@@ -1,6 +1,18 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.
  */
 package org.jackhuang.hellominecraft.utils;
 
@@ -15,9 +27,10 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLDecoder;
@@ -54,11 +67,7 @@ public final class Utils {
             Field field = ClassLoader.class.getDeclaredField("usr_paths");
             field.setAccessible(true);
             String[] paths = (String[]) field.get(null);
-            for (int i = 0; i < paths.length; i++) {
-                if (s.equals(paths[i])) {
-                    return;
-                }
-            }
+            for (String path : paths) if (s.equals(path)) return;
             String[] tmp = new String[paths.length + 1];
             System.arraycopy(paths, 0, tmp, 0, paths.length);
             tmp[paths.length] = s;
@@ -90,7 +99,7 @@ public final class Utils {
 	try {
 	    Desktop.getDesktop().browse(new URI(url));
 	    return true;
-	} catch (Exception ex) {
+	} catch (URISyntaxException | IOException ex) {
 	    HMCLog.warn("Failed to open link:" + url, ex);
 	    return false;
 	}
@@ -171,7 +180,7 @@ public final class Utils {
             Method exit = z.getDeclaredMethod("exit", int.class);
             exit.setAccessible(true);
             exit.invoke(z, 0);
-        } catch(Exception e) {
+        } catch(ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             MessageBox.Show(C.i18n("launcher.exit_failed"));
             e.printStackTrace();
         }

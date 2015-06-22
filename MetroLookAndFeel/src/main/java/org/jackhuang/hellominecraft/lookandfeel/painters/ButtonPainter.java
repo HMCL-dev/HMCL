@@ -1,14 +1,4 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package org.jackhuang.hellominecraft.lookandfeel.painters;
-
-/**
- *
- * @author hyh
- */
-/*
  * $Id: MetroGraphicsUtils.java,v 1.9 2005/12/05 15:00:55 kizune Exp $
  *
  * Copyright 2004 Sun Microsystems, Inc., 4150 Network Circle,
@@ -28,6 +18,8 @@ package org.jackhuang.hellominecraft.lookandfeel.painters;
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
+package org.jackhuang.hellominecraft.lookandfeel.painters;
+
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;

@@ -1,29 +1,24 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * $Id: NimbusGraphicsUtils.java,v 1.9 2005/12/05 15:00:55 kizune Exp $
+ *
+ * Copyright 2004 Sun Microsystems, Inc., 4150 Network Circle,
+ * Santa Clara, California 95054, U.S.A. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package org.jackhuang.hellominecraft.lookandfeel.ui;
-
-/*
-* $Id: NimbusGraphicsUtils.java,v 1.9 2005/12/05 15:00:55 kizune Exp $
-*
-* Copyright 2004 Sun Microsystems, Inc., 4150 Network Circle,
-* Santa Clara, California 95054, U.S.A. All rights reserved.
-*
-* This library is free software; you can redistribute it and/or
-* modify it under the terms of the GNU Lesser General Public
-* License as published by the Free Software Foundation; either
-* version 2.1 of the License, or (at your option) any later version.
-*
-* This library is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-* Lesser General Public License for more details.
-*
-* You should have received a copy of the GNU Lesser General Public
-* License along with this library; if not, write to the Free Software
-* Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/
 
 import static javax.swing.SwingConstants.NORTH;
 import static javax.swing.SwingConstants.SOUTH;
@@ -34,7 +29,8 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 
 /**
- * NimbusScrollButton - a fixed size 15x17 vertical 17x15 horizontal transparent button.
+ * NimbusScrollButton - a fixed size 15x17 vertical 17x15 horizontal transparent
+ * button.
  *
  * @author Created by Jasper Potts (Jan 17, 2007)
  * @version 1.0
@@ -55,19 +51,23 @@ public class ScrollButton extends MetalScrollButton implements SwingConstants {
         }
     }
 
-    @Override public Dimension getMaximumSize() {
+    @Override
+    public Dimension getMaximumSize() {
         return this.getPreferredSize();
     }
 
-    @Override public Dimension getMinimumSize() {
+    @Override
+    public Dimension getMinimumSize() {
         return this.getPreferredSize();
     }
 
-    @Override public Dimension getPreferredSize() {
+    @Override
+    public Dimension getPreferredSize() {
         return new Dimension(btnWidth, btnHeight);
     }
 
-    @Override public void repaint(long tm, int x, int y, int width, int height) {
+    @Override
+    public void repaint(long tm, int x, int y, int width, int height) {
         if (getParent() != null) getParent().repaint();
     }
 
@@ -76,7 +76,7 @@ public class ScrollButton extends MetalScrollButton implements SwingConstants {
      *
      * @param g {@inheritDoc}
      */
-    @Override public void paint(Graphics g) {
+    @Override
+    public void paint(Graphics g) {
     }
 }
-

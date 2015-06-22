@@ -1,9 +1,19 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.
  */
-
 package org.jackhuang.hellominecraft.utils;
 
 import java.io.BufferedReader;
@@ -42,13 +52,14 @@ public final class NetUtils {
     
     public static String getStreamContent(InputStream is, String encoding)
         throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(is, encoding));
-        String result = "";
-        String line;
-        while ((line = br.readLine()) != null) {
-            result += line + "\n";
+        String result;
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(is, encoding))) {
+            result = "";
+            String line;
+            while ((line = br.readLine()) != null) {
+                result += line + "\n";
+            }
         }
-        br.close();
 	if(result.length() < 1) return "";
 	else return result.substring(0, result.length() - 1);
     }
@@ -104,8 +115,8 @@ public final class NetUtils {
     }
 
     public static String post(String url, Map<String, String> params) {
-        URL u = null;
-        HttpURLConnection con = null;
+        URL u;
+        HttpURLConnection con;
         StringBuilder sb = new StringBuilder();
         if (params != null) {
             for (Map.Entry<String, String> e : params.entrySet()) {
@@ -126,29 +137,30 @@ public final class NetUtils {
             con.setDoInput(true);
             con.setUseCaches(false);
             con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-            OutputStreamWriter osw = new OutputStreamWriter(con.getOutputStream(), DEFAULT_CHARSET);
-            osw.write(sb.toString());
-            osw.flush();
-            osw.close();
+            try (OutputStreamWriter osw = new OutputStreamWriter(con.getOutputStream(), DEFAULT_CHARSET)) {
+                osw.write(sb.toString());
+                osw.flush();
+            }
+            StringBuilder buffer = new StringBuilder();
+            try {
+                BufferedReader br = new BufferedReader(new InputStreamReader(con
+                        .getInputStream(), DEFAULT_CHARSET));
+                String temp;
+                while ((temp = br.readLine()) != null) {
+                    buffer.append(temp);
+                    buffer.append("\n");
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            con.disconnect();
+            return buffer.toString();
         } catch (Exception e) {
             HMCLog.warn("Failed to post.", e);
+            return null;
         }
-        StringBuilder buffer = new StringBuilder();
-        try {
-            BufferedReader br = new BufferedReader(new InputStreamReader(con
-                    .getInputStream(), DEFAULT_CHARSET));
-            String temp;
-            while ((temp = br.readLine()) != null) {
-                buffer.append(temp);
-                buffer.append("\n");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        
-        con.disconnect();
-
-        return buffer.toString();
     }
     private static final String METHOD_POST = "POST";
     private static final String DEFAULT_CHARSET = "UTF-8";

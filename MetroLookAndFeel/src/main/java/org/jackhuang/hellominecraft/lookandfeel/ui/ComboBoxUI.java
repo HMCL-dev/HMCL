@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.jackhuang.hellominecraft.lookandfeel.ui;
 
 import static org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils.loadImage;
@@ -70,7 +66,9 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
     /**
      * The minumum size is the size of the display area plus insets plus the
      * button.
+     * @return the size yeah.
      */
+    @Override
     public Dimension getMinimumSize(JComponent c) {
         if (!isMinimumSizeDirty) {
             return new Dimension(cachedMinimumSize);
@@ -88,6 +86,7 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
         return new Dimension(size);
     }
 
+    @Override
     protected JButton createArrowButton() {
         JButton button = new JButton() {
             @Override
@@ -114,6 +113,7 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
         return button;
     }
 
+    @Override
     public void paint(Graphics g, JComponent c) {
         hasFocus = comboBox.hasFocus();
         ListCellRenderer renderer = comboBox.getRenderer();
@@ -173,6 +173,7 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
         }
     }
 
+    @Override
     protected LayoutManager createLayoutManager() {
         return new ComboLayout();
     }
@@ -186,9 +187,11 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
     private boolean mouseInside = false;
     private boolean mouseDown = false;
 
+    @Override
     public void mouseClicked(MouseEvent e) {
     }
 
+    @Override
     public void mouseEntered(MouseEvent e) {
         if (comboBox.isEditable()) {
             if (e.getComponent() == arrowButton) {
@@ -200,6 +203,7 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
         }
     }
 
+    @Override
     public void mouseExited(MouseEvent e) {
         if (comboBox.isEditable()) {
             if (e.getComponent() == arrowButton) {
@@ -211,6 +215,7 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
         }
     }
 
+    @Override
     public void mousePressed(MouseEvent e) {
         if (comboBox.isEditable()) {
             if (e.getComponent() == arrowButton) {
@@ -222,6 +227,7 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
         }
     }
 
+    @Override
     public void mouseReleased(MouseEvent e) {
         if (comboBox.isEditable()) {
             if (e.getComponent() == arrowButton) {
@@ -237,20 +243,25 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
     // LayoutManager
     private class ComboLayout implements LayoutManager {
 
+        @Override
         public void addLayoutComponent(String name, Component comp) {
         }
 
+        @Override
         public void removeLayoutComponent(Component comp) {
         }
 
+        @Override
         public Dimension preferredLayoutSize(Container parent) {
             return parent.getPreferredSize();
         }
 
+        @Override
         public Dimension minimumLayoutSize(Container parent) {
             return parent.getMinimumSize();
         }
 
+        @Override
         public void layoutContainer(Container parent) {
             JComboBox cb = (JComboBox) parent;
             int width = cb.getWidth();

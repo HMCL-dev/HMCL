@@ -1,10 +1,22 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.
  */
 package org.jackhuang.hellominecraft.launcher.utils.installers.optifine.vanilla;
 
+import java.io.IOException;
 import java.io.StringBufferInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,14 +27,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList;
 import org.jackhuang.hellominecraft.launcher.utils.installers.optifine.OptiFineVersion;
 import org.jackhuang.hellominecraft.utils.ArrayUtils;
 import org.jackhuang.hellominecraft.utils.NetUtils;
 import org.jackhuang.hellominecraft.utils.StrUtils;
+import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 /**
  *
@@ -45,8 +60,8 @@ public class OptiFineVersionList extends InstallerVersionList {
     public void refreshList(String[] sss) throws Exception {
         String content = NetUtils.doGet("http://optifine.net/downloads");
         if(versions != null) return;
-	versionMap = new HashMap<String, List<InstallerVersion>>();
-	versions = new ArrayList<InstallerVersion>();
+	versionMap = new HashMap<>();
+	versions = new ArrayList<>();
         
         content = content.replace("&nbsp;", " ").replace("&gt;", ">").replace("&lt;", "<");
         
@@ -94,7 +109,7 @@ public class OptiFineVersionList extends InstallerVersionList {
                     }
                 }
             }
-        } catch (Exception ex) {
+        } catch (ParserConfigurationException | SAXException | IOException | DOMException ex) {
             throw new RuntimeException(ex);
         }
         
