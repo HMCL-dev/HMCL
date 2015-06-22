@@ -1,0 +1,20 @@
+rootProject.name = 'HMCL'
+
+// Find the directories containing a "build.gradle" file in the root directory
+// of the project. That is, every directory containing a "build.gradle" will
+// be automatically the subproject of this project.
+def subDirs = rootDir.listFiles(new FileFilter() {
+    public boolean accept(File file) {
+        if (!file.isDirectory()) {
+            return false
+        }
+        if (file.name == 'buildSrc') {
+            return false
+        }
+        return new File(file, 'build.gradle').isFile()
+    }
+});
+
+subDirs.each { File dir ->
+    include dir.name
+}

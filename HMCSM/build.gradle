@@ -1,0 +1,90 @@
+//apply plugin: 'execjar'
+apply plugin: 'launch4j'
+
+if (!hasProperty('mainClass')) {
+    ext.mainClass = 'org.jackhuang.hellominecraft.svrmgr.Main'
+}
+
+String mavenGroupId = 'HMCSM'
+String mavenVersion = '0.8.6'
+String bundleName = "Hello Minecraft! Server Manager"
+
+group = mavenGroupId
+version = mavenVersion
+
+String mavenArtifactId = name
+
+buildscript {
+    repositories {
+        mavenCentral();
+        // You may define additional repositories, or even remove "mavenCentral()".
+        // Read more about repositories here:
+        //   http://www.gradle.org/docs/current/userguide/dependency_management.html#sec:repositories
+    /*
+        maven {
+            url uri('../../../../repo')
+        }*/
+        dependencies {
+            //classpath 'org.jackhuang.gradle:ExecJar:1.0-SNAPSHOT'
+            classpath 'net.sf.proguard:proguard-gradle:4.10'
+            classpath 'edu.sc.seis.gradle:launch4j:1.0.6'
+        }
+    }
+}
+
+configure(install.repositories.mavenInstaller) {
+    pom.project {
+        groupId = mavenGroupId
+        artifactId = mavenArtifactId
+        version = mavenVersion
+    }
+}
+
+dependencies {
+    compile project(":HMCLAPI")
+    compile project(":MetroLookAndFeel")
+    compile files("../../../../repo/org/ho/jyaml/1.3/jyaml-1.3.jar")
+    compile ("org.tukaani:xz:1.5")
+    compile ('org.jsoup:jsoup:1.7.2')
+}
+
+jar {
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    
+    manifest {
+        attributes 'Created-By'        : 'Copyright(c) 2014 huangyuhui.',
+                   'Main-Class'        : mainClass
+    }
+}
+
+task proguard(type: proguard.gradle.ProGuardTask, dependsOn: jar) {
+    ext {
+        injar = jar.archivePath
+        jar.classifier = 'proguard'
+        outjar = jar.archivePath
+        jar.classifier = ''
+    }
+    
+    injars injar
+    outjars outjar
+    printusage "shrinking_" + version + ".map"
+    printmapping "obfuscate_" + version + ".map"
+    
+    configuration 'proguard.pro'
+}
+/*
+execjar.suffix = 'proguard'
+execjar.version = mavenVersion
+execjar.group = mavenGroupId
+execjar.mainClass = mainClass
+execjar.bundleName = bundleName
+
+execjar.dependsOn proguard
+*/
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'icon.icns'
+    }
+}
+
+build.dependsOn proguard

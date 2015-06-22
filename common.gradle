@@ -1,0 +1,44 @@
+//
+// This file is to be applied to every subproject.
+//
+
+apply plugin: 'java'
+apply plugin: 'maven'
+
+//sourceCompatibility = '1.7'
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+repositories {
+    mavenCentral();
+}
+
+buildscript {
+    repositories {
+        mavenCentral();
+    }
+}
+
+dependencies {
+    // Adding dependencies here will add the dependencies to each subproject.
+    
+    compile 'com.google.code.gson:gson:2.2.4' // Apache License 2.0
+}
+
+task sourcesJar(type: Jar, dependsOn: classes, description: 'Creates a jar from the source files.') {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives jar
+    archives sourcesJar
+}
+
+task createFolders(description: 'Creates the source folders if they do not exist.') doLast {
+    sourceSets*.allSource*.srcDirs*.each { File srcDir ->
+        if (!srcDir.isDirectory()) {
+            println "Creating source folder: ${srcDir}"
+            srcDir.mkdirs()
+        }
+    }
+}

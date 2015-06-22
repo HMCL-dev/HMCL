@@ -1,0 +1,24 @@
+import org.gradle.api.artifacts.*
+
+apply plugin: 'base' // To add "clean" task to the root project.
+
+subprojects {
+    apply from: rootProject.file('common.gradle')
+}
+
+task mergedJavadoc(type: Javadoc, description: 'Creates Javadoc from all the projects.') {
+    title = 'All modules'
+    destinationDir = new File(project.buildDir, 'merged-javadoc')
+
+    // Note: The closures below are executed lazily.
+    source {
+       subprojects*.sourceSets*.main*.allSource
+    }
+    classpath.from {
+        subprojects*.configurations*.compile*.copyRecursive({ !(it instanceof ProjectDependency); })*.resolve()
+    }
+}
+
+task wrapper(type: Wrapper, description: 'Creates and deploys the Gradle wrapper to the current directory.') {
+    gradleVersion = '1.11'
+}

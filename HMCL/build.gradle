@@ -1,0 +1,95 @@
+apply plugin: 'launch4j'
+apply plugin: 'me.tatarka.retrolambda'
+
+if (!hasProperty('mainClass')) {
+    ext.mainClass = 'org.jackhuang.hellominecraft.launcher.Main'
+}
+
+String mavenGroupId = 'HMCL'
+String mavenVersion = '2.3.2'
+String bundleName = "Hello Minecraft! Launcher"
+
+group = mavenGroupId
+version = mavenVersion
+
+String mavenArtifactId = name
+
+buildscript {
+    repositories {
+        mavenCentral();
+        
+        dependencies {
+            classpath 'net.sf.proguard:proguard-gradle:4.10'
+            classpath 'edu.sc.seis.gradle:launch4j:1.0.6'
+            classpath 'me.tatarka:gradle-retrolambda:3.1.0'
+        }
+    }
+}
+
+configure(install.repositories.mavenInstaller) {
+    pom.project {
+        groupId = mavenGroupId
+        artifactId = mavenArtifactId
+        version = mavenVersion
+    }
+}
+
+dependencies {
+    compile project(":MetroLookAndFeel")
+    compile project(":HMCLAPI")
+}
+
+retrolambda {
+    javaVersion = JavaVersion.VERSION_1_7
+}
+
+jar {
+    jar.classifier = 'base'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    
+    manifest {
+        attributes 'Created-By'        : 'Copyright(c) 2013-2014 huangyuhui.',
+                   'Main-Class'        : mainClass
+    }
+}
+
+task proguard(type: proguard.gradle.ProGuardTask, dependsOn: jar) {
+    ext {
+        def re = jar.classifier
+        injar = jar.archivePath
+        jar.classifier = ''
+        outjar = jar.archivePath
+        jar.classifier = re
+    }
+    
+    injars injar
+    outjars outjar
+    printusage "shrinking_" + version + ".map"
+    printmapping "obfuscate_" + version + ".map"
+    
+    configuration 'proguard.pro'
+}
+
+launch4j {
+    launch4jCmd = 'D:\\Develop\\Java\\Launch4j\\launch4j.exe'
+    supportUrl = 'http://www.mcbbs.net/thread-142335-1-1.html'
+    jreMinVersion = '1.6.0'
+    
+    mainClassName = mainClass
+    icon = new File(project.buildDir,  '../icon.ico').absolutePath
+    version = mavenVersion + '.0'
+    downloadUrl = 'http://java.com/download'
+    copyright = "Copyright(c) 2013-2014 huangyuhui."
+    
+    jar = new File(project.buildDir, 'libs/' + mavenGroupId + '-' + mavenVersion + '.jar').absolutePath
+    outfile = mavenGroupId + '-' + mavenVersion + '.exe'
+    messagesJreVersionError = 'This application requires a Java Runtime Environment installation, or the runtime is corrupted.\n\u6ca1\u6709\u627e\u5230\u004a\u0061\u0076\u0061\u8fd0\u884c\u65f6\uff0c\u8bf7\u4e0d\u8981\u4f7f\u7528\u7eff\u8272\u004a\u0061\u0076\u0061\uff0c\u8bf7\u4f7f\u7528\u5b89\u88c5\u7248\u7684\u004a\u0061\u0076\u0061\uff0c\u70b9\u51fb\u786e\u5b9a\u8fdb\u5165\u004a\u0061\u0076\u0061\u5b89\u88c5\u9875\u9762\u3002'
+}
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'icon.icns'
+    }
+}
+
+build.dependsOn proguard
