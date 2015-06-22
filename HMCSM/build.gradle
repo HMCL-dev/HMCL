@@ -1,4 +1,19 @@
-//apply plugin: 'execjar'
+/*
+ * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.
+ */
 apply plugin: 'launch4j'
 
 if (!hasProperty('mainClass')) {
@@ -17,15 +32,7 @@ String mavenArtifactId = name
 buildscript {
     repositories {
         mavenCentral();
-        // You may define additional repositories, or even remove "mavenCentral()".
-        // Read more about repositories here:
-        //   http://www.gradle.org/docs/current/userguide/dependency_management.html#sec:repositories
-    /*
-        maven {
-            url uri('../../../../repo')
-        }*/
         dependencies {
-            //classpath 'org.jackhuang.gradle:ExecJar:1.0-SNAPSHOT'
             classpath 'net.sf.proguard:proguard-gradle:4.10'
             classpath 'edu.sc.seis.gradle:launch4j:1.0.6'
         }
@@ -72,15 +79,6 @@ task proguard(type: proguard.gradle.ProGuardTask, dependsOn: jar) {
     
     configuration 'proguard.pro'
 }
-/*
-execjar.suffix = 'proguard'
-execjar.version = mavenVersion
-execjar.group = mavenGroupId
-execjar.mainClass = mainClass
-execjar.bundleName = bundleName
-
-execjar.dependsOn proguard
-*/
 processResources {
     from(sourceSets.main.resources.srcDirs) {
         exclude 'icon.icns'
