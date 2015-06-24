@@ -1,6 +1,6 @@
--libraryjars D:\Develop\Java\jdk1.6.0_45\jre\lib\rt.jar
--libraryjars D:\Develop\Java\jdk1.6.0_45\jre\lib\jce.jar
--libraryjars D:\Develop\Java\jdk1.6.0_45\jre\lib\jsse.jar
+-libraryjars <java.home>/lib/rt.jar
+-libraryjars <java.home>/lib/jce.jar
+-libraryjars <java.home>/lib/jsse.jar
 
 -dontoptimize
 -dontshrink

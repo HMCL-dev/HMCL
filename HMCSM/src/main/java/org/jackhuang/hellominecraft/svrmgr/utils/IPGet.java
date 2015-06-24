@@ -8,9 +8,9 @@ package org.jackhuang.hellominecraft.svrmgr.utils;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.jackhuang.hellominecraft.DoneListener1;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.NetUtils;
+import org.jackhuang.hellominecraft.utils.functions.Consumer;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -21,7 +21,7 @@ import org.jsoup.select.Elements;
  */
 public class IPGet extends Thread {
 
-    public DoneListener1<String> dl;
+    public Consumer<String> dl;
 
     @Override
     public void run() {
@@ -37,11 +37,11 @@ public class IPGet extends Thread {
 		while(m.find()) {
 		    s += m.group() + ",";
 		}
-		dl.onDone(s.substring(0, s.length()-1));
+		dl.accept(s.substring(0, s.length()-1));
 	    }
 	} catch (Exception ex) {
 	    HMCLog.warn("Failed to get ip from ip138.", ex);
-	    dl.onDone("获取失败");
+	    dl.accept("获取失败");
 	}
     }
     

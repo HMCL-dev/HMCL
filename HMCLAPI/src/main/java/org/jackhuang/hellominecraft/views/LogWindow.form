@@ -37,6 +37,8 @@
                       <Component id="btnMCBBS" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="btnMCF" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="btnGitHub" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="btnTerminateGame" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
@@ -46,7 +48,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="btnClose" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Component id="lblCrash" alignment="0" pref="639" max="32767" attributes="0"/>
+                  <Component id="lblCrash" alignment="0" pref="674" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -68,6 +70,7 @@
                   <Component id="btnTieBa" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnMCF" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnTerminateGame" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnGitHub" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -162,6 +165,14 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnTerminateGameActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="btnGitHub">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="GitHub"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnGitHubActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>

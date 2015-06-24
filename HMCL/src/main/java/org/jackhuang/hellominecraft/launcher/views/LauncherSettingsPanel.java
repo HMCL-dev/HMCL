@@ -39,6 +39,10 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
         initComponents();
         
         txtBackgroundPath.setText(Settings.s().getBgpath());
+        txtProxyHost.setText(Settings.s().getProxyHost());
+        txtProxyPort.setText(Settings.s().getProxyPort());
+        txtProxyUsername.setText(Settings.s().getProxyUserName());
+        txtProxyPassword.setText(Settings.s().getProxyPassword());
         cboDownloadSource.setSelectedIndex(Settings.s().getDownloadType());
         cboTheme.setSelectedIndex(Settings.s().getTheme());
         chkEnableShadow.setSelected(Settings.s().isEnableShadow());
@@ -66,6 +70,15 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
         chkEnableShadow = new javax.swing.JCheckBox();
         jLabel1 = new javax.swing.JLabel();
         cboTheme = new javax.swing.JComboBox();
+        jLabel2 = new javax.swing.JLabel();
+        txtProxyHost = new javax.swing.JTextField();
+        jLabel3 = new javax.swing.JLabel();
+        txtProxyPort = new javax.swing.JTextField();
+        jLabel5 = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+        txtProxyUsername = new javax.swing.JTextField();
+        txtProxyPassword = new javax.swing.JTextField();
+        jLabel8 = new javax.swing.JLabel();
 
         cboDownloadSource.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Mojang", "BMCLAPI(By bangbang93)" }));
         cboDownloadSource.addItemListener(new java.awt.event.ItemListener() {
@@ -119,6 +132,40 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
             }
         });
 
+        jLabel2.setText(bundle.getString("launcher.proxy")); // NOI18N
+
+        txtProxyHost.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                txtProxyHostFocusLost(evt);
+            }
+        });
+
+        jLabel3.setText(bundle.getString("proxy.host")); // NOI18N
+
+        txtProxyPort.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                txtProxyPortFocusLost(evt);
+            }
+        });
+
+        jLabel5.setText(bundle.getString("proxy.port")); // NOI18N
+
+        jLabel6.setText(bundle.getString("proxy.username")); // NOI18N
+
+        txtProxyUsername.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                txtProxyUsernameFocusLost(evt);
+            }
+        });
+
+        txtProxyPassword.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                txtProxyPasswordFocusLost(evt);
+            }
+        });
+
+        jLabel8.setText(bundle.getString("proxy.password")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -127,17 +174,11 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(chkEnableShadow)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(btnCheckUpdate))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel7)
                             .addComponent(jLabel1)
-                            .addComponent(jLabel14))
+                            .addComponent(jLabel14)
+                            .addComponent(jLabel2))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -145,7 +186,30 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(btnSelBackgroundPath))
                             .addComponent(cboDownloadSource, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(cboTheme, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(cboTheme, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel3)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtProxyHost, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel5)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtProxyPort, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel6)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtProxyUsername, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel8)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtProxyPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(chkEnableShadow)
+                            .addComponent(btnCheckUpdate))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -165,10 +229,21 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
                     .addComponent(jLabel1)
                     .addComponent(cboTheme, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(chkEnableShadow)
-                    .addComponent(btnCheckUpdate, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 119, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtProxyHost, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2)
+                    .addComponent(jLabel3)
+                    .addComponent(txtProxyPort, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel5)
+                    .addComponent(txtProxyUsername, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel6)
+                    .addComponent(txtProxyPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel8))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkEnableShadow)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnCheckUpdate, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 71, Short.MAX_VALUE)
                 .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -200,8 +275,7 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_btnSelBackgroundPathActionPerformed
 
     private void txtBackgroundPathFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtBackgroundPathFocusLost
-        String path = txtBackgroundPath.getText();
-        Settings.s().setBgpath(path);
+        Settings.s().setBgpath(txtBackgroundPath.getText());
         MainFrame.instance.loadBackground();
     }//GEN-LAST:event_txtBackgroundPathFocusLost
 
@@ -219,6 +293,22 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
             MainFrame.instance.reloadColor();
     }//GEN-LAST:event_cboThemeItemStateChanged
 
+    private void txtProxyHostFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtProxyHostFocusLost
+        Settings.s().setProxyHost(txtProxyHost.getText());
+    }//GEN-LAST:event_txtProxyHostFocusLost
+
+    private void txtProxyPortFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtProxyPortFocusLost
+        Settings.s().setProxyPort(txtProxyPort.getText());
+    }//GEN-LAST:event_txtProxyPortFocusLost
+
+    private void txtProxyUsernameFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtProxyUsernameFocusLost
+        Settings.s().setProxyUserName(txtProxyUsername.getText());
+    }//GEN-LAST:event_txtProxyUsernameFocusLost
+
+    private void txtProxyPasswordFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtProxyPasswordFocusLost
+        Settings.s().setProxyPassword(txtProxyPassword.getText());
+    }//GEN-LAST:event_txtProxyPasswordFocusLost
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCheckUpdate;
     private javax.swing.JButton btnSelBackgroundPath;
@@ -227,8 +317,17 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JCheckBox chkEnableShadow;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel14;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
     private javax.swing.JTextField txtBackgroundPath;
+    private javax.swing.JTextField txtProxyHost;
+    private javax.swing.JTextField txtProxyPassword;
+    private javax.swing.JTextField txtProxyPort;
+    private javax.swing.JTextField txtProxyUsername;
     // End of variables declaration//GEN-END:variables
 }

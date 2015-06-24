@@ -22,9 +22,14 @@ import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.text.ParseException;
 import javax.swing.ImageIcon;
 import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.utils.functions.DoneListener0;
 import org.jackhuang.hellominecraft.HMCLog;
@@ -38,6 +43,7 @@ import org.jackhuang.hellominecraft.launcher.utils.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.views.MainFrame;
 import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
 import org.jackhuang.hellominecraft.utils.MessageBox;
+import org.jackhuang.hellominecraft.utils.StrUtils;
 
 /**
  *
@@ -90,11 +96,23 @@ public final class Main implements DoneListener0 {
 
             try {
                 UIManager.setLookAndFeel(new HelloMinecraftLookAndFeel());
-            } catch (Throwable ex) {
+            } catch (ParseException | UnsupportedLookAndFeelException ex) {
                 HMCLog.warn("Failed to set look and feel...", ex);
             }
 
             Settings.UPDATE_CHECKER.start();
+
+            if (StrUtils.isNotBlank(Settings.s().getProxyHost()) && StrUtils.isNotBlank(Settings.s().getProxyPort())) {
+                System.setProperty("http.proxyHost", Settings.s().getProxyHost());
+                System.setProperty("http.proxyPort", Settings.s().getProxyPort());
+                if (StrUtils.isNotBlank(Settings.s().getProxyUserName()) && StrUtils.isNotBlank(Settings.s().getProxyPassword()))
+                    Authenticator.setDefault(new Authenticator() {
+                        @Override
+                        protected PasswordAuthentication getPasswordAuthentication() {
+                            return new PasswordAuthentication(Settings.s().getProxyUserName(), Settings.s().getProxyPassword().toCharArray());
+                        }
+                    });
+            }
 
             MainFrame.showMainFrame(Settings.isFirstLoad());
         }
@@ -111,7 +129,7 @@ public final class Main implements DoneListener0 {
                 MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
             try {
                 java.awt.Desktop.getDesktop().browse(new URI(C.URL_PUBLISH));
-            } catch (Throwable e) {
+            } catch (URISyntaxException | IOException e) {
                 HMCLog.warn("Failed to browse uri: " + C.URL_PUBLISH, e);
 
                 Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();

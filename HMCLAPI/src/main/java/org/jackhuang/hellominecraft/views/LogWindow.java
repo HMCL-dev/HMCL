@@ -73,6 +73,7 @@ public class LogWindow extends javax.swing.JFrame {
         btnTieBa = new javax.swing.JButton();
         btnMCF = new javax.swing.JButton();
         btnTerminateGame = new javax.swing.JButton();
+        btnGitHub = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Log");
@@ -139,6 +140,13 @@ public class LogWindow extends javax.swing.JFrame {
             }
         });
 
+        btnGitHub.setText("GitHub");
+        btnGitHub.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnGitHubActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -153,6 +161,8 @@ public class LogWindow extends javax.swing.JFrame {
                         .addComponent(btnMCBBS)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnMCF)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnGitHub)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(btnTerminateGame)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -161,7 +171,7 @@ public class LogWindow extends javax.swing.JFrame {
                         .addComponent(btnClear)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnClose))
-                    .addComponent(lblCrash, javax.swing.GroupLayout.DEFAULT_SIZE, 639, Short.MAX_VALUE))
+                    .addComponent(lblCrash, javax.swing.GroupLayout.DEFAULT_SIZE, 674, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -179,7 +189,8 @@ public class LogWindow extends javax.swing.JFrame {
                     .addComponent(btnMCBBS)
                     .addComponent(btnTieBa)
                     .addComponent(btnMCF)
-                    .addComponent(btnTerminateGame))
+                    .addComponent(btnTerminateGame)
+                    .addComponent(btnGitHub))
                 .addContainerGap())
         );
 
@@ -218,6 +229,10 @@ public class LogWindow extends javax.swing.JFrame {
         if(terminateGameListener != null)
             terminateGameListener.onDone();
     }//GEN-LAST:event_btnTerminateGameActionPerformed
+
+    private void btnGitHubActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGitHubActionPerformed
+        Utils.openLink(C.URL_GITHUB);
+    }//GEN-LAST:event_btnGitHubActionPerformed
 
     public void log(String status) {
         String text = txtLog.getText();
@@ -286,6 +301,7 @@ public class LogWindow extends javax.swing.JFrame {
     private javax.swing.JButton btnClear;
     private javax.swing.JButton btnClose;
     private javax.swing.JButton btnCopy;
+    private javax.swing.JButton btnGitHub;
     private javax.swing.JButton btnMCBBS;
     private javax.swing.JButton btnMCF;
     private javax.swing.JButton btnTerminateGame;

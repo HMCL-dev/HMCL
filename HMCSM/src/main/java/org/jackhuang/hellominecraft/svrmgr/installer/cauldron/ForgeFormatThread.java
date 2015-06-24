@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.jackhuang.hellominecraft.DoneListener1;
+import org.jackhuang.hellominecraft.utils.functions.Consumer;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -22,10 +22,10 @@ import org.jsoup.select.Elements;
  */
 public class ForgeFormatThread extends Thread {
     
-    DoneListener1<Map<String, List<ForgeVersion>>> lis;
+    Consumer<Map<String, List<ForgeVersion>>> lis;
     Map<String, List<ForgeVersion>> formattedList;
     
-    public ForgeFormatThread(DoneListener1<Map<String, List<ForgeVersion>>> lis) {
+    public ForgeFormatThread(Consumer<Map<String, List<ForgeVersion>>> lis) {
         this.lis = lis;
     }
     
@@ -75,14 +75,14 @@ public class ForgeFormatThread extends Thread {
                 }
 		
 		if(!formattedList.containsKey(v.mcver))
-		    formattedList.put(v.mcver, new ArrayList<ForgeVersion>());
+		    formattedList.put(v.mcver, new ArrayList<>());
                 formattedList.get(v.mcver).add(v);
             }
         } catch (IOException ex) {
             HMCLog.warn("Failed to get forge list", ex);
             ForgeVersion v = new ForgeVersion();
             v.mcver = v.ver = "获取失败";
-	    formattedList.put(v.mcver, new ArrayList<ForgeVersion>());
+	    formattedList.put(v.mcver, new ArrayList<>());
             formattedList.get(v.mcver).add(v);
         }
     }
@@ -91,7 +91,7 @@ public class ForgeFormatThread extends Thread {
     public void run() {
         formatNew();
         if(lis != null)
-            lis.onDone(formattedList);
+            lis.accept(formattedList);
     }
     
 }

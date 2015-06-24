@@ -89,13 +89,13 @@ task proguard(type: proguard.gradle.ProGuardTask, dependsOn: jar) {
 launch4j {
     launch4jCmd = 'D:\\Develop\\Java\\Launch4j\\launch4j.exe'
     supportUrl = 'http://www.mcbbs.net/thread-142335-1-1.html'
-    jreMinVersion = '1.6.0'
+    jreMinVersion = '1.7.0'
     
     mainClassName = mainClass
     icon = new File(project.buildDir,  '../icon.ico').absolutePath
     version = mavenVersion + '.0'
     downloadUrl = 'http://java.com/download'
-    copyright = "Copyright(c) 2013-2014 huangyuhui."
+    copyright = "Copyright(c) 2013-2015 huangyuhui."
     
     jar = new File(project.buildDir, 'libs/' + mavenGroupId + '-' + mavenVersion + '.jar').absolutePath
     outfile = mavenGroupId + '-' + mavenVersion + '.exe'

@@ -35,7 +35,8 @@ public final class Config {
     @SerializedName("username")
     private String username;
     @SerializedName("clientToken")
-    private String clientToken;
+    private final String clientToken;
+    private String proxyHost, proxyPort, proxyUserName, proxyPassword;
     @SerializedName("enableShadow")
     private boolean enableShadow;
     @SerializedName("theme")
@@ -159,5 +160,41 @@ public final class Config {
     public DownloadType getDownloadSource() {
         if(downloadtype >= DownloadType.values().length || downloadtype < 0) return null;
         return DownloadType.values()[downloadtype];
+    }
+
+    public String getProxyHost() {
+        return proxyHost == null ? "" : proxyHost;
+    }
+
+    public void setProxyHost(String proxyHost) {
+        this.proxyHost = proxyHost;
+        Settings.save();
+    }
+
+    public String getProxyPort() {
+        return proxyPort == null ? "" : proxyPort;
+    }
+
+    public void setProxyPort(String proxyPort) {
+        this.proxyPort = proxyPort;
+        Settings.save();
+    }
+
+    public String getProxyUserName() {
+        return proxyUserName == null ? "" : proxyUserName;
+    }
+
+    public void setProxyUserName(String proxyUserName) {
+        this.proxyUserName = proxyUserName;
+        Settings.save();
+    }
+
+    public String getProxyPassword() {
+        return proxyPassword == null ? "" : proxyPassword;
+    }
+
+    public void setProxyPassword(String proxyPassword) {
+        this.proxyPassword = proxyPassword;
+        Settings.save();
     }
 }

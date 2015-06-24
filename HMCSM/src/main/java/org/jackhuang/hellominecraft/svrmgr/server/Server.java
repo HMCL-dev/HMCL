@@ -22,8 +22,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.jackhuang.hellominecraft.utils.functions.DoneListener0;
-import org.jackhuang.hellominecraft.DoneListener1;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.IOUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
@@ -34,12 +32,15 @@ import org.jackhuang.hellominecraft.svrmgr.settings.SettingsManager;
 import org.jackhuang.hellominecraft.svrmgr.threads.MonitorThread;
 import org.jackhuang.hellominecraft.svrmgr.threads.WaitForThread;
 import org.jackhuang.hellominecraft.svrmgr.utils.Utilities;
+import org.jackhuang.hellominecraft.utils.Event;
+import org.jackhuang.hellominecraft.utils.EventHandler;
+import org.jackhuang.hellominecraft.utils.functions.Consumer;
 
 /**
  *
  * @author hyh
  */
-public class Server implements DoneListener1<Integer>, MonitorThread.MonitorThreadListener,
+public class Server implements Event<Integer>, MonitorThread.MonitorThreadListener,
 	ActionListener {
 
     private static Server instance;
@@ -61,10 +62,11 @@ public class Server implements DoneListener1<Integer>, MonitorThread.MonitorThre
     Process server;
     MonitorThread threadA, threadB;
     WaitForThread threadC;
-    DoneListener1<Pair<String, String[]>> gettingPlayerNumber;
+    Consumer<Pair<String, String[]>> gettingPlayerNumber;
     ArrayList<MonitorThread.MonitorThreadListener> listeners;
-    ArrayList<DoneListener1<Integer>> listenersC;
-    ArrayList<DoneListener0> listenersBegin, listenersDone;
+    ArrayList<Event<Integer>> listenersC;
+    //ArrayList<DoneListener0> listenersBegin, listenersDone;
+    public final EventHandler<Void> startedEvent = new EventHandler<>(this), stoppedEvent = new EventHandler<>(this);
     ArrayList<TimerTask> timerTasks;
     ArrayList<Schedule> schedules;
     BufferedWriter bw;
@@ -78,28 +80,18 @@ public class Server implements DoneListener1<Integer>, MonitorThread.MonitorThre
 	this.jar = jar;
 	this.memory = memory;
 	isRestart = isDone = false;
-	listeners = new ArrayList<MonitorThread.MonitorThreadListener>();
-	listenersC = new ArrayList<DoneListener1<Integer>>();
-	listenersBegin = new ArrayList<DoneListener0>();
-	listenersDone = new ArrayList<DoneListener0>();
-	schedules = new ArrayList<Schedule>();
-	timerTasks = new ArrayList<TimerTask>();
+	listeners = new ArrayList<>();
+	listenersC = new ArrayList<>();
+	schedules = new ArrayList<>();
+	timerTasks = new ArrayList<>();
     }
 
     public void addListener(MonitorThread.MonitorThreadListener l) {
 	listeners.add(l);
     }
 
-    public void addListener(DoneListener1<Integer> l) {
+    public void addListener(Event<Integer> l) {
 	listenersC.add(l);
-    }
-
-    public void addServerStartedListener(DoneListener0 l) {
-	listenersBegin.add(l);
-    }
-
-    public void addServerDoneListener(DoneListener0 l) {
-	listenersDone.add(l);
     }
 
     public void run() throws IOException {
@@ -133,9 +125,7 @@ public class Server implements DoneListener1<Integer>, MonitorThread.MonitorThre
 		bw = new BufferedWriter(new OutputStreamWriter(server.getOutputStream()));
 	    }
 	    isRunning = true;
-	    for (DoneListener0 d : listenersBegin) {
-		d.onDone();
-	    }
+            startedEvent.execute(null);
 	    sendStatus("*** 启动服务端中 ***");
 	} catch (IOException ex) {
 	    Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
@@ -156,7 +146,7 @@ public class Server implements DoneListener1<Integer>, MonitorThread.MonitorThre
 	}
     }
 
-    public void getPlayerNumber(DoneListener1<Pair<String, String[]>> d) {
+    public void getPlayerNumber(Consumer<Pair<String, String[]>> d) {
 	isGettingPlayerNumber = 1;
 	gettingPlayerNumber = d;
 	sendCommand("list");
@@ -210,15 +200,13 @@ public class Server implements DoneListener1<Integer>, MonitorThread.MonitorThre
 
     private void registerThreadC(Process p) {
 	threadC = new WaitForThread(p);
-	for (DoneListener1<Integer> l : listenersC) {
-	    threadC.addListener(l);
-	}
-	threadC.addListener(this);
+	for (Event<Integer> l : listenersC) threadC.event.register(l);
+	threadC.event.register(this);
 	threadC.start();
     }
 
     @Override
-    public void onDone(Integer t) {
+    public boolean call(Object sender, Integer t) {
 	if (t == 0) {
 	    sendStatus("*** 服务端已停止 ***");
 	    System.out.println("Server stopped successfully");
@@ -227,17 +215,9 @@ public class Server implements DoneListener1<Integer>, MonitorThread.MonitorThre
 	    System.err.println("Server crashed(exit code: " + t + ")");
 	}
 	isRunning = false;
-	for (int i = 0; i < schedules.size(); i++) {
-	    if (schedules.get(i).timeType == Schedule.TIME_TYPE_SERVER_STOPPED) {
-		ScheduleTranslator.translate(this, schedules.get(i)).run();
-	    }
-	}
-	if (timer != null) {
-	    timer.cancel();
-	}
-	if (pastTimer != null) {
-	    pastTimer.stop();
-	}
+        for (Schedule schedule : schedules) if (schedule.timeType == Schedule.TIME_TYPE_SERVER_STOPPED) ScheduleTranslator.translate(this, schedule).run();
+	if (timer != null) timer.cancel();
+	if (pastTimer != null) pastTimer.stop();
 	restoreMods();
 	if (isRestart) {
 	    try {
@@ -248,6 +228,7 @@ public class Server implements DoneListener1<Integer>, MonitorThread.MonitorThre
 	    }
 	    isRestart = false;
 	}
+        return true;
     }
 
     private static void disactiveMods(ArrayList<String> inactiveExtMods,
@@ -270,58 +251,49 @@ public class Server implements DoneListener1<Integer>, MonitorThread.MonitorThre
 	    System.out.println("没有文件: " + paramString);
 	    return;
 	}
-	for (int i = 0; i < files.length; i++) {
-	    File file = files[i];
-	    if (!file.isDirectory()) {
-		String name = file.getName();
-
-		if ((!paramArrayOfString.contains(name))
-			|| ((!name.toLowerCase().endsWith(".zip")) && (!name.toLowerCase().endsWith(".jar")))) {
-		    continue;
-		}
-
-		String newName = name + "X";
-		File newFile = new File(file.getParentFile(), newName);
-
-		if (newFile.exists()) {
-		    newFile.delete();
-		}
-		if (file.renameTo(newFile)) {
-		    System.out.println("已禁用: " + name + ", 新名称: " + newFile.getName());
-		} else {
-		    System.out.println("无法禁用: " + name);
-		}
-	    }
-	}
+        for (File file : files) if (!file.isDirectory()) {
+            String name = file.getName();
+            
+            if ((!paramArrayOfString.contains(name))
+                    || ((!name.toLowerCase().endsWith(".zip")) && (!name.toLowerCase().endsWith(".jar")))) {
+                continue;
+            }
+            
+            String newName = name + "X";
+            File newFile = new File(file.getParentFile(), newName);
+            
+            if (newFile.exists()) {
+                newFile.delete();
+            }
+            if (file.renameTo(newFile)) {
+                System.out.println("已禁用: " + name + ", 新名称: " + newFile.getName());
+            } else {
+                System.out.println("无法禁用: " + name);
+            }
+        }
     }
 
     private static void restoreModsByType(String paramString) {
 	System.out.println("还原被禁用的文件: " + paramString);
 	File[] files = new File(Utilities.getGameDir(), paramString).listFiles();
-	if (files == null) {
-	    return;
-	}
-	for (int i = 0; i < files.length; i++) {
-	    File file = files[i];
-	    if (file.isDirectory()) {
-		continue;
-	    }
-	    String name = file.getName();
-	    String lowName = name.toLowerCase();
-	    if ((!lowName.endsWith(".zipx")) && (!lowName.endsWith(".jarx"))) {
-		continue;
-	    }
-	    String newName = name.substring(0, name.length() - 1);
-
-	    File newFile = new File(file.getParentFile(), newName);
-	    if (newFile.exists()) {
-		file.delete();
-	    } else {
-		if (!file.renameTo(newFile)) {
-		    System.out.println("无法重命名: " + file.getName() + " 到: " + newFile.getName() + " 在: " + file.getParent());
-		}
-	    }
-	}
+	if (files == null) return;
+        for (File file : files) if (!file.isDirectory()) {
+            String name = file.getName();
+            String lowName = name.toLowerCase();
+            if ((!lowName.endsWith(".zipx")) && (!lowName.endsWith(".jarx"))) {
+                continue;
+            }
+            String newName = name.substring(0, name.length() - 1);
+            
+            File newFile = new File(file.getParentFile(), newName);
+            if (newFile.exists()) {
+                file.delete();
+            } else {
+                if (!file.renameTo(newFile)) {
+                    System.out.println("无法重命名: " + file.getName() + " 到: " + newFile.getName() + " 在: " + file.getParent());
+                }
+            }
+        }
     }
 
     static void restoreMods() {
@@ -360,18 +332,16 @@ public class Server implements DoneListener1<Integer>, MonitorThread.MonitorThre
 	    } else {
 		s = new String[0];
 	    }
-	    Pair<String, String[]> p = new Pair<String, String[]>(playerNumber, s);
+	    Pair<String, String[]> p = new Pair<>(playerNumber, s);
 	    isGettingPlayerNumber = 0;
-	    gettingPlayerNumber.onDone(p);
+	    gettingPlayerNumber.accept(p);
 	    return;
 	}
 	if (isDone == false) {
 	    Pattern p = Pattern.compile("\\[INFO\\] Done \\([0-9]*\\.[0-9]*s\\)! For help, type \"help\" or \"\\?\"");
 	    Matcher m = p.matcher(status);
 	    if (m.find()) {
-		for (DoneListener0 d : listenersDone) {
-		    d.onDone();
-		}
+		stoppedEvent.execute(null);
 		timer = new Timer();
 		timerTasks.clear();
 		for (int i = 0; i < schedules.size(); i++) {
@@ -379,9 +349,7 @@ public class Server implements DoneListener1<Integer>, MonitorThread.MonitorThre
 			ScheduleTranslator.translate(this, schedules.get(i)).run();
 			continue;
 		    }
-		    if (schedules.get(i).timeType != Schedule.TIME_TYPE_PER) {
-			continue;
-		    }
+		    if (schedules.get(i).timeType != Schedule.TIME_TYPE_PER) continue;
 		    long mill = (long) Math.floor(schedules.get(i).per * 60 * 1000);
 		    timerTasks.add(ScheduleTranslator.translate(this, schedules.get(i)));
 		    timer.schedule(timerTasks.get(i), mill, mill);
@@ -395,11 +363,7 @@ public class Server implements DoneListener1<Integer>, MonitorThread.MonitorThre
 	}
 	if (status.length() > 20) {
 	    if (status.substring(20).contains("[SEVERE] This crash report has been saved to: ")) {
-		for (int i = 0; i < schedules.size(); i++) {
-		    if (schedules.get(i).timeType == Schedule.TIME_TYPE_SERVER_CRASHED) {
-			ScheduleTranslator.translate(this, schedules.get(i)).run();
-		    }
-		}
+                for (Schedule schedule : schedules) if (schedule.timeType == Schedule.TIME_TYPE_SERVER_CRASHED) ScheduleTranslator.translate(this, schedule).run();
 	    }
 	}
     }
@@ -409,23 +373,15 @@ public class Server implements DoneListener1<Integer>, MonitorThread.MonitorThre
     @Override
     public void actionPerformed(ActionEvent e) {
 	c.setTime(new Date());
-	if (c.get(Calendar.SECOND) != 0) {
-	    return;
-	}
+	if (c.get(Calendar.SECOND) != 0) return;
 	int minute = c.get(Calendar.MINUTE);
-	for (int i = 0; i < schedules.size(); i++) {
-	    if (schedules.get(i).timeType != Schedule.TIME_TYPE_PAST_HOUR) {
-		continue;
-	    }
-	    if (schedules.get(i).per == minute) {
-		ScheduleTranslator.translate(this, schedules.get(i)).run();
-	    }
-	}
+        for (Schedule schedule : schedules) {
+            if (schedule.timeType != Schedule.TIME_TYPE_PAST_HOUR) continue;
+            if (schedule.per == minute) ScheduleTranslator.translate(this, schedule).run();
+        }
     }
 
     private void sendStatus(String status) {
-	for (MonitorThread.MonitorThreadListener l : listeners) {
-	    l.onStatus(status);
-	}
+	for (MonitorThread.MonitorThreadListener l : listeners) l.onStatus(status);
     }
 }

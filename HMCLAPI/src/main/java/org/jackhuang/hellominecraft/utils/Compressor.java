@@ -41,8 +41,9 @@ public class Compressor {
     /**
      * 功能：把 sourceDir 目录下的所有文件进行 zip 格式的压缩，保存为指定 zip 文件
      *
-     * @param sourceDir
-     * @param zipFile
+     * @param sourceDir 源文件夹
+     * @param zipFile 压缩生成的zip文件路径。
+     * @throws java.io.IOException 压缩失败或无法读取
      */
     public static void zip(File sourceDir, File zipFile) throws IOException {
         FileOutputStream os;
@@ -65,7 +66,7 @@ public class Compressor {
      *
      * @param source zip文件路径
      * @param basePath 待压缩文件根目录
-     * @param zos
+     * @param zos zip文件的os
      */
     private static void zipFile(File source, String basePath,
             ZipOutputStream zos) throws IOException {
@@ -115,6 +116,7 @@ public class Compressor {
      * @param zipFileName zip文件路径
      * @param extPlace 待压缩文件根目录
      * @param without 带前缀的不解压
+     * @throws java.io.IOException 解压失败或无法写入
      */
     public static void unzip(File zipFileName, File extPlace, String[] without) throws IOException {
         extPlace.mkdirs();
@@ -164,6 +166,7 @@ public class Compressor {
      *
      * @param destFile zip1
      * @param srcFile zip2
+     * @throws java.io.IOException 无法写入或读取
      */
     public static void merge(File destFile, File srcFile) throws IOException {
         try (ZipOutputStream os = new ZipOutputStream(new FileOutputStream(destFile))) {

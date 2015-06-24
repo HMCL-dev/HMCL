@@ -9,8 +9,8 @@ package org.jackhuang.hellominecraft.svrmgr.installer.bukkit;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.jackhuang.hellominecraft.DoneListener1;
 import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.functions.Consumer;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -22,18 +22,18 @@ import org.jsoup.select.Elements;
  */
 public class BukkitFormatThread extends Thread {
     
-    DoneListener1<List<BukkitVersion>> lis;
+    Consumer<List<BukkitVersion>> lis;
     List<BukkitVersion> formattedList;
     String url;
     
-    public BukkitFormatThread(String url, DoneListener1<List<BukkitVersion>> lis) {
+    public BukkitFormatThread(String url, Consumer<List<BukkitVersion>> lis) {
         this.lis = lis;
 	this.url = url;
     }
     
     public void format(String url) {
         
-        formattedList = new ArrayList<BukkitVersion>();
+        formattedList = new ArrayList<>();
         
         try {
             Document doc = Jsoup.connect(url).get();
@@ -74,7 +74,7 @@ public class BukkitFormatThread extends Thread {
         List<BukkitVersion> al = null;
         format(url);
         if(lis != null)
-            lis.onDone(formattedList);
+            lis.accept(formattedList);
     }
     
 }

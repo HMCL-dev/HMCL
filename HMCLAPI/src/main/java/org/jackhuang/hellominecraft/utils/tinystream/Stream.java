@@ -42,10 +42,14 @@ public class Stream<T> {
     protected Stream() {
     }
 
-    protected static <T> Stream<T> of(List<T> a) {
+    protected static <T> Stream<T> noneCopyOf(List<T> a) {
         Stream<T> b = new Stream<>();
         b.internal = a;
         return b;
+    }
+
+    protected static <T> Stream<T> of(Collection<T> a) {
+        return new Stream<>(a);
     }
 
     public Stream<T> forEach(Consumer<? super T> p) {
@@ -88,15 +92,25 @@ public class Stream<T> {
     }
 
     public boolean anyMatch(Predicate<? super T> p) {
-        return map(t -> p.apply(t)).reduce(false, (accumulator, _item) -> accumulator | _item);
+        return map(t -> p.apply(t)).<Boolean>reduce(false, (a, b) -> a | b);
     }
 
     public boolean allMatch(Predicate<? super T> p) {
-        return map(t -> p.apply(t)).reduce(true, (accumulator, _item) -> accumulator & _item);
+        return map(t -> p.apply(t)).<Boolean>reduce(true, (a, b) -> a & b);
     }
 
     public T findFirst() {
         return internal.isEmpty() ? null : internal.get(0);
+    }
+    
+    public Stream<T> skip(int c) {
+        internal = internal.subList(c+1, internal.size());
+        return this;
+    }
+    
+    public Stream<T> limit(int c) {
+        internal = internal.subList(0, c);
+        return this;
     }
 
 }

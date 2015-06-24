@@ -34,8 +34,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.utils.functions.DoneListener0;
-import org.jackhuang.hellominecraft.DoneListener1;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.tasks.TaskWindow;
@@ -48,7 +46,6 @@ import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.svrmgr.utils.ModType;
 import org.jackhuang.hellominecraft.svrmgr.utils.MonitorInfoBean;
 import org.jackhuang.hellominecraft.svrmgr.utils.MonitorServiceImpl;
-import org.jackhuang.hellominecraft.utils.Pair;
 import org.jackhuang.hellominecraft.version.MinecraftRemoteVersions;
 import org.jackhuang.hellominecraft.svrmgr.Main;
 import org.jackhuang.hellominecraft.svrmgr.cbplugins.BukkitPlugin;
@@ -78,13 +75,14 @@ import org.jackhuang.hellominecraft.svrmgr.utils.Utilities;
 import org.jackhuang.hellominecraft.utils.SwingUtils;
 import org.jackhuang.hellominecraft.version.MinecraftRemoteVersion;
 import org.jackhuang.hellominecraft.lookandfeel.components.ConstomButton;
+import org.jackhuang.hellominecraft.utils.Event;
 
 /**
  *
  * @author hyh
  */
 public final class MainWindow extends javax.swing.JFrame
-        implements MonitorThread.MonitorThreadListener, DoneListener1<Integer> {
+        implements MonitorThread.MonitorThreadListener, Event<Integer> {
 
     ImageIcon background = new ImageIcon(getClass().getResource("/background.jpg"));
     JLabel backgroundLabel;
@@ -144,11 +142,10 @@ public final class MainWindow extends javax.swing.JFrame
 
         setTitle(Main.makeTitle());
         String mainjar = SettingsManager.settings.mainjar;
-        if (!Utilities.isEmpty(mainjar)) {
+        if (!Utilities.isEmpty(mainjar))
             ServerProperties.init(new File(mainjar).getParent());
-        }
         txtMainJar.setText(mainjar);
-        commandSet = new ArrayList<String>();
+        commandSet = new ArrayList<>();
         btnStop.setEnabled(false);
         btnShutdown.setEnabled(false);
         btnCommand.setEnabled(false);
@@ -480,9 +477,8 @@ public final class MainWindow extends javax.swing.JFrame
             public void actionPerformed(ActionEvent e) {
                 InputDialog id = new InputDialog(MainWindow.this, true, new String[]{"玩家", "物品ID", "数量"});
                 id.setVisible(true);
-                if (id.result != null) {
+                if (id.result != null)
                     Server.getInstance().sendCommand("give " + id.result[0] + " " + id.result[1] + " " + id.result[2]);
-                }
             }
         });
         ppmBasically.add(itm);
@@ -2896,23 +2892,21 @@ public final class MainWindow extends javax.swing.JFrame
 
     void loadFromServerProperties() {
         ServerProperties sp = ServerProperties.getInstance();
-        if (sp == null) {
+        if (sp == null)
             return;
-        }
         txtServerPort.setValue(sp.getPropertyInt("server-port", 25565));
         txtServerName.setText(sp.getProperty("server-name"));
         cboGameMode.setSelectedIndex(sp.getPropertyInt("gamemode", 0));
         cboDifficulty.setSelectedIndex(sp.getPropertyInt("difficulty", 1));
         String wt = sp.getProperty("level-type");
-        if (wt.equals("LARGEBIOMES")) {
+        if (wt.equals("LARGEBIOMES"))
             cboWorldType.setSelectedIndex(2);
-        } else if (wt.equals("FLAT")) {
+        else if (wt.equals("FLAT"))
             cboWorldType.setSelectedIndex(1);
-        } else if (wt.equals("DEFAULT")) {
+        else if (wt.equals("DEFAULT"))
             cboWorldType.setSelectedIndex(0);
-        } else {
+        else
             cboWorldType.setSelectedIndex(0);
-        }
         txtMaxPlayer.setValue(sp.getPropertyInt("max-players", 20));
         chkAllowFlight.setSelected(sp.getPropertyBoolean("allow-flight", false));
         chkAllowNether.setSelected(sp.getPropertyBoolean("allow-nether", true));
@@ -2932,82 +2926,64 @@ public final class MainWindow extends javax.swing.JFrame
 
     void loadFromOPs() {
         File mainjar = new File(SettingsManager.settings.mainjar);
-        if (!mainjar.exists()) {
-            return;
-        }
+        if (!mainjar.exists()) return;
         File folder = mainjar.getParentFile();
         op = new Op();
         op.initByBoth(new File(folder, "ops.txt"), new File(folder, "ops.json"));
-        for (Op.Operator ss : op.op) {
-            lstOPModel.addElement(ss.name);
-        }
+        for (Op.Operator ss : op.op) lstOPModel.addElement(ss.name);
         lstOP.setModel(lstOPModel);
     }
 
     void loadFromWhiteList() {
         File mainjar = new File(SettingsManager.settings.mainjar);
-        if (!mainjar.exists()) {
-            return;
-        }
+        if (!mainjar.exists()) return;
         File folder = mainjar.getParentFile();
         whitelist = new WhiteList();
         whitelist.initByBoth(new File(folder, "white-list.txt"), new File(folder, "white-list.json"));
-        for (WhiteList.WhiteListPlayer ss : whitelist.op) {
-            lstWhiteListModel.addElement(ss.name);
-        }
+        for (WhiteList.WhiteListPlayer ss : whitelist.op) lstWhiteListModel.addElement(ss.name);
         lstWhiteList.setModel(lstWhiteListModel);
     }
 
     void loadFromBannedPlayers() {
         File mainjar = new File(SettingsManager.settings.mainjar);
-        if (!mainjar.exists()) {
-            return;
-        }
+        if (!mainjar.exists()) return;
         File folder = mainjar.getParentFile();
         banned = new BannedPlayers();
         banned.initByBoth(new File(folder, "banned-players.txt"), new File(folder, "banned-players.json"));
-        for (BannedPlayers.BannedPlayer ss : banned.op) {
+        for (BannedPlayers.BannedPlayer ss : banned.op)
             lstBannedModel.addElement(ss.name);
-        }
         lstBanned.setModel(lstBannedModel);
     }
 
     void loadLocalMods() {
         String path = Utilities.getPath("mods");
-        if (path == null) {
-            return;
-        }
+        if (path == null) return;
         ArrayList<String> sl = Utilities.findAllFile(new File(path));
         DefaultTableModel model = (DefaultTableModel) lstExternalMods.getModel();
-        while (model.getRowCount() > 0) {
+        while (model.getRowCount() > 0)
             model.removeRow(0);
-        }
-        for (String s : sl) {
+        for (String s : sl)
             model.addRow(new Object[]{!SettingsManager.settings.inactiveExtMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(Utilities.addSeparator(path) + s))});
-        }
 
         lstExternalMods.updateUI();
     }
 
     void loadLocalPlugins() {
         String path = Utilities.getPath("plugins");
-        if (path == null) {
+        if (path == null)
             return;
-        }
         ArrayList<String> sl = Utilities.findAllFile(new File(path));
         DefaultTableModel model = (DefaultTableModel) lstPlugins.getModel();
-        while (model.getRowCount() > 0) {
+        while (model.getRowCount() > 0)
             model.removeRow(0);
-        }
         for (String s : sl) {
             PluginInformation p = PluginManager.getPluginYML(new File(Utilities.getGameDir() + "plugins" + File.separator + s));
-            if (p == null) {
+            if (p == null)
                 model.addRow(new Object[]{!SettingsManager.settings.inactivePlugins.contains(s), s,
                     "", "", "", ""});
-            } else {
+            else
                 model.addRow(new Object[]{!SettingsManager.settings.inactivePlugins.contains(s), s,
                     p.name, p.version, p.author, p.description});
-            }
         }
 
         lstPlugins.updateUI();
@@ -3015,17 +2991,14 @@ public final class MainWindow extends javax.swing.JFrame
 
     void loadLocalCoreMods() {
         String path = Utilities.getPath("coremods");
-        if (path == null) {
+        if (path == null)
             return;
-        }
         ArrayList<String> sl = Utilities.findAllFile(new File(path));
         DefaultTableModel model = (DefaultTableModel) lstCoreMods.getModel();
-        while (model.getRowCount() > 0) {
+        while (model.getRowCount() > 0)
             model.removeRow(0);
-        }
-        for (String s : sl) {
+        for (String s : sl)
             model.addRow(new Object[]{!SettingsManager.settings.inactiveCoreMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(Utilities.addSeparator(path) + s))});
-        }
 
         lstCoreMods.updateUI();
     }
@@ -3033,14 +3006,12 @@ public final class MainWindow extends javax.swing.JFrame
     void loadWorlds() {
         ArrayList<String> s = BackupManager.findAllWorlds();
         DefaultTableModel model = (DefaultTableModel) lstWorlds.getModel();
-        if (SettingsManager.settings.inactiveWorlds == null) {
-            SettingsManager.settings.inactiveWorlds = new ArrayList<String>();
-        }
-        for (String world : s) {
+        if (SettingsManager.settings.inactiveWorlds == null)
+            SettingsManager.settings.inactiveWorlds = new ArrayList<>();
+        for (String world : s)
             model.addRow(new Object[]{
                 world, Utilities.getGameDir() + world, !SettingsManager.settings.inactiveWorlds.contains(world)
             });
-        }
         lstWorlds.updateUI();
     }
 
@@ -3057,13 +3028,11 @@ public final class MainWindow extends javax.swing.JFrame
     }
 
     void loadSchedules() {
-        if (SettingsManager.settings.schedules == null) {
-            SettingsManager.settings.schedules = new ArrayList<Schedule>();
-        }
+        if (SettingsManager.settings.schedules == null)
+            SettingsManager.settings.schedules = new ArrayList<>();
         DefaultTableModel model = (DefaultTableModel) lstSchedules.getModel();
-        for (Schedule s : SettingsManager.settings.schedules) {
+        for (Schedule s : SettingsManager.settings.schedules)
             model.addRow(ScheduleTranslator.getRow(s));
-        }
         lstSchedules.updateUI();
     }
 
@@ -3073,67 +3042,46 @@ public final class MainWindow extends javax.swing.JFrame
 
     void loadBukkits() {
         int idx = cboBukkitType.getSelectedIndex();
-        if (idx == -1) {
-            return;
-        }
-        String url = null;
+        if (idx == -1) return;
         if (idx == 1) {
             BukkitFormatThread thread = new BukkitFormatThread(
-                    "http://dl.bukkit.org/downloads/craftbukkit/list/beta/",
-                    new DoneListener1<List<BukkitVersion>>() {
-                        @Override
-                        public void onDone(List<BukkitVersion> value) {
-                            craftBukkitBeta = value;
-                            reloadBukkitList();
-                        }
+                    "http://dl.bukkit.org/downloads/craftbukkit/list/beta/", value -> {
+                        craftBukkitBeta = value;
+                        reloadBukkitList();
                     });
             thread.start();
         } else if (idx == 0) {
             BukkitFormatThread thread = new BukkitFormatThread(
-                    "http://dl.bukkit.org/downloads/craftbukkit/list/rb/",
-                    new DoneListener1<List<BukkitVersion>>() {
-                        @Override
-                        public void onDone(List<BukkitVersion> value) {
-                            craftBukkitRecommended = value;
-                            reloadBukkitList();
-                        }
+                    "http://dl.bukkit.org/downloads/craftbukkit/list/rb/", value -> {
+                        craftBukkitRecommended = value;
+                        reloadBukkitList();
                     });
             thread.start();
         } else if (idx == 2) {
             BukkitFormatThread thread = new BukkitFormatThread(
-                    "http://dl.bukkit.org/downloads/craftbukkit/list/dev/",
-                    new DoneListener1<List<BukkitVersion>>() {
-                        @Override
-                        public void onDone(List<BukkitVersion> value) {
-                            craftBukkitDev = value;
-                            reloadBukkitList();
-                        }
+                    "http://dl.bukkit.org/downloads/craftbukkit/list/dev/", value -> {
+                        craftBukkitDev = value;
+                        reloadBukkitList();
                     });
             thread.start();
         }
     }
 
     void loadMCPCs() {
-        ForgeFormatThread thread = new ForgeFormatThread(
-                new DoneListener1<Map<String, List<ForgeVersion>>>() {
-                    @Override
-                    public void onDone(Map<String, List<ForgeVersion>> value) {
-                        mcpcPackages = value;
-                        reloadMCPCList();
-                    }
-                });
+        ForgeFormatThread thread = new ForgeFormatThread(value -> {
+            mcpcPackages = value;
+            reloadMCPCList();
+        });
         thread.start();
     }
 
     public void reloadMCPCList() {
-        if (mcpcPackages == null) {
+        if (mcpcPackages == null)
             return;
-        }
         int cnt = cboCauldronMinecraft.getItemCount();
         cboCauldronMinecraft.removeAllItems();
-        for (String s : mcpcPackages.keySet()) {
+        for (String s : mcpcPackages.keySet())
             cboCauldronMinecraft.addItem(s);
-        }
 
         String mcver = (String) cboCauldronMinecraft.getSelectedItem();
         useMCPCVersions(mcver);
@@ -3141,9 +3089,8 @@ public final class MainWindow extends javax.swing.JFrame
 
     public void useMCPCVersions(String ver) {
         DefaultTableModel model = (DefaultTableModel) lstMCPC.getModel();
-        while (model.getRowCount() > 0) {
+        while (model.getRowCount() > 0)
             model.removeRow(0);
-        }
         for (ForgeVersion v : mcpcPackages.get(ver)) {
             Object[] row = new Object[]{
                 v.mcver, v.ver, v.releasetime
@@ -3155,26 +3102,22 @@ public final class MainWindow extends javax.swing.JFrame
 
     public void reloadBukkitList() {
         int idx = cboBukkitType.getSelectedIndex();
-        if (idx == -1) {
+        if (idx == -1)
             return;
-        }
-        if (idx == 1) {
+        if (idx == 1)
             useBukkitVersions(craftBukkitBeta);
-        } else if (idx == 0) {
+        else if (idx == 0)
             useBukkitVersions(craftBukkitRecommended);
-        } else if (idx == 2) {
+        else if (idx == 2)
             useBukkitVersions(craftBukkitDev);
-        }
     }
 
     public void useBukkitVersions(List<BukkitVersion> list) {
-        if (list == null) {
+        if (list == null)
             return;
-        }
         DefaultTableModel model = (DefaultTableModel) lstCraftbukkit.getModel();
-        while (model.getRowCount() > 0) {
+        while (model.getRowCount() > 0)
             model.removeRow(0);
-        }
         for (BukkitVersion v : list) {
             Object[] row = new Object[]{
                 v.buildNumber, v.version
@@ -3229,54 +3172,42 @@ public final class MainWindow extends javax.swing.JFrame
     void refreshInfos() {
         ArrayList<String> al = Utilities.findAllFile(new File(Utilities.getGameDir() + "infos-HMCSM"));
         DefaultTableModel model = (DefaultTableModel) lstInfos.getModel();
-        for (String s : al) {
+        for (String s : al)
             model.addRow(new Object[]{s, Utilities.trimExtension(s)});
-        }
         lstInfos.updateUI();
     }
 
     void refreshReports() {
         ArrayList<String> al = Utilities.findAllFile(new File(Utilities.getGameDir() + "crash-reports"));
-        for (String s : al) {
-            lstCrashReportsModel.addElement(s);
-        }
+        for (String s : al) lstCrashReportsModel.addElement(s);
         lstReports.setModel(lstCrashReportsModel);
     }
 
     void getIP() {
         IPGet get = new IPGet();
-        get.dl = new DoneListener1<String>() {
-
-            @Override
-            public void onDone(String value) {
-                lblIPAddress.setText("IP: " + value);
-            }
-        };
+        get.dl = a -> lblIPAddress.setText("IP: " + a);;
         get.start();
     }
 
     void loadBukkitPlugins() {
         final DefaultTableModel model = (DefaultTableModel) lstBukkitPlugins.getModel();
-        while (model.getRowCount() > 0) {
+        while (model.getRowCount() > 0)
             model.removeRow(0);
-        }
         lstBukkitPlugins.updateUI();
         Thread t = new Thread() {
             @Override
             public void run() {
                 try {
                     List<BukkitPlugin> l;
-                    if (cboCategory.getSelectedIndex() == 0) {
+                    if (cboCategory.getSelectedIndex() == 0)
                         l = PluginManager.getPlugins();
-                    } else {
+                    else
                         l = PluginManager.getPluginsByCategory(cboCategory.getSelectedItem().toString());
-                    }
                     plugins = l;
-                    for (BukkitPlugin p : l) {
+                    for (BukkitPlugin p : l)
                         model.addRow(new Object[]{
                             p.plugin_name, p.description, p.getLatestVersion(), p.getLatestBukkit()
                         });
-                    }
                     lstBukkitPlugins.updateUI();
                 } catch (Exception ex) {
                     HMCLog.warn("Failed to get plugins", ex);
@@ -3294,9 +3225,8 @@ public final class MainWindow extends javax.swing.JFrame
                     List<Category> l = PluginManager.getCategories();
                     cboCategory.removeAllItems();
                     cboCategory.addItem("所有");
-                    for (Category c : l) {
+                    for (Category c : l)
                         cboCategory.addItem(c.name);
-                    }
                 } catch (Exception ex) {
                     HMCLog.warn("Failed to load bukkit categories.");
                 }
@@ -3320,41 +3250,36 @@ public final class MainWindow extends javax.swing.JFrame
 
     void loadPlayers() {
         Server s = Server.getInstance();
-        if (s != null && s.isRunning) {
-            s.getPlayerNumber(new DoneListener1<Pair<String, String[]>>() {
-                @Override
-                public void onDone(Pair<String, String[]> t) {
-                    lblPlayers.setText("在线人数" + t.key);
-                    lstPlayersModel.clear();
-                    for (String s : t.value) {
-                        lstPlayersModel.addElement(s);
-                    }
-                    lstPlayers.setModel(lstPlayersModel);
-                }
+        if (s != null && s.isRunning)
+            s.getPlayerNumber(t -> {
+                lblPlayers.setText("在线人数" + t.key);
+                lstPlayersModel.clear();
+                for (String s1 : t.value) lstPlayersModel.addElement(s1);
+                lstPlayers.setModel(lstPlayersModel);
             });
-        } else {
+        else
             MessageBox.Show("服务器未开启！");
-        }
     }
 
-    class ServerBeginListener implements DoneListener0 {
+    class ServerBeginListener implements Event<Void> {
 
         @Override
-        public void onDone() {
-            commandSet = new ArrayList<String>();
+        public boolean call(Object sender, Void v) {
+            commandSet = new ArrayList<>();
             txtMain.setText("");
             btnLaunch.setEnabled(false);
             btnStop.setEnabled(true);
             btnShutdown.setEnabled(true);
             btnCommand.setEnabled(true);
+            return true;
         }
 
     }
 
-    class ServerDoneListener implements DoneListener0 {
+    class ServerDoneListener implements Event<Void> {
 
         @Override
-        public void onDone() {
+        public boolean call(Object sender, Void v) {
             getPlayerNumberTimer = new Timer();
             getPlayerNumberTimer.schedule(new TimerTask() {
 
@@ -3363,6 +3288,7 @@ public final class MainWindow extends javax.swing.JFrame
                     loadPlayers();
                 }
             }, 1000 * 60 * 10, 1000 * 60 * 10);
+            return true;
         }
 
     }
@@ -3372,40 +3298,35 @@ public final class MainWindow extends javax.swing.JFrame
         if (!eula.exists()) {
             int option = JOptionPane.showConfirmDialog(null, "您是否确认新的EULA(https://account.mojang.com/documents/minecraft_eula)？如果拒绝会导致无法启动Minecraft 1.7.10或更高版本的服务端。");
             try {
-                if (option == JOptionPane.YES_OPTION) {
+                if (option == JOptionPane.YES_OPTION)
                     FileUtils.write(eula, "eula=true");
-                } else if (option == JOptionPane.NO_OPTION) {
+                else if (option == JOptionPane.NO_OPTION)
                     FileUtils.write(eula, "eula=false");
-                }
             } catch (IOException e) {
                 MessageBox.Show("确认rula失败");
             }
         }
         File serverproperties = new File(new File(SettingsManager.settings.mainjar).getParentFile(), "server.properties");
 
-        if (!serverproperties.exists()) {
+        if (!serverproperties.exists())
             try {
                 FileUtils.write(serverproperties, ServerProperties.getDefault());
             } catch (IOException ex) {
                 HMCLog.warn("Failed to save server.properties", ex);
             }
-        }
 
         Server.init(SettingsManager.settings.mainjar, String.valueOf(SettingsManager.settings.maxMemory));
         Server.getInstance()
                 .addListener((MonitorThread.MonitorThreadListener) this);
         Server.getInstance()
-                .addListener((DoneListener1<Integer>) this);
+                .addListener((Event<Integer>) this);
         Server.getInstance()
                 .clearSchedule();
-        for (Schedule s : SettingsManager.settings.schedules) {
+        for (Schedule s : SettingsManager.settings.schedules)
             Server.getInstance().addSchedule(s);
-        }
 
-        Server.getInstance()
-                .addServerStartedListener(new ServerBeginListener());
-        Server.getInstance()
-                .addServerDoneListener(new ServerDoneListener());
+        Server.getInstance().startedEvent.register(new ServerBeginListener());
+        Server.getInstance().startedEvent.register(new ServerDoneListener());
         try {
             Server.getInstance().run();
         } catch (IOException ex) {
@@ -3434,18 +3355,15 @@ public final class MainWindow extends javax.swing.JFrame
         } else if (evt.getKeyCode() == KeyEvent.VK_DOWN) {
             newCommandIndex++;
             type = 1;
-        } else if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+        } else if (evt.getKeyCode() == KeyEvent.VK_ENTER)
             type = 2;
-        }
         if (type == 1) {
-            if (outOfCommandSet(newCommandIndex)) {
+            if (outOfCommandSet(newCommandIndex))
                 return;
-            }
             commandIndex = newCommandIndex;
             txtCommand.setText(commandSet.get(commandIndex));
-        } else if (type == 2) {
+        } else if (type == 2)
             sendCommand();
-        }
     }//GEN-LAST:event_txtCommandKeyPressed
 
     private void btnSendCommandActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSendCommandActionPerformed
@@ -3530,13 +3448,12 @@ public final class MainWindow extends javax.swing.JFrame
     private void cboWorldTypeItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboWorldTypeItemStateChanged
         int OAO = cboWorldType.getSelectedIndex();
         String type = "DEFAULT";
-        if (OAO == 0) {
+        if (OAO == 0)
             type = "DEFAULT";
-        } else if (OAO == 1) {
+        else if (OAO == 1)
             type = "FLAT";
-        } else if (OAO == 2) {
+        else if (OAO == 2)
             type = "LARGEBIMOES";
-        }
         ServerProperties.getInstance().setLevelType(type);
     }//GEN-LAST:event_cboWorldTypeItemStateChanged
 
@@ -3560,9 +3477,9 @@ public final class MainWindow extends javax.swing.JFrame
         lstOPModel.addElement(txtOPName.getText());
         lstOP.updateUI();
 
-        if (Server.isInstanceRunning()) {
+        if (Server.isInstanceRunning())
             Server.getInstance().sendCommand("op " + txtOPName.getText());
-        } else {
+        else {
             Op.Operator operator = new Op.Operator(txtOPName.getText());
             op.op.add(operator);
             File dir = new File(SettingsManager.settings.mainjar).getParentFile();
@@ -3580,9 +3497,9 @@ public final class MainWindow extends javax.swing.JFrame
         lstOPModel.removeElement(lstOP.getSelectedIndex());
         lstOP.updateUI();
 
-        if (Server.isInstanceRunning()) {
+        if (Server.isInstanceRunning())
             Server.getInstance().sendCommand("deop " + txtOPName.getText());
-        } else {
+        else {
             Op.Operator operator = new Op.Operator(s);
             op.op.remove(operator);
             File dir = new File(SettingsManager.settings.mainjar).getParentFile();
@@ -3599,9 +3516,9 @@ public final class MainWindow extends javax.swing.JFrame
         lstWhiteListModel.addElement(txtWhiteName.getText());
         lstWhiteList.updateUI();
 
-        if (Server.isInstanceRunning()) {
+        if (Server.isInstanceRunning())
             Server.getInstance().sendCommand("whitelist add " + txtWhiteName.getText());
-        } else {
+        else {
             WhiteList.WhiteListPlayer player = new WhiteList.WhiteListPlayer(txtWhiteName.getText());
             whitelist.op.add(player);
             File dir = new File(SettingsManager.settings.mainjar).getParentFile();
@@ -3619,9 +3536,9 @@ public final class MainWindow extends javax.swing.JFrame
         lstWhiteListModel.removeElement(lstWhiteList.getSelectedIndex());
         lstWhiteList.updateUI();
 
-        if (Server.isInstanceRunning()) {
+        if (Server.isInstanceRunning())
             Server.getInstance().sendCommand("whitelist remove " + txtWhiteName.getText());
-        } else {
+        else {
             WhiteList.WhiteListPlayer player = new WhiteList.WhiteListPlayer(name);
             whitelist.op.remove(player);
             File dir = new File(SettingsManager.settings.mainjar).getParentFile();
@@ -3773,22 +3690,20 @@ public final class MainWindow extends javax.swing.JFrame
         Vector strings = ((DefaultTableModel) lstExternalMods.getModel()).getDataVector();
         for (Object s : strings) {
             Vector v = (Vector) s;
-            if (!(Boolean) v.elementAt(0)) {
+            if (!(Boolean) v.elementAt(0))
                 arrayList.add((String) v.elementAt(1));
-            }
         }
         SettingsManager.settings.inactiveExtMods = arrayList;
         SettingsManager.save();
     }//GEN-LAST:event_btnSaveExtModActionPerformed
 
     private void btnSavePluginsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSavePluginsActionPerformed
-        ArrayList<String> arrayList = new ArrayList<String>();
+        ArrayList<String> arrayList = new ArrayList<>();
         Vector strings = ((DefaultTableModel) lstCoreMods.getModel()).getDataVector();
         for (Object s : strings) {
             Vector v = (Vector) s;
-            if (!(Boolean) v.elementAt(0)) {
+            if (!(Boolean) v.elementAt(0))
                 arrayList.add((String) v.elementAt(1));
-            }
         }
         SettingsManager.settings.inactiveCoreMods = arrayList;
         SettingsManager.save();
@@ -3798,9 +3713,9 @@ public final class MainWindow extends javax.swing.JFrame
         lstBannedModel.addElement(txtBanName.getText());
         lstBanned.updateUI();
 
-        if (Server.isInstanceRunning()) {
+        if (Server.isInstanceRunning())
             Server.getInstance().sendCommand("ban " + txtBanName.getText());
-        } else {
+        else {
             BannedPlayers.BannedPlayer player = new BannedPlayers.BannedPlayer(txtBanName.getText());
             banned.op.add(player);
             File dir = new File(SettingsManager.settings.mainjar).getParentFile();
@@ -3818,9 +3733,9 @@ public final class MainWindow extends javax.swing.JFrame
         lstBannedModel.removeElement(lstBanned.getSelectedIndex());
         lstBanned.updateUI();
 
-        if (Server.isInstanceRunning()) {
+        if (Server.isInstanceRunning())
             Server.getInstance().sendCommand("pardon " + txtBanName.getText());
-        } else {
+        else {
             BannedPlayers.BannedPlayer player = new BannedPlayers.BannedPlayer(s);
             banned.op.remove(player);
             File dir = new File(SettingsManager.settings.mainjar).getParentFile();
@@ -3905,12 +3820,10 @@ public final class MainWindow extends javax.swing.JFrame
     private void btnSaveWorldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveWorldActionPerformed
 
         DefaultTableModel model = (DefaultTableModel) lstWorlds.getModel();
-        SettingsManager.settings.inactiveWorlds = new ArrayList<String>();
-        for (int i = 0; i < model.getRowCount(); i++) {
-            if ((Boolean) model.getValueAt(i, 2) == false) {
+        SettingsManager.settings.inactiveWorlds = new ArrayList<>();
+        for (int i = 0; i < model.getRowCount(); i++)
+            if ((Boolean) model.getValueAt(i, 2) == false)
                 SettingsManager.settings.inactiveWorlds.add((String) model.getValueAt(i, 0));
-            }
-        }
         SettingsManager.save();
     }//GEN-LAST:event_btnSaveWorldActionPerformed
 
@@ -3931,9 +3844,8 @@ public final class MainWindow extends javax.swing.JFrame
 
     private void btnDeleteBackupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteBackupActionPerformed
         int index = lstBackups.getSelectedRow();
-        if (index == -1) {
+        if (index == -1)
             return;
-        }
         DefaultTableModel model = (DefaultTableModel) lstBackups.getModel();
         Utilities.deleteAll(new File(BackupManager.backupDir()
                 + model.getValueAt(index, 0) + "+"
@@ -3944,9 +3856,8 @@ public final class MainWindow extends javax.swing.JFrame
 
     private void btnRestoreBackupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRestoreBackupActionPerformed
         int index = lstBackups.getSelectedRow();
-        if (index == -1) {
+        if (index == -1)
             return;
-        }
         DefaultTableModel model = (DefaultTableModel) lstBackups.getModel();
         BackupManager.restoreBackup(BackupManager.backupDir()
                 + model.getValueAt(index, 0) + "+"
@@ -3977,9 +3888,8 @@ public final class MainWindow extends javax.swing.JFrame
         try {
             DefaultTableModel model = (DefaultTableModel) lstInfos.getModel();
             int index = lstInfos.getSelectedRow();
-            if (index == -1) {
+            if (index == -1)
                 return;
-            }
             String path = Utilities.getGameDir() + "infos-HMCSM" + File.separator + model.getValueAt(index, 0);
             String content = FileUtils.readFileToString(new File(path));
             txtInfo.setText(content);
@@ -3990,14 +3900,13 @@ public final class MainWindow extends javax.swing.JFrame
 
     private void btnAutoSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAutoSearchActionPerformed
         ArrayList<String> al = Utilities.findAllFile(IOUtils.currentDir());
-        for (String s : al) {
+        for (String s : al)
             if (ServerChecker.isServerJar(new File(s))) {
                 String path = IOUtils.tryGetCanonicalFilePath(new File(IOUtils.currentDir(), s));
                 txtMainJar.setText(path);
                 SettingsManager.settings.mainjar = path;
                 SettingsManager.save();
             }
-        }
     }//GEN-LAST:event_btnAutoSearchActionPerformed
 
     private void cboCategoryItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboCategoryItemStateChanged
@@ -4007,9 +3916,8 @@ public final class MainWindow extends javax.swing.JFrame
     private void btnShowPluginInfoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnShowPluginInfoActionPerformed
         try {
             int index = lstBukkitPlugins.getSelectedRow();
-            if (index == -1) {
+            if (index == -1)
                 return;
-            }
             PluginInfo pi = PluginManager.getPluginInfo(plugins.get(index).slug);
             PluginInfoDialog w = new PluginInfoDialog(this, true, pi);
             w.setVisible(true);
@@ -4025,9 +3933,8 @@ public final class MainWindow extends javax.swing.JFrame
     private void btnShowReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnShowReportActionPerformed
         try {
             int index = lstReports.getSelectedIndex();
-            if (index == -1) {
+            if (index == -1)
                 return;
-            }
             String path = Utilities.getGameDir() + "crash-reports" + File.separator + lstCrashReportsModel.get(index);
             String content = FileUtils.readFileToString(new File(path));
             txtCrashReport.setText(content);
@@ -4083,15 +3990,13 @@ public final class MainWindow extends javax.swing.JFrame
 
     private void btnDownloadCraftbukkitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadCraftbukkitActionPerformed
         int idx = lstCraftbukkit.getSelectedRow();
-        if (idx == -1) {
+        if (idx == -1)
             return;
-        }
         String ext = "";
         List<BukkitVersion> cb = null;
         int idx2 = cboBukkitType.getSelectedIndex();
-        if (idx2 == -1) {
+        if (idx2 == -1)
             return;
-        }
         switch (idx2) {
             case 0:
                 ext = "rb";
@@ -4101,6 +4006,8 @@ public final class MainWindow extends javax.swing.JFrame
                 ext = "beta";
                 cb = craftBukkitBeta;
                 break;
+            default:
+                return;
         }
         BukkitVersion v = cb.get(idx);
         File file = new File(IOUtils.currentDir(), "craftbukkit-" + ext + "-" + v.version + ".jar");
@@ -4110,18 +4017,16 @@ public final class MainWindow extends javax.swing.JFrame
 
     private void btnDownloadMCPCActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadMCPCActionPerformed
         int idx = lstMCPC.getSelectedRow();
-        if (idx == -1) {
+        if (idx == -1)
             return;
-        }
         ForgeVersion v = mcpcPackages.get(cboCauldronMinecraft.getSelectedItem().toString()).get(idx);
         String url;
         File filepath = new File(IOUtils.currentDir(), "forge-installer.jar");
         url = v.installer[1];
-        if (!TaskWindow.getInstance().addTask(new FileDownloadTask(url, filepath).setTag("cauldron-" + v.ver)).start()) {
+        if (!TaskWindow.getInstance().addTask(new FileDownloadTask(url, filepath).setTag("cauldron-" + v.ver)).start())
             MessageBox.Show(C.I18N.getString("install.failed_download_forge"));
-        } else {
+        else
             installMCPC(filepath);
-        }
     }//GEN-LAST:event_btnDownloadMCPCActionPerformed
 
     private void installMCPC(final File filepath) {
@@ -4144,18 +4049,16 @@ public final class MainWindow extends javax.swing.JFrame
         Vector strings = ((DefaultTableModel) lstPlugins.getModel()).getDataVector();
         for (Object s : strings) {
             Vector v = (Vector) s;
-            if (!(Boolean) v.elementAt(0)) {
+            if (!(Boolean) v.elementAt(0))
                 arrayList.add((String) v.elementAt(1));
-            }
         }
         SettingsManager.settings.inactivePlugins = arrayList;
         SettingsManager.save();
     }//GEN-LAST:event_btnSaveCoreModActionPerformed
 
     private void cboCauldronMinecraftItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboCauldronMinecraftItemStateChanged
-        if (cboCauldronMinecraft.getItemCount() > 0 && mcpcPackages != null && mcpcPackages.containsKey(cboCauldronMinecraft.getSelectedItem().toString())) {
+        if (cboCauldronMinecraft.getItemCount() > 0 && mcpcPackages != null && mcpcPackages.containsKey(cboCauldronMinecraft.getSelectedItem().toString()))
             useMCPCVersions(cboCauldronMinecraft.getSelectedItem().toString());
-        }
     }//GEN-LAST:event_cboCauldronMinecraftItemStateChanged
 
     private void btnInstallMCPCActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInstallMCPCActionPerformed
@@ -4177,9 +4080,8 @@ public final class MainWindow extends javax.swing.JFrame
     }//GEN-LAST:event_jButton11ActionPerformed
 
     private void btnCommandMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnCommandMouseClicked
-        if (Server.getInstance() == null || !Server.getInstance().isRunning || !btnCommand.isEnabled()) {
+        if (Server.getInstance() == null || !Server.getInstance().isRunning || !btnCommand.isEnabled())
             return;
-        }
         ppmBasically.show(evt.getComponent(), evt.getPoint().x, evt.getPoint().y);
     }//GEN-LAST:event_btnCommandMouseClicked
 
@@ -4192,9 +4094,8 @@ public final class MainWindow extends javax.swing.JFrame
     }//GEN-LAST:event_formWindowClosed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-        if (Server.getInstance() != null && Server.getInstance().isRunning) {
+        if (Server.getInstance() != null && Server.getInstance().isRunning)
             Server.getInstance().stop();
-        }
     }//GEN-LAST:event_formWindowClosing
 
     private void txtMaxMemoryFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtMaxMemoryFocusLost
@@ -4212,7 +4113,7 @@ public final class MainWindow extends javax.swing.JFrame
     }
 
     @Override
-    public void onDone(Integer t) {
+    public boolean call(Object sender, Integer t) {
         btnLaunch.setEnabled(true);
         btnStop.setEnabled(false);
         btnShutdown.setEnabled(false);
@@ -4229,30 +4130,28 @@ public final class MainWindow extends javax.swing.JFrame
             getPlayerNumberTimer.cancel();
             getPlayerNumberTimer = null;
         }
+        return true;
     }
 
     private void sendCommand() {
         String command = txtCommand.getText();
         boolean append = false;
-        if (outOfCommandSet()) {
+        if (outOfCommandSet())
             append = true;
-        } else if (!command.equals(commandSet.get(commandIndex))) {
+        else if (!command.equals(commandSet.get(commandIndex)))
             append = true;
-        }
-        if (Server.getInstance() != null) {
+        if (Server.getInstance() != null)
             Server.getInstance().sendCommand(command);
-        } else {
+        else
             System.err.println("Server is null.");
-        }
         System.out.println("Send command: " + command);
         onStatus(">" + command);
         txtCommand.setText("");
         if (append) {
             commandSet.add(command);
             commandIndex = commandSet.size();
-        } else {
+        } else
             commandIndex++;
-        }
     }
 
     MonitorThread mainThread;
