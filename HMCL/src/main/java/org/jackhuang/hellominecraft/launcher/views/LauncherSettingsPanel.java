@@ -38,14 +38,14 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
     public LauncherSettingsPanel() {
         initComponents();
         
-        txtBackgroundPath.setText(Settings.s().getBgpath());
-        txtProxyHost.setText(Settings.s().getProxyHost());
-        txtProxyPort.setText(Settings.s().getProxyPort());
-        txtProxyUsername.setText(Settings.s().getProxyUserName());
-        txtProxyPassword.setText(Settings.s().getProxyPassword());
-        cboDownloadSource.setSelectedIndex(Settings.s().getDownloadType());
-        cboTheme.setSelectedIndex(Settings.s().getTheme());
-        chkEnableShadow.setSelected(Settings.s().isEnableShadow());
+        txtBackgroundPath.setText(Settings.getInstance().getBgpath());
+        txtProxyHost.setText(Settings.getInstance().getProxyHost());
+        txtProxyPort.setText(Settings.getInstance().getProxyPort());
+        txtProxyUsername.setText(Settings.getInstance().getProxyUserName());
+        txtProxyPassword.setText(Settings.getInstance().getProxyPassword());
+        cboDownloadSource.setSelectedIndex(Settings.getInstance().getDownloadType());
+        cboTheme.setSelectedIndex(Settings.getInstance().getTheme());
+        chkEnableShadow.setSelected(Settings.getInstance().isEnableShadow());
         
         setBackground(Color.white);
         setOpaque(true);
@@ -250,7 +250,7 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cboDownloadSourceItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboDownloadSourceItemStateChanged
-        Settings.s().setDownloadType(cboDownloadSource.getSelectedIndex());
+        Settings.getInstance().setDownloadType(cboDownloadSource.getSelectedIndex());
     }//GEN-LAST:event_cboDownloadSourceItemStateChanged
 
     private void btnSelBackgroundPathActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSelBackgroundPathActionPerformed
@@ -266,7 +266,7 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
             String path = fc.getSelectedFile().getCanonicalPath();
             path = IOUtils.removeLastSeparator(path);
             txtBackgroundPath.setText(path);
-            Settings.s().setBgpath(path);
+            Settings.getInstance().setBgpath(path);
             MainFrame.instance.loadBackground();
         } catch (IOException e) {
             HMCLog.warn("Failed to set background path.", e);
@@ -275,7 +275,7 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_btnSelBackgroundPathActionPerformed
 
     private void txtBackgroundPathFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtBackgroundPathFocusLost
-        Settings.s().setBgpath(txtBackgroundPath.getText());
+        Settings.getInstance().setBgpath(txtBackgroundPath.getText());
         MainFrame.instance.loadBackground();
     }//GEN-LAST:event_txtBackgroundPathFocusLost
 
@@ -284,29 +284,29 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_btnCheckUpdateActionPerformed
 
     private void chkEnableShadowFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_chkEnableShadowFocusLost
-        Settings.s().setEnableShadow(chkEnableShadow.isSelected());
+        Settings.getInstance().setEnableShadow(chkEnableShadow.isSelected());
     }//GEN-LAST:event_chkEnableShadowFocusLost
 
     private void cboThemeItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboThemeItemStateChanged
-        Settings.s().setTheme(cboTheme.getSelectedIndex());
+        Settings.getInstance().setTheme(cboTheme.getSelectedIndex());
         if(MainFrame.instance != null)
             MainFrame.instance.reloadColor();
     }//GEN-LAST:event_cboThemeItemStateChanged
 
     private void txtProxyHostFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtProxyHostFocusLost
-        Settings.s().setProxyHost(txtProxyHost.getText());
+        Settings.getInstance().setProxyHost(txtProxyHost.getText());
     }//GEN-LAST:event_txtProxyHostFocusLost
 
     private void txtProxyPortFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtProxyPortFocusLost
-        Settings.s().setProxyPort(txtProxyPort.getText());
+        Settings.getInstance().setProxyPort(txtProxyPort.getText());
     }//GEN-LAST:event_txtProxyPortFocusLost
 
     private void txtProxyUsernameFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtProxyUsernameFocusLost
-        Settings.s().setProxyUserName(txtProxyUsername.getText());
+        Settings.getInstance().setProxyUserName(txtProxyUsername.getText());
     }//GEN-LAST:event_txtProxyUsernameFocusLost
 
     private void txtProxyPasswordFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtProxyPasswordFocusLost
-        Settings.s().setProxyPassword(txtProxyPassword.getText());
+        Settings.getInstance().setProxyPassword(txtProxyPassword.getText());
     }//GEN-LAST:event_txtProxyPasswordFocusLost
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

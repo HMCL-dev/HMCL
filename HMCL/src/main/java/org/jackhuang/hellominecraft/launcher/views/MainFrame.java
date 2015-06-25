@@ -70,7 +70,7 @@ public final class MainFrame extends DraggableFrame {
 
     MainFrame() {
         defaultTitle = Main.makeTitle();
-        enableShadow = Settings.s().isEnableShadow();
+        enableShadow = Settings.getInstance().isEnableShadow();
         if (enableShadow)
             setSize(834, 542);
         else
@@ -89,7 +89,7 @@ public final class MainFrame extends DraggableFrame {
                 getRootPane().setBorder(border = new DropShadowBorder(borderColor, 4));
             } catch (Throwable ex) {
                 HMCLog.err("Failed to set window transparent.", ex);
-                Settings.s().setEnableShadow(false);
+                Settings.getInstance().setEnableShadow(false);
                 setSize(802, 511);
             }
 
@@ -97,8 +97,8 @@ public final class MainFrame extends DraggableFrame {
     }
 
     private void initComponents() {
-        borderColor = BasicColors.bgcolors[Settings.s().getTheme()];
-        borderColorDarker = BasicColors.bgcolors_darker[Settings.s().getTheme()];
+        borderColor = BasicColors.bgcolors[Settings.getInstance().getTheme()];
+        borderColorDarker = BasicColors.bgcolors_darker[Settings.getInstance().getTheme()];
 
         realPanel = new JPanel();
         realPanel.setLayout(null);
@@ -265,7 +265,7 @@ public final class MainFrame extends DraggableFrame {
     ImageIcon background;
 
     public void loadBackground() {
-        background = Utils.searchBackgroundImage(Main.getIcon("background.jpg"), Settings.s().getBgpath(), 800, 480);
+        background = Utils.searchBackgroundImage(Main.getIcon("background.jpg"), Settings.getInstance().getBgpath(), 800, 480);
         if (background != null) {
             if (backgroundLabel == null) {
                 backgroundLabel = new JLabel(background);
@@ -316,8 +316,8 @@ public final class MainFrame extends DraggableFrame {
     Color borderColorDarker = BasicColors.COLOR_BLUE_DARKER;
 
     public void reloadColor() {
-        borderColor = BasicColors.bgcolors[Settings.s().getTheme()];
-        borderColorDarker = BasicColors.bgcolors_darker[Settings.s().getTheme()];
+        borderColor = BasicColors.bgcolors[Settings.getInstance().getTheme()];
+        borderColorDarker = BasicColors.bgcolors_darker[Settings.getInstance().getTheme()];
         if (border != null)
             border.setColor(borderColor);
         header.setBackground(borderColor);

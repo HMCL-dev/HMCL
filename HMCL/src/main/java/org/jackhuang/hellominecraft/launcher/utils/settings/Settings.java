@@ -44,7 +44,7 @@ public final class Settings {
     private static final Config settings;
     public static final UpdateChecker UPDATE_CHECKER;
 
-    public static Config s() {
+    public static Config getInstance() {
         return settings;
     }
 

@@ -193,14 +193,14 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public boolean refreshJson(String id) {
-        return MCUtils.downloadMinecraftVersionJson(baseFolder, id, Settings.s().getDownloadSource());
+        return MCUtils.downloadMinecraftVersionJson(baseFolder, id, Settings.getInstance().getDownloadSource());
     }
 
     @Override
     public boolean refreshAssetsIndex(String id) {
         MinecraftVersion mv = getVersionById(id);
         if (mv == null) return false;
-        return MCUtils.downloadMinecraftAssetsIndex(new File(baseFolder, "assets"), mv.assets, Settings.s().getDownloadSource());
+        return MCUtils.downloadMinecraftAssetsIndex(new File(baseFolder, "assets"), mv.assets, Settings.getInstance().getDownloadSource());
     }
 
     @Override
@@ -226,7 +226,7 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public List<GameLauncher.DownloadLibraryJob> getDownloadLibraries(DownloadType downloadType) {
         ArrayList<DownloadLibraryJob> downloadLibraries = new ArrayList<>();
-        MinecraftVersion v = profile.getSelectedMinecraftVersion().resolve(this, Settings.s().getDownloadSource());
+        MinecraftVersion v = profile.getSelectedMinecraftVersion().resolve(this, Settings.getInstance().getDownloadSource());
         for (IMinecraftLibrary l : v.libraries) {
             l.init();
             if (l.allow()) {
@@ -259,7 +259,7 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public GameLauncher.DecompressLibraryJob getDecompressLibraries() {
-        MinecraftVersion v = profile.getSelectedMinecraftVersion().resolve(this, Settings.s().getDownloadSource());
+        MinecraftVersion v = profile.getSelectedMinecraftVersion().resolve(this, Settings.getInstance().getDownloadSource());
         ArrayList<File> unzippings = new ArrayList<>();
         ArrayList<String[]> extractRules = new ArrayList<>();
         for (IMinecraftLibrary l : v.libraries) {

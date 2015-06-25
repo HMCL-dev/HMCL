@@ -1020,12 +1020,12 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_btnRetryLiteLoaderActionPerformed
 
     private void btnDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadActionPerformed
-        downloadMinecraft(Settings.s().getDownloadSource());
+        downloadMinecraft(Settings.getInstance().getDownloadSource());
         refreshVersions();
     }//GEN-LAST:event_btnDownloadActionPerformed
 
     private void btnRefreshGameDownloadsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshGameDownloadsActionPerformed
-        refreshDownloads(Settings.s().getDownloadSource());
+        refreshDownloads(Settings.getInstance().getDownloadSource());
     }//GEN-LAST:event_btnRefreshGameDownloadsActionPerformed
 
     private void btnExploreMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnExploreMouseClicked
@@ -1158,7 +1158,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         for (Profile s : Settings.getProfiles()) {
             if (firstProfile == null) firstProfile = s;
             cboProfiles.addItem(s.getName());
-            if (Settings.s().getLast() != null && Settings.s().getLast().equals(s.getName())) {
+            if (Settings.getInstance().getLast() != null && Settings.getInstance().getLast().equals(s.getName())) {
                 index = i;
                 selectedProfile = s;
             }
@@ -1250,7 +1250,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         if (mcVersion == null || profile == null) return;
         type.getList((value) -> {
             if (value != null)
-                TaskWindow.getInstance().addTask(type.getDownloadTask(Settings.s().getDownloadSource().getProvider())).start();
+                TaskWindow.getInstance().addTask(type.getDownloadTask(Settings.getInstance().getDownloadSource().getProvider())).start();
         });
     }
 
@@ -1297,7 +1297,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     void downloadMinecraft(DownloadType index) {
         if (profile == null) return;
         if (lstDownloads.getSelectedRow() < 0)
-            refreshDownloads(Settings.s().getDownloadSource());
+            refreshDownloads(Settings.getInstance().getDownloadSource());
         if (lstDownloads.getSelectedRow() < 0) {
             MessageBox.Show(C.i18n("gamedownload.not_refreshed"));
             return;
@@ -1328,7 +1328,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         }
 
         void refreshVersions() {
-            list = Settings.s().getDownloadSource().getProvider().getInstallerByType(id);
+            list = Settings.getInstance().getDownloadSource().getProvider().getInstallerByType(id);
             if (TaskWindow.getInstance().addTask(new TaskRunnableArg1<>(C.i18n("install." + id + ".get_list"), list)
                     .registerPreviousResult(new DefaultPreviousResult<>(new String[]{getMinecraftVersionFormatted()})))
                     .start())

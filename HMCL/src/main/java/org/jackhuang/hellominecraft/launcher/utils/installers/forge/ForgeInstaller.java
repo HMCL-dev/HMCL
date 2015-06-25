@@ -66,7 +66,7 @@ public class ForgeInstaller extends Task {
             File from = new File(gameDir, "versions" + File.separator + profile.install.minecraft);
             if(!from.exists()) {
                 if(MessageBox.Show(C.i18n("install.no_version_if_intall")) == MessageBox.YES_OPTION) {
-                    if(!mp.install(profile.install.minecraft, Settings.s().getDownloadSource())) {
+                    if(!mp.install(profile.install.minecraft, Settings.getInstance().getDownloadSource())) {
                         setFailReason(new RuntimeException(C.i18n("install.no_version")));
                     }
                 } else {

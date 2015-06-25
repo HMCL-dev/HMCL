@@ -293,7 +293,7 @@ public class MainPagePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_txtPlayerNameFocusGained
 
     private void txtPlayerNameFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtPlayerNameFocusLost
-        Settings.s().setUsername(txtPlayerName.getText());
+        Settings.getInstance().setUsername(txtPlayerName.getText());
     }//GEN-LAST:event_txtPlayerNameFocusLost
 
     private void cboLoginModeItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboLoginModeItemStateChanged
@@ -313,15 +313,15 @@ public class MainPagePanel extends javax.swing.JPanel {
         CardLayout cl = (CardLayout) pnlPassword.getLayout();
         if (l.isLoggedIn()) cl.last(pnlPassword);
         else cl.first(pnlPassword);
-        String username = Settings.s().getUsername();
+        String username = Settings.getInstance().getUsername();
         if (StrUtils.isNotBlank(username)) txtPlayerName.setText(username);
 
-        Settings.s().setLoginType(index);
+        Settings.getInstance().setLoginType(index);
     }//GEN-LAST:event_cboLoginModeItemStateChanged
 
     private void cboProfilesItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboProfilesItemStateChanged
         if (!isLoading && cboProfiles.getSelectedIndex() != -1 && !StrUtils.isBlank((String) cboProfiles.getSelectedItem())) {
-            Settings.s().setLast((String) cboProfiles.getSelectedItem());
+            Settings.getInstance().setLast((String) cboProfiles.getSelectedItem());
             loadMinecraftVersions();
         }
     }//GEN-LAST:event_cboProfilesItemStateChanged
@@ -401,12 +401,12 @@ public class MainPagePanel extends javax.swing.JPanel {
         }
         final int index = cboLoginMode.getSelectedIndex();
         final IAuthenticator l = IAuthenticator.logins.get(index);
-        final LoginInfo li = new LoginInfo(Settings.s().getUsername(), l.isLoggedIn() || l.isHidePasswordBox() ? null : new String(txtPassword.getPassword()));
+        final LoginInfo li = new LoginInfo(Settings.getInstance().getUsername(), l.isLoggedIn() || l.isHidePasswordBox() ? null : new String(txtPassword.getPassword()));
         Thread t = new Thread() {
             @Override
             public void run() {
                 Thread.currentThread().setName("Game Launcher");
-                DefaultGameLauncher gl = new DefaultGameLauncher(getCurrentProfile(), li, l, Settings.s().getDownloadSource());
+                DefaultGameLauncher gl = new DefaultGameLauncher(getCurrentProfile(), li, l, Settings.getInstance().getDownloadSource());
                 gl.failEvent.register((sender, s) -> {
                     if (s != null) MessageBox.Show(s);
                     MainFrame.instance.closeMessage();
@@ -431,9 +431,9 @@ public class MainPagePanel extends javax.swing.JPanel {
             } catch (Exception ex) {
                 HMCLog.warn("Failed to get login name", ex);
             }
-        if (Settings.s().getLoginType() < list.size()) {
+        if (Settings.getInstance().getLoginType() < list.size()) {
             preaparingAuth = false;
-            cboLoginMode.setSelectedIndex(Settings.s().getLoginType());
+            cboLoginMode.setSelectedIndex(Settings.getInstance().getLoginType());
 
             cboLoginModeItemStateChanged(null);
         }
@@ -526,7 +526,7 @@ public class MainPagePanel extends javax.swing.JPanel {
     }
 
     public void onSelected() {
-        refreshMinecrafts(Settings.s().getLast());
+        refreshMinecrafts(Settings.getInstance().getLast());
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

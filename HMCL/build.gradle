@@ -1,3 +1,8 @@
+
+import java.util.jar.JarOutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+
 /*
  * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
  * 
@@ -86,6 +91,28 @@ task proguard(type: proguard.gradle.ProGuardTask, dependsOn: jar) {
     configuration 'proguard.pro'
 }
 
+task makeExecutable(dependsOn: jar) {
+    ext {
+        def re = jar.classifier
+        injar = jar.archivePath
+        jar.classifier = ''
+        outjar = jar.archivePath
+        jar.classifier = re
+    }
+    def fos = new FileOutputStream(outjar)
+    def is = new FileInputStream('')
+    def read
+    def bytes = new byte[8192]
+    while((read = is.read(bytes)) != -1)
+        fos.write(bytes, 0, read);
+    is.close()
+    is = new FileInputStream(injar)
+    while((read = is.read(bytes)) != -1)
+        fos.write(bytes, 0, read);
+    is.close()
+    fos.close()
+}
+
 launch4j {
     launch4jCmd = 'D:\\Develop\\Java\\Launch4j\\launch4j.exe'
     supportUrl = 'http://www.mcbbs.net/thread-142335-1-1.html'
@@ -108,4 +135,5 @@ processResources {
     }
 }
 
-build.dependsOn proguard
+//build.dependsOn proguard
+build.dependsOn makeExecutable

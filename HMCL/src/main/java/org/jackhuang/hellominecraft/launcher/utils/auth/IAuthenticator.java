@@ -35,21 +35,17 @@ public abstract class IAuthenticator {
     public static final List<IAuthenticator> logins;
 
     static {
-	String clientToken = Settings.s().getClientToken();
+	String clientToken = Settings.getInstance().getClientToken();
 	logins = new ArrayList<>();
 	logins.add(offlineLogin = new OfflineAuthenticator(clientToken));
 	logins.add(yggdrasilLogin = new YggdrasilAuthenticator(clientToken));
 	logins.add(skinmeLogin = new SkinmeAuthenticator(clientToken));
         //logins.add(bestLogin = new BestLogin(clientToken));
-	yggdrasilLogin.onLoadSettings(Settings.s().getYggdrasilConfig());
+	yggdrasilLogin.onLoadSettings(Settings.getInstance().getYggdrasilConfig());
 
-	Runtime.getRuntime().addShutdownHook(new Thread() {
-
-	    @Override
-	    public void run() {
-		Settings.s().setYggdrasilConfig(yggdrasilLogin.onSaveSettings());
-	    }
-	});
+	Runtime.getRuntime().addShutdownHook(new Thread(() -> 
+            Settings.getInstance().setYggdrasilConfig(yggdrasilLogin.onSaveSettings())
+        ));
     }
 
     protected String clientToken;

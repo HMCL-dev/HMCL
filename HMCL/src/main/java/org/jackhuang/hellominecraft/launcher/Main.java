@@ -102,14 +102,14 @@ public final class Main implements DoneListener0 {
 
             Settings.UPDATE_CHECKER.start();
 
-            if (StrUtils.isNotBlank(Settings.s().getProxyHost()) && StrUtils.isNotBlank(Settings.s().getProxyPort())) {
-                System.setProperty("http.proxyHost", Settings.s().getProxyHost());
-                System.setProperty("http.proxyPort", Settings.s().getProxyPort());
-                if (StrUtils.isNotBlank(Settings.s().getProxyUserName()) && StrUtils.isNotBlank(Settings.s().getProxyPassword()))
+            if (StrUtils.isNotBlank(Settings.getInstance().getProxyHost()) && StrUtils.isNotBlank(Settings.getInstance().getProxyPort())) {
+                System.setProperty("http.proxyHost", Settings.getInstance().getProxyHost());
+                System.setProperty("http.proxyPort", Settings.getInstance().getProxyPort());
+                if (StrUtils.isNotBlank(Settings.getInstance().getProxyUserName()) && StrUtils.isNotBlank(Settings.getInstance().getProxyPassword()))
                     Authenticator.setDefault(new Authenticator() {
                         @Override
                         protected PasswordAuthentication getPasswordAuthentication() {
-                            return new PasswordAuthentication(Settings.s().getProxyUserName(), Settings.s().getProxyPassword().toCharArray());
+                            return new PasswordAuthentication(Settings.getInstance().getProxyUserName(), Settings.getInstance().getProxyPassword().toCharArray());
                         }
                     });
             }
@@ -137,11 +137,11 @@ public final class Main implements DoneListener0 {
                 MessageBox.Show(C.i18n("update.no_browser"));
             }
         else
-            Settings.s().setCheckUpdate(false);
+            Settings.getInstance().setCheckUpdate(false);
     }
 
     public static void invokeUpdate() {
-        if (Settings.s().isCheckUpdate()) update();
+        if (Settings.getInstance().isCheckUpdate()) update();
         MainFrame.instance.invokeUpdate();
     }
 

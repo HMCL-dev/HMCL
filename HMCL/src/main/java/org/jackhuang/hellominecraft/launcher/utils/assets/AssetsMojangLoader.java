@@ -52,7 +52,7 @@ public class AssetsMojangLoader extends IAssetsHandler {
         File assets = mp.getAssets();
         HMCLog.log("Get index: " + assetsId);
         File f = IOUtils.tryGetCanonicalFile(new File(assets, "indexes/" + assetsId + ".json"));
-        if (!f.exists() && !MCUtils.downloadMinecraftAssetsIndex(assets, assetsId, Settings.s().getDownloadSource())) {
+        if (!f.exists() && !MCUtils.downloadMinecraftAssetsIndex(assets, assetsId, Settings.getInstance().getDownloadSource())) {
             dl.accept(null);
             return;
         }
