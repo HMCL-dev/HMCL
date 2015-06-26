@@ -131,13 +131,19 @@ public class MinecraftLoader extends IMinecraftLoader {
 
             if (index.isVirtual()) {
                 HMCLog.log("Reconstructing virtual assets folder at " + virtualRoot);
+                int tot = index.getFileMap().entrySet().size();
+                int cnt = 0;
                 for (Map.Entry entry : index.getFileMap().entrySet()) {
                     File target = new File(virtualRoot, (String) entry.getKey());
                     File original = new File(new File(objectDir, ((AssetsObject) entry.getValue()).getHash().substring(0, 2)), ((AssetsObject) entry.getValue()).getHash());
-
-                    if (!target.isFile())
-                        FileUtils.copyFile(original, target, false);
+                    if (original.exists()) {
+                        cnt++;
+                        if (!target.isFile())
+                            FileUtils.copyFile(original, target, false);
+                    }
                 }
+                // If the scale new format existent file is lower then 0.1, use the old format.
+                if (cnt * 10 < tot) return assetsDir;
             }
         } catch (IOException e) {
             HMCLog.warn("Failed to create virutal assets.", e);
