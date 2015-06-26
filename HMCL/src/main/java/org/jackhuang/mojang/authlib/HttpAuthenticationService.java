@@ -9,10 +9,10 @@ import java.net.Proxy;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Map;
+import java.util.Objects;
 import org.jackhuang.hellominecraft.logging.logger.Logger;
 import org.jackhuang.hellominecraft.utils.IOUtils;
 import org.jackhuang.hellominecraft.utils.NetUtils;
-import org.jackhuang.hellominecraft.utils.Validate;
 
 public abstract class HttpAuthenticationService extends BaseAuthenticationService {
 
@@ -20,134 +20,131 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
     private final Proxy proxy;
 
     protected HttpAuthenticationService(Proxy proxy) {
-	Validate.notNull(proxy);
-	this.proxy = proxy;
+        Objects.requireNonNull(proxy);
+        this.proxy = proxy;
     }
 
     public Proxy getProxy() {
-	return this.proxy;
+        return this.proxy;
     }
 
     protected HttpURLConnection createUrlConnection(URL url) throws IOException {
-	Validate.notNull(url);
-	LOGGER.debug(new StringBuilder().append("Opening connection to ").append(url).toString());
-	HttpURLConnection connection = (HttpURLConnection) url.openConnection(this.proxy);
-	connection.setConnectTimeout(15000);
-	connection.setReadTimeout(15000);
-	connection.setUseCaches(false);
-	return connection;
+        Objects.requireNonNull(url);
+        LOGGER.debug("Opening connection to " + url);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection(this.proxy);
+        connection.setConnectTimeout(15000);
+        connection.setReadTimeout(15000);
+        connection.setUseCaches(false);
+        return connection;
     }
 
     public String performPostRequest(URL url, String post, String contentType) throws IOException {
-	Validate.notNull(url);
-	Validate.notNull(post);
-	Validate.notNull(contentType);
-	HttpURLConnection connection = createUrlConnection(url);
-	byte[] postAsBytes = post.getBytes("UTF-8");
+        Objects.requireNonNull(url);
+        Objects.requireNonNull(post);
+        Objects.requireNonNull(contentType);
+        HttpURLConnection connection = createUrlConnection(url);
+        byte[] postAsBytes = post.getBytes("UTF-8");
 
-	connection.setRequestProperty("Content-Type", new StringBuilder().append(contentType).append("; charset=utf-8").toString());
-	connection.setRequestProperty("Content-Length", new StringBuilder().append("").append(postAsBytes.length).toString());
-	connection.setDoOutput(true);
+        connection.setRequestProperty("Content-Type", contentType + "; charset=utf-8");
+        connection.setRequestProperty("Content-Length", "" + postAsBytes.length);
+        connection.setDoOutput(true);
 
-	LOGGER.debug(new StringBuilder().append("Writing POST data to ").append(url).append(": ").append(post).toString());
+        LOGGER.debug("Writing POST data to " + url + ": " + post);
 
-	OutputStream outputStream = null;
-	try {
-	    outputStream = connection.getOutputStream();
-	    IOUtils.write(postAsBytes, outputStream);
-	} finally {
-	    IOUtils.closeQuietly(outputStream);
-	}
+        OutputStream outputStream = null;
+        try {
+            outputStream = connection.getOutputStream();
+            IOUtils.write(postAsBytes, outputStream);
+        } finally {
+            IOUtils.closeQuietly(outputStream);
+        }
 
-	LOGGER.debug(new StringBuilder().append("Reading data from ").append(url).toString());
+        LOGGER.debug("Reading data from " + url);
 
-	InputStream inputStream = null;
-	try {
-	    inputStream = connection.getInputStream();
-	    String result = NetUtils.getStreamContent(inputStream, "UTF-8");
-	    LOGGER.debug(new StringBuilder().append("Successful read, server response was ").append(connection.getResponseCode()).toString());
-	    LOGGER.debug(new StringBuilder().append("Response: ").append(result).toString());
-	    String str1 = result;
-	    return str1;
-	} catch (IOException e) {
-	    IOUtils.closeQuietly(inputStream);
-	    inputStream = connection.getErrorStream();
+        InputStream inputStream = null;
+        try {
+            inputStream = connection.getInputStream();
+            String result = NetUtils.getStreamContent(inputStream, "UTF-8");
+            LOGGER.debug("Successful read, server response was " + connection.getResponseCode());
+            LOGGER.debug("Response: " + result);
+            String str1 = result;
+            return str1;
+        } catch (IOException e) {
+            IOUtils.closeQuietly(inputStream);
+            inputStream = connection.getErrorStream();
 
-	    if (inputStream != null) {
-		LOGGER.debug(new StringBuilder().append("Reading error page from ").append(url).toString());
-		String result = NetUtils.getStreamContent(inputStream, "UTF-8");
-		LOGGER.debug(new StringBuilder().append("Successful read, server response was ").append(connection.getResponseCode()).toString());
-		LOGGER.debug(new StringBuilder().append("Response: ").append(result).toString());
-		String str2 = result;
-		return str2;
-	    }
-	    LOGGER.debug("Request failed", e);
-	    throw e;
-	} finally {
-	    IOUtils.closeQuietly(inputStream);
-	}
+            if (inputStream != null) {
+                LOGGER.debug("Reading error page from " + url);
+                String result = NetUtils.getStreamContent(inputStream, "UTF-8");
+                LOGGER.debug("Successful read, server response was " + connection.getResponseCode());
+                LOGGER.debug("Response: " + result);
+                String str2 = result;
+                return str2;
+            }
+            LOGGER.debug("Request failed", e);
+            throw e;
+        } finally {
+            IOUtils.closeQuietly(inputStream);
+        }
     }
 
     public String performGetRequest(URL url)
-	    throws IOException {
-	Validate.notNull(url);
-	HttpURLConnection connection = createUrlConnection(url);
+            throws IOException {
+        Objects.requireNonNull(url);
+        HttpURLConnection connection = createUrlConnection(url);
 
-	LOGGER.debug(new StringBuilder().append("Reading data from ").append(url).toString());
+        LOGGER.debug("Reading data from " + url);
 
-	InputStream inputStream = null;
-	try {
-	    inputStream = connection.getInputStream();
-	    String result = NetUtils.getStreamContent(inputStream, "UTF-8");
-	    LOGGER.debug(new StringBuilder().append("Successful read, server response was ").append(connection.getResponseCode()).toString());
-	    LOGGER.debug(new StringBuilder().append("Response: ").append(result).toString());
-	    String str1 = result;
-	    return str1;
-	} catch (IOException e) {
-	    IOUtils.closeQuietly(inputStream);
-	    inputStream = connection.getErrorStream();
+        InputStream inputStream = null;
+        try {
+            inputStream = connection.getInputStream();
+            String result = NetUtils.getStreamContent(inputStream, "UTF-8");
+            LOGGER.debug("Successful read, server response was " + connection.getResponseCode());
+            LOGGER.debug("Response: " + result);
+            String str1 = result;
+            return str1;
+        } catch (IOException e) {
+            IOUtils.closeQuietly(inputStream);
+            inputStream = connection.getErrorStream();
 
-	    if (inputStream != null) {
-		LOGGER.debug(new StringBuilder().append("Reading error page from ").append(url).toString());
-		String result = NetUtils.getStreamContent(inputStream, "UTF-8");
-		LOGGER.debug(new StringBuilder().append("Successful read, server response was ").append(connection.getResponseCode()).toString());
-		LOGGER.debug(new StringBuilder().append("Response: ").append(result).toString());
-		String str2 = result;
-		return str2;
-	    }
-	    LOGGER.debug("Request failed", e);
-	    throw e;
-	} finally {
-	    IOUtils.closeQuietly(inputStream);
-	}
+            if (inputStream != null) {
+                LOGGER.debug("Reading error page from " + url);
+                String result = NetUtils.getStreamContent(inputStream, "UTF-8");
+                LOGGER.debug("Successful read, server response was " + connection.getResponseCode());
+                LOGGER.debug("Response: " + result);
+                String str2 = result;
+                return str2;
+            }
+            LOGGER.debug("Request failed", e);
+            throw e;
+        } finally {
+            IOUtils.closeQuietly(inputStream);
+        }
     }
 
     public static String buildQuery(Map<String, Object> query) {
-	if (query == null) {
-	    return "";
-	}
-	StringBuilder builder = new StringBuilder();
+        if (query == null) return "";
+        StringBuilder builder = new StringBuilder();
 
-	for (Map.Entry entry : query.entrySet()) {
-	    if (builder.length() > 0) {
-		builder.append('&');
-	    }
-	    try {
-		builder.append(URLEncoder.encode((String) entry.getKey(), "UTF-8"));
-	    } catch (UnsupportedEncodingException e) {
-		LOGGER.error("Unexpected exception building query", e);
-	    }
+        for (Map.Entry<String, Object> entry : query.entrySet()) {
+            if (builder.length() > 0)
+                builder.append('&');
+            try {
+                builder.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                LOGGER.error("Unexpected exception building query", e);
+            }
 
-	    if (entry.getValue() != null) {
-		builder.append('=');
-		try {
-		    builder.append(URLEncoder.encode(entry.getValue().toString(), "UTF-8"));
-		} catch (UnsupportedEncodingException e) {
-		    LOGGER.error("Unexpected exception building query", e);
-		}
-	    }
-	}
+            if (entry.getValue() != null) {
+                builder.append('=');
+                try {
+                    builder.append(URLEncoder.encode(entry.getValue().toString(), "UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    LOGGER.error("Unexpected exception building query", e);
+                }
+            }
+        }
 
-	return builder.toString();
+        return builder.toString();
     }
 }

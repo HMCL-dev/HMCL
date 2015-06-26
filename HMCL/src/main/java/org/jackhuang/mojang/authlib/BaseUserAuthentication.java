@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.jackhuang.hellominecraft.logging.logger.Logger;
 import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.utils.Validate;
 import org.jackhuang.mojang.authlib.properties.Property;
 import org.jackhuang.mojang.authlib.properties.PropertyMap;
 import org.jackhuang.mojang.util.UUIDTypeAdapter;
@@ -30,7 +30,7 @@ public abstract class BaseUserAuthentication
     private UserType userType;
 
     protected BaseUserAuthentication(AuthenticationService authenticationService) {
-	Validate.notNull(authenticationService);
+	Objects.requireNonNull(authenticationService);
 	this.authenticationService = authenticationService;
     }
 

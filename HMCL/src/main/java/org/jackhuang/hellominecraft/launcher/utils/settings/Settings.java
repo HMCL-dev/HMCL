@@ -60,7 +60,6 @@ public final class Settings {
 
     static {
         settings = initSettings();
-        isFirstLoad = StrUtils.isBlank(settings.getUsername());
         if (!getVersions().containsKey("Default"))
             getVersions().put("Default", new Profile());
 
@@ -70,7 +69,7 @@ public final class Settings {
 
     private static Config initSettings() {
         Config c = new Config();
-        if (settingsFile.exists())
+        if (settingsFile.exists()) {
             try {
                 String str = FileUtils.readFileToString(settingsFile);
                 if (str == null || str.trim().equals(""))
@@ -87,7 +86,8 @@ public final class Settings {
                     System.exit(1);
                 }
             }
-        else {
+            isFirstLoad = StrUtils.isBlank(settings.getUsername());
+        } else {
             HMCLog.log("No settings file here, may be first loading.");
             isFirstLoad = true;
         }

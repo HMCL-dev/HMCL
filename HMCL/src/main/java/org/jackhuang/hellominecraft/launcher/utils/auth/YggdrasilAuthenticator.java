@@ -140,7 +140,7 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
         UserProfileProvider info = new UserProfileProvider();
         try {
             ua.logIn();
-            if(!ua.isLoggedIn()) throw new Exception(C.i18n("WrongPassword"));
+            if(!ua.isLoggedIn()) throw new Exception(C.i18n("login.wrong_password"));
             GameProfile profile = ua.getSelectedProfile();
             info.setUserName(profile.getName());
             info.setSuccess(true);

@@ -85,8 +85,8 @@ public class AssetsMojangLoader extends IAssetsHandler {
         if (o != null && o.getFileMap() != null)
             for (Map.Entry<String, AssetsObject> e : o.getFileMap().entrySet()) {
                 Contents c = new Contents();
-                c.key = e.getValue().getHash().substring(0, 2) + "/" + e.getValue().getHash();
                 c.eTag = e.getValue().getHash();
+                c.key = c.eTag.substring(0, 2) + "/" + e.getValue().getHash();
                 c.size = e.getValue().getSize();
                 contents.add(c);
                 assetsDownloadURLs.add(c.key);

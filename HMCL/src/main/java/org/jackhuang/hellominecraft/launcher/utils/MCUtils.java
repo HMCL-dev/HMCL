@@ -53,31 +53,29 @@ public final class MCUtils {
 
             String hash = ((AssetsObject) index.getFileMap().get(name)).getHash();
             return new File(objectsDir, hash.substring(0, 2) + "/" + hash);
-        } catch(JsonSyntaxException e) {
+        } catch (JsonSyntaxException e) {
             throw new IOException("Assets file format malformed.", e);
         }
     }
 
     private static int lessThan32(byte[] b, int x) {
-        for (; x < b.length; x++) {
-            if (b[x] < 32) {
+        for (; x < b.length; x++)
+            if (b[x] < 32)
                 return x;
-            }
-        }
         return -1;
     }
 
-    private static MinecraftVersionRequest getVersionOfOldMinecraft(ZipFile paramZipFile, ZipEntry paramZipEntry) throws IOException {
+    private static MinecraftVersionRequest getVersionOfOldMinecraft(ZipFile file, ZipEntry entry) throws IOException {
         MinecraftVersionRequest r = new MinecraftVersionRequest();
-        byte[] tmp = NetUtils.getBytesFromStream(paramZipFile.getInputStream(paramZipEntry));
+        byte[] tmp = NetUtils.getBytesFromStream(file.getInputStream(entry));
 
-        byte[] arrayOfByte = "Minecraft Minecraft ".getBytes("ASCII");
+        byte[] bytes = "Minecraft Minecraft ".getBytes("ASCII");
         int j;
-        if ((j = ArrayUtils.matchArray(tmp, arrayOfByte)) < 0) {
+        if ((j = ArrayUtils.matchArray(tmp, bytes)) < 0) {
             r.type = MinecraftVersionRequest.Unkown;
             return r;
         }
-        int i = j + arrayOfByte.length;
+        int i = j + bytes.length;
 
         if ((j = lessThan32(tmp, i)) < 0) {
             r.type = MinecraftVersionRequest.Unkown;
@@ -86,11 +84,8 @@ public final class MCUtils {
         String ver = new String(tmp, i, j - i, "ASCII");
         r.version = ver;
 
-        if (paramZipFile.getEntry("META-INF/MANIFEST.MF") == null) {
-            r.type = MinecraftVersionRequest.Modified;
-        } else {
-            r.type = MinecraftVersionRequest.OK;
-        }
+        r.type = file.getEntry("META-INF/MANIFEST.MF") == null ?
+                MinecraftVersionRequest.Modified : MinecraftVersionRequest.OK;
         return r;
     }
 
@@ -112,10 +107,10 @@ public final class MCUtils {
             return r;
         }
         r.version = new String(tmp, i, j - i, "ASCII");
-        
+
         char ch = r.version.charAt(0);
         // 1.8.1+
-        if(ch < '0' || ch > '9') {
+        if (ch < '0' || ch > '9') {
             str = "Can't keep up! Did the system time change, or is the server overloaded?".getBytes("ASCII");
             j = ArrayUtils.matchArray(tmp, str);
             if (j < 0) {
@@ -124,7 +119,7 @@ public final class MCUtils {
             }
             i = -1;
             while (j > 0) {
-                if(tmp[j] >= 48 && tmp[j] <= 57) {
+                if (tmp[j] >= 48 && tmp[j] <= 57) {
                     i = j;
                     break;
                 }
@@ -139,12 +134,8 @@ public final class MCUtils {
             k++;
             r.version = new String(tmp, k, i - k + 1);
         }
-
-        if (file.getEntry("META-INF/MANIFEST.MF") == null) {
-            r.type = MinecraftVersionRequest.Modified;
-        } else {
-            r.type = MinecraftVersionRequest.OK;
-        }
+        r.type = file.getEntry("META-INF/MANIFEST.MF") == null ?
+                MinecraftVersionRequest.Modified : MinecraftVersionRequest.OK;
         return r;
     }
 
@@ -167,14 +158,12 @@ public final class MCUtils {
             localZipFile = new ZipFile(file);
             ZipEntry minecraft = localZipFile
                     .getEntry("net/minecraft/client/Minecraft.class");
-            if (minecraft != null) {
+            if (minecraft != null)
                 return getVersionOfOldMinecraft(localZipFile, minecraft);
-            }
             ZipEntry main = localZipFile.getEntry("net/minecraft/client/main/Main.class");
             ZipEntry minecraftserver = localZipFile.getEntry("net/minecraft/server/MinecraftServer.class");
-            if ((main != null) && (minecraftserver != null)) {
+            if ((main != null) && (minecraftserver != null))
                 return getVersionOfNewMinecraft(localZipFile, minecraftserver);
-            }
             r.type = MinecraftVersionRequest.Invaild;
             return r;
         } catch (IOException localException) {
@@ -182,34 +171,35 @@ public final class MCUtils {
             r.type = MinecraftVersionRequest.InvaildJar;
             return r;
         } finally {
-            if (localZipFile != null) {
+            if (localZipFile != null)
                 try {
                     localZipFile.close();
                 } catch (IOException ex) {
                     HMCLog.warn("Failed to close zip file", ex);
                 }
-            }
         }
     }
 
     public static File getLocation() {
-        String localObject = "minecraft";
+        String baseName = "minecraft";
         String str1 = System.getProperty("user.home", ".");
         File file;
-        OS os = OS.os();
-        if (os == OS.LINUX) {
-            file = new File(str1, '.' + (String) localObject + '/');
-        } else if (os == OS.WINDOWS) {
-            String str2;
-            if ((str2 = System.getenv("APPDATA")) != null) {
-                file = new File(str2, "." + (String) localObject + '/');
-            } else {
-                file = new File(str1, '.' + (String) localObject + '/');
-            }
-        } else if (os == OS.OSX) {
-            file = new File(str1, "Library/Application Support/" + localObject);
-        } else {
-            file = new File(str1, localObject + '/');
+        switch (OS.os()) {
+            case LINUX:
+                file = new File(str1, '.' + (String) baseName + '/');
+                break;
+            case WINDOWS:
+                String str2;
+                if ((str2 = System.getenv("APPDATA")) != null)
+                    file = new File(str2, "." + baseName + '/');
+                else
+                    file = new File(str1, '.' + baseName + '/');
+                break;
+            case OSX:
+                file = new File(str1, "Library/Application Support/" + baseName);
+                break;
+            default:
+                file = new File(str1, baseName + '/');
         }
         return file;
     }
@@ -220,10 +210,7 @@ public final class MCUtils {
     }
 
     public static String minecraft() {
-        String os = System.getProperty("os.name").trim().toLowerCase();
-        if (os.contains("mac")) {
-            return "minecraft";
-        }
+        if (OS.os() == OS.OSX) return "minecraft";
         return ".minecraft";
     }
 
@@ -233,7 +220,7 @@ public final class MCUtils {
             gameDir = new File(gameDir, MCUtils.minecraft());
             if (!gameDir.exists()) {
                 File newFile = MCUtils.getLocation();
-                if(newFile.exists()) gameDir = newFile;
+                if (newFile.exists()) gameDir = newFile;
             }
         }
         return gameDir;
@@ -253,8 +240,6 @@ public final class MCUtils {
                 .addTask(new FileDownloadTask(vurl + id + ".jar", IOUtils.tryGetCanonicalFile(mvj)).setTag(id + ".jar"))
                 .start()) {
             MinecraftVersion mv = new Gson().fromJson(FileUtils.readFileToStringQuietly(mvt), MinecraftVersion.class);
-            //File apath = new File(gameDir, "assets/indexes");
-            //downloadMinecraftAssetsIndex(apath, mv.assets, sourceType);
             return mv;
         }
         return null;
@@ -273,15 +258,13 @@ public final class MCUtils {
         if (TaskWindow.getInstance()
                 .addTask(new FileDownloadTask(vurl + id + ".json", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".json"))
                 .start()) {
-            if (moved != null) {
+            if (moved != null)
                 moved.delete();
-            }
             return true;
         } else {
             mvt.delete();
-            if (moved != null) {
+            if (moved != null)
                 moved.renameTo(mvt);
-            }
             return false;
         }
     }
@@ -299,19 +282,24 @@ public final class MCUtils {
         if (TaskWindow.getInstance()
                 .addTask(new FileDownloadTask(aurl + assetsId + ".json", IOUtils.tryGetCanonicalFile(assetsIndex)).setTag(assetsId + ".json"))
                 .start()) {
-            if (renamed != null) {
+            if (renamed != null)
                 renamed.delete();
-            }
             return true;
         }
-        if (renamed != null) {
+        if (renamed != null)
             renamed.renameTo(assetsIndex);
-        }
         return false;
     }
 
     public static MinecraftRemoteVersions getRemoteMinecraftVersions(DownloadType sourceType) throws IOException {
         String result = NetUtils.doGet(sourceType.getProvider().getVersionsListDownloadURL());
         return MinecraftRemoteVersions.fromJson(result);
+    }
+    
+    public static String profile = "{\"selectedProfile\": \"(Default)\",\"profiles\": {\"(Default)\": {\"name\": \"(Default)\"}},\"clientToken\": \"88888888-8888-8888-8888-888888888888\"}";
+    public static void tryWriteProfile(File gameDir) throws IOException {
+        File file = new File(gameDir, "launcher_profiles.json");
+        if(!file.exists())
+            FileUtils.writeStringToFile(file, profile);
     }
 }
