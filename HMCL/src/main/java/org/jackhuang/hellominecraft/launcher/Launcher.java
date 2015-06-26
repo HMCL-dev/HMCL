@@ -36,6 +36,7 @@ import org.jackhuang.hellominecraft.utils.JdkVersion;
 import org.jackhuang.hellominecraft.utils.LauncherPrintStream;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.OS;
+import org.jackhuang.hellominecraft.utils.Platform;
 import org.jackhuang.hellominecraft.utils.Utils;
 
 /**
@@ -105,7 +106,7 @@ public final class Launcher {
             return;
         }
 
-        if (!JdkVersion.isJava64Bit() && OS.is64Bit())
+        if (!JdkVersion.isJava64Bit() && OS.getPlatform() == Platform.BIT_32)
             MessageBox.Show(C.i18n("advice.os64butjdk32"));
 
         Method minecraftMain;

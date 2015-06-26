@@ -90,7 +90,7 @@ task proguard(type: proguard.gradle.ProGuardTask, dependsOn: jar) {
     
     configuration 'proguard.pro'
 }
-
+/*
 task makeExecutable(dependsOn: jar) {
     ext {
         def re = jar.classifier
@@ -111,7 +111,7 @@ task makeExecutable(dependsOn: jar) {
         fos.write(bytes, 0, read);
     is.close()
     fos.close()
-}
+}*/
 
 launch4j {
     launch4jCmd = 'D:\\Develop\\Java\\Launch4j\\launch4j.exe'
@@ -135,5 +135,5 @@ processResources {
     }
 }
 
-//build.dependsOn proguard
-build.dependsOn makeExecutable
+build.dependsOn proguard
+//build.dependsOn makeExecutable

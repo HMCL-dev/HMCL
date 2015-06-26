@@ -26,11 +26,12 @@ import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Launcher;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.utils.settings.Profile;
-import org.jackhuang.hellominecraft.utils.FileUtils;
+import org.jackhuang.hellominecraft.launcher.utils.settings.Settings;
 import org.jackhuang.hellominecraft.utils.JdkVersion;
 import org.jackhuang.hellominecraft.utils.MathUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.OS;
+import org.jackhuang.hellominecraft.utils.Platform;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.Utils;
 
@@ -62,24 +63,16 @@ public abstract class IMinecraftLoader {
             res.addAll(Arrays.asList(v.getWrapperLauncher().split(" ")));
 
         String str = v.getJavaDir();
-        JdkVersion jv = null;
-        File f = new File(str + ".hmc");
-        try {
-            String s = FileUtils.readFileToString(f);
-            String[] strs = s.split("\n");
-            if (str.length() >= 2)
-                jv = new JdkVersion(strs[0], MathUtils.parseInt(strs[1], -1));
-            else
-                throw new IllegalStateException("The format of file: " + f + " is wrong: " + s);
-        } catch (IOException | IllegalStateException e) {
-            try {
-                jv = JdkVersion.getJavaVersionFromExecutable(str);
-                jv.write(f);
-                if (!f.exists())
-                    HMCLog.warn("Failed to load version from file " + f, e);
-            } catch (Exception ex) {
-                HMCLog.warn("Failed to read JDKVersion.", ex);
-            }
+        JdkVersion jv = new JdkVersion(str);
+        if(Settings.getInstance().getJava().contains(jv))
+            jv = Settings.getInstance().getJava().get(Settings.getInstance().getJava().indexOf(jv));
+        else try {
+            jv = JdkVersion.getJavaVersionFromExecutable(str);
+            Settings.getInstance().getJava().add(jv);
+            Settings.save();
+        } catch (IOException ex) {
+            HMCLog.warn("Failed to get java version", ex);
+            jv = null;
         }
         res.add(str);
 
@@ -95,12 +88,12 @@ public abstract class IMinecraftLoader {
             res.add("-Xmn128m");
         }
 
-        if (jv != null && jv.is64Bit == 0 && OS.is64Bit())
+        if (jv != null && jv.platform == Platform.BIT_32 && OS.getPlatform() == Platform.BIT_64)
             MessageBox.Show(C.i18n("advice.os64butjdk32"));
 
         if (!StrUtils.isBlank(v.getMaxMemory())) {
             int mem = MathUtils.parseMemory(v.getMaxMemory(), 2147483647);
-            if (jv != null && jv.is64Bit == 0 && mem > 1024)
+            if (jv != null && jv.platform == Platform.BIT_32 && mem > 1024)
                 MessageBox.Show(C.i18n("launch.too_big_memory_alloc_64bit"));
             else {
                 long a = OS.getTotalPhysicalMemory() / 1024 / 1024;
@@ -114,10 +107,10 @@ public abstract class IMinecraftLoader {
         }
 
         if (!StrUtils.isBlank(v.getPermSize()) && !v.isNoJVMArgs())
-            if (jv != null && jv.ver != null && (jv.ver.startsWith("1.8") || jv.ver.startsWith("1.9"))); else res.add("-XX:MaxPermSize=" + v.getPermSize() + "m");
+            if (jv != null && jv.ver != null && (jv.ver.startsWith("1.8") || jv.ver.startsWith("1.9")));
+            else res.add("-XX:MaxPermSize=" + v.getPermSize() + "m");
 
-        if (!v.isNoJVMArgs())
-            appendJVMArgs(res);
+        if (!v.isNoJVMArgs()) appendJVMArgs(res);
 
         HMCLog.log("On making java.library.path.");
 

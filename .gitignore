@@ -18,6 +18,7 @@ hs_err_pid*
 *.bat
 *.log
 .mine*
+*.json
 
 HMCLAPI/build/
 HMCL/build/

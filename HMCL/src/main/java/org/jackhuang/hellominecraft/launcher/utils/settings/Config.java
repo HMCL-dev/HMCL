@@ -18,9 +18,12 @@ package org.jackhuang.hellominecraft.launcher.utils.settings;
 
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import com.google.gson.annotations.SerializedName;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
+import org.jackhuang.hellominecraft.utils.JdkVersion;
 import org.jackhuang.hellominecraft.utils.OS;
 
 /**
@@ -41,6 +44,12 @@ public final class Config {
     private boolean enableShadow;
     @SerializedName("theme")
     private int theme;
+    
+    private List<JdkVersion> java;
+
+    public List<JdkVersion> getJava() {
+        return java == null ? java = new ArrayList<>() : java;
+    }
 
     public int getTheme() {
         return theme;

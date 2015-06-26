@@ -32,7 +32,7 @@ import org.jackhuang.hellominecraft.launcher.launch.GameLauncher.DownloadLibrary
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftLoader;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.launch.MinecraftLoader;
-import org.jackhuang.hellominecraft.utils.BaseLauncherProfile;
+import org.jackhuang.hellominecraft.launcher.utils.BaseLauncherProfile;
 import org.jackhuang.hellominecraft.utils.FileUtils;
 import org.jackhuang.hellominecraft.launcher.utils.MCUtils;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;

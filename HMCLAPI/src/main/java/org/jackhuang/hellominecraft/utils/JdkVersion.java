@@ -35,11 +35,32 @@ public final class JdkVersion {
     /**
      * -1 - unkown 0 - 32Bit 1 - 64Bit
      */
-    public int is64Bit;
+    public Platform platform;
+    
+    public String location;
 
-    public JdkVersion(String ver, int is64Bit) {
+    @Override
+    public boolean equals(Object obj) {
+        if(!(obj instanceof JdkVersion)) return false;
+        JdkVersion b = (JdkVersion)obj;
+        return new File(b.location).equals(new File(location));
+    }
+
+    @Override
+    public int hashCode() {
+        return new File(location).hashCode();
+    }
+
+    public JdkVersion(String location) {
+        File f = new File(location);
+        if(f.exists() && f.isFile()) f = f.getParentFile();
+        this.location = f.getAbsolutePath();
+    }
+
+    public JdkVersion(String location, String ver, Platform platform) {
+        this(location);
         this.ver = ver;
-        this.is64Bit = is64Bit;
+        this.platform = platform;
     }
 
     /**
@@ -146,7 +167,7 @@ public final class JdkVersion {
         BufferedReader br = null;
         int lineNumber = 0;
         String ver = null;
-        int is64Bit = -1;
+        Platform platform = Platform.UNKNOWN;
         try {
             br = new BufferedReader(new InputStreamReader(is));
             String line;
@@ -162,11 +183,10 @@ public final class JdkVersion {
                         }
                         break;
                     case 3:
-                        if (line.contains("64-Bit")) {
-                            is64Bit = 1;
-                        } else {
-                            is64Bit = 0;
-                        }
+                        if (line.contains("64-Bit"))
+                            platform = Platform.BIT_64;
+                        else
+                            platform = Platform.BIT_32;
                         break;
                 }
             }
@@ -177,12 +197,12 @@ public final class JdkVersion {
                 br.close();
             }
         }
-        return new JdkVersion(ver, is64Bit);
+        return new JdkVersion(file, ver, platform);
     }
 
     public void write(File f) throws IOException {
-        if (ver != null && is64Bit != -1) {
-            FileUtils.write(f, ver + "\n" + is64Bit);
+        if (ver != null && platform != Platform.UNKNOWN) {
+            FileUtils.write(f, ver + "\n" + platform);
         }
     }
     

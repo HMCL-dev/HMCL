@@ -54,9 +54,9 @@ public enum OS {
         return OS.UNKOWN;
     }
     
-    public static boolean is64Bit() {
+    public static Platform getPlatform() {
 	String arch = System.getProperty("os.arch");
-	return arch.contains("64");
+	return arch.contains("64") ? Platform.BIT_64 : Platform.BIT_32;
     }
     
     /**

@@ -16,6 +16,8 @@
  */
 package org.jackhuang.hellominecraft.launcher.utils.settings;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
@@ -25,10 +27,12 @@ import java.util.Objects;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
+import org.jackhuang.hellominecraft.utils.EnumAdapter;
 import org.jackhuang.hellominecraft.utils.tinystream.CollectionUtils;
 import org.jackhuang.hellominecraft.utils.FileUtils;
 import org.jackhuang.hellominecraft.utils.IOUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
+import org.jackhuang.hellominecraft.utils.Platform;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.UpdateChecker;
 import org.jackhuang.hellominecraft.utils.VersionNumber;
@@ -38,7 +42,9 @@ import org.jackhuang.hellominecraft.utils.VersionNumber;
  * @author hyh
  */
 public final class Settings {
+
     public static final File settingsFile = new File(IOUtils.currentDir(), "hmcl.json");
+    public static final Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(Platform.class, new EnumAdapter<>(Platform.values())).create();
 
     private static boolean isFirstLoad;
     private static final Config settings;
@@ -55,34 +61,34 @@ public final class Settings {
     static {
         settings = initSettings();
         isFirstLoad = StrUtils.isBlank(settings.getUsername());
-	if(!getVersions().containsKey("Default"))
-	    getVersions().put("Default", new Profile());
-        
+        if (!getVersions().containsKey("Default"))
+            getVersions().put("Default", new Profile());
+
         UPDATE_CHECKER = new UpdateChecker(new VersionNumber(Main.firstVer, Main.secondVer, Main.thirdVer),
                 "hmcl", settings.isCheckUpdate(), () -> Main.invokeUpdate());
     }
-    
+
     private static Config initSettings() {
         Config c = new Config();
-        if (settingsFile.exists()) {
+        if (settingsFile.exists())
             try {
                 String str = FileUtils.readFileToString(settingsFile);
-                if (str == null || str.trim().equals("")) {
-		    HMCLog.log("Settings file is empty, use the default settings.");
-                } else {
-                    Config d = C.gsonPrettyPrinting.fromJson(str, Config.class);
-                    if(d != null) c = d;
+                if (str == null || str.trim().equals(""))
+                    HMCLog.log("Settings file is empty, use the default settings.");
+                else {
+                    Config d = gson.fromJson(str, Config.class);
+                    if (d != null) c = d;
                 }
                 HMCLog.log("Initialized settings.");
             } catch (IOException | JsonSyntaxException e) {
-		    HMCLog.warn("Something happened wrongly when load settings.", e);
+                HMCLog.warn("Something happened wrongly when load settings.", e);
                 if (MessageBox.Show(C.i18n("settings.failed_load"), MessageBox.YES_NO_OPTION) == MessageBox.NO_OPTION) {
-		    HMCLog.err("Cancelled loading settings.");
+                    HMCLog.err("Cancelled loading settings.");
                     System.exit(1);
                 }
             }
-        } else {
-	    HMCLog.log("No settings file here, may be first loading.");
+        else {
+            HMCLog.log("No settings file here, may be first loading.");
             isFirstLoad = true;
         }
         return c;
@@ -90,7 +96,7 @@ public final class Settings {
 
     public static void save() {
         try {
-            FileUtils.write(settingsFile, C.gsonPrettyPrinting.toJson(settings));
+            FileUtils.write(settingsFile, gson.toJson(settings));
         } catch (IOException ex) {
             HMCLog.err("Failed to save config", ex);
         }
@@ -99,20 +105,20 @@ public final class Settings {
     public static Profile getVersion(String name) {
         return getVersions().get(name);
     }
-    
+
     public static Map<String, Profile> getVersions() {
-	return settings.getConfigurations();
+        return settings.getConfigurations();
     }
 
     public static void setVersion(Profile ver) {
         Objects.requireNonNull(ver);
         getVersions().put(ver.getName(), ver);
     }
-    
+
     public static Collection<Profile> getProfiles() {
-	return CollectionUtils.sortOut(getVersions().values(), (t) -> t != null && t.getName() != null);
+        return CollectionUtils.sortOut(getVersions().values(), (t) -> t != null && t.getName() != null);
     }
-    
+
     public static Profile getOneProfile() {
         return settings.getConfigurations().firstEntry().getValue();
     }
