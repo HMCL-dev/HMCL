@@ -18,6 +18,7 @@ package org.jackhuang.hellominecraft.launcher.utils.installers.optifine.vanilla;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.tasks.communication.PreviousResult;
 import org.jackhuang.hellominecraft.utils.NetUtils;
@@ -50,7 +51,7 @@ public class OptiFineDownloadFormatter extends Task implements PreviousResult<St
 
     @Override
     public String getInfo() {
-        return "Get OptiFine Download Link.";
+        return C.i18n("install.optifine.get_download_link");
     }
 
     @Override

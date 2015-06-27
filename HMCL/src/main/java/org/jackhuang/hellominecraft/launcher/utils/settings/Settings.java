@@ -86,7 +86,7 @@ public final class Settings {
                     System.exit(1);
                 }
             }
-            isFirstLoad = StrUtils.isBlank(settings.getUsername());
+            isFirstLoad = StrUtils.isBlank(c.getUsername());
         } else {
             HMCLog.log("No settings file here, may be first loading.");
             isFirstLoad = true;
