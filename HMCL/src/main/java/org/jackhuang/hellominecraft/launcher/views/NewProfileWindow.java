@@ -18,6 +18,7 @@ package org.jackhuang.hellominecraft.launcher.views;
 
 import org.jackhuang.hellominecraft.launcher.utils.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.utils.settings.Settings;
+import org.jackhuang.hellominecraft.utils.StrUtils;
 
 /**
  *
@@ -26,14 +27,13 @@ import org.jackhuang.hellominecraft.launcher.utils.settings.Settings;
 public final class NewProfileWindow extends javax.swing.JDialog {
 
     public NewProfileWindow(java.awt.Frame parent) {
-	super(parent, true);
-	initComponents();
-	
+        super(parent, true);
+        initComponents();
+
         setLocationRelativeTo(null);
-	
-	for (Profile s : Settings.getProfiles()) {
-	    cboProfiles.addItem(s.getName());
-	}
+
+        for (Profile s : Settings.getProfiles())
+            cboProfiles.addItem(s.getName());
     }
 
     /**
@@ -124,25 +124,27 @@ public final class NewProfileWindow extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void txtNewProfileNameKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtNewProfileNameKeyTyped
-	switch(evt.getKeyCode()) {
-	    case 13:
-		Profile newProfile = new Profile(Settings.getVersion(cboProfiles.getSelectedItem().toString()));
-		newProfile.setName(txtNewProfileName.getText());
-		Settings.trySetVersion(newProfile);
-	    case 27:
-		this.dispose();
-	}
+        switch (evt.getKeyCode()) {
+            case 13:
+                Profile newProfile = new Profile(Settings.getVersion(cboProfiles.getSelectedItem().toString()));
+                newProfile.setName(txtNewProfileName.getText());
+                Settings.trySetVersion(newProfile);
+            case 27:
+                this.dispose();
+        }
     }//GEN-LAST:event_txtNewProfileNameKeyTyped
 
     private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOKActionPerformed
-	Profile newProfile = new Profile(Settings.getVersion(cboProfiles.getSelectedItem().toString()));
-        newProfile.setName(txtNewProfileName.getText());
-	Settings.trySetVersion(newProfile);
-	this.dispose();
+        if (!StrUtils.isBlank(txtNewProfileName.getText())) {
+            Profile newProfile = new Profile(Settings.getVersion(cboProfiles.getSelectedItem().toString()));
+            newProfile.setName(txtNewProfileName.getText());
+            Settings.trySetVersion(newProfile);
+        }
+        this.dispose();
     }//GEN-LAST:event_btnOKActionPerformed
 
     private void btnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelActionPerformed
-	this.dispose();
+        this.dispose();
     }//GEN-LAST:event_btnCancelActionPerformed
 
 

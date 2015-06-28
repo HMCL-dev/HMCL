@@ -52,7 +52,7 @@ import org.jackhuang.hellominecraft.utils.StrUtils;
 public final class Main implements DoneListener0 {
 
     public static String launcherName = "Hello Minecraft! Launcher";
-    public static byte firstVer = 2, secondVer = 3, thirdVer = 2;
+    public static byte firstVer = 2, secondVer = 3, thirdVer = 3;
     public static int minimumLauncherVersion = 16;
 
     /**

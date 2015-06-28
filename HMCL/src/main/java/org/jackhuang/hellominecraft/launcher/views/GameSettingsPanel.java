@@ -76,7 +76,7 @@ public class GameSettingsPanel extends javax.swing.JPanel {
         initComponents();
         setBackground(Color.white);
         setOpaque(true);
-        
+
         forge = new InstallerHelper(lstForge, "forge");
         liteloader = new InstallerHelper(lstLiteLoader, "liteloader");
         optifine = new InstallerHelper(lstOptifine, "optifine");
@@ -1087,12 +1087,12 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
 
     private void cboGameDirTypeFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_cboGameDirTypeFocusLost
         if (cboGameDirType.getSelectedIndex() >= 0)
-        profile.setGameDirType(GameDirType.values()[cboGameDirType.getSelectedIndex()]);
+            profile.setGameDirType(GameDirType.values()[cboGameDirType.getSelectedIndex()]);
     }//GEN-LAST:event_cboGameDirTypeFocusLost
 
     private void cboLauncherVisibilityFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_cboLauncherVisibilityFocusLost
         if (cboLauncherVisibility.getSelectedIndex() >= 0)
-        profile.setLauncherVisibility(cboLauncherVisibility.getSelectedIndex());
+            profile.setLauncherVisibility(cboLauncherVisibility.getSelectedIndex());
     }//GEN-LAST:event_cboLauncherVisibilityFocusLost
 
     private void btnDownloadAllAssetsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadAllAssetsActionPerformed
@@ -1103,6 +1103,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
             return;
         }
         String s = StrUtils.formatVersion(minecraftVersion.version);
+        if (StrUtils.isBlank(s)) return;
         for (IAssetsHandler a : IAssetsHandler.getAssetsHandlers()) {
             if (a.isVersionAllowed(s)) {
                 downloadAssets(a);
@@ -1114,7 +1115,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
             Selector selector = new Selector(MainFrame.instance, al.toArray(new String[0]), C.i18n("assets.unkown_type_select_one", mcVersion));
             selector.setVisible(true);
             if (selector.sel != -1)
-            downloadAssets(IAssetsHandler.getAssetsHandler(selector.sel));
+                downloadAssets(IAssetsHandler.getAssetsHandler(selector.sel));
         }
     }//GEN-LAST:event_btnDownloadAllAssetsActionPerformed
 
@@ -1313,6 +1314,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }
 
     class InstallerHelper {
+
         List<InstallerVersionList.InstallerVersion> versions;
         InstallerVersionList list;
         JTable jt;
@@ -1374,7 +1376,6 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     String mcVersion;
 
     // </editor-fold>
-
     // </editor-fold>
     public void versionChanged(Profile profile, String version) {
         this.mcVersion = version;
