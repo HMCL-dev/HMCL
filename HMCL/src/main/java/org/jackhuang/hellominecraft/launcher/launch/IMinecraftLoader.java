@@ -80,7 +80,7 @@ public abstract class IMinecraftLoader {
             res.addAll(Arrays.asList(StrUtils.tokenize(v.getJavaArgs())));
 
         if (!v.isNoJVMArgs() && !(jv != null && jv.isEarlyAccess())) {
-            res.add("-Xincgc");
+            //res.add("-Xincgc");
             res.add("-XX:+UseConcMarkSweepGC");
             res.add("-XX:+CMSIncrementalMode");
             res.add("-XX:-UseAdaptiveSizePolicy");

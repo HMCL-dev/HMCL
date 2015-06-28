@@ -91,7 +91,7 @@ public class LiteLoaderInstaller extends Task implements PreviousResultRegistrat
         return C.i18n("install.liteloader.install");
     }
     
-    ArrayList<PreviousResult<File>> pre = new ArrayList();
+    ArrayList<PreviousResult<File>> pre = new ArrayList<>();
     @Override
     public Task registerPreviousResult(PreviousResult pr) {
         pre.add(pr);

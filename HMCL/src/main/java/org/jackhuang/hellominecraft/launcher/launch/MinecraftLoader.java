@@ -123,7 +123,7 @@ public class MinecraftLoader extends IMinecraftLoader {
 
         if (!indexFile.isFile()) {
             HMCLog.warn("No assets index file " + virtualRoot + "; can't reconstruct assets");
-            return virtualRoot;
+            return assetsDir;
         }
 
         try {
