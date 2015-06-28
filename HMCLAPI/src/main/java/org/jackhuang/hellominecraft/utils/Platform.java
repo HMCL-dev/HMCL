@@ -21,7 +21,36 @@ package org.jackhuang.hellominecraft.utils;
  * @author huangyuhui
  */
 public enum Platform {
-    UNKNOWN,
-    BIT_32,
-    BIT_64
+
+    UNKNOWN {
+
+                @Override
+                public String getBit() {
+                    return "unknown";
+                }
+
+            },
+    BIT_32 {
+
+                @Override
+                public String getBit() {
+                    return "32";
+                }
+
+            },
+    BIT_64 {
+
+                @Override
+                public String getBit() {
+                    return "64";
+                }
+
+            };
+
+    public abstract String getBit();
+    
+    public static Platform getPlatform() {
+	String arch = System.getProperty("os.arch");
+	return arch.contains("64") ? Platform.BIT_64 : Platform.BIT_32;
+    }
 }

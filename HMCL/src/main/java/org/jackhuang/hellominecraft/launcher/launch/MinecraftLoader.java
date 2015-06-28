@@ -87,7 +87,7 @@ public class MinecraftLoader extends IMinecraftLoader {
             t = t.replace("${assets_root}", provider.getAssets().getAbsolutePath());
             t = t.replace("${auth_access_token}", lr.getAccessToken());
             t = t.replace("${user_type}", lr.getUserType());
-            t = t.replace("${assets_index_name}", version.assets == null ? "legacy" : version.assets);
+            t = t.replace("${assets_index_name}", version.getAssets());
             t = t.replace("${user_properties}", lr.getUserProperties());
             t = t.replace("${user_property_map}", lr.getUserPropertyMap());
             res.add(t);
@@ -117,7 +117,7 @@ public class MinecraftLoader extends IMinecraftLoader {
         File assetsDir = new File(provider.getBaseFolder(), "assets");
         File indexDir = new File(assetsDir, "indexes");
         File objectDir = new File(assetsDir, "objects");
-        String assetVersion = version.assets == null ? "legacy" : version.assets;
+        String assetVersion = version.getAssets();
         File indexFile = new File(indexDir, assetVersion + ".json");
         File virtualRoot = new File(new File(assetsDir, "virtual"), assetVersion);
 

@@ -35,14 +35,18 @@ public final class OfflineAuthenticator extends IAuthenticator {
         UserProfileProvider result = new UserProfileProvider();
         result.setSuccess(StrUtils.isNotBlank(info.username));
         result.setUserName(info.username);
-        String md5 = DigestUtils.md5Hex(info.username);
-        String uuid = md5.substring(0, 8) + '-' + md5.substring(8, 12) + '-' + md5.substring(12, 16) + '-' + md5.substring(16, 21) + md5.substring(21);
+        String uuid = getUUIDFromUserName(info.username);
         result.setSession(uuid);
         result.setUserId(uuid);
         result.setAccessToken("${auth_access_token}");
         result.setUserType("Legacy");
         result.setErrorReason(C.i18n("login.no_Player007"));
         return result;
+    }
+    
+    public static String getUUIDFromUserName(String str) {
+        String md5 = DigestUtils.md5Hex(str);
+        return md5.substring(0, 8) + '-' + md5.substring(8, 12) + '-' + md5.substring(12, 16) + '-' + md5.substring(16, 21) + md5.substring(21);
     }
 
     @Override

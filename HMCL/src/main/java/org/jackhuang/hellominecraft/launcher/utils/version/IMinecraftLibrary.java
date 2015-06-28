@@ -23,7 +23,7 @@ import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
  *
  * @author hyh
  */
-public abstract class IMinecraftLibrary {
+public abstract class IMinecraftLibrary implements Cloneable {
     
     public String name;
     public IMinecraftLibrary(String name) {
@@ -50,7 +50,7 @@ public abstract class IMinecraftLibrary {
 	hash = 89 * hash + (this.name != null ? this.name.hashCode() : 0);
 	return hash;
     }
-
+    
     @Override
-    protected abstract Object clone();
+    public abstract Object clone();
 }

@@ -16,7 +16,6 @@
  */
 package org.jackhuang.hellominecraft.launcher.views;
 
-import com.sun.awt.AWTUtilities;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -85,7 +84,8 @@ public final class MainFrame extends DraggableFrame {
 
         if (enableShadow)
             try {
-                AWTUtilities.setWindowOpaque(this, false);
+                //AWTUtilities.setWindowOpaque(this, false);
+                setBackground(new Color(0,0,0,0));
                 getRootPane().setBorder(border = new DropShadowBorder(borderColor, 4));
             } catch (Throwable ex) {
                 HMCLog.err("Failed to set window transparent.", ex);

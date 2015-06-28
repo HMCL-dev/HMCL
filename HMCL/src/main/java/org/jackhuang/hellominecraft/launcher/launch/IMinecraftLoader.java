@@ -88,7 +88,7 @@ public abstract class IMinecraftLoader {
             res.add("-Xmn128m");
         }
 
-        if (jv != null && jv.platform == Platform.BIT_32 && OS.getPlatform() == Platform.BIT_64)
+        if (jv != null && jv.platform == Platform.BIT_32 && Platform.getPlatform() == Platform.BIT_64)
             MessageBox.Show(C.i18n("advice.os64butjdk32"));
 
         if (!StrUtils.isBlank(v.getMaxMemory())) {

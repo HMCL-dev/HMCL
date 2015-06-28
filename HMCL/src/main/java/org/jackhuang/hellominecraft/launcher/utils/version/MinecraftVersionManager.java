@@ -126,7 +126,7 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
                 }
                 continue;
             }
-            MinecraftVersion mcVersion = null;
+            MinecraftVersion mcVersion;
             try {
                 mcVersion = gson.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
                 if (mcVersion == null) throw new RuntimeException("Wrong json format, got null.");
@@ -142,7 +142,7 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
                         HMCLog.warn("Ignoring: " + dir + ", the json of this Minecraft is malformed.", ex);
                         continue;
                     }
-                }
+                } else continue;
             }
             try {
                 if (!id.equals(mcVersion.id)) {

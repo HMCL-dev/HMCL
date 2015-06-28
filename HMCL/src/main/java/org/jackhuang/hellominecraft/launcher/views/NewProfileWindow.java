@@ -25,9 +25,6 @@ import org.jackhuang.hellominecraft.launcher.utils.settings.Settings;
  */
 public final class NewProfileWindow extends javax.swing.JDialog {
 
-    /**
-     * Creates new form NewProfileWindow
-     */
     public NewProfileWindow(java.awt.Frame parent) {
 	super(parent, true);
 	initComponents();

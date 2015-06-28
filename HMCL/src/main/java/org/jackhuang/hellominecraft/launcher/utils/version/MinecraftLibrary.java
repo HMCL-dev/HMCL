@@ -21,13 +21,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.utils.OS;
+import org.jackhuang.hellominecraft.utils.Platform;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 
 /**
  *
  * @author hyh
  */
-public class MinecraftLibrary extends IMinecraftLibrary implements Cloneable {
+public class MinecraftLibrary extends IMinecraftLibrary {
 
     public ArrayList<Rules> rules;
     public String url, formatted=null;
@@ -72,10 +73,7 @@ public class MinecraftLibrary extends IMinecraftLibrary implements Cloneable {
 			break;
 		    }
 		} else {
-		    if (r.os != null && (StrUtils.isBlank(r.os.name) || r.os.name.equalsIgnoreCase(OS.os().toString()))) {
-			flag = true;
-		    }
-		    if (r.os == null) {
+		    if (r.os == null || (r.os != null && (StrUtils.isBlank(r.os.name) || r.os.name.equalsIgnoreCase(OS.os().toString())))) {
 			flag = true;
 		    }
 		}
@@ -85,16 +83,7 @@ public class MinecraftLibrary extends IMinecraftLibrary implements Cloneable {
     }
 
     private String formatArch(String nati) {
-	String arch = System.getProperty("os.arch");
-	if (arch.contains("64")) {
-	    arch = "64";
-	} else {
-	    arch = "32";
-	}
-	if (nati == null) {
-	    return "";
-	}
-	return nati.replace("${arch}", arch);
+	return nati == null ? "" : nati.replace("${arch}", Platform.getPlatform().getBit());
     }
 
     private String getNative() {

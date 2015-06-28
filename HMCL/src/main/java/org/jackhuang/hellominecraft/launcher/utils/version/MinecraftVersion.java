@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
+import org.jackhuang.hellominecraft.launcher.utils.assets.AssetsIndex;
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.utils.ArrayUtils;
 
@@ -116,6 +117,10 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
     
     public boolean isAllowedToUnpackNatives() {
 	return true;
+    }
+    
+    public String getAssets() {
+        return assets == null ? AssetsIndex.DEFAULT_ASSET_NAME : assets;
     }
 
     @Override

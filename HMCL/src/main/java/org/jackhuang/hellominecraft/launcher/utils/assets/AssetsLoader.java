@@ -16,10 +16,12 @@
  */
 package org.jackhuang.hellominecraft.launcher.utils.assets;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.EventHandler;
 import org.jackhuang.hellominecraft.utils.MathUtils;
@@ -27,6 +29,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 /**
  *
@@ -39,8 +42,8 @@ public class AssetsLoader extends Thread {
     NodeList nodes;
     public String uri;
     ArrayList<Contents> al;
-    public final EventHandler<Throwable> failedEvent = new EventHandler<Throwable>(this);
-    public final EventHandler<List<Contents>> successEvent = new EventHandler<List<Contents>>(this);
+    public final EventHandler<Throwable> failedEvent = new EventHandler<>(this);
+    public final EventHandler<List<Contents>> successEvent = new EventHandler<>(this);
 
     AssetsLoader(String uri) {
         this.uri = uri;
@@ -74,7 +77,7 @@ public class AssetsLoader extends Thread {
     @Override
     public void run() {
         Thread.currentThread().setName("AssetsLoader");
-        al = new ArrayList<Contents>();
+        al = new ArrayList<>();
         try {
             HMCLog.log("AssetsLoader - Download begin.");
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -94,7 +97,7 @@ public class AssetsLoader extends Thread {
             HMCLog.log("AssetsLoader - Format end.");
 
             successEvent.execute(al);
-        } catch (Exception e) {
+        } catch (ParserConfigurationException | SAXException | IOException e) {
             HMCLog.warn("AssetsLoader - Failed", e);
             failedEvent.execute(e);
         }

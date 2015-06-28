@@ -35,7 +35,6 @@ import org.jackhuang.hellominecraft.utils.DoubleOutputStream;
 import org.jackhuang.hellominecraft.utils.JdkVersion;
 import org.jackhuang.hellominecraft.utils.LauncherPrintStream;
 import org.jackhuang.hellominecraft.utils.MessageBox;
-import org.jackhuang.hellominecraft.utils.OS;
 import org.jackhuang.hellominecraft.utils.Platform;
 import org.jackhuang.hellominecraft.utils.Utils;
 
@@ -106,15 +105,16 @@ public final class Launcher {
             return;
         }
 
-        if (!JdkVersion.isJava64Bit() && OS.getPlatform() == Platform.BIT_32)
+        if (!JdkVersion.isJava64Bit() && Platform.getPlatform() == Platform.BIT_32)
             MessageBox.Show(C.i18n("advice.os64butjdk32"));
 
         Method minecraftMain;
         try {
             minecraftMain = new URLClassLoader(urls).loadClass(mainClass).getMethod("main", String[].class);
-        } catch (Throwable t) {
+        } catch (ClassNotFoundException | NoSuchMethodException | SecurityException t) {
             MessageBox.Show(C.i18n("crash.main_class_not_found"));
             println("Minecraft main class not found.");
+            t.printStackTrace();
             return;
         }
 

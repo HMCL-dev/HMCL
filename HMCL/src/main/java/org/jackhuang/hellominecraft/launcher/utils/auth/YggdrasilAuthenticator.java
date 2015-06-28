@@ -99,7 +99,7 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
             }
             result.setUserName(username);
             result.setSuccess(true);
-            result.setUserId(UUIDTypeAdapter.fromUUID(selectedProfile.getId()));
+            result.setUserId(selectedProfile == null ? OfflineAuthenticator.getUUIDFromUserName(username) : UUIDTypeAdapter.fromUUID(selectedProfile.getId()));
             result.setUserProperties(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new LegacyPropertyMapSerializer()).create().toJson(ua.getUserProperties()));
 	    result.setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()));
             result.setAccessToken(ua.getAuthenticatedToken());

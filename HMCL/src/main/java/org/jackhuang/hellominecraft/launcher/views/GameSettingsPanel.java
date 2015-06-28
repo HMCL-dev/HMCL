@@ -1176,7 +1176,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         }
     }
 
-    Profile getProfile() {
+    final Profile getProfile() {
         if (cboProfiles.getSelectedIndex() >= 0)
             return Settings.getVersion(cboProfiles.getSelectedItem().toString());
         else return null;
@@ -1346,9 +1346,9 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
             while (model.getRowCount() > 0)
                 model.removeRow(0);
             String mcver = StrUtils.formatVersion(getMinecraftVersionFormatted());
-            List<InstallerVersionList.InstallerVersion> versions = list.getVersions(mcver);
-            if (versions != null) {
-                for (InstallerVersionList.InstallerVersion v : versions) {
+            List<InstallerVersionList.InstallerVersion> ver = list.getVersions(mcver);
+            if (ver != null) {
+                for (InstallerVersionList.InstallerVersion v : ver) {
                     Object a = v.selfVersion == null ? "null" : v.selfVersion;
                     Object b = v.mcVersion == null ? "null" : v.mcVersion;
                     Object[] row = new Object[]{a, b};
@@ -1356,7 +1356,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
                 }
                 table.updateUI();
             }
-            return versions;
+            return ver;
         }
     }
 
