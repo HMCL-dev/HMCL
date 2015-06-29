@@ -54,17 +54,17 @@ public class MojangDownloadProvider implements IDownloadProvider {
 
     @Override
     public String getVersionsDownloadURL() {
-        return "https://s3.amazonaws.com/Minecraft.Download/versions/";
+        return "http://s3.amazonaws.com/Minecraft.Download/versions/";
     }
 
     @Override
     public String getIndexesDownloadURL() {
-        return "https://s3.amazonaws.com/Minecraft.Download/indexes/";
+        return "http://s3.amazonaws.com/Minecraft.Download/indexes/";
     }
 
     @Override
     public String getVersionsListDownloadURL() {
-        return "https://s3.amazonaws.com/Minecraft.Download/versions/versions.json";
+        return "http://s3.amazonaws.com/Minecraft.Download/versions/versions.json";
     }
 
     @Override

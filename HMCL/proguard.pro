@@ -72,7 +72,7 @@
 -keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.installers.liteloader.LiteLoaderVersion { public <fields>; }
 -keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.installers.liteloader.LiteLoaderVersionsMeta { public <fields>; }
 
--keepclassmembers class org.jackhuang.hellominecraft.utils.JdkVersion { public <fields>; }
+-keepclassmembers class org.jackhuang.hellominecraft.utils.JdkVersion { private <fields>; }
 
 -keepclassmembers class org.jackhuang.hellominecraft.version.MinecraftRemoteLatestVersion { public <fields>; }
 -keepclassmembers class org.jackhuang.hellominecraft.version.MinecraftRemoteVersion { public <fields>; }

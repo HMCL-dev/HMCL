@@ -50,8 +50,8 @@ public class ForgeBMCLVersionList extends InstallerVersionList {
     @Override
     public void refreshList(String[] neededVersions) throws Exception {
         if(versionMap == null) {
-            versionMap = new HashMap<String, List<InstallerVersion>>();
-            versions = new ArrayList<InstallerVersion>();
+            versionMap = new HashMap<>();
+            versions = new ArrayList<>();
         }
         
         for (String x : neededVersions) {
@@ -69,13 +69,13 @@ public class ForgeBMCLVersionList extends InstallerVersionList {
 
                     List<InstallerVersion> al = ArrayUtils.tryGetMapWithList(versionMap, StrUtils.formatVersion(v.minecraft));
                     iv.changelog = v.downloads.changelog;
-                    iv.installer = "http://bmclapi.bangbang93.com/forge/getforge/" + iv.mcVersion + "/" + iv.selfVersion;
+                    iv.installer = ArrayUtils.getEnd(v.downloads.installer);
                     iv.universal = ArrayUtils.getEnd(v.downloads.universal);
                     al.add(iv);
                     versions.add(iv);
                 }
             } catch(JsonSyntaxException e) {
-                HMCLog.warn("Failed to parse BMCLAPI response.", e);
+                HMCLog.warn("Failed to parse BMCLAPI2 response.", e);
             }
         }
         Collections.sort(versions, new InstallerVersionComparator());
