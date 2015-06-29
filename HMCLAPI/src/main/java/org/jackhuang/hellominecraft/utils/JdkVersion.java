@@ -31,18 +31,30 @@ import org.jackhuang.hellominecraft.HMCLog;
  */
 public final class JdkVersion {
 
-    public String ver;
+    private String ver;
+
+    public String getVersion() {
+        return ver;
+    }
+
+    public Platform getPlatform() {
+        return Platform.values()[platform];
+    }
+
+    public String getLocation() {
+        return location;
+    }
     /**
      * -1 - unkown 0 - 32Bit 1 - 64Bit
      */
-    public Platform platform;
-    
-    public String location;
+    private int platform;
+
+    private String location;
 
     @Override
     public boolean equals(Object obj) {
-        if(!(obj instanceof JdkVersion)) return false;
-        JdkVersion b = (JdkVersion)obj;
+        if (!(obj instanceof JdkVersion)) return false;
+        JdkVersion b = (JdkVersion) obj;
         return new File(b.location).equals(new File(location));
     }
 
@@ -53,14 +65,14 @@ public final class JdkVersion {
 
     public JdkVersion(String location) {
         File f = new File(location);
-        if(f.exists() && f.isFile()) f = f.getParentFile();
+        if (f.exists() && f.isFile()) f = f.getParentFile();
         this.location = f.getAbsolutePath();
     }
 
     public JdkVersion(String location, String ver, Platform platform) {
         this(location);
         this.ver = ver;
-        this.platform = platform;
+        this.platform = platform.ordinal();
     }
 
     /**
@@ -94,18 +106,17 @@ public final class JdkVersion {
     static {
         javaVersion = System.getProperty("java.version");
         // version String should look like "1.4.2_10"
-        if (javaVersion.contains("1.9.")) {
+        if (javaVersion.contains("1.9."))
             majorJavaVersion = JAVA_18;
-        } else if (javaVersion.contains("1.8.")) {
+        else if (javaVersion.contains("1.8."))
             majorJavaVersion = JAVA_18;
-        } else if (javaVersion.contains("1.7.")) {
+        else if (javaVersion.contains("1.7."))
             majorJavaVersion = JAVA_17;
-        } else if (javaVersion.contains("1.6.")) {
+        else if (javaVersion.contains("1.6."))
             majorJavaVersion = JAVA_16;
-        } else {
+        else
             // else leave 1.5 as default (it's either 1.5 or unknown)
             majorJavaVersion = JAVA_15;
-        }
     }
 
     /**
@@ -125,7 +136,8 @@ public final class JdkVersion {
      *
      *
      * rn a code comparable to the JAVA_XX codes in this class
-     * @return 
+     *
+     * @return
      * @see #JAVA_13
      * @see #JAVA_14
      * @see #JAVA_15
@@ -193,19 +205,17 @@ public final class JdkVersion {
         } catch (InterruptedException | IOException e) {
             HMCLog.warn("Failed to get java version", e);
         } finally {
-            if (br != null) {
+            if (br != null)
                 br.close();
-            }
         }
         return new JdkVersion(file, ver, platform);
     }
 
     public void write(File f) throws IOException {
-        if (ver != null && platform != Platform.UNKNOWN) {
+        if (ver != null && getPlatform() != Platform.UNKNOWN)
             FileUtils.write(f, ver + "\n" + platform);
-        }
     }
-    
+
     public boolean isEarlyAccess() {
         return ver != null && ver.endsWith("-ea");
     }

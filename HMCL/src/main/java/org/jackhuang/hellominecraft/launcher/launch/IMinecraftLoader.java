@@ -88,12 +88,12 @@ public abstract class IMinecraftLoader {
             res.add("-Xmn128m");
         }
 
-        if (jv != null && jv.platform == Platform.BIT_32 && Platform.getPlatform() == Platform.BIT_64)
+        if (jv != null && jv.getPlatform() == Platform.BIT_32 && Platform.getPlatform() == Platform.BIT_64)
             MessageBox.Show(C.i18n("advice.os64butjdk32"));
 
         if (!StrUtils.isBlank(v.getMaxMemory())) {
             int mem = MathUtils.parseMemory(v.getMaxMemory(), 2147483647);
-            if (jv != null && jv.platform == Platform.BIT_32 && mem > 1024)
+            if (jv != null && jv.getPlatform() == Platform.BIT_32 && mem > 1024)
                 MessageBox.Show(C.i18n("launch.too_big_memory_alloc_64bit"));
             else {
                 long a = OS.getTotalPhysicalMemory() / 1024 / 1024;
@@ -107,7 +107,7 @@ public abstract class IMinecraftLoader {
         }
 
         if (!StrUtils.isBlank(v.getPermSize()) && !v.isNoJVMArgs())
-            if (jv != null && jv.ver != null && (jv.ver.startsWith("1.8") || jv.ver.startsWith("1.9")));
+            if (jv != null && jv.getVersion() != null && (jv.getVersion().startsWith("1.8") || jv.getVersion().startsWith("1.9")));
             else res.add("-XX:MaxPermSize=" + v.getPermSize() + "m");
 
         if (!v.isNoJVMArgs()) appendJVMArgs(res);
