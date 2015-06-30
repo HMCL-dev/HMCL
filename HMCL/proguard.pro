@@ -45,7 +45,7 @@
 -keep class org.jackhuang.hellominecraft.launcher.Launcher { public static void main(java.lang.String[]); }
 
 -keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.settings.Profile { private <fields>; public <fields>; }
--keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.settings.Config { public <fields>; }
+-keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.settings.Config { private <fields>; }
 
 -keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.assets.AssetsObject { <fields>; }
 -keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.assets.AssetsIndex { <fields>; }

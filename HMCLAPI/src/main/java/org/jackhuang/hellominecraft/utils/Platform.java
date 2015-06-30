@@ -50,7 +50,6 @@ public enum Platform {
     public abstract String getBit();
     
     public static Platform getPlatform() {
-	String arch = System.getProperty("os.arch");
-	return arch.contains("64") ? Platform.BIT_64 : Platform.BIT_32;
+	return System.getProperty("os.arch").contains("64") ? BIT_64 : BIT_32;
     }
 }

@@ -44,7 +44,7 @@ public final class Config {
     private boolean enableShadow;
     @SerializedName("theme")
     private int theme;
-    
+    @SerializedName("java")
     private List<JdkVersion> java;
 
     public List<JdkVersion> getJava() {

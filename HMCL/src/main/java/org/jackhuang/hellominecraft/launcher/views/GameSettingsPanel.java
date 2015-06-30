@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.launcher.views;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -931,9 +932,15 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_btnRemoveProfileActionPerformed
 
     private void cboVersionsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboVersionsItemStateChanged
-        if (isLoading || cboVersions.getSelectedIndex() < 0 || StrUtils.isBlank((String) cboVersions.getSelectedItem()) || getProfile() == null) return;
+        
+        if (isLoading || evt.getStateChange() != ItemEvent.SELECTED || cboVersions.getSelectedIndex() < 0 || StrUtils.isBlank((String) cboVersions.getSelectedItem()) || getProfile() == null)
+            return;
         loadMinecraftVersion((String) cboVersions.getSelectedItem());
         versionChanged(getProfile(), (String) cboVersions.getSelectedItem());
+        
+        getProfile().setSelectedMinecraftVersion(cboVersions.getSelectedItem().toString());
+        cboVersions.setToolTipText(cboVersions.getSelectedItem().toString());
+        Settings.save();
     }//GEN-LAST:event_cboVersionsItemStateChanged
 
     private void btnRefreshVersionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshVersionsActionPerformed

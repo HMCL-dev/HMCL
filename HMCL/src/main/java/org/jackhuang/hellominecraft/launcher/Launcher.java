@@ -105,7 +105,7 @@ public final class Launcher {
             return;
         }
 
-        if (!JdkVersion.isJava64Bit() && Platform.getPlatform() == Platform.BIT_32)
+        if (!JdkVersion.isJava64Bit() && Platform.getPlatform() == Platform.BIT_64)
             MessageBox.Show(C.i18n("advice.os64butjdk32"));
 
         Method minecraftMain;

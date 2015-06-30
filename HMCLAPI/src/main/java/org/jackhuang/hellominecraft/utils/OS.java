@@ -62,7 +62,7 @@ public enum OS {
             OperatingSystemMXBean o = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
             return o.getTotalPhysicalMemorySize();
         } catch(Throwable t) {
-            HMCLog.warn("Failed to get total physical memory size", t);
+            HMCLog.warn("Failed to get total physical memory size");
             return -1;
         }
     }
