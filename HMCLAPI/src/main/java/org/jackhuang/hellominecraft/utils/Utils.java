@@ -16,6 +16,7 @@
  */
 package org.jackhuang.hellominecraft.utils;
 
+import org.jackhuang.hellominecraft.utils.system.MessageBox;
 import com.google.gson.GsonBuilder;
 import com.sun.management.OperatingSystemMXBean;
 import java.awt.Desktop;

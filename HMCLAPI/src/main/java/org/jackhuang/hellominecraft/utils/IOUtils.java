@@ -16,6 +16,7 @@
  */
 package org.jackhuang.hellominecraft.utils;
 
+import org.jackhuang.hellominecraft.utils.system.OS;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;

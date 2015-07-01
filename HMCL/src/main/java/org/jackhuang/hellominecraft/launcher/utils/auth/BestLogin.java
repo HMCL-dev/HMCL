@@ -19,7 +19,7 @@ package org.jackhuang.hellominecraft.launcher.utils.auth;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import org.jackhuang.hellominecraft.utils.DigestUtils;
+import org.jackhuang.hellominecraft.utils.code.DigestUtils;
 
 /**
  *

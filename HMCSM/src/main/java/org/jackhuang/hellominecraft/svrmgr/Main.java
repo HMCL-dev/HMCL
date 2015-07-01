@@ -10,7 +10,7 @@ import java.awt.Font;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import javax.swing.UIManager;
-import org.jackhuang.hellominecraft.utils.functions.DoneListener0;
+import org.jackhuang.hellominecraft.utils.functions.NonConsumer;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.views.LogWindow;
 import org.jackhuang.hellominecraft.svrmgr.settings.SettingsManager;
@@ -41,7 +41,7 @@ public class Main {
 	    } catch (Throwable ex) {
 		HMCLog.warn("Failed to set look and feel", ex);
 	    }
-	    new UpdateChecker(new VersionNumber(firstVer, secondVer, thirdVer), "hmcsm", SettingsManager.settings.checkUpdate, new DoneListener0() {
+	    new UpdateChecker(new VersionNumber(firstVer, secondVer, thirdVer), "hmcsm", SettingsManager.settings.checkUpdate, new NonConsumer() {
 
                 @Override
                 public void onDone() {

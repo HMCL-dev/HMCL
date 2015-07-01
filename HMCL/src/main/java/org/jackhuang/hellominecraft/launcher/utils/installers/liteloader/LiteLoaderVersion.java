@@ -16,7 +16,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.utils.installers.liteloader;
 
-import org.jackhuang.hellominecraft.launcher.utils.version.MinecraftLibrary;
+import org.jackhuang.hellominecraft.launcher.version.MinecraftLibrary;
 
 /**
  *

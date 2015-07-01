@@ -38,7 +38,7 @@ import javax.swing.JPanel;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
-import org.jackhuang.hellominecraft.launcher.utils.settings.Settings;
+import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.utils.UpdateChecker;
 import org.jackhuang.hellominecraft.utils.Utils;
 import org.jackhuang.hellominecraft.views.DropShadowBorder;

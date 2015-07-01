@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.launcher.utils.version.MinecraftLibrary;
+import org.jackhuang.hellominecraft.launcher.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList;
 import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList.InstallerVersion;
 import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionNewerComparator;

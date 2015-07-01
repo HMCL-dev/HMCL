@@ -18,7 +18,7 @@ package org.jackhuang.hellominecraft.launcher.utils.auth;
 
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.utils.DigestUtils;
+import org.jackhuang.hellominecraft.utils.code.DigestUtils;
 
 /**
  *

@@ -23,12 +23,12 @@ import org.jackhuang.hellominecraft.launcher.launch.GameLauncher.DownloadLibrary
 import org.jackhuang.hellominecraft.launcher.utils.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.utils.auth.LoginInfo;
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
-import org.jackhuang.hellominecraft.launcher.utils.settings.Profile;
+import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.tasks.ParallelTask;
 import org.jackhuang.hellominecraft.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
-import org.jackhuang.hellominecraft.utils.Compressor;
-import org.jackhuang.hellominecraft.utils.MessageBox;
+import org.jackhuang.hellominecraft.utils.system.Compressor;
+import org.jackhuang.hellominecraft.utils.system.MessageBox;
 
 public class DefaultGameLauncher extends GameLauncher {
 

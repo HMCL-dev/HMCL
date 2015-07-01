@@ -42,7 +42,7 @@ import org.jackhuang.hellominecraft.tasks.download.HTTPGetTask;
 import org.jackhuang.hellominecraft.utils.FileUtils;
 import org.jackhuang.hellominecraft.svrmgr.utils.IMonitorService;
 import org.jackhuang.hellominecraft.utils.IOUtils;
-import org.jackhuang.hellominecraft.utils.MessageBox;
+import org.jackhuang.hellominecraft.utils.system.MessageBox;
 import org.jackhuang.hellominecraft.svrmgr.utils.ModType;
 import org.jackhuang.hellominecraft.svrmgr.utils.MonitorInfoBean;
 import org.jackhuang.hellominecraft.svrmgr.utils.MonitorServiceImpl;

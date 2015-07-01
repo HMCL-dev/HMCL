@@ -29,12 +29,12 @@ import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
-import org.jackhuang.hellominecraft.launcher.utils.settings.Settings;
+import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.utils.FileUtils;
 import org.jackhuang.hellominecraft.utils.NetUtils;
-import org.jackhuang.hellominecraft.launcher.utils.version.MinecraftLibrary;
-import org.jackhuang.hellominecraft.utils.MessageBox;
+import org.jackhuang.hellominecraft.launcher.version.MinecraftLibrary;
+import org.jackhuang.hellominecraft.utils.system.MessageBox;
 
 /**
  *

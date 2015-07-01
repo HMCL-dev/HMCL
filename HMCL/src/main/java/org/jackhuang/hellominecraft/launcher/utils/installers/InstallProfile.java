@@ -17,7 +17,7 @@
 package org.jackhuang.hellominecraft.launcher.utils.installers;
 
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hellominecraft.launcher.utils.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.launcher.utils.installers.forge.Install;
 
 /**

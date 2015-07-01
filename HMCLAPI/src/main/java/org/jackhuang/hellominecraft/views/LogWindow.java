@@ -17,8 +17,8 @@
 package org.jackhuang.hellominecraft.views;
 
 import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.utils.functions.DoneListener0;
-import org.jackhuang.hellominecraft.utils.functions.DoneListener0Return;
+import org.jackhuang.hellominecraft.utils.functions.NonConsumer;
+import org.jackhuang.hellominecraft.utils.functions.NonFunction;
 import org.jackhuang.hellominecraft.utils.DoubleOutputStream;
 import org.jackhuang.hellominecraft.utils.LauncherPrintStream;
 import org.jackhuang.hellominecraft.utils.StrUtils;
@@ -32,8 +32,8 @@ import org.jackhuang.hellominecraft.utils.Utils;
 public class LogWindow extends javax.swing.JFrame {
     
     boolean movingEnd;
-    DoneListener0Return<Boolean> listener;
-    DoneListener0 terminateGameListener;
+    NonFunction<Boolean> listener;
+    NonConsumer terminateGameListener;
 
     /**
      * Creates new form LogWindow
@@ -250,11 +250,11 @@ public class LogWindow extends javax.swing.JFrame {
 	log(StrUtils.getStackTrace(t));
     }
     
-    public void setExit(DoneListener0Return<Boolean> exit) {
+    public void setExit(NonFunction<Boolean> exit) {
 	this.listener = exit;
     }
     
-    public void setTerminateGame(DoneListener0 l) {
+    public void setTerminateGame(NonConsumer l) {
 	this.terminateGameListener = l;
     }
     

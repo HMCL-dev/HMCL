@@ -11,7 +11,7 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.util.StringTokenizer;
 import com.sun.management.OperatingSystemMXBean;
-import org.jackhuang.hellominecraft.utils.Bytes;
+import org.jackhuang.hellominecraft.utils.StrUtils;
 
 /**
  *
@@ -33,6 +33,7 @@ public class MonitorServiceImpl implements IMonitorService {
      * @throws Exception
      * @author GuoHuang
      */
+    @Override
     public MonitorInfoBean getMonitorInfoBean() throws Exception {
         int kb = 1024;
         // 可使用内存
@@ -78,7 +79,7 @@ public class MonitorServiceImpl implements IMonitorService {
         InputStream is = null;
         InputStreamReader isr = null;
         BufferedReader brStat = null;
-        StringTokenizer tokenStat = null;
+        StringTokenizer tokenStat;
         try {
             System.out.println("Getting usage rate of CPU , linux version: " + linuxVersion);
             Process process = Runtime.getRuntime().exec("top -b -n 1");
@@ -102,9 +103,9 @@ public class MonitorServiceImpl implements IMonitorService {
                 user = user.substring(0, user.indexOf("%"));
                 system = system.substring(0, system.indexOf("%"));
                 nice = nice.substring(0, nice.indexOf("%"));
-                float userUsage = new Float(user).floatValue();
-                float systemUsage = new Float(system).floatValue();
-                float niceUsage = new Float(nice).floatValue();
+                float userUsage = new Float(user);
+                float systemUsage = new Float(system);
+                float niceUsage = new Float(nice);
                 return (userUsage + systemUsage + niceUsage) / 100;
             } else {
                 brStat.readLine();
@@ -120,7 +121,7 @@ public class MonitorServiceImpl implements IMonitorService {
                 String cpuUsage = tokenStat.nextToken();
                 System.out.println("CPU idle : " + cpuUsage);
                 Float usage = new Float(cpuUsage.substring(0, cpuUsage.indexOf("%")));
-                return (1 - usage.floatValue() / 100);
+                return (1 - usage / 100);
             }
         } catch (IOException ioe) {
             System.out.println(ioe.getMessage());
@@ -164,11 +165,11 @@ public class MonitorServiceImpl implements IMonitorService {
             if (c0 != null && c1 != null) {
                 long idletime = c1[0] - c0[0];
                 long busytime = c1[1] - c0[1];
-                return Double.valueOf(PERCENT * (busytime) / (busytime + idletime)).doubleValue();
+                return (double) PERCENT * (busytime) / (busytime + idletime);
             } else {
                 return 0.0;
             }
-        } catch (Exception ex) {
+        } catch (IOException | InterruptedException ex) {
             ex.printStackTrace();
             return 0.0;
         }
@@ -206,13 +207,13 @@ public class MonitorServiceImpl implements IMonitorService {
                 }
                 // 字段出现顺序：Caption,CommandLine,KernelModeTime,ReadOperationCount,
                 // ThreadCount,UserModeTime,WriteOperation
-                String caption = Bytes.substring(line, capidx, cmdidx - 1).trim();
-                String cmd = Bytes.substring(line, cmdidx, kmtidx - 1).trim();
-                if (cmd.indexOf("wmic.exe") >= 0) {
+                String caption = StrUtils.substring(line, capidx, cmdidx - 1).trim();
+                String cmd = StrUtils.substring(line, cmdidx, kmtidx - 1).trim();
+                if (cmd.contains("wmic.exe")) {
                     continue;
                 }
-                String s1 = Bytes.substring(line, kmtidx, rocidx - 1).trim();
-                String s2 = Bytes.substring(line, umtidx, wocidx - 1).trim();
+                String s1 = StrUtils.substring(line, kmtidx, rocidx - 1).trim();
+                String s2 = StrUtils.substring(line, umtidx, wocidx - 1).trim();
                 if (caption.equals("System Idle Process") || caption.equals("System")) {
                     if (s1.length() > 0) {
                         idletime += Long.parseLong(s1);
@@ -232,7 +233,7 @@ public class MonitorServiceImpl implements IMonitorService {
             retn[0] = idletime;
             retn[1] = kneltime + usertime;
             return retn;
-        } catch (Exception ex) {
+        } catch (IOException | NumberFormatException ex) {
             ex.printStackTrace();
         } finally {
             try {

@@ -31,6 +31,15 @@ import java.util.StringTokenizer;
  */
 public final class StrUtils {
 
+    public static String substring(String src, int start_idx, int end_idx) {
+        byte[] b = src.getBytes();
+        String tgt = "";
+        for (int i = start_idx; i <= end_idx; i++) {
+            tgt += (char) b[i];
+        }
+        return tgt;
+    }
+
     public static String makeCommand(List<String> cmd) {
         StringBuilder cmdbuf = new StringBuilder(120);
         for (int i = 0; i < cmd.size(); i++) {

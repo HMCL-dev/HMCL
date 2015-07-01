@@ -16,8 +16,9 @@
  */
 package org.jackhuang.hellominecraft.utils;
 
+import org.jackhuang.hellominecraft.utils.system.MessageBox;
 import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.utils.functions.DoneListener0;
+import org.jackhuang.hellominecraft.utils.functions.NonConsumer;
 import org.jackhuang.hellominecraft.HMCLog;
 
 /**
@@ -29,9 +30,9 @@ public final class UpdateChecker extends Thread {
     public VersionNumber base;
     public String type;
     public boolean continueUpdate;
-    public DoneListener0 dl;
+    public NonConsumer dl;
 
-    public UpdateChecker(VersionNumber base, String type, boolean continueUpdate, DoneListener0 dl) {
+    public UpdateChecker(VersionNumber base, String type, boolean continueUpdate, NonConsumer dl) {
 	super("UpdateChecker");
         this.base = base;
         this.type = type;

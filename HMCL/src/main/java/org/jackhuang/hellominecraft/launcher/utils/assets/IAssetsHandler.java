@@ -26,11 +26,11 @@ import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.utils.download.IDownloadProvider;
-import org.jackhuang.hellominecraft.launcher.utils.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.functions.Consumer;
-import org.jackhuang.hellominecraft.utils.DigestUtils;
+import org.jackhuang.hellominecraft.utils.code.DigestUtils;
 import org.jackhuang.hellominecraft.utils.IOUtils;
 import org.jackhuang.hellominecraft.utils.NetUtils;
 

@@ -16,17 +16,38 @@
  */
 package org.jackhuang.hellominecraft.utils;
 
+import java.util.Map;
+
 /**
  *
  * @author hyh
+ * @param <K> K Type
+ * @param <V> V Type
  */
-public class Pair<K, V> {
+public class Pair<K, V> implements Map.Entry<K, V> {
     public K key;
     public V value;
 
     public Pair(K k, V v) {
         key = k;
         value = v;
+    }
+
+    @Override
+    public K getKey() {
+        return key;
+    }
+
+    @Override
+    public V getValue() {
+        return value;
+    }
+
+    @Override
+    public V setValue(V value) {
+        V t = this.value;
+        this.value = value;
+        return t;
     }
     
 }

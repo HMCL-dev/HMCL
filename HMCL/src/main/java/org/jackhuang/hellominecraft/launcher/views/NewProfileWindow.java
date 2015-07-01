@@ -16,8 +16,8 @@
  */
 package org.jackhuang.hellominecraft.launcher.views;
 
-import org.jackhuang.hellominecraft.launcher.utils.settings.Profile;
-import org.jackhuang.hellominecraft.launcher.utils.settings.Settings;
+import org.jackhuang.hellominecraft.launcher.settings.Profile;
+import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 
 /**

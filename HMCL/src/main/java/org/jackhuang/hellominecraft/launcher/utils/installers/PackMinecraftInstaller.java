@@ -19,7 +19,7 @@ package org.jackhuang.hellominecraft.launcher.utils.installers;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import org.jackhuang.hellominecraft.utils.Compressor;
+import org.jackhuang.hellominecraft.utils.system.Compressor;
 import org.jackhuang.hellominecraft.utils.FileUtils;
 import org.jackhuang.hellominecraft.utils.IOUtils;
 

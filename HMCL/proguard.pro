@@ -44,18 +44,18 @@
 -keep class org.jackhuang.hellominecraft.launcher.Main { public static void main(java.lang.String[]); }
 -keep class org.jackhuang.hellominecraft.launcher.Launcher { public static void main(java.lang.String[]); }
 
--keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.settings.Profile { private <fields>; public <fields>; }
--keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.settings.Config { private <fields>; }
+-keepclassmembers class org.jackhuang.hellominecraft.launcher.settings.Profile { private <fields>; public <fields>; }
+-keepclassmembers class org.jackhuang.hellominecraft.launcher.settings.Config { private <fields>; }
+
+-keepclassmembers class org.jackhuang.hellominecraft.launcher.version.MinecraftLibrary { public <fields>; }
+-keepclassmembers class org.jackhuang.hellominecraft.launcher.version.IMinecraftLibrary { public <fields>; }
+-keepclassmembers class org.jackhuang.hellominecraft.launcher.version.Natives { public <fields>; }
+-keepclassmembers class org.jackhuang.hellominecraft.launcher.version.OS { public <fields>; }
+-keepclassmembers class org.jackhuang.hellominecraft.launcher.version.Rules { public <fields>; }
+-keepclassmembers class org.jackhuang.hellominecraft.launcher.version.MinecraftVersion { public <fields>; }
 
 -keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.assets.AssetsObject { <fields>; }
 -keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.assets.AssetsIndex { <fields>; }
-
--keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.version.MinecraftLibrary { public <fields>; }
--keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.version.IMinecraftLibrary { public <fields>; }
--keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.version.Natives { public <fields>; }
--keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.version.OS { public <fields>; }
--keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.version.Rules { public <fields>; }
--keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.version.MinecraftVersion { public <fields>; }
 
 -keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.installers.forge.InstallProfile { public <fields>; }
 -keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.installers.forge.Install { public <fields>; }
@@ -72,7 +72,7 @@
 -keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.installers.liteloader.LiteLoaderVersion { public <fields>; }
 -keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.installers.liteloader.LiteLoaderVersionsMeta { public <fields>; }
 
--keepclassmembers class org.jackhuang.hellominecraft.utils.JdkVersion { private <fields>; }
+-keepclassmembers class org.jackhuang.hellominecraft.utils.system.JdkVersion { private <fields>; }
 
 -keepclassmembers class org.jackhuang.hellominecraft.version.MinecraftRemoteLatestVersion { public <fields>; }
 -keepclassmembers class org.jackhuang.hellominecraft.version.MinecraftRemoteVersion { public <fields>; }

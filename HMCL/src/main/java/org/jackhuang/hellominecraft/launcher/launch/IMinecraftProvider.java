@@ -21,8 +21,8 @@ import java.util.Collection;
 import java.util.List;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
-import org.jackhuang.hellominecraft.launcher.utils.settings.Profile;
-import org.jackhuang.hellominecraft.launcher.utils.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.launcher.settings.Profile;
+import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 
 /**
  *

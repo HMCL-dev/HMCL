@@ -1,0 +1,213 @@
+/*
+ * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.
+ */
+package org.jackhuang.hellominecraft.utils.system;
+
+import org.jackhuang.hellominecraft.utils.system.Platform;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.FileUtils;
+import org.jackhuang.hellominecraft.utils.StrUtils;
+
+/**
+ *
+ * @author hyh
+ */
+public final class JdkVersion {
+
+    private String ver;
+
+    public String getVersion() {
+        return ver;
+    }
+
+    public Platform getPlatform() {
+        return Platform.values()[platform];
+    }
+
+    public String getLocation() {
+        return location;
+    }
+    
+    public int getParsedVersion() {
+        return parseVersion(getVersion());
+    }
+    /**
+     * -1 - unkown 0 - 32Bit 1 - 64Bit
+     */
+    private int platform;
+
+    private String location;
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof JdkVersion)) return false;
+        JdkVersion b = (JdkVersion) obj;
+        return new File(b.location).equals(new File(location));
+    }
+
+    @Override
+    public int hashCode() {
+        return new File(location).hashCode();
+    }
+
+    public JdkVersion(String location) {
+        File f = new File(location);
+        if (f.exists() && f.isFile()) f = f.getParentFile();
+        this.location = f.getAbsolutePath();
+    }
+
+    public JdkVersion(String location, String ver, Platform platform) {
+        this(location);
+        this.ver = ver;
+        this.platform = platform.ordinal();
+    }
+
+    /**
+     * Constant identifying the 1.5 JVM (Java 5).
+     */
+    public static final int UNKOWN = 2;
+    /**
+     * Constant identifying the 1.6 JVM (Java 6).
+     */
+    public static final int JAVA_16 = 3;
+    /**
+     * Constant identifying the 1.7 JVM (Java 7).
+     */
+    public static final int JAVA_17 = 4;
+    /**
+     * Constant identifying the 1.8 JVM (Java 8).
+     */
+    public static final int JAVA_18 = 5;
+    /**
+     * Constant identifying the 1.9 JVM (Java 9).
+     */
+    public static final int JAVA_19 = 6;
+
+    private static final String javaVersion;
+    private static final int majorJavaVersion;
+
+    static {
+        javaVersion = System.getProperty("java.version");
+        // version String should look like "1.4.2_10"
+        majorJavaVersion = parseVersion(javaVersion);
+    }
+    
+    private static int parseVersion(String javaVersion) {
+        if(StrUtils.isBlank(javaVersion)) return UNKOWN;
+        int a = UNKOWN;
+        if (javaVersion.contains("1.9."))
+            a = JAVA_19;
+        else if (javaVersion.contains("1.8."))
+            a = JAVA_18;
+        else if (javaVersion.contains("1.7."))
+            a = JAVA_17;
+        else if (javaVersion.contains("1.6."))
+            a = JAVA_16;
+        return a;
+    }
+
+    /**
+     * Return the full Java version string, as returned by
+     * <code>System.getProperty("java.version")</code>.
+     *
+     * @return the full Java version string
+     * @see System#getProperty(String)
+     */
+    public static String getJavaVersion() {
+        return javaVersion;
+    }
+
+    /**
+     * Get the major version code. This means we can do things like
+     * <code>if (getMajorJavaVersion() < JAVA_14)</code>. @retu
+     *
+     *
+     * rn a code comparable to the JAVA_XX codes in this class
+     *
+     * @return
+     * @see #JAVA_13
+     * @see #JAVA_14
+     * @see #JAVA_15
+     * @see #JAVA_16
+     * @see #JAVA_17
+     */
+    public static int getMajorJavaVersion() {
+        return majorJavaVersion;
+    }
+
+    public static boolean isJava64Bit() {
+        String jdkBit = System.getProperty("sun.arch.data.model");
+        return jdkBit.contains("64");
+    }
+
+    static Pattern p = Pattern.compile("java version \"[1-9]*\\.[1-9]*\\.[0-9]*(.*?)\"");
+
+    public static JdkVersion getJavaVersionFromExecutable(String file) throws IOException {
+        String[] str = new String[]{file, "-version"};
+        ProcessBuilder pb = new ProcessBuilder(str);
+        JavaProcess jp = new JavaProcess(str, pb.start(), null);
+        InputStream is = jp.getRawProcess().getErrorStream();
+        BufferedReader br = null;
+        int lineNumber = 0;
+        String ver = null;
+        Platform platform = Platform.UNKNOWN;
+        try {
+            br = new BufferedReader(new InputStreamReader(is));
+            String line;
+            jp.getRawProcess().waitFor();
+            while ((line = br.readLine()) != null) {
+                lineNumber++;
+                switch (lineNumber) {
+                    case 1:
+                        Matcher m = p.matcher(line);
+                        if (m.find()) {
+                            ver = m.group();
+                            ver = ver.substring("java version \"".length(), ver.length() - 1);
+                        }
+                        break;
+                    case 3:
+                        if (line.contains("64-Bit"))
+                            platform = Platform.BIT_64;
+                        else
+                            platform = Platform.BIT_32;
+                        break;
+                }
+            }
+        } catch (InterruptedException | IOException e) {
+            HMCLog.warn("Failed to get java version", e);
+        } finally {
+            if (br != null)
+                br.close();
+        }
+        return new JdkVersion(file, ver, platform);
+    }
+
+    public void write(File f) throws IOException {
+        if (ver != null && getPlatform() != Platform.UNKNOWN)
+            FileUtils.write(f, ver + "\n" + platform);
+    }
+
+    public boolean isEarlyAccess() {
+        return getVersion() != null && getVersion().endsWith("-ea");
+    }
+}

@@ -29,15 +29,15 @@ import org.jackhuang.hellominecraft.launcher.utils.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.utils.auth.LoginInfo;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
-import org.jackhuang.hellominecraft.launcher.utils.settings.Profile;
+import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.utils.FileUtils;
 import org.jackhuang.hellominecraft.utils.IOUtils;
-import org.jackhuang.hellominecraft.utils.JavaProcess;
-import org.jackhuang.hellominecraft.utils.MessageBox;
-import org.jackhuang.hellominecraft.utils.OS;
+import org.jackhuang.hellominecraft.utils.system.JavaProcess;
+import org.jackhuang.hellominecraft.utils.system.MessageBox;
+import org.jackhuang.hellominecraft.utils.system.OS;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.EventHandler;
-import org.jackhuang.hellominecraft.utils.ProcessManager;
+import org.jackhuang.hellominecraft.utils.system.ProcessManager;
 
 public class GameLauncher {
 

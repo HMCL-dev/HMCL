@@ -20,13 +20,13 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.utils.functions.TrueDoneListener;
+import org.jackhuang.hellominecraft.utils.functions.TrueFunction;
 import org.jackhuang.hellominecraft.launcher.views.MainFrame;
-import org.jackhuang.hellominecraft.utils.tinystream.CollectionUtils;
+import org.jackhuang.hellominecraft.utils.CollectionUtils;
 import org.jackhuang.hellominecraft.utils.Event;
-import org.jackhuang.hellominecraft.utils.JavaProcess;
-import org.jackhuang.hellominecraft.utils.MessageBox;
-import org.jackhuang.hellominecraft.utils.ProcessThread;
+import org.jackhuang.hellominecraft.utils.system.JavaProcess;
+import org.jackhuang.hellominecraft.utils.system.MessageBox;
+import org.jackhuang.hellominecraft.utils.system.ProcessThread;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.views.LogWindow;
 
@@ -48,7 +48,7 @@ public class LaunchFinisher implements Event<List<String>> {
                 MainFrame.instance.closeMessage();
             else {
                 if (LogWindow.instance.isVisible())
-                    LogWindow.instance.setExit(TrueDoneListener.instance);
+                    LogWindow.instance.setExit(TrueFunction.instance);
                 MainFrame.instance.dispose();
             }
             Event<JavaProcess> event = (sender2, t) -> {

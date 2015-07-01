@@ -21,13 +21,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.launcher.utils.settings.Profile;
+import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.tasks.communication.PreviousResult;
 import org.jackhuang.hellominecraft.tasks.communication.PreviousResultRegistrator;
 import org.jackhuang.hellominecraft.utils.FileUtils;
-import org.jackhuang.hellominecraft.launcher.utils.version.MinecraftLibrary;
-import org.jackhuang.hellominecraft.launcher.utils.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.launcher.version.MinecraftLibrary;
+import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 
 /**
  *

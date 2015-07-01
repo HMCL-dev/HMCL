@@ -5,7 +5,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
-import org.jackhuang.hellominecraft.utils.Base64;
+import org.jackhuang.hellominecraft.utils.code.Base64;
 
 public class Property {
 

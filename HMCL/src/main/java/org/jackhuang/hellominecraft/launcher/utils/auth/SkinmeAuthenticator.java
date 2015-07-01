@@ -18,7 +18,7 @@ package org.jackhuang.hellominecraft.launcher.utils.auth;
 
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
-import org.jackhuang.hellominecraft.utils.DigestUtils;
+import org.jackhuang.hellominecraft.utils.code.DigestUtils;
 import org.jackhuang.hellominecraft.utils.NetUtils;
 import org.jackhuang.hellominecraft.views.Selector;
 

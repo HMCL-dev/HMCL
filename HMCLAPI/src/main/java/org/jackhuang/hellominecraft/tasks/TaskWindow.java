@@ -19,9 +19,9 @@ package org.jackhuang.hellominecraft.tasks;
 import java.awt.EventQueue;
 import java.util.ArrayList;
 import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.utils.functions.DoneListener0;
+import org.jackhuang.hellominecraft.utils.functions.NonConsumer;
 import org.jackhuang.hellominecraft.HMCLog;
-import org.jackhuang.hellominecraft.utils.MessageBox;
+import org.jackhuang.hellominecraft.utils.system.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.SwingUtils;
 
@@ -30,7 +30,7 @@ import org.jackhuang.hellominecraft.utils.SwingUtils;
  * @author hyh
  */
 public class TaskWindow extends javax.swing.JDialog
-        implements ProgressProviderListener, DoneListener0, DoingDoneListener<Task> {
+        implements ProgressProviderListener, NonConsumer, DoingDoneListener<Task> {
 
     private static final TaskWindow instance = new TaskWindow();
 

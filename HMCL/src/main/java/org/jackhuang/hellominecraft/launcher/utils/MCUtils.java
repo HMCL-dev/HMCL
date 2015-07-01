@@ -26,16 +26,16 @@ import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.utils.assets.AssetsIndex;
 import org.jackhuang.hellominecraft.launcher.utils.assets.AssetsObject;
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
-import org.jackhuang.hellominecraft.launcher.utils.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.version.MinecraftRemoteVersions;
 import org.jackhuang.hellominecraft.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.ArrayUtils;
 import org.jackhuang.hellominecraft.utils.FileUtils;
 import org.jackhuang.hellominecraft.utils.IOUtils;
-import org.jackhuang.hellominecraft.utils.MinecraftVersionRequest;
+import org.jackhuang.hellominecraft.version.MinecraftVersionRequest;
 import org.jackhuang.hellominecraft.utils.NetUtils;
-import org.jackhuang.hellominecraft.utils.OS;
+import org.jackhuang.hellominecraft.utils.system.OS;
 
 /**
  *

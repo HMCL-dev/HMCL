@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.jackhuang.hellominecraft.utils.functions.DoneListener0;
+import org.jackhuang.hellominecraft.utils.functions.NonConsumer;
 import org.jackhuang.hellominecraft.HMCLog;
 
 /**
@@ -32,7 +32,7 @@ import org.jackhuang.hellominecraft.HMCLog;
 public class TaskList extends Thread {
 
     List<Task> taskQueue = Collections.synchronizedList(new ArrayList());
-    ArrayList<DoneListener0> allDone = new ArrayList();
+    ArrayList<NonConsumer> allDone = new ArrayList();
     ArrayList<DoingDoneListener<Task>> taskListener = new ArrayList();
 
     int totTask = 0;
@@ -47,7 +47,7 @@ public class TaskList extends Thread {
         taskQueue.clear();
     }
 
-    public void addAllDoneListener(DoneListener0 l) {
+    public void addAllDoneListener(NonConsumer l) {
         allDone.add(l);
     }
 
@@ -143,7 +143,7 @@ public class TaskList extends Thread {
         for (Task taskQueue1 : taskQueue)
             executeTask(taskQueue1);
         if (shouldContinue)
-            for (DoneListener0 d : allDone)
+            for (NonConsumer d : allDone)
                 d.onDone();
     }
 

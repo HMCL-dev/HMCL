@@ -31,7 +31,7 @@ import javax.swing.ImageIcon;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.utils.functions.DoneListener0;
+import org.jackhuang.hellominecraft.utils.functions.NonConsumer;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.launch.GameLauncher;
 import org.jackhuang.hellominecraft.launcher.utils.CrashReport;
@@ -39,17 +39,17 @@ import org.jackhuang.hellominecraft.logging.Configuration;
 import org.jackhuang.hellominecraft.logging.appender.ConsoleAppender;
 import org.jackhuang.hellominecraft.logging.layout.DefaultLayout;
 import org.jackhuang.hellominecraft.views.LogWindow;
-import org.jackhuang.hellominecraft.launcher.utils.settings.Settings;
+import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.views.MainFrame;
 import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
-import org.jackhuang.hellominecraft.utils.MessageBox;
+import org.jackhuang.hellominecraft.utils.system.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 
 /**
  *
  * @author hyh
  */
-public final class Main implements DoneListener0 {
+public final class Main implements NonConsumer {
 
     public static String launcherName = "Hello Minecraft! Launcher";
     public static byte firstVer = 2, secondVer = 3, thirdVer = 3;

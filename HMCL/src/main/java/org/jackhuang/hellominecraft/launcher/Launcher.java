@@ -27,15 +27,15 @@ import java.util.ArrayList;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
-import org.jackhuang.hellominecraft.utils.functions.TrueDoneListener;
+import org.jackhuang.hellominecraft.utils.functions.TrueFunction;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.views.LogWindow;
 import org.jackhuang.hellominecraft.launcher.launch.MinecraftCrashAdvicer;
 import org.jackhuang.hellominecraft.utils.DoubleOutputStream;
-import org.jackhuang.hellominecraft.utils.JdkVersion;
+import org.jackhuang.hellominecraft.utils.system.JdkVersion;
 import org.jackhuang.hellominecraft.utils.LauncherPrintStream;
-import org.jackhuang.hellominecraft.utils.MessageBox;
-import org.jackhuang.hellominecraft.utils.Platform;
+import org.jackhuang.hellominecraft.utils.system.MessageBox;
+import org.jackhuang.hellominecraft.utils.system.Platform;
 import org.jackhuang.hellominecraft.utils.Utils;
 
 /**
@@ -133,7 +133,7 @@ public final class Launcher {
             LogWindow.instance.log(C.i18n("crash.minecraft"));
             LogWindow.instance.log(advice);
             LogWindow.instance.log(trace.toString());
-            LogWindow.instance.setExit(TrueDoneListener.instance);
+            LogWindow.instance.setExit(TrueFunction.instance);
             LogWindow.instance.setVisible(true);
         }
 

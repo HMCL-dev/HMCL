@@ -18,7 +18,7 @@ package org.jackhuang.hellominecraft.launcher.utils.auth;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.jackhuang.hellominecraft.launcher.utils.settings.Settings;
+import org.jackhuang.hellominecraft.launcher.settings.Settings;
 
 /**
  * Login interface
