@@ -38,80 +38,79 @@ import org.jackhuang.mojang.util.UUIDTypeAdapter;
  * @author hyh
  */
 public final class YggdrasilAuthenticator extends IAuthenticator {
-    
+
     YggdrasilAuthenticationService service;
     YggdrasilUserAuthentication ua;
-    
+
     public YggdrasilAuthenticator(String clientToken) {
         super(clientToken);
         service = new YggdrasilAuthenticationService(Proxy.NO_PROXY, clientToken);
-        ua = (YggdrasilUserAuthentication)service.createUserAuthentication(Agent.MINECRAFT);
+        ua = (YggdrasilUserAuthentication) service.createUserAuthentication(Agent.MINECRAFT);
     }
 
     @Override
     public UserProfileProvider login(LoginInfo info) {
-        if(ua.canPlayOnline()) {
+        if (ua.canPlayOnline()) {
             UserProfileProvider result = new UserProfileProvider();
             result.setUserName(info.username);
             result.setSuccess(true);
             result.setUserId(UUIDTypeAdapter.fromUUID(ua.getSelectedProfile().getId()));
             result.setUserProperties(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new LegacyPropertyMapSerializer()).create().toJson(ua.getUserProperties()));
-	    result.setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()));
+            result.setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()));
             result.setAccessToken(ua.getAuthenticatedToken());
             result.setSession(ua.getAuthenticatedToken());
-	    result.setUserType(ua.getUserType().getName());
+            result.setUserType(ua.getUserType().getName());
             return result;
         }
         UserProfileProvider result = new UserProfileProvider();
         String usr = info.username;
-        if(info.username == null || !info.username.contains("@")) {
+        if (info.username == null || !info.username.contains("@")) {
             result.setSuccess(false);
             result.setErrorReason(C.i18n("login.not_email"));
             return result;
         }
         String pwd = info.password;
-        
-	if(!ua.isLoggedIn())
-	    ua.setPassword(pwd);
+
+        if (!ua.isLoggedIn())
+            ua.setPassword(pwd);
         ua.setUsername(usr);
         try {
             ua.logIn();
-            if(!ua.isLoggedIn()) throw new Exception(C.i18n("login.wrong_password"));
+            if (!ua.isLoggedIn()) throw new Exception(C.i18n("login.wrong_password"));
             GameProfile selectedProfile = ua.getSelectedProfile();
             GameProfile[] profiles = ua.getAvailableProfiles();
             String[] names;
             String username;
-            if(selectedProfile == null) {
-                if(ArrayUtils.isNotEmpty(profiles)) {
+            if (selectedProfile == null)
+                if (ArrayUtils.isNotEmpty(profiles)) {
                     names = new String[profiles.length];
-                    for(int i = 0; i < profiles.length; i++) {
+                    for (int i = 0; i < profiles.length; i++)
                         names[i] = profiles[i].getName();
-                    }
                     Selector s = new Selector(null, names, C.i18n("login.choose_charactor"));
                     s.setVisible(true);
-		    selectedProfile = profiles[s.sel];
+                    selectedProfile = profiles[s.sel];
                     username = names[s.sel];
-                } else {
+                } else
                     username = JOptionPane.showInputDialog(C.i18n("login.no_charactor"));
-                }
-            } else {
+            else
                 username = selectedProfile.getName();
-            }
             result.setUserName(username);
             result.setSuccess(true);
             result.setUserId(selectedProfile == null ? OfflineAuthenticator.getUUIDFromUserName(username) : UUIDTypeAdapter.fromUUID(selectedProfile.getId()));
             result.setUserProperties(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new LegacyPropertyMapSerializer()).create().toJson(ua.getUserProperties()));
-	    result.setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()));
-            result.setAccessToken(ua.getAuthenticatedToken());
-            result.setSession(ua.getAuthenticatedToken());
-	    result.setUserType(ua.getUserType().getName());
+            result.setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()));
+            String authToken = ua.getAuthenticatedToken();
+            if (authToken == null) authToken = "0";
+            result.setAccessToken(authToken);
+            result.setSession(authToken);
+            result.setUserType(ua.getUserType().getName());
         } catch (Exception ex) {
             result.setErrorReason(ex.getMessage());
             result.setSuccess(false);
             result.setUserName(ua.getUserID());
-	    result.setUserType(UserType.MOJANG.getName());
-	    
-	    HMCLog.err("Failed to login by yggdrasil authentication.", ex);
+            result.setUserType(UserType.MOJANG.getName());
+
+            HMCLog.err("Failed to login by yggdrasil authentication.", ex);
         }
         return result;
     }
@@ -131,7 +130,7 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
     }
 
     public void onLoadSettings(Map settings) {
-        if(settings == null) return;
+        if (settings == null) return;
         ua.loadFromStorage(settings);
     }
 
@@ -140,7 +139,7 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
         UserProfileProvider info = new UserProfileProvider();
         try {
             ua.logIn();
-            if(!ua.isLoggedIn()) throw new Exception(C.i18n("login.wrong_password"));
+            if (!ua.isLoggedIn()) throw new Exception(C.i18n("login.wrong_password"));
             GameProfile profile = ua.getSelectedProfile();
             info.setUserName(profile.getName());
             info.setSuccess(true);

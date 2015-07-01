@@ -420,11 +420,6 @@ public class GameSettingsPanel extends javax.swing.JPanel {
                 txtJavaDirFocusLost(evt);
             }
         });
-        txtJavaDir.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtJavaDirActionPerformed(evt);
-            }
-        });
 
         jLabel11.setText(bundle.getString("settings.java_dir")); // NOI18N
 
@@ -948,7 +943,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_btnRefreshVersionsActionPerformed
 
     private void btnRefreshForgeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshForgeActionPerformed
-        forge.refreshVersions();//refreshForgeVersions();
+        forge.refreshVersions();
     }//GEN-LAST:event_btnRefreshForgeActionPerformed
 
     private void btnDownloadForgeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadForgeActionPerformed
@@ -1129,10 +1124,6 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     private void txtMaxMemoryFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtMaxMemoryFocusLost
         profile.setMaxMemory(txtMaxMemory.getText());
     }//GEN-LAST:event_txtMaxMemoryFocusLost
-
-    private void txtJavaDirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtJavaDirActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txtJavaDirActionPerformed
 
     private void txtJavaDirFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtJavaDirFocusLost
         profile.setJavaDir(txtJavaDir.getText());

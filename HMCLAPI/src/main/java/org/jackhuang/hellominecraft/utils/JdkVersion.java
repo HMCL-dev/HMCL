@@ -44,6 +44,10 @@ public final class JdkVersion {
     public String getLocation() {
         return location;
     }
+    
+    public int getParsedVersion() {
+        return parseVersion(getVersion());
+    }
     /**
      * -1 - unkown 0 - 32Bit 1 - 64Bit
      */
@@ -80,10 +84,6 @@ public final class JdkVersion {
      */
     public static final int UNKOWN = 2;
     /**
-     * Constant identifying the 1.5 JVM (Java 5).
-     */
-    public static final int JAVA_15 = 2;
-    /**
      * Constant identifying the 1.6 JVM (Java 6).
      */
     public static final int JAVA_16 = 3;
@@ -106,17 +106,21 @@ public final class JdkVersion {
     static {
         javaVersion = System.getProperty("java.version");
         // version String should look like "1.4.2_10"
+        majorJavaVersion = parseVersion(javaVersion);
+    }
+    
+    private static int parseVersion(String javaVersion) {
+        if(StrUtils.isBlank(javaVersion)) return UNKOWN;
+        int a = UNKOWN;
         if (javaVersion.contains("1.9."))
-            majorJavaVersion = JAVA_18;
+            a = JAVA_19;
         else if (javaVersion.contains("1.8."))
-            majorJavaVersion = JAVA_18;
+            a = JAVA_18;
         else if (javaVersion.contains("1.7."))
-            majorJavaVersion = JAVA_17;
+            a = JAVA_17;
         else if (javaVersion.contains("1.6."))
-            majorJavaVersion = JAVA_16;
-        else
-            // else leave 1.5 as default (it's either 1.5 or unknown)
-            majorJavaVersion = JAVA_15;
+            a = JAVA_16;
+        return a;
     }
 
     /**
@@ -146,22 +150,6 @@ public final class JdkVersion {
      */
     public static int getMajorJavaVersion() {
         return majorJavaVersion;
-    }
-
-    /**
-     * Convenience method to determine if the current JVM is at least Java 1.6
-     * (Java 6).
-     *
-     * @return <code>true</code> if the current JVM is at least Java 1.6
-     * @deprecated as of Spring 3.0, in favor of reflective checks for the
-     * specific Java 1.6 classes of interest
-     * @see #getMajorJavaVersion()
-     * @see #JAVA_16
-     * @see #JAVA_17
-     */
-    @Deprecated
-    public static boolean isAtLeastJava16() {
-        return (majorJavaVersion >= JAVA_16);
     }
 
     public static boolean isJava64Bit() {
@@ -217,6 +205,6 @@ public final class JdkVersion {
     }
 
     public boolean isEarlyAccess() {
-        return ver != null && ver.endsWith("-ea");
+        return getVersion() != null && getVersion().endsWith("-ea");
     }
 }

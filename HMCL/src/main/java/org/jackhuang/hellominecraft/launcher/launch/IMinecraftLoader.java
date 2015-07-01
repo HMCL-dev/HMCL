@@ -80,7 +80,6 @@ public abstract class IMinecraftLoader {
             res.addAll(Arrays.asList(StrUtils.tokenize(v.getJavaArgs())));
 
         if (!v.isNoJVMArgs() && !(jv != null && jv.isEarlyAccess())) {
-            //res.add("-Xincgc");
             res.add("-XX:+UseConcMarkSweepGC");
             res.add("-XX:+CMSIncrementalMode");
             res.add("-XX:-UseAdaptiveSizePolicy");
@@ -107,14 +106,14 @@ public abstract class IMinecraftLoader {
         }
 
         if (!StrUtils.isBlank(v.getPermSize()) && !v.isNoJVMArgs())
-            if (jv != null && jv.getVersion() != null && (jv.getVersion().startsWith("1.8") || jv.getVersion().startsWith("1.9")));
+            if (jv != null && jv.getParsedVersion() >= JdkVersion.JAVA_18);
             else res.add("-XX:MaxPermSize=" + v.getPermSize() + "m");
 
         if (!v.isNoJVMArgs()) appendJVMArgs(res);
 
         HMCLog.log("On making java.library.path.");
 
-        res.add("-Djava.library.path=" + provider.getDecompressNativesToLocation().getPath());//v.getSelectedMinecraftVersion().getNatives(v.getCanonicalGameDirFile()));
+        res.add("-Djava.library.path=" + provider.getDecompressNativesToLocation().getPath());
         res.add("-Dfml.ignoreInvalidMinecraftCertificates=true");
         res.add("-Dfml.ignorePatchDiscrepancies=true");
 
