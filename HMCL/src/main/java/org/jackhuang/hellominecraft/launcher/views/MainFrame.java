@@ -23,6 +23,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridLayout;
 import java.awt.Transparency;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -61,6 +62,7 @@ public final class MainFrame extends DraggableFrame {
     LauncherSettingsPanel launcherPanel;
     CardLayout infoLayout;
     JPanel infoSwap;
+    JPanel launcherPanelWrapper, gamePanelWrapper;
     JLabel backgroundLabel, windowTitle;
     JPanel realPanel;
     DropShadowBorder border;
@@ -221,10 +223,12 @@ public final class MainFrame extends DraggableFrame {
 
         this.mainPanel = new MainPagePanel();
         this.infoSwap.add(mainPanel, "main");
-        this.gamePanel = new GameSettingsPanel();
-        this.infoSwap.add(gamePanel, "game");
-        this.launcherPanel = new LauncherSettingsPanel();
-        this.infoSwap.add(launcherPanel, "launcher");
+        gamePanelWrapper = new JPanel();
+        gamePanelWrapper.setLayout(new GridLayout());
+        this.infoSwap.add(gamePanelWrapper, "game");
+        launcherPanelWrapper = new JPanel();
+        launcherPanelWrapper.setLayout(new GridLayout());
+        this.infoSwap.add(launcherPanelWrapper, "launcher");
 
         truePanel.add(this.infoSwap, "Center");
         centralPanel.setLayout(null);
@@ -246,10 +250,19 @@ public final class MainFrame extends DraggableFrame {
             this.mainTab.setIsActive(true);
             this.mainPanel.onSelected();
         } else if (tabName.equalsIgnoreCase("game")) {
+            if(gamePanel == null) {
+                gamePanel = new GameSettingsPanel();
+                gamePanelWrapper.add(gamePanel);
+            }
             this.gameTab.setIsActive(true);
             this.gamePanel.onSelected();
-        } else if (tabName.equalsIgnoreCase("launcher"))
+        } else if (tabName.equalsIgnoreCase("launcher")) {
+            if(launcherPanel == null) {
+                launcherPanel = new LauncherSettingsPanel();
+                launcherPanelWrapper.add(launcherPanel);
+            }
             this.launcherTab.setIsActive(true);
+        }
 
         this.infoLayout.show(this.infoSwap, tabName);
     }
