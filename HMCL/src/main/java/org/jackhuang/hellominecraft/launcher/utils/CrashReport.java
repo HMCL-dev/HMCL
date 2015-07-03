@@ -47,7 +47,7 @@ public class CrashReport implements Thread.UncaughtExceptionHandler {
             text += "  Time: " + DateFormat.getDateInstance().format(new Date()) + "\n";
             text += "  Thread: " + t.toString() + "\n";
             text += "\n  Advice: \n    ";
-            text += MinecraftCrashAdvicer.getAdvice(e, true);
+            text += MinecraftCrashAdvicer.getAdvice(StrUtils.getStackTrace(e), true);
             text += "\n  Content: \n    ";
             text += StrUtils.getStackTrace(e) + "\n\n";
             text += "-- System Details --\n";

@@ -124,15 +124,13 @@ public final class Launcher {
             minecraftMain.invoke(null, new Object[]{cmds});
         } catch (Throwable throwable) {
             HMCLog.err("Cought exception!");
-            final StringWriter trace = new StringWriter();
-            PrintWriter writer = new PrintWriter(trace);
-            throwable.printStackTrace(writer);
-            final String advice = MinecraftCrashAdvicer.getAdvice(throwable);
+            String trace = StrUtils.getStackTrace(throwable);
+            final String advice = MinecraftCrashAdvicer.getAdvice(trace);
             MessageBox.Show(C.i18n("crash.minecraft") + ": " + advice);
 
             LogWindow.instance.log(C.i18n("crash.minecraft"));
             LogWindow.instance.log(advice);
-            LogWindow.instance.log(trace.toString());
+            LogWindow.instance.log(trace);
             LogWindow.instance.setExit(TrueFunction.instance);
             LogWindow.instance.setVisible(true);
         }
