@@ -11,7 +11,7 @@ import java.net.URLEncoder;
 import java.util.Map;
 import java.util.Objects;
 import org.jackhuang.hellominecraft.logging.logger.Logger;
-import org.jackhuang.hellominecraft.utils.IOUtils;
+import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.NetUtils;
 
 public abstract class HttpAuthenticationService extends BaseAuthenticationService {

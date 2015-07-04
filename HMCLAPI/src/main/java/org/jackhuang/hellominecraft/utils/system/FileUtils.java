@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.
  */
-package org.jackhuang.hellominecraft.utils;
+package org.jackhuang.hellominecraft.utils.system;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -27,6 +27,7 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.NetUtils;
 
 /**
  *

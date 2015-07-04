@@ -31,11 +31,11 @@ import org.jackhuang.hellominecraft.views.LogWindow;
  *
  * @author hyh
  */
-public class CrashReport implements Thread.UncaughtExceptionHandler {
+public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
     boolean enableLogger = false;
 
-    public CrashReport(boolean enableLogger) {
+    public CrashReporter(boolean enableLogger) {
         this.enableLogger = enableLogger;
     }
 

@@ -54,7 +54,7 @@ import org.jackhuang.hellominecraft.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.tasks.communication.DefaultPreviousResult;
 import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.tasks.download.HTTPGetTask;
-import org.jackhuang.hellominecraft.utils.IOUtils;
+import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.system.MessageBox;
 import org.jackhuang.hellominecraft.version.MinecraftVersionRequest;
 import org.jackhuang.hellominecraft.utils.system.OS;

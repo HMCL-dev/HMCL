@@ -32,13 +32,13 @@ import org.jackhuang.hellominecraft.launcher.launch.GameLauncher.DownloadLibrary
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftLoader;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.launch.MinecraftLoader;
-import org.jackhuang.hellominecraft.utils.FileUtils;
+import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.launcher.utils.MCUtils;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
-import org.jackhuang.hellominecraft.utils.IOUtils;
+import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.system.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.Utils;
@@ -226,15 +226,17 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     public List<GameLauncher.DownloadLibraryJob> getDownloadLibraries(DownloadType downloadType) {
         ArrayList<DownloadLibraryJob> downloadLibraries = new ArrayList<>();
         MinecraftVersion v = profile.getSelectedMinecraftVersion().resolve(this, Settings.getInstance().getDownloadSource());
-        for (IMinecraftLibrary l : v.libraries) {
-            l.init();
-            if (l.allow()) {
-                File ff = l.getFilePath(baseFolder);
-                if (!ff.exists()) {
-                    String libURL = downloadType.getProvider().getLibraryDownloadURL() + "/";
-                    libURL = l.getDownloadURL(libURL, downloadType);
-                    if (libURL != null)
-                        downloadLibraries.add(new DownloadLibraryJob(l.name, libURL, ff));
+        if(v.libraries != null) {
+            for (IMinecraftLibrary l : v.libraries) {
+                l.init();
+                if (l.allow()) {
+                    File ff = l.getFilePath(baseFolder);
+                    if (!ff.exists()) {
+                        String libURL = downloadType.getProvider().getLibraryDownloadURL() + "/";
+                        libURL = l.getDownloadURL(libURL, downloadType);
+                        if (libURL != null)
+                            downloadLibraries.add(new DownloadLibraryJob(l.name, libURL, ff));
+                    }
                 }
             }
         }

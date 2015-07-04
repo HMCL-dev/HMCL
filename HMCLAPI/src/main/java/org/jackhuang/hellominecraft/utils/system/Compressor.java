@@ -26,7 +26,6 @@ import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
-import org.jackhuang.hellominecraft.utils.IOUtils;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 
 /**

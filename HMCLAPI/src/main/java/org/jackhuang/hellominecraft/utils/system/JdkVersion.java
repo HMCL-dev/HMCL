@@ -25,7 +25,6 @@ import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jackhuang.hellominecraft.HMCLog;
-import org.jackhuang.hellominecraft.utils.FileUtils;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 
 /**

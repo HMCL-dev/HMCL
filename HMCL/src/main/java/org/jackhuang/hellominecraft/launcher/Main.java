@@ -34,7 +34,7 @@ import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.utils.functions.NonConsumer;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.launch.GameLauncher;
-import org.jackhuang.hellominecraft.launcher.utils.CrashReport;
+import org.jackhuang.hellominecraft.launcher.utils.CrashReporter;
 import org.jackhuang.hellominecraft.logging.Configuration;
 import org.jackhuang.hellominecraft.logging.appender.ConsoleAppender;
 import org.jackhuang.hellominecraft.logging.layout.DefaultLayout;
@@ -77,7 +77,7 @@ public final class Main implements NonConsumer {
 
     public static void main(String[] args) {
         {
-            Thread.setDefaultUncaughtExceptionHandler(new CrashReport(true));
+            Thread.setDefaultUncaughtExceptionHandler(new CrashReporter(true));
 
             try {
                 File file = new File("hmcl.log");

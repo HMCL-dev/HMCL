@@ -18,7 +18,7 @@ package org.jackhuang.hellominecraft.launcher.settings;
 
 import java.io.File;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
-import org.jackhuang.hellominecraft.utils.IOUtils;
+import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.launcher.utils.MCUtils;
 import org.jackhuang.hellominecraft.launcher.version.GameDirType;
 import org.jackhuang.hellominecraft.utils.StrUtils;

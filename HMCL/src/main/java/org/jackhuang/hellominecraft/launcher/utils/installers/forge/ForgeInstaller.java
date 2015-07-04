@@ -31,7 +31,7 @@ import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.tasks.Task;
-import org.jackhuang.hellominecraft.utils.FileUtils;
+import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.NetUtils;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.utils.system.MessageBox;

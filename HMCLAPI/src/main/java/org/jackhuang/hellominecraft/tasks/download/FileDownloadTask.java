@@ -34,7 +34,7 @@ import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.tasks.communication.PreviousResult;
 import org.jackhuang.hellominecraft.tasks.communication.PreviousResultRegistrator;
-import org.jackhuang.hellominecraft.utils.IOUtils;
+import org.jackhuang.hellominecraft.utils.system.IOUtils;
 
 /**
  *

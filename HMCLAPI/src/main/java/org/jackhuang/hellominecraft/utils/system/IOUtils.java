@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.
  */
-package org.jackhuang.hellominecraft.utils;
+package org.jackhuang.hellominecraft.utils.system;
 
 import org.jackhuang.hellominecraft.utils.system.OS;
 import java.io.ByteArrayOutputStream;
