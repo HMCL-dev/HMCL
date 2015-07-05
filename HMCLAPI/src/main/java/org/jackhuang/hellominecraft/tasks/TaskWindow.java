@@ -170,7 +170,7 @@ public class TaskWindow extends javax.swing.JDialog
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelActionPerformed
-        if(MessageBox.Show(C.i18n("operation.confirm_stop"), MessageBox.YES_OPTION) == MessageBox.YES_OPTION)
+        if(MessageBox.Show(C.i18n("operation.confirm_stop"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
             this.dispose();
     }//GEN-LAST:event_btnCancelActionPerformed
 
@@ -181,12 +181,7 @@ public class TaskWindow extends javax.swing.JDialog
         }
 
         if (!suc) {
-            EventQueue.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    taskList.abort();
-                }
-            });
+            EventQueue.invokeLater(taskList::abort);
             HMCLog.log("Tasks have been canceled by user.");
         }
     }//GEN-LAST:event_formWindowClosed

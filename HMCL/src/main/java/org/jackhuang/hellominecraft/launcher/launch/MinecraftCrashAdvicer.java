@@ -30,23 +30,8 @@ public final class MinecraftCrashAdvicer {
     }
     
     public static String getAdvice(String trace, boolean selfCrash) {
-        /*if (t.getCause() instanceof UnsupportedClassVersionError) {
-            return C.i18n("crash.advice.UnsupportedClassVersionError");
-        } else if (t instanceof ConcurrentModificationException) {
-            return C.i18n("crash.advice.ConcurrentModificationException");
-        } else if (t instanceof SecurityException) {
-            return C.i18n("crash.advice.SecurityException");
-        } else if (t instanceof InvocationTargetException) {
-            return C.i18n("crash.advice.InvocationTargetException");
-        } else if (t instanceof NoSuchFieldError || (t.getCause() != null && t.getCause() instanceof NoSuchFieldException)) {
-            return C.i18n("crash.advice.NoSuchFieldError");
-        } else if (t instanceof NoClassDefFoundError || t instanceof ClassNotFoundException || (t.getCause() != null && t.getCause() instanceof ClassNotFoundException)) {
-            return C.i18n("crash.advice.ClassNotFondException");
-        }*/
-        
-        if (trace.contains("LWJGLException")) {
-            if(trace.contains("Pixel format not accelerated"))
-                return C.i18n("crash.advice.LWJGLException");
+        if(trace.contains("Pixel format not accelerated")) {
+            return C.i18n("crash.advice.LWJGLException");
         } else if (trace.contains("UnsupportedClassVersionError")) {
             return C.i18n("crash.advice.UnsupportedClassVersionError");
         } else if (trace.contains("ConcurrentModificationException")) {
@@ -56,13 +41,13 @@ public final class MinecraftCrashAdvicer {
         } else if (trace.contains("NoSuchFieldException") || trace.contains("NoSuchFieldError")) {
             return C.i18n("crash.advice.NoSuchFieldError");
         } else if (trace.contains("NoClassDefFoundError") || trace.contains("ClassNotFoundException")) {
-            return C.i18n("crash.advice.ClassNotFondException");
+            return C.i18n("crash.advice.ClassNotFoundException");
         } else if (trace.contains("no lwjgl in java.library.path")) {
             return C.i18n("crash.advice.no_lwjgl");
         } else if (trace.contains("OpenGL") || trace.contains("OpenAL")) {
             return C.i18n("crash.advice.OpenGL");
         }
-        return selfCrash ? C.i18n("crash.advice.no") : C.i18n("crash.advice.otherwise");
+        return C.i18n(selfCrash ? "crash.advice.no" : "crash.advice.otherwise");
     }
 
 }
