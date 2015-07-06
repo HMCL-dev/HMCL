@@ -8,7 +8,7 @@ package org.jackhuang.hellominecraft.svrmgr.installer.cauldron;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class Install {
     public String profileName, target, path, version, filePath, welcome, minecraft, mirrorList, logo;

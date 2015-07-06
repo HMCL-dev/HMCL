@@ -21,7 +21,7 @@ import org.jackhuang.hellominecraft.views.LogWindow;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class ContentGetAndShowTask extends HTTPGetTask implements Event<String> {
 

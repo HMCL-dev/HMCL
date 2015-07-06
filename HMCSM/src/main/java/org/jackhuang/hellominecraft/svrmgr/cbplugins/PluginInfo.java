@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class PluginInfo {
     public String website, dbo_page, description, slug, plugin_name,

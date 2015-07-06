@@ -28,7 +28,7 @@ import org.jackhuang.hellominecraft.logging.layout.ILayout;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public abstract class OutputStreamAppender extends AbstractAppender {
 

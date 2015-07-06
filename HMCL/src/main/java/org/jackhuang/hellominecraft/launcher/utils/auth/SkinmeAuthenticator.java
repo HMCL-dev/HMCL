@@ -24,7 +24,7 @@ import org.jackhuang.hellominecraft.views.Selector;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public final class SkinmeAuthenticator extends IAuthenticator {
 

@@ -22,7 +22,7 @@ import javax.swing.text.JTextComponent;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class TextComponentOutputStream extends OutputStream {
 

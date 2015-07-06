@@ -28,7 +28,7 @@ import org.jackhuang.hellominecraft.utils.system.OS;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public final class Config {
     @SerializedName("last")

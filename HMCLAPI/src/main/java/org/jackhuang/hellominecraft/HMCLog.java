@@ -21,7 +21,7 @@ import org.jackhuang.hellominecraft.logging.logger.Logger;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class HMCLog {
     

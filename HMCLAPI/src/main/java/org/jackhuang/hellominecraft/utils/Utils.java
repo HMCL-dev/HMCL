@@ -41,7 +41,7 @@ import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 
 /**
- * @author hyh
+ * @author huangyuhui
  */
 public final class Utils {
     

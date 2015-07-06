@@ -23,7 +23,7 @@ import org.jackhuang.hellominecraft.utils.functions.Consumer;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  * @param <T> Runnable&lt;T&gt;
  */
 public class TaskRunnableArg1<T> extends TaskInfo implements PreviousResultRegistrator<T> {

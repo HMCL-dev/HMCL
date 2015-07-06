@@ -22,7 +22,7 @@ import org.jackhuang.hellominecraft.logging.layout.ILayout;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public interface IAppender {
     

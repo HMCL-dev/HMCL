@@ -20,7 +20,7 @@ import java.util.Map;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class MinecraftForgeVersionRoot {
     public String artifact, webpath, adfly, homepage, name;

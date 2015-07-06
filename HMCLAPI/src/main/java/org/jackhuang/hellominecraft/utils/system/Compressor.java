@@ -31,7 +31,7 @@ import org.jackhuang.hellominecraft.utils.StrUtils;
 /**
  * 文件压缩/解压类
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class Compressor {
 

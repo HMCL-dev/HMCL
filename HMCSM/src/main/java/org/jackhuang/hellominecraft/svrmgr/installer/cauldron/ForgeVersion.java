@@ -6,7 +6,7 @@ package org.jackhuang.hellominecraft.svrmgr.installer.cauldron;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class ForgeVersion {
     public String vername, ver, mcver, releasetime, changelog;

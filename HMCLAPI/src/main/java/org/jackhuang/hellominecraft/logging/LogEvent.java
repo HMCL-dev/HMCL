@@ -20,7 +20,7 @@ import org.jackhuang.hellominecraft.logging.message.IMessage;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class LogEvent {
     

@@ -20,7 +20,7 @@ import java.io.Serializable;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public interface IMessage extends Serializable {
     String getFormattedMessage();

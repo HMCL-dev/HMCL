@@ -66,7 +66,7 @@ import org.jackhuang.hellominecraft.views.Selector;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class GameSettingsPanel extends javax.swing.JPanel {
 

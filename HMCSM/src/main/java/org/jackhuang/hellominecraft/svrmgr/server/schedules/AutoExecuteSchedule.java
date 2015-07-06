@@ -12,7 +12,7 @@ import org.jackhuang.hellominecraft.svrmgr.settings.Schedule;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class AutoExecuteSchedule extends TimerTask {
     Schedule main;

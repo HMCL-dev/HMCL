@@ -17,7 +17,7 @@ import org.jsoup.select.Elements;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class IPGet extends Thread {
 

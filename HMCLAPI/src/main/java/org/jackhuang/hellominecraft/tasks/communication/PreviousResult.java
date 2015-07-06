@@ -18,7 +18,7 @@ package org.jackhuang.hellominecraft.tasks.communication;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  * @param <T> Task result type
  */
 public interface PreviousResult<T> {

@@ -10,7 +10,7 @@ import org.jackhuang.hellominecraft.svrmgr.settings.SettingsManager;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class Utilities {
 

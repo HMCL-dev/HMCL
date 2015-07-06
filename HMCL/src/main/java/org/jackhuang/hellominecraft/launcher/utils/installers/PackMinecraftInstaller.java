@@ -25,7 +25,7 @@ import org.jackhuang.hellominecraft.utils.system.IOUtils;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class PackMinecraftInstaller {
 

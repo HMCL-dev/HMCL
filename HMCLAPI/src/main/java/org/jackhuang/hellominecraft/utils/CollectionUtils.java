@@ -24,7 +24,7 @@ import java.util.Iterator;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public final class CollectionUtils {
     public static <T> void forEach(Collection<T> coll, Consumer<T> p) {

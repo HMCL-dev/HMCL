@@ -29,7 +29,7 @@ import org.jackhuang.hellominecraft.utils.NetUtils;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class MinecraftForgeVersionList extends InstallerVersionList {
     private static MinecraftForgeVersionList instance;

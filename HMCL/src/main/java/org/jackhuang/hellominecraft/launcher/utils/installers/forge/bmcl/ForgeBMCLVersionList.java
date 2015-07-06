@@ -32,7 +32,7 @@ import org.jackhuang.hellominecraft.utils.NetUtils;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class ForgeBMCLVersionList extends InstallerVersionList {
 

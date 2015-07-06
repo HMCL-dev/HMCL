@@ -10,7 +10,7 @@ import org.jackhuang.hellominecraft.svrmgr.settings.Schedule;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class AutoSaveSchedule extends TimerTask {
     

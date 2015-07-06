@@ -6,7 +6,7 @@ package org.jackhuang.hellominecraft.svrmgr.views;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class CommandsWindow extends javax.swing.JDialog {
 

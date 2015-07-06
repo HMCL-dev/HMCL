@@ -22,7 +22,7 @@ import org.jackhuang.hellominecraft.launcher.utils.installers.forge.Install;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class InstallProfile {
     @SerializedName("install")

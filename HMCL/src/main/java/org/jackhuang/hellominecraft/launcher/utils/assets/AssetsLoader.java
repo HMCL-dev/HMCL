@@ -33,7 +33,7 @@ import org.xml.sax.SAXException;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class AssetsLoader extends Thread {
 

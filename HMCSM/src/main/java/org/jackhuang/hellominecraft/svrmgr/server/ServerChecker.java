@@ -11,7 +11,7 @@ import org.jackhuang.hellominecraft.HMCLog;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class ServerChecker {
     

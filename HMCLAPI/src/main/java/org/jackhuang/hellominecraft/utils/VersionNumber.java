@@ -20,7 +20,7 @@ import org.jackhuang.hellominecraft.HMCLog;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public final class VersionNumber implements Comparable<VersionNumber> {
 

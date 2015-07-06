@@ -18,7 +18,7 @@ package org.jackhuang.hellominecraft.tasks;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class TaskRunnable extends TaskInfo {
     private final Runnable r;

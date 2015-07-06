@@ -22,7 +22,7 @@ import java.util.Map;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class ArrayUtils {
 

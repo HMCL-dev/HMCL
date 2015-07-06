@@ -8,7 +8,7 @@ package org.jackhuang.hellominecraft.svrmgr.settings;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class WhiteList extends PlayerList<WhiteList.WhiteListPlayer> {
 

@@ -20,7 +20,7 @@ import java.awt.Color;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class BasicColors {
     

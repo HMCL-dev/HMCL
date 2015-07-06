@@ -22,7 +22,7 @@ import org.jackhuang.hellominecraft.logging.LogEvent;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class DefaultLayout extends AbstractStringLayout {
     private static final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");

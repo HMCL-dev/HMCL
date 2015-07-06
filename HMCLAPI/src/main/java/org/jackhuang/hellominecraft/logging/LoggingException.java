@@ -18,7 +18,7 @@ package org.jackhuang.hellominecraft.logging;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class LoggingException extends RuntimeException {
 

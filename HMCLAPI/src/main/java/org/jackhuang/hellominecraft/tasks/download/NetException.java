@@ -18,7 +18,7 @@ package org.jackhuang.hellominecraft.tasks.download;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class NetException extends RuntimeException {
     

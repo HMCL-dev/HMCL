@@ -21,7 +21,7 @@ import javax.swing.plaf.synth.SynthLookAndFeel;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class HelloMinecraftLookAndFeel extends SynthLookAndFeel {
 

@@ -21,7 +21,7 @@ import org.jackhuang.hellominecraft.C;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class MinecraftRemoteVersions {
     

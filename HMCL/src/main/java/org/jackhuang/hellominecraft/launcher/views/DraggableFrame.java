@@ -23,7 +23,7 @@ import javax.swing.JFrame;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class DraggableFrame extends JFrame
         implements MouseListener, MouseMotionListener {

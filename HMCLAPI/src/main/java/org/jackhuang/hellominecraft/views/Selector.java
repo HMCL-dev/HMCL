@@ -18,7 +18,7 @@ package org.jackhuang.hellominecraft.views;
 
 /**
  * The frame given to choose things.
- * @author hyh
+ * @author huangyuhui
  */
 public class Selector extends javax.swing.JDialog {
     String[] selList;

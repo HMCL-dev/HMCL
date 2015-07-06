@@ -28,7 +28,7 @@ import org.jackhuang.hellominecraft.launcher.version.MinecraftVersionManager;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public final class Profile {
 

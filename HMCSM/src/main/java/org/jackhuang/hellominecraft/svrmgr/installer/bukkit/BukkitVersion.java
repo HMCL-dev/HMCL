@@ -8,7 +8,7 @@ package org.jackhuang.hellominecraft.svrmgr.installer.bukkit;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class BukkitVersion {
     

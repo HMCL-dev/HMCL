@@ -21,7 +21,7 @@ import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public abstract class IMinecraftLibrary implements Cloneable {
     

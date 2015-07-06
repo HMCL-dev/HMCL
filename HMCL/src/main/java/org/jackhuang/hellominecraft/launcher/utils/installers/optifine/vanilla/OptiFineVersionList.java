@@ -41,7 +41,7 @@ import org.xml.sax.SAXException;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class OptiFineVersionList extends InstallerVersionList {
     private static OptiFineVersionList instance;

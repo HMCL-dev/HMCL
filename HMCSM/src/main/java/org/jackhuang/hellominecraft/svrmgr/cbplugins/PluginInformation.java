@@ -6,7 +6,7 @@ package org.jackhuang.hellominecraft.svrmgr.cbplugins;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class PluginInformation {
     

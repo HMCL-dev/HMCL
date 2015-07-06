@@ -6,7 +6,7 @@ package org.jackhuang.hellominecraft.svrmgr.settings;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 import com.google.gson.Gson;
 import java.io.File;
@@ -17,7 +17,7 @@ import org.jackhuang.hellominecraft.utils.system.IOUtils;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class SettingsManager {
 

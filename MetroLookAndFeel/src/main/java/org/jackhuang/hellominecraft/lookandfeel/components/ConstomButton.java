@@ -21,7 +21,7 @@ import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class ConstomButton extends javax.swing.JButton {
     public Color normalFg = GraphicsUtils.getWebColorWithAlpha("DDDDDD3F"), normalBg = GraphicsUtils.getWebColorWithAlpha("DDDDDD3F"),

@@ -37,7 +37,7 @@ import org.jackhuang.hellominecraft.utils.NetUtils;
 /**
  * Assets
  *
- * @author hyh
+ * @author huangyuhui
  */
 public abstract class IAssetsHandler {
 

@@ -23,7 +23,7 @@ import org.jackhuang.hellominecraft.utils.code.DigestUtils;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public final class BestLogin extends IAuthenticator {
 

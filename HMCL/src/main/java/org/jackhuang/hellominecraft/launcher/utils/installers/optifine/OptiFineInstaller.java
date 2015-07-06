@@ -31,7 +31,7 @@ import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class OptiFineInstaller extends Task implements PreviousResultRegistrator<File>  {
 

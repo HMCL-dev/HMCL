@@ -6,7 +6,7 @@ package org.jackhuang.hellominecraft.svrmgr.server.download;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class ServerDownloadPackage {
     public String mcversion, version, forgeversion, majorversion, file;

@@ -23,7 +23,7 @@ import java.util.ArrayList;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class LauncherPrintStream extends PrintStream {
 

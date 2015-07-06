@@ -35,7 +35,7 @@ import org.jackhuang.mojang.util.UUIDTypeAdapter;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public final class YggdrasilAuthenticator extends IAuthenticator {
 

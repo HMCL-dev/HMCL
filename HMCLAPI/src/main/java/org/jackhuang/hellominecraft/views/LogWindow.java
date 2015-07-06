@@ -27,7 +27,7 @@ import org.jackhuang.hellominecraft.utils.Utils;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class LogWindow extends javax.swing.JFrame {
     

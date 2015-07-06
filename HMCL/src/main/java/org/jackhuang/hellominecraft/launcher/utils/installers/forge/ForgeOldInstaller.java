@@ -23,7 +23,7 @@ import org.jackhuang.hellominecraft.launcher.utils.installers.PackMinecraftInsta
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class ForgeOldInstaller {
     

@@ -20,7 +20,7 @@ import java.util.Collection;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public abstract class Task extends ProgressProvider {
     

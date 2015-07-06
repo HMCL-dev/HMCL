@@ -38,7 +38,7 @@ import org.jackhuang.hellominecraft.utils.functions.Consumer;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class Server implements Event<Integer>, MonitorThread.MonitorThreadListener,
 	ActionListener {

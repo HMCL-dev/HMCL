@@ -29,7 +29,7 @@ import org.jackhuang.hellominecraft.views.LogWindow;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class CrashReporter implements Thread.UncaughtExceptionHandler {
 

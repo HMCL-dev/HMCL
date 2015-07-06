@@ -20,7 +20,7 @@ import org.jackhuang.hellominecraft.tasks.ProgressProviderListener;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public interface DownloadListener extends ProgressProviderListener {
 

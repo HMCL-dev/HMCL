@@ -38,7 +38,7 @@ import org.jackhuang.hellominecraft.utils.system.IOUtils;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 // This class downloads a file from a URL.
 public class FileDownloadTask extends Task implements PreviousResult<File>, PreviousResultRegistrator<String> {

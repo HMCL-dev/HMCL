@@ -20,7 +20,7 @@ import java.util.Map;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class LiteLoaderVersionsRoot {
     public Map<String, LiteLoaderMCVersions> versions;

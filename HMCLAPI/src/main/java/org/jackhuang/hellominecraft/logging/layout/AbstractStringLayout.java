@@ -20,7 +20,7 @@ import org.jackhuang.hellominecraft.logging.LogEvent;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public abstract class AbstractStringLayout implements ILayout<String> {
 

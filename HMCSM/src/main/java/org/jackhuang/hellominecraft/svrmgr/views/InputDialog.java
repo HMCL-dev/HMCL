@@ -16,7 +16,7 @@ import javax.swing.JTextField;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class InputDialog extends javax.swing.JDialog {
     

@@ -20,7 +20,7 @@ import java.util.ArrayList;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public interface AssetsLoaderListener {
 

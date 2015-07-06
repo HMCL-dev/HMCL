@@ -6,7 +6,7 @@ package org.jackhuang.hellominecraft.svrmgr.settings;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class Schedule {
     public static final int 

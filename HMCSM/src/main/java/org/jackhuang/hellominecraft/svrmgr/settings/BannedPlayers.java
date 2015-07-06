@@ -11,7 +11,7 @@ import java.util.Date;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class BannedPlayers extends PlayerList<BannedPlayers.BannedPlayer> {
 

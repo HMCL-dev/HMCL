@@ -48,7 +48,7 @@ import org.jackhuang.hellominecraft.views.BasicColors;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public final class MainFrame extends DraggableFrame {
 

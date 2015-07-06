@@ -9,7 +9,7 @@ import org.jackhuang.hellominecraft.svrmgr.server.Server;
 import org.jackhuang.hellominecraft.svrmgr.settings.Schedule;
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class AutoRestartSchedule extends TimerTask {
     

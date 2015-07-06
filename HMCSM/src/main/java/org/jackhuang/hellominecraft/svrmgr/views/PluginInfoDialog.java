@@ -15,7 +15,7 @@ import org.jackhuang.hellominecraft.svrmgr.utils.Utilities;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class PluginInfoDialog extends javax.swing.JDialog {
 

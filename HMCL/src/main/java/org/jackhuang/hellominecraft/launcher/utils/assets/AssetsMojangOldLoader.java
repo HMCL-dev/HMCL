@@ -26,7 +26,7 @@ import org.jackhuang.hellominecraft.utils.functions.Consumer;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class AssetsMojangOldLoader extends IAssetsHandler {
 

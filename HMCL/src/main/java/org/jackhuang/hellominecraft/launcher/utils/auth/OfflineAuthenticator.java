@@ -22,7 +22,7 @@ import org.jackhuang.hellominecraft.utils.code.DigestUtils;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public final class OfflineAuthenticator extends IAuthenticator {
 

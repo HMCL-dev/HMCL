@@ -23,7 +23,7 @@ import org.jackhuang.hellominecraft.logging.layout.DefaultLayout;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 
 public class Configuration {

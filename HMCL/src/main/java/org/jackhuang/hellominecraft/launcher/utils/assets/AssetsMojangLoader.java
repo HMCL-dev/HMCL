@@ -34,7 +34,7 @@ import org.jackhuang.hellominecraft.utils.VersionNumber;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class AssetsMojangLoader extends IAssetsHandler {
 

@@ -16,7 +16,7 @@ import org.jackhuang.hellominecraft.svrmgr.utils.Utilities;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class BackupManager {
     

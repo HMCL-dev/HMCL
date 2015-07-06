@@ -21,7 +21,7 @@ import java.io.OutputStream;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class DoubleOutputStream extends OutputStream {
 

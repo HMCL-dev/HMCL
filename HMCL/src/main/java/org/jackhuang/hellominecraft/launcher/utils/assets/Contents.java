@@ -18,7 +18,7 @@ package org.jackhuang.hellominecraft.launcher.utils.assets;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class Contents {
     

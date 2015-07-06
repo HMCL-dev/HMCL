@@ -20,7 +20,7 @@ import org.jackhuang.hellominecraft.C;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public enum DownloadType {
     Mojang(C.i18n("download.mojang"), new MojangDownloadProvider()),

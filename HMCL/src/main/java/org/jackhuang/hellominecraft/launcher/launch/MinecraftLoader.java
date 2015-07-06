@@ -37,9 +37,9 @@ import org.jackhuang.hellominecraft.utils.system.MessageBox;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
-public class MinecraftLoader extends IMinecraftLoader {
+public class MinecraftLoader extends AbstractMinecraftLoader {
 
     private MinecraftVersion version;
     String text;

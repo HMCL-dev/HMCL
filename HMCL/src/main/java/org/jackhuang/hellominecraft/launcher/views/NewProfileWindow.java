@@ -22,7 +22,7 @@ import org.jackhuang.hellominecraft.utils.StrUtils;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public final class NewProfileWindow extends javax.swing.JDialog {
 

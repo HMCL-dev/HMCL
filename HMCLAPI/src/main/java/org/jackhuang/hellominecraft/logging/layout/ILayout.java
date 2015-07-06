@@ -21,7 +21,7 @@ import org.jackhuang.hellominecraft.logging.LogEvent;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  * @param <T>
  */
 public interface ILayout<T extends Serializable> {

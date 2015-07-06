@@ -23,7 +23,7 @@ import org.jackhuang.hellominecraft.HMCLog;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public final class UpdateChecker extends Thread {
     public static boolean OUT_DATED = false;

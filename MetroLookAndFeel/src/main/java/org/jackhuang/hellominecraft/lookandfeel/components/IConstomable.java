@@ -18,7 +18,7 @@ package org.jackhuang.hellominecraft.lookandfeel.components;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public interface IConstomable {
     boolean constomBackground();

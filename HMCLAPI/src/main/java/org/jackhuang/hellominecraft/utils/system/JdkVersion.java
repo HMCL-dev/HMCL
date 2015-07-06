@@ -16,7 +16,6 @@
  */
 package org.jackhuang.hellominecraft.utils.system;
 
-import org.jackhuang.hellominecraft.utils.system.Platform;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +28,7 @@ import org.jackhuang.hellominecraft.utils.StrUtils;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public final class JdkVersion {
 

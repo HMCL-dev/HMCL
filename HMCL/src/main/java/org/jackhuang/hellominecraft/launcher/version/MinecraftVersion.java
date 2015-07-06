@@ -28,7 +28,7 @@ import org.jackhuang.hellominecraft.utils.ArrayUtils;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion> {
 

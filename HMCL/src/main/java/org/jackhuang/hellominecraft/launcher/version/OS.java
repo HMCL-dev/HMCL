@@ -18,7 +18,7 @@ package org.jackhuang.hellominecraft.launcher.version;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class OS {
     public String version, name;

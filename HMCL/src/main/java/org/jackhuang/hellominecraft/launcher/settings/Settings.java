@@ -35,7 +35,7 @@ import org.jackhuang.hellominecraft.utils.VersionNumber;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public final class Settings {
 

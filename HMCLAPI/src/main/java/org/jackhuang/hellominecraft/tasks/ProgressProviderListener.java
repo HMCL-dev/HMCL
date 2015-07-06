@@ -18,7 +18,7 @@ package org.jackhuang.hellominecraft.tasks;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public interface ProgressProviderListener {
     void setProgress(int prog, int max);

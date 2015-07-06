@@ -32,7 +32,7 @@ import org.jackhuang.hellominecraft.utils.StrUtils;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class LiteLoaderVersionList extends InstallerVersionList {
     private static LiteLoaderVersionList instance;

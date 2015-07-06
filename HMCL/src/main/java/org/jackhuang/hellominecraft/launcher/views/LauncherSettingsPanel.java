@@ -28,7 +28,7 @@ import org.jackhuang.hellominecraft.utils.system.MessageBox;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class LauncherSettingsPanel extends javax.swing.JPanel {
 

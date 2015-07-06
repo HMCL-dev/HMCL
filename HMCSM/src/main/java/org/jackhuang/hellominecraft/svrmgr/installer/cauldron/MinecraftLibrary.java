@@ -9,7 +9,7 @@ import java.io.File;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class MinecraftLibrary {
 

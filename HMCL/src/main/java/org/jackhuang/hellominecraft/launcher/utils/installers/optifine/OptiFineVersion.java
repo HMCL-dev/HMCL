@@ -18,7 +18,7 @@ package org.jackhuang.hellominecraft.launcher.utils.installers.optifine;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class OptiFineVersion {
     public String dl, ver, date, mirror, mcver;

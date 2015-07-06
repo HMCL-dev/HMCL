@@ -24,7 +24,7 @@ import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class MinecraftClassicVersion extends MinecraftVersion {
 

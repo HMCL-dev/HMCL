@@ -26,7 +26,7 @@ import javax.swing.JLabel;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class HeaderTab extends JLabel
         implements MouseListener {

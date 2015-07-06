@@ -37,7 +37,7 @@ import org.tukaani.xz.XZInputStream;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class ForgeInstaller {
 

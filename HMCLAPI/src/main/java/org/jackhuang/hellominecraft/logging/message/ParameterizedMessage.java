@@ -27,7 +27,7 @@ import java.util.Set;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class ParameterizedMessage
         implements IMessage {

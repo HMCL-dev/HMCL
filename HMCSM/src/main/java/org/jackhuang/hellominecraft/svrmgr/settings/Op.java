@@ -7,7 +7,7 @@ package org.jackhuang.hellominecraft.svrmgr.settings;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class Op extends PlayerList<Op.Operator> {
 

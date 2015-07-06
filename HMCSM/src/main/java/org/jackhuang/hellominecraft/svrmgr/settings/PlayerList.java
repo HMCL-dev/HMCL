@@ -17,7 +17,7 @@ import org.jackhuang.hellominecraft.svrmgr.settings.PlayerList.BasePlayer;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  * @param <T> Player type.
  */
 public abstract class PlayerList<T extends BasePlayer> {

@@ -22,7 +22,7 @@ import java.util.ResourceBundle;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public final class C {
     public static final Gson gsonPrettyPrinting = new GsonBuilder().setPrettyPrinting().create();

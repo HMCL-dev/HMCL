@@ -21,7 +21,7 @@ import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class Main {
     

@@ -6,7 +6,7 @@ package org.jackhuang.hellominecraft.svrmgr.utils;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class MonitorInfoBean {
 

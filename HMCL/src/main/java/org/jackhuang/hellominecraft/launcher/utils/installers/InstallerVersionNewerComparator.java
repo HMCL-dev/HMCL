@@ -21,7 +21,7 @@ import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionLi
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class InstallerVersionNewerComparator implements Comparator<InstallerVersion> {
 

@@ -18,7 +18,7 @@ package org.jackhuang.hellominecraft.launcher.utils.installers.forge;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class Install {
     public String profileName;

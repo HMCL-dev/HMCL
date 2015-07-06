@@ -27,7 +27,7 @@ import org.jackhuang.hellominecraft.utils.EventHandler;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class HTTPGetTask extends TaskInfo implements PreviousResult<String> {
 

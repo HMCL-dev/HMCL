@@ -20,7 +20,7 @@ import javax.swing.JOptionPane;
 import org.jackhuang.hellominecraft.C;
   
 /**  
- * @author hyh  
+ * @author huangyuhui  
  */  
 public class MessageBox   
 {

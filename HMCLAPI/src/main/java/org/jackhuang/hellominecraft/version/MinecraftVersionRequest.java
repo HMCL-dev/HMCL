@@ -19,7 +19,7 @@ package org.jackhuang.hellominecraft.version;
 import org.jackhuang.hellominecraft.C;
 
 /**
- * @author hyh
+ * @author huangyuhui
  */
 public class MinecraftVersionRequest {
     public static final int Unkown = 0, Invaild = 1, InvaildJar = 2,

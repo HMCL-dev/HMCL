@@ -25,7 +25,7 @@ import org.jackhuang.hellominecraft.utils.EventHandler;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class ProcessThread extends Thread {
 

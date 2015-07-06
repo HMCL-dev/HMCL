@@ -18,7 +18,7 @@ package org.jackhuang.hellominecraft.logging.message;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public final class ParameterizedMessageFactory extends AbstractMessageFactory {
 

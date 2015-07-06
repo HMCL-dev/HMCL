@@ -79,7 +79,7 @@ import org.jackhuang.hellominecraft.utils.Event;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public final class MainWindow extends javax.swing.JFrame
         implements MonitorThread.MonitorThreadListener, Event<Integer> {

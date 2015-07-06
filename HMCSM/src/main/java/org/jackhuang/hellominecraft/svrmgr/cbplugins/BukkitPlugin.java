@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class BukkitPlugin {
     

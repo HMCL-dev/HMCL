@@ -27,7 +27,7 @@ import org.jackhuang.hellominecraft.utils.SwingUtils;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class TaskWindow extends javax.swing.JDialog
         implements ProgressProviderListener, NonConsumer, DoingDoneListener<Task> {

@@ -13,7 +13,7 @@ import java.util.zip.ZipFile;
 
 /**
  * 判断mod类型
- * @author hyh
+ * @author huangyuhui
  */
 public class ModType {
 

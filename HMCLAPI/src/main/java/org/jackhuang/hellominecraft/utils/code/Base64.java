@@ -20,7 +20,7 @@ import java.io.UnsupportedEncodingException;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class Base64 {
 

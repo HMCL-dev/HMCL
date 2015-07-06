@@ -24,7 +24,7 @@ import java.security.NoSuchAlgorithmException;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class DigestUtils {
 

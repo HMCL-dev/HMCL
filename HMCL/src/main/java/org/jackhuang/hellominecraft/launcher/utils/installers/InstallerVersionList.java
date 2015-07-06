@@ -22,7 +22,7 @@ import org.jackhuang.hellominecraft.utils.functions.Consumer;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public abstract class InstallerVersionList implements Consumer<String[]> {
     /**

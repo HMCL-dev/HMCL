@@ -18,7 +18,7 @@ package org.jackhuang.hellominecraft.utils.functions;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class FalseFunction implements NonFunction<Boolean> {
 

@@ -19,7 +19,7 @@ import org.jackhuang.hellominecraft.utils.StrUtils;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class PluginManager {
     

@@ -16,7 +16,7 @@ import org.jackhuang.mojang.authlib.properties.PropertyMap;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class LegacyPropertyMapSerializer
 	implements JsonSerializer<PropertyMap> {

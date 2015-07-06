@@ -23,7 +23,7 @@ import org.jackhuang.hellominecraft.launcher.settings.Settings;
 /**
  * Login interface
  *
- * @author hyh
+ * @author huangyuhui
  */
 public abstract class IAuthenticator {
 

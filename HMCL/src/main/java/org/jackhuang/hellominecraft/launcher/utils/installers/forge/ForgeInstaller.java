@@ -38,7 +38,7 @@ import org.jackhuang.hellominecraft.utils.system.MessageBox;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class ForgeInstaller extends Task {
 

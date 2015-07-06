@@ -21,7 +21,7 @@ import java.lang.management.ManagementFactory;
 import org.jackhuang.hellominecraft.HMCLog;
 
 /**
- * @author hyh
+ * @author huangyuhui
  */
 public enum OS {
     

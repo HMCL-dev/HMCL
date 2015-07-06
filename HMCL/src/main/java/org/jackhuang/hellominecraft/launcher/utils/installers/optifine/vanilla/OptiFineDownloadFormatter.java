@@ -25,7 +25,7 @@ import org.jackhuang.hellominecraft.utils.NetUtils;
 
 /**
  *
- * @author hyh
+ * @author huangyuhui
  */
 public class OptiFineDownloadFormatter extends Task implements PreviousResult<String> {
     String url, result;
