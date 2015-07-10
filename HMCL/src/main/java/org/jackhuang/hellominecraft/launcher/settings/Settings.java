@@ -38,6 +38,8 @@ import org.jackhuang.hellominecraft.utils.VersionNumber;
  * @author huangyuhui
  */
 public final class Settings {
+    
+    public static final String DEFAULT_PROFILE = "Default";
 
     public static final File settingsFile = new File(IOUtils.currentDir(), "hmcl.json");
     //public static final Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(Platform.class, new EnumAdapter<>(Platform.values())).create();
@@ -56,8 +58,12 @@ public final class Settings {
 
     static {
         settings = initSettings();
-        if (!getVersions().containsKey("Default"))
-            getVersions().put("Default", new Profile());
+        if (!getVersions().containsKey(DEFAULT_PROFILE))
+            getVersions().put(DEFAULT_PROFILE, new Profile());
+        
+        for(Profile e : getVersions().values()) {
+            e.checkFormat();
+        }
 
         UPDATE_CHECKER = new UpdateChecker(new VersionNumber(Main.firstVer, Main.secondVer, Main.thirdVer),
                 "hmcl", settings.isCheckUpdate(), () -> Main.invokeUpdate());
@@ -126,11 +132,15 @@ public final class Settings {
         return true;
     }
 
-    public static void delVersion(Profile ver) {
-        delVersion(ver.getName());
+    public static boolean delVersion(Profile ver) {
+        return delVersion(ver.getName());
     }
 
-    public static void delVersion(String ver) {
-        getVersions().remove(ver);
+    public static boolean delVersion(String ver) {
+        if (DEFAULT_PROFILE.equals(ver)) {
+            MessageBox.Show(C.i18n("settings.cannot_remove_default_config"));
+            return false;
+        }
+        return getVersions().remove(ver) != null;
     }
 }

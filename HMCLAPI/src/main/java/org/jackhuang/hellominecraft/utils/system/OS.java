@@ -25,10 +25,16 @@ import org.jackhuang.hellominecraft.HMCLog;
  */
 public enum OS {
     
-    LINUX,
-    WINDOWS,
-    OSX,
-    UNKOWN;
+    LINUX('/'),
+    WINDOWS('\\'),
+    OSX('/'),
+    UNKOWN('/');
+    
+    public final char fileSeparator;
+
+    private OS(char fileSeparator) {
+        this.fileSeparator = fileSeparator;
+    }
 
     public static OS os() {
         String str;

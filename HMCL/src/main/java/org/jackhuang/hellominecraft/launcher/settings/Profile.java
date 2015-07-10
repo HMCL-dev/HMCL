@@ -25,6 +25,7 @@ import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.Utils;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersionManager;
+import org.jackhuang.hellominecraft.utils.system.OS;
 
 /**
  *
@@ -235,12 +236,12 @@ public final class Profile {
         Settings.save();
     }
 
-    public int getLauncherVisibility() {
-	return launcherVisibility;
+    public LauncherVisibility getLauncherVisibility() {
+	return LauncherVisibility.values()[launcherVisibility];
     }
 
-    public void setLauncherVisibility(int launcherVisibility) {
-	this.launcherVisibility = launcherVisibility;
+    public void setLauncherVisibility(LauncherVisibility launcherVisibility) {
+	this.launcherVisibility = launcherVisibility.ordinal();
         Settings.save();
     }
 
@@ -306,4 +307,7 @@ public final class Profile {
         Settings.save();
     }
 
+    public void checkFormat() {
+        gameDir = gameDir.replace('/', OS.os().fileSeparator).replace('\\', OS.os().fileSeparator);
+    }
 }

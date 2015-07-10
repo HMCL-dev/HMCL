@@ -34,6 +34,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.launcher.settings.LauncherVisibility;
 import org.jackhuang.hellominecraft.launcher.utils.MCUtils;
 import org.jackhuang.hellominecraft.launcher.utils.assets.IAssetsHandler;
 import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList;
@@ -912,17 +913,14 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
 
     private void btnRemoveProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveProfileActionPerformed
         if (profile == null) return;
-        if ("Default".equals(profile.getName())) {
-            MessageBox.Show(C.i18n("settings.cannot_remove_default_config"));
-            return;
-        }
         if (MessageBox.Show(C.i18n("ui.message.sure_remove", profile.getName()), MessageBox.YES_NO_OPTION) == MessageBox.NO_OPTION) return;
-        cboProfiles.removeItem(profile.getName());
-        Settings.delVersion(profile);
-        profile = Settings.getOneProfile();
-        if (profile != null) {
-            prepare(profile);
-            loadVersions();
+        if(Settings.delVersion(profile)) {
+            cboProfiles.removeItem(profile.getName());
+            profile = Settings.getOneProfile();
+            if (profile != null) {
+                prepare(profile);
+                loadVersions();
+            }
         }
     }//GEN-LAST:event_btnRemoveProfileActionPerformed
 
@@ -1094,7 +1092,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
 
     private void cboLauncherVisibilityFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_cboLauncherVisibilityFocusLost
         if (cboLauncherVisibility.getSelectedIndex() >= 0)
-            profile.setLauncherVisibility(cboLauncherVisibility.getSelectedIndex());
+            profile.setLauncherVisibility(LauncherVisibility.values()[cboLauncherVisibility.getSelectedIndex()]);
     }//GEN-LAST:event_cboLauncherVisibilityFocusLost
 
     private void btnDownloadAllAssetsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadAllAssetsActionPerformed
@@ -1197,7 +1195,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         chkNoJVMArgs.setSelected(profile.isNoJVMArgs());
         chkFullscreen.setSelected(profile.isFullscreen());
         chkCancelWrapper.setSelected(profile.isCanceledWrapper());
-        cboLauncherVisibility.setSelectedIndex(profile.getLauncherVisibility());
+        cboLauncherVisibility.setSelectedIndex(profile.getLauncherVisibility().ordinal());
         cboGameDirType.setSelectedIndex(profile.getGameDirType().ordinal());
 
         loadVersions();
