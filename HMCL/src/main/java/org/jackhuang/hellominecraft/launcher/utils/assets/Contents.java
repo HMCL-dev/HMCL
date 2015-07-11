@@ -21,8 +21,8 @@ package org.jackhuang.hellominecraft.launcher.utils.assets;
  * @author huangyuhui
  */
 public class Contents {
-    
+
     public String key, eTag, lastModified, storageClass;
     public long size;
-    
+
 }

@@ -25,6 +25,7 @@ import java.util.Map;
  * @param <V> V Type
  */
 public class Pair<K, V> implements Map.Entry<K, V> {
+
     public K key;
     public V value;
 
@@ -49,5 +50,5 @@ public class Pair<K, V> implements Map.Entry<K, V> {
         this.value = value;
         return t;
     }
-    
+
 }

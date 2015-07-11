@@ -18,33 +18,32 @@ package org.jackhuang.hellominecraft;
 
 import org.jackhuang.hellominecraft.logging.logger.Logger;
 
-
 /**
  *
  * @author huangyuhui
  */
 public class HMCLog {
-    
+
     public static Logger logger = new Logger("HMC");
-    
+
     public static void log(String message) {
         logger.info(message);
     }
-    
+
     public static void warn(String message) {
         logger.warn(message);
     }
-    
+
     public static void warn(String msg, Throwable t) {
         logger.warn(msg, t);
     }
-    
+
     public static void err(String msg) {
         logger.error(msg);
     }
-    
+
     public static void err(String msg, Throwable t) {
         logger.error(msg, t);
     }
-    
+
 }

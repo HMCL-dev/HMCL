@@ -46,9 +46,8 @@ public class TintablePanel extends JPanel {
     }
 
     public void setOverIcon(ImageIcon image) {
-        if (this.overIcon != null) {
+        if (this.overIcon != null)
             remove(this.overIcon);
-        }
 
         this.overIcon = new JLabel(image);
         this.overIcon.setVisible(false);

@@ -30,20 +30,20 @@ public class AssetsIndex {
     public static final String DEFAULT_ASSET_NAME = "legacy";
     private Map<String, AssetsObject> objects;
     private boolean virtual;
-    
+
     public AssetsIndex() {
-	this.objects = new LinkedHashMap();
+        this.objects = new LinkedHashMap();
     }
 
     public Map<String, AssetsObject> getFileMap() {
-	return this.objects;
+        return this.objects;
     }
 
     public Set<AssetsObject> getUniqueObjects() {
-	return new HashSet(this.objects.values());
+        return new HashSet(this.objects.values());
     }
 
     public boolean isVirtual() {
-	return this.virtual;
+        return this.virtual;
     }
 }

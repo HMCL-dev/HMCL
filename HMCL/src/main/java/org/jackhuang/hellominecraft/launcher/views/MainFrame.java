@@ -86,8 +86,7 @@ public final class MainFrame extends DraggableFrame {
 
         if (enableShadow)
             try {
-                //AWTUtilities.setWindowOpaque(this, false);
-                setBackground(new Color(0,0,0,0));
+                setBackground(new Color(0, 0, 0, 0));
                 getRootPane().setBorder(border = new DropShadowBorder(borderColor, 4));
             } catch (Throwable ex) {
                 HMCLog.err("Failed to set window transparent.", ex);
@@ -250,14 +249,14 @@ public final class MainFrame extends DraggableFrame {
             this.mainTab.setIsActive(true);
             this.mainPanel.onSelected();
         } else if (tabName.equalsIgnoreCase("game")) {
-            if(gamePanel == null) {
+            if (gamePanel == null) {
                 gamePanel = new GameSettingsPanel();
                 gamePanelWrapper.add(gamePanel);
             }
             this.gameTab.setIsActive(true);
             this.gamePanel.onSelected();
         } else if (tabName.equalsIgnoreCase("launcher")) {
-            if(launcherPanel == null) {
+            if (launcherPanel == null) {
                 launcherPanel = new LauncherSettingsPanel();
                 launcherPanelWrapper.add(launcherPanel);
             }

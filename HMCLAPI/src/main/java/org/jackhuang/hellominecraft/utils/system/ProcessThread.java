@@ -31,7 +31,7 @@ public class ProcessThread extends Thread {
 
     JavaProcess p;
     boolean readError = false, enableReading = true;
-    
+
     public final EventHandler<String> printlnEvent = new EventHandler<>(this);
     public final EventHandler<JavaProcess> stopEvent = new EventHandler<>(this);
 
@@ -49,22 +49,20 @@ public class ProcessThread extends Thread {
     public void run() {
         InputStream in = null;
         BufferedReader br = null;
-        if (enableReading) {
+        if (enableReading)
             in = readError ? p.getRawProcess().getErrorStream() : p.getRawProcess().getInputStream();
-        }
         try {
-            if (enableReading) {
+            if (enableReading)
                 try {
                     br = new BufferedReader(new InputStreamReader(in, System.getProperty("sun.jnu.encoding", "UTF-8")));
                 } catch (UnsupportedEncodingException ex) {
                     HMCLog.warn("Unsupported encoding: " + System.getProperty("sun.jnu.encoding", "UTF-8"), ex);
                     br = new BufferedReader(new InputStreamReader(in));
                 }
-            }
-            
+
             String line;
-            while (p.isRunning()) {
-                if (enableReading) {
+            while (p.isRunning())
+                if (enableReading)
                     while ((line = br.readLine()) != null) {
                         printlnEvent.execute(line);
                         if (readError) {
@@ -75,14 +73,12 @@ public class ProcessThread extends Thread {
                             p.getStdOutLines().add(line);
                         }
                     }
-                } else {
+                else
                     try {
                         Thread.sleep(1);
                     } catch (Exception e) {
                     }
-                }
-            }
-            if (enableReading) {
+            if (enableReading)
                 while ((line = br.readLine()) != null) {
                     printlnEvent.execute(line);
                     if (readError) {
@@ -93,7 +89,6 @@ public class ProcessThread extends Thread {
                         p.getStdOutLines().add(line);
                     }
                 }
-            }
             stopEvent.execute(p);
         } catch (Exception e) {
             e.printStackTrace();

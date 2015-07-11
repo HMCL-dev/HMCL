@@ -64,7 +64,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
 
         String str = v.getJavaDir();
         JdkVersion jv = new JdkVersion(str);
-        if(Settings.getInstance().getJava().contains(jv))
+        if (Settings.getInstance().getJava().contains(jv))
             jv = Settings.getInstance().getJava().get(Settings.getInstance().getJava().indexOf(jv));
         else try {
             jv = JdkVersion.getJavaVersionFromExecutable(str);
@@ -153,11 +153,9 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
             res.add(args.length > 1 ? args[1] : "25565");
         }
 
-        if (v.isFullscreen())
-            res.add("--fullscreen");
+        if (v.isFullscreen()) res.add("--fullscreen");
 
-        if (v.isDebug() && !v.isCanceledWrapper())
-            res.add("-debug");
+        if (v.isDebug() && !v.isCanceledWrapper()) res.add("-debug");
 
         if (StrUtils.isNotBlank(v.getMinecraftArgs()))
             res.addAll(Arrays.asList(v.getMinecraftArgs().split(" ")));
@@ -172,6 +170,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
      * <li>main class</li>
      * <li>minecraft arguments</li>
      * </ul>
+     *
      * @param list the command list you shoud edit.
      */
     protected abstract void makeSelf(List<String> list);

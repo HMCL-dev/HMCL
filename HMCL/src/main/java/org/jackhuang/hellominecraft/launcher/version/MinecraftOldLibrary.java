@@ -26,12 +26,12 @@ import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 public class MinecraftOldLibrary extends MinecraftLibrary {
 
     public MinecraftOldLibrary(String name) {
-	super(name);
+        super(name);
     }
 
     @Override
     public boolean isRequiredToUnzip() {
-	return false;
+        return false;
     }
 
     @Override
@@ -40,22 +40,22 @@ public class MinecraftOldLibrary extends MinecraftLibrary {
 
     @Override
     public boolean allow() {
-	return true;
+        return true;
     }
 
     @Override
     public File getFilePath(File gameDir) {
-	return new File(gameDir, "bin/" + name + ".jar");
+        return new File(gameDir, "bin/" + name + ".jar");
     }
 
     @Override
     public Object clone() {
-	return new MinecraftOldLibrary(name);
+        return new MinecraftOldLibrary(name);
     }
 
     @Override
     public String getDownloadURL(String urlBase, DownloadType downloadType) {
-	return null;
+        return null;
     }
-    
+
 }

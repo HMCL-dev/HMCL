@@ -52,11 +52,10 @@ public class Compressor {
         BufferedOutputStream bos = new BufferedOutputStream(os);
         try (ZipOutputStream zos = new ZipOutputStream(bos)) {
             String basePath;
-            if (sourceDir.isDirectory()) {
+            if (sourceDir.isDirectory())
                 basePath = sourceDir.getPath();
-            } else {//直接压缩单个文件时，取父目录
+            else//直接压缩单个文件时，取父目录
                 basePath = sourceDir.getParent();
-            }
             zipFile(sourceDir, basePath, zos);
             zos.closeEntry();
         }
@@ -72,22 +71,21 @@ public class Compressor {
     private static void zipFile(File source, String basePath,
             ZipOutputStream zos) throws IOException {
         File[] files;
-        if (source.isDirectory()) {
+        if (source.isDirectory())
             files = source.listFiles();
-        } else {
+        else {
             files = new File[1];
             files[0] = source;
         }
         String pathName;//存相对路径(相对于待压缩的根目录)  
         byte[] buf = new byte[1024];
         int length;
-        for (File file : files) {
+        for (File file : files)
             if (file.isDirectory()) {
                 pathName = file.getPath().substring(basePath.length() + 1)
                         + "/";
-                if (file.getName().toLowerCase().contains("meta-inf")) {
+                if (file.getName().toLowerCase().contains("meta-inf"))
                     continue;
-                }
                 zos.putNextEntry(new ZipEntry(pathName));
                 zipFile(file, basePath, zos);
             } else {
@@ -95,18 +93,16 @@ public class Compressor {
                 try (InputStream is = new FileInputStream(file)) {
                     BufferedInputStream bis = new BufferedInputStream(is);
                     zos.putNextEntry(new ZipEntry(pathName));
-                    while ((length = bis.read(buf)) > 0) {
+                    while ((length = bis.read(buf)) > 0)
                         zos.write(buf, 0, length);
-                    }
                 }
             }
-        }
     }
 
     public static void unzip(String zipFileName, String extPlace) throws IOException {
         unzip(new File(zipFileName), new File(extPlace));
     }
-    
+
     public static void unzip(File zipFileName, File extPlace) throws IOException {
         unzip(zipFileName, extPlace, new String[0]);
     }
@@ -129,7 +125,7 @@ public class Compressor {
                 while (e.hasMoreElements()) {
                     ZipEntry zipEnt = (ZipEntry) e.nextElement();
                     gbkPath = zipEnt.getName();
-                    if(StrUtils.startsWithOne(without, gbkPath)) continue;
+                    if (StrUtils.startsWithOne(without, gbkPath)) continue;
                     if (zipEnt.isDirectory()) {
                         strtemp = strPath + File.separator + gbkPath;
                         File dir = new File(strtemp);
@@ -142,15 +138,13 @@ public class Compressor {
                         strtemp = strPath + File.separator + gbkPath;
                         //建目录
                         String strsubdir = gbkPath;
-                        for (int i = 0; i < strsubdir.length(); i++) {
+                        for (int i = 0; i < strsubdir.length(); i++)
                             if (strsubdir.substring(i, i + 1).equalsIgnoreCase("/")) {
                                 String temp = strPath + File.separator + strsubdir.substring(0, i);
                                 File subdir = new File(temp);
-                                if (!subdir.exists()) {
+                                if (!subdir.exists())
                                     subdir.mkdir();
-                                }
                             }
-                        }
                         try (FileOutputStream fos = new FileOutputStream(strtemp); BufferedOutputStream bos = new BufferedOutputStream(fos)) {
                             int c;
                             while ((c = bis.read()) != -1)

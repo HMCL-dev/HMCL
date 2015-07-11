@@ -21,6 +21,7 @@ package org.jackhuang.hellominecraft.launcher.version;
  * @author huangyuhui
  */
 public class Rules {
+
     public String action;
     public OS os;
 }

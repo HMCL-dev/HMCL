@@ -23,5 +23,6 @@ import java.util.Map;
  * @author huangyuhui
  */
 public class LiteLoaderMCVersions {
+
     public Map<String, Map<String, LiteLoaderVersion>> artefacts;
 }

@@ -41,9 +41,9 @@ public class MojangDownloadProvider implements IDownloadProvider {
 
     @Override
     public InstallerVersionList getInstallerByType(String type) {
-        if(type.equalsIgnoreCase("forge")) return getForgeInstaller();
-        if(type.equalsIgnoreCase("liteloader")) return getLiteLoaderInstaller();
-        if(type.equalsIgnoreCase("optifine")) return getOptiFineInstaller();
+        if (type.equalsIgnoreCase("forge")) return getForgeInstaller();
+        if (type.equalsIgnoreCase("liteloader")) return getLiteLoaderInstaller();
+        if (type.equalsIgnoreCase("optifine")) return getOptiFineInstaller();
         return null;
     }
 
@@ -76,5 +76,5 @@ public class MojangDownloadProvider implements IDownloadProvider {
     public boolean isAllowedToUseSelfURL() {
         return true;
     }
-    
+
 }

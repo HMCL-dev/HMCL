@@ -22,5 +22,6 @@ package org.jackhuang.hellominecraft.utils;
  * @param <T> EventArgs
  */
 public interface Event<T> {
+
     boolean call(Object sender, T t);
 }

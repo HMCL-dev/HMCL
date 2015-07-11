@@ -21,8 +21,9 @@ package org.jackhuang.hellominecraft.tasks;
  * @author huangyuhui
  */
 public abstract class ProgressProvider {
+
     protected ProgressProviderListener ppl;
-    
+
     public ProgressProvider setProgressProviderListener(ProgressProviderListener p) {
         ppl = p;
         return this;

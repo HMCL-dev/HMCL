@@ -25,33 +25,40 @@ import org.jackhuang.hellominecraft.utils.functions.Consumer;
  * @author huangyuhui
  */
 public abstract class InstallerVersionList implements Consumer<String[]> {
+
     /**
      * Refresh installer versions list from the downloaded content.
+     *
      * @param versions Minecraft versions you need to refresh
      * @throws java.lang.Exception
      */
     public abstract void refreshList(String[] versions) throws Exception;
+
     public abstract String getName();
+
     public abstract List<InstallerVersion> getVersions(String mcVersion);
-    
+
     public static class InstallerVersion implements Comparable<InstallerVersion> {
-	public String selfVersion, mcVersion;
-	public String installer, universal;
+
+        public String selfVersion, mcVersion;
+        public String installer, universal;
         public String changelog;
 
-	public InstallerVersion(String selfVersion, String mcVersion) {
-	    this.selfVersion = selfVersion;
-	    this.mcVersion = mcVersion;
-	}
+        public InstallerVersion(String selfVersion, String mcVersion) {
+            this.selfVersion = selfVersion;
+            this.mcVersion = mcVersion;
+        }
 
         @Override
         public int compareTo(InstallerVersion o) {
             return selfVersion.compareTo(o.selfVersion);
         }
     }
-    
+
     public static class InstallerVersionComparator implements Comparator<InstallerVersion> {
+
         public static final InstallerVersionComparator INSTANCE = new InstallerVersionComparator();
+
         @Override
         public int compare(InstallerVersion o1, InstallerVersion o2) {
             return o2.compareTo(o1);

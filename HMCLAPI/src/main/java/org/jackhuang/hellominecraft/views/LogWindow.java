@@ -30,7 +30,7 @@ import org.jackhuang.hellominecraft.utils.Utils;
  * @author huangyuhui
  */
 public class LogWindow extends javax.swing.JFrame {
-    
+
     boolean movingEnd;
     NonFunction<Boolean> listener;
     NonConsumer terminateGameListener;
@@ -40,18 +40,18 @@ public class LogWindow extends javax.swing.JFrame {
      */
     public LogWindow() {
         initComponents();
-        
+
         movingEnd = true;
 
         setLocationRelativeTo(null);
-	
-	TextComponentOutputStream tc = new TextComponentOutputStream(txtLog);
-	DoubleOutputStream out = new DoubleOutputStream(tc, System.out);
-	System.setOut(new LauncherPrintStream(out));
-	DoubleOutputStream err = new DoubleOutputStream(tc, System.err);
-	System.setErr(new LauncherPrintStream(err));
+
+        TextComponentOutputStream tc = new TextComponentOutputStream(txtLog);
+        DoubleOutputStream out = new DoubleOutputStream(tc, System.out);
+        System.setOut(new LauncherPrintStream(out));
+        DoubleOutputStream err = new DoubleOutputStream(tc, System.err);
+        System.setErr(new LauncherPrintStream(err));
     }
-    
+
     public static LogWindow instance = new LogWindow();
 
     /**
@@ -206,15 +206,15 @@ public class LogWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_btnClearActionPerformed
 
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
-        if(listener != null && listener.onDone()) Utils.shutdownForcely();
+        if (listener != null && listener.onDone()) Utils.shutdownForcely();
     }//GEN-LAST:event_formWindowClosed
 
     private void btnCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCopyActionPerformed
-	Utils.setClipborad(this.txtLog.getText());
+        Utils.setClipborad(this.txtLog.getText());
     }//GEN-LAST:event_btnCopyActionPerformed
 
     private void btnMCBBSActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMCBBSActionPerformed
-	Utils.openLink(C.URL_PUBLISH);
+        Utils.openLink(C.URL_PUBLISH);
     }//GEN-LAST:event_btnMCBBSActionPerformed
 
     private void btnTieBaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTieBaActionPerformed
@@ -226,7 +226,7 @@ public class LogWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_btnMCFActionPerformed
 
     private void btnTerminateGameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTerminateGameActionPerformed
-        if(terminateGameListener != null)
+        if (terminateGameListener != null)
             terminateGameListener.onDone();
     }//GEN-LAST:event_btnTerminateGameActionPerformed
 
@@ -238,49 +238,49 @@ public class LogWindow extends javax.swing.JFrame {
         String text = txtLog.getText();
         text += status + System.getProperty("line.separator");
         txtLog.setText(text);
-        
-        if(movingEnd) {
+
+        if (movingEnd) {
             int position = text.length();
             txtLog.setCaretPosition(position);
         }
     }
-    
+
     public void log(String status, Throwable t) {
-	log(status);
-	log(StrUtils.getStackTrace(t));
+        log(status);
+        log(StrUtils.getStackTrace(t));
     }
-    
+
     public void setExit(NonFunction<Boolean> exit) {
-	this.listener = exit;
+        this.listener = exit;
     }
-    
+
     public void setTerminateGame(NonConsumer l) {
-	this.terminateGameListener = l;
+        this.terminateGameListener = l;
     }
-    
+
     public void clean() {
         txtLog.setText("");
     }
-    
+
     public boolean getMovingEnd() {
         return movingEnd;
     }
-    
+
     public void setMovingEnd(boolean b) {
         movingEnd = b;
     }
 
     @Override
     public void setVisible(boolean b) {
-	lblCrash.setVisible(false);
-	btnMCBBS.setVisible(false);
-	btnTieBa.setVisible(false);
-	btnMCF.setVisible(false);
-	super.setVisible(b);
+        lblCrash.setVisible(false);
+        btnMCBBS.setVisible(false);
+        btnTieBa.setVisible(false);
+        btnMCF.setVisible(false);
+        super.setVisible(b);
     }
-    
+
     public void showAsCrashWindow(boolean out_date) {
-        if(out_date) {
+        if (out_date) {
             lblCrash.setVisible(false);
             btnMCBBS.setVisible(false);
             btnTieBa.setVisible(false);
@@ -293,10 +293,10 @@ public class LogWindow extends javax.swing.JFrame {
             btnMCF.setVisible(true);
             lblCrash.setText(C.i18n("ui.label.crashing"));
         }
-        
-	super.setVisible(true);
+
+        super.setVisible(true);
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnClear;
     private javax.swing.JButton btnClose;

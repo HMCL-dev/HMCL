@@ -24,12 +24,12 @@ import org.jackhuang.hellominecraft.C;
  * @author huangyuhui
  */
 public class MinecraftRemoteVersions {
-    
+
     public ArrayList<MinecraftRemoteVersion> versions;
     public MinecraftRemoteLatestVersion latest;
-    
+
     public static MinecraftRemoteVersions fromJson(String s) {
         return C.gson.fromJson(s, MinecraftRemoteVersions.class);
     }
-    
+
 }

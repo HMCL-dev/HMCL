@@ -21,19 +21,25 @@ package org.jackhuang.hellominecraft.tasks;
  * @author huangyuhui
  */
 public interface DoingDoneListener<K> {
+
     /**
      * Task done.
-     * @param k 
+     *
+     * @param k
      */
     void onDone(K k);
+
     /**
      * Before task executing.
-     * @param k 
+     *
+     * @param k
      */
     void onDoing(K k);
+
     /**
      * Task failed.
-     * @param k 
+     *
+     * @param k
      */
     void onFailed(K k);
 }

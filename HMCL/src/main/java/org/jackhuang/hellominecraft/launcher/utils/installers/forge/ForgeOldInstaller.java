@@ -26,12 +26,12 @@ import org.jackhuang.hellominecraft.launcher.utils.installers.PackMinecraftInsta
  * @author huangyuhui
  */
 public class ForgeOldInstaller {
-    
+
     public static void install(String destMinecraftJar, String srcMinecraftJar, String forgeUniversal) throws IOException {
         ArrayList<String> al = new ArrayList<>();
         al.add(srcMinecraftJar);
         al.add(forgeUniversal);
         new PackMinecraftInstaller(al, new File(destMinecraftJar)).install();
     }
-    
+
 }

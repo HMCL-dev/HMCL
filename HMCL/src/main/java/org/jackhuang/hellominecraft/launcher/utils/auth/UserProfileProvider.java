@@ -109,14 +109,14 @@ public final class UserProfileProvider {
     public void setUserType(String userType) {
         this.userType = userType;
     }
-    
+
     private String username = "";
     private String userId = "";
     private String session = "";
     private String accessToken = "";
     private boolean success = false;
     private String error = "";
-    private String userProperties = "{}"; 
+    private String userProperties = "{}";
     private String userPropertyMap = "{}";
     private String otherInfo = "";
     private String clientIdentifier = "";

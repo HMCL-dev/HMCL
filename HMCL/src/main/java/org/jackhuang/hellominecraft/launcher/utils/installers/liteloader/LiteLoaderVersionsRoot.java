@@ -23,6 +23,7 @@ import java.util.Map;
  * @author huangyuhui
  */
 public class LiteLoaderVersionsRoot {
+
     public Map<String, LiteLoaderMCVersions> versions;
     public LiteLoaderVersionsMeta meta;
 }

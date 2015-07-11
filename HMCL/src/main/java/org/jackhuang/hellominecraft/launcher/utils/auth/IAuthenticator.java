@@ -30,28 +30,26 @@ public abstract class IAuthenticator {
     public static final YggdrasilAuthenticator yggdrasilLogin;
     public static final OfflineAuthenticator offlineLogin;
     public static final SkinmeAuthenticator skinmeLogin;
-    //public static final BestLogin bestLogin;
 
     public static final List<IAuthenticator> logins;
 
     static {
-	String clientToken = Settings.getInstance().getClientToken();
-	logins = new ArrayList<>();
-	logins.add(offlineLogin = new OfflineAuthenticator(clientToken));
-	logins.add(yggdrasilLogin = new YggdrasilAuthenticator(clientToken));
-	logins.add(skinmeLogin = new SkinmeAuthenticator(clientToken));
-        //logins.add(bestLogin = new BestLogin(clientToken));
-	yggdrasilLogin.onLoadSettings(Settings.getInstance().getYggdrasilConfig());
+        String clientToken = Settings.getInstance().getClientToken();
+        logins = new ArrayList<>();
+        logins.add(offlineLogin = new OfflineAuthenticator(clientToken));
+        logins.add(yggdrasilLogin = new YggdrasilAuthenticator(clientToken));
+        logins.add(skinmeLogin = new SkinmeAuthenticator(clientToken));
+        yggdrasilLogin.onLoadSettings(Settings.getInstance().getYggdrasilConfig());
 
-	Runtime.getRuntime().addShutdownHook(new Thread(() -> 
-            Settings.getInstance().setYggdrasilConfig(yggdrasilLogin.onSaveSettings())
+        Runtime.getRuntime().addShutdownHook(new Thread(()
+                -> Settings.getInstance().setYggdrasilConfig(yggdrasilLogin.onSaveSettings())
         ));
     }
 
     protected String clientToken;
 
     public IAuthenticator(String clientToken) {
-	this.clientToken = clientToken;
+        this.clientToken = clientToken;
     }
 
     /**
@@ -74,11 +72,11 @@ public abstract class IAuthenticator {
      * @return Will I hide password box?
      */
     public boolean isHidePasswordBox() {
-	return false;
+        return false;
     }
 
     public boolean isLoggedIn() {
-	return false;
+        return false;
     }
 
     public void setRememberMe(boolean is) {

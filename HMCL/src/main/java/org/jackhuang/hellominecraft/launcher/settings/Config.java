@@ -31,6 +31,7 @@ import org.jackhuang.hellominecraft.utils.system.OS;
  * @author huangyuhui
  */
 public final class Config {
+
     @SerializedName("last")
     private String last;
     @SerializedName("bgpath")
@@ -119,7 +120,7 @@ public final class Config {
     }
 
     public TreeMap<String, Profile> getConfigurations() {
-        if(configurations == null)
+        if (configurations == null)
             configurations = new TreeMap<>();
         return configurations;
     }
@@ -141,7 +142,7 @@ public final class Config {
         this.yggdrasil = yggdrasil;
         Settings.save();
     }
-    
+
     @SerializedName("logintype")
     private int logintype;
     @SerializedName("downloadtype")
@@ -152,22 +153,21 @@ public final class Config {
     private boolean checkUpdate;
     @SerializedName("yggdrasil")
     private Map yggdrasil;
-    
-    public Config()
-    {
+
+    public Config() {
         clientToken = UUID.randomUUID().toString();
         username = "";
         logintype = downloadtype = 0;
         checkUpdate = true;
-	configurations = new TreeMap<>();
-	Profile profile = new Profile();
-	configurations.put(profile.getName(), profile);
+        configurations = new TreeMap<>();
+        Profile profile = new Profile();
+        configurations.put(profile.getName(), profile);
         enableShadow = OS.os() == OS.WINDOWS;
         theme = 0;
     }
 
     public DownloadType getDownloadSource() {
-        if(downloadtype >= DownloadType.values().length || downloadtype < 0) return null;
+        if (downloadtype >= DownloadType.values().length || downloadtype < 0) return null;
         return DownloadType.values()[downloadtype];
     }
 

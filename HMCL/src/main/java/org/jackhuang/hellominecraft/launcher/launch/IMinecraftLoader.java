@@ -23,5 +23,6 @@ import java.util.List;
  * @author huangyuhui
  */
 public interface IMinecraftLoader {
+
     List<String> makeLaunchingCommand();
 }

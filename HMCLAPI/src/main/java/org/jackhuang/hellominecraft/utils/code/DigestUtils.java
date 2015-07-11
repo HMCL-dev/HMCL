@@ -16,7 +16,6 @@
  */
 package org.jackhuang.hellominecraft.utils.code;
 
-import org.jackhuang.hellominecraft.utils.code.Hex;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;

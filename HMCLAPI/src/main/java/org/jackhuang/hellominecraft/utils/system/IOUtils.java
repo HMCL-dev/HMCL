@@ -16,7 +16,6 @@
  */
 package org.jackhuang.hellominecraft.utils.system;
 
-import org.jackhuang.hellominecraft.utils.system.OS;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
@@ -43,14 +42,12 @@ import org.jackhuang.hellominecraft.HMCLog;
 public class IOUtils {
 
     public static String addSeparator(String path) {
-        if (path == null || path.trim().length() == 0) {
+        if (path == null || path.trim().length() == 0)
             return "";
-        }
-        if (isSeparator(path.charAt(path.length() - 1))) {
+        if (isSeparator(path.charAt(path.length() - 1)))
             return path;
-        } else {
+        else
             return path + File.separatorChar;
-        }
     }
 
     public static boolean isSeparator(char ch) {
@@ -60,21 +57,18 @@ public class IOUtils {
     public static String removeLastSeparator(String dir) {
         String t = dir.trim();
         char ch = t.charAt(t.length() - 1);
-        if (isSeparator(ch)) {
+        if (isSeparator(ch))
             return t.substring(0, t.length() - 1);
-        }
         return t;
     }
 
     public static String extractLastDirectory(String dir) {
         String t = removeLastSeparator(dir);
         int i = t.length() - 1;
-        while (i >= 0 && !isSeparator(dir.charAt(i))) {
+        while (i >= 0 && !isSeparator(dir.charAt(i)))
             i--;
-        }
-        if (i < 0) {
+        if (i < 0)
             return t;
-        }
         return t.substring(i + 1, (t.length() - i) + (i + 1) - 1);
     }
 
@@ -83,11 +77,9 @@ public class IOUtils {
         if (f.isDirectory()) {
             File[] f1 = f.listFiles();
             int len = f1.length;
-            for (int i = 0; i < len; i++) {
-                if (f1[i].isFile()) {
+            for (int i = 0; i < len; i++)
+                if (f1[i].isFile())
                     arr.add(f1[i].getName());
-                }
-            }
         }
         return arr;
     }
@@ -97,11 +89,9 @@ public class IOUtils {
         if (f.isDirectory()) {
             File[] f1 = f.listFiles();
             int len = f1.length;
-            for (int i = 0; i < len; i++) {
-                if (f1[i].isFile()) {
+            for (int i = 0; i < len; i++)
+                if (f1[i].isFile())
                     arr.add(addSeparator(f.getAbsolutePath()) + f1[i].getName());
-                }
-            }
         }
         return arr;
     }
@@ -111,11 +101,9 @@ public class IOUtils {
         if (f.isDirectory()) {
             File[] f1 = f.listFiles();
             int len = f1.length;
-            for (int i = 0; i < len; i++) {
-                if (f1[i].isDirectory()) {
+            for (int i = 0; i < len; i++)
+                if (f1[i].isDirectory())
                     arr.add(f1[i].getName());
-                }
-            }
         }
         return arr;
     }
@@ -152,9 +140,8 @@ public class IOUtils {
             for (int i = 0; i < macs.length; i++) {
                 mac = Integer.toHexString(macs[i] & 0xFF);
 
-                if (mac.length() == 1) {
+                if (mac.length() == 1)
                     mac = '0' + mac;
-                }
 
                 sb.append(mac).append("-");
             }
@@ -179,11 +166,10 @@ public class IOUtils {
     public static String getJavaDir() {
         String path = System.getProperty("java.home") + File.separatorChar + "bin" + File.separatorChar;
         path = addSeparator(path);
-        if (OS.os() == OS.WINDOWS && new File(path + "javaw.exe").isFile()) {
+        if (OS.os() == OS.WINDOWS && new File(path + "javaw.exe").isFile())
             return path + "javaw.exe";
-        } else {
+        else
             return path + "java";
-        }
     }
 
     public static byte[] readFully(InputStream stream) throws IOException {
@@ -192,9 +178,8 @@ public class IOUtils {
         int len;
         do {
             len = stream.read(data);
-            if (len <= 0) {
+            if (len <= 0)
                 continue;
-            }
             entryBuffer.write(data, 0, len);
         } while (len != -1);
 
@@ -219,39 +204,33 @@ public class IOUtils {
 
     public static void closeQuietly(Closeable closeable) {
         try {
-            if (closeable != null) {
+            if (closeable != null)
                 closeable.close();
-            }
         } catch (IOException ioe) {
         }
     }
 
     public static void write(byte[] data, OutputStream output)
             throws IOException {
-        if (data != null) {
+        if (data != null)
             output.write(data);
-        }
     }
 
     public static void write(String data, OutputStream output, String encoding)
             throws IOException {
-        if (data != null) {
+        if (data != null)
             output.write(data.getBytes(encoding));
-        }
     }
 
     public static FileInputStream openInputStream(File file)
             throws IOException {
         if (file.exists()) {
-            if (file.isDirectory()) {
+            if (file.isDirectory())
                 throw new IOException("File '" + file + "' exists but is a directory");
-            }
-            if (!file.canRead()) {
+            if (!file.canRead())
                 throw new IOException("File '" + file + "' cannot be read");
-            }
-        } else {
+        } else
             throw new FileNotFoundException("File '" + file + "' does not exist");
-        }
         return new FileInputStream(file);
     }
 

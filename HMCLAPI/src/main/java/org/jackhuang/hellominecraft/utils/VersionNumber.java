@@ -27,16 +27,16 @@ public final class VersionNumber implements Comparable<VersionNumber> {
     public byte firstVer, secondVer, thirdVer;
 
     public VersionNumber(byte a, byte b, byte c) {
-        firstVer = a; secondVer = b; thirdVer = c;
+        firstVer = a;
+        secondVer = b;
+        thirdVer = c;
     }
 
     public static VersionNumber check(String data) {
-        while (!data.isEmpty() && ((data.charAt(0) < '0' || data.charAt(0) > '9') && data.charAt(0) != '.')) {
+        while (!data.isEmpty() && ((data.charAt(0) < '0' || data.charAt(0) > '9') && data.charAt(0) != '.'))
             data = data.substring(1);
-        }
-        if (data.isEmpty()) {
+        if (data.isEmpty())
             return null;
-        }
         VersionNumber ur;
         String[] ver = data.split("\\.");
         if (ver.length == 3) {
@@ -55,24 +55,21 @@ public final class VersionNumber implements Comparable<VersionNumber> {
     }
 
     public static boolean isOlder(VersionNumber a, VersionNumber b) {
-        if (a.firstVer < b.firstVer) {
+        if (a.firstVer < b.firstVer)
             return true;
-        } else if (a.firstVer == b.firstVer) {
-            if (a.secondVer < b.secondVer) {
+        else if (a.firstVer == b.firstVer)
+            if (a.secondVer < b.secondVer)
                 return true;
-            } else if (a.secondVer == b.secondVer) {
-                if (a.thirdVer < b.thirdVer) {
+            else if (a.secondVer == b.secondVer)
+                if (a.thirdVer < b.thirdVer)
                     return true;
-                }
-            }
-        }
         return false;
     }
 
     @Override
     public int compareTo(VersionNumber o) {
-        if(isOlder(this, o)) return -1;
-        else if(isOlder(o, this)) return 1;
+        if (isOlder(this, o)) return -1;
+        else if (isOlder(o, this)) return 1;
         else return 0;
     }
 

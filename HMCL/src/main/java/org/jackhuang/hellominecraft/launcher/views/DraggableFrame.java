@@ -63,9 +63,8 @@ public class DraggableFrame extends JFrame
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        if ((e.getModifiersEx() & 0x400) != 0) {
+        if ((e.getModifiersEx() & 0x400) != 0)
             setLocation(e.getXOnScreen() - this.dragGripX, e.getYOnScreen() - this.dragGripY);
-        }
     }
 
     @Override

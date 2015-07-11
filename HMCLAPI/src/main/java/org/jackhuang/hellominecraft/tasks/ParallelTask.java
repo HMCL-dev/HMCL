@@ -24,6 +24,7 @@ import java.util.HashSet;
  * @author huangyuhui
  */
 public class ParallelTask extends Task {
+
     Collection<Task> dependsTask = new HashSet<>();
 
     @Override
@@ -40,9 +41,9 @@ public class ParallelTask extends Task {
     public Collection<Task> getDependTasks() {
         return dependsTask;
     }
-    
+
     public void addDependsTask(Task t) {
         dependsTask.add(t);
     }
-    
+
 }

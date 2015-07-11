@@ -71,7 +71,7 @@ public class AssetsMojangLoader extends IAssetsHandler {
             return;
         }
         AssetsIndex o;
-        try { 
+        try {
             o = C.gson.fromJson(result, AssetsIndex.class);
         } catch (Exception e) {
             HMCLog.err("Failed to parse index json, please redownload it!", e);

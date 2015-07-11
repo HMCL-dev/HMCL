@@ -23,17 +23,17 @@ import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionLi
  * @author huangyuhui
  */
 public class BMCLAPIDownloadProvider implements IDownloadProvider {
-    
+
     @Override
     public InstallerVersionList getForgeInstaller() {
         return org.jackhuang.hellominecraft.launcher.utils.installers.forge.bmcl.ForgeBMCLVersionList.getInstance();
     }
-    
+
     @Override
     public InstallerVersionList getLiteLoaderInstaller() {
         return org.jackhuang.hellominecraft.launcher.utils.installers.liteloader.LiteLoaderVersionList.getInstance();
     }
-    
+
     @Override
     public InstallerVersionList getOptiFineInstaller() {
         return org.jackhuang.hellominecraft.launcher.utils.installers.optifine.bmcl.OptiFineBMCLVersionList.getInstance();
@@ -41,9 +41,9 @@ public class BMCLAPIDownloadProvider implements IDownloadProvider {
 
     @Override
     public InstallerVersionList getInstallerByType(String type) {
-        if(type.equalsIgnoreCase("forge")) return getForgeInstaller();
-        if(type.equalsIgnoreCase("liteloader")) return getLiteLoaderInstaller();
-        if(type.equalsIgnoreCase("optifine")) return getOptiFineInstaller();
+        if (type.equalsIgnoreCase("forge")) return getForgeInstaller();
+        if (type.equalsIgnoreCase("liteloader")) return getLiteLoaderInstaller();
+        if (type.equalsIgnoreCase("optifine")) return getOptiFineInstaller();
         return null;
     }
 
@@ -64,17 +64,17 @@ public class BMCLAPIDownloadProvider implements IDownloadProvider {
 
     @Override
     public String getVersionsListDownloadURL() {
-        return  "http://bmclapi2.bangbang93.com/versions/versions.json";
+        return "http://bmclapi2.bangbang93.com/versions/versions.json";
     }
 
     @Override
     public String getAssetsDownloadURL() {
-        return  "http://bmclapi2.bangbang93.com/assets/";
+        return "http://bmclapi2.bangbang93.com/assets/";
     }
 
     @Override
     public boolean isAllowedToUseSelfURL() {
         return false;
     }
-    
+
 }

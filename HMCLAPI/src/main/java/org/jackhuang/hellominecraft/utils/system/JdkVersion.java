@@ -45,7 +45,7 @@ public final class JdkVersion {
     public String getLocation() {
         return location;
     }
-    
+
     public int getParsedVersion() {
         return parseVersion(getVersion());
     }
@@ -109,18 +109,14 @@ public final class JdkVersion {
         // version String should look like "1.4.2_10"
         majorJavaVersion = parseVersion(javaVersion);
     }
-    
+
     private static int parseVersion(String javaVersion) {
-        if(StrUtils.isBlank(javaVersion)) return UNKOWN;
+        if (StrUtils.isBlank(javaVersion)) return UNKOWN;
         int a = UNKOWN;
-        if (javaVersion.contains("1.9."))
-            a = JAVA_19;
-        else if (javaVersion.contains("1.8."))
-            a = JAVA_18;
-        else if (javaVersion.contains("1.7."))
-            a = JAVA_17;
-        else if (javaVersion.contains("1.6."))
-            a = JAVA_16;
+        if (javaVersion.contains("1.9.")) a = JAVA_19;
+        else if (javaVersion.contains("1.8.")) a = JAVA_18;
+        else if (javaVersion.contains("1.7.")) a = JAVA_17;
+        else if (javaVersion.contains("1.6.")) a = JAVA_16;
         return a;
     }
 

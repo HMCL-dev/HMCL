@@ -23,14 +23,14 @@ package org.jackhuang.hellominecraft.tasks;
 public abstract class TaskInfo extends Task {
 
     String info;
-    
+
     public TaskInfo(String info) {
         this.info = info;
     }
-    
+
     @Override
     public String getInfo() {
         return info;
     }
-    
+
 }

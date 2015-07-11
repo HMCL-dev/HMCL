@@ -24,12 +24,12 @@ import org.jackhuang.hellominecraft.HMCLog;
  * @author huangyuhui
  */
 public enum OS {
-    
+
     LINUX('/'),
     WINDOWS('\\'),
     OSX('/'),
     UNKOWN('/');
-    
+
     public final char fileSeparator;
 
     private OS(char fileSeparator) {
@@ -39,27 +39,21 @@ public enum OS {
     public static OS os() {
         String str;
         if ((str = System.getProperty("os.name").toLowerCase())
-                .contains("win")) {
+                .contains("win"))
             return OS.WINDOWS;
-        }
-        if (str.contains("mac")) {
+        if (str.contains("mac"))
             return OS.OSX;
-        }
-        if (str.contains("solaris")) {
+        if (str.contains("solaris"))
             return OS.LINUX;
-        }
-        if (str.contains("sunos")) {
+        if (str.contains("sunos"))
             return OS.LINUX;
-        }
-        if (str.contains("linux")) {
+        if (str.contains("linux"))
             return OS.LINUX;
-        }
-        if (str.contains("unix")) {
+        if (str.contains("unix"))
             return OS.LINUX;
-        }
         return OS.UNKOWN;
     }
-    
+
     /**
      * @return Free Physical Memory Size (Byte)
      */
@@ -67,10 +61,10 @@ public enum OS {
         try {
             OperatingSystemMXBean o = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
             return o.getTotalPhysicalMemorySize();
-        } catch(Throwable t) {
+        } catch (Throwable t) {
             HMCLog.warn("Failed to get total physical memory size");
             return -1;
         }
     }
-    
+
 }

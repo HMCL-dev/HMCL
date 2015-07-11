@@ -28,28 +28,27 @@ public final class MinecraftCrashAdvicer {
     public static String getAdvice(String trace) {
         return getAdvice(trace, false);
     }
-    
+
     public static String getAdvice(String trace, boolean selfCrash) {
         trace = trace.toLowerCase();
-        if(trace.contains("pixel format not accelerated")) {
+        if (trace.contains("pixel format not accelerated"))
             return C.i18n("crash.advice.LWJGLException");
-        } else if (trace.contains("unsupportedclassversionrrror")) {
+        else if (trace.contains("unsupportedclassversionrrror"))
             return C.i18n("crash.advice.UnsupportedClassVersionError");
-        } else if (trace.contains("concurrentmodificationexception")) {
+        else if (trace.contains("concurrentmodificationexception"))
             return C.i18n("crash.advice.ConcurrentModificationException");
-        } else if (trace.contains("securityexception")) {
+        else if (trace.contains("securityexception"))
             return C.i18n("crash.advice.SecurityException");
-        } else if (trace.contains("nosuchfieldexception") || trace.contains("nosuchfielderror")) {
+        else if (trace.contains("nosuchfieldexception") || trace.contains("nosuchfielderror"))
             return C.i18n("crash.advice.NoSuchFieldError");
-        } else if (trace.contains("outofmemory") || trace.contains("out of memory")) {
+        else if (trace.contains("outofmemory") || trace.contains("out of memory"))
             return C.i18n("crash.advice.OutOfMemoryError");
-        } else if (trace.contains("noclassdeffounderror") || trace.contains("classnotfoundexception")) {
+        else if (trace.contains("noclassdeffounderror") || trace.contains("classnotfoundexception"))
             return C.i18n("crash.advice.ClassNotFoundException");
-        } else if (trace.contains("no lwjgl in java.library.path")) {
+        else if (trace.contains("no lwjgl in java.library.path"))
             return C.i18n("crash.advice.no_lwjgl");
-        } else if (trace.contains("opengl") || trace.contains("openal")) {
+        else if (trace.contains("opengl") || trace.contains("openal"))
             return C.i18n("crash.advice.OpenGL");
-        }
         return C.i18n(selfCrash ? "crash.advice.no" : "crash.advice.otherwise");
     }
 

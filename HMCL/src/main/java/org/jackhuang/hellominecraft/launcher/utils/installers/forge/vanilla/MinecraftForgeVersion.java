@@ -21,6 +21,7 @@ package org.jackhuang.hellominecraft.launcher.utils.installers.forge.vanilla;
  * @author huangyuhui
  */
 public class MinecraftForgeVersion {
+
     public String branch, mcversion, jobver, version;
     public int build;
     public double modified;

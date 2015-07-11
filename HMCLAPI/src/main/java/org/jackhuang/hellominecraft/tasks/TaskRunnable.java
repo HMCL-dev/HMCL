@@ -21,7 +21,9 @@ package org.jackhuang.hellominecraft.tasks;
  * @author huangyuhui
  */
 public class TaskRunnable extends TaskInfo {
+
     private final Runnable r;
+
     public TaskRunnable(String info, Runnable r) {
         super(info);
         this.r = r;
@@ -32,10 +34,10 @@ public class TaskRunnable extends TaskInfo {
         try {
             r.run();
             return true;
-        } catch(Throwable t) {
+        } catch (Throwable t) {
             setFailReason(t);
             return false;
         }
     }
-    
+
 }

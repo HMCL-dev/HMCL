@@ -54,21 +54,16 @@ public class AssetsLoader extends Thread {
         for (int i = 0; i < contents.getLength(); i++) {
             Node result = contents.item(i);
             if (result.getNodeType() == Node.ELEMENT_NODE) {
-                if (result.getNodeName().equalsIgnoreCase("Key")) {
+                if (result.getNodeName().equalsIgnoreCase("Key"))
                     ret.key = result.getTextContent();
-                }
-                if (result.getNodeName().equalsIgnoreCase("ETag")) {
+                if (result.getNodeName().equalsIgnoreCase("ETag"))
                     ret.eTag = result.getTextContent();
-                }
-                if (result.getNodeName().equalsIgnoreCase("LastModified")) {
+                if (result.getNodeName().equalsIgnoreCase("LastModified"))
                     ret.lastModified = result.getTextContent();
-                }
-                if (result.getNodeName().equalsIgnoreCase("Size")) {
+                if (result.getNodeName().equalsIgnoreCase("Size"))
                     ret.size = MathUtils.parseInt(result.getTextContent(), 0);
-                }
-                if (result.getNodeName().equalsIgnoreCase("StorageClass")) {
+                if (result.getNodeName().equalsIgnoreCase("StorageClass"))
                     ret.storageClass = result.getTextContent();
-                }
             }
         }
         return ret;
@@ -90,7 +85,7 @@ public class AssetsLoader extends Thread {
                 Node result = nodes.item(i);
                 if (result.getNodeType() == Node.ELEMENT_NODE && result.getNodeName().equals("Contents")) {
                     Contents c = modifyContents(result.getChildNodes());
-                    if(c.key != null)
+                    if (c.key != null)
                         al.add(c);
                 }
             }

@@ -87,9 +87,8 @@ public class TaskList extends Thread {
     static final Set<Task> taskPool = Collections.synchronizedSet(new HashSet<Task>());
 
     private void processTasks(Collection<Task> c) {
-        if (c == null) {
+        if (c == null)
             return;
-        }
         this.totTask += c.size();
         Set<InvokeThread> runningThread = Collections.synchronizedSet(new HashSet<InvokeThread>());
         for (Task t2 : c) {
@@ -99,46 +98,41 @@ public class TaskList extends Thread {
             runningThread.add(thread);
             thread.start();
         }
-        while (!runningThread.isEmpty()) {
+        while (!runningThread.isEmpty())
             try {
-                if(this.isInterrupted()) return;
+                if (this.isInterrupted()) return;
                 Thread.sleep(1);
             } catch (InterruptedException ex) {
                 HMCLog.warn("Failed to sleep task thread", ex);
             }
-        }
-        
+
     }
 
     private void executeTask(Task t) {
-        if (!shouldContinue || t == null) {
+        if (!shouldContinue || t == null)
             return;
-        }
         processTasks(t.getDependTasks());
 
         HMCLog.log("Executing task: " + t.getInfo());
-        for (DoingDoneListener<Task> d : taskListener) {
+        for (DoingDoneListener<Task> d : taskListener)
             d.onDoing(t);
-        }
 
         if (t.executeTask()) {
             HMCLog.log("Task finished: " + t.getInfo());
-            for (DoingDoneListener<Task> d : taskListener) {
+            for (DoingDoneListener<Task> d : taskListener)
                 d.onDone(t);
-            }
             processTasks(t.getAfterTasks());
         } else {
             HMCLog.err("Task failed: " + t.getInfo(), t.getFailReason());
-            for (DoingDoneListener<Task> d : taskListener) {
+            for (DoingDoneListener<Task> d : taskListener)
                 d.onFailed(t);
-            }
         }
     }
 
     @Override
     public void run() {
         Thread.currentThread().setName("TaskList");
-        
+
         threadPool.clear();
         for (Task taskQueue1 : taskQueue)
             executeTask(taskQueue1);
@@ -153,10 +147,10 @@ public class TaskList extends Thread {
 
     public void abort() {
         shouldContinue = false;
-        while(!threadPool.isEmpty())
-            synchronized(threadPool) {
+        while (!threadPool.isEmpty())
+            synchronized (threadPool) {
                 InvokeThread it = threadPool.iterator().next();
-                if(!it.task.abort()) it.interrupt();
+                if (!it.task.abort()) it.interrupt();
                 threadPool.remove(it);
             }
         this.interrupt();

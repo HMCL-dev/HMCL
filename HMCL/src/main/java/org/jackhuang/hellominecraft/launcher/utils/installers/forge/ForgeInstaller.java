@@ -48,8 +48,8 @@ public class ForgeInstaller extends Task {
     public IMinecraftProvider mp;
 
     public ForgeInstaller(IMinecraftProvider mp, File forgeInstaller) {
-	this.gameDir = mp.getBaseFolder();
-	this.forgeInstaller = forgeInstaller;
+        this.gameDir = mp.getBaseFolder();
+        this.forgeInstaller = forgeInstaller;
         this.mp = mp;
     }
 
@@ -64,17 +64,15 @@ public class ForgeInstaller extends Task {
             InstallProfile profile = gson.fromJson(content, InstallProfile.class);
 
             File from = new File(gameDir, "versions" + File.separator + profile.install.minecraft);
-            if(!from.exists()) {
-                if(MessageBox.Show(C.i18n("install.no_version_if_intall")) == MessageBox.YES_OPTION) {
-                    if(!mp.install(profile.install.minecraft, Settings.getInstance().getDownloadSource())) {
+            if (!from.exists()) {
+                if (MessageBox.Show(C.i18n("install.no_version_if_intall")) == MessageBox.YES_OPTION) {
+                    if (!mp.install(profile.install.minecraft, Settings.getInstance().getDownloadSource()))
                         setFailReason(new RuntimeException(C.i18n("install.no_version")));
-                    }
-                } else {
+                } else
                     setFailReason(new RuntimeException(C.i18n("install.no_version")));
-                }
                 return false;
             }
-            
+
             File to = new File(gameDir, "versions" + File.separator + profile.install.target);
             to.mkdirs();
 
@@ -100,7 +98,7 @@ public class ForgeInstaller extends Task {
                 bos.close();
             }
             return true;
-        } catch(IOException | JsonSyntaxException e) {
+        } catch (IOException | JsonSyntaxException e) {
             setFailReason(e);
             return false;
         }

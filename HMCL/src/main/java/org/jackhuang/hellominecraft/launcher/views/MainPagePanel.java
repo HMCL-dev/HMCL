@@ -457,7 +457,7 @@ public class MainPagePanel extends javax.swing.JPanel {
                 SwingUtilities.invokeLater(() -> {
                     MessageBox.Show(C.i18n("mainwindow.no_version"));
                     showedNoVersion = true;
-            });
+                });
         } else {
             for (MinecraftVersion mcVersion : getCurrentProfile().getMinecraftProvider().getVersions()) {
                 if (mcVersion.hidden) continue;

@@ -23,6 +23,7 @@ import java.util.Arrays;
  * @author huangyuhui
  */
 public class Extract extends Object implements Cloneable {
+
     String[] exclude;
 
     @Override
@@ -31,6 +32,5 @@ public class Extract extends Object implements Cloneable {
         e.exclude = exclude == null ? null : Arrays.copyOf(exclude, exclude.length);
         return e;
     }
-    
-    
+
 }

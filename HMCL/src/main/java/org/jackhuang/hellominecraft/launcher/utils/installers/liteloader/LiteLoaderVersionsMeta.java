@@ -21,5 +21,6 @@ package org.jackhuang.hellominecraft.launcher.utils.installers.liteloader;
  * @author huangyuhui
  */
 public class LiteLoaderVersionsMeta {
+
     public String description, authors, url;
 }

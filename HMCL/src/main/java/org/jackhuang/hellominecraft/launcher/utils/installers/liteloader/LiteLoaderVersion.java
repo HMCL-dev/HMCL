@@ -23,6 +23,7 @@ import org.jackhuang.hellominecraft.launcher.version.MinecraftLibrary;
  * @author huangyuhui
  */
 public class LiteLoaderVersion {
+
     public String tweakClass, file, version, md5, timestamp;
     public MinecraftLibrary[] libraries;
 }

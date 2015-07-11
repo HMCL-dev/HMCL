@@ -21,6 +21,7 @@ package org.jackhuang.hellominecraft.launcher.utils.assets;
  * @author huangyuhui
  */
 public class AssetsObject {
+
     private String hash;
     private long size;
 
@@ -28,26 +29,26 @@ public class AssetsObject {
     }
 
     public String getHash() {
-	return this.hash;
+        return this.hash;
     }
 
     public long getSize() {
-	return this.size;
+        return this.size;
     }
 
     @Override
     public boolean equals(Object o) {
-	if (this == o) return true;
-	if (o == null || getClass() != o.getClass()) return false;
-	AssetsObject that = (AssetsObject) o;
-	if (this.size != that.size) return false;
-	return this.hash.equals(that.hash);
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AssetsObject that = (AssetsObject) o;
+        if (this.size != that.size) return false;
+        return this.hash.equals(that.hash);
     }
 
     @Override
     public int hashCode() {
-	int result = this.hash.hashCode();
-	result = 31 * result + (int) (this.size ^ this.size >>> 32);
-	return result;
+        int result = this.hash.hashCode();
+        result = 31 * result + (int) (this.size ^ this.size >>> 32);
+        return result;
     }
 }

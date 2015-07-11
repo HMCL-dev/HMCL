@@ -28,8 +28,9 @@ import org.jackhuang.hellominecraft.utils.NetUtils;
  * @author huangyuhui
  */
 public class OptiFineDownloadFormatter extends Task implements PreviousResult<String> {
+
     String url, result;
-    
+
     public OptiFineDownloadFormatter(String url) {
         this.url = url;
     }
@@ -40,7 +41,7 @@ public class OptiFineDownloadFormatter extends Task implements PreviousResult<St
             String content = NetUtils.doGet(url);
             Pattern p = Pattern.compile("\"downloadx\\?f=OptiFine(.*)\"");
             Matcher m = p.matcher(content);
-            while(m.find()) result = m.group(1);
+            while (m.find()) result = m.group(1);
             result = "http://optifine.net/downloadx?f=OptiFine" + result;
             return true;
         } catch (Exception ex) {

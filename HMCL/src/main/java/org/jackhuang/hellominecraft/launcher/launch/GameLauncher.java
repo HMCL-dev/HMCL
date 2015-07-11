@@ -104,8 +104,14 @@ public class GameLauncher {
         File file = provider.getDecompressNativesToLocation();
         if (file != null) FileUtils.cleanDirectoryQuietly(file);
 
-        if(!downloadLibrariesEvent.execute(provider.getDownloadLibraries(downloadType))) { failEvent.execute(C.i18n("launch.failed")); return null; }
-        if(!decompressNativesEvent.execute(provider.getDecompressLibraries())) { failEvent.execute(C.i18n("launch.failed")); return null; }
+        if (!downloadLibrariesEvent.execute(provider.getDownloadLibraries(downloadType))) {
+            failEvent.execute(C.i18n("launch.failed"));
+            return null;
+        }
+        if (!decompressNativesEvent.execute(provider.getDecompressLibraries())) {
+            failEvent.execute(C.i18n("launch.failed"));
+            return null;
+        }
         successEvent.execute(loader.makeLaunchingCommand());
         return loader;
     }
@@ -185,6 +191,7 @@ public class GameLauncher {
     }
 
     public static class DecompressLibraryJob {
+
         File[] decompressFiles;
         String[][] extractRules;
         File decompressTo;

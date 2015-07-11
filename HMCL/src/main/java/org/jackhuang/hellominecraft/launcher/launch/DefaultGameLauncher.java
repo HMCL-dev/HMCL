@@ -57,17 +57,12 @@ public class DefaultGameLauncher extends GameLauncher {
             return flag;
         });
         decompressNativesEvent.register((sender, value) -> {
-            //boolean flag = true;
             for (int i = 0; i < value.decompressFiles.length; i++)
                 try {
                     Compressor.unzip(value.decompressFiles[i], value.decompressTo, value.extractRules[i]);
                 } catch (IOException ex) {
                     HMCLog.err("Unable to decompress library file: " + value.decompressFiles[i] + " to " + value.decompressTo, ex);
-                    //flag = false;
                 }
-            /*if(!flag)
-            if(MessageBox.Show(C.i18n("launch.not_finished_decompressing_natives"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-            flag = true;*/
             return true;
         });
     }

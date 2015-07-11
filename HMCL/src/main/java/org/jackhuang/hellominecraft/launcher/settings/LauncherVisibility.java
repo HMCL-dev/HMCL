@@ -21,6 +21,7 @@ package org.jackhuang.hellominecraft.launcher.settings;
  * @author huangyuhui
  */
 public enum LauncherVisibility {
+
     CLOSE,
     HIDE,
     KEEP

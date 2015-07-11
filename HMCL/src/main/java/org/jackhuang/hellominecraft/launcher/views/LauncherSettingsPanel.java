@@ -37,7 +37,7 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
      */
     public LauncherSettingsPanel() {
         initComponents();
-        
+
         txtBackgroundPath.setText(Settings.getInstance().getBgpath());
         txtProxyHost.setText(Settings.getInstance().getProxyHost());
         txtProxyPort.setText(Settings.getInstance().getProxyPort());
@@ -46,7 +46,7 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
         cboDownloadSource.setSelectedIndex(Settings.getInstance().getDownloadType());
         cboTheme.setSelectedIndex(Settings.getInstance().getTheme());
         chkEnableShadow.setSelected(Settings.getInstance().isEnableShadow());
-        
+
         setBackground(Color.white);
         setOpaque(true);
     }
@@ -259,9 +259,8 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
         fc.setDialogTitle(C.i18n("launcher.choose_bgpath"));
         fc.setMultiSelectionEnabled(false);
         fc.showOpenDialog(this);
-        if (fc.getSelectedFile() == null) {
+        if (fc.getSelectedFile() == null)
             return;
-        }
         try {
             String path = fc.getSelectedFile().getCanonicalPath();
             path = IOUtils.removeLastSeparator(path);
@@ -289,7 +288,7 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
 
     private void cboThemeItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboThemeItemStateChanged
         Settings.getInstance().setTheme(cboTheme.getSelectedIndex());
-        if(MainFrame.instance != null)
+        if (MainFrame.instance != null)
             MainFrame.instance.reloadColor();
     }//GEN-LAST:event_cboThemeItemStateChanged
 

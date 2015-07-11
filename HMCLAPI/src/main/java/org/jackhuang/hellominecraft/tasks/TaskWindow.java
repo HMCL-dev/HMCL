@@ -170,7 +170,7 @@ public class TaskWindow extends javax.swing.JDialog
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelActionPerformed
-        if(MessageBox.Show(C.i18n("operation.confirm_stop"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+        if (MessageBox.Show(C.i18n("operation.confirm_stop"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
             this.dispose();
     }//GEN-LAST:event_btnCancelActionPerformed
 
@@ -230,7 +230,7 @@ public class TaskWindow extends javax.swing.JDialog
 
     @Override
     public void onFailed(Task task) {
-        failReasons.add(task.getInfo() + ": " + (task.getFailReason() == null ? "No exception" : task.getFailReason().getLocalizedMessage()));
+        failReasons.add(task.getInfo() + ": " + (null == task.getFailReason() ? "No exception" : task.getFailReason().getLocalizedMessage()));
         pgsTotal.setMaximum(taskList.taskCount());
         pgsTotal.setValue(pgsTotal.getValue() + 1);
         SwingUtils.replaceLast(lstDownload, task.getFailReason());

@@ -62,7 +62,6 @@ public abstract class IAssetsHandler {
 
     static {
         assetsHandlers.add(new AssetsMojangLoader(C.i18n("assets.list.1_7_3_after")));
-        //assetsHandlers.add(new AssetsMojangOldLoader(C.i18n("assets.list.1_6")));
     }
 
     /**

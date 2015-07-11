@@ -29,46 +29,46 @@ import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 public class MinecraftClassicVersion extends MinecraftVersion {
 
     public MinecraftClassicVersion() {
-	super();
+        super();
 
-	mainClass = "net.minecraft.client.Minecraft";
-	id = "Classic";
-	type = "release";
-	processArguments = assets = releaseTime = time = null;
-	minecraftArguments = "${auth_player_name} ${auth_session} --workDir ${game_directory}";
-	libraries = new ArrayList<>();
-	libraries.add(new MinecraftOldLibrary("lwjgl"));
-	libraries.add(new MinecraftOldLibrary("jinput"));
-	libraries.add(new MinecraftOldLibrary("lwjgl_util"));
+        mainClass = "net.minecraft.client.Minecraft";
+        id = "Classic";
+        type = "release";
+        processArguments = assets = releaseTime = time = null;
+        minecraftArguments = "${auth_player_name} ${auth_session} --workDir ${game_directory}";
+        libraries = new ArrayList<>();
+        libraries.add(new MinecraftOldLibrary("lwjgl"));
+        libraries.add(new MinecraftOldLibrary("jinput"));
+        libraries.add(new MinecraftOldLibrary("lwjgl_util"));
     }
 
     @Override
     public Object clone() {
-	return super.clone();
+        return super.clone();
     }
 
     @Override
     public MinecraftVersion resolve(IMinecraftProvider manager, Set<String> resolvedSoFar, DownloadType sourceType) {
-	return this;
+        return this;
     }
 
     @Override
     public File getJar(File gameDir) {
-	return new File(gameDir, "bin/minecraft.jar");
+        return new File(gameDir, "bin/minecraft.jar");
     }
 
     @Override
     public File getJar(File gameDir, String suffix) {
-	return new File(gameDir, "bin/minecraft" + suffix + ".jar");
+        return new File(gameDir, "bin/minecraft" + suffix + ".jar");
     }
 
     @Override
     public File getNatives(File gameDir) {
-	return new File(gameDir, "bin/natives");
+        return new File(gameDir, "bin/natives");
     }
-    
+
     @Override
     public boolean isAllowedToUnpackNatives() {
-	return false;
+        return false;
     }
 }

@@ -21,7 +21,10 @@ package org.jackhuang.hellominecraft.tasks;
  * @author huangyuhui
  */
 public interface ProgressProviderListener {
+
     void setProgress(int prog, int max);
+
     void setStatus(String sta);
+
     void onProgressProviderDone();
 }

@@ -25,18 +25,17 @@ import java.util.HashSet;
 public class ProcessManager {
 
     private static final HashSet<JavaProcess> gameProcesses = new HashSet();
-    
+
     public void registerProcess(JavaProcess jp) {
         gameProcesses.add(jp);
     }
-    
+
     public void stopAllProcesses() {
-        for(JavaProcess jp : gameProcesses) {
+        for (JavaProcess jp : gameProcesses)
             jp.stop();
-        }
         gameProcesses.clear();
     }
-    
+
     public void onProcessStopped(JavaProcess p) {
         gameProcesses.remove(p);
     }

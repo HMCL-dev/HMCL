@@ -27,16 +27,19 @@ import java.util.Iterator;
  * @author huangyuhui
  */
 public final class CollectionUtils {
+
     public static <T> void forEach(Collection<T> coll, Consumer<T> p) {
-        for(T t : coll) p.accept(t);
+        for (T t : coll) p.accept(t);
     }
-    
+
     public static <T> Collection<T> sortOut(Collection<T> coll, Predicate<T> p) {
         ArrayList<T> newColl = new ArrayList<>();
-        forEach(coll, t -> { if(p.apply(t)) newColl.add(t); });
+        forEach(coll, t -> {
+            if (p.apply(t)) newColl.add(t);
+        });
         return newColl;
     }
-    
+
     public static <T> boolean removeIf(Collection<T> coll, Predicate<T> p) {
         boolean removed = false;
         final Iterator<T> each = coll.iterator();

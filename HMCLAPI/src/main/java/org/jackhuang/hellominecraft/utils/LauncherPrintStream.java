@@ -30,19 +30,18 @@ public class LauncherPrintStream extends PrintStream {
     private final ArrayList<Consumer<String>> printListeners = new ArrayList<>();
 
     public LauncherPrintStream(OutputStream paramOutputStream) {
-	super(paramOutputStream);
+        super(paramOutputStream);
     }
 
     @Override
     public final void println(String paramString) {
-	super.println(paramString);
+        super.println(paramString);
 
-	for (Consumer<String> a1 : printListeners) {
-	    a1.accept(paramString);
-	}
+        for (Consumer<String> a1 : printListeners)
+            a1.accept(paramString);
     }
 
     public final void addPrintListener(Consumer<String> paraml) {
-	this.printListeners.add(paraml);
+        this.printListeners.add(paraml);
     }
 }

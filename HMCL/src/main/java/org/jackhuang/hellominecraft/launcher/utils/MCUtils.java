@@ -84,8 +84,8 @@ public final class MCUtils {
         String ver = new String(tmp, i, j - i, "ASCII");
         r.version = ver;
 
-        r.type = file.getEntry("META-INF/MANIFEST.MF") == null ?
-                MinecraftVersionRequest.Modified : MinecraftVersionRequest.OK;
+        r.type = file.getEntry("META-INF/MANIFEST.MF") == null
+                ? MinecraftVersionRequest.Modified : MinecraftVersionRequest.OK;
         return r;
     }
 
@@ -134,8 +134,8 @@ public final class MCUtils {
             k++;
             r.version = new String(tmp, k, i - k + 1);
         }
-        r.type = file.getEntry("META-INF/MANIFEST.MF") == null ?
-                MinecraftVersionRequest.Modified : MinecraftVersionRequest.OK;
+        r.type = file.getEntry("META-INF/MANIFEST.MF") == null
+                ? MinecraftVersionRequest.Modified : MinecraftVersionRequest.OK;
         return r;
     }
 
@@ -295,11 +295,12 @@ public final class MCUtils {
         String result = NetUtils.doGet(sourceType.getProvider().getVersionsListDownloadURL());
         return MinecraftRemoteVersions.fromJson(result);
     }
-    
+
     public static String profile = "{\"selectedProfile\": \"(Default)\",\"profiles\": {\"(Default)\": {\"name\": \"(Default)\"}},\"clientToken\": \"88888888-8888-8888-8888-888888888888\"}";
+
     public static void tryWriteProfile(File gameDir) throws IOException {
         File file = new File(gameDir, "launcher_profiles.json");
-        if(!file.exists())
+        if (!file.exists())
             FileUtils.writeStringToFile(file, profile);
     }
 }

@@ -34,40 +34,38 @@ import org.jackhuang.hellominecraft.HMCLog;
  * @author huang
  */
 public final class NetUtils {
-    
+
     public static byte[] getBytesFromStream(InputStream is) throws IOException {
         ByteArrayOutputStream localByteArrayOutputStream = new ByteArrayOutputStream();
         byte[] arrayOfByte1 = new byte[1024];
         int i;
-        while ((i = is.read(arrayOfByte1)) >= 0) {
+        while ((i = is.read(arrayOfByte1)) >= 0)
             localByteArrayOutputStream.write(arrayOfByte1, 0, i);
-        }
         is.close();
         return localByteArrayOutputStream.toByteArray();
     }
-    
+
     public static String getStreamContent(InputStream is) throws IOException {
         return getStreamContent(is, DEFAULT_CHARSET);
     }
-    
+
     public static String getStreamContent(InputStream is, String encoding)
-        throws IOException {
+            throws IOException {
         String result;
         try (BufferedReader br = new BufferedReader(new InputStreamReader(is, encoding))) {
             result = "";
             String line;
-            while ((line = br.readLine()) != null) {
+            while ((line = br.readLine()) != null)
                 result += line + "\n";
-            }
         }
-	if(result.length() < 1) return "";
-	else return result.substring(0, result.length() - 1);
+        if (result.length() < 1) return "";
+        else return result.substring(0, result.length() - 1);
     }
-    
+
     public static String doGet(String url, String encoding) throws IOException {
         return getStreamContent(new URL(url).openConnection().getInputStream());
     }
-    
+
     public static String doGet(String url) throws IOException {
         return doGet(url, DEFAULT_CHARSET);
     }
@@ -85,16 +83,15 @@ public final class NetUtils {
     public static String sendGetRequest(String endpoint,
             String requestParameters) {
         String result = null;
-        if (endpoint.startsWith("http://")) {
+        if (endpoint.startsWith("http://"))
             // Send a GET request to the servlet
             try {
                 // Construct data
                 StringBuilder data = new StringBuilder();
                 // Send data
                 String urlStr = endpoint;
-                if (requestParameters != null && requestParameters.length() > 0) {
+                if (requestParameters != null && requestParameters.length() > 0)
                     urlStr += "?" + requestParameters;
-                }
                 URL url = new URL(urlStr);
                 URLConnection conn = url.openConnection();
 
@@ -110,7 +107,6 @@ public final class NetUtils {
             } catch (Exception e) {
                 HMCLog.warn("Failed to send get request.", e);
             }
-        }
         return result;
     }
 
@@ -164,7 +160,7 @@ public final class NetUtils {
     }
     private static final String METHOD_POST = "POST";
     private static final String DEFAULT_CHARSET = "UTF-8";
-    
+
     public static URL constantURL(String url) {
         try {
             return new URL(url);
@@ -173,15 +169,14 @@ public final class NetUtils {
             return null;
         }
     }
-    
+
     public static URL concatenateURL(URL url, String query) {
-	try {
-	    if ((url.getQuery() != null) && (url.getQuery().length() > 0)) {
-		return new URL(url.getProtocol(), url.getHost(), url.getPort(), new StringBuilder().append(url.getFile()).append("&").append(query).toString());
-	    }
-	    return new URL(url.getProtocol(), url.getHost(), url.getPort(), new StringBuilder().append(url.getFile()).append("?").append(query).toString());
-	} catch (MalformedURLException ex) {
-	    throw new IllegalArgumentException("Could not concatenate given URL with GET arguments!", ex);
-	}
+        try {
+            if ((url.getQuery() != null) && (url.getQuery().length() > 0))
+                return new URL(url.getProtocol(), url.getHost(), url.getPort(), new StringBuilder().append(url.getFile()).append("&").append(query).toString());
+            return new URL(url.getProtocol(), url.getHost(), url.getPort(), new StringBuilder().append(url.getFile()).append("?").append(query).toString());
+        } catch (MalformedURLException ex) {
+            throw new IllegalArgumentException("Could not concatenate given URL with GET arguments!", ex);
+        }
     }
 }

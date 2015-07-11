@@ -118,12 +118,10 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
                 if (StrUtils.formatVersion(id) == null) {
                     if (MessageBox.Show(C.i18n("launcher.versions_json_not_matched_cannot_auto_completion", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                         FileUtils.deleteDirectoryQuietly(dir);
-                } else if (MessageBox.Show(C.i18n("launcher.versions_json_not_matched_needs_auto_completion", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
-                    if (!refreshJson(id)) {
+                } else if (MessageBox.Show(C.i18n("launcher.versions_json_not_matched_needs_auto_completion", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+                    if (!refreshJson(id))
                         if (MessageBox.Show(C.i18n("launcher.versions_json_not_matched_cannot_auto_completion", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                             FileUtils.deleteDirectoryQuietly(dir);
-                    }
-                }
                 continue;
             }
             MinecraftVersion mcVersion;
@@ -215,10 +213,10 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public File getRunDirectory(String id) {
         switch (profile.getGameDirType()) {
-        case VERSION_FOLDER:
-            return new File(baseFolder, "versions/" + id + "/");
-        default:
-            return baseFolder;
+            case VERSION_FOLDER:
+                return new File(baseFolder, "versions/" + id + "/");
+            default:
+                return baseFolder;
         }
     }
 
@@ -226,7 +224,7 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     public List<GameLauncher.DownloadLibraryJob> getDownloadLibraries(DownloadType downloadType) {
         ArrayList<DownloadLibraryJob> downloadLibraries = new ArrayList<>();
         MinecraftVersion v = profile.getSelectedMinecraftVersion().resolve(this, Settings.getInstance().getDownloadSource());
-        if(v.libraries != null) {
+        if (v.libraries != null)
             for (IMinecraftLibrary l : v.libraries) {
                 l.init();
                 if (l.allow()) {
@@ -239,7 +237,6 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
                     }
                 }
             }
-        }
         return downloadLibraries;
     }
 

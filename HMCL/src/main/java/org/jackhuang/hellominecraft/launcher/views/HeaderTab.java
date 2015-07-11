@@ -48,7 +48,7 @@ public class HeaderTab extends JLabel
         return this.isActive;
     }
 
-    public void setIsActive(boolean isActive) {
+    public final void setIsActive(boolean isActive) {
         this.isActive = isActive;
         setOpaque(isActive);
 

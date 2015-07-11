@@ -38,7 +38,7 @@ import org.jackhuang.hellominecraft.utils.VersionNumber;
  * @author huangyuhui
  */
 public final class Settings {
-    
+
     public static final String DEFAULT_PROFILE = "Default";
 
     public static final File settingsFile = new File(IOUtils.currentDir(), "hmcl.json");
@@ -60,10 +60,9 @@ public final class Settings {
         settings = initSettings();
         if (!getVersions().containsKey(DEFAULT_PROFILE))
             getVersions().put(DEFAULT_PROFILE, new Profile());
-        
-        for(Profile e : getVersions().values()) {
+
+        for (Profile e : getVersions().values())
             e.checkFormat();
-        }
 
         UPDATE_CHECKER = new UpdateChecker(new VersionNumber(Main.firstVer, Main.secondVer, Main.thirdVer),
                 "hmcl", settings.isCheckUpdate(), () -> Main.invokeUpdate());

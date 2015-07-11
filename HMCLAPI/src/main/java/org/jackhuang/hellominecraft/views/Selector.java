@@ -18,9 +18,11 @@ package org.jackhuang.hellominecraft.views;
 
 /**
  * The frame given to choose things.
+ *
  * @author huangyuhui
  */
 public class Selector extends javax.swing.JDialog {
+
     String[] selList;
     String msg;
     /**
@@ -39,12 +41,12 @@ public class Selector extends javax.swing.JDialog {
         initComponents();
 
         setLocationRelativeTo(null);
-        
+
         this.selList = selList;
         this.sel = failedToSel;
         this.msg = msg;
         jLabel1.setText(msg);
-        for(String s : selList)
+        for (String s : selList)
             jComboBox1.addItem(s);
     }
 

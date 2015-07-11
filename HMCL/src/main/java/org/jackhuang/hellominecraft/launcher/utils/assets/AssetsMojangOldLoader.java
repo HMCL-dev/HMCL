@@ -61,11 +61,11 @@ public class AssetsMojangOldLoader extends IAssetsHandler {
     @Override
     public boolean isVersionAllowed(String formattedVersion) {
         VersionNumber r = VersionNumber.check(formattedVersion);
-        if(r == null) return false;
-        return VersionNumber.check("1.7.2").compareTo(r) >= 0 &&
-                VersionNumber.check("1.6.0").compareTo(r) <= 0;
+        if (r == null) return false;
+        return VersionNumber.check("1.7.2").compareTo(r) >= 0
+                && VersionNumber.check("1.6.0").compareTo(r) <= 0;
     }
-    
+
     @Override
     public Task getDownloadTask(IDownloadProvider sourceType) {
         return new AssetsTask(URL);

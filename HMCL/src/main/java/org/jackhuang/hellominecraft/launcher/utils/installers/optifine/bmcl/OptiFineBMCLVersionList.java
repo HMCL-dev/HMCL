@@ -59,7 +59,7 @@ public class OptiFineBMCLVersionList extends InstallerVersionList {
         if (s == null) return;
         root = C.gson.fromJson(s, new TypeToken<ArrayList<OptiFineVersion>>() {
         }.getType());
-        for(OptiFineVersion v : root) {
+        for (OptiFineVersion v : root) {
             v.mirror = v.mirror.replace("http://optifine.net/http://optifine.net/", "http://optifine.net/");
 
             if (StrUtils.isBlank(v.mcver)) {

@@ -21,6 +21,7 @@ package org.jackhuang.hellominecraft.launcher.version;
  * @author huangyuhui
  */
 public enum GameDirType {
+
     ROOT_FOLDER,
     VERSION_FOLDER;
 }

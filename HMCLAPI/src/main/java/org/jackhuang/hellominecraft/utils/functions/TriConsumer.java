@@ -21,5 +21,6 @@ package org.jackhuang.hellominecraft.utils.functions;
  * @author huangyuhui
  */
 public interface TriConsumer<V1, V2, V3> {
+
     void onDone(V1 v1, V2 v2, V3 v3);
 }

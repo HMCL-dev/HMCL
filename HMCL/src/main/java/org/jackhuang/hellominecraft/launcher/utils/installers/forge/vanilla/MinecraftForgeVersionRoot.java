@@ -23,6 +23,7 @@ import java.util.Map;
  * @author huangyuhui
  */
 public class MinecraftForgeVersionRoot {
+
     public String artifact, webpath, adfly, homepage, name;
     public Map<String, int[]> branches, mcversion;
     public Map<String, Integer> promos;

@@ -20,5 +20,6 @@ package org.jackhuang.hellominecraft.utils.functions;
  * @author huangyuhui
  */
 public interface BiConsumer<V, V2> {
+
     void onDone(V value, V2 value2);
 }

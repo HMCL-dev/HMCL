@@ -21,16 +21,17 @@ package org.jackhuang.hellominecraft.tasks.communication;
  * @author huangyuhui
  * @param <T> the type of result.
  */
-public class DefaultPreviousResult<T> implements PreviousResult<T>{
+public class DefaultPreviousResult<T> implements PreviousResult<T> {
+
     T a;
 
     public DefaultPreviousResult(T a) {
         this.a = a;
     }
-    
+
     @Override
     public T getResult() {
         return a;
     }
-    
+
 }

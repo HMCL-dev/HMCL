@@ -21,5 +21,6 @@ package org.jackhuang.hellominecraft.utils.functions;
  * @author huangyuhui
  */
 public interface BiFunction<A, B, C> {
+
     C apply(A a, B b);
 }

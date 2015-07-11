@@ -21,6 +21,7 @@ package org.jackhuang.hellominecraft.launcher.version;
  * @author huangyuhui
  */
 public class Natives implements Cloneable {
+
     public String windows, osx, linux;
 
     @Override

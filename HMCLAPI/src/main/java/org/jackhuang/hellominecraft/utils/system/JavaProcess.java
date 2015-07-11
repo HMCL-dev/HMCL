@@ -16,7 +16,6 @@
  */
 package org.jackhuang.hellominecraft.utils.system;
 
-import org.jackhuang.hellominecraft.utils.system.ProcessManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -35,7 +34,7 @@ public class JavaProcess {
     public JavaProcess(List<String> commands, Process process, ProcessManager pm) {
         this.commands = commands;
         this.process = process;
-        if(pm != null) pm.registerProcess(this);
+        if (pm != null) pm.registerProcess(this);
     }
 
     public JavaProcess(String[] commands, Process process, ProcessManager pm) {

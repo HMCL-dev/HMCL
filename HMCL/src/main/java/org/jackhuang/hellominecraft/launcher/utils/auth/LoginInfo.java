@@ -21,6 +21,7 @@ package org.jackhuang.hellominecraft.launcher.utils.auth;
  * @author huangyuhui
  */
 public final class LoginInfo {
+
     public String username, password;
 
     public LoginInfo(String username, String password) {

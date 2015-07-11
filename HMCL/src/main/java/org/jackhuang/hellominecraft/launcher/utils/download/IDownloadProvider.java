@@ -23,14 +23,24 @@ import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionLi
  * @author huangyuhui
  */
 public interface IDownloadProvider {
+
     InstallerVersionList getInstallerByType(String type);
+
     InstallerVersionList getForgeInstaller();
+
     InstallerVersionList getLiteLoaderInstaller();
+
     InstallerVersionList getOptiFineInstaller();
+
     String getLibraryDownloadURL();
+
     String getVersionsDownloadURL();
+
     String getIndexesDownloadURL();
+
     String getVersionsListDownloadURL();
+
     String getAssetsDownloadURL();
+
     boolean isAllowedToUseSelfURL();
 }
