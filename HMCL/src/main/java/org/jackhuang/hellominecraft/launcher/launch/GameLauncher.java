@@ -126,7 +126,7 @@ public class GameLauncher {
             provider.onLaunch();
             ProcessBuilder builder = new ProcessBuilder(str);
             builder.directory(provider.getRunDirectory(get.getSelectedMinecraftVersion().id))
-                    .environment().put("APPDATA", get.getCanonicalGameDirFile().getParent());
+                    .environment().put("APPDATA", get.getCanonicalGameDirFile().getPath());
             JavaProcess jp = new JavaProcess(str, builder.start(), PROCESS_MANAGER);
             launchEvent.execute(jp);
         } catch (IOException e) {
@@ -158,7 +158,7 @@ public class GameLauncher {
         if (isWin) {
             writer.write("@echo off");
             writer.newLine();
-            String appdata = IOUtils.tryGetCanonicalFilePath(get.getCanonicalGameDirFile().getParentFile());
+            String appdata = IOUtils.tryGetCanonicalFilePath(get.getCanonicalGameDirFile());
             if (appdata != null) {
                 writer.write("set appdata=" + appdata);
                 writer.newLine();
