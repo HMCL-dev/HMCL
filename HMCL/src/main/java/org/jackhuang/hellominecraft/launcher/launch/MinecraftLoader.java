@@ -129,10 +129,11 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         try {
             AssetsIndex index = (AssetsIndex) C.gson.fromJson(FileUtils.readFileToString(indexFile, "UTF-8"), AssetsIndex.class);
 
+            if (index == null) return assetsDir;
             if (index.isVirtual()) {
+                int cnt = 0;
                 HMCLog.log("Reconstructing virtual assets folder at " + virtualRoot);
                 int tot = index.getFileMap().entrySet().size();
-                int cnt = 0;
                 for (Map.Entry entry : index.getFileMap().entrySet()) {
                     File target = new File(virtualRoot, (String) entry.getKey());
                     File original = new File(new File(objectDir, ((AssetsObject) entry.getValue()).getHash().substring(0, 2)), ((AssetsObject) entry.getValue()).getHash());
