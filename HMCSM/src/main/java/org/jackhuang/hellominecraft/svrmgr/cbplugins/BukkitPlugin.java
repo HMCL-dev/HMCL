@@ -1,6 +1,18 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.
  */
 package org.jackhuang.hellominecraft.svrmgr.cbplugins;
 
@@ -11,27 +23,26 @@ import java.util.List;
  * @author huangyuhui
  */
 public class BukkitPlugin {
-    
+
     public String description, plugin_name, slug;
     public List<PluginVersion> versions;
-    
+
     public String getLatestVersion() {
-        if(versions != null) {
+        if (versions != null) {
             PluginVersion v = versions.get(0);
             return v.version;
         }
         return null;
     }
-    
+
     public String getLatestBukkit() {
-        if(versions != null) {
+        if (versions != null) {
             PluginVersion v = versions.get(0);
             List<String> al = v.game_versions;
-            if(al != null && !al.isEmpty()) {
+            if (al != null && !al.isEmpty())
                 return al.get(0);
-            }
         }
         return "";
     }
-    
+
 }

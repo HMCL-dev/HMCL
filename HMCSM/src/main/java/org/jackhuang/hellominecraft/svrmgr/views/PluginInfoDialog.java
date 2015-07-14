@@ -1,6 +1,18 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.
  */
 package org.jackhuang.hellominecraft.svrmgr.views;
 
@@ -36,12 +48,11 @@ public class PluginInfoDialog extends javax.swing.JDialog {
         lblWebsite.setText(pi.link);
         //SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         DefaultTableModel model = (DefaultTableModel) lstPluginInfo.getModel();
-        for (PluginVersion v : pi.versions) {
+        for (PluginVersion v : pi.versions)
             model.addRow(new Object[]{
                 v.date, v.version, v.filename, StrUtils.parseParams("", v.game_versions.toArray(), ", "),
                 v.type
             });
-        }
         lstPluginInfo.updateUI();
     }
 
@@ -216,14 +227,13 @@ public class PluginInfoDialog extends javax.swing.JDialog {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         int index = lstPluginInfo.getSelectedRow();
-        if (index == -1) {
+        if (index == -1)
             return;
-        }
         String url = pi.versions.get(index).download;
         TaskWindow.getInstance()
-        .addTask(new FileDownloadTask(url, new File(Utilities.getGameDir() + "plugins"
-                + File.separator + pi.versions.get(index).filename)))
-        .start();
+                .addTask(new FileDownloadTask(url, new File(Utilities.getGameDir() + "plugins"
+                                        + File.separator + pi.versions.get(index).filename)))
+                .start();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

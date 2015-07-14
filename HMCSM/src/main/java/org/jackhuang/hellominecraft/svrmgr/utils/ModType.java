@@ -1,6 +1,18 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.
  */
 package org.jackhuang.hellominecraft.svrmgr.utils;
 
@@ -13,6 +25,7 @@ import java.util.zip.ZipFile;
 
 /**
  * 判断mod类型
+ *
  * @author huangyuhui
  */
 public class ModType {
@@ -22,7 +35,7 @@ public class ModType {
     public static final int Forge = 2;
     public static final int ModLoader = 3;
     public static final int Unknown = 4;
-    
+
     public static int getModType(String path) {
         return getModType(new File(path));
     }
@@ -35,42 +48,41 @@ public class ModType {
                 zipFile = new ZipFile(path);
                 String gbkPath;
                 java.util.Enumeration e = zipFile.entries();
-                while (e.hasMoreElements())
-                {
+                while (e.hasMoreElements()) {
                     ZipEntry zipEnt = (ZipEntry) e.nextElement();
-                    if(zipEnt.isDirectory()) continue;
+                    if (zipEnt.isDirectory()) continue;
                     gbkPath = zipEnt.getName();
-                    if("mcmod.info".equals(gbkPath))
+                    if ("mcmod.info".equals(gbkPath))
                         return ForgeMod;
-                    else if("mcpmod.info".equals(gbkPath))
+                    else if ("mcpmod.info".equals(gbkPath))
                         return Forge;
-                    else if("ModLoader.class".equals(gbkPath))
+                    else if ("ModLoader.class".equals(gbkPath))
                         isModLoader = true;
-                    else if(gbkPath.trim().startsWith("mod_"))
+                    else if (gbkPath.trim().startsWith("mod_"))
                         return ModLoaderMod;
                 }
             }
-        } catch(Exception e) {
-            
+        } catch (Exception e) {
+
         } finally {
             try {
-                if(zipFile != null)
+                if (zipFile != null)
                     zipFile.close();
             } catch (IOException ex) {
                 Logger.getLogger(ModType.class.getName()).log(Level.SEVERE, null, ex);
             } catch (Throwable t) {
-                
+
             }
         }
-        if(isModLoader)
+        if (isModLoader)
             return ModLoaderMod;
         else
             return Unknown;
     }
-    
+
     public static String getModTypeShowName(int type) {
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraftlauncher/I18N"); // NOI18N
-        switch(type) {
+        switch (type) {
             case ForgeMod:
                 return bundle.getString("ForgeMod");
             case Forge:

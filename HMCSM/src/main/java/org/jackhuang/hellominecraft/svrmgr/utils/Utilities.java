@@ -1,6 +1,18 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.
  */
 package org.jackhuang.hellominecraft.svrmgr.utils;
 
@@ -51,7 +63,7 @@ public class Utilities {
     }
 
     public static ArrayList<String> findAllFile(File f) {
-        ArrayList<String> arr = new ArrayList<String>();
+        ArrayList<String> arr = new ArrayList<>();
         if (!f.exists()) {
             return arr;
         }
@@ -68,7 +80,7 @@ public class Utilities {
     }
 
     public static ArrayList<String> findAllDir(File f) {
-        ArrayList<String> arr = new ArrayList<String>();
+        ArrayList<String> arr = new ArrayList<>();
         if (f.isDirectory()) {
             File[] f1 = f.listFiles();
             int len = f1.length;
@@ -104,10 +116,7 @@ public class Utilities {
 
     public static boolean is16Folder(String path) {
         path = Utilities.addSeparator(path);
-        if (new File(path + "versions").exists()) {
-            return true;
-        }
-        return false;
+        return new File(path + "versions").exists();
     }
 
     public static boolean isEmpty(String s) {
@@ -184,11 +193,11 @@ public class Utilities {
                     dp.browse(uri);
                     isBrowsed = true;
                 }
-            } catch (java.lang.NullPointerException e) {
+            } catch (java.lang.NullPointerException | java.io.IOException e) {
 //此为uri为空时抛出异常
-            } catch (java.io.IOException e) {
 //此为无法获取系统默认浏览器
             }
+            
         }
         return isBrowsed;
     }

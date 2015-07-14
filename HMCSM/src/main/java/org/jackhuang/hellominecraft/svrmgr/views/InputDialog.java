@@ -1,6 +1,18 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.
  */
 package org.jackhuang.hellominecraft.svrmgr.views;
 
@@ -19,7 +31,7 @@ import javax.swing.JTextField;
  * @author huangyuhui
  */
 public class InputDialog extends javax.swing.JDialog {
-    
+
     ArrayList<JTextField> textFields;
     ArrayList<JPanel> panels;
     public String[] result;
@@ -30,31 +42,26 @@ public class InputDialog extends javax.swing.JDialog {
     public InputDialog(java.awt.Frame parent, boolean modal, String[] messages) {
         super(parent, modal);
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        
-        textFields = new ArrayList<JTextField>();
-        panels = new ArrayList<JPanel>();
+
+        textFields = new ArrayList<>();
+        panels = new ArrayList<>();
         jButton1 = new javax.swing.JButton();
         jButton1.setText("确认");
-        jButton1.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                result = new String[textFields.size()]; 
-                for(int i = 0; i < textFields.size(); i++)
-                    result[i] = textFields.get(i).getText();
-                InputDialog.this.dispose();
-            }
+        jButton1.addActionListener((ActionEvent e) -> {
+            result = new String[textFields.size()];
+            for (int i = 0; i < textFields.size(); i++)
+                result[i] = textFields.get(i).getText();
+            InputDialog.this.dispose();
         });
-        for(String s : messages) {
+        for (String s : messages)
             makeNewField(s);
-        }
         makeLayout();
         Dimension scrSize = Toolkit.getDefaultToolkit().getScreenSize();
         setLocation((scrSize.width - this.getWidth()) / 2,
                 (scrSize.height - this.getHeight()) / 2);
     }
-    
-    void makeNewField(String message) {
+
+    final void makeNewField(String message) {
         JLabel label = new JLabel();
         label.setText(message);
         JTextField textField = new JTextField();
@@ -64,55 +71,55 @@ public class InputDialog extends javax.swing.JDialog {
         javax.swing.GroupLayout jPanelLayout = new javax.swing.GroupLayout(panel);
         panel.setLayout(jPanelLayout);
         jPanelLayout.setHorizontalGroup(
-            jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanelLayout.createSequentialGroup()
-                        .addComponent(label)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(textField))
-                .addContainerGap())
+                jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(jPanelLayout.createSequentialGroup()
+                                        .addComponent(label)
+                                        .addGap(0, 0, Short.MAX_VALUE))
+                                .addComponent(textField))
+                        .addContainerGap())
         );
         jPanelLayout.setVerticalGroup(
-            jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(label)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(textField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(label)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(textField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         textFields.add(textField);
         panels.add(panel);
     }
-    
-    void makeLayout() {
+
+    final void makeLayout() {
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         GroupLayout.ParallelGroup g = layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING);
-        for(JPanel p : panels)
+        for (JPanel p : panels)
             g.addComponent(p, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE);
         g.addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jButton1));
+                .addGap(0, 0, Short.MAX_VALUE)
+                .addComponent(jButton1));
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(g)
-                .addContainerGap())
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(g)
+                        .addContainerGap())
         );
         GroupLayout.SequentialGroup g2 = layout.createSequentialGroup()
                 .addContainerGap();
-        for(JPanel p : panels)
+        for (JPanel p : panels)
             g2 = g2.addComponent(p, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED);
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED);
         g2 = g2.addComponent(jButton1)
                 .addContainerGap();
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(g2)
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(g2)
         );
 
         pack();

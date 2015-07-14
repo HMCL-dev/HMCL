@@ -1,6 +1,18 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.
  */
 package org.jackhuang.hellominecraft.svrmgr.server;
 
@@ -13,9 +25,9 @@ import org.jackhuang.hellominecraft.svrmgr.settings.Schedule;
  * @author huangyuhui
  */
 public class ScheduleTranslator {
-    
+
     public static TimerTask translate(Server ser, Schedule s) {
-        switch(s.type) {
+        switch (s.type) {
             case Schedule.TYPE_AUTO_SAVE:
                 return new AutoSaveSchedule(s, ser);
             case Schedule.TYPE_AUTO_RESTART:
@@ -29,9 +41,9 @@ public class ScheduleTranslator {
         }
         return null;
     }
-    
+
     public static String getName(Schedule s) {
-        switch(s.type) {
+        switch (s.type) {
             case Schedule.TYPE_AUTO_SAVE:
                 return "自动保存";
             case Schedule.TYPE_AUTO_RESTART:
@@ -45,9 +57,9 @@ public class ScheduleTranslator {
         }
         return "";
     }
-    
+
     public static String getTimeTypeName(Schedule s) {
-        switch(s.timeType) {
+        switch (s.timeType) {
             case Schedule.TIME_TYPE_PER:
                 return "每x分钟";
             case Schedule.TIME_TYPE_PAST_HOUR:
@@ -61,11 +73,11 @@ public class ScheduleTranslator {
         }
         return "";
     }
-    
+
     public static Object[] getRow(Schedule s) {
-        return new Object[] {
-                getName(s), getTimeTypeName(s), s.per, s.content
-            };
+        return new Object[]{
+            getName(s), getTimeTypeName(s), s.per, s.content
+        };
     }
-    
+
 }

@@ -1,6 +1,18 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.
  */
 package org.jackhuang.hellominecraft.svrmgr.cbplugins;
 
@@ -22,7 +34,7 @@ import org.jackhuang.hellominecraft.utils.StrUtils;
  * @author huangyuhui
  */
 public class PluginManager {
-    
+
     public static PluginInformation getPluginYML(File f) {
         try {
             ZipFile file = new ZipFile(f);
@@ -34,14 +46,15 @@ public class PluginManager {
         }
         return null;
     }
-    
+
     public static List<BukkitPlugin> getPlugins() throws Exception {
         String result = NetUtils.doGet("http://api.bukget.org/3//plugins?fields=slug,plugin_name,description,versions.version,versions.game_versions");
         Gson gson = new Gson();
-        List<BukkitPlugin> list = gson.fromJson(result, new TypeToken<List<BukkitPlugin>>(){}.getType());
+        List<BukkitPlugin> list = gson.fromJson(result, new TypeToken<List<BukkitPlugin>>() {
+        }.getType());
         return list;
     }
-    
+
     public static final String CATEGORY_ADMIN_TOOLS = "Admin Tools",
             CATEGORY_DEVELOPER_TOOLS = "Developer Tools",
             CATEGORY_FUN = "Fun",
@@ -58,28 +71,31 @@ public class PluginManager {
             CATEGORY_MISCELLANEOUS = "Miscellaneous",
             CATEGORY_WORLD_GENERATORS = "World Generators",
             CATEGORY_WEBSITE_ADMINISTRATION = "Website Administration";
-    
+
     public static List<BukkitPlugin> getPluginsByCategory(String category) throws Exception {
         String result = NetUtils.doGet("http://api.bukget.org/3//categories/" + category + "?fields=slug,plugin_name,description,versions.version,versions.game_versions");
         Gson gson = new Gson();
-        List<BukkitPlugin> list = gson.fromJson(result, new TypeToken<List<BukkitPlugin>>(){}.getType());
+        List<BukkitPlugin> list = gson.fromJson(result, new TypeToken<List<BukkitPlugin>>() {
+        }.getType());
         return list;
     }
+
     public static List<Category> getCategories() throws Exception {
         String result = NetUtils.doGet("http://api.bukget.org/3//categories/");
         Gson gson = new Gson();
-        List<Category> list = gson.fromJson(result, new TypeToken<List<Category>>(){}.getType());
+        List<Category> list = gson.fromJson(result, new TypeToken<List<Category>>() {
+        }.getType());
         return list;
     }
+
     public static PluginInfo getPluginInfo(String slug) throws Exception {
-        if(StrUtils.isNotBlank(slug)) {
+        if (StrUtils.isNotBlank(slug)) {
             String result = NetUtils.doGet("http://api.bukget.org/3//plugins/bukkit/" + slug.toLowerCase());
-            if(StrUtils.isNotBlank(result)) {
-                if(!result.equals("null")) {
+            if (StrUtils.isNotBlank(result))
+                if (!result.equals("null")) {
                     PluginInfo info = new Gson().fromJson(result, PluginInfo.class);
                     return info;
                 }
-            }
         }
         return null;
     }
