@@ -49,21 +49,8 @@ public final class Launcher {
     }
 
     public static void main(String[] args) {
-        println("*** " + Main.makeTitle() + " ***");
-
         Thread.currentThread().setName("launcher");
-        try {
-            File logFile = new File("hmclmc.log");
-            if (!logFile.exists()) logFile.createNewFile();
-            FileOutputStream tc = new FileOutputStream(logFile);
-            DoubleOutputStream out = new DoubleOutputStream(tc, System.out);
-            System.setOut(new LauncherPrintStream(out));
-            DoubleOutputStream err = new DoubleOutputStream(tc, System.err);
-            System.setErr(new LauncherPrintStream(err));
-        } catch (Exception e) {
-            println("Failed to add log file appender.");
-            e.printStackTrace();
-        }
+        println("*** " + Main.makeTitle() + " ***");
 
         LogWindow.instance.setTerminateGame(Utils::shutdownForcely);
 
@@ -85,6 +72,19 @@ public final class Launcher {
         int len = tokenized.length;
 
         if (showInfo) {
+            try {
+                File logFile = new File("hmclmc.log");
+                if (!logFile.exists()) logFile.createNewFile();
+                FileOutputStream tc = new FileOutputStream(logFile);
+                DoubleOutputStream out = new DoubleOutputStream(tc, System.out);
+                System.setOut(new LauncherPrintStream(out));
+                DoubleOutputStream err = new DoubleOutputStream(tc, System.err);
+                System.setErr(new LauncherPrintStream(err));
+            } catch (Exception e) {
+                println("Failed to add log file appender.");
+                e.printStackTrace();
+            }
+            
             println("Arguments: {\n" + StrUtils.parseParams("    ", args, "\n") + "\n}");
             println("Main Class: " + mainClass);
             println("Class Path: {\n" + StrUtils.parseParams("    ", tokenized, "\n") + "\n}");

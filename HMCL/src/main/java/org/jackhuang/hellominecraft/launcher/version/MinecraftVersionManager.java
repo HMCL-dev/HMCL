@@ -180,7 +180,9 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
             File toJson = new File(toDir, to + ".json");
             File toJar = new File(toDir, to + ".jar");
             new File(toDir, from + ".json").renameTo(toJson);
-            new File(toDir, from + ".jar").renameTo(toJar);
+            File newJar = new File(toDir, from + ".jar");
+            if (newJar.exists())
+                newJar.renameTo(toJar);
             return true;
         } catch (IOException | JsonSyntaxException e) {
             HMCLog.warn("Failed to rename " + from + " to " + to + ", the json of this Minecraft is malformed.", e);

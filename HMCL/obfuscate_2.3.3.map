@@ -1980,24 +1980,24 @@ org.jackhuang.hellominecraft.launcher.version.MinecraftVersionManager -> org.jac
     78:78:int getVersionCount() -> a
     83:160:void refreshVersions() -> a
     164:168:boolean removeVersionFromDisk(java.lang.String) -> a
-    174:187:boolean renameVersion(java.lang.String,java.lang.String) -> a
-    193:193:boolean refreshJson(java.lang.String) -> b
-    198:200:boolean refreshAssetsIndex(java.lang.String) -> c
-    205:210:boolean install(java.lang.String,org.jackhuang.hellominecraft.launcher.utils.download.DownloadType) -> a
-    215:219:java.io.File getRunDirectory(java.lang.String) -> a
-    225:240:java.util.List getDownloadLibraries(org.jackhuang.hellominecraft.launcher.utils.download.DownloadType) -> a
-    245:246:void openSelf(java.lang.String) -> a
-    250:251:void open(java.lang.String,java.lang.String) -> a
-    255:255:java.io.File getAssets() -> a
-    260:270:org.jackhuang.hellominecraft.launcher.launch.GameLauncher$DecompressLibraryJob getDecompressLibraries() -> a
-    275:276:java.io.File getDecompressNativesToLocation() -> c
-    281:281:java.io.File getMinecraftJar() -> d
-    287:287:org.jackhuang.hellominecraft.launcher.launch.IMinecraftLoader provideMinecraftLoader(org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider,org.jackhuang.hellominecraft.launcher.utils.download.DownloadType) -> a
-    292:292:org.jackhuang.hellominecraft.launcher.version.MinecraftVersion getOneVersion() -> a
-    297:297:org.jackhuang.hellominecraft.launcher.version.MinecraftVersion getVersionById(java.lang.String) -> a
-    302:302:java.io.File getResourcePacks() -> b
-    307:307:java.io.File getBaseFolder() -> e
-    312:314:void onLaunch() -> b
+    174:189:boolean renameVersion(java.lang.String,java.lang.String) -> a
+    195:195:boolean refreshJson(java.lang.String) -> b
+    200:202:boolean refreshAssetsIndex(java.lang.String) -> c
+    207:212:boolean install(java.lang.String,org.jackhuang.hellominecraft.launcher.utils.download.DownloadType) -> a
+    217:221:java.io.File getRunDirectory(java.lang.String) -> a
+    227:242:java.util.List getDownloadLibraries(org.jackhuang.hellominecraft.launcher.utils.download.DownloadType) -> a
+    247:248:void openSelf(java.lang.String) -> a
+    252:253:void open(java.lang.String,java.lang.String) -> a
+    257:257:java.io.File getAssets() -> a
+    262:272:org.jackhuang.hellominecraft.launcher.launch.GameLauncher$DecompressLibraryJob getDecompressLibraries() -> a
+    277:278:java.io.File getDecompressNativesToLocation() -> c
+    283:283:java.io.File getMinecraftJar() -> d
+    289:289:org.jackhuang.hellominecraft.launcher.launch.IMinecraftLoader provideMinecraftLoader(org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider,org.jackhuang.hellominecraft.launcher.utils.download.DownloadType) -> a
+    294:294:org.jackhuang.hellominecraft.launcher.version.MinecraftVersion getOneVersion() -> a
+    299:299:org.jackhuang.hellominecraft.launcher.version.MinecraftVersion getVersionById(java.lang.String) -> a
+    304:304:java.io.File getResourcePacks() -> b
+    309:309:java.io.File getBaseFolder() -> e
+    314:316:void onLaunch() -> b
 org.jackhuang.hellominecraft.launcher.version.MinecraftVersionManager$1 -> org.jackhuang.hellominecraft.launcher.aN:
     int[] $SwitchMap$org$jackhuang$hellominecraft$launcher$version$GameDirType -> a
 org.jackhuang.hellominecraft.launcher.version.Natives -> org.jackhuang.hellominecraft.launcher.aO:
