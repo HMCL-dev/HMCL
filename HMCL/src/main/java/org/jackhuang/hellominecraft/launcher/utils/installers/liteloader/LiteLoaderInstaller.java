@@ -69,10 +69,8 @@ public class LiteLoaderInstaller extends Task implements PreviousResultRegistrat
 
             mv.id += "-LiteLoader" + version.selfVersion;
 
-            if (!mv.mainClass.startsWith("net.minecraft.launchwrapper.")) {
-                mv.mainClass = "net.minecraft.launchwrapper.Launch";
-                mv.minecraftArguments += " --tweakClass " + version.tweakClass;
-            }
+            mv.mainClass = "net.minecraft.launchwrapper.Launch";
+            mv.minecraftArguments += " --tweakClass " + version.tweakClass;
             File folder = new File(profile.getCanonicalGameDir(), "versions/" + mv.id);
             folder.mkdirs();
             File json = new File(folder, mv.id + ".json");

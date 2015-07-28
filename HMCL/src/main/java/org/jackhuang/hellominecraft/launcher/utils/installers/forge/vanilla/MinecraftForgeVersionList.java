@@ -67,7 +67,7 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
                     if (!StrUtils.isBlank(v.branch))
                         ver = ver + "-" + v.branch;
                     String filename = root.artifact + "-" + ver + "-" + f[1] + "." + f[0];
-                    String url = root.webpath + "/" + ver + "/" + filename;
+                    String url = root.webpath + ver + "/" + filename;
                     switch (f[1]) {
                         case "installer":
                             iv.installer = url;

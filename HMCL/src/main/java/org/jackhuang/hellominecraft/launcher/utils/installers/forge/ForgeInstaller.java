@@ -42,7 +42,6 @@ import org.jackhuang.hellominecraft.utils.system.MessageBox;
  */
 public class ForgeInstaller extends Task {
 
-    private final Gson gson = new Gson();
     public File gameDir;
     public File forgeInstaller;
     public IMinecraftProvider mp;
@@ -61,7 +60,7 @@ public class ForgeInstaller extends Task {
             ZipFile zipFile = new ZipFile(forgeInstaller);
             ZipEntry entry = zipFile.getEntry("install_profile.json");
             String content = NetUtils.getStreamContent(zipFile.getInputStream(entry));
-            InstallProfile profile = gson.fromJson(content, InstallProfile.class);
+            InstallProfile profile = C.gsonPrettyPrinting.fromJson(content, InstallProfile.class);
 
             File from = new File(gameDir, "versions" + File.separator + profile.install.minecraft);
             if (!from.exists()) {
@@ -80,7 +79,7 @@ public class ForgeInstaller extends Task {
             FileUtils.copyFile(new File(from, profile.install.minecraft + ".jar"),
                     new File(to, profile.install.target + ".jar"));
             HMCLog.log("Creating new version profile..." + profile.install.target + ".json");
-            FileUtils.write(new File(to, profile.install.target + ".json"), gson.toJson(profile.versionInfo));
+            FileUtils.write(new File(to, profile.install.target + ".json"), C.gsonPrettyPrinting.toJson(profile.versionInfo));
 
             HMCLog.log("Extracting universal forge pack..." + profile.install.filePath);
 
