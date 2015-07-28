@@ -16,6 +16,7 @@
  */
 package org.jackhuang.hellominecraft.tasks;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -64,6 +65,17 @@ public abstract class Task {
 
     public void setParallelExecuting(boolean parallelExecuting) {
         this.parallelExecuting = parallelExecuting;
+    }
+    
+    ArrayList<DoingDoneListener<Task>> taskListener = new ArrayList();
+
+    public Task addTaskListener(DoingDoneListener<Task> l) {
+        taskListener.add(l);
+        return this;
+    }
+
+    public ArrayList<DoingDoneListener<Task>> getTaskListeners() {
+        return taskListener;
     }
 
     public abstract String getInfo();

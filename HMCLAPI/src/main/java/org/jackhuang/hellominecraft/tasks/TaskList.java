@@ -116,15 +116,21 @@ public class TaskList extends Thread {
         HMCLog.log("Executing task: " + t.getInfo());
         for (DoingDoneListener<Task> d : taskListener)
             d.onDoing(t);
+        for (DoingDoneListener<Task> d : t.getTaskListeners())
+            d.onDoing(t);
 
         if (t.executeTask()) {
             HMCLog.log("Task finished: " + t.getInfo());
             for (DoingDoneListener<Task> d : taskListener)
                 d.onDone(t);
+            for (DoingDoneListener<Task> d : t.getTaskListeners())
+                d.onDone(t);
             processTasks(t.getAfterTasks());
         } else {
             HMCLog.err("Task failed: " + t.getInfo(), t.getFailReason());
             for (DoingDoneListener<Task> d : taskListener)
+                d.onFailed(t);
+            for (DoingDoneListener<Task> d : t.getTaskListeners())
                 d.onFailed(t);
         }
     }

@@ -16,6 +16,7 @@
  */
 package org.jackhuang.hellominecraft.utils.system;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.NetUtils;
@@ -73,7 +75,7 @@ public class FileUtils {
     public static void cleanDirectory(File directory)
             throws IOException {
         if (!directory.exists()) {
-	    //String message = directory + " does not exist";
+            //String message = directory + " does not exist";
             //throw new IllegalArgumentException(message);
             directory.mkdirs();
             return;
@@ -428,5 +430,16 @@ public class FileUtils {
         for (File f : files)
             if (f.getName().endsWith(suffix)) al.add(f);
         return al.toArray(new File[0]);
+    }
+
+    public static byte[] toByteArray(File file) throws IOException {
+        try (FileInputStream is = new FileInputStream(file)) {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            int n;
+            byte[] b = new byte[1024];
+            while ((n = is.read(b)) != -1) os.write(b, 0, n);
+            os.close();
+            return os.toByteArray();
+        }
     }
 }

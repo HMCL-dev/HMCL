@@ -14,125 +14,68 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.
  */
-package org.jackhuang.hellominecraft.tasks.download;
+package org.jackhuang.hellominecraft.launcher.launch;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.security.GeneralSecurityException;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.X509TrustManager;
+import java.util.Arrays;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Pack200;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.tasks.Task;
-import org.jackhuang.hellominecraft.tasks.communication.PreviousResult;
-import org.jackhuang.hellominecraft.tasks.communication.PreviousResultRegistrator;
+import org.jackhuang.hellominecraft.tasks.download.NetException;
+import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
+import org.tukaani.xz.XZInputStream;
 
 /**
  *
  * @author huangyuhui
  */
-// This class downloads a file from a URL.
-public class FileDownloadTask extends Task implements PreviousResult<File>, PreviousResultRegistrator<String> {
+public class LibraryDownloadTask extends Task {
 
-    private static final X509TrustManager xtm = new X509TrustManager() {
-        @Override
-        public void checkClientTrusted(X509Certificate[] chain, String authType) {
-        }
-
-        @Override
-        public void checkServerTrusted(X509Certificate[] chain, String authType) {
-        }
-
-        @Override
-        public X509Certificate[] getAcceptedIssuers() {
-            return null;
-        }
-    };
-    private static final HostnameVerifier hnv = (hostname, session) -> true;
-
-    static {
-        SSLContext sslContext = null;
-
-        try {
-            sslContext = SSLContext.getInstance("TLS");
-            X509TrustManager[] xtmArray = new X509TrustManager[]{xtm};
-            sslContext.init(null, xtmArray, new java.security.SecureRandom());
-        } catch (GeneralSecurityException gse) {
-        }
-        if (sslContext != null)
-            HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
-
-        HttpsURLConnection.setDefaultHostnameVerifier(hnv);
-    }
-
-    // Max size of download buffer.
     private static final int MAX_BUFFER_SIZE = 2048;
 
-    private URL url; // download URL
-    private int size; // size of download in bytes
-    private int downloaded; // number of bytes downloaded
-    private final File filePath;
+    GameLauncher.DownloadLibraryJob job;
 
-    public FileDownloadTask(File filePath) {
-        this((URL) null, filePath);
+    public LibraryDownloadTask(GameLauncher.DownloadLibraryJob job) {
+        this.job = job;
     }
-
-    public FileDownloadTask(String url, File filePath) {
-        this(IOUtils.parseURL(url), filePath);
-    }
-
-    // Constructor for Download.
-    public FileDownloadTask(URL url, File filePath) {
-        this.url = url;
-        size = -1;
-        downloaded = 0;
-        this.filePath = filePath;
-    }
-
-    // Get this download's URL.
-    public String getUrl() {
-        return url.toString();
-    }
-
-    RandomAccessFile file = null;
-    InputStream stream = null;
-    boolean shouldContinue = true, aborted = false;
-
-    private void closeFiles() {
-        // Close file.
-        if (file != null)
-            try {
-                file.close();
-                file = null;
-            } catch (IOException e) {
-                HMCLog.warn("Failed to close file", e);
-            }
-
-        // Close connection to server.
-        if (stream != null)
-            try {
-                stream.close();
-                stream = null;
-            } catch (IOException e) {
-                HMCLog.warn("Failed to close stream", e);
-            }
-    }
-
-    // Download file.
+    
     @Override
     public boolean executeTask() {
-        for (PreviousResult<String> p : al)
-            this.url = IOUtils.parseURL(p.getResult());
+        try {
+            File packFile = new File(job.path.getParentFile(), job.path.getName() + ".pack.xz");
+            if (job.url.contains("forge") && download(new URL(job.url + ".pack.xz"), packFile)) {
+                unpackLibrary(job.path, FileUtils.toByteArray(packFile));
+                packFile.delete();
+                return true;
+            } else {
+                return download(new URL(job.url), job.path);
+            }
+        } catch (Exception ex) {
+            setFailReason(ex);
+            return false;
+        }
+    }
 
+    InputStream stream;
+    RandomAccessFile file;
+    boolean shouldContinue = true, aborted = false;
+    int size = -1;
+
+    boolean download(URL url, File filePath) {
+        size = -1;
+        int downloaded = 0;
         for (int repeat = 0; repeat < 6; repeat++) {
             if (repeat > 0)
                 HMCLog.warn("Failed to download, repeat: " + repeat);
@@ -174,7 +117,6 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                 // Open file and seek to the end of it.
                 file = new RandomAccessFile(tempFile, "rw");
                 file.seek(downloaded);
-
                 stream = connection.getInputStream();
                 while (true) {
                     // Size buffer according to how much of the file is left to download.
@@ -212,8 +154,69 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
         return false;
     }
 
-    public static void download(String url, String file, DownloadListener dl) {
-        ((Task) new FileDownloadTask(url, new File(file)).setProgressProviderListener(dl)).executeTask();
+    public static void unpackLibrary(File output, byte[] data)
+            throws IOException {
+        HMCLog.log("Unpacking " + output);
+        if (output.exists())
+            output.delete();
+
+        byte[] decompressed = IOUtils.readFully(new XZInputStream(new ByteArrayInputStream(data)));
+
+        String end = new String(decompressed, decompressed.length - 4, 4);
+        if (!end.equals("SIGN")) {
+            HMCLog.log("Unpacking failed, signature missing " + end);
+            return;
+        }
+
+        int x = decompressed.length;
+        int len = decompressed[(x - 8)] & 0xFF | (decompressed[(x - 7)] & 0xFF) << 8 | (decompressed[(x - 6)] & 0xFF) << 16 | (decompressed[(x - 5)] & 0xFF) << 24;
+
+        File temp = File.createTempFile("art", ".pack");
+        HMCLog.log("  Signed");
+        HMCLog.log("  Checksum Length: " + len);
+        HMCLog.log("  Total Length:    " + (decompressed.length - len - 8));
+        HMCLog.log("  Temp File:       " + temp.getAbsolutePath());
+
+        byte[] checksums = Arrays.copyOfRange(decompressed, decompressed.length - len - 8, decompressed.length - 8);
+
+        try (OutputStream out = new FileOutputStream(temp)) {
+            out.write(decompressed, 0, decompressed.length - len - 8);
+        }
+        decompressed = null;
+        data = null;
+        System.gc();
+
+        try (FileOutputStream jarBytes = new FileOutputStream(output); JarOutputStream jos = new JarOutputStream(jarBytes)) {
+            
+            Pack200.newUnpacker().unpack(temp, jos);
+            
+            JarEntry checksumsFile = new JarEntry("checksums.sha1");
+            checksumsFile.setTime(0L);
+            jos.putNextEntry(checksumsFile);
+            jos.write(checksums);
+            jos.closeEntry();
+        }
+        temp.delete();
+    }
+
+    private void closeFiles() {
+        // Close file.
+        if (file != null)
+            try {
+                file.close();
+                file = null;
+            } catch (IOException e) {
+                HMCLog.warn("Failed to close file", e);
+            }
+
+        // Close connection to server.
+        if (stream != null)
+            try {
+                stream.close();
+                stream = null;
+            } catch (IOException e) {
+                HMCLog.warn("Failed to close stream", e);
+            }
     }
 
     @Override
@@ -225,19 +228,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
 
     @Override
     public String getInfo() {
-        return C.i18n("download") + ": " + url + " " + filePath;
+        return C.i18n("download") + ": " + job.name;
     }
 
-    @Override
-    public File getResult() {
-        return filePath;
-    }
-
-    ArrayList<PreviousResult<String>> al = new ArrayList();
-
-    @Override
-    public Task registerPreviousResult(PreviousResult<String> pr) {
-        al.add(pr);
-        return this;
-    }
 }

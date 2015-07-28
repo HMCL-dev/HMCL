@@ -950,7 +950,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
             MessageBox.Show(C.i18n("install.not_refreshed"));
             return;
         }
-        InstallerVersion v = forge.getVersion(idx);//forgeVersions.get(idx);
+        InstallerVersion v = forge.getVersion(idx);
         String url;
         File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "forge-installer.jar");
         if (v.installer != null) {

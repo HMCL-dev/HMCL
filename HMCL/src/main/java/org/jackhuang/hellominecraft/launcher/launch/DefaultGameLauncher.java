@@ -47,7 +47,8 @@ public class DefaultGameLauncher extends GameLauncher {
             final TaskWindow dw = TaskWindow.getInstance();
             ParallelTask parallelTask = new ParallelTask();
             for (DownloadLibraryJob s : t) {
-                parallelTask.addDependsTask(new FileDownloadTask(s.url, s.path).setTag(s.name));
+                //parallelTask.addDependsTask(new FileDownloadTask(s.url, s.path).setTag(s.name));
+                parallelTask.addDependsTask(new LibraryDownloadTask(s));
             }
             dw.addTask(parallelTask);
             boolean flag = true;
