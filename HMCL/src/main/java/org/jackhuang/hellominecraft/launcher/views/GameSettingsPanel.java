@@ -223,7 +223,6 @@ public class GameSettingsPanel extends javax.swing.JPanel {
         lstForge = new javax.swing.JTable();
         btnRefreshForge = new javax.swing.JButton();
         btnDownloadForge = new javax.swing.JButton();
-        btnRetryForge = new javax.swing.JButton();
         pnlOptifine = new javax.swing.JPanel();
         jScrollPane13 = new javax.swing.JScrollPane();
         lstOptifine = new javax.swing.JTable();
@@ -234,7 +233,6 @@ public class GameSettingsPanel extends javax.swing.JPanel {
         jScrollPane12 = new javax.swing.JScrollPane();
         lstLiteLoader = new javax.swing.JTable();
         btnRefreshLiteLoader = new javax.swing.JButton();
-        btnRetryLiteLoader = new javax.swing.JButton();
         pnlGameDownloads = new javax.swing.JPanel();
         btnDownload = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -498,7 +496,7 @@ public class GameSettingsPanel extends javax.swing.JPanel {
                                 .addComponent(jLabel9)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(txtHeight, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 306, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 320, Short.MAX_VALUE)
                                 .addComponent(chkFullscreen))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel22Layout.createSequentialGroup()
                                 .addGroup(jPanel22Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -695,36 +693,26 @@ public class GameSettingsPanel extends javax.swing.JPanel {
         }
     });
 
-    btnRetryForge.setText(bundle.getString("ui.button.retry")); // NOI18N
-    btnRetryForge.addActionListener(new java.awt.event.ActionListener() {
-        public void actionPerformed(java.awt.event.ActionEvent evt) {
-            btnRetryForgeActionPerformed(evt);
-        }
-    });
-
     javax.swing.GroupLayout jPanel16Layout = new javax.swing.GroupLayout(jPanel16);
     jPanel16.setLayout(jPanel16Layout);
     jPanel16Layout.setHorizontalGroup(
         jPanel16Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel16Layout.createSequentialGroup()
-            .addComponent(jScrollPane11, javax.swing.GroupLayout.DEFAULT_SIZE, 587, Short.MAX_VALUE)
+            .addComponent(jScrollPane11, javax.swing.GroupLayout.DEFAULT_SIZE, 601, Short.MAX_VALUE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(jPanel16Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                .addComponent(btnRetryForge, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(btnDownloadForge, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(btnRefreshForge, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addContainerGap())
     );
     jPanel16Layout.setVerticalGroup(
         jPanel16Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addComponent(jScrollPane11, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+        .addComponent(jScrollPane11, javax.swing.GroupLayout.DEFAULT_SIZE, 291, Short.MAX_VALUE)
         .addGroup(jPanel16Layout.createSequentialGroup()
             .addComponent(btnDownloadForge)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(btnRetryForge)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(btnRefreshForge)
-            .addGap(0, 210, Short.MAX_VALUE))
+            .addGap(0, 0, Short.MAX_VALUE))
     );
 
     tabInstallers.addTab("Forge", jPanel16);
@@ -753,7 +741,7 @@ btnRefreshOptifine.addActionListener(new java.awt.event.ActionListener() {
     pnlOptifineLayout.setHorizontalGroup(
         pnlOptifineLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
         .addGroup(pnlOptifineLayout.createSequentialGroup()
-            .addComponent(jScrollPane13, javax.swing.GroupLayout.DEFAULT_SIZE, 587, Short.MAX_VALUE)
+            .addComponent(jScrollPane13, javax.swing.GroupLayout.DEFAULT_SIZE, 601, Short.MAX_VALUE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(pnlOptifineLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                 .addComponent(btnDownloadOptifine, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -791,36 +779,26 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }
     });
 
-    btnRetryLiteLoader.setText(bundle.getString("ui.button.retry")); // NOI18N
-    btnRetryLiteLoader.addActionListener(new java.awt.event.ActionListener() {
-        public void actionPerformed(java.awt.event.ActionEvent evt) {
-            btnRetryLiteLoaderActionPerformed(evt);
-        }
-    });
-
     javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
     jPanel3.setLayout(jPanel3Layout);
     jPanel3Layout.setHorizontalGroup(
         jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
         .addGroup(jPanel3Layout.createSequentialGroup()
-            .addComponent(jScrollPane12, javax.swing.GroupLayout.DEFAULT_SIZE, 587, Short.MAX_VALUE)
+            .addComponent(jScrollPane12, javax.swing.GroupLayout.DEFAULT_SIZE, 601, Short.MAX_VALUE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                 .addComponent(btnInstallLiteLoader, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(btnRetryLiteLoader, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(btnRefreshLiteLoader))
             .addContainerGap())
     );
     jPanel3Layout.setVerticalGroup(
         jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addComponent(jScrollPane12, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+        .addComponent(jScrollPane12, javax.swing.GroupLayout.DEFAULT_SIZE, 291, Short.MAX_VALUE)
         .addGroup(jPanel3Layout.createSequentialGroup()
             .addComponent(btnInstallLiteLoader)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(btnRetryLiteLoader)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(btnRefreshLiteLoader)
-            .addGap(0, 210, Short.MAX_VALUE))
+            .addGap(0, 0, Short.MAX_VALUE))
     );
 
     tabInstallers.addTab("LiteLoader", jPanel3);
@@ -862,7 +840,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     pnlGameDownloadsLayout.setHorizontalGroup(
         pnlGameDownloadsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
         .addGroup(pnlGameDownloadsLayout.createSequentialGroup()
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 592, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 606, Short.MAX_VALUE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(pnlGameDownloadsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                 .addComponent(btnRefreshGameDownloads, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -896,7 +874,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
             .addContainerGap()
             .addComponent(btnIncludeMinecraft)
             .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        .addComponent(tabVersionEdit)
+        .addComponent(tabVersionEdit, javax.swing.GroupLayout.DEFAULT_SIZE, 684, Short.MAX_VALUE)
     );
     layout.setVerticalGroup(
         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -970,17 +948,10 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
             url = v.installer;
             TaskWindow.getInstance()
                     .addTask(new FileDownloadTask(url, filepath).setTag("forge"))
-                    .addTask(new ForgeInstaller(profile.getMinecraftProvider(), filepath))
+                    .addTask(new ForgeInstaller(profile.getMinecraftProvider(), filepath, v))
                     .start();
         }
     }//GEN-LAST:event_btnDownloadForgeActionPerformed
-
-    private void btnRetryForgeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRetryForgeActionPerformed
-        if (profile == null) return;
-        MinecraftVersion v = profile.getMinecraftProvider().getVersionById(mcVersion);
-        if (v == null) return;
-        TaskWindow.getInstance().addTask(new ForgeInstaller(profile.getMinecraftProvider(), IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "forge-installer.jar"))).start();
-    }//GEN-LAST:event_btnRetryForgeActionPerformed
 
     private void btnRefreshOptifineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshOptifineActionPerformed
         optifine.refreshVersions();
@@ -1022,15 +993,6 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     private void btnRefreshLiteLoaderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshLiteLoaderActionPerformed
         liteloader.refreshVersions();
     }//GEN-LAST:event_btnRefreshLiteLoaderActionPerformed
-
-    private void btnRetryLiteLoaderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRetryLiteLoaderActionPerformed
-        if (profile == null) return;
-        int idx = lstLiteLoader.getSelectedRow();
-        if (idx == -1) return;
-        InstallerVersion v = liteloader.getVersion(idx);
-        File filepath = new File(IOUtils.currentDir(), "liteloader-universal.jar");
-        TaskWindow.getInstance().addTask(new LiteLoaderInstaller(profile, (LiteLoaderInstallerVersion) v, filepath)).start();
-    }//GEN-LAST:event_btnRetryLiteLoaderActionPerformed
 
     private void btnDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadActionPerformed
         downloadMinecraft(Settings.getInstance().getDownloadSource());
@@ -1447,8 +1409,6 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     private javax.swing.JButton btnRefreshOptifine;
     private javax.swing.JButton btnRefreshVersions;
     private javax.swing.JButton btnRemoveProfile;
-    private javax.swing.JButton btnRetryForge;
-    private javax.swing.JButton btnRetryLiteLoader;
     private javax.swing.JComboBox cboGameDirType;
     private javax.swing.JComboBox cboLauncherVisibility;
     private javax.swing.JComboBox cboProfiles;

@@ -16,8 +16,8 @@
  */
 package org.jackhuang.hellominecraft.launcher.launch;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,7 +33,6 @@ import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.tasks.download.NetException;
-import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.tukaani.xz.XZInputStream;
 
@@ -55,8 +54,8 @@ public class LibraryDownloadTask extends Task {
     public boolean executeTask() {
         try {
             File packFile = new File(job.path.getParentFile(), job.path.getName() + ".pack.xz");
-            if (job.url.contains("forge") && download(new URL(job.url + ".pack.xz"), packFile)) {
-                unpackLibrary(job.path, FileUtils.toByteArray(packFile));
+            if (job.url.contains("typesafe") && download(new URL(job.url + ".pack.xz"), packFile)) {
+                unpackLibrary(job.path, packFile);
                 packFile.delete();
                 return true;
             } else {
@@ -74,6 +73,7 @@ public class LibraryDownloadTask extends Task {
     int size = -1;
 
     boolean download(URL url, File filePath) {
+        HMCLog.log("Downloading: " + url + " to " + filePath);
         size = -1;
         int downloaded = 0;
         for (int repeat = 0; repeat < 6; repeat++) {
@@ -154,13 +154,13 @@ public class LibraryDownloadTask extends Task {
         return false;
     }
 
-    public static void unpackLibrary(File output, byte[] data)
+    public static void unpackLibrary(File output, File input)
             throws IOException {
         HMCLog.log("Unpacking " + output);
         if (output.exists())
             output.delete();
 
-        byte[] decompressed = IOUtils.readFully(new XZInputStream(new ByteArrayInputStream(data)));
+        byte[] decompressed = IOUtils.readFully(new XZInputStream(new FileInputStream(input)));
 
         String end = new String(decompressed, decompressed.length - 4, 4);
         if (!end.equals("SIGN")) {
@@ -183,7 +183,6 @@ public class LibraryDownloadTask extends Task {
             out.write(decompressed, 0, decompressed.length - len - 8);
         }
         decompressed = null;
-        data = null;
         System.gc();
 
         try (FileOutputStream jarBytes = new FileOutputStream(output); JarOutputStream jos = new JarOutputStream(jarBytes)) {

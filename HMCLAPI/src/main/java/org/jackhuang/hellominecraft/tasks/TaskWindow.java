@@ -262,7 +262,7 @@ public class TaskWindow extends javax.swing.JDialog
     @Override
     public void onFailed(Task task) {
         SwingUtilities.invokeLater(() -> {
-            failReasons.add(task.getInfo() + ": " + (null == task.getFailReason() ? "No exception" : task.getFailReason().getLocalizedMessage()));
+            failReasons.add(task.getInfo() + ": " + (null == task.getFailReason() ? "No exception" : task.getFailReason().getClass().toString() + ": " + task.getFailReason().getLocalizedMessage()));
             pgsTotal.setMaximum(taskList.taskCount());
             pgsTotal.setValue(pgsTotal.getValue() + 1);
             int idx = tasks.indexOf(task);

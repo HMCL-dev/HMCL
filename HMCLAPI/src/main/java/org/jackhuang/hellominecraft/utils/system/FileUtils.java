@@ -431,15 +431,4 @@ public class FileUtils {
             if (f.getName().endsWith(suffix)) al.add(f);
         return al.toArray(new File[0]);
     }
-
-    public static byte[] toByteArray(File file) throws IOException {
-        try (FileInputStream is = new FileInputStream(file)) {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            int n;
-            byte[] b = new byte[1024];
-            while ((n = is.read(b)) != -1) os.write(b, 0, n);
-            os.close();
-            return os.toByteArray();
-        }
-    }
 }

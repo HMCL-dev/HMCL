@@ -27,7 +27,7 @@
               <Component id="btnIncludeMinecraft" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
-          <Component id="tabVersionEdit" alignment="0" max="32767" attributes="0"/>
+          <Component id="tabVersionEdit" alignment="0" pref="684" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
@@ -306,7 +306,7 @@
                                       <Component id="jLabel9" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="txtHeight" min="-2" pref="100" max="-2" attributes="0"/>
-                                      <EmptySpace pref="306" max="32767" attributes="0"/>
+                                      <EmptySpace pref="320" max="32767" attributes="0"/>
                                       <Component id="chkFullscreen" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <Group type="102" alignment="1" attributes="0">
@@ -733,10 +733,9 @@
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="1" attributes="0">
-                              <Component id="jScrollPane11" pref="587" max="32767" attributes="0"/>
+                              <Component id="jScrollPane11" pref="601" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                  <Component id="btnRetryForge" alignment="0" max="32767" attributes="0"/>
                                   <Component id="btnDownloadForge" alignment="0" max="32767" attributes="0"/>
                                   <Component id="btnRefreshForge" alignment="0" max="32767" attributes="0"/>
                               </Group>
@@ -746,14 +745,12 @@
                     </DimensionLayout>
                     <DimensionLayout dim="1">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jScrollPane11" pref="0" max="32767" attributes="0"/>
+                          <Component id="jScrollPane11" pref="291" max="32767" attributes="0"/>
                           <Group type="102" attributes="0">
                               <Component id="btnDownloadForge" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="btnRetryForge" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
                               <Component id="btnRefreshForge" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="0" pref="210" max="32767" attributes="0"/>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -801,16 +798,6 @@
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnDownloadForgeActionPerformed"/>
                       </Events>
                     </Component>
-                    <Component class="javax.swing.JButton" name="btnRetryForge">
-                      <Properties>
-                        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.retry" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
-                        </Property>
-                      </Properties>
-                      <Events>
-                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnRetryForgeActionPerformed"/>
-                      </Events>
-                    </Component>
                   </SubComponents>
                 </Container>
                 <Container class="javax.swing.JPanel" name="pnlOptifine">
@@ -826,7 +813,7 @@
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="jScrollPane13" pref="587" max="32767" attributes="0"/>
+                              <Component id="jScrollPane13" pref="601" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                   <Component id="btnDownloadOptifine" max="32767" attributes="0"/>
@@ -906,11 +893,10 @@
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="jScrollPane12" pref="587" max="32767" attributes="0"/>
+                              <Component id="jScrollPane12" pref="601" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                   <Component id="btnInstallLiteLoader" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="btnRetryLiteLoader" alignment="0" max="32767" attributes="0"/>
                                   <Component id="btnRefreshLiteLoader" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
@@ -919,14 +905,12 @@
                     </DimensionLayout>
                     <DimensionLayout dim="1">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jScrollPane12" pref="0" max="32767" attributes="0"/>
+                          <Component id="jScrollPane12" pref="291" max="32767" attributes="0"/>
                           <Group type="102" attributes="0">
                               <Component id="btnInstallLiteLoader" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="btnRetryLiteLoader" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
                               <Component id="btnRefreshLiteLoader" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="0" pref="210" max="32767" attributes="0"/>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -974,16 +958,6 @@
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnRefreshLiteLoaderActionPerformed"/>
                       </Events>
                     </Component>
-                    <Component class="javax.swing.JButton" name="btnRetryLiteLoader">
-                      <Properties>
-                        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.retry" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
-                        </Property>
-                      </Properties>
-                      <Events>
-                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnRetryLiteLoaderActionPerformed"/>
-                      </Events>
-                    </Component>
                   </SubComponents>
                 </Container>
               </SubComponents>
@@ -1005,7 +979,7 @@
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="jScrollPane2" pref="592" max="32767" attributes="0"/>
+                      <Component id="jScrollPane2" pref="606" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
                           <Component id="btnRefreshGameDownloads" alignment="0" max="32767" attributes="0"/>

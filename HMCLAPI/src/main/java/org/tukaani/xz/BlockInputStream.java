@@ -195,10 +195,12 @@ class BlockInputStream extends InputStream {
             filterChain = filters[i].getInputStream(filterChain);
     }
 
+    @Override
     public int read() throws IOException {
         return read(tempBuf, 0, 1) == -1 ? -1 : (tempBuf[0] & 0xFF);
     }
 
+    @Override
     public int read(byte[] buf, int off, int len) throws IOException {
         if (endReached)
             return -1;

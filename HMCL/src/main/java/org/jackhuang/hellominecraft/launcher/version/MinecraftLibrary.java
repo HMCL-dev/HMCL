@@ -72,9 +72,8 @@ public class MinecraftLibrary extends IMinecraftLibrary {
                         flag = false;
                         break;
                     }
-                } else
-                    if (r.os == null || (r.os != null && (StrUtils.isBlank(r.os.name) || r.os.name.equalsIgnoreCase(OS.os().toString()))))
-                        flag = true;
+                } else if (r.os == null || (r.os != null && (StrUtils.isBlank(r.os.name) || r.os.name.equalsIgnoreCase(OS.os().toString()))))
+                    flag = true;
         return flag;
     }
 
@@ -123,6 +122,7 @@ public class MinecraftLibrary extends IMinecraftLibrary {
     @Override
     public String getDownloadURL(String urlBase, DownloadType downloadType) {
         if (StrUtils.isNotBlank(url) && downloadType.getProvider().isAllowedToUseSelfURL()) urlBase = this.url;
+        if (urlBase.endsWith(".jar")) return urlBase;
         return urlBase + formatted.replace('\\', '/');
     }
 

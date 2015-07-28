@@ -17,7 +17,6 @@
 package org.jackhuang.hellominecraft.launcher.utils.installers.forge;
 
 import org.jackhuang.hellominecraft.launcher.utils.installers.InstallProfile;
-import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -30,6 +29,7 @@ import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
+import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList.InstallerVersion;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.NetUtils;
@@ -45,11 +45,13 @@ public class ForgeInstaller extends Task {
     public File gameDir;
     public File forgeInstaller;
     public IMinecraftProvider mp;
+    public InstallerVersion installerVersion;
 
-    public ForgeInstaller(IMinecraftProvider mp, File forgeInstaller) {
+    public ForgeInstaller(IMinecraftProvider mp, File forgeInstaller, InstallerVersion installerVersion) {
         this.gameDir = mp.getBaseFolder();
         this.forgeInstaller = forgeInstaller;
         this.mp = mp;
+        this.installerVersion = installerVersion;
     }
 
     @Override
@@ -79,6 +81,9 @@ public class ForgeInstaller extends Task {
             FileUtils.copyFile(new File(from, profile.install.minecraft + ".jar"),
                     new File(to, profile.install.target + ".jar"));
             HMCLog.log("Creating new version profile..." + profile.install.target + ".json");
+            for (MinecraftLibrary library : profile.versionInfo.libraries)
+                if (library.name.startsWith("net.minecraftforge:forge:"))
+                    library.url = installerVersion.universal;
             FileUtils.write(new File(to, profile.install.target + ".json"), C.gsonPrettyPrinting.toJson(profile.versionInfo));
 
             HMCLog.log("Extracting universal forge pack..." + profile.install.filePath);

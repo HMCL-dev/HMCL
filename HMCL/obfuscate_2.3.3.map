@@ -1333,12 +1333,12 @@ org.jackhuang.hellominecraft.launcher.launch.LibraryDownloadTask -> org.jackhuan
     boolean shouldContinue -> a
     boolean aborted -> b
     int size -> a
-    57:67:boolean executeTask() -> a
-    77:154:boolean download(java.net.URL,java.io.File) -> a
-    159:200:void unpackLibrary(java.io.File,byte[]) -> a
-    204:220:void closeFiles() -> a
-    224:226:boolean abort() -> b
-    231:231:java.lang.String getInfo() -> a
+    56:66:boolean executeTask() -> a
+    76:154:boolean download(java.net.URL,java.io.File) -> a
+    159:199:void unpackLibrary(java.io.File,java.io.File) -> a
+    203:219:void closeFiles() -> a
+    223:225:boolean abort() -> b
+    230:230:java.lang.String getInfo() -> a
 org.jackhuang.hellominecraft.launcher.launch.MinecraftCrashAdvicer -> org.jackhuang.hellominecraft.launcher.u:
     29:29:java.lang.String getAdvice(java.lang.String) -> a
     33:52:java.lang.String getAdvice(java.lang.String,boolean) -> a
@@ -1767,8 +1767,9 @@ org.jackhuang.hellominecraft.launcher.utils.installers.forge.ForgeInstaller -> o
     java.io.File gameDir -> a
     java.io.File forgeInstaller -> b
     org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider mp -> a
-    58:102:boolean executeTask() -> a
-    108:108:java.lang.String getInfo() -> a
+    org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList$InstallerVersion installerVersion -> a
+    60:107:boolean executeTask() -> a
+    113:113:java.lang.String getInfo() -> a
 org.jackhuang.hellominecraft.launcher.utils.installers.forge.ForgeOldInstaller -> org.jackhuang.hellominecraft.launcher.ak:
     31:35:void install(java.lang.String,java.lang.String,java.lang.String) -> a
 org.jackhuang.hellominecraft.launcher.utils.installers.forge.Install -> org.jackhuang.hellominecraft.launcher.al:
@@ -1837,9 +1838,9 @@ org.jackhuang.hellominecraft.launcher.utils.installers.liteloader.LiteLoaderInst
     java.io.File installer -> a
     org.jackhuang.hellominecraft.launcher.settings.Profile profile -> a
     java.util.ArrayList pre -> a
-    54:83:boolean executeTask() -> a
-    89:89:java.lang.String getInfo() -> a
-    96:97:org.jackhuang.hellominecraft.tasks.Task registerPreviousResult(org.jackhuang.hellominecraft.tasks.communication.PreviousResult) -> a
+    54:85:boolean executeTask() -> a
+    91:91:java.lang.String getInfo() -> a
+    98:99:org.jackhuang.hellominecraft.tasks.Task registerPreviousResult(org.jackhuang.hellominecraft.tasks.communication.PreviousResult) -> a
 org.jackhuang.hellominecraft.launcher.utils.installers.liteloader.LiteLoaderMCVersions -> org.jackhuang.hellominecraft.launcher.au:
     java.util.Map artefacts -> artefacts
 org.jackhuang.hellominecraft.launcher.utils.installers.liteloader.LiteLoaderVersion -> org.jackhuang.hellominecraft.launcher.av:
@@ -1944,13 +1945,13 @@ org.jackhuang.hellominecraft.launcher.version.MinecraftLibrary -> org.jackhuang.
     org.jackhuang.hellominecraft.launcher.version.Natives natives -> natives
     org.jackhuang.hellominecraft.launcher.version.Extract extract -> extract
     55:55:java.lang.Object clone() -> clone
-    65:78:boolean allow() -> b
-    82:82:java.lang.String formatArch(java.lang.String) -> a
-    86:92:java.lang.String getNative() -> a
-    97:97:boolean isRequiredToUnzip() -> a
-    102:116:void init() -> a
-    120:120:java.io.File getFilePath(java.io.File) -> a
-    125:126:java.lang.String getDownloadURL(java.lang.String,org.jackhuang.hellominecraft.launcher.utils.download.DownloadType) -> a
+    65:77:boolean allow() -> b
+    81:81:java.lang.String formatArch(java.lang.String) -> a
+    85:91:java.lang.String getNative() -> a
+    96:96:boolean isRequiredToUnzip() -> a
+    101:115:void init() -> a
+    119:119:java.io.File getFilePath(java.io.File) -> a
+    124:126:java.lang.String getDownloadURL(java.lang.String,org.jackhuang.hellominecraft.launcher.utils.download.DownloadType) -> a
     131:131:java.lang.String[] getDecompressExtractRules() -> a
 org.jackhuang.hellominecraft.launcher.version.MinecraftOldLibrary -> org.jackhuang.hellominecraft.launcher.aL:
     34:34:boolean isRequiredToUnzip() -> a
@@ -2045,23 +2046,22 @@ org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel -> org.jackhuang.h
     java.lang.String mcVersion -> a
     javax.swing.JPopupMenu ppmManage -> a
     javax.swing.JPopupMenu ppmExplore -> b
-    javax.swing.JButton btnDownload -> a
-    javax.swing.JButton btnDownloadAllAssets -> b
-    javax.swing.JButton btnDownloadForge -> c
-    javax.swing.JButton btnDownloadOptifine -> d
-    javax.swing.JButton btnExplore -> e
-    javax.swing.JButton btnIncludeMinecraft -> f
-    javax.swing.JButton btnInstallLiteLoader -> g
-    javax.swing.JButton btnModify -> h
-    javax.swing.JButton btnNewProfile -> i
-    javax.swing.JButton btnRefreshForge -> j
-    javax.swing.JButton btnRefreshGameDownloads -> k
-    javax.swing.JButton btnRefreshLiteLoader -> l
-    javax.swing.JButton btnRefreshOptifine -> m
-    javax.swing.JButton btnRefreshVersions -> n
-    javax.swing.JButton btnRemoveProfile -> o
-    javax.swing.JButton btnRetryForge -> p
-    javax.swing.JButton btnRetryLiteLoader -> q
+    javax.swing.JButton btnChoosingJavaDir -> a
+    javax.swing.JButton btnDownload -> b
+    javax.swing.JButton btnDownloadAllAssets -> c
+    javax.swing.JButton btnDownloadForge -> d
+    javax.swing.JButton btnDownloadOptifine -> e
+    javax.swing.JButton btnExplore -> f
+    javax.swing.JButton btnIncludeMinecraft -> g
+    javax.swing.JButton btnInstallLiteLoader -> h
+    javax.swing.JButton btnModify -> i
+    javax.swing.JButton btnNewProfile -> j
+    javax.swing.JButton btnRefreshForge -> k
+    javax.swing.JButton btnRefreshGameDownloads -> l
+    javax.swing.JButton btnRefreshLiteLoader -> m
+    javax.swing.JButton btnRefreshOptifine -> n
+    javax.swing.JButton btnRefreshVersions -> o
+    javax.swing.JButton btnRemoveProfile -> p
     javax.swing.JComboBox cboGameDirType -> a
     javax.swing.JComboBox cboLauncherVisibility -> b
     javax.swing.JComboBox cboProfiles -> c
@@ -2070,7 +2070,6 @@ org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel -> org.jackhuang.h
     javax.swing.JCheckBox chkDebug -> b
     javax.swing.JCheckBox chkFullscreen -> c
     javax.swing.JCheckBox chkNoJVMArgs -> d
-    javax.swing.JButton jButton1 -> r
     javax.swing.JLabel jLabel1 -> a
     javax.swing.JLabel jLabel10 -> b
     javax.swing.JLabel jLabel11 -> c
@@ -2117,63 +2116,61 @@ org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel -> org.jackhuang.h
     javax.swing.JTextField txtServerIP -> i
     javax.swing.JTextField txtWidth -> j
     javax.swing.JTextField txtWrapperLauncher -> k
-    172:911:void initComponents() -> d
-    914:919:void cboProfilesItemStateChanged(java.awt.event.ItemEvent) -> a
-    922:925:void btnNewProfileActionPerformed(java.awt.event.ActionEvent) -> a
-    928:938:void btnRemoveProfileActionPerformed(java.awt.event.ActionEvent) -> b
-    942:950:void cboVersionsItemStateChanged(java.awt.event.ItemEvent) -> b
-    953:954:void btnRefreshVersionsActionPerformed(java.awt.event.ActionEvent) -> c
-    957:958:void btnRefreshForgeActionPerformed(java.awt.event.ActionEvent) -> d
-    961:976:void btnDownloadForgeActionPerformed(java.awt.event.ActionEvent) -> e
-    979:983:void btnRetryForgeActionPerformed(java.awt.event.ActionEvent) -> f
-    986:987:void btnRefreshOptifineActionPerformed(java.awt.event.ActionEvent) -> g
-    990:1004:void btnDownloadOptifineActionPerformed(java.awt.event.ActionEvent) -> h
-    1007:1020:void btnInstallLiteLoaderActionPerformed(java.awt.event.ActionEvent) -> i
-    1023:1024:void btnRefreshLiteLoaderActionPerformed(java.awt.event.ActionEvent) -> j
-    1027:1033:void btnRetryLiteLoaderActionPerformed(java.awt.event.ActionEvent) -> k
-    1036:1038:void btnDownloadActionPerformed(java.awt.event.ActionEvent) -> l
-    1041:1042:void btnRefreshGameDownloadsActionPerformed(java.awt.event.ActionEvent) -> m
-    1045:1046:void btnExploreMouseClicked(java.awt.event.MouseEvent) -> a
-    1049:1063:void btnIncludeMinecraftActionPerformed(java.awt.event.ActionEvent) -> n
-    1066:1067:void btnModifyMouseClicked(java.awt.event.MouseEvent) -> b
-    1070:1071:void txtJavaArgsFocusLost(java.awt.event.FocusEvent) -> a
-    1074:1075:void txtMinecraftArgsFocusLost(java.awt.event.FocusEvent) -> b
-    1078:1079:void txtPermSizeFocusLost(java.awt.event.FocusEvent) -> c
-    1082:1083:void chkDebugFocusLost(java.awt.event.FocusEvent) -> d
-    1086:1087:void chkNoJVMArgsFocusLost(java.awt.event.FocusEvent) -> e
-    1090:1091:void chkCancelWrapperFocusLost(java.awt.event.FocusEvent) -> f
-    1094:1095:void txtWrapperLauncherFocusLost(java.awt.event.FocusEvent) -> g
-    1098:1099:void txtServerIPFocusLost(java.awt.event.FocusEvent) -> h
-    1102:1104:void cboGameDirTypeFocusLost(java.awt.event.FocusEvent) -> i
-    1107:1109:void cboLauncherVisibilityFocusLost(java.awt.event.FocusEvent) -> j
-    1112:1133:void btnDownloadAllAssetsActionPerformed(java.awt.event.ActionEvent) -> o
-    1136:1137:void txtMaxMemoryFocusLost(java.awt.event.FocusEvent) -> k
-    1140:1141:void txtJavaDirFocusLost(java.awt.event.FocusEvent) -> l
-    1144:1145:void chkFullscreenFocusLost(java.awt.event.FocusEvent) -> m
-    1148:1149:void txtHeightFocusLost(java.awt.event.FocusEvent) -> n
-    1152:1153:void txtWidthFocusLost(java.awt.event.FocusEvent) -> o
-    1156:1159:void txtGameDirFocusLost(java.awt.event.FocusEvent) -> p
-    1162:1178:void jButton1ActionPerformed(java.awt.event.ActionEvent) -> p
-    1183:1206:void loadProfiles() -> e
-    1209:1211:org.jackhuang.hellominecraft.launcher.settings.Profile getProfile() -> a
-    1215:1235:void prepare(org.jackhuang.hellominecraft.launcher.settings.Profile) -> a
-    1238:1251:void loadVersions() -> a
-    1254:1255:void loadMinecraftVersion() -> b
-    1258:1259:void loadMinecraftVersion(java.lang.String) -> a
-    1268:1273:void loadMinecraftVersion(org.jackhuang.hellominecraft.launcher.version.MinecraftVersion) -> a
-    1279:1284:void downloadAssets(org.jackhuang.hellominecraft.launcher.utils.assets.IAssetsHandler) -> a
-    1289:1324:void refreshDownloads(org.jackhuang.hellominecraft.launcher.utils.download.DownloadType) -> a
-    1327:1336:void downloadMinecraft(org.jackhuang.hellominecraft.launcher.utils.download.DownloadType) -> b
-    1341:1341:java.lang.String getMinecraftVersionFormatted() -> a
-    1394:1396:void refreshVersions() -> f
-    1409:1422:void versionChanged(org.jackhuang.hellominecraft.launcher.settings.Profile,java.lang.String) -> a
-    1425:1430:void onSelected() -> c
-    1281:1283:void lambda$downloadAssets$16(org.jackhuang.hellominecraft.launcher.utils.assets.IAssetsHandler,java.lang.String[]) -> b
-    155:158:void lambda$new$15(java.awt.event.ActionEvent) -> q
-    148:151:void lambda$new$14(java.awt.event.ActionEvent) -> r
-    140:144:void lambda$new$13(java.awt.event.ActionEvent) -> s
-    129:136:void lambda$new$12(java.awt.event.ActionEvent) -> t
-    105:107:void lambda$new$11(java.awt.event.ActionEvent) -> u
+    172:889:void initComponents() -> d
+    892:897:void cboProfilesItemStateChanged(java.awt.event.ItemEvent) -> a
+    900:903:void btnNewProfileActionPerformed(java.awt.event.ActionEvent) -> a
+    906:916:void btnRemoveProfileActionPerformed(java.awt.event.ActionEvent) -> b
+    920:928:void cboVersionsItemStateChanged(java.awt.event.ItemEvent) -> b
+    931:932:void btnRefreshVersionsActionPerformed(java.awt.event.ActionEvent) -> c
+    935:936:void btnRefreshForgeActionPerformed(java.awt.event.ActionEvent) -> d
+    939:954:void btnDownloadForgeActionPerformed(java.awt.event.ActionEvent) -> e
+    957:958:void btnRefreshOptifineActionPerformed(java.awt.event.ActionEvent) -> f
+    961:975:void btnDownloadOptifineActionPerformed(java.awt.event.ActionEvent) -> g
+    978:991:void btnInstallLiteLoaderActionPerformed(java.awt.event.ActionEvent) -> h
+    994:995:void btnRefreshLiteLoaderActionPerformed(java.awt.event.ActionEvent) -> i
+    998:1000:void btnDownloadActionPerformed(java.awt.event.ActionEvent) -> j
+    1003:1004:void btnRefreshGameDownloadsActionPerformed(java.awt.event.ActionEvent) -> k
+    1007:1008:void btnExploreMouseClicked(java.awt.event.MouseEvent) -> a
+    1011:1025:void btnIncludeMinecraftActionPerformed(java.awt.event.ActionEvent) -> l
+    1028:1029:void btnModifyMouseClicked(java.awt.event.MouseEvent) -> b
+    1032:1033:void txtJavaArgsFocusLost(java.awt.event.FocusEvent) -> a
+    1036:1037:void txtMinecraftArgsFocusLost(java.awt.event.FocusEvent) -> b
+    1040:1041:void txtPermSizeFocusLost(java.awt.event.FocusEvent) -> c
+    1044:1045:void chkDebugFocusLost(java.awt.event.FocusEvent) -> d
+    1048:1049:void chkNoJVMArgsFocusLost(java.awt.event.FocusEvent) -> e
+    1052:1053:void chkCancelWrapperFocusLost(java.awt.event.FocusEvent) -> f
+    1056:1057:void txtWrapperLauncherFocusLost(java.awt.event.FocusEvent) -> g
+    1060:1061:void txtServerIPFocusLost(java.awt.event.FocusEvent) -> h
+    1064:1066:void cboGameDirTypeFocusLost(java.awt.event.FocusEvent) -> i
+    1069:1071:void cboLauncherVisibilityFocusLost(java.awt.event.FocusEvent) -> j
+    1074:1095:void btnDownloadAllAssetsActionPerformed(java.awt.event.ActionEvent) -> m
+    1098:1099:void txtMaxMemoryFocusLost(java.awt.event.FocusEvent) -> k
+    1102:1103:void txtJavaDirFocusLost(java.awt.event.FocusEvent) -> l
+    1106:1107:void chkFullscreenFocusLost(java.awt.event.FocusEvent) -> m
+    1110:1111:void txtHeightFocusLost(java.awt.event.FocusEvent) -> n
+    1114:1115:void txtWidthFocusLost(java.awt.event.FocusEvent) -> o
+    1118:1121:void txtGameDirFocusLost(java.awt.event.FocusEvent) -> p
+    1124:1139:void btnChoosingJavaDirActionPerformed(java.awt.event.ActionEvent) -> n
+    1144:1167:void loadProfiles() -> e
+    1170:1172:org.jackhuang.hellominecraft.launcher.settings.Profile getProfile() -> a
+    1176:1196:void prepare(org.jackhuang.hellominecraft.launcher.settings.Profile) -> a
+    1199:1212:void loadVersions() -> a
+    1215:1216:void loadMinecraftVersion() -> b
+    1219:1220:void loadMinecraftVersion(java.lang.String) -> a
+    1229:1234:void loadMinecraftVersion(org.jackhuang.hellominecraft.launcher.version.MinecraftVersion) -> a
+    1240:1245:void downloadAssets(org.jackhuang.hellominecraft.launcher.utils.assets.IAssetsHandler) -> a
+    1250:1285:void refreshDownloads(org.jackhuang.hellominecraft.launcher.utils.download.DownloadType) -> a
+    1288:1297:void downloadMinecraft(org.jackhuang.hellominecraft.launcher.utils.download.DownloadType) -> b
+    1302:1302:java.lang.String getMinecraftVersionFormatted() -> a
+    1355:1357:void refreshVersions() -> f
+    1370:1383:void versionChanged(org.jackhuang.hellominecraft.launcher.settings.Profile,java.lang.String) -> a
+    1386:1391:void onSelected() -> c
+    1242:1244:void lambda$downloadAssets$16(org.jackhuang.hellominecraft.launcher.utils.assets.IAssetsHandler,java.lang.String[]) -> b
+    155:158:void lambda$new$15(java.awt.event.ActionEvent) -> o
+    148:151:void lambda$new$14(java.awt.event.ActionEvent) -> p
+    140:144:void lambda$new$13(java.awt.event.ActionEvent) -> q
+    129:136:void lambda$new$12(java.awt.event.ActionEvent) -> r
+    105:107:void lambda$new$11(java.awt.event.ActionEvent) -> s
     73:73:void access$000(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel,java.awt.event.ItemEvent) -> a
     73:73:void access$100(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel,java.awt.event.ItemEvent) -> b
     73:73:void access$200(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel,java.awt.event.MouseEvent) -> a
@@ -2208,15 +2205,13 @@ org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel -> org.jackhuang.h
     73:73:void access$3100(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel,java.awt.event.ActionEvent) -> l
     73:73:void access$3200(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel,java.awt.event.ActionEvent) -> m
     73:73:void access$3300(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel,java.awt.event.ActionEvent) -> n
-    73:73:void access$3400(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel,java.awt.event.ActionEvent) -> o
-    73:73:void access$3500(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel,java.awt.event.ActionEvent) -> p
-    73:73:javax.swing.JTable access$3600(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel) -> a
-    73:73:java.lang.String access$3700(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel) -> a
-    void access$lambda$0(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel,java.awt.event.ActionEvent) -> q
-    void access$lambda$1(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel,java.awt.event.ActionEvent) -> r
-    void access$lambda$2(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel,java.awt.event.ActionEvent) -> s
-    void access$lambda$3(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel,java.awt.event.ActionEvent) -> t
-    void access$lambda$4(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel,java.awt.event.ActionEvent) -> u
+    73:73:javax.swing.JTable access$3400(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel) -> a
+    73:73:java.lang.String access$3500(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel) -> a
+    void access$lambda$0(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel,java.awt.event.ActionEvent) -> o
+    void access$lambda$1(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel,java.awt.event.ActionEvent) -> p
+    void access$lambda$2(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel,java.awt.event.ActionEvent) -> q
+    void access$lambda$3(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel,java.awt.event.ActionEvent) -> r
+    void access$lambda$4(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel,java.awt.event.ActionEvent) -> s
     void access$lambda$5(org.jackhuang.hellominecraft.launcher.utils.assets.IAssetsHandler,java.lang.String[]) -> a
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.aU:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel arg$1 -> a
@@ -2250,142 +2245,136 @@ org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$$Lambda$6 -> org.j
     org.jackhuang.hellominecraft.utils.functions.Consumer lambdaFactory$(org.jackhuang.hellominecraft.launcher.utils.assets.IAssetsHandler) -> a
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$1 -> org.jackhuang.hellominecraft.launcher.ba:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    254:255:void itemStateChanged(java.awt.event.ItemEvent) -> itemStateChanged
+    252:253:void itemStateChanged(java.awt.event.ItemEvent) -> itemStateChanged
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$10 -> org.jackhuang.hellominecraft.launcher.bb:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    408:409:void focusLost(java.awt.event.FocusEvent) -> focusLost
+    406:407:void focusLost(java.awt.event.FocusEvent) -> focusLost
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$11 -> org.jackhuang.hellominecraft.launcher.bc:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    417:418:void focusLost(java.awt.event.FocusEvent) -> focusLost
+    415:416:void focusLost(java.awt.event.FocusEvent) -> focusLost
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$12 -> org.jackhuang.hellominecraft.launcher.bd:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    423:424:void focusLost(java.awt.event.FocusEvent) -> focusLost
+    421:422:void focusLost(java.awt.event.FocusEvent) -> focusLost
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$13 -> org.jackhuang.hellominecraft.launcher.be:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    433:434:void focusLost(java.awt.event.FocusEvent) -> focusLost
+    431:432:void focusLost(java.awt.event.FocusEvent) -> focusLost
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$14 -> org.jackhuang.hellominecraft.launcher.bf:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    443:444:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
+    441:442:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$15 -> org.jackhuang.hellominecraft.launcher.bg:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    450:451:void focusLost(java.awt.event.FocusEvent) -> focusLost
+    448:449:void focusLost(java.awt.event.FocusEvent) -> focusLost
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$16 -> org.jackhuang.hellominecraft.launcher.bh:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    461:462:void focusLost(java.awt.event.FocusEvent) -> focusLost
+    459:460:void focusLost(java.awt.event.FocusEvent) -> focusLost
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$17 -> org.jackhuang.hellominecraft.launcher.bi:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    468:469:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
+    466:467:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$18 -> org.jackhuang.hellominecraft.launcher.bj:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    555:556:void focusLost(java.awt.event.FocusEvent) -> focusLost
+    553:554:void focusLost(java.awt.event.FocusEvent) -> focusLost
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$19 -> org.jackhuang.hellominecraft.launcher.bk:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    564:565:void focusLost(java.awt.event.FocusEvent) -> focusLost
+    562:563:void focusLost(java.awt.event.FocusEvent) -> focusLost
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$1ImplementedActionListener -> org.jackhuang.hellominecraft.launcher.bl:
     java.lang.String a -> a
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
     97:100:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$2 -> org.jackhuang.hellominecraft.launcher.bm:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    260:261:void itemStateChanged(java.awt.event.ItemEvent) -> itemStateChanged
+    258:259:void itemStateChanged(java.awt.event.ItemEvent) -> itemStateChanged
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$20 -> org.jackhuang.hellominecraft.launcher.bn:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    570:571:void focusLost(java.awt.event.FocusEvent) -> focusLost
+    568:569:void focusLost(java.awt.event.FocusEvent) -> focusLost
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$21 -> org.jackhuang.hellominecraft.launcher.bo:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    580:581:void focusLost(java.awt.event.FocusEvent) -> focusLost
+    578:579:void focusLost(java.awt.event.FocusEvent) -> focusLost
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$22 -> org.jackhuang.hellominecraft.launcher.bp:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    587:588:void focusLost(java.awt.event.FocusEvent) -> focusLost
+    585:586:void focusLost(java.awt.event.FocusEvent) -> focusLost
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$23 -> org.jackhuang.hellominecraft.launcher.bq:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    594:595:void focusLost(java.awt.event.FocusEvent) -> focusLost
+    592:593:void focusLost(java.awt.event.FocusEvent) -> focusLost
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$24 -> org.jackhuang.hellominecraft.launcher.br:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    602:603:void focusLost(java.awt.event.FocusEvent) -> focusLost
+    600:601:void focusLost(java.awt.event.FocusEvent) -> focusLost
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$25 -> org.jackhuang.hellominecraft.launcher.bs:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    610:611:void focusLost(java.awt.event.FocusEvent) -> focusLost
+    608:609:void focusLost(java.awt.event.FocusEvent) -> focusLost
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$26 -> org.jackhuang.hellominecraft.launcher.bt:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    687:688:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
+    685:686:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$27 -> org.jackhuang.hellominecraft.launcher.bu:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    694:695:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
+    692:693:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$28 -> org.jackhuang.hellominecraft.launcher.bv:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    701:702:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
+    728:729:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$29 -> org.jackhuang.hellominecraft.launcher.bw:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    740:741:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
+    735:736:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$3 -> org.jackhuang.hellominecraft.launcher.bx:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    299:300:void mouseClicked(java.awt.event.MouseEvent) -> mouseClicked
+    297:298:void mouseClicked(java.awt.event.MouseEvent) -> mouseClicked
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$30 -> org.jackhuang.hellominecraft.launcher.by:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    747:748:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
+    766:767:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$31 -> org.jackhuang.hellominecraft.launcher.bz:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
     778:779:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$32 -> org.jackhuang.hellominecraft.launcher.bA:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    790:791:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
+    822:823:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$33 -> org.jackhuang.hellominecraft.launcher.bB:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    797:798:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
+    834:835:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$34 -> org.jackhuang.hellominecraft.launcher.bC:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    844:845:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
+    864:865:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
 org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$35 -> org.jackhuang.hellominecraft.launcher.bD:
-    org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    856:857:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$36 -> org.jackhuang.hellominecraft.launcher.bE:
-    org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    886:887:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$37 -> org.jackhuang.hellominecraft.launcher.bF:
     org.jackhuang.hellominecraft.tasks.download.HTTPGetTask tsk -> a
     org.jackhuang.hellominecraft.launcher.utils.download.DownloadType val$provider -> a
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    1294:1311:boolean executeTask() -> a
-    1316:1316:java.lang.String getInfo() -> a
-    1321:1321:java.util.Collection getDependTasks() -> b
-    1298:1310:void lambda$executeTask$17(org.jackhuang.hellominecraft.version.MinecraftRemoteVersions) -> a
-    void access$lambda$0(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$37,org.jackhuang.hellominecraft.version.MinecraftRemoteVersions) -> a
-org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$37$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.bG:
-    org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$37 arg$1 -> a
+    1255:1272:boolean executeTask() -> a
+    1277:1277:java.lang.String getInfo() -> a
+    1282:1282:java.util.Collection getDependTasks() -> b
+    1259:1271:void lambda$executeTask$17(org.jackhuang.hellominecraft.version.MinecraftRemoteVersions) -> a
+    void access$lambda$0(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$35,org.jackhuang.hellominecraft.version.MinecraftRemoteVersions) -> a
+org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$35$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.bE:
+    org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$35 arg$1 -> a
     org.jackhuang.hellominecraft.version.MinecraftRemoteVersions arg$2 -> a
-    java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$37,org.jackhuang.hellominecraft.version.MinecraftRemoteVersions) -> b
+    java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$35,org.jackhuang.hellominecraft.version.MinecraftRemoteVersions) -> b
     void run() -> run
-    java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$37,org.jackhuang.hellominecraft.version.MinecraftRemoteVersions) -> a
-org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$4 -> org.jackhuang.hellominecraft.launcher.bH:
+    java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$35,org.jackhuang.hellominecraft.version.MinecraftRemoteVersions) -> a
+org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$4 -> org.jackhuang.hellominecraft.launcher.bF:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    306:307:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$5 -> org.jackhuang.hellominecraft.launcher.bI:
+    304:305:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
+org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$5 -> org.jackhuang.hellominecraft.launcher.bG:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    315:316:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$6 -> org.jackhuang.hellominecraft.launcher.bJ:
+    313:314:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
+org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$6 -> org.jackhuang.hellominecraft.launcher.bH:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    322:323:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$7 -> org.jackhuang.hellominecraft.launcher.bK:
+    320:321:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
+org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$7 -> org.jackhuang.hellominecraft.launcher.bI:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    330:331:void mouseClicked(java.awt.event.MouseEvent) -> mouseClicked
-org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$8 -> org.jackhuang.hellominecraft.launcher.bL:
+    328:329:void mouseClicked(java.awt.event.MouseEvent) -> mouseClicked
+org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$8 -> org.jackhuang.hellominecraft.launcher.bJ:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    393:394:void focusLost(java.awt.event.FocusEvent) -> focusLost
-org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$9 -> org.jackhuang.hellominecraft.launcher.bM:
+    391:392:void focusLost(java.awt.event.FocusEvent) -> focusLost
+org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$9 -> org.jackhuang.hellominecraft.launcher.bK:
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    402:403:void focusLost(java.awt.event.FocusEvent) -> focusLost
-org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$InstallerHelper -> org.jackhuang.hellominecraft.launcher.bN:
+    400:401:void focusLost(java.awt.event.FocusEvent) -> focusLost
+org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel$InstallerHelper -> org.jackhuang.hellominecraft.launcher.bL:
     java.util.List versions -> a
     org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList list -> a
     javax.swing.JTable jt -> a
     java.lang.String id -> a
     org.jackhuang.hellominecraft.launcher.views.GameSettingsPanel this$0 -> a
-    1357:1358:void loadVersions() -> a
-    1361:1366:void refreshVersions() -> b
-    1369:1369:org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList$InstallerVersion getVersion(int) -> a
-    1373:1389:java.util.List loadVersions(org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList,javax.swing.JTable) -> a
-org.jackhuang.hellominecraft.launcher.views.HeaderTab -> org.jackhuang.hellominecraft.launcher.bO:
+    1318:1319:void loadVersions() -> a
+    1322:1327:void refreshVersions() -> b
+    1330:1330:org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList$InstallerVersion getVersion(int) -> a
+    1334:1350:java.util.List loadVersions(org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList,javax.swing.JTable) -> a
+org.jackhuang.hellominecraft.launcher.views.HeaderTab -> org.jackhuang.hellominecraft.launcher.bM:
     boolean isActive -> a
     javax.swing.DefaultButtonModel model -> a
     48:48:boolean isActive() -> a
@@ -2400,12 +2389,12 @@ org.jackhuang.hellominecraft.launcher.views.HeaderTab -> org.jackhuang.hellomine
     90:92:void mouseReleased(java.awt.event.MouseEvent) -> mouseReleased
     96:97:void mouseEntered(java.awt.event.MouseEvent) -> mouseEntered
     101:102:void mouseExited(java.awt.event.MouseEvent) -> mouseExited
-org.jackhuang.hellominecraft.launcher.views.HeaderTab$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.bP:
+org.jackhuang.hellominecraft.launcher.views.HeaderTab$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.bN:
     org.jackhuang.hellominecraft.launcher.views.HeaderTab arg$1 -> a
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.launcher.views.HeaderTab) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.launcher.views.HeaderTab) -> a
-org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel -> org.jackhuang.hellominecraft.launcher.bQ:
+org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel -> org.jackhuang.hellominecraft.launcher.bO:
     javax.swing.JButton btnCheckUpdate -> a
     javax.swing.JButton btnSelBackgroundPath -> b
     javax.swing.JComboBox cboDownloadSource -> a
@@ -2446,37 +2435,37 @@ org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel -> org.jackhua
     33:33:void access$700(org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel,java.awt.event.FocusEvent) -> d
     33:33:void access$800(org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel,java.awt.event.FocusEvent) -> e
     33:33:void access$900(org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel,java.awt.event.FocusEvent) -> f
-org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$1 -> org.jackhuang.hellominecraft.launcher.bR:
+org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$1 -> org.jackhuang.hellominecraft.launcher.bP:
     org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel this$0 -> a
     86:87:void itemStateChanged(java.awt.event.ItemEvent) -> itemStateChanged
-org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$10 -> org.jackhuang.hellominecraft.launcher.bS:
+org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$10 -> org.jackhuang.hellominecraft.launcher.bQ:
     org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel this$0 -> a
     163:164:void focusLost(java.awt.event.FocusEvent) -> focusLost
-org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$2 -> org.jackhuang.hellominecraft.launcher.bT:
+org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$2 -> org.jackhuang.hellominecraft.launcher.bR:
     org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel this$0 -> a
     96:97:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$3 -> org.jackhuang.hellominecraft.launcher.bU:
+org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$3 -> org.jackhuang.hellominecraft.launcher.bS:
     org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel this$0 -> a
     106:107:void focusLost(java.awt.event.FocusEvent) -> focusLost
-org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$4 -> org.jackhuang.hellominecraft.launcher.bV:
+org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$4 -> org.jackhuang.hellominecraft.launcher.bT:
     org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel this$0 -> a
     115:116:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$5 -> org.jackhuang.hellominecraft.launcher.bW:
+org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$5 -> org.jackhuang.hellominecraft.launcher.bU:
     org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel this$0 -> a
     122:123:void focusLost(java.awt.event.FocusEvent) -> focusLost
-org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$6 -> org.jackhuang.hellominecraft.launcher.bX:
+org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$6 -> org.jackhuang.hellominecraft.launcher.bV:
     org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel this$0 -> a
     131:132:void itemStateChanged(java.awt.event.ItemEvent) -> itemStateChanged
-org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$7 -> org.jackhuang.hellominecraft.launcher.bY:
+org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$7 -> org.jackhuang.hellominecraft.launcher.bW:
     org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel this$0 -> a
     139:140:void focusLost(java.awt.event.FocusEvent) -> focusLost
-org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$8 -> org.jackhuang.hellominecraft.launcher.bZ:
+org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$8 -> org.jackhuang.hellominecraft.launcher.bX:
     org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel this$0 -> a
     147:148:void focusLost(java.awt.event.FocusEvent) -> focusLost
-org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$9 -> org.jackhuang.hellominecraft.launcher.ca:
+org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel$9 -> org.jackhuang.hellominecraft.launcher.bY:
     org.jackhuang.hellominecraft.launcher.views.LauncherSettingsPanel this$0 -> a
     157:158:void focusLost(java.awt.event.FocusEvent) -> focusLost
-org.jackhuang.hellominecraft.launcher.views.MainFrame -> org.jackhuang.hellominecraft.launcher.cb:
+org.jackhuang.hellominecraft.launcher.views.MainFrame -> org.jackhuang.hellominecraft.launcher.bZ:
     org.jackhuang.hellominecraft.launcher.views.MainFrame instance -> a
     org.jackhuang.hellominecraft.launcher.views.HeaderTab mainTab -> a
     org.jackhuang.hellominecraft.launcher.views.HeaderTab gameTab -> b
@@ -2519,29 +2508,29 @@ org.jackhuang.hellominecraft.launcher.views.MainFrame -> org.jackhuang.hellomine
     void access$lambda$0(org.jackhuang.hellominecraft.launcher.views.MainFrame,java.awt.event.ActionEvent) -> a
     void access$lambda$1(org.jackhuang.hellominecraft.launcher.views.MainFrame,java.awt.event.ActionEvent) -> b
     void access$lambda$2(org.jackhuang.hellominecraft.launcher.views.MainFrame,java.awt.event.ActionEvent) -> c
-org.jackhuang.hellominecraft.launcher.views.MainFrame$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.cc:
+org.jackhuang.hellominecraft.launcher.views.MainFrame$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.ca:
     org.jackhuang.hellominecraft.launcher.views.MainFrame arg$1 -> a
     java.awt.event.ActionListener get$Lambda(org.jackhuang.hellominecraft.launcher.views.MainFrame) -> b
     void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
     java.awt.event.ActionListener lambdaFactory$(org.jackhuang.hellominecraft.launcher.views.MainFrame) -> a
-org.jackhuang.hellominecraft.launcher.views.MainFrame$$Lambda$2 -> org.jackhuang.hellominecraft.launcher.cd:
+org.jackhuang.hellominecraft.launcher.views.MainFrame$$Lambda$2 -> org.jackhuang.hellominecraft.launcher.cb:
     org.jackhuang.hellominecraft.launcher.views.MainFrame arg$1 -> a
     java.awt.event.ActionListener get$Lambda(org.jackhuang.hellominecraft.launcher.views.MainFrame) -> b
     void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
     java.awt.event.ActionListener lambdaFactory$(org.jackhuang.hellominecraft.launcher.views.MainFrame) -> a
-org.jackhuang.hellominecraft.launcher.views.MainFrame$$Lambda$3 -> org.jackhuang.hellominecraft.launcher.ce:
+org.jackhuang.hellominecraft.launcher.views.MainFrame$$Lambda$3 -> org.jackhuang.hellominecraft.launcher.cc:
     org.jackhuang.hellominecraft.launcher.views.MainFrame arg$1 -> a
     java.awt.event.ActionListener get$Lambda(org.jackhuang.hellominecraft.launcher.views.MainFrame) -> b
     void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
     java.awt.event.ActionListener lambdaFactory$(org.jackhuang.hellominecraft.launcher.views.MainFrame) -> a
-org.jackhuang.hellominecraft.launcher.views.MainFrame$1 -> org.jackhuang.hellominecraft.launcher.cf:
+org.jackhuang.hellominecraft.launcher.views.MainFrame$1 -> org.jackhuang.hellominecraft.launcher.cd:
     org.jackhuang.hellominecraft.launcher.views.MainFrame this$0 -> a
     189:190:void mouseClicked(java.awt.event.MouseEvent) -> mouseClicked
     194:194:void mousePressed(java.awt.event.MouseEvent) -> mousePressed
     198:198:void mouseReleased(java.awt.event.MouseEvent) -> mouseReleased
     202:202:void mouseEntered(java.awt.event.MouseEvent) -> mouseEntered
     206:206:void mouseExited(java.awt.event.MouseEvent) -> mouseExited
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel -> org.jackhuang.hellominecraft.launcher.cg:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel -> org.jackhuang.hellominecraft.launcher.ce:
     boolean showedNoVersion -> a
     boolean preaparingAuth -> b
     boolean isLoading -> c
@@ -2613,45 +2602,45 @@ org.jackhuang.hellominecraft.launcher.views.MainPagePanel -> org.jackhuang.hello
     void access$lambda$3(org.jackhuang.hellominecraft.launcher.views.MainPagePanel,org.jackhuang.hellominecraft.launcher.launch.GameLauncher) -> b
     void access$lambda$4() -> d
     void access$lambda$5() -> e
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.ch:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.cf:
     org.jackhuang.hellominecraft.launcher.views.MainPagePanel arg$1 -> a
     java.awt.event.ActionListener get$Lambda(org.jackhuang.hellominecraft.launcher.views.MainPagePanel) -> b
     void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
     java.awt.event.ActionListener lambdaFactory$(org.jackhuang.hellominecraft.launcher.views.MainPagePanel) -> a
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$$Lambda$2 -> org.jackhuang.hellominecraft.launcher.ci:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$$Lambda$2 -> org.jackhuang.hellominecraft.launcher.cg:
     org.jackhuang.hellominecraft.launcher.views.MainPagePanel arg$1 -> a
     org.jackhuang.hellominecraft.utils.functions.Consumer get$Lambda(org.jackhuang.hellominecraft.launcher.views.MainPagePanel) -> b
     void accept(java.lang.Object) -> a
     org.jackhuang.hellominecraft.utils.functions.Consumer lambdaFactory$(org.jackhuang.hellominecraft.launcher.views.MainPagePanel) -> a
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$$Lambda$3 -> org.jackhuang.hellominecraft.launcher.cj:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$$Lambda$3 -> org.jackhuang.hellominecraft.launcher.ch:
     org.jackhuang.hellominecraft.launcher.views.MainPagePanel arg$1 -> a
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.launcher.views.MainPagePanel) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.launcher.views.MainPagePanel) -> a
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$$Lambda$4 -> org.jackhuang.hellominecraft.launcher.ck:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$$Lambda$4 -> org.jackhuang.hellominecraft.launcher.ci:
     org.jackhuang.hellominecraft.launcher.views.MainPagePanel arg$1 -> a
     org.jackhuang.hellominecraft.utils.functions.Consumer get$Lambda(org.jackhuang.hellominecraft.launcher.views.MainPagePanel) -> b
     void accept(java.lang.Object) -> a
     org.jackhuang.hellominecraft.utils.functions.Consumer lambdaFactory$(org.jackhuang.hellominecraft.launcher.views.MainPagePanel) -> a
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$$Lambda$5 -> org.jackhuang.hellominecraft.launcher.cl:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$$Lambda$5 -> org.jackhuang.hellominecraft.launcher.cj:
     org.jackhuang.hellominecraft.launcher.views.MainPagePanel$$Lambda$5 instance -> a
     void run() -> run
     java.lang.Runnable lambdaFactory$() -> a
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$$Lambda$6 -> org.jackhuang.hellominecraft.launcher.cm:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$$Lambda$6 -> org.jackhuang.hellominecraft.launcher.ck:
     org.jackhuang.hellominecraft.launcher.views.MainPagePanel$$Lambda$6 instance -> a
     void run() -> run
     java.lang.Runnable lambdaFactory$() -> a
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$1 -> org.jackhuang.hellominecraft.launcher.cn:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$1 -> org.jackhuang.hellominecraft.launcher.cl:
     org.jackhuang.hellominecraft.launcher.views.MainPagePanel this$0 -> a
     117:118:void focusGained(java.awt.event.FocusEvent) -> focusGained
     120:121:void focusLost(java.awt.event.FocusEvent) -> focusLost
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$10 -> org.jackhuang.hellominecraft.launcher.co:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$10 -> org.jackhuang.hellominecraft.launcher.cm:
     org.jackhuang.hellominecraft.launcher.views.MainPagePanel this$0 -> a
     220:221:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$11 -> org.jackhuang.hellominecraft.launcher.cp:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$11 -> org.jackhuang.hellominecraft.launcher.cn:
     org.jackhuang.hellominecraft.launcher.views.MainPagePanel this$0 -> a
     227:228:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$12 -> org.jackhuang.hellominecraft.launcher.cq:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$12 -> org.jackhuang.hellominecraft.launcher.co:
     org.jackhuang.hellominecraft.launcher.utils.auth.LoginInfo val$li -> a
     org.jackhuang.hellominecraft.launcher.utils.auth.IAuthenticator val$l -> a
     org.jackhuang.hellominecraft.utils.functions.Consumer val$listener -> a
@@ -2659,39 +2648,39 @@ org.jackhuang.hellominecraft.launcher.views.MainPagePanel$12 -> org.jackhuang.he
     408:417:void run() -> run
     411:413:boolean lambda$run$23(java.lang.Object,java.lang.String) -> b
     boolean access$lambda$0(java.lang.Object,java.lang.String) -> a
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$12$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.cr:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$12$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.cp:
     org.jackhuang.hellominecraft.launcher.views.MainPagePanel$12$$Lambda$1 instance -> a
     boolean call(java.lang.Object,java.lang.Object) -> a
     org.jackhuang.hellominecraft.utils.Event lambdaFactory$() -> a
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$2 -> org.jackhuang.hellominecraft.launcher.cs:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$2 -> org.jackhuang.hellominecraft.launcher.cq:
     org.jackhuang.hellominecraft.launcher.views.MainPagePanel this$0 -> a
     125:126:void keyPressed(java.awt.event.KeyEvent) -> keyPressed
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$3 -> org.jackhuang.hellominecraft.launcher.ct:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$3 -> org.jackhuang.hellominecraft.launcher.cr:
     org.jackhuang.hellominecraft.launcher.views.MainPagePanel this$0 -> a
     134:135:void itemStateChanged(java.awt.event.ItemEvent) -> itemStateChanged
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$4 -> org.jackhuang.hellominecraft.launcher.cu:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$4 -> org.jackhuang.hellominecraft.launcher.cs:
     org.jackhuang.hellominecraft.launcher.views.MainPagePanel this$0 -> a
     144:145:void itemStateChanged(java.awt.event.ItemEvent) -> itemStateChanged
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$5 -> org.jackhuang.hellominecraft.launcher.cv:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$5 -> org.jackhuang.hellominecraft.launcher.ct:
     org.jackhuang.hellominecraft.launcher.views.MainPagePanel this$0 -> a
     153:154:void itemStateChanged(java.awt.event.ItemEvent) -> itemStateChanged
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$6 -> org.jackhuang.hellominecraft.launcher.cw:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$6 -> org.jackhuang.hellominecraft.launcher.cu:
     org.jackhuang.hellominecraft.launcher.views.MainPagePanel this$0 -> a
     163:164:void focusGained(java.awt.event.FocusEvent) -> focusGained
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$7 -> org.jackhuang.hellominecraft.launcher.cx:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$7 -> org.jackhuang.hellominecraft.launcher.cv:
     org.jackhuang.hellominecraft.launcher.views.MainPagePanel this$0 -> a
     168:169:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$8 -> org.jackhuang.hellominecraft.launcher.cy:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$8 -> org.jackhuang.hellominecraft.launcher.cw:
     org.jackhuang.hellominecraft.launcher.views.MainPagePanel this$0 -> a
     173:174:void keyPressed(java.awt.event.KeyEvent) -> keyPressed
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$9 -> org.jackhuang.hellominecraft.launcher.cz:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$9 -> org.jackhuang.hellominecraft.launcher.cx:
     org.jackhuang.hellominecraft.launcher.views.MainPagePanel this$0 -> a
     200:201:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.launcher.views.MainPagePanel$PrepareAuthDoneListener -> org.jackhuang.hellominecraft.launcher.cA:
+org.jackhuang.hellominecraft.launcher.views.MainPagePanel$PrepareAuthDoneListener -> org.jackhuang.hellominecraft.launcher.cy:
     org.jackhuang.hellominecraft.launcher.views.MainPagePanel this$0 -> a
     501:502:boolean call(java.lang.Object,java.util.List) -> a
     497:497:boolean call(java.lang.Object,java.lang.Object) -> a
-org.jackhuang.hellominecraft.launcher.views.NewProfileWindow -> org.jackhuang.hellominecraft.launcher.cB:
+org.jackhuang.hellominecraft.launcher.views.NewProfileWindow -> org.jackhuang.hellominecraft.launcher.cz:
     javax.swing.JButton btnCancel -> a
     javax.swing.JButton btnOK -> b
     javax.swing.JComboBox cboProfiles -> a
@@ -2705,26 +2694,26 @@ org.jackhuang.hellominecraft.launcher.views.NewProfileWindow -> org.jackhuang.he
     27:27:void access$000(org.jackhuang.hellominecraft.launcher.views.NewProfileWindow,java.awt.event.KeyEvent) -> a
     27:27:void access$100(org.jackhuang.hellominecraft.launcher.views.NewProfileWindow,java.awt.event.ActionEvent) -> a
     27:27:void access$200(org.jackhuang.hellominecraft.launcher.views.NewProfileWindow,java.awt.event.ActionEvent) -> b
-org.jackhuang.hellominecraft.launcher.views.NewProfileWindow$1 -> org.jackhuang.hellominecraft.launcher.cC:
+org.jackhuang.hellominecraft.launcher.views.NewProfileWindow$1 -> org.jackhuang.hellominecraft.launcher.cA:
     org.jackhuang.hellominecraft.launcher.views.NewProfileWindow this$0 -> a
     63:64:void keyTyped(java.awt.event.KeyEvent) -> keyTyped
-org.jackhuang.hellominecraft.launcher.views.NewProfileWindow$2 -> org.jackhuang.hellominecraft.launcher.cD:
+org.jackhuang.hellominecraft.launcher.views.NewProfileWindow$2 -> org.jackhuang.hellominecraft.launcher.cB:
     org.jackhuang.hellominecraft.launcher.views.NewProfileWindow this$0 -> a
     72:73:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.launcher.views.NewProfileWindow$3 -> org.jackhuang.hellominecraft.launcher.cE:
+org.jackhuang.hellominecraft.launcher.views.NewProfileWindow$3 -> org.jackhuang.hellominecraft.launcher.cC:
     org.jackhuang.hellominecraft.launcher.views.NewProfileWindow this$0 -> a
     79:80:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.logging.AppenderControl -> org.jackhuang.hellominecraft.launcher.cF:
+org.jackhuang.hellominecraft.logging.AppenderControl -> org.jackhuang.hellominecraft.launcher.cD:
     java.lang.ThreadLocal recursive -> a
     org.jackhuang.hellominecraft.logging.appender.IAppender appender -> a
     org.jackhuang.hellominecraft.logging.Level level -> a
     int intLevel -> a
     35:35:org.jackhuang.hellominecraft.logging.appender.IAppender getAppender() -> a
     39:69:void callAppender(org.jackhuang.hellominecraft.logging.LogEvent) -> a
-org.jackhuang.hellominecraft.logging.Configuration -> org.jackhuang.hellominecraft.launcher.cG:
+org.jackhuang.hellominecraft.logging.Configuration -> org.jackhuang.hellominecraft.launcher.cE:
     java.util.ArrayList appenders -> a
     org.jackhuang.hellominecraft.logging.Configuration DEFAULT -> a
-org.jackhuang.hellominecraft.logging.Level -> org.jackhuang.hellominecraft.launcher.cH:
+org.jackhuang.hellominecraft.logging.Level -> org.jackhuang.hellominecraft.launcher.cF:
     org.jackhuang.hellominecraft.logging.Level OFF -> a
     org.jackhuang.hellominecraft.logging.Level FATAL -> b
     org.jackhuang.hellominecraft.logging.Level ERROR -> c
@@ -2739,52 +2728,52 @@ org.jackhuang.hellominecraft.logging.Level -> org.jackhuang.hellominecraft.launc
     23:23:org.jackhuang.hellominecraft.logging.Level valueOf(java.lang.String) -> a
     41:41:boolean lessOrEqual(org.jackhuang.hellominecraft.logging.Level) -> a
     45:45:boolean lessOrEqual(int) -> a
-org.jackhuang.hellominecraft.logging.LogEvent -> org.jackhuang.hellominecraft.launcher.cI:
+org.jackhuang.hellominecraft.logging.LogEvent -> org.jackhuang.hellominecraft.launcher.cG:
     org.jackhuang.hellominecraft.logging.Level level -> a
     java.lang.String threadName -> a
     java.lang.Throwable thrown -> a
     org.jackhuang.hellominecraft.logging.message.IMessage message -> a
-org.jackhuang.hellominecraft.logging.LoggingException -> org.jackhuang.hellominecraft.launcher.cJ:
-org.jackhuang.hellominecraft.logging.appender.AbstractAppender -> org.jackhuang.hellominecraft.launcher.cK:
+org.jackhuang.hellominecraft.logging.LoggingException -> org.jackhuang.hellominecraft.launcher.cH:
+org.jackhuang.hellominecraft.logging.appender.AbstractAppender -> org.jackhuang.hellominecraft.launcher.cI:
     java.lang.String name -> a
     org.jackhuang.hellominecraft.logging.layout.ILayout layout -> a
     boolean ignoreExceptions -> a
     44:44:java.lang.String getName() -> a
     49:49:boolean ignoreExceptions() -> a
     54:54:org.jackhuang.hellominecraft.logging.layout.ILayout getLayout() -> a
-org.jackhuang.hellominecraft.logging.appender.ConsoleAppender -> org.jackhuang.hellominecraft.launcher.cL:
-org.jackhuang.hellominecraft.logging.appender.ConsoleAppender$SystemErrStream -> org.jackhuang.hellominecraft.launcher.cM:
+org.jackhuang.hellominecraft.logging.appender.ConsoleAppender -> org.jackhuang.hellominecraft.launcher.cJ:
+org.jackhuang.hellominecraft.logging.appender.ConsoleAppender$SystemErrStream -> org.jackhuang.hellominecraft.launcher.cK:
     66:66:void close() -> close
     70:71:void flush() -> flush
     75:76:void write(byte[]) -> write
     81:82:void write(byte[],int,int) -> write
     86:87:void write(int) -> write
-org.jackhuang.hellominecraft.logging.appender.ConsoleAppender$SystemOutStream -> org.jackhuang.hellominecraft.launcher.cN:
+org.jackhuang.hellominecraft.logging.appender.ConsoleAppender$SystemOutStream -> org.jackhuang.hellominecraft.launcher.cL:
     38:38:void close() -> close
     42:43:void flush() -> flush
     47:48:void write(byte[]) -> write
     53:54:void write(byte[],int,int) -> write
     58:59:void write(int) -> write
-org.jackhuang.hellominecraft.logging.appender.IAppender -> org.jackhuang.hellominecraft.launcher.cO:
+org.jackhuang.hellominecraft.logging.appender.IAppender -> org.jackhuang.hellominecraft.launcher.cM:
     void append(org.jackhuang.hellominecraft.logging.LogEvent) -> a
     java.lang.String getName() -> a
     boolean ignoreExceptions() -> a
     org.jackhuang.hellominecraft.logging.layout.ILayout getLayout() -> a
-org.jackhuang.hellominecraft.logging.appender.OutputStreamAppender -> org.jackhuang.hellominecraft.launcher.cP:
+org.jackhuang.hellominecraft.logging.appender.OutputStreamAppender -> org.jackhuang.hellominecraft.launcher.cN:
     java.io.OutputStream stream -> a
     boolean immediateFlush -> a
     java.util.concurrent.locks.Lock readLock -> a
     48:62:void append(org.jackhuang.hellominecraft.logging.LogEvent) -> a
-org.jackhuang.hellominecraft.logging.layout.AbstractStringLayout -> org.jackhuang.hellominecraft.launcher.cQ:
+org.jackhuang.hellominecraft.logging.layout.AbstractStringLayout -> org.jackhuang.hellominecraft.launcher.cO:
     29:29:byte[] toByteArray(org.jackhuang.hellominecraft.logging.LogEvent) -> a
-org.jackhuang.hellominecraft.logging.layout.DefaultLayout -> org.jackhuang.hellominecraft.launcher.cR:
+org.jackhuang.hellominecraft.logging.layout.DefaultLayout -> org.jackhuang.hellominecraft.launcher.cP:
     java.text.SimpleDateFormat sdf -> a
     32:32:java.lang.String toSerializable(org.jackhuang.hellominecraft.logging.LogEvent) -> a
     27:27:java.io.Serializable toSerializable(org.jackhuang.hellominecraft.logging.LogEvent) -> a
-org.jackhuang.hellominecraft.logging.layout.ILayout -> org.jackhuang.hellominecraft.launcher.cS:
+org.jackhuang.hellominecraft.logging.layout.ILayout -> org.jackhuang.hellominecraft.launcher.cQ:
     byte[] toByteArray(org.jackhuang.hellominecraft.logging.LogEvent) -> a
     java.io.Serializable toSerializable(org.jackhuang.hellominecraft.logging.LogEvent) -> a
-org.jackhuang.hellominecraft.logging.logger.AbstractLogger -> org.jackhuang.hellominecraft.launcher.cT:
+org.jackhuang.hellominecraft.logging.logger.AbstractLogger -> org.jackhuang.hellominecraft.launcher.cR:
     java.lang.Class DEFAULT_MESSAGE_FACTORY_CLASS -> a
     java.lang.String FQCN -> a
     java.lang.String THROWING -> b
@@ -2864,7 +2853,7 @@ org.jackhuang.hellominecraft.logging.logger.AbstractLogger -> org.jackhuang.hell
     515:518:void warn(java.lang.String) -> f
     522:526:void warn(java.lang.String,java.lang.Object[]) -> f
     530:533:void warn(java.lang.String,java.lang.Throwable) -> f
-org.jackhuang.hellominecraft.logging.logger.ILogger -> org.jackhuang.hellominecraft.launcher.cU:
+org.jackhuang.hellominecraft.logging.logger.ILogger -> org.jackhuang.hellominecraft.launcher.cS:
     void catching(org.jackhuang.hellominecraft.logging.Level,java.lang.Throwable) -> a
     void catching(java.lang.Throwable) -> a
     void debug(org.jackhuang.hellominecraft.logging.message.IMessage) -> a
@@ -2929,7 +2918,7 @@ org.jackhuang.hellominecraft.logging.logger.ILogger -> org.jackhuang.hellominecr
     void warn(java.lang.String) -> f
     void warn(java.lang.String,java.lang.Object[]) -> f
     void warn(java.lang.String,java.lang.Throwable) -> f
-org.jackhuang.hellominecraft.logging.logger.Logger -> org.jackhuang.hellominecraft.launcher.cV:
+org.jackhuang.hellominecraft.logging.logger.Logger -> org.jackhuang.hellominecraft.launcher.cT:
     org.jackhuang.hellominecraft.logging.logger.Logger$PrivateConfig config -> a
     java.util.Map appenders -> a
     45:48:void setLevel(org.jackhuang.hellominecraft.logging.Level) -> a
@@ -2946,7 +2935,7 @@ org.jackhuang.hellominecraft.logging.logger.Logger -> org.jackhuang.hellominecra
     105:106:void removeAppender(org.jackhuang.hellominecraft.logging.appender.IAppender) -> b
     109:113:java.util.Map getAppenders() -> a
     118:119:java.lang.String toString() -> toString
-org.jackhuang.hellominecraft.logging.logger.Logger$PrivateConfig -> org.jackhuang.hellominecraft.launcher.cW:
+org.jackhuang.hellominecraft.logging.logger.Logger$PrivateConfig -> org.jackhuang.hellominecraft.launcher.cU:
     org.jackhuang.hellominecraft.logging.Configuration config -> a
     org.jackhuang.hellominecraft.logging.Level level -> a
     int intLevel -> a
@@ -2958,7 +2947,7 @@ org.jackhuang.hellominecraft.logging.logger.Logger$PrivateConfig -> org.jackhuan
     160:160:boolean filter(org.jackhuang.hellominecraft.logging.Level,java.lang.Object,java.lang.Throwable) -> a
     165:165:boolean filter(org.jackhuang.hellominecraft.logging.Level,org.jackhuang.hellominecraft.logging.message.IMessage,java.lang.Throwable) -> a
     122:122:org.jackhuang.hellominecraft.logging.Level access$000(org.jackhuang.hellominecraft.logging.logger.Logger$PrivateConfig) -> a
-org.jackhuang.hellominecraft.logging.logger.SimpleLogger -> org.jackhuang.hellominecraft.launcher.cX:
+org.jackhuang.hellominecraft.logging.logger.SimpleLogger -> org.jackhuang.hellominecraft.launcher.cV:
     char SPACE -> a
     java.text.DateFormat dateFormatter -> a
     org.jackhuang.hellominecraft.logging.Level level -> a
@@ -2975,19 +2964,19 @@ org.jackhuang.hellominecraft.logging.logger.SimpleLogger -> org.jackhuang.hellom
     129:129:boolean isEnabled(org.jackhuang.hellominecraft.logging.Level,java.lang.String,java.lang.Object[]) -> a
     134:134:boolean isEnabled(org.jackhuang.hellominecraft.logging.Level,java.lang.Object,java.lang.Throwable) -> a
     139:139:boolean isEnabled(org.jackhuang.hellominecraft.logging.Level,org.jackhuang.hellominecraft.logging.message.IMessage,java.lang.Throwable) -> a
-org.jackhuang.hellominecraft.logging.message.AbstractMessageFactory -> org.jackhuang.hellominecraft.launcher.cY:
+org.jackhuang.hellominecraft.logging.message.AbstractMessageFactory -> org.jackhuang.hellominecraft.launcher.cW:
     28:28:org.jackhuang.hellominecraft.logging.message.IMessage newMessage(java.lang.Object) -> a
     33:33:org.jackhuang.hellominecraft.logging.message.IMessage newMessage(java.lang.String) -> a
-org.jackhuang.hellominecraft.logging.message.IMessage -> org.jackhuang.hellominecraft.launcher.cZ:
+org.jackhuang.hellominecraft.logging.message.IMessage -> org.jackhuang.hellominecraft.launcher.cX:
     java.lang.String getFormattedMessage() -> a
     java.lang.String getFormat() -> b
     java.lang.Object[] getParameters() -> a
     java.lang.Throwable getThrowable() -> a
-org.jackhuang.hellominecraft.logging.message.IMessageFactory -> org.jackhuang.hellominecraft.launcher.da:
+org.jackhuang.hellominecraft.logging.message.IMessageFactory -> org.jackhuang.hellominecraft.launcher.cY:
     org.jackhuang.hellominecraft.logging.message.IMessage newMessage(java.lang.Object) -> a
     org.jackhuang.hellominecraft.logging.message.IMessage newMessage(java.lang.String) -> a
     org.jackhuang.hellominecraft.logging.message.IMessage newMessage(java.lang.String,java.lang.Object[]) -> a
-org.jackhuang.hellominecraft.logging.message.ObjectMessage -> org.jackhuang.hellominecraft.launcher.db:
+org.jackhuang.hellominecraft.logging.message.ObjectMessage -> org.jackhuang.hellominecraft.launcher.cZ:
     long serialVersionUID -> a
     java.lang.Object obj -> a
     34:34:java.lang.String getFormattedMessage() -> a
@@ -2997,7 +2986,7 @@ org.jackhuang.hellominecraft.logging.message.ObjectMessage -> org.jackhuang.hell
     63:63:int hashCode() -> hashCode
     68:68:java.lang.String toString() -> toString
     73:73:java.lang.Throwable getThrowable() -> a
-org.jackhuang.hellominecraft.logging.message.ParameterizedMessage -> org.jackhuang.hellominecraft.launcher.dc:
+org.jackhuang.hellominecraft.logging.message.ParameterizedMessage -> org.jackhuang.hellominecraft.launcher.da:
     java.lang.String RECURSION_PREFIX -> a
     java.lang.String RECURSION_SUFFIX -> b
     java.lang.String ERROR_PREFIX -> c
@@ -3028,10 +3017,10 @@ org.jackhuang.hellominecraft.logging.message.ParameterizedMessage -> org.jackhua
     233:336:void recursiveDeepToString(java.lang.Object,java.lang.StringBuilder,java.util.Set) -> a
     339:340:java.lang.String identityToString(java.lang.Object) -> b
     345:345:java.lang.String toString() -> toString
-org.jackhuang.hellominecraft.logging.message.ParameterizedMessageFactory -> org.jackhuang.hellominecraft.launcher.dd:
+org.jackhuang.hellominecraft.logging.message.ParameterizedMessageFactory -> org.jackhuang.hellominecraft.launcher.db:
     org.jackhuang.hellominecraft.logging.message.ParameterizedMessageFactory INSTANCE -> a
     29:29:org.jackhuang.hellominecraft.logging.message.IMessage newMessage(java.lang.String,java.lang.Object[]) -> a
-org.jackhuang.hellominecraft.logging.message.SimpleMessage -> org.jackhuang.hellominecraft.launcher.de:
+org.jackhuang.hellominecraft.logging.message.SimpleMessage -> org.jackhuang.hellominecraft.launcher.dc:
     long serialVersionUID -> a
     java.lang.String message -> a
     39:39:java.lang.String getFormattedMessage() -> a
@@ -3041,7 +3030,7 @@ org.jackhuang.hellominecraft.logging.message.SimpleMessage -> org.jackhuang.hell
     68:68:int hashCode() -> hashCode
     73:73:java.lang.String toString() -> toString
     78:78:java.lang.Throwable getThrowable() -> a
-org.jackhuang.hellominecraft.logging.message.StringFormattedMessage -> org.jackhuang.hellominecraft.launcher.df:
+org.jackhuang.hellominecraft.logging.message.StringFormattedMessage -> org.jackhuang.hellominecraft.launcher.dd:
     long serialVersionUID -> a
     java.lang.String messagePattern -> a
     java.lang.Object[] argArray -> a
@@ -3070,7 +3059,7 @@ org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel -> org.jackhu
     43:43:java.lang.String getName() -> getName
     53:53:java.lang.String getID() -> getID
     63:63:java.lang.String getDescription() -> getDescription
-org.jackhuang.hellominecraft.lookandfeel.components.ConstomButton -> org.jackhuang.hellominecraft.launcher.dg:
+org.jackhuang.hellominecraft.lookandfeel.components.ConstomButton -> org.jackhuang.hellominecraft.launcher.de:
     java.awt.Color normalFg -> a
     java.awt.Color normalBg -> b
     java.awt.Color prelightFg -> c
@@ -3081,7 +3070,7 @@ org.jackhuang.hellominecraft.lookandfeel.components.ConstomButton -> org.jackhua
     long lastDrawTime -> a
     int radix -> b
     boolean notDraw -> a
-org.jackhuang.hellominecraft.lookandfeel.components.IConstomable -> org.jackhuang.hellominecraft.launcher.dh:
+org.jackhuang.hellominecraft.lookandfeel.components.IConstomable -> org.jackhuang.hellominecraft.launcher.df:
     boolean constomBackground() -> a
     boolean constomForeground() -> b
 org.jackhuang.hellominecraft.lookandfeel.painters.ButtonPainter -> org.jackhuang.hellominecraft.lookandfeel.painters.ButtonPainter:
@@ -3228,21 +3217,21 @@ org.jackhuang.hellominecraft.lookandfeel.ui.ScrollButton -> org.jackhuang.hellom
     66:66:java.awt.Dimension getPreferredSize() -> getPreferredSize
     71:72:void repaint(long,int,int,int,int) -> repaint
     81:81:void paint(java.awt.Graphics) -> paint
-org.jackhuang.hellominecraft.tasks.DoingDoneListener -> org.jackhuang.hellominecraft.launcher.di:
+org.jackhuang.hellominecraft.tasks.DoingDoneListener -> org.jackhuang.hellominecraft.launcher.dg:
     void onDone(java.lang.Object) -> a
     void onDoing(java.lang.Object) -> b
     void onFailed(java.lang.Object) -> c
-org.jackhuang.hellominecraft.tasks.ParallelTask -> org.jackhuang.hellominecraft.launcher.dj:
+org.jackhuang.hellominecraft.tasks.ParallelTask -> org.jackhuang.hellominecraft.launcher.dh:
     java.util.Collection dependsTask -> a
     32:32:boolean executeTask() -> a
     37:37:java.lang.String getInfo() -> a
     42:42:java.util.Collection getDependTasks() -> b
     46:47:void addDependsTask(org.jackhuang.hellominecraft.tasks.Task) -> a
-org.jackhuang.hellominecraft.tasks.ProgressProviderListener -> org.jackhuang.hellominecraft.launcher.dk:
+org.jackhuang.hellominecraft.tasks.ProgressProviderListener -> org.jackhuang.hellominecraft.launcher.di:
     void setProgress(org.jackhuang.hellominecraft.tasks.Task,int,int) -> a
     void setStatus(org.jackhuang.hellominecraft.tasks.Task,java.lang.String) -> a
     void onProgressProviderDone(org.jackhuang.hellominecraft.tasks.Task) -> a
-org.jackhuang.hellominecraft.tasks.Task -> org.jackhuang.hellominecraft.launcher.dl:
+org.jackhuang.hellominecraft.tasks.Task -> org.jackhuang.hellominecraft.launcher.dj:
     java.lang.Throwable failReason -> a
     java.lang.String tag -> c
     boolean parallelExecuting -> c
@@ -3261,10 +3250,10 @@ org.jackhuang.hellominecraft.tasks.Task -> org.jackhuang.hellominecraft.launcher
     84:84:java.util.Collection getDependTasks() -> b
     88:88:java.util.Collection getAfterTasks() -> a
     94:95:org.jackhuang.hellominecraft.tasks.Task setProgressProviderListener(org.jackhuang.hellominecraft.tasks.ProgressProviderListener) -> a
-org.jackhuang.hellominecraft.tasks.TaskInfo -> org.jackhuang.hellominecraft.launcher.dm:
+org.jackhuang.hellominecraft.tasks.TaskInfo -> org.jackhuang.hellominecraft.launcher.dk:
     java.lang.String info -> a
     33:33:java.lang.String getInfo() -> a
-org.jackhuang.hellominecraft.tasks.TaskList -> org.jackhuang.hellominecraft.launcher.dn:
+org.jackhuang.hellominecraft.tasks.TaskList -> org.jackhuang.hellominecraft.launcher.dl:
     java.util.List taskQueue -> a
     java.util.ArrayList allDone -> a
     java.util.ArrayList taskListener -> b
@@ -3283,20 +3272,20 @@ org.jackhuang.hellominecraft.tasks.TaskList -> org.jackhuang.hellominecraft.laun
     151:151:boolean isEmpty() -> a
     155:163:void abort() -> b
     32:32:void access$000(org.jackhuang.hellominecraft.tasks.TaskList,org.jackhuang.hellominecraft.tasks.Task) -> a
-org.jackhuang.hellominecraft.tasks.TaskList$InvokeThread -> org.jackhuang.hellominecraft.launcher.do:
+org.jackhuang.hellominecraft.tasks.TaskList$InvokeThread -> org.jackhuang.hellominecraft.launcher.dm:
     org.jackhuang.hellominecraft.tasks.Task task -> a
     java.util.Set s -> a
     org.jackhuang.hellominecraft.tasks.TaskList this$0 -> a
     79:82:void run() -> run
-org.jackhuang.hellominecraft.tasks.TaskRunnable -> org.jackhuang.hellominecraft.launcher.dp:
+org.jackhuang.hellominecraft.tasks.TaskRunnable -> org.jackhuang.hellominecraft.launcher.dn:
     java.lang.Runnable r -> a
     35:39:boolean executeTask() -> a
-org.jackhuang.hellominecraft.tasks.TaskRunnableArg1 -> org.jackhuang.hellominecraft.launcher.dq:
+org.jackhuang.hellominecraft.tasks.TaskRunnableArg1 -> org.jackhuang.hellominecraft.launcher.do:
     org.jackhuang.hellominecraft.utils.functions.Consumer r -> a
     java.util.ArrayList al -> a
     38:44:boolean executeTask() -> a
     52:53:org.jackhuang.hellominecraft.tasks.Task registerPreviousResult(org.jackhuang.hellominecraft.tasks.communication.PreviousResult) -> a
-org.jackhuang.hellominecraft.tasks.TaskWindow -> org.jackhuang.hellominecraft.launcher.dr:
+org.jackhuang.hellominecraft.tasks.TaskWindow -> org.jackhuang.hellominecraft.launcher.dp:
     org.jackhuang.hellominecraft.tasks.TaskWindow instance -> a
     boolean suc -> a
     org.jackhuang.hellominecraft.tasks.TaskList taskList -> a
@@ -3340,12 +3329,12 @@ org.jackhuang.hellominecraft.tasks.TaskWindow -> org.jackhuang.hellominecraft.la
     void access$lambda$2(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> b
     void access$lambda$3(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> c
     void access$lambda$4(org.jackhuang.hellominecraft.tasks.TaskWindow,java.lang.String) -> a
-org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.ds:
+org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.dq:
     org.jackhuang.hellominecraft.tasks.TaskList arg$1 -> a
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.tasks.TaskList) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.tasks.TaskList) -> a
-org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$4 -> org.jackhuang.hellominecraft.launcher.dt:
+org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$4 -> org.jackhuang.hellominecraft.launcher.dr:
     org.jackhuang.hellominecraft.tasks.TaskWindow arg$1 -> a
     org.jackhuang.hellominecraft.tasks.Task arg$2 -> a
     int arg$3 -> a
@@ -3353,53 +3342,53 @@ org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$4 -> org.jackhuang.hellomi
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task,int,int) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task,int,int) -> a
-org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$5 -> org.jackhuang.hellominecraft.launcher.du:
+org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$5 -> org.jackhuang.hellominecraft.launcher.ds:
     org.jackhuang.hellominecraft.tasks.TaskWindow arg$1 -> a
     org.jackhuang.hellominecraft.tasks.Task arg$2 -> a
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> a
-org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$6 -> org.jackhuang.hellominecraft.launcher.dv:
+org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$6 -> org.jackhuang.hellominecraft.launcher.dt:
     org.jackhuang.hellominecraft.tasks.TaskWindow arg$1 -> a
     org.jackhuang.hellominecraft.tasks.Task arg$2 -> a
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> a
-org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$7 -> org.jackhuang.hellominecraft.launcher.dw:
+org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$7 -> org.jackhuang.hellominecraft.launcher.du:
     org.jackhuang.hellominecraft.tasks.TaskWindow arg$1 -> a
     org.jackhuang.hellominecraft.tasks.Task arg$2 -> a
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> a
-org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$8 -> org.jackhuang.hellominecraft.launcher.dx:
+org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$8 -> org.jackhuang.hellominecraft.launcher.dv:
     org.jackhuang.hellominecraft.tasks.TaskWindow arg$1 -> a
     java.lang.String arg$2 -> a
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.tasks.TaskWindow,java.lang.String) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.tasks.TaskWindow,java.lang.String) -> a
-org.jackhuang.hellominecraft.tasks.TaskWindow$1 -> org.jackhuang.hellominecraft.launcher.dy:
+org.jackhuang.hellominecraft.tasks.TaskWindow$1 -> org.jackhuang.hellominecraft.launcher.dw:
     org.jackhuang.hellominecraft.tasks.TaskWindow this$0 -> a
     112:113:void windowClosed(java.awt.event.WindowEvent) -> windowClosed
-org.jackhuang.hellominecraft.tasks.TaskWindow$2 -> org.jackhuang.hellominecraft.launcher.dz:
+org.jackhuang.hellominecraft.tasks.TaskWindow$2 -> org.jackhuang.hellominecraft.launcher.dx:
     org.jackhuang.hellominecraft.tasks.TaskWindow this$0 -> a
     119:120:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.tasks.communication.DefaultPreviousResult -> org.jackhuang.hellominecraft.launcher.dA:
+org.jackhuang.hellominecraft.tasks.communication.DefaultPreviousResult -> org.jackhuang.hellominecraft.launcher.dy:
     java.lang.Object a -> a
     34:34:java.lang.Object getResult() -> a
-org.jackhuang.hellominecraft.tasks.communication.PreviousResult -> org.jackhuang.hellominecraft.launcher.dB:
+org.jackhuang.hellominecraft.tasks.communication.PreviousResult -> org.jackhuang.hellominecraft.launcher.dz:
     java.lang.Object getResult() -> a
-org.jackhuang.hellominecraft.tasks.communication.PreviousResultRegistrator -> org.jackhuang.hellominecraft.launcher.dC:
+org.jackhuang.hellominecraft.tasks.communication.PreviousResultRegistrator -> org.jackhuang.hellominecraft.launcher.dA:
     org.jackhuang.hellominecraft.tasks.Task registerPreviousResult(org.jackhuang.hellominecraft.tasks.communication.PreviousResult) -> a
-org.jackhuang.hellominecraft.tasks.download.ContentGetAndShowTask -> org.jackhuang.hellominecraft.launcher.dD:
+org.jackhuang.hellominecraft.tasks.download.ContentGetAndShowTask -> org.jackhuang.hellominecraft.launcher.dB:
     java.lang.String info -> b
     35:36:boolean executeTask() -> a
     43:43:java.lang.String getInfo() -> a
     48:51:boolean call(java.lang.Object,java.lang.String) -> a
     26:26:boolean call(java.lang.Object,java.lang.Object) -> a
-org.jackhuang.hellominecraft.tasks.download.DownloadListener -> org.jackhuang.hellominecraft.launcher.dE:
+org.jackhuang.hellominecraft.tasks.download.DownloadListener -> org.jackhuang.hellominecraft.launcher.dC:
     boolean OnFailed() -> a
     void OnFailedMoreThan5Times(java.lang.String) -> a
-org.jackhuang.hellominecraft.tasks.download.FileDownloadTask -> org.jackhuang.hellominecraft.launcher.dF:
+org.jackhuang.hellominecraft.tasks.download.FileDownloadTask -> org.jackhuang.hellominecraft.launcher.dD:
     javax.net.ssl.X509TrustManager xtm -> a
     javax.net.ssl.HostnameVerifier hnv -> a
     int MAX_BUFFER_SIZE -> a
@@ -3423,15 +3412,15 @@ org.jackhuang.hellominecraft.tasks.download.FileDownloadTask -> org.jackhuang.he
     44:44:java.lang.Object getResult() -> a
     60:60:boolean lambda$static$5(java.lang.String,javax.net.ssl.SSLSession) -> b
     boolean access$lambda$0(java.lang.String,javax.net.ssl.SSLSession) -> a
-org.jackhuang.hellominecraft.tasks.download.FileDownloadTask$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.dG:
+org.jackhuang.hellominecraft.tasks.download.FileDownloadTask$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.dE:
     org.jackhuang.hellominecraft.tasks.download.FileDownloadTask$$Lambda$1 instance -> a
     boolean verify(java.lang.String,javax.net.ssl.SSLSession) -> verify
     javax.net.ssl.HostnameVerifier lambdaFactory$() -> a
-org.jackhuang.hellominecraft.tasks.download.FileDownloadTask$1 -> org.jackhuang.hellominecraft.launcher.dH:
+org.jackhuang.hellominecraft.tasks.download.FileDownloadTask$1 -> org.jackhuang.hellominecraft.launcher.dF:
     49:49:void checkClientTrusted(java.security.cert.X509Certificate[],java.lang.String) -> checkClientTrusted
     53:53:void checkServerTrusted(java.security.cert.X509Certificate[],java.lang.String) -> checkServerTrusted
     57:57:java.security.cert.X509Certificate[] getAcceptedIssuers() -> getAcceptedIssuers
-org.jackhuang.hellominecraft.tasks.download.HTTPGetTask -> org.jackhuang.hellominecraft.launcher.dI:
+org.jackhuang.hellominecraft.tasks.download.HTTPGetTask -> org.jackhuang.hellominecraft.launcher.dG:
     java.lang.String url -> d
     java.lang.String encoding -> e
     java.lang.String result -> f
@@ -3442,8 +3431,8 @@ org.jackhuang.hellominecraft.tasks.download.HTTPGetTask -> org.jackhuang.hellomi
     89:89:java.lang.String getInfo() -> a
     94:94:java.lang.String getResult() -> b
     32:32:java.lang.Object getResult() -> a
-org.jackhuang.hellominecraft.tasks.download.NetException -> org.jackhuang.hellominecraft.launcher.dJ:
-org.jackhuang.hellominecraft.utils.ArrayUtils -> org.jackhuang.hellominecraft.launcher.dK:
+org.jackhuang.hellominecraft.tasks.download.NetException -> org.jackhuang.hellominecraft.launcher.dH:
+org.jackhuang.hellominecraft.utils.ArrayUtils -> org.jackhuang.hellominecraft.launcher.dI:
     30:30:boolean isEmpty(java.lang.Object[]) -> a
     34:34:boolean isNotEmpty(java.lang.Object[]) -> b
     38:38:boolean contains(java.lang.Object[],java.lang.Object) -> a
@@ -3456,19 +3445,19 @@ org.jackhuang.hellominecraft.utils.ArrayUtils -> org.jackhuang.hellominecraft.la
     86:89:java.util.List tryGetMapWithList(java.util.Map,java.lang.String) -> a
     93:104:int matchArray(java.lang.Object[],java.lang.Object[]) -> a
     108:119:int matchArray(byte[],byte[]) -> a
-org.jackhuang.hellominecraft.utils.CollectionUtils -> org.jackhuang.hellominecraft.launcher.dL:
+org.jackhuang.hellominecraft.utils.CollectionUtils -> org.jackhuang.hellominecraft.launcher.dJ:
     32:33:void forEach(java.util.Collection,org.jackhuang.hellominecraft.utils.functions.Consumer) -> a
     36:40:java.util.Collection sortOut(java.util.Collection,org.jackhuang.hellominecraft.utils.functions.Predicate) -> a
     44:51:boolean removeIf(java.util.Collection,org.jackhuang.hellominecraft.utils.functions.Predicate) -> a
     38:39:void lambda$sortOut$6(org.jackhuang.hellominecraft.utils.functions.Predicate,java.util.ArrayList,java.lang.Object) -> b
     void access$lambda$0(org.jackhuang.hellominecraft.utils.functions.Predicate,java.util.ArrayList,java.lang.Object) -> a
-org.jackhuang.hellominecraft.utils.CollectionUtils$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.dM:
+org.jackhuang.hellominecraft.utils.CollectionUtils$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.dK:
     org.jackhuang.hellominecraft.utils.functions.Predicate arg$1 -> a
     java.util.ArrayList arg$2 -> a
     org.jackhuang.hellominecraft.utils.functions.Consumer get$Lambda(org.jackhuang.hellominecraft.utils.functions.Predicate,java.util.ArrayList) -> b
     void accept(java.lang.Object) -> a
     org.jackhuang.hellominecraft.utils.functions.Consumer lambdaFactory$(org.jackhuang.hellominecraft.utils.functions.Predicate,java.util.ArrayList) -> a
-org.jackhuang.hellominecraft.utils.DoubleOutputStream -> org.jackhuang.hellominecraft.launcher.dN:
+org.jackhuang.hellominecraft.utils.DoubleOutputStream -> org.jackhuang.hellominecraft.launcher.dL:
     java.io.OutputStream a -> a
     java.io.OutputStream b -> b
     boolean c -> a
@@ -3477,23 +3466,23 @@ org.jackhuang.hellominecraft.utils.DoubleOutputStream -> org.jackhuang.hellomine
     64:70:void write(int) -> write
     74:80:void close() -> close
     84:88:void flush() -> flush
-org.jackhuang.hellominecraft.utils.Event -> org.jackhuang.hellominecraft.launcher.dO:
+org.jackhuang.hellominecraft.utils.Event -> org.jackhuang.hellominecraft.launcher.dM:
     boolean call(java.lang.Object,java.lang.Object) -> a
-org.jackhuang.hellominecraft.utils.EventHandler -> org.jackhuang.hellominecraft.launcher.dP:
+org.jackhuang.hellominecraft.utils.EventHandler -> org.jackhuang.hellominecraft.launcher.dN:
     java.util.HashSet handlers -> a
     java.lang.Object sender -> a
     37:38:void register(org.jackhuang.hellominecraft.utils.Event) -> a
     41:42:void unregister(org.jackhuang.hellominecraft.utils.Event) -> b
     45:48:boolean execute(java.lang.Object) -> a
-org.jackhuang.hellominecraft.utils.LauncherPrintStream -> org.jackhuang.hellominecraft.launcher.dQ:
+org.jackhuang.hellominecraft.utils.LauncherPrintStream -> org.jackhuang.hellominecraft.launcher.dO:
     java.util.ArrayList printListeners -> a
     38:42:void println(java.lang.String) -> println
     45:46:void addPrintListener(org.jackhuang.hellominecraft.utils.functions.Consumer) -> a
-org.jackhuang.hellominecraft.utils.MathUtils -> org.jackhuang.hellominecraft.launcher.dR:
+org.jackhuang.hellominecraft.utils.MathUtils -> org.jackhuang.hellominecraft.launcher.dP:
     27:29:int parseInt(java.lang.String,int) -> a
     35:38:boolean canParseInt(java.lang.String) -> a
     44:49:int parseMemory(java.lang.String,int) -> b
-org.jackhuang.hellominecraft.utils.NetUtils -> org.jackhuang.hellominecraft.launcher.dS:
+org.jackhuang.hellominecraft.utils.NetUtils -> org.jackhuang.hellominecraft.launcher.dQ:
     java.lang.String METHOD_POST -> a
     java.lang.String DEFAULT_CHARSET -> b
     39:45:byte[] getBytesFromStream(java.io.InputStream) -> a
@@ -3505,13 +3494,13 @@ org.jackhuang.hellominecraft.utils.NetUtils -> org.jackhuang.hellominecraft.laun
     116:158:java.lang.String post(java.lang.String,java.util.Map) -> a
     166:169:java.net.URL constantURL(java.lang.String) -> a
     175:179:java.net.URL concatenateURL(java.net.URL,java.lang.String) -> a
-org.jackhuang.hellominecraft.utils.Pair -> org.jackhuang.hellominecraft.launcher.dT:
+org.jackhuang.hellominecraft.utils.Pair -> org.jackhuang.hellominecraft.launcher.dR:
     java.lang.Object key -> a
     java.lang.Object value -> b
     39:39:java.lang.Object getKey() -> getKey
     44:44:java.lang.Object getValue() -> getValue
     49:51:java.lang.Object setValue(java.lang.Object) -> setValue
-org.jackhuang.hellominecraft.utils.StrUtils -> org.jackhuang.hellominecraft.launcher.dU:
+org.jackhuang.hellominecraft.utils.StrUtils -> org.jackhuang.hellominecraft.launcher.dS:
     35:40:java.lang.String substring(java.lang.String,int,int) -> a
     44:71:java.lang.String makeCommand(java.util.List) -> a
     75:75:boolean startsWith(java.lang.String,java.lang.String) -> a
@@ -3530,7 +3519,7 @@ org.jackhuang.hellominecraft.utils.StrUtils -> org.jackhuang.hellominecraft.laun
     221:221:boolean isBlank(java.lang.String) -> a
     225:225:boolean isNotBlank(java.lang.String) -> b
     229:232:java.lang.String getStackTrace(java.lang.Throwable) -> a
-org.jackhuang.hellominecraft.utils.SwingUtils -> org.jackhuang.hellominecraft.launcher.dV:
+org.jackhuang.hellominecraft.utils.SwingUtils -> org.jackhuang.hellominecraft.launcher.dT:
     44:44:javax.swing.table.DefaultTableModel makeDefaultTableModel(java.lang.String[],java.lang.Class[],boolean[]) -> a
     68:72:void openLink(java.net.URI) -> a
     79:81:void moveEnd(javax.swing.JTextArea) -> a
@@ -3543,14 +3532,14 @@ org.jackhuang.hellominecraft.utils.SwingUtils -> org.jackhuang.hellominecraft.la
     131:133:void appendLast(javax.swing.JTable,java.lang.Object[]) -> a
     136:138:void setValueAt(javax.swing.JTable,java.lang.Object,int,int) -> a
     141:143:void removeRow(javax.swing.JTable,int) -> a
-org.jackhuang.hellominecraft.utils.SwingUtils$1 -> org.jackhuang.hellominecraft.launcher.dW:
+org.jackhuang.hellominecraft.utils.SwingUtils$1 -> org.jackhuang.hellominecraft.launcher.dU:
     java.lang.Class[] types -> a
     boolean[] canEdit -> a
     java.lang.Class[] val$typesA -> b
     boolean[] val$canEditA -> b
     52:52:java.lang.Class getColumnClass(int) -> getColumnClass
     57:57:boolean isCellEditable(int,int) -> isCellEditable
-org.jackhuang.hellominecraft.utils.TextComponentOutputStream -> org.jackhuang.hellominecraft.launcher.dX:
+org.jackhuang.hellominecraft.utils.TextComponentOutputStream -> org.jackhuang.hellominecraft.launcher.dV:
     javax.swing.text.JTextComponent txt -> a
     37:38:void write(byte[]) -> write
     42:43:void write(byte[],int,int) -> write
@@ -3558,13 +3547,13 @@ org.jackhuang.hellominecraft.utils.TextComponentOutputStream -> org.jackhuang.he
     59:60:void write(int) -> write
     48:51:void lambda$append$7(java.lang.String) -> b
     void access$lambda$0(org.jackhuang.hellominecraft.utils.TextComponentOutputStream,java.lang.String) -> a
-org.jackhuang.hellominecraft.utils.TextComponentOutputStream$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.dY:
+org.jackhuang.hellominecraft.utils.TextComponentOutputStream$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.dW:
     org.jackhuang.hellominecraft.utils.TextComponentOutputStream arg$1 -> a
     java.lang.String arg$2 -> a
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.utils.TextComponentOutputStream,java.lang.String) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.utils.TextComponentOutputStream,java.lang.String) -> a
-org.jackhuang.hellominecraft.utils.UpdateChecker -> org.jackhuang.hellominecraft.launcher.dZ:
+org.jackhuang.hellominecraft.utils.UpdateChecker -> org.jackhuang.hellominecraft.launcher.dX:
     boolean OUT_DATED -> a
     org.jackhuang.hellominecraft.utils.VersionNumber base -> a
     java.lang.String type -> a
@@ -3574,7 +3563,7 @@ org.jackhuang.hellominecraft.utils.UpdateChecker -> org.jackhuang.hellominecraft
     49:60:void run() -> run
     63:72:void process(boolean) -> a
     75:75:org.jackhuang.hellominecraft.utils.VersionNumber getNewVersion() -> a
-org.jackhuang.hellominecraft.utils.Utils -> org.jackhuang.hellominecraft.launcher.ea:
+org.jackhuang.hellominecraft.utils.Utils -> org.jackhuang.hellominecraft.launcher.dY:
     com.google.gson.GsonBuilder gsonBuilder -> a
     51:51:com.google.gson.GsonBuilder getDefaultGsonBuilder() -> a
     55:63:java.lang.String[] getURL() -> a
@@ -3586,7 +3575,7 @@ org.jackhuang.hellominecraft.utils.Utils -> org.jackhuang.hellominecraft.launche
     120:120:javax.swing.ImageIcon scaleImage(javax.swing.ImageIcon,int,int) -> a
     124:172:javax.swing.ImageIcon searchBackgroundImage(javax.swing.ImageIcon,java.lang.String,int,int) -> a
     180:188:void shutdownForcely() -> a
-org.jackhuang.hellominecraft.utils.VersionNumber -> org.jackhuang.hellominecraft.launcher.eb:
+org.jackhuang.hellominecraft.utils.VersionNumber -> org.jackhuang.hellominecraft.launcher.dZ:
     byte firstVer -> a
     byte secondVer -> b
     byte thirdVer -> c
@@ -3594,14 +3583,14 @@ org.jackhuang.hellominecraft.utils.VersionNumber -> org.jackhuang.hellominecraft
     58:66:boolean isOlder(org.jackhuang.hellominecraft.utils.VersionNumber,org.jackhuang.hellominecraft.utils.VersionNumber) -> a
     71:73:int compareTo(org.jackhuang.hellominecraft.utils.VersionNumber) -> a
     25:25:int compareTo(java.lang.Object) -> compareTo
-org.jackhuang.hellominecraft.utils.code.Base64 -> org.jackhuang.hellominecraft.launcher.ec:
+org.jackhuang.hellominecraft.utils.code.Base64 -> org.jackhuang.hellominecraft.launcher.ea:
     char[] alphabet -> a
     byte[] codes -> a
     28:51:char[] encode(byte[]) -> a
     55:55:char[] encode(java.lang.String,java.lang.String) -> a
     59:59:char[] encode(java.lang.String) -> a
     63:89:byte[] decode(char[]) -> a
-org.jackhuang.hellominecraft.utils.code.Charsets -> org.jackhuang.hellominecraft.launcher.ed:
+org.jackhuang.hellominecraft.utils.code.Charsets -> org.jackhuang.hellominecraft.launcher.eb:
     java.nio.charset.Charset ISO_8859_1 -> a
     java.nio.charset.Charset US_ASCII -> b
     java.nio.charset.Charset UTF_16 -> c
@@ -3610,7 +3599,7 @@ org.jackhuang.hellominecraft.utils.code.Charsets -> org.jackhuang.hellominecraft
     java.nio.charset.Charset UTF_8 -> f
     36:36:java.nio.charset.Charset toCharset(java.nio.charset.Charset) -> a
     40:40:java.nio.charset.Charset toCharset(java.lang.String) -> a
-org.jackhuang.hellominecraft.utils.code.DigestUtils -> org.jackhuang.hellominecraft.launcher.ee:
+org.jackhuang.hellominecraft.utils.code.DigestUtils -> org.jackhuang.hellominecraft.launcher.ec:
     int STREAM_BUFFER_LENGTH -> a
     34:34:byte[] digest(java.security.MessageDigest,java.io.InputStream) -> a
     39:41:java.security.MessageDigest getDigest(java.lang.String) -> a
@@ -3666,7 +3655,7 @@ org.jackhuang.hellominecraft.utils.code.DigestUtils -> org.jackhuang.hellominecr
     263:264:java.security.MessageDigest updateDigest(java.security.MessageDigest,byte[]) -> a
     269:277:java.security.MessageDigest updateDigest(java.security.MessageDigest,java.io.InputStream) -> a
     281:282:java.security.MessageDigest updateDigest(java.security.MessageDigest,java.lang.String) -> a
-org.jackhuang.hellominecraft.utils.code.Hex -> org.jackhuang.hellominecraft.launcher.ef:
+org.jackhuang.hellominecraft.utils.code.Hex -> org.jackhuang.hellominecraft.launcher.ed:
     java.nio.charset.Charset DEFAULT_CHARSET -> a
     java.lang.String DEFAULT_CHARSET_NAME -> a
     char[] DIGITS_LOWER -> a
@@ -3685,30 +3674,30 @@ org.jackhuang.hellominecraft.utils.code.Hex -> org.jackhuang.hellominecraft.laun
     124:124:java.nio.charset.Charset getCharset() -> a
     128:128:java.lang.String getCharsetName() -> a
     133:133:java.lang.String toString() -> toString
-org.jackhuang.hellominecraft.utils.functions.BiConsumer -> org.jackhuang.hellominecraft.launcher.eg:
+org.jackhuang.hellominecraft.utils.functions.BiConsumer -> org.jackhuang.hellominecraft.launcher.ee:
     void onDone(java.lang.Object,java.lang.Object) -> a
-org.jackhuang.hellominecraft.utils.functions.BiFunction -> org.jackhuang.hellominecraft.launcher.eh:
+org.jackhuang.hellominecraft.utils.functions.BiFunction -> org.jackhuang.hellominecraft.launcher.ef:
     java.lang.Object apply(java.lang.Object,java.lang.Object) -> a
-org.jackhuang.hellominecraft.utils.functions.Consumer -> org.jackhuang.hellominecraft.launcher.ei:
+org.jackhuang.hellominecraft.utils.functions.Consumer -> org.jackhuang.hellominecraft.launcher.eg:
     void accept(java.lang.Object) -> a
-org.jackhuang.hellominecraft.utils.functions.FalseFunction -> org.jackhuang.hellominecraft.launcher.ej:
+org.jackhuang.hellominecraft.utils.functions.FalseFunction -> org.jackhuang.hellominecraft.launcher.eh:
     27:27:java.lang.Boolean onDone() -> a
     23:23:java.lang.Object onDone() -> a
-org.jackhuang.hellominecraft.utils.functions.Function -> org.jackhuang.hellominecraft.launcher.ek:
+org.jackhuang.hellominecraft.utils.functions.Function -> org.jackhuang.hellominecraft.launcher.ei:
     java.lang.Object apply(java.lang.Object) -> a
-org.jackhuang.hellominecraft.utils.functions.NonConsumer -> org.jackhuang.hellominecraft.launcher.el:
+org.jackhuang.hellominecraft.utils.functions.NonConsumer -> org.jackhuang.hellominecraft.launcher.ej:
     void onDone() -> a
-org.jackhuang.hellominecraft.utils.functions.NonFunction -> org.jackhuang.hellominecraft.launcher.em:
+org.jackhuang.hellominecraft.utils.functions.NonFunction -> org.jackhuang.hellominecraft.launcher.ek:
     java.lang.Object onDone() -> a
-org.jackhuang.hellominecraft.utils.functions.Predicate -> org.jackhuang.hellominecraft.launcher.en:
+org.jackhuang.hellominecraft.utils.functions.Predicate -> org.jackhuang.hellominecraft.launcher.el:
     boolean apply(java.lang.Object) -> a
-org.jackhuang.hellominecraft.utils.functions.TriConsumer -> org.jackhuang.hellominecraft.launcher.eo:
+org.jackhuang.hellominecraft.utils.functions.TriConsumer -> org.jackhuang.hellominecraft.launcher.em:
     void onDone(java.lang.Object,java.lang.Object,java.lang.Object) -> a
-org.jackhuang.hellominecraft.utils.functions.TrueFunction -> org.jackhuang.hellominecraft.launcher.ep:
+org.jackhuang.hellominecraft.utils.functions.TrueFunction -> org.jackhuang.hellominecraft.launcher.en:
     org.jackhuang.hellominecraft.utils.functions.TrueFunction instance -> a
     31:31:java.lang.Boolean onDone() -> a
     23:23:java.lang.Object onDone() -> a
-org.jackhuang.hellominecraft.utils.system.Compressor -> org.jackhuang.hellominecraft.launcher.eq:
+org.jackhuang.hellominecraft.utils.system.Compressor -> org.jackhuang.hellominecraft.launcher.eo:
     39:40:void zip(java.lang.String,java.lang.String) -> a
     51:62:void zip(java.io.File,java.io.File) -> a
     74:100:void zipFile(java.io.File,java.lang.String,java.util.zip.ZipOutputStream) -> a
@@ -3716,7 +3705,7 @@ org.jackhuang.hellominecraft.utils.system.Compressor -> org.jackhuang.hellominec
     107:108:void unzip(java.io.File,java.io.File) -> b
     119:157:void unzip(java.io.File,java.io.File,java.lang.String[]) -> a
     167:192:void merge(java.io.File,java.io.File) -> c
-org.jackhuang.hellominecraft.utils.system.FileUtils -> org.jackhuang.hellominecraft.launcher.er:
+org.jackhuang.hellominecraft.utils.system.FileUtils -> org.jackhuang.hellominecraft.launcher.ep:
     42:53:void deleteDirectory(java.io.File) -> a
     57:61:boolean deleteDirectoryQuietly(java.io.File) -> a
     67:71:boolean cleanDirectoryQuietly(java.io.File) -> b
@@ -3753,8 +3742,7 @@ org.jackhuang.hellominecraft.utils.system.FileUtils -> org.jackhuang.hellominecr
     406:406:java.io.FileOutputStream openOutputStream(java.io.File) -> a
     411:424:java.io.FileOutputStream openOutputStream(java.io.File,boolean) -> a
     428:432:java.io.File[] searchSuffix(java.io.File,java.lang.String) -> a
-    436:443:byte[] toByteArray(java.io.File) -> a
-org.jackhuang.hellominecraft.utils.system.IOUtils -> org.jackhuang.hellominecraft.launcher.es:
+org.jackhuang.hellominecraft.utils.system.IOUtils -> org.jackhuang.hellominecraft.launcher.eq:
     45:50:java.lang.String addSeparator(java.lang.String) -> a
     54:54:boolean isSeparator(char) -> a
     58:62:java.lang.String removeLastSeparator(java.lang.String) -> b
@@ -3782,7 +3770,7 @@ org.jackhuang.hellominecraft.utils.system.IOUtils -> org.jackhuang.hellominecraf
     254:254:java.io.File tryGetCanonicalFile(java.lang.String) -> a
     259:261:java.lang.String tryGetCanonicalFilePath(java.io.File) -> b
     267:270:java.net.URL parseURL(java.lang.String) -> a
-org.jackhuang.hellominecraft.utils.system.JavaProcess -> org.jackhuang.hellominecraft.launcher.et:
+org.jackhuang.hellominecraft.utils.system.JavaProcess -> org.jackhuang.hellominecraft.launcher.er:
     java.util.List commands -> a
     java.lang.Process process -> a
     java.util.ArrayList stdOutLines -> a
@@ -3796,7 +3784,7 @@ org.jackhuang.hellominecraft.utils.system.JavaProcess -> org.jackhuang.hellomine
     76:79:int getExitCode() -> a
     85:85:java.lang.String toString() -> toString
     89:90:void stop() -> a
-org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor -> org.jackhuang.hellominecraft.launcher.eu:
+org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor -> org.jackhuang.hellominecraft.launcher.es:
     java.util.HashSet al -> a
     org.jackhuang.hellominecraft.utils.EventHandler stoppedEvent -> a
     org.jackhuang.hellominecraft.utils.system.JavaProcess p -> a
@@ -3808,21 +3796,21 @@ org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor -> org.jackhuang.he
     boolean access$lambda$0(org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor,java.lang.Object,org.jackhuang.hellominecraft.utils.system.JavaProcess) -> a
     boolean access$lambda$1(org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor,java.lang.Object,org.jackhuang.hellominecraft.utils.system.JavaProcess) -> b
     boolean access$lambda$2(java.lang.Thread) -> a
-org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.ev:
+org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.et:
     org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor arg$1 -> a
     org.jackhuang.hellominecraft.utils.Event get$Lambda(org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor) -> b
     boolean call(java.lang.Object,java.lang.Object) -> a
     org.jackhuang.hellominecraft.utils.Event lambdaFactory$(org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor) -> a
-org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor$$Lambda$4 -> org.jackhuang.hellominecraft.launcher.ew:
+org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor$$Lambda$4 -> org.jackhuang.hellominecraft.launcher.eu:
     org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor arg$1 -> a
     org.jackhuang.hellominecraft.utils.Event get$Lambda(org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor) -> b
     boolean call(java.lang.Object,java.lang.Object) -> a
     org.jackhuang.hellominecraft.utils.Event lambdaFactory$(org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor) -> a
-org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor$$Lambda$5 -> org.jackhuang.hellominecraft.launcher.ex:
+org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor$$Lambda$5 -> org.jackhuang.hellominecraft.launcher.ev:
     org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor$$Lambda$5 instance -> a
     boolean apply(java.lang.Object) -> a
     org.jackhuang.hellominecraft.utils.functions.Predicate lambdaFactory$() -> a
-org.jackhuang.hellominecraft.utils.system.JdkVersion -> org.jackhuang.hellominecraft.launcher.ey:
+org.jackhuang.hellominecraft.utils.system.JdkVersion -> org.jackhuang.hellominecraft.launcher.ew:
     java.lang.String ver -> ver
     int platform -> platform
     java.lang.String location -> location
@@ -3847,7 +3835,7 @@ org.jackhuang.hellominecraft.utils.system.JdkVersion -> org.jackhuang.hellominec
     160:196:org.jackhuang.hellominecraft.utils.system.JdkVersion getJavaVersionFromExecutable(java.lang.String) -> a
     200:202:void write(java.io.File) -> a
     205:205:boolean isEarlyAccess() -> b
-org.jackhuang.hellominecraft.utils.system.MessageBox -> org.jackhuang.hellominecraft.launcher.ez:
+org.jackhuang.hellominecraft.utils.system.MessageBox -> org.jackhuang.hellominecraft.launcher.ex:
     java.lang.String Title -> a
     int DEFAULT_OPTION -> a
     int YES_NO_OPTION -> b
@@ -3866,7 +3854,7 @@ org.jackhuang.hellominecraft.utils.system.MessageBox -> org.jackhuang.hellominec
     94:102:int Show(java.lang.String,java.lang.String,int) -> a
     113:113:int Show(java.lang.String,int) -> a
     123:123:int Show(java.lang.String) -> a
-org.jackhuang.hellominecraft.utils.system.OS -> org.jackhuang.hellominecraft.launcher.eA:
+org.jackhuang.hellominecraft.utils.system.OS -> org.jackhuang.hellominecraft.launcher.ey:
     org.jackhuang.hellominecraft.utils.system.OS LINUX -> a
     org.jackhuang.hellominecraft.utils.system.OS WINDOWS -> b
     org.jackhuang.hellominecraft.utils.system.OS OSX -> c
@@ -3877,7 +3865,7 @@ org.jackhuang.hellominecraft.utils.system.OS -> org.jackhuang.hellominecraft.lau
     26:26:org.jackhuang.hellominecraft.utils.system.OS valueOf(java.lang.String) -> a
     41:54:org.jackhuang.hellominecraft.utils.system.OS os() -> a
     62:66:long getTotalPhysicalMemory() -> a
-org.jackhuang.hellominecraft.utils.system.Platform -> org.jackhuang.hellominecraft.launcher.eB:
+org.jackhuang.hellominecraft.utils.system.Platform -> org.jackhuang.hellominecraft.launcher.ez:
     org.jackhuang.hellominecraft.utils.system.Platform UNKNOWN -> a
     org.jackhuang.hellominecraft.utils.system.Platform BIT_32 -> b
     org.jackhuang.hellominecraft.utils.system.Platform BIT_64 -> c
@@ -3886,18 +3874,18 @@ org.jackhuang.hellominecraft.utils.system.Platform -> org.jackhuang.hellominecra
     23:23:org.jackhuang.hellominecraft.utils.system.Platform valueOf(java.lang.String) -> a
     java.lang.String getBit() -> a
     53:53:org.jackhuang.hellominecraft.utils.system.Platform getPlatform() -> a
-org.jackhuang.hellominecraft.utils.system.Platform$1 -> org.jackhuang.hellominecraft.launcher.eC:
+org.jackhuang.hellominecraft.utils.system.Platform$1 -> org.jackhuang.hellominecraft.launcher.eA:
     29:29:java.lang.String getBit() -> a
-org.jackhuang.hellominecraft.utils.system.Platform$2 -> org.jackhuang.hellominecraft.launcher.eD:
+org.jackhuang.hellominecraft.utils.system.Platform$2 -> org.jackhuang.hellominecraft.launcher.eB:
     37:37:java.lang.String getBit() -> a
-org.jackhuang.hellominecraft.utils.system.Platform$3 -> org.jackhuang.hellominecraft.launcher.eE:
+org.jackhuang.hellominecraft.utils.system.Platform$3 -> org.jackhuang.hellominecraft.launcher.eC:
     45:45:java.lang.String getBit() -> a
-org.jackhuang.hellominecraft.utils.system.ProcessManager -> org.jackhuang.hellominecraft.launcher.eF:
+org.jackhuang.hellominecraft.utils.system.ProcessManager -> org.jackhuang.hellominecraft.launcher.eD:
     java.util.HashSet gameProcesses -> a
     30:31:void registerProcess(org.jackhuang.hellominecraft.utils.system.JavaProcess) -> a
     34:37:void stopAllProcesses() -> a
     40:41:void onProcessStopped(org.jackhuang.hellominecraft.utils.system.JavaProcess) -> b
-org.jackhuang.hellominecraft.utils.system.ProcessThread -> org.jackhuang.hellominecraft.launcher.eG:
+org.jackhuang.hellominecraft.utils.system.ProcessThread -> org.jackhuang.hellominecraft.launcher.eE:
     org.jackhuang.hellominecraft.utils.system.JavaProcess p -> a
     boolean readError -> a
     boolean enableReading -> b
@@ -3906,19 +3894,19 @@ org.jackhuang.hellominecraft.utils.system.ProcessThread -> org.jackhuang.hellomi
     45:45:org.jackhuang.hellominecraft.utils.system.JavaProcess getProcess() -> a
     50:96:void run() -> run
     99:99:void stopped() -> a
-org.jackhuang.hellominecraft.version.MinecraftRemoteLatestVersion -> org.jackhuang.hellominecraft.launcher.eH:
+org.jackhuang.hellominecraft.version.MinecraftRemoteLatestVersion -> org.jackhuang.hellominecraft.launcher.eF:
     java.lang.String snapshot -> snapshot
     java.lang.String release -> release
-org.jackhuang.hellominecraft.version.MinecraftRemoteVersion -> org.jackhuang.hellominecraft.launcher.eI:
+org.jackhuang.hellominecraft.version.MinecraftRemoteVersion -> org.jackhuang.hellominecraft.launcher.eG:
     java.lang.String id -> id
     java.lang.String time -> time
     java.lang.String releaseTime -> releaseTime
     java.lang.String type -> type
-org.jackhuang.hellominecraft.version.MinecraftRemoteVersions -> org.jackhuang.hellominecraft.launcher.eJ:
+org.jackhuang.hellominecraft.version.MinecraftRemoteVersions -> org.jackhuang.hellominecraft.launcher.eH:
     java.util.ArrayList versions -> versions
     org.jackhuang.hellominecraft.version.MinecraftRemoteLatestVersion latest -> latest
     32:32:org.jackhuang.hellominecraft.version.MinecraftRemoteVersions fromJson(java.lang.String) -> a
-org.jackhuang.hellominecraft.version.MinecraftVersionRequest -> org.jackhuang.hellominecraft.launcher.eK:
+org.jackhuang.hellominecraft.version.MinecraftVersionRequest -> org.jackhuang.hellominecraft.launcher.eI:
     int Unkown -> a
     int Invaild -> b
     int InvaildJar -> c
@@ -3930,7 +3918,7 @@ org.jackhuang.hellominecraft.version.MinecraftVersionRequest -> org.jackhuang.he
     int type -> i
     java.lang.String version -> a
     32:59:java.lang.String getResponse(org.jackhuang.hellominecraft.version.MinecraftVersionRequest) -> a
-org.jackhuang.hellominecraft.views.AbstractFilter -> org.jackhuang.hellominecraft.launcher.eL:
+org.jackhuang.hellominecraft.views.AbstractFilter -> org.jackhuang.hellominecraft.launcher.eJ:
     java.awt.image.BufferedImage filter(java.awt.image.BufferedImage,java.awt.image.BufferedImage) -> filter
     37:37:java.awt.geom.Rectangle2D getBounds2D(java.awt.image.BufferedImage) -> getBounds2D
     42:45:java.awt.image.BufferedImage createCompatibleDestImage(java.awt.image.BufferedImage,java.awt.image.ColorModel) -> createCompatibleDestImage
@@ -3938,7 +3926,7 @@ org.jackhuang.hellominecraft.views.AbstractFilter -> org.jackhuang.hellominecraf
     55:55:java.awt.RenderingHints getRenderingHints() -> getRenderingHints
     59:73:int[] getPixels(java.awt.image.BufferedImage,int,int,int,int,int[]) -> a
     77:88:void setPixels(java.awt.image.BufferedImage,int,int,int,int,int[]) -> a
-org.jackhuang.hellominecraft.views.BasicColors -> org.jackhuang.hellominecraft.launcher.eM:
+org.jackhuang.hellominecraft.views.BasicColors -> org.jackhuang.hellominecraft.launcher.eK:
     java.awt.Color COLOR_RED -> a
     java.awt.Color COLOR_RED_DARKER -> b
     java.awt.Color COLOR_GREEN -> c
@@ -3949,7 +3937,7 @@ org.jackhuang.hellominecraft.views.BasicColors -> org.jackhuang.hellominecraft.l
     java.awt.Color[] bgcolors -> a
     java.awt.Color[] bgcolors_darker -> b
     28:31:java.awt.Color getWebColor(java.lang.String) -> a
-org.jackhuang.hellominecraft.views.DropShadowBorder -> org.jackhuang.hellominecraft.launcher.eN:
+org.jackhuang.hellominecraft.views.DropShadowBorder -> org.jackhuang.hellominecraft.launcher.eL:
     java.awt.Color color -> a
     int thickness -> a
     java.awt.Insets insets -> a
@@ -3958,12 +3946,12 @@ org.jackhuang.hellominecraft.views.DropShadowBorder -> org.jackhuang.hellominecr
     55:55:java.awt.Insets getBorderInsets(java.awt.Component) -> getBorderInsets
     60:60:java.awt.Insets getBorderInsets(java.awt.Component,java.awt.Insets) -> getBorderInsets
     65:87:void paintBorder(java.awt.Component,java.awt.Graphics,int,int,int,int) -> paintBorder
-org.jackhuang.hellominecraft.views.FastBlurFilter -> org.jackhuang.hellominecraft.launcher.eO:
+org.jackhuang.hellominecraft.views.FastBlurFilter -> org.jackhuang.hellominecraft.launcher.eM:
     int radius -> a
     38:38:int getRadius() -> a
     43:61:java.awt.image.BufferedImage filter(java.awt.image.BufferedImage,java.awt.image.BufferedImage) -> filter
     65:143:void blur(int[],int[],int,int,int) -> a
-org.jackhuang.hellominecraft.views.LogWindow -> org.jackhuang.hellominecraft.launcher.eP:
+org.jackhuang.hellominecraft.views.LogWindow -> org.jackhuang.hellominecraft.launcher.eN:
     boolean movingEnd -> a
     org.jackhuang.hellominecraft.utils.functions.NonFunction listener -> a
     org.jackhuang.hellominecraft.utils.functions.NonConsumer terminateGameListener -> a
@@ -4007,34 +3995,34 @@ org.jackhuang.hellominecraft.views.LogWindow -> org.jackhuang.hellominecraft.lau
     32:32:void access$600(org.jackhuang.hellominecraft.views.LogWindow,java.awt.event.ActionEvent) -> f
     32:32:void access$700(org.jackhuang.hellominecraft.views.LogWindow,java.awt.event.ActionEvent) -> g
     32:32:void access$800(org.jackhuang.hellominecraft.views.LogWindow,java.awt.event.ActionEvent) -> h
-org.jackhuang.hellominecraft.views.LogWindow$1 -> org.jackhuang.hellominecraft.launcher.eQ:
+org.jackhuang.hellominecraft.views.LogWindow$1 -> org.jackhuang.hellominecraft.launcher.eO:
     org.jackhuang.hellominecraft.views.LogWindow this$0 -> a
     83:84:void windowClosed(java.awt.event.WindowEvent) -> windowClosed
-org.jackhuang.hellominecraft.views.LogWindow$2 -> org.jackhuang.hellominecraft.launcher.eR:
+org.jackhuang.hellominecraft.views.LogWindow$2 -> org.jackhuang.hellominecraft.launcher.eP:
     org.jackhuang.hellominecraft.views.LogWindow this$0 -> a
     95:96:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.views.LogWindow$3 -> org.jackhuang.hellominecraft.launcher.eS:
+org.jackhuang.hellominecraft.views.LogWindow$3 -> org.jackhuang.hellominecraft.launcher.eQ:
     org.jackhuang.hellominecraft.views.LogWindow this$0 -> a
     102:103:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.views.LogWindow$4 -> org.jackhuang.hellominecraft.launcher.eT:
+org.jackhuang.hellominecraft.views.LogWindow$4 -> org.jackhuang.hellominecraft.launcher.eR:
     org.jackhuang.hellominecraft.views.LogWindow this$0 -> a
     109:110:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.views.LogWindow$5 -> org.jackhuang.hellominecraft.launcher.eU:
+org.jackhuang.hellominecraft.views.LogWindow$5 -> org.jackhuang.hellominecraft.launcher.eS:
     org.jackhuang.hellominecraft.views.LogWindow this$0 -> a
     118:119:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.views.LogWindow$6 -> org.jackhuang.hellominecraft.launcher.eV:
+org.jackhuang.hellominecraft.views.LogWindow$6 -> org.jackhuang.hellominecraft.launcher.eT:
     org.jackhuang.hellominecraft.views.LogWindow this$0 -> a
     125:126:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.views.LogWindow$7 -> org.jackhuang.hellominecraft.launcher.eW:
+org.jackhuang.hellominecraft.views.LogWindow$7 -> org.jackhuang.hellominecraft.launcher.eU:
     org.jackhuang.hellominecraft.views.LogWindow this$0 -> a
     132:133:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.views.LogWindow$8 -> org.jackhuang.hellominecraft.launcher.eX:
+org.jackhuang.hellominecraft.views.LogWindow$8 -> org.jackhuang.hellominecraft.launcher.eV:
     org.jackhuang.hellominecraft.views.LogWindow this$0 -> a
     139:140:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.views.LogWindow$9 -> org.jackhuang.hellominecraft.launcher.eY:
+org.jackhuang.hellominecraft.views.LogWindow$9 -> org.jackhuang.hellominecraft.launcher.eW:
     org.jackhuang.hellominecraft.views.LogWindow this$0 -> a
     146:147:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.views.Selector -> org.jackhuang.hellominecraft.launcher.eZ:
+org.jackhuang.hellominecraft.views.Selector -> org.jackhuang.hellominecraft.launcher.eX:
     java.lang.String[] selList -> a
     java.lang.String msg -> a
     int sel -> a
@@ -4048,13 +4036,13 @@ org.jackhuang.hellominecraft.views.Selector -> org.jackhuang.hellominecraft.laun
     129:131:void jButton1ActionPerformed(java.awt.event.ActionEvent) -> b
     24:24:void access$000(org.jackhuang.hellominecraft.views.Selector,java.awt.event.ActionEvent) -> a
     24:24:void access$100(org.jackhuang.hellominecraft.views.Selector,java.awt.event.ActionEvent) -> b
-org.jackhuang.hellominecraft.views.Selector$1 -> org.jackhuang.hellominecraft.launcher.fa:
+org.jackhuang.hellominecraft.views.Selector$1 -> org.jackhuang.hellominecraft.launcher.eY:
     org.jackhuang.hellominecraft.views.Selector this$0 -> a
     75:76:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.views.Selector$2 -> org.jackhuang.hellominecraft.launcher.fb:
+org.jackhuang.hellominecraft.views.Selector$2 -> org.jackhuang.hellominecraft.launcher.eZ:
     org.jackhuang.hellominecraft.views.Selector this$0 -> a
     82:83:void actionPerformed(java.awt.event.ActionEvent) -> actionPerformed
-org.jackhuang.hellominecraft.views.TintablePanel -> org.jackhuang.hellominecraft.launcher.fc:
+org.jackhuang.hellominecraft.views.TintablePanel -> org.jackhuang.hellominecraft.launcher.fa:
     java.awt.Color tintColor -> a
     boolean tintActive -> a
     javax.swing.JLabel overIcon -> a
@@ -4065,17 +4053,17 @@ org.jackhuang.hellominecraft.views.TintablePanel -> org.jackhuang.hellominecraft
     63:70:void setTintActive(boolean) -> a
     74:81:void doLayout() -> doLayout
     85:91:void paint(java.awt.Graphics) -> paint
-org.jackhuang.hellominecraft.views.TintablePanel$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.fd:
+org.jackhuang.hellominecraft.views.TintablePanel$$Lambda$1 -> org.jackhuang.hellominecraft.launcher.fb:
     org.jackhuang.hellominecraft.views.TintablePanel arg$1 -> a
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.views.TintablePanel) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.views.TintablePanel) -> a
-org.jackhuang.hellominecraft.views.TintablePanel$$Lambda$2 -> org.jackhuang.hellominecraft.launcher.fe:
+org.jackhuang.hellominecraft.views.TintablePanel$$Lambda$2 -> org.jackhuang.hellominecraft.launcher.fc:
     org.jackhuang.hellominecraft.views.TintablePanel arg$1 -> a
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.views.TintablePanel) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.views.TintablePanel) -> a
-org.jackhuang.mojang.authlib.Agent -> org.jackhuang.hellominecraft.launcher.ff:
+org.jackhuang.mojang.authlib.Agent -> org.jackhuang.hellominecraft.launcher.fd:
     org.jackhuang.mojang.authlib.Agent MINECRAFT -> MINECRAFT
     org.jackhuang.mojang.authlib.Agent SCROLLS -> SCROLLS
     java.lang.String name -> name
@@ -4083,12 +4071,12 @@ org.jackhuang.mojang.authlib.Agent -> org.jackhuang.hellominecraft.launcher.ff:
     16:16:java.lang.String getName() -> getName
     20:20:int getVersion() -> getVersion
     25:25:java.lang.String toString() -> toString
-org.jackhuang.mojang.authlib.AuthenticationService -> org.jackhuang.hellominecraft.launcher.fg:
+org.jackhuang.mojang.authlib.AuthenticationService -> org.jackhuang.hellominecraft.launcher.fe:
     org.jackhuang.mojang.authlib.UserAuthentication createUserAuthentication(org.jackhuang.mojang.authlib.Agent) -> a
     org.jackhuang.mojang.authlib.minecraft.MinecraftSessionService createMinecraftSessionService() -> a
     org.jackhuang.mojang.authlib.GameProfileRepository createProfileRepository() -> a
-org.jackhuang.mojang.authlib.BaseAuthenticationService -> org.jackhuang.hellominecraft.launcher.fh:
-org.jackhuang.mojang.authlib.BaseUserAuthentication -> org.jackhuang.hellominecraft.launcher.fi:
+org.jackhuang.mojang.authlib.BaseAuthenticationService -> org.jackhuang.hellominecraft.launcher.ff:
+org.jackhuang.mojang.authlib.BaseUserAuthentication -> org.jackhuang.hellominecraft.launcher.fg:
     org.jackhuang.hellominecraft.logging.logger.Logger LOGGER -> a
     java.lang.String STORAGE_KEY_PROFILE_NAME -> a
     java.lang.String STORAGE_KEY_PROFILE_ID -> b
@@ -4122,7 +4110,7 @@ org.jackhuang.mojang.authlib.BaseUserAuthentication -> org.jackhuang.hellominecr
     250:253:org.jackhuang.mojang.authlib.UserType getUserType() -> a
     257:258:void setUserType(org.jackhuang.mojang.authlib.UserType) -> a
     261:262:void setUserid(java.lang.String) -> c
-org.jackhuang.mojang.authlib.GameProfile -> org.jackhuang.hellominecraft.launcher.fj:
+org.jackhuang.mojang.authlib.GameProfile -> org.jackhuang.hellominecraft.launcher.fh:
     java.util.UUID id -> a
     java.lang.String name -> a
     org.jackhuang.mojang.authlib.properties.PropertyMap properties -> a
@@ -4135,9 +4123,9 @@ org.jackhuang.mojang.authlib.GameProfile -> org.jackhuang.hellominecraft.launche
     58:60:int hashCode() -> hashCode
     65:65:java.lang.String toString() -> toString
     70:70:boolean isLegacy() -> b
-org.jackhuang.mojang.authlib.GameProfileRepository -> org.jackhuang.hellominecraft.launcher.fk:
+org.jackhuang.mojang.authlib.GameProfileRepository -> org.jackhuang.hellominecraft.launcher.fi:
     void findProfilesByNames(java.lang.String[],org.jackhuang.mojang.authlib.Agent,org.jackhuang.mojang.authlib.ProfileLookupCallback) -> a
-org.jackhuang.mojang.authlib.HttpAuthenticationService -> org.jackhuang.hellominecraft.launcher.fl:
+org.jackhuang.mojang.authlib.HttpAuthenticationService -> org.jackhuang.hellominecraft.launcher.fj:
     org.jackhuang.hellominecraft.logging.logger.Logger LOGGER -> a
     java.net.Proxy proxy -> a
     28:28:java.net.Proxy getProxy() -> a
@@ -4145,13 +4133,13 @@ org.jackhuang.mojang.authlib.HttpAuthenticationService -> org.jackhuang.hellomin
     42:87:java.lang.String performPostRequest(java.net.URL,java.lang.String,java.lang.String) -> a
     93:121:java.lang.String performGetRequest(java.net.URL) -> a
     126:148:java.lang.String buildQuery(java.util.Map) -> a
-org.jackhuang.mojang.authlib.HttpUserAuthentication -> org.jackhuang.hellominecraft.launcher.fm:
+org.jackhuang.mojang.authlib.HttpUserAuthentication -> org.jackhuang.hellominecraft.launcher.fk:
     11:11:org.jackhuang.mojang.authlib.HttpAuthenticationService getAuthenticationService() -> a
     3:3:org.jackhuang.mojang.authlib.AuthenticationService getAuthenticationService() -> a
-org.jackhuang.mojang.authlib.ProfileLookupCallback -> org.jackhuang.hellominecraft.launcher.fn:
+org.jackhuang.mojang.authlib.ProfileLookupCallback -> org.jackhuang.hellominecraft.launcher.fl:
     void onProfileLookupSucceeded(org.jackhuang.mojang.authlib.GameProfile) -> a
     void onProfileLookupFailed(org.jackhuang.mojang.authlib.GameProfile,java.lang.Exception) -> a
-org.jackhuang.mojang.authlib.UserAuthentication -> org.jackhuang.hellominecraft.launcher.fo:
+org.jackhuang.mojang.authlib.UserAuthentication -> org.jackhuang.hellominecraft.launcher.fm:
     boolean canLogIn() -> a
     void logIn() -> b
     void logOut() -> a
@@ -4168,7 +4156,7 @@ org.jackhuang.mojang.authlib.UserAuthentication -> org.jackhuang.hellominecraft.
     java.lang.String getUserID() -> c
     org.jackhuang.mojang.authlib.properties.PropertyMap getUserProperties() -> a
     org.jackhuang.mojang.authlib.UserType getUserType() -> a
-org.jackhuang.mojang.authlib.UserType -> org.jackhuang.hellominecraft.launcher.fp:
+org.jackhuang.mojang.authlib.UserType -> org.jackhuang.hellominecraft.launcher.fn:
     org.jackhuang.mojang.authlib.UserType LEGACY -> LEGACY
     org.jackhuang.mojang.authlib.UserType MOJANG -> MOJANG
     java.util.Map BY_NAME -> BY_NAME
@@ -4178,21 +4166,21 @@ org.jackhuang.mojang.authlib.UserType -> org.jackhuang.hellominecraft.launcher.f
     6:6:org.jackhuang.mojang.authlib.UserType valueOf(java.lang.String) -> valueOf
     19:19:org.jackhuang.mojang.authlib.UserType byName(java.lang.String) -> byName
     23:23:java.lang.String getName() -> getName
-org.jackhuang.mojang.authlib.exceptions.AuthenticationException -> org.jackhuang.hellominecraft.launcher.fq:
-org.jackhuang.mojang.authlib.exceptions.AuthenticationUnavailableException -> org.jackhuang.hellominecraft.launcher.fr:
-org.jackhuang.mojang.authlib.exceptions.InvalidCredentialsException -> org.jackhuang.hellominecraft.launcher.fs:
-org.jackhuang.mojang.authlib.exceptions.UserMigratedException -> org.jackhuang.hellominecraft.launcher.ft:
-org.jackhuang.mojang.authlib.minecraft.BaseMinecraftSessionService -> org.jackhuang.hellominecraft.launcher.fu:
+org.jackhuang.mojang.authlib.exceptions.AuthenticationException -> org.jackhuang.hellominecraft.launcher.fo:
+org.jackhuang.mojang.authlib.exceptions.AuthenticationUnavailableException -> org.jackhuang.hellominecraft.launcher.fp:
+org.jackhuang.mojang.authlib.exceptions.InvalidCredentialsException -> org.jackhuang.hellominecraft.launcher.fq:
+org.jackhuang.mojang.authlib.exceptions.UserMigratedException -> org.jackhuang.hellominecraft.launcher.fr:
+org.jackhuang.mojang.authlib.minecraft.BaseMinecraftSessionService -> org.jackhuang.hellominecraft.launcher.fs:
     org.jackhuang.mojang.authlib.AuthenticationService authenticationService -> a
     15:15:org.jackhuang.mojang.authlib.AuthenticationService getAuthenticationService() -> a
-org.jackhuang.mojang.authlib.minecraft.HttpMinecraftSessionService -> org.jackhuang.hellominecraft.launcher.fv:
+org.jackhuang.mojang.authlib.minecraft.HttpMinecraftSessionService -> org.jackhuang.hellominecraft.launcher.ft:
     13:13:org.jackhuang.mojang.authlib.HttpAuthenticationService getAuthenticationService() -> a
     5:5:org.jackhuang.mojang.authlib.AuthenticationService getAuthenticationService() -> a
-org.jackhuang.mojang.authlib.minecraft.MinecraftSessionService -> org.jackhuang.hellominecraft.launcher.fw:
+org.jackhuang.mojang.authlib.minecraft.MinecraftSessionService -> org.jackhuang.hellominecraft.launcher.fu:
     void joinServer(org.jackhuang.mojang.authlib.GameProfile,java.lang.String,java.lang.String) -> a
     org.jackhuang.mojang.authlib.GameProfile hasJoinedServer(org.jackhuang.mojang.authlib.GameProfile,java.lang.String) -> a
     org.jackhuang.mojang.authlib.GameProfile fillProfileProperties(org.jackhuang.mojang.authlib.GameProfile,boolean) -> a
-org.jackhuang.mojang.authlib.properties.Property -> org.jackhuang.hellominecraft.launcher.fx:
+org.jackhuang.mojang.authlib.properties.Property -> org.jackhuang.hellominecraft.launcher.fv:
     java.lang.String name -> name
     java.lang.String value -> value
     java.lang.String signature -> signature
@@ -4201,15 +4189,15 @@ org.jackhuang.mojang.authlib.properties.Property -> org.jackhuang.hellominecraft
     35:35:java.lang.String getSignature() -> getSignature
     39:39:boolean hasSignature() -> hasSignature
     44:55:boolean isSignatureValid(java.security.PublicKey) -> isSignatureValid
-org.jackhuang.mojang.authlib.properties.PropertyMap -> org.jackhuang.hellominecraft.launcher.fy:
-org.jackhuang.mojang.authlib.properties.PropertyMap$Serializer -> org.jackhuang.hellominecraft.launcher.fz:
+org.jackhuang.mojang.authlib.properties.PropertyMap -> org.jackhuang.hellominecraft.launcher.fw:
+org.jackhuang.mojang.authlib.properties.PropertyMap$Serializer -> org.jackhuang.hellominecraft.launcher.fx:
     25:56:org.jackhuang.mojang.authlib.properties.PropertyMap deserialize(com.google.gson.JsonElement,java.lang.reflect.Type,com.google.gson.JsonDeserializationContext) -> a
     61:76:com.google.gson.JsonElement serialize(org.jackhuang.mojang.authlib.properties.PropertyMap,java.lang.reflect.Type,com.google.gson.JsonSerializationContext) -> a
     21:21:com.google.gson.JsonElement serialize(java.lang.Object,java.lang.reflect.Type,com.google.gson.JsonSerializationContext) -> serialize
     21:21:java.lang.Object deserialize(com.google.gson.JsonElement,java.lang.reflect.Type,com.google.gson.JsonDeserializationContext) -> deserialize
-org.jackhuang.mojang.authlib.yggdrasil.ProfileIncompleteException -> org.jackhuang.hellominecraft.launcher.fA:
-org.jackhuang.mojang.authlib.yggdrasil.ProfileNotFoundException -> org.jackhuang.hellominecraft.launcher.fB:
-org.jackhuang.mojang.authlib.yggdrasil.YggdrasilAuthenticationService -> org.jackhuang.hellominecraft.launcher.fC:
+org.jackhuang.mojang.authlib.yggdrasil.ProfileIncompleteException -> org.jackhuang.hellominecraft.launcher.fy:
+org.jackhuang.mojang.authlib.yggdrasil.ProfileNotFoundException -> org.jackhuang.hellominecraft.launcher.fz:
+org.jackhuang.mojang.authlib.yggdrasil.YggdrasilAuthenticationService -> org.jackhuang.hellominecraft.launcher.fA:
     java.lang.String clientToken -> a
     com.google.gson.Gson gson -> a
     50:50:org.jackhuang.mojang.authlib.UserAuthentication createUserAuthentication(org.jackhuang.mojang.authlib.Agent) -> a
@@ -4217,13 +4205,13 @@ org.jackhuang.mojang.authlib.yggdrasil.YggdrasilAuthenticationService -> org.jac
     60:60:org.jackhuang.mojang.authlib.GameProfileRepository createProfileRepository() -> a
     65:88:org.jackhuang.mojang.authlib.yggdrasil.response.Response makeRequest(java.net.URL,java.lang.Object,java.lang.Class) -> a
     93:93:java.lang.String getClientToken() -> a
-org.jackhuang.mojang.authlib.yggdrasil.YggdrasilAuthenticationService$1 -> org.jackhuang.hellominecraft.launcher.fD:
-org.jackhuang.mojang.authlib.yggdrasil.YggdrasilAuthenticationService$GameProfileSerializer -> org.jackhuang.hellominecraft.launcher.fE:
+org.jackhuang.mojang.authlib.yggdrasil.YggdrasilAuthenticationService$1 -> org.jackhuang.hellominecraft.launcher.fB:
+org.jackhuang.mojang.authlib.yggdrasil.YggdrasilAuthenticationService$GameProfileSerializer -> org.jackhuang.hellominecraft.launcher.fC:
     100:103:org.jackhuang.mojang.authlib.GameProfile deserialize(com.google.gson.JsonElement,java.lang.reflect.Type,com.google.gson.JsonDeserializationContext) -> a
     108:115:com.google.gson.JsonElement serialize(org.jackhuang.mojang.authlib.GameProfile,java.lang.reflect.Type,com.google.gson.JsonSerializationContext) -> a
     96:96:com.google.gson.JsonElement serialize(java.lang.Object,java.lang.reflect.Type,com.google.gson.JsonSerializationContext) -> serialize
     96:96:java.lang.Object deserialize(com.google.gson.JsonElement,java.lang.reflect.Type,com.google.gson.JsonDeserializationContext) -> deserialize
-org.jackhuang.mojang.authlib.yggdrasil.YggdrasilGameProfileRepository -> org.jackhuang.hellominecraft.launcher.fF:
+org.jackhuang.mojang.authlib.yggdrasil.YggdrasilGameProfileRepository -> org.jackhuang.hellominecraft.launcher.fD:
     org.jackhuang.hellominecraft.logging.logger.Logger LOGGER -> a
     java.lang.String BASE_URL -> a
     java.lang.String SEARCH_PAGE_URL -> b
@@ -4232,8 +4220,8 @@ org.jackhuang.mojang.authlib.yggdrasil.YggdrasilGameProfileRepository -> org.jac
     int DELAY_BETWEEN_FAILURES -> c
     org.jackhuang.mojang.authlib.yggdrasil.YggdrasilAuthenticationService authenticationService -> a
     32:91:void findProfilesByNames(java.lang.String[],org.jackhuang.mojang.authlib.Agent,org.jackhuang.mojang.authlib.ProfileLookupCallback) -> a
-org.jackhuang.mojang.authlib.yggdrasil.YggdrasilGameProfileRepository$1 -> org.jackhuang.hellominecraft.launcher.fG:
-org.jackhuang.mojang.authlib.yggdrasil.YggdrasilGameProfileRepository$ProfileCriteria -> org.jackhuang.hellominecraft.launcher.fH:
+org.jackhuang.mojang.authlib.yggdrasil.YggdrasilGameProfileRepository$1 -> org.jackhuang.hellominecraft.launcher.fE:
+org.jackhuang.mojang.authlib.yggdrasil.YggdrasilGameProfileRepository$ProfileCriteria -> org.jackhuang.hellominecraft.launcher.fF:
     java.lang.String name -> a
     java.lang.String agent -> b
     org.jackhuang.mojang.authlib.yggdrasil.YggdrasilGameProfileRepository this$0 -> a
@@ -4242,7 +4230,7 @@ org.jackhuang.mojang.authlib.yggdrasil.YggdrasilGameProfileRepository$ProfileCri
     113:120:boolean equals(java.lang.Object) -> equals
     125:125:int hashCode() -> hashCode
     130:130:java.lang.String toString() -> toString
-org.jackhuang.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService -> org.jackhuang.hellominecraft.launcher.fI:
+org.jackhuang.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService -> org.jackhuang.hellominecraft.launcher.fG:
     org.jackhuang.hellominecraft.logging.logger.Logger LOGGER -> a
     java.lang.String BASE_URL -> a
     java.net.URL JOIN_URL -> a
@@ -4253,7 +4241,7 @@ org.jackhuang.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService -> org.j
     95:95:org.jackhuang.mojang.authlib.yggdrasil.YggdrasilAuthenticationService getAuthenticationService() -> a
     19:19:org.jackhuang.mojang.authlib.HttpAuthenticationService getAuthenticationService() -> a
     19:19:org.jackhuang.mojang.authlib.AuthenticationService getAuthenticationService() -> a
-org.jackhuang.mojang.authlib.yggdrasil.YggdrasilUserAuthentication -> org.jackhuang.hellominecraft.launcher.fJ:
+org.jackhuang.mojang.authlib.yggdrasil.YggdrasilUserAuthentication -> org.jackhuang.hellominecraft.launcher.fH:
     org.jackhuang.hellominecraft.logging.logger.Logger LOGGER -> a
     java.lang.String BASE_URL -> g
     java.net.URL ROUTE_AUTHENTICATE -> a
@@ -4285,22 +4273,22 @@ org.jackhuang.mojang.authlib.yggdrasil.YggdrasilUserAuthentication -> org.jackhu
     246:246:org.jackhuang.mojang.authlib.yggdrasil.YggdrasilAuthenticationService getAuthenticationService() -> a
     23:23:org.jackhuang.mojang.authlib.HttpAuthenticationService getAuthenticationService() -> a
     23:23:org.jackhuang.mojang.authlib.AuthenticationService getAuthenticationService() -> a
-org.jackhuang.mojang.authlib.yggdrasil.request.AuthenticationRequest -> org.jackhuang.hellominecraft.launcher.fK:
+org.jackhuang.mojang.authlib.yggdrasil.request.AuthenticationRequest -> org.jackhuang.hellominecraft.launcher.fI:
     org.jackhuang.mojang.authlib.Agent agent -> agent
     java.lang.String username -> username
     java.lang.String password -> password
     java.lang.String clientToken -> clientToken
     boolean requestUser -> requestUser
-org.jackhuang.mojang.authlib.yggdrasil.request.JoinMinecraftServerRequest -> org.jackhuang.hellominecraft.launcher.fL:
+org.jackhuang.mojang.authlib.yggdrasil.request.JoinMinecraftServerRequest -> org.jackhuang.hellominecraft.launcher.fJ:
     java.lang.String accessToken -> accessToken
     java.util.UUID selectedProfile -> selectedProfile
     java.lang.String serverId -> serverId
-org.jackhuang.mojang.authlib.yggdrasil.request.RefreshRequest -> org.jackhuang.hellominecraft.launcher.fM:
+org.jackhuang.mojang.authlib.yggdrasil.request.RefreshRequest -> org.jackhuang.hellominecraft.launcher.fK:
     java.lang.String clientToken -> clientToken
     java.lang.String accessToken -> accessToken
     org.jackhuang.mojang.authlib.GameProfile selectedProfile -> selectedProfile
     boolean requestUser -> requestUser
-org.jackhuang.mojang.authlib.yggdrasil.response.AuthenticationResponse -> org.jackhuang.hellominecraft.launcher.fN:
+org.jackhuang.mojang.authlib.yggdrasil.response.AuthenticationResponse -> org.jackhuang.hellominecraft.launcher.fL:
     java.lang.String accessToken -> accessToken
     java.lang.String clientToken -> clientToken
     org.jackhuang.mojang.authlib.GameProfile selectedProfile -> selectedProfile
@@ -4311,24 +4299,24 @@ org.jackhuang.mojang.authlib.yggdrasil.response.AuthenticationResponse -> org.ja
     22:22:org.jackhuang.mojang.authlib.GameProfile[] getAvailableProfiles() -> getAvailableProfiles
     26:26:org.jackhuang.mojang.authlib.GameProfile getSelectedProfile() -> getSelectedProfile
     30:30:org.jackhuang.mojang.authlib.yggdrasil.response.User getUser() -> getUser
-org.jackhuang.mojang.authlib.yggdrasil.response.HasJoinedMinecraftServerResponse -> org.jackhuang.hellominecraft.launcher.fO:
+org.jackhuang.mojang.authlib.yggdrasil.response.HasJoinedMinecraftServerResponse -> org.jackhuang.hellominecraft.launcher.fM:
     java.util.UUID id -> id
     org.jackhuang.mojang.authlib.properties.PropertyMap properties -> properties
     12:12:java.util.UUID getId() -> getId
     16:16:org.jackhuang.mojang.authlib.properties.PropertyMap getProperties() -> getProperties
-org.jackhuang.mojang.authlib.yggdrasil.response.MinecraftProfilePropertiesResponse -> org.jackhuang.hellominecraft.launcher.fP:
+org.jackhuang.mojang.authlib.yggdrasil.response.MinecraftProfilePropertiesResponse -> org.jackhuang.hellominecraft.launcher.fN:
     java.util.UUID id -> id
     java.lang.String name -> name
     org.jackhuang.mojang.authlib.properties.PropertyMap properties -> properties
     13:13:java.util.UUID getId() -> getId
     17:17:java.lang.String getName() -> getName
     21:21:org.jackhuang.mojang.authlib.properties.PropertyMap getProperties() -> getProperties
-org.jackhuang.mojang.authlib.yggdrasil.response.ProfileSearchResultsResponse -> org.jackhuang.hellominecraft.launcher.fQ:
+org.jackhuang.mojang.authlib.yggdrasil.response.ProfileSearchResultsResponse -> org.jackhuang.hellominecraft.launcher.fO:
     org.jackhuang.mojang.authlib.GameProfile[] profiles -> profiles
     int size -> size
     11:11:org.jackhuang.mojang.authlib.GameProfile[] getProfiles() -> getProfiles
     15:15:int getSize() -> getSize
-org.jackhuang.mojang.authlib.yggdrasil.response.RefreshResponse -> org.jackhuang.hellominecraft.launcher.fR:
+org.jackhuang.mojang.authlib.yggdrasil.response.RefreshResponse -> org.jackhuang.hellominecraft.launcher.fP:
     java.lang.String accessToken -> accessToken
     java.lang.String clientToken -> clientToken
     org.jackhuang.mojang.authlib.GameProfile selectedProfile -> selectedProfile
@@ -4339,29 +4327,29 @@ org.jackhuang.mojang.authlib.yggdrasil.response.RefreshResponse -> org.jackhuang
     22:22:org.jackhuang.mojang.authlib.GameProfile[] getAvailableProfiles() -> getAvailableProfiles
     26:26:org.jackhuang.mojang.authlib.GameProfile getSelectedProfile() -> getSelectedProfile
     30:30:org.jackhuang.mojang.authlib.yggdrasil.response.User getUser() -> getUser
-org.jackhuang.mojang.authlib.yggdrasil.response.Response -> org.jackhuang.hellominecraft.launcher.fS:
+org.jackhuang.mojang.authlib.yggdrasil.response.Response -> org.jackhuang.hellominecraft.launcher.fQ:
     java.lang.String error -> error
     java.lang.String errorMessage -> errorMessage
     java.lang.String cause -> cause
     10:10:java.lang.String getError() -> getError
     14:14:java.lang.String getCause() -> getCause
     18:18:java.lang.String getErrorMessage() -> getErrorMessage
-org.jackhuang.mojang.authlib.yggdrasil.response.User -> org.jackhuang.hellominecraft.launcher.fT:
+org.jackhuang.mojang.authlib.yggdrasil.response.User -> org.jackhuang.hellominecraft.launcher.fR:
     java.lang.String id -> id
     org.jackhuang.mojang.authlib.properties.PropertyMap properties -> properties
     11:11:java.lang.String getId() -> getId
     15:15:org.jackhuang.mojang.authlib.properties.PropertyMap getProperties() -> getProperties
-org.jackhuang.mojang.util.LegacyPropertyMapSerializer -> org.jackhuang.hellominecraft.launcher.fU:
+org.jackhuang.mojang.util.LegacyPropertyMapSerializer -> org.jackhuang.hellominecraft.launcher.fS:
     26:36:com.google.gson.JsonElement serialize(org.jackhuang.mojang.authlib.properties.PropertyMap,java.lang.reflect.Type,com.google.gson.JsonSerializationContext) -> a
     21:21:com.google.gson.JsonElement serialize(java.lang.Object,java.lang.reflect.Type,com.google.gson.JsonSerializationContext) -> serialize
-org.jackhuang.mojang.util.UUIDTypeAdapter -> org.jackhuang.hellominecraft.launcher.fV:
+org.jackhuang.mojang.util.UUIDTypeAdapter -> org.jackhuang.hellominecraft.launcher.fT:
     13:14:void write(com.google.gson.stream.JsonWriter,java.util.UUID) -> a
     17:17:java.util.UUID read(com.google.gson.stream.JsonReader) -> a
     21:21:java.lang.String fromUUID(java.util.UUID) -> a
     25:25:java.util.UUID fromString(java.lang.String) -> a
     9:9:java.lang.Object read(com.google.gson.stream.JsonReader) -> read
     9:9:void write(com.google.gson.stream.JsonWriter,java.lang.Object) -> write
-org.tukaani.xz.ARMOptions -> org.jackhuang.hellominecraft.launcher.fW:
+org.tukaani.xz.ARMOptions -> org.jackhuang.hellominecraft.launcher.fU:
     int ALIGNMENT -> b
     26:26:org.tukaani.xz.FinishableOutputStream getOutputStream(org.tukaani.xz.FinishableOutputStream) -> a
     30:30:java.io.InputStream getInputStream(java.io.InputStream) -> a
@@ -4371,7 +4359,7 @@ org.tukaani.xz.ARMOptions -> org.jackhuang.hellominecraft.launcher.fW:
     18:18:int getEncoderMemoryUsage() -> b
     18:18:int getStartOffset() -> c
     18:18:void setStartOffset(int) -> a
-org.tukaani.xz.ARMThumbOptions -> org.jackhuang.hellominecraft.launcher.fX:
+org.tukaani.xz.ARMThumbOptions -> org.jackhuang.hellominecraft.launcher.fV:
     int ALIGNMENT -> b
     26:26:org.tukaani.xz.FinishableOutputStream getOutputStream(org.tukaani.xz.FinishableOutputStream) -> a
     30:30:java.io.InputStream getInputStream(java.io.InputStream) -> a
@@ -4381,7 +4369,7 @@ org.tukaani.xz.ARMThumbOptions -> org.jackhuang.hellominecraft.launcher.fX:
     18:18:int getEncoderMemoryUsage() -> b
     18:18:int getStartOffset() -> c
     18:18:void setStartOffset(int) -> a
-org.tukaani.xz.BCJCoder -> org.jackhuang.hellominecraft.launcher.fY:
+org.tukaani.xz.BCJCoder -> org.jackhuang.hellominecraft.launcher.fW:
     long X86_FILTER_ID -> a
     long POWERPC_FILTER_ID -> b
     long IA64_FILTER_ID -> c
@@ -4392,13 +4380,13 @@ org.tukaani.xz.BCJCoder -> org.jackhuang.hellominecraft.launcher.fY:
     25:25:boolean changesSize() -> a
     29:29:boolean nonLastOK() -> b
     33:33:boolean lastOK() -> c
-org.tukaani.xz.BCJDecoder -> org.jackhuang.hellominecraft.launcher.fZ:
+org.tukaani.xz.BCJDecoder -> org.jackhuang.hellominecraft.launcher.fX:
     long filterID -> g
     int startOffset -> a
     boolean $assertionsDisabled -> a
     39:39:int getMemoryUsage() -> a
     43:60:java.io.InputStream getInputStream(java.io.InputStream) -> a
-org.tukaani.xz.BCJEncoder -> org.jackhuang.hellominecraft.launcher.ga:
+org.tukaani.xz.BCJEncoder -> org.jackhuang.hellominecraft.launcher.fY:
     org.tukaani.xz.BCJOptions options -> a
     long filterID -> g
     byte[] props -> a
@@ -4407,7 +4395,7 @@ org.tukaani.xz.BCJEncoder -> org.jackhuang.hellominecraft.launcher.ga:
     38:38:byte[] getFilterProps() -> a
     42:42:boolean supportsFlushing() -> d
     46:46:org.tukaani.xz.FinishableOutputStream getOutputStream(org.tukaani.xz.FinishableOutputStream) -> a
-org.tukaani.xz.BCJOptions -> org.jackhuang.hellominecraft.launcher.gb:
+org.tukaani.xz.BCJOptions -> org.jackhuang.hellominecraft.launcher.fZ:
     int alignment -> b
     int startOffset -> a
     boolean $assertionsDisabled -> a
@@ -4416,7 +4404,7 @@ org.tukaani.xz.BCJOptions -> org.jackhuang.hellominecraft.launcher.gb:
     42:42:int getEncoderMemoryUsage() -> b
     46:46:int getDecoderMemoryUsage() -> a
     51:54:java.lang.Object clone() -> clone
-org.tukaani.xz.BlockInputStream -> org.jackhuang.hellominecraft.launcher.gc:
+org.tukaani.xz.BlockInputStream -> org.jackhuang.hellominecraft.launcher.ga:
     java.io.DataInputStream inData -> a
     org.tukaani.xz.CountingInputStream inCounted -> a
     java.io.InputStream filterChain -> a
@@ -4428,13 +4416,13 @@ org.tukaani.xz.BlockInputStream -> org.jackhuang.hellominecraft.launcher.gc:
     long uncompressedSize -> d
     boolean endReached -> a
     byte[] tempBuf -> a
-    199:199:int read() -> read
-    203:240:int read(byte[],int,int) -> read
-    244:265:void validate() -> a
-    268:268:int available() -> available
-    272:272:long getUnpaddedSize() -> a
-    276:276:long getUncompressedSize() -> b
-org.tukaani.xz.BlockOutputStream -> org.jackhuang.hellominecraft.launcher.gd:
+    200:200:int read() -> read
+    205:242:int read(byte[],int,int) -> read
+    246:267:void validate() -> a
+    270:270:int available() -> available
+    274:274:long getUnpaddedSize() -> a
+    278:278:long getUncompressedSize() -> b
+org.tukaani.xz.BlockOutputStream -> org.jackhuang.hellominecraft.launcher.gb:
     java.io.OutputStream out -> a
     org.tukaani.xz.CountingOutputStream outCounted -> a
     org.tukaani.xz.FinishableOutputStream filterChain -> a
@@ -4450,14 +4438,14 @@ org.tukaani.xz.BlockOutputStream -> org.jackhuang.hellominecraft.launcher.gd:
     118:125:void validate() -> b
     128:128:long getUnpaddedSize() -> a
     132:132:long getUncompressedSize() -> b
-org.tukaani.xz.CorruptedInputException -> org.jackhuang.hellominecraft.launcher.ge:
+org.tukaani.xz.CorruptedInputException -> org.jackhuang.hellominecraft.launcher.gc:
     long serialVersionUID -> a
-org.tukaani.xz.CountingInputStream -> org.jackhuang.hellominecraft.launcher.gf:
+org.tukaani.xz.CountingInputStream -> org.jackhuang.hellominecraft.launcher.gd:
     long size -> a
     27:31:int read() -> read
     35:39:int read(byte[],int,int) -> read
     43:43:long getSize() -> a
-org.tukaani.xz.CountingOutputStream -> org.jackhuang.hellominecraft.launcher.gg:
+org.tukaani.xz.CountingOutputStream -> org.jackhuang.hellominecraft.launcher.ge:
     java.io.OutputStream out -> a
     long size -> a
     32:35:void write(int) -> write
@@ -4465,23 +4453,23 @@ org.tukaani.xz.CountingOutputStream -> org.jackhuang.hellominecraft.launcher.gg:
     44:45:void flush() -> flush
     48:49:void close() -> close
     52:52:long getSize() -> a
-org.tukaani.xz.DeltaCoder -> org.jackhuang.hellominecraft.launcher.gh:
+org.tukaani.xz.DeltaCoder -> org.jackhuang.hellominecraft.launcher.gf:
     long FILTER_ID -> a
     16:16:boolean changesSize() -> a
     20:20:boolean nonLastOK() -> b
     24:24:boolean lastOK() -> c
-org.tukaani.xz.DeltaDecoder -> org.jackhuang.hellominecraft.launcher.gi:
+org.tukaani.xz.DeltaDecoder -> org.jackhuang.hellominecraft.launcher.gg:
     int distance -> a
     26:26:int getMemoryUsage() -> a
     30:30:java.io.InputStream getInputStream(java.io.InputStream) -> a
-org.tukaani.xz.DeltaEncoder -> org.jackhuang.hellominecraft.launcher.gj:
+org.tukaani.xz.DeltaEncoder -> org.jackhuang.hellominecraft.launcher.gh:
     org.tukaani.xz.DeltaOptions options -> a
     byte[] props -> a
     22:22:long getFilterID() -> a
     26:26:byte[] getFilterProps() -> a
     30:30:boolean supportsFlushing() -> d
     34:34:org.tukaani.xz.FinishableOutputStream getOutputStream(org.tukaani.xz.FinishableOutputStream) -> a
-org.tukaani.xz.DeltaInputStream -> org.jackhuang.hellominecraft.launcher.gk:
+org.tukaani.xz.DeltaInputStream -> org.jackhuang.hellominecraft.launcher.gi:
     int DISTANCE_MIN -> a
     int DISTANCE_MAX -> b
     java.io.InputStream in -> a
@@ -4492,7 +4480,7 @@ org.tukaani.xz.DeltaInputStream -> org.jackhuang.hellominecraft.launcher.gk:
     92:113:int read(byte[],int,int) -> read
     122:128:int available() -> available
     138:145:void close() -> close
-org.tukaani.xz.DeltaOptions -> org.jackhuang.hellominecraft.launcher.gl:
+org.tukaani.xz.DeltaOptions -> org.jackhuang.hellominecraft.launcher.gj:
     int DISTANCE_MIN -> a
     int DISTANCE_MAX -> b
     int distance -> c
@@ -4505,7 +4493,7 @@ org.tukaani.xz.DeltaOptions -> org.jackhuang.hellominecraft.launcher.gl:
     87:87:java.io.InputStream getInputStream(java.io.InputStream) -> a
     91:91:org.tukaani.xz.FilterEncoder getFilterEncoder() -> a
     96:99:java.lang.Object clone() -> clone
-org.tukaani.xz.DeltaOutputStream -> org.jackhuang.hellominecraft.launcher.gm:
+org.tukaani.xz.DeltaOutputStream -> org.jackhuang.hellominecraft.launcher.gk:
     int FILTER_BUF_SIZE -> a
     org.tukaani.xz.FinishableOutputStream out -> a
     org.tukaani.xz.delta.DeltaEncoder delta -> a
@@ -4519,19 +4507,19 @@ org.tukaani.xz.DeltaOutputStream -> org.jackhuang.hellominecraft.launcher.gm:
     68:80:void flush() -> flush
     83:96:void finish() -> a
     99:112:void close() -> close
-org.tukaani.xz.FilterCoder -> org.jackhuang.hellominecraft.launcher.gn:
+org.tukaani.xz.FilterCoder -> org.jackhuang.hellominecraft.launcher.gl:
     boolean changesSize() -> a
     boolean nonLastOK() -> b
     boolean lastOK() -> c
-org.tukaani.xz.FilterDecoder -> org.jackhuang.hellominecraft.launcher.go:
+org.tukaani.xz.FilterDecoder -> org.jackhuang.hellominecraft.launcher.gm:
     int getMemoryUsage() -> a
     java.io.InputStream getInputStream(java.io.InputStream) -> a
-org.tukaani.xz.FilterEncoder -> org.jackhuang.hellominecraft.launcher.gp:
+org.tukaani.xz.FilterEncoder -> org.jackhuang.hellominecraft.launcher.gn:
     long getFilterID() -> a
     byte[] getFilterProps() -> a
     boolean supportsFlushing() -> d
     org.tukaani.xz.FinishableOutputStream getOutputStream(org.tukaani.xz.FinishableOutputStream) -> a
-org.tukaani.xz.FilterOptions -> org.jackhuang.hellominecraft.launcher.gq:
+org.tukaani.xz.FilterOptions -> org.jackhuang.hellominecraft.launcher.go:
     27:32:int getEncoderMemoryUsage(org.tukaani.xz.FilterOptions[]) -> a
     42:47:int getDecoderMemoryUsage(org.tukaani.xz.FilterOptions[]) -> b
     int getEncoderMemoryUsage() -> b
@@ -4539,16 +4527,16 @@ org.tukaani.xz.FilterOptions -> org.jackhuang.hellominecraft.launcher.gq:
     int getDecoderMemoryUsage() -> a
     java.io.InputStream getInputStream(java.io.InputStream) -> a
     org.tukaani.xz.FilterEncoder getFilterEncoder() -> a
-org.tukaani.xz.FinishableOutputStream -> org.jackhuang.hellominecraft.launcher.gr:
+org.tukaani.xz.FinishableOutputStream -> org.jackhuang.hellominecraft.launcher.gp:
     30:30:void finish() -> a
-org.tukaani.xz.FinishableWrapperOutputStream -> org.jackhuang.hellominecraft.launcher.gs:
+org.tukaani.xz.FinishableWrapperOutputStream -> org.jackhuang.hellominecraft.launcher.gq:
     java.io.OutputStream out -> a
     39:40:void write(int) -> write
     46:47:void write(byte[]) -> write
     54:55:void write(byte[],int,int) -> write
     61:62:void flush() -> flush
     68:69:void close() -> close
-org.tukaani.xz.IA64Options -> org.jackhuang.hellominecraft.launcher.gt:
+org.tukaani.xz.IA64Options -> org.jackhuang.hellominecraft.launcher.gr:
     int ALIGNMENT -> b
     26:26:org.tukaani.xz.FinishableOutputStream getOutputStream(org.tukaani.xz.FinishableOutputStream) -> a
     30:30:java.io.InputStream getInputStream(java.io.InputStream) -> a
@@ -4558,25 +4546,25 @@ org.tukaani.xz.IA64Options -> org.jackhuang.hellominecraft.launcher.gt:
     18:18:int getEncoderMemoryUsage() -> b
     18:18:int getStartOffset() -> c
     18:18:void setStartOffset(int) -> a
-org.tukaani.xz.IndexIndicatorException -> org.jackhuang.hellominecraft.launcher.gu:
+org.tukaani.xz.IndexIndicatorException -> org.jackhuang.hellominecraft.launcher.gs:
     long serialVersionUID -> a
-org.tukaani.xz.LZMA2Coder -> org.jackhuang.hellominecraft.launcher.gv:
+org.tukaani.xz.LZMA2Coder -> org.jackhuang.hellominecraft.launcher.gt:
     long FILTER_ID -> a
     16:16:boolean changesSize() -> a
     20:20:boolean nonLastOK() -> b
     24:24:boolean lastOK() -> c
-org.tukaani.xz.LZMA2Decoder -> org.jackhuang.hellominecraft.launcher.gw:
+org.tukaani.xz.LZMA2Decoder -> org.jackhuang.hellominecraft.launcher.gu:
     int dictSize -> a
     29:29:int getMemoryUsage() -> a
     33:33:java.io.InputStream getInputStream(java.io.InputStream) -> a
-org.tukaani.xz.LZMA2Encoder -> org.jackhuang.hellominecraft.launcher.gx:
+org.tukaani.xz.LZMA2Encoder -> org.jackhuang.hellominecraft.launcher.gv:
     org.tukaani.xz.LZMA2Options options -> a
     byte[] props -> a
     36:36:long getFilterID() -> a
     40:40:byte[] getFilterProps() -> a
     44:44:boolean supportsFlushing() -> d
     48:48:org.tukaani.xz.FinishableOutputStream getOutputStream(org.tukaani.xz.FinishableOutputStream) -> a
-org.tukaani.xz.LZMA2InputStream -> org.jackhuang.hellominecraft.launcher.gy:
+org.tukaani.xz.LZMA2InputStream -> org.jackhuang.hellominecraft.launcher.gw:
     int DICT_SIZE_MIN -> a
     int DICT_SIZE_MAX -> b
     int COMPRESSED_SIZE_MAX -> c
@@ -4599,7 +4587,7 @@ org.tukaani.xz.LZMA2InputStream -> org.jackhuang.hellominecraft.launcher.gy:
     301:315:void decodeProps() -> b
     334:340:int available() -> available
     350:357:void close() -> close
-org.tukaani.xz.LZMA2Options -> org.jackhuang.hellominecraft.launcher.gz:
+org.tukaani.xz.LZMA2Options -> org.jackhuang.hellominecraft.launcher.gx:
     int PRESET_MIN -> a
     int PRESET_MAX -> b
     int PRESET_DEFAULT -> c
@@ -4656,7 +4644,7 @@ org.tukaani.xz.LZMA2Options -> org.jackhuang.hellominecraft.launcher.gz:
     566:566:java.io.InputStream getInputStream(java.io.InputStream) -> a
     570:570:org.tukaani.xz.FilterEncoder getFilterEncoder() -> a
     575:578:java.lang.Object clone() -> clone
-org.tukaani.xz.LZMA2OutputStream -> org.jackhuang.hellominecraft.launcher.gA:
+org.tukaani.xz.LZMA2OutputStream -> org.jackhuang.hellominecraft.launcher.gy:
     int COMPRESSED_SIZE_MAX -> a
     org.tukaani.xz.FinishableOutputStream out -> a
     java.io.DataOutputStream outData -> a
@@ -4683,7 +4671,7 @@ org.tukaani.xz.LZMA2OutputStream -> org.jackhuang.hellominecraft.launcher.gA:
     204:223:void flush() -> flush
     226:238:void finish() -> a
     241:260:void close() -> close
-org.tukaani.xz.LZMAInputStream -> org.jackhuang.hellominecraft.launcher.gB:
+org.tukaani.xz.LZMAInputStream -> org.jackhuang.hellominecraft.launcher.gz:
     int DICT_SIZE_MAX -> a
     java.io.InputStream in -> a
     org.tukaani.xz.lz.LZDecoder lz -> a
@@ -4702,13 +4690,13 @@ org.tukaani.xz.LZMAInputStream -> org.jackhuang.hellominecraft.launcher.gB:
     444:444:int read() -> read
     471:550:int read(byte[],int,int) -> read
     561:568:void close() -> close
-org.tukaani.xz.MemoryLimitException -> org.jackhuang.hellominecraft.launcher.gC:
+org.tukaani.xz.MemoryLimitException -> org.jackhuang.hellominecraft.launcher.gA:
     long serialVersionUID -> a
     int memoryNeeded -> a
     int memoryLimit -> b
     48:48:int getMemoryNeeded() -> a
     58:58:int getMemoryLimit() -> b
-org.tukaani.xz.PowerPCOptions -> org.jackhuang.hellominecraft.launcher.gD:
+org.tukaani.xz.PowerPCOptions -> org.jackhuang.hellominecraft.launcher.gB:
     int ALIGNMENT -> b
     26:26:org.tukaani.xz.FinishableOutputStream getOutputStream(org.tukaani.xz.FinishableOutputStream) -> a
     30:30:java.io.InputStream getInputStream(java.io.InputStream) -> a
@@ -4718,9 +4706,9 @@ org.tukaani.xz.PowerPCOptions -> org.jackhuang.hellominecraft.launcher.gD:
     18:18:int getEncoderMemoryUsage() -> b
     18:18:int getStartOffset() -> c
     18:18:void setStartOffset(int) -> a
-org.tukaani.xz.RawCoder -> org.jackhuang.hellominecraft.launcher.gE:
+org.tukaani.xz.RawCoder -> org.jackhuang.hellominecraft.launcher.gC:
     15:32:void validate(org.tukaani.xz.FilterCoder[]) -> a
-org.tukaani.xz.SPARCOptions -> org.jackhuang.hellominecraft.launcher.gF:
+org.tukaani.xz.SPARCOptions -> org.jackhuang.hellominecraft.launcher.gD:
     int ALIGNMENT -> b
     26:26:org.tukaani.xz.FinishableOutputStream getOutputStream(org.tukaani.xz.FinishableOutputStream) -> a
     30:30:java.io.InputStream getInputStream(java.io.InputStream) -> a
@@ -4730,7 +4718,7 @@ org.tukaani.xz.SPARCOptions -> org.jackhuang.hellominecraft.launcher.gF:
     18:18:int getEncoderMemoryUsage() -> b
     18:18:int getStartOffset() -> c
     18:18:void setStartOffset(int) -> a
-org.tukaani.xz.SeekableFileInputStream -> org.jackhuang.hellominecraft.launcher.gG:
+org.tukaani.xz.SeekableFileInputStream -> org.jackhuang.hellominecraft.launcher.gE:
     java.io.RandomAccessFile randomAccessFile -> a
     55:55:int read() -> read
     62:62:int read(byte[]) -> read
@@ -4739,12 +4727,12 @@ org.tukaani.xz.SeekableFileInputStream -> org.jackhuang.hellominecraft.launcher.
     85:85:long length() -> a
     93:93:long position() -> b
     100:101:void seek(long) -> a
-org.tukaani.xz.SeekableInputStream -> org.jackhuang.hellominecraft.launcher.gH:
+org.tukaani.xz.SeekableInputStream -> org.jackhuang.hellominecraft.launcher.gF:
     42:54:long skip(long) -> skip
     long length() -> a
     long position() -> b
     void seek(long) -> a
-org.tukaani.xz.SeekableXZInputStream -> org.jackhuang.hellominecraft.launcher.gI:
+org.tukaani.xz.SeekableXZInputStream -> org.jackhuang.hellominecraft.launcher.gG:
     org.tukaani.xz.SeekableInputStream in -> a
     int memoryLimit -> a
     int indexMemoryUsage -> b
@@ -4787,7 +4775,7 @@ org.tukaani.xz.SeekableXZInputStream -> org.jackhuang.hellominecraft.launcher.gI
     827:846:void locateBlockByPos(org.tukaani.xz.index.BlockInfo,long) -> a
     854:868:void locateBlockByNumber(org.tukaani.xz.index.BlockInfo,int) -> a
     881:895:void initBlockDecoder() -> b
-org.tukaani.xz.SimpleInputStream -> org.jackhuang.hellominecraft.launcher.gJ:
+org.tukaani.xz.SimpleInputStream -> org.jackhuang.hellominecraft.launcher.gH:
     int FILTER_BUF_SIZE -> a
     java.io.InputStream in -> a
     org.tukaani.xz.simple.SimpleFilter simpleFilter -> a
@@ -4804,7 +4792,7 @@ org.tukaani.xz.SimpleInputStream -> org.jackhuang.hellominecraft.launcher.gJ:
     55:115:int read(byte[],int,int) -> read
     120:126:int available() -> available
     130:137:void close() -> close
-org.tukaani.xz.SimpleOutputStream -> org.jackhuang.hellominecraft.launcher.gK:
+org.tukaani.xz.SimpleOutputStream -> org.jackhuang.hellominecraft.launcher.gI:
     int FILTER_BUF_SIZE -> a
     org.tukaani.xz.FinishableOutputStream out -> a
     org.tukaani.xz.simple.SimpleFilter simpleFilter -> a
@@ -4822,7 +4810,7 @@ org.tukaani.xz.SimpleOutputStream -> org.jackhuang.hellominecraft.launcher.gK:
     108:108:void flush() -> flush
     112:123:void finish() -> a
     126:150:void close() -> close
-org.tukaani.xz.SingleXZInputStream -> org.jackhuang.hellominecraft.launcher.gL:
+org.tukaani.xz.SingleXZInputStream -> org.jackhuang.hellominecraft.launcher.gJ:
     java.io.InputStream in -> a
     int memoryLimit -> a
     org.tukaani.xz.common.StreamFlags streamHeaderFlags -> a
@@ -4841,7 +4829,7 @@ org.tukaani.xz.SingleXZInputStream -> org.jackhuang.hellominecraft.launcher.gL:
     271:280:void validateStreamFooter() -> a
     294:300:int available() -> available
     310:317:void close() -> close
-org.tukaani.xz.UncompressedLZMA2OutputStream -> org.jackhuang.hellominecraft.launcher.gM:
+org.tukaani.xz.UncompressedLZMA2OutputStream -> org.jackhuang.hellominecraft.launcher.gK:
     org.tukaani.xz.FinishableOutputStream out -> a
     java.io.DataOutputStream outData -> a
     byte[] uncompBuf -> a
@@ -4858,9 +4846,9 @@ org.tukaani.xz.UncompressedLZMA2OutputStream -> org.jackhuang.hellominecraft.lau
     100:115:void flush() -> flush
     118:130:void finish() -> a
     133:152:void close() -> close
-org.tukaani.xz.UnsupportedOptionsException -> org.jackhuang.hellominecraft.launcher.gN:
+org.tukaani.xz.UnsupportedOptionsException -> org.jackhuang.hellominecraft.launcher.gL:
     long serialVersionUID -> a
-org.tukaani.xz.X86Options -> org.jackhuang.hellominecraft.launcher.gO:
+org.tukaani.xz.X86Options -> org.jackhuang.hellominecraft.launcher.gM:
     int ALIGNMENT -> b
     26:26:org.tukaani.xz.FinishableOutputStream getOutputStream(org.tukaani.xz.FinishableOutputStream) -> a
     30:30:java.io.InputStream getInputStream(java.io.InputStream) -> a
@@ -4870,18 +4858,18 @@ org.tukaani.xz.X86Options -> org.jackhuang.hellominecraft.launcher.gO:
     18:18:int getEncoderMemoryUsage() -> b
     18:18:int getStartOffset() -> c
     18:18:void setStartOffset(int) -> a
-org.tukaani.xz.XZ -> org.jackhuang.hellominecraft.launcher.gP:
+org.tukaani.xz.XZ -> org.jackhuang.hellominecraft.launcher.gN:
     byte[] HEADER_MAGIC -> a
     byte[] FOOTER_MAGIC -> b
     int CHECK_NONE -> a
     int CHECK_CRC32 -> b
     int CHECK_CRC64 -> c
     int CHECK_SHA256 -> d
-org.tukaani.xz.XZFormatException -> org.jackhuang.hellominecraft.launcher.gQ:
+org.tukaani.xz.XZFormatException -> org.jackhuang.hellominecraft.launcher.gO:
     long serialVersionUID -> a
-org.tukaani.xz.XZIOException -> org.jackhuang.hellominecraft.launcher.gR:
+org.tukaani.xz.XZIOException -> org.jackhuang.hellominecraft.launcher.gP:
     long serialVersionUID -> a
-org.tukaani.xz.XZInputStream -> org.jackhuang.hellominecraft.launcher.gS:
+org.tukaani.xz.XZInputStream -> org.jackhuang.hellominecraft.launcher.gQ:
     int memoryLimit -> a
     java.io.InputStream in -> a
     org.tukaani.xz.SingleXZInputStream xzIn -> a
@@ -4893,7 +4881,7 @@ org.tukaani.xz.XZInputStream -> org.jackhuang.hellominecraft.launcher.gS:
     242:275:void prepareNextStream() -> a
     289:295:int available() -> available
     305:312:void close() -> close
-org.tukaani.xz.XZOutputStream -> org.jackhuang.hellominecraft.launcher.gT:
+org.tukaani.xz.XZOutputStream -> org.jackhuang.hellominecraft.launcher.gR:
     java.io.OutputStream out -> a
     org.tukaani.xz.common.StreamFlags streamFlags -> a
     org.tukaani.xz.check.Check check -> a
@@ -4915,17 +4903,17 @@ org.tukaani.xz.XZOutputStream -> org.jackhuang.hellominecraft.launcher.gT:
     462:464:void encodeStreamFlags(byte[],int) -> a
     467:474:void encodeStreamHeader() -> c
     477:487:void encodeStreamFooter() -> d
-org.tukaani.xz.check.CRC32 -> org.jackhuang.hellominecraft.launcher.gU:
+org.tukaani.xz.check.CRC32 -> org.jackhuang.hellominecraft.launcher.gS:
     java.util.zip.CRC32 state -> a
     21:22:void update(byte[],int,int) -> a
     25:31:byte[] finish() -> a
-org.tukaani.xz.check.CRC64 -> org.jackhuang.hellominecraft.launcher.gV:
+org.tukaani.xz.check.CRC64 -> org.jackhuang.hellominecraft.launcher.gT:
     long poly -> a
     long[] crcTable -> a
     long crc -> b
     38:42:void update(byte[],int,int) -> a
     45:52:byte[] finish() -> a
-org.tukaani.xz.check.Check -> org.jackhuang.hellominecraft.launcher.gW:
+org.tukaani.xz.check.Check -> org.jackhuang.hellominecraft.launcher.gU:
     int size -> a
     java.lang.String name -> a
     void update(byte[],int,int) -> a
@@ -4934,45 +4922,45 @@ org.tukaani.xz.check.Check -> org.jackhuang.hellominecraft.launcher.gW:
     27:27:int getSize() -> a
     31:31:java.lang.String getName() -> a
     36:54:org.tukaani.xz.check.Check getInstance(int) -> a
-org.tukaani.xz.check.None -> org.jackhuang.hellominecraft.launcher.gX:
+org.tukaani.xz.check.None -> org.jackhuang.hellominecraft.launcher.gV:
     18:18:void update(byte[],int,int) -> a
     21:22:byte[] finish() -> a
-org.tukaani.xz.check.SHA256 -> org.jackhuang.hellominecraft.launcher.gY:
+org.tukaani.xz.check.SHA256 -> org.jackhuang.hellominecraft.launcher.gW:
     java.security.MessageDigest sha256 -> a
     22:23:void update(byte[],int,int) -> a
     26:28:byte[] finish() -> a
-org.tukaani.xz.common.DecoderUtil -> org.jackhuang.hellominecraft.launcher.gZ:
+org.tukaani.xz.common.DecoderUtil -> org.jackhuang.hellominecraft.launcher.gX:
     24:32:boolean isCRC32Valid(byte[],int,int,int) -> a
     37:48:org.tukaani.xz.common.StreamFlags decodeStreamHeader(byte[]) -> a
     55:78:org.tukaani.xz.common.StreamFlags decodeStreamFooter(byte[]) -> b
     83:89:org.tukaani.xz.common.StreamFlags decodeStreamFlags(byte[],int) -> a
     94:94:boolean areStreamFlagsEqual(org.tukaani.xz.common.StreamFlags,org.tukaani.xz.common.StreamFlags) -> a
     98:119:long decodeVLI(java.io.InputStream) -> a
-org.tukaani.xz.common.EncoderUtil -> org.jackhuang.hellominecraft.launcher.ha:
+org.tukaani.xz.common.EncoderUtil -> org.jackhuang.hellominecraft.launcher.gY:
     19:25:void writeCRC32(java.io.OutputStream,byte[]) -> a
     29:35:void encodeVLI(java.io.OutputStream,long) -> a
-org.tukaani.xz.common.StreamFlags -> org.jackhuang.hellominecraft.launcher.hb:
+org.tukaani.xz.common.StreamFlags -> org.jackhuang.hellominecraft.launcher.gZ:
     int checkType -> a
     long backwardSize -> a
-org.tukaani.xz.common.Util -> org.jackhuang.hellominecraft.launcher.hc:
+org.tukaani.xz.common.Util -> org.jackhuang.hellominecraft.launcher.ha:
     int STREAM_HEADER_SIZE -> a
     long BACKWARD_SIZE_MAX -> a
     int BLOCK_HEADER_SIZE_MAX -> b
     long VLI_MAX -> b
     int VLI_SIZE_MAX -> c
     20:26:int getVLISize(long) -> a
-org.tukaani.xz.delta.DeltaCoder -> org.jackhuang.hellominecraft.launcher.hd:
+org.tukaani.xz.delta.DeltaCoder -> org.jackhuang.hellominecraft.launcher.hb:
     int DISTANCE_MIN -> a
     int DISTANCE_MAX -> b
     int DISTANCE_MASK -> c
     int distance -> d
     byte[] history -> a
     int pos -> e
-org.tukaani.xz.delta.DeltaDecoder -> org.jackhuang.hellominecraft.launcher.he:
+org.tukaani.xz.delta.DeltaDecoder -> org.jackhuang.hellominecraft.launcher.hc:
     18:23:void decode(byte[],int,int) -> a
-org.tukaani.xz.delta.DeltaEncoder -> org.jackhuang.hellominecraft.launcher.hf:
+org.tukaani.xz.delta.DeltaEncoder -> org.jackhuang.hellominecraft.launcher.hd:
     18:23:void encode(byte[],int,int,byte[]) -> a
-org.tukaani.xz.index.BlockInfo -> org.jackhuang.hellominecraft.launcher.hg:
+org.tukaani.xz.index.BlockInfo -> org.jackhuang.hellominecraft.launcher.he:
     int blockNumber -> a
     long compressedOffset -> a
     long uncompressedOffset -> b
@@ -4982,7 +4970,7 @@ org.tukaani.xz.index.BlockInfo -> org.jackhuang.hellominecraft.launcher.hg:
     28:28:int getCheckType() -> a
     32:32:boolean hasNext() -> a
     36:37:void setNext() -> a
-org.tukaani.xz.index.IndexBase -> org.jackhuang.hellominecraft.launcher.hh:
+org.tukaani.xz.index.IndexBase -> org.jackhuang.hellominecraft.launcher.hf:
     org.tukaani.xz.XZIOException invalidIndexException -> a
     long blocksSum -> a
     long uncompressedSum -> b
@@ -4993,7 +4981,7 @@ org.tukaani.xz.index.IndexBase -> org.jackhuang.hellominecraft.launcher.hh:
     36:36:long getStreamSize() -> b
     41:41:int getIndexPaddingSize() -> a
     45:55:void add(long,long) -> a
-org.tukaani.xz.index.IndexDecoder -> org.jackhuang.hellominecraft.launcher.hi:
+org.tukaani.xz.index.IndexDecoder -> org.jackhuang.hellominecraft.launcher.hg:
     org.tukaani.xz.common.StreamFlags streamFlags -> a
     long streamPadding -> e
     int memoryUsage -> a
@@ -5016,22 +5004,22 @@ org.tukaani.xz.index.IndexDecoder -> org.jackhuang.hellominecraft.launcher.hi:
     200:222:void setBlockInfo(org.tukaani.xz.index.BlockInfo,int) -> a
     22:22:long getStreamSize() -> b
     22:22:long getIndexSize() -> a
-org.tukaani.xz.index.IndexEncoder -> org.jackhuang.hellominecraft.launcher.hj:
+org.tukaani.xz.index.IndexEncoder -> org.jackhuang.hellominecraft.launcher.hh:
     java.util.ArrayList records -> a
     29:31:void add(long,long) -> a
     34:58:void encode(java.io.OutputStream) -> a
     20:20:long getStreamSize() -> b
     20:20:long getIndexSize() -> a
-org.tukaani.xz.index.IndexHash -> org.jackhuang.hellominecraft.launcher.hk:
+org.tukaani.xz.index.IndexHash -> org.jackhuang.hellominecraft.launcher.hi:
     org.tukaani.xz.check.Check hash -> a
     37:43:void add(long,long) -> a
     48:93:void validate(java.io.InputStream) -> a
     22:22:long getStreamSize() -> b
     22:22:long getIndexSize() -> a
-org.tukaani.xz.index.IndexRecord -> org.jackhuang.hellominecraft.launcher.hl:
+org.tukaani.xz.index.IndexRecord -> org.jackhuang.hellominecraft.launcher.hj:
     long unpadded -> a
     long uncompressed -> b
-org.tukaani.xz.lz.BT4 -> org.jackhuang.hellominecraft.launcher.hm:
+org.tukaani.xz.lz.BT4 -> org.jackhuang.hellominecraft.launcher.hk:
     org.tukaani.xz.lz.Hash234 hash -> a
     int[] tree -> a
     org.tukaani.xz.lz.Matches matches -> a
@@ -5044,10 +5032,10 @@ org.tukaani.xz.lz.BT4 -> org.jackhuang.hellominecraft.launcher.hm:
     64:184:org.tukaani.xz.lz.Matches getMatches() -> a
     188:233:void skip(int,int) -> a
     237:254:void skip(int) -> a
-org.tukaani.xz.lz.CRC32Hash -> org.jackhuang.hellominecraft.launcher.hn:
+org.tukaani.xz.lz.CRC32Hash -> org.jackhuang.hellominecraft.launcher.hl:
     int CRC32_POLY -> a
     int[] crcTable -> a
-org.tukaani.xz.lz.HC4 -> org.jackhuang.hellominecraft.launcher.ho:
+org.tukaani.xz.lz.HC4 -> org.jackhuang.hellominecraft.launcher.hm:
     org.tukaani.xz.lz.Hash234 hash -> a
     int[] chain -> a
     org.tukaani.xz.lz.Matches matches -> a
@@ -5060,7 +5048,7 @@ org.tukaani.xz.lz.HC4 -> org.jackhuang.hellominecraft.launcher.ho:
     63:77:int movePos() -> c
     81:185:org.tukaani.xz.lz.Matches getMatches() -> a
     189:199:void skip(int) -> a
-org.tukaani.xz.lz.Hash234 -> org.jackhuang.hellominecraft.launcher.hp:
+org.tukaani.xz.lz.Hash234 -> org.jackhuang.hellominecraft.launcher.hn:
     int HASH_2_SIZE -> a
     int HASH_2_MASK -> b
     int HASH_3_SIZE -> c
@@ -5080,7 +5068,7 @@ org.tukaani.xz.lz.Hash234 -> org.jackhuang.hellominecraft.launcher.hp:
     75:75:int getHash4Pos() -> c
     79:82:void updateTables(int) -> a
     85:88:void normalize(int) -> b
-org.tukaani.xz.lz.LZDecoder -> org.jackhuang.hellominecraft.launcher.hq:
+org.tukaani.xz.lz.LZDecoder -> org.jackhuang.hellominecraft.launcher.ho:
     byte[] buf -> a
     int start -> a
     int pos -> b
@@ -5099,7 +5087,7 @@ org.tukaani.xz.lz.LZDecoder -> org.jackhuang.hellominecraft.launcher.hq:
     102:104:void repeatPending() -> b
     108:114:void copyUncompressed(java.io.DataInputStream,int) -> a
     117:124:int flush(byte[],int) -> a
-org.tukaani.xz.lz.LZEncoder -> org.jackhuang.hellominecraft.launcher.hr:
+org.tukaani.xz.lz.LZEncoder -> org.jackhuang.hellominecraft.launcher.hp:
     int MF_HC4 -> a
     int MF_BT4 -> b
     int keepSizeBefore -> f
@@ -5136,11 +5124,11 @@ org.tukaani.xz.lz.LZEncoder -> org.jackhuang.hellominecraft.launcher.hr:
     395:407:int movePos(int,int) -> c
     org.tukaani.xz.lz.Matches getMatches() -> a
     void skip(int) -> a
-org.tukaani.xz.lz.Matches -> org.jackhuang.hellominecraft.launcher.hs:
+org.tukaani.xz.lz.Matches -> org.jackhuang.hellominecraft.launcher.hq:
     int[] len -> a
     int[] dist -> b
     int count -> a
-org.tukaani.xz.lzma.LZMACoder -> org.jackhuang.hellominecraft.launcher.ht:
+org.tukaani.xz.lzma.LZMACoder -> org.jackhuang.hellominecraft.launcher.hr:
     int POS_STATES_MAX -> a
     int MATCH_LEN_MIN -> b
     int MATCH_LEN_MAX -> c
@@ -5167,7 +5155,7 @@ org.tukaani.xz.lzma.LZMACoder -> org.jackhuang.hellominecraft.launcher.ht:
     short[] distAlign -> e
     55:55:int getDistState(int) -> a
     65:89:void reset() -> a
-org.tukaani.xz.lzma.LZMACoder$LengthCoder -> org.jackhuang.hellominecraft.launcher.hu:
+org.tukaani.xz.lzma.LZMACoder$LengthCoder -> org.jackhuang.hellominecraft.launcher.hs:
     int LOW_SYMBOLS -> a
     int MID_SYMBOLS -> b
     int HIGH_SYMBOLS -> c
@@ -5177,16 +5165,16 @@ org.tukaani.xz.lzma.LZMACoder$LengthCoder -> org.jackhuang.hellominecraft.launch
     short[] high -> b
     org.tukaani.xz.lzma.LZMACoder this$0 -> a
     129:138:void reset() -> a
-org.tukaani.xz.lzma.LZMACoder$LiteralCoder -> org.jackhuang.hellominecraft.launcher.hv:
+org.tukaani.xz.lzma.LZMACoder$LiteralCoder -> org.jackhuang.hellominecraft.launcher.ht:
     int lc -> a
     int literalPosMask -> b
     org.tukaani.xz.lzma.LZMACoder this$0 -> a
     102:104:int getSubcoderIndex(int,int) -> a
-org.tukaani.xz.lzma.LZMACoder$LiteralCoder$LiteralSubcoder -> org.jackhuang.hellominecraft.launcher.hw:
+org.tukaani.xz.lzma.LZMACoder$LiteralCoder$LiteralSubcoder -> org.jackhuang.hellominecraft.launcher.hu:
     short[] probs -> a
     org.tukaani.xz.lzma.LZMACoder$LiteralCoder this$1 -> a
     112:113:void reset() -> a
-org.tukaani.xz.lzma.LZMADecoder -> org.jackhuang.hellominecraft.launcher.hx:
+org.tukaani.xz.lzma.LZMADecoder -> org.jackhuang.hellominecraft.launcher.hv:
     org.tukaani.xz.lz.LZDecoder lz -> a
     org.tukaani.xz.rangecoder.RangeDecoder rc -> a
     org.tukaani.xz.lzma.LZMADecoder$LiteralDecoder literalDecoder -> a
@@ -5199,19 +5187,19 @@ org.tukaani.xz.lzma.LZMADecoder -> org.jackhuang.hellominecraft.launcher.hx:
     102:129:int decodeRepMatch(int) -> c
     17:17:org.tukaani.xz.lz.LZDecoder access$200(org.tukaani.xz.lzma.LZMADecoder) -> a
     17:17:org.tukaani.xz.rangecoder.RangeDecoder access$300(org.tukaani.xz.lzma.LZMADecoder) -> a
-org.tukaani.xz.lzma.LZMADecoder$1 -> org.jackhuang.hellominecraft.launcher.hy:
-org.tukaani.xz.lzma.LZMADecoder$LengthDecoder -> org.jackhuang.hellominecraft.launcher.hz:
+org.tukaani.xz.lzma.LZMADecoder$1 -> org.jackhuang.hellominecraft.launcher.hw:
+org.tukaani.xz.lzma.LZMADecoder$LengthDecoder -> org.jackhuang.hellominecraft.launcher.hx:
     org.tukaani.xz.lzma.LZMADecoder this$0 -> a
     188:195:int decode(int) -> a
-org.tukaani.xz.lzma.LZMADecoder$LiteralDecoder -> org.jackhuang.hellominecraft.launcher.hA:
+org.tukaani.xz.lzma.LZMADecoder$LiteralDecoder -> org.jackhuang.hellominecraft.launcher.hy:
     org.tukaani.xz.lzma.LZMADecoder$LiteralDecoder$LiteralSubdecoder[] subdecoders -> a
     org.tukaani.xz.lzma.LZMADecoder this$0 -> a
     145:147:void reset() -> a
     150:152:void decode() -> b
-org.tukaani.xz.lzma.LZMADecoder$LiteralDecoder$LiteralSubdecoder -> org.jackhuang.hellominecraft.launcher.hB:
+org.tukaani.xz.lzma.LZMADecoder$LiteralDecoder$LiteralSubdecoder -> org.jackhuang.hellominecraft.launcher.hz:
     org.tukaani.xz.lzma.LZMADecoder$LiteralDecoder this$1 -> a
     157:181:void decode() -> b
-org.tukaani.xz.lzma.LZMAEncoder -> org.jackhuang.hellominecraft.launcher.hC:
+org.tukaani.xz.lzma.LZMAEncoder -> org.jackhuang.hellominecraft.launcher.hA:
     int MODE_FAST -> n
     int MODE_NORMAL -> o
     int LZMA2_UNCOMPRESSED_LIMIT -> s
@@ -5260,8 +5248,8 @@ org.tukaani.xz.lzma.LZMAEncoder -> org.jackhuang.hellominecraft.launcher.hC:
     472:477:void updateAlignPrices() -> e
     485:493:void updatePrices() -> c
     17:17:org.tukaani.xz.rangecoder.RangeEncoder access$100(org.tukaani.xz.lzma.LZMAEncoder) -> a
-org.tukaani.xz.lzma.LZMAEncoder$1 -> org.jackhuang.hellominecraft.launcher.hD:
-org.tukaani.xz.lzma.LZMAEncoder$LengthEncoder -> org.jackhuang.hellominecraft.launcher.hE:
+org.tukaani.xz.lzma.LZMAEncoder$1 -> org.jackhuang.hellominecraft.launcher.hB:
+org.tukaani.xz.lzma.LZMAEncoder$LengthEncoder -> org.jackhuang.hellominecraft.launcher.hC:
     int PRICE_UPDATE_INTERVAL -> d
     int[] counters -> a
     int[][] prices -> a
@@ -5271,7 +5259,7 @@ org.tukaani.xz.lzma.LZMAEncoder$LengthEncoder -> org.jackhuang.hellominecraft.la
     675:675:int getPrice(int,int) -> a
     679:685:void updatePrices() -> b
     688:709:void updatePrices(int) -> a
-org.tukaani.xz.lzma.LZMAEncoder$LiteralEncoder -> org.jackhuang.hellominecraft.launcher.hF:
+org.tukaani.xz.lzma.LZMAEncoder$LiteralEncoder -> org.jackhuang.hellominecraft.launcher.hD:
     org.tukaani.xz.lzma.LZMAEncoder$LiteralEncoder$LiteralSubencoder[] subencoders -> a
     boolean $assertionsDisabled -> a
     org.tukaani.xz.lzma.LZMAEncoder this$0 -> a
@@ -5279,19 +5267,19 @@ org.tukaani.xz.lzma.LZMAEncoder$LiteralEncoder -> org.jackhuang.hellominecraft.l
     516:518:void encodeInit() -> b
     521:525:void encode() -> c
     529:537:int getPrice(int,int,int,int,org.tukaani.xz.lzma.State) -> a
-org.tukaani.xz.lzma.LZMAEncoder$LiteralEncoder$LiteralSubencoder -> org.jackhuang.hellominecraft.launcher.hG:
+org.tukaani.xz.lzma.LZMAEncoder$LiteralEncoder$LiteralSubencoder -> org.jackhuang.hellominecraft.launcher.hE:
     org.tukaani.xz.lzma.LZMAEncoder$LiteralEncoder this$1 -> a
     542:574:void encode() -> b
     577:591:int getNormalPrice(int) -> a
     595:614:int getMatchedPrice(int,int) -> a
-org.tukaani.xz.lzma.LZMAEncoderFast -> org.jackhuang.hellominecraft.launcher.hH:
+org.tukaani.xz.lzma.LZMAEncoderFast -> org.jackhuang.hellominecraft.launcher.hF:
     int EXTRA_SIZE_BEFORE -> s
     int EXTRA_SIZE_AFTER -> t
     org.tukaani.xz.lz.Matches matches -> a
     24:25:int getMemoryUsage(int,int,int) -> a
     42:42:boolean changePair(int,int) -> a
     49:149:int getNextSymbol() -> a
-org.tukaani.xz.lzma.LZMAEncoderNormal -> org.jackhuang.hellominecraft.launcher.hI:
+org.tukaani.xz.lzma.LZMAEncoderNormal -> org.jackhuang.hellominecraft.launcher.hG:
     int OPTS -> s
     int EXTRA_SIZE_BEFORE -> t
     int EXTRA_SIZE_AFTER -> u
@@ -5310,7 +5298,7 @@ org.tukaani.xz.lzma.LZMAEncoderNormal -> org.jackhuang.hellominecraft.launcher.h
     374:422:void calc1BytePrices(int,int,int,int) -> a
     429:486:int calcLongRepPrices(int,int,int,int) -> c
     496:565:void calcNormalMatchPrices(int,int,int,int,int) -> a
-org.tukaani.xz.lzma.Optimum -> org.jackhuang.hellominecraft.launcher.hJ:
+org.tukaani.xz.lzma.Optimum -> org.jackhuang.hellominecraft.launcher.hH:
     int INFINITY_PRICE -> f
     org.tukaani.xz.lzma.State state -> a
     int[] reps -> a
@@ -5325,7 +5313,7 @@ org.tukaani.xz.lzma.Optimum -> org.jackhuang.hellominecraft.launcher.hJ:
     43:47:void set1(int,int,int) -> a
     53:58:void set2(int,int,int) -> b
     65:72:void set3(int,int,int,int,int) -> a
-org.tukaani.xz.lzma.State -> org.jackhuang.hellominecraft.launcher.hK:
+org.tukaani.xz.lzma.State -> org.jackhuang.hellominecraft.launcher.hI:
     int STATES -> a
     int LIT_STATES -> b
     int LIT_LIT -> c
@@ -5349,7 +5337,7 @@ org.tukaani.xz.lzma.State -> org.jackhuang.hellominecraft.launcher.hK:
     65:66:void updateLongRep() -> d
     69:70:void updateShortRep() -> e
     73:73:boolean isLiteral() -> a
-org.tukaani.xz.rangecoder.RangeCoder -> org.jackhuang.hellominecraft.launcher.hL:
+org.tukaani.xz.rangecoder.RangeCoder -> org.jackhuang.hellominecraft.launcher.hJ:
     int SHIFT_BITS -> a
     int TOP_MASK -> b
     int BIT_MODEL_TOTAL_BITS -> c
@@ -5357,7 +5345,7 @@ org.tukaani.xz.rangecoder.RangeCoder -> org.jackhuang.hellominecraft.launcher.hL
     short PROB_INIT -> a
     int MOVE_BITS -> e
     24:25:void initProbs(short[]) -> a
-org.tukaani.xz.rangecoder.RangeDecoder -> org.jackhuang.hellominecraft.launcher.hM:
+org.tukaani.xz.rangecoder.RangeDecoder -> org.jackhuang.hellominecraft.launcher.hK:
     int range -> f
     int code -> g
     void normalize() -> a
@@ -5365,7 +5353,7 @@ org.tukaani.xz.rangecoder.RangeDecoder -> org.jackhuang.hellominecraft.launcher.
     46:52:int decodeBitTree(short[]) -> a
     56:66:int decodeReverseBitTree(short[]) -> b
     70:81:int decodeDirectBits(int) -> a
-org.tukaani.xz.rangecoder.RangeDecoderFromBuffer -> org.jackhuang.hellominecraft.launcher.hN:
+org.tukaani.xz.rangecoder.RangeDecoderFromBuffer -> org.jackhuang.hellominecraft.launcher.hL:
     int INIT_SIZE -> h
     byte[] buf -> a
     int pos -> i
@@ -5374,11 +5362,11 @@ org.tukaani.xz.rangecoder.RangeDecoderFromBuffer -> org.jackhuang.hellominecraft
     45:45:boolean isInBufferOK() -> a
     49:49:boolean isFinished() -> b
     53:63:void normalize() -> a
-org.tukaani.xz.rangecoder.RangeDecoderFromStream -> org.jackhuang.hellominecraft.launcher.hO:
+org.tukaani.xz.rangecoder.RangeDecoderFromStream -> org.jackhuang.hellominecraft.launcher.hM:
     java.io.DataInputStream inData -> a
     32:32:boolean isFinished() -> a
     36:40:void normalize() -> a
-org.tukaani.xz.rangecoder.RangeEncoder -> org.jackhuang.hellominecraft.launcher.hP:
+org.tukaani.xz.rangecoder.RangeEncoder -> org.jackhuang.hellominecraft.launcher.hN:
     int MOVE_REDUCING_BITS -> f
     int BIT_PRICE_SHIFT_BITS -> g
     int[] prices -> a
@@ -5402,30 +5390,30 @@ org.tukaani.xz.rangecoder.RangeEncoder -> org.jackhuang.hellominecraft.launcher.
     174:185:int getReverseBitTreePrice(short[],int) -> b
     190:198:void encodeDirectBits(int,int) -> a
     201:201:int getDirectBitsPrice(int) -> a
-org.tukaani.xz.simple.ARM -> org.jackhuang.hellominecraft.launcher.hQ:
+org.tukaani.xz.simple.ARM -> org.jackhuang.hellominecraft.launcher.hO:
     boolean isEncoder -> a
     int pos -> a
     23:48:int code(byte[],int,int) -> a
-org.tukaani.xz.simple.ARMThumb -> org.jackhuang.hellominecraft.launcher.hR:
+org.tukaani.xz.simple.ARMThumb -> org.jackhuang.hellominecraft.launcher.hP:
     boolean isEncoder -> a
     int pos -> a
     23:51:int code(byte[],int,int) -> a
-org.tukaani.xz.simple.IA64 -> org.jackhuang.hellominecraft.launcher.hS:
+org.tukaani.xz.simple.IA64 -> org.jackhuang.hellominecraft.launcher.hQ:
     int[] BRANCH_TABLE -> a
     boolean isEncoder -> a
     int pos -> a
     29:79:int code(byte[],int,int) -> a
-org.tukaani.xz.simple.PowerPC -> org.jackhuang.hellominecraft.launcher.hT:
+org.tukaani.xz.simple.PowerPC -> org.jackhuang.hellominecraft.launcher.hR:
     boolean isEncoder -> a
     int pos -> a
     23:48:int code(byte[],int,int) -> a
-org.tukaani.xz.simple.SPARC -> org.jackhuang.hellominecraft.launcher.hU:
+org.tukaani.xz.simple.SPARC -> org.jackhuang.hellominecraft.launcher.hS:
     boolean isEncoder -> a
     int pos -> a
     23:54:int code(byte[],int,int) -> a
-org.tukaani.xz.simple.SimpleFilter -> org.jackhuang.hellominecraft.launcher.hV:
+org.tukaani.xz.simple.SimpleFilter -> org.jackhuang.hellominecraft.launcher.hT:
     int code(byte[],int,int) -> a
-org.tukaani.xz.simple.X86 -> org.jackhuang.hellominecraft.launcher.hW:
+org.tukaani.xz.simple.X86 -> org.jackhuang.hellominecraft.launcher.hU:
     boolean[] MASK_TO_ALLOWED_STATUS -> a
     int[] MASK_TO_BIT_NUMBER -> a
     boolean isEncoder -> a
