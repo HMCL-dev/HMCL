@@ -124,6 +124,7 @@ public abstract class IAssetsHandler {
             progress = 0;
             max = assetsDownloadURLs.size();
             al = new ArrayList<>();
+            int hasDownloaded = 0;
             for (int i = 0; i < max; i++) {
                 String mark = assetsDownloadURLs.get(i);
                 String url = u + mark;
@@ -137,7 +138,10 @@ public abstract class IAssetsHandler {
                         String sha = DigestUtils.sha1Hex(NetUtils.getBytesFromStream(fis));
                         IOUtils.closeQuietly(fis);
                         if (contents.get(i).eTag.equals(sha)) {
+                            hasDownloaded++;
                             HMCLog.log("File " + assetsLocalNames.get(i) + " has downloaded successfully, skipped downloading.");
+                            if (ppl != null)
+                                ppl.setProgress(this, hasDownloaded, max);
                             continue;
                         }
                     }

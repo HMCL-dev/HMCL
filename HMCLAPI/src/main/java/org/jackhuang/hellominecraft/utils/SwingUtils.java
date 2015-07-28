@@ -126,5 +126,20 @@ public class SwingUtils {
             model.removeRow(0);
         table.updateUI();
     }
+    
+    public static void appendLast(JTable table, Object... elements) {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        model.addRow(elements);
+    }
+    
+    public static void setValueAt(JTable table, Object element, int row, int col) {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        model.setValueAt(element, row, col);
+    }
+    
+    public static void removeRow(JTable table, int row) {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        model.removeRow(row);
+    }
 
 }

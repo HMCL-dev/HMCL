@@ -204,13 +204,13 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                     downloaded += read;
 
                     if (ppl != null) {
-                        ppl.setProgress(downloaded, size);
+                        ppl.setProgress(this, downloaded, size);
                     }
                 }
                 closeFiles();
                 tempFile.renameTo(filePath);
                 if (ppl != null) {
-                    ppl.onProgressProviderDone();
+                    ppl.onProgressProviderDone(this);
                 }
                 return true;
             } catch (Exception e) {

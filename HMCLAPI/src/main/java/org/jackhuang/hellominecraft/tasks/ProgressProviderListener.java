@@ -22,9 +22,9 @@ package org.jackhuang.hellominecraft.tasks;
  */
 public interface ProgressProviderListener {
 
-    void setProgress(int prog, int max);
+    void setProgress(Task task, int prog, int max);
 
-    void setStatus(String sta);
+    void setStatus(Task task, String sta);
 
-    void onProgressProviderDone();
+    void onProgressProviderDone(Task task);
 }

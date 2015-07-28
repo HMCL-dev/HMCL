@@ -62,7 +62,7 @@ public class HTTPGetTask extends TaskInfo implements PreviousResult<String> {
                 while ((i = is.read()) != -1) {
                     baos.write(i);
                     if (ppl != null) {
-                        ppl.setProgress(++read, size);
+                        ppl.setProgress(this, ++read, size);
                     }
                     if (!shouldContinue) {
                         return true;

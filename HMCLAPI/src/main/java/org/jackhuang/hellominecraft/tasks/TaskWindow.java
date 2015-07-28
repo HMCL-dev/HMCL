@@ -18,6 +18,7 @@ package org.jackhuang.hellominecraft.tasks;
 
 import java.awt.EventQueue;
 import java.util.ArrayList;
+import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.utils.functions.NonConsumer;
 import org.jackhuang.hellominecraft.HMCLog;
@@ -72,8 +73,9 @@ public class TaskWindow extends javax.swing.JDialog
         pgsSingle.setValue(0);
         pgsTotal.setValue(0);
         suc = false;
-        SwingUtils.clear(lstDownload);
+        SwingUtils.clearDefaultTable(lstDownload);
         failReasons.clear();
+        tasks.clear();
         try {
             taskList.start();
         } catch (Exception e) {
@@ -100,7 +102,7 @@ public class TaskWindow extends javax.swing.JDialog
         lblTotalProgress = new javax.swing.JLabel();
         pgsTotal = new javax.swing.JProgressBar();
         srlDownload = new javax.swing.JScrollPane();
-        lstDownload = new javax.swing.JList();
+        lstDownload = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraft/launcher/I18N"); // NOI18N
@@ -126,6 +128,10 @@ public class TaskWindow extends javax.swing.JDialog
 
         pgsTotal.setStringPainted(true);
 
+        lstDownload.setModel(SwingUtils.makeDefaultTableModel(new String[]{C.i18n("taskwindow.file_name"), C.i18n("taskwindow.download_progress")}, new Class[]{String.class, String.class}, new boolean[]{false,false})
+        );
+        lstDownload.setRowSelectionAllowed(false);
+        lstDownload.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         srlDownload.setViewportView(lstDownload);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -151,7 +157,7 @@ public class TaskWindow extends javax.swing.JDialog
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(srlDownload, javax.swing.GroupLayout.DEFAULT_SIZE, 241, Short.MAX_VALUE)
+                .addComponent(srlDownload, javax.swing.GroupLayout.DEFAULT_SIZE, 232, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(btnCancel, javax.swing.GroupLayout.Alignment.TRAILING)
@@ -175,6 +181,8 @@ public class TaskWindow extends javax.swing.JDialog
     }//GEN-LAST:event_btnCancelActionPerformed
 
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
+        tasks.clear();
+        
         if (!this.failReasons.isEmpty()) {
             MessageBox.Show(StrUtils.parseParams("", failReasons.toArray(), "\n"), C.i18n("message.error"), MessageBox.ERROR_MESSAGE);
             failReasons.clear();
@@ -190,16 +198,29 @@ public class TaskWindow extends javax.swing.JDialog
     private javax.swing.JButton btnCancel;
     private javax.swing.JLabel lblSingleProgress;
     private javax.swing.JLabel lblTotalProgress;
-    private javax.swing.JList lstDownload;
+    private javax.swing.JTable lstDownload;
     private javax.swing.JProgressBar pgsSingle;
     private javax.swing.JProgressBar pgsTotal;
     private javax.swing.JScrollPane srlDownload;
     // End of variables declaration//GEN-END:variables
 
+    ArrayList<Task> tasks = new ArrayList<>();
+    ArrayList<Integer> progresses = new ArrayList<>();
+    
     @Override
-    public void setProgress(int progress, int max) {
-        pgsSingle.setMaximum(max);
-        pgsSingle.setValue(progress);
+    public void setProgress(Task task, int progress, int max) {
+        SwingUtilities.invokeLater(() -> {
+            int idx = tasks.indexOf(task);
+            if(idx == -1) return;
+            int pgs = progress * 100 / max;
+            if(progresses.get(idx) != pgs) {
+                SwingUtils.setValueAt(lstDownload, pgs + "%", idx, 1);
+                progresses.set(idx, pgs);
+            }
+            if(task.isParallelExecuting()) return;
+            pgsSingle.setMaximum(max);
+            pgsSingle.setValue(progress);
+        });
     }
 
     @Override
@@ -211,11 +232,14 @@ public class TaskWindow extends javax.swing.JDialog
 
     @Override
     public void onDoing(Task task) {
-        if (!task.isParallelExecuting())
-            task.setProgressProviderListener(this);
+        task.setProgressProviderListener(this);
 
-        SwingUtils.appendLast(lstDownload, task.getInfo());
-        SwingUtils.moveEnd(srlDownload);
+        SwingUtilities.invokeLater(() -> {
+            tasks.add(task);
+            progresses.add(0);
+            SwingUtils.appendLast(lstDownload, task.getInfo(), "0%");
+            SwingUtils.moveEnd(srlDownload);
+        });
     }
 
     public boolean areTasksFinished() {
@@ -224,26 +248,39 @@ public class TaskWindow extends javax.swing.JDialog
 
     @Override
     public void onDone(Task task) {
-        pgsTotal.setMaximum(taskList.taskCount());
-        pgsTotal.setValue(pgsTotal.getValue() + 1);
+        SwingUtilities.invokeLater(() -> {
+            pgsTotal.setMaximum(taskList.taskCount());
+            pgsTotal.setValue(pgsTotal.getValue() + 1);
+            int idx = tasks.indexOf(task);
+            if (idx == -1) return;
+            tasks.remove(idx);
+            progresses.remove(idx);
+            SwingUtils.removeRow(lstDownload, idx);
+        });
     }
 
     @Override
     public void onFailed(Task task) {
-        failReasons.add(task.getInfo() + ": " + (null == task.getFailReason() ? "No exception" : task.getFailReason().getLocalizedMessage()));
-        pgsTotal.setMaximum(taskList.taskCount());
-        pgsTotal.setValue(pgsTotal.getValue() + 1);
-        SwingUtils.replaceLast(lstDownload, task.getFailReason());
-        SwingUtils.moveEnd(srlDownload);
+        SwingUtilities.invokeLater(() -> {
+            failReasons.add(task.getInfo() + ": " + (null == task.getFailReason() ? "No exception" : task.getFailReason().getLocalizedMessage()));
+            pgsTotal.setMaximum(taskList.taskCount());
+            pgsTotal.setValue(pgsTotal.getValue() + 1);
+            int idx = tasks.indexOf(task);
+            SwingUtils.setValueAt(lstDownload, task.getFailReason(), idx, 0);
+            SwingUtils.setValueAt(lstDownload, "0%", idx, 1);
+            SwingUtils.moveEnd(srlDownload);
+        });
     }
 
     @Override
-    public void onProgressProviderDone() {
+    public void onProgressProviderDone(Task task) {
 
     }
 
     @Override
-    public void setStatus(String sta) {
-        SwingUtils.replaceLast(lstDownload, sta);
+    public void setStatus(Task task, String sta) {
+        SwingUtilities.invokeLater(() -> {
+            SwingUtils.setValueAt(lstDownload, sta, lstDownload.getRowCount(), 0);
+        });
     }
 }

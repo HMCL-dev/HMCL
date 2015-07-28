@@ -22,7 +22,7 @@ import java.util.Collection;
  *
  * @author huangyuhui
  */
-public abstract class Task extends ProgressProvider {
+public abstract class Task {
 
     /**
      * Run in a new thread(packed in TaskList).
@@ -74,5 +74,12 @@ public abstract class Task extends ProgressProvider {
 
     public Collection<Task> getAfterTasks() {
         return null;
+    }
+    
+    protected ProgressProviderListener ppl;
+
+    public Task setProgressProviderListener(ProgressProviderListener p) {
+        ppl = p;
+        return this;
     }
 }
