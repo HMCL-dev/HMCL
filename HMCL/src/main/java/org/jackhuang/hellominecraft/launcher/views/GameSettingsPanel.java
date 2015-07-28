@@ -21,6 +21,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -200,6 +201,7 @@ public class GameSettingsPanel extends javax.swing.JPanel {
         jLabel10 = new javax.swing.JLabel();
         jLabel12 = new javax.swing.JLabel();
         cboGameDirType = new javax.swing.JComboBox();
+        btnChoosingJavaDir = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         chkDebug = new javax.swing.JCheckBox();
         jLabel26 = new javax.swing.JLabel();
@@ -460,6 +462,13 @@ public class GameSettingsPanel extends javax.swing.JPanel {
             }
         });
 
+        btnChoosingJavaDir.setText(bundle.getString("ui.button.explore")); // NOI18N
+        btnChoosingJavaDir.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnChoosingJavaDirActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel22Layout = new javax.swing.GroupLayout(jPanel22);
         jPanel22.setLayout(jPanel22Layout);
         jPanel22Layout.setHorizontalGroup(
@@ -482,11 +491,6 @@ public class GameSettingsPanel extends javax.swing.JPanel {
                         .addGroup(jPanel22Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(cboGameDirType, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(cboLauncherVisibility, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(txtJavaDir, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(jPanel22Layout.createSequentialGroup()
-                                .addComponent(txtMaxMemory)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(lblMaxMemory))
                             .addComponent(txtGameDir)
                             .addGroup(jPanel22Layout.createSequentialGroup()
                                 .addComponent(txtWidth, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -495,7 +499,15 @@ public class GameSettingsPanel extends javax.swing.JPanel {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(txtHeight, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 306, Short.MAX_VALUE)
-                                .addComponent(chkFullscreen)))))
+                                .addComponent(chkFullscreen))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel22Layout.createSequentialGroup()
+                                .addGroup(jPanel22Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtMaxMemory)
+                                    .addComponent(txtJavaDir))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel22Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(btnChoosingJavaDir, javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(lblMaxMemory, javax.swing.GroupLayout.Alignment.TRAILING))))))
                 .addContainerGap())
         );
         jPanel22Layout.setVerticalGroup(
@@ -508,7 +520,8 @@ public class GameSettingsPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel22Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtJavaDir, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel11))
+                    .addComponent(jLabel11)
+                    .addComponent(btnChoosingJavaDir))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel22Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblMaxMemory)
@@ -1145,6 +1158,24 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         loadVersions();
     }//GEN-LAST:event_txtGameDirFocusLost
 
+    private void btnChoosingJavaDirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnChoosingJavaDirActionPerformed
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setDialogTitle(C.i18n("settings.choose_javapath"));
+        fc.setMultiSelectionEnabled(false);
+        fc.showOpenDialog(this);
+        if (fc.getSelectedFile() == null)
+            return;
+        try {
+            String path = fc.getSelectedFile().getCanonicalPath();
+            txtJavaDir.setText(path);
+            profile.setJavaDir(txtJavaDir.getText());
+        } catch (IOException e) {
+            HMCLog.warn("Failed to set background path.", e);
+            MessageBox.Show(C.i18n("ui.label.failed_set") + e.getMessage());
+        }
+    }//GEN-LAST:event_btnChoosingJavaDirActionPerformed
+
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Load">
     private void loadProfiles() {
@@ -1400,6 +1431,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     // <editor-fold defaultstate="collapsed" desc="UI Definations">
     JPopupMenu ppmManage, ppmExplore;
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnChoosingJavaDir;
     private javax.swing.JButton btnDownload;
     private javax.swing.JButton btnDownloadAllAssets;
     private javax.swing.JButton btnDownloadForge;

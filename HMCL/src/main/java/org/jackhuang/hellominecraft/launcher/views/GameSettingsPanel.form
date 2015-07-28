@@ -299,12 +299,6 @@
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="cboGameDirType" alignment="1" max="32767" attributes="0"/>
                                   <Component id="cboLauncherVisibility" alignment="1" max="32767" attributes="0"/>
-                                  <Component id="txtJavaDir" alignment="1" max="32767" attributes="0"/>
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <Component id="txtMaxMemory" max="32767" attributes="0"/>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="lblMaxMemory" min="-2" max="-2" attributes="0"/>
-                                  </Group>
                                   <Component id="txtGameDir" max="32767" attributes="0"/>
                                   <Group type="102" attributes="0">
                                       <Component id="txtWidth" min="-2" pref="100" max="-2" attributes="0"/>
@@ -314,6 +308,17 @@
                                       <Component id="txtHeight" min="-2" pref="100" max="-2" attributes="0"/>
                                       <EmptySpace pref="306" max="32767" attributes="0"/>
                                       <Component id="chkFullscreen" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" alignment="1" attributes="0">
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="txtMaxMemory" max="32767" attributes="0"/>
+                                          <Component id="txtJavaDir" max="32767" attributes="0"/>
+                                      </Group>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="btnChoosingJavaDir" alignment="1" min="-2" max="-2" attributes="0"/>
+                                          <Component id="lblMaxMemory" alignment="1" min="-2" max="-2" attributes="0"/>
+                                      </Group>
                                   </Group>
                               </Group>
                           </Group>
@@ -334,6 +339,7 @@
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="txtJavaDir" alignment="3" min="-2" pref="26" max="-2" attributes="0"/>
                           <Component id="jLabel11" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="btnChoosingJavaDir" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
@@ -488,6 +494,16 @@
               </Properties>
               <Events>
                 <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="cboGameDirTypeFocusLost"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="btnChoosingJavaDir">
+              <Properties>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.explore" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                </Property>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnChoosingJavaDirActionPerformed"/>
               </Events>
             </Component>
           </SubComponents>
