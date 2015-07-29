@@ -35,7 +35,7 @@ public class TaskList extends Thread {
     ArrayList<NonConsumer> allDone = new ArrayList();
     ArrayList<DoingDoneListener<Task>> taskListener = new ArrayList();
 
-    int totTask = 0;
+    int totTask;
     boolean shouldContinue = true;
 
     public TaskList() {
@@ -43,7 +43,6 @@ public class TaskList extends Thread {
 
     public void clean() {
         shouldContinue = true;
-        totTask = 0;
         taskQueue.clear();
     }
 
@@ -57,7 +56,6 @@ public class TaskList extends Thread {
 
     public void addTask(Task task) {
         taskQueue.add(task);
-        totTask++;
     }
 
     public int taskCount() {
@@ -120,7 +118,7 @@ public class TaskList extends Thread {
             d.onDoing(t);
 
         if (t.executeTask()) {
-            HMCLog.log("Task finished: " + t.getInfo());
+            HMCLog.log((t.isAborted() ? "Task aborted: " : "Task finished: ") + t.getInfo());
             for (DoingDoneListener<Task> d : taskListener)
                 d.onDone(t);
             for (DoingDoneListener<Task> d : t.getTaskListeners())
@@ -140,6 +138,7 @@ public class TaskList extends Thread {
         Thread.currentThread().setName("TaskList");
 
         threadPool.clear();
+        totTask = taskQueue.size();
         for (Task taskQueue1 : taskQueue)
             executeTask(taskQueue1);
         if (shouldContinue)

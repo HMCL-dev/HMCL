@@ -162,30 +162,20 @@ public final class JdkVersion {
         JavaProcess jp = new JavaProcess(str, pb.start(), null);
         InputStream is = jp.getRawProcess().getErrorStream();
         BufferedReader br = null;
-        int lineNumber = 0;
         String ver = null;
-        Platform platform = Platform.UNKNOWN;
+        Platform platform = Platform.BIT_32;
         try {
             br = new BufferedReader(new InputStreamReader(is));
             String line;
             jp.getRawProcess().waitFor();
             while ((line = br.readLine()) != null) {
-                lineNumber++;
-                switch (lineNumber) {
-                    case 1:
-                        Matcher m = p.matcher(line);
-                        if (m.find()) {
-                            ver = m.group();
-                            ver = ver.substring("java version \"".length(), ver.length() - 1);
-                        }
-                        break;
-                    case 3:
-                        if (line.contains("64-Bit"))
-                            platform = Platform.BIT_64;
-                        else
-                            platform = Platform.BIT_32;
-                        break;
+                Matcher m = p.matcher(line);
+                if (m.find()) {
+                    ver = m.group();
+                    ver = ver.substring("java version \"".length(), ver.length() - 1);
                 }
+                if (line.contains("64-Bit"))
+                    platform = Platform.BIT_64;
             }
         } catch (InterruptedException | IOException e) {
             HMCLog.warn("Failed to get java version", e);

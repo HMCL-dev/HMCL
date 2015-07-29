@@ -105,7 +105,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
 
     RandomAccessFile file = null;
     InputStream stream = null;
-    boolean shouldContinue = true, aborted = false;
+    boolean shouldContinue = true;
 
     private void closeFiles() {
         // Close file.
@@ -199,7 +199,10 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                         ppl.setProgress(this, downloaded, size);
                 }
                 closeFiles();
-                tempFile.renameTo(filePath);
+                if (aborted)
+                    tempFile.delete();
+                else
+                    tempFile.renameTo(filePath);
                 if (ppl != null)
                     ppl.onProgressProviderDone(this);
                 return true;

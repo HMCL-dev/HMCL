@@ -79,7 +79,7 @@ public class LibraryDownloadTask extends Task {
 
     InputStream stream;
     RandomAccessFile file;
-    boolean shouldContinue = true, aborted = false;
+    boolean shouldContinue = true;
     int size = -1;
 
     boolean download(URL url, File filePath) {

@@ -39,7 +39,14 @@ public abstract class Task {
      * @return is aborted.
      */
     public boolean abort() {
+        aborted = true;
         return false;
+    }
+    
+    protected boolean aborted = false;
+    
+    public boolean isAborted() {
+        return aborted;
     }
 
     public Throwable getFailReason() {

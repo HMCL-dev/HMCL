@@ -182,7 +182,7 @@ public class TaskWindow extends javax.swing.JDialog
 
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
         tasks.clear();
-        
+
         if (!this.failReasons.isEmpty()) {
             MessageBox.Show(StrUtils.parseParams("", failReasons.toArray(), "\n"), C.i18n("message.error"), MessageBox.ERROR_MESSAGE);
             failReasons.clear();
@@ -206,18 +206,18 @@ public class TaskWindow extends javax.swing.JDialog
 
     ArrayList<Task> tasks = new ArrayList<>();
     ArrayList<Integer> progresses = new ArrayList<>();
-    
+
     @Override
     public void setProgress(Task task, int progress, int max) {
         SwingUtilities.invokeLater(() -> {
             int idx = tasks.indexOf(task);
-            if(idx == -1) return;
+            if (idx == -1) return;
             int pgs = progress * 100 / max;
-            if(progresses.get(idx) != pgs) {
+            if (progresses.get(idx) != pgs) {
                 SwingUtils.setValueAt(lstDownload, pgs + "%", idx, 1);
                 progresses.set(idx, pgs);
             }
-            if(task.isParallelExecuting()) return;
+            if (task.isParallelExecuting()) return;
             pgsSingle.setMaximum(max);
             pgsSingle.setValue(progress);
         });
@@ -266,6 +266,7 @@ public class TaskWindow extends javax.swing.JDialog
             pgsTotal.setMaximum(taskList.taskCount());
             pgsTotal.setValue(pgsTotal.getValue() + 1);
             int idx = tasks.indexOf(task);
+            if (idx == -1) return;
             SwingUtils.setValueAt(lstDownload, task.getFailReason(), idx, 0);
             SwingUtils.setValueAt(lstDownload, "0%", idx, 1);
             SwingUtils.moveEnd(srlDownload);

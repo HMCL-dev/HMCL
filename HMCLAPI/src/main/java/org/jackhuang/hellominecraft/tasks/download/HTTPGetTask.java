@@ -81,6 +81,7 @@ public class HTTPGetTask extends TaskInfo implements PreviousResult<String> {
     @Override
     public boolean abort() {
         shouldContinue = false;
+        aborted = true;
         return true;
     }
 

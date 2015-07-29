@@ -1331,7 +1331,6 @@ org.jackhuang.hellominecraft.launcher.launch.LibraryDownloadTask -> org.jackhuan
     java.io.InputStream stream -> a
     java.io.RandomAccessFile file -> a
     boolean shouldContinue -> a
-    boolean aborted -> b
     int size -> a
     56:76:boolean executeTask() -> a
     86:167:boolean download(java.net.URL,java.io.File) -> a
@@ -3232,24 +3231,26 @@ org.jackhuang.hellominecraft.tasks.ProgressProviderListener -> org.jackhuang.hel
     void setStatus(org.jackhuang.hellominecraft.tasks.Task,java.lang.String) -> a
     void onProgressProviderDone(org.jackhuang.hellominecraft.tasks.Task) -> a
 org.jackhuang.hellominecraft.tasks.Task -> org.jackhuang.hellominecraft.launcher.dj:
+    boolean aborted -> b
     java.lang.Throwable failReason -> a
     java.lang.String tag -> c
     boolean parallelExecuting -> c
     java.util.ArrayList taskListener -> b
     org.jackhuang.hellominecraft.tasks.ProgressProviderListener ppl -> a
     boolean executeTask() -> a
-    42:42:boolean abort() -> b
-    46:46:java.lang.Throwable getFailReason() -> a
-    51:52:void setFailReason(java.lang.Throwable) -> a
-    58:59:org.jackhuang.hellominecraft.tasks.Task setTag(java.lang.String) -> a
-    63:63:boolean isParallelExecuting() -> c
-    67:68:void setParallelExecuting(boolean) -> a
-    73:74:org.jackhuang.hellominecraft.tasks.Task addTaskListener(org.jackhuang.hellominecraft.tasks.DoingDoneListener) -> a
-    78:78:java.util.ArrayList getTaskListeners() -> a
+    42:43:boolean abort() -> b
+    49:49:boolean isAborted() -> c
+    53:53:java.lang.Throwable getFailReason() -> a
+    58:59:void setFailReason(java.lang.Throwable) -> a
+    65:66:org.jackhuang.hellominecraft.tasks.Task setTag(java.lang.String) -> a
+    70:70:boolean isParallelExecuting() -> d
+    74:75:void setParallelExecuting(boolean) -> a
+    80:81:org.jackhuang.hellominecraft.tasks.Task addTaskListener(org.jackhuang.hellominecraft.tasks.DoingDoneListener) -> a
+    85:85:java.util.ArrayList getTaskListeners() -> a
     java.lang.String getInfo() -> a
-    84:84:java.util.Collection getDependTasks() -> b
-    88:88:java.util.Collection getAfterTasks() -> a
-    94:95:org.jackhuang.hellominecraft.tasks.Task setProgressProviderListener(org.jackhuang.hellominecraft.tasks.ProgressProviderListener) -> a
+    91:91:java.util.Collection getDependTasks() -> b
+    95:95:java.util.Collection getAfterTasks() -> a
+    101:102:org.jackhuang.hellominecraft.tasks.Task setProgressProviderListener(org.jackhuang.hellominecraft.tasks.ProgressProviderListener) -> a
 org.jackhuang.hellominecraft.tasks.TaskInfo -> org.jackhuang.hellominecraft.launcher.dk:
     java.lang.String info -> a
     33:33:java.lang.String getInfo() -> a
@@ -3311,14 +3312,14 @@ org.jackhuang.hellominecraft.tasks.TaskWindow -> org.jackhuang.hellominecraft.la
     235:243:void onDoing(org.jackhuang.hellominecraft.tasks.Task) -> b
     246:246:boolean areTasksFinished() -> b
     251:260:void onDone(org.jackhuang.hellominecraft.tasks.Task) -> c
-    264:273:void onFailed(org.jackhuang.hellominecraft.tasks.Task) -> d
-    278:278:void onProgressProviderDone(org.jackhuang.hellominecraft.tasks.Task) -> a
-    282:285:void setStatus(org.jackhuang.hellominecraft.tasks.Task,java.lang.String) -> a
+    264:274:void onFailed(org.jackhuang.hellominecraft.tasks.Task) -> d
+    279:279:void onProgressProviderDone(org.jackhuang.hellominecraft.tasks.Task) -> a
+    283:286:void setStatus(org.jackhuang.hellominecraft.tasks.Task,java.lang.String) -> a
     33:33:void onFailed(java.lang.Object) -> c
     33:33:void onDoing(java.lang.Object) -> b
     33:33:void onDone(java.lang.Object) -> a
-    283:284:void lambda$setStatus$4(java.lang.String) -> a
-    265:272:void lambda$onFailed$3(org.jackhuang.hellominecraft.tasks.Task) -> e
+    284:285:void lambda$setStatus$4(java.lang.String) -> a
+    265:273:void lambda$onFailed$3(org.jackhuang.hellominecraft.tasks.Task) -> e
     252:259:void lambda$onDone$2(org.jackhuang.hellominecraft.tasks.Task) -> f
     238:242:void lambda$onDoing$1(org.jackhuang.hellominecraft.tasks.Task) -> g
     213:223:void lambda$setProgress$0(org.jackhuang.hellominecraft.tasks.Task,int,int) -> b
@@ -3334,7 +3335,7 @@ org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$1 -> org.jackhuang.hellomi
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.tasks.TaskList) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.tasks.TaskList) -> a
-org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$4 -> org.jackhuang.hellominecraft.launcher.dr:
+org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$2 -> org.jackhuang.hellominecraft.launcher.dr:
     org.jackhuang.hellominecraft.tasks.TaskWindow arg$1 -> a
     org.jackhuang.hellominecraft.tasks.Task arg$2 -> a
     int arg$3 -> a
@@ -3342,25 +3343,25 @@ org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$4 -> org.jackhuang.hellomi
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task,int,int) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task,int,int) -> a
-org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$5 -> org.jackhuang.hellominecraft.launcher.ds:
+org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$3 -> org.jackhuang.hellominecraft.launcher.ds:
     org.jackhuang.hellominecraft.tasks.TaskWindow arg$1 -> a
     org.jackhuang.hellominecraft.tasks.Task arg$2 -> a
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> a
-org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$6 -> org.jackhuang.hellominecraft.launcher.dt:
+org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$4 -> org.jackhuang.hellominecraft.launcher.dt:
     org.jackhuang.hellominecraft.tasks.TaskWindow arg$1 -> a
     org.jackhuang.hellominecraft.tasks.Task arg$2 -> a
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> a
-org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$7 -> org.jackhuang.hellominecraft.launcher.du:
+org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$5 -> org.jackhuang.hellominecraft.launcher.du:
     org.jackhuang.hellominecraft.tasks.TaskWindow arg$1 -> a
     org.jackhuang.hellominecraft.tasks.Task arg$2 -> a
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> a
-org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$8 -> org.jackhuang.hellominecraft.launcher.dv:
+org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$6 -> org.jackhuang.hellominecraft.launcher.dv:
     org.jackhuang.hellominecraft.tasks.TaskWindow arg$1 -> a
     java.lang.String arg$2 -> a
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.tasks.TaskWindow,java.lang.String) -> b
@@ -3399,7 +3400,6 @@ org.jackhuang.hellominecraft.tasks.download.FileDownloadTask -> org.jackhuang.he
     java.io.RandomAccessFile file -> a
     java.io.InputStream stream -> a
     boolean shouldContinue -> a
-    boolean aborted -> b
     java.util.ArrayList al -> a
     103:103:java.lang.String getUrl() -> b
     112:128:void closeFiles() -> a
@@ -3427,9 +3427,9 @@ org.jackhuang.hellominecraft.tasks.download.HTTPGetTask -> org.jackhuang.hellomi
     org.jackhuang.hellominecraft.utils.EventHandler tdtsl -> a
     boolean shouldContinue -> a
     54:78:boolean executeTask() -> a
-    83:84:boolean abort() -> b
-    89:89:java.lang.String getInfo() -> a
-    94:94:java.lang.String getResult() -> b
+    83:85:boolean abort() -> b
+    90:90:java.lang.String getInfo() -> a
+    95:95:java.lang.String getResult() -> b
     32:32:java.lang.Object getResult() -> a
 org.jackhuang.hellominecraft.tasks.download.NetException -> org.jackhuang.hellominecraft.launcher.dH:
 org.jackhuang.hellominecraft.utils.ArrayUtils -> org.jackhuang.hellominecraft.launcher.dI:
