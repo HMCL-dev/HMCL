@@ -1235,11 +1235,11 @@ org.jackhuang.hellominecraft.launcher.launch.AbstractMinecraftLoader -> org.jack
     org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider lr -> a
     java.io.File gameDir -> b
     org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider provider -> a
-    60:128:void makeHeadCommand(java.util.List) -> a
-    132:163:java.util.List makeLaunchingCommand() -> a
+    60:133:void makeHeadCommand(java.util.List) -> a
+    137:168:java.util.List makeLaunchingCommand() -> a
     void makeSelf(java.util.List) -> b
-    179:179:void appendJVMArgs(java.util.List) -> c
-    182:182:org.jackhuang.hellominecraft.launcher.settings.Profile getUserVersion() -> a
+    184:184:void appendJVMArgs(java.util.List) -> c
+    187:187:org.jackhuang.hellominecraft.launcher.settings.Profile getUserVersion() -> a
 org.jackhuang.hellominecraft.launcher.launch.DefaultGameLauncher -> org.jackhuang.hellominecraft.launcher.h:
     46:69:void register() -> a
     61:67:boolean lambda$register$3(java.lang.Object,org.jackhuang.hellominecraft.launcher.launch.GameLauncher$DecompressLibraryJob) -> b
@@ -1333,12 +1333,12 @@ org.jackhuang.hellominecraft.launcher.launch.LibraryDownloadTask -> org.jackhuan
     boolean shouldContinue -> a
     boolean aborted -> b
     int size -> a
-    56:66:boolean executeTask() -> a
-    76:154:boolean download(java.net.URL,java.io.File) -> a
-    159:199:void unpackLibrary(java.io.File,java.io.File) -> a
-    203:219:void closeFiles() -> a
-    223:225:boolean abort() -> b
-    230:230:java.lang.String getInfo() -> a
+    56:76:boolean executeTask() -> a
+    86:167:boolean download(java.net.URL,java.io.File) -> a
+    172:212:void unpackLibrary(java.io.File,java.io.File) -> a
+    216:232:void closeFiles() -> a
+    236:238:boolean abort() -> b
+    243:243:java.lang.String getInfo() -> a
 org.jackhuang.hellominecraft.launcher.launch.MinecraftCrashAdvicer -> org.jackhuang.hellominecraft.launcher.u:
     29:29:java.lang.String getAdvice(java.lang.String) -> a
     33:52:java.lang.String getAdvice(java.lang.String,boolean) -> a
@@ -3261,22 +3261,22 @@ org.jackhuang.hellominecraft.tasks.TaskList -> org.jackhuang.hellominecraft.laun
     boolean shouldContinue -> a
     java.util.Set threadPool -> a
     java.util.Set taskPool -> b
-    45:48:void clean() -> a
-    51:52:void addAllDoneListener(org.jackhuang.hellominecraft.utils.functions.NonConsumer) -> a
-    55:56:void addTaskListener(org.jackhuang.hellominecraft.tasks.DoingDoneListener) -> a
-    59:61:void addTask(org.jackhuang.hellominecraft.tasks.Task) -> a
-    64:64:int taskCount() -> a
-    90:109:void processTasks(java.util.Collection) -> a
-    112:136:void executeTask(org.jackhuang.hellominecraft.tasks.Task) -> b
-    140:148:void run() -> run
-    151:151:boolean isEmpty() -> a
-    155:163:void abort() -> b
+    45:47:void clean() -> a
+    50:51:void addAllDoneListener(org.jackhuang.hellominecraft.utils.functions.NonConsumer) -> a
+    54:55:void addTaskListener(org.jackhuang.hellominecraft.tasks.DoingDoneListener) -> a
+    58:59:void addTask(org.jackhuang.hellominecraft.tasks.Task) -> a
+    62:62:int taskCount() -> a
+    88:107:void processTasks(java.util.Collection) -> a
+    110:134:void executeTask(org.jackhuang.hellominecraft.tasks.Task) -> b
+    138:147:void run() -> run
+    150:150:boolean isEmpty() -> a
+    154:162:void abort() -> b
     32:32:void access$000(org.jackhuang.hellominecraft.tasks.TaskList,org.jackhuang.hellominecraft.tasks.Task) -> a
 org.jackhuang.hellominecraft.tasks.TaskList$InvokeThread -> org.jackhuang.hellominecraft.launcher.dm:
     org.jackhuang.hellominecraft.tasks.Task task -> a
     java.util.Set s -> a
     org.jackhuang.hellominecraft.tasks.TaskList this$0 -> a
-    79:82:void run() -> run
+    77:80:void run() -> run
 org.jackhuang.hellominecraft.tasks.TaskRunnable -> org.jackhuang.hellominecraft.launcher.dn:
     java.lang.Runnable r -> a
     35:39:boolean executeTask() -> a
@@ -3403,12 +3403,12 @@ org.jackhuang.hellominecraft.tasks.download.FileDownloadTask -> org.jackhuang.he
     java.util.ArrayList al -> a
     103:103:java.lang.String getUrl() -> b
     112:128:void closeFiles() -> a
-    133:212:boolean executeTask() -> a
-    216:217:void download(java.lang.String,java.lang.String,org.jackhuang.hellominecraft.tasks.download.DownloadListener) -> a
-    221:223:boolean abort() -> b
-    228:228:java.lang.String getInfo() -> a
-    233:233:java.io.File getResult() -> a
-    240:241:org.jackhuang.hellominecraft.tasks.Task registerPreviousResult(org.jackhuang.hellominecraft.tasks.communication.PreviousResult) -> a
+    133:215:boolean executeTask() -> a
+    219:220:void download(java.lang.String,java.lang.String,org.jackhuang.hellominecraft.tasks.download.DownloadListener) -> a
+    224:226:boolean abort() -> b
+    231:231:java.lang.String getInfo() -> a
+    236:236:java.io.File getResult() -> a
+    243:244:org.jackhuang.hellominecraft.tasks.Task registerPreviousResult(org.jackhuang.hellominecraft.tasks.communication.PreviousResult) -> a
     44:44:java.lang.Object getResult() -> a
     60:60:boolean lambda$static$5(java.lang.String,javax.net.ssl.SSLSession) -> b
     boolean access$lambda$0(java.lang.String,javax.net.ssl.SSLSession) -> a
@@ -3832,9 +3832,9 @@ org.jackhuang.hellominecraft.utils.system.JdkVersion -> org.jackhuang.hellominec
     131:131:java.lang.String getJavaVersion() -> c
     149:149:int getMajorJavaVersion() -> b
     153:154:boolean isJava64Bit() -> a
-    160:196:org.jackhuang.hellominecraft.utils.system.JdkVersion getJavaVersionFromExecutable(java.lang.String) -> a
-    200:202:void write(java.io.File) -> a
-    205:205:boolean isEarlyAccess() -> b
+    160:186:org.jackhuang.hellominecraft.utils.system.JdkVersion getJavaVersionFromExecutable(java.lang.String) -> a
+    190:192:void write(java.io.File) -> a
+    195:195:boolean isEarlyAccess() -> b
 org.jackhuang.hellominecraft.utils.system.MessageBox -> org.jackhuang.hellominecraft.launcher.ex:
     java.lang.String Title -> a
     int DEFAULT_OPTION -> a

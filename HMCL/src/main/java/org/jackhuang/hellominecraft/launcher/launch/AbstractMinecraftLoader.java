@@ -87,6 +87,12 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
             res.add("-Xmn128m");
         }
 
+        if (jv != null) {
+            HMCLog.log("Java Version: " + jv.getVersion());
+            HMCLog.log("Java Platform: " + jv.getPlatform().getBit());
+        }
+        HMCLog.log("System Platform: " + Platform.getPlatform().getBit());
+
         if (jv != null && jv.getPlatform() == Platform.BIT_32 && Platform.getPlatform() == Platform.BIT_64)
             MessageBox.Show(C.i18n("advice.os64butjdk32"));
 
@@ -106,8 +112,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
         }
 
         if (!StrUtils.isBlank(v.getPermSize()) && !v.isNoJVMArgs())
-            if (jv != null && jv.getParsedVersion() >= JdkVersion.JAVA_18);
-            else res.add("-XX:MaxPermSize=" + v.getPermSize() + "m");
+            if (jv != null && jv.getParsedVersion() >= JdkVersion.JAVA_18); else res.add("-XX:MaxPermSize=" + v.getPermSize() + "m");
 
         if (!v.isNoJVMArgs()) appendJVMArgs(res);
 

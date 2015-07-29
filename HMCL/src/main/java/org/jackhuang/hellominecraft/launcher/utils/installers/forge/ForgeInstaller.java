@@ -81,9 +81,9 @@ public class ForgeInstaller extends Task {
             FileUtils.copyFile(new File(from, profile.install.minecraft + ".jar"),
                     new File(to, profile.install.target + ".jar"));
             HMCLog.log("Creating new version profile..." + profile.install.target + ".json");
-            for (MinecraftLibrary library : profile.versionInfo.libraries)
+            /*for (MinecraftLibrary library : profile.versionInfo.libraries)
                 if (library.name.startsWith("net.minecraftforge:forge:"))
-                    library.url = installerVersion.universal;
+                    library.url = installerVersion.universal;*/
             FileUtils.write(new File(to, profile.install.target + ".json"), C.gsonPrettyPrinting.toJson(profile.versionInfo));
 
             HMCLog.log("Extracting universal forge pack..." + profile.install.filePath);

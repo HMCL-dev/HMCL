@@ -49,16 +49,26 @@ public class LibraryDownloadTask extends Task {
     public LibraryDownloadTask(GameLauncher.DownloadLibraryJob job) {
         this.job = job;
     }
-    
+
     @Override
     public boolean executeTask() {
         try {
             File packFile = new File(job.path.getParentFile(), job.path.getName() + ".pack.xz");
-            if (job.url.contains("typesafe") && download(new URL(job.url + ".pack.xz"), packFile)) {
+            if (job.name.contains("typesafe") && download(new URL(job.url + ".pack.xz"), packFile)) {
                 unpackLibrary(job.path, packFile);
                 packFile.delete();
                 return true;
             } else {
+                if (job.name.startsWith("net.minecraftforge:forge:")) {
+                    String[] s = job.name.split(":");
+                    if (s.length == 3)
+                        job.url = "http://files.minecraftforge.net/maven/net/minecraftforge/forge/" + s[2] + "/forge-" + s[2] + "-universal.jar";
+                }
+                if (job.name.startsWith("com.mumfrey:liteloader:")) {
+                    String[] s = job.name.split(":");
+                    if (s.length == 3 && s[2].length() > 3)
+                        job.url = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + s[2].substring(0, s[2].length() - 3) + "/liteloader-" + s[2] + ".jar";
+                }
                 return download(new URL(job.url), job.path);
             }
         } catch (Exception ex) {
@@ -141,7 +151,10 @@ public class LibraryDownloadTask extends Task {
                         ppl.setProgress(this, downloaded, size);
                 }
                 closeFiles();
-                tempFile.renameTo(filePath);
+                if (aborted)
+                    tempFile.delete();
+                else
+                    tempFile.renameTo(filePath);
                 if (ppl != null)
                     ppl.onProgressProviderDone(this);
                 return true;
@@ -156,7 +169,7 @@ public class LibraryDownloadTask extends Task {
 
     public static void unpackLibrary(File output, File input)
             throws IOException {
-        HMCLog.log("Unpacking " + output);
+        HMCLog.log("Unpacking " + input);
         if (output.exists())
             output.delete();
 
@@ -186,9 +199,9 @@ public class LibraryDownloadTask extends Task {
         System.gc();
 
         try (FileOutputStream jarBytes = new FileOutputStream(output); JarOutputStream jos = new JarOutputStream(jarBytes)) {
-            
+
             Pack200.newUnpacker().unpack(temp, jos);
-            
+
             JarEntry checksumsFile = new JarEntry("checksums.sha1");
             checksumsFile.setTime(0L);
             jos.putNextEntry(checksumsFile);
