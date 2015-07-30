@@ -44,12 +44,12 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
     private MinecraftVersion version;
     String text;
 
-    public MinecraftLoader(Profile ver, IMinecraftProvider provider, UserProfileProvider lr, File minecraftJar) throws IllegalStateException {
-        this(ver, provider, lr, minecraftJar, DownloadType.Mojang);
+    public MinecraftLoader(Profile ver, IMinecraftProvider provider, UserProfileProvider lr) throws IllegalStateException {
+        this(ver, provider, lr, DownloadType.Mojang);
     }
 
-    public MinecraftLoader(Profile ver, IMinecraftProvider provider, UserProfileProvider lr, File minecraftJar, DownloadType downloadtype) throws IllegalStateException {
-        super(ver, provider, lr, minecraftJar);
+    public MinecraftLoader(Profile ver, IMinecraftProvider provider, UserProfileProvider lr, DownloadType downloadtype) throws IllegalStateException {
+        super(ver, provider, lr);
         version = ver.getSelectedMinecraftVersion().resolve(provider, downloadtype);
     }
 
@@ -61,7 +61,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
             if (l.allow())
                 library += l.getFilePath(gameDir).getAbsolutePath() + File.pathSeparator;
         }
-        library += IOUtils.tryGetCanonicalFilePath(minecraftJar) + File.pathSeparator;
+        library += IOUtils.tryGetCanonicalFilePath(provider.getMinecraftJar()) + File.pathSeparator;
         library = library.substring(0, library.length() - File.pathSeparator.length());
         if (v.isCanceledWrapper()) res.add("-cp");
         res.add(library);

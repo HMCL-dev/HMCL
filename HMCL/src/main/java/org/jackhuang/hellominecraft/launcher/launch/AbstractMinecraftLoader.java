@@ -41,16 +41,14 @@ import org.jackhuang.hellominecraft.utils.Utils;
  */
 public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
 
-    protected File minecraftJar;
     protected Profile v;
     protected UserProfileProvider lr;
     protected File gameDir;
     protected IMinecraftProvider provider;
 
-    public AbstractMinecraftLoader(Profile ver, IMinecraftProvider provider, UserProfileProvider lr, File minecraftJar) {
+    public AbstractMinecraftLoader(Profile ver, IMinecraftProvider provider, UserProfileProvider lr) {
         this.lr = lr;
 
-        this.minecraftJar = minecraftJar;
         v = ver;
         this.provider = provider;
         gameDir = v.getCanonicalGameDirFile();

@@ -286,7 +286,7 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public IMinecraftLoader provideMinecraftLoader(UserProfileProvider p, DownloadType type)
             throws IllegalStateException {
-        return new MinecraftLoader(profile, this, p, getMinecraftJar(), type);
+        return new MinecraftLoader(profile, this, p, type);
     }
 
     @Override
