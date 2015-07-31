@@ -20,6 +20,7 @@ import java.awt.Color;
 import java.io.IOException;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
@@ -258,6 +259,8 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setDialogTitle(C.i18n("launcher.choose_bgpath"));
         fc.setMultiSelectionEnabled(false);
+        fc.setFileFilter(new FileNameExtensionFilter("*.png", "png"));
+        fc.addChoosableFileFilter(new FileNameExtensionFilter("*.jpg", "jpg"));
         fc.showOpenDialog(this);
         if (fc.getSelectedFile() == null)
             return;

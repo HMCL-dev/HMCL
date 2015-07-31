@@ -77,12 +77,24 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
         if (v.hasJavaArgs())
             res.addAll(Arrays.asList(StrUtils.tokenize(v.getJavaArgs())));
 
-        if (!v.isNoJVMArgs() && !(jv != null && jv.isEarlyAccess())) {
-            res.add("-XX:+UseConcMarkSweepGC");
-            res.add("-XX:+CMSIncrementalMode");
-            res.add("-XX:-UseAdaptiveSizePolicy");
+        if (!v.isNoJVMArgs()) {
+            appendJVMArgs(res);
 
-            res.add("-Xmn128m");
+            if (jv == null || !jv.isEarlyAccess()) {
+                if (OS.os() == OS.WINDOWS)
+                    res.add("-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump");
+                res.add("-XX:+UseConcMarkSweepGC");
+                res.add("-XX:+CMSIncrementalMode");
+                res.add("-XX:-UseAdaptiveSizePolicy");
+                res.add("-XX:-OmitStackTraceInFastThrow");
+
+                res.add("-Xmn128m");
+            }
+            if (!StrUtils.isBlank(v.getPermSize()))
+                if (jv == null || jv.getParsedVersion() < JdkVersion.JAVA_18)
+                    res.add("-XX:PermSize=" + v.getPermSize() + "m");
+                else if (jv.getParsedVersion() >= JdkVersion.JAVA_18)
+                    res.add("-XX:MetaspaceSize=" + v.getPermSize() + "m");
         }
 
         if (jv != null) {
@@ -108,13 +120,6 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
             if (MathUtils.canParseInt(v.getMaxMemory())) a += "m";
             res.add(a);
         }
-
-        if (!StrUtils.isBlank(v.getPermSize()) && !v.isNoJVMArgs())
-            if (jv != null && jv.getParsedVersion() >= JdkVersion.JAVA_18); else res.add("-XX:MaxPermSize=" + v.getPermSize() + "m");
-
-        if (!v.isNoJVMArgs()) appendJVMArgs(res);
-
-        HMCLog.log("On making java.library.path.");
 
         res.add("-Djava.library.path=" + provider.getDecompressNativesToLocation().getPath());
         res.add("-Dfml.ignoreInvalidMinecraftCertificates=true");

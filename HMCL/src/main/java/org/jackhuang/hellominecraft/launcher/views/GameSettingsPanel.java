@@ -32,6 +32,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
@@ -48,6 +50,7 @@ import org.jackhuang.hellominecraft.launcher.utils.installers.optifine.vanilla.O
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
+import org.jackhuang.hellominecraft.launcher.utils.FileNameFilter;
 import org.jackhuang.hellominecraft.launcher.version.GameDirType;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.tasks.Task;
@@ -1125,6 +1128,9 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setDialogTitle(C.i18n("settings.choose_javapath"));
         fc.setMultiSelectionEnabled(false);
+        fc.setFileFilter(new FileNameFilter("javaw.exe"));
+        fc.addChoosableFileFilter(new FileNameFilter("java.exe"));
+        fc.addChoosableFileFilter(new FileNameFilter("java"));
         fc.showOpenDialog(this);
         if (fc.getSelectedFile() == null)
             return;
@@ -1133,7 +1139,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
             txtJavaDir.setText(path);
             profile.setJavaDir(txtJavaDir.getText());
         } catch (IOException e) {
-            HMCLog.warn("Failed to set background path.", e);
+            HMCLog.warn("Failed to set java path.", e);
             MessageBox.Show(C.i18n("ui.label.failed_set") + e.getMessage());
         }
     }//GEN-LAST:event_btnChoosingJavaDirActionPerformed

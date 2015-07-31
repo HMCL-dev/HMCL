@@ -27,7 +27,7 @@
               <Component id="btnIncludeMinecraft" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
-          <Component id="tabVersionEdit" alignment="0" pref="684" max="32767" attributes="0"/>
+          <Component id="tabVersionEdit" alignment="0" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">

@@ -25,8 +25,11 @@ if (!hasProperty('mainClass')) {
     ext.mainClass = 'org.jackhuang.hellominecraft.launcher.Main'
 }
 
+
+def buildnumber = System.getenv("BUILD_NUMBER") == null ? "" : "-"+System.getenv("BUILD_NUMBER")
+
 String mavenGroupId = 'HMCL'
-String mavenVersion = '2.3.3'
+String mavenVersion = '2.3.3' + buildnumber
 String bundleName = "Hello Minecraft! Launcher"
 
 group = mavenGroupId
