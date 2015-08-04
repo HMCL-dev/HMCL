@@ -16,11 +16,8 @@
  */
 package org.jackhuang.hellominecraft.utils.system;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jackhuang.hellominecraft.HMCLog;
@@ -154,21 +151,14 @@ public final class JdkVersion {
         return jdkBit.contains("64");
     }
 
-    static Pattern p = Pattern.compile("java version \"[1-9]*\\.[1-9]*\\.[0-9]*(.*?)\"");
+    private static final Pattern p = Pattern.compile("java version \"[1-9]*\\.[1-9]*\\.[0-9]*(.*?)\"");
 
     public static JdkVersion getJavaVersionFromExecutable(String file) throws IOException {
         String[] str = new String[]{file, "-version"};
-        ProcessBuilder pb = new ProcessBuilder(str);
-        JavaProcess jp = new JavaProcess(str, pb.start(), null);
-        InputStream is = jp.getRawProcess().getErrorStream();
-        BufferedReader br = null;
-        String ver = null;
         Platform platform = Platform.BIT_32;
+        String ver = null;
         try {
-            br = new BufferedReader(new InputStreamReader(is));
-            String line;
-            jp.getRawProcess().waitFor();
-            while ((line = br.readLine()) != null) {
+            for(String line : IOUtils.readProcessByErrorStream(str)) {
                 Matcher m = p.matcher(line);
                 if (m.find()) {
                     ver = m.group();
@@ -179,9 +169,6 @@ public final class JdkVersion {
             }
         } catch (InterruptedException | IOException e) {
             HMCLog.warn("Failed to get java version", e);
-        } finally {
-            if (br != null)
-                br.close();
         }
         return new JdkVersion(file, ver, platform);
     }

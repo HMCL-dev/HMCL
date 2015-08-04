@@ -25,6 +25,7 @@ import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.Utils;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersionManager;
+import org.jackhuang.hellominecraft.utils.system.Java;
 import org.jackhuang.hellominecraft.utils.system.OS;
 
 /**
@@ -34,7 +35,7 @@ import org.jackhuang.hellominecraft.utils.system.OS;
 public final class Profile {
 
     private String name, selectedMinecraftVersion = "", javaArgs, minecraftArgs, maxMemory, permSize, width, height, userProperties;
-    private String gameDir, javaDir, wrapperLauncher, serverIp;
+    private String gameDir, javaDir, wrapperLauncher, serverIp, java;
     private boolean fullscreen, debug, noJVMArgs, canceledWrapper;
 
     /**
@@ -60,7 +61,8 @@ public final class Profile {
         this.name = name;
         gameDir = MCUtils.getInitGameDir().getPath();
         debug = fullscreen = canceledWrapper = false;
-        javaDir = IOUtils.getJavaDir();
+        javaDir = "";
+        java = "Default";
         launcherVisibility = gameDirType = 0;
         minecraftArgs = serverIp = "";
     }
@@ -73,6 +75,7 @@ public final class Profile {
         maxMemory = v.maxMemory;
         width = v.width;
         height = v.height;
+        java = v.java;
         fullscreen = v.fullscreen;
         javaArgs = v.javaArgs;
         javaDir = v.javaDir;
@@ -129,8 +132,12 @@ public final class Profile {
     }
 
     public String getJavaDir() {
-        if (StrUtils.isBlank(javaDir))
-            javaDir = IOUtils.getJavaDir();
+        Java j = getJava();
+        if (j.getHome() == null) return javaDir;
+        else return j.getJava();
+    }
+
+    public String getSettingsJavaDir() {
         return javaDir;
     }
 
@@ -140,6 +147,29 @@ public final class Profile {
 
     public void setJavaDir(String javaDir) {
         this.javaDir = javaDir;
+        Settings.save();
+    }
+
+    public Java getJava() {
+        return Settings.JAVA.get(getJavaIndexInAllJavas());
+    }
+
+    public int getJavaIndexInAllJavas() {
+        if(StrUtils.isBlank(java) && StrUtils.isNotBlank(javaDir)) {
+            java = "Custom";
+        }
+        int idx = Settings.JAVA.indexOf(new Java(java, null));
+        if (idx == -1) {
+            java = "Default";
+            idx = 0;
+        }
+        return idx;
+    }
+
+    public void setJava(Java java) {
+        int idx = Settings.JAVA.indexOf(java);
+        if (idx == -1) return;
+        this.java = java.getName();
         Settings.save();
     }
 

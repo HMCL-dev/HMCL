@@ -64,6 +64,9 @@ public final class SkinmeAuthenticator extends IAuthenticator {
             if (null != sl[0]) switch (sl[0]) {
                 case "0":
                     req.setSuccess(false);
+                    if(sl[1].contains("No Valid Character")) {
+                        sl[1] = C.i18n("login.no_valid_character");
+                    }
                     req.setErrorReason(sl[1]);
                     break;
                 case "1": {

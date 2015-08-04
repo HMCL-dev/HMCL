@@ -32,8 +32,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
@@ -65,6 +63,7 @@ import org.jackhuang.hellominecraft.version.MinecraftVersionRequest;
 import org.jackhuang.hellominecraft.utils.system.OS;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.SwingUtils;
+import org.jackhuang.hellominecraft.utils.system.Java;
 import org.jackhuang.hellominecraft.version.MinecraftRemoteVersion;
 import org.jackhuang.hellominecraft.version.MinecraftRemoteVersions;
 import org.jackhuang.hellominecraft.views.Selector;
@@ -161,6 +160,13 @@ public class GameSettingsPanel extends javax.swing.JPanel {
         });
         ppmManage.add(itm);
         //</editor-fold>
+
+        for (Java j : Settings.JAVA) {
+            String name = j.getName();
+            if (name.equals("Default")) name = C.i18n("settings.default");
+            if (name.equals("Custom")) name = C.i18n("settings.custom");
+            cboJava.addItem(name);
+        }
     }
 
     /**
@@ -205,6 +211,7 @@ public class GameSettingsPanel extends javax.swing.JPanel {
         jLabel12 = new javax.swing.JLabel();
         cboGameDirType = new javax.swing.JComboBox();
         btnChoosingJavaDir = new javax.swing.JButton();
+        cboJava = new javax.swing.JComboBox();
         jPanel2 = new javax.swing.JPanel();
         chkDebug = new javax.swing.JCheckBox();
         jLabel26 = new javax.swing.JLabel();
@@ -470,6 +477,12 @@ public class GameSettingsPanel extends javax.swing.JPanel {
             }
         });
 
+        cboJava.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                cboJavaItemStateChanged(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel22Layout = new javax.swing.GroupLayout(jPanel22);
         jPanel22.setLayout(jPanel22Layout);
         jPanel22Layout.setHorizontalGroup(
@@ -504,7 +517,10 @@ public class GameSettingsPanel extends javax.swing.JPanel {
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel22Layout.createSequentialGroup()
                                 .addGroup(jPanel22Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(txtMaxMemory)
-                                    .addComponent(txtJavaDir))
+                                    .addGroup(jPanel22Layout.createSequentialGroup()
+                                        .addComponent(cboJava, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(txtJavaDir)))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(jPanel22Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(btnChoosingJavaDir, javax.swing.GroupLayout.Alignment.TRAILING)
@@ -522,7 +538,8 @@ public class GameSettingsPanel extends javax.swing.JPanel {
                 .addGroup(jPanel22Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtJavaDir, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel11)
-                    .addComponent(btnChoosingJavaDir))
+                    .addComponent(btnChoosingJavaDir, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cboJava, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel22Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblMaxMemory)
@@ -667,7 +684,7 @@ public class GameSettingsPanel extends javax.swing.JPanel {
                 .addComponent(jLabel31)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtServerIP, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 85, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 86, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(chkDebug)
                     .addComponent(chkNoJVMArgs)
@@ -710,7 +727,7 @@ public class GameSettingsPanel extends javax.swing.JPanel {
     );
     jPanel16Layout.setVerticalGroup(
         jPanel16Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addComponent(jScrollPane11, javax.swing.GroupLayout.DEFAULT_SIZE, 291, Short.MAX_VALUE)
+        .addComponent(jScrollPane11, javax.swing.GroupLayout.DEFAULT_SIZE, 292, Short.MAX_VALUE)
         .addGroup(jPanel16Layout.createSequentialGroup()
             .addComponent(btnDownloadForge)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -758,7 +775,7 @@ btnRefreshOptifine.addActionListener(new java.awt.event.ActionListener() {
             .addComponent(btnDownloadOptifine)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(btnRefreshOptifine)
-            .addGap(0, 239, Short.MAX_VALUE))
+            .addGap(0, 240, Short.MAX_VALUE))
     );
 
     tabInstallers.addTab("OptiFine", pnlOptifine);
@@ -796,7 +813,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     );
     jPanel3Layout.setVerticalGroup(
         jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addComponent(jScrollPane12, javax.swing.GroupLayout.DEFAULT_SIZE, 291, Short.MAX_VALUE)
+        .addComponent(jScrollPane12, javax.swing.GroupLayout.DEFAULT_SIZE, 292, Short.MAX_VALUE)
         .addGroup(jPanel3Layout.createSequentialGroup()
             .addComponent(btnInstallLiteLoader)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -856,7 +873,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
             .addComponent(btnRefreshGameDownloads)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(btnDownload))
-        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 320, Short.MAX_VALUE)
+        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 321, Short.MAX_VALUE)
     );
 
     tabVersionEdit.addTab(bundle.getString("settings.tabs.game_download"), pnlGameDownloads); // NOI18N
@@ -877,7 +894,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
             .addContainerGap()
             .addComponent(btnIncludeMinecraft)
             .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        .addComponent(tabVersionEdit, javax.swing.GroupLayout.DEFAULT_SIZE, 684, Short.MAX_VALUE)
+        .addComponent(tabVersionEdit)
     );
     layout.setVerticalGroup(
         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1124,6 +1141,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_txtGameDirFocusLost
 
     private void btnChoosingJavaDirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnChoosingJavaDirActionPerformed
+        if (cboJava.getSelectedIndex() != 1) return;
         JFileChooser fc = new JFileChooser();
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setDialogTitle(C.i18n("settings.choose_javapath"));
@@ -1143,6 +1161,18 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
             MessageBox.Show(C.i18n("ui.label.failed_set") + e.getMessage());
         }
     }//GEN-LAST:event_btnChoosingJavaDirActionPerformed
+
+    private void cboJavaItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboJavaItemStateChanged
+        if (isLoading || evt.getStateChange() != ItemEvent.SELECTED || cboJava.getSelectedIndex() < 0 || StrUtils.isBlank((String) cboJava.getSelectedItem()) || getProfile() == null)
+            return;
+        int idx = cboJava.getSelectedIndex();
+        if (idx != -1) {
+            Java j = Settings.JAVA.get(idx);
+            profile.setJava(j);
+            txtJavaDir.setEnabled(idx == 1);
+            txtJavaDir.setText(j.getHome() == null ? profile.getSettingsJavaDir() : j.getJava());
+        }
+    }//GEN-LAST:event_cboJavaItemStateChanged
 
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Load">
@@ -1187,7 +1217,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         txtGameDir.setText(profile.getGameDir());
         txtJavaArgs.setText(profile.getJavaArgs());
         txtMinecraftArgs.setText(profile.getMinecraftArgs());
-        txtJavaDir.setText(profile.getJavaDir());
+        txtJavaDir.setText(profile.getSettingsJavaDir());
         txtWrapperLauncher.setText(profile.getWrapperLauncher());
         txtServerIP.setText(profile.getServerIp());
         chkDebug.setSelected(profile.isDebug());
@@ -1196,6 +1226,11 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         chkCancelWrapper.setSelected(profile.isCanceledWrapper());
         cboLauncherVisibility.setSelectedIndex(profile.getLauncherVisibility().ordinal());
         cboGameDirType.setSelectedIndex(profile.getGameDirType().ordinal());
+
+        isLoading = true;
+        cboJava.setSelectedIndex(profile.getJavaIndexInAllJavas());
+        isLoading = false;
+        cboJavaItemStateChanged(new ItemEvent(cboJava, 0, cboJava.getSelectedItem(), ItemEvent.SELECTED));
 
         loadVersions();
         loadMinecraftVersion();
@@ -1416,6 +1451,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     private javax.swing.JButton btnRefreshVersions;
     private javax.swing.JButton btnRemoveProfile;
     private javax.swing.JComboBox cboGameDirType;
+    private javax.swing.JComboBox cboJava;
     private javax.swing.JComboBox cboLauncherVisibility;
     private javax.swing.JComboBox cboProfiles;
     private javax.swing.JComboBox cboVersions;

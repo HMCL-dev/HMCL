@@ -312,7 +312,11 @@
                                   <Group type="102" alignment="1" attributes="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
                                           <Component id="txtMaxMemory" max="32767" attributes="0"/>
-                                          <Component id="txtJavaDir" max="32767" attributes="0"/>
+                                          <Group type="102" attributes="0">
+                                              <Component id="cboJava" min="-2" pref="100" max="-2" attributes="0"/>
+                                              <EmptySpace max="-2" attributes="0"/>
+                                              <Component id="txtJavaDir" max="32767" attributes="0"/>
+                                          </Group>
                                       </Group>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Group type="103" groupAlignment="0" attributes="0">
@@ -339,7 +343,8 @@
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="txtJavaDir" alignment="3" min="-2" pref="26" max="-2" attributes="0"/>
                           <Component id="jLabel11" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="btnChoosingJavaDir" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="btnChoosingJavaDir" alignment="3" min="-2" pref="26" max="-2" attributes="0"/>
+                          <Component id="cboJava" alignment="3" min="-2" pref="26" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
@@ -506,6 +511,16 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnChoosingJavaDirActionPerformed"/>
               </Events>
             </Component>
+            <Component class="javax.swing.JComboBox" name="cboJava">
+              <Properties>
+                <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+                  <StringArray count="0"/>
+                </Property>
+              </Properties>
+              <Events>
+                <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="cboJavaItemStateChanged"/>
+              </Events>
+            </Component>
           </SubComponents>
         </Container>
         <Container class="javax.swing.JPanel" name="jPanel2">
@@ -585,7 +600,7 @@
                       <Component id="jLabel31" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="txtServerIP" min="-2" pref="26" max="-2" attributes="0"/>
-                      <EmptySpace pref="85" max="32767" attributes="0"/>
+                      <EmptySpace pref="86" max="32767" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="chkDebug" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="chkNoJVMArgs" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -745,7 +760,7 @@
                     </DimensionLayout>
                     <DimensionLayout dim="1">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jScrollPane11" pref="291" max="32767" attributes="0"/>
+                          <Component id="jScrollPane11" pref="292" max="32767" attributes="0"/>
                           <Group type="102" attributes="0">
                               <Component id="btnDownloadForge" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
@@ -830,7 +845,7 @@
                               <Component id="btnDownloadOptifine" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="btnRefreshOptifine" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="0" pref="239" max="32767" attributes="0"/>
+                              <EmptySpace min="0" pref="240" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -905,7 +920,7 @@
                     </DimensionLayout>
                     <DimensionLayout dim="1">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jScrollPane12" pref="291" max="32767" attributes="0"/>
+                          <Component id="jScrollPane12" pref="292" max="32767" attributes="0"/>
                           <Group type="102" attributes="0">
                               <Component id="btnInstallLiteLoader" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
@@ -996,7 +1011,7 @@
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="btnDownload" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Component id="jScrollPane2" pref="320" max="32767" attributes="0"/>
+                  <Component id="jScrollPane2" pref="321" max="32767" attributes="0"/>
               </Group>
             </DimensionLayout>
           </Layout>

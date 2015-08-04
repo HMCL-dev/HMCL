@@ -16,6 +16,7 @@
  */
 package org.jackhuang.hellominecraft.utils.system;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
@@ -23,6 +24,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
@@ -33,6 +35,7 @@ import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.List;
 import org.jackhuang.hellominecraft.HMCLog;
 
 /**
@@ -164,7 +167,11 @@ public class IOUtils {
     }
 
     public static String getJavaDir() {
-        String path = System.getProperty("java.home") + File.separatorChar + "bin" + File.separatorChar;
+        return getJavaDir(System.getProperty("java.home"));
+    }
+    
+    public static String getJavaDir(String home) {
+        String path = home + File.separatorChar + "bin" + File.separatorChar;
         path = addSeparator(path);
         if (OS.os() == OS.WINDOWS && new File(path + "javaw.exe").isFile())
             return path + "javaw.exe";
@@ -237,7 +244,7 @@ public class IOUtils {
     public static String tryGetCanonicalFolderPath(File file) {
         try {
             return IOUtils.addSeparator(file.getCanonicalPath());
-        } catch (IOException ex) {
+        } catch (IOException ignored) {
             return IOUtils.addSeparator(file.getAbsolutePath());
         }
     }
@@ -245,7 +252,7 @@ public class IOUtils {
     public static File tryGetCanonicalFile(File file) {
         try {
             return file.getCanonicalFile();
-        } catch (IOException ex) {
+        } catch (IOException ignored) {
             return file.getAbsoluteFile();
         }
     }
@@ -257,7 +264,7 @@ public class IOUtils {
     public static String tryGetCanonicalFilePath(File file) {
         try {
             return file.getCanonicalPath();
-        } catch (IOException ex) {
+        } catch (IOException ignored) {
             return file.getAbsolutePath();
         }
     }
@@ -269,5 +276,31 @@ public class IOUtils {
             HMCLog.warn("Failed to parse URL:" + str);
             return null;
         }
+    }
+    
+    public static List<String> readProcessByInputStream(String[] cmd) throws IOException, InterruptedException {
+        JavaProcess jp = new JavaProcess(cmd, new ProcessBuilder(cmd).start(), null);
+        ArrayList<String> lines = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(jp.getRawProcess().getInputStream()))) {
+            jp.getRawProcess().waitFor();
+            String line;
+            while((line = br.readLine()) != null) {
+                lines.add(line);
+            }
+        }
+        return lines;
+    }
+    
+    public static List<String> readProcessByErrorStream(String[] cmd) throws IOException, InterruptedException {
+        JavaProcess jp = new JavaProcess(cmd, new ProcessBuilder(cmd).start(), null);
+        ArrayList<String> lines = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(jp.getRawProcess().getErrorStream()))) {
+            jp.getRawProcess().waitFor();
+            String line;
+            while((line = br.readLine()) != null) {
+                lines.add(line);
+            }
+        }
+        return lines;
     }
 }

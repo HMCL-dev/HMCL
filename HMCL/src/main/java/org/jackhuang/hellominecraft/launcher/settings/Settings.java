@@ -19,7 +19,10 @@ package org.jackhuang.hellominecraft.launcher.settings;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.jackhuang.hellominecraft.C;
@@ -32,6 +35,8 @@ import org.jackhuang.hellominecraft.utils.system.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.UpdateChecker;
 import org.jackhuang.hellominecraft.utils.VersionNumber;
+import org.jackhuang.hellominecraft.utils.system.Java;
+import org.jackhuang.hellominecraft.utils.system.OS;
 
 /**
  *
@@ -42,11 +47,11 @@ public final class Settings {
     public static final String DEFAULT_PROFILE = "Default";
 
     public static final File settingsFile = new File(IOUtils.currentDir(), "hmcl.json");
-    //public static final Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(Platform.class, new EnumAdapter<>(Platform.values())).create();
 
     private static boolean isFirstLoad;
     private static final Config settings;
     public static final UpdateChecker UPDATE_CHECKER;
+    public static final List<Java> JAVA;
 
     public static Config getInstance() {
         return settings;
@@ -66,6 +71,13 @@ public final class Settings {
 
         UPDATE_CHECKER = new UpdateChecker(new VersionNumber(Main.firstVer, Main.secondVer, Main.thirdVer),
                 "hmcl", settings.isCheckUpdate(), () -> Main.invokeUpdate());
+
+        List<Java> temp = new ArrayList<>();
+        temp.add(new Java("Default", System.getProperty("java.home")));
+        temp.add(new Java("Custom", null));
+        if (OS.os() == OS.WINDOWS)
+            temp.addAll(Java.queryAllJavaHomeInWindowsByReg());
+        JAVA = Collections.unmodifiableList(temp);
     }
 
     private static Config initSettings() {
