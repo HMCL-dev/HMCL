@@ -26,8 +26,9 @@ import org.jackhuang.hellominecraft.HMCLog;
  * @author huangyuhui
  */
 public class Java {
+
     String name, home;
-    
+
     public Java(String name, String home) {
         this.name = name;
         this.home = home;
@@ -40,18 +41,17 @@ public class Java {
     public String getHome() {
         return home;
     }
-    
+
     public String getJava() {
         return IOUtils.getJavaDir(getHome());
     }
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof Java) {
+        if (obj instanceof Java) {
             Java j = (Java) obj;
             return (j.getName() == null && this.getName() == null) || ((Java) obj).getName().equals(this.getName());
-        }
-        else return false;
+        } else return false;
     }
 
     @Override
@@ -94,7 +94,10 @@ public class Java {
         List<String> l = IOUtils.readProcessByInputStream(cmd);
         if (l.size() < 3) return null;
         // 18 = 4 spaces + [name.length()] + 4 spaces + "REG_SZ".length()=6 characters + 4 spaces
-        return l.get(2).substring(18 + name.length());
+        String s = l.get(2);
+        if (s != null && s.startsWith("    " + name + "    REG_SZ    "))
+            return s.substring(("    " + name + "    REG_SZ    ").length());
+        else return null;
     }
 
 }

@@ -61,10 +61,8 @@ public final class Profile {
         this.name = name;
         gameDir = MCUtils.getInitGameDir().getPath();
         debug = fullscreen = canceledWrapper = false;
-        javaDir = "";
-        java = "Default";
         launcherVisibility = gameDirType = 0;
-        minecraftArgs = serverIp = "";
+        javaDir = java = minecraftArgs = serverIp = "";
     }
 
     public Profile(Profile v) {

@@ -1422,56 +1422,56 @@ org.jackhuang.hellominecraft.launcher.settings.Profile -> org.jackhuang.hellomin
     int launcherVisibility -> launcherVisibility
     int gameDirType -> gameDirType
     org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider minecraftProvider -> a
-    94:95:org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider getMinecraftProvider() -> a
-    99:108:org.jackhuang.hellominecraft.launcher.version.MinecraftVersion getSelectedMinecraftVersion() -> a
-    112:113:java.lang.String getGameDir() -> a
-    117:117:java.lang.String getCanonicalGameDir() -> b
-    121:121:java.io.File getCanonicalGameDirFile() -> a
-    125:125:java.io.File getGameDirFile() -> b
-    129:131:org.jackhuang.hellominecraft.launcher.settings.Profile setGameDir(java.lang.String) -> a
-    135:137:java.lang.String getJavaDir() -> c
-    141:141:java.lang.String getSettingsJavaDir() -> d
-    145:145:java.io.File getJavaDirFile() -> c
-    149:151:void setJavaDir(java.lang.String) -> a
-    154:154:org.jackhuang.hellominecraft.utils.system.Java getJava() -> a
-    158:166:int getJavaIndexInAllJavas() -> a
-    170:174:void setJava(org.jackhuang.hellominecraft.utils.system.Java) -> a
-    177:177:java.io.File getFolder(java.lang.String) -> a
-    181:181:java.lang.String getName() -> e
-    185:186:void setName(java.lang.String) -> b
-    189:190:void setSelectedMinecraftVersion(java.lang.String) -> c
-    193:194:java.lang.String getJavaArgs() -> f
-    198:200:void setJavaArgs(java.lang.String) -> d
-    203:203:boolean hasJavaArgs() -> a
-    207:208:java.lang.String getMaxMemory() -> g
-    212:214:void setMaxMemory(java.lang.String) -> e
-    217:218:java.lang.String getWidth() -> h
-    222:223:void setWidth(java.lang.String) -> f
-    226:227:java.lang.String getHeight() -> i
-    231:233:void setHeight(java.lang.String) -> g
-    236:237:java.lang.String getUserProperties() -> j
-    241:242:void setUserProperties(java.lang.String) -> h
-    245:245:boolean isFullscreen() -> b
-    249:251:void setFullscreen(boolean) -> a
-    254:254:boolean isDebug() -> c
-    258:260:void setDebug(boolean) -> b
-    263:263:org.jackhuang.hellominecraft.launcher.settings.LauncherVisibility getLauncherVisibility() -> a
-    267:269:void setLauncherVisibility(org.jackhuang.hellominecraft.launcher.settings.LauncherVisibility) -> a
-    272:272:org.jackhuang.hellominecraft.launcher.version.GameDirType getGameDirType() -> a
-    276:278:void setGameDirType(org.jackhuang.hellominecraft.launcher.version.GameDirType) -> a
-    281:281:java.lang.String getPermSize() -> k
-    285:287:void setPermSize(java.lang.String) -> i
-    290:290:boolean isNoJVMArgs() -> d
-    294:295:void setNoJVMArgs(boolean) -> c
-    298:298:java.lang.String getMinecraftArgs() -> l
-    302:304:void setMinecraftArgs(java.lang.String) -> j
-    307:307:boolean isCanceledWrapper() -> e
-    311:313:void setCanceledWrapper(boolean) -> d
-    316:316:java.lang.String getWrapperLauncher() -> m
-    320:322:void setWrapperLauncher(java.lang.String) -> k
-    325:325:java.lang.String getServerIp() -> n
-    329:331:void setServerIp(java.lang.String) -> l
-    334:335:void checkFormat() -> a
+    92:93:org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider getMinecraftProvider() -> a
+    97:106:org.jackhuang.hellominecraft.launcher.version.MinecraftVersion getSelectedMinecraftVersion() -> a
+    110:111:java.lang.String getGameDir() -> a
+    115:115:java.lang.String getCanonicalGameDir() -> b
+    119:119:java.io.File getCanonicalGameDirFile() -> a
+    123:123:java.io.File getGameDirFile() -> b
+    127:129:org.jackhuang.hellominecraft.launcher.settings.Profile setGameDir(java.lang.String) -> a
+    133:135:java.lang.String getJavaDir() -> c
+    139:139:java.lang.String getSettingsJavaDir() -> d
+    143:143:java.io.File getJavaDirFile() -> c
+    147:149:void setJavaDir(java.lang.String) -> a
+    152:152:org.jackhuang.hellominecraft.utils.system.Java getJava() -> a
+    156:164:int getJavaIndexInAllJavas() -> a
+    168:172:void setJava(org.jackhuang.hellominecraft.utils.system.Java) -> a
+    175:175:java.io.File getFolder(java.lang.String) -> a
+    179:179:java.lang.String getName() -> e
+    183:184:void setName(java.lang.String) -> b
+    187:188:void setSelectedMinecraftVersion(java.lang.String) -> c
+    191:192:java.lang.String getJavaArgs() -> f
+    196:198:void setJavaArgs(java.lang.String) -> d
+    201:201:boolean hasJavaArgs() -> a
+    205:206:java.lang.String getMaxMemory() -> g
+    210:212:void setMaxMemory(java.lang.String) -> e
+    215:216:java.lang.String getWidth() -> h
+    220:221:void setWidth(java.lang.String) -> f
+    224:225:java.lang.String getHeight() -> i
+    229:231:void setHeight(java.lang.String) -> g
+    234:235:java.lang.String getUserProperties() -> j
+    239:240:void setUserProperties(java.lang.String) -> h
+    243:243:boolean isFullscreen() -> b
+    247:249:void setFullscreen(boolean) -> a
+    252:252:boolean isDebug() -> c
+    256:258:void setDebug(boolean) -> b
+    261:261:org.jackhuang.hellominecraft.launcher.settings.LauncherVisibility getLauncherVisibility() -> a
+    265:267:void setLauncherVisibility(org.jackhuang.hellominecraft.launcher.settings.LauncherVisibility) -> a
+    270:270:org.jackhuang.hellominecraft.launcher.version.GameDirType getGameDirType() -> a
+    274:276:void setGameDirType(org.jackhuang.hellominecraft.launcher.version.GameDirType) -> a
+    279:279:java.lang.String getPermSize() -> k
+    283:285:void setPermSize(java.lang.String) -> i
+    288:288:boolean isNoJVMArgs() -> d
+    292:293:void setNoJVMArgs(boolean) -> c
+    296:296:java.lang.String getMinecraftArgs() -> l
+    300:302:void setMinecraftArgs(java.lang.String) -> j
+    305:305:boolean isCanceledWrapper() -> e
+    309:311:void setCanceledWrapper(boolean) -> d
+    314:314:java.lang.String getWrapperLauncher() -> m
+    318:320:void setWrapperLauncher(java.lang.String) -> k
+    323:323:java.lang.String getServerIp() -> n
+    327:329:void setServerIp(java.lang.String) -> l
+    332:333:void checkFormat() -> a
 org.jackhuang.hellominecraft.launcher.settings.Settings -> org.jackhuang.hellominecraft.launcher.z:
     java.lang.String DEFAULT_PROFILE -> a
     java.io.File settingsFile -> a
@@ -3350,7 +3350,7 @@ org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$1 -> org.jackhuang.hellomi
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.tasks.TaskList) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.tasks.TaskList) -> a
-org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$2 -> org.jackhuang.hellominecraft.launcher.dt:
+org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$4 -> org.jackhuang.hellominecraft.launcher.dt:
     org.jackhuang.hellominecraft.tasks.TaskWindow arg$1 -> a
     org.jackhuang.hellominecraft.tasks.Task arg$2 -> a
     int arg$3 -> a
@@ -3358,25 +3358,25 @@ org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$2 -> org.jackhuang.hellomi
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task,int,int) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task,int,int) -> a
-org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$3 -> org.jackhuang.hellominecraft.launcher.du:
+org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$5 -> org.jackhuang.hellominecraft.launcher.du:
     org.jackhuang.hellominecraft.tasks.TaskWindow arg$1 -> a
     org.jackhuang.hellominecraft.tasks.Task arg$2 -> a
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> a
-org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$4 -> org.jackhuang.hellominecraft.launcher.dv:
+org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$6 -> org.jackhuang.hellominecraft.launcher.dv:
     org.jackhuang.hellominecraft.tasks.TaskWindow arg$1 -> a
     org.jackhuang.hellominecraft.tasks.Task arg$2 -> a
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> a
-org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$5 -> org.jackhuang.hellominecraft.launcher.dw:
+org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$7 -> org.jackhuang.hellominecraft.launcher.dw:
     org.jackhuang.hellominecraft.tasks.TaskWindow arg$1 -> a
     org.jackhuang.hellominecraft.tasks.Task arg$2 -> a
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> b
     void run() -> run
     java.lang.Runnable lambdaFactory$(org.jackhuang.hellominecraft.tasks.TaskWindow,org.jackhuang.hellominecraft.tasks.Task) -> a
-org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$6 -> org.jackhuang.hellominecraft.launcher.dx:
+org.jackhuang.hellominecraft.tasks.TaskWindow$$Lambda$8 -> org.jackhuang.hellominecraft.launcher.dx:
     org.jackhuang.hellominecraft.tasks.TaskWindow arg$1 -> a
     java.lang.String arg$2 -> a
     java.lang.Runnable get$Lambda(org.jackhuang.hellominecraft.tasks.TaskWindow,java.lang.String) -> b
@@ -3791,14 +3791,14 @@ org.jackhuang.hellominecraft.utils.system.IOUtils -> org.jackhuang.hellominecraf
 org.jackhuang.hellominecraft.utils.system.Java -> org.jackhuang.hellominecraft.launcher.et:
     java.lang.String name -> a
     java.lang.String home -> b
-    37:37:java.lang.String getName() -> a
-    41:41:java.lang.String getHome() -> b
-    45:45:java.lang.String getJava() -> c
-    50:54:boolean equals(java.lang.Object) -> equals
+    38:38:java.lang.String getName() -> a
+    42:42:java.lang.String getHome() -> b
+    46:46:java.lang.String getJava() -> c
+    51:54:boolean equals(java.lang.Object) -> equals
     59:59:int hashCode() -> hashCode
     64:78:java.util.List queryAllJavaHomeInWindowsByReg() -> a
     83:89:java.util.List queryRegSubFolders(java.lang.String) -> a
-    93:97:java.lang.String queryRegValue(java.lang.String,java.lang.String) -> a
+    93:100:java.lang.String queryRegValue(java.lang.String,java.lang.String) -> a
 org.jackhuang.hellominecraft.utils.system.JavaProcess -> org.jackhuang.hellominecraft.launcher.eu:
     java.util.List commands -> a
     java.lang.Process process -> a
