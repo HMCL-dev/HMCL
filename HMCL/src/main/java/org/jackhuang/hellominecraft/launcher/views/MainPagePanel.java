@@ -378,8 +378,12 @@ public class MainPagePanel extends javax.swing.JPanel {
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) btnRunActionPerformed();
     }//GEN-LAST:event_txtPasswordKeyPressed
 
+    boolean isLaunching = false;
+    
     // <editor-fold defaultstate="collapsed" desc="Game Launch">
     void genLaunchCode(final Consumer<GameLauncher> listener) {
+        if (isLaunching) return;
+        isLaunching = true;
         HMCLog.log("Start generating launching command...");
         File file = getCurrentProfile().getCanonicalGameDirFile();
         if (!file.exists()) {
@@ -394,12 +398,12 @@ public class MainPagePanel extends javax.swing.JPanel {
             return;
         }
 
-        if (cboLoginMode.getItemCount() == 0) {
+        final int index = cboLoginMode.getSelectedIndex();
+        if (index < 0 || index >= IAuthenticator.logins.size()) {
             HMCLog.warn("There's no login method.");
             MessageBox.Show(C.i18n("login.methods.no_method"));
             return;
         }
-        final int index = cboLoginMode.getSelectedIndex();
         final IAuthenticator l = IAuthenticator.logins.get(index);
         final LoginInfo li = new LoginInfo(Settings.getInstance().getUsername(), l.isLoggedIn() || l.isHidePasswordBox() ? null : new String(txtPassword.getPassword()));
         Thread t = new Thread() {
@@ -410,6 +414,11 @@ public class MainPagePanel extends javax.swing.JPanel {
                 gl.failEvent.register((sender, s) -> {
                     if (s != null) MessageBox.Show(s);
                     MainFrame.instance.closeMessage();
+                    isLaunching = false;
+                    return true;
+                });
+                gl.successEvent.register((sender, s) -> {
+                    isLaunching = false;
                     return true;
                 });
                 listener.accept(gl);
@@ -431,9 +440,11 @@ public class MainPagePanel extends javax.swing.JPanel {
             } catch (Exception ex) {
                 HMCLog.warn("Failed to get login name", ex);
             }
-        if (Settings.getInstance().getLoginType() < list.size()) {
+        int loginType = Settings.getInstance().getLoginType();
+        if (0 <= loginType && loginType < cboLoginMode.getItemCount()) {
             preaparingAuth = false;
-            cboLoginMode.setSelectedIndex(Settings.getInstance().getLoginType());
+            
+            cboLoginMode.setSelectedIndex(loginType);
 
             cboLoginModeItemStateChanged(null);
         }
