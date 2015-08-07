@@ -83,21 +83,33 @@ public class Java {
         String[] cmd = new String[]{"cmd", "/c", "reg", "query", location};
         List<String> l = IOUtils.readProcessByInputStream(cmd);
         List<String> ans = new ArrayList<>();
-        for (String line : l)
+        for (String line : l) {
             if (line.startsWith(location) && !line.equals(location))
                 ans.add(line);
+        }
         return ans;
     }
 
     private static String queryRegValue(String location, String name) throws IOException, InterruptedException {
         String[] cmd = new String[]{"cmd", "/c", "reg", "query", location, "/v", name};
         List<String> l = IOUtils.readProcessByInputStream(cmd);
-        if (l.size() < 3) return null;
-        // 18 = 4 spaces + [name.length()] + 4 spaces + "REG_SZ".length()=6 characters + 4 spaces
-        String s = l.get(2);
-        if (s != null && s.startsWith("    " + name + "    REG_SZ    "))
-            return s.substring(("    " + name + "    REG_SZ    ").length());
-        else return null;
+        boolean last = false;
+        for(String s : l) {
+            if(s.trim().isEmpty()) continue;
+            if (last == true && s.trim().startsWith(name)) {
+                int begins = s.indexOf(name);
+                if(begins > 0) {
+                    s = s.substring(begins + name.length());
+                    begins = s.indexOf("REG_SZ");
+                    if(begins > 0) {
+                        s = s.substring(begins + "REG_SZ".length());
+                        return s.trim();
+                    }
+                }
+            }
+            if(s.trim().equals(location)) last = true;
+        }
+        return null;
     }
 
 }

@@ -3806,8 +3806,8 @@ org.jackhuang.hellominecraft.utils.system.Java -> org.jackhuang.hellominecraft.l
     51:54:boolean equals(java.lang.Object) -> equals
     59:59:int hashCode() -> hashCode
     64:78:java.util.List queryAllJavaHomeInWindowsByReg() -> a
-    83:89:java.util.List queryRegSubFolders(java.lang.String) -> a
-    93:100:java.lang.String queryRegValue(java.lang.String,java.lang.String) -> a
+    83:90:java.util.List queryRegSubFolders(java.lang.String) -> a
+    94:112:java.lang.String queryRegValue(java.lang.String,java.lang.String) -> a
 org.jackhuang.hellominecraft.utils.system.JavaProcess -> org.jackhuang.hellominecraft.launcher.ev:
     java.util.List commands -> a
     java.lang.Process process -> a
