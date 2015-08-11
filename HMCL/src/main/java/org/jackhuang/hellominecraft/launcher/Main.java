@@ -27,6 +27,7 @@ import java.net.PasswordAuthentication;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
+import java.util.Map;
 import javax.swing.ImageIcon;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -44,6 +45,7 @@ import org.jackhuang.hellominecraft.launcher.views.MainFrame;
 import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
 import org.jackhuang.hellominecraft.utils.system.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
+import org.jackhuang.hellominecraft.utils.system.OS;
 
 /**
  *
@@ -52,7 +54,7 @@ import org.jackhuang.hellominecraft.utils.StrUtils;
 public final class Main implements NonConsumer {
 
     public static String launcherName = "Hello Minecraft! Launcher";
-    public static byte firstVer = 2, secondVer = 3, thirdVer = 3;
+    public static byte firstVer = 2, secondVer = 3, thirdVer = 4;
     public static int minimumLauncherVersion = 16;
 
     /**
@@ -126,17 +128,25 @@ public final class Main implements NonConsumer {
     public static void update() {
         if (MessageBox.Show(C.i18n("update.newest_version") + Settings.UPDATE_CHECKER.getNewVersion().firstVer + "." + Settings.UPDATE_CHECKER.getNewVersion().secondVer + "." + Settings.UPDATE_CHECKER.getNewVersion().thirdVer + "\n"
                 + C.i18n("update.should_open_link"),
-                MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+                MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
+            Map<String, String> map = Settings.UPDATE_CHECKER.download_link;
+            String url = C.URL_PUBLISH;
+            if (map != null)
+                if (map.containsKey(OS.os().checked_name))
+                    url = map.get(OS.os().checked_name);
+                else if (map.containsKey(OS.UNKOWN.checked_name))
+                    url = map.get(OS.UNKOWN.checked_name);
+            if (url == null) url = C.URL_PUBLISH;
             try {
-                java.awt.Desktop.getDesktop().browse(new URI(C.URL_PUBLISH));
+                java.awt.Desktop.getDesktop().browse(new URI(url));
             } catch (URISyntaxException | IOException e) {
-                HMCLog.warn("Failed to browse uri: " + C.URL_PUBLISH, e);
+                HMCLog.warn("Failed to browse uri: " + url, e);
 
                 Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
-                cb.setContents(new StringSelection(C.URL_PUBLISH), null);
+                cb.setContents(new StringSelection(url), null);
                 MessageBox.Show(C.i18n("update.no_browser"));
             }
-        else
+        } else
             Settings.getInstance().setCheckUpdate(false);
     }
 

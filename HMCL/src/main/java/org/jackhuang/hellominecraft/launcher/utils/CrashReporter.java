@@ -18,10 +18,12 @@ package org.jackhuang.hellominecraft.launcher.utils;
 
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.launch.MinecraftCrashAdvicer;
+import org.jackhuang.hellominecraft.utils.NetUtils;
 import org.jackhuang.hellominecraft.utils.UpdateChecker;
 import org.jackhuang.hellominecraft.utils.system.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
@@ -57,6 +59,8 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             if (enableLogger) HMCLog.err(text);
             else System.out.println(text);
             SwingUtilities.invokeLater(() -> LogWindow.instance.showAsCrashWindow(UpdateChecker.OUT_DATED));
+            if (!UpdateChecker.OUT_DATED)
+                reportToServer(text);
         } catch (Throwable ex) {
             try {
                 MessageBox.Show(e.getMessage() + "\n" + ex.getMessage(), "ERROR", MessageBox.ERROR_MESSAGE);
@@ -65,6 +69,14 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                 exx.printStackTrace();
             }
         }
+    }
+
+    void reportToServer(String text) {
+        new Thread(() -> {
+            HashMap<String, String> map = new HashMap<>();
+            map.put("CrashReport", text);
+            System.out.println(NetUtils.post("http://huangyuhui.duapp.com/crash.php", map));
+        }).start();
     }
 
 }

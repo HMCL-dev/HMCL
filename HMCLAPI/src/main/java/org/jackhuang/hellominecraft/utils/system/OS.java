@@ -25,15 +25,17 @@ import org.jackhuang.hellominecraft.HMCLog;
  */
 public enum OS {
 
-    LINUX('/'),
-    WINDOWS('\\'),
-    OSX('/'),
-    UNKOWN('/');
+    LINUX('/', "linux"),
+    WINDOWS('\\', "windows"),
+    OSX('/', "osx"),
+    UNKOWN('/', "universal");
 
     public final char fileSeparator;
+    public final String checked_name;
 
-    private OS(char fileSeparator) {
+    private OS(char fileSeparator, String n) {
         this.fileSeparator = fileSeparator;
+        checked_name = n;
     }
 
     public static OS os() {

@@ -123,8 +123,6 @@ public final class NetUtils {
             }
             sb = new StringBuilder(sb.substring(0, sb.length() - 1));
         }
-        System.out.println("send_url:" + url);
-        System.out.println("send_data:" + sb.toString());
         try {
             u = new URL(url);
             con = (HttpURLConnection) u.openConnection();

@@ -21,6 +21,7 @@ import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -222,6 +223,7 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public List<ModInfo> listMods() {
+        if (profile.getSelectedMinecraftVersion() == null) return Arrays.asList();
         File modsFolder = new File(getRunDirectory(profile.getSelectedMinecraftVersion().id), "mods");
         ArrayList<ModInfo> mods = new ArrayList<>();
         Queue<File> queue = new LinkedList<>();
@@ -235,9 +237,8 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
                         ModInfo m = ModInfo.readModInfo(f);
                         if (m != null)
                             mods.add(m);
-                    } else if(f.isDirectory()) {
+                    } else if (f.isDirectory())
                         queue.add(f);
-                    }
         }
         Collections.sort(mods);
         return mods;

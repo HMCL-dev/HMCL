@@ -16,6 +16,7 @@
  */
 package org.jackhuang.hellominecraft.utils;
 
+import java.util.Map;
 import org.jackhuang.hellominecraft.utils.system.MessageBox;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.utils.functions.NonConsumer;
@@ -32,6 +33,7 @@ public final class UpdateChecker extends Thread {
     public String type;
     public boolean continueUpdate;
     public NonConsumer dl;
+    public Map<String, String> download_link;
 
     public UpdateChecker(VersionNumber base, String type, boolean continueUpdate, NonConsumer dl) {
         super("UpdateChecker");
@@ -46,9 +48,9 @@ public final class UpdateChecker extends Thread {
     @Override
     public void run() {
 
-        String url = "http://huangyuhui.duapp.com/info.php?type=" + type, version;
+        String version;
         try {
-            version = NetUtils.doGet(url);
+            version = NetUtils.doGet("http://huangyuhui.duapp.com/info.php?type=" + type);
         } catch (Exception e) {
             HMCLog.warn("Failed to get update url.", e);
             return;
@@ -57,6 +59,14 @@ public final class UpdateChecker extends Thread {
         if (!continueUpdate)
             return;
         process(false);
+        if (OUT_DATED) {
+            try {
+                download_link = C.gson.fromJson(NetUtils.doGet("http://huangyuhui.duapp.com/update_link.php?type=" + type), Map.class);
+            } catch (Exception e) {
+                HMCLog.warn("Failed to get update link.", e);
+            }
+            dl.onDone();
+        }
     }
 
     public void process(boolean showMessage) {
@@ -67,7 +77,6 @@ public final class UpdateChecker extends Thread {
         } else
             if (VersionNumber.isOlder(base, value)) {
                 OUT_DATED = true;
-                dl.onDone();
             }
     }
 
