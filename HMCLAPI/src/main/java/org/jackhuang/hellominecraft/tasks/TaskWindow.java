@@ -70,7 +70,6 @@ public class TaskWindow extends javax.swing.JDialog
 
     public boolean start() {
         if (taskList.isAlive()) return false;
-        pgsSingle.setValue(0);
         pgsTotal.setValue(0);
         suc = false;
         SwingUtils.clearDefaultTable(lstDownload);
@@ -97,8 +96,6 @@ public class TaskWindow extends javax.swing.JDialog
     private void initComponents() {
 
         btnCancel = new javax.swing.JButton();
-        pgsSingle = new javax.swing.JProgressBar();
-        lblSingleProgress = new javax.swing.JLabel();
         lblTotalProgress = new javax.swing.JLabel();
         pgsTotal = new javax.swing.JProgressBar();
         srlDownload = new javax.swing.JScrollPane();
@@ -120,10 +117,6 @@ public class TaskWindow extends javax.swing.JDialog
             }
         });
 
-        pgsSingle.setStringPainted(true);
-
-        lblSingleProgress.setText(bundle.getString("taskwindow.single_progress")); // NOI18N
-
         lblTotalProgress.setText(bundle.getString("taskwindow.total_progress")); // NOI18N
 
         pgsTotal.setStringPainted(true);
@@ -140,35 +133,24 @@ public class TaskWindow extends javax.swing.JDialog
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblSingleProgress)
-                        .addGap(349, 349, 349))
-                    .addComponent(pgsSingle, javax.swing.GroupLayout.DEFAULT_SIZE, 434, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblTotalProgress)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(pgsTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(lblTotalProgress)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(pgsTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnCancel)
                 .addContainerGap())
-            .addComponent(srlDownload)
+            .addComponent(srlDownload, javax.swing.GroupLayout.DEFAULT_SIZE, 517, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(srlDownload, javax.swing.GroupLayout.DEFAULT_SIZE, 232, Short.MAX_VALUE)
+                .addComponent(srlDownload, javax.swing.GroupLayout.DEFAULT_SIZE, 289, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(btnCancel, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(lblSingleProgress)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pgsSingle, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblTotalProgress)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pgsTotal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(btnCancel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(pgsTotal, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(lblTotalProgress, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
 
@@ -196,10 +178,8 @@ public class TaskWindow extends javax.swing.JDialog
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCancel;
-    private javax.swing.JLabel lblSingleProgress;
     private javax.swing.JLabel lblTotalProgress;
     private javax.swing.JTable lstDownload;
-    private javax.swing.JProgressBar pgsSingle;
     private javax.swing.JProgressBar pgsTotal;
     private javax.swing.JScrollPane srlDownload;
     // End of variables declaration//GEN-END:variables
@@ -218,8 +198,6 @@ public class TaskWindow extends javax.swing.JDialog
                 progresses.set(idx, pgs);
             }
             if (task.isParallelExecuting()) return;
-            pgsSingle.setMaximum(max);
-            pgsSingle.setValue(progress);
         });
     }
 

@@ -33,7 +33,7 @@ import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.tasks.communication.PreviousResult;
-import org.jackhuang.hellominecraft.tasks.communication.PreviousResultRegistrator;
+import org.jackhuang.hellominecraft.tasks.communication.PreviousResultRegistrar;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 
 /**
@@ -41,7 +41,7 @@ import org.jackhuang.hellominecraft.utils.system.IOUtils;
  * @author huangyuhui
  */
 // This class downloads a file from a URL.
-public class FileDownloadTask extends Task implements PreviousResult<File>, PreviousResultRegistrator<String> {
+public class FileDownloadTask extends Task implements PreviousResult<File>, PreviousResultRegistrar<String> {
 
     private static final X509TrustManager xtm = new X509TrustManager() {
         @Override

@@ -127,7 +127,8 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
 
         if (OS.os() != OS.WINDOWS)
             res.add("-Duser.home=" + gameDir.getParent());
-
+        res.add("-Dhellominecraftlauncher.gamedir=" + gameDir.getAbsolutePath());
+        
         if (!v.isCanceledWrapper()) {
             res.add("-cp");
             res.add(StrUtils.parseParams("", Utils.getURL(), File.pathSeparator));

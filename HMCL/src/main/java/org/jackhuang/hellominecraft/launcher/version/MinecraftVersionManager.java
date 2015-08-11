@@ -22,8 +22,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.TreeMap;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
@@ -38,9 +41,9 @@ import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
+import org.jackhuang.hellominecraft.launcher.utils.ModInfo;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.system.MessageBox;
-import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.Utils;
 
 /**
@@ -115,13 +118,8 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
                     jsons[0].renameTo(new File(jsons[0].getParent(), id + ".json"));
             }
             if (!jsonFile.exists()) {
-                if (StrUtils.formatVersion(id) == null) {
-                    if (MessageBox.Show(C.i18n("launcher.versions_json_not_matched_cannot_auto_completion", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                        FileUtils.deleteDirectoryQuietly(dir);
-                } else if (MessageBox.Show(C.i18n("launcher.versions_json_not_matched_needs_auto_completion", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                    if (!refreshJson(id))
-                        if (MessageBox.Show(C.i18n("launcher.versions_json_not_matched_cannot_auto_completion", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                            FileUtils.deleteDirectoryQuietly(dir);
+                if (MessageBox.Show(C.i18n("launcher.versions_json_not_matched_cannot_auto_completion", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+                    FileUtils.deleteDirectoryQuietly(dir);
                 continue;
             }
             MinecraftVersion mcVersion;
@@ -130,7 +128,7 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
                 if (mcVersion == null) throw new RuntimeException("Wrong json format, got null.");
             } catch (IOException | RuntimeException e) {
                 HMCLog.warn("Found wrong format json, try to fix it.", e);
-                if (MessageBox.Show(C.i18n("launcher.versions_json_not_formattedn", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
+                if (MessageBox.Show(C.i18n("launcher.versions_json_not_formatted", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
                     refreshJson(id);
                     try {
                         mcVersion = gson.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
@@ -220,6 +218,29 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
             default:
                 return baseFolder;
         }
+    }
+
+    @Override
+    public List<ModInfo> listMods() {
+        File modsFolder = new File(getRunDirectory(profile.getSelectedMinecraftVersion().id), "mods");
+        ArrayList<ModInfo> mods = new ArrayList<>();
+        Queue<File> queue = new LinkedList<>();
+        queue.add(modsFolder);
+        while (!queue.isEmpty()) {
+            File dir = queue.poll();
+            File[] fs = dir.listFiles();
+            if (fs != null)
+                for (File f : fs)
+                    if (ModInfo.isFileMod(f)) {
+                        ModInfo m = ModInfo.readModInfo(f);
+                        if (m != null)
+                            mods.add(m);
+                    } else if(f.isDirectory()) {
+                        queue.add(f);
+                    }
+        }
+        Collections.sort(mods);
+        return mods;
     }
 
     @Override

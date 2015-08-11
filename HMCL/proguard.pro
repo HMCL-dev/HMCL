@@ -57,6 +57,8 @@
 -keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.assets.AssetsObject { <fields>; }
 -keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.assets.AssetsIndex { <fields>; }
 
+-keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.ModInfo { <fields>; }
+
 -keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.installers.forge.InstallProfile { public <fields>; }
 -keepclassmembers class org.jackhuang.hellominecraft.launcher.utils.installers.forge.Install { public <fields>; }
 

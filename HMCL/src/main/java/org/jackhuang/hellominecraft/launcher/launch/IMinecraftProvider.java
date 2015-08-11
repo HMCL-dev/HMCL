@@ -22,6 +22,7 @@ import java.util.List;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
+import org.jackhuang.hellominecraft.launcher.utils.ModInfo;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 
 /**
@@ -56,6 +57,8 @@ public abstract class IMinecraftProvider {
     public abstract void open(String version, String folder);
 
     public abstract File getAssets();
+    
+    public abstract List<ModInfo> listMods();
 
     /**
      * Returns the thing like ".minecraft/resourcepacks".

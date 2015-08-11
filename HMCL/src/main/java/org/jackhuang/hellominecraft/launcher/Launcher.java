@@ -22,6 +22,8 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
@@ -41,8 +43,6 @@ import org.jackhuang.hellominecraft.utils.Utils;
  * @author huangyuhui
  */
 public final class Launcher {
-
-    private static final Launcher instance = new Launcher();
 
     public static void println(String s) {
         System.out.println(s);
@@ -84,7 +84,7 @@ public final class Launcher {
                 println("Failed to add log file appender.");
                 e.printStackTrace();
             }
-            
+
             println("Arguments: {\n" + StrUtils.parseParams("    ", args, "\n") + "\n}");
             println("Main Class: " + mainClass);
             println("Class Path: {\n" + StrUtils.parseParams("    ", tokenized, "\n") + "\n}");

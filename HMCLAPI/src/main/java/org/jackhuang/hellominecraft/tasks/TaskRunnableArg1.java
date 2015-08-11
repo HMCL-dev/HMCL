@@ -18,7 +18,7 @@ package org.jackhuang.hellominecraft.tasks;
 
 import java.util.ArrayList;
 import org.jackhuang.hellominecraft.tasks.communication.PreviousResult;
-import org.jackhuang.hellominecraft.tasks.communication.PreviousResultRegistrator;
+import org.jackhuang.hellominecraft.tasks.communication.PreviousResultRegistrar;
 import org.jackhuang.hellominecraft.utils.functions.Consumer;
 
 /**
@@ -26,7 +26,7 @@ import org.jackhuang.hellominecraft.utils.functions.Consumer;
  * @author huangyuhui
  * @param <T> Runnable&lt;T&gt;
  */
-public class TaskRunnableArg1<T> extends TaskInfo implements PreviousResultRegistrator<T> {
+public class TaskRunnableArg1<T> extends TaskInfo implements PreviousResultRegistrar<T> {
     private final Consumer<T> r;
     public TaskRunnableArg1(String info, Consumer<T> r) {
         super(info);

@@ -17,6 +17,14 @@
 package org.jackhuang.hellominecraft.launcher.views;
 
 import java.awt.Color;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -32,6 +40,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
@@ -49,6 +60,7 @@ import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.utils.FileNameFilter;
+import org.jackhuang.hellominecraft.launcher.utils.ModInfo;
 import org.jackhuang.hellominecraft.launcher.version.GameDirType;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.tasks.Task;
@@ -63,6 +75,8 @@ import org.jackhuang.hellominecraft.version.MinecraftVersionRequest;
 import org.jackhuang.hellominecraft.utils.system.OS;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.SwingUtils;
+import org.jackhuang.hellominecraft.utils.Utils;
+import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.Java;
 import org.jackhuang.hellominecraft.version.MinecraftRemoteVersion;
 import org.jackhuang.hellominecraft.version.MinecraftRemoteVersions;
@@ -72,7 +86,7 @@ import org.jackhuang.hellominecraft.views.Selector;
  *
  * @author huangyuhui
  */
-public class GameSettingsPanel extends javax.swing.JPanel {
+public class GameSettingsPanel extends javax.swing.JPanel implements DropTargetListener {
 
     /**
      * Creates new form GameSettingsPanel
@@ -161,12 +175,80 @@ public class GameSettingsPanel extends javax.swing.JPanel {
         ppmManage.add(itm);
         //</editor-fold>
 
+        lstExternalMods.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        if (lstExternalMods.getColumnModel().getColumnCount() > 0) {
+            lstExternalMods.getColumnModel().getColumn(0).setMinWidth(17);
+            lstExternalMods.getColumnModel().getColumn(0).setPreferredWidth(17);
+            lstExternalMods.getColumnModel().getColumn(0).setMaxWidth(17);
+        }
+        lstExternalMods.getSelectionModel().addListSelectionListener(e -> {
+            int row = lstExternalMods.getSelectedRow();
+            if (mods != null && 0 <= row && row < mods.size()) {
+                ModInfo m = mods.get(row);
+                boolean hasLink = m.url != null;
+                String text = "<html>" + (hasLink ? "<a href=\"" + m.url + "\">" : "") + m.getName() + (hasLink ? "</a>" : "");
+                if (m.authorList != null && m.authorList.length > 0)
+                    text += " by " + StrUtils.parseParams("", m.authorList, ", ");
+                text += "<br>" + (m.description == null ? "No mcmod.info found" : SwingUtils.getParsedJPanelText(lblModInfo, m.description));
+                lblModInfo.setText(text);
+                lblModInfo.setCursor(new java.awt.Cursor(hasLink ? java.awt.Cursor.HAND_CURSOR : java.awt.Cursor.DEFAULT_CURSOR));
+            }
+        });
+        ((DefaultTableModel) lstExternalMods.getModel()).addTableModelListener(e -> {
+            if (e.getType() == TableModelEvent.UPDATE && e.getColumn() == 0) {
+                int row = lstExternalMods.getSelectedRow();
+                if (mods != null && mods.size() > row && row >= 0) {
+                    File f = mods.get(row).location, newf;
+                    if (f.getName().endsWith(".disabled"))
+                        newf = new File(f.getParentFile(), f.getName().substring(0, f.getName().length() - ".disabled".length()));
+                    else
+                        newf = new File(f.getParentFile(), f.getName() + ".disabled");
+                    if (f.renameTo(newf))
+                        mods.get(row).location = newf;
+                }
+            }
+        });
+        tabVersionEdit.addChangeListener(new ChangeListener() {
+            boolean a = false, b = false;
+
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                if (tabVersionEdit.getSelectedComponent() == pnlGameDownloads && !a) {
+                    a = true;
+                    refreshDownloads(Settings.getInstance().getDownloadSource());
+                } else if (tabVersionEdit.getSelectedComponent() == pnlAutoInstall && !b) {
+                    b = true;
+                    forge.refreshVersions();
+                }
+            }
+        });
+        tabInstallers.addChangeListener(new ChangeListener() {
+            boolean a = false, b = false, c = false;
+
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                switch (tabInstallers.getSelectedIndex()) {
+                    case 0: if (!a) forge.refreshVersions();
+                        a = true;
+                        break;
+                    case 1: if (!b) optifine.refreshVersions();
+                        b = true;
+                        break;
+                    case 2: if (!c) liteloader.refreshVersions();
+                        c = true;
+                        break;
+                }
+            }
+        });
+
         for (Java j : Settings.JAVA) {
             String name = j.getName();
             if (name.equals("Default")) name = C.i18n("settings.default");
             if (name.equals("Custom")) name = C.i18n("settings.custom");
             cboJava.addItem(name);
         }
+
+        dropTarget = new DropTarget(lstExternalMods, DnDConstants.ACTION_COPY_OR_MOVE, this);
     }
 
     /**
@@ -178,19 +260,6 @@ public class GameSettingsPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jPanel1 = new javax.swing.JPanel();
-        jPanel4 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        cboProfiles = new javax.swing.JComboBox();
-        cboVersions = new javax.swing.JComboBox();
-        jLabel2 = new javax.swing.JLabel();
-        jPanel5 = new javax.swing.JPanel();
-        btnModify = new javax.swing.JButton();
-        btnRefreshVersions = new javax.swing.JButton();
-        txtMinecraftVersion = new javax.swing.JTextField();
-        btnNewProfile = new javax.swing.JButton();
-        btnRemoveProfile = new javax.swing.JButton();
-        btnExplore = new javax.swing.JButton();
         tabVersionEdit = new javax.swing.JTabbedPane();
         jPanel22 = new javax.swing.JPanel();
         jLabel24 = new javax.swing.JLabel();
@@ -212,6 +281,7 @@ public class GameSettingsPanel extends javax.swing.JPanel {
         cboGameDirType = new javax.swing.JComboBox();
         btnChoosingJavaDir = new javax.swing.JButton();
         cboJava = new javax.swing.JComboBox();
+        btnChoosingGameDir = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         chkDebug = new javax.swing.JCheckBox();
         jLabel26 = new javax.swing.JLabel();
@@ -226,6 +296,13 @@ public class GameSettingsPanel extends javax.swing.JPanel {
         txtWrapperLauncher = new javax.swing.JTextField();
         jLabel31 = new javax.swing.JLabel();
         txtServerIP = new javax.swing.JTextField();
+        jPanel6 = new javax.swing.JPanel();
+        jPanel7 = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        lstExternalMods = new javax.swing.JTable();
+        btnAddMod = new javax.swing.JButton();
+        btnRemoveMod = new javax.swing.JButton();
+        lblModInfo = new javax.swing.JLabel();
         pnlAutoInstall = new javax.swing.JPanel();
         tabInstallers = new javax.swing.JTabbedPane();
         jPanel16 = new javax.swing.JPanel();
@@ -248,152 +325,26 @@ public class GameSettingsPanel extends javax.swing.JPanel {
         jScrollPane2 = new javax.swing.JScrollPane();
         lstDownloads = new javax.swing.JTable();
         btnRefreshGameDownloads = new javax.swing.JButton();
+        jPanel1 = new javax.swing.JPanel();
+        jPanel4 = new javax.swing.JPanel();
+        jLabel1 = new javax.swing.JLabel();
+        cboProfiles = new javax.swing.JComboBox();
+        cboVersions = new javax.swing.JComboBox();
+        jLabel2 = new javax.swing.JLabel();
+        jPanel5 = new javax.swing.JPanel();
+        btnModify = new javax.swing.JButton();
+        btnRefreshVersions = new javax.swing.JButton();
+        txtMinecraftVersion = new javax.swing.JTextField();
+        btnNewProfile = new javax.swing.JButton();
+        btnRemoveProfile = new javax.swing.JButton();
+        btnExplore = new javax.swing.JButton();
         btnIncludeMinecraft = new javax.swing.JButton();
 
         setBackground(new java.awt.Color(255, 255, 255));
 
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraft/launcher/I18N"); // NOI18N
-        jLabel1.setText(bundle.getString("ui.label.profile")); // NOI18N
-
-        cboProfiles.setMinimumSize(new java.awt.Dimension(32, 23));
-        cboProfiles.setPreferredSize(new java.awt.Dimension(32, 23));
-        cboProfiles.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cboProfilesItemStateChanged(evt);
-            }
-        });
-
-        cboVersions.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cboVersionsItemStateChanged(evt);
-            }
-        });
-
-        jLabel2.setText(bundle.getString("ui.label.version")); // NOI18N
-
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cboProfiles, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cboVersions, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cboProfiles, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cboVersions, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel2))
-                .addContainerGap(11, Short.MAX_VALUE))
-        );
-
-        btnModify.setText(bundle.getString("settings.manage")); // NOI18N
-        btnModify.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                btnModifyMouseClicked(evt);
-            }
-        });
-
-        btnRefreshVersions.setText(bundle.getString("ui.button.refresh")); // NOI18N
-        btnRefreshVersions.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnRefreshVersionsActionPerformed(evt);
-            }
-        });
-
-        txtMinecraftVersion.setEditable(false);
-
-        btnNewProfile.setText(bundle.getString("setupwindow.new")); // NOI18N
-        btnNewProfile.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnNewProfileActionPerformed(evt);
-            }
-        });
-
-        btnRemoveProfile.setText(bundle.getString("ui.button.delete")); // NOI18N
-        btnRemoveProfile.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnRemoveProfileActionPerformed(evt);
-            }
-        });
-
-        btnExplore.setText(bundle.getString("settings.explore")); // NOI18N
-        btnExplore.setToolTipText("");
-        btnExplore.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                btnExploreMouseClicked(evt);
-            }
-        });
-
-        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addGap(0, 0, 0)
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(btnNewProfile, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(txtMinecraftVersion))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(btnRemoveProfile, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnRefreshVersions, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(btnModify, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnExplore, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnNewProfile, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnRemoveProfile, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnExplore, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtMinecraftVersion, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnRefreshVersions, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnModify, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(0, 0, Short.MAX_VALUE))
-        );
-
         tabVersionEdit.setName("tabVersionEdit"); // NOI18N
 
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraft/launcher/I18N"); // NOI18N
         jLabel24.setText(bundle.getString("settings.game_directory")); // NOI18N
 
         txtGameDir.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -483,6 +434,13 @@ public class GameSettingsPanel extends javax.swing.JPanel {
             }
         });
 
+        btnChoosingGameDir.setText(bundle.getString("ui.button.explore")); // NOI18N
+        btnChoosingGameDir.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnChoosingGameDirActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel22Layout = new javax.swing.GroupLayout(jPanel22);
         jPanel22.setLayout(jPanel22Layout);
         jPanel22Layout.setHorizontalGroup(
@@ -505,7 +463,6 @@ public class GameSettingsPanel extends javax.swing.JPanel {
                         .addGroup(jPanel22Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(cboGameDirType, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(cboLauncherVisibility, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(txtGameDir)
                             .addGroup(jPanel22Layout.createSequentialGroup()
                                 .addComponent(txtWidth, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -515,16 +472,19 @@ public class GameSettingsPanel extends javax.swing.JPanel {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 320, Short.MAX_VALUE)
                                 .addComponent(chkFullscreen))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel22Layout.createSequentialGroup()
-                                .addGroup(jPanel22Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(txtMaxMemory)
-                                    .addGroup(jPanel22Layout.createSequentialGroup()
-                                        .addComponent(cboJava, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(txtJavaDir)))
+                                .addComponent(txtMaxMemory)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel22Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(btnChoosingJavaDir, javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(lblMaxMemory, javax.swing.GroupLayout.Alignment.TRAILING))))))
+                                .addComponent(lblMaxMemory))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel22Layout.createSequentialGroup()
+                                .addComponent(txtGameDir)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnChoosingGameDir))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel22Layout.createSequentialGroup()
+                                .addComponent(cboJava, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtJavaDir)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnChoosingJavaDir)))))
                 .addContainerGap())
         );
         jPanel22Layout.setVerticalGroup(
@@ -533,7 +493,8 @@ public class GameSettingsPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(jPanel22Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtGameDir, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel24))
+                    .addComponent(jLabel24)
+                    .addComponent(btnChoosingGameDir, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel22Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtJavaDir, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -560,7 +521,7 @@ public class GameSettingsPanel extends javax.swing.JPanel {
                     .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel25)
                     .addComponent(txtWidth, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 92, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 95, Short.MAX_VALUE)
                 .addComponent(btnDownloadAllAssets)
                 .addContainerGap())
         );
@@ -684,7 +645,7 @@ public class GameSettingsPanel extends javax.swing.JPanel {
                 .addComponent(jLabel31)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtServerIP, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 86, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 90, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(chkDebug)
                     .addComponent(chkNoJVMArgs)
@@ -693,6 +654,84 @@ public class GameSettingsPanel extends javax.swing.JPanel {
         );
 
         tabVersionEdit.addTab(bundle.getString("advancedsettings"), jPanel2); // NOI18N
+
+        lstExternalMods.setModel(SwingUtils.makeDefaultTableModel(new String[]{"", "Mod", C.i18n("ui.label.version")}, new Class[]{Boolean.class,String.class,String.class}, new boolean[]{true,false,false}));
+        lstExternalMods.setColumnSelectionAllowed(true);
+        lstExternalMods.getTableHeader().setReorderingAllowed(false);
+        lstExternalMods.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                lstExternalModsKeyPressed(evt);
+            }
+        });
+        jScrollPane1.setViewportView(lstExternalMods);
+        lstExternalMods.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+
+        btnAddMod.setText("添加");
+        btnAddMod.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAddModActionPerformed(evt);
+            }
+        });
+
+        btnRemoveMod.setText("删除");
+        btnRemoveMod.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRemoveModActionPerformed(evt);
+            }
+        });
+
+        lblModInfo.setText(bundle.getString("mods.default_information")); // NOI18N
+        lblModInfo.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        lblModInfo.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblModInfoMouseClicked(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
+        jPanel7.setLayout(jPanel7Layout);
+        jPanel7Layout.setHorizontalGroup(
+            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel7Layout.createSequentialGroup()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 606, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(btnRemoveMod)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel7Layout.createSequentialGroup()
+                        .addComponent(btnAddMod)
+                        .addContainerGap())))
+            .addGroup(jPanel7Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lblModInfo)
+                .addContainerGap())
+        );
+        jPanel7Layout.setVerticalGroup(
+            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel7Layout.createSequentialGroup()
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel7Layout.createSequentialGroup()
+                        .addComponent(btnAddMod)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnRemoveMod)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 279, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblModInfo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+
+        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
+        jPanel6.setLayout(jPanel6Layout);
+        jPanel6Layout.setHorizontalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jPanel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        jPanel6Layout.setVerticalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jPanel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+
+        tabVersionEdit.addTab(bundle.getString("mods"), jPanel6); // NOI18N
 
         lstForge.setModel(SwingUtils.makeDefaultTableModel(new String[]{C.I18N.getString("install.version"), C.I18N.getString("install.mcversion")},
             new Class[]{String.class, String.class}, new boolean[]{false, false}));
@@ -727,7 +766,7 @@ public class GameSettingsPanel extends javax.swing.JPanel {
     );
     jPanel16Layout.setVerticalGroup(
         jPanel16Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addComponent(jScrollPane11, javax.swing.GroupLayout.DEFAULT_SIZE, 292, Short.MAX_VALUE)
+        .addComponent(jScrollPane11, javax.swing.GroupLayout.DEFAULT_SIZE, 296, Short.MAX_VALUE)
         .addGroup(jPanel16Layout.createSequentialGroup()
             .addComponent(btnDownloadForge)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -775,7 +814,7 @@ btnRefreshOptifine.addActionListener(new java.awt.event.ActionListener() {
             .addComponent(btnDownloadOptifine)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(btnRefreshOptifine)
-            .addGap(0, 240, Short.MAX_VALUE))
+            .addGap(0, 244, Short.MAX_VALUE))
     );
 
     tabInstallers.addTab("OptiFine", pnlOptifine);
@@ -813,7 +852,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     );
     jPanel3Layout.setVerticalGroup(
         jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addComponent(jScrollPane12, javax.swing.GroupLayout.DEFAULT_SIZE, 292, Short.MAX_VALUE)
+        .addComponent(jScrollPane12, javax.swing.GroupLayout.DEFAULT_SIZE, 296, Short.MAX_VALUE)
         .addGroup(jPanel3Layout.createSequentialGroup()
             .addComponent(btnInstallLiteLoader)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -873,10 +912,149 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
             .addComponent(btnRefreshGameDownloads)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(btnDownload))
-        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 321, Short.MAX_VALUE)
+        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 325, Short.MAX_VALUE)
     );
 
     tabVersionEdit.addTab(bundle.getString("settings.tabs.game_download"), pnlGameDownloads); // NOI18N
+
+    jLabel1.setText(bundle.getString("ui.label.profile")); // NOI18N
+
+    cboProfiles.setMinimumSize(new java.awt.Dimension(32, 23));
+    cboProfiles.setPreferredSize(new java.awt.Dimension(32, 23));
+    cboProfiles.addItemListener(new java.awt.event.ItemListener() {
+        public void itemStateChanged(java.awt.event.ItemEvent evt) {
+            cboProfilesItemStateChanged(evt);
+        }
+    });
+
+    cboVersions.addItemListener(new java.awt.event.ItemListener() {
+        public void itemStateChanged(java.awt.event.ItemEvent evt) {
+            cboVersionsItemStateChanged(evt);
+        }
+    });
+
+    jLabel2.setText(bundle.getString("ui.label.version")); // NOI18N
+
+    javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+    jPanel4.setLayout(jPanel4Layout);
+    jPanel4Layout.setHorizontalGroup(
+        jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel4Layout.createSequentialGroup()
+            .addContainerGap()
+            .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel4Layout.createSequentialGroup()
+                    .addComponent(jLabel1)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(cboProfiles, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel4Layout.createSequentialGroup()
+                    .addComponent(jLabel2)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(cboVersions, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+    );
+    jPanel4Layout.setVerticalGroup(
+        jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel4Layout.createSequentialGroup()
+            .addContainerGap()
+            .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(cboProfiles, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jLabel1))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(cboVersions, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jLabel2))
+            .addContainerGap(11, Short.MAX_VALUE))
+    );
+
+    btnModify.setText(bundle.getString("settings.manage")); // NOI18N
+    btnModify.addMouseListener(new java.awt.event.MouseAdapter() {
+        public void mouseClicked(java.awt.event.MouseEvent evt) {
+            btnModifyMouseClicked(evt);
+        }
+    });
+
+    btnRefreshVersions.setText(bundle.getString("ui.button.refresh")); // NOI18N
+    btnRefreshVersions.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            btnRefreshVersionsActionPerformed(evt);
+        }
+    });
+
+    txtMinecraftVersion.setEditable(false);
+
+    btnNewProfile.setText(bundle.getString("setupwindow.new")); // NOI18N
+    btnNewProfile.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            btnNewProfileActionPerformed(evt);
+        }
+    });
+
+    btnRemoveProfile.setText(bundle.getString("ui.button.delete")); // NOI18N
+    btnRemoveProfile.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            btnRemoveProfileActionPerformed(evt);
+        }
+    });
+
+    btnExplore.setText(bundle.getString("settings.explore")); // NOI18N
+    btnExplore.setToolTipText("");
+    btnExplore.addMouseListener(new java.awt.event.MouseAdapter() {
+        public void mouseClicked(java.awt.event.MouseEvent evt) {
+            btnExploreMouseClicked(evt);
+        }
+    });
+
+    javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+    jPanel5.setLayout(jPanel5Layout);
+    jPanel5Layout.setHorizontalGroup(
+        jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel5Layout.createSequentialGroup()
+            .addGap(0, 0, 0)
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addComponent(btnNewProfile, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(txtMinecraftVersion))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addComponent(btnRemoveProfile, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(btnRefreshVersions, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addComponent(btnModify, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(btnExplore, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+    );
+    jPanel5Layout.setVerticalGroup(
+        jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel5Layout.createSequentialGroup()
+            .addContainerGap()
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(btnNewProfile, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(btnRemoveProfile, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(btnExplore, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(txtMinecraftVersion, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(btnRefreshVersions, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(btnModify, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+    );
+
+    javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+    jPanel1.setLayout(jPanel1Layout);
+    jPanel1Layout.setHorizontalGroup(
+        jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel1Layout.createSequentialGroup()
+            .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+    );
+    jPanel1Layout.setVerticalGroup(
+        jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel1Layout.createSequentialGroup()
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGap(0, 0, Short.MAX_VALUE))
+    );
 
     btnIncludeMinecraft.setText(bundle.getString("setupwindow.include_minecraft")); // NOI18N
     btnIncludeMinecraft.addActionListener(new java.awt.event.ActionListener() {
@@ -1174,6 +1352,82 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         }
     }//GEN-LAST:event_cboJavaItemStateChanged
 
+    private void btnAddModActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddModActionPerformed
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setDialogTitle(C.I18N.getString("mods.choose_mod"));
+        fc.setMultiSelectionEnabled(true);
+        if (fc.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;
+        boolean flag = false;
+        for (File f : fc.getSelectedFiles())
+            if (!addMod(f)) flag |= true;
+        if (flag)
+            MessageBox.Show(C.I18N.getString("mods.failed"));
+    }//GEN-LAST:event_btnAddModActionPerformed
+
+    boolean addMod(File f) {
+        try {
+            if (!ModInfo.isFileMod(f) || mods == null) return false;
+            File newf = profile.getFolder("mods");
+            newf.mkdirs();
+            newf = new File(newf, f.getName());
+            FileUtils.copyFile(f, newf);
+            ModInfo i = ModInfo.readModInfo(f);
+            mods.add(i);
+            ((DefaultTableModel) lstExternalMods.getModel()).addRow(new Object[]{i.isActive(), i.location.getName(), i.version});
+            return true;
+        } catch (IOException ex) {
+            HMCLog.warn("Failed to copy mod", ex);
+            return false;
+        }
+    }
+
+    private void btnRemoveModActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveModActionPerformed
+        DefaultTableModel model = (DefaultTableModel) lstExternalMods.getModel();
+        int[] rows = lstExternalMods.getSelectedRows();
+        Arrays.sort(rows);
+        int removed = 0;
+        for (int idx : rows) {
+            ModInfo mi = mods.get(idx - removed);
+            File f = mi.location;
+            mods.remove(idx - removed);
+            model.removeRow(idx - removed);
+            removed++;
+            f.delete();
+        }
+    }//GEN-LAST:event_btnRemoveModActionPerformed
+
+    private void lstExternalModsKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_lstExternalModsKeyPressed
+        btnRemoveModActionPerformed(null);
+    }//GEN-LAST:event_lstExternalModsKeyPressed
+
+    private void lblModInfoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblModInfoMouseClicked
+        int idx = lstExternalMods.getSelectedRow();
+        if (idx > 0 && idx < mods.size()) {
+            ModInfo m = mods.get(idx);
+            if (m.url != null)
+                Utils.openLink(m.url);
+        }
+    }//GEN-LAST:event_lblModInfoMouseClicked
+
+    private void btnChoosingGameDirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnChoosingGameDirActionPerformed
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        fc.setDialogTitle(C.i18n("settings.choose_gamedir"));
+        fc.setMultiSelectionEnabled(false);
+        fc.showOpenDialog(this);
+        if (fc.getSelectedFile() == null)
+            return;
+        try {
+            String path = fc.getSelectedFile().getCanonicalPath();
+            txtGameDir.setText(path);
+            profile.setGameDir(path);
+        } catch (IOException e) {
+            HMCLog.warn("Failed to set game dir.", e);
+            MessageBox.Show(C.i18n("ui.label.failed_set") + e.getMessage());
+        }
+    }//GEN-LAST:event_btnChoosingGameDirActionPerformed
+
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Load">
     private void loadProfiles() {
@@ -1250,6 +1504,8 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         }
         isLoading = false;
         if (index < cboVersions.getItemCount()) cboVersions.setSelectedIndex(index);
+
+        reloadMods();
     }
 
     void loadMinecraftVersion() {
@@ -1343,6 +1599,36 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         return minecraftVersion == null ? "" : (StrUtils.formatVersion(minecraftVersion.version) == null) ? mcVersion : minecraftVersion.version;
     }
 
+    @Override
+    public void dragEnter(DropTargetDragEvent dtde) {
+        DataFlavor[] f = dtde.getCurrentDataFlavors();
+        if (f[0].match(DataFlavor.javaFileListFlavor))
+            try {
+                Transferable tr = dtde.getTransferable();
+                List<File> files = (List<File>) tr.getTransferData(DataFlavor.javaFileListFlavor);
+                for (File file : files)
+                    addMod(file);
+            } catch (Exception ex) {
+                HMCLog.warn("Failed to drop file.", ex);
+            }
+    }
+
+    @Override
+    public void dragOver(DropTargetDragEvent dtde) {
+    }
+
+    @Override
+    public void dropActionChanged(DropTargetDragEvent dtde) {
+    }
+
+    @Override
+    public void dragExit(DropTargetEvent dte) {
+    }
+
+    @Override
+    public void drop(DropTargetDropEvent dtde) {
+    }
+
     class InstallerHelper {
 
         List<InstallerVersionList.InstallerVersion> versions;
@@ -1406,12 +1692,25 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     String mcVersion;
 
     // </editor-fold>
+    // <editor-fold>
+    List<ModInfo> mods;
+
+    private void reloadMods() {
+        mods = profile.getMinecraftProvider().listMods();
+        SwingUtils.clearDefaultTable(lstExternalMods);
+        DefaultTableModel model = (DefaultTableModel) lstExternalMods.getModel();
+        for (ModInfo info : mods)
+            model.addRow(new Object[]{info.isActive(), info.getFileName(), info.version});
+    }
+
     // </editor-fold>
     public void versionChanged(Profile profile, String version) {
         this.mcVersion = version;
         forge.loadVersions();
         optifine.loadVersions();
         liteloader.loadVersions();
+
+        reloadMods();
 
         MinecraftVersion v = profile.getMinecraftProvider().getVersionById(version);
         if (v != null)
@@ -1433,7 +1732,11 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
 
     // <editor-fold defaultstate="collapsed" desc="UI Definations">
     JPopupMenu ppmManage, ppmExplore;
+
+    DropTarget dropTarget;
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnAddMod;
+    private javax.swing.JButton btnChoosingGameDir;
     private javax.swing.JButton btnChoosingJavaDir;
     private javax.swing.JButton btnDownload;
     private javax.swing.JButton btnDownloadAllAssets;
@@ -1449,6 +1752,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     private javax.swing.JButton btnRefreshLiteLoader;
     private javax.swing.JButton btnRefreshOptifine;
     private javax.swing.JButton btnRefreshVersions;
+    private javax.swing.JButton btnRemoveMod;
     private javax.swing.JButton btnRemoveProfile;
     private javax.swing.JComboBox cboGameDirType;
     private javax.swing.JComboBox cboJava;
@@ -1480,12 +1784,17 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
+    private javax.swing.JPanel jPanel6;
+    private javax.swing.JPanel jPanel7;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane11;
     private javax.swing.JScrollPane jScrollPane12;
     private javax.swing.JScrollPane jScrollPane13;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel lblMaxMemory;
+    private javax.swing.JLabel lblModInfo;
     private javax.swing.JTable lstDownloads;
+    private javax.swing.JTable lstExternalMods;
     private javax.swing.JTable lstForge;
     private javax.swing.JTable lstLiteLoader;
     private javax.swing.JTable lstOptifine;

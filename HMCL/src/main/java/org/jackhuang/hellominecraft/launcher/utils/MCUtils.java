@@ -20,8 +20,15 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.utils.assets.AssetsIndex;
 import org.jackhuang.hellominecraft.launcher.utils.assets.AssetsObject;
@@ -35,6 +42,7 @@ import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.version.MinecraftVersionRequest;
 import org.jackhuang.hellominecraft.utils.NetUtils;
+import org.jackhuang.hellominecraft.utils.Pair;
 import org.jackhuang.hellominecraft.utils.system.OS;
 
 /**
@@ -243,6 +251,30 @@ public final class MCUtils {
             return mv;
         }
         return null;
+    }
+    
+    public static boolean downloadMinecraftJar(File gameDir, String id, DownloadType sourceType) {
+        String vurl = sourceType.getProvider().getVersionsDownloadURL() + id + "/";
+        File vpath = new File(gameDir, "versions/" + id);
+        File mvv = new File(vpath, id + ".jar"), moved = null;
+        if (mvv.exists()) {
+            moved = new File(vpath, id + "-renamed.jar");
+            mvv.renameTo(moved);
+        }
+        File mvt = new File(vpath, id + ".jar");
+        vpath.mkdirs();
+        if (TaskWindow.getInstance()
+                .addTask(new FileDownloadTask(vurl + id + ".jar", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".jar"))
+                .start()) {
+            if (moved != null)
+                moved.delete();
+            return true;
+        } else {
+            mvt.delete();
+            if (moved != null)
+                moved.renameTo(mvt);
+            return false;
+        }
     }
 
     public static boolean downloadMinecraftVersionJson(File gameDir, String id, DownloadType sourceType) {

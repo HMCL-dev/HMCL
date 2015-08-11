@@ -23,7 +23,7 @@ import org.jackhuang.hellominecraft.tasks.Task;
  * @author huangyuhui
  * @param <T> Previous task result type
  */
-public interface PreviousResultRegistrator<T> {
+public interface PreviousResultRegistrar<T> {
     
     /**
      * 

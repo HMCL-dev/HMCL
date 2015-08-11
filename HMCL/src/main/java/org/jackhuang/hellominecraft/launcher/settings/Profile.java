@@ -125,6 +125,7 @@ public final class Profile {
 
     public Profile setGameDir(String gameDir) {
         this.gameDir = gameDir;
+        getMinecraftProvider().refreshVersions();
         Settings.save();
         return this;
     }
@@ -153,9 +154,8 @@ public final class Profile {
     }
 
     public int getJavaIndexInAllJavas() {
-        if(StrUtils.isBlank(java) && StrUtils.isNotBlank(javaDir)) {
+        if (StrUtils.isBlank(java) && StrUtils.isNotBlank(javaDir))
             java = "Custom";
-        }
         int idx = Settings.JAVA.indexOf(new Java(java, null));
         if (idx == -1) {
             java = "Default";
@@ -172,7 +172,7 @@ public final class Profile {
     }
 
     public File getFolder(String folder) {
-        return new File(getGameDir(), folder);
+        return new File(getMinecraftProvider().getRunDirectory(getSelectedMinecraftVersion().id), folder);
     }
 
     public String getName() {

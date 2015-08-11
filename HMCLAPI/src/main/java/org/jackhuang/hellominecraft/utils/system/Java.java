@@ -72,6 +72,16 @@ public class Java {
                 if (javahome != null)
                     ans.add(new Java(java.substring("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\".length()), javahome));
             }
+            javas = queryRegSubFolders("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit");
+            for (String java : javas) {
+                int s = 0;
+                for (char c : java.toCharArray())
+                    if (c == '.') s++;
+                if (s <= 1) continue;
+                String javahome = queryRegValue(java, "JavaHome");
+                if (javahome != null)
+                    ans.add(new Java(java.substring("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\".length()), javahome));
+            }
             return ans;
         } catch (IOException | InterruptedException ex) {
             HMCLog.err("Faield to query java", ex);

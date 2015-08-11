@@ -24,7 +24,7 @@ import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.tasks.communication.PreviousResult;
-import org.jackhuang.hellominecraft.tasks.communication.PreviousResultRegistrator;
+import org.jackhuang.hellominecraft.tasks.communication.PreviousResultRegistrar;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
@@ -33,7 +33,7 @@ import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
  *
  * @author huangyuhui
  */
-public class OptiFineInstaller extends Task implements PreviousResultRegistrator<File>  {
+public class OptiFineInstaller extends Task implements PreviousResultRegistrar<File>  {
 
     public File installer;
     public Profile profile;

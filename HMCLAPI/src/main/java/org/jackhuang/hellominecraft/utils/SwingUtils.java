@@ -16,8 +16,10 @@
  */
 package org.jackhuang.hellominecraft.utils;
 
+import java.awt.FontMetrics;
 import java.net.URI;
 import javax.swing.DefaultListModel;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
@@ -33,12 +35,13 @@ import org.jackhuang.hellominecraft.HMCLog;
 public class SwingUtils {
 
     /**
-     * Make DefaultTableModel by overriding getColumnClass and isCellEditable of DefaultTableModel.
-     * 
+     * Make DefaultTableModel by overriding getColumnClass and isCellEditable of
+     * DefaultTableModel.
+     *
      * @param titleA The title of each column.
      * @param typesA The type of each column value.
      * @param canEditA Is column editable?
-     * @return 
+     * @return
      */
     public static DefaultTableModel makeDefaultTableModel(String[] titleA, final Class[] typesA, final boolean[] canEditA) {
         return new javax.swing.table.DefaultTableModel(
@@ -61,7 +64,8 @@ public class SwingUtils {
 
     /**
      * Open URL by java.awt.Desktop
-     * @param link 
+     *
+     * @param link
      */
     public static void openLink(URI link) {
         try {
@@ -73,7 +77,8 @@ public class SwingUtils {
 
     /**
      * Move the cursor to the end of TextArea.
-     * @param tf  the TextArea
+     *
+     * @param tf the TextArea
      */
     public static void moveEnd(JTextArea tf) {
         int position = tf.getText().length();
@@ -82,6 +87,7 @@ public class SwingUtils {
 
     /**
      * Move the cursor to the end of ScrollPane.
+     *
      * @param pane the ScrollPane
      */
     public static void moveEnd(JScrollPane pane) {
@@ -91,6 +97,7 @@ public class SwingUtils {
 
     /**
      * Get the DefaultListModel from JList.
+     *
      * @param list
      * @return Forcely Type casted to DefaultListModel
      */
@@ -100,6 +107,7 @@ public class SwingUtils {
 
     /**
      * Append new element to JList
+     *
      * @param list the JList
      * @param element the Element
      */
@@ -118,6 +126,7 @@ public class SwingUtils {
 
     /**
      * Clear the JTable
+     *
      * @param table JTable with DefaultTableModel.
      */
     public static void clearDefaultTable(JTable table) {
@@ -126,20 +135,39 @@ public class SwingUtils {
             model.removeRow(0);
         table.updateUI();
     }
-    
+
     public static void appendLast(JTable table, Object... elements) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.addRow(elements);
     }
-    
+
     public static void setValueAt(JTable table, Object element, int row, int col) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.setValueAt(element, row, col);
     }
-    
+
     public static void removeRow(JTable table, int row) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.removeRow(row);
+    }
+
+    public static String getParsedJPanelText(JLabel jLabel1, String longString) {
+        if(StrUtils.isBlank(longString)) return longString;
+        StringBuilder builder = new StringBuilder();
+        char[] chars = longString.toCharArray();
+        FontMetrics fontMetrics = jLabel1.getFontMetrics(jLabel1.getFont());
+        for (int beginIndex = 0, limit = 1;; limit++) {
+            if (fontMetrics.charsWidth(chars, beginIndex, limit) < jLabel1.getWidth()) {
+                if (beginIndex + limit < chars.length)
+                    continue;
+                builder.append(chars, beginIndex, limit);
+                break;
+            }
+            builder.append(chars, beginIndex, limit - 1).append("<br/>");
+            beginIndex += limit - 1;
+            limit = 1;
+        }
+        return builder.toString();
     }
 
 }

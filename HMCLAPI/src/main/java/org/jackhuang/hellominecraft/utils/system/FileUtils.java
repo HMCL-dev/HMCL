@@ -16,7 +16,6 @@
  */
 package org.jackhuang.hellominecraft.utils.system;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
@@ -26,7 +25,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.NetUtils;
@@ -228,6 +226,14 @@ public class FileUtils {
             return NetUtils.getStreamContent(IOUtils.openInputStream(file));
         } catch (FileNotFoundException ex) {
             return "";
+        }
+    }
+    
+    public static void copyFileQuietly(File srcFile, File destFile) {
+        try {
+            copyFile(srcFile, destFile);
+        } catch (IOException ex) {
+            HMCLog.warn("Failed to copy file", ex);
         }
     }
 
