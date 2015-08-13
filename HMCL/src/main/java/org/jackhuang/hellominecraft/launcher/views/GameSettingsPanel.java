@@ -175,7 +175,6 @@ public class GameSettingsPanel extends javax.swing.JPanel implements DropTargetL
         ppmManage.add(itm);
         //</editor-fold>
 
-        lstExternalMods.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         if (lstExternalMods.getColumnModel().getColumnCount() > 0) {
             lstExternalMods.getColumnModel().getColumn(0).setMinWidth(17);
             lstExternalMods.getColumnModel().getColumn(0).setPreferredWidth(17);
@@ -1143,11 +1142,12 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         String url;
         File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "forge-installer.jar");
         if (v.installer != null) {
-            url = v.installer;
+            url = Settings.getInstance().getDownloadSource().getProvider().getParsedLibraryDownloadURL(v.installer);
             TaskWindow.getInstance()
                     .addTask(new FileDownloadTask(url, filepath).setTag("forge"))
                     .addTask(new ForgeInstaller(profile.getMinecraftProvider(), filepath, v))
                     .start();
+            refreshVersions();
         }
     }//GEN-LAST:event_btnDownloadForgeActionPerformed
 
@@ -1169,6 +1169,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
                     .addTask(new FileDownloadTask(filepath).registerPreviousResult(task).setTag("optifine"))
                     .addTask(new OptiFineInstaller(profile, v.selfVersion, filepath))
                     .start();
+            refreshVersions();
         }
     }//GEN-LAST:event_btnDownloadOptifineActionPerformed
 
@@ -1186,6 +1187,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         TaskWindow.getInstance()
                 .addTask(task).addTask(new LiteLoaderInstaller(profile, (LiteLoaderInstallerVersion) v).registerPreviousResult(task))
                 .start();
+            refreshVersions();
     }//GEN-LAST:event_btnInstallLiteLoaderActionPerformed
 
     private void btnRefreshLiteLoaderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshLiteLoaderActionPerformed
@@ -1369,6 +1371,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         try {
             if (!ModInfo.isFileMod(f) || mods == null) return false;
             File newf = profile.getFolder("mods");
+            if(newf == null) return false;
             newf.mkdirs();
             newf = new File(newf, f.getName());
             FileUtils.copyFile(f, newf);
@@ -1537,7 +1540,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         if (mcVersion == null || profile == null) return;
         type.getList((value) -> {
             if (value != null)
-                TaskWindow.getInstance().addTask(type.getDownloadTask(Settings.getInstance().getDownloadSource().getProvider())).start();
+                SwingUtilities.invokeLater(() -> TaskWindow.getInstance().addTask(type.getDownloadTask(Settings.getInstance().getDownloadSource().getProvider())).start());
         });
     }
 
@@ -1694,13 +1697,22 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     // </editor-fold>
     // <editor-fold>
     List<ModInfo> mods;
+    private final Object lockMod = new Object();
 
     private void reloadMods() {
-        mods = profile.getMinecraftProvider().listMods();
-        SwingUtils.clearDefaultTable(lstExternalMods);
-        DefaultTableModel model = (DefaultTableModel) lstExternalMods.getModel();
-        for (ModInfo info : mods)
-            model.addRow(new Object[]{info.isActive(), info.getFileName(), info.version});
+        new Thread(() -> {
+            synchronized (lockMod) {
+                mods = profile.getMinecraftProvider().listMods();
+                SwingUtilities.invokeLater(() -> {
+                    synchronized (lockMod) {
+                        SwingUtils.clearDefaultTable(lstExternalMods);
+                        DefaultTableModel model = (DefaultTableModel) lstExternalMods.getModel();
+                        for (ModInfo info : mods)
+                            model.addRow(new Object[]{info.isActive(), info.getFileName(), info.version});
+                    }
+                });
+            }
+        }).start();
     }
 
     // </editor-fold>

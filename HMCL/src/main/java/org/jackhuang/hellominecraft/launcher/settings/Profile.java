@@ -172,6 +172,7 @@ public final class Profile {
     }
 
     public File getFolder(String folder) {
+        if (getSelectedMinecraftVersion() == null) return new File(getCanonicalGameDirFile(), folder);
         return new File(getMinecraftProvider().getRunDirectory(getSelectedMinecraftVersion().id), folder);
     }
 

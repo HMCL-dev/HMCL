@@ -9,10 +9,10 @@ import java.net.Proxy;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Map;
-import java.util.Objects;
 import org.jackhuang.hellominecraft.logging.logger.Logger;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.NetUtils;
+import org.jackhuang.hellominecraft.utils.Utils;
 
 public abstract class HttpAuthenticationService extends BaseAuthenticationService {
 
@@ -20,7 +20,6 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
     private final Proxy proxy;
 
     protected HttpAuthenticationService(Proxy proxy) {
-        Objects.requireNonNull(proxy);
         this.proxy = proxy;
     }
 
@@ -29,7 +28,6 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
     }
 
     protected HttpURLConnection createUrlConnection(URL url) throws IOException {
-        Objects.requireNonNull(url);
         LOGGER.debug("Opening connection to " + url);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection(this.proxy);
         connection.setConnectTimeout(15000);
@@ -39,9 +37,9 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
     }
 
     public String performPostRequest(URL url, String post, String contentType) throws IOException {
-        Objects.requireNonNull(url);
-        Objects.requireNonNull(post);
-        Objects.requireNonNull(contentType);
+        Utils.requireNonNull(url);
+        Utils.requireNonNull(post);
+        Utils.requireNonNull(contentType);
         HttpURLConnection connection = createUrlConnection(url);
         byte[] postAsBytes = post.getBytes("UTF-8");
 
@@ -90,7 +88,7 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
 
     public String performGetRequest(URL url)
             throws IOException {
-        Objects.requireNonNull(url);
+        Utils.requireNonNull(url);
         HttpURLConnection connection = createUrlConnection(url);
 
         LOGGER.debug("Reading data from " + url);

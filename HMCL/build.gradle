@@ -62,11 +62,11 @@ dependencies {
 }
 
 retrolambda {
-    javaVersion = JavaVersion.VERSION_1_7
+    javaVersion = JavaVersion.VERSION_1_6
 }
 
 jar {
-    jar.classifier = 'base'
+    //jar.classifier = 'base'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     
     manifest {
@@ -117,7 +117,7 @@ task makeExecutable(dependsOn: jar) << {
 launch4j {
     launch4jCmd = 'D:\\Develop\\Java\\Launch4j\\launch4j.exe'
     supportUrl = 'http://www.mcbbs.net/thread-142335-1-1.html'
-    jreMinVersion = '1.7.0'
+    jreMinVersion = '1.6.0'
     
     mainClassName = mainClass
     icon = new File(project.buildDir,  '../icon.ico').absolutePath
@@ -136,6 +136,6 @@ processResources {
     }
 }
 
-build.dependsOn proguard
+//build.dependsOn proguard
 //makeExecutable.dependsOn proguard
 //build.dependsOn makeExecutable

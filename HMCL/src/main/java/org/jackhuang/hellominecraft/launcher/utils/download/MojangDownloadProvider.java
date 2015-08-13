@@ -77,4 +77,9 @@ public class MojangDownloadProvider implements IDownloadProvider {
         return true;
     }
 
+    @Override
+    public String getParsedLibraryDownloadURL(String str) {
+        return str;
+    }
+
 }

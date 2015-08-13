@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
@@ -77,6 +76,8 @@ public final class Settings {
         temp.add(new Java("Custom", null));
         if (OS.os() == OS.WINDOWS)
             temp.addAll(Java.queryAllJavaHomeInWindowsByReg());
+        if (OS.os() == OS.OSX)
+            temp.addAll(Java.queryAllJDKInMac());
         JAVA = Collections.unmodifiableList(temp);
     }
 
@@ -124,7 +125,6 @@ public final class Settings {
     }
 
     public static void setVersion(Profile ver) {
-        Objects.requireNonNull(ver);
         getVersions().put(ver.getName(), ver);
     }
 

@@ -16,6 +16,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.launch;
 
+import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -146,7 +147,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
                 // If the scale new format existent file is lower then 0.1, use the old format.
                 if (cnt * 10 < tot) return assetsDir;
             }
-        } catch (IOException e) {
+        } catch (IOException | JsonSyntaxException e) {
             HMCLog.warn("Failed to create virutal assets.", e);
         }
 

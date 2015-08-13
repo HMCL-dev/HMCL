@@ -73,6 +73,11 @@ public class BMCLAPIDownloadProvider implements IDownloadProvider {
     }
 
     @Override
+    public String getParsedLibraryDownloadURL(String str) {
+        return str.replace("http://files.minecraftforge.net/maven", "http://bmclapi2.bangbang93.com/maven");
+    }
+
+    @Override
     public boolean isAllowedToUseSelfURL() {
         return false;
     }

@@ -228,7 +228,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
 
     @Override
     public String getInfo() {
-        return C.i18n("download") + ": " + url + " " + filePath;
+        return C.i18n("download") + ": " + url;
     }
 
     @Override

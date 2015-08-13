@@ -186,4 +186,8 @@ public final class Utils {
             e.printStackTrace();
         }
     }
+
+    public static void requireNonNull(Object o) {
+        if (o == null) throw new NullPointerException("Oh dear, there is a problem...");
+    }
 }

@@ -24,10 +24,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.TreeMap;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
@@ -223,23 +221,26 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public List<ModInfo> listMods() {
-        if (profile.getSelectedMinecraftVersion() == null) return Arrays.asList();
+        if (profile.getSelectedMinecraftVersion() == null) return new ArrayList<>();
         File modsFolder = new File(getRunDirectory(profile.getSelectedMinecraftVersion().id), "mods");
         ArrayList<ModInfo> mods = new ArrayList<>();
-        Queue<File> queue = new LinkedList<>();
-        queue.add(modsFolder);
-        while (!queue.isEmpty()) {
-            File dir = queue.poll();
-            File[] fs = dir.listFiles();
-            if (fs != null)
-                for (File f : fs)
-                    if (ModInfo.isFileMod(f)) {
-                        ModInfo m = ModInfo.readModInfo(f);
-                        if (m != null)
-                            mods.add(m);
-                    } else if (f.isDirectory())
-                        queue.add(f);
-        }
+        File[] fs = modsFolder.listFiles();
+        if (fs != null)
+            for (File f : fs)
+                if (ModInfo.isFileMod(f)) {
+                    ModInfo m = ModInfo.readModInfo(f);
+                    if (m != null)
+                        mods.add(m);
+                } else if (f.isDirectory()) {
+                    File[] ss = f.listFiles();
+                    if (ss != null)
+                        for (File ff : ss)
+                            if (ModInfo.isFileMod(ff)) {
+                                ModInfo m = ModInfo.readModInfo(ff);
+                                if (m != null)
+                                    mods.add(m);
+                            }
+                }
         Collections.sort(mods);
         return mods;
     }
@@ -255,7 +256,7 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
                     File ff = l.getFilePath(baseFolder);
                     if (!ff.exists()) {
                         String libURL = downloadType.getProvider().getLibraryDownloadURL() + "/";
-                        libURL = l.getDownloadURL(libURL, downloadType);
+                        libURL = downloadType.getProvider().getParsedLibraryDownloadURL(l.getDownloadURL(libURL, downloadType));
                         if (libURL != null)
                             downloadLibraries.add(new DownloadLibraryJob(l.name, libURL, ff));
                     }

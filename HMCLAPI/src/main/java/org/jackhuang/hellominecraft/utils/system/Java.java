@@ -16,6 +16,7 @@
  */
 package org.jackhuang.hellominecraft.utils.system;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,9 +60,30 @@ public class Java {
         return name.hashCode();
     }
 
+    /*
+     -----------------------------------
+     MAC OS X
+     -----------------------------------
+     */
+    public static List<Java> queryAllJDKInMac() {
+        List<Java> ans = new ArrayList<>();
+        if (new File("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home").exists())
+            ans.add(new Java("JRE", "/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home"));
+        File f = new File("/Library/Java/JavaVirtualMachines/");
+        if (f.exists())
+            for (File a : f.listFiles())
+                ans.add(new Java(a.getName(), new File(a, "Contents/Home").getAbsolutePath()));
+        return ans;
+    }
+
+    /*
+     -----------------------------------
+     WINDOWS
+     -----------------------------------
+     */
     public static List<Java> queryAllJavaHomeInWindowsByReg() {
+        List<Java> ans = new ArrayList<>();
         try {
-            List<Java> ans = new ArrayList<>();
             List<String> javas = queryRegSubFolders("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment");
             for (String java : javas) {
                 int s = 0;
@@ -82,21 +104,19 @@ public class Java {
                 if (javahome != null)
                     ans.add(new Java(java.substring("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\".length()), javahome));
             }
-            return ans;
         } catch (IOException | InterruptedException ex) {
             HMCLog.err("Faield to query java", ex);
-            return null;
         }
+        return ans;
     }
 
     private static List<String> queryRegSubFolders(String location) throws IOException, InterruptedException {
         String[] cmd = new String[]{"cmd", "/c", "reg", "query", location};
         List<String> l = IOUtils.readProcessByInputStream(cmd);
         List<String> ans = new ArrayList<>();
-        for (String line : l) {
+        for (String line : l)
             if (line.startsWith(location) && !line.equals(location))
                 ans.add(line);
-        }
         return ans;
     }
 
@@ -104,20 +124,20 @@ public class Java {
         String[] cmd = new String[]{"cmd", "/c", "reg", "query", location, "/v", name};
         List<String> l = IOUtils.readProcessByInputStream(cmd);
         boolean last = false;
-        for(String s : l) {
-            if(s.trim().isEmpty()) continue;
+        for (String s : l) {
+            if (s.trim().isEmpty()) continue;
             if (last == true && s.trim().startsWith(name)) {
                 int begins = s.indexOf(name);
-                if(begins > 0) {
+                if (begins > 0) {
                     s = s.substring(begins + name.length());
                     begins = s.indexOf("REG_SZ");
-                    if(begins > 0) {
+                    if (begins > 0) {
                         s = s.substring(begins + "REG_SZ".length());
                         return s.trim();
                     }
                 }
             }
-            if(s.trim().equals(location)) last = true;
+            if (s.trim().equals(location)) last = true;
         }
         return null;
     }

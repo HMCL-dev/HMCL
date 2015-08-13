@@ -16,7 +16,6 @@
  */
 package org.jackhuang.hellominecraft.tasks;
 
-import java.awt.EventQueue;
 import java.util.ArrayList;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.C;
@@ -52,6 +51,13 @@ public class TaskWindow extends javax.swing.JDialog
         initComponents();
 
         setLocationRelativeTo(null);
+        
+        if (lstDownload.getColumnModel().getColumnCount() > 1) {
+            int i = 35;
+            lstDownload.getColumnModel().getColumn(1).setMinWidth(i);
+            lstDownload.getColumnModel().getColumn(1).setMaxWidth(i);
+            lstDownload.getColumnModel().getColumn(1).setPreferredWidth(i);
+        }
 
         setModal(true);
     }
@@ -96,7 +102,6 @@ public class TaskWindow extends javax.swing.JDialog
     private void initComponents() {
 
         btnCancel = new javax.swing.JButton();
-        lblTotalProgress = new javax.swing.JLabel();
         pgsTotal = new javax.swing.JProgressBar();
         srlDownload = new javax.swing.JScrollPane();
         lstDownload = new javax.swing.JTable();
@@ -117,8 +122,6 @@ public class TaskWindow extends javax.swing.JDialog
             }
         });
 
-        lblTotalProgress.setText(bundle.getString("taskwindow.total_progress")); // NOI18N
-
         pgsTotal.setStringPainted(true);
 
         lstDownload.setModel(SwingUtils.makeDefaultTableModel(new String[]{C.i18n("taskwindow.file_name"), C.i18n("taskwindow.download_progress")}, new Class[]{String.class, String.class}, new boolean[]{false,false})
@@ -133,8 +136,6 @@ public class TaskWindow extends javax.swing.JDialog
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lblTotalProgress)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pgsTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnCancel)
@@ -144,13 +145,11 @@ public class TaskWindow extends javax.swing.JDialog
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(srlDownload, javax.swing.GroupLayout.DEFAULT_SIZE, 289, Short.MAX_VALUE)
+                .addComponent(srlDownload, javax.swing.GroupLayout.DEFAULT_SIZE, 291, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(btnCancel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(pgsTotal, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(lblTotalProgress, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(pgsTotal, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
 
@@ -166,19 +165,18 @@ public class TaskWindow extends javax.swing.JDialog
         tasks.clear();
 
         if (!this.failReasons.isEmpty()) {
-            MessageBox.Show(StrUtils.parseParams("", failReasons.toArray(), "\n"), C.i18n("message.error"), MessageBox.ERROR_MESSAGE);
+            SwingUtilities.invokeLater(() -> MessageBox.Show(StrUtils.parseParams("", failReasons.toArray(), "\n"), C.i18n("message.error"), MessageBox.ERROR_MESSAGE));
             failReasons.clear();
         }
 
         if (!suc) {
-            EventQueue.invokeLater(taskList::abort);
+            SwingUtilities.invokeLater(taskList::abort);
             HMCLog.log("Tasks have been canceled by user.");
         }
     }//GEN-LAST:event_formWindowClosed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCancel;
-    private javax.swing.JLabel lblTotalProgress;
     private javax.swing.JTable lstDownload;
     private javax.swing.JProgressBar pgsTotal;
     private javax.swing.JScrollPane srlDownload;
@@ -197,7 +195,6 @@ public class TaskWindow extends javax.swing.JDialog
                 SwingUtils.setValueAt(lstDownload, pgs + "%", idx, 1);
                 progresses.set(idx, pgs);
             }
-            if (task.isParallelExecuting()) return;
         });
     }
 

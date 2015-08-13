@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.launcher.utils;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
@@ -60,7 +61,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             else System.out.println(text);
             SwingUtilities.invokeLater(() -> LogWindow.instance.showAsCrashWindow(UpdateChecker.OUT_DATED));
             if (!UpdateChecker.OUT_DATED)
-                reportToServer(text);
+                reportToServer(text, e);
         } catch (Throwable ex) {
             try {
                 MessageBox.Show(e.getMessage() + "\n" + ex.getMessage(), "ERROR", MessageBox.ERROR_MESSAGE);
@@ -71,7 +72,12 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         }
     }
 
-    void reportToServer(String text) {
+    private static final HashSet<String> throwableSet = new HashSet<>();
+
+    void reportToServer(String text, Throwable t) {
+        String s = StrUtils.getStackTrace(t);
+        if (throwableSet.contains(s)) return;
+        throwableSet.add(s);
         new Thread(() -> {
             HashMap<String, String> map = new HashMap<>();
             map.put("CrashReport", text);
