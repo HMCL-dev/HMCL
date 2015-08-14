@@ -18,6 +18,7 @@ package org.jackhuang.hellominecraft.launcher.utils;
 
 import java.io.File;
 import javax.swing.filechooser.FileFilter;
+import org.jackhuang.hellominecraft.utils.system.FileUtils;
 
 /**
  *
@@ -33,7 +34,7 @@ public class FileNameFilter extends FileFilter {
 
     @Override
     public boolean accept(File f) {
-        return f.isDirectory() || f.getName().equals(acceptedName);
+        return f.isDirectory() || f.getName().equals(acceptedName) && !FileUtils.getExtension(f.getName()).equals("lnk");
     }
 
     @Override

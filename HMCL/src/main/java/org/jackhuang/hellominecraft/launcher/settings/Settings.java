@@ -62,10 +62,10 @@ public final class Settings {
 
     static {
         settings = initSettings();
-        if (!getVersions().containsKey(DEFAULT_PROFILE))
-            getVersions().put(DEFAULT_PROFILE, new Profile());
+        if (!getProfiles().containsKey(DEFAULT_PROFILE))
+            getProfiles().put(DEFAULT_PROFILE, new Profile());
 
-        for (Profile e : getVersions().values())
+        for (Profile e : getProfiles().values())
             e.checkFormat();
 
         UPDATE_CHECKER = new UpdateChecker(new VersionNumber(Main.firstVer, Main.secondVer, Main.thirdVer),
@@ -116,42 +116,42 @@ public final class Settings {
         }
     }
 
-    public static Profile getVersion(String name) {
-        return getVersions().get(name);
+    public static Profile getProfile(String name) {
+        return getProfiles().get(name);
     }
 
-    public static Map<String, Profile> getVersions() {
+    public static Map<String, Profile> getProfiles() {
         return settings.getConfigurations();
     }
 
-    public static void setVersion(Profile ver) {
-        getVersions().put(ver.getName(), ver);
+    public static void setProfile(Profile ver) {
+        getProfiles().put(ver.getName(), ver);
     }
 
-    public static Collection<Profile> getProfiles() {
-        return CollectionUtils.sortOut(getVersions().values(), (t) -> t != null && t.getName() != null);
+    public static Collection<Profile> getProfilesFiltered() {
+        return CollectionUtils.sortOut(getProfiles().values(), (t) -> t != null && t.getName() != null);
     }
 
     public static Profile getOneProfile() {
         return settings.getConfigurations().firstEntry().getValue();
     }
 
-    public static boolean trySetVersion(Profile ver) {
-        if (ver == null || ver.getName() == null || getVersions().containsKey(ver.getName()))
+    public static boolean trySetProfile(Profile ver) {
+        if (ver == null || ver.getName() == null || getProfiles().containsKey(ver.getName()))
             return false;
-        getVersions().put(ver.getName(), ver);
+        getProfiles().put(ver.getName(), ver);
         return true;
     }
 
-    public static boolean delVersion(Profile ver) {
-        return delVersion(ver.getName());
+    public static boolean delProfile(Profile ver) {
+        return delProfile(ver.getName());
     }
 
-    public static boolean delVersion(String ver) {
+    public static boolean delProfile(String ver) {
         if (DEFAULT_PROFILE.equals(ver)) {
             MessageBox.Show(C.i18n("settings.cannot_remove_default_config"));
             return false;
         }
-        return getVersions().remove(ver) != null;
+        return getProfiles().remove(ver) != null;
     }
 }

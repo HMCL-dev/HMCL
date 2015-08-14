@@ -379,7 +379,7 @@ public class MainPagePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_txtPasswordKeyPressed
 
     boolean isLaunching = false;
-    
+
     // <editor-fold defaultstate="collapsed" desc="Game Launch">
     void genLaunchCode(final Consumer<GameLauncher> listener) {
         if (isLaunching) return;
@@ -443,7 +443,7 @@ public class MainPagePanel extends javax.swing.JPanel {
         int loginType = Settings.getInstance().getLoginType();
         if (0 <= loginType && loginType < cboLoginMode.getItemCount()) {
             preaparingAuth = false;
-            
+
             cboLoginMode.setSelectedIndex(loginType);
 
             cboLoginModeItemStateChanged(null);
@@ -451,7 +451,7 @@ public class MainPagePanel extends javax.swing.JPanel {
     }
 
     void loadFromSettings() {
-        for (Profile s : Settings.getProfiles()) cboProfiles.addItem(s.getName());
+        for (Profile s : Settings.getProfilesFiltered()) cboProfiles.addItem(s.getName());
     }
 
     boolean showedNoVersion = false;
@@ -460,23 +460,25 @@ public class MainPagePanel extends javax.swing.JPanel {
         isLoading = true;
         cboVersions.removeAllItems();
         int index = 0, i = 0;
-        getCurrentProfile().getMinecraftProvider().refreshVersions();
-        MinecraftVersion selVersion = getCurrentProfile().getSelectedMinecraftVersion();
-        String selectedMC = selVersion == null ? null : selVersion.id;
-        if (getCurrentProfile().getMinecraftProvider().getVersions().isEmpty()) {
-            if (!showedNoVersion)
-                SwingUtilities.invokeLater(() -> {
-                    MessageBox.Show(C.i18n("mainwindow.no_version"));
-                    showedNoVersion = true;
-                });
-        } else {
-            for (MinecraftVersion mcVersion : getCurrentProfile().getMinecraftProvider().getVersions()) {
-                if (mcVersion.hidden) continue;
-                cboVersions.addItem(mcVersion.id);
-                if (mcVersion.id.equals(selectedMC)) index = i;
-                i++;
+        if (getCurrentProfile() != null) {
+            getCurrentProfile().getMinecraftProvider().refreshVersions();
+            MinecraftVersion selVersion = getCurrentProfile().getSelectedMinecraftVersion();
+            String selectedMC = selVersion == null ? null : selVersion.id;
+            if (getCurrentProfile().getMinecraftProvider().getVersions().isEmpty()) {
+                if (!showedNoVersion)
+                    SwingUtilities.invokeLater(() -> {
+                        MessageBox.Show(C.i18n("mainwindow.no_version"));
+                        showedNoVersion = true;
+                    });
+            } else {
+                for (MinecraftVersion mcVersion : getCurrentProfile().getMinecraftProvider().getVersions()) {
+                    if (mcVersion.hidden) continue;
+                    cboVersions.addItem(mcVersion.id);
+                    if (mcVersion.id.equals(selectedMC)) index = i;
+                    i++;
+                }
+                if (index < cboVersions.getItemCount()) cboVersions.setSelectedIndex(index);
             }
-            if (index < cboVersions.getItemCount()) cboVersions.setSelectedIndex(index);
         }
         isLoading = false;
     }
@@ -533,7 +535,7 @@ public class MainPagePanel extends javax.swing.JPanel {
     }
 
     public Profile getCurrentProfile() {
-        return Settings.getVersion((String) cboProfiles.getSelectedItem());
+        return Settings.getProfile((String) cboProfiles.getSelectedItem());
     }
 
     public void onSelected() {

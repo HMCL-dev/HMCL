@@ -16,14 +16,14 @@
  */
 package org.jackhuang.hellominecraft.launcher.utils;
 
-import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import javax.swing.SwingUtilities;
+import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
-import org.jackhuang.hellominecraft.launcher.launch.MinecraftCrashAdvicer;
 import org.jackhuang.hellominecraft.utils.NetUtils;
 import org.jackhuang.hellominecraft.utils.UpdateChecker;
 import org.jackhuang.hellominecraft.utils.system.MessageBox;
@@ -41,18 +41,39 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
     public CrashReporter(boolean enableLogger) {
         this.enableLogger = enableLogger;
     }
+    
+    public boolean checkThrowable(Throwable e) {
+        String s = StrUtils.getStackTrace(e);
+        if(s.contains("sun.awt.shell.Win32ShellFolder2") || s.contains("UnsatisfiedLinkError")) {
+            System.out.println(C.i18n("crash.user_fault"));
+            try {
+                MessageBox.Show(C.i18n("crash.user_fault"));
+            } catch(Throwable t) {
+                t.printStackTrace();
+            }
+            return false;
+        } else if(s.contains("java.awt.HeadlessException")) {
+            System.out.println(C.i18n("crash.headless"));
+            try {
+                MessageBox.Show(C.i18n("crash.headless"));
+            } catch(Throwable t) {
+            }
+        }
+        return true;
+    }
 
     @Override
     public void uncaughtException(Thread t, Throwable e) {
+        if (!checkThrowable(e)) return;
+        String s = StrUtils.getStackTrace(e);
+        if (!s.contains("org.jackhuang.hellominecraft")) return;
         try {
             String text = "\n---- Hello Minecraft! Crash Report ----\n";
-            text += "  Version: " + Main.makeVersion() + "\n";
-            text += "  Time: " + DateFormat.getDateInstance().format(new Date()) + "\n";
+            text += "  Version: " + Main.makeVersion() + "." + Main.forthVer + "\n";
+            text += "  Time: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + "\n";
             text += "  Thread: " + t.toString() + "\n";
-            text += "\n  Advice: \n    ";
-            text += MinecraftCrashAdvicer.getAdvice(StrUtils.getStackTrace(e), true);
             text += "\n  Content: \n    ";
-            text += StrUtils.getStackTrace(e) + "\n\n";
+            text += s + "\n\n";
             text += "-- System Details --\n";
             text += "  Operating System: " + System.getProperty("os.name") + " (" + System.getProperty("os.arch") + ") version " + System.getProperty("os.version") + "\n";
             text += "  Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor") + "\n";
@@ -61,7 +82,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             else System.out.println(text);
             SwingUtilities.invokeLater(() -> LogWindow.instance.showAsCrashWindow(UpdateChecker.OUT_DATED));
             if (!UpdateChecker.OUT_DATED)
-                reportToServer(text, e);
+                reportToServer(text, s);
         } catch (Throwable ex) {
             try {
                 MessageBox.Show(e.getMessage() + "\n" + ex.getMessage(), "ERROR", MessageBox.ERROR_MESSAGE);
@@ -74,10 +95,9 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
     private static final HashSet<String> throwableSet = new HashSet<>();
 
-    void reportToServer(String text, Throwable t) {
-        String s = StrUtils.getStackTrace(t);
-        if (throwableSet.contains(s)) return;
-        throwableSet.add(s);
+    void reportToServer(String text, String stacktrace) {
+        if (throwableSet.contains(stacktrace)) return;
+        throwableSet.add(stacktrace);
         new Thread(() -> {
             HashMap<String, String> map = new HashMap<>();
             map.put("CrashReport", text);

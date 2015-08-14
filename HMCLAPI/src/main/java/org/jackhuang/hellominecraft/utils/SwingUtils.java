@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.utils;
 import java.awt.FontMetrics;
 import java.net.URI;
 import javax.swing.DefaultListModel;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JScrollBar;
@@ -169,5 +170,4 @@ public class SwingUtils {
         }
         return builder.toString();
     }
-
 }

@@ -21,7 +21,6 @@ import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -283,6 +282,7 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public GameLauncher.DecompressLibraryJob getDecompressLibraries() {
         MinecraftVersion v = profile.getSelectedMinecraftVersion().resolve(this, Settings.getInstance().getDownloadSource());
+        if (v.libraries == null) return null;
         ArrayList<File> unzippings = new ArrayList<>();
         ArrayList<String[]> extractRules = new ArrayList<>();
         for (IMinecraftLibrary l : v.libraries) {

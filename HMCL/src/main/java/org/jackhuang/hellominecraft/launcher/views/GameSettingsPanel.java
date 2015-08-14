@@ -1102,7 +1102,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     private void btnRemoveProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveProfileActionPerformed
         if (profile == null) return;
         if (MessageBox.Show(C.i18n("ui.message.sure_remove", profile.getName()), MessageBox.YES_NO_OPTION) == MessageBox.NO_OPTION) return;
-        if (Settings.delVersion(profile)) {
+        if (Settings.delProfile(profile)) {
             cboProfiles.removeItem(profile.getName());
             profile = Settings.getOneProfile();
             if (profile != null) {
@@ -1218,7 +1218,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
                 MessageBox.Show(C.i18n("setupwindow.no_empty_name"));
                 return;
             }
-            Settings.trySetVersion(new Profile(name).setGameDir(newGameDir.getAbsolutePath()));
+            Settings.trySetProfile(new Profile(name).setGameDir(newGameDir.getAbsolutePath()));
             MessageBox.Show(C.i18n("setupwindow.find_in_configurations"));
             loadProfiles();
         }
@@ -1438,7 +1438,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         cboProfiles.removeAllItems();
         Profile firstProfile = null, selectedProfile = null;
         int index = 0, i = 0;
-        for (Profile s : Settings.getProfiles()) {
+        for (Profile s : Settings.getProfilesFiltered()) {
             if (firstProfile == null) firstProfile = s;
             cboProfiles.addItem(s.getName());
             if (Settings.getInstance().getLast() != null && Settings.getInstance().getLast().equals(s.getName())) {
@@ -1461,7 +1461,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
 
     final Profile getProfile() {
         if (cboProfiles.getSelectedIndex() >= 0)
-            return Settings.getVersion(cboProfiles.getSelectedItem().toString());
+            return Settings.getProfile(cboProfiles.getSelectedItem().toString());
         else return null;
     }
 

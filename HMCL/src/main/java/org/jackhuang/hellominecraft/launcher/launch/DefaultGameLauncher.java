@@ -26,7 +26,6 @@ import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.tasks.ParallelTask;
 import org.jackhuang.hellominecraft.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.system.Compressor;
 import org.jackhuang.hellominecraft.utils.system.MessageBox;
 
@@ -46,10 +45,9 @@ public class DefaultGameLauncher extends GameLauncher {
         downloadLibrariesEvent.register((sender, t) -> {
             final TaskWindow dw = TaskWindow.getInstance();
             ParallelTask parallelTask = new ParallelTask();
-            for (DownloadLibraryJob s : t) {
+            for (DownloadLibraryJob s : t)
                 //parallelTask.addDependsTask(new FileDownloadTask(s.url, s.path).setTag(s.name));
                 parallelTask.addDependsTask(new LibraryDownloadTask(s));
-            }
             dw.addTask(parallelTask);
             boolean flag = true;
             if (t.size() > 0) flag = dw.start();
@@ -58,6 +56,7 @@ public class DefaultGameLauncher extends GameLauncher {
             return flag;
         });
         decompressNativesEvent.register((sender, value) -> {
+            if (value == null) return false;
             for (int i = 0; i < value.decompressFiles.length; i++)
                 try {
                     Compressor.unzip(value.decompressFiles[i], value.decompressTo, value.extractRules[i]);

@@ -32,7 +32,7 @@ public final class NewProfileWindow extends javax.swing.JDialog {
 
         setLocationRelativeTo(null);
 
-        for (Profile s : Settings.getProfiles())
+        for (Profile s : Settings.getProfilesFiltered())
             cboProfiles.addItem(s.getName());
     }
 
@@ -126,9 +126,9 @@ public final class NewProfileWindow extends javax.swing.JDialog {
     private void txtNewProfileNameKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtNewProfileNameKeyTyped
         switch (evt.getKeyCode()) {
             case 13:
-                Profile newProfile = new Profile(Settings.getVersion(cboProfiles.getSelectedItem().toString()));
+                Profile newProfile = new Profile(Settings.getProfile(cboProfiles.getSelectedItem().toString()));
                 newProfile.setName(txtNewProfileName.getText());
-                Settings.trySetVersion(newProfile);
+                Settings.trySetProfile(newProfile);
             case 27:
                 this.dispose();
         }
@@ -136,9 +136,9 @@ public final class NewProfileWindow extends javax.swing.JDialog {
 
     private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOKActionPerformed
         if (!StrUtils.isBlank(txtNewProfileName.getText())) {
-            Profile newProfile = new Profile(Settings.getVersion(cboProfiles.getSelectedItem().toString()));
+            Profile newProfile = new Profile(Settings.getProfile(cboProfiles.getSelectedItem().toString()));
             newProfile.setName(txtNewProfileName.getText());
-            Settings.trySetVersion(newProfile);
+            Settings.trySetProfile(newProfile);
         }
         this.dispose();
     }//GEN-LAST:event_btnOKActionPerformed

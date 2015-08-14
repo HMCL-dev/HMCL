@@ -54,7 +54,7 @@ import org.jackhuang.hellominecraft.utils.system.OS;
 public final class Main implements NonConsumer {
 
     public static String launcherName = "Hello Minecraft! Launcher";
-    public static byte firstVer = 2, secondVer = 3, thirdVer = 4;
+    public static byte firstVer = 2, secondVer = 3, thirdVer = 4, forthVer = 10;
     public static int minimumLauncherVersion = 16;
 
     /**
@@ -115,7 +115,7 @@ public final class Main implements NonConsumer {
                         }
                     });
             }
-
+            
             MainFrame.showMainFrame(Settings.isFirstLoad());
         }
     }
