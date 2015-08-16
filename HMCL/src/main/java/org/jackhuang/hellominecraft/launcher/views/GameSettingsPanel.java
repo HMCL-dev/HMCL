@@ -1187,7 +1187,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         TaskWindow.getInstance()
                 .addTask(task).addTask(new LiteLoaderInstaller(profile, (LiteLoaderInstallerVersion) v).registerPreviousResult(task))
                 .start();
-            refreshVersions();
+        refreshVersions();
     }//GEN-LAST:event_btnInstallLiteLoaderActionPerformed
 
     private void btnRefreshLiteLoaderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshLiteLoaderActionPerformed
@@ -1371,7 +1371,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         try {
             if (!ModInfo.isFileMod(f) || mods == null) return false;
             File newf = profile.getFolder("mods");
-            if(newf == null) return false;
+            if (newf == null) return false;
             newf.mkdirs();
             newf = new File(newf, f.getName());
             FileUtils.copyFile(f, newf);
@@ -1724,6 +1724,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
 
         reloadMods();
 
+        if (profile == null || version == null) return;
         MinecraftVersion v = profile.getMinecraftProvider().getVersionById(version);
         if (v != null)
             for (IAssetsHandler ph : IAssetsHandler.getAssetsHandlers())

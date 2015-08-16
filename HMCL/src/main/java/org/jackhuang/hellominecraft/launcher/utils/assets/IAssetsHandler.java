@@ -109,7 +109,6 @@ public abstract class IAssetsHandler {
 
         ArrayList<Task> al;
         String u;
-        int progress, max;
 
         public AssetsTask(String url) {
             this.u = url;
@@ -121,8 +120,7 @@ public abstract class IAssetsHandler {
                 setFailReason(new RuntimeException(C.i18n("assets.not_refreshed")));
                 return false;
             }
-            progress = 0;
-            max = assetsDownloadURLs.size();
+            int max = assetsDownloadURLs.size();
             al = new ArrayList<>();
             int hasDownloaded = 0;
             for (int i = 0; i < max; i++) {

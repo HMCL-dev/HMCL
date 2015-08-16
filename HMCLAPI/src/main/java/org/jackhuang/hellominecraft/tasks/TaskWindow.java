@@ -51,7 +51,7 @@ public class TaskWindow extends javax.swing.JDialog
         initComponents();
 
         setLocationRelativeTo(null);
-        
+
         if (lstDownload.getColumnModel().getColumnCount() > 1) {
             int i = 35;
             lstDownload.getColumnModel().getColumn(1).setMinWidth(i);
@@ -68,6 +68,8 @@ public class TaskWindow extends javax.swing.JDialog
     }
 
     public void clean() {
+        if (isVisible())
+            throw new RuntimeException("This error should not appear, please contact the author.");
         taskList = null;
         taskList = new TaskList();
         taskList.addTaskListener(this);
@@ -170,7 +172,8 @@ public class TaskWindow extends javax.swing.JDialog
         }
 
         if (!suc) {
-            SwingUtilities.invokeLater(taskList::abort);
+            if (taskList != null)
+                SwingUtilities.invokeLater(taskList::abort);
             HMCLog.log("Tasks have been canceled by user.");
         }
     }//GEN-LAST:event_formWindowClosed

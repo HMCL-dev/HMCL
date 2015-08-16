@@ -22,13 +22,7 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.security.GeneralSecurityException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.X509TrustManager;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.tasks.Task;
@@ -42,37 +36,6 @@ import org.jackhuang.hellominecraft.utils.system.IOUtils;
  */
 // This class downloads a file from a URL.
 public class FileDownloadTask extends Task implements PreviousResult<File>, PreviousResultRegistrar<String> {
-
-    private static final X509TrustManager xtm = new X509TrustManager() {
-        @Override
-        public void checkClientTrusted(X509Certificate[] chain, String authType) {
-        }
-
-        @Override
-        public void checkServerTrusted(X509Certificate[] chain, String authType) {
-        }
-
-        @Override
-        public X509Certificate[] getAcceptedIssuers() {
-            return null;
-        }
-    };
-    private static final HostnameVerifier hnv = (hostname, session) -> true;
-
-    static {
-        SSLContext sslContext = null;
-
-        try {
-            sslContext = SSLContext.getInstance("TLS");
-            X509TrustManager[] xtmArray = new X509TrustManager[]{xtm};
-            sslContext.init(null, xtmArray, new java.security.SecureRandom());
-        } catch (GeneralSecurityException gse) {
-        }
-        if (sslContext != null)
-            HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
-
-        HttpsURLConnection.setDefaultHostnameVerifier(hnv);
-    }
 
     // Max size of download buffer.
     private static final int MAX_BUFFER_SIZE = 2048;

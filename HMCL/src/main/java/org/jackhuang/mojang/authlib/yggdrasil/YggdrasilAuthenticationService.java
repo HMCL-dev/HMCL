@@ -80,11 +80,7 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
             }
 
             return (T) result;
-        } catch (IOException e) {
-            throw new AuthenticationUnavailableException(C.i18n("login.failed.connect_authentication_server"), e);
-        } catch (IllegalStateException e) {
-            throw new AuthenticationUnavailableException(C.i18n("login.failed.connect_authentication_server"), e);
-        } catch (JsonParseException e) {
+        } catch (IOException | IllegalStateException | JsonParseException e) {
             throw new AuthenticationUnavailableException(C.i18n("login.failed.connect_authentication_server"), e);
         }
     }

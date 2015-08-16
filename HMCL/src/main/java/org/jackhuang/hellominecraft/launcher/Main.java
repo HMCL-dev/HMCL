@@ -26,8 +26,14 @@ import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
+import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.util.Map;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.X509TrustManager;
 import javax.swing.ImageIcon;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -52,6 +58,37 @@ import org.jackhuang.hellominecraft.utils.system.OS;
  * @author huangyuhui
  */
 public final class Main implements NonConsumer {
+    
+    private static final X509TrustManager xtm = new X509TrustManager() {
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType) {
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType) {
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return null;
+        }
+    };
+    private static final HostnameVerifier hnv = (hostname, session) -> true;
+
+    static {
+        SSLContext sslContext = null;
+
+        try {
+            sslContext = SSLContext.getInstance("TLS");
+            X509TrustManager[] xtmArray = new X509TrustManager[]{xtm};
+            sslContext.init(null, xtmArray, new java.security.SecureRandom());
+        } catch (GeneralSecurityException gse) {
+        }
+        if (sslContext != null)
+            HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+
+        HttpsURLConnection.setDefaultHostnameVerifier(hnv);
+    }
 
     public static String launcherName = "Hello Minecraft! Launcher";
     public static byte firstVer = 2, secondVer = 3, thirdVer = 4, forthVer = 10;

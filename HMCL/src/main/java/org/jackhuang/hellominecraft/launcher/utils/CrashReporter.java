@@ -41,30 +41,38 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
     public CrashReporter(boolean enableLogger) {
         this.enableLogger = enableLogger;
     }
-    
+
     public boolean checkThrowable(Throwable e) {
         String s = StrUtils.getStackTrace(e);
-        if(s.contains("sun.awt.shell.Win32ShellFolder2") || s.contains("UnsatisfiedLinkError")) {
+        if (s.contains("sun.awt.shell.Win32ShellFolder2") || s.contains("UnsatisfiedLinkError")) {
             System.out.println(C.i18n("crash.user_fault"));
             try {
                 MessageBox.Show(C.i18n("crash.user_fault"));
-            } catch(Throwable t) {
+            } catch (Throwable t) {
                 t.printStackTrace();
             }
             return false;
-        } else if(s.contains("java.awt.HeadlessException")) {
+        } else if (s.contains("java.awt.HeadlessException")) {
             System.out.println(C.i18n("crash.headless"));
             try {
                 MessageBox.Show(C.i18n("crash.headless"));
-            } catch(Throwable t) {
+            } catch (Throwable t) {
             }
+            return false;
+        } else if(s.contains("java.lang.NoClassDefFoundError")) {
+            System.out.println(C.i18n("crash.NoClassDefFound"));
+            try {
+                MessageBox.Show(C.i18n("crash.NoClassDefFound"));
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
+            return false;
         }
         return true;
     }
 
     @Override
     public void uncaughtException(Thread t, Throwable e) {
-        if (!checkThrowable(e)) return;
         String s = StrUtils.getStackTrace(e);
         if (!s.contains("org.jackhuang.hellominecraft")) return;
         try {
@@ -80,9 +88,12 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             text += "  Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor") + "\n";
             if (enableLogger) HMCLog.err(text);
             else System.out.println(text);
-            SwingUtilities.invokeLater(() -> LogWindow.instance.showAsCrashWindow(UpdateChecker.OUT_DATED));
-            if (!UpdateChecker.OUT_DATED)
-                reportToServer(text, s);
+
+            if (!checkThrowable(e)) {
+                SwingUtilities.invokeLater(() -> LogWindow.instance.showAsCrashWindow(UpdateChecker.OUT_DATED));
+                if (!UpdateChecker.OUT_DATED)
+                    reportToServer(text, s);
+            }
         } catch (Throwable ex) {
             try {
                 MessageBox.Show(e.getMessage() + "\n" + ex.getMessage(), "ERROR", MessageBox.ERROR_MESSAGE);

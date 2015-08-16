@@ -19,7 +19,6 @@ package org.jackhuang.hellominecraft.utils;
 import java.awt.FontMetrics;
 import java.net.URI;
 import javax.swing.DefaultListModel;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JScrollBar;
@@ -153,11 +152,12 @@ public class SwingUtils {
     }
 
     public static String getParsedJPanelText(JLabel jLabel1, String longString) {
-        if(StrUtils.isBlank(longString)) return longString;
+        if (StrUtils.isBlank(longString)) return longString;
         StringBuilder builder = new StringBuilder();
         char[] chars = longString.toCharArray();
         FontMetrics fontMetrics = jLabel1.getFontMetrics(jLabel1.getFont());
         for (int beginIndex = 0, limit = 1;; limit++) {
+            if (beginIndex + limit >= chars.length) break;
             if (fontMetrics.charsWidth(chars, beginIndex, limit) < jLabel1.getWidth()) {
                 if (beginIndex + limit < chars.length)
                     continue;
