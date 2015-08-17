@@ -21,7 +21,6 @@ import org.jackhuang.hellominecraft.utils.system.MessageBox;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.utils.functions.NonConsumer;
 import org.jackhuang.hellominecraft.HMCLog;
-import org.jackhuang.hellominecraft.utils.system.OS;
 
 /**
  *

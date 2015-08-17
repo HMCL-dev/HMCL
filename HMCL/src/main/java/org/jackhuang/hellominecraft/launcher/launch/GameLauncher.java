@@ -124,6 +124,15 @@ public class GameLauncher {
     public void launch(List str) {
         try {
             provider.onLaunch();
+            if (StrUtils.isNotBlank(getProfile().getPrecalledCommand())) {
+                Process p = Runtime.getRuntime().exec(getProfile().getPrecalledCommand());
+                try {
+                    if (p != null && p.isAlive())
+                        p.waitFor();
+                } catch (InterruptedException ex) {
+                    HMCLog.warn("Failed to invoke precalled command", ex);
+                }
+            }
             ProcessBuilder builder = new ProcessBuilder(str);
             builder.directory(provider.getRunDirectory(get.getSelectedMinecraftVersion().id))
                     .environment().put("APPDATA", get.getCanonicalGameDirFile().getPath());
@@ -163,6 +172,10 @@ public class GameLauncher {
                 writer.write("set appdata=" + appdata);
                 writer.newLine();
             }
+        }
+        if (StrUtils.isNotBlank(getProfile().getPrecalledCommand())) {
+            writer.write(getProfile().getPrecalledCommand());
+            writer.newLine();
         }
         writer.write(StrUtils.makeCommand(str));
         writer.close();

@@ -25,7 +25,7 @@ if (!hasProperty('mainClass')) {
     ext.mainClass = 'org.jackhuang.hellominecraft.launcher.Main'
 }
 
-def buildnumber = System.getenv("BUILD_NUMBER") == null ? "" : "."+System.getenv("BUILD_NUMBER")
+def buildnumber = System.getenv("BUILD_NUMBER") == null ? ".12" : "."+System.getenv("BUILD_NUMBER")
 
 String mavenGroupId = 'HMCL'
 String mavenVersion = '2.3.4' + buildnumber
@@ -66,7 +66,6 @@ retrolambda {
 }
 
 jar {
-    //jar.classifier = 'base'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     
     manifest {
@@ -121,7 +120,7 @@ launch4j {
     
     mainClassName = mainClass
     icon = new File(project.buildDir,  '../icon.ico').absolutePath
-    version = mavenVersion + '.0'
+    version = mavenVersion
     downloadUrl = 'http://java.com/download'
     copyright = "Copyright(c) 2013-2015 huangyuhui."
     
@@ -135,7 +134,3 @@ processResources {
         exclude 'icon.icns'
     }
 }
-
-//build.dependsOn proguard
-//makeExecutable.dependsOn proguard
-//build.dependsOn makeExecutable

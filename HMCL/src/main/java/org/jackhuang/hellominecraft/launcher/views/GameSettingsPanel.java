@@ -292,7 +292,7 @@ public class GameSettingsPanel extends javax.swing.JPanel implements DropTargetL
         chkNoJVMArgs = new javax.swing.JCheckBox();
         chkCancelWrapper = new javax.swing.JCheckBox();
         jLabel30 = new javax.swing.JLabel();
-        txtWrapperLauncher = new javax.swing.JTextField();
+        txtPrecalledCommand = new javax.swing.JTextField();
         jLabel31 = new javax.swing.JLabel();
         txtServerIP = new javax.swing.JTextField();
         jPanel6 = new javax.swing.JPanel();
@@ -575,9 +575,9 @@ public class GameSettingsPanel extends javax.swing.JPanel implements DropTargetL
 
         jLabel30.setText(bundle.getString("advancedsettings.wrapper_launcher")); // NOI18N
 
-        txtWrapperLauncher.addFocusListener(new java.awt.event.FocusAdapter() {
+        txtPrecalledCommand.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
-                txtWrapperLauncherFocusLost(evt);
+                txtPrecalledCommandFocusLost(evt);
             }
         });
 
@@ -596,7 +596,7 @@ public class GameSettingsPanel extends javax.swing.JPanel implements DropTargetL
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(txtWrapperLauncher)
+                    .addComponent(txtPrecalledCommand)
                     .addComponent(txtServerIP)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -639,7 +639,7 @@ public class GameSettingsPanel extends javax.swing.JPanel implements DropTargetL
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel30)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(txtWrapperLauncher, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(txtPrecalledCommand, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel31)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1252,9 +1252,9 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         profile.setCanceledWrapper(chkCancelWrapper.isSelected());
     }//GEN-LAST:event_chkCancelWrapperFocusLost
 
-    private void txtWrapperLauncherFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtWrapperLauncherFocusLost
-        profile.setWrapperLauncher(txtWrapperLauncher.getText());
-    }//GEN-LAST:event_txtWrapperLauncherFocusLost
+    private void txtPrecalledCommandFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtPrecalledCommandFocusLost
+        profile.setPrecalledCommand(txtPrecalledCommand.getText());
+    }//GEN-LAST:event_txtPrecalledCommandFocusLost
 
     private void txtServerIPFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtServerIPFocusLost
         profile.setServerIp(txtServerIP.getText());
@@ -1475,7 +1475,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         txtJavaArgs.setText(profile.getJavaArgs());
         txtMinecraftArgs.setText(profile.getMinecraftArgs());
         txtJavaDir.setText(profile.getSettingsJavaDir());
-        txtWrapperLauncher.setText(profile.getWrapperLauncher());
+        txtPrecalledCommand.setText(profile.getPrecalledCommand());
         txtServerIP.setText(profile.getServerIp());
         chkDebug.setSelected(profile.isDebug());
         chkNoJVMArgs.setSelected(profile.isNoJVMArgs());
@@ -1824,9 +1824,9 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     private javax.swing.JTextField txtMinecraftArgs;
     private javax.swing.JTextField txtMinecraftVersion;
     private javax.swing.JTextField txtPermSize;
+    private javax.swing.JTextField txtPrecalledCommand;
     private javax.swing.JTextField txtServerIP;
     private javax.swing.JTextField txtWidth;
-    private javax.swing.JTextField txtWrapperLauncher;
     // End of variables declaration//GEN-END:variables
     // </editor-fold>
 }

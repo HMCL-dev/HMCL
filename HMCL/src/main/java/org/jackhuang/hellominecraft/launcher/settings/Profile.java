@@ -35,7 +35,7 @@ import org.jackhuang.hellominecraft.utils.system.OS;
 public final class Profile {
 
     private String name, selectedMinecraftVersion = "", javaArgs, minecraftArgs, maxMemory, permSize, width, height, userProperties;
-    private String gameDir, javaDir, wrapperLauncher, serverIp, java;
+    private String gameDir, javaDir, precalledCommand, serverIp, java;
     private boolean fullscreen, debug, noJVMArgs, canceledWrapper;
 
     /**
@@ -62,7 +62,7 @@ public final class Profile {
         gameDir = MCUtils.getInitGameDir().getPath();
         debug = fullscreen = canceledWrapper = false;
         launcherVisibility = gameDirType = 0;
-        javaDir = java = minecraftArgs = serverIp = "";
+        javaDir = java = minecraftArgs = serverIp = precalledCommand = "";
     }
 
     public Profile(Profile v) {
@@ -84,7 +84,7 @@ public final class Profile {
         canceledWrapper = v.canceledWrapper;
         noJVMArgs = v.noJVMArgs;
         launcherVisibility = v.launcherVisibility;
-        wrapperLauncher = v.wrapperLauncher;
+        precalledCommand = v.precalledCommand;
         serverIp = v.serverIp;
     }
 
@@ -311,12 +311,12 @@ public final class Profile {
         Settings.save();
     }
 
-    public String getWrapperLauncher() {
-        return wrapperLauncher;
+    public String getPrecalledCommand() {
+        return precalledCommand;
     }
 
-    public void setWrapperLauncher(String wrapperLauncher) {
-        this.wrapperLauncher = wrapperLauncher;
+    public void setPrecalledCommand(String precalledCommand) {
+        this.precalledCommand = precalledCommand;
         Settings.save();
     }
 

@@ -57,9 +57,6 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
     public void makeHeadCommand(List<String> res) {
         HMCLog.log("On making head command.");
 
-        if (StrUtils.isNotBlank(v.getWrapperLauncher()))
-            res.addAll(Arrays.asList(v.getWrapperLauncher().split(" ")));
-
         String str = v.getJavaDir();
         JdkVersion jv = new JdkVersion(str);
         if (Settings.getInstance().getJava().contains(jv))

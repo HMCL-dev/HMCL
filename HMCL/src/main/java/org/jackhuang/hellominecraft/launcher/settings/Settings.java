@@ -69,7 +69,7 @@ public final class Settings {
             e.checkFormat();
 
         UPDATE_CHECKER = new UpdateChecker(new VersionNumber(Main.firstVer, Main.secondVer, Main.thirdVer),
-                "hmcl", settings.isCheckUpdate(), () -> Main.invokeUpdate());
+                "hmcl", settings.isCheckUpdate(), Main::invokeUpdate);
 
         List<Java> temp = new ArrayList<>();
         temp.add(new Java("Default", System.getProperty("java.home")));

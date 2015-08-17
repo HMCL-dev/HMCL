@@ -338,7 +338,7 @@
                   <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="txtWrapperLauncher" alignment="0" max="32767" attributes="0"/>
+                          <Component id="txtPrecalledCommand" alignment="0" max="32767" attributes="0"/>
                           <Component id="txtServerIP" alignment="0" max="32767" attributes="0"/>
                           <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
@@ -393,7 +393,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jLabel30" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="txtWrapperLauncher" min="-2" pref="26" max="-2" attributes="0"/>
+                      <Component id="txtPrecalledCommand" min="-2" pref="26" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jLabel31" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
@@ -486,9 +486,9 @@
                 </Property>
               </Properties>
             </Component>
-            <Component class="javax.swing.JTextField" name="txtWrapperLauncher">
+            <Component class="javax.swing.JTextField" name="txtPrecalledCommand">
               <Events>
-                <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="txtWrapperLauncherFocusLost"/>
+                <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="txtPrecalledCommandFocusLost"/>
               </Events>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel31">

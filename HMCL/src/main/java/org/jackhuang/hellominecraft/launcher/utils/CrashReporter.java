@@ -77,7 +77,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         if (!s.contains("org.jackhuang.hellominecraft")) return;
         try {
             String text = "\n---- Hello Minecraft! Crash Report ----\n";
-            text += "  Version: " + Main.makeVersion() + "." + Main.forthVer + "\n";
+            text += "  Version: " + Main.makeVersion() + "\n";
             text += "  Time: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + "\n";
             text += "  Thread: " + t.toString() + "\n";
             text += "\n  Content: \n    ";
