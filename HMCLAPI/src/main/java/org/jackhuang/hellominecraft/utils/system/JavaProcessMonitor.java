@@ -38,23 +38,24 @@ public class JavaProcessMonitor {
         this.p = p;
     }
 
-    void start() {
+    public void start() {
         Event<JavaProcess> event = (sender2, t) -> {
             processThreadStopped((ProcessThread) sender2, false);
             return true;
         };
-        ProcessThread a = new ProcessThread(p, true, true);
-        a.stopEvent.register((sender3, p1) -> {
+        Event<JavaProcess> event2 = (sender3, p1) -> {
             if (p1.getExitCode() != 0 && p1.getStdErrLines().size() > 0 && StrUtils.containsOne(p1.getStdErrLines(), Arrays.asList("Could not create the Java Virtual Machine.",
                     "Error occurred during initialization of VM",
                     "A fatal exception has occurred. Program will exit."))) MessageBox.Show(C.i18n("launch.cannot_create_jvm"));
             processThreadStopped((ProcessThread) sender3, false);
             return true;
-        });
+        };
+        ProcessThread a = new ProcessThread(p, true, true);
+        a.stopEvent.register(event2);
         a.start();
         al.add(a);
         a = new ProcessThread(p, false, true);
-        a.stopEvent.register(event);
+        a.stopEvent.register(event2);
         a.start();
         al.add(a);
         a = new ProcessThread(p, false, false);

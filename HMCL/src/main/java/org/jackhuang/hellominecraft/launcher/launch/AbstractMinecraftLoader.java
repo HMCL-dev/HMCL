@@ -58,6 +58,11 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
         HMCLog.log("On making head command.");
 
         String str = v.getJavaDir();
+        if(!v.getJavaDirFile().exists()) {
+            MessageBox.Show(C.i18n("launch.wrong_javadir"));
+            v.setJava(null);
+            str = v.getJavaDir();
+        }
         JdkVersion jv = new JdkVersion(str);
         if (Settings.getInstance().getJava().contains(jv))
             jv = Settings.getInstance().getJava().get(Settings.getInstance().getJava().indexOf(jv));

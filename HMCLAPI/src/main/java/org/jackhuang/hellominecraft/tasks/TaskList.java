@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.jackhuang.hellominecraft.utils.functions.NonConsumer;
 import org.jackhuang.hellominecraft.HMCLog;
 
 /**
@@ -32,7 +31,7 @@ import org.jackhuang.hellominecraft.HMCLog;
 public class TaskList extends Thread {
 
     List<Task> taskQueue = Collections.synchronizedList(new ArrayList());
-    ArrayList<NonConsumer> allDone = new ArrayList();
+    ArrayList<Runnable> allDone = new ArrayList();
     ArrayList<DoingDoneListener<Task>> taskListener = new ArrayList();
 
     int totTask;
@@ -46,7 +45,7 @@ public class TaskList extends Thread {
         taskQueue.clear();
     }
 
-    public void addAllDoneListener(NonConsumer l) {
+    public void addAllDoneListener(Runnable l) {
         allDone.add(l);
     }
 
@@ -100,8 +99,7 @@ public class TaskList extends Thread {
             try {
                 if (this.isInterrupted()) return;
                 Thread.sleep(1);
-            } catch (InterruptedException ex) {
-                HMCLog.warn("Failed to sleep task thread", ex);
+            } catch (InterruptedException ignore) {
             }
 
     }
@@ -148,8 +146,8 @@ public class TaskList extends Thread {
         for (Task taskQueue1 : taskQueue)
             executeTask(taskQueue1);
         if (shouldContinue)
-            for (NonConsumer d : allDone)
-                d.onDone();
+            for (Runnable d : allDone)
+                d.run();
     }
 
     public boolean isEmpty() {

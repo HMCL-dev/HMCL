@@ -22,6 +22,10 @@ package org.jackhuang.hellominecraft.tasks.download;
  */
 public class NetException extends RuntimeException {
     
+    public NetException(Exception message) {
+        super(message);
+    }
+    
     public NetException(String message) {
         super(message);
     }

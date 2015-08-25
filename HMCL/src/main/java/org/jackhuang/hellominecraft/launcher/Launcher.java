@@ -22,8 +22,6 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
@@ -91,6 +89,9 @@ public final class Launcher {
             SwingUtilities.invokeLater(() -> LogWindow.instance.setVisible(true));
         }
 
+        if (!JdkVersion.isJava64Bit() && Platform.getPlatform() == Platform.BIT_64)
+            MessageBox.Show(C.i18n("advice.os64butjdk32"));
+
         URL[] urls = new URL[len];
 
         try {
@@ -103,12 +104,9 @@ public final class Launcher {
             return;
         }
 
-        if (!JdkVersion.isJava64Bit() && Platform.getPlatform() == Platform.BIT_64)
-            MessageBox.Show(C.i18n("advice.os64butjdk32"));
-
         Method minecraftMain;
         try {
-            minecraftMain = new URLClassLoader(urls).loadClass(mainClass).getMethod("main", String[].class);
+            minecraftMain = new URLClassLoader(urls, URLClassLoader.getSystemClassLoader().getParent()).loadClass(mainClass).getMethod("main", String[].class);
         } catch (ClassNotFoundException | NoSuchMethodException | SecurityException t) {
             MessageBox.Show(C.i18n("crash.main_class_not_found"));
             println("Minecraft main class not found.");

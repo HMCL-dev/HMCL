@@ -26,19 +26,22 @@ import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.security.GeneralSecurityException;
 import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.util.Map;
+import java.util.jar.JarFile;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.X509TrustManager;
 import javax.swing.ImageIcon;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.utils.functions.NonConsumer;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.launch.GameLauncher;
 import org.jackhuang.hellominecraft.launcher.utils.CrashReporter;
@@ -47,18 +50,24 @@ import org.jackhuang.hellominecraft.logging.appender.ConsoleAppender;
 import org.jackhuang.hellominecraft.logging.layout.DefaultLayout;
 import org.jackhuang.hellominecraft.views.LogWindow;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
+import org.jackhuang.hellominecraft.launcher.utils.upgrade.Upgrader;
 import org.jackhuang.hellominecraft.launcher.views.MainFrame;
 import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
+import org.jackhuang.hellominecraft.tasks.TaskWindow;
+import org.jackhuang.hellominecraft.utils.ArrayUtils;
 import org.jackhuang.hellominecraft.utils.system.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
+import org.jackhuang.hellominecraft.utils.VersionNumber;
+import org.jackhuang.hellominecraft.utils.system.FileUtils;
+import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.system.OS;
 
 /**
  *
  * @author huangyuhui
  */
-public final class Main implements NonConsumer {
-    
+public final class Main implements Runnable {
+
     private static final X509TrustManager xtm = new X509TrustManager() {
         @Override
         public void checkClientTrusted(X509Certificate[] chain, String authType) {
@@ -91,7 +100,7 @@ public final class Main implements NonConsumer {
     }
 
     public static String launcherName = "Hello Minecraft! Launcher";
-    public static byte firstVer = 2, secondVer = 3, thirdVer = 4, forthVer = 12;
+    public static byte firstVer = 2, secondVer = 3, thirdVer = 4, forthVer = 13;
     public static int minimumLauncherVersion = 16;
 
     /**
@@ -116,6 +125,31 @@ public final class Main implements NonConsumer {
 
     public static void main(String[] args) {
         {
+            if (!ArrayUtils.contains(args, "nofound"))
+                try {
+                    File f = Upgrader.HMCL_VER_FILE;
+                    if (f.exists()) {
+                        Map<String, String> m = C.gson.fromJson(FileUtils.readFileToString(f), Map.class);
+                        String s = m.get("ver");
+                        if (s != null && VersionNumber.check(s).compareTo(new VersionNumber(firstVer, secondVer, thirdVer)) > 0) {
+                            String j = m.get("loc");
+                            if (j != null) {
+                                File jar = new File(j);
+                                if (jar.exists()) {
+                                    JarFile jarFile = new JarFile(jar);
+                                    String mainClass = jarFile.getManifest().getMainAttributes().getValue("Main-Class");
+                                    if (mainClass != null) {
+                                        new URLClassLoader(new URL[]{jar.toURI().toURL()}, URLClassLoader.getSystemClassLoader().getParent()).loadClass(mainClass).getMethod("main", String[].class).invoke(null, new Object[]{new String[]{"nofound"}});
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                }
+
             Thread.setDefaultUncaughtExceptionHandler(new CrashReporter(true));
 
             try {
@@ -152,43 +186,54 @@ public final class Main implements NonConsumer {
                         }
                     });
             }
-            
+
             MainFrame.showMainFrame(Settings.isFirstLoad());
         }
     }
 
     @Override
-    public void onDone() {
+    public void run() {
         GameLauncher.PROCESS_MANAGER.stopAllProcesses();
     }
 
     public static void update() {
-        if (MessageBox.Show(C.i18n("update.newest_version") + Settings.UPDATE_CHECKER.getNewVersion().firstVer + "." + Settings.UPDATE_CHECKER.getNewVersion().secondVer + "." + Settings.UPDATE_CHECKER.getNewVersion().thirdVer + "\n"
-                + C.i18n("update.should_open_link"),
-                MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
-            Map<String, String> map = Settings.UPDATE_CHECKER.download_link;
-            String url = C.URL_PUBLISH;
-            if (map != null)
-                if (map.containsKey(OS.os().checked_name))
-                    url = map.get(OS.os().checked_name);
-                else if (map.containsKey(OS.UNKOWN.checked_name))
-                    url = map.get(OS.UNKOWN.checked_name);
-            if (url == null) url = C.URL_PUBLISH;
-            try {
-                java.awt.Desktop.getDesktop().browse(new URI(url));
-            } catch (URISyntaxException | IOException e) {
-                HMCLog.warn("Failed to browse uri: " + url, e);
+        Settings.UPDATE_CHECKER.requestDownloadLink(() -> {
+            SwingUtilities.invokeLater(() -> {
+                Map<String, String> map = Settings.UPDATE_CHECKER.download_link;
+                if (map != null && map.containsKey("pack"))
+                    try {
+                        if (TaskWindow.getInstance().addTask(new Upgrader(map.get("pack"), Settings.UPDATE_CHECKER.versionString)).start()) {
+                            new ProcessBuilder(new String[]{IOUtils.getJavaDir(), "-jar", Upgrader.getSelf(Settings.UPDATE_CHECKER.versionString).getAbsolutePath()}).directory(new File(".")).start();
+                            System.exit(0);
+                        }
+                    } catch (IOException ex) {
+                        HMCLog.warn("Failed to create upgrader", ex);
+                    }
+                if (MessageBox.Show(C.i18n("update.newest_version") + Settings.UPDATE_CHECKER.getNewVersion().firstVer + "." + Settings.UPDATE_CHECKER.getNewVersion().secondVer + "." + Settings.UPDATE_CHECKER.getNewVersion().thirdVer + "\n"
+                        + C.i18n("update.should_open_link"),
+                        MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
+                    String url = C.URL_PUBLISH;
+                    if (map != null)
+                        if (map.containsKey(OS.os().checked_name))
+                            url = map.get(OS.os().checked_name);
+                        else if (map.containsKey(OS.UNKOWN.checked_name))
+                            url = map.get(OS.UNKOWN.checked_name);
+                    if (url == null) url = C.URL_PUBLISH;
+                    try {
+                        java.awt.Desktop.getDesktop().browse(new URI(url));
+                    } catch (URISyntaxException | IOException e) {
+                        HMCLog.warn("Failed to browse uri: " + url, e);
 
-                Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
-                cb.setContents(new StringSelection(url), null);
-                MessageBox.Show(C.i18n("update.no_browser"));
-            }
-        } else
-            Settings.getInstance().setCheckUpdate(false);
+                        Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
+                        cb.setContents(new StringSelection(url), null);
+                        MessageBox.Show(C.i18n("update.no_browser"));
+                    }
+                }
+            });
+        });
     }
 
     public static void invokeUpdate() {
-        if (Settings.getInstance().isCheckUpdate()) update();
         MainFrame.instance.invokeUpdate();
     }
 

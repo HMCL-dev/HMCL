@@ -20,15 +20,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Map;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.utils.assets.AssetsIndex;
 import org.jackhuang.hellominecraft.launcher.utils.assets.AssetsObject;
@@ -42,7 +35,6 @@ import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.version.MinecraftVersionRequest;
 import org.jackhuang.hellominecraft.utils.NetUtils;
-import org.jackhuang.hellominecraft.utils.Pair;
 import org.jackhuang.hellominecraft.utils.system.OS;
 
 /**
@@ -188,28 +180,31 @@ public final class MCUtils {
         }
     }
 
-    public static File getLocation() {
-        String baseName = "minecraft";
-        String str1 = System.getProperty("user.home", ".");
+    public static File getWorkingDirectory(String baseName) {
+        String userhome = System.getProperty("user.home", ".");
         File file;
         switch (OS.os()) {
             case LINUX:
-                file = new File(str1, '.' + (String) baseName + '/');
+                file = new File(userhome, '.' + baseName + '/');
                 break;
             case WINDOWS:
-                String str2;
-                if ((str2 = System.getenv("APPDATA")) != null)
-                    file = new File(str2, "." + baseName + '/');
+                String appdata = System.getenv("APPDATA");
+                if (appdata != null)
+                    file = new File(appdata, "." + baseName + '/');
                 else
-                    file = new File(str1, '.' + baseName + '/');
+                    file = new File(userhome, '.' + baseName + '/');
                 break;
             case OSX:
-                file = new File(str1, "Library/Application Support/" + baseName);
+                file = new File(userhome, "Library/Application Support/" + baseName);
                 break;
             default:
-                file = new File(str1, baseName + '/');
+                file = new File(userhome, baseName + '/');
         }
         return file;
+    }
+
+    public static File getLocation() {
+        return getWorkingDirectory("minecraft");
     }
 
     public static boolean is16Folder(String path) {
@@ -252,7 +247,7 @@ public final class MCUtils {
         }
         return null;
     }
-    
+
     public static boolean downloadMinecraftJar(File gameDir, String id, DownloadType sourceType) {
         String vurl = sourceType.getProvider().getVersionsDownloadURL() + id + "/";
         File vpath = new File(gameDir, "versions/" + id);

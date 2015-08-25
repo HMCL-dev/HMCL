@@ -344,11 +344,13 @@ public class FileUtils {
         return filename.substring(0, index);
     }
 
-    public static void writeQuietly(File file, CharSequence data) {
+    public static boolean writeQuietly(File file, CharSequence data) {
         try {
             write(file, data);
+            return true;
         } catch (IOException e) {
             HMCLog.warn("Failed to write data to file: " + file, e);
+            return false;
         }
     }
 

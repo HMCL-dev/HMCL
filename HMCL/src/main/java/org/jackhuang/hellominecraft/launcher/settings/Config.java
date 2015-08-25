@@ -125,15 +125,6 @@ public final class Config {
         return configurations;
     }
 
-    public boolean isCheckUpdate() {
-        return checkUpdate;
-    }
-
-    public void setCheckUpdate(boolean checkUpdate) {
-        this.checkUpdate = checkUpdate;
-        Settings.save();
-    }
-
     public Map getYggdrasilConfig() {
         return yggdrasil;
     }
@@ -149,8 +140,6 @@ public final class Config {
     private int downloadtype;
     @SerializedName("configurations")
     private TreeMap<String, Profile> configurations;
-    @SerializedName("checkUpdate")
-    private boolean checkUpdate;
     @SerializedName("yggdrasil")
     private Map yggdrasil;
 
@@ -158,7 +147,6 @@ public final class Config {
         clientToken = UUID.randomUUID().toString();
         username = "";
         logintype = downloadtype = 0;
-        checkUpdate = true;
         configurations = new TreeMap<>();
         Profile profile = new Profile();
         configurations.put(profile.getName(), profile);

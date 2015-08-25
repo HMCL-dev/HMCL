@@ -14,13 +14,33 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.
  */
-package org.jackhuang.hellominecraft.utils.functions;
+package org.jackhuang.hellominecraft.utils.system;
+
+import org.jackhuang.hellominecraft.utils.functions.Consumer;
 
 /**
  *
  * @author huangyuhui
  */
-public interface NonConsumer {
+public class ThreadExecutor extends Thread {
 
-    void onDone();
+    public final Consumer<Throwable> c;
+    public final Runnable r;
+
+    public ThreadExecutor(Consumer<Throwable> c, Runnable r) {
+        super();
+        this.c = c;
+        this.r = r;
+    }
+
+    @Override
+    public void run() {
+        try {
+            r.run();
+            c.accept(null);
+        } catch (Throwable t) {
+            c.accept(t);
+        }
+    }
+
 }

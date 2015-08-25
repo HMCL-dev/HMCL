@@ -51,7 +51,7 @@ public final class C {
         try {
             return String.format(C.I18N.getString(a), format);
         } catch (Exception e) {
-            HMCLog.warn("Failed to read localization lang: " + a, e);
+            HMCLog.warn("Failed to read localization key: " + a, e);
             return a;
         }
     }

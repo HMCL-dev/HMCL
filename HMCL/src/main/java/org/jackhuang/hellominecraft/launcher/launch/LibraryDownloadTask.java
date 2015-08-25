@@ -20,10 +20,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.jar.JarEntry;
@@ -31,8 +28,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
-import org.jackhuang.hellominecraft.tasks.Task;
-import org.jackhuang.hellominecraft.tasks.download.NetException;
+import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.tukaani.xz.XZInputStream;
 
@@ -40,13 +36,12 @@ import org.tukaani.xz.XZInputStream;
  *
  * @author huangyuhui
  */
-public class LibraryDownloadTask extends Task {
-
-    private static final int MAX_BUFFER_SIZE = 2048;
+public class LibraryDownloadTask extends FileDownloadTask {
 
     GameLauncher.DownloadLibraryJob job;
 
     public LibraryDownloadTask(GameLauncher.DownloadLibraryJob job) {
+        super();
         this.job = job;
     }
 
@@ -76,95 +71,11 @@ public class LibraryDownloadTask extends Task {
             return false;
         }
     }
-
-    InputStream stream;
-    RandomAccessFile file;
-    boolean shouldContinue = true;
-    int size = -1;
-
+    
     boolean download(URL url, File filePath) {
-        HMCLog.log("Downloading: " + url + " to " + filePath);
-        size = -1;
-        int downloaded = 0;
-        for (int repeat = 0; repeat < 6; repeat++) {
-            if (repeat > 0)
-                HMCLog.warn("Failed to download, repeat: " + repeat);
-            try {
-
-                // Open connection to URL.
-                HttpURLConnection connection
-                        = (HttpURLConnection) url.openConnection();
-
-                connection.setConnectTimeout(5000);
-                connection.setRequestProperty("User-Agent", "Hello Minecraft! Launcher");
-
-                // Connect to server.
-                connection.connect();
-
-                // Make sure response code is in the 200 range.
-                if (connection.getResponseCode() / 100 != 2) {
-                    setFailReason(new NetException(C.i18n("download.not_200") + " " + connection.getResponseCode()));
-                    return false;
-                }
-
-                // Check for valid content length.
-                int contentLength = connection.getContentLength();
-                if (contentLength < 1) {
-                    setFailReason(new NetException("The content length is invalid."));
-                    return false;
-                }
-
-                // Set the size for this download if it hasn't been already set.
-                if (size == -1)
-                    size = contentLength;
-
-                filePath.getParentFile().mkdirs();
-
-                File tempFile = new File(filePath.getAbsolutePath() + ".hmd");
-                if (!tempFile.exists())
-                    tempFile.createNewFile();
-
-                // Open file and seek to the end of it.
-                file = new RandomAccessFile(tempFile, "rw");
-                file.seek(downloaded);
-                stream = connection.getInputStream();
-                while (true) {
-                    // Size buffer according to how much of the file is left to download.
-                    if (!shouldContinue) {
-                        closeFiles();
-                        filePath.delete();
-                        break;
-                    }
-
-                    byte buffer[] = new byte[MAX_BUFFER_SIZE];
-
-                    // Read from server into buffer.
-                    int read = stream.read(buffer);
-                    if (read == -1)
-                        break;
-
-                    // Write buffer to file.
-                    file.write(buffer, 0, read);
-                    downloaded += read;
-
-                    if (ppl != null)
-                        ppl.setProgress(this, downloaded, size);
-                }
-                closeFiles();
-                if (aborted)
-                    tempFile.delete();
-                else
-                    tempFile.renameTo(filePath);
-                if (ppl != null)
-                    ppl.onProgressProviderDone(this);
-                return true;
-            } catch (Exception e) {
-                setFailReason(new NetException(C.i18n("download.failed") + " " + url, e));
-            } finally {
-                closeFiles();
-            }
-        }
-        return false;
+        this.url = url;
+        this.filePath = filePath;
+        return super.executeTask();
     }
 
     public static void unpackLibrary(File output, File input)
@@ -209,33 +120,6 @@ public class LibraryDownloadTask extends Task {
             jos.closeEntry();
         }
         temp.delete();
-    }
-
-    private void closeFiles() {
-        // Close file.
-        if (file != null)
-            try {
-                file.close();
-                file = null;
-            } catch (IOException e) {
-                HMCLog.warn("Failed to close file", e);
-            }
-
-        // Close connection to server.
-        if (stream != null)
-            try {
-                stream.close();
-                stream = null;
-            } catch (IOException e) {
-                HMCLog.warn("Failed to close stream", e);
-            }
-    }
-
-    @Override
-    public boolean abort() {
-        shouldContinue = false;
-        aborted = true;
-        return true;
     }
 
     @Override

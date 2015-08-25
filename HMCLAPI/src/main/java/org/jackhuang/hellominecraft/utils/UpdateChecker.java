@@ -19,7 +19,6 @@ package org.jackhuang.hellominecraft.utils;
 import java.util.Map;
 import org.jackhuang.hellominecraft.utils.system.MessageBox;
 import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.utils.functions.NonConsumer;
 import org.jackhuang.hellominecraft.HMCLog;
 
 /**
@@ -30,16 +29,15 @@ public final class UpdateChecker extends Thread {
 
     public static boolean OUT_DATED = false;
     public VersionNumber base;
+    public String versionString;
     public String type;
-    public boolean continueUpdate;
-    public NonConsumer dl;
-    public Map<String, String> download_link;
+    public Runnable dl;
+    public Map<String, String> download_link = null;
 
-    public UpdateChecker(VersionNumber base, String type, boolean continueUpdate, NonConsumer dl) {
+    public UpdateChecker(VersionNumber base, String type, Runnable dl) {
         super("UpdateChecker");
         this.base = base;
         this.type = type;
-        this.continueUpdate = continueUpdate;
         this.dl = dl;
     }
 
@@ -48,25 +46,16 @@ public final class UpdateChecker extends Thread {
     @Override
     public void run() {
 
-        String version;
         try {
-            version = NetUtils.doGet("http://huangyuhui.duapp.com/info.php?type=" + type);
+            versionString = NetUtils.doGet("http://huangyuhui.duapp.com/info.php?type=" + type);
         } catch (Exception e) {
             HMCLog.warn("Failed to get update url.", e);
             return;
         }
-        value = VersionNumber.check(version);
-        if (!continueUpdate)
-            return;
+        value = VersionNumber.check(versionString);
         process(false);
-        if (OUT_DATED) {
-            try {
-                download_link = C.gson.fromJson(NetUtils.doGet("http://huangyuhui.duapp.com/update_link.php?type=" + type), Map.class);
-            } catch (Exception e) {
-                HMCLog.warn("Failed to get update link.", e);
-            }
-            dl.onDone();
-        }
+        if (OUT_DATED)
+            dl.run();
     }
 
     public void process(boolean showMessage) {
@@ -74,14 +63,23 @@ public final class UpdateChecker extends Thread {
             HMCLog.warn("Failed to check update...");
             if (showMessage)
                 MessageBox.Show(C.i18n("update.failed"));
-        } else
-            if (VersionNumber.isOlder(base, value)) {
-                OUT_DATED = true;
-            }
+        } else if (VersionNumber.isOlder(base, value))
+            OUT_DATED = true;
     }
 
     public VersionNumber getNewVersion() {
         return value;
     }
 
+    public synchronized void requestDownloadLink(Runnable finish) {
+        new Thread(() -> {
+            if (download_link == null)
+                try {
+                    download_link = C.gson.fromJson(NetUtils.doGet("http://huangyuhui.duapp.com/update_link.php?type=" + type), Map.class);
+                } catch (Exception e) {
+                    HMCLog.warn("Failed to get update link.", e);
+                }
+            finish.run();
+        }).start();
+    }
 }

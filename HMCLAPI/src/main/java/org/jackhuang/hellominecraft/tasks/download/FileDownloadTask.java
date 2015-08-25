@@ -38,12 +38,14 @@ import org.jackhuang.hellominecraft.utils.system.IOUtils;
 public class FileDownloadTask extends Task implements PreviousResult<File>, PreviousResultRegistrar<String> {
 
     // Max size of download buffer.
-    private static final int MAX_BUFFER_SIZE = 2048;
+    protected static final int MAX_BUFFER_SIZE = 2048;
 
-    private URL url; // download URL
-    private int size; // size of download in bytes
-    private int downloaded; // number of bytes downloaded
-    private final File filePath;
+    protected URL url; // download URL
+    protected int downloaded = 0; // number of bytes downloaded
+    protected File filePath;
+
+    public FileDownloadTask() {
+    }
 
     public FileDownloadTask(File filePath) {
         this((URL) null, filePath);
@@ -56,8 +58,6 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
     // Constructor for Download.
     public FileDownloadTask(URL url, File filePath) {
         this.url = url;
-        size = -1;
-        downloaded = 0;
         this.filePath = filePath;
     }
 
@@ -124,10 +124,6 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                     return false;
                 }
 
-                // Set the size for this download if it hasn't been already set.
-                if (size == -1)
-                    size = contentLength;
-
                 filePath.getParentFile().mkdirs();
 
                 File tempFile = new File(filePath.getAbsolutePath() + ".hmd");
@@ -135,10 +131,11 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                     tempFile.createNewFile();
 
                 // Open file and seek to the end of it.
-                file = new RandomAccessFile(tempFile, "rw");
-                file.seek(downloaded);
+                file = new RandomAccessFile(tempFile, "rwd");
 
                 stream = connection.getInputStream();
+                int lastDownloaded = 0;
+                long lastTime = System.currentTimeMillis();
                 while (true) {
                     // Size buffer according to how much of the file is left to download.
                     if (!shouldContinue) {
@@ -158,14 +155,21 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                     file.write(buffer, 0, read);
                     downloaded += read;
 
-                    if (ppl != null)
-                        ppl.setProgress(this, downloaded, size);
+                    long now = System.currentTimeMillis();
+                    if (ppl != null && (now - lastTime) >= 1000) {
+                        ppl.setProgress(this, downloaded, contentLength);
+                        ppl.setStatus(this, (downloaded - lastDownloaded) / 1024 + "KB/s");
+                        lastDownloaded = downloaded;
+                        lastTime = now;
+                    }
                 }
                 closeFiles();
                 if (aborted)
                     tempFile.delete();
-                else
+                else {
+                    if (filePath.exists()) filePath.delete();
                     tempFile.renameTo(filePath);
+                }
                 if (ppl != null)
                     ppl.onProgressProviderDone(this);
                 return true;
@@ -184,6 +188,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
 
     @Override
     public boolean abort() {
+        //for (Downloader d : downloaders) d.abort();
         shouldContinue = false;
         aborted = true;
         return true;

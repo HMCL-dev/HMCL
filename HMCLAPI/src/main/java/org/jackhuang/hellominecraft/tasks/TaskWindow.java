@@ -19,7 +19,6 @@ package org.jackhuang.hellominecraft.tasks;
 import java.util.ArrayList;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.utils.functions.NonConsumer;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.system.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
@@ -30,7 +29,7 @@ import org.jackhuang.hellominecraft.utils.SwingUtils;
  * @author huangyuhui
  */
 public class TaskWindow extends javax.swing.JDialog
-        implements ProgressProviderListener, NonConsumer, DoingDoneListener<Task> {
+        implements ProgressProviderListener, Runnable, DoingDoneListener<Task> {
 
     private static final TaskWindow instance = new TaskWindow();
 
@@ -202,7 +201,7 @@ public class TaskWindow extends javax.swing.JDialog
     }
 
     @Override
-    public void onDone() {
+    public void run() {
         suc = true;
         this.dispose();
         HMCLog.log("Tasks are finished.");
@@ -259,7 +258,9 @@ public class TaskWindow extends javax.swing.JDialog
     @Override
     public void setStatus(Task task, String sta) {
         SwingUtilities.invokeLater(() -> {
-            SwingUtils.setValueAt(lstDownload, sta, lstDownload.getRowCount(), 0);
+            int idx = tasks.indexOf(task);
+            if (idx == -1) return;
+            SwingUtils.setValueAt(lstDownload, task.getInfo() + ": " + sta, idx, 0);
         });
     }
 }

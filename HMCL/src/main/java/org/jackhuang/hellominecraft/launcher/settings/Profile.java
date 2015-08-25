@@ -165,9 +165,13 @@ public final class Profile {
     }
 
     public void setJava(Java java) {
-        int idx = Settings.JAVA.indexOf(java);
-        if (idx == -1) return;
-        this.java = java.getName();
+        if (java == null)
+            this.java = Settings.JAVA.get(0).getName();
+        else {
+            int idx = Settings.JAVA.indexOf(java);
+            if (idx == -1) return;
+            this.java = java.getName();
+        }
         Settings.save();
     }
 

@@ -133,6 +133,7 @@ public class GameLauncher {
                     HMCLog.warn("Failed to invoke precalled command", ex);
                 }
             }
+            HMCLog.log("Starting process");
             ProcessBuilder builder = new ProcessBuilder(str);
             builder.directory(provider.getRunDirectory(get.getSelectedMinecraftVersion().id))
                     .environment().put("APPDATA", get.getCanonicalGameDirFile().getPath());

@@ -372,7 +372,6 @@ public final class MainFrame extends DraggableFrame {
     }
 
     public void invokeUpdate() {
-        if (!isVisible()) return;
         defaultTitle = defaultTitle + C.i18n("update.found");
         if (!isShowedMessage) {
             windowTitle.setText(defaultTitle);

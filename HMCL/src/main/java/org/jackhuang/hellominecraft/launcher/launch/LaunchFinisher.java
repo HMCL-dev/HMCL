@@ -49,6 +49,7 @@ public class LaunchFinisher implements Event<List<String>> {
                     System.exit(0);
                 return true;
             });
+            jpm.start();
             return true;
         });
         obj.launch(str);
