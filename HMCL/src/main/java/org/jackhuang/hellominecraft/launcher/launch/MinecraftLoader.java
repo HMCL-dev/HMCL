@@ -59,7 +59,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         String library = v.isCanceledWrapper() ? "" : "-cp=";
         for (MinecraftLibrary l : version.libraries) {
             l.init();
-            if (l.allow())
+            if (l.allow() && !l.isRequiredToUnzip())
                 library += l.getFilePath(gameDir).getAbsolutePath() + File.pathSeparator;
         }
         library += IOUtils.tryGetCanonicalFilePath(provider.getMinecraftJar()) + File.pathSeparator;

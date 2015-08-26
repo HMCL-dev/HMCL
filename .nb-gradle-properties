@@ -6,10 +6,10 @@
   <source-level>1.8</source-level>
   <common-tasks>
     <task>
-      <display-name>makeExecutable</display-name>
+      <display-name>launch4j</display-name>
       <non-blocking>no</non-blocking>
       <task-names>
-        <name must-exist="yes">makeExecutable</name>
+        <name must-exist="yes">launch4j</name>
       </task-names>
       <task-args/>
       <task-jvm-args/>

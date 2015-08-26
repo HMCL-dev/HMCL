@@ -112,7 +112,7 @@ task makeExecutable(dependsOn: jar) << {
     is.close()
     fos.close()
 }
-/*
+
 launch4j {
     launch4jCmd = 'D:\\Develop\\Java\\Launch4j\\launch4j.exe'
     supportUrl = 'http://www.mcbbs.net/thread-142335-1-1.html'
@@ -128,7 +128,7 @@ launch4j {
     outfile = mavenGroupId + '-' + mavenVersion + '.exe'
     messagesJreVersionError = 'This application requires a Java Runtime Environment installation, or the runtime is corrupted.\n\u6ca1\u6709\u627e\u5230\u004a\u0061\u0076\u0061\u8fd0\u884c\u65f6\uff0c\u8bf7\u4e0d\u8981\u4f7f\u7528\u7eff\u8272\u004a\u0061\u0076\u0061\uff0c\u8bf7\u4f7f\u7528\u5b89\u88c5\u7248\u7684\u004a\u0061\u0076\u0061\uff0c\u70b9\u51fb\u786e\u5b9a\u8fdb\u5165\u004a\u0061\u0076\u0061\u5b89\u88c5\u9875\u9762\u3002'
 }
-*/
+
 processResources {
     from(sourceSets.main.resources.srcDirs) {
         exclude 'icon.icns'
