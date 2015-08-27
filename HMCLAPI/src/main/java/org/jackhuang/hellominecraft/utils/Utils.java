@@ -17,7 +17,6 @@
 package org.jackhuang.hellominecraft.utils;
 
 import org.jackhuang.hellominecraft.utils.system.MessageBox;
-import com.google.gson.GsonBuilder;
 import com.sun.management.OperatingSystemMXBean;
 import java.awt.Desktop;
 import java.awt.Image;
@@ -44,12 +43,6 @@ import org.jackhuang.hellominecraft.HMCLog;
  * @author huangyuhui
  */
 public final class Utils {
-
-    private static final GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting();
-
-    public static GsonBuilder getDefaultGsonBuilder() {
-        return gsonBuilder;
-    }
 
     public static String[] getURL() {
         URL[] urls = ((URLClassLoader) Utils.class.getClassLoader()).getURLs();

@@ -16,7 +16,6 @@
  */
 package org.jackhuang.hellominecraft.launcher.version;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +52,6 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     private File baseFolder;
     private final Profile profile;
     private final Map<String, MinecraftVersion> versions = new TreeMap();
-    private final Gson gson = Utils.getDefaultGsonBuilder().create();
 
     /**
      *
@@ -122,14 +120,14 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
             }
             MinecraftVersion mcVersion;
             try {
-                mcVersion = gson.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
+                mcVersion = C.gson.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
                 if (mcVersion == null) throw new RuntimeException("Wrong json format, got null.");
             } catch (IOException | RuntimeException e) {
                 HMCLog.warn("Found wrong format json, try to fix it.", e);
                 if (MessageBox.Show(C.i18n("launcher.versions_json_not_formatted", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
                     refreshJson(id);
                     try {
-                        mcVersion = gson.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
+                        mcVersion = C.gson.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
                         if (mcVersion == null) throw new RuntimeException("Wrong json format, got null.");
                     } catch (IOException | RuntimeException ex) {
                         HMCLog.err("Retried but still failed.");
@@ -142,7 +140,7 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
                 if (!id.equals(mcVersion.id)) {
                     HMCLog.warn("Found: " + dir + ", it contains id: " + mcVersion.id + ", expected: " + id + ", the launcher will fix this problem.");
                     mcVersion.id = id;
-                    FileUtils.writeQuietly(jsonFile, gson.toJson(mcVersion));
+                    FileUtils.writeQuietly(jsonFile, C.gsonPrettyPrinting.toJson(mcVersion));
                 }
 
                 if (mcVersion.libraries != null)
@@ -150,7 +148,7 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
                         ml.init();
                 versions.put(id, mcVersion);
             } catch (Exception e) {
-                HMCLog.warn("Ignoring: " + dir + ", the json of this Minecraft is malformed.");
+                HMCLog.warn("Ignoring: " + dir + ", the json of this Minecraft is malformed.", e);
             }
         }
     }
@@ -168,9 +166,9 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     public boolean renameVersion(String from, String to) {
         try {
             File fromJson = new File(baseFolder, "versions/" + from + "/" + from + ".json");
-            MinecraftVersion mcVersion = gson.fromJson(FileUtils.readFileToString(fromJson), MinecraftVersion.class);
+            MinecraftVersion mcVersion = C.gson.fromJson(FileUtils.readFileToString(fromJson), MinecraftVersion.class);
             mcVersion.id = to;
-            FileUtils.writeQuietly(fromJson, gson.toJson(mcVersion));
+            FileUtils.writeQuietly(fromJson, C.gsonPrettyPrinting.toJson(mcVersion));
             File toDir = new File(baseFolder, "versions/" + to);
             new File(baseFolder, "versions/" + from).renameTo(toDir);
             File toJson = new File(toDir, to + ".json");
