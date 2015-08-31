@@ -39,7 +39,6 @@ import org.jackhuang.hellominecraft.launcher.launch.LaunchScriptFinisher;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
 import org.jackhuang.hellominecraft.utils.Event;
-import org.jackhuang.hellominecraft.views.LogWindow;
 import org.jackhuang.hellominecraft.lookandfeel.components.ConstomButton;
 import org.jackhuang.hellominecraft.utils.functions.Consumer;
 
@@ -58,8 +57,9 @@ public class MainPagePanel extends javax.swing.JPanel {
         pnlButtons = new javax.swing.JPanel();
         pnlButtons.setLayout(null);
 
+        int w = 150, h = 50;
         btnRun = new ConstomButton();
-        btnRun.setBounds(0, 0, 150, 50);
+        btnRun.setBounds(0, 0, w, h);
         Font font = btnRun.getFont();
         Font newFont = new Font(font.getName(), font.getStyle(), 15);
         pnlButtons.add(btnRun);
@@ -69,7 +69,7 @@ public class MainPagePanel extends javax.swing.JPanel {
         btnRun.addActionListener(e -> btnRunActionPerformed());
 
         this.add(pnlButtons);
-        pnlButtons.setBounds(0, 0, 150, 50);
+        pnlButtons.setBounds(0, 0, w, h);
 
         this.setSize(new Dimension(deWidth, deHeight));
         this.pnlButtons.setLocation(deWidth - pnlButtons.getWidth() - 25, deHeight - pnlButtons.getHeight() - 25);
@@ -104,8 +104,6 @@ public class MainPagePanel extends javax.swing.JPanel {
         txtPassword = new javax.swing.JPasswordField();
         jPanel3 = new javax.swing.JPanel();
         btnLogout = new javax.swing.JButton();
-        btnShowLog = new javax.swing.JButton();
-        btnMakeLaunchScript = new javax.swing.JButton();
 
         setLayout(null);
 
@@ -214,20 +212,6 @@ public class MainPagePanel extends javax.swing.JPanel {
 
         pnlPassword.add(jPanel3, "card3");
 
-        btnShowLog.setText(bundle.getString("mainwindow.show_log")); // NOI18N
-        btnShowLog.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnShowLogActionPerformed(evt);
-            }
-        });
-
-        btnMakeLaunchScript.setText(bundle.getString("mainwindow.make_launch_script")); // NOI18N
-        btnMakeLaunchScript.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnMakeLaunchScriptActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout pnlMoreLayout = new javax.swing.GroupLayout(pnlMore);
         pnlMore.setLayout(pnlMoreLayout);
         pnlMoreLayout.setHorizontalGroup(
@@ -244,8 +228,6 @@ public class MainPagePanel extends javax.swing.JPanel {
                         .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(cboProfiles, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(cboVersions, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addComponent(btnMakeLaunchScript, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnShowLog, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(pnlMoreLayout.createSequentialGroup()
                         .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblUserName)
@@ -277,11 +259,7 @@ public class MainPagePanel extends javax.swing.JPanel {
                     .addComponent(txtPlayerName, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnlPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 254, Short.MAX_VALUE)
-                .addComponent(btnShowLog)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnMakeLaunchScript)
-                .addContainerGap())
+                .addContainerGap(316, Short.MAX_VALUE))
         );
 
         add(pnlMore);
@@ -351,18 +329,6 @@ public class MainPagePanel extends javax.swing.JPanel {
         if (l.isLoggedIn()) l.logout();
         cl.first(pnlPassword);
     }//GEN-LAST:event_btnLogoutActionPerformed
-
-    private void btnShowLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnShowLogActionPerformed
-        LogWindow.instance.setVisible(true);
-    }//GEN-LAST:event_btnShowLogActionPerformed
-
-    private void btnMakeLaunchScriptActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMakeLaunchScriptActionPerformed
-        MainFrame.instance.showMessage(C.i18n("ui.message.launching"));
-        genLaunchCode(value -> {
-            value.successEvent.register(new LaunchScriptFinisher());
-            value.successEvent.register(new PrepareAuthDoneListener());
-        });
-    }//GEN-LAST:event_btnMakeLaunchScriptActionPerformed
 
     private void txtPlayerNameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPlayerNameKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -523,6 +489,14 @@ public class MainPagePanel extends javax.swing.JPanel {
             value.successEvent.register(new PrepareAuthDoneListener());
         });
     }
+    
+    public void btnMakeLaunchCodeActionPerformed() {
+        MainFrame.instance.showMessage(C.i18n("ui.message.launching"));
+        genLaunchCode(value -> {
+            value.successEvent.register(new LaunchScriptFinisher());
+            value.successEvent.register(new PrepareAuthDoneListener());
+        });
+    }
 
     public void onShow(boolean showLeft) {
         if (showLeft)
@@ -544,8 +518,6 @@ public class MainPagePanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnLogout;
-    private javax.swing.JButton btnMakeLaunchScript;
-    private javax.swing.JButton btnShowLog;
     private javax.swing.JComboBox cboLoginMode;
     private javax.swing.JComboBox cboProfiles;
     private javax.swing.JComboBox cboVersions;

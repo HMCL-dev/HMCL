@@ -49,8 +49,6 @@
                               <Component id="cboVersions" alignment="0" max="32767" attributes="0"/>
                           </Group>
                       </Group>
-                      <Component id="btnMakeLaunchScript" alignment="0" max="32767" attributes="0"/>
-                      <Component id="btnShowLog" alignment="0" max="32767" attributes="0"/>
                       <Group type="102" alignment="0" attributes="0">
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="lblUserName" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -92,11 +90,7 @@
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="pnlPassword" min="-2" pref="26" max="-2" attributes="0"/>
-                  <EmptySpace pref="254" max="32767" attributes="0"/>
-                  <Component id="btnShowLog" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Component id="btnMakeLaunchScript" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
+                  <EmptySpace pref="316" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -254,26 +248,6 @@
             </Container>
           </SubComponents>
         </Container>
-        <Component class="javax.swing.JButton" name="btnShowLog">
-          <Properties>
-            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mainwindow.show_log" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
-            </Property>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnShowLogActionPerformed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JButton" name="btnMakeLaunchScript">
-          <Properties>
-            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mainwindow.make_launch_script" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
-            </Property>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnMakeLaunchScriptActionPerformed"/>
-          </Events>
-        </Component>
       </SubComponents>
     </Container>
   </SubComponents>

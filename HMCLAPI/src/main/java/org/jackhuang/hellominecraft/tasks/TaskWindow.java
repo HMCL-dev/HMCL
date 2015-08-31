@@ -32,7 +32,7 @@ public class TaskWindow extends javax.swing.JDialog
         implements ProgressProviderListener, Runnable, DoingDoneListener<Task> {
 
     private static final TaskWindow instance = new TaskWindow();
-
+    
     public static TaskWindow getInstance() {
         instance.clean();
         return instance;
@@ -67,8 +67,7 @@ public class TaskWindow extends javax.swing.JDialog
     }
 
     public void clean() {
-        if (isVisible())
-            throw new RuntimeException("This error should not appear, please contact the author.");
+        if (isVisible()) return;
         taskList = null;
         taskList = new TaskList();
         taskList.addTaskListener(this);
@@ -163,6 +162,7 @@ public class TaskWindow extends javax.swing.JDialog
     }//GEN-LAST:event_btnCancelActionPerformed
 
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
+        if(taskList == null) return;
         tasks.clear();
 
         if (!this.failReasons.isEmpty()) {
@@ -171,8 +171,7 @@ public class TaskWindow extends javax.swing.JDialog
         }
 
         if (!suc) {
-            if (taskList != null)
-                SwingUtilities.invokeLater(taskList::abort);
+            SwingUtilities.invokeLater(taskList::abort);
             HMCLog.log("Tasks have been canceled by user.");
         }
     }//GEN-LAST:event_formWindowClosed

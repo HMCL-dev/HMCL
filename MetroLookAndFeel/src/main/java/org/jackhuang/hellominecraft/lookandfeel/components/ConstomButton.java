@@ -24,7 +24,7 @@ import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
  * @author huangyuhui
  */
 public class ConstomButton extends javax.swing.JButton {
-    public Color normalFg = GraphicsUtils.getWebColorWithAlpha("DDDDDD3F"), normalBg = GraphicsUtils.getWebColorWithAlpha("DDDDDD3F"),
+    public Color normalFg = GraphicsUtils.getWebColorWithAlpha("DDDDDD6F"), normalBg = GraphicsUtils.getWebColorWithAlpha("DDDDDD6F"),
 	    prelightFg = GraphicsUtils.getWebColorWithAlpha("FFFFFF7F"), prelightBg = GraphicsUtils.getWebColorWithAlpha("FFFFFF7F"),
 	    activeFg = GraphicsUtils.getWebColorWithAlpha("EAEDF83F"), activeBg = GraphicsUtils.getWebColorWithAlpha("EAEDF83F");
     public int drawPercent = 0;
