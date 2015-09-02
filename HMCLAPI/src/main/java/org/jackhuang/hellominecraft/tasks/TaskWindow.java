@@ -17,6 +17,7 @@
 package org.jackhuang.hellominecraft.tasks;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
@@ -33,9 +34,13 @@ public class TaskWindow extends javax.swing.JDialog
 
     private static final TaskWindow instance = new TaskWindow();
     
-    public static TaskWindow getInstance() {
+    private static TaskWindow inst() {
         instance.clean();
         return instance;
+    }
+    
+    public static TaskWindowFactory getInstance() {
+        return new TaskWindowFactory();
     }
 
     boolean suc = false;
@@ -75,7 +80,7 @@ public class TaskWindow extends javax.swing.JDialog
     }
 
     public boolean start() {
-        if (taskList.isAlive()) return false;
+        if (isVisible() || taskList.isAlive()) return false;
         pgsTotal.setValue(0);
         suc = false;
         SwingUtils.clearDefaultTable(lstDownload);
@@ -112,6 +117,9 @@ public class TaskWindow extends javax.swing.JDialog
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
                 formWindowClosed(evt);
+            }
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
             }
         });
 
@@ -174,7 +182,12 @@ public class TaskWindow extends javax.swing.JDialog
             SwingUtilities.invokeLater(taskList::abort);
             HMCLog.log("Tasks have been canceled by user.");
         }
+        taskList = null;
     }//GEN-LAST:event_formWindowClosed
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        // TODO add your handling code here:
+    }//GEN-LAST:event_formWindowClosing
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCancel;
@@ -261,5 +274,24 @@ public class TaskWindow extends javax.swing.JDialog
             if (idx == -1) return;
             SwingUtils.setValueAt(lstDownload, task.getInfo() + ": " + sta, idx, 0);
         });
+    }
+    
+    public static class TaskWindowFactory {
+        public static final Object obj = new Object();
+        
+        LinkedList<Task> ll = new LinkedList<>();
+        
+        public TaskWindowFactory addTask(Task t) {
+            ll.add(t);
+            return this;
+        }
+        
+        public boolean start() {
+            synchronized(obj) {
+                TaskWindow tw = inst();
+                for(Task t : ll) tw.addTask(t);
+                return tw.start();
+            }
+        }
     }
 }

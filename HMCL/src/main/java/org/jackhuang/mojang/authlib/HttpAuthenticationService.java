@@ -14,7 +14,7 @@ import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.NetUtils;
 import org.jackhuang.hellominecraft.utils.Utils;
 
-public abstract class HttpAuthenticationService extends BaseAuthenticationService {
+public abstract class HttpAuthenticationService implements AuthenticationService {
 
     private static final Logger LOGGER = new Logger("HttpAuthenticationService");
     private final Proxy proxy;

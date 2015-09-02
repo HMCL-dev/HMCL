@@ -11,14 +11,12 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import org.jackhuang.mojang.authlib.Agent;
 import org.jackhuang.mojang.authlib.GameProfile;
-import org.jackhuang.mojang.authlib.GameProfileRepository;
 import org.jackhuang.mojang.authlib.HttpAuthenticationService;
 import org.jackhuang.mojang.authlib.UserAuthentication;
 import org.jackhuang.mojang.authlib.exceptions.AuthenticationException;
 import org.jackhuang.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import org.jackhuang.mojang.authlib.exceptions.InvalidCredentialsException;
 import org.jackhuang.mojang.authlib.exceptions.UserMigratedException;
-import org.jackhuang.mojang.authlib.minecraft.MinecraftSessionService;
 import org.jackhuang.mojang.authlib.properties.PropertyMap;
 import org.jackhuang.mojang.authlib.yggdrasil.response.Response;
 import org.jackhuang.mojang.util.UUIDTypeAdapter;
@@ -48,16 +46,6 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
     @Override
     public UserAuthentication createUserAuthentication(Agent agent) {
         return new YggdrasilUserAuthentication(this, agent);
-    }
-
-    @Override
-    public MinecraftSessionService createMinecraftSessionService() {
-        return new YggdrasilMinecraftSessionService(this);
-    }
-
-    @Override
-    public GameProfileRepository createProfileRepository() {
-        return new YggdrasilGameProfileRepository(this);
     }
 
     protected <T extends Response> T makeRequest(URL url, Object input, Class<T> classOfT) throws AuthenticationException {

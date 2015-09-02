@@ -78,23 +78,19 @@ public class ForgeInstaller {
         //forge.format();
         File file = new File(gameDir, profile.install.filePath);
         file.getParentFile().mkdirs();
-        FileOutputStream fos = new FileOutputStream(file);
-        BufferedOutputStream bos = new BufferedOutputStream(fos);
-        int c;
-        while ((c = is.read()) != -1)
-            bos.write((byte) c);
-        bos.close();
-        fos.close();
+        try (FileOutputStream fos = new FileOutputStream(file); BufferedOutputStream bos = new BufferedOutputStream(fos)) {
+            int c;
+            while ((c = is.read()) != -1)
+                bos.write((byte) c);
+        }
 
         File minecraftserver = new File(gameDir, "minecraft_server." + profile.install.minecraft + ".jar");
-        TaskWindow tw = TaskWindow.getInstance();
         if (minecraftserver.exists() && JOptionPane.showConfirmDialog(null, "已发现官方服务端文件，是否要重新下载？") == JOptionPane.YES_OPTION) {
-            tw.clean();
-            if (!tw.addTask(new FileDownloadTask("https://s3.amazonaws.com/Minecraft.Download/versions/{MCVER}/minecraft_server.{MCVER}.jar".replace("{MCVER}", profile.install.minecraft),
+            if (!TaskWindow.getInstance().addTask(new FileDownloadTask("https://s3.amazonaws.com/Minecraft.Download/versions/{MCVER}/minecraft_server.{MCVER}.jar".replace("{MCVER}", profile.install.minecraft),
                     minecraftserver).setTag("minecraft_server")).start())
                 MessageBox.Show("Minecraft官方服务端下载失败！");
         }
-        tw.clean();
+        TaskWindow.TaskWindowFactory tw = TaskWindow.getInstance();
         for (MinecraftLibrary library : profile.versionInfo.libraries) {
             library.init();
             File lib = new File(gameDir, "libraries" + File.separator + library.formatted + ".pack.xz");
@@ -103,10 +99,10 @@ public class ForgeInstaller {
                 libURL = library.url;
             tw.addTask(new FileDownloadTask(libURL + library.formatted.replace("\\", "/"), lib).setTag(library.name));
         }
-        tw.start();
-        if (!tw.areTasksFinished())
+        if (!tw.start())
             MessageBox.Show("压缩库下载失败！");
-        tw.clean();
+        
+        tw = TaskWindow.getInstance();
         for (MinecraftLibrary library : profile.versionInfo.libraries) {
             File packxz = new File(gameDir, "libraries" + File.separator + library.formatted + ".pack.xz");
             if (packxz.exists()) return;
@@ -117,11 +113,10 @@ public class ForgeInstaller {
                 libURL = library.url;
             tw.addTask(new FileDownloadTask(libURL + library.formatted.replace("\\", "/"), lib).setTag(library.name));
         }
-        tw.start();
-        if (!tw.areTasksFinished())
+        if (!tw.start())
             MessageBox.Show("库下载失败！");
-        tw.clean();
-        ArrayList<String> badLibs = new ArrayList<String>();
+        
+        ArrayList<String> badLibs = new ArrayList<>();
         for (MinecraftLibrary library : profile.versionInfo.libraries) {
             File lib = new File(gameDir, "libraries" + File.separator + library.formatted);
             File packFile = new File(gameDir, "libraries" + File.separator + library.formatted + ".pack.xz");
@@ -157,17 +152,15 @@ public class ForgeInstaller {
 
         byte[] checksums = Arrays.copyOfRange(decompressed, decompressed.length - len - 8, decompressed.length - 8);
 
-        FileOutputStream jarBytes = new FileOutputStream(output);
-        JarOutputStream jos = new JarOutputStream(jarBytes);
-
-        Pack200.newUnpacker().unpack(new ByteArrayInputStream(decompressed), jos);
-
-        jos.putNextEntry(new JarEntry("checksums.sha1"));
-        jos.write(checksums);
-        jos.closeEntry();
-
-        jos.close();
-        jarBytes.close();
+        try (FileOutputStream jarBytes = new FileOutputStream(output); JarOutputStream jos = new JarOutputStream(jarBytes)) {
+            
+            Pack200.newUnpacker().unpack(new ByteArrayInputStream(decompressed), jos);
+            
+            jos.putNextEntry(new JarEntry("checksums.sha1"));
+            jos.write(checksums);
+            jos.closeEntry();
+            
+        }
     }
 
     private static boolean checksumValid(File libPath, List<String> checksums) {
@@ -186,21 +179,21 @@ public class ForgeInstaller {
     private static boolean validateJar(File libPath, byte[] data, List<String> checksums) throws IOException {
         System.out.println("Checking \"" + libPath.getAbsolutePath() + "\" internal checksums");
 
-        HashMap<String, String> files = new HashMap<String, String>();
+        HashMap<String, String> files = new HashMap<>();
         String[] hashes = null;
-        JarInputStream jar = new JarInputStream(new ByteArrayInputStream(data));
-        JarEntry entry = jar.getNextJarEntry();
-        while (entry != null) {
-            byte[] eData = IOUtils.readFully(jar);
-
-            if (entry.getName().equals("checksums.sha1"))
-                hashes = new String(eData, Charset.forName("UTF-8")).split("\n");
-
-            if (!entry.isDirectory())
-                files.put(entry.getName(), DigestUtils.sha1Hex(eData));
-            entry = jar.getNextJarEntry();
+        try (JarInputStream jar = new JarInputStream(new ByteArrayInputStream(data))) {
+            JarEntry entry = jar.getNextJarEntry();
+            while (entry != null) {
+                byte[] eData = IOUtils.readFully(jar);
+                
+                if (entry.getName().equals("checksums.sha1"))
+                    hashes = new String(eData, Charset.forName("UTF-8")).split("\n");
+                
+                if (!entry.isDirectory())
+                    files.put(entry.getName(), DigestUtils.sha1Hex(eData));
+                entry = jar.getNextJarEntry();
+            }
         }
-        jar.close();
 
         if (hashes != null) {
             boolean failed = !checksums.contains(files.get("checksums.sha1"));

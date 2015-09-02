@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import org.jackhuang.hellominecraft.HMCLog;
@@ -30,7 +31,7 @@ import org.jackhuang.hellominecraft.HMCLog;
  */
 public class TaskList extends Thread {
 
-    List<Task> taskQueue = Collections.synchronizedList(new ArrayList());
+    List<Task> taskQueue = Collections.synchronizedList(new LinkedList<>());
     ArrayList<Runnable> allDone = new ArrayList();
     ArrayList<DoingDoneListener<Task>> taskListener = new ArrayList();
 
@@ -143,8 +144,8 @@ public class TaskList extends Thread {
 
         threadPool.clear();
         totTask = taskQueue.size();
-        for (Task taskQueue1 : taskQueue)
-            executeTask(taskQueue1);
+        while(!taskQueue.isEmpty())
+            executeTask(taskQueue.remove(0));
         if (shouldContinue)
             for (Runnable d : allDone)
                 d.run();

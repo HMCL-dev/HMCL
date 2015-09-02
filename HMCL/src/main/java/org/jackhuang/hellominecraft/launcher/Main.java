@@ -31,6 +31,8 @@ import java.net.URLClassLoader;
 import java.security.GeneralSecurityException;
 import java.security.cert.X509Certificate;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.jar.JarFile;
 import javax.net.ssl.HostnameVerifier;
@@ -139,7 +141,11 @@ public final class Main implements Runnable {
                                     JarFile jarFile = new JarFile(jar);
                                     String mainClass = jarFile.getManifest().getMainAttributes().getValue("Main-Class");
                                     if (mainClass != null) {
-                                        new URLClassLoader(new URL[]{jar.toURI().toURL()}, URLClassLoader.getSystemClassLoader().getParent()).loadClass(mainClass).getMethod("main", String[].class).invoke(null, new Object[]{new String[]{"nofound"}});
+                                        ArrayList<String> al = new ArrayList<>(Arrays.asList(args));
+                                        al.add("notfound");
+                                        new URLClassLoader(new URL[]{jar.toURI().toURL()},
+                                                URLClassLoader.getSystemClassLoader().getParent()).loadClass(mainClass)
+                                                .getMethod("main", String[].class).invoke(null, new Object[]{al.toArray(new String[0])});
                                         return;
                                     }
                                 }
