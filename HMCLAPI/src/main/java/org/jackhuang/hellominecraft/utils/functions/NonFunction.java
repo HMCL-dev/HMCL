@@ -22,5 +22,5 @@ package org.jackhuang.hellominecraft.utils.functions;
  */
 public interface NonFunction<T> {
 
-    T onDone();
+    T apply();
 }

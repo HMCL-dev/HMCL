@@ -23,7 +23,7 @@ package org.jackhuang.hellominecraft.utils.functions;
 public class FalseFunction implements NonFunction<Boolean> {
 
     @Override
-    public Boolean onDone() {
+    public Boolean apply() {
         return Boolean.FALSE;
     }
     

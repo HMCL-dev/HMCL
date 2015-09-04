@@ -40,6 +40,9 @@ public class JavaProcessMonitor {
 
     public void start() {
         Event<JavaProcess> event = (sender2, t) -> {
+            if(t.getExitCode() != 0) {
+                MessageBox.Show(C.i18n("launch.exited_abnormally"));
+            }
             processThreadStopped((ProcessThread) sender2, false);
             return true;
         };

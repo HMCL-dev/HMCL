@@ -50,7 +50,7 @@ public final class Launcher {
         Thread.currentThread().setName("launcher");
         println("*** " + Main.makeTitle() + " ***");
 
-        LogWindow.instance.setTerminateGame(Utils::shutdownForcely);
+        LogWindow.instance.setTerminateGame(() -> Utils.shutdownForcely(1));
 
         boolean showInfo = false;
         String classPath = "";
@@ -75,6 +75,7 @@ public final class Launcher {
                 if (!logFile.exists()) logFile.createNewFile();
                 FileOutputStream tc = new FileOutputStream(logFile);
                 DoubleOutputStream out = new DoubleOutputStream(tc, System.out);
+                Launcher l = new Launcher();
                 System.setOut(new LauncherPrintStream(out));
                 DoubleOutputStream err = new DoubleOutputStream(tc, System.err);
                 System.setErr(new LauncherPrintStream(err));
@@ -132,5 +133,6 @@ public final class Launcher {
         }
 
         println("*** Game Exited ***");
+        System.exit(1);
     }
 }

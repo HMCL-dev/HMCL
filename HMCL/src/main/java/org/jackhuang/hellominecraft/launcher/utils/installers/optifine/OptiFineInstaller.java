@@ -33,7 +33,7 @@ import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
  *
  * @author huangyuhui
  */
-public class OptiFineInstaller extends Task implements PreviousResultRegistrar<File>  {
+public class OptiFineInstaller extends Task implements PreviousResultRegistrar<File> {
 
     public File installer;
     public Profile profile;
@@ -51,26 +51,26 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
 
     @Override
     public boolean executeTask() {
-        if(profile == null || profile.getSelectedMinecraftVersion() == null) {
+        if (profile == null || profile.getSelectedMinecraftVersion() == null) {
             setFailReason(new RuntimeException(C.i18n("install.no_version")));
             return false;
         }
-        MinecraftVersion mv = (MinecraftVersion)profile.getSelectedMinecraftVersion().clone();
-        
+        MinecraftVersion mv = (MinecraftVersion) profile.getSelectedMinecraftVersion().clone();
+
         try {
             mv.inheritsFrom = mv.id;
             mv.jar = mv.jar == null ? mv.id : mv.jar;
             mv.libraries.clear();
             mv.libraries.add(0, new MinecraftLibrary("optifine:OptiFine:" + version));
             FileUtils.copyFile(installer, new File(profile.getCanonicalGameDir(), "libraries/optifine/OptiFine/" + version + "/OptiFine-" + version + ".jar"));
-                
+
             mv.id += "-" + version;
-            if(new ZipFile(installer).getEntry("optifine/OptiFineTweaker.class") != null) {
-                if(!mv.mainClass.startsWith("net.minecraft.launchwrapper.")) {
+            if (new ZipFile(installer).getEntry("optifine/OptiFineTweaker.class") != null) {
+                if (!mv.mainClass.startsWith("net.minecraft.launchwrapper.")) {
                     mv.mainClass = "net.minecraft.launchwrapper.Launch";
-                    mv.minecraftArguments += " --tweakClass optifine.OptiFineTweaker";
                     mv.libraries.add(1, new MinecraftLibrary("net.minecraft:launchwrapper:1.7"));
                 }
+                mv.minecraftArguments += " --tweakClass optifine.OptiFineTweaker";
             }
             File loc = new File(profile.getCanonicalGameDir(), "versions/" + mv.id);
             loc.mkdirs();
@@ -87,12 +87,13 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
     public String getInfo() {
         return "Optifine Installer";
     }
-    
+
     ArrayList<PreviousResult<File>> pre = new ArrayList();
+
     @Override
     public Task registerPreviousResult(PreviousResult pr) {
         pre.add(pr);
         return this;
     }
-    
+
 }

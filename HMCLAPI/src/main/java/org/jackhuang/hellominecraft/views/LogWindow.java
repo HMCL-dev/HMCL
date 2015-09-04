@@ -204,7 +204,8 @@ public class LogWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_btnClearActionPerformed
 
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
-        if (listener != null && listener.onDone()) Utils.shutdownForcely();
+        if (listener != null && listener.apply() && terminateGameListener != null)
+            terminateGameListener.run();
     }//GEN-LAST:event_formWindowClosed
 
     private void btnCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCopyActionPerformed

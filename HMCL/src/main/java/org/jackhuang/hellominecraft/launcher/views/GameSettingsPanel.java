@@ -28,6 +28,7 @@ import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -1439,7 +1440,8 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_btnRemoveModActionPerformed
 
     private void lstExternalModsKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_lstExternalModsKeyPressed
-        btnRemoveModActionPerformed(null);
+        if(evt.getKeyCode() == KeyEvent.VK_DELETE)
+            btnRemoveModActionPerformed(null);
     }//GEN-LAST:event_lstExternalModsKeyPressed
 
     private void lblModInfoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblModInfoMouseClicked

@@ -41,7 +41,8 @@ public class LauncherPrintStream extends PrintStream {
             a1.accept(paramString);
     }
 
-    public final void addPrintListener(Consumer<String> paraml) {
+    public final LauncherPrintStream addPrintListener(Consumer<String> paraml) {
         this.printListeners.add(paraml);
+        return this;
     }
 }

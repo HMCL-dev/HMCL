@@ -168,12 +168,12 @@ public final class Utils {
     /**
      * In order to fight against the permission manager.
      */
-    public static void shutdownForcely() {
+    public static void shutdownForcely(int status) {
         try {
             Class z = Class.forName("java.lang.Shutdown");
             Method exit = z.getDeclaredMethod("exit", int.class);
             exit.setAccessible(true);
-            exit.invoke(z, 0);
+            exit.invoke(z, status);
         } catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             MessageBox.Show(C.i18n("launcher.exit_failed"));
             e.printStackTrace();

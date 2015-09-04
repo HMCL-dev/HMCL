@@ -193,7 +193,12 @@ public final class Main implements Runnable {
                     });
             }
 
-            MainFrame.showMainFrame(Settings.isFirstLoad());
+            try {
+                MainFrame.showMainFrame(Settings.isFirstLoad());
+            } catch (Throwable t) {
+                new CrashReporter(false).uncaughtException(Thread.currentThread(), t);
+                System.exit(1);
+            }
         }
     }
 

@@ -16,7 +16,6 @@
  */
 package org.jackhuang.hellominecraft.utils.system;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
@@ -47,23 +46,44 @@ public class ProcessThread extends Thread {
 
     @Override
     public void run() {
-        InputStream in = null;
-        BufferedReader br = null;
-        if (enableReading)
-            in = readError ? p.getRawProcess().getErrorStream() : p.getRawProcess().getInputStream();
         try {
-            if (enableReading)
+            InputStreamReader br;
+            if (enableReading) {
+                InputStream in = readError ? p.getRawProcess().getErrorStream() : p.getRawProcess().getInputStream();
                 try {
-                    br = new BufferedReader(new InputStreamReader(in, System.getProperty("sun.jnu.encoding", "UTF-8")));
+                    br = new InputStreamReader(in, System.getProperty("sun.jnu.encoding", "UTF-8"));
                 } catch (UnsupportedEncodingException ex) {
                     HMCLog.warn("Unsupported encoding: " + System.getProperty("sun.jnu.encoding", "UTF-8"), ex);
-                    br = new BufferedReader(new InputStreamReader(in));
+                    br = new InputStreamReader(in);
                 }
+            }
+            else br = null;
 
-            String line;
+            int ch;
+            String line = "";
             while (p.isRunning())
-                if (enableReading)
-                    while ((line = br.readLine()) != null) {
+                if (br != null)
+                    while ((ch = br.read()) != -1)
+                        if (ch == '\n') {
+                            printlnEvent.execute(line);
+                            if (readError) {
+                                System.err.println(line);
+                                p.getStdErrLines().add(line);
+                            } else {
+                                System.out.println(line);
+                                p.getStdOutLines().add(line);
+                            }
+                            line = "";
+                        } else
+                            line += (char) ch;
+                else
+                    try {
+                        Thread.sleep(1);
+                    } catch (Exception e) {
+                    }
+            if (br != null)
+                while ((ch = br.read()) != -1)
+                    if (ch == '\n') {
                         printlnEvent.execute(line);
                         if (readError) {
                             System.err.println(line);
@@ -72,29 +92,12 @@ public class ProcessThread extends Thread {
                             System.out.println(line);
                             p.getStdOutLines().add(line);
                         }
-                    }
-                else
-                    try {
-                        Thread.sleep(1);
-                    } catch (Exception e) {
-                    }
-            if (enableReading)
-                while ((line = br.readLine()) != null) {
-                    printlnEvent.execute(line);
-                    if (readError) {
-                        System.err.println(line);
-                        p.getStdErrLines().add(line);
-                    } else {
-                        System.out.println(line);
-                        p.getStdOutLines().add(line);
-                    }
-                }
+                        line = "";
+                    } else
+                        line += (char) ch;
             stopEvent.execute(p);
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private void stopped() {
     }
 }

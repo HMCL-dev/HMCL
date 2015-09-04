@@ -27,7 +27,7 @@ public class TrueFunction implements NonFunction<Boolean> {
     private TrueFunction(){}
     
     @Override
-    public Boolean onDone() {
+    public Boolean apply() {
         return Boolean.TRUE;
     }
     
