@@ -74,45 +74,6 @@ jar {
     }
 }
 
-task proguard(type: proguard.gradle.ProGuardTask, dependsOn: jar) {
-    ext {
-        def re = jar.classifier
-        injar = jar.archivePath
-        jar.classifier = ''
-        outjar = jar.archivePath
-        jar.classifier = re
-    }
-    
-    injars injar
-    outjars outjar
-    printmapping "obfuscate_" + version + ".map"
-    
-    configuration 'proguard.pro'
-}
-
-task makeExecutable(dependsOn: jar) << {
-    ext {
-        jar.classifier = ''
-        makeExecutableinjar = jar.archivePath
-        jar.classifier = ''
-        makeExecutableoutjar = jar.archivePath
-        jar.classifier = ''
-    }
-    def loc = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".exe")
-    def fos = new FileOutputStream(loc)
-    def is = new FileInputStream(new File(project.buildDir, '../HMCLauncher.exe'))
-    int read
-    def bytes = new byte[8192]
-    while((read = is.read(bytes)) != -1)
-        fos.write(bytes, 0, read);
-    is.close()
-    is = new FileInputStream(makeExecutableinjar)
-    while((read = is.read(bytes)) != -1)
-        fos.write(bytes, 0, read);
-    is.close()
-    fos.close()
-}
-
 launch4j {
     launch4jCmd = 'D:\\Develop\\Java\\Launch4j\\launch4j.exe'
     supportUrl = 'http://www.mcbbs.net/thread-142335-1-1.html'

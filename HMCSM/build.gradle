@@ -36,7 +36,6 @@ buildscript {
     repositories {
         mavenCentral();
         dependencies {
-            classpath 'net.sf.proguard:proguard-gradle:4.10'
             classpath 'edu.sc.seis.gradle:launch4j:1.0.6'
             classpath 'me.tatarka:gradle-retrolambda:3.1.0'
         }
@@ -72,26 +71,10 @@ jar {
     }
 }
 
-task proguard(type: proguard.gradle.ProGuardTask, dependsOn: jar) {
-    ext {
-        injar = jar.archivePath
-        jar.classifier = 'proguard'
-        outjar = jar.archivePath
-        jar.classifier = ''
-    }
-    
-    injars injar
-    outjars outjar
-    printusage "shrinking_" + version + ".map"
-    printmapping "obfuscate_" + version + ".map"
-    
-    configuration 'proguard.pro'
-}
-
 processResources {
     from(sourceSets.main.resources.srcDirs) {
         exclude 'icon.icns'
     }
 }
 
-build.dependsOn proguard
+build.dependsOn makeExecutable
