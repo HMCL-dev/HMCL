@@ -224,6 +224,7 @@ public class TaskWindow extends javax.swing.JDialog
         task.setProgressProviderListener(this);
 
         SwingUtilities.invokeLater(() -> {
+            if(taskList == null) return;
             tasks.add(task);
             progresses.add(0);
             SwingUtils.appendLast(lstDownload, task.getInfo(), "0%");
@@ -238,6 +239,7 @@ public class TaskWindow extends javax.swing.JDialog
     @Override
     public void onDone(Task task) {
         SwingUtilities.invokeLater(() -> {
+            if(taskList == null) return;
             pgsTotal.setMaximum(taskList.taskCount());
             pgsTotal.setValue(pgsTotal.getValue() + 1);
             int idx = tasks.indexOf(task);
@@ -251,6 +253,7 @@ public class TaskWindow extends javax.swing.JDialog
     @Override
     public void onFailed(Task task) {
         SwingUtilities.invokeLater(() -> {
+            if(taskList == null) return;
             failReasons.add(task.getInfo() + ": " + (null == task.getFailReason() ? "No exception" : task.getFailReason().getLocalizedMessage()));
             pgsTotal.setMaximum(taskList.taskCount());
             pgsTotal.setValue(pgsTotal.getValue() + 1);
@@ -270,6 +273,7 @@ public class TaskWindow extends javax.swing.JDialog
     @Override
     public void setStatus(Task task, String sta) {
         SwingUtilities.invokeLater(() -> {
+            if(taskList == null) return;
             int idx = tasks.indexOf(task);
             if (idx == -1) return;
             SwingUtils.setValueAt(lstDownload, task.getInfo() + ": " + sta, idx, 0);

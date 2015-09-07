@@ -117,6 +117,7 @@ public final class Launcher {
 
         println("*** Launching Game ***");
 
+        int flag = 0;
         try {
             minecraftMain.invoke(null, new Object[]{cmds});
         } catch (Throwable throwable) {
@@ -130,9 +131,11 @@ public final class Launcher {
             LogWindow.instance.log(trace);
             LogWindow.instance.setExit(TrueFunction.instance);
             LogWindow.instance.setVisible(true);
+            
+            flag = 1;
         }
 
         println("*** Game Exited ***");
-        System.exit(1);
+        System.exit(flag);
     }
 }

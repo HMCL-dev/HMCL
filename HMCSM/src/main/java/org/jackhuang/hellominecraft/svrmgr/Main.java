@@ -20,6 +20,7 @@ import java.awt.Font;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.ParseException;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import org.jackhuang.hellominecraft.HMCLog;
@@ -29,6 +30,7 @@ import org.jackhuang.hellominecraft.utils.UpdateChecker;
 import org.jackhuang.hellominecraft.svrmgr.views.MainWindow;
 import org.jackhuang.hellominecraft.utils.VersionNumber;
 import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
+import org.jackhuang.hellominecraft.utils.system.MessageBox;
 
 /**
  *
@@ -53,8 +55,8 @@ public class Main {
             } catch (ParseException | UnsupportedLookAndFeelException ex) {
                 HMCLog.warn("Failed to set look and feel", ex);
             }
-            new UpdateChecker(new VersionNumber(firstVer, secondVer, thirdVer), "hmcsm", SettingsManager.settings.checkUpdate, () -> {
-                SettingsManager.settings.checkUpdate = false;
+            new UpdateChecker(new VersionNumber(firstVer, secondVer, thirdVer), "hmcsm", () -> {
+                SwingUtilities.invokeLater(() -> MessageBox.Show("发现更新！"));
             }).start();
             new MainWindow().setVisible(true);
         } catch (Throwable t) {
