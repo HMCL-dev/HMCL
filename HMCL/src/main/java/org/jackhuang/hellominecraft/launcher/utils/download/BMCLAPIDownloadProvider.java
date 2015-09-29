@@ -26,7 +26,8 @@ public class BMCLAPIDownloadProvider implements IDownloadProvider {
 
     @Override
     public InstallerVersionList getForgeInstaller() {
-        return org.jackhuang.hellominecraft.launcher.utils.installers.forge.bmcl.ForgeBMCLVersionList.getInstance();
+        //return org.jackhuang.hellominecraft.launcher.utils.installers.forge.bmcl.ForgeBMCLVersionList.getInstance();
+        return org.jackhuang.hellominecraft.launcher.utils.installers.forge.vanilla.MinecraftForgeVersionList.getInstance();
     }
 
     @Override
@@ -74,7 +75,7 @@ public class BMCLAPIDownloadProvider implements IDownloadProvider {
 
     @Override
     public String getParsedLibraryDownloadURL(String str) {
-        return str.replace("http://files.minecraftforge.net/maven", "http://bmclapi2.bangbang93.com/maven");
+        return str == null ? null : str.replace("http://files.minecraftforge.net/maven", "http://bmclapi2.bangbang93.com/maven");
     }
 
     @Override

@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
@@ -29,10 +30,12 @@ import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.launcher.utils.MCUtils;
 import org.jackhuang.hellominecraft.launcher.utils.assets.AssetsIndex;
 import org.jackhuang.hellominecraft.launcher.utils.assets.AssetsObject;
+import org.jackhuang.hellominecraft.launcher.utils.assets.IAssetsHandler;
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.utils.system.OS;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.MessageBox;
 
@@ -43,6 +46,7 @@ import org.jackhuang.hellominecraft.utils.system.MessageBox;
 public class MinecraftLoader extends AbstractMinecraftLoader {
 
     private MinecraftVersion version;
+    DownloadType dt;
     String text;
 
     public MinecraftLoader(Profile ver, IMinecraftProvider provider, UserProfileProvider lr) throws IllegalStateException {
@@ -51,7 +55,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
 
     public MinecraftLoader(Profile ver, IMinecraftProvider provider, UserProfileProvider lr, DownloadType downloadtype) throws IllegalStateException {
         super(ver, provider, lr);
-        version = ver.getSelectedMinecraftVersion().resolve(provider, downloadtype);
+        version = ver.getSelectedMinecraftVersion().resolve(provider, dt = downloadtype);
     }
 
     @Override
@@ -72,8 +76,13 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         String arg = v.getSelectedMinecraftVersion().minecraftArguments;
         String[] splitted = org.jackhuang.hellominecraft.utils.StrUtils.tokenize(arg);
 
-        if (!new File(v.getGameDirFile(), "assets").exists())
-            MessageBox.Show(C.i18n("assets.no_assets"));
+        if (!checkAssetsExist())
+            if (MessageBox.Show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
+                IAssetsHandler.ASSETS_HANDLER.getList(version, provider, (value) -> {
+                    if (value != null)
+                        TaskWindow.getInstance().addTask(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(dt.getProvider())).start();
+                });
+            }
 
         String game_assets = reconstructAssets().getAbsolutePath();
 
@@ -111,6 +120,28 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
             }
         } catch (IOException e) {
             HMCLog.err("Failed to append jvm arguments when searching for asset objects.", e);
+        }
+    }
+
+    private boolean checkAssetsExist() {
+        File assetsDir = new File(provider.getBaseFolder(), "assets");
+        File indexDir = new File(assetsDir, "indexes");
+        File objectDir = new File(assetsDir, "objects");
+        File indexFile = new File(indexDir, version.getAssets() + ".json");
+
+        if (!assetsDir.exists() && !indexFile.isFile())
+            return false;
+
+        try {
+            AssetsIndex index = (AssetsIndex) C.gson.fromJson(FileUtils.readFileToString(indexFile, "UTF-8"), AssetsIndex.class);
+
+            if (index == null) return false;
+            for (Map.Entry entry : index.getFileMap().entrySet())
+                if (!new File(new File(objectDir, ((AssetsObject) entry.getValue()).getHash().substring(0, 2)), ((AssetsObject) entry.getValue()).getHash()).exists())
+                    return false;
+            return true;
+        } catch (IOException | JsonSyntaxException e) {
+            return false;
         }
     }
 

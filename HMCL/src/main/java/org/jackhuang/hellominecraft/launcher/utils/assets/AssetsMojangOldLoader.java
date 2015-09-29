@@ -19,7 +19,9 @@ package org.jackhuang.hellominecraft.launcher.utils.assets;
 import java.io.File;
 import java.util.ArrayList;
 import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.utils.download.IDownloadProvider;
+import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.utils.VersionNumber;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.utils.functions.Consumer;
@@ -37,7 +39,7 @@ public class AssetsMojangOldLoader extends IAssetsHandler {
     }
 
     @Override
-    public void getList(final Consumer<String[]> dl) {
+    public void getList(MinecraftVersion mv, IMinecraftProvider mp, final Consumer<String[]> dl) {
         AssetsLoader al = new AssetsLoader(URL);
         al.failedEvent.register((sender, e) -> {
             HMCLog.warn("Failed to get assets list.", e);

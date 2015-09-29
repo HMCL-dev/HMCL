@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.jackhuang.hellominecraft.C;
+import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList;
 import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionNewerComparator;
@@ -47,7 +48,7 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
 
     @Override
     public void refreshList(String[] needed) throws Exception {
-        String s = NetUtils.doGet(C.URL_FORGE_LIST);
+        String s = NetUtils.doGet(Settings.getInstance().getDownloadSource().getProvider().getParsedLibraryDownloadURL(C.URL_FORGE_LIST));
         if (root != null) return;
 
         root = C.gson.fromJson(s, MinecraftForgeVersionRoot.class);
@@ -67,7 +68,7 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
                     if (!StrUtils.isBlank(v.branch))
                         ver = ver + "-" + v.branch;
                     String filename = root.artifact + "-" + ver + "-" + f[1] + "." + f[0];
-                    String url = root.webpath + ver + "/" + filename;
+                    String url = Settings.getInstance().getDownloadSource().getProvider().getParsedLibraryDownloadURL(root.webpath + ver + "/" + filename);
                     switch (f[1]) {
                         case "installer":
                             iv.installer = url;

@@ -30,10 +30,8 @@ import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.views.LogWindow;
 import org.jackhuang.hellominecraft.launcher.launch.MinecraftCrashAdvicer;
 import org.jackhuang.hellominecraft.utils.DoubleOutputStream;
-import org.jackhuang.hellominecraft.utils.system.JdkVersion;
 import org.jackhuang.hellominecraft.utils.LauncherPrintStream;
 import org.jackhuang.hellominecraft.utils.system.MessageBox;
-import org.jackhuang.hellominecraft.utils.system.Platform;
 import org.jackhuang.hellominecraft.utils.Utils;
 
 /**
@@ -47,10 +45,7 @@ public final class Launcher {
     }
 
     public static void main(String[] args) {
-        Thread.currentThread().setName("launcher");
         println("*** " + Main.makeTitle() + " ***");
-
-        LogWindow.instance.setTerminateGame(() -> Utils.shutdownForcely(1));
 
         boolean showInfo = false;
         String classPath = "";
@@ -64,18 +59,16 @@ public final class Launcher {
             else if (s.equals("-debug")) showInfo = true;
             else cmdList.add(s);
 
-        String[] cmds = (String[]) cmdList.toArray(new String[cmdList.size()]);
-
         String[] tokenized = StrUtils.tokenize(classPath, File.pathSeparator);
         int len = tokenized.length;
 
         if (showInfo) {
+            LogWindow.instance.setTerminateGame(() -> Utils.shutdownForcely(1));
             try {
                 File logFile = new File("hmclmc.log");
                 if (!logFile.exists()) logFile.createNewFile();
                 FileOutputStream tc = new FileOutputStream(logFile);
                 DoubleOutputStream out = new DoubleOutputStream(tc, System.out);
-                Launcher l = new Launcher();
                 System.setOut(new LauncherPrintStream(out));
                 DoubleOutputStream err = new DoubleOutputStream(tc, System.err);
                 System.setErr(new LauncherPrintStream(err));
@@ -87,11 +80,10 @@ public final class Launcher {
             println("Arguments: {\n" + StrUtils.parseParams("    ", args, "\n") + "\n}");
             println("Main Class: " + mainClass);
             println("Class Path: {\n" + StrUtils.parseParams("    ", tokenized, "\n") + "\n}");
-            SwingUtilities.invokeLater(() -> LogWindow.instance.setVisible(true));
+            SwingUtilities.invokeLater(() -> {
+                LogWindow.instance.setVisible(true);
+            });
         }
-
-        if (!JdkVersion.isJava64Bit() && Platform.getPlatform() == Platform.BIT_64)
-            MessageBox.Show(C.i18n("advice.os64butjdk32"));
 
         URL[] urls = new URL[len];
 
@@ -119,7 +111,7 @@ public final class Launcher {
 
         int flag = 0;
         try {
-            minecraftMain.invoke(null, new Object[]{cmds});
+            minecraftMain.invoke(null, new Object[]{(String[]) cmdList.toArray(new String[cmdList.size()])});
         } catch (Throwable throwable) {
             HMCLog.err("Cought exception!");
             String trace = StrUtils.getStackTrace(throwable);

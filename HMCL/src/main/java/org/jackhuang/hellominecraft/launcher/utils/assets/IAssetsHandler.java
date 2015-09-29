@@ -50,18 +50,10 @@ public abstract class IAssetsHandler {
         this.name = name;
     }
 
-    private static final List<IAssetsHandler> assetsHandlers = new ArrayList<>();
-
-    public static IAssetsHandler getAssetsHandler(int i) {
-        return assetsHandlers.get(i);
-    }
-
-    public static List<IAssetsHandler> getAssetsHandlers() {
-        return assetsHandlers;
-    }
+    public static final IAssetsHandler ASSETS_HANDLER;
 
     static {
-        assetsHandlers.add(new AssetsMojangLoader(C.i18n("assets.list.1_7_3_after")));
+        ASSETS_HANDLER = new AssetsMojangLoader(C.i18n("assets.list.1_7_3_after"));
     }
 
     /**
@@ -76,9 +68,11 @@ public abstract class IAssetsHandler {
     /**
      * All the files assets needed
      *
+     * @param mv The version that needs assets
+     * @param mp The Minecraft Provider
      * @param x finished event
      */
-    public abstract void getList(Consumer<String[]> x);
+    public abstract void getList(MinecraftVersion mv, IMinecraftProvider mp, Consumer<String[]> x);
 
     /**
      * Will be invoked when the user invoked "Download all assets".
@@ -87,21 +81,6 @@ public abstract class IAssetsHandler {
      * @return Download File Task
      */
     public abstract Task getDownloadTask(IDownloadProvider sourceType);
-
-    /**
-     * assets path
-     */
-    protected MinecraftVersion mv;
-    protected IMinecraftProvider mp;
-
-    /**
-     * @param mp
-     * @param mv
-     */
-    public void setAssets(IMinecraftProvider mp, MinecraftVersion mv) {
-        this.mp = mp;
-        this.mv = mv;
-    }
 
     public abstract boolean isVersionAllowed(String formattedVersion);
 
@@ -116,7 +95,7 @@ public abstract class IAssetsHandler {
 
         @Override
         public boolean executeTask() {
-            if (mv == null || assetsDownloadURLs == null) {
+            if (assetsDownloadURLs == null) {
                 setFailReason(new RuntimeException(C.i18n("assets.not_refreshed")));
                 return false;
             }

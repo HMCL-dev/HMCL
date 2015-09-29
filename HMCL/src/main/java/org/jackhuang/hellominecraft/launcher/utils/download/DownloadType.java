@@ -25,7 +25,8 @@ import org.jackhuang.hellominecraft.C;
 public enum DownloadType {
 
     Mojang(C.i18n("download.mojang"), new MojangDownloadProvider()),
-    BMCL(C.i18n("download.BMCL"), new BMCLAPIDownloadProvider());
+    BMCL(C.i18n("download.BMCL"), new BMCLAPIDownloadProvider()),
+    RapidData(C.i18n("download.rapid_data"), new RapidDataDownloadProvider());
 
     private final String name;
     private final IDownloadProvider provider;

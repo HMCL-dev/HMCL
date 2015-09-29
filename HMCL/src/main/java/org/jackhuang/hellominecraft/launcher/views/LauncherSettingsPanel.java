@@ -24,6 +24,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
+import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.system.MessageBox;
 
@@ -38,6 +39,11 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
      */
     public LauncherSettingsPanel() {
         initComponents();
+        
+        String[] strings = new String[DownloadType.values().length];
+        for (int i = 0; i < strings.length; i++)
+            strings[i] = DownloadType.values()[i].getName();
+        cboDownloadSource.setModel(new DefaultComboBoxModel(strings));
 
         txtBackgroundPath.setText(Settings.getInstance().getBgpath());
         txtProxyHost.setText(Settings.getInstance().getProxyHost());
@@ -81,7 +87,6 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
         txtProxyPassword = new javax.swing.JTextField();
         jLabel8 = new javax.swing.JLabel();
 
-        cboDownloadSource.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Mojang", "BMCLAPI(By bangbang93)" }));
         cboDownloadSource.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 cboDownloadSourceItemStateChanged(evt);

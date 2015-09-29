@@ -51,15 +51,14 @@ public final class NetUtils {
 
     public static String getStreamContent(InputStream is, String encoding)
             throws IOException {
-        String result;
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(is, encoding))) {
-            result = "";
-            String line;
-            while ((line = br.readLine()) != null)
-                result += line + "\n";
+        StringBuilder sb = new StringBuilder();
+        try (InputStreamReader br = new InputStreamReader(is, encoding)) {
+            int len;
+            char[] buf = new char[16384];
+            while ((len = br.read(buf)) != -1)
+                sb.append(buf, 0, len);
         }
-        if (result.length() < 1) return "";
-        else return result.substring(0, result.length() - 1);
+        return sb.toString();
     }
 
     public static String doGet(String url, String encoding) throws IOException {

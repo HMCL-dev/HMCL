@@ -150,7 +150,7 @@ public final class Config {
         configurations = new TreeMap<>();
         Profile profile = new Profile();
         configurations.put(profile.getName(), profile);
-        enableShadow = OS.os() == OS.WINDOWS;
+        enableShadow = false;
         theme = 0;
     }
 

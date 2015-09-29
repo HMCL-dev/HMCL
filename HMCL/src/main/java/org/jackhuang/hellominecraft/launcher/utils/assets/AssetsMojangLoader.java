@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
@@ -29,6 +30,7 @@ import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.launcher.utils.MCUtils;
 import org.jackhuang.hellominecraft.launcher.utils.download.IDownloadProvider;
+import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.utils.functions.Consumer;
 import org.jackhuang.hellominecraft.utils.VersionNumber;
 
@@ -43,7 +45,7 @@ public class AssetsMojangLoader extends IAssetsHandler {
     }
 
     @Override
-    public void getList(final Consumer<String[]> dl) {
+    public void getList(MinecraftVersion mv, IMinecraftProvider mp, final Consumer<String[]> dl) {
         if (mv == null) {
             dl.accept(null);
             return;

@@ -31,7 +31,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -82,7 +81,6 @@ import org.jackhuang.hellominecraft.utils.system.Java;
 import org.jackhuang.hellominecraft.version.MinecraftRemoteVersion;
 import org.jackhuang.hellominecraft.version.MinecraftRemoteVersions;
 import org.jackhuang.hellominecraft.views.LogWindow;
-import org.jackhuang.hellominecraft.views.Selector;
 
 /**
  *
@@ -1310,27 +1308,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_cboLauncherVisibilityFocusLost
 
     private void btnDownloadAllAssetsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadAllAssetsActionPerformed
-        boolean flag = false;
-        ArrayList<String> al = new ArrayList<>();
-        if (minecraftVersion == null) {
-            MessageBox.Show(C.i18n("mainwindow.no_version"));
-            return;
-        }
-        String s = StrUtils.formatVersion(minecraftVersion.version);
-        if (StrUtils.isBlank(s)) return;
-        for (IAssetsHandler a : IAssetsHandler.getAssetsHandlers()) {
-            if (a.isVersionAllowed(s)) {
-                downloadAssets(a);
-                return;
-            }
-            al.add(a.getName());
-        }
-        if (!flag) {
-            Selector selector = new Selector(MainFrame.instance, al.toArray(new String[0]), C.i18n("assets.unkown_type_select_one", mcVersion));
-            selector.setVisible(true);
-            if (selector.sel != -1)
-                downloadAssets(IAssetsHandler.getAssetsHandler(selector.sel));
-        }
+        downloadAssets(IAssetsHandler.ASSETS_HANDLER);
     }//GEN-LAST:event_btnDownloadAllAssetsActionPerformed
 
     private void txtMaxMemoryFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtMaxMemoryFocusLost
@@ -1440,7 +1418,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_btnRemoveModActionPerformed
 
     private void lstExternalModsKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_lstExternalModsKeyPressed
-        if(evt.getKeyCode() == KeyEvent.VK_DELETE)
+        if (evt.getKeyCode() == KeyEvent.VK_DELETE)
             btnRemoveModActionPerformed(null);
     }//GEN-LAST:event_lstExternalModsKeyPressed
 
@@ -1481,7 +1459,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
 
     private void btnCleanGameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCleanGameActionPerformed
         File f = getProfile().getMinecraftProvider().getRunDirectory(mcVersion);
-        String[] dir = { "logs", "asm", "NVIDIA", "crash-reports", "server-resource-packs", "natives", "native" };
+        String[] dir = {"logs", "asm", "NVIDIA", "crash-reports", "server-resource-packs", "natives", "native"};
         for (String s : dir) FileUtils.deleteDirectoryQuietly(new File(f, s));
         String[] files = {"output-client.log", "usercache.json", "usernamecache.json", "hmclmc.log"};
         for (String s : files) new File(f, s).delete();
@@ -1596,7 +1574,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
 
     private void downloadAssets(final IAssetsHandler type) {
         if (mcVersion == null || profile == null) return;
-        type.getList((value) -> {
+        type.getList(profile.getMinecraftProvider().getVersionById(mcVersion), profile.getMinecraftProvider(), (value) -> {
             if (value != null)
                 SwingUtilities.invokeLater(() -> TaskWindow.getInstance().addTask(type.getDownloadTask(Settings.getInstance().getDownloadSource().getProvider())).start());
         });
@@ -1781,16 +1759,6 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         liteloader.loadVersions();
 
         reloadMods();
-
-        if (profile == null || version == null) return;
-        MinecraftVersion v = profile.getMinecraftProvider().getVersionById(version);
-        if (v != null)
-            for (IAssetsHandler ph : IAssetsHandler.getAssetsHandlers())
-                try {
-                    ph.setAssets(profile.getMinecraftProvider(), v);
-                } catch (Exception e) {
-                    HMCLog.warn("Failed to load assets", e);
-                }
     }
 
     public void onSelected() {
@@ -1799,6 +1767,10 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         if (profile.getMinecraftProvider().getVersionCount() <= 0)
             versionChanged(profile, null);
         else versionChanged(getProfile(), (String) cboVersions.getSelectedItem());
+    }
+    
+    public void showGameDownloads() {
+        tabVersionEdit.setSelectedComponent(pnlGameDownloads);
     }
 
     // <editor-fold defaultstate="collapsed" desc="UI Definations">

@@ -332,6 +332,7 @@ public class MainPagePanel extends javax.swing.JPanel {
 
     private void txtPlayerNameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPlayerNameKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+            Settings.getInstance().setUsername(txtPlayerName.getText());
             int index = cboLoginMode.getSelectedIndex();
             if (index < 0) return;
             IAuthenticator l = IAuthenticator.logins.get(index);
@@ -433,7 +434,10 @@ public class MainPagePanel extends javax.swing.JPanel {
             if (getCurrentProfile().getMinecraftProvider().getVersions().isEmpty()) {
                 if (!showedNoVersion)
                     SwingUtilities.invokeLater(() -> {
-                        MessageBox.Show(C.i18n("mainwindow.no_version"));
+                        if(MessageBox.Show(C.i18n("mainwindow.no_version"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
+                            MainFrame.instance.selectTab("game");
+                            MainFrame.instance.gamePanel.showGameDownloads();
+                        }
                         showedNoVersion = true;
                     });
             } else {

@@ -24,7 +24,6 @@ import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.ArrayUtils;
 import org.jackhuang.hellominecraft.views.Selector;
-import org.jackhuang.mojang.authlib.Agent;
 import org.jackhuang.mojang.authlib.GameProfile;
 import org.jackhuang.mojang.authlib.UserType;
 import org.jackhuang.mojang.authlib.properties.PropertyMap;
@@ -45,7 +44,7 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
     public YggdrasilAuthenticator(String clientToken) {
         super(clientToken);
         service = new YggdrasilAuthenticationService(Proxy.NO_PROXY, clientToken);
-        ua = (YggdrasilUserAuthentication) service.createUserAuthentication(Agent.MINECRAFT);
+        ua = (YggdrasilUserAuthentication) service.createUserAuthentication();
     }
 
     @Override

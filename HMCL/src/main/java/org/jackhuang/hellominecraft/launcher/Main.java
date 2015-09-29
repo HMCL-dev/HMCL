@@ -102,7 +102,7 @@ public final class Main implements Runnable {
     }
 
     public static String launcherName = "Hello Minecraft! Launcher";
-    public static byte firstVer = 2, secondVer = 3, thirdVer = 5, forthVer = 2;
+    public static byte firstVer = 2, secondVer = 3, thirdVer = 5, forthVer = 4;
     public static int minimumLauncherVersion = 16;
 
     /**
@@ -155,6 +155,8 @@ public final class Main implements Runnable {
                 } catch (Throwable t) {
                     t.printStackTrace();
                 }
+            
+            System.setProperty("sun.java2d.noddraw", "true");
 
             Thread.setDefaultUncaughtExceptionHandler(new CrashReporter(true));
 
