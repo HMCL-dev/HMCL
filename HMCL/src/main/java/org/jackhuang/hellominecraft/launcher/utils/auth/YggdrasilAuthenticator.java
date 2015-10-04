@@ -24,13 +24,12 @@ import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.ArrayUtils;
 import org.jackhuang.hellominecraft.views.Selector;
-import org.jackhuang.mojang.authlib.GameProfile;
-import org.jackhuang.mojang.authlib.UserType;
-import org.jackhuang.mojang.authlib.properties.PropertyMap;
-import org.jackhuang.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
-import org.jackhuang.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
-import org.jackhuang.mojang.util.LegacyPropertyMapSerializer;
-import org.jackhuang.mojang.util.UUIDTypeAdapter;
+import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.GameProfile;
+import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.properties.PropertyMap;
+import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.YggdrasilAuthenticationService;
+import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.YggdrasilUserAuthentication;
+import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.properties.LegacyPropertyMapSerializer;
+import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.UUIDTypeAdapter;
 
 /**
  *
@@ -58,7 +57,7 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
             result.setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()));
             result.setAccessToken(ua.getAuthenticatedToken());
             result.setSession(ua.getAuthenticatedToken());
-            result.setUserType(ua.getUserType().getName());
+            result.setUserType("mojang");
             return result;
         }
         UserProfileProvider result = new UserProfileProvider();
@@ -102,15 +101,14 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
             if (authToken == null) authToken = "0";
             result.setAccessToken(authToken);
             result.setSession(authToken);
-            result.setUserType(ua.getUserType().getName());
         } catch (Exception ex) {
             result.setErrorReason(ex.getMessage());
             result.setSuccess(false);
             result.setUserName(ua.getUserID());
-            result.setUserType(UserType.MOJANG.getName());
 
             HMCLog.err("Failed to login by yggdrasil authentication.", ex);
         }
+        result.setUserType("mojang");
         return result;
     }
 
