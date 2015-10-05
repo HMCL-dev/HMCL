@@ -28,8 +28,8 @@ import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.GameProfile;
 import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.properties.PropertyMap;
 import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.YggdrasilAuthenticationService;
 import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.YggdrasilUserAuthentication;
-import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.properties.LegacyPropertyMapSerializer;
 import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.UUIDTypeAdapter;
+import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.properties.LegacyPropertyMapSerializer;
 
 /**
  *
@@ -52,7 +52,7 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
             UserProfileProvider result = new UserProfileProvider();
             result.setUserName(info.username);
             result.setSuccess(true);
-            result.setUserId(UUIDTypeAdapter.fromUUID(ua.getSelectedProfile().getId()));
+            result.setUserId(UUIDTypeAdapter.fromUUID(ua.getSelectedProfile().id));
             result.setUserProperties(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new LegacyPropertyMapSerializer()).create().toJson(ua.getUserProperties()));
             result.setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()));
             result.setAccessToken(ua.getAuthenticatedToken());
@@ -83,7 +83,7 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
                 if (ArrayUtils.isNotEmpty(profiles)) {
                     names = new String[profiles.length];
                     for (int i = 0; i < profiles.length; i++)
-                        names[i] = profiles[i].getName();
+                        names[i] = profiles[i].name;
                     Selector s = new Selector(null, names, C.i18n("login.choose_charactor"));
                     s.setVisible(true);
                     selectedProfile = profiles[s.sel];
@@ -91,10 +91,10 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
                 } else
                     username = JOptionPane.showInputDialog(C.i18n("login.no_charactor"));
             else
-                username = selectedProfile.getName();
+                username = selectedProfile.name;
             result.setUserName(username);
             result.setSuccess(true);
-            result.setUserId(selectedProfile == null ? OfflineAuthenticator.getUUIDFromUserName(username) : UUIDTypeAdapter.fromUUID(selectedProfile.getId()));
+            result.setUserId(selectedProfile == null ? OfflineAuthenticator.getUUIDFromUserName(username) : UUIDTypeAdapter.fromUUID(selectedProfile.id));
             result.setUserProperties(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new LegacyPropertyMapSerializer()).create().toJson(ua.getUserProperties()));
             result.setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()));
             String authToken = ua.getAuthenticatedToken();
@@ -138,9 +138,9 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
             ua.logIn();
             if (!ua.isLoggedIn()) throw new Exception(C.i18n("login.wrong_password"));
             GameProfile profile = ua.getSelectedProfile();
-            info.setUserName(profile.getName());
+            info.setUserName(profile.name);
             info.setSuccess(true);
-            info.setUserId(profile.getId().toString());
+            info.setUserId(profile.id.toString());
             info.setAccessToken(ua.getAuthenticatedToken());
         } catch (Exception ex) {
             info.setErrorReason(ex.getMessage());

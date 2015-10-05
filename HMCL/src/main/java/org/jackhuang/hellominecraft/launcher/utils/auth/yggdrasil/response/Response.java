@@ -1,20 +1,16 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.response;
 
+/**
+ *
+ * @author huangyuhui
+ */
 public class Response {
-
-    private String error;
-    private String errorMessage;
-    private String cause;
-
-    public String getError() {
-        return this.error;
-    }
-
-    public String getCause() {
-        return this.cause;
-    }
-
-    public String getErrorMessage() {
-        return this.errorMessage;
-    }
+    public String error;
+    public String errorMessage;
+    public String cause;
 }
