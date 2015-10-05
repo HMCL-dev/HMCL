@@ -27,7 +27,7 @@ public class LegacyPropertyMapSerializer
 	for (String key : src.keySet()) {
 	    JsonArray values = new JsonArray();
 
-	    values.add(new JsonPrimitive(src.get(key).getValue()));
+	    values.add(new JsonPrimitive(src.get(key).value));
 
 	    result.add(key, values);
 	}

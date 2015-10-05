@@ -10,7 +10,7 @@ public class UUIDTypeAdapter extends TypeAdapter<UUID> {
 
     @Override
     public void write(JsonWriter out, UUID value)
-            throws IOException {
+    throws IOException {
         out.value(fromUUID(value));
     }
 

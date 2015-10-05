@@ -4,14 +4,6 @@ import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.properties.Pro
 
 public class User {
 
-    private String id;
-    private PropertyMap properties;
-
-    public String getId() {
-        return this.id;
-    }
-
-    public PropertyMap getProperties() {
-        return this.properties;
-    }
+    public String id;
+    public PropertyMap properties;
 }

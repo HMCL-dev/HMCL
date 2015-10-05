@@ -2,19 +2,12 @@ package org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
 import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.properties.PropertyMap;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
@@ -22,6 +15,7 @@ import java.net.URLEncoder;
 import java.util.Map;
 import java.util.UUID;
 import org.jackhuang.hellominecraft.C;
+import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.GameProfile.GameProfileSerializer;
 import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.response.Response;
 import org.jackhuang.hellominecraft.logging.logger.Logger;
 import org.jackhuang.hellominecraft.utils.NetUtils;
@@ -194,26 +188,5 @@ public class YggdrasilAuthenticationService {
 
     public String getClientToken() {
         return this.clientToken;
-    }
-
-    private static class GameProfileSerializer implements JsonSerializer<GameProfile>, JsonDeserializer<GameProfile> {
-
-        @Override
-        public GameProfile deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            JsonObject object = (JsonObject) json;
-            UUID id = object.has("id") ? (UUID) context.deserialize(object.get("id"), UUID.class) : null;
-            String name = object.has("name") ? object.getAsJsonPrimitive("name").getAsString() : null;
-            return new GameProfile(id, name);
-        }
-
-        @Override
-        public JsonElement serialize(GameProfile src, Type typeOfSrc, JsonSerializationContext context) {
-            JsonObject result = new JsonObject();
-            if (src.id != null)
-                result.add("id", context.serialize(src.id));
-            if (src.name != null)
-                result.addProperty("name", src.name);
-            return result;
-        }
     }
 }

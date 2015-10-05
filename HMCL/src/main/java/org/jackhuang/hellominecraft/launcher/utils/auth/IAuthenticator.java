@@ -27,22 +27,22 @@ import org.jackhuang.hellominecraft.launcher.settings.Settings;
  */
 public abstract class IAuthenticator {
 
-    public static final YggdrasilAuthenticator yggdrasilLogin;
-    public static final OfflineAuthenticator offlineLogin;
-    public static final SkinmeAuthenticator skinmeLogin;
+    public static final YggdrasilAuthenticator YGGDRASIL_LOGIN;
+    public static final OfflineAuthenticator OFFLINE_LOGIN;
+    public static final SkinmeAuthenticator SKINME_LOGIN;
 
-    public static final List<IAuthenticator> logins;
+    public static final List<IAuthenticator> LOGINS;
 
     static {
         String clientToken = Settings.getInstance().getClientToken();
-        logins = new ArrayList<>();
-        logins.add(offlineLogin = new OfflineAuthenticator(clientToken));
-        logins.add(yggdrasilLogin = new YggdrasilAuthenticator(clientToken));
-        logins.add(skinmeLogin = new SkinmeAuthenticator(clientToken));
-        yggdrasilLogin.onLoadSettings(Settings.getInstance().getYggdrasilConfig());
+        LOGINS = new ArrayList<>();
+        LOGINS.add(OFFLINE_LOGIN = new OfflineAuthenticator(clientToken));
+        LOGINS.add(YGGDRASIL_LOGIN = new YggdrasilAuthenticator(clientToken));
+        LOGINS.add(SKINME_LOGIN = new SkinmeAuthenticator(clientToken));
+        YGGDRASIL_LOGIN.onLoadSettings(Settings.getInstance().getYggdrasilConfig());
 
         Runtime.getRuntime().addShutdownHook(new Thread(()
-                -> Settings.getInstance().setYggdrasilConfig(yggdrasilLogin.onSaveSettings())
+                -> Settings.getInstance().setYggdrasilConfig(YGGDRASIL_LOGIN.onSaveSettings())
         ));
     }
 
