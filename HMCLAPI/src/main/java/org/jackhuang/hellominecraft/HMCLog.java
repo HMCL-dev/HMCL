@@ -34,8 +34,16 @@ public class HMCLog {
         logger.warn(message);
     }
 
+    public static void debug(String message) {
+        logger.debug(message);
+    }
+
     public static void warn(String msg, Throwable t) {
         logger.warn(msg, t);
+    }
+
+    public static void debug(String msg, Throwable t) {
+        logger.debug(msg, t);
     }
 
     public static void err(String msg) {

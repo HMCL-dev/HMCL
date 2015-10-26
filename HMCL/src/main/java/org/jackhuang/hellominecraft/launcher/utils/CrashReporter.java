@@ -112,7 +112,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         new Thread(() -> {
             HashMap<String, String> map = new HashMap<>();
             map.put("CrashReport", text);
-            System.out.println(NetUtils.post("http://huangyuhui.duapp.com/crash.php", map));
+            System.out.println(NetUtils.post(NetUtils.constantURL("http://huangyuhui.duapp.com/crash.php"), map));
         }).start();
     }
 

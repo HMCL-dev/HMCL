@@ -51,11 +51,6 @@ public class GameProfile {
         return result;
     }
 
-    @Override
-    public String toString() {
-        return "GameProfile{" + "id=" + id + ", name=" + name + ", properties=" + properties + '}';
-    }
-
     public static class GameProfileSerializer implements JsonSerializer<GameProfile>, JsonDeserializer<GameProfile> {
 
         @Override

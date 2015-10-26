@@ -21,13 +21,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Map;
 import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.system.IOUtils;
 
 /**
  *
@@ -69,6 +71,14 @@ public final class NetUtils {
         return doGet(url, DEFAULT_CHARSET);
     }
 
+    public static String doGet(URL url) throws IOException {
+        return doGet(url, Proxy.NO_PROXY);
+    }
+
+    public static String doGet(URL url, Proxy proxy) throws IOException {
+        return getStreamContent(url.openConnection(proxy).getInputStream());
+    }
+
     /**
      * Sends an HTTP GET request to a url
      *
@@ -108,10 +118,8 @@ public final class NetUtils {
             }
         return result;
     }
-
-    public static String post(String url, Map<String, String> params) {
-        URL u;
-        HttpURLConnection con;
+    
+    public static String post(URL u, Map<String, String> params) {
         StringBuilder sb = new StringBuilder();
         if (params != null) {
             for (Map.Entry<String, String> e : params.entrySet()) {
@@ -120,36 +128,51 @@ public final class NetUtils {
                 sb.append(e.getValue());
                 sb.append("&");
             }
-            sb = new StringBuilder(sb.substring(0, sb.length() - 1));
+            sb.deleteCharAt(sb.length() - 1);
         }
+        return post(u, sb.toString());
+    }
+
+    public static String post(URL u, String post) {
+        return post(u, post, "application/x-www-form-urlencoded");
+    }
+    
+    public static String post(URL u, String post, String contentType) {
+        return post(u, post, contentType, Proxy.NO_PROXY);
+    }
+    
+    public static String post(URL u, String post, String contentType, Proxy proxy) {
         try {
-            u = new URL(url);
-            con = (HttpURLConnection) u.openConnection();
+            HttpURLConnection con = (HttpURLConnection) u.openConnection(proxy);
             con.setRequestMethod(METHOD_POST);
             con.setDoOutput(true);
             con.setDoInput(true);
             con.setUseCaches(false);
-            con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-            try (OutputStreamWriter osw = new OutputStreamWriter(con.getOutputStream(), DEFAULT_CHARSET)) {
-                osw.write(sb.toString());
-                osw.flush();
-            }
-            StringBuilder buffer = new StringBuilder();
+            con.setConnectTimeout(15000);
+            con.setReadTimeout(15000);
+            con.setRequestProperty("Content-Type", contentType + "; charset=utf-8");
+            con.setRequestProperty("Content-Length", "" + post.getBytes(DEFAULT_CHARSET).length);
+            OutputStream os = null;
             try {
-                BufferedReader br = new BufferedReader(new InputStreamReader(con
-                        .getInputStream(), DEFAULT_CHARSET));
-                String temp;
-                while ((temp = br.readLine()) != null) {
-                    buffer.append(temp);
-                    buffer.append("\n");
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
+                os = con.getOutputStream();
+                IOUtils.write(post, os, DEFAULT_CHARSET);
+            } finally {
+                if (os != null) IOUtils.closeQuietly(os);
+            }
+            
+            String result = null;
+            InputStream is = null;
+            try {
+                is = con.getInputStream();
+                result = getStreamContent(is);
+            } catch(IOException ex) {
+                if (is != null) IOUtils.closeQuietly(is);
+                is = con.getErrorStream();
+                result = getStreamContent(is);
             }
 
             con.disconnect();
-            return buffer.toString();
+            return result;
         } catch (Exception e) {
             HMCLog.warn("Failed to post.", e);
             return null;

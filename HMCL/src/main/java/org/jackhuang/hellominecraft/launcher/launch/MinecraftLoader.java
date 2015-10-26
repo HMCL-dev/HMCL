@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
@@ -99,7 +98,6 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
             t = t.replace("${user_type}", lr.getUserType());
             t = t.replace("${assets_index_name}", version.getAssets());
             t = t.replace("${user_properties}", lr.getUserProperties());
-            t = t.replace("${user_property_map}", lr.getUserPropertyMap());
             res.add(t);
         }
 

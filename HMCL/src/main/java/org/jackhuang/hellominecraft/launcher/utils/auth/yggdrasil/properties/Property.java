@@ -25,10 +25,10 @@ public class Property {
 
     public boolean isSignatureValid(PublicKey publicKey) {
 	try {
-	    Signature signature = Signature.getInstance("SHA1withRSA");
-	    signature.initVerify(publicKey);
-	    signature.update(this.value.getBytes());
-	    return signature.verify(Base64.decode(this.signature.toCharArray()));
+	    Signature sign = Signature.getInstance("SHA1withRSA");
+	    sign.initVerify(publicKey);
+	    sign.update(this.value.getBytes());
+	    return sign.verify(Base64.decode(this.signature.toCharArray()));
 	} catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
 	    e.printStackTrace();
 	}

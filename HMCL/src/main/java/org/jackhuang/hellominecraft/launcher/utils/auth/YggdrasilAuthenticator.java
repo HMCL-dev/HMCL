@@ -29,7 +29,6 @@ import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.properties.Pro
 import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.YggdrasilAuthenticationService;
 import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.YggdrasilUserAuthentication;
 import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.UUIDTypeAdapter;
-import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.properties.LegacyPropertyMapSerializer;
 
 /**
  *
@@ -53,7 +52,7 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
             result.setUserName(info.username);
             result.setSuccess(true);
             result.setUserId(UUIDTypeAdapter.fromUUID(ua.getSelectedProfile().id));
-            result.setUserProperties(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new LegacyPropertyMapSerializer()).create().toJson(ua.getUserProperties()));
+            result.setUserProperties(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.LegacySerializer()).create().toJson(ua.getUserProperties()));
             result.setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()));
             result.setAccessToken(ua.getAuthenticatedToken());
             result.setSession(ua.getAuthenticatedToken());
@@ -95,7 +94,7 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
             result.setUserName(username);
             result.setSuccess(true);
             result.setUserId(selectedProfile == null ? OfflineAuthenticator.getUUIDFromUserName(username) : UUIDTypeAdapter.fromUUID(selectedProfile.id));
-            result.setUserProperties(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new LegacyPropertyMapSerializer()).create().toJson(ua.getUserProperties()));
+            result.setUserProperties(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.LegacySerializer()).create().toJson(ua.getUserProperties()));
             result.setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()));
             String authToken = ua.getAuthenticatedToken();
             if (authToken == null) authToken = "0";

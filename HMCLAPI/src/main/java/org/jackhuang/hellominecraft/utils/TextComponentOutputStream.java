@@ -17,6 +17,8 @@
 package org.jackhuang.hellominecraft.utils;
 
 import java.io.OutputStream;
+import java.util.Timer;
+import java.util.TimerTask;
 import javax.swing.SwingUtilities;
 import javax.swing.text.JTextComponent;
 
@@ -25,11 +27,38 @@ import javax.swing.text.JTextComponent;
  * @author huangyuhui
  */
 public class TextComponentOutputStream extends OutputStream {
+    
+    private static final Timer TIMER = new Timer();
 
     private final JTextComponent txt;
+    private final CacheTask t = new CacheTask();
+    private class CacheTask extends TimerTask {
+        private final Object lock = new Object();
+        private StringBuilder cachedString = new StringBuilder();
+
+        @Override
+        public void run() {
+            synchronized(lock) {
+                SwingUtilities.invokeLater(() -> {
+                    String t = txt.getText() + cachedString.toString().replace("\t", "    ");
+                    txt.setText(t);
+                    txt.setCaretPosition(t.length());
+                    cachedString = new StringBuilder();
+                });
+            }
+        }
+        
+        void cache(String s) {
+            synchronized(lock) {
+                cachedString.append(s);
+            }
+        }
+    }
 
     public TextComponentOutputStream(JTextComponent paramJTextComponent) {
         txt = paramJTextComponent;
+        
+        //TIMER.schedule(t, 20);
     }
 
     @Override
@@ -43,6 +72,7 @@ public class TextComponentOutputStream extends OutputStream {
     }
 
     private void append(final String newString) {
+        //t.cache(newString);
         try {
             SwingUtilities.invokeLater(() -> {
                 String t = txt.getText() + newString.replace("\t", "    ");
@@ -57,5 +87,9 @@ public class TextComponentOutputStream extends OutputStream {
     @Override
     public final void write(int paramInt) {
         append(new String(new byte[]{(byte) paramInt}));
+    }
+    
+    public static void dispose() {
+        TIMER.cancel();
     }
 }
