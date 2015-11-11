@@ -26,8 +26,7 @@ import org.jackhuang.hellominecraft.utils.ArrayUtils;
 import org.jackhuang.hellominecraft.views.Selector;
 import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.GameProfile;
 import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.properties.PropertyMap;
-import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.YggdrasilAuthenticationService;
-import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.YggdrasilUserAuthentication;
+import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.YggdrasilAuthentication;
 import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.UUIDTypeAdapter;
 
 /**
@@ -36,13 +35,11 @@ import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.UUIDTypeAdapte
  */
 public final class YggdrasilAuthenticator extends IAuthenticator {
 
-    YggdrasilAuthenticationService service;
-    YggdrasilUserAuthentication ua;
+    YggdrasilAuthentication ua;
 
     public YggdrasilAuthenticator(String clientToken) {
         super(clientToken);
-        service = new YggdrasilAuthenticationService(Proxy.NO_PROXY, clientToken);
-        ua = (YggdrasilUserAuthentication) service.createUserAuthentication();
+        ua = new YggdrasilAuthentication(Proxy.NO_PROXY, clientToken);
     }
 
     @Override

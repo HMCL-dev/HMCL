@@ -1,7 +1,7 @@
 package org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.request;
 
 import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.GameProfile;
-import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.YggdrasilUserAuthentication;
+import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.YggdrasilAuthentication;
 
 public class RefreshRequest {
 
@@ -10,13 +10,13 @@ public class RefreshRequest {
     public GameProfile selectedProfile;
     public boolean requestUser = true;
 
-    public RefreshRequest(YggdrasilUserAuthentication authenticationService) {
-        this(authenticationService, null);
+    public RefreshRequest(YggdrasilAuthentication userAuth) {
+        this(userAuth, null);
     }
 
-    public RefreshRequest(YggdrasilUserAuthentication authenticationService, GameProfile profile) {
-        this.clientToken = authenticationService.getAuthenticationService().getClientToken();
-        this.accessToken = authenticationService.getAuthenticatedToken();
+    public RefreshRequest(YggdrasilAuthentication userAuth, GameProfile profile) {
+        this.clientToken = userAuth.getClientToken();
+        this.accessToken = userAuth.getAuthenticatedToken();
         this.selectedProfile = profile;
     }
 }

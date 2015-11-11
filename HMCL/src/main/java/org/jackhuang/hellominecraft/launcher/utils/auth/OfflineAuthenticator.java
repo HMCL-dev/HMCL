@@ -46,7 +46,6 @@ public final class OfflineAuthenticator extends IAuthenticator {
 
     public static String getUUIDFromUserName(String str) {
         return DigestUtils.md5Hex(str);
-        //return md5.substring(0, 8) + '-' + md5.substring(8, 12) + '-' + md5.substring(12, 16) + '-' + md5.substring(16, 21) + md5.substring(21);
     }
 
     @Override
