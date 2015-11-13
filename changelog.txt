@@ -1,0 +1,3 @@
+Release Notes - Gradle - Version 2.8
+
+See http://wiki.gradle.org/display/GRADLE/Gradle+2.8+Release+Notes
