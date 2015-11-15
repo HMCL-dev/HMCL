@@ -569,7 +569,7 @@ public class GameSettingsPanel extends javax.swing.JPanel implements DropTargetL
             }
         });
 
-        chkCancelWrapper.setText("取消包裹启动器（出现奇怪问题时可尝试使用,与调试模式冲突）");
+        chkCancelWrapper.setText(bundle.getString("advancedsettings.cancel_wrapper_launcher")); // NOI18N
         chkCancelWrapper.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 chkCancelWrapperFocusLost(evt);
@@ -716,7 +716,7 @@ public class GameSettingsPanel extends javax.swing.JPanel implements DropTargetL
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnRemoveMod)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 279, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 264, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblModInfo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -1079,7 +1079,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         }
     });
 
-    btnCleanGame.setText("清理游戏文件");
+    btnCleanGame.setText(bundle.getString("setupwindow.clean")); // NOI18N
     btnCleanGame.addActionListener(new java.awt.event.ActionListener() {
         public void actionPerformed(java.awt.event.ActionEvent evt) {
             btnCleanGameActionPerformed(evt);

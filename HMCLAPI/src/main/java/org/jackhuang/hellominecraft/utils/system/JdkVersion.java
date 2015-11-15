@@ -57,12 +57,14 @@ public final class JdkVersion {
     public boolean equals(Object obj) {
         if (!(obj instanceof JdkVersion)) return false;
         JdkVersion b = (JdkVersion) obj;
+        if(b.location == null || location == null)
+            return b.location == location;
         return new File(b.location).equals(new File(location));
     }
 
     @Override
     public int hashCode() {
-        return new File(location).hashCode();
+        return location == null ? 0 : new File(location).hashCode();
     }
 
     public JdkVersion(String location) {

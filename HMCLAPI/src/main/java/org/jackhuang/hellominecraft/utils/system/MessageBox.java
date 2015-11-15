@@ -24,7 +24,7 @@ import org.jackhuang.hellominecraft.C;
  */
 public class MessageBox {
 
-    private static String Title = C.i18n("message.info");
+    private static final String TITLE = C.i18n("message.info");
     /**
      * Buttons: OK
      */
@@ -110,7 +110,7 @@ public class MessageBox {
      * @return User Operation
      */
     public static int Show(String Msg, int Option) {
-        return Show(Msg, Title, Option);
+        return Show(Msg, TITLE, Option);
     }
 
     /**
@@ -120,6 +120,6 @@ public class MessageBox {
      * @return User Operation
      */
     public static int Show(String Msg) {
-        return Show(Msg, Title, INFORMATION_MESSAGE);
+        return Show(Msg, TITLE, INFORMATION_MESSAGE);
     }
 }

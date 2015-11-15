@@ -8,7 +8,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
-import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.properties.PropertyMap;
 import java.util.UUID;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 

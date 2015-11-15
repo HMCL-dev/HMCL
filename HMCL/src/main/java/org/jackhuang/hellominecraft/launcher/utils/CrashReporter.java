@@ -57,15 +57,19 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             try {
                 MessageBox.Show(C.i18n("crash.headless"));
             } catch (Throwable t) {
+                t.printStackTrace();
             }
             return false;
-        } else if(s.contains("java.lang.NoClassDefFoundError")) {
+        } else if(s.contains("java.lang.NoClassDefFoundError") || s.contains("java.lang.IncompatibleClassChangeError") || s.contains("java.lang.ClassFormatError")) {
             System.out.println(C.i18n("crash.NoClassDefFound"));
             try {
                 MessageBox.Show(C.i18n("crash.NoClassDefFound"));
             } catch (Throwable t) {
                 t.printStackTrace();
             }
+            return false;
+        } else if(s.contains("java.lang.OutOfMemoryError")) {
+            System.out.println("FUCKING MEMORY LIMIT!");
             return false;
         }
         return true;

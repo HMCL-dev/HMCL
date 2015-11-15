@@ -245,6 +245,7 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public List<GameLauncher.DownloadLibraryJob> getDownloadLibraries(DownloadType downloadType) {
         ArrayList<DownloadLibraryJob> downloadLibraries = new ArrayList<>();
+        if(profile.getSelectedMinecraftVersion() == null) return downloadLibraries;
         MinecraftVersion v = profile.getSelectedMinecraftVersion().resolve(this, Settings.getInstance().getDownloadSource());
         if (v.libraries != null)
             for (IMinecraftLibrary l : v.libraries) {
@@ -296,7 +297,7 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public File getDecompressNativesToLocation() {
         MinecraftVersion v = profile.getSelectedMinecraftVersion();
-        return v.getNatives(profile.getCanonicalGameDirFile());
+        return v == null ? null : v.getNatives(profile.getCanonicalGameDirFile());
     }
 
     @Override

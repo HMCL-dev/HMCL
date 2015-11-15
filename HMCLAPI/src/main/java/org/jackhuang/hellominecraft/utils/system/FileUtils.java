@@ -435,6 +435,7 @@ public class FileUtils {
     public static File[] searchSuffix(File dir, String suffix) {
         ArrayList<File> al = new ArrayList();
         File[] files = dir.listFiles();
+        if (files == null) return new File[0];
         for (File f : files)
             if (f.getName().endsWith(suffix)) al.add(f);
         return al.toArray(new File[0]);

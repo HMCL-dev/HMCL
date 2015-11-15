@@ -29,7 +29,19 @@ public final class C {
     public static final Gson gsonPrettyPrinting = new GsonBuilder().setPrettyPrinting().create();
     public static final Gson gson = new Gson();
 
-    public static final ResourceBundle I18N = ResourceBundle.getBundle("org/jackhuang/hellominecraft/launcher/I18N");
+    public static final ResourceBundle I18N;
+    
+    static {
+        ResourceBundle rb = null;
+        try {
+            rb = ResourceBundle.getBundle("org/jackhuang/hellominecraft/launcher/I18N");
+        } catch(Throwable t) {
+            rb = null;
+            System.out.println("Did you delete I18N.properties?");
+            t.printStackTrace();
+        }
+        I18N = rb;
+    }
 
     //http://repo1.maven.org/maven2
     public static final String URL_PUBLISH = "http://www.mcbbs.net/thread-142335-1-1.html";

@@ -1,11 +1,10 @@
-package org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.response;
+package org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil;
 
 import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.GameProfile;
 
 public class Response {
 
-    public String accessToken;
-    public String clientToken;
+    public String accessToken, clientToken;
     public GameProfile selectedProfile;
     public GameProfile[] availableProfiles;
     public User user;

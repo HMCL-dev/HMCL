@@ -349,7 +349,7 @@ public class MainPagePanel extends javax.swing.JPanel {
 
     // <editor-fold defaultstate="collapsed" desc="Game Launch">
     void genLaunchCode(final Consumer<GameLauncher> listener) {
-        if (isLaunching) return;
+        if (isLaunching || getCurrentProfile() == null) return;
         isLaunching = true;
         HMCLog.log("Start generating launching command...");
         File file = getCurrentProfile().getCanonicalGameDirFile();

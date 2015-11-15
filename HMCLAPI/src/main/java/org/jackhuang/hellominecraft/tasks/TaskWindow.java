@@ -71,16 +71,15 @@ public class TaskWindow extends javax.swing.JDialog
         return this;
     }
 
-    public void clean() {
+    public synchronized void clean() {
         if (isVisible()) return;
-        taskList = null;
         taskList = new TaskList();
         taskList.addTaskListener(this);
         taskList.addAllDoneListener(this);
     }
 
     public boolean start() {
-        if (isVisible() || taskList.isAlive()) return false;
+        if (isVisible() || taskList == null || taskList.isAlive()) return false;
         pgsTotal.setValue(0);
         suc = false;
         SwingUtils.clearDefaultTable(lstDownload);
@@ -179,7 +178,8 @@ public class TaskWindow extends javax.swing.JDialog
         }
 
         if (!suc) {
-            SwingUtilities.invokeLater(taskList::abort);
+            if (taskList != null)
+                SwingUtilities.invokeLater(taskList::abort);
             HMCLog.log("Tasks have been canceled by user.");
         }
         taskList = null;
@@ -205,7 +205,7 @@ public class TaskWindow extends javax.swing.JDialog
             int idx = tasks.indexOf(task);
             if (idx == -1) return;
             int pgs = progress * 100 / max;
-            if (progresses.get(idx) != pgs) {
+            if (progresses.contains(idx) && progresses.get(idx) != pgs && lstDownload.getRowCount() > idx) {
                 SwingUtils.setValueAt(lstDownload, pgs + "%", idx, 1);
                 progresses.set(idx, pgs);
             }
@@ -281,8 +281,6 @@ public class TaskWindow extends javax.swing.JDialog
     }
     
     public static class TaskWindowFactory {
-        public static final Object obj = new Object();
-        
         LinkedList<Task> ll = new LinkedList<>();
         
         public TaskWindowFactory addTask(Task t) {
@@ -291,7 +289,8 @@ public class TaskWindow extends javax.swing.JDialog
         }
         
         public boolean start() {
-            synchronized(obj) {
+            synchronized(instance) {
+                if (instance.isVisible()) return false;
                 TaskWindow tw = inst();
                 for(Task t : ll) tw.addTask(t);
                 return tw.start();

@@ -155,7 +155,10 @@ public final class Config {
     }
 
     public DownloadType getDownloadSource() {
-        if (downloadtype >= DownloadType.values().length || downloadtype < 0) return null;
+        if (downloadtype >= DownloadType.values().length || downloadtype < 0) {
+            downloadtype = 0;
+            Settings.save();
+        }
         return DownloadType.values()[downloadtype];
     }
 

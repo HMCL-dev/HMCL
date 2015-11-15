@@ -73,8 +73,10 @@ public class GameLauncher {
     public IMinecraftLoader makeLaunchCommand() {
         IMinecraftLoader loader;
         try {
-            if (info != null) result = login.login(info);
-            else result = login.loginBySettings();
+            if (info != null)
+                result = login.login(info);
+            else
+                result = login.loginBySettings();
         } catch (Exception e) {
             HMCLog.err("An exception has thrown when logging in.", e);
             result = new UserProfileProvider();
@@ -102,7 +104,8 @@ public class GameLauncher {
         }
 
         File file = provider.getDecompressNativesToLocation();
-        if (file != null) FileUtils.cleanDirectoryQuietly(file);
+        if (file != null)
+            FileUtils.cleanDirectoryQuietly(file);
 
         if (!downloadLibrariesEvent.execute(provider.getDownloadLibraries(downloadType))) {
             failEvent.execute(C.i18n("launch.failed"));
@@ -135,8 +138,10 @@ public class GameLauncher {
             }
             HMCLog.log("Starting process");
             ProcessBuilder builder = new ProcessBuilder(str);
+            if (get == null || get.getSelectedMinecraftVersion() == null || StrUtils.isBlank(get.getCanonicalGameDir()))
+                throw new NullPointerException("Fucking bug!");
             builder.directory(provider.getRunDirectory(get.getSelectedMinecraftVersion().id))
-                    .environment().put("APPDATA", get.getCanonicalGameDirFile().getPath());
+            .environment().put("APPDATA", get.getCanonicalGameDir());
             JavaProcess jp = new JavaProcess(str, builder.start(), PROCESS_MANAGER);
             launchEvent.execute(jp);
         } catch (IOException e) {
@@ -157,7 +162,8 @@ public class GameLauncher {
         provider.onLaunch();
         boolean isWin = OS.os() == OS.WINDOWS;
         File f = new File(launcherName + (isWin ? ".bat" : ".sh"));
-        if (!f.exists()) f.createNewFile();
+        if (!f.exists())
+            f.createNewFile();
         BufferedWriter writer;
         try {
             writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f), System.getProperty("sun.jnu.encoding", "UTF-8")));

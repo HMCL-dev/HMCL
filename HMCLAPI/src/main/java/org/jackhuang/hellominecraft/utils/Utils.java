@@ -30,7 +30,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLDecoder;
@@ -93,7 +92,7 @@ public final class Utils {
         try {
             Desktop.getDesktop().browse(new URI(url));
             return true;
-        } catch (URISyntaxException | IOException ex) {
+        } catch (Exception ex) {
             HMCLog.warn("Failed to open link:" + url, ex);
             return false;
         }
@@ -166,7 +165,8 @@ public final class Utils {
     }
 
     /**
-     * In order to fight against the permission manager.
+     * In order to fight against the permission manager by Minecraft Forge.
+     * @param status exit code
      */
     public static void shutdownForcely(int status) {
         try {

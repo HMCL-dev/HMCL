@@ -1,4 +1,4 @@
-package org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.properties;
+package org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
@@ -24,7 +24,6 @@ public class PropertyMap extends HashMap<String, Property> {
             Map<String, String> property = new HashMap<>();
             property.put("name", profileProperty.name);
             property.put("value", profileProperty.value);
-            property.put("signature", profileProperty.signature);
             properties.add(property);
         }
         return properties;
@@ -35,9 +34,6 @@ public class PropertyMap extends HashMap<String, Property> {
             for (Map<String, String> propertyMap : list) {
                 String name = propertyMap.get("name");
                 String value = propertyMap.get("value");
-                String signature = propertyMap.get("signature");
-
-                put(name, new Property(name, value, signature));
             }
         } catch (Throwable t) {
             HMCLog.warn("Failed to deserialize properties", t);
@@ -53,7 +49,7 @@ public class PropertyMap extends HashMap<String, Property> {
                 JsonObject object = (JsonObject) json;
 
                 for (Map.Entry<String, JsonElement> entry : object.entrySet())
-                    if ((entry.getValue() instanceof JsonArray))
+                    if (entry.getValue() instanceof JsonArray)
                         for (JsonElement element : (JsonArray) entry.getValue())
                             result.put(entry.getKey(),
                             new Property((String) entry.getKey(), element.getAsString()));
@@ -63,11 +59,6 @@ public class PropertyMap extends HashMap<String, Property> {
                         JsonObject object = (JsonObject) element;
                         String name = object.getAsJsonPrimitive("name").getAsString();
                         String value = object.getAsJsonPrimitive("value").getAsString();
-
-                        if (object.has("signature"))
-                            result.put(name, new Property(name, value, object.getAsJsonPrimitive("signature").getAsString()));
-                        else
-                            result.put(name, new Property(name, value));
                     }
 
             return result;
@@ -76,16 +67,10 @@ public class PropertyMap extends HashMap<String, Property> {
         @Override
         public JsonElement serialize(PropertyMap src, Type typeOfSrc, JsonSerializationContext context) {
             JsonArray result = new JsonArray();
-
             for (Property property : src.values()) {
                 JsonObject object = new JsonObject();
-
                 object.addProperty("name", property.name);
                 object.addProperty("value", property.value);
-
-                if (property.signature != null)
-                    object.addProperty("signature", property.signature);
-
                 result.add(object);
             }
 
@@ -99,15 +84,11 @@ public class PropertyMap extends HashMap<String, Property> {
         @Override
         public JsonElement serialize(PropertyMap src, Type typeOfSrc, JsonSerializationContext context) {
             JsonObject result = new JsonObject();
-
             for (String key : src.keySet()) {
                 JsonArray values = new JsonArray();
-
                 values.add(new JsonPrimitive(src.get(key).value));
-
                 result.add(key, values);
             }
-
             return result;
         }
     }

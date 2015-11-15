@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.utils.assets.AssetsIndex;
 import org.jackhuang.hellominecraft.launcher.utils.assets.AssetsObject;
@@ -242,7 +243,13 @@ public final class MCUtils {
                 .addTask(new FileDownloadTask(vurl + id + ".json", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".json"))
                 .addTask(new FileDownloadTask(vurl + id + ".jar", IOUtils.tryGetCanonicalFile(mvj)).setTag(id + ".jar"))
                 .start()) {
-            MinecraftVersion mv = new Gson().fromJson(FileUtils.readFileToStringQuietly(mvt), MinecraftVersion.class);
+            MinecraftVersion mv;
+            try {
+                mv = C.gson.fromJson(FileUtils.readFileToStringQuietly(mvt), MinecraftVersion.class);
+            } catch(JsonSyntaxException ex) {
+                HMCLog.err("Failed to parse minecraft version json.", ex);
+                mv = null;
+            }
             return mv;
         }
         return null;

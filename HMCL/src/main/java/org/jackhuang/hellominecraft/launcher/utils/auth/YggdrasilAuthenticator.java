@@ -25,7 +25,7 @@ import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.ArrayUtils;
 import org.jackhuang.hellominecraft.views.Selector;
 import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.GameProfile;
-import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.properties.PropertyMap;
+import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.PropertyMap;
 import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.YggdrasilAuthentication;
 import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.UUIDTypeAdapter;
 
