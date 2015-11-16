@@ -18,19 +18,21 @@ package org.jackhuang.hellominecraft.utils;
 
 import java.io.OutputStream;
 import java.util.Timer;
-import java.util.TimerTask;
 import javax.swing.SwingUtilities;
-import javax.swing.text.JTextComponent;
+import org.jackhuang.hellominecraft.logging.Level;
+import org.jackhuang.hellominecraft.views.LogWindow;
 
 /**
  *
  * @author huangyuhui
  */
-public class TextComponentOutputStream extends OutputStream {
+public class LogWindowOutputStream extends OutputStream {
     
     private static final Timer TIMER = new Timer();
 
-    private final JTextComponent txt;
+    private final LogWindow txt;
+    private final Level sas;
+    /*
     private final CacheTask t = new CacheTask();
     private class CacheTask extends TimerTask {
         private final Object lock = new Object();
@@ -53,12 +55,11 @@ public class TextComponentOutputStream extends OutputStream {
                 cachedString.append(s);
             }
         }
-    }
+    }*/
 
-    public TextComponentOutputStream(JTextComponent paramJTextComponent) {
-        txt = paramJTextComponent;
-        
-        //TIMER.schedule(t, 20);
+    public LogWindowOutputStream(LogWindow logWindow, Level l) {
+        txt = logWindow;
+        this.sas = l;
     }
 
     @Override
@@ -72,12 +73,9 @@ public class TextComponentOutputStream extends OutputStream {
     }
 
     private void append(final String newString) {
-        //t.cache(newString);
         try {
             SwingUtilities.invokeLater(() -> {
-                String t = txt.getText() + newString.replace("\t", "    ");
-                txt.setText(t);
-                txt.setCaretPosition(t.length());
+                txt.log(newString, Level.guessLevel(newString, sas));
             });
         } catch (Throwable e) {
             e.printStackTrace();

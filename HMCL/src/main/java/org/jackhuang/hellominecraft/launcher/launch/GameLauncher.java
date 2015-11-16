@@ -144,7 +144,7 @@ public class GameLauncher {
             .environment().put("APPDATA", get.getCanonicalGameDir());
             JavaProcess jp = new JavaProcess(str, builder.start(), PROCESS_MANAGER);
             launchEvent.execute(jp);
-        } catch (IOException e) {
+        } catch (Exception e) {
             failEvent.execute(C.i18n("launch.failed_creating_process") + "\n" + e.getMessage());
             HMCLog.err("Failed to launch when creating a new process.", e);
         }

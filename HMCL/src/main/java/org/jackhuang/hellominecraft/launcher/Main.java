@@ -70,7 +70,7 @@ import org.jackhuang.hellominecraft.utils.system.OS;
  */
 public final class Main implements Runnable {
 
-    private static final X509TrustManager xtm = new X509TrustManager() {
+    private static final X509TrustManager XTM = new X509TrustManager() {
         @Override
         public void checkClientTrusted(X509Certificate[] chain, String authType) {
         }
@@ -84,21 +84,21 @@ public final class Main implements Runnable {
             return null;
         }
     };
-    private static final HostnameVerifier hnv = (hostname, session) -> true;
+    private static final HostnameVerifier HNV = (hostname, session) -> true;
 
     static {
         SSLContext sslContext = null;
 
         try {
             sslContext = SSLContext.getInstance("TLS");
-            X509TrustManager[] xtmArray = new X509TrustManager[]{xtm};
+            X509TrustManager[] xtmArray = new X509TrustManager[]{XTM};
             sslContext.init(null, xtmArray, new java.security.SecureRandom());
         } catch (GeneralSecurityException gse) {
         }
         if (sslContext != null)
             HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
 
-        HttpsURLConnection.setDefaultHostnameVerifier(hnv);
+        HttpsURLConnection.setDefaultHostnameVerifier(HNV);
     }
 
     public static String launcherName = "Hello Minecraft! Launcher";
@@ -123,7 +123,7 @@ public final class Main implements Runnable {
         return launcherName + ' ' + makeVersion();
     }
 
-    public static final Main instance = new Main();
+    public static final Main INSTANCE = new Main();
 
     public static void main(String[] args) {
         {
@@ -174,7 +174,7 @@ public final class Main implements Runnable {
 
             LogWindow.instance.clean();
             LogWindow.instance.setTerminateGame(GameLauncher.PROCESS_MANAGER::stopAllProcesses);
-
+            
             try {
                 UIManager.setLookAndFeel(new HelloMinecraftLookAndFeel());
             } catch (ParseException | UnsupportedLookAndFeelException ex) {

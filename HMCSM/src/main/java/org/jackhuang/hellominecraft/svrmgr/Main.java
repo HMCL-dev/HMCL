@@ -63,10 +63,10 @@ public class Main {
             HMCLog.err("There's something wrong when running server holder.", t);
 
             LogWindow.instance.clean();
-            LogWindow.instance.log("开服器崩溃了QAQ");
+            LogWindow.instance.warning("开服器崩溃了QAQ");
             StringWriter trace = new StringWriter();
             t.printStackTrace(new PrintWriter(trace));
-            LogWindow.instance.log(trace.toString());
+            LogWindow.instance.warning(trace.toString());
             LogWindow.instance.setVisible(true);
 
             System.exit(-1);

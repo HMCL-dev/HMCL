@@ -16,33 +16,82 @@
  */
 package org.jackhuang.hellominecraft.logging;
 
+import java.awt.Color;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  *
  * @author huangyuhui
  */
 public enum Level {
 
-    OFF(0),
-    FATAL(1),
-    ERROR(2),
-    WARN(3),
-    INFO(4),
-    DEBUG(5),
-    TRACE(6),
-    ALL(2147483647);
+    OFF(0, Color.gray),
+    FATAL(1, Color.red),
+    ERROR(2, Color.red),
+    WARN(3, Color.orange),
+    INFO(4, Color.black),
+    DEBUG(5, Color.blue),
+    TRACE(6, Color.blue),
+    ALL(2147483647, Color.black);
 
     public final int level;
+    public final Color COLOR;
 
-    private Level(int i) {
-	level = i;
+    private Level(int i, Color c) {
+        level = i;
+        COLOR = c;
     }
 
     public boolean lessOrEqual(Level level) {
-	return this.level <= level.level;
+        return this.level <= level.level;
     }
 
     public boolean lessOrEqual(int level) {
-	return this.level <= level;
+        return this.level <= level;
+    }
+
+    public static final Pattern MINECRAFT_LOGGER = Pattern.compile("\\[(?<timestamp>[0-9:]+)\\] \\[[^/]+/(?<level>[^\\]]+)\\]");
+    public static final String JAVA_SYMBOL = "([a-zA-Z_$][a-zA-Z\\d_$]*\\.)+[a-zA-Z_$][a-zA-Z\\d_$]*";
+
+    public static Level guessLevel(String line, Level level) {
+        Matcher m = MINECRAFT_LOGGER.matcher(line);
+        if (m.find()) {
+            // New style logs from log4j
+            String levelStr = m.group("level");
+            if ("INFO".equals(levelStr))
+                level = INFO;
+            else if ("WARN".equals(levelStr))
+                level = WARN;
+            else if ("ERROR".equals(levelStr))
+                level = ERROR;
+            else if ("FATAL".equals(levelStr))
+                level = FATAL;
+            else if ("TRACE".equals(levelStr))
+                level = TRACE;
+            else if ("DEBUG".equals(levelStr))
+                level = DEBUG;
+        } else {
+            if (line.contains("[INFO]") || line.contains("[CONFIG]") || line.contains("[FINE]")
+            || line.contains("[FINER]") || line.contains("[FINEST]"))
+                level = INFO;
+            if (line.contains("[SEVERE]") || line.contains("[STDERR]"))
+                level = ERROR;
+            if (line.contains("[WARNING]"))
+                level = WARN;
+            if (line.contains("[DEBUG]"))
+                level = DEBUG;
+        }
+        if (line.contains("overwriting existing"))
+            return FATAL;
+        
+        if (line.contains("Exception in thread")
+        || line.matches("\\s+at " + JAVA_SYMBOL)
+        || line.matches("Caused by: " + JAVA_SYMBOL)
+        || line.matches("([a-zA-Z_$][a-zA-Z\\d_$]*\\.)+[a-zA-Z_$]?[a-zA-Z\\d_$]*(Exception|Error|Throwable)")
+        || line.matches("... \\d+ more$"))
+            return ERROR;
+        return level;
     }
 
 }

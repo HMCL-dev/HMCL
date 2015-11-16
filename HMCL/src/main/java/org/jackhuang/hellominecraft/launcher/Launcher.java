@@ -61,7 +61,7 @@ public final class Launcher {
 
         String[] tokenized = StrUtils.tokenize(classPath, File.pathSeparator);
         int len = tokenized.length;
-
+        
         if (showInfo) {
             LogWindow.instance.setTerminateGame(() -> Utils.shutdownForcely(1));
             try {
@@ -99,7 +99,7 @@ public final class Launcher {
 
         Method minecraftMain;
         try {
-            minecraftMain = new URLClassLoader(urls, URLClassLoader.getSystemClassLoader().getParent()).loadClass(mainClass).getMethod("main", String[].class);
+            minecraftMain = new URLClassLoader(urls, URLClassLoader.getSystemClassLoader()).loadClass(mainClass).getMethod("main", String[].class);
         } catch (ClassNotFoundException | NoSuchMethodException | SecurityException t) {
             MessageBox.Show(C.i18n("crash.main_class_not_found"));
             println("Minecraft main class not found.");
@@ -118,9 +118,9 @@ public final class Launcher {
             final String advice = MinecraftCrashAdvicer.getAdvice(trace);
             MessageBox.Show(C.i18n("crash.minecraft") + ": " + advice);
 
-            LogWindow.instance.log(C.i18n("crash.minecraft"));
-            LogWindow.instance.log(advice);
-            LogWindow.instance.log(trace);
+            LogWindow.instance.warning(C.i18n("crash.minecraft"));
+            LogWindow.instance.warning(advice);
+            LogWindow.instance.warning(trace);
             LogWindow.instance.setExit(TrueFunction.instance);
             LogWindow.instance.setVisible(true);
             

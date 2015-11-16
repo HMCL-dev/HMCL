@@ -29,7 +29,7 @@ public class DefaultLayout extends AbstractStringLayout {
 
     @Override
     public String toSerializable(LogEvent event) {
-	return "[" + sdf.format(new Date()) + "][" + event.threadName + "/" + event.level.name() + "] " + event.message.getFormattedMessage() + "\n";
+	return "[" + sdf.format(new Date()) + "] [" + event.threadName + "/" + event.level.name() + "] " + event.message.getFormattedMessage() + "\n";
     }
     
 }

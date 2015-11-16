@@ -16,13 +16,18 @@
  */
 package org.jackhuang.hellominecraft.views;
 
-import java.util.Timer;
+import java.awt.Color;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
 import org.jackhuang.hellominecraft.C;
+import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.logging.Level;
 import org.jackhuang.hellominecraft.utils.functions.NonFunction;
 import org.jackhuang.hellominecraft.utils.DoubleOutputStream;
 import org.jackhuang.hellominecraft.utils.LauncherPrintStream;
-import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.utils.TextComponentOutputStream;
+import org.jackhuang.hellominecraft.utils.LogWindowOutputStream;
 import org.jackhuang.hellominecraft.utils.Utils;
 
 /**
@@ -44,11 +49,10 @@ public class LogWindow extends javax.swing.JFrame {
         movingEnd = true;
 
         setLocationRelativeTo(null);
-
-        TextComponentOutputStream tc = new TextComponentOutputStream(txtLog);
-        DoubleOutputStream out = new DoubleOutputStream(tc, System.out);
+        txtLog.setEditable(false);
+        DoubleOutputStream out = new DoubleOutputStream(new LogWindowOutputStream(this, Level.INFO), System.out);
         System.setOut(new LauncherPrintStream(out));
-        DoubleOutputStream err = new DoubleOutputStream(tc, System.err);
+        DoubleOutputStream err = new DoubleOutputStream(new LogWindowOutputStream(this, Level.ERROR), System.err);
         System.setErr(new LauncherPrintStream(err));
     }
 
@@ -63,8 +67,6 @@ public class LogWindow extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        txtLog = new javax.swing.JTextArea();
         btnClear = new javax.swing.JButton();
         btnClose = new javax.swing.JButton();
         btnCopy = new javax.swing.JButton();
@@ -74,6 +76,8 @@ public class LogWindow extends javax.swing.JFrame {
         btnMCF = new javax.swing.JButton();
         btnTerminateGame = new javax.swing.JButton();
         btnGitHub = new javax.swing.JButton();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        txtLog = new javax.swing.JTextPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(C.I18N.getString("logwindow.title")); // NOI18N
@@ -82,11 +86,6 @@ public class LogWindow extends javax.swing.JFrame {
                 formWindowClosed(evt);
             }
         });
-
-        txtLog.setEditable(false);
-        txtLog.setColumns(20);
-        txtLog.setRows(5);
-        jScrollPane1.setViewportView(txtLog);
 
         btnClear.setText(C.I18N.getString("ui.button.clear")); // NOI18N
         btnClear.addActionListener(new java.awt.event.ActionListener() {
@@ -146,15 +145,17 @@ public class LogWindow extends javax.swing.JFrame {
             }
         });
 
+        jScrollPane2.setViewportView(txtLog);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jScrollPane2)
+                    .addGroup(layout.createSequentialGroup()
                         .addComponent(btnTieBa)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnMCBBS)
@@ -170,7 +171,7 @@ public class LogWindow extends javax.swing.JFrame {
                         .addComponent(btnClear)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnClose))
-                    .addComponent(lblCrash, javax.swing.GroupLayout.DEFAULT_SIZE, 674, Short.MAX_VALUE))
+                    .addComponent(lblCrash, javax.swing.GroupLayout.Alignment.LEADING))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -179,7 +180,7 @@ public class LogWindow extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(lblCrash, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 375, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 356, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnClear)
@@ -235,19 +236,28 @@ public class LogWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_btnGitHubActionPerformed
 
     public void log(String status) {
-        String text = txtLog.getText();
-        text += status + System.getProperty("line.separator");
-        txtLog.setText(text);
+        log(status, Level.INFO);
+    }
+    
+    public void warning(String status) {
+        log(status, Level.WARN);
+    }
+    
+    public void log(String status, Level c) {
+        status = status.replace("\t", "    ");
+        Document d = txtLog.getStyledDocument();
+        SimpleAttributeSet sas = new SimpleAttributeSet();
+        StyleConstants.setForeground(sas, c.COLOR);
+        try {
+            d.insertString(d.getLength(), status, sas);
+        } catch (BadLocationException ex) {
+            HMCLog.err("Failed to insert \"" + status + "\" to " + d.getLength(), ex);
+        }
 
         if (movingEnd) {
-            int position = text.length();
+            int position = d.getLength();
             txtLog.setCaretPosition(position);
         }
-    }
-
-    public void log(String status, Throwable t) {
-        log(status);
-        log(StrUtils.getStackTrace(t));
     }
 
     public void setExit(NonFunction<Boolean> exit) {
@@ -306,8 +316,8 @@ public class LogWindow extends javax.swing.JFrame {
     private javax.swing.JButton btnMCF;
     private javax.swing.JButton btnTerminateGame;
     private javax.swing.JButton btnTieBa;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel lblCrash;
-    private javax.swing.JTextArea txtLog;
+    private javax.swing.JTextPane txtLog;
     // End of variables declaration//GEN-END:variables
 }
