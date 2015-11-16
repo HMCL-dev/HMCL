@@ -24,7 +24,6 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.functions.TrueFunction;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.views.LogWindow;
@@ -98,8 +97,10 @@ public final class Launcher {
         }
 
         Method minecraftMain;
+        URLClassLoader ucl = new URLClassLoader(urls, URLClassLoader.getSystemClassLoader().getParent());
+        Thread.currentThread().setContextClassLoader(ucl);
         try {
-            minecraftMain = new URLClassLoader(urls, URLClassLoader.getSystemClassLoader()).loadClass(mainClass).getMethod("main", String[].class);
+            minecraftMain = ucl.loadClass(mainClass).getMethod("main", String[].class);
         } catch (ClassNotFoundException | NoSuchMethodException | SecurityException t) {
             MessageBox.Show(C.i18n("crash.main_class_not_found"));
             println("Minecraft main class not found.");
@@ -113,15 +114,14 @@ public final class Launcher {
         try {
             minecraftMain.invoke(null, new Object[]{(String[]) cmdList.toArray(new String[cmdList.size()])});
         } catch (Throwable throwable) {
-            HMCLog.err("Cought exception!");
             String trace = StrUtils.getStackTrace(throwable);
             final String advice = MinecraftCrashAdvicer.getAdvice(trace);
             MessageBox.Show(C.i18n("crash.minecraft") + ": " + advice);
 
-            LogWindow.instance.warning(C.i18n("crash.minecraft"));
-            LogWindow.instance.warning(advice);
-            LogWindow.instance.warning(trace);
             LogWindow.instance.setExit(TrueFunction.instance);
+            System.err.println(C.i18n("crash.minecraft"));
+            System.err.println(advice);
+            System.err.println(trace);
             LogWindow.instance.setVisible(true);
             
             flag = 1;
