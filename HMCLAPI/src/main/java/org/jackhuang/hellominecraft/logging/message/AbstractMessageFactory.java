@@ -21,15 +21,15 @@ package org.jackhuang.hellominecraft.logging.message;
  * @author huangyuhui
  */
 public abstract class AbstractMessageFactory
-	implements IMessageFactory {
+implements IMessageFactory {
 
     @Override
     public IMessage newMessage(Object message) {
-	return new ObjectMessage(message);
+        return new ObjectMessage(message);
     }
 
     @Override
     public IMessage newMessage(String message) {
-	return new SimpleMessage(message);
+        return new SimpleMessage(message);
     }
 }

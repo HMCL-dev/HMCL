@@ -73,7 +73,7 @@ public enum Level {
                 level = DEBUG;
         } else {
             if (line.contains("[INFO]") || line.contains("[CONFIG]") || line.contains("[FINE]")
-            || line.contains("[FINER]") || line.contains("[FINEST]"))
+                || line.contains("[FINER]") || line.contains("[FINEST]"))
                 level = INFO;
             if (line.contains("[SEVERE]") || line.contains("[STDERR]"))
                 level = ERROR;
@@ -84,12 +84,12 @@ public enum Level {
         }
         if (line.contains("overwriting existing"))
             return FATAL;
-        
+
         if (line.contains("Exception in thread")
-        || line.matches("\\s+at " + JAVA_SYMBOL)
-        || line.matches("Caused by: " + JAVA_SYMBOL)
-        || line.matches("([a-zA-Z_$][a-zA-Z\\d_$]*\\.)+[a-zA-Z_$]?[a-zA-Z\\d_$]*(Exception|Error|Throwable)")
-        || line.matches("... \\d+ more$"))
+            || line.matches("\\s+at " + JAVA_SYMBOL)
+            || line.matches("Caused by: " + JAVA_SYMBOL)
+            || line.matches("([a-zA-Z_$][a-zA-Z\\d_$]*\\.)+[a-zA-Z_$]?[a-zA-Z\\d_$]*(Exception|Error|Throwable)")
+            || line.matches("... \\d+ more$"))
             return ERROR;
         return level;
     }

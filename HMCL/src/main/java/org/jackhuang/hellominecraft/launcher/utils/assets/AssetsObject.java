@@ -38,10 +38,13 @@ public class AssetsObject {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         AssetsObject that = (AssetsObject) o;
-        if (this.size != that.size) return false;
+        if (this.size != that.size)
+            return false;
         return this.hash.equals(that.hash);
     }
 

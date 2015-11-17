@@ -6,24 +6,24 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 /**
  * XZ constants.
  */
 public class XZ {
+
     /**
      * XZ Header Magic Bytes begin a XZ file.
      * This can be useful to detect XZ compressed data.
      */
     public static final byte[] HEADER_MAGIC = {
-            (byte)0xFD, '7', 'z', 'X', 'Z', '\0' };
+        (byte) 0xFD, '7', 'z', 'X', 'Z', '\0'};
 
     /**
      * XZ Footer Magic Bytes are the last bytes of a XZ Stream.
      */
-    public static final byte[] FOOTER_MAGIC = { 'Y', 'Z' };
+    public static final byte[] FOOTER_MAGIC = {'Y', 'Z'};
 
     /**
      * Integrity check ID indicating that no integrity check is calculated.
@@ -49,5 +49,6 @@ public class XZ {
      */
     public static final int CHECK_SHA256 = 10;
 
-    private XZ() {}
+    private XZ() {
+    }
 }

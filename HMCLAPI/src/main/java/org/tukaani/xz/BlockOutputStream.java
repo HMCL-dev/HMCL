@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.OutputStream;
@@ -16,6 +15,7 @@ import org.tukaani.xz.common.EncoderUtil;
 import org.tukaani.xz.check.Check;
 
 class BlockOutputStream extends FinishableOutputStream {
+
     private final OutputStream out;
     private final CountingOutputStream outCounted;
     private FinishableOutputStream filterChain;
@@ -72,7 +72,7 @@ class BlockOutputStream extends FinishableOutputStream {
             throw new UnsupportedOptionsException();
 
         // Block Header Size
-        buf[0] = (byte)(buf.length / 4);
+        buf[0] = (byte) (buf.length / 4);
 
         // Write the Block Header field to the output stream.
         out.write(buf);
@@ -85,7 +85,7 @@ class BlockOutputStream extends FinishableOutputStream {
     }
 
     public void write(int b) throws IOException {
-        tempBuf[0] = (byte)b;
+        tempBuf[0] = (byte) b;
         write(tempBuf, 0, 1);
     }
 
@@ -120,7 +120,7 @@ class BlockOutputStream extends FinishableOutputStream {
         // It is very hard to trigger this exception.
         // This is just to be pedantic.
         if (compressedSize < 0 || compressedSize > compressedSizeLimit
-                || uncompressedSize < 0)
+            || uncompressedSize < 0)
             throw new XZIOException("XZ Stream has grown too big");
     }
 

@@ -95,18 +95,21 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
 
         File version = new File(baseFolder, "versions");
         File[] files = version.listFiles();
-        if (files == null || files.length == 0) return;
+        if (files == null || files.length == 0)
+            return;
 
         for (File dir : files) {
             String id = dir.getName();
             File jsonFile = new File(dir, id + ".json");
 
-            if (!dir.isDirectory()) continue;
+            if (!dir.isDirectory())
+                continue;
             boolean ask = false;
             File[] jsons = null;
             if (!jsonFile.exists()) {
                 jsons = FileUtils.searchSuffix(dir, "json");
-                if (jsons.length == 1) ask = true;
+                if (jsons.length == 1)
+                    ask = true;
             }
             if (ask) {
                 HMCLog.warn("Found not matched filenames version: " + id + ", json: " + jsons[0].getName());
@@ -121,20 +124,23 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
             MinecraftVersion mcVersion;
             try {
                 mcVersion = C.gson.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
-                if (mcVersion == null) throw new RuntimeException("Wrong json format, got null.");
+                if (mcVersion == null)
+                    throw new RuntimeException("Wrong json format, got null.");
             } catch (IOException | RuntimeException e) {
                 HMCLog.warn("Found wrong format json, try to fix it.", e);
                 if (MessageBox.Show(C.i18n("launcher.versions_json_not_formatted", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
                     refreshJson(id);
                     try {
                         mcVersion = C.gson.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
-                        if (mcVersion == null) throw new RuntimeException("Wrong json format, got null.");
+                        if (mcVersion == null)
+                            throw new RuntimeException("Wrong json format, got null.");
                     } catch (IOException | RuntimeException ex) {
                         HMCLog.err("Retried but still failed.");
                         HMCLog.warn("Ignoring: " + dir + ", the json of this Minecraft is malformed.", ex);
                         continue;
                     }
-                } else continue;
+                } else
+                    continue;
             }
             try {
                 if (!id.equals(mcVersion.id)) {
@@ -156,7 +162,8 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public boolean removeVersionFromDisk(String name) {
         File version = new File(baseFolder, "versions/" + name);
-        if (!version.exists()) return true;
+        if (!version.exists())
+            return true;
 
         versions.remove(name);
         return FileUtils.deleteDirectoryQuietly(version);
@@ -192,7 +199,8 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public boolean refreshAssetsIndex(String id) {
         MinecraftVersion mv = getVersionById(id);
-        if (mv == null) return false;
+        if (mv == null)
+            return false;
         return MCUtils.downloadMinecraftAssetsIndex(new File(baseFolder, "assets"), mv.assets, Settings.getInstance().getDownloadSource());
     }
 
@@ -218,7 +226,8 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public List<ModInfo> listMods() {
-        if (profile.getSelectedMinecraftVersion() == null) return new ArrayList<>();
+        if (profile.getSelectedMinecraftVersion() == null)
+            return new ArrayList<>();
         File modsFolder = new File(getRunDirectory(profile.getSelectedMinecraftVersion().id), "mods");
         ArrayList<ModInfo> mods = new ArrayList<>();
         File[] fs = modsFolder.listFiles();
@@ -245,7 +254,8 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public List<GameLauncher.DownloadLibraryJob> getDownloadLibraries(DownloadType downloadType) {
         ArrayList<DownloadLibraryJob> downloadLibraries = new ArrayList<>();
-        if(profile.getSelectedMinecraftVersion() == null) return downloadLibraries;
+        if (profile.getSelectedMinecraftVersion() == null)
+            return downloadLibraries;
         MinecraftVersion v = profile.getSelectedMinecraftVersion().resolve(this, Settings.getInstance().getDownloadSource());
         if (v.libraries != null)
             for (IMinecraftLibrary l : v.libraries) {
@@ -281,7 +291,8 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public GameLauncher.DecompressLibraryJob getDecompressLibraries() {
         MinecraftVersion v = profile.getSelectedMinecraftVersion().resolve(this, Settings.getInstance().getDownloadSource());
-        if (v.libraries == null) return null;
+        if (v.libraries == null)
+            return null;
         ArrayList<File> unzippings = new ArrayList<>();
         ArrayList<String[]> extractRules = new ArrayList<>();
         for (IMinecraftLibrary l : v.libraries) {
@@ -307,7 +318,7 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public IMinecraftLoader provideMinecraftLoader(UserProfileProvider p, DownloadType type)
-            throws IllegalStateException {
+    throws IllegalStateException {
         return new MinecraftLoader(profile, this, p, type);
     }
 
@@ -334,6 +345,7 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public void onLaunch() {
         File resourcePacks = getResourcePacks();
-        if (!resourcePacks.exists()) resourcePacks.mkdirs();
+        if (!resourcePacks.exists())
+            resourcePacks.mkdirs();
     }
 }

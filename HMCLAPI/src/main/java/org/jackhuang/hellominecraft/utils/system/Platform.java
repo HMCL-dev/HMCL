@@ -24,28 +24,28 @@ public enum Platform {
 
     UNKNOWN {
 
-                @Override
-                public String getBit() {
-                    return "unknown";
-                }
+        @Override
+        public String getBit() {
+            return "unknown";
+        }
 
-            },
+    },
     BIT_32 {
 
-                @Override
-                public String getBit() {
-                    return "32";
-                }
+        @Override
+        public String getBit() {
+            return "32";
+        }
 
-            },
+    },
     BIT_64 {
 
-                @Override
-                public String getBit() {
-                    return "64";
-                }
+        @Override
+        public String getBit() {
+            return "64";
+        }
 
-            };
+    };
 
     public abstract String getBit();
 

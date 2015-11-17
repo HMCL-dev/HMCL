@@ -26,11 +26,12 @@ import javax.swing.JFrame;
  * @author huangyuhui
  */
 public class DraggableFrame extends JFrame
-        implements MouseListener, MouseMotionListener {
+implements MouseListener, MouseMotionListener {
 
     private int dragGripX;
     private int dragGripY;
 
+    @SuppressWarnings("LeakingThisInConstructor")
     public DraggableFrame() {
         setUndecorated(true);
         addMouseListener(this);

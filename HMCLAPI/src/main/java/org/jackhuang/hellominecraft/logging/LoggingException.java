@@ -23,7 +23,7 @@ package org.jackhuang.hellominecraft.logging;
 public class LoggingException extends RuntimeException {
 
     public LoggingException(Exception e) {
-	super(e);
+        super(e);
     }
-    
+
 }

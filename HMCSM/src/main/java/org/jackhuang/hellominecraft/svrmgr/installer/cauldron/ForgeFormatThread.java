@@ -56,7 +56,8 @@ public class ForgeFormatThread extends Thread {
                 allforge.addAll(table.getElementsByTag("tr"));
             for (Element e : allforge) {
                 Elements tds = e.getElementsByTag("td");
-                if (tds.isEmpty()) continue;
+                if (tds.isEmpty())
+                    continue;
                 ForgeVersion v = new ForgeVersion();
                 v.ver = tds.get(0).text();
                 v.mcver = tds.get(1).text();
@@ -74,8 +75,10 @@ public class ForgeFormatThread extends Thread {
                         v.changelog = href;
                     else if (prev != null) {
                         int index;
-                        if (href.contains("adf.ly")) index = 0;
-                        else index = 1;
+                        if (href.contains("adf.ly"))
+                            index = 0;
+                        else
+                            index = 1;
                         if (prev.toLowerCase().contains("installer"))
                             v.installer[index] = href;
                         else if (prev.toLowerCase().contains("server"))

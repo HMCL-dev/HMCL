@@ -30,7 +30,7 @@ import java.util.Set;
  * @author huangyuhui
  */
 public class ParameterizedMessage
-        implements IMessage {
+implements IMessage {
 
     public static final String RECURSION_PREFIX = "[...";
     public static final String RECURSION_SUFFIX = "...]";
@@ -67,21 +67,20 @@ public class ParameterizedMessage
     }
 
     public ParameterizedMessage(String messagePattern, Object arg) {
-        this(messagePattern, new Object[]{arg});
+        this(messagePattern, new Object[] {arg});
     }
 
     public ParameterizedMessage(String messagePattern, Object arg1, Object arg2) {
-        this(messagePattern, new Object[]{arg1, arg2});
+        this(messagePattern, new Object[] {arg1, arg2});
     }
 
     private String[] parseArguments(Object[] arguments) {
-        if (arguments == null) {
+        if (arguments == null)
             return null;
-        }
         int argsCount = countArgumentPlaceholders(this.messagePattern);
         int resultArgCount = arguments.length;
         if ((argsCount < arguments.length)
-                && (this.throwable == null) && ((arguments[(arguments.length - 1)] instanceof Throwable))) {
+            && (this.throwable == null) && ((arguments[(arguments.length - 1)] instanceof Throwable))) {
             this.throwable = ((Throwable) arguments[(arguments.length - 1)]);
             resultArgCount--;
         }
@@ -94,18 +93,16 @@ public class ParameterizedMessage
             strArgs[0] = deepToString(arguments);
         } else {
             strArgs = new String[resultArgCount];
-            for (int i = 0; i < strArgs.length; i++) {
+            for (int i = 0; i < strArgs.length; i++)
                 strArgs[i] = deepToString(arguments[i]);
-            }
         }
         return strArgs;
     }
 
     @Override
     public String getFormattedMessage() {
-        if (this.formattedMessage == null) {
+        if (this.formattedMessage == null)
             this.formattedMessage = formatMessage(this.messagePattern, this.stringArgs);
-        }
         return this.formattedMessage;
     }
 
@@ -116,9 +113,8 @@ public class ParameterizedMessage
 
     @Override
     public Object[] getParameters() {
-        if (this.argArray != null) {
+        if (this.argArray != null)
             return this.argArray;
-        }
         return this.stringArgs;
     }
 
@@ -133,8 +129,10 @@ public class ParameterizedMessage
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
 
         ParameterizedMessage that = (ParameterizedMessage) o;
         if (this.messagePattern != null ? !this.messagePattern.equals(that.messagePattern) : that.messagePattern != null)
@@ -159,11 +157,11 @@ public class ParameterizedMessage
         int currentArgument = 0;
         for (int i = 0; i < messagePattern.length(); i++) {
             char curChar = messagePattern.charAt(i);
-            if (curChar == ESCAPE_CHAR) {
+            if (curChar == ESCAPE_CHAR)
                 escapeCounter++;
-            } else if ((curChar == DELIM_START)
-                    && (i < messagePattern.length() - 1)
-                    && (messagePattern.charAt(i + 1) == DELIM_STOP)) {
+            else if ((curChar == DELIM_START)
+                     && (i < messagePattern.length() - 1)
+                     && (messagePattern.charAt(i + 1) == DELIM_STOP)) {
                 int escapedEscapes = escapeCounter / 2;
                 for (int j = 0; j < escapedEscapes; j++)
                     result.append(ESCAPE_CHAR);
@@ -193,36 +191,39 @@ public class ParameterizedMessage
     }
 
     public static int countArgumentPlaceholders(String messagePattern) {
-        if (messagePattern == null) return 0;
+        if (messagePattern == null)
+            return 0;
 
         int delim = messagePattern.indexOf(123);
 
-        if (delim == -1) return 0;
+        if (delim == -1)
+            return 0;
         int result = 0;
         boolean isEscaped = false;
         for (int i = 0; i < messagePattern.length(); i++) {
             char curChar = messagePattern.charAt(i);
-            if (curChar == ESCAPE_CHAR) {
+            if (curChar == ESCAPE_CHAR)
                 isEscaped = !isEscaped;
-            } else if (curChar == DELIM_START) {
+            else if (curChar == DELIM_START) {
                 if ((!isEscaped)
-                        && (i < messagePattern.length() - 1)
-                        && (messagePattern.charAt(i + 1) == DELIM_STOP)) {
+                    && (i < messagePattern.length() - 1)
+                    && (messagePattern.charAt(i + 1) == DELIM_STOP)) {
                     result++;
                     i++;
                 }
 
                 isEscaped = false;
-            } else {
+            } else
                 isEscaped = false;
-            }
         }
         return result;
     }
 
     public static String deepToString(Object o) {
-        if (o == null) return null;
-        if (o instanceof String) return (String) o;
+        if (o == null)
+            return null;
+        if (o instanceof String)
+            return (String) o;
         StringBuilder str = new StringBuilder();
         Set dejaVu = new HashSet();
         recursiveDeepToString(o, str, dejaVu);
@@ -239,53 +240,57 @@ public class ParameterizedMessage
             return;
         }
         Class oClass = o.getClass();
-        if (oClass.isArray()) {
-            if (oClass == byte[].class) {
+        if (oClass.isArray())
+            if (oClass == byte[].class)
                 str.append(Arrays.toString((byte[]) (byte[]) o));
-            } else if (oClass == short[].class) {
+            else if (oClass == short[].class)
                 str.append(Arrays.toString((short[]) (short[]) o));
-            } else if (oClass == int[].class) {
+            else if (oClass == int[].class)
                 str.append(Arrays.toString((int[]) (int[]) o));
-            } else if (oClass == long[].class) {
+            else if (oClass == long[].class)
                 str.append(Arrays.toString((long[]) (long[]) o));
-            } else if (oClass == float[].class) {
+            else if (oClass == float[].class)
                 str.append(Arrays.toString((float[]) (float[]) o));
-            } else if (oClass == double[].class) {
+            else if (oClass == double[].class)
                 str.append(Arrays.toString((double[]) (double[]) o));
-            } else if (oClass == boolean[].class) {
+            else if (oClass == boolean[].class)
                 str.append(Arrays.toString((boolean[]) (boolean[]) o));
-            } else if (oClass == char[].class) {
+            else if (oClass == char[].class)
                 str.append(Arrays.toString((char[]) (char[]) o));
-            } else {
+            else {
                 String id = identityToString(o);
-                if (dejaVu.contains(id)) {
+                if (dejaVu.contains(id))
                     str.append("[...").append(id).append("...]");
-                } else {
+                else {
                     dejaVu.add(id);
                     Object[] oArray = (Object[]) (Object[]) o;
                     str.append("[");
                     boolean first = true;
                     for (Object current : oArray) {
-                        if (first) first = false;
-                        else str.append(", ");
+                        if (first)
+                            first = false;
+                        else
+                            str.append(", ");
                         recursiveDeepToString(current, str, new HashSet(dejaVu));
                     }
                     str.append("]");
                 }
             }
-        } else if ((o instanceof Map)) {
+        else if ((o instanceof Map)) {
             String id = identityToString(o);
-            if (dejaVu.contains(id)) {
+            if (dejaVu.contains(id))
                 str.append("[...").append(id).append("...]");
-            } else {
+            else {
                 dejaVu.add(id);
                 Map oMap = (Map) o;
                 str.append("{");
                 boolean isFirst = true;
                 for (Object o1 : oMap.entrySet()) {
                     Map.Entry current = (Map.Entry) o1;
-                    if (isFirst) isFirst = false;
-                    else str.append(", ");
+                    if (isFirst)
+                        isFirst = false;
+                    else
+                        str.append(", ");
                     Object key = current.getKey();
                     Object value = current.getValue();
                     recursiveDeepToString(key, str, new HashSet(dejaVu));
@@ -296,17 +301,19 @@ public class ParameterizedMessage
             }
         } else if ((o instanceof Collection)) {
             String id = identityToString(o);
-            if (dejaVu.contains(id)) {
+            if (dejaVu.contains(id))
                 str.append("[...").append(id).append("...]");
-            } else {
+            else {
                 dejaVu.add(id);
                 Collection oCol = (Collection) o;
                 str.append("[");
                 boolean isFirst = true;
                 for (Iterator i$ = oCol.iterator(); i$.hasNext();) {
                     Object anOCol = i$.next();
-                    if (isFirst) isFirst = false;
-                    else str.append(", ");
+                    if (isFirst)
+                        isFirst = false;
+                    else
+                        str.append(", ");
                     recursiveDeepToString(anOCol, str, new HashSet(dejaVu));
                 }
                 str.append("]");
@@ -316,7 +323,7 @@ public class ParameterizedMessage
             SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
             str.append(format.format(date));
-        } else {
+        } else
             try {
                 str.append(o.toString());
             } catch (Throwable t) {
@@ -332,16 +339,16 @@ public class ParameterizedMessage
                 }
                 str.append("!!!]");
             }
-        }
     }
 
     public static String identityToString(Object obj) {
-        if (obj == null) return null;
-        return obj.getClass().getName()+"@"+Integer.toHexString(System.identityHashCode(obj));
+        if (obj == null)
+            return null;
+        return obj.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(obj));
     }
 
     @Override
     public String toString() {
-        return "ParameterizedMessage[messagePattern="+this.messagePattern+", stringArgs="+Arrays.toString(this.stringArgs)+", throwable="+this.throwable+"]";
+        return "ParameterizedMessage[messagePattern=" + this.messagePattern + ", stringArgs=" + Arrays.toString(this.stringArgs) + ", throwable=" + this.throwable + "]";
     }
 }

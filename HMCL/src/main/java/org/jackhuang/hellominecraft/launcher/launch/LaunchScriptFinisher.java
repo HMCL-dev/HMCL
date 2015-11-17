@@ -36,7 +36,8 @@ public class LaunchScriptFinisher implements Event<List<String>> {
         boolean flag = false;
         try {
             String s = JOptionPane.showInputDialog(C.i18n("mainwindow.enter_script_name"));
-            if (s != null) MessageBox.Show(C.i18n("mainwindow.make_launch_succeed") + " " + ((GameLauncher) sender).makeLauncher(s, str).getAbsolutePath());
+            if (s != null)
+                MessageBox.Show(C.i18n("mainwindow.make_launch_succeed") + " " + ((GameLauncher) sender).makeLauncher(s, str).getAbsolutePath());
             flag = true;
         } catch (IOException ex) {
             MessageBox.Show(C.i18n("mainwindow.make_launch_script_failed"));

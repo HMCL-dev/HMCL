@@ -42,9 +42,9 @@ public abstract class Task {
         aborted = true;
         return false;
     }
-    
+
     protected boolean aborted = false;
-    
+
     public boolean isAborted() {
         return aborted;
     }
@@ -73,7 +73,7 @@ public abstract class Task {
     public void setParallelExecuting(boolean parallelExecuting) {
         this.parallelExecuting = parallelExecuting;
     }
-    
+
     ArrayList<DoingDoneListener<Task>> taskListener = new ArrayList();
 
     public Task addTaskListener(DoingDoneListener<Task> l) {
@@ -94,7 +94,7 @@ public abstract class Task {
     public Collection<Task> getAfterTasks() {
         return null;
     }
-    
+
     protected ProgressProviderListener ppl;
 
     public Task setProgressProviderListener(ProgressProviderListener p) {

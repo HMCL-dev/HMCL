@@ -6,10 +6,10 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.common;
 
 public class Util {
+
     public static final int STREAM_HEADER_SIZE = 12;
     public static final long BACKWARD_SIZE_MAX = 1L << 34;
     public static final int BLOCK_HEADER_SIZE_MAX = 1024;

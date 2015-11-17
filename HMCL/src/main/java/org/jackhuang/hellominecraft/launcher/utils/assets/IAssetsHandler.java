@@ -70,7 +70,7 @@ public abstract class IAssetsHandler {
      *
      * @param mv The version that needs assets
      * @param mp The Minecraft Provider
-     * @param x finished event
+     * @param x  finished event
      */
     public abstract void getList(MinecraftVersion mv, IMinecraftProvider mp, Consumer<String[]> x);
 
@@ -78,6 +78,7 @@ public abstract class IAssetsHandler {
      * Will be invoked when the user invoked "Download all assets".
      *
      * @param sourceType Download Source
+     *
      * @return Download File Task
      */
     public abstract Task getDownloadTask(IDownloadProvider sourceType);
@@ -106,8 +107,10 @@ public abstract class IAssetsHandler {
                 String mark = assetsDownloadURLs.get(i);
                 String url = u + mark;
                 File location = assetsLocalNames.get(i);
-                if (!location.getParentFile().exists()) location.getParentFile().mkdirs();
-                if (location.isDirectory()) continue;
+                if (!location.getParentFile().exists())
+                    location.getParentFile().mkdirs();
+                if (location.isDirectory())
+                    continue;
                 boolean need = true;
                 try {
                     if (location.exists()) {
@@ -126,7 +129,8 @@ public abstract class IAssetsHandler {
                     HMCLog.warn("Failed to get hash: " + location, e);
                     need = !location.exists();
                 }
-                if (need) al.add(new FileDownloadTask(url, location).setTag(mark));
+                if (need)
+                    al.add(new FileDownloadTask(url, location).setTag(mark));
             }
             return true;
         }

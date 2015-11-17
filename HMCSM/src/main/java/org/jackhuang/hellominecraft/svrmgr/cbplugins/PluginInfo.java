@@ -23,8 +23,9 @@ import java.util.List;
  * @author huangyuhui
  */
 public class PluginInfo {
+
     public String website, dbo_page, description, slug, plugin_name,
-            link, stage, main;
+    link, stage, main;
     public List<String> authors, categories;
     public List<PluginVersion> versions;
 }

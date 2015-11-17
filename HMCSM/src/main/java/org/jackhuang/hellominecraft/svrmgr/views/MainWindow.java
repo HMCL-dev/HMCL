@@ -94,7 +94,7 @@ import org.jackhuang.hellominecraft.utils.Event;
  * @author huangyuhui
  */
 public final class MainWindow extends javax.swing.JFrame
-        implements MonitorThread.MonitorThreadListener, Event<Integer> {
+implements MonitorThread.MonitorThreadListener, Event<Integer> {
 
     ImageIcon background = new ImageIcon(getClass().getResource("/background.jpg"));
     JLabel backgroundLabel;
@@ -133,7 +133,7 @@ public final class MainWindow extends javax.swing.JFrame
 
         Dimension scrSize = Toolkit.getDefaultToolkit().getScreenSize();
         setLocation((scrSize.width - this.getWidth()) / 2,
-                (scrSize.height - this.getHeight()) / 2);
+                    (scrSize.height - this.getHeight()) / 2);
 
         this.setIconImage(new ImageIcon(getClass().getResource("/icon.png")).getImage());
 
@@ -258,7 +258,7 @@ public final class MainWindow extends javax.swing.JFrame
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                InputDialog id = new InputDialog(MainWindow.this, true, new String[]{"玩家", "讯息"});
+                InputDialog id = new InputDialog(MainWindow.this, true, new String[] {"玩家", "讯息"});
                 id.setVisible(true);
                 Server.getInstance().sendCommand("tell " + id.result[0] + " " + id.result[1]);
             }
@@ -432,7 +432,7 @@ public final class MainWindow extends javax.swing.JFrame
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                InputDialog id = new InputDialog(MainWindow.this, true, new String[]{
+                InputDialog id = new InputDialog(MainWindow.this, true, new String[] {
                     "要调整的天气（只能填：clear[意思是取消所有天气]或rain[意思是下雨]或thunder[意思是打雷]",
                     "时间"
                 });
@@ -487,7 +487,7 @@ public final class MainWindow extends javax.swing.JFrame
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                InputDialog id = new InputDialog(MainWindow.this, true, new String[]{"玩家", "物品ID", "数量"});
+                InputDialog id = new InputDialog(MainWindow.this, true, new String[] {"玩家", "物品ID", "数量"});
                 id.setVisible(true);
                 if (id.result != null)
                     Server.getInstance().sendCommand("give " + id.result[0] + " " + id.result[1] + " " + id.result[2]);
@@ -2938,27 +2938,32 @@ public final class MainWindow extends javax.swing.JFrame
 
     void loadFromOPs() {
         File mainjar = new File(SettingsManager.settings.mainjar);
-        if (!mainjar.exists()) return;
+        if (!mainjar.exists())
+            return;
         File folder = mainjar.getParentFile();
         op = new Op();
         op.initByBoth(new File(folder, "ops.txt"), new File(folder, "ops.json"));
-        for (Op.Operator ss : op.op) lstOPModel.addElement(ss.name);
+        for (Op.Operator ss : op.op)
+            lstOPModel.addElement(ss.name);
         lstOP.setModel(lstOPModel);
     }
 
     void loadFromWhiteList() {
         File mainjar = new File(SettingsManager.settings.mainjar);
-        if (!mainjar.exists()) return;
+        if (!mainjar.exists())
+            return;
         File folder = mainjar.getParentFile();
         whitelist = new WhiteList();
         whitelist.initByBoth(new File(folder, "white-list.txt"), new File(folder, "white-list.json"));
-        for (WhiteList.WhiteListPlayer ss : whitelist.op) lstWhiteListModel.addElement(ss.name);
+        for (WhiteList.WhiteListPlayer ss : whitelist.op)
+            lstWhiteListModel.addElement(ss.name);
         lstWhiteList.setModel(lstWhiteListModel);
     }
 
     void loadFromBannedPlayers() {
         File mainjar = new File(SettingsManager.settings.mainjar);
-        if (!mainjar.exists()) return;
+        if (!mainjar.exists())
+            return;
         File folder = mainjar.getParentFile();
         banned = new BannedPlayers();
         banned.initByBoth(new File(folder, "banned-players.txt"), new File(folder, "banned-players.json"));
@@ -2969,13 +2974,14 @@ public final class MainWindow extends javax.swing.JFrame
 
     void loadLocalMods() {
         String path = Utilities.getPath("mods");
-        if (path == null) return;
+        if (path == null)
+            return;
         ArrayList<String> sl = Utilities.findAllFile(new File(path));
         DefaultTableModel model = (DefaultTableModel) lstExternalMods.getModel();
         while (model.getRowCount() > 0)
             model.removeRow(0);
         for (String s : sl)
-            model.addRow(new Object[]{!SettingsManager.settings.inactiveExtMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(Utilities.addSeparator(path) + s))});
+            model.addRow(new Object[] {!SettingsManager.settings.inactiveExtMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(Utilities.addSeparator(path) + s))});
 
         lstExternalMods.updateUI();
     }
@@ -2991,11 +2997,11 @@ public final class MainWindow extends javax.swing.JFrame
         for (String s : sl) {
             PluginInformation p = PluginManager.getPluginYML(new File(Utilities.getGameDir() + "plugins" + File.separator + s));
             if (p == null)
-                model.addRow(new Object[]{!SettingsManager.settings.inactivePlugins.contains(s), s,
-                    "", "", "", ""});
+                model.addRow(new Object[] {!SettingsManager.settings.inactivePlugins.contains(s), s,
+                                           "", "", "", ""});
             else
-                model.addRow(new Object[]{!SettingsManager.settings.inactivePlugins.contains(s), s,
-                    p.name, p.version, p.author, p.description});
+                model.addRow(new Object[] {!SettingsManager.settings.inactivePlugins.contains(s), s,
+                                           p.name, p.version, p.author, p.description});
         }
 
         lstPlugins.updateUI();
@@ -3010,7 +3016,7 @@ public final class MainWindow extends javax.swing.JFrame
         while (model.getRowCount() > 0)
             model.removeRow(0);
         for (String s : sl)
-            model.addRow(new Object[]{!SettingsManager.settings.inactiveCoreMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(Utilities.addSeparator(path) + s))});
+            model.addRow(new Object[] {!SettingsManager.settings.inactiveCoreMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(Utilities.addSeparator(path) + s))});
 
         lstCoreMods.updateUI();
     }
@@ -3021,7 +3027,7 @@ public final class MainWindow extends javax.swing.JFrame
         if (SettingsManager.settings.inactiveWorlds == null)
             SettingsManager.settings.inactiveWorlds = new ArrayList<>();
         for (String world : s)
-            model.addRow(new Object[]{
+            model.addRow(new Object[] {
                 world, Utilities.getGameDir() + world, !SettingsManager.settings.inactiveWorlds.contains(world)
             });
         lstWorlds.updateUI();
@@ -3032,7 +3038,7 @@ public final class MainWindow extends javax.swing.JFrame
         DefaultTableModel model = (DefaultTableModel) lstBackups.getModel();
         for (String backup : al) {
             String[] names = Utilities.trimExtension(backup).split("\\+");
-            model.addRow(new Object[]{
+            model.addRow(new Object[] {
                 names[0], names[1], names[2]
             });
         }
@@ -3054,27 +3060,28 @@ public final class MainWindow extends javax.swing.JFrame
 
     void loadBukkits() {
         int idx = cboBukkitType.getSelectedIndex();
-        if (idx == -1) return;
+        if (idx == -1)
+            return;
         if (idx == 1) {
             BukkitFormatThread thread = new BukkitFormatThread(
-                    "http://dl.bukkit.org/downloads/craftbukkit/list/beta/", value -> {
-                        craftBukkitBeta = value;
-                        reloadBukkitList();
-                    });
+            "http://dl.bukkit.org/downloads/craftbukkit/list/beta/", value -> {
+                craftBukkitBeta = value;
+                reloadBukkitList();
+            });
             thread.start();
         } else if (idx == 0) {
             BukkitFormatThread thread = new BukkitFormatThread(
-                    "http://dl.bukkit.org/downloads/craftbukkit/list/rb/", value -> {
-                        craftBukkitRecommended = value;
-                        reloadBukkitList();
-                    });
+            "http://dl.bukkit.org/downloads/craftbukkit/list/rb/", value -> {
+                craftBukkitRecommended = value;
+                reloadBukkitList();
+            });
             thread.start();
         } else if (idx == 2) {
             BukkitFormatThread thread = new BukkitFormatThread(
-                    "http://dl.bukkit.org/downloads/craftbukkit/list/dev/", value -> {
-                        craftBukkitDev = value;
-                        reloadBukkitList();
-                    });
+            "http://dl.bukkit.org/downloads/craftbukkit/list/dev/", value -> {
+                craftBukkitDev = value;
+                reloadBukkitList();
+            });
             thread.start();
         }
     }
@@ -3104,7 +3111,7 @@ public final class MainWindow extends javax.swing.JFrame
         while (model.getRowCount() > 0)
             model.removeRow(0);
         for (ForgeVersion v : mcpcPackages.get(ver)) {
-            Object[] row = new Object[]{
+            Object[] row = new Object[] {
                 v.mcver, v.ver, v.releasetime
             };
             model.addRow(row);
@@ -3131,7 +3138,7 @@ public final class MainWindow extends javax.swing.JFrame
         while (model.getRowCount() > 0)
             model.removeRow(0);
         for (BukkitVersion v : list) {
-            Object[] row = new Object[]{
+            Object[] row = new Object[] {
                 v.buildNumber, v.version
             };
             model.addRow(row);
@@ -3185,13 +3192,14 @@ public final class MainWindow extends javax.swing.JFrame
         ArrayList<String> al = Utilities.findAllFile(new File(Utilities.getGameDir() + "infos-HMCSM"));
         DefaultTableModel model = (DefaultTableModel) lstInfos.getModel();
         for (String s : al)
-            model.addRow(new Object[]{s, Utilities.trimExtension(s)});
+            model.addRow(new Object[] {s, Utilities.trimExtension(s)});
         lstInfos.updateUI();
     }
 
     void refreshReports() {
         ArrayList<String> al = Utilities.findAllFile(new File(Utilities.getGameDir() + "crash-reports"));
-        for (String s : al) lstCrashReportsModel.addElement(s);
+        for (String s : al)
+            lstCrashReportsModel.addElement(s);
         lstReports.setModel(lstCrashReportsModel);
     }
 
@@ -3217,7 +3225,7 @@ public final class MainWindow extends javax.swing.JFrame
                         l = PluginManager.getPluginsByCategory(cboCategory.getSelectedItem().toString());
                     plugins = l;
                     for (BukkitPlugin p : l)
-                        model.addRow(new Object[]{
+                        model.addRow(new Object[] {
                             p.plugin_name, p.description, p.getLatestVersion(), p.getLatestBukkit()
                         });
                     lstBukkitPlugins.updateUI();
@@ -3266,7 +3274,8 @@ public final class MainWindow extends javax.swing.JFrame
             s.getPlayerNumber(t -> {
                 lblPlayers.setText("在线人数" + t.key);
                 lstPlayersModel.clear();
-                for (String s1 : t.value) lstPlayersModel.addElement(s1);
+                for (String s1 : t.value)
+                    lstPlayersModel.addElement(s1);
                 lstPlayers.setModel(lstPlayersModel);
             });
         else
@@ -3329,11 +3338,11 @@ public final class MainWindow extends javax.swing.JFrame
 
         Server.init(SettingsManager.settings.mainjar, String.valueOf(SettingsManager.settings.maxMemory));
         Server.getInstance()
-                .addListener((MonitorThread.MonitorThreadListener) this);
+        .addListener((MonitorThread.MonitorThreadListener) this);
         Server.getInstance()
-                .addListener((Event<Integer>) this);
+        .addListener((Event<Integer>) this);
         Server.getInstance()
-                .clearSchedule();
+        .clearSchedule();
         for (Schedule s : SettingsManager.settings.schedules)
             Server.getInstance().addSchedule(s);
 
@@ -3583,7 +3592,7 @@ public final class MainWindow extends javax.swing.JFrame
             FileUtils.copyFile(new File(path), newf);
 
             DefaultTableModel model = (DefaultTableModel) lstExternalMods.getModel();
-            model.addRow(new Object[]{fc.getSelectedFile().getName(), ModType.getModTypeShowName(ModType.getModType(newf))});
+            model.addRow(new Object[] {fc.getSelectedFile().getName(), ModType.getModTypeShowName(ModType.getModType(newf))});
             lstExternalMods.updateUI();
         } catch (IOException e) {
             MessageBox.Show(bundle.getString("添加失败"));
@@ -3624,7 +3633,7 @@ public final class MainWindow extends javax.swing.JFrame
 
             DefaultTableModel model = (DefaultTableModel) lstCoreMods.getModel();
             lstCoreMods.updateUI();
-            model.addRow(new Object[]{fc.getSelectedFile().getName(), ModType.getModTypeShowName(ModType.getModType(newf))});
+            model.addRow(new Object[] {fc.getSelectedFile().getName(), ModType.getModTypeShowName(ModType.getModType(newf))});
             FileUtils.copyFile(new File(path), newf);
         } catch (IOException e) {
             MessageBox.Show(java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraftlauncher/VersionSettingsWindow").getString("添加失败"));
@@ -3666,7 +3675,7 @@ public final class MainWindow extends javax.swing.JFrame
 
             DefaultTableModel model = (DefaultTableModel) lstPlugins.getModel();
             lstPlugins.updateUI();
-            model.addRow(new Object[]{fc.getSelectedFile().getName(), ModType.getModTypeShowName(ModType.getModType(newf))});
+            model.addRow(new Object[] {fc.getSelectedFile().getName(), ModType.getModTypeShowName(ModType.getModType(newf))});
             FileUtils.copyFile(new File(path), newf);
         } catch (IOException e) {
             MessageBox.Show(java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraftlauncher/VersionSettingsWindow").getString("添加失败"));
@@ -3860,9 +3869,9 @@ public final class MainWindow extends javax.swing.JFrame
             return;
         DefaultTableModel model = (DefaultTableModel) lstBackups.getModel();
         Utilities.deleteAll(new File(BackupManager.backupDir()
-                + model.getValueAt(index, 0) + "+"
-                + model.getValueAt(index, 1) + "+"
-                + model.getValueAt(index, 2) + ".zip"));
+                                     + model.getValueAt(index, 0) + "+"
+                                     + model.getValueAt(index, 1) + "+"
+                                     + model.getValueAt(index, 2) + ".zip"));
         model.removeRow(index);
     }//GEN-LAST:event_btnDeleteBackupActionPerformed
 
@@ -3872,9 +3881,9 @@ public final class MainWindow extends javax.swing.JFrame
             return;
         DefaultTableModel model = (DefaultTableModel) lstBackups.getModel();
         BackupManager.restoreBackup(BackupManager.backupDir()
-                + model.getValueAt(index, 0) + "+"
-                + model.getValueAt(index, 1) + "+"
-                + model.getValueAt(index, 2) + ".zip");
+                                    + model.getValueAt(index, 0) + "+"
+                                    + model.getValueAt(index, 1) + "+"
+                                    + model.getValueAt(index, 2) + ".zip");
     }//GEN-LAST:event_btnRestoreBackupActionPerformed
 
     private void btnRefreshDownloadsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshDownloadsActionPerformed
@@ -4024,7 +4033,7 @@ public final class MainWindow extends javax.swing.JFrame
         BukkitVersion v = cb.get(idx);
         File file = new File(IOUtils.currentDir(), "craftbukkit-" + ext + "-" + v.version + ".jar");
         TaskWindow.getInstance().addTask(new FileDownloadTask(v.downloadLink, IOUtils.tryGetCanonicalFile(file)).setTag("bukkit-" + ext + "-" + v.version))
-                .start();
+        .start();
     }//GEN-LAST:event_btnDownloadCraftbukkitActionPerformed
 
     private void btnDownloadMCPCActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadMCPCActionPerformed
@@ -4133,8 +4142,8 @@ public final class MainWindow extends javax.swing.JFrame
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
         try {
             FileUtils.write(new File(Utilities.getGameDir() + "infos-HMCSM"
-                    + File.separator + format.format(new Date()) + ".txt"),
-                    txtMain.getText());
+                                     + File.separator + format.format(new Date()) + ".txt"),
+                            txtMain.getText());
         } catch (IOException ex) {
             HMCLog.warn("Failed to save info", ex);
         }
@@ -4168,10 +4177,10 @@ public final class MainWindow extends javax.swing.JFrame
 
     MonitorThread mainThread;
     DefaultListModel lstOPModel = new DefaultListModel(),
-            lstWhiteListModel = new DefaultListModel(),
-            lstBannedModel = new DefaultListModel(),
-            lstCrashReportsModel = new DefaultListModel(),
-            lstPlayersModel = new DefaultListModel();
+    lstWhiteListModel = new DefaultListModel(),
+    lstBannedModel = new DefaultListModel(),
+    lstCrashReportsModel = new DefaultListModel(),
+    lstPlayersModel = new DefaultListModel();
     List<BukkitPlugin> plugins;
     Map<String, List<ForgeVersion>> mcpcPackages;
     List<BukkitVersion> craftBukkitRecommended, craftBukkitBeta, craftBukkitDev;

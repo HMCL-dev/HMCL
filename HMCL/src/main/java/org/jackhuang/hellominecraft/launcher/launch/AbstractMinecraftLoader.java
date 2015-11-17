@@ -58,7 +58,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
         HMCLog.log("On making head command.");
 
         String str = v.getJavaDir();
-        if(!v.getJavaDirFile().exists()) {
+        if (!v.getJavaDirFile().exists()) {
             MessageBox.Show(C.i18n("launch.wrong_javadir"));
             v.setJava(null);
             str = v.getJavaDir();
@@ -66,14 +66,15 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
         JdkVersion jv = new JdkVersion(str);
         if (Settings.getInstance().getJava().contains(jv))
             jv = Settings.getInstance().getJava().get(Settings.getInstance().getJava().indexOf(jv));
-        else try {
-            jv = JdkVersion.getJavaVersionFromExecutable(str);
-            Settings.getInstance().getJava().add(jv);
-            Settings.save();
-        } catch (IOException ex) {
-            HMCLog.warn("Failed to get java version", ex);
-            jv = null;
-        }
+        else
+            try {
+                jv = JdkVersion.getJavaVersionFromExecutable(str);
+                Settings.getInstance().getJava().add(jv);
+                Settings.save();
+            } catch (IOException ex) {
+                HMCLog.warn("Failed to get java version", ex);
+                jv = null;
+            }
         res.add(str);
 
         if (v.hasJavaArgs())
@@ -119,7 +120,8 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
                     MessageBox.Show(C.i18n("launch.too_big_memory_alloc_free_space_too_low", a));
             }
             String a = "-Xmx" + v.getMaxMemory();
-            if (MathUtils.canParseInt(v.getMaxMemory())) a += "m";
+            if (MathUtils.canParseInt(v.getMaxMemory()))
+                a += "m";
             res.add(a);
         }
 
@@ -130,7 +132,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
         if (OS.os() != OS.WINDOWS)
             res.add("-Duser.home=" + gameDir.getParent());
         res.add("-Dhellominecraftlauncher.gamedir=" + gameDir.getAbsolutePath());
-        
+
         if (!v.isCanceledWrapper()) {
             res.add("-cp");
             res.add(StrUtils.parseParams("", Utils.getURL(), File.pathSeparator));
@@ -164,9 +166,11 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
             res.add(args.length > 1 ? args[1] : "25565");
         }
 
-        if (v.isFullscreen()) res.add("--fullscreen");
+        if (v.isFullscreen())
+            res.add("--fullscreen");
 
-        if (v.isDebug() && !v.isCanceledWrapper()) res.add("-debug");
+        if (v.isDebug() && !v.isCanceledWrapper())
+            res.add("-debug");
 
         if (StrUtils.isNotBlank(v.getMinecraftArgs()))
             res.addAll(Arrays.asList(v.getMinecraftArgs().split(" ")));

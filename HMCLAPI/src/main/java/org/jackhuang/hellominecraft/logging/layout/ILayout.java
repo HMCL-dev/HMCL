@@ -25,8 +25,9 @@ import org.jackhuang.hellominecraft.logging.LogEvent;
  * @param <T>
  */
 public interface ILayout<T extends Serializable> {
-    
+
     byte[] toByteArray(LogEvent event);
+
     T toSerializable(LogEvent event);
-    
+
 }

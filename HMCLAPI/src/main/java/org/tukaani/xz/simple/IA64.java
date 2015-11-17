@@ -7,15 +7,15 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.simple;
 
 public final class IA64 implements SimpleFilter {
+
     private static final int[] BRANCH_TABLE = {
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            4, 4, 6, 6, 0, 0, 7, 7,
-            4, 4, 0, 0, 4, 4, 0, 0 };
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        4, 4, 6, 6, 0, 0, 7, 7,
+        4, 4, 0, 0, 4, 4, 0, 0};
 
     private final boolean isEncoder;
     private int pos;
@@ -47,11 +47,11 @@ public final class IA64 implements SimpleFilter {
                 long instrNorm = instr >>> bitRes;
 
                 if (((instrNorm >>> 37) & 0x0F) != 0x05
-                        || ((instrNorm >>> 9) & 0x07) != 0x00)
+                    || ((instrNorm >>> 9) & 0x07) != 0x00)
                     continue;
 
-                int src = (int)((instrNorm >>> 13) & 0x0FFFFF);
-                src |= ((int)(instrNorm >>> 36) & 1) << 20;
+                int src = (int) ((instrNorm >>> 13) & 0x0FFFFF);
+                src |= ((int) (instrNorm >>> 36) & 1) << 20;
                 src <<= 4;
 
                 int dest;
@@ -70,7 +70,7 @@ public final class IA64 implements SimpleFilter {
                 instr |= instrNorm << bitRes;
 
                 for (int j = 0; j < 6; ++j)
-                    buf[i + bytePos + j] = (byte)(instr >>> (8 * j));
+                    buf[i + bytePos + j] = (byte) (instr >>> (8 * j));
             }
         }
 

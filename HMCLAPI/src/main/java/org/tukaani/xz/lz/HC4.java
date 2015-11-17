@@ -7,10 +7,10 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.lz;
 
 final class HC4 extends LZEncoder {
+
     private final Hash234 hash;
     private final int[] chain;
     private final Matches matches;
@@ -32,7 +32,7 @@ final class HC4 extends LZEncoder {
      * See <code>LZEncoder.getInstance</code> for parameter descriptions.
      */
     HC4(int dictSize, int beforeSizeMin, int readAheadMax,
-            int niceLen, int matchLenMax, int depthLimit) {
+        int niceLen, int matchLenMax, int depthLimit) {
         super(dictSize, beforeSizeMin, readAheadMax, niceLen, matchLenMax);
 
         hash = new Hash234(dictSize);
@@ -57,7 +57,7 @@ final class HC4 extends LZEncoder {
      * Moves to the next byte, checks that there is enough available space,
      * and possibly normalizes the hash tables and the hash chain.
      *
-     * @return      number of bytes available, including the current byte
+     * @return number of bytes available, including the current byte
      */
     private int movePos() {
         int avail = movePos(4, 4);
@@ -118,7 +118,7 @@ final class HC4 extends LZEncoder {
         // Also here the hashing algorithm guarantees that if the first byte
         // matches, also the next two bytes do.
         if (delta2 != delta3 && delta3 < cyclicSize
-                && buf[readPos - delta3] == buf[readPos]) {
+            && buf[readPos - delta3] == buf[readPos]) {
             lenBest = 3;
             matches.dist[matches.count++] = delta3 - 1;
             delta2 = delta3;
@@ -161,7 +161,7 @@ final class HC4 extends LZEncoder {
             // a match that is at least one byte longer than lenBest. This
             // too short matches get quickly skipped.
             if (buf[readPos + lenBest - delta] == buf[readPos + lenBest]
-                    && buf[readPos - delta] == buf[readPos]) {
+                && buf[readPos - delta] == buf[readPos]) {
                 // Calculate the length of the match.
                 int len = 0;
                 while (++len < matchLenLimit)
@@ -188,13 +188,12 @@ final class HC4 extends LZEncoder {
     public void skip(int len) {
         assert len >= 0;
 
-        while (len-- > 0) {
+        while (len-- > 0)
             if (movePos() != 0) {
                 // Update the hash chain and hash tables.
                 hash.calcHashes(buf, readPos);
                 chain[cyclicPos] = hash.getHash4Pos();
                 hash.updateTables(lzPos);
             }
-        }
     }
 }

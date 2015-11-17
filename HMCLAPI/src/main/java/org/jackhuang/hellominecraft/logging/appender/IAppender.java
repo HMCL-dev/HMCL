@@ -25,10 +25,13 @@ import org.jackhuang.hellominecraft.logging.layout.ILayout;
  * @author huangyuhui
  */
 public interface IAppender {
-    
+
     void append(LogEvent event);
+
     String getName();
+
     boolean ignoreExceptions();
+
     ILayout<? extends Serializable> getLayout();
-    
+
 }

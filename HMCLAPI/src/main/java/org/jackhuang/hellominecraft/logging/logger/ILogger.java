@@ -24,133 +24,133 @@ import org.jackhuang.hellominecraft.logging.message.IMessage;
  * @author huangyuhui
  */
 public interface ILogger {
-    
-  void catching(Level paramLevel, Throwable paramThrowable);
 
-  void catching(Throwable paramThrowable);
+    void catching(Level paramLevel, Throwable paramThrowable);
 
-  void debug(IMessage paramIMessage);
+    void catching(Throwable paramThrowable);
 
-  void debug(IMessage paramIMessage, Throwable paramThrowable);
+    void debug(IMessage paramIMessage);
 
-  void debug(Object paramObject);
+    void debug(IMessage paramIMessage, Throwable paramThrowable);
 
-  void debug(Object paramObject, Throwable paramThrowable);
+    void debug(Object paramObject);
 
-  void debug(String paramString);
+    void debug(Object paramObject, Throwable paramThrowable);
 
-  void debug(String paramString, Object[] paramArrayOfObject);
+    void debug(String paramString);
 
-  void debug(String paramString, Throwable paramThrowable);
+    void debug(String paramString, Object[] paramArrayOfObject);
 
-  void entry();
+    void debug(String paramString, Throwable paramThrowable);
 
-  void entry(Object[] paramArrayOfObject);
+    void entry();
 
-  void error(IMessage paramIMessage);
+    void entry(Object[] paramArrayOfObject);
 
-  void error(IMessage paramIMessage, Throwable paramThrowable);
+    void error(IMessage paramIMessage);
 
-  void error(Object paramObject);
+    void error(IMessage paramIMessage, Throwable paramThrowable);
 
-  void error(Object paramObject, Throwable paramThrowable);
+    void error(Object paramObject);
 
-  void error(String paramString);
+    void error(Object paramObject, Throwable paramThrowable);
 
-  void error(String paramString, Object[] paramArrayOfObject);
+    void error(String paramString);
 
-  void error(String paramString, Throwable paramThrowable);
+    void error(String paramString, Object[] paramArrayOfObject);
 
-  void fatal(IMessage paramIMessage);
+    void error(String paramString, Throwable paramThrowable);
 
-  void fatal(IMessage paramIMessage, Throwable paramThrowable);
+    void fatal(IMessage paramIMessage);
 
-  void fatal(Object paramObject);
+    void fatal(IMessage paramIMessage, Throwable paramThrowable);
 
-  void fatal(Object paramObject, Throwable paramThrowable);
+    void fatal(Object paramObject);
 
-  void fatal(String paramString);
+    void fatal(Object paramObject, Throwable paramThrowable);
 
-  void fatal(String paramString, Object[] paramArrayOfObject);
+    void fatal(String paramString);
 
-  void fatal(String paramString, Throwable paramThrowable);
+    void fatal(String paramString, Object[] paramArrayOfObject);
 
-  String getName();
+    void fatal(String paramString, Throwable paramThrowable);
 
-  void info(IMessage paramIMessage);
+    String getName();
 
-  void info(IMessage paramIMessage, Throwable paramThrowable);
+    void info(IMessage paramIMessage);
 
-  void info(Object paramObject);
+    void info(IMessage paramIMessage, Throwable paramThrowable);
 
-  void info(Object paramObject, Throwable paramThrowable);
+    void info(Object paramObject);
 
-  void info(String paramString);
+    void info(Object paramObject, Throwable paramThrowable);
 
-  void info(String paramString, Object[] paramArrayOfObject);
+    void info(String paramString);
 
-  void info(String paramString, Throwable paramThrowable);
+    void info(String paramString, Object[] paramArrayOfObject);
 
-  boolean isDebugEnabled();
+    void info(String paramString, Throwable paramThrowable);
 
-  boolean isEnabled(Level paramLevel);
+    boolean isDebugEnabled();
 
-  boolean isErrorEnabled();
+    boolean isEnabled(Level paramLevel);
 
-  boolean isFatalEnabled();
+    boolean isErrorEnabled();
 
-  boolean isInfoEnabled();
+    boolean isFatalEnabled();
 
-  boolean isTraceEnabled();
+    boolean isInfoEnabled();
 
-  boolean isWarnEnabled();
+    boolean isTraceEnabled();
 
-  void log(Level paramLevel, IMessage paramIMessage);
+    boolean isWarnEnabled();
 
-  void log(Level paramLevel, IMessage paramIMessage, Throwable paramThrowable);
+    void log(Level paramLevel, IMessage paramIMessage);
 
-  void log(Level paramLevel, Object paramObject);
+    void log(Level paramLevel, IMessage paramIMessage, Throwable paramThrowable);
 
-  void log(Level paramLevel, Object paramObject, Throwable paramThrowable);
+    void log(Level paramLevel, Object paramObject);
 
-  void log(Level paramLevel, String paramString);
+    void log(Level paramLevel, Object paramObject, Throwable paramThrowable);
 
-  void log(Level paramLevel, String paramString, Object[] paramArrayOfObject);
+    void log(Level paramLevel, String paramString);
 
-  void log(Level paramLevel, String paramString, Throwable paramThrowable);
+    void log(Level paramLevel, String paramString, Object[] paramArrayOfObject);
 
-  void printf(Level paramLevel, String paramString, Object[] paramArrayOfObject);
+    void log(Level paramLevel, String paramString, Throwable paramThrowable);
 
-  <T extends Throwable> T throwing(Level paramLevel, T paramT);
+    void printf(Level paramLevel, String paramString, Object[] paramArrayOfObject);
 
-  <T extends Throwable> T throwing(T paramT);
+    <T extends Throwable> T throwing(Level paramLevel, T paramT);
 
-  void trace(IMessage paramIMessage);
+    <T extends Throwable> T throwing(T paramT);
 
-  void trace(IMessage paramIMessage, Throwable paramThrowable);
+    void trace(IMessage paramIMessage);
 
-  void trace(Object paramObject);
+    void trace(IMessage paramIMessage, Throwable paramThrowable);
 
-  void trace(Object paramObject, Throwable paramThrowable);
+    void trace(Object paramObject);
 
-  void trace(String paramString);
+    void trace(Object paramObject, Throwable paramThrowable);
 
-  void trace(String paramString, Object[] paramArrayOfObject);
+    void trace(String paramString);
 
-  void trace(String paramString, Throwable paramThrowable);
+    void trace(String paramString, Object[] paramArrayOfObject);
 
-  void warn(IMessage paramIMessage);
+    void trace(String paramString, Throwable paramThrowable);
 
-  void warn(IMessage paramIMessage, Throwable paramThrowable);
+    void warn(IMessage paramIMessage);
 
-  void warn(Object paramObject);
+    void warn(IMessage paramIMessage, Throwable paramThrowable);
 
-  void warn(Object paramObject, Throwable paramThrowable);
+    void warn(Object paramObject);
 
-  void warn(String paramString);
+    void warn(Object paramObject, Throwable paramThrowable);
 
-  void warn(String paramString, Object[] paramArrayOfObject);
+    void warn(String paramString);
 
-  void warn(String paramString, Throwable paramThrowable);
+    void warn(String paramString, Object[] paramArrayOfObject);
+
+    void warn(String paramString, Throwable paramThrowable);
 
 }

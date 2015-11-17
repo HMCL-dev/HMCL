@@ -27,7 +27,9 @@ import org.jackhuang.hellominecraft.utils.functions.Consumer;
  * @param <T> Runnable&lt;T&gt;
  */
 public class TaskRunnableArg1<T> extends TaskInfo implements PreviousResultRegistrar<T> {
+
     private final Consumer<T> r;
+
     public TaskRunnableArg1(String info, Consumer<T> r) {
         super(info);
         this.r = r;
@@ -35,16 +37,17 @@ public class TaskRunnableArg1<T> extends TaskInfo implements PreviousResultRegis
 
     @Override
     public boolean executeTask() {
-        if(al.size() != 1) throw new IllegalStateException("the count of args is not one.");
+        if (al.size() != 1)
+            throw new IllegalStateException("the count of args is not one.");
         try {
             r.accept(al.get(0).getResult());
             return true;
-        } catch(Throwable t) {
+        } catch (Throwable t) {
             setFailReason(t);
             return false;
         }
     }
-    
+
     ArrayList<PreviousResult<T>> al = new ArrayList();
 
     @Override
@@ -52,7 +55,5 @@ public class TaskRunnableArg1<T> extends TaskInfo implements PreviousResultRegis
         al.add(pr);
         return this;
     }
-    
-    
-    
+
 }

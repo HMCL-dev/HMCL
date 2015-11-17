@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.OutputStream;
@@ -18,6 +17,7 @@ import java.io.IOException;
  * people will never need this.
  */
 public class FinishableWrapperOutputStream extends FinishableOutputStream {
+
     /**
      * The {@link java.io.OutputStream OutputStream} that has been
      * wrapped into a FinishableWrapperOutputStream.
@@ -48,7 +48,7 @@ public class FinishableWrapperOutputStream extends FinishableOutputStream {
 
     /**
      * Calls {@link java.io.OutputStream#write(byte[],int,int)
-                    out.write(buf, off, len)}.
+     * out.write(buf, off, len)}.
      */
     public void write(byte[] buf, int off, int len) throws IOException {
         out.write(buf, off, len);

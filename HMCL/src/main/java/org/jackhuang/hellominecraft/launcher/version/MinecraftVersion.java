@@ -33,7 +33,7 @@ import org.jackhuang.hellominecraft.utils.ArrayUtils;
 public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion> {
 
     public String minecraftArguments, mainClass, time, id, type, processArguments,
-            releaseTime, assets, jar, inheritsFrom;
+    releaseTime, assets, jar, inheritsFrom;
     public int minimumLauncherVersion;
     public boolean hidden;
 
@@ -56,7 +56,8 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
         this.inheritsFrom = inheritsFrom;
         this.minimumLauncherVersion = minimumLauncherVersion;
         this.hidden = hidden;
-        if (libraries == null) this.libraries = new ArrayList<>();
+        if (libraries == null)
+            this.libraries = new ArrayList<>();
         else {
             this.libraries = new ArrayList<>(libraries.size());
             for (IMinecraftLibrary library : libraries)
@@ -81,18 +82,19 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
 
         MinecraftVersion parent = manager.getVersionById(inheritsFrom);
         if (parent == null) {
-            if (!manager.install(inheritsFrom, sourceType)) return this;
+            if (!manager.install(inheritsFrom, sourceType))
+                return this;
             parent = manager.getVersionById(inheritsFrom);
         }
         parent = parent.resolve(manager, resolvedSoFar, sourceType);
         MinecraftVersion result = new MinecraftVersion(
-                this.minecraftArguments != null ? this.minecraftArguments : parent.minecraftArguments,
-                this.mainClass != null ? this.mainClass : parent.mainClass,
-                this.time, this.id, this.type, parent.processArguments, this.releaseTime,
-                this.assets != null ? this.assets : parent.assets,
-                this.jar != null ? this.jar : parent.jar,
-                null, parent.minimumLauncherVersion,
-                this.libraries != null ? ArrayUtils.merge(this.libraries, parent.libraries) : parent.libraries, this.hidden);
+        this.minecraftArguments != null ? this.minecraftArguments : parent.minecraftArguments,
+        this.mainClass != null ? this.mainClass : parent.mainClass,
+        this.time, this.id, this.type, parent.processArguments, this.releaseTime,
+        this.assets != null ? this.assets : parent.assets,
+        this.jar != null ? this.jar : parent.jar,
+        null, parent.minimumLauncherVersion,
+        this.libraries != null ? ArrayUtils.merge(this.libraries, parent.libraries) : parent.libraries, this.hidden);
 
         return result;
     }
@@ -109,7 +111,7 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
 
     public File getNatives(File gameDir) {
         return new File(gameDir, "versions/" + id + "/" + id
-                + "-natives");
+                                 + "-natives");
     }
 
     public boolean isAllowedToUnpackNatives() {

@@ -60,7 +60,8 @@ public class OptiFineVersionList extends InstallerVersionList {
     @Override
     public void refreshList(String[] sss) throws Exception {
         String content = NetUtils.doGet("http://optifine.net/downloads");
-        if (versions != null) return;
+        if (versions != null)
+            return;
         versionMap = new HashMap<>();
         versions = new ArrayList<>();
 
@@ -93,7 +94,8 @@ public class OptiFineVersionList extends InstallerVersionList {
                         if (StrUtils.isBlank(v.mcver)) {
                             Pattern p = Pattern.compile("OptiFine (.*?) ");
                             Matcher m = p.matcher(v.ver);
-                            while (m.find()) v.mcver = StrUtils.formatVersion(m.group(1));
+                            while (m.find())
+                                v.mcver = StrUtils.formatVersion(m.group(1));
                         }
                         InstallerVersion iv = new InstallerVersion(v.ver, StrUtils.formatVersion(v.mcver));
                         iv.installer = iv.universal = v.mirror;
@@ -119,10 +121,13 @@ public class OptiFineVersionList extends InstallerVersionList {
 
     @Override
     public List<InstallerVersion> getVersions(String mcVersion) {
-        if (versions == null || versionMap == null) return null;
-        if (StrUtils.isBlank(mcVersion)) return versions;
+        if (versions == null || versionMap == null)
+            return null;
+        if (StrUtils.isBlank(mcVersion))
+            return versions;
         List c = versionMap.get(mcVersion);
-        if (c == null) return versions;
+        if (c == null)
+            return versions;
         Collections.sort(c, InstallerVersionComparator.INSTANCE);
         return c;
     }

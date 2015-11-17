@@ -85,9 +85,10 @@ public class MessageBox {
     /**
      * Show MsgBox with title and options
      *
-     * @param Msg The Message
-     * @param Title The title of MsgBox.
+     * @param Msg    The Message
+     * @param Title  The title of MsgBox.
      * @param Option The type of MsgBox.
+     *
      * @return user operation.
      */
     public static int Show(String Msg, String Title, int Option) {
@@ -105,8 +106,9 @@ public class MessageBox {
     /**
      * Show MsgBox with options
      *
-     * @param Msg The Message
+     * @param Msg    The Message
      * @param Option The type of MsgBox.
+     *
      * @return User Operation
      */
     public static int Show(String Msg, int Option) {
@@ -117,6 +119,7 @@ public class MessageBox {
      * Show Default MsgBox
      *
      * @param Msg The Message
+     *
      * @return User Operation
      */
     public static int Show(String Msg) {

@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 /**
@@ -17,6 +16,7 @@ package org.tukaani.xz;
  * included in the error detail message in human readable format.
  */
 public class MemoryLimitException extends XZIOException {
+
     private static final long serialVersionUID = 3L;
 
     private final int memoryNeeded;
@@ -28,8 +28,8 @@ public class MemoryLimitException extends XZIOException {
      * The amount of memory needed and the memory usage limit are
      * included in the error detail message.
      *
-     * @param   memoryNeeded    amount of memory needed as kibibytes (KiB)
-     * @param   memoryLimit     specified memory usage limit as kibibytes (KiB)
+     * @param memoryNeeded amount of memory needed as kibibytes (KiB)
+     * @param memoryLimit  specified memory usage limit as kibibytes (KiB)
      */
     public MemoryLimitException(int memoryNeeded, int memoryLimit) {
         super("" + memoryNeeded + " KiB of memory would be needed; limit was "
@@ -42,7 +42,7 @@ public class MemoryLimitException extends XZIOException {
     /**
      * Gets how much memory is required to decompress the data.
      *
-     * @return      amount of memory needed as kibibytes (KiB)
+     * @return amount of memory needed as kibibytes (KiB)
      */
     public int getMemoryNeeded() {
         return memoryNeeded;
@@ -52,7 +52,7 @@ public class MemoryLimitException extends XZIOException {
      * Gets what the memory usage limit was at the time the exception
      * was created.
      *
-     * @return      memory usage limit as kibibytes (KiB)
+     * @return memory usage limit as kibibytes (KiB)
      */
     public int getMemoryLimit() {
         return memoryLimit;

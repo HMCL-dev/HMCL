@@ -31,138 +31,135 @@ public class Logger extends AbstractLogger {
 
     protected volatile PrivateConfig config;
     private final Map<String, AppenderControl> appenders = new ConcurrentHashMap();
-    
+
     public Logger(String name) {
-	this(name, null, Level.INFO);
+        this(name, null, Level.INFO);
     }
 
     public Logger(String name, IMessageFactory messageFactory, Level defaultLevel) {
-	super(name, messageFactory);
-	this.config = new PrivateConfig(Configuration.DEFAULT, this, defaultLevel);
+        super(name, messageFactory);
+        this.config = new PrivateConfig(Configuration.DEFAULT, this, defaultLevel);
     }
 
     public synchronized void setLevel(Level level) {
-	if (level != null) {
-	    this.config = new PrivateConfig(this.config, level);
-	}
+        if (level != null)
+            this.config = new PrivateConfig(this.config, level);
     }
 
     public Level getLevel() {
-	return this.config.level;
+        return this.config.level;
     }
 
     @Override
     public void abstractLog(Level level, IMessage data, Throwable t) {
-	LogEvent event = new LogEvent();
-	event.level = level;
-	event.message = data;
-	event.thrown = t;
-	event.threadName = Thread.currentThread().getName();
+        LogEvent event = new LogEvent();
+        event.level = level;
+        event.message = data;
+        event.thrown = t;
+        event.threadName = Thread.currentThread().getName();
 
-	log(event);
+        log(event);
     }
 
     public void log(LogEvent event) {
-	callAppenders(event);
+        callAppenders(event);
     }
 
     protected void callAppenders(LogEvent event) {
-	for (AppenderControl control : this.appenders.values()) {
-	    control.callAppender(event);
-	}
+        for (AppenderControl control : this.appenders.values())
+            control.callAppender(event);
     }
 
     @Override
     public boolean isEnabled(Level level, String msg) {
-	return this.config.filter(level, msg);
+        return this.config.filter(level, msg);
     }
 
     @Override
     public boolean isEnabled(Level level, String msg, Throwable t) {
-	return this.config.filter(level, msg, t);
+        return this.config.filter(level, msg, t);
     }
 
     @Override
     public boolean isEnabled(Level level, String msg, Object[] p1) {
-	return this.config.filter(level, msg, p1);
+        return this.config.filter(level, msg, p1);
     }
 
     @Override
     public boolean isEnabled(Level level, Object msg, Throwable t) {
-	return this.config.filter(level, msg, t);
+        return this.config.filter(level, msg, t);
     }
 
     @Override
     public boolean isEnabled(Level level, IMessage msg, Throwable t) {
-	return this.config.filter(level, msg, t);
+        return this.config.filter(level, msg, t);
     }
 
     public void addAppender(IAppender appender) {
-	this.appenders.put(appender.getName(), new AppenderControl(appender, null));
+        this.appenders.put(appender.getName(), new AppenderControl(appender, null));
     }
 
     public void removeAppender(IAppender appender) {
-	this.appenders.remove(appender.getName());
+        this.appenders.remove(appender.getName());
     }
 
     public Map<String, IAppender> getAppenders() {
-	Map map = new HashMap();
-	for (Map.Entry entry : this.appenders.entrySet()) {
-	    map.put(entry.getKey(), ((AppenderControl) entry.getValue()).getAppender());
-	}
-	return map;
+        Map map = new HashMap();
+        for (Map.Entry entry : this.appenders.entrySet())
+            map.put(entry.getKey(), ((AppenderControl) entry.getValue()).getAppender());
+        return map;
     }
 
     @Override
     public String toString() {
-	String nameLevel = "" + getName() + ":" + getLevel();
-	return nameLevel;
+        String nameLevel = "" + getName() + ":" + getLevel();
+        return nameLevel;
     }
 
     protected class PrivateConfig {
 
-	public final Configuration config;
-	private final Level level;
-	private final int intLevel;
-	private final Logger logger;
+        public final Configuration config;
+        private final Level level;
+        private final int intLevel;
+        private final Logger logger;
 
-	public PrivateConfig(Configuration c, Logger logger, Level level) {
-	    this.level = level;
-	    this.intLevel = this.level.level;
-	    this.logger = logger;
-	    
-	    this.config = c;
-	    for(IAppender appender : config.appenders)
-		addAppender(appender);
-	}
+        public PrivateConfig(Configuration c, Logger logger, Level level) {
+            this.level = level;
+            this.intLevel = this.level.level;
+            this.logger = logger;
 
-	public PrivateConfig(PrivateConfig pc, Level level) {
-	    this(pc.config, pc.logger, level);
-	}
+            this.config = c;
+            for (IAppender appender : config.appenders)
+                addAppender(appender);
+        }
 
-	boolean filter(Level level, String msg) {
+        public PrivateConfig(PrivateConfig pc, Level level) {
+            this(pc.config, pc.logger, level);
+        }
 
-	    return this.intLevel >= level.level;
-	}
+        boolean filter(Level level, String msg) {
 
-	boolean filter(Level level, String msg, Throwable t) {
+            return this.intLevel >= level.level;
+        }
 
-	    return this.intLevel >= level.level;
-	}
+        boolean filter(Level level, String msg, Throwable t) {
 
-	boolean filter(Level level, String msg, Object[] p1) {
+            return this.intLevel >= level.level;
+        }
 
-	    return this.intLevel >= level.level;
-	}
+        boolean filter(Level level, String msg, Object[] p1) {
 
-	boolean filter(Level level, Object msg, Throwable t) {
+            return this.intLevel >= level.level;
+        }
 
-	    return this.intLevel >= level.level;
-	}
+        boolean filter(Level level, Object msg, Throwable t) {
 
-	boolean filter(Level level, IMessage msg, Throwable t) {
+            return this.intLevel >= level.level;
+        }
 
-	    return this.intLevel >= level.level;
-	}
+        boolean filter(Level level, IMessage msg, Throwable t) {
+
+            return this.intLevel >= level.level;
+        }
     }
 }

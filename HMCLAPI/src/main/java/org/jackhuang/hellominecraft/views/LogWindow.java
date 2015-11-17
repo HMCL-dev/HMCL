@@ -238,11 +238,11 @@ public class LogWindow extends javax.swing.JFrame {
     public void log(String status) {
         log(status, Level.INFO);
     }
-    
+
     public void warning(String status) {
         log(status, Level.WARN);
     }
-    
+
     public void log(String status, Level c) {
         status = status.replace("\t", "    ");
         Document d = txtLog.getStyledDocument();

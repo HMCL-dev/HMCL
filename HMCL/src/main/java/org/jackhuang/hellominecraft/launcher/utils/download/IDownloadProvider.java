@@ -41,7 +41,7 @@ public interface IDownloadProvider {
     String getVersionsListDownloadURL();
 
     String getAssetsDownloadURL();
-    
+
     String getParsedLibraryDownloadURL(String str);
 
     boolean isAllowedToUseSelfURL();

@@ -7,7 +7,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.lzma;
 
 import org.tukaani.xz.lz.LZEncoder;
@@ -15,6 +14,7 @@ import org.tukaani.xz.lz.Matches;
 import org.tukaani.xz.rangecoder.RangeEncoder;
 
 public abstract class LZMAEncoder extends LZMACoder {
+
     public static final int MODE_FAST = 1;
     public static final int MODE_NORMAL = 2;
 
@@ -28,7 +28,7 @@ public abstract class LZMAEncoder extends LZMACoder {
      * less space than MATCH_LEN_MAX bytes.
      */
     private static final int LZMA2_UNCOMPRESSED_LIMIT
-            = (2 << 20) - MATCH_LEN_MAX;
+                             = (2 << 20) - MATCH_LEN_MAX;
 
     /**
      * LZMA2 chunk is considered full when its compressed size exceeds
@@ -58,7 +58,7 @@ public abstract class LZMAEncoder extends LZMACoder {
     private final int distSlotPricesSize;
     private final int[][] distSlotPrices;
     private final int[][] fullDistPrices
-            = new int[DIST_STATES][FULL_DISTANCES];
+                          = new int[DIST_STATES][FULL_DISTANCES];
     private final int[] alignPrices = new int[ALIGN_SIZE];
 
     int back = 0;
@@ -72,12 +72,12 @@ public abstract class LZMAEncoder extends LZMACoder {
         switch (mode) {
             case MODE_FAST:
                 m += LZMAEncoderFast.getMemoryUsage(
-                        dictSize, extraSizeBefore, mf);
+                dictSize, extraSizeBefore, mf);
                 break;
 
             case MODE_NORMAL:
                 m += LZMAEncoderNormal.getMemoryUsage(
-                        dictSize, extraSizeBefore, mf);
+                dictSize, extraSizeBefore, mf);
                 break;
 
             default:
@@ -88,9 +88,9 @@ public abstract class LZMAEncoder extends LZMACoder {
     }
 
     public static LZMAEncoder getInstance(
-                RangeEncoder rc, int lc, int lp, int pb, int mode,
-                int dictSize, int extraSizeBefore,
-                int niceLen, int mf, int depthLimit) {
+    RangeEncoder rc, int lc, int lp, int pb, int mode,
+    int dictSize, int extraSizeBefore,
+    int niceLen, int mf, int depthLimit) {
         switch (mode) {
             case MODE_FAST:
                 return new LZMAEncoderFast(rc, lc, lp, pb,
@@ -207,14 +207,14 @@ public abstract class LZMAEncoder extends LZMACoder {
     /**
      * Compresses for LZMA2.
      *
-     * @return      true if the LZMA2 chunk became full, false otherwise
+     * @return true if the LZMA2 chunk became full, false otherwise
      */
     public boolean encodeForLZMA2() {
         if (!lz.isStarted() && !encodeInit())
             return false;
 
         while (uncompressedSize <= LZMA2_UNCOMPRESSED_LIMIT
-                && rc.getPendingSize() <= LZMA2_COMPRESSED_LIMIT)
+               && rc.getPendingSize() <= LZMA2_COMPRESSED_LIMIT)
             if (!encodeSymbol())
                 return false;
 
@@ -291,11 +291,11 @@ public abstract class LZMAEncoder extends LZMACoder {
             int base = (2 | (distSlot & 1)) << footerBits;
             int distReduced = dist - base;
 
-            if (distSlot < DIST_MODEL_END) {
+            if (distSlot < DIST_MODEL_END)
                 rc.encodeReverseBitTree(
-                        distSpecial[distSlot - DIST_MODEL_START],
-                        distReduced);
-            } else {
+                distSpecial[distSlot - DIST_MODEL_START],
+                distReduced);
+            else {
                 rc.encodeDirectBits(distReduced >>> ALIGN_BITS,
                                     footerBits - ALIGN_BITS);
                 rc.encodeReverseBitTree(distAlign, distReduced & ALIGN_MASK);
@@ -319,9 +319,9 @@ public abstract class LZMAEncoder extends LZMACoder {
             int dist = reps[rep];
             rc.encodeBit(isRep0, state.get(), 1);
 
-            if (rep == 1) {
+            if (rep == 1)
                 rc.encodeBit(isRep1, state.get(), 0);
-            } else {
+            else {
                 rc.encodeBit(isRep1, state.get(), 1);
                 rc.encodeBit(isRep2, state.get(), rep - 2);
 
@@ -335,9 +335,9 @@ public abstract class LZMAEncoder extends LZMACoder {
             reps[0] = dist;
         }
 
-        if (len == 1) {
+        if (len == 1)
             state.updateShortRep();
-        } else {
+        else {
             repLenEncoder.encode(len, posState);
             state.updateLongRep();
         }
@@ -379,11 +379,11 @@ public abstract class LZMAEncoder extends LZMACoder {
     int getLongRepPrice(int anyRepPrice, int rep, State state, int posState) {
         int price = anyRepPrice;
 
-        if (rep == 0) {
+        if (rep == 0)
             price += RangeEncoder.getBitPrice(isRep0[state.get()], 0)
                      + RangeEncoder.getBitPrice(
-                       isRep0Long[state.get()][posState], 1);
-        } else {
+            isRep0Long[state.get()][posState], 1);
+        else {
             price += RangeEncoder.getBitPrice(isRep0[state.get()], 1);
 
             if (rep == 1)
@@ -410,9 +410,9 @@ public abstract class LZMAEncoder extends LZMACoder {
                     + matchLenEncoder.getPrice(len, posState);
         int distState = getDistState(len);
 
-        if (dist < FULL_DISTANCES) {
+        if (dist < FULL_DISTANCES)
             price += fullDistPrices[distState][dist];
-        } else {
+        else {
             // Note that distSlotPrices includes also
             // the price of direct bits.
             int distSlot = getDistSlot(dist);
@@ -429,24 +429,24 @@ public abstract class LZMAEncoder extends LZMACoder {
         for (int distState = 0; distState < DIST_STATES; ++distState) {
             for (int distSlot = 0; distSlot < distSlotPricesSize; ++distSlot)
                 distSlotPrices[distState][distSlot]
-                        = RangeEncoder.getBitTreePrice(
-                          distSlots[distState], distSlot);
+                = RangeEncoder.getBitTreePrice(
+                distSlots[distState], distSlot);
 
             for (int distSlot = DIST_MODEL_END; distSlot < distSlotPricesSize;
-                    ++distSlot) {
+                 ++distSlot) {
                 int count = (distSlot >>> 1) - 1 - ALIGN_BITS;
                 distSlotPrices[distState][distSlot]
-                        += RangeEncoder.getDirectBitsPrice(count);
+                += RangeEncoder.getDirectBitsPrice(count);
             }
 
             for (int dist = 0; dist < DIST_MODEL_START; ++dist)
                 fullDistPrices[distState][dist]
-                        = distSlotPrices[distState][dist];
+                = distSlotPrices[distState][dist];
         }
 
         int dist = DIST_MODEL_START;
         for (int distSlot = DIST_MODEL_START; distSlot < DIST_MODEL_END;
-                ++distSlot) {
+             ++distSlot) {
             int footerBits = (distSlot >>> 1) - 1;
             int base = (2 | (distSlot & 1)) << footerBits;
 
@@ -454,12 +454,12 @@ public abstract class LZMAEncoder extends LZMACoder {
             for (int i = 0; i < limit; ++i) {
                 int distReduced = dist - base;
                 int price = RangeEncoder.getReverseBitTreePrice(
-                        distSpecial[distSlot - DIST_MODEL_START],
-                        distReduced);
+                distSpecial[distSlot - DIST_MODEL_START],
+                distReduced);
 
                 for (int distState = 0; distState < DIST_STATES; ++distState)
                     fullDistPrices[distState][dist]
-                            = distSlotPrices[distState][distSlot] + price;
+                    = distSlotPrices[distState][distSlot] + price;
 
                 ++dist;
             }
@@ -492,8 +492,8 @@ public abstract class LZMAEncoder extends LZMACoder {
         repLenEncoder.updatePrices();
     }
 
-
     class LiteralEncoder extends LiteralCoder {
+
         LiteralSubencoder[] subencoders;
 
         LiteralEncoder(int lc, int lp) {
@@ -527,17 +527,18 @@ public abstract class LZMAEncoder extends LZMACoder {
         int getPrice(int curByte, int matchByte,
                      int prevByte, int pos, State state) {
             int price = RangeEncoder.getBitPrice(
-                    isMatch[state.get()][pos & posMask], 0);
+            isMatch[state.get()][pos & posMask], 0);
 
             int i = getSubcoderIndex(prevByte, pos);
             price += state.isLiteral()
-                   ? subencoders[i].getNormalPrice(curByte)
-                   : subencoders[i].getMatchedPrice(curByte, matchByte);
+                     ? subencoders[i].getNormalPrice(curByte)
+                     : subencoders[i].getMatchedPrice(curByte, matchByte);
 
             return price;
         }
 
         private class LiteralSubencoder extends LiteralSubcoder {
+
             void encode() {
                 int symbol = lz.getByte(readAhead) | 0x100;
 
@@ -616,8 +617,8 @@ public abstract class LZMAEncoder extends LZMACoder {
         }
     }
 
-
     class LengthEncoder extends LengthCoder {
+
         /**
          * The prices are updated after at least
          * <code>PRICE_UPDATE_INTERVAL</code> many lengths
@@ -676,12 +677,11 @@ public abstract class LZMAEncoder extends LZMACoder {
         }
 
         void updatePrices() {
-            for (int posState = 0; posState < counters.length; ++posState) {
+            for (int posState = 0; posState < counters.length; ++posState)
                 if (counters[posState] <= 0) {
                     counters[posState] = PRICE_UPDATE_INTERVAL;
                     updatePrices(posState);
                 }
-            }
         }
 
         private void updatePrices(int posState) {
@@ -690,22 +690,22 @@ public abstract class LZMAEncoder extends LZMACoder {
             int i = 0;
             for (; i < LOW_SYMBOLS; ++i)
                 prices[posState][i] = choice0Price
-                        + RangeEncoder.getBitTreePrice(low[posState], i);
+                                      + RangeEncoder.getBitTreePrice(low[posState], i);
 
             choice0Price = RangeEncoder.getBitPrice(choice[0], 1);
             int choice1Price = RangeEncoder.getBitPrice(choice[1], 0);
 
             for (; i < LOW_SYMBOLS + MID_SYMBOLS; ++i)
                 prices[posState][i] = choice0Price + choice1Price
-                         + RangeEncoder.getBitTreePrice(mid[posState],
-                                                        i - LOW_SYMBOLS);
+                                      + RangeEncoder.getBitTreePrice(mid[posState],
+                                                                     i - LOW_SYMBOLS);
 
             choice1Price = RangeEncoder.getBitPrice(choice[1], 1);
 
             for (; i < prices[posState].length; ++i)
                 prices[posState][i] = choice0Price + choice1Price
-                         + RangeEncoder.getBitTreePrice(high, i - LOW_SYMBOLS
-                                                              - MID_SYMBOLS);
+                                      + RangeEncoder.getBitTreePrice(high, i - LOW_SYMBOLS
+                                                                           - MID_SYMBOLS);
         }
     }
 }

@@ -27,7 +27,7 @@ import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 
 public abstract class AbstractFilter
-        implements BufferedImageOp {
+implements BufferedImageOp {
 
     @Override
     public abstract BufferedImage filter(BufferedImage paramBufferedImage1, BufferedImage paramBufferedImage2);

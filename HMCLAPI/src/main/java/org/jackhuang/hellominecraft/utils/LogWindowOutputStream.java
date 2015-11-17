@@ -27,7 +27,7 @@ import org.jackhuang.hellominecraft.views.LogWindow;
  * @author huangyuhui
  */
 public class LogWindowOutputStream extends OutputStream {
-    
+
     private static final Timer TIMER = new Timer();
 
     private final LogWindow txt;
@@ -84,9 +84,9 @@ public class LogWindowOutputStream extends OutputStream {
 
     @Override
     public final void write(int paramInt) {
-        append(new String(new byte[]{(byte) paramInt}));
+        append(new String(new byte[] {(byte) paramInt}));
     }
-    
+
     public static void dispose() {
         TIMER.cancel();
     }

@@ -27,9 +27,8 @@ public class FastBlurFilter extends AbstractFilter {
     }
 
     public FastBlurFilter(int radius) {
-        if (radius < 1) {
+        if (radius < 1)
             radius = 1;
-        }
 
         this.radius = radius;
     }
@@ -43,9 +42,8 @@ public class FastBlurFilter extends AbstractFilter {
         int width = src.getWidth();
         int height = src.getHeight();
 
-        if (dst == null) {
+        if (dst == null)
             dst = createCompatibleDestImage(src, null);
-        }
 
         int[] srcPixels = new int[width * height];
         int[] dstPixels = new int[width * height];
@@ -68,22 +66,18 @@ public class FastBlurFilter extends AbstractFilter {
         int srcIndex = 0;
 
         int[] sumLookupTable = new int[256 * windowSize];
-        for (int i = 0; i < sumLookupTable.length; i++) {
+        for (int i = 0; i < sumLookupTable.length; i++)
             sumLookupTable[i] = (i / windowSize);
-        }
 
         int[] indexLookupTable = new int[radiusPlusOne];
-        if (radius < width) {
-            for (int i = 0; i < indexLookupTable.length; i++) {
+        if (radius < width)
+            for (int i = 0; i < indexLookupTable.length; i++)
                 indexLookupTable[i] = i;
-            }
-        } else {
-            for (int i = 0; i < width; i++) {
+        else {
+            for (int i = 0; i < width; i++)
                 indexLookupTable[i] = i;
-            }
-            for (int i = width; i < indexLookupTable.length; i++) {
+            for (int i = width; i < indexLookupTable.length; i++)
                 indexLookupTable[i] = (width - 1);
-            }
         }
 
         for (int y = 0; y < height; y++) {
@@ -113,14 +107,12 @@ public class FastBlurFilter extends AbstractFilter {
                 dstIndex += height;
 
                 int nextPixelIndex = x + radiusPlusOne;
-                if (nextPixelIndex >= width) {
+                if (nextPixelIndex >= width)
                     nextPixelIndex = width - 1;
-                }
 
                 int previousPixelIndex = x - radius;
-                if (previousPixelIndex < 0) {
+                if (previousPixelIndex < 0)
                     previousPixelIndex = 0;
-                }
 
                 int nextPixel = srcPixels[(srcIndex + nextPixelIndex)];
                 int previousPixel = srcPixels[(srcIndex + previousPixelIndex)];

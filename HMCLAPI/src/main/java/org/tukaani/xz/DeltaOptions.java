@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.InputStream;
@@ -27,6 +26,7 @@ import java.io.InputStream;
  * FLAC will give much smaller result at much better compression speed.
  */
 public class DeltaOptions extends FilterOptions {
+
     /**
      * Smallest supported delta calculation distance.
      */
@@ -42,7 +42,8 @@ public class DeltaOptions extends FilterOptions {
     /**
      * Creates new Delta options and sets the delta distance to 1 byte.
      */
-    public DeltaOptions() {}
+    public DeltaOptions() {
+    }
 
     /**
      * Creates new Delta options and sets the distance to the given value.
@@ -58,8 +59,8 @@ public class DeltaOptions extends FilterOptions {
     public void setDistance(int distance) throws UnsupportedOptionsException {
         if (distance < DISTANCE_MIN || distance > DISTANCE_MAX)
             throw new UnsupportedOptionsException(
-                    "Delta distance must be in the range [" + DISTANCE_MIN
-                    + ", " + DISTANCE_MAX + "]: " + distance);
+            "Delta distance must be in the range [" + DISTANCE_MIN
+            + ", " + DISTANCE_MAX + "]: " + distance);
 
         this.distance = distance;
     }

@@ -6,10 +6,10 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 abstract class BCJOptions extends FilterOptions {
+
     private final int alignment;
     int startOffset = 0;
 
@@ -23,10 +23,10 @@ abstract class BCJOptions extends FilterOptions {
      * The default value is <code>0</code>.
      */
     public void setStartOffset(int startOffset)
-            throws UnsupportedOptionsException {
+    throws UnsupportedOptionsException {
         if ((startOffset & (alignment - 1)) != 0)
             throw new UnsupportedOptionsException(
-                    "Start offset must be a multiple of " + alignment);
+            "Start offset must be a multiple of " + alignment);
 
         this.startOffset = startOffset;
     }

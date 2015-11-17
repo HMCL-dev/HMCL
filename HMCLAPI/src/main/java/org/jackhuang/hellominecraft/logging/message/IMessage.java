@@ -23,8 +23,12 @@ import java.io.Serializable;
  * @author huangyuhui
  */
 public interface IMessage extends Serializable {
+
     String getFormattedMessage();
+
     String getFormat();
+
     Object[] getParameters();
+
     Throwable getThrowable();
 }

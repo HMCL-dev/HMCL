@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.InputStream;
@@ -14,6 +13,7 @@ import java.io.IOException;
 import org.tukaani.xz.simple.SimpleFilter;
 
 class SimpleInputStream extends InputStream {
+
     private static final int FILTER_BUF_SIZE = 4096;
 
     private InputStream in;
@@ -127,12 +127,11 @@ class SimpleInputStream extends InputStream {
     }
 
     public void close() throws IOException {
-        if (in != null) {
+        if (in != null)
             try {
                 in.close();
             } finally {
                 in = null;
             }
-        }
     }
 }

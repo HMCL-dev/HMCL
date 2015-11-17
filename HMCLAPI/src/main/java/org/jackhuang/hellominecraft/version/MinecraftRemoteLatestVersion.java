@@ -21,7 +21,7 @@ package org.jackhuang.hellominecraft.version;
  * @author huangyuhui
  */
 public class MinecraftRemoteLatestVersion {
-    
+
     public String snapshot, release;
-    
+
 }

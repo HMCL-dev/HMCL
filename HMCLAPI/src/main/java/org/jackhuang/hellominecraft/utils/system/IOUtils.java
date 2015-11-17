@@ -169,7 +169,7 @@ public class IOUtils {
     public static String getJavaDir() {
         return getJavaDir(System.getProperty("java.home"));
     }
-    
+
     public static String getJavaDir(String home) {
         String path = home + File.separatorChar + "bin" + File.separatorChar;
         path = addSeparator(path);
@@ -218,19 +218,19 @@ public class IOUtils {
     }
 
     public static void write(byte[] data, OutputStream output)
-            throws IOException {
+    throws IOException {
         if (data != null)
             output.write(data);
     }
 
     public static void write(String data, OutputStream output, String encoding)
-            throws IOException {
+    throws IOException {
         if (data != null)
             output.write(data.getBytes(encoding));
     }
 
     public static FileInputStream openInputStream(File file)
-            throws IOException {
+    throws IOException {
         if (file.exists()) {
             if (file.isDirectory())
                 throw new IOException("File '" + file + "' exists but is a directory");
@@ -277,29 +277,27 @@ public class IOUtils {
             return null;
         }
     }
-    
+
     public static List<String> readProcessByInputStream(String[] cmd) throws IOException, InterruptedException {
         JavaProcess jp = new JavaProcess(cmd, new ProcessBuilder(cmd).start(), null);
         ArrayList<String> lines = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(jp.getRawProcess().getInputStream()))) {
             jp.getRawProcess().waitFor();
             String line;
-            while((line = br.readLine()) != null) {
+            while ((line = br.readLine()) != null)
                 lines.add(line);
-            }
         }
         return lines;
     }
-    
+
     public static List<String> readProcessByErrorStream(String[] cmd) throws IOException, InterruptedException {
         JavaProcess jp = new JavaProcess(cmd, new ProcessBuilder(cmd).start(), null);
         ArrayList<String> lines = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(jp.getRawProcess().getErrorStream()))) {
             jp.getRawProcess().waitFor();
             String line;
-            while((line = br.readLine()) != null) {
+            while ((line = br.readLine()) != null)
                 lines.add(line);
-            }
         }
         return lines;
     }

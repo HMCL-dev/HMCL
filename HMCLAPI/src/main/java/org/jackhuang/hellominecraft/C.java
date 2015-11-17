@@ -30,12 +30,12 @@ public final class C {
     public static final Gson gson = new Gson();
 
     public static final ResourceBundle I18N;
-    
+
     static {
         ResourceBundle rb = null;
         try {
             rb = ResourceBundle.getBundle("org/jackhuang/hellominecraft/launcher/I18N");
-        } catch(Throwable t) {
+        } catch (Throwable t) {
             rb = null;
             System.out.println("Did you delete I18N.properties?");
             t.printStackTrace();

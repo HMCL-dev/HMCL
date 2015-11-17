@@ -60,7 +60,9 @@ public final class Utils {
             Field field = ClassLoader.class.getDeclaredField("usr_paths");
             field.setAccessible(true);
             String[] paths = (String[]) field.get(null);
-            for (String path : paths) if (s.equals(path)) return;
+            for (String path : paths)
+                if (s.equals(path))
+                    return;
             String[] tmp = new String[paths.length + 1];
             System.arraycopy(paths, 0, tmp, 0, paths.length);
             tmp[paths.length] = s;
@@ -166,6 +168,7 @@ public final class Utils {
 
     /**
      * In order to fight against the permission manager by Minecraft Forge.
+     *
      * @param status exit code
      */
     public static void shutdownForcely(int status) {
@@ -181,6 +184,7 @@ public final class Utils {
     }
 
     public static void requireNonNull(Object o) {
-        if (o == null) throw new NullPointerException("Oh dear, there is a problem...");
+        if (o == null)
+            throw new NullPointerException("Oh dear, there is a problem...");
     }
 }

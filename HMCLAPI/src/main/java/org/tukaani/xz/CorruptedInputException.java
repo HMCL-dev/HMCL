@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 /**
@@ -15,6 +14,7 @@ package org.tukaani.xz;
  * already read from the input stream was corrupt too.
  */
 public class CorruptedInputException extends XZIOException {
+
     private static final long serialVersionUID = 3L;
 
     /**
@@ -29,7 +29,7 @@ public class CorruptedInputException extends XZIOException {
      * Creates a new CorruptedInputException with
      * the specified error detail message.
      *
-     * @param       s           error detail message
+     * @param s error detail message
      */
     public CorruptedInputException(String s) {
         super(s);

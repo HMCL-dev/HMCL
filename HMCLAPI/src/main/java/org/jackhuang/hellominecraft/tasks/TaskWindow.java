@@ -30,15 +30,15 @@ import org.jackhuang.hellominecraft.utils.SwingUtils;
  * @author huangyuhui
  */
 public class TaskWindow extends javax.swing.JDialog
-        implements ProgressProviderListener, Runnable, DoingDoneListener<Task> {
+implements ProgressProviderListener, Runnable, DoingDoneListener<Task> {
 
     private static final TaskWindow instance = new TaskWindow();
-    
+
     private static TaskWindow inst() {
         instance.clean();
         return instance;
     }
-    
+
     public static TaskWindowFactory getInstance() {
         return new TaskWindowFactory();
     }
@@ -72,14 +72,16 @@ public class TaskWindow extends javax.swing.JDialog
     }
 
     public synchronized void clean() {
-        if (isVisible()) return;
+        if (isVisible())
+            return;
         taskList = new TaskList();
         taskList.addTaskListener(this);
         taskList.addAllDoneListener(this);
     }
 
     public boolean start() {
-        if (isVisible() || taskList == null || taskList.isAlive()) return false;
+        if (isVisible() || taskList == null || taskList.isAlive())
+            return false;
         pgsTotal.setValue(0);
         suc = false;
         SwingUtils.clearDefaultTable(lstDownload);
@@ -169,7 +171,8 @@ public class TaskWindow extends javax.swing.JDialog
     }//GEN-LAST:event_btnCancelActionPerformed
 
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
-        if(taskList == null) return;
+        if (taskList == null)
+            return;
         tasks.clear();
 
         if (!this.failReasons.isEmpty()) {
@@ -203,7 +206,8 @@ public class TaskWindow extends javax.swing.JDialog
     public void setProgress(Task task, int progress, int max) {
         SwingUtilities.invokeLater(() -> {
             int idx = tasks.indexOf(task);
-            if (idx == -1) return;
+            if (idx == -1)
+                return;
             int pgs = progress * 100 / max;
             if (progresses.contains(idx) && progresses.get(idx) != pgs && lstDownload.getRowCount() > idx) {
                 SwingUtils.setValueAt(lstDownload, pgs + "%", idx, 1);
@@ -224,7 +228,8 @@ public class TaskWindow extends javax.swing.JDialog
         task.setProgressProviderListener(this);
 
         SwingUtilities.invokeLater(() -> {
-            if(taskList == null) return;
+            if (taskList == null)
+                return;
             tasks.add(task);
             progresses.add(0);
             SwingUtils.appendLast(lstDownload, task.getInfo(), "0%");
@@ -239,11 +244,13 @@ public class TaskWindow extends javax.swing.JDialog
     @Override
     public void onDone(Task task) {
         SwingUtilities.invokeLater(() -> {
-            if(taskList == null) return;
+            if (taskList == null)
+                return;
             pgsTotal.setMaximum(taskList.taskCount());
             pgsTotal.setValue(pgsTotal.getValue() + 1);
             int idx = tasks.indexOf(task);
-            if (idx == -1) return;
+            if (idx == -1)
+                return;
             tasks.remove(idx);
             progresses.remove(idx);
             SwingUtils.removeRow(lstDownload, idx);
@@ -253,12 +260,14 @@ public class TaskWindow extends javax.swing.JDialog
     @Override
     public void onFailed(Task task) {
         SwingUtilities.invokeLater(() -> {
-            if(taskList == null) return;
+            if (taskList == null)
+                return;
             failReasons.add(task.getInfo() + ": " + (null == task.getFailReason() ? "No exception" : (StrUtils.isBlank(task.getFailReason().getLocalizedMessage()) ? task.getFailReason().getClass().getSimpleName() : task.getFailReason().getLocalizedMessage())));
             pgsTotal.setMaximum(taskList.taskCount());
             pgsTotal.setValue(pgsTotal.getValue() + 1);
             int idx = tasks.indexOf(task);
-            if (idx == -1) return;
+            if (idx == -1)
+                return;
             SwingUtils.setValueAt(lstDownload, task.getFailReason(), idx, 0);
             SwingUtils.setValueAt(lstDownload, "0%", idx, 1);
             SwingUtils.moveEnd(srlDownload);
@@ -273,26 +282,31 @@ public class TaskWindow extends javax.swing.JDialog
     @Override
     public void setStatus(Task task, String sta) {
         SwingUtilities.invokeLater(() -> {
-            if(taskList == null) return;
+            if (taskList == null)
+                return;
             int idx = tasks.indexOf(task);
-            if (idx == -1) return;
+            if (idx == -1)
+                return;
             SwingUtils.setValueAt(lstDownload, task.getInfo() + ": " + sta, idx, 0);
         });
     }
-    
+
     public static class TaskWindowFactory {
+
         LinkedList<Task> ll = new LinkedList<>();
-        
+
         public TaskWindowFactory addTask(Task t) {
             ll.add(t);
             return this;
         }
-        
+
         public boolean start() {
-            synchronized(instance) {
-                if (instance.isVisible()) return false;
+            synchronized (instance) {
+                if (instance.isVisible())
+                    return false;
                 TaskWindow tw = inst();
-                for(Task t : ll) tw.addTask(t);
+                for (Task t : ll)
+                    tw.addTask(t);
                 return tw.start();
             }
         }

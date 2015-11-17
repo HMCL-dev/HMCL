@@ -6,16 +6,16 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 class DeltaEncoder extends DeltaCoder implements FilterEncoder {
+
     private final DeltaOptions options;
     private final byte[] props = new byte[1];
 
     DeltaEncoder(DeltaOptions options) {
-        props[0] = (byte)(options.getDistance() - 1);
-        this.options = (DeltaOptions)options.clone();
+        props[0] = (byte) (options.getDistance() - 1);
+        this.options = (DeltaOptions) options.clone();
     }
 
     public long getFilterID() {

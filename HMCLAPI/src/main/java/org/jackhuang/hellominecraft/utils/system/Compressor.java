@@ -43,7 +43,8 @@ public class Compressor {
      * 功能：把 sourceDir 目录下的所有文件进行 zip 格式的压缩，保存为指定 zip 文件
      *
      * @param sourceDir 源文件夹
-     * @param zipFile 压缩生成的zip文件路径。
+     * @param zipFile   压缩生成的zip文件路径。
+     *
      * @throws java.io.IOException 压缩失败或无法读取
      */
     public static void zip(File sourceDir, File zipFile) throws IOException {
@@ -64,12 +65,12 @@ public class Compressor {
     /**
      * 将文件压缩成zip文件
      *
-     * @param source zip文件路径
+     * @param source   zip文件路径
      * @param basePath 待压缩文件根目录
-     * @param zos zip文件的os
+     * @param zos      zip文件的os
      */
     private static void zipFile(File source, String basePath,
-            ZipOutputStream zos) throws IOException {
+                                ZipOutputStream zos) throws IOException {
         File[] files;
         if (source.isDirectory())
             files = source.listFiles();
@@ -83,7 +84,7 @@ public class Compressor {
         for (File file : files)
             if (file.isDirectory()) {
                 pathName = file.getPath().substring(basePath.length() + 1)
-                        + "/";
+                           + "/";
                 if (file.getName().toLowerCase().contains("meta-inf"))
                     continue;
                 zos.putNextEntry(new ZipEntry(pathName));
@@ -111,8 +112,9 @@ public class Compressor {
      * 将文件压缩成zip文件
      *
      * @param zipFileName zip文件路径
-     * @param extPlace 待压缩文件根目录
-     * @param without 带前缀的不解压
+     * @param extPlace    待压缩文件根目录
+     * @param without     带前缀的不解压
+     *
      * @throws java.io.IOException 解压失败或无法写入
      */
     public static void unzip(File zipFileName, File extPlace, String[] without) throws IOException {
@@ -125,7 +127,8 @@ public class Compressor {
                 while (e.hasMoreElements()) {
                     ZipEntry zipEnt = (ZipEntry) e.nextElement();
                     gbkPath = zipEnt.getName();
-                    if (StrUtils.startsWithOne(without, gbkPath)) continue;
+                    if (StrUtils.startsWithOne(without, gbkPath))
+                        continue;
                     if (zipEnt.isDirectory()) {
                         strtemp = strPath + File.separator + gbkPath;
                         File dir = new File(strtemp);
@@ -160,7 +163,8 @@ public class Compressor {
      * 将zip1合并到zip2里面，即保留zip2
      *
      * @param destFile zip1
-     * @param srcFile zip2
+     * @param srcFile  zip2
+     *
      * @throws java.io.IOException 无法写入或读取
      */
     public static void merge(File destFile, File srcFile) throws IOException {

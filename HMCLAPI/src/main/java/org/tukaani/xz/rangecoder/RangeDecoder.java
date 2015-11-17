@@ -7,13 +7,13 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.rangecoder;
 
 import java.io.DataInputStream;
 import java.io.IOException;
 
 public abstract class RangeDecoder extends RangeCoder {
+
     int range = 0;
     int code = 0;
 
@@ -29,13 +29,12 @@ public abstract class RangeDecoder extends RangeCoder {
         // Compare code and bound as if they were unsigned 32-bit integers.
         if ((code ^ 0x80000000) < (bound ^ 0x80000000)) {
             range = bound;
-            probs[index] = (short)(
-                    prob + ((BIT_MODEL_TOTAL - prob) >>> MOVE_BITS));
+            probs[index] = (short) (prob + ((BIT_MODEL_TOTAL - prob) >>> MOVE_BITS));
             bit = 0;
         } else {
             range -= bound;
             code -= bound;
-            probs[index] = (short)(prob - (prob >>> MOVE_BITS));
+            probs[index] = (short) (prob - (prob >>> MOVE_BITS));
             bit = 1;
         }
 
@@ -45,9 +44,9 @@ public abstract class RangeDecoder extends RangeCoder {
     public int decodeBitTree(short[] probs) throws IOException {
         int symbol = 1;
 
-        do {
+        do
             symbol = (symbol << 1) | decodeBit(probs, symbol);
-        } while (symbol < probs.length);
+        while (symbol < probs.length);
 
         return symbol - probs.length;
     }

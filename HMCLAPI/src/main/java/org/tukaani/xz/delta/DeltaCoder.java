@@ -6,10 +6,10 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.delta;
 
 abstract class DeltaCoder {
+
     static final int DISTANCE_MIN = 1;
     static final int DISTANCE_MAX = 256;
     static final int DISTANCE_MASK = DISTANCE_MAX - 1;

@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.InputStream;
@@ -16,6 +15,7 @@ import org.tukaani.xz.simple.SPARC;
  * BCJ filter for SPARC.
  */
 public class SPARCOptions extends BCJOptions {
+
     private static final int ALIGNMENT = 4;
 
     public SPARCOptions() {

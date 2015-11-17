@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.common;
 
 import java.io.InputStream;
@@ -19,6 +18,7 @@ import org.tukaani.xz.CorruptedInputException;
 import org.tukaani.xz.UnsupportedOptionsException;
 
 public class DecoderUtil extends Util {
+
     public static boolean isCRC32Valid(byte[] buf, int off, int len,
                                        int ref_off) {
         CRC32 crc32 = new CRC32();
@@ -26,14 +26,14 @@ public class DecoderUtil extends Util {
         long value = crc32.getValue();
 
         for (int i = 0; i < 4; ++i)
-            if ((byte)(value >>> (i * 8)) != buf[ref_off + i])
+            if ((byte) (value >>> (i * 8)) != buf[ref_off + i])
                 return false;
 
         return true;
     }
 
     public static StreamFlags decodeStreamHeader(byte[] buf)
-            throws IOException {
+    throws IOException {
         for (int i = 0; i < XZ.HEADER_MAGIC.length; ++i)
             if (buf[i] != XZ.HEADER_MAGIC[i])
                 throw new XZFormatException();
@@ -46,17 +46,16 @@ public class DecoderUtil extends Util {
             return decodeStreamFlags(buf, XZ.HEADER_MAGIC.length);
         } catch (UnsupportedOptionsException e) {
             throw new UnsupportedOptionsException(
-                    "Unsupported options in XZ Stream Header");
+            "Unsupported options in XZ Stream Header");
         }
     }
 
     public static StreamFlags decodeStreamFooter(byte[] buf)
-            throws IOException {
-        if (buf[10] != XZ.FOOTER_MAGIC[0] || buf[11] != XZ.FOOTER_MAGIC[1]) {
+    throws IOException {
+        if (buf[10] != XZ.FOOTER_MAGIC[0] || buf[11] != XZ.FOOTER_MAGIC[1])
             // NOTE: The exception could be XZFormatException too.
             // It depends on the situation which one is better.
             throw new CorruptedInputException("XZ Stream Footer is corrupt");
-        }
 
         if (!isCRC32Valid(buf, 4, 6, 0))
             throw new CorruptedInputException("XZ Stream Footer is corrupt");
@@ -66,7 +65,7 @@ public class DecoderUtil extends Util {
             streamFlags = decodeStreamFlags(buf, 8);
         } catch (UnsupportedOptionsException e) {
             throw new UnsupportedOptionsException(
-                    "Unsupported options in XZ Stream Footer");
+            "Unsupported options in XZ Stream Footer");
         }
 
         streamFlags.backwardSize = 0;
@@ -79,7 +78,7 @@ public class DecoderUtil extends Util {
     }
 
     private static StreamFlags decodeStreamFlags(byte[] buf, int off)
-            throws UnsupportedOptionsException {
+    throws UnsupportedOptionsException {
         if (buf[off] != 0x00 || (buf[off + 1] & 0xFF) >= 0x10)
             throw new UnsupportedOptionsException();
 
@@ -113,7 +112,7 @@ public class DecoderUtil extends Util {
             if (b == 0x00)
                 throw new CorruptedInputException();
 
-            num |= (long)(b & 0x7F) << (i * 7);
+            num |= (long) (b & 0x7F) << (i * 7);
         }
 
         return num;

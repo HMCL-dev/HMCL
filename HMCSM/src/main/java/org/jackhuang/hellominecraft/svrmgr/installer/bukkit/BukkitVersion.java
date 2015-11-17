@@ -21,7 +21,7 @@ package org.jackhuang.hellominecraft.svrmgr.installer.bukkit;
  * @author huangyuhui
  */
 public class BukkitVersion {
-    
+
     public String buildNumber, version, type, downloadLink, infoLink;
-    
+
 }

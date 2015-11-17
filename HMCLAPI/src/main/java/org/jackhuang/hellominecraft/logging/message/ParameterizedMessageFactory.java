@@ -26,6 +26,6 @@ public final class ParameterizedMessageFactory extends AbstractMessageFactory {
 
     @Override
     public IMessage newMessage(String message, Object[] params) {
-	return new ParameterizedMessage(message, params);
+        return new ParameterizedMessage(message, params);
     }
 }

@@ -44,7 +44,8 @@ public class EventHandler<T> {
     public boolean execute(T x) {
         boolean flag = true;
         for (Event<T> t : handlers)
-            if (!t.call(sender, x)) flag = false;
+            if (!t.call(sender, x))
+                flag = false;
         return flag;
     }
 

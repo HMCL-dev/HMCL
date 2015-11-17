@@ -107,7 +107,8 @@ public class AssetsMojangLoader extends IAssetsHandler {
     @Override
     public boolean isVersionAllowed(String formattedVersion) {
         VersionNumber ur = VersionNumber.check(formattedVersion);
-        if (ur == null) return false;
+        if (ur == null)
+            return false;
         return VersionNumber.check("1.6.0").compareTo(ur) <= 0;
     }
 }

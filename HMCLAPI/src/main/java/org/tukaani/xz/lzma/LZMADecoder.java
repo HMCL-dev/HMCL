@@ -7,7 +7,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.lzma;
 
 import java.io.IOException;
@@ -15,6 +14,7 @@ import org.tukaani.xz.lz.LZDecoder;
 import org.tukaani.xz.rangecoder.RangeDecoder;
 
 public final class LZMADecoder extends LZMACoder {
+
     private final LZDecoder lz;
     private final RangeDecoder rc;
     private final LiteralDecoder literalDecoder;
@@ -52,9 +52,9 @@ public final class LZMADecoder extends LZMACoder {
         while (lz.hasSpace()) {
             int posState = lz.getPos() & posMask;
 
-            if (rc.decodeBit(isMatch[state.get()], posState) == 0) {
+            if (rc.decodeBit(isMatch[state.get()], posState) == 0)
                 literalDecoder.decode();
-            } else {
+            else {
                 int len = rc.decodeBit(isRep, state.get()) == 0
                           ? decodeMatch(posState)
                           : decodeRepMatch(posState);
@@ -79,16 +79,16 @@ public final class LZMADecoder extends LZMACoder {
         int len = matchLenDecoder.decode(posState);
         int distSlot = rc.decodeBitTree(distSlots[getDistState(len)]);
 
-        if (distSlot < DIST_MODEL_START) {
+        if (distSlot < DIST_MODEL_START)
             reps[0] = distSlot;
-        } else {
+        else {
             int limit = (distSlot >> 1) - 1;
             reps[0] = (2 | (distSlot & 1)) << limit;
 
-            if (distSlot < DIST_MODEL_END) {
+            if (distSlot < DIST_MODEL_END)
                 reps[0] |= rc.decodeReverseBitTree(
-                        distSpecial[distSlot - DIST_MODEL_START]);
-            } else {
+                distSpecial[distSlot - DIST_MODEL_START]);
+            else {
                 reps[0] |= rc.decodeDirectBits(limit - ALIGN_BITS)
                            << ALIGN_BITS;
                 reps[0] |= rc.decodeReverseBitTree(distAlign);
@@ -107,12 +107,12 @@ public final class LZMADecoder extends LZMACoder {
         } else {
             int tmp;
 
-            if (rc.decodeBit(isRep1, state.get()) == 0) {
+            if (rc.decodeBit(isRep1, state.get()) == 0)
                 tmp = reps[1];
-            } else {
-                if (rc.decodeBit(isRep2, state.get()) == 0) {
+            else {
+                if (rc.decodeBit(isRep2, state.get()) == 0)
                     tmp = reps[2];
-                } else {
+                else {
                     tmp = reps[3];
                     reps[3] = reps[2];
                 }
@@ -129,8 +129,8 @@ public final class LZMADecoder extends LZMACoder {
         return repLenDecoder.decode(posState);
     }
 
-
     private class LiteralDecoder extends LiteralCoder {
+
         LiteralSubdecoder[] subdecoders;
 
         LiteralDecoder(int lc, int lp) {
@@ -151,17 +151,16 @@ public final class LZMADecoder extends LZMACoder {
             subdecoders[i].decode();
         }
 
-
         private class LiteralSubdecoder extends LiteralSubcoder {
+
             void decode() throws IOException {
                 int symbol = 1;
 
-                if (state.isLiteral()) {
-                    do {
+                if (state.isLiteral())
+                    do
                         symbol = (symbol << 1) | rc.decodeBit(probs, symbol);
-                    } while (symbol < 0x100);
-
-                } else {
+                    while (symbol < 0x100);
+                else {
                     int matchByte = lz.getByte(reps[0]);
                     int offset = 0x100;
                     int matchBit;
@@ -176,14 +175,14 @@ public final class LZMADecoder extends LZMACoder {
                     } while (symbol < 0x100);
                 }
 
-                lz.putByte((byte)symbol);
+                lz.putByte((byte) symbol);
                 state.updateLiteral();
             }
         }
     }
 
-
     private class LengthDecoder extends LengthCoder {
+
         int decode(int posState) throws IOException {
             if (rc.decodeBit(choice, 0) == 0)
                 return rc.decodeBitTree(low[posState]) + MATCH_LEN_MIN;

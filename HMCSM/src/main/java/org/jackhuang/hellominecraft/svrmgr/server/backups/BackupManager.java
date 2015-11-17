@@ -49,7 +49,7 @@ public class BackupManager {
                 try {
                     SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
                     Compressor.zip(Utilities.getGameDir() + folder + File.separator,
-                            backupDir() + "world+" + f.format(new Date()) + "+" + folder + ".zip");
+                                   backupDir() + "world+" + f.format(new Date()) + "+" + folder + ".zip");
                 } catch (IOException ex) {
                     HMCLog.warn("Failed to compress world pack.", ex);
                 }
@@ -101,7 +101,7 @@ public class BackupManager {
                 try {
                     SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
                     Compressor.zip(Utilities.getGameDir() + "plugins" + File.separator,
-                            backupDir() + "plugin+" + f.format(new Date()) + "+plugins.zip");
+                                   backupDir() + "plugin+" + f.format(new Date()) + "+plugins.zip");
                 } catch (IOException ex) {
                     HMCLog.warn("Failed to compress world pack with plugins.", ex);
                 }

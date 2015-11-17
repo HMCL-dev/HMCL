@@ -49,7 +49,7 @@ public class PluginInfoDialog extends javax.swing.JDialog {
         //SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         DefaultTableModel model = (DefaultTableModel) lstPluginInfo.getModel();
         for (PluginVersion v : pi.versions)
-            model.addRow(new Object[]{
+            model.addRow(new Object[] {
                 v.date, v.version, v.filename, StrUtils.parseParams("", v.game_versions.toArray(), ", "),
                 v.type
             });
@@ -231,9 +231,9 @@ public class PluginInfoDialog extends javax.swing.JDialog {
             return;
         String url = pi.versions.get(index).download;
         TaskWindow.getInstance()
-                .addTask(new FileDownloadTask(url, new File(Utilities.getGameDir() + "plugins"
-                                        + File.separator + pi.versions.get(index).filename)))
-                .start();
+        .addTask(new FileDownloadTask(url, new File(Utilities.getGameDir() + "plugins"
+                                                    + File.separator + pi.versions.get(index).filename)))
+        .start();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

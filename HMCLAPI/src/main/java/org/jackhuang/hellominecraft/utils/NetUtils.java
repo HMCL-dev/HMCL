@@ -52,7 +52,7 @@ public final class NetUtils {
     }
 
     public static String getStreamContent(InputStream is, String encoding)
-            throws IOException {
+    throws IOException {
         StringBuilder sb = new StringBuilder();
         try (InputStreamReader br = new InputStreamReader(is, encoding)) {
             int len;
@@ -82,15 +82,16 @@ public final class NetUtils {
     /**
      * Sends an HTTP GET request to a url
      *
-     * @param endpoint - The URL of the server. (Example: "
-     * http://www.yahoo.com/search")
+     * @param endpoint          - The URL of the server. (Example: "
+     *                          http://www.yahoo.com/search")
      * @param requestParameters - all the request parameters (Example:
-     * "param1=val1&param2=val2"). Note: This method will add the question mark
-     * (?) to the request - DO NOT add it yourself
+     *                          "param1=val1&param2=val2"). Note: This method will add the question mark
+     *                          (?) to the request - DO NOT add it yourself
+     *
      * @return - The response from the end point
      */
     public static String sendGetRequest(String endpoint,
-            String requestParameters) {
+                                        String requestParameters) {
         String result = null;
         if (endpoint.startsWith("http://"))
             // Send a GET request to the servlet
@@ -118,7 +119,7 @@ public final class NetUtils {
             }
         return result;
     }
-    
+
     public static String post(URL u, Map<String, String> params) {
         StringBuilder sb = new StringBuilder();
         if (params != null) {
@@ -136,11 +137,11 @@ public final class NetUtils {
     public static String post(URL u, String post) {
         return post(u, post, "application/x-www-form-urlencoded");
     }
-    
+
     public static String post(URL u, String post, String contentType) {
         return post(u, post, contentType, Proxy.NO_PROXY);
     }
-    
+
     public static String post(URL u, String post, String contentType, Proxy proxy) {
         try {
             HttpURLConnection con = (HttpURLConnection) u.openConnection(proxy);
@@ -157,16 +158,18 @@ public final class NetUtils {
                 os = con.getOutputStream();
                 IOUtils.write(post, os, DEFAULT_CHARSET);
             } finally {
-                if (os != null) IOUtils.closeQuietly(os);
+                if (os != null)
+                    IOUtils.closeQuietly(os);
             }
-            
+
             String result = null;
             InputStream is = null;
             try {
                 is = con.getInputStream();
                 result = getStreamContent(is);
-            } catch(IOException ex) {
-                if (is != null) IOUtils.closeQuietly(is);
+            } catch (IOException ex) {
+                if (is != null)
+                    IOUtils.closeQuietly(is);
                 is = con.getErrorStream();
                 result = getStreamContent(is);
             }

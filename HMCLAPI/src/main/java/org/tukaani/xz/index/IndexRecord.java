@@ -6,10 +6,10 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.index;
 
 class IndexRecord {
+
     final long unpadded;
     final long uncompressed;
 

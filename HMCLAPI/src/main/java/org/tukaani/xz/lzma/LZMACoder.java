@@ -7,12 +7,12 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.lzma;
 
 import org.tukaani.xz.rangecoder.RangeCoder;
 
 abstract class LZMACoder {
+
     static final int POS_STATES_MAX = 1 << 4;
 
     static final int MATCH_LEN_MIN = 2;
@@ -44,11 +44,11 @@ abstract class LZMACoder {
     final short[] isRep2 = new short[State.STATES];
     final short[][] isRep0Long = new short[State.STATES][POS_STATES_MAX];
     final short[][] distSlots = new short[DIST_STATES][DIST_SLOTS];
-    final short[][] distSpecial = { new short[2], new short[2],
-                                    new short[4], new short[4],
-                                    new short[8], new short[8],
-                                    new short[16], new short[16],
-                                    new short[32], new short[32] };
+    final short[][] distSpecial = {new short[2], new short[2],
+                                   new short[4], new short[4],
+                                   new short[8], new short[8],
+                                   new short[16], new short[16],
+                                   new short[32], new short[32]};
     final short[] distAlign = new short[ALIGN_SIZE];
 
     static final int getDistState(int len) {
@@ -88,8 +88,8 @@ abstract class LZMACoder {
         RangeCoder.initProbs(distAlign);
     }
 
-
     abstract class LiteralCoder {
+
         private final int lc;
         private final int literalPosMask;
 
@@ -104,8 +104,8 @@ abstract class LZMACoder {
             return low + high;
         }
 
-
         abstract class LiteralSubcoder {
+
             final short[] probs = new short[0x300];
 
             void reset() {
@@ -114,8 +114,8 @@ abstract class LZMACoder {
         }
     }
 
-
     abstract class LengthCoder {
+
         static final int LOW_SYMBOLS = 1 << 3;
         static final int MID_SYMBOLS = 1 << 3;
         static final int HIGH_SYMBOLS = 1 << 8;

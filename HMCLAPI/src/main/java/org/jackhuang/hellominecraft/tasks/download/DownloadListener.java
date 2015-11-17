@@ -25,5 +25,6 @@ import org.jackhuang.hellominecraft.tasks.ProgressProviderListener;
 public interface DownloadListener extends ProgressProviderListener {
 
     boolean OnFailed();
+
     void OnFailedMoreThan5Times(String url);
 }

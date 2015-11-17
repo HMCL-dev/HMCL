@@ -91,7 +91,7 @@ public final class Main implements Runnable {
 
         try {
             sslContext = SSLContext.getInstance("TLS");
-            X509TrustManager[] xtmArray = new X509TrustManager[]{XTM};
+            X509TrustManager[] xtmArray = new X509TrustManager[] {XTM};
             sslContext.init(null, xtmArray, new java.security.SecureRandom());
         } catch (GeneralSecurityException gse) {
         }
@@ -143,9 +143,9 @@ public final class Main implements Runnable {
                                     if (mainClass != null) {
                                         ArrayList<String> al = new ArrayList<>(Arrays.asList(args));
                                         al.add("notfound");
-                                        new URLClassLoader(new URL[]{jar.toURI().toURL()},
-                                                URLClassLoader.getSystemClassLoader().getParent()).loadClass(mainClass)
-                                                .getMethod("main", String[].class).invoke(null, new Object[]{al.toArray(new String[0])});
+                                        new URLClassLoader(new URL[] {jar.toURI().toURL()},
+                                                           URLClassLoader.getSystemClassLoader().getParent()).loadClass(mainClass)
+                                        .getMethod("main", String[].class).invoke(null, new Object[] {al.toArray(new String[0])});
                                         return;
                                     }
                                 }
@@ -155,7 +155,7 @@ public final class Main implements Runnable {
                 } catch (Throwable t) {
                     t.printStackTrace();
                 }
-            
+
             System.setProperty("sun.java2d.noddraw", "true");
 
             Thread.setDefaultUncaughtExceptionHandler(new CrashReporter(true));
@@ -174,7 +174,7 @@ public final class Main implements Runnable {
 
             LogWindow.instance.clean();
             LogWindow.instance.setTerminateGame(GameLauncher.PROCESS_MANAGER::stopAllProcesses);
-            
+
             try {
                 UIManager.setLookAndFeel(new HelloMinecraftLookAndFeel());
             } catch (ParseException | UnsupportedLookAndFeelException ex) {
@@ -216,22 +216,23 @@ public final class Main implements Runnable {
                 if (map != null && map.containsKey("pack"))
                     try {
                         if (TaskWindow.getInstance().addTask(new Upgrader(map.get("pack"), Settings.UPDATE_CHECKER.versionString)).start()) {
-                            new ProcessBuilder(new String[]{IOUtils.getJavaDir(), "-jar", Upgrader.getSelf(Settings.UPDATE_CHECKER.versionString).getAbsolutePath()}).directory(new File(".")).start();
+                            new ProcessBuilder(new String[] {IOUtils.getJavaDir(), "-jar", Upgrader.getSelf(Settings.UPDATE_CHECKER.versionString).getAbsolutePath()}).directory(new File(".")).start();
                             System.exit(0);
                         }
                     } catch (IOException ex) {
                         HMCLog.warn("Failed to create upgrader", ex);
                     }
                 if (MessageBox.Show(C.i18n("update.newest_version") + Settings.UPDATE_CHECKER.getNewVersion().firstVer + "." + Settings.UPDATE_CHECKER.getNewVersion().secondVer + "." + Settings.UPDATE_CHECKER.getNewVersion().thirdVer + "\n"
-                        + C.i18n("update.should_open_link"),
-                        MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
+                                    + C.i18n("update.should_open_link"),
+                                    MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
                     String url = C.URL_PUBLISH;
                     if (map != null)
                         if (map.containsKey(OS.os().checked_name))
                             url = map.get(OS.os().checked_name);
                         else if (map.containsKey(OS.UNKOWN.checked_name))
                             url = map.get(OS.UNKOWN.checked_name);
-                    if (url == null) url = C.URL_PUBLISH;
+                    if (url == null)
+                        url = C.URL_PUBLISH;
                     try {
                         java.awt.Desktop.getDesktop().browse(new URI(url));
                     } catch (URISyntaxException | IOException e) {

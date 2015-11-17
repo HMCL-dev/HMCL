@@ -79,7 +79,7 @@ public class ForgeInstaller extends Task {
 
             HMCLog.log("Copying jar..." + profile.install.minecraft + ".jar to " + profile.install.target + ".jar");
             FileUtils.copyFile(new File(from, profile.install.minecraft + ".jar"),
-                    new File(to, profile.install.target + ".jar"));
+                               new File(to, profile.install.target + ".jar"));
             HMCLog.log("Creating new version profile..." + profile.install.target + ".json");
             /*for (MinecraftLibrary library : profile.versionInfo.libraries)
                 if (library.name.startsWith("net.minecraftforge:forge:"))
@@ -98,7 +98,8 @@ public class ForgeInstaller extends Task {
             try (FileOutputStream fos = new FileOutputStream(file)) {
                 BufferedOutputStream bos = new BufferedOutputStream(fos);
                 int c;
-                while ((c = is.read()) != -1) bos.write((byte) c);
+                while ((c = is.read()) != -1)
+                    bos.write((byte) c);
                 bos.close();
             }
             return true;

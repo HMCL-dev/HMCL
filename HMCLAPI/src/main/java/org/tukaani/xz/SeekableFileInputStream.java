@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.File;
@@ -19,6 +18,7 @@ import java.io.FileNotFoundException;
  * in a SeekableInputStream.
  */
 public class SeekableFileInputStream extends SeekableInputStream {
+
     /**
      * The RandomAccessFile that has been wrapped
      * into a SeekableFileInputStream.
@@ -87,7 +87,7 @@ public class SeekableFileInputStream extends SeekableInputStream {
 
     /**
      * Calls {@link RandomAccessFile#getFilePointer()
-                    randomAccessFile.getFilePointer()}.
+     * randomAccessFile.getFilePointer()}.
      */
     public long position() throws IOException {
         return randomAccessFile.getFilePointer();

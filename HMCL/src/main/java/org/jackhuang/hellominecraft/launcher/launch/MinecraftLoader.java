@@ -67,7 +67,8 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         }
         library += IOUtils.tryGetCanonicalFilePath(provider.getMinecraftJar()) + File.pathSeparator;
         library = library.substring(0, library.length() - File.pathSeparator.length());
-        if (v.isCanceledWrapper()) res.add("-cp");
+        if (v.isCanceledWrapper())
+            res.add("-cp");
         res.add(library);
         String mainClass = version.mainClass;
         res.add((v.isCanceledWrapper() ? "" : "-mainClass=") + mainClass);
@@ -76,12 +77,11 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         String[] splitted = org.jackhuang.hellominecraft.utils.StrUtils.tokenize(arg);
 
         if (!checkAssetsExist())
-            if (MessageBox.Show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
+            if (MessageBox.Show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                 IAssetsHandler.ASSETS_HANDLER.getList(version, provider, (value) -> {
-                    if (value != null)
-                        TaskWindow.getInstance().addTask(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(dt.getProvider())).start();
-                });
-            }
+                                                          if (value != null)
+                                                              TaskWindow.getInstance().addTask(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(dt.getProvider())).start();
+                                                      });
 
         String game_assets = reconstructAssets().getAbsolutePath();
 
@@ -133,7 +133,8 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         try {
             AssetsIndex index = (AssetsIndex) C.gson.fromJson(FileUtils.readFileToString(indexFile, "UTF-8"), AssetsIndex.class);
 
-            if (index == null) return false;
+            if (index == null)
+                return false;
             for (Map.Entry entry : index.getFileMap().entrySet())
                 if (!new File(new File(objectDir, ((AssetsObject) entry.getValue()).getHash().substring(0, 2)), ((AssetsObject) entry.getValue()).getHash()).exists())
                     return false;
@@ -159,7 +160,8 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         try {
             AssetsIndex index = (AssetsIndex) C.gson.fromJson(FileUtils.readFileToString(indexFile, "UTF-8"), AssetsIndex.class);
 
-            if (index == null) return assetsDir;
+            if (index == null)
+                return assetsDir;
             if (index.isVirtual()) {
                 int cnt = 0;
                 HMCLog.log("Reconstructing virtual assets folder at " + virtualRoot);
@@ -174,7 +176,8 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
                     }
                 }
                 // If the scale new format existent file is lower then 0.1, use the old format.
-                if (cnt * 10 < tot) return assetsDir;
+                if (cnt * 10 < tot)
+                    return assetsDir;
             }
         } catch (IOException | JsonSyntaxException e) {
             HMCLog.warn("Failed to create virutal assets.", e);

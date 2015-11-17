@@ -28,108 +28,106 @@ public class Hex {
     private final Charset charset;
 
     public static byte[] decodeHex(char[] data) throws Exception {
-	int len = data.length;
+        int len = data.length;
 
-	if ((len & 0x1) != 0) {
-	    throw new Exception("Odd number of characters.");
-	}
+        if ((len & 0x1) != 0)
+            throw new Exception("Odd number of characters.");
 
-	byte[] out = new byte[len >> 1];
+        byte[] out = new byte[len >> 1];
 
-	int i = 0;
-	for (int j = 0; j < len; i++) {
-	    int f = toDigit(data[j], j) << 4;
-	    j++;
-	    f |= toDigit(data[j], j);
-	    j++;
-	    out[i] = (byte) (f & 0xFF);
-	}
+        int i = 0;
+        for (int j = 0; j < len; i++) {
+            int f = toDigit(data[j], j) << 4;
+            j++;
+            f |= toDigit(data[j], j);
+            j++;
+            out[i] = (byte) (f & 0xFF);
+        }
 
-	return out;
+        return out;
     }
 
     public static char[] encodeHex(byte[] data) {
-	return encodeHex(data, true);
+        return encodeHex(data, true);
     }
 
     public static char[] encodeHex(byte[] data, boolean toLowerCase) {
-	return encodeHex(data, toLowerCase ? DIGITS_LOWER : DIGITS_UPPER);
+        return encodeHex(data, toLowerCase ? DIGITS_LOWER : DIGITS_UPPER);
     }
 
     protected static char[] encodeHex(byte[] data, char[] toDigits) {
-	int l = data.length;
-	char[] out = new char[l << 1];
+        int l = data.length;
+        char[] out = new char[l << 1];
 
-	int i = 0;
-	for (int j = 0; i < l; i++) {
-	    out[(j++)] = toDigits[((0xF0 & data[i]) >>> 4)];
-	    out[(j++)] = toDigits[(0xF & data[i])];
-	}
-	return out;
+        int i = 0;
+        for (int j = 0; i < l; i++) {
+            out[(j++)] = toDigits[((0xF0 & data[i]) >>> 4)];
+            out[(j++)] = toDigits[(0xF & data[i])];
+        }
+        return out;
     }
 
     public static String encodeHexString(byte[] data) {
-	return new String(encodeHex(data));
+        return new String(encodeHex(data));
     }
 
     protected static int toDigit(char ch, int index) throws Exception {
-	int digit = Character.digit(ch, 16);
-	if (digit == -1) {
-	    throw new Exception("Illegal hexadecimal character " + ch + " at index " + index);
-	}
-	return digit;
+        int digit = Character.digit(ch, 16);
+        if (digit == -1)
+            throw new Exception("Illegal hexadecimal character " + ch + " at index " + index);
+        return digit;
     }
 
     public Hex() {
-	this.charset = DEFAULT_CHARSET;
+        this.charset = DEFAULT_CHARSET;
     }
 
     public Hex(Charset charset) {
-	this.charset = charset;
+        this.charset = charset;
     }
 
     public Hex(String charsetName) {
-	this(Charset.forName(charsetName));
+        this(Charset.forName(charsetName));
     }
 
     public byte[] decode(byte[] array) throws Exception {
-	return decodeHex(new String(array, getCharset()).toCharArray());
+        return decodeHex(new String(array, getCharset()).toCharArray());
     }
 
     public Object decode(Object object) throws Exception {
-	try {
-	    char[] charArray = (object instanceof String) ? ((String) object).toCharArray() : (char[]) (char[]) object;
-	    return decodeHex(charArray);
-	} catch (ClassCastException e) {
-	    throw new Exception(e.getMessage(), e);
-	}
+        try {
+            char[] charArray = (object instanceof String) ? ((String) object).toCharArray() : (char[]) (char[]) object;
+            return decodeHex(charArray);
+        } catch (ClassCastException e) {
+            throw new Exception(e.getMessage(), e);
+        }
     }
 
     public byte[] encode(byte[] array) {
-	return encodeHexString(array).getBytes(getCharset());
+        return encodeHexString(array).getBytes(getCharset());
     }
 
     public Object encode(Object object)
-	    throws Exception {
-	try {
-	    byte[] byteArray = (object instanceof String) ? ((String) object).getBytes(getCharset()) : (byte[]) (byte[]) object;
+    throws Exception {
+        try {
+            byte[] byteArray = (object instanceof String) ? ((String) object).getBytes(getCharset()) : (byte[]) (byte[]) object;
 
-	    return encodeHex(byteArray);
-	} catch (ClassCastException e) {
-	    throw new Exception(e.getMessage(), e);
-	}
+            return encodeHex(byteArray);
+        } catch (ClassCastException e) {
+            throw new Exception(e.getMessage(), e);
+        }
     }
 
     public Charset getCharset() {
-	return this.charset;
+        return this.charset;
     }
 
     public String getCharsetName() {
-	return this.charset.name();
+        return this.charset.name();
     }
 
     @Override
     public String toString() {
-	return super.toString() + "[charsetName=" + this.charset + "]";
+        return super.toString() + "[charsetName=" + this.charset + "]";
     }
 }

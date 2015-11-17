@@ -7,10 +7,10 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.lz;
 
 final class BT4 extends LZEncoder {
+
     private final Hash234 hash;
     private final int[] tree;
     private final Matches matches;
@@ -25,7 +25,7 @@ final class BT4 extends LZEncoder {
     }
 
     BT4(int dictSize, int beforeSizeMin, int readAheadMax,
-            int niceLen, int matchLenMax, int depthLimit) {
+        int niceLen, int matchLenMax, int depthLimit) {
         super(dictSize, beforeSizeMin, readAheadMax, niceLen, matchLenMax);
 
         cyclicSize = dictSize + 1;
@@ -100,7 +100,7 @@ final class BT4 extends LZEncoder {
         // Also here the hashing algorithm guarantees that if the first byte
         // matches, also the next two bytes do.
         if (delta2 != delta3 && delta3 < cyclicSize
-                && buf[readPos - delta3] == buf[readPos]) {
+            && buf[readPos - delta3] == buf[readPos]) {
             lenBest = 3;
             matches.dist[matches.count++] = delta3 - 1;
             delta2 = delta3;
@@ -170,7 +170,7 @@ final class BT4 extends LZEncoder {
             }
 
             if ((buf[readPos + len - delta] & 0xFF)
-                    < (buf[readPos + len] & 0xFF)) {
+                < (buf[readPos + len] & 0xFF)) {
                 tree[ptr1] = currentMatch;
                 ptr1 = pair + 1;
                 currentMatch = tree[ptr1];
@@ -205,21 +205,20 @@ final class BT4 extends LZEncoder {
                         + (delta > cyclicPos ? cyclicSize : 0)) << 1;
             int len = Math.min(len0, len1);
 
-            if (buf[readPos + len - delta] == buf[readPos + len]) {
+            if (buf[readPos + len - delta] == buf[readPos + len])
                 // No need to look for longer matches than niceLenLimit
                 // because we only are updating the tree, not returning
                 // matches found to the caller.
-                do {
+                do
                     if (++len == niceLenLimit) {
                         tree[ptr1] = tree[pair];
                         tree[ptr0] = tree[pair + 1];
                         return;
                     }
-                } while (buf[readPos + len - delta] == buf[readPos + len]);
-            }
+                while (buf[readPos + len - delta] == buf[readPos + len]);
 
             if ((buf[readPos + len - delta] & 0xFF)
-                    < (buf[readPos + len] & 0xFF)) {
+                < (buf[readPos + len] & 0xFF)) {
                 tree[ptr1] = currentMatch;
                 ptr1 = pair + 1;
                 currentMatch = tree[ptr1];

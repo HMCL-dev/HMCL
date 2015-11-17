@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.OutputStream;
@@ -21,6 +20,7 @@ import java.io.IOException;
  * using this as the output stream for a chain of raw filters.
  */
 class CountingOutputStream extends FinishableOutputStream {
+
     private final OutputStream out;
     private long size = 0;
 

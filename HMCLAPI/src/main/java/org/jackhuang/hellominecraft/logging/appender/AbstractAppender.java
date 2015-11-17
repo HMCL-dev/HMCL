@@ -30,27 +30,27 @@ public abstract class AbstractAppender implements IAppender {
     private final boolean ignoreExceptions;
 
     public AbstractAppender(String name, ILayout<? extends Serializable> layout) {
-	this(name, layout, true);
+        this(name, layout, true);
     }
 
     public AbstractAppender(String name, ILayout<? extends Serializable> layout, boolean ignoreExceptions) {
-	this.name = name;
-	this.layout = layout;
-	this.ignoreExceptions = ignoreExceptions;
+        this.name = name;
+        this.layout = layout;
+        this.ignoreExceptions = ignoreExceptions;
     }
 
     @Override
     public String getName() {
-	return name;
+        return name;
     }
 
     @Override
     public boolean ignoreExceptions() {
-	return ignoreExceptions;
+        return ignoreExceptions;
     }
 
     @Override
     public ILayout<? extends Serializable> getLayout() {
-	return this.layout;
+        return this.layout;
     }
 }

@@ -30,6 +30,7 @@ public abstract class InstallerVersionList implements Consumer<String[]> {
      * Refresh installer versions list from the downloaded content.
      *
      * @param versions Minecraft versions you need to refresh
+     *
      * @throws java.lang.Exception
      */
     public abstract void refreshList(String[] versions) throws Exception;

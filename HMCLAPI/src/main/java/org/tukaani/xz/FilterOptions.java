@@ -7,7 +7,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.InputStream;
@@ -17,6 +16,7 @@ import java.io.IOException;
  * Base class for filter-specific options classes.
  */
 public abstract class FilterOptions implements Cloneable {
+
     /**
      * Gets how much memory the encoder will need with
      * the given filter chain. This function simply calls
@@ -60,7 +60,7 @@ public abstract class FilterOptions implements Cloneable {
      * to XZOutputStream.
      */
     public abstract FinishableOutputStream getOutputStream(
-            FinishableOutputStream out);
+    FinishableOutputStream out);
 
     /**
      * Gets how much memory the decoder will need to decompress the data
@@ -72,9 +72,10 @@ public abstract class FilterOptions implements Cloneable {
      * Gets a raw (no XZ headers) decoder input stream using these options.
      */
     public abstract InputStream getInputStream(InputStream in)
-            throws IOException;
+    throws IOException;
 
     abstract FilterEncoder getFilterEncoder();
 
-    FilterOptions() {}
+    FilterOptions() {
+    }
 }

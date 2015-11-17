@@ -23,12 +23,13 @@ package org.jackhuang.hellominecraft.utils.functions;
 public class TrueFunction implements NonFunction<Boolean> {
 
     public static final TrueFunction instance = new TrueFunction();
-    
-    private TrueFunction(){}
-    
+
+    private TrueFunction() {
+    }
+
     @Override
     public Boolean apply() {
         return Boolean.TRUE;
     }
-    
+
 }

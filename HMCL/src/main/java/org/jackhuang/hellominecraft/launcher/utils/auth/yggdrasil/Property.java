@@ -5,7 +5,7 @@ public class Property {
     public final String name, value;
 
     public Property(String name, String value) {
-	this.name = name;
-	this.value = value;
+        this.name = name;
+        this.value = value;
     }
 }

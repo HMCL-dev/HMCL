@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.FilterInputStream;
@@ -17,6 +16,7 @@ import java.io.IOException;
  * Counts the number of bytes read from an input stream.
  */
 class CountingInputStream extends FilterInputStream {
+
     private long size = 0;
 
     public CountingInputStream(InputStream in) {

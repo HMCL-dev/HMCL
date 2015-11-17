@@ -52,7 +52,7 @@ public class PropertyMap extends HashMap<String, Property> {
                     if (entry.getValue() instanceof JsonArray)
                         for (JsonElement element : (JsonArray) entry.getValue())
                             result.put(entry.getKey(),
-                            new Property((String) entry.getKey(), element.getAsString()));
+                                       new Property((String) entry.getKey(), element.getAsString()));
             } else if ((json instanceof JsonArray))
                 for (JsonElement element : (JsonArray) json)
                     if ((element instanceof JsonObject)) {

@@ -26,7 +26,7 @@ public abstract class AbstractStringLayout implements ILayout<String> {
 
     @Override
     public byte[] toByteArray(LogEvent event) {
-	return toSerializable(event).getBytes();
+        return toSerializable(event).getBytes();
     }
-    
+
 }

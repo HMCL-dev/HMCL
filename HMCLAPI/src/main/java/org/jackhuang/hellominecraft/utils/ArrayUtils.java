@@ -78,8 +78,10 @@ public class ArrayUtils {
     }
 
     public static <K> K getEnd(K[] k) {
-        if (k == null) return null;
-        else return k[k.length - 1];
+        if (k == null)
+            return null;
+        else
+            return k[k.length - 1];
     }
 
     public static List tryGetMapWithList(Map map, String key) {

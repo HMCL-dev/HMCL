@@ -10,7 +10,7 @@
  * <li>Single-threaded streamed compression and decompression</li>
  * <li>Single-threaded decompression with limited random access support</li>
  * <li>Raw streams (no .xz headers) for advanced users, including LZMA2
- *     with preset dictionary</li>
+ * with preset dictionary</li>
  * </ul>
  * <p>
  * Threading is planned but it is unknown when it will be implemented.

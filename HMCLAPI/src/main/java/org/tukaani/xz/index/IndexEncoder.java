@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.index;
 
 import java.io.OutputStream;
@@ -18,6 +17,7 @@ import org.tukaani.xz.common.EncoderUtil;
 import org.tukaani.xz.XZIOException;
 
 public class IndexEncoder extends IndexBase {
+
     private final ArrayList records = new ArrayList();
 
     public IndexEncoder() {
@@ -25,7 +25,7 @@ public class IndexEncoder extends IndexBase {
     }
 
     public void add(long unpaddedSize, long uncompressedSize)
-            throws XZIOException {
+    throws XZIOException {
         super.add(unpaddedSize, uncompressedSize);
         records.add(new IndexRecord(unpaddedSize, uncompressedSize));
     }
@@ -41,8 +41,8 @@ public class IndexEncoder extends IndexBase {
         EncoderUtil.encodeVLI(outChecked, recordCount);
 
         // List of Records
-        for (Iterator i = records.iterator(); i.hasNext(); ) {
-            IndexRecord record = (IndexRecord)i.next();
+        for (Iterator i = records.iterator(); i.hasNext();) {
+            IndexRecord record = (IndexRecord) i.next();
             EncoderUtil.encodeVLI(outChecked, record.unpadded);
             EncoderUtil.encodeVLI(outChecked, record.uncompressed);
         }
@@ -54,6 +54,6 @@ public class IndexEncoder extends IndexBase {
         // CRC32
         long value = crc32.getValue();
         for (int i = 0; i < 4; ++i)
-            out.write((byte)(value >>> (i * 8)));
+            out.write((byte) (value >>> (i * 8)));
     }
 }

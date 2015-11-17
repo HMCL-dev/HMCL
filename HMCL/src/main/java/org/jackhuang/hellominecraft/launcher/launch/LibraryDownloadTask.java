@@ -71,7 +71,7 @@ public class LibraryDownloadTask extends FileDownloadTask {
             return false;
         }
     }
-    
+
     boolean download(URL url, File filePath) {
         this.url = url;
         this.filePath = filePath;
@@ -79,7 +79,7 @@ public class LibraryDownloadTask extends FileDownloadTask {
     }
 
     public static void unpackLibrary(File output, File input)
-            throws IOException {
+    throws IOException {
         HMCLog.log("Unpacking " + input);
         if (output.exists())
             output.delete();

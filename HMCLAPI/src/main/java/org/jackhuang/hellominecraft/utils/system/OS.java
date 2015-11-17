@@ -41,7 +41,7 @@ public enum OS {
     public static OS os() {
         String str;
         if ((str = System.getProperty("os.name").toLowerCase())
-                .contains("win"))
+        .contains("win"))
             return OS.WINDOWS;
         if (str.contains("mac"))
             return OS.OSX;

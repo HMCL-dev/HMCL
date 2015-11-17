@@ -7,18 +7,18 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.rangecoder;
 
 import java.io.OutputStream;
 import java.io.IOException;
 
 public final class RangeEncoder extends RangeCoder {
+
     private static final int MOVE_REDUCING_BITS = 4;
     private static final int BIT_PRICE_SHIFT_BITS = 4;
 
     private static final int[] prices
-            = new int[BIT_MODEL_TOTAL >>> MOVE_REDUCING_BITS];
+                               = new int[BIT_MODEL_TOTAL >>> MOVE_REDUCING_BITS];
 
     private long low;
     private int range;
@@ -35,7 +35,7 @@ public final class RangeEncoder extends RangeCoder {
 
     static {
         for (int i = (1 << MOVE_REDUCING_BITS) / 2; i < BIT_MODEL_TOTAL;
-                i += (1 << MOVE_REDUCING_BITS)) {
+             i += (1 << MOVE_REDUCING_BITS)) {
             int w = i;
             int bitCount = 0;
 
@@ -50,8 +50,8 @@ public final class RangeEncoder extends RangeCoder {
             }
 
             prices[i >> MOVE_REDUCING_BITS]
-                    = (BIT_MODEL_TOTAL_BITS << BIT_PRICE_SHIFT_BITS)
-                      - 15 - bitCount;
+            = (BIT_MODEL_TOTAL_BITS << BIT_PRICE_SHIFT_BITS)
+              - 15 - bitCount;
         }
     }
 
@@ -84,17 +84,17 @@ public final class RangeEncoder extends RangeCoder {
     }
 
     private void shiftLow() {
-        int lowHi = (int)(low >>> 32);
+        int lowHi = (int) (low >>> 32);
 
         if (lowHi != 0 || low < 0xFF000000L) {
             int temp = cache;
 
             do {
-                buf[bufPos++] = (byte)(temp + lowHi);
+                buf[bufPos++] = (byte) (temp + lowHi);
                 temp = 0xFF;
             } while (--cacheSize != 0);
 
-            cache = (byte)(low >>> 24);
+            cache = (byte) (low >>> 24);
         }
 
         ++cacheSize;
@@ -108,12 +108,11 @@ public final class RangeEncoder extends RangeCoder {
         // NOTE: Any non-zero value for bit is taken as 1.
         if (bit == 0) {
             range = bound;
-            probs[index] = (short)(
-                    prob + ((BIT_MODEL_TOTAL - prob) >>> MOVE_BITS));
+            probs[index] = (short) (prob + ((BIT_MODEL_TOTAL - prob) >>> MOVE_BITS));
         } else {
             low += bound & 0xFFFFFFFFL;
             range -= bound;
-            probs[index] = (short)(prob - (prob >>> MOVE_BITS));
+            probs[index] = (short) (prob - (prob >>> MOVE_BITS));
         }
 
         if ((range & TOP_MASK) == 0) {

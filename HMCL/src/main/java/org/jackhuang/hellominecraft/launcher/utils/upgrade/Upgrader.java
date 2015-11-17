@@ -64,11 +64,13 @@ public class Upgrader extends Task {
         HashMap<String, String> json = new HashMap<>();
         File f = getSelf(newestVersion);
         try {
-            if (!f.getParentFile().exists()) f.getParentFile().mkdirs();
-            
-            for (int i = 0; f.exists(); i++) f = new File(BASE_FOLDER, "HMCL-" + newestVersion + (i > 0 ? "-" + i : "") + ".jar");
+            if (!f.getParentFile().exists())
+                f.getParentFile().mkdirs();
+
+            for (int i = 0; f.exists(); i++)
+                f = new File(BASE_FOLDER, "HMCL-" + newestVersion + (i > 0 ? "-" + i : "") + ".jar");
             f.createNewFile();
-            
+
             try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(f))) {
                 Pack200.newUnpacker().unpack(new XZInputStream(new FileInputStream(tempFile)), jos);
             }

@@ -55,9 +55,10 @@ public final class JdkVersion {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof JdkVersion)) return false;
+        if (!(obj instanceof JdkVersion))
+            return false;
         JdkVersion b = (JdkVersion) obj;
-        if(b.location == null || location == null)
+        if (b.location == null || location == null)
             return b.location == location;
         return new File(b.location).equals(new File(location));
     }
@@ -69,7 +70,8 @@ public final class JdkVersion {
 
     public JdkVersion(String location) {
         File f = new File(location);
-        if (f.exists() && f.isFile()) f = f.getParentFile();
+        if (f.exists() && f.isFile())
+            f = f.getParentFile();
         this.location = f.getAbsolutePath();
     }
 
@@ -110,12 +112,17 @@ public final class JdkVersion {
     }
 
     private static int parseVersion(String javaVersion) {
-        if (StrUtils.isBlank(javaVersion)) return UNKOWN;
+        if (StrUtils.isBlank(javaVersion))
+            return UNKOWN;
         int a = UNKOWN;
-        if (javaVersion.contains("1.9.")) a = JAVA_19;
-        else if (javaVersion.contains("1.8.")) a = JAVA_18;
-        else if (javaVersion.contains("1.7.")) a = JAVA_17;
-        else if (javaVersion.contains("1.6.")) a = JAVA_16;
+        if (javaVersion.contains("1.9."))
+            a = JAVA_19;
+        else if (javaVersion.contains("1.8."))
+            a = JAVA_18;
+        else if (javaVersion.contains("1.7."))
+            a = JAVA_17;
+        else if (javaVersion.contains("1.6."))
+            a = JAVA_16;
         return a;
     }
 
@@ -124,6 +131,7 @@ public final class JdkVersion {
      * <code>System.getProperty("java.version")</code>.
      *
      * @return the full Java version string
+     *
      * @see System#getProperty(String)
      */
     public static String getJavaVersion() {
@@ -138,6 +146,7 @@ public final class JdkVersion {
      * rn a code comparable to the JAVA_XX codes in this class
      *
      * @return
+     *
      * @see #JAVA_13
      * @see #JAVA_14
      * @see #JAVA_15
@@ -156,11 +165,11 @@ public final class JdkVersion {
     private static final Pattern p = Pattern.compile("java version \"[1-9]*\\.[1-9]*\\.[0-9]*(.*?)\"");
 
     public static JdkVersion getJavaVersionFromExecutable(String file) throws IOException {
-        String[] str = new String[]{file, "-version"};
+        String[] str = new String[] {file, "-version"};
         Platform platform = Platform.BIT_32;
         String ver = null;
         try {
-            for(String line : IOUtils.readProcessByErrorStream(str)) {
+            for (String line : IOUtils.readProcessByErrorStream(str)) {
                 Matcher m = p.matcher(line);
                 if (m.find()) {
                     ver = m.group();

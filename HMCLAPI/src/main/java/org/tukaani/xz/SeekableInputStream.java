@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.InputStream;
@@ -16,6 +15,7 @@ import java.io.IOException;
  * Input stream with random access support.
  */
 public abstract class SeekableInputStream extends InputStream {
+
     /**
      * Seeks <code>n</code> bytes forward in this stream.
      * <p>
@@ -32,11 +32,11 @@ public abstract class SeekableInputStream extends InputStream {
      * {@link java.io.InputStream#skip(long) InputStream.skip}.
      *
      * @return      <code>0</code> if <code>n</code> is negative,
-     *              less than <code>n</code> if skipping <code>n</code>
-     *              bytes would seek past the end of the file,
-     *              <code>n</code> otherwise
+     * less than <code>n</code> if skipping <code>n</code>
+     * bytes would seek past the end of the file,
+     * <code>n</code> otherwise
      *
-     * @throws      IOException might be thrown by {@link #seek(long)}
+     * @throws IOException might be thrown by {@link #seek(long)}
      */
     public long skip(long n) throws IOException {
         if (n <= 0)
@@ -72,10 +72,10 @@ public abstract class SeekableInputStream extends InputStream {
      * past the end of the stream, <code>read</code> will return
      * <code>-1</code> to indicate end of stream.
      *
-     * @param       pos         new read position in the stream
+     * @param pos new read position in the stream
      *
-     * @throws      IOException if <code>pos</code> is negative or if
-     *                          a stream-specific I/O error occurs
+     * @throws IOException if <code>pos</code> is negative or if
+     *                     a stream-specific I/O error occurs
      */
     public abstract void seek(long pos) throws IOException;
 }

@@ -52,7 +52,8 @@ public class Java {
         if (obj instanceof Java) {
             Java j = (Java) obj;
             return (j.getName() == null && this.getName() == null) || ((Java) obj).getName().equals(this.getName());
-        } else return false;
+        } else
+            return false;
     }
 
     @Override
@@ -88,8 +89,10 @@ public class Java {
             for (String java : javas) {
                 int s = 0;
                 for (char c : java.toCharArray())
-                    if (c == '.') s++;
-                if (s <= 1) continue;
+                    if (c == '.')
+                        s++;
+                if (s <= 1)
+                    continue;
                 String javahome = queryRegValue(java, "JavaHome");
                 if (javahome != null)
                     ans.add(new Java(java.substring("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\".length()), javahome));
@@ -98,8 +101,10 @@ public class Java {
             for (String java : javas) {
                 int s = 0;
                 for (char c : java.toCharArray())
-                    if (c == '.') s++;
-                if (s <= 1) continue;
+                    if (c == '.')
+                        s++;
+                if (s <= 1)
+                    continue;
                 String javahome = queryRegValue(java, "JavaHome");
                 if (javahome != null)
                     ans.add(new Java(java.substring("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\".length()), javahome));
@@ -111,7 +116,7 @@ public class Java {
     }
 
     private static List<String> queryRegSubFolders(String location) throws IOException, InterruptedException {
-        String[] cmd = new String[]{"cmd", "/c", "reg", "query", location};
+        String[] cmd = new String[] {"cmd", "/c", "reg", "query", location};
         List<String> l = IOUtils.readProcessByInputStream(cmd);
         List<String> ans = new ArrayList<>();
         for (String line : l)
@@ -121,11 +126,12 @@ public class Java {
     }
 
     private static String queryRegValue(String location, String name) throws IOException, InterruptedException {
-        String[] cmd = new String[]{"cmd", "/c", "reg", "query", location, "/v", name};
+        String[] cmd = new String[] {"cmd", "/c", "reg", "query", location, "/v", name};
         List<String> l = IOUtils.readProcessByInputStream(cmd);
         boolean last = false;
         for (String s : l) {
-            if (s.trim().isEmpty()) continue;
+            if (s.trim().isEmpty())
+                continue;
             if (last == true && s.trim().startsWith(name)) {
                 int begins = s.indexOf(name);
                 if (begins > 0) {
@@ -137,7 +143,8 @@ public class Java {
                     }
                 }
             }
-            if (s.trim().equals(location)) last = true;
+            if (s.trim().equals(location))
+                last = true;
         }
         return null;
     }

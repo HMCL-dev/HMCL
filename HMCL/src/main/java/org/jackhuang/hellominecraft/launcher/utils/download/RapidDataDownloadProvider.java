@@ -46,11 +46,10 @@ public class RapidDataDownloadProvider extends MojangDownloadProvider {
     public String getVersionsListDownloadURL() {
         return "http://mirrors.rapiddata.org/Minecraft.Download/versions/versions.json";
     }
-    
+
     @Override
     public String getParsedLibraryDownloadURL(String str) {
         return str == null ? null : str.replace("http://files.minecraftforge.net/maven", "http://mirrors.rapiddata.org/forge/maven");
     }
-    
-    
+
 }

@@ -6,13 +6,13 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.IOException;
 import org.tukaani.xz.simple.SimpleFilter;
 
 class SimpleOutputStream extends FinishableOutputStream {
+
     private static final int FILTER_BUF_SIZE = 4096;
 
     private FinishableOutputStream out;
@@ -41,7 +41,7 @@ class SimpleOutputStream extends FinishableOutputStream {
     }
 
     public void write(int b) throws IOException {
-        tempBuf[0] = (byte)b;
+        tempBuf[0] = (byte) b;
         write(tempBuf, 0, 1);
     }
 
@@ -124,14 +124,14 @@ class SimpleOutputStream extends FinishableOutputStream {
 
     public void close() throws IOException {
         if (out != null) {
-            if (!finished) {
+            if (!finished)
                 // out.close() must be called even if writePending() fails.
                 // writePending() saves the possible exception so we can
                 // ignore exceptions here.
                 try {
                     writePending();
-                } catch (IOException e) {}
-            }
+                } catch (IOException e) {
+                }
 
             try {
                 out.close();

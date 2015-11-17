@@ -55,7 +55,8 @@ public class LiteLoaderInstaller extends Task implements PreviousResultRegistrar
             setFailReason(new RuntimeException(C.i18n("install.no_version")));
             return false;
         }
-        if (pre.size() != 1 && installer == null) throw new IllegalStateException("No registered previous task.");
+        if (pre.size() != 1 && installer == null)
+            throw new IllegalStateException("No registered previous task.");
         if (installer == null)
             installer = pre.get(pre.size() - 1).getResult();
         try {

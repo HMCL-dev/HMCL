@@ -34,37 +34,32 @@ public final class StrUtils {
     public static String substring(String src, int start_idx, int end_idx) {
         byte[] b = src.getBytes();
         String tgt = "";
-        for (int i = start_idx; i <= end_idx; i++) {
+        for (int i = start_idx; i <= end_idx; i++)
             tgt += (char) b[i];
-        }
         return tgt;
     }
 
     public static String makeCommand(List<String> cmd) {
         StringBuilder cmdbuf = new StringBuilder(120);
         for (int i = 0; i < cmd.size(); i++) {
-            if (i > 0) {
+            if (i > 0)
                 cmdbuf.append(' ');
-            }
             String s = cmd.get(i);
-            if (s.indexOf(' ') >= 0 || s.indexOf('\t') >= 0) {
+            if (s.indexOf(' ') >= 0 || s.indexOf('\t') >= 0)
                 if (s.charAt(0) != '"') {
                     cmdbuf.append('"');
                     cmdbuf.append(s);
-                    if (s.endsWith("\\")) {
+                    if (s.endsWith("\\"))
                         cmdbuf.append("\\");
-                    }
                     cmdbuf.append('"');
-                } else if (s.endsWith("\"")) {
+                } else if (s.endsWith("\""))
                     /* The argument has already been quoted. */
                     cmdbuf.append(s);
-                } else {
+                else
                     /* Unmatched quote for the argument. */
                     throw new IllegalArgumentException();
-                }
-            } else {
+            else
                 cmdbuf.append(s);
-            }
         }
         String str = cmdbuf.toString();
 
@@ -76,61 +71,49 @@ public final class StrUtils {
     }
 
     public static boolean startsWithOne(String[] a, String match) {
-        if (a == null) {
+        if (a == null)
             return false;
-        }
-        for (String b : a) {
-            if (startsWith(match, b)) {
+        for (String b : a)
+            if (startsWith(match, b))
                 return true;
-            }
-        }
         return false;
     }
 
     public static boolean equalsOne(String base, String... a) {
-        for (String s : a) {
-            if (base.equals(s)) {
+        for (String s : a)
+            if (base.equals(s))
                 return true;
-            }
-        }
         return false;
     }
 
     public static boolean containsOne(List<String> base, List<String> match) {
-        for (String a : base) {
-            for (String b : match) {
-                if (a.toLowerCase().contains(b.toLowerCase())) {
+        for (String a : base)
+            for (String b : match)
+                if (a.toLowerCase().contains(b.toLowerCase()))
                     return true;
-                }
-            }
-        }
         return false;
     }
 
     public static int getCharShowTime(String s, char c) {
         int res = 0;
-        for (int i = 0; i < s.length(); i++) {
-            if (s.charAt(i) == c) {
+        for (int i = 0; i < s.length(); i++)
+            if (s.charAt(i) == c)
                 res++;
-            }
-        }
         return res;
     }
 
     public static String formatVersion(String ver) {
-        if (isBlank(ver)) {
+        if (isBlank(ver))
             return null;
-        } else {
-            for(char ch : ver.toCharArray()) {
-                if((ch < '0' || ch > '9') && ch != '.') return null;
-            }
-        }
+        else
+            for (char ch : ver.toCharArray())
+                if ((ch < '0' || ch > '9') && ch != '.')
+                    return null;
         int i = getCharShowTime(ver, '.');
-        if (i == 1) {
+        if (i == 1)
             return ver + ".0";
-        } else {
+        else
             return ver;
-        }
     }
 
     public static String parseParams(String addBefore, Collection paramArrayOfObject, String paramString) {
@@ -138,57 +121,49 @@ public final class StrUtils {
     }
 
     public static String parseParams(String addBefore, Object[] paramArrayOfObject, String paramString) {
-        if (paramArrayOfObject == null) {
+        if (paramArrayOfObject == null)
             return "";
-        }
         StringBuilder localStringBuffer = new StringBuilder();
         for (int i = 0; i < paramArrayOfObject.length; i++) {
             Object localObject = paramArrayOfObject[i];
-            if (i > 0) {
+            if (i > 0)
                 localStringBuffer.append(addBefore).append(paramString);
-            }
-            if (localObject == null) {
+            if (localObject == null)
                 localStringBuffer.append("null");
-            } else if (localObject.getClass().isArray()) {
+            else if (localObject.getClass().isArray()) {
                 localStringBuffer.append("[");
 
                 if ((localObject instanceof Object[])) {
                     Object[] arrayOfObject = (Object[]) localObject;
                     localStringBuffer.append(parseParams(addBefore, arrayOfObject, paramString));
-                } else {
+                } else
                     for (int j = 0; j < Array.getLength(localObject); j++) {
-                        if (j > 0) {
+                        if (j > 0)
                             localStringBuffer.append(paramString);
-                        }
                         localStringBuffer.append(addBefore).append(Array.get(localObject, j));
                     }
-                }
                 localStringBuffer.append("]");
-            } else {
+            } else
                 localStringBuffer.append(addBefore).append(paramArrayOfObject[i]);
-            }
         }
         return localStringBuffer.toString();
     }
 
     public static boolean isEquals(String base, String to) {
-        if (base == null) {
+        if (base == null)
             return (to == null);
-        } else {
+        else
             return base.equals(to);
-        }
     }
 
     public static Dimension parseDimension(String str) {
         String[] tokenized = tokenize(str, "x,");
-        if (tokenized.length != 2) {
+        if (tokenized.length != 2)
             return null;
-        }
         int i = MathUtils.parseInt(tokenized[0], -1);
         int j = MathUtils.parseInt(tokenized[1], -1);
-        if ((i < 0) || (j < 0)) {
+        if ((i < 0) || (j < 0))
             return null;
-        }
         return new Dimension(i, j);
     }
 
@@ -210,9 +185,8 @@ public final class StrUtils {
     public static String trimExtension(String filename) {
         if ((filename != null) && (filename.length() > 0)) {
             int i = filename.lastIndexOf('.');
-            if ((i > -1) && (i < (filename.length()))) {
+            if ((i > -1) && (i < (filename.length())))
                 return filename.substring(0, i);
-            }
         }
         return filename;
     }

@@ -12,7 +12,7 @@ public class AuthenticationRequest {
         agent = new HashMap<>();
         agent.put("name", "Minecraft");
         agent.put("version", 1);
-        
+
         this.username = username;
         this.password = password;
         this.clientToken = clientToken;

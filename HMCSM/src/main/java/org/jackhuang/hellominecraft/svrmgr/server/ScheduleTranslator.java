@@ -75,7 +75,7 @@ public class ScheduleTranslator {
     }
 
     public static Object[] getRow(Schedule s) {
-        return new Object[]{
+        return new Object[] {
             getName(s), getTimeTypeName(s), s.per, s.content
         };
     }

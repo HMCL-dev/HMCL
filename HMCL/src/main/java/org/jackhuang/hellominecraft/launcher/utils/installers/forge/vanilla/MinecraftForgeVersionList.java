@@ -49,7 +49,8 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
     @Override
     public void refreshList(String[] needed) throws Exception {
         String s = NetUtils.doGet(Settings.getInstance().getDownloadSource().getProvider().getParsedLibraryDownloadURL(C.URL_FORGE_LIST));
-        if (root != null) return;
+        if (root != null)
+            return;
 
         root = C.gson.fromJson(s, MinecraftForgeVersionRoot.class);
 
@@ -96,10 +97,13 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
 
     @Override
     public List<InstallerVersion> getVersions(String mcVersion) {
-        if (versions == null || versionMap == null) return null;
-        if (StrUtils.isBlank(mcVersion)) return versions;
+        if (versions == null || versionMap == null)
+            return null;
+        if (StrUtils.isBlank(mcVersion))
+            return versions;
         List c = versionMap.get(mcVersion);
-        if (c == null) return versions;
+        if (c == null)
+            return versions;
         Collections.sort(c, InstallerVersionComparator.INSTANCE);
         return c;
     }

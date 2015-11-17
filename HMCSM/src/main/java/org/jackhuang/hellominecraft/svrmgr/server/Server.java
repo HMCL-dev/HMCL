@@ -53,7 +53,7 @@ import org.jackhuang.hellominecraft.utils.functions.Consumer;
  * @author huangyuhui
  */
 public class Server implements Event<Integer>, MonitorThread.MonitorThreadListener,
-        ActionListener {
+                               ActionListener {
 
     private static Server instance;
     private static boolean disactived = false;
@@ -112,7 +112,7 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
             jvmPath = IOUtils.getJavaDir();
         else
             jvmPath = SettingsManager.settings.javaDir;
-        String[] puts = new String[]{
+        String[] puts = new String[] {
             jvmPath,
             "-Xmx" + memory + "m",
             "-jar",
@@ -124,8 +124,8 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
         pb.directory(new File(SettingsManager.settings.mainjar).getParentFile());
         try {
             disactiveMods(SettingsManager.settings.inactiveExtMods,
-                    SettingsManager.settings.inactiveCoreMods,
-                    SettingsManager.settings.inactivePlugins);
+                          SettingsManager.settings.inactiveCoreMods,
+                          SettingsManager.settings.inactivePlugins);
             server = pb.start();
             registerThread(threadA, server.getInputStream());
             registerThread(threadB, server.getErrorStream());
@@ -206,7 +206,8 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
 
     private void registerThreadC(Process p) {
         threadC = new WaitForThread(p);
-        for (Event<Integer> l : listenersC) threadC.event.register(l);
+        for (Event<Integer> l : listenersC)
+            threadC.event.register(l);
         threadC.event.register(this);
         threadC.start();
     }
@@ -221,9 +222,13 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
             System.err.println("Server crashed(exit code: " + t + ")");
         }
         isRunning = false;
-        for (Schedule schedule : schedules) if (schedule.timeType == Schedule.TIME_TYPE_SERVER_STOPPED) ScheduleTranslator.translate(this, schedule).run();
-        if (timer != null) timer.cancel();
-        if (pastTimer != null) pastTimer.stop();
+        for (Schedule schedule : schedules)
+            if (schedule.timeType == Schedule.TIME_TYPE_SERVER_STOPPED)
+                ScheduleTranslator.translate(this, schedule).run();
+        if (timer != null)
+            timer.cancel();
+        if (pastTimer != null)
+            pastTimer.stop();
         restoreMods();
         if (isRestart) {
             try {
@@ -238,7 +243,7 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
     }
 
     private static void disactiveMods(ArrayList<String> inactiveExtMods,
-            ArrayList<String> inactiveCoreMods, ArrayList<String> inactivePlugins) {
+                                      ArrayList<String> inactiveCoreMods, ArrayList<String> inactivePlugins) {
         disactiveModsByType(inactiveExtMods, "mods");
         disactiveModsByType(inactiveCoreMods, "coremods");
         disactiveModsByType(inactivePlugins, "plugins");
@@ -256,11 +261,12 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
             System.out.println("没有文件: " + paramString);
             return;
         }
-        for (File file : files) if (!file.isDirectory()) {
+        for (File file : files)
+            if (!file.isDirectory()) {
                 String name = file.getName();
 
                 if ((!paramArrayOfString.contains(name))
-                        || ((!name.toLowerCase().endsWith(".zip")) && (!name.toLowerCase().endsWith(".jar"))))
+                    || ((!name.toLowerCase().endsWith(".zip")) && (!name.toLowerCase().endsWith(".jar"))))
                     continue;
 
                 String newName = name + "X";
@@ -278,8 +284,10 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
     private static void restoreModsByType(String paramString) {
         System.out.println("还原被禁用的文件: " + paramString);
         File[] files = new File(Utilities.getGameDir(), paramString).listFiles();
-        if (files == null) return;
-        for (File file : files) if (!file.isDirectory()) {
+        if (files == null)
+            return;
+        for (File file : files)
+            if (!file.isDirectory()) {
                 String name = file.getName();
                 String lowName = name.toLowerCase();
                 if ((!lowName.endsWith(".zipx")) && (!lowName.endsWith(".jarx")))
@@ -289,9 +297,8 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
                 File newFile = new File(file.getParentFile(), newName);
                 if (newFile.exists())
                     file.delete();
-                else
-                    if (!file.renameTo(newFile))
-                        System.out.println("无法重命名: " + file.getName() + " 到: " + newFile.getName() + " 在: " + file.getParent());
+                else if (!file.renameTo(newFile))
+                    System.out.println("无法重命名: " + file.getName() + " 到: " + newFile.getName() + " 在: " + file.getParent());
             }
     }
 
@@ -346,7 +353,8 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
                         ScheduleTranslator.translate(this, schedules.get(i)).run();
                         continue;
                     }
-                    if (schedules.get(i).timeType != Schedule.TIME_TYPE_PER) continue;
+                    if (schedules.get(i).timeType != Schedule.TIME_TYPE_PER)
+                        continue;
                     long mill = (long) Math.floor(schedules.get(i).per * 60 * 1000);
                     timerTasks.add(ScheduleTranslator.translate(this, schedules.get(i)));
                     timer.schedule(timerTasks.get(i), mill, mill);
@@ -360,7 +368,9 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
         }
         if (status.length() > 20)
             if (status.substring(20).contains("[SEVERE] This crash report has been saved to: "))
-                for (Schedule schedule : schedules) if (schedule.timeType == Schedule.TIME_TYPE_SERVER_CRASHED) ScheduleTranslator.translate(this, schedule).run();
+                for (Schedule schedule : schedules)
+                    if (schedule.timeType == Schedule.TIME_TYPE_SERVER_CRASHED)
+                        ScheduleTranslator.translate(this, schedule).run();
     }
 
     GregorianCalendar c = new GregorianCalendar();
@@ -368,15 +378,19 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
     @Override
     public void actionPerformed(ActionEvent e) {
         c.setTime(new Date());
-        if (c.get(Calendar.SECOND) != 0) return;
+        if (c.get(Calendar.SECOND) != 0)
+            return;
         int minute = c.get(Calendar.MINUTE);
         for (Schedule schedule : schedules) {
-            if (schedule.timeType != Schedule.TIME_TYPE_PAST_HOUR) continue;
-            if (schedule.per == minute) ScheduleTranslator.translate(this, schedule).run();
+            if (schedule.timeType != Schedule.TIME_TYPE_PAST_HOUR)
+                continue;
+            if (schedule.per == minute)
+                ScheduleTranslator.translate(this, schedule).run();
         }
     }
 
     private void sendStatus(String status) {
-        for (MonitorThread.MonitorThreadListener l : listeners) l.onStatus(status);
+        for (MonitorThread.MonitorThreadListener l : listeners)
+            l.onStatus(status);
     }
 }

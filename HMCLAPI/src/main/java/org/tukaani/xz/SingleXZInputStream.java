@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.InputStream;
@@ -40,6 +39,7 @@ import org.tukaani.xz.check.Check;
  * @see XZInputStream
  */
 public class SingleXZInputStream extends InputStream {
+
     private InputStream in;
     private int memoryLimit;
     private StreamFlags streamHeaderFlags;
@@ -59,24 +59,24 @@ public class SingleXZInputStream extends InputStream {
      * from <code>in</code>. The header of the first Block is not read
      * until <code>read</code> is called.
      *
-     * @param       in          input stream from which XZ-compressed
-     *                          data is read
+     * @param in input stream from which XZ-compressed
+     *           data is read
      *
-     * @throws      XZFormatException
-     *                          input is not in the XZ format
+     * @throws XZFormatException
+     *                                     input is not in the XZ format
      *
-     * @throws      CorruptedInputException
-     *                          XZ header CRC32 doesn't match
+     * @throws CorruptedInputException
+     *                                     XZ header CRC32 doesn't match
      *
-     * @throws      UnsupportedOptionsException
-     *                          XZ header is valid but specifies options
-     *                          not supported by this implementation
+     * @throws UnsupportedOptionsException
+     *                                     XZ header is valid but specifies options
+     *                                     not supported by this implementation
      *
-     * @throws      EOFException
-     *                          less than 12 bytes of input was available
-     *                          from <code>in</code>
+     * @throws EOFException
+     *                                     less than 12 bytes of input was available
+     *                                     from <code>in</code>
      *
-     * @throws      IOException may be thrown by <code>in</code>
+     * @throws IOException                 may be thrown by <code>in</code>
      */
     public SingleXZInputStream(InputStream in) throws IOException {
         initialize(in, -1);
@@ -89,31 +89,31 @@ public class SingleXZInputStream extends InputStream {
      * This is identical to <code>SingleXZInputStream(InputStream)</code>
      * except that this takes also the <code>memoryLimit</code> argument.
      *
-     * @param       in          input stream from which XZ-compressed
-     *                          data is read
+     * @param in          input stream from which XZ-compressed
+     *                    data is read
      *
-     * @param       memoryLimit memory usage limit in kibibytes (KiB)
-     *                          or <code>-1</code> to impose no
-     *                          memory usage limit
+     * @param memoryLimit memory usage limit in kibibytes (KiB)
+     *                    or <code>-1</code> to impose no
+     *                    memory usage limit
      *
-     * @throws      XZFormatException
-     *                          input is not in the XZ format
+     * @throws XZFormatException
+     *                                     input is not in the XZ format
      *
-     * @throws      CorruptedInputException
-     *                          XZ header CRC32 doesn't match
+     * @throws CorruptedInputException
+     *                                     XZ header CRC32 doesn't match
      *
-     * @throws      UnsupportedOptionsException
-     *                          XZ header is valid but specifies options
-     *                          not supported by this implementation
+     * @throws UnsupportedOptionsException
+     *                                     XZ header is valid but specifies options
+     *                                     not supported by this implementation
      *
-     * @throws      EOFException
-     *                          less than 12 bytes of input was available
-     *                          from <code>in</code>
+     * @throws EOFException
+     *                                     less than 12 bytes of input was available
+     *                                     from <code>in</code>
      *
-     * @throws      IOException may be thrown by <code>in</code>
+     * @throws IOException                 may be thrown by <code>in</code>
      */
     public SingleXZInputStream(InputStream in, int memoryLimit)
-            throws IOException {
+    throws IOException {
         initialize(in, memoryLimit);
     }
 
@@ -123,7 +123,7 @@ public class SingleXZInputStream extends InputStream {
     }
 
     private void initialize(InputStream in, int memoryLimit)
-            throws IOException {
+    throws IOException {
         byte[] streamHeader = new byte[DecoderUtil.STREAM_HEADER_SIZE];
         new DataInputStream(in).readFully(streamHeader);
         initialize(in, memoryLimit, streamHeader);
@@ -140,7 +140,7 @@ public class SingleXZInputStream extends InputStream {
     /**
      * Gets the ID of the integrity check used in this XZ Stream.
      *
-     * @return      the Check ID specified in the XZ Stream Header
+     * @return the Check ID specified in the XZ Stream Header
      */
     public int getCheckType() {
         return streamHeaderFlags.checkType;
@@ -149,7 +149,7 @@ public class SingleXZInputStream extends InputStream {
     /**
      * Gets the name of the integrity check used in this XZ Stream.
      *
-     * @return      the name of the check specified in the XZ Stream Header
+     * @return the name of the check specified in the XZ Stream Header
      */
     public String getCheckName() {
         return check.getName();
@@ -162,19 +162,19 @@ public class SingleXZInputStream extends InputStream {
      * may be inefficient. Wrap it in {@link java.io.BufferedInputStream}
      * if you need to read lots of data one byte at a time.
      *
-     * @return      the next decompressed byte, or <code>-1</code>
-     *              to indicate the end of the compressed stream
+     * @return the next decompressed byte, or <code>-1</code>
+     * to indicate the end of the compressed stream
      *
-     * @throws      CorruptedInputException
-     * @throws      UnsupportedOptionsException
-     * @throws      MemoryLimitException
+     * @throws CorruptedInputException
+     * @throws UnsupportedOptionsException
+     * @throws MemoryLimitException
      *
-     * @throws      XZIOException if the stream has been closed
+     * @throws XZIOException               if the stream has been closed
      *
-     * @throws      EOFException
-     *                          compressed input is truncated or corrupt
+     * @throws EOFException
+     *                                     compressed input is truncated or corrupt
      *
-     * @throws      IOException may be thrown by <code>in</code>
+     * @throws IOException                 may be thrown by <code>in</code>
      */
     public int read() throws IOException {
         return read(tempBuf, 0, 1) == -1 ? -1 : (tempBuf[0] & 0xFF);
@@ -188,31 +188,31 @@ public class SingleXZInputStream extends InputStream {
      * bytes of uncompressed data. Less than <code>len</code> bytes may
      * be read only in the following situations:
      * <ul>
-     *   <li>The end of the compressed data was reached successfully.</li>
-     *   <li>An error is detected after at least one but less <code>len</code>
-     *       bytes have already been successfully decompressed.
-     *       The next call with non-zero <code>len</code> will immediately
-     *       throw the pending exception.</li>
-     *   <li>An exception is thrown.</li>
+     * <li>The end of the compressed data was reached successfully.</li>
+     * <li>An error is detected after at least one but less <code>len</code>
+     * bytes have already been successfully decompressed.
+     * The next call with non-zero <code>len</code> will immediately
+     * throw the pending exception.</li>
+     * <li>An exception is thrown.</li>
      * </ul>
      *
-     * @param       buf         target buffer for uncompressed data
-     * @param       off         start offset in <code>buf</code>
-     * @param       len         maximum number of uncompressed bytes to read
+     * @param buf target buffer for uncompressed data
+     * @param off start offset in <code>buf</code>
+     * @param len maximum number of uncompressed bytes to read
      *
-     * @return      number of bytes read, or <code>-1</code> to indicate
-     *              the end of the compressed stream
+     * @return number of bytes read, or <code>-1</code> to indicate
+     * the end of the compressed stream
      *
-     * @throws      CorruptedInputException
-     * @throws      UnsupportedOptionsException
-     * @throws      MemoryLimitException
+     * @throws CorruptedInputException
+     * @throws UnsupportedOptionsException
+     * @throws MemoryLimitException
      *
-     * @throws      XZIOException if the stream has been closed
+     * @throws XZIOException               if the stream has been closed
      *
-     * @throws      EOFException
-     *                          compressed input is truncated or corrupt
+     * @throws EOFException
+     *                                     compressed input is truncated or corrupt
      *
-     * @throws      IOException may be thrown by <code>in</code>
+     * @throws IOException                 may be thrown by <code>in</code>
      */
     public int read(byte[] buf, int off, int len) throws IOException {
         if (off < 0 || len < 0 || off + len < 0 || off + len > buf.length)
@@ -234,17 +234,16 @@ public class SingleXZInputStream extends InputStream {
 
         try {
             while (len > 0) {
-                if (blockDecoder == null) {
+                if (blockDecoder == null)
                     try {
                         blockDecoder = new BlockInputStream(
-                                in, check, memoryLimit, -1, -1);
+                        in, check, memoryLimit, -1, -1);
                     } catch (IndexIndicatorException e) {
                         indexHash.validate(in);
                         validateStreamFooter();
                         endReached = true;
                         return size > 0 ? size : -1;
                     }
-                }
 
                 int ret = blockDecoder.read(buf, off, len);
 
@@ -274,9 +273,9 @@ public class SingleXZInputStream extends InputStream {
 
         if (!DecoderUtil.areStreamFlagsEqual(streamHeaderFlags,
                                              streamFooterFlags)
-                || indexHash.getIndexSize() != streamFooterFlags.backwardSize)
+            || indexHash.getIndexSize() != streamFooterFlags.backwardSize)
             throw new CorruptedInputException(
-                    "XZ Stream Footer does not match Stream Header");
+            "XZ Stream Footer does not match Stream Header");
     }
 
     /**
@@ -287,8 +286,8 @@ public class SingleXZInputStream extends InputStream {
      * thrown before the number of bytes claimed to be available have
      * been read from this input stream.
      *
-     * @return      the number of uncompressed bytes that can be read
-     *              without blocking
+     * @return the number of uncompressed bytes that can be read
+     * without blocking
      */
     public int available() throws IOException {
         if (in == null)
@@ -304,15 +303,14 @@ public class SingleXZInputStream extends InputStream {
      * Closes the stream and calls <code>in.close()</code>.
      * If the stream was already closed, this does nothing.
      *
-     * @throws  IOException if thrown by <code>in.close()</code>
+     * @throws IOException if thrown by <code>in.close()</code>
      */
     public void close() throws IOException {
-        if (in != null) {
+        if (in != null)
             try {
                 in.close();
             } finally {
                 in = null;
             }
-        }
     }
 }

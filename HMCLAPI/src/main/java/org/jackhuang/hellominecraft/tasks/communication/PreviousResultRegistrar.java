@@ -24,10 +24,11 @@ import org.jackhuang.hellominecraft.tasks.Task;
  * @param <T> Previous task result type
  */
 public interface PreviousResultRegistrar<T> {
-    
+
     /**
-     * 
+     *
      * @param pr previous task handler
+     *
      * @return task self instance
      */
     Task registerPreviousResult(PreviousResult<T> pr);

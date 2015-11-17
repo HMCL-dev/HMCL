@@ -15,16 +15,16 @@ import org.jackhuang.hellominecraft.utils.NetUtils;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 
 public class YggdrasilAuthentication {
-    
+
     public static final Gson GSON = new GsonBuilder()
-        .registerTypeAdapter(GameProfile.class, new GameProfile.GameProfileSerializer())
-        .registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer())
-        .registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
-    
+    .registerTypeAdapter(GameProfile.class, new GameProfile.GameProfileSerializer())
+    .registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer())
+    .registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
+
     protected static final String BASE_URL = "https://authserver.mojang.com/";
     protected static final URL ROUTE_AUTHENTICATE = NetUtils.constantURL(BASE_URL + "authenticate");
     protected static final URL ROUTE_REFRESH = NetUtils.constantURL(BASE_URL + "refresh");
-    
+
     protected static final String STORAGE_KEY_ACCESS_TOKEN = "accessToken";
     protected static final String STORAGE_KEY_PROFILE_NAME = "displayName";
     protected static final String STORAGE_KEY_PROFILE_ID = "uuid";
@@ -32,11 +32,11 @@ public class YggdrasilAuthentication {
     protected static final String STORAGE_KEY_USER_NAME = "username";
     protected static final String STORAGE_KEY_USER_ID = "userid";
     protected static final String STORAGE_KEY_USER_PROPERTIES = "userProperties";
-    
+
     private final Proxy proxy;
     private final String clientToken;
     private final PropertyMap userProperties = new PropertyMap();
-    
+
     private String userid, username, password, accessToken;
     private GameProfile selectedProfile;
     private GameProfile[] profiles;
@@ -48,7 +48,6 @@ public class YggdrasilAuthentication {
     }
 
     // <editor-fold defaultstate="collapsed" desc="Get/Set">
-    
     public void setUsername(String username) {
         if ((isLoggedIn()) && (canPlayOnline()))
             throw new IllegalStateException("Cannot change username while logged in & online");
@@ -104,7 +103,7 @@ public class YggdrasilAuthentication {
     protected void setUserId(String userid) {
         this.userid = userid;
     }
-    
+
     public Proxy getProxy() {
         return this.proxy;
     }
@@ -120,22 +119,20 @@ public class YggdrasilAuthentication {
     @Deprecated
     public String getSessionToken() {
         if (isLoggedIn() && getSelectedProfile() != null && canPlayOnline())
-            return String.format("token:%s:%s", new Object[]{getAuthenticatedToken(), getSelectedProfile().id});
+            return String.format("token:%s:%s", new Object[] {getAuthenticatedToken(), getSelectedProfile().id});
         return null;
     }
 
     public String getAuthenticatedToken() {
         return this.accessToken;
     }
-    
-    // </editor-fold>
-    
-    // <editor-fold defaultstate="collapsed" desc="Log In/Out">
 
+    // </editor-fold>
+    // <editor-fold defaultstate="collapsed" desc="Log In/Out">
     public boolean canPlayOnline() {
         return isLoggedIn() && getSelectedProfile() != null && this.isOnline;
     }
-    
+
     public boolean canLogIn() {
         return !canPlayOnline() && StrUtils.isNotBlank(getUsername()) && (StrUtils.isNotBlank(getPassword()) || StrUtils.isNotBlank(getAuthenticatedToken()));
     }
@@ -209,7 +206,6 @@ public class YggdrasilAuthentication {
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="Settings Storage">
-    
     public void loadFromStorage(Map<String, Object> credentials) {
         logOut();
 
@@ -257,9 +253,8 @@ public class YggdrasilAuthentication {
 
         return result;
     }
-    
+
     // </editor-fold>
-    
     protected Response request(URL url, Object input) throws AuthenticationException {
         try {
             String jsonResult = input == null ? NetUtils.doGet(url) : NetUtils.post(url, GSON.toJson(input), "application/json", proxy);

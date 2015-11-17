@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 /**
@@ -15,6 +14,7 @@ package org.tukaani.xz;
  * from <code>XZIOException</code>.
  */
 public class XZIOException extends java.io.IOException {
+
     private static final long serialVersionUID = 3L;
 
     public XZIOException() {

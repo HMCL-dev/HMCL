@@ -7,10 +7,10 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.lzma;
 
 final class Optimum {
+
     private static final int INFINITY_PRICE = 1 << 30;
 
     final State state = new State();

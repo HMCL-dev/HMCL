@@ -42,6 +42,7 @@ public class MonitorServiceImpl implements IMonitorService {
      * 获得当前的监控对象.
      *
      * @return 返回构造好的监控对象
+     *
      * @throws Exception
      * @author GuoHuang
      */
@@ -144,7 +145,7 @@ public class MonitorServiceImpl implements IMonitorService {
     }
 
     private static void freeResource(InputStream is, InputStreamReader isr,
-            BufferedReader br) {
+                                     BufferedReader br) {
         try {
             if (is != null)
                 is.close();
@@ -161,6 +162,7 @@ public class MonitorServiceImpl implements IMonitorService {
      * 获得CPU使用率.
      *
      * @return 返回cpu使用率
+     *
      * @author GuoHuang
      */
     private double getCpuRatioForWindows() {
@@ -186,7 +188,9 @@ public class MonitorServiceImpl implements IMonitorService {
      * 读取CPU信息.
      *
      * @param proc
+     *
      * @return
+     *
      * @author GuoHuang
      */
     private long[] readCpu(final Process proc) {
@@ -249,6 +253,7 @@ public class MonitorServiceImpl implements IMonitorService {
      * 测试方法.
      *
      * @param args
+     *
      * @throws Exception
      * @author GuoHuang
      */

@@ -25,16 +25,15 @@ import org.jackhuang.hellominecraft.logging.layout.DefaultLayout;
  *
  * @author huangyuhui
  */
-
 public class Configuration {
-    
+
     public ArrayList<IAppender> appenders = new ArrayList<IAppender>();
-    
+
     public static Configuration DEFAULT;
-    
+
     static {
-	DEFAULT = new Configuration();
-	DEFAULT.appenders.add(new ConsoleAppender("Console", new DefaultLayout(), true, new ConsoleAppender.SystemOutStream(), true));
+        DEFAULT = new Configuration();
+        DEFAULT.appenders.add(new ConsoleAppender("Console", new DefaultLayout(), true, new ConsoleAppender.SystemOutStream(), true));
     }
-    
+
 }

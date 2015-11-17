@@ -25,11 +25,12 @@ import org.jackhuang.hellominecraft.logging.LogEvent;
  * @author huangyuhui
  */
 public class DefaultLayout extends AbstractStringLayout {
+
     private static final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 
     @Override
     public String toSerializable(LogEvent event) {
-	return "[" + sdf.format(new Date()) + "] [" + event.threadName + "/" + event.level.name() + "] " + event.message.getFormattedMessage() + "\n";
+        return "[" + sdf.format(new Date()) + "] [" + event.threadName + "/" + event.level.name() + "] " + event.message.getFormattedMessage() + "\n";
     }
-    
+
 }

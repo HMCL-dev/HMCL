@@ -25,7 +25,7 @@ import java.util.List;
 public class MinecraftVersion {
 
     public String minecraftArguments, mainClass, time, id, type, processArguments,
-            releaseTime, assets, jar, inheritsFrom;
+    releaseTime, assets, jar, inheritsFrom;
     public int minimumLauncherVersion;
 
     public List<MinecraftLibrary> libraries;

@@ -6,18 +6,18 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 
 class UncompressedLZMA2OutputStream extends FinishableOutputStream {
+
     private FinishableOutputStream out;
     private final DataOutputStream outData;
 
     private final byte[] uncompBuf
-            = new byte[LZMA2OutputStream.COMPRESSED_SIZE_MAX];
+                         = new byte[LZMA2OutputStream.COMPRESSED_SIZE_MAX];
     private int uncompPos = 0;
     private boolean dictResetNeeded = true;
 
@@ -40,7 +40,7 @@ class UncompressedLZMA2OutputStream extends FinishableOutputStream {
     }
 
     public void write(int b) throws IOException {
-        tempBuf[0] = (byte)b;
+        tempBuf[0] = (byte) b;
         write(tempBuf, 0, 1);
     }
 
@@ -131,11 +131,11 @@ class UncompressedLZMA2OutputStream extends FinishableOutputStream {
 
     public void close() throws IOException {
         if (out != null) {
-            if (!finished) {
+            if (!finished)
                 try {
                     writeEndMarker();
-                } catch (IOException e) {}
-            }
+                } catch (IOException e) {
+                }
 
             try {
                 out.close();

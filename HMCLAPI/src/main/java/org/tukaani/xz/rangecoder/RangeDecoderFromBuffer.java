@@ -7,7 +7,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.rangecoder;
 
 import java.io.DataInputStream;
@@ -15,6 +14,7 @@ import java.io.IOException;
 import org.tukaani.xz.CorruptedInputException;
 
 public final class RangeDecoderFromBuffer extends RangeDecoder {
+
     private static final int INIT_SIZE = 5;
 
     private final byte[] buf;
@@ -26,7 +26,7 @@ public final class RangeDecoderFromBuffer extends RangeDecoder {
     }
 
     public void prepareInputBuffer(DataInputStream in, int len)
-            throws IOException {
+    throws IOException {
         if (len < INIT_SIZE)
             throw new CorruptedInputException();
 
@@ -50,7 +50,7 @@ public final class RangeDecoderFromBuffer extends RangeDecoder {
     }
 
     public void normalize() throws IOException {
-        if ((range & TOP_MASK) == 0) {
+        if ((range & TOP_MASK) == 0)
             try {
                 // If the input is corrupt, this might throw
                 // ArrayIndexOutOfBoundsException.
@@ -59,6 +59,5 @@ public final class RangeDecoderFromBuffer extends RangeDecoder {
             } catch (ArrayIndexOutOfBoundsException e) {
                 throw new CorruptedInputException();
             }
-        }
     }
 }

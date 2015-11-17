@@ -70,7 +70,8 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
         ua.setUsername(usr);
         try {
             ua.logIn();
-            if (!ua.isLoggedIn()) throw new Exception(C.i18n("login.wrong_password"));
+            if (!ua.isLoggedIn())
+                throw new Exception(C.i18n("login.wrong_password"));
             GameProfile selectedProfile = ua.getSelectedProfile();
             GameProfile[] profiles = ua.getAvailableProfiles();
             String[] names;
@@ -94,7 +95,8 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
             result.setUserProperties(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.LegacySerializer()).create().toJson(ua.getUserProperties()));
             result.setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()));
             String authToken = ua.getAuthenticatedToken();
-            if (authToken == null) authToken = "0";
+            if (authToken == null)
+                authToken = "0";
             result.setAccessToken(authToken);
             result.setSession(authToken);
         } catch (Exception ex) {
@@ -123,7 +125,8 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
     }
 
     public void onLoadSettings(Map settings) {
-        if (settings == null) return;
+        if (settings == null)
+            return;
         ua.loadFromStorage(settings);
     }
 
@@ -132,7 +135,8 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
         UserProfileProvider info = new UserProfileProvider();
         try {
             ua.logIn();
-            if (!ua.isLoggedIn()) throw new Exception(C.i18n("login.wrong_password"));
+            if (!ua.isLoggedIn())
+                throw new Exception(C.i18n("login.wrong_password"));
             GameProfile profile = ua.getSelectedProfile();
             info.setUserName(profile.name);
             info.setSuccess(true);

@@ -7,7 +7,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.lz;
 
 import java.io.DataInputStream;
@@ -15,6 +14,7 @@ import java.io.IOException;
 import org.tukaani.xz.CorruptedInputException;
 
 public final class LZDecoder {
+
     private final byte[] buf;
     private int start = 0;
     private int pos = 0;
@@ -104,7 +104,7 @@ public final class LZDecoder {
     }
 
     public void copyUncompressed(DataInputStream inData, int len)
-            throws IOException {
+    throws IOException {
         int copySize = Math.min(buf.length - pos, len);
         inData.readFully(buf, pos, copySize);
         pos += copySize;

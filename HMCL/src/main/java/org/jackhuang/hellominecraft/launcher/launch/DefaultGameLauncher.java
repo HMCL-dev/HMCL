@@ -49,13 +49,15 @@ public class DefaultGameLauncher extends GameLauncher {
                 parallelTask.addDependsTask(new LibraryDownloadTask(s));
             dw.addTask(parallelTask);
             boolean flag = true;
-            if (t.size() > 0) flag = dw.start();
+            if (t.size() > 0)
+                flag = dw.start();
             if (!flag && MessageBox.Show(C.i18n("launch.not_finished_downloading_libraries"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                 flag = true;
             return flag;
         });
         decompressNativesEvent.register((sender, value) -> {
-            if (value == null) return false;
+            if (value == null)
+                return false;
             for (int i = 0; i < value.decompressFiles.length; i++)
                 try {
                     Compressor.unzip(value.decompressFiles[i], value.decompressTo, value.extractRules[i]);

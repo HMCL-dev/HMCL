@@ -154,8 +154,10 @@ public class GameLauncher {
      * According to the name...
      *
      * @param launcherName the name of launch bat/sh
-     * @param str launch command
+     * @param str          launch command
+     *
      * @return launcher location
+     *
      * @throws java.io.IOException write contents failed.
      */
     public File makeLauncher(String launcherName, List str) throws IOException {

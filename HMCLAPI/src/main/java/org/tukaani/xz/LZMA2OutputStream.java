@@ -7,7 +7,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.DataOutputStream;
@@ -17,6 +16,7 @@ import org.tukaani.xz.rangecoder.RangeEncoder;
 import org.tukaani.xz.lzma.LZMAEncoder;
 
 class LZMA2OutputStream extends FinishableOutputStream {
+
     static final int COMPRESSED_SIZE_MAX = 64 << 10;
 
     private FinishableOutputStream out;
@@ -62,10 +62,10 @@ class LZMA2OutputStream extends FinishableOutputStream {
         int dictSize = options.getDictSize();
         int extraSizeBefore = getExtraSizeBefore(dictSize);
         lzma = LZMAEncoder.getInstance(rc,
-                options.getLc(), options.getLp(), options.getPb(),
-                options.getMode(),
-                dictSize, extraSizeBefore, options.getNiceLen(),
-                options.getMatchFinder(), options.getDepthLimit());
+                                       options.getLc(), options.getLp(), options.getPb(),
+                                       options.getMode(),
+                                       dictSize, extraSizeBefore, options.getNiceLen(),
+                                       options.getMatchFinder(), options.getDepthLimit());
 
         lz = lzma.getLZEncoder();
 
@@ -79,7 +79,7 @@ class LZMA2OutputStream extends FinishableOutputStream {
     }
 
     public void write(int b) throws IOException {
-        tempBuf[0] = (byte)b;
+        tempBuf[0] = (byte) b;
         write(tempBuf, 0, 1);
     }
 
@@ -118,9 +118,9 @@ class LZMA2OutputStream extends FinishableOutputStream {
 
         // +2 because the header of a compressed chunk is 2 bytes
         // bigger than the header of an uncompressed chunk.
-        if (compressedSize + 2 < uncompressedSize) {
+        if (compressedSize + 2 < uncompressedSize)
             writeLZMA(uncompressedSize, compressedSize);
-        } else {
+        else {
             lzma.reset();
             uncompressedSize = lzma.getUncompressedSize();
             assert uncompressedSize > 0 : uncompressedSize;
@@ -133,20 +133,18 @@ class LZMA2OutputStream extends FinishableOutputStream {
     }
 
     private void writeLZMA(int uncompressedSize, int compressedSize)
-            throws IOException {
+    throws IOException {
         int control;
 
-        if (propsNeeded) {
+        if (propsNeeded)
             if (dictResetNeeded)
                 control = 0x80 + (3 << 5);
             else
                 control = 0x80 + (2 << 5);
-        } else {
-            if (stateResetNeeded)
-                control = 0x80 + (1 << 5);
-            else
-                control = 0x80;
-        }
+        else if (stateResetNeeded)
+            control = 0x80 + (1 << 5);
+        else
+            control = 0x80;
 
         control |= (uncompressedSize - 1) >>> 16;
         outData.writeByte(control);
@@ -239,11 +237,11 @@ class LZMA2OutputStream extends FinishableOutputStream {
 
     public void close() throws IOException {
         if (out != null) {
-            if (!finished) {
+            if (!finished)
                 try {
                     writeEndMarker();
-                } catch (IOException e) {}
-            }
+                } catch (IOException e) {
+                }
 
             try {
                 out.close();

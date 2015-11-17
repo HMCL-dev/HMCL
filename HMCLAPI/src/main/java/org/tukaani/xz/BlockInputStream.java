@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.InputStream;
@@ -18,6 +17,7 @@ import org.tukaani.xz.common.DecoderUtil;
 import org.tukaani.xz.check.Check;
 
 class BlockInputStream extends InputStream {
+
     private final DataInputStream inData;
     private final CountingInputStream inCounted;
     private InputStream filterChain;
@@ -35,7 +35,7 @@ class BlockInputStream extends InputStream {
     public BlockInputStream(InputStream in, Check check, int memoryLimit,
                             long unpaddedSizeInIndex,
                             long uncompressedSizeInIndex)
-            throws IOException, IndexIndicatorException {
+    throws IOException, IndexIndicatorException {
         this.check = check;
         inData = new DataInputStream(in);
 
@@ -59,7 +59,7 @@ class BlockInputStream extends InputStream {
         // Check for reserved bits in Block Flags.
         if ((buf[1] & 0x3C) != 0)
             throw new UnsupportedOptionsException(
-                    "Unsupported options in XZ Block Header");
+            "Unsupported options in XZ Block Header");
 
         // Memory for the Filter Flags field
         int filterCount = (buf[1] & 0x03) + 1;
@@ -69,7 +69,7 @@ class BlockInputStream extends InputStream {
         // Use a stream to parse the fields after the Block Flags field.
         // Exclude the CRC32 field at the end.
         ByteArrayInputStream bufStream = new ByteArrayInputStream(
-                buf, 2, headerSize - 6);
+        buf, 2, headerSize - 6);
 
         try {
             // Set the maximum valid compressed size. This is overriden
@@ -83,7 +83,7 @@ class BlockInputStream extends InputStream {
                 compressedSizeInHeader = DecoderUtil.decodeVLI(bufStream);
 
                 if (compressedSizeInHeader == 0
-                        || compressedSizeInHeader > compressedSizeLimit)
+                    || compressedSizeInHeader > compressedSizeLimit)
                     throw new CorruptedInputException();
 
                 compressedSizeLimit = compressedSizeInHeader;
@@ -102,7 +102,7 @@ class BlockInputStream extends InputStream {
                 if (filterPropsSize > bufStream.available())
                     throw new CorruptedInputException();
 
-                filterProps[i] = new byte[(int)filterPropsSize];
+                filterProps[i] = new byte[(int) filterPropsSize];
                 bufStream.read(filterProps[i]);
             }
 
@@ -114,7 +114,7 @@ class BlockInputStream extends InputStream {
         for (int i = bufStream.available(); i > 0; --i)
             if (bufStream.read() != 0x00)
                 throw new UnsupportedOptionsException(
-                        "Unsupported options in XZ Block Header");
+                "Unsupported options in XZ Block Header");
 
         // Validate the Blcok Header against the Index when doing
         // random access reading.
@@ -125,26 +125,26 @@ class BlockInputStream extends InputStream {
             int headerAndCheckSize = headerSize + check.getSize();
             if (headerAndCheckSize >= unpaddedSizeInIndex)
                 throw new CorruptedInputException(
-                        "XZ Index does not match a Block Header");
+                "XZ Index does not match a Block Header");
 
             // The compressed size calculated from Unpadded Size must
             // match the value stored in the Compressed Size field in
             // the Block Header.
             long compressedSizeFromIndex
-                    = unpaddedSizeInIndex - headerAndCheckSize;
+                 = unpaddedSizeInIndex - headerAndCheckSize;
             if (compressedSizeFromIndex > compressedSizeLimit
-                    || (compressedSizeInHeader != -1
-                        && compressedSizeInHeader != compressedSizeFromIndex))
+                || (compressedSizeInHeader != -1
+                    && compressedSizeInHeader != compressedSizeFromIndex))
                 throw new CorruptedInputException(
-                        "XZ Index does not match a Block Header");
+                "XZ Index does not match a Block Header");
 
             // The uncompressed size stored in the Index must match
             // the value stored in the Uncompressed Size field in
             // the Block Header.
             if (uncompressedSizeInHeader != -1
-                    && uncompressedSizeInHeader != uncompressedSizeInIndex)
+                && uncompressedSizeInHeader != uncompressedSizeInIndex)
                 throw new CorruptedInputException(
-                        "XZ Index does not match a Block Header");
+                "XZ Index does not match a Block Header");
 
             // For further validation, pretend that the values from the Index
             // were stored in the Block Header.
@@ -158,7 +158,7 @@ class BlockInputStream extends InputStream {
         // supported by this decoder implementation.
         FilterDecoder[] filters = new FilterDecoder[filterIDs.length];
 
-        for (int i = 0; i < filters.length; ++i) {
+        for (int i = 0; i < filters.length; ++i)
             if (filterIDs[i] == LZMA2Coder.FILTER_ID)
                 filters[i] = new LZMA2Decoder(filterProps[i]);
 
@@ -170,8 +170,7 @@ class BlockInputStream extends InputStream {
 
             else
                 throw new UnsupportedOptionsException(
-                        "Unknown Filter ID " + filterIDs[i]);
-        }
+                "Unknown Filter ID " + filterIDs[i]);
 
         RawCoder.validate(filters);
 
@@ -214,10 +213,10 @@ class BlockInputStream extends InputStream {
             // Catch invalid values.
             long compressedSize = inCounted.getSize();
             if (compressedSize < 0
-                    || compressedSize > compressedSizeLimit
-                    || uncompressedSize < 0
-                    || (uncompressedSizeInHeader != -1
-                        && uncompressedSize > uncompressedSizeInHeader))
+                || compressedSize > compressedSizeLimit
+                || uncompressedSize < 0
+                || (uncompressedSizeInHeader != -1
+                    && uncompressedSize > uncompressedSizeInHeader))
                 throw new CorruptedInputException();
 
             // Check the Block integrity as soon as possible:
@@ -248,9 +247,9 @@ class BlockInputStream extends InputStream {
         // Validate Compressed Size and Uncompressed Size if they were
         // present in Block Header.
         if ((compressedSizeInHeader != -1
-                    && compressedSizeInHeader != compressedSize)
-                || (uncompressedSizeInHeader != -1
-                    && uncompressedSizeInHeader != uncompressedSize))
+             && compressedSizeInHeader != compressedSize)
+            || (uncompressedSizeInHeader != -1
+                && uncompressedSizeInHeader != uncompressedSize))
             throw new CorruptedInputException();
 
         // Block Padding bytes must be zeros.
@@ -263,7 +262,7 @@ class BlockInputStream extends InputStream {
         inData.readFully(storedCheck);
         if (!Arrays.equals(check.finish(), storedCheck))
             throw new CorruptedInputException("Integrity check ("
-                    + check.getName() + ") does not match");
+                                              + check.getName() + ") does not match");
     }
 
     public int available() throws IOException {

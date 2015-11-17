@@ -7,7 +7,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.lzma;
 
 import org.tukaani.xz.lz.LZEncoder;
@@ -15,6 +14,7 @@ import org.tukaani.xz.lz.Matches;
 import org.tukaani.xz.rangecoder.RangeEncoder;
 
 final class LZMAEncoderFast extends LZMAEncoder {
+
     private static int EXTRA_SIZE_BEFORE = 1;
     private static int EXTRA_SIZE_AFTER = MATCH_LEN_MAX - 1;
 
@@ -22,13 +22,13 @@ final class LZMAEncoderFast extends LZMAEncoder {
 
     static int getMemoryUsage(int dictSize, int extraSizeBefore, int mf) {
         return LZEncoder.getMemoryUsage(
-                dictSize, Math.max(extraSizeBefore, EXTRA_SIZE_BEFORE),
-                EXTRA_SIZE_AFTER, MATCH_LEN_MAX, mf);
+        dictSize, Math.max(extraSizeBefore, EXTRA_SIZE_BEFORE),
+        EXTRA_SIZE_AFTER, MATCH_LEN_MAX, mf);
     }
 
     LZMAEncoderFast(RangeEncoder rc, int lc, int lp, int pb,
-                           int dictSize, int extraSizeBefore,
-                           int niceLen, int mf, int depthLimit) {
+                    int dictSize, int extraSizeBefore,
+                    int niceLen, int mf, int depthLimit) {
         super(rc, LZEncoder.getInstance(dictSize,
                                         Math.max(extraSizeBefore,
                                                  EXTRA_SIZE_BEFORE),
@@ -95,7 +95,7 @@ final class LZMAEncoderFast extends LZMAEncoder {
             }
 
             while (matches.count > 1
-                    && mainLen == matches.len[matches.count - 2] + 1) {
+                   && mainLen == matches.len[matches.count - 2] + 1) {
                 if (!changePair(matches.dist[matches.count - 2], mainDist))
                     break;
 
@@ -108,15 +108,14 @@ final class LZMAEncoderFast extends LZMAEncoder {
                 mainLen = 1;
         }
 
-        if (bestRepLen >= MATCH_LEN_MIN) {
+        if (bestRepLen >= MATCH_LEN_MIN)
             if (bestRepLen + 1 >= mainLen
-                    || (bestRepLen + 2 >= mainLen && mainDist >= (1 << 9))
-                    || (bestRepLen + 3 >= mainLen && mainDist >= (1 << 15))) {
+                || (bestRepLen + 2 >= mainLen && mainDist >= (1 << 9))
+                || (bestRepLen + 3 >= mainLen && mainDist >= (1 << 15))) {
                 back = bestRepIndex;
                 skip(bestRepLen - 1);
                 return bestRepLen;
             }
-        }
 
         if (mainLen < MATCH_LEN_MIN || avail <= MATCH_LEN_MIN)
             return 1;
@@ -130,12 +129,12 @@ final class LZMAEncoderFast extends LZMAEncoder {
             int newDist = matches.dist[matches.count - 1];
 
             if ((newLen >= mainLen && newDist < mainDist)
-                    || (newLen == mainLen + 1
-                        && !changePair(mainDist, newDist))
-                    || newLen > mainLen + 1
-                    || (newLen + 1 >= mainLen
-                        && mainLen >= MATCH_LEN_MIN + 1
-                        && changePair(newDist, mainDist)))
+                || (newLen == mainLen + 1
+                    && !changePair(mainDist, newDist))
+                || newLen > mainLen + 1
+                || (newLen + 1 >= mainLen
+                    && mainLen >= MATCH_LEN_MIN + 1
+                    && changePair(newDist, mainDist)))
                 return 1;
         }
 

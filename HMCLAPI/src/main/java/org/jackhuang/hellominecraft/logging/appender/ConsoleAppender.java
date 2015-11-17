@@ -28,62 +28,62 @@ import org.jackhuang.hellominecraft.logging.layout.ILayout;
 public class ConsoleAppender extends OutputStreamAppender {
 
     public ConsoleAppender(String name, ILayout<? extends Serializable> layout, boolean ignoreExceptions, OutputStream stream, boolean immediateFlush) {
-	super(name, layout, ignoreExceptions, stream, true);
+        super(name, layout, ignoreExceptions, stream, true);
     }
 
     public static class SystemOutStream extends OutputStream {
 
-	@Override
-	public void close() {
-	}
+        @Override
+        public void close() {
+        }
 
-	@Override
-	public void flush() {
-	    System.out.flush();
-	}
+        @Override
+        public void flush() {
+            System.out.flush();
+        }
 
-	@Override
-	public void write(byte[] b) throws IOException {
-	    System.out.write(b);
-	}
+        @Override
+        public void write(byte[] b) throws IOException {
+            System.out.write(b);
+        }
 
-	@Override
-	public void write(byte[] b, int off, int len)
-		throws IOException {
-	    System.out.write(b, off, len);
-	}
+        @Override
+        public void write(byte[] b, int off, int len)
+        throws IOException {
+            System.out.write(b, off, len);
+        }
 
-	@Override
-	public void write(int b) throws IOException {
-	    System.out.write(b);
-	}
+        @Override
+        public void write(int b) throws IOException {
+            System.out.write(b);
+        }
     }
 
     public static class SystemErrStream extends OutputStream {
 
-	@Override
-	public void close() {
-	}
+        @Override
+        public void close() {
+        }
 
-	@Override
-	public void flush() {
-	    System.err.flush();
-	}
+        @Override
+        public void flush() {
+            System.err.flush();
+        }
 
-	@Override
-	public void write(byte[] b) throws IOException {
-	    System.err.write(b);
-	}
+        @Override
+        public void write(byte[] b) throws IOException {
+            System.err.write(b);
+        }
 
-	@Override
-	public void write(byte[] b, int off, int len)
-		throws IOException {
-	    System.err.write(b, off, len);
-	}
+        @Override
+        public void write(byte[] b, int off, int len)
+        throws IOException {
+            System.err.write(b, off, len);
+        }
 
-	@Override
-	public void write(int b) {
-	    System.err.write(b);
-	}
+        @Override
+        public void write(int b) {
+            System.err.write(b);
+        }
     }
 }

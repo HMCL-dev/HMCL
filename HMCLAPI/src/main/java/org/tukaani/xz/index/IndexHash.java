@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.index;
 
 import java.io.InputStream;
@@ -20,6 +19,7 @@ import org.tukaani.xz.XZIOException;
 import org.tukaani.xz.CorruptedInputException;
 
 public class IndexHash extends IndexBase {
+
     private org.tukaani.xz.check.Check hash;
 
     public IndexHash() {
@@ -33,7 +33,7 @@ public class IndexHash extends IndexBase {
     }
 
     public void add(long unpaddedSize, long uncompressedSize)
-            throws XZIOException {
+    throws XZIOException {
         super.add(unpaddedSize, uncompressedSize);
 
         ByteBuffer buf = ByteBuffer.allocate(2 * 8);
@@ -68,15 +68,15 @@ public class IndexHash extends IndexBase {
             }
 
             if (stored.blocksSum > blocksSum
-                    || stored.uncompressedSum > uncompressedSum
-                    || stored.indexListSize > indexListSize)
+                || stored.uncompressedSum > uncompressedSum
+                || stored.indexListSize > indexListSize)
                 throw new CorruptedInputException("XZ Index is corrupt");
         }
 
         if (stored.blocksSum != blocksSum
-                || stored.uncompressedSum != uncompressedSum
-                || stored.indexListSize != indexListSize
-                || !Arrays.equals(stored.hash.finish(), hash.finish()))
+            || stored.uncompressedSum != uncompressedSum
+            || stored.indexListSize != indexListSize
+            || !Arrays.equals(stored.hash.finish(), hash.finish()))
             throw new CorruptedInputException("XZ Index is corrupt");
 
         // Index Padding

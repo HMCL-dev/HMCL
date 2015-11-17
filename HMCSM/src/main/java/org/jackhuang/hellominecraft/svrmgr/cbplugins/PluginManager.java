@@ -51,32 +51,32 @@ public class PluginManager {
         String result = NetUtils.doGet("http://api.bukget.org/3//plugins?fields=slug,plugin_name,description,versions.version,versions.game_versions");
         Gson gson = new Gson();
         List<BukkitPlugin> list = gson.fromJson(result, new TypeToken<List<BukkitPlugin>>() {
-        }.getType());
+                                                }.getType());
         return list;
     }
 
     public static final String CATEGORY_ADMIN_TOOLS = "Admin Tools",
-            CATEGORY_DEVELOPER_TOOLS = "Developer Tools",
-            CATEGORY_FUN = "Fun",
-            CATEGORY_GENERAL = "General",
-            CATEGORY_ANTI_GRIEFING_TOOLS = "Anti Griefing Tools",
-            CATEGORY_MECHAICS = "Mechanics",
-            CATEGORY_Fixes = "Fixes",
-            CATEGORY_ROLE_PLAYING = "Role Playing",
-            CATEGORY_WORLD_EDITING_AND_MANAGEMENT = "World Editing and Management",
-            CATEGORY_TELEPORTATION = "Teleportation",
-            CATEGORY_INFORMATIONAL = "Informational",
-            CATEGORY_ECONOMY = "Economy",
-            CATEGORY_CHAT_RELATED = "Chat Related",
-            CATEGORY_MISCELLANEOUS = "Miscellaneous",
-            CATEGORY_WORLD_GENERATORS = "World Generators",
-            CATEGORY_WEBSITE_ADMINISTRATION = "Website Administration";
+    CATEGORY_DEVELOPER_TOOLS = "Developer Tools",
+    CATEGORY_FUN = "Fun",
+    CATEGORY_GENERAL = "General",
+    CATEGORY_ANTI_GRIEFING_TOOLS = "Anti Griefing Tools",
+    CATEGORY_MECHAICS = "Mechanics",
+    CATEGORY_Fixes = "Fixes",
+    CATEGORY_ROLE_PLAYING = "Role Playing",
+    CATEGORY_WORLD_EDITING_AND_MANAGEMENT = "World Editing and Management",
+    CATEGORY_TELEPORTATION = "Teleportation",
+    CATEGORY_INFORMATIONAL = "Informational",
+    CATEGORY_ECONOMY = "Economy",
+    CATEGORY_CHAT_RELATED = "Chat Related",
+    CATEGORY_MISCELLANEOUS = "Miscellaneous",
+    CATEGORY_WORLD_GENERATORS = "World Generators",
+    CATEGORY_WEBSITE_ADMINISTRATION = "Website Administration";
 
     public static List<BukkitPlugin> getPluginsByCategory(String category) throws Exception {
         String result = NetUtils.doGet("http://api.bukget.org/3//categories/" + category + "?fields=slug,plugin_name,description,versions.version,versions.game_versions");
         Gson gson = new Gson();
         List<BukkitPlugin> list = gson.fromJson(result, new TypeToken<List<BukkitPlugin>>() {
-        }.getType());
+                                                }.getType());
         return list;
     }
 
@@ -84,7 +84,7 @@ public class PluginManager {
         String result = NetUtils.doGet("http://api.bukget.org/3//categories/");
         Gson gson = new Gson();
         List<Category> list = gson.fromJson(result, new TypeToken<List<Category>>() {
-        }.getType());
+                                            }.getType());
         return list;
     }
 

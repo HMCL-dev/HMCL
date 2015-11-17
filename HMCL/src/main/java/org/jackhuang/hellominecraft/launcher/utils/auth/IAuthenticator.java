@@ -42,7 +42,7 @@ public abstract class IAuthenticator {
         YGGDRASIL_LOGIN.onLoadSettings(Settings.getInstance().getYggdrasilConfig());
 
         Runtime.getRuntime().addShutdownHook(new Thread(()
-                -> Settings.getInstance().setYggdrasilConfig(YGGDRASIL_LOGIN.onSaveSettings())
+        -> Settings.getInstance().setYggdrasilConfig(YGGDRASIL_LOGIN.onSaveSettings())
         ));
     }
 
@@ -56,6 +56,7 @@ public abstract class IAuthenticator {
      * Login Method
      *
      * @param info username & password
+     *
      * @return login result
      */
     public abstract UserProfileProvider login(LoginInfo info);

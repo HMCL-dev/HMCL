@@ -50,7 +50,8 @@ public class ModType {
                 java.util.Enumeration e = zipFile.entries();
                 while (e.hasMoreElements()) {
                     ZipEntry zipEnt = (ZipEntry) e.nextElement();
-                    if (zipEnt.isDirectory()) continue;
+                    if (zipEnt.isDirectory())
+                        continue;
                     gbkPath = zipEnt.getName();
                     if ("mcmod.info".equals(gbkPath))
                         return ForgeMod;

@@ -6,10 +6,10 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 abstract class BCJCoder implements FilterCoder {
+
     public static final long X86_FILTER_ID = 0x04;
     public static final long POWERPC_FILTER_ID = 0x05;
     public static final long IA64_FILTER_ID = 0x06;

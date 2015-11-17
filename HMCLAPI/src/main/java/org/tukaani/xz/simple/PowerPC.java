@@ -7,10 +7,10 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.simple;
 
 public final class PowerPC implements SimpleFilter {
+
     private final boolean isEncoder;
     private int pos;
 
@@ -23,7 +23,7 @@ public final class PowerPC implements SimpleFilter {
         int end = off + len - 4;
         int i;
 
-        for (i = off; i <= end; i += 4) {
+        for (i = off; i <= end; i += 4)
             if ((buf[i] & 0xFC) == 0x48 && (buf[i + 3] & 0x03) == 0x01) {
                 int src = ((buf[i] & 0x03) << 24)
                           | ((buf[i + 1] & 0xFF) << 16)
@@ -36,12 +36,11 @@ public final class PowerPC implements SimpleFilter {
                 else
                     dest = src - (pos + i - off);
 
-                buf[i] = (byte)(0x48 | ((dest >>> 24) & 0x03));
-                buf[i + 1] = (byte)(dest >>> 16);
-                buf[i + 2] = (byte)(dest >>> 8);
-                buf[i + 3] = (byte)((buf[i + 3] & 0x03) | dest);
+                buf[i] = (byte) (0x48 | ((dest >>> 24) & 0x03));
+                buf[i + 1] = (byte) (dest >>> 16);
+                buf[i + 2] = (byte) (dest >>> 8);
+                buf[i + 3] = (byte) ((buf[i + 3] & 0x03) | dest);
             }
-        }
 
         i -= off;
         pos += i;

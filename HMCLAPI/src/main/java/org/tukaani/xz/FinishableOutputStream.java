@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.OutputStream;
@@ -17,6 +16,7 @@ import java.io.IOException;
  * the underlying stream.
  */
 public abstract class FinishableOutputStream extends OutputStream {
+
     /**
      * Finish the stream without closing the underlying stream.
      * No more data may be written to the stream after finishing.
@@ -25,7 +25,9 @@ public abstract class FinishableOutputStream extends OutputStream {
      * does nothing. Subclasses should override it if they need finishing
      * support, which is the case, for example, with compressors.
      *
-     * @throws      IOException
+     * @throws IOException
      */
-    public void finish() throws IOException {};
+    public void finish() throws IOException {
+    }
+;
 }

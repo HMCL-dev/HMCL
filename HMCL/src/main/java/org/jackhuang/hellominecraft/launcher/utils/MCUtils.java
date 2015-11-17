@@ -86,7 +86,7 @@ public final class MCUtils {
         r.version = ver;
 
         r.type = file.getEntry("META-INF/MANIFEST.MF") == null
-                ? MinecraftVersionRequest.Modified : MinecraftVersionRequest.OK;
+                 ? MinecraftVersionRequest.Modified : MinecraftVersionRequest.OK;
         return r;
     }
 
@@ -131,12 +131,13 @@ public final class MCUtils {
                 return r;
             }
             int k = i;
-            while (tmp[k] >= 48 && tmp[k] <= 57 || tmp[k] == 46) k--;
+            while (tmp[k] >= 48 && tmp[k] <= 57 || tmp[k] == 46)
+                k--;
             k++;
             r.version = new String(tmp, k, i - k + 1);
         }
         r.type = file.getEntry("META-INF/MANIFEST.MF") == null
-                ? MinecraftVersionRequest.Modified : MinecraftVersionRequest.OK;
+                 ? MinecraftVersionRequest.Modified : MinecraftVersionRequest.OK;
         return r;
     }
 
@@ -158,7 +159,7 @@ public final class MCUtils {
         try {
             localZipFile = new ZipFile(file);
             ZipEntry minecraft = localZipFile
-                    .getEntry("net/minecraft/client/Minecraft.class");
+            .getEntry("net/minecraft/client/Minecraft.class");
             if (minecraft != null)
                 return getVersionOfOldMinecraft(localZipFile, minecraft);
             ZipEntry main = localZipFile.getEntry("net/minecraft/client/main/Main.class");
@@ -214,7 +215,8 @@ public final class MCUtils {
     }
 
     public static String minecraft() {
-        if (OS.os() == OS.OSX) return "minecraft";
+        if (OS.os() == OS.OSX)
+            return "minecraft";
         return ".minecraft";
     }
 
@@ -224,7 +226,8 @@ public final class MCUtils {
             gameDir = new File(gameDir, MCUtils.minecraft());
             if (!gameDir.exists()) {
                 File newFile = MCUtils.getLocation();
-                if (newFile.exists()) gameDir = newFile;
+                if (newFile.exists())
+                    gameDir = newFile;
             }
         }
         return gameDir;
@@ -240,13 +243,13 @@ public final class MCUtils {
         mvj.delete();
 
         if (TaskWindow.getInstance()
-                .addTask(new FileDownloadTask(vurl + id + ".json", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".json"))
-                .addTask(new FileDownloadTask(vurl + id + ".jar", IOUtils.tryGetCanonicalFile(mvj)).setTag(id + ".jar"))
-                .start()) {
+        .addTask(new FileDownloadTask(vurl + id + ".json", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".json"))
+        .addTask(new FileDownloadTask(vurl + id + ".jar", IOUtils.tryGetCanonicalFile(mvj)).setTag(id + ".jar"))
+        .start()) {
             MinecraftVersion mv;
             try {
                 mv = C.gson.fromJson(FileUtils.readFileToStringQuietly(mvt), MinecraftVersion.class);
-            } catch(JsonSyntaxException ex) {
+            } catch (JsonSyntaxException ex) {
                 HMCLog.err("Failed to parse minecraft version json.", ex);
                 mv = null;
             }
@@ -266,8 +269,8 @@ public final class MCUtils {
         File mvt = new File(vpath, id + ".jar");
         vpath.mkdirs();
         if (TaskWindow.getInstance()
-                .addTask(new FileDownloadTask(vurl + id + ".jar", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".jar"))
-                .start()) {
+        .addTask(new FileDownloadTask(vurl + id + ".jar", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".jar"))
+        .start()) {
             if (moved != null)
                 moved.delete();
             return true;
@@ -290,8 +293,8 @@ public final class MCUtils {
         File mvt = new File(vpath, id + ".json");
         vpath.mkdirs();
         if (TaskWindow.getInstance()
-                .addTask(new FileDownloadTask(vurl + id + ".json", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".json"))
-                .start()) {
+        .addTask(new FileDownloadTask(vurl + id + ".json", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".json"))
+        .start()) {
             if (moved != null)
                 moved.delete();
             return true;
@@ -314,8 +317,8 @@ public final class MCUtils {
             assetsIndex.renameTo(renamed);
         }
         if (TaskWindow.getInstance()
-                .addTask(new FileDownloadTask(aurl + assetsId + ".json", IOUtils.tryGetCanonicalFile(assetsIndex)).setTag(assetsId + ".json"))
-                .start()) {
+        .addTask(new FileDownloadTask(aurl + assetsId + ".json", IOUtils.tryGetCanonicalFile(assetsIndex)).setTag(assetsId + ".json"))
+        .start()) {
             if (renamed != null)
                 renamed.delete();
             return true;

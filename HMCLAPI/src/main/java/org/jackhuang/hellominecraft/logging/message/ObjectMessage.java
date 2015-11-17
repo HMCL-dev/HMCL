@@ -17,15 +17,14 @@
 package org.jackhuang.hellominecraft.logging.message;
 
 public class ObjectMessage
-        implements IMessage {
+implements IMessage {
 
     private static final long serialVersionUID = -5903272448334166185L;
     private final transient Object obj;
 
     public ObjectMessage(Object obj) {
-        if (obj == null) {
+        if (obj == null)
             obj = "null";
-        }
         this.obj = obj;
     }
 
@@ -41,17 +40,15 @@ public class ObjectMessage
 
     @Override
     public Object[] getParameters() {
-        return new Object[]{this.obj};
+        return new Object[] {this.obj};
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
+        if (this == o)
             return true;
-        }
-        if ((o == null) || (getClass() != o.getClass())) {
+        if ((o == null) || (getClass() != o.getClass()))
             return false;
-        }
 
         ObjectMessage that = (ObjectMessage) o;
 

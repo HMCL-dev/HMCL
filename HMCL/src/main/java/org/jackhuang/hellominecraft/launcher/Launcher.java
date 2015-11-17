@@ -53,19 +53,24 @@ public final class Launcher {
         ArrayList<String> cmdList = new ArrayList<>();
 
         for (String s : args)
-            if (s.startsWith("-cp=")) classPath = classPath.concat(s.substring("-cp=".length()));
-            else if (s.startsWith("-mainClass=")) mainClass = s.substring("-mainClass=".length());
-            else if (s.equals("-debug")) showInfo = true;
-            else cmdList.add(s);
+            if (s.startsWith("-cp="))
+                classPath = classPath.concat(s.substring("-cp=".length()));
+            else if (s.startsWith("-mainClass="))
+                mainClass = s.substring("-mainClass=".length());
+            else if (s.equals("-debug"))
+                showInfo = true;
+            else
+                cmdList.add(s);
 
         String[] tokenized = StrUtils.tokenize(classPath, File.pathSeparator);
         int len = tokenized.length;
-        
+
         if (showInfo) {
             LogWindow.instance.setTerminateGame(() -> Utils.shutdownForcely(1));
             try {
                 File logFile = new File("hmclmc.log");
-                if (!logFile.exists()) logFile.createNewFile();
+                if (!logFile.exists())
+                    logFile.createNewFile();
                 FileOutputStream tc = new FileOutputStream(logFile);
                 DoubleOutputStream out = new DoubleOutputStream(tc, System.out);
                 System.setOut(new LauncherPrintStream(out));
@@ -112,7 +117,7 @@ public final class Launcher {
 
         int flag = 0;
         try {
-            minecraftMain.invoke(null, new Object[]{(String[]) cmdList.toArray(new String[cmdList.size()])});
+            minecraftMain.invoke(null, new Object[] {(String[]) cmdList.toArray(new String[cmdList.size()])});
         } catch (Throwable throwable) {
             String trace = StrUtils.getStackTrace(throwable);
             final String advice = MinecraftCrashAdvicer.getAdvice(trace);
@@ -123,7 +128,7 @@ public final class Launcher {
             System.err.println(advice);
             System.err.println(trace);
             LogWindow.instance.setVisible(true);
-            
+
             flag = 1;
         }
 

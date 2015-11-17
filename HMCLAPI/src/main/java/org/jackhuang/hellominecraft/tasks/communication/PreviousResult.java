@@ -22,7 +22,7 @@ package org.jackhuang.hellominecraft.tasks.communication;
  * @param <T> Task result type
  */
 public interface PreviousResult<T> {
-    
+
     T getResult();
-    
+
 }

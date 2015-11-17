@@ -53,7 +53,8 @@ public class BukkitFormatThread extends Thread {
                 allforge.addAll(table.getElementsByTag("tr"));
             for (Element e : allforge) {
                 Elements tds = e.getElementsByTag("td");
-                if (tds.isEmpty()) continue;
+                if (tds.isEmpty())
+                    continue;
                 BukkitVersion v = new BukkitVersion();
                 Elements ths = e.getElementsByTag("th");
                 v.buildNumber = v.infoLink = null;
@@ -66,7 +67,8 @@ public class BukkitFormatThread extends Thread {
                 }
                 v.version = tds.get(0).text();
                 v.type = tds.get(1).text();
-                if (tds.get(2).getElementsByTag("a").isEmpty()) continue;
+                if (tds.get(2).getElementsByTag("a").isEmpty())
+                    continue;
                 v.downloadLink = "http://dl.bukkit.org" + tds.get(2).getElementsByTag("a").get(0).attr("href");
                 formattedList.add(v);
             }

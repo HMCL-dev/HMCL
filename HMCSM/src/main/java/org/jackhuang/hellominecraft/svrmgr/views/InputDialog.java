@@ -58,7 +58,7 @@ public class InputDialog extends javax.swing.JDialog {
         makeLayout();
         Dimension scrSize = Toolkit.getDefaultToolkit().getScreenSize();
         setLocation((scrSize.width - this.getWidth()) / 2,
-                (scrSize.height - this.getHeight()) / 2);
+                    (scrSize.height - this.getHeight()) / 2);
     }
 
     final void makeNewField(String message) {
@@ -71,24 +71,24 @@ public class InputDialog extends javax.swing.JDialog {
         javax.swing.GroupLayout jPanelLayout = new javax.swing.GroupLayout(panel);
         panel.setLayout(jPanelLayout);
         jPanelLayout.setHorizontalGroup(
-                jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(jPanelLayout.createSequentialGroup()
-                                        .addComponent(label)
-                                        .addGap(0, 0, Short.MAX_VALUE))
-                                .addComponent(textField))
-                        .addContainerGap())
+        jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanelLayout.createSequentialGroup()
+        .addContainerGap()
+        .addGroup(jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanelLayout.createSequentialGroup()
+        .addComponent(label)
+        .addGap(0, 0, Short.MAX_VALUE))
+        .addComponent(textField))
+        .addContainerGap())
         );
         jPanelLayout.setVerticalGroup(
-                jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(label)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(textField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanelLayout.createSequentialGroup()
+        .addContainerGap()
+        .addComponent(label)
+        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        .addComponent(textField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         textFields.add(textField);
         panels.add(panel);
@@ -101,25 +101,25 @@ public class InputDialog extends javax.swing.JDialog {
         for (JPanel p : panels)
             g.addComponent(p, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE);
         g.addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(jButton1));
+                   .addGap(0, 0, Short.MAX_VALUE)
+                   .addComponent(jButton1));
         layout.setHorizontalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(g)
-                        .addContainerGap())
+        layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(layout.createSequentialGroup()
+        .addContainerGap()
+        .addGroup(g)
+        .addContainerGap())
         );
         GroupLayout.SequentialGroup g2 = layout.createSequentialGroup()
-                .addContainerGap();
+        .addContainerGap();
         for (JPanel p : panels)
             g2 = g2.addComponent(p, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED);
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED);
         g2 = g2.addComponent(jButton1)
-                .addContainerGap();
+        .addContainerGap();
         layout.setVerticalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(g2)
+        layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(g2)
         );
 
         pack();

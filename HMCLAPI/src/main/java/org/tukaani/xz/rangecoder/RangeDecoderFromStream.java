@@ -7,7 +7,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.rangecoder;
 
 import java.io.InputStream;
@@ -16,6 +15,7 @@ import java.io.IOException;
 import org.tukaani.xz.CorruptedInputException;
 
 public final class RangeDecoderFromStream extends RangeDecoder {
+
     private final DataInputStream inData;
 
     public RangeDecoderFromStream(InputStream in) throws IOException {

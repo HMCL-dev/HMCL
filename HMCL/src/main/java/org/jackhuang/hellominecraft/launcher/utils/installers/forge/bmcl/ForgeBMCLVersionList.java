@@ -39,7 +39,8 @@ public class ForgeBMCLVersionList extends InstallerVersionList {
     private static ForgeBMCLVersionList instance;
 
     public static ForgeBMCLVersionList getInstance() {
-        if (instance == null) instance = new ForgeBMCLVersionList();
+        if (instance == null)
+            instance = new ForgeBMCLVersionList();
         return instance;
     }
 
@@ -55,7 +56,8 @@ public class ForgeBMCLVersionList extends InstallerVersionList {
         }
 
         for (String x : neededVersions) {
-            if (versionMap.containsKey(x)) continue;
+            if (versionMap.containsKey(x))
+                continue;
             String s = NetUtils.doGet("http://bmclapi2.bangbang93.com/forge/minecraft/" + x);
 
             if (s == null)
@@ -63,7 +65,7 @@ public class ForgeBMCLVersionList extends InstallerVersionList {
 
             try {
                 root = C.gson.fromJson(s, new TypeToken<ArrayList<ForgeVersion>>() {
-                }.getType());
+                                       }.getType());
                 for (ForgeVersion v : root) {
                     InstallerVersion iv = new InstallerVersion(v.version, StrUtils.formatVersion(v.minecraft));
 
@@ -83,10 +85,13 @@ public class ForgeBMCLVersionList extends InstallerVersionList {
 
     @Override
     public List<InstallerVersion> getVersions(String mcVersion) {
-        if (versions == null || versionMap == null) return null;
-        if (StrUtils.isBlank(mcVersion)) return versions;
+        if (versions == null || versionMap == null)
+            return null;
+        if (StrUtils.isBlank(mcVersion))
+            return versions;
         List c = versionMap.get(mcVersion);
-        if (c == null) return versions;
+        if (c == null)
+            return versions;
         Collections.sort(c, InstallerVersionComparator.INSTANCE);
         return c;
     }

@@ -34,7 +34,7 @@ public class MinecraftLibrary {
         str = s[0];
         str = str.replace('.', File.separatorChar);
         str += File.separator + s[1] + File.separator + s[2]
-                + File.separator + s[1] + '-' + s[2] + ".jar";
+               + File.separator + s[1] + '-' + s[2] + ".jar";
         formatted = str;
     }
 }

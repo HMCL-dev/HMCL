@@ -7,10 +7,10 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.lz;
 
 final class Hash234 extends CRC32Hash {
+
     private static final int HASH_2_SIZE = 1 << 10;
     private static final int HASH_2_MASK = HASH_2_SIZE - 1;
 

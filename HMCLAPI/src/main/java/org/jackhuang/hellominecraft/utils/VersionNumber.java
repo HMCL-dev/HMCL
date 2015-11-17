@@ -68,9 +68,12 @@ public final class VersionNumber implements Comparable<VersionNumber> {
 
     @Override
     public int compareTo(VersionNumber o) {
-        if (isOlder(this, o)) return -1;
-        else if (isOlder(o, this)) return 1;
-        else return 0;
+        if (isOlder(this, o))
+            return -1;
+        else if (isOlder(o, this))
+            return 1;
+        else
+            return 0;
     }
 
 }

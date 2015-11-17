@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.index;
 
 import java.io.IOException;
@@ -20,6 +19,7 @@ import org.tukaani.xz.MemoryLimitException;
 import org.tukaani.xz.UnsupportedOptionsException;
 
 public class IndexDecoder extends IndexBase {
+
     private final StreamFlags streamFlags;
     private final long streamPadding;
     private final int memoryUsage;
@@ -40,7 +40,7 @@ public class IndexDecoder extends IndexBase {
 
     public IndexDecoder(SeekableInputStream in, StreamFlags streamFooterFlags,
                         long streamPadding, int memoryLimit)
-            throws IOException {
+    throws IOException {
         super(new CorruptedInputException("XZ Index is corrupt"));
         this.streamFlags = streamFooterFlags;
         this.streamPadding = streamPadding;
@@ -71,21 +71,21 @@ public class IndexDecoder extends IndexBase {
             // allocate the arrays to hold the Records.
             if (count > Integer.MAX_VALUE)
                 throw new UnsupportedOptionsException("XZ Index has over "
-                        + Integer.MAX_VALUE + " Records");
+                                                      + Integer.MAX_VALUE + " Records");
 
             // Calculate approximate memory requirements and check the
             // memory usage limit.
-            memoryUsage = 1 + (int)((16L * count + 1023) / 1024);
+            memoryUsage = 1 + (int) ((16L * count + 1023) / 1024);
             if (memoryLimit >= 0 && memoryUsage > memoryLimit)
                 throw new MemoryLimitException(memoryUsage, memoryLimit);
 
             // Allocate the arrays for the Records.
-            unpadded = new long[(int)count];
-            uncompressed = new long[(int)count];
+            unpadded = new long[(int) count];
+            uncompressed = new long[(int) count];
             int record = 0;
 
             // Decode the Records.
-            for (int i = (int)count; i > 0; --i) {
+            for (int i = (int) count; i > 0; --i) {
                 // Get the next Record.
                 long unpaddedSize = DecoderUtil.decodeVLI(inChecked);
                 long uncompressedSize = DecoderUtil.decodeVLI(inChecked);
@@ -135,7 +135,7 @@ public class IndexDecoder extends IndexBase {
     public void setOffsets(IndexDecoder prev) {
         // NOTE: SeekableXZInputStream checks that the total number of Blocks
         // in concatenated Streams fits into an int.
-        recordOffset = prev.recordOffset + (int)prev.recordCount;
+        recordOffset = prev.recordOffset + (int) prev.recordCount;
         compressedOffset = prev.compressedOffset
                            + prev.getStreamSize() + prev.streamPadding;
         assert (compressedOffset & 3) == 0;
@@ -153,7 +153,7 @@ public class IndexDecoder extends IndexBase {
     public int getRecordCount() {
         // It was already checked in the constructor that it fits into an int.
         // Otherwise we couldn't have allocated the arrays.
-        return (int)recordCount;
+        return (int) recordCount;
     }
 
     public long getUncompressedSize() {

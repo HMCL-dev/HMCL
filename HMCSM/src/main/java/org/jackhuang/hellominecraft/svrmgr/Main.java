@@ -56,8 +56,8 @@ public class Main {
                 HMCLog.warn("Failed to set look and feel", ex);
             }
             new UpdateChecker(new VersionNumber(firstVer, secondVer, thirdVer), "hmcsm", () -> {
-                SwingUtilities.invokeLater(() -> MessageBox.Show("发现更新！"));
-            }).start();
+                                  SwingUtilities.invokeLater(() -> MessageBox.Show("发现更新！"));
+                              }).start();
             new MainWindow().setVisible(true);
         } catch (Throwable t) {
             HMCLog.err("There's something wrong when running server holder.", t);

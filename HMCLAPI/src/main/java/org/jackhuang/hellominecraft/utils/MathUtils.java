@@ -44,9 +44,12 @@ public class MathUtils {
             return Integer.parseInt(s);
         } catch (Exception e) {
             int a = parseInt(s.substring(0, s.length() - 1), def);
-            if (s.endsWith("g")) return a * 1024;
-            else if (s.endsWith("k")) return a / 1024;
-            else return a;
+            if (s.endsWith("g"))
+                return a * 1024;
+            else if (s.endsWith("k"))
+                return a / 1024;
+            else
+                return a;
         }
     }
 

@@ -69,7 +69,7 @@ public final class Settings {
             e.checkFormat();
 
         UPDATE_CHECKER = new UpdateChecker(new VersionNumber(Main.firstVer, Main.secondVer, Main.thirdVer),
-                "hmcl", Main::invokeUpdate);
+                                           "hmcl", Main::invokeUpdate);
 
         List<Java> temp = new ArrayList<>();
         temp.add(new Java("Default", System.getProperty("java.home")));
@@ -90,7 +90,8 @@ public final class Settings {
                     HMCLog.log("Settings file is empty, use the default settings.");
                 else {
                     Config d = C.gsonPrettyPrinting.fromJson(str, Config.class);
-                    if (d != null) c = d;
+                    if (d != null)
+                        c = d;
                 }
                 HMCLog.log("Initialized settings.");
             } catch (IOException | JsonSyntaxException e) {

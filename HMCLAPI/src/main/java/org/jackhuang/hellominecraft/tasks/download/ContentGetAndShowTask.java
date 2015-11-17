@@ -37,7 +37,7 @@ public class ContentGetAndShowTask extends HTTPGetTask implements Event<String> 
     }
 
     String info;
-    
+
     @Override
     public String getInfo() {
         return info;

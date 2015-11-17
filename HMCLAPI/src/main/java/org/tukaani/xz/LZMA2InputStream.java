@@ -7,7 +7,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.InputStream;
@@ -21,6 +20,7 @@ import org.tukaani.xz.lzma.LZMADecoder;
  * Decompresses a raw LZMA2 stream (no XZ headers).
  */
 public class LZMA2InputStream extends InputStream {
+
     /**
      * Smallest valid LZMA2 dictionary size.
      * <p>
@@ -47,7 +47,7 @@ public class LZMA2InputStream extends InputStream {
 
     private final LZDecoder lz;
     private final RangeDecoderFromBuffer rc
-            = new RangeDecoderFromBuffer(COMPRESSED_SIZE_MAX);
+                                         = new RangeDecoderFromBuffer(COMPRESSED_SIZE_MAX);
     private LZMADecoder lzma;
 
     private int uncompressedSize = 0;
@@ -65,11 +65,11 @@ public class LZMA2InputStream extends InputStream {
      * Gets approximate decompressor memory requirements as kibibytes for
      * the given dictionary size.
      *
-     * @param       dictSize    LZMA2 dictionary size as bytes, must be
-     *                          in the range [<code>DICT_SIZE_MIN</code>,
-     *                          <code>DICT_SIZE_MAX</code>]
+     * @param dictSize LZMA2 dictionary size as bytes, must be
+     *                 in the range [<code>DICT_SIZE_MIN</code>,
+     *                 <code>DICT_SIZE_MAX</code>]
      *
-     * @return      approximate memory requirements as kibibytes (KiB)
+     * @return approximate memory requirements as kibibytes (KiB)
      */
     public static int getMemoryUsage(int dictSize) {
         // The base state is around 30-40 KiB (probabilities etc.),
@@ -81,7 +81,7 @@ public class LZMA2InputStream extends InputStream {
     private static int getDictSize(int dictSize) {
         if (dictSize < DICT_SIZE_MIN || dictSize > DICT_SIZE_MAX)
             throw new IllegalArgumentException(
-                    "Unsupported dictionary size " + dictSize);
+            "Unsupported dictionary size " + dictSize);
 
         // Round dictionary size upward to a multiple of 16. This way LZMA
         // can use LZDecoder.getPos() for calculating LZMA's posMask.
@@ -106,12 +106,12 @@ public class LZMA2InputStream extends InputStream {
      * was used when compressing. If you know the uncompressed size
      * of the data, this might allow saving some memory.
      *
-     * @param       in          input stream from which LZMA2-compressed
-     *                          data is read
+     * @param in       input stream from which LZMA2-compressed
+     *                 data is read
      *
-     * @param       dictSize    LZMA2 dictionary size as bytes, must be
-     *                          in the range [<code>DICT_SIZE_MIN</code>,
-     *                          <code>DICT_SIZE_MAX</code>]
+     * @param dictSize LZMA2 dictionary size as bytes, must be
+     *                 in the range [<code>DICT_SIZE_MIN</code>,
+     *                 <code>DICT_SIZE_MAX</code>]
      */
     public LZMA2InputStream(InputStream in, int dictSize) {
         this(in, dictSize, null);
@@ -125,15 +125,15 @@ public class LZMA2InputStream extends InputStream {
      * If a preset dictionary was used when compressing the data, the
      * same preset dictionary must be provided when decompressing.
      *
-     * @param       in          input stream from which LZMA2-compressed
-     *                          data is read
+     * @param in         input stream from which LZMA2-compressed
+     *                   data is read
      *
-     * @param       dictSize    LZMA2 dictionary size as bytes, must be
-     *                          in the range [<code>DICT_SIZE_MIN</code>,
-     *                          <code>DICT_SIZE_MAX</code>]
+     * @param dictSize   LZMA2 dictionary size as bytes, must be
+     *                   in the range [<code>DICT_SIZE_MIN</code>,
+     *                   <code>DICT_SIZE_MAX</code>]
      *
-     * @param       presetDict  preset dictionary or <code>null</code>
-     *                          to use no preset dictionary
+     * @param presetDict preset dictionary or <code>null</code>
+     *                   to use no preset dictionary
      */
     public LZMA2InputStream(InputStream in, int dictSize, byte[] presetDict) {
         // Check for null because otherwise null isn't detect
@@ -155,17 +155,17 @@ public class LZMA2InputStream extends InputStream {
      * may be inefficient. Wrap it in <code>java.io.BufferedInputStream</code>
      * if you need to read lots of data one byte at a time.
      *
-     * @return      the next decompressed byte, or <code>-1</code>
-     *              to indicate the end of the compressed stream
+     * @return the next decompressed byte, or <code>-1</code>
+     * to indicate the end of the compressed stream
      *
-     * @throws      CorruptedInputException
+     * @throws CorruptedInputException
      *
-     * @throws      XZIOException if the stream has been closed
+     * @throws XZIOException           if the stream has been closed
      *
-     * @throws      EOFException
-     *                          compressed input is truncated or corrupt
+     * @throws EOFException
+     *                                 compressed input is truncated or corrupt
      *
-     * @throws      IOException may be thrown by <code>in</code>
+     * @throws IOException             may be thrown by <code>in</code>
      */
     public int read() throws IOException {
         return read(tempBuf, 0, 1) == -1 ? -1 : (tempBuf[0] & 0xFF);
@@ -179,21 +179,21 @@ public class LZMA2InputStream extends InputStream {
      * bytes have been decompressed, the end of the LZMA2 stream is reached,
      * or an exception is thrown.
      *
-     * @param       buf         target buffer for uncompressed data
-     * @param       off         start offset in <code>buf</code>
-     * @param       len         maximum number of uncompressed bytes to read
+     * @param buf target buffer for uncompressed data
+     * @param off start offset in <code>buf</code>
+     * @param len maximum number of uncompressed bytes to read
      *
-     * @return      number of bytes read, or <code>-1</code> to indicate
-     *              the end of the compressed stream
+     * @return number of bytes read, or <code>-1</code> to indicate
+     * the end of the compressed stream
      *
-     * @throws      CorruptedInputException
+     * @throws CorruptedInputException
      *
-     * @throws      XZIOException if the stream has been closed
+     * @throws XZIOException           if the stream has been closed
      *
-     * @throws      EOFException
-     *                          compressed input is truncated or corrupt
+     * @throws EOFException
+     *                                 compressed input is truncated or corrupt
      *
-     * @throws      IOException may be thrown by <code>in</code>
+     * @throws IOException             may be thrown by <code>in</code>
      */
     public int read(byte[] buf, int off, int len) throws IOException {
         if (off < 0 || len < 0 || off + len < 0 || off + len > buf.length)
@@ -223,9 +223,9 @@ public class LZMA2InputStream extends InputStream {
 
                 int copySizeMax = Math.min(uncompressedSize, len);
 
-                if (!isLZMAChunk) {
+                if (!isLZMAChunk)
                     lz.copyUncompressed(in, copySizeMax);
-                } else {
+                else {
                     lz.setLimit(copySizeMax);
                     lzma.decode();
                     if (!rc.isInBufferOK())
@@ -263,9 +263,8 @@ public class LZMA2InputStream extends InputStream {
             needProps = true;
             needDictReset = false;
             lz.reset();
-        } else if (needDictReset) {
+        } else if (needDictReset)
             throw new CorruptedInputException();
-        }
 
         if (control >= 0x80) {
             isLZMAChunk = true;
@@ -279,19 +278,16 @@ public class LZMA2InputStream extends InputStream {
                 needProps = false;
                 decodeProps();
 
-            } else if (needProps) {
+            } else if (needProps)
                 throw new CorruptedInputException();
-
-            } else if (control >= 0xA0) {
+            else if (control >= 0xA0)
                 lzma.reset();
-            }
 
             rc.prepareInputBuffer(in, compressedSize);
 
-        } else if (control > 0x02) {
+        } else if (control > 0x02)
             throw new CorruptedInputException();
-
-        } else {
+        else {
             isLZMAChunk = false;
             uncompressedSize = in.readUnsignedShort() + 1;
         }
@@ -327,8 +323,8 @@ public class LZMA2InputStream extends InputStream {
      * will then be the number of uncompressed bytes remaining from that
      * chunk.
      *
-     * @return      the number of uncompressed bytes that can be read
-     *              without blocking
+     * @return the number of uncompressed bytes that can be read
+     * without blocking
      */
     public int available() throws IOException {
         if (in == null)
@@ -344,15 +340,14 @@ public class LZMA2InputStream extends InputStream {
      * Closes the stream and calls <code>in.close()</code>.
      * If the stream was already closed, this does nothing.
      *
-     * @throws  IOException if thrown by <code>in.close()</code>
+     * @throws IOException if thrown by <code>in.close()</code>
      */
     public void close() throws IOException {
-        if (in != null) {
+        if (in != null)
             try {
                 in.close();
             } finally {
                 in = null;
             }
-        }
     }
 }

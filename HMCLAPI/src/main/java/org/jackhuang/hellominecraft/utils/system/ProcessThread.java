@@ -56,8 +56,8 @@ public class ProcessThread extends Thread {
                     HMCLog.warn("Unsupported encoding: " + System.getProperty("sun.jnu.encoding", "UTF-8"), ex);
                     br = new InputStreamReader(in);
                 }
-            }
-            else br = null;
+            } else
+                br = null;
 
             int ch;
             String line = "";

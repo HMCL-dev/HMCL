@@ -67,7 +67,8 @@ public final class Profile {
 
     public Profile(Profile v) {
         this();
-        if (v == null) return;
+        if (v == null)
+            return;
         name = v.name;
         gameDir = v.gameDir;
         maxMemory = v.maxMemory;
@@ -89,25 +90,30 @@ public final class Profile {
     }
 
     public IMinecraftProvider getMinecraftProvider() {
-        if (minecraftProvider == null) minecraftProvider = new MinecraftVersionManager(this);
+        if (minecraftProvider == null)
+            minecraftProvider = new MinecraftVersionManager(this);
         return minecraftProvider;
     }
 
     public MinecraftVersion getSelectedMinecraftVersion() {
         if (StrUtils.isBlank(selectedMinecraftVersion)) {
             MinecraftVersion v = getMinecraftProvider().getOneVersion();
-            if (v == null) return null;
+            if (v == null)
+                return null;
             selectedMinecraftVersion = v.id;
             return v;
         }
         MinecraftVersion v = getMinecraftProvider().getVersionById(selectedMinecraftVersion);
-        if (v == null) v = getMinecraftProvider().getOneVersion();
-        if (v != null) setSelectedMinecraftVersion(v.id);
+        if (v == null)
+            v = getMinecraftProvider().getOneVersion();
+        if (v != null)
+            setSelectedMinecraftVersion(v.id);
         return v;
     }
 
     public String getGameDir() {
-        if (StrUtils.isBlank(gameDir)) gameDir = MCUtils.getInitGameDir().getPath();
+        if (StrUtils.isBlank(gameDir))
+            gameDir = MCUtils.getInitGameDir().getPath();
         return IOUtils.addSeparator(gameDir);
     }
 
@@ -132,8 +138,10 @@ public final class Profile {
 
     public String getJavaDir() {
         Java j = getJava();
-        if (j.getHome() == null) return javaDir;
-        else return j.getJava();
+        if (j.getHome() == null)
+            return javaDir;
+        else
+            return j.getJava();
     }
 
     public String getSettingsJavaDir() {
@@ -169,14 +177,16 @@ public final class Profile {
             this.java = Settings.JAVA.get(0).getName();
         else {
             int idx = Settings.JAVA.indexOf(java);
-            if (idx == -1) return;
+            if (idx == -1)
+                return;
             this.java = java.getName();
         }
         Settings.save();
     }
 
     public File getFolder(String folder) {
-        if (getSelectedMinecraftVersion() == null) return new File(getCanonicalGameDirFile(), folder);
+        if (getSelectedMinecraftVersion() == null)
+            return new File(getCanonicalGameDirFile(), folder);
         return new File(getMinecraftProvider().getRunDirectory(getSelectedMinecraftVersion().id), folder);
     }
 
@@ -193,7 +203,8 @@ public final class Profile {
     }
 
     public String getJavaArgs() {
-        if (StrUtils.isBlank(javaArgs)) return "";
+        if (StrUtils.isBlank(javaArgs))
+            return "";
         return javaArgs;
     }
 
@@ -207,7 +218,8 @@ public final class Profile {
     }
 
     public String getMaxMemory() {
-        if (StrUtils.isBlank(maxMemory)) return String.valueOf(Utils.getSuggestedMemorySize());
+        if (StrUtils.isBlank(maxMemory))
+            return String.valueOf(Utils.getSuggestedMemorySize());
         return maxMemory;
     }
 
@@ -217,7 +229,8 @@ public final class Profile {
     }
 
     public String getWidth() {
-        if (StrUtils.isBlank(width)) return "854";
+        if (StrUtils.isBlank(width))
+            return "854";
         return width;
     }
 
@@ -226,7 +239,8 @@ public final class Profile {
     }
 
     public String getHeight() {
-        if (StrUtils.isBlank(height)) return "480";
+        if (StrUtils.isBlank(height))
+            return "480";
         return height;
     }
 
@@ -236,7 +250,8 @@ public final class Profile {
     }
 
     public String getUserProperties() {
-        if (userProperties == null) return "";
+        if (userProperties == null)
+            return "";
         return userProperties;
     }
 

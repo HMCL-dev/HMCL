@@ -6,13 +6,13 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.IOException;
 import org.tukaani.xz.delta.DeltaEncoder;
 
 class DeltaOutputStream extends FinishableOutputStream {
+
     private static final int FILTER_BUF_SIZE = 4096;
 
     private FinishableOutputStream out;
@@ -34,7 +34,7 @@ class DeltaOutputStream extends FinishableOutputStream {
     }
 
     public void write(int b) throws IOException {
-        tempBuf[0] = (byte)b;
+        tempBuf[0] = (byte) b;
         write(tempBuf, 0, 1);
     }
 

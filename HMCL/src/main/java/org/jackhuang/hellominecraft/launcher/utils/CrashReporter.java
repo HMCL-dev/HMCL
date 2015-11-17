@@ -60,7 +60,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                 t.printStackTrace();
             }
             return false;
-        } else if(s.contains("java.lang.NoClassDefFoundError") || s.contains("java.lang.IncompatibleClassChangeError") || s.contains("java.lang.ClassFormatError")) {
+        } else if (s.contains("java.lang.NoClassDefFoundError") || s.contains("java.lang.IncompatibleClassChangeError") || s.contains("java.lang.ClassFormatError")) {
             System.out.println(C.i18n("crash.NoClassDefFound"));
             try {
                 MessageBox.Show(C.i18n("crash.NoClassDefFound"));
@@ -68,7 +68,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                 t.printStackTrace();
             }
             return false;
-        } else if(s.contains("java.lang.OutOfMemoryError")) {
+        } else if (s.contains("java.lang.OutOfMemoryError")) {
             System.out.println("FUCKING MEMORY LIMIT!");
             return false;
         }
@@ -78,7 +78,8 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
     @Override
     public void uncaughtException(Thread t, Throwable e) {
         String s = StrUtils.getStackTrace(e);
-        if (!s.contains("org.jackhuang.hellominecraft")) return;
+        if (!s.contains("org.jackhuang.hellominecraft"))
+            return;
         try {
             String text = "\n---- Hello Minecraft! Crash Report ----\n";
             text += "  Version: " + Main.makeVersion() + "\n";
@@ -90,8 +91,10 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             text += "  Operating System: " + System.getProperty("os.name") + " (" + System.getProperty("os.arch") + ") version " + System.getProperty("os.version") + "\n";
             text += "  Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor") + "\n";
             text += "  Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor") + "\n";
-            if (enableLogger) HMCLog.err(text);
-            else System.out.println(text);
+            if (enableLogger)
+                HMCLog.err(text);
+            else
+                System.out.println(text);
 
             if (checkThrowable(e)) {
                 SwingUtilities.invokeLater(() -> LogWindow.instance.showAsCrashWindow(UpdateChecker.OUT_DATED));
@@ -111,7 +114,8 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
     private static final HashSet<String> throwableSet = new HashSet<>();
 
     void reportToServer(String text, String stacktrace) {
-        if (throwableSet.contains(stacktrace)) return;
+        if (throwableSet.contains(stacktrace))
+            return;
         throwableSet.add(stacktrace);
         new Thread(() -> {
             HashMap<String, String> map = new HashMap<>();

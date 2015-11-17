@@ -40,16 +40,16 @@ public class JavaProcessMonitor {
 
     public void start() {
         Event<JavaProcess> event = (sender2, t) -> {
-            if(t.getExitCode() != 0) {
+            if (t.getExitCode() != 0)
                 MessageBox.Show(C.i18n("launch.exited_abnormally"));
-            }
             processThreadStopped((ProcessThread) sender2, false);
             return true;
         };
         Event<JavaProcess> event2 = (sender3, p1) -> {
             if (p1.getExitCode() != 0 && p1.getStdErrLines().size() > 0 && StrUtils.containsOne(p1.getStdErrLines(), Arrays.asList("Could not create the Java Virtual Machine.",
-                    "Error occurred during initialization of VM",
-                    "A fatal exception has occurred. Program will exit."))) MessageBox.Show(C.i18n("launch.cannot_create_jvm"));
+                                                                                                                                   "Error occurred during initialization of VM",
+                                                                                                                                   "A fatal exception has occurred. Program will exit.")))
+                MessageBox.Show(C.i18n("launch.cannot_create_jvm"));
             processThreadStopped((ProcessThread) sender3, false);
             return true;
         };
@@ -71,7 +71,8 @@ public class JavaProcessMonitor {
         al.remove(t);
         al.removeAll(CollectionUtils.sortOut(al, t1 -> !t1.isAlive()));
         if (al.isEmpty() || forceTermintate) {
-            for (Thread a : al) a.interrupt();
+            for (Thread a : al)
+                a.interrupt();
             al.clear();
             stoppedEvent.execute(p);
         }

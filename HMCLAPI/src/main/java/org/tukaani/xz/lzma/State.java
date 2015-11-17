@@ -7,10 +7,10 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.lzma;
 
 final class State {
+
     static final int STATES = 12;
 
     private static final int LIT_STATES = 7;
@@ -30,7 +30,8 @@ final class State {
 
     private int state;
 
-    State() {}
+    State() {
+    }
 
     State(State other) {
         state = other.state;

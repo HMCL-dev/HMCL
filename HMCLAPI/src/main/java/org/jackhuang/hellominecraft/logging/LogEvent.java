@@ -23,10 +23,10 @@ import org.jackhuang.hellominecraft.logging.message.IMessage;
  * @author huangyuhui
  */
 public class LogEvent {
-    
+
     public Level level;
     public String threadName;
     public Throwable thrown;
     public IMessage message;
-    
+
 }

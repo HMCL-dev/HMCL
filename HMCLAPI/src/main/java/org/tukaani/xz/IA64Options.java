@@ -6,7 +6,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.InputStream;
@@ -16,6 +15,7 @@ import org.tukaani.xz.simple.IA64;
  * BCJ filter for Itanium (IA-64) instructions.
  */
 public class IA64Options extends BCJOptions {
+
     private static final int ALIGNMENT = 16;
 
     public IA64Options() {

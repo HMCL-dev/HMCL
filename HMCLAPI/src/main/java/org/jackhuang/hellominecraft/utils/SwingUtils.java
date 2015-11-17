@@ -38,28 +38,29 @@ public class SwingUtils {
      * Make DefaultTableModel by overriding getColumnClass and isCellEditable of
      * DefaultTableModel.
      *
-     * @param titleA The title of each column.
-     * @param typesA The type of each column value.
+     * @param titleA   The title of each column.
+     * @param typesA   The type of each column value.
      * @param canEditA Is column editable?
+     *
      * @return
      */
     public static DefaultTableModel makeDefaultTableModel(String[] titleA, final Class[] typesA, final boolean[] canEditA) {
         return new javax.swing.table.DefaultTableModel(
-                new Object[][]{},
-                titleA) {
-                    Class[] types = typesA;
-                    boolean[] canEdit = canEditA;
+        new Object[][] {},
+        titleA) {
+            Class[] types = typesA;
+            boolean[] canEdit = canEditA;
 
-                    @Override
-                    public Class getColumnClass(int columnIndex) {
-                        return types[columnIndex];
-                    }
+            @Override
+            public Class getColumnClass(int columnIndex) {
+                return types[columnIndex];
+            }
 
-                    @Override
-                    public boolean isCellEditable(int rowIndex, int columnIndex) {
-                        return canEdit[columnIndex];
-                    }
-                };
+            @Override
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit[columnIndex];
+            }
+        };
     }
 
     /**
@@ -99,6 +100,7 @@ public class SwingUtils {
      * Get the DefaultListModel from JList.
      *
      * @param list
+     *
      * @return Forcely Type casted to DefaultListModel
      */
     public static DefaultListModel getDefaultListModel(JList list) {
@@ -108,7 +110,7 @@ public class SwingUtils {
     /**
      * Append new element to JList
      *
-     * @param list the JList
+     * @param list    the JList
      * @param element the Element
      */
     public static void appendLast(JList list, Object element) {
@@ -152,12 +154,14 @@ public class SwingUtils {
     }
 
     public static String getParsedJPanelText(JLabel jLabel1, String longString) {
-        if (StrUtils.isBlank(longString)) return longString;
+        if (StrUtils.isBlank(longString))
+            return longString;
         StringBuilder builder = new StringBuilder();
         char[] chars = longString.toCharArray();
         FontMetrics fontMetrics = jLabel1.getFontMetrics(jLabel1.getFont());
         for (int beginIndex = 0, limit = 1;; limit++) {
-            if (beginIndex + limit >= chars.length) break;
+            if (beginIndex + limit >= chars.length)
+                break;
             if (fontMetrics.charsWidth(chars, beginIndex, limit) < jLabel1.getWidth()) {
                 if (beginIndex + limit < chars.length)
                     continue;

@@ -103,7 +103,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
 
                 // Open connection to URL.
                 HttpURLConnection connection
-                        = (HttpURLConnection) url.openConnection();
+                                  = (HttpURLConnection) url.openConnection();
 
                 connection.setConnectTimeout(5000);
                 connection.setRequestProperty("User-Agent", "Hello Minecraft! Launcher");
@@ -167,7 +167,8 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                 if (aborted)
                     tempFile.delete();
                 else {
-                    if (filePath.exists()) filePath.delete();
+                    if (filePath.exists())
+                        filePath.delete();
                     tempFile.renameTo(filePath);
                 }
                 if (ppl != null)

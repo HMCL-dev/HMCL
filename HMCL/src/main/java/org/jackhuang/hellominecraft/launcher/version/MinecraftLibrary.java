@@ -104,10 +104,10 @@ public class MinecraftLibrary extends IMinecraftLibrary {
         str = str.replace('.', File.separatorChar);
         if (natives == null)
             str += File.separator + s[1] + File.separator + s[2]
-                    + File.separator + s[1] + '-' + s[2] + ".jar";
+                   + File.separator + s[1] + '-' + s[2] + ".jar";
         else {
             str += File.separator + s[1] + File.separator + s[2]
-                    + File.separator + s[1] + '-' + s[2] + '-';
+                   + File.separator + s[1] + '-' + s[2] + '-';
             str += getNative();
             str += ".jar";
         }
@@ -121,8 +121,10 @@ public class MinecraftLibrary extends IMinecraftLibrary {
 
     @Override
     public String getDownloadURL(String urlBase, DownloadType downloadType) {
-        if (StrUtils.isNotBlank(url) && downloadType.getProvider().isAllowedToUseSelfURL()) urlBase = this.url;
-        if (urlBase.endsWith(".jar")) return urlBase;
+        if (StrUtils.isNotBlank(url) && downloadType.getProvider().isAllowedToUseSelfURL())
+            urlBase = this.url;
+        if (urlBase.endsWith(".jar"))
+            return urlBase;
         return urlBase + formatted.replace('\\', '/');
     }
 

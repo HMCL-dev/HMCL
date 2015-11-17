@@ -74,7 +74,7 @@ public class ForgeInstaller {
         entry = zipFile.getEntry(profile.install.filePath);
         InputStream is = zipFile.getInputStream(entry);
 
-	//MinecraftLibrary forge = new MinecraftLibrary(profile.install.path);
+        //MinecraftLibrary forge = new MinecraftLibrary(profile.install.path);
         //forge.format();
         File file = new File(gameDir, profile.install.filePath);
         file.getParentFile().mkdirs();
@@ -85,11 +85,10 @@ public class ForgeInstaller {
         }
 
         File minecraftserver = new File(gameDir, "minecraft_server." + profile.install.minecraft + ".jar");
-        if (minecraftserver.exists() && JOptionPane.showConfirmDialog(null, "已发现官方服务端文件，是否要重新下载？") == JOptionPane.YES_OPTION) {
+        if (minecraftserver.exists() && JOptionPane.showConfirmDialog(null, "已发现官方服务端文件，是否要重新下载？") == JOptionPane.YES_OPTION)
             if (!TaskWindow.getInstance().addTask(new FileDownloadTask("https://s3.amazonaws.com/Minecraft.Download/versions/{MCVER}/minecraft_server.{MCVER}.jar".replace("{MCVER}", profile.install.minecraft),
-                    minecraftserver).setTag("minecraft_server")).start())
+                                                                       minecraftserver).setTag("minecraft_server")).start())
                 MessageBox.Show("Minecraft官方服务端下载失败！");
-        }
         TaskWindow.TaskWindowFactory tw = TaskWindow.getInstance();
         for (MinecraftLibrary library : profile.versionInfo.libraries) {
             library.init();
@@ -101,11 +100,12 @@ public class ForgeInstaller {
         }
         if (!tw.start())
             MessageBox.Show("压缩库下载失败！");
-        
+
         tw = TaskWindow.getInstance();
         for (MinecraftLibrary library : profile.versionInfo.libraries) {
             File packxz = new File(gameDir, "libraries" + File.separator + library.formatted + ".pack.xz");
-            if (packxz.exists()) return;
+            if (packxz.exists())
+                return;
             File lib = new File(gameDir, "libraries" + File.separator + library.formatted);
             lib.getParentFile().mkdirs();
             String libURL = "https://libraries.minecraft.net/";
@@ -115,7 +115,7 @@ public class ForgeInstaller {
         }
         if (!tw.start())
             MessageBox.Show("库下载失败！");
-        
+
         ArrayList<String> badLibs = new ArrayList<>();
         for (MinecraftLibrary library : profile.versionInfo.libraries) {
             File lib = new File(gameDir, "libraries" + File.separator + library.formatted);
@@ -135,7 +135,7 @@ public class ForgeInstaller {
     }
 
     public static void unpackLibrary(File output, byte[] data)
-            throws IOException {
+    throws IOException {
         if (output.exists())
             output.delete();
 
@@ -153,13 +153,13 @@ public class ForgeInstaller {
         byte[] checksums = Arrays.copyOfRange(decompressed, decompressed.length - len - 8, decompressed.length - 8);
 
         try (FileOutputStream jarBytes = new FileOutputStream(output); JarOutputStream jos = new JarOutputStream(jarBytes)) {
-            
+
             Pack200.newUnpacker().unpack(new ByteArrayInputStream(decompressed), jos);
-            
+
             jos.putNextEntry(new JarEntry("checksums.sha1"));
             jos.write(checksums);
             jos.closeEntry();
-            
+
         }
     }
 
@@ -185,10 +185,10 @@ public class ForgeInstaller {
             JarEntry entry = jar.getNextJarEntry();
             while (entry != null) {
                 byte[] eData = IOUtils.readFully(jar);
-                
+
                 if (entry.getName().equals("checksums.sha1"))
                     hashes = new String(eData, Charset.forName("UTF-8")).split("\n");
-                
+
                 if (!entry.isDirectory())
                     files.put(entry.getName(), DigestUtils.sha1Hex(eData));
                 entry = jar.getNextJarEntry();

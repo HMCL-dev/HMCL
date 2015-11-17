@@ -8,7 +8,7 @@ public class Response {
     public GameProfile selectedProfile;
     public GameProfile[] availableProfiles;
     public User user;
-    
+
     public String error;
     public String errorMessage;
     public String cause;

@@ -51,7 +51,8 @@ public class LiteLoaderVersionList extends InstallerVersionList {
     @Override
     public void refreshList(String[] needed) throws Exception {
         String s = NetUtils.doGet(C.URL_LITELOADER_LIST);
-        if (root != null) return;
+        if (root != null)
+            return;
 
         root = C.gson.fromJson(s, LiteLoaderVersionsRoot.class);
 
@@ -62,7 +63,8 @@ public class LiteLoaderVersionList extends InstallerVersionList {
             ArrayList<InstallerVersion> al = new ArrayList<>();
             LiteLoaderMCVersions mcv = arr.getValue();
             for (Map.Entry<String, LiteLoaderVersion> entry : mcv.artefacts.get("com.mumfrey:liteloader").entrySet()) {
-                if ("latest".equals(entry.getKey())) continue;
+                if ("latest".equals(entry.getKey()))
+                    continue;
                 LiteLoaderVersion v = entry.getValue();
                 LiteLoaderInstallerVersion iv = new LiteLoaderInstallerVersion(v.version, StrUtils.formatVersion(arr.getKey()));
                 iv.universal = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + arr.getKey() + "/" + v.file;
@@ -81,10 +83,13 @@ public class LiteLoaderVersionList extends InstallerVersionList {
 
     @Override
     public List<InstallerVersion> getVersions(String mcVersion) {
-        if (versions == null || versionMap == null) return null;
-        if (StrUtils.isBlank(mcVersion)) return versions;
+        if (versions == null || versionMap == null)
+            return null;
+        if (StrUtils.isBlank(mcVersion))
+            return versions;
         List c = versionMap.get(mcVersion);
-        if (c == null) return versions;
+        if (c == null)
+            return versions;
         Collections.sort(c, InstallerVersionComparator.INSTANCE);
         return c;
     }

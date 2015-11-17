@@ -26,5 +26,5 @@ public class FalseFunction implements NonFunction<Boolean> {
     public Boolean apply() {
         return Boolean.FALSE;
     }
-    
+
 }

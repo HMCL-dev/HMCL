@@ -29,7 +29,7 @@ import javax.swing.JLabel;
  * @author huangyuhui
  */
 public class HeaderTab extends JLabel
-        implements MouseListener {
+implements MouseListener {
 
     private boolean isActive;
     private final DefaultButtonModel model;

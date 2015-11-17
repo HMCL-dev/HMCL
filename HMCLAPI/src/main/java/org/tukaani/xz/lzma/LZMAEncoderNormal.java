@@ -7,7 +7,6 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.lzma;
 
 import org.tukaani.xz.lz.LZEncoder;
@@ -15,6 +14,7 @@ import org.tukaani.xz.lz.Matches;
 import org.tukaani.xz.rangecoder.RangeEncoder;
 
 final class LZMAEncoderNormal extends LZMAEncoder {
+
     private static final int OPTS = 4096;
 
     private static int EXTRA_SIZE_BEFORE = OPTS;
@@ -33,14 +33,14 @@ final class LZMAEncoderNormal extends LZMAEncoder {
 
     static int getMemoryUsage(int dictSize, int extraSizeBefore, int mf) {
         return LZEncoder.getMemoryUsage(dictSize,
-                   Math.max(extraSizeBefore, EXTRA_SIZE_BEFORE),
-                   EXTRA_SIZE_AFTER, MATCH_LEN_MAX, mf)
+                                        Math.max(extraSizeBefore, EXTRA_SIZE_BEFORE),
+                                        EXTRA_SIZE_AFTER, MATCH_LEN_MAX, mf)
                + OPTS * 64 / 1024;
     }
 
     LZMAEncoderNormal(RangeEncoder rc, int lc, int lp, int pb,
-                             int dictSize, int extraSizeBefore,
-                             int niceLen, int mf, int depthLimit) {
+                      int dictSize, int extraSizeBefore,
+                      int niceLen, int mf, int depthLimit) {
         super(rc, LZEncoder.getInstance(dictSize,
                                         Math.max(extraSizeBefore,
                                                  EXTRA_SIZE_BEFORE),
@@ -166,9 +166,8 @@ final class LZMAEncoderNormal extends LZMAEncoder {
         // encoded as a repeated match (short or long), we must be return
         // to have the byte encoded as a literal.
         if (mainLen < MATCH_LEN_MIN && curByte != matchByte
-                && repLens[repBest] < MATCH_LEN_MIN)
+            && repLens[repBest] < MATCH_LEN_MIN)
             return 1;
-
 
         int pos = lz.getPos();
         int posState = pos & posMask;
@@ -201,7 +200,6 @@ final class LZMAEncoderNormal extends LZMAEncoder {
             back = opts[1].backPrev;
             return 1;
         }
-
 
         // Update the lookup tables for distances and lengths before using
         // those price calculation functions. (The price function above
@@ -263,7 +261,6 @@ final class LZMAEncoderNormal extends LZMAEncoder {
             }
         }
 
-
         avail = Math.min(lz.getAvail(), OPTS - 1);
 
         // Get matches for later bytes and optimize the use of LZMA symbols
@@ -272,7 +269,7 @@ final class LZMAEncoderNormal extends LZMAEncoder {
         while (++optCur < optEnd) {
             matches = getMatches();
             if (matches.count > 0
-                    && matches.len[matches.count - 1] >= niceLen)
+                && matches.len[matches.count - 1] >= niceLen)
                 break;
 
             --avail;
@@ -314,14 +311,12 @@ final class LZMAEncoderNormal extends LZMAEncoder {
                     opts[optCur].state.updateLongRep();
                 else
                     opts[optCur].state.updateMatch();
-            } else {
+            } else
                 opts[optCur].state.set(opts[optPrev].state);
-            }
 
             opts[optCur].state.updateLiteral();
-        } else {
+        } else
             opts[optCur].state.set(opts[optPrev].state);
-        }
 
         if (optPrev == optCur - 1) {
             // Must be either a short rep or a literal.
@@ -378,8 +373,8 @@ final class LZMAEncoderNormal extends LZMAEncoder {
 
         // Try a literal.
         int literalPrice = opts[optCur].price
-                + literalEncoder.getPrice(curByte, matchByte, lz.getByte(1),
-                                          pos, opts[optCur].state);
+                           + literalEncoder.getPrice(curByte, matchByte, lz.getByte(1),
+                                                     pos, opts[optCur].state);
         if (literalPrice < opts[optCur + 1].price) {
             opts[optCur + 1].set1(literalPrice, optCur, -1);
             nextIsByte = true;
@@ -387,7 +382,7 @@ final class LZMAEncoderNormal extends LZMAEncoder {
 
         // Try a short rep.
         if (matchByte == curByte && (opts[optCur + 1].optPrev == optCur
-                                      || opts[optCur + 1].backPrev != 0)) {
+                                     || opts[optCur + 1].backPrev != 0)) {
             int shortRepPrice = getShortRepPrice(anyRepPrice,
                                                  opts[optCur].state,
                                                  posState);
@@ -514,7 +509,7 @@ final class LZMAEncoderNormal extends LZMAEncoder {
         while (startLen > matches.len[match])
             ++match;
 
-        for (int len = startLen; ; ++len) {
+        for (int len = startLen;; ++len) {
             int dist = matches.dist[match];
 
             // Calculate the price of a match of len bytes from the nearest
@@ -541,9 +536,9 @@ final class LZMAEncoderNormal extends LZMAEncoder {
                 int matchByte = lz.getByte(0); // lz.getByte(len, len)
                 int prevByte = lz.getByte(len, 1);
                 int price = matchAndLenPrice
-                        + literalEncoder.getPrice(curByte, matchByte,
-                                                  prevByte, pos + len,
-                                                  nextState);
+                            + literalEncoder.getPrice(curByte, matchByte,
+                                                      prevByte, pos + len,
+                                                      nextState);
                 nextState.updateLiteral();
 
                 // Rep0

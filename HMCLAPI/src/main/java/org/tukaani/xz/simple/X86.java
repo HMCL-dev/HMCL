@@ -7,12 +7,12 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.simple;
 
 public final class X86 implements SimpleFilter {
+
     private static final boolean[] MASK_TO_ALLOWED_STATUS
-            = {true, true, true, false, true, false, false, false};
+                                   = {true, true, true, false, true, false, false, false};
 
     private static final int[] MASK_TO_BIT_NUMBER = {0, 1, 2, 2, 3, 3, 3, 3};
 
@@ -40,18 +40,17 @@ public final class X86 implements SimpleFilter {
                 continue;
 
             prevPos = i - prevPos;
-            if ((prevPos & ~3) != 0) { // (unsigned)prevPos > 3
+            if ((prevPos & ~3) != 0) // (unsigned)prevPos > 3
                 prevMask = 0;
-            } else {
+            else {
                 prevMask = (prevMask << (prevPos - 1)) & 7;
-                if (prevMask != 0) {
+                if (prevMask != 0)
                     if (!MASK_TO_ALLOWED_STATUS[prevMask] || test86MSByte(
-                            buf[i + 4 - MASK_TO_BIT_NUMBER[prevMask]])) {
+                    buf[i + 4 - MASK_TO_BIT_NUMBER[prevMask]])) {
                         prevPos = i;
                         prevMask = (prevMask << 1) | 1;
                         continue;
                     }
-                }
             }
 
             prevPos = i;
@@ -72,20 +71,19 @@ public final class X86 implements SimpleFilter {
                         break;
 
                     int index = MASK_TO_BIT_NUMBER[prevMask] * 8;
-                    if (!test86MSByte((byte)(dest >>> (24 - index))))
+                    if (!test86MSByte((byte) (dest >>> (24 - index))))
                         break;
 
                     src = dest ^ ((1 << (32 - index)) - 1);
                 }
 
-                buf[i + 1] = (byte)dest;
-                buf[i + 2] = (byte)(dest >>> 8);
-                buf[i + 3] = (byte)(dest >>> 16);
-                buf[i + 4] = (byte)(~(((dest >>> 24) & 1) - 1));
+                buf[i + 1] = (byte) dest;
+                buf[i + 2] = (byte) (dest >>> 8);
+                buf[i + 3] = (byte) (dest >>> 16);
+                buf[i + 4] = (byte) (~(((dest >>> 24) & 1) - 1));
                 i += 4;
-            } else {
+            } else
                 prevMask = (prevMask << 1) | 1;
-            }
         }
 
         prevPos = i - prevPos;

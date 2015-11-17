@@ -52,7 +52,8 @@ public class HTTPGetTask extends TaskInfo implements PreviousResult<String> {
     @Override
     public boolean executeTask() {
         for (int repeat = 0; repeat < 6; repeat++) {
-            if (repeat > 0) HMCLog.warn("Failed to download, repeat: " + repeat);
+            if (repeat > 0)
+                HMCLog.warn("Failed to download, repeat: " + repeat);
             try {
                 URLConnection conn = new URL(url).openConnection();
                 InputStream is = conn.getInputStream();
@@ -61,12 +62,10 @@ public class HTTPGetTask extends TaskInfo implements PreviousResult<String> {
                 int size = conn.getContentLength(), read = 0;
                 while ((i = is.read()) != -1) {
                     baos.write(i);
-                    if (ppl != null) {
+                    if (ppl != null)
                         ppl.setProgress(this, ++read, size);
-                    }
-                    if (!shouldContinue) {
+                    if (!shouldContinue)
                         return true;
-                    }
                 }
                 result = baos.toString();
                 tdtsl.execute(result);

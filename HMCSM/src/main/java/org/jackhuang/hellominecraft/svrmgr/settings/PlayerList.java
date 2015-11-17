@@ -71,7 +71,8 @@ public abstract class PlayerList<T extends BasePlayer> {
         String[] lines = s.split("\n");
         op = new HashSet<T>();
         for (String l : lines) {
-            if (l.startsWith("#")) continue;
+            if (l.startsWith("#"))
+                continue;
             T player = newPlayer(l);
             if (StrUtils.isBlank(l))
                 continue;

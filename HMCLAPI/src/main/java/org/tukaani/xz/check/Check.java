@@ -6,17 +6,18 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.check;
 
 import org.tukaani.xz.XZ;
 import org.tukaani.xz.UnsupportedOptionsException;
 
 public abstract class Check {
+
     int size;
     String name;
 
     public abstract void update(byte[] buf, int off, int len);
+
     public abstract byte[] finish();
 
     public void update(byte[] buf) {
@@ -32,7 +33,7 @@ public abstract class Check {
     }
 
     public static Check getInstance(int checkType)
-            throws UnsupportedOptionsException {
+    throws UnsupportedOptionsException {
         switch (checkType) {
             case XZ.CHECK_NONE:
                 return new None();
@@ -46,12 +47,13 @@ public abstract class Check {
             case XZ.CHECK_SHA256:
                 try {
                     return new SHA256();
-                } catch (java.security.NoSuchAlgorithmException e) {}
+                } catch (java.security.NoSuchAlgorithmException e) {
+                }
 
                 break;
         }
 
         throw new UnsupportedOptionsException(
-                "Unsupported Check ID " + checkType);
+        "Unsupported Check ID " + checkType);
     }
 }

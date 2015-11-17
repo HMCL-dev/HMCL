@@ -32,9 +32,9 @@ public class Selector extends javax.swing.JDialog {
     public static int failedToSel = -1;
 
     /**
-     * @param parent null
+     * @param parent  null
      * @param selList Selection List
-     * @param msg Message
+     * @param msg     Message
      */
     public Selector(java.awt.Frame parent, String[] selList, String msg) {
         super(parent, true);

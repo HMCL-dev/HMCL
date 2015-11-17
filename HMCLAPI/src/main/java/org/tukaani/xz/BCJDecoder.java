@@ -6,33 +6,32 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz;
 
 import java.io.InputStream;
 import org.tukaani.xz.simple.*;
 
 class BCJDecoder extends BCJCoder implements FilterDecoder {
+
     private final long filterID;
     private final int startOffset;
 
     BCJDecoder(long filterID, byte[] props)
-            throws UnsupportedOptionsException {
+    throws UnsupportedOptionsException {
         assert isBCJFilterID(filterID);
         this.filterID = filterID;
 
-        if (props.length == 0) {
+        if (props.length == 0)
             startOffset = 0;
-        } else if (props.length == 4) {
+        else if (props.length == 4) {
             int n = 0;
             for (int i = 0; i < 4; ++i)
                 n |= (props[i] & 0xFF) << (i * 8);
 
             startOffset = n;
-        } else {
+        } else
             throw new UnsupportedOptionsException(
-                    "Unsupported BCJ filter properties");
-        }
+            "Unsupported BCJ filter properties");
     }
 
     public int getMemoryUsage() {

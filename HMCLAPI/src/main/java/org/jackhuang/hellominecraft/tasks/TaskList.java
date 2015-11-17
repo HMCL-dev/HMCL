@@ -98,7 +98,8 @@ public class TaskList extends Thread {
         }
         while (!runningThread.isEmpty())
             try {
-                if (this.isInterrupted()) return;
+                if (this.isInterrupted())
+                    return;
                 Thread.sleep(1);
             } catch (InterruptedException ignore) {
             }
@@ -119,7 +120,7 @@ public class TaskList extends Thread {
         boolean returns = false;
         try {
             returns = t.executeTask();
-        } catch(Throwable e) {
+        } catch (Throwable e) {
             t.setFailReason(e);
         }
         if (returns) {
@@ -144,7 +145,7 @@ public class TaskList extends Thread {
 
         threadPool.clear();
         totTask = taskQueue.size();
-        while(!taskQueue.isEmpty())
+        while (!taskQueue.isEmpty())
             executeTask(taskQueue.remove(0));
         if (shouldContinue)
             for (Runnable d : allDone)
@@ -160,7 +161,8 @@ public class TaskList extends Thread {
         while (!threadPool.isEmpty())
             synchronized (threadPool) {
                 InvokeThread it = threadPool.iterator().next();
-                if (!it.task.abort()) it.interrupt();
+                if (!it.task.abort())
+                    it.interrupt();
                 threadPool.remove(it);
             }
         this.interrupt();

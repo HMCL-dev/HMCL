@@ -28,7 +28,7 @@ public class Settings {
     public String maxMemory;
     public String mainjar, bgPath, javaDir, javaArgs;
     public ArrayList<String> inactiveExtMods, inactiveCoreMods, inactivePlugins,
-            inactiveWorlds;
+    inactiveWorlds;
     public ArrayList<Schedule> schedules;
 
     public Settings() {

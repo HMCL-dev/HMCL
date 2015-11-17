@@ -24,7 +24,7 @@ import org.jackhuang.hellominecraft.C;
 public class MinecraftVersionRequest {
 
     public static final int Unkown = 0, Invaild = 1, InvaildJar = 2,
-            Modified = 3, OK = 4, NotFound = 5, NotReadable = 6, NotAFile = 7;
+    Modified = 3, OK = 4, NotFound = 5, NotReadable = 6, NotAFile = 7;
     public int type;
     public String version;
 

@@ -6,12 +6,12 @@
  * This file has been put into the public domain.
  * You can do whatever you want with this file.
  */
-
 package org.tukaani.xz.index;
 
 import org.tukaani.xz.common.StreamFlags;
 
 public class BlockInfo {
+
     public int blockNumber = -1;
     public long compressedOffset = -1;
     public long uncompressedOffset = -1;

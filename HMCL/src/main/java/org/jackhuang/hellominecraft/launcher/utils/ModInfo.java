@@ -67,10 +67,12 @@ public class ModInfo implements Comparable<ModInfo> {
     }
 
     public static boolean isFileMod(File file) {
-        if (file == null) return false;
+        if (file == null)
+            return false;
         String name = file.getName();
         boolean disabled = name.endsWith(".disabled");
-        if (disabled) name = name.substring(0, name.length() - ".disabled".length());
+        if (disabled)
+            name = name.substring(0, name.length() - ".disabled".length());
         return name.endsWith(".zip") || name.endsWith(".jar");
     }
 
@@ -80,11 +82,15 @@ public class ModInfo implements Comparable<ModInfo> {
         try {
             ZipFile jar = new ZipFile(f);
             ZipEntry entry = jar.getEntry("mcmod.info");
-            if (entry == null) return i;
+            if (entry == null)
+                return i;
             else {
                 List<ModInfo> m = C.gson.fromJson(new InputStreamReader(jar.getInputStream(entry)), new TypeToken<List<ModInfo>>() {
-                }.getType());
-                if (m != null && m.size() > 0) { i = m.get(0); i.location = f; }
+                                                  }.getType());
+                if (m != null && m.size() > 0) {
+                    i = m.get(0);
+                    i.location = f;
+                }
             }
             jar.close();
             return i;

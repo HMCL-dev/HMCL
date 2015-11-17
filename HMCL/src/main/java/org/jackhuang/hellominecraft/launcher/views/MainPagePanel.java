@@ -275,9 +275,11 @@ public class MainPagePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_txtPlayerNameFocusLost
 
     private void cboLoginModeItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboLoginModeItemStateChanged
-        if (preaparingAuth) return;
+        if (preaparingAuth)
+            return;
         int index = cboLoginMode.getSelectedIndex();
-        if (index < 0) return;
+        if (index < 0)
+            return;
 
         IAuthenticator l = IAuthenticator.LOGINS.get(index);
         if (l.isHidePasswordBox()) {
@@ -289,10 +291,13 @@ public class MainPagePanel extends javax.swing.JPanel {
         }
 
         CardLayout cl = (CardLayout) pnlPassword.getLayout();
-        if (l.isLoggedIn()) cl.last(pnlPassword);
-        else cl.first(pnlPassword);
+        if (l.isLoggedIn())
+            cl.last(pnlPassword);
+        else
+            cl.first(pnlPassword);
         String username = Settings.getInstance().getUsername();
-        if (StrUtils.isNotBlank(username)) txtPlayerName.setText(username);
+        if (StrUtils.isNotBlank(username))
+            txtPlayerName.setText(username);
 
         Settings.getInstance().setLoginType(index);
     }//GEN-LAST:event_cboLoginModeItemStateChanged
@@ -321,12 +326,14 @@ public class MainPagePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_txtPasswordActionPerformed
 
     private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
-        if (preaparingAuth) return;
+        if (preaparingAuth)
+            return;
         int index = cboLoginMode.getSelectedIndex();
 
         IAuthenticator l = IAuthenticator.LOGINS.get(index);
         CardLayout cl = (CardLayout) pnlPassword.getLayout();
-        if (l.isLoggedIn()) l.logout();
+        if (l.isLoggedIn())
+            l.logout();
         cl.first(pnlPassword);
     }//GEN-LAST:event_btnLogoutActionPerformed
 
@@ -334,22 +341,27 @@ public class MainPagePanel extends javax.swing.JPanel {
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             Settings.getInstance().setUsername(txtPlayerName.getText());
             int index = cboLoginMode.getSelectedIndex();
-            if (index < 0) return;
+            if (index < 0)
+                return;
             IAuthenticator l = IAuthenticator.LOGINS.get(index);
-            if (l.isHidePasswordBox()) btnRunActionPerformed();
-            else if (!l.isLoggedIn()) txtPassword.requestFocus();
+            if (l.isHidePasswordBox())
+                btnRunActionPerformed();
+            else if (!l.isLoggedIn())
+                txtPassword.requestFocus();
         }
     }//GEN-LAST:event_txtPlayerNameKeyPressed
 
     private void txtPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPasswordKeyPressed
-        if (evt.getKeyCode() == KeyEvent.VK_ENTER) btnRunActionPerformed();
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER)
+            btnRunActionPerformed();
     }//GEN-LAST:event_txtPasswordKeyPressed
 
     boolean isLaunching = false;
 
     // <editor-fold defaultstate="collapsed" desc="Game Launch">
     void genLaunchCode(final Consumer<GameLauncher> listener) {
-        if (isLaunching || getCurrentProfile() == null) return;
+        if (isLaunching || getCurrentProfile() == null)
+            return;
         isLaunching = true;
         HMCLog.log("Start generating launching command...");
         File file = getCurrentProfile().getCanonicalGameDirFile();
@@ -379,7 +391,8 @@ public class MainPagePanel extends javax.swing.JPanel {
                 Thread.currentThread().setName("Game Launcher");
                 DefaultGameLauncher gl = new DefaultGameLauncher(getCurrentProfile(), li, l, Settings.getInstance().getDownloadSource());
                 gl.failEvent.register((sender, s) -> {
-                    if (s != null) MessageBox.Show(s);
+                    if (s != null)
+                        MessageBox.Show(s);
                     MainFrame.instance.closeMessage();
                     isLaunching = false;
                     return true;
@@ -417,7 +430,8 @@ public class MainPagePanel extends javax.swing.JPanel {
     }
 
     void loadFromSettings() {
-        for (Profile s : Settings.getProfilesFiltered()) cboProfiles.addItem(s.getName());
+        for (Profile s : Settings.getProfilesFiltered())
+            cboProfiles.addItem(s.getName());
     }
 
     boolean showedNoVersion = false;
@@ -433,7 +447,7 @@ public class MainPagePanel extends javax.swing.JPanel {
             if (getCurrentProfile().getMinecraftProvider().getVersions().isEmpty()) {
                 if (!showedNoVersion)
                     SwingUtilities.invokeLater(() -> {
-                        if(MessageBox.Show(C.i18n("mainwindow.no_version"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
+                        if (MessageBox.Show(C.i18n("mainwindow.no_version"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
                             MainFrame.instance.selectTab("game");
                             MainFrame.instance.gamePanel.showGameDownloads();
                         }
@@ -441,12 +455,15 @@ public class MainPagePanel extends javax.swing.JPanel {
                     });
             } else {
                 for (MinecraftVersion mcVersion : getCurrentProfile().getMinecraftProvider().getVersions()) {
-                    if (mcVersion.hidden) continue;
+                    if (mcVersion.hidden)
+                        continue;
                     cboVersions.addItem(mcVersion.id);
-                    if (mcVersion.id.equals(selectedMC)) index = i;
+                    if (mcVersion.id.equals(selectedMC))
+                        index = i;
                     i++;
                 }
-                if (index < cboVersions.getItemCount()) cboVersions.setSelectedIndex(index);
+                if (index < cboVersions.getItemCount())
+                    cboVersions.setSelectedIndex(index);
             }
         }
         isLoading = false;
@@ -492,7 +509,7 @@ public class MainPagePanel extends javax.swing.JPanel {
             value.successEvent.register(new PrepareAuthDoneListener());
         });
     }
-    
+
     public void btnMakeLaunchCodeActionPerformed() {
         MainFrame.instance.showMessage(C.i18n("ui.message.launching"));
         genLaunchCode(value -> {

@@ -40,7 +40,8 @@ public class PackMinecraftInstaller {
     public void install() throws IOException {
         File file = new File(IOUtils.currentDir(), "HMCL-MERGE-TEMP");
         file.mkdirs();
-        for (String src1 : src) Compressor.unzip(new File(src1), file);
+        for (String src1 : src)
+            Compressor.unzip(new File(src1), file);
         Compressor.zip(file, dest);
         FileUtils.deleteDirectory(file);
     }
