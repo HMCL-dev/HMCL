@@ -16,6 +16,7 @@
  */
 package org.jackhuang.hellominecraft.views;
 
+import java.awt.Frame;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
@@ -197,7 +198,15 @@ public class LogWindow extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCloseActionPerformed
-        this.dispose();
+        boolean flag = false;
+        for (Frame f : Frame.getFrames()) {
+            if (f == this) continue;
+            if (f.isVisible()) flag = true;
+        }
+        if (flag)
+            this.dispose();
+        else
+            Utils.shutdownForcely(0);
     }//GEN-LAST:event_btnCloseActionPerformed
 
     private void btnClearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearActionPerformed

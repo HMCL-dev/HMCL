@@ -105,17 +105,18 @@ public final class NetUtils {
         con.setDoOutput(true);
         con.setDoInput(true);
         con.setUseCaches(false);
-        con.setConnectTimeout(15000);
-        con.setReadTimeout(15000);
+        con.setConnectTimeout(30000);
+        con.setReadTimeout(30000);
         con.setRequestProperty("Content-Type", contentType + "; charset=utf-8");
-        con.setRequestProperty("Content-Length", "" + post.getBytes(DEFAULT_CHARSET).length);
+        byte[] bytes = post.getBytes(DEFAULT_CHARSET);
+        con.setRequestProperty("Content-Length", "" + bytes.length);
+        con.connect();
         OutputStream os = null;
         try {
             os = con.getOutputStream();
-            IOUtils.write(post, os, DEFAULT_CHARSET);
+            IOUtils.write(bytes, os);
         } finally {
-            if (os != null)
-                IOUtils.closeQuietly(os);
+            IOUtils.closeQuietly(os);
         }
 
         String result;
@@ -124,8 +125,7 @@ public final class NetUtils {
             is = con.getInputStream();
             result = getStreamContent(is);
         } catch (IOException ex) {
-            if (is != null)
-                IOUtils.closeQuietly(is);
+            IOUtils.closeQuietly(is);
             is = con.getErrorStream();
             result = getStreamContent(is);
         }

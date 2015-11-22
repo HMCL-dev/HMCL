@@ -72,6 +72,7 @@ public class GameLauncher {
     }
 
     public IMinecraftLoader makeLaunchCommand() {
+        HMCLog.log("Logging in...");
         IMinecraftLoader loader;
         try {
             if (info != null)
@@ -98,10 +99,13 @@ public class GameLauncher {
         if (file != null)
             FileUtils.cleanDirectoryQuietly(file);
 
+        HMCLog.log("Detecting libraries...");
         if (!downloadLibrariesEvent.execute(provider.getDownloadLibraries(downloadType))) {
             failEvent.execute(C.i18n("launch.failed"));
             return null;
         }
+        
+        HMCLog.log("Unpacking natives...");
         if (!decompressNativesEvent.execute(provider.getDecompressLibraries())) {
             failEvent.execute(C.i18n("launch.failed"));
             return null;
@@ -152,6 +156,7 @@ public class GameLauncher {
      * @throws java.io.IOException write contents failed.
      */
     public File makeLauncher(String launcherName, List str) throws IOException {
+        HMCLog.log("Making shell launcher...");
         provider.onLaunch();
         boolean isWin = OS.os() == OS.WINDOWS;
         File f = new File(launcherName + (isWin ? ".bat" : ".sh"));

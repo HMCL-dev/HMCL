@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.jackhuang.hellominecraft.C;
+import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.NetUtils;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 
@@ -122,8 +123,13 @@ public class YggdrasilAuthentication {
             String jsonResult = input == null ? NetUtils.get(url) : NetUtils.post(url, GSON.toJson(input), "application/json", proxy);
             Response response = (Response) GSON.fromJson(jsonResult, Response.class);
 
-            if (StrUtils.isNotBlank(response.error))
+            if (StrUtils.isNotBlank(response.error)) {
+                HMCLog.err("Failed to log in, the auth server returned an error: " + response.error + ", message: " + response.errorMessage + ", cause: " + response.cause);
+                if (response.errorMessage.contains("Invalid token")) {
+                    response.errorMessage = C.i18n("login.invalid_token");
+                }
                 throw new AuthenticationException("Request error: " + response.errorMessage);
+            }
 
             if (!clientToken.equals(response.clientToken))
                 throw new AuthenticationException(C.i18n("login.changed_client_token"));

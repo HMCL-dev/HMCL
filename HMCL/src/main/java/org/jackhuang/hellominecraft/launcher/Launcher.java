@@ -124,16 +124,16 @@ public final class Launcher {
             final String advice = MinecraftCrashAdvicer.getAdvice(trace);
             MessageBox.Show(C.i18n("crash.minecraft") + ": " + advice);
 
-            LogWindow.instance.setExit(TrueFunction.instance);
             System.err.println(C.i18n("crash.minecraft"));
             System.err.println(advice);
             System.err.println(trace);
+            LogWindow.instance.setExit(TrueFunction.instance);
             LogWindow.instance.setVisible(true);
             flag = 1;
         }
 
         println("*** Game Exited ***");
-        System.exit(flag);
+        Utils.shutdownForcely(1);
     }
     
     static Object getShutdownHaltLock() {
