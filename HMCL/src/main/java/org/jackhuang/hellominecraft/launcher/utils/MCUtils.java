@@ -329,7 +329,7 @@ public final class MCUtils {
     }
 
     public static MinecraftRemoteVersions getRemoteMinecraftVersions(DownloadType sourceType) throws IOException {
-        String result = NetUtils.doGet(sourceType.getProvider().getVersionsListDownloadURL());
+        String result = NetUtils.get(sourceType.getProvider().getVersionsListDownloadURL());
         return MinecraftRemoteVersions.fromJson(result);
     }
 

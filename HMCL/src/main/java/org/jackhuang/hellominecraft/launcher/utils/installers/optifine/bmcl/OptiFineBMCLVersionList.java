@@ -51,7 +51,7 @@ public class OptiFineBMCLVersionList extends InstallerVersionList {
 
     @Override
     public void refreshList(String[] needed) throws Exception {
-        String s = NetUtils.doGet("http://bmclapi.bangbang93.com/optifine/versionlist");
+        String s = NetUtils.get("http://bmclapi.bangbang93.com/optifine/versionlist");
 
         versionMap = new HashMap<>();
         versions = new ArrayList<>();

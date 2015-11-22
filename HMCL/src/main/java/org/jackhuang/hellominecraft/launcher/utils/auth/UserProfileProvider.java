@@ -51,15 +51,8 @@ public final class UserProfileProvider {
     }
 
     public void setAccessToken(String accessToken) {
+        if (accessToken == null) accessToken = "0";
         this.accessToken = accessToken;
-    }
-
-    public boolean isSuccessful() {
-        return success;
-    }
-
-    public void setSuccess(boolean success) {
-        this.success = success;
     }
 
     public String getErrorReason() {
@@ -114,7 +107,6 @@ public final class UserProfileProvider {
     private String userId = "";
     private String session = "";
     private String accessToken = "";
-    private boolean success = false;
     private String error = "";
     private String userProperties = "{}";
     private String userPropertyMap = "{}";

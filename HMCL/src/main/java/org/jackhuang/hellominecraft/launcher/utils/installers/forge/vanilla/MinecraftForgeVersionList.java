@@ -48,7 +48,7 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
 
     @Override
     public void refreshList(String[] needed) throws Exception {
-        String s = NetUtils.doGet(Settings.getInstance().getDownloadSource().getProvider().getParsedLibraryDownloadURL(C.URL_FORGE_LIST));
+        String s = NetUtils.get(Settings.getInstance().getDownloadSource().getProvider().getParsedLibraryDownloadURL(C.URL_FORGE_LIST));
         if (root != null)
             return;
 

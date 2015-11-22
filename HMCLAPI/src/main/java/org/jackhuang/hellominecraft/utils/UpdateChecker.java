@@ -47,7 +47,7 @@ public final class UpdateChecker extends Thread {
     public void run() {
 
         try {
-            versionString = NetUtils.doGet("http://huangyuhui.duapp.com/info.php?type=" + type);
+            versionString = NetUtils.get("http://huangyuhui.duapp.com/info.php?type=" + type);
         } catch (Exception e) {
             HMCLog.warn("Failed to get update url.", e);
             return;
@@ -75,7 +75,7 @@ public final class UpdateChecker extends Thread {
         new Thread(() -> {
             if (download_link == null)
                 try {
-                    download_link = C.gson.fromJson(NetUtils.doGet("http://huangyuhui.duapp.com/update_link.php?type=" + type), Map.class);
+                    download_link = C.gson.fromJson(NetUtils.get("http://huangyuhui.duapp.com/update_link.php?type=" + type), Map.class);
                 } catch (Exception e) {
                     HMCLog.warn("Failed to get update link.", e);
                 }

@@ -16,6 +16,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.utils.auth;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
@@ -32,7 +33,7 @@ public final class BestLogin extends IAuthenticator {
     }
 
     @Override
-    public UserProfileProvider login(LoginInfo info) {
+    public UserProfileProvider login(LoginInfo info) throws AuthenticationException {
         try {
             String request = "bl:l:" + info.username + ":" + DigestUtils.sha1Hex(info.password);
 
@@ -42,34 +43,25 @@ public final class BestLogin extends IAuthenticator {
             os.write(request.getBytes());
 
             UserProfileProvider lr = new UserProfileProvider();
-            lr.setSuccess(false);
 
             InputStream is = socket.getInputStream();
             int code = is.read();
             switch (code) {
                 case -1:
-                    lr.setErrorReason("internet error.");
-                    break;
+                    throw new AuthenticationException("internet error.");
                 case 200:
-                    lr.setErrorReason("server restarting.");
-                    break;
+                    throw new AuthenticationException("server restarting.");
                 case 255:
-                    lr.setErrorReason("unknown error");
-                    break;
+                    throw new AuthenticationException("unknown error");
                 case 3:
-                    lr.setErrorReason("unregistered.");
-                    break;
+                    throw new AuthenticationException("unregistered.");
                 case 50:
-                    lr.setErrorReason("please update your launcher and act your account.");
-                    break;
+                    throw new AuthenticationException("please update your launcher and act your account.");
                 case 2:
-                    lr.setErrorReason("wrong password.");
-                    break;
+                    throw new AuthenticationException("wrong password.");
                 case 100:
-                    lr.setErrorReason("server reloading.");
-                    break;
+                    throw new AuthenticationException("server reloading.");
                 case 0:
-                    lr.setSuccess(true);
                     byte[] b = new byte[64];
                     is.read(b, 0, b.length);
                     String[] ss = new String(b).split(":");
@@ -81,11 +73,8 @@ public final class BestLogin extends IAuthenticator {
             }
             lr.setUserType("Legacy");
             return lr;
-        } catch (Throwable t) {
-            UserProfileProvider lr = new UserProfileProvider();
-            lr.setSuccess(false);
-            lr.setErrorReason(t.getMessage());
-            return lr;
+        } catch (IOException t) {
+            throw new AuthenticationException(t);
         }
     }
 

@@ -1,4 +1,4 @@
-package org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil;
+package org.jackhuang.hellominecraft.launcher.utils.auth;
 
 public class AuthenticationException extends Exception {
 

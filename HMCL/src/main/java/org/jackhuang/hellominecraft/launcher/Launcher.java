@@ -18,6 +18,7 @@ package org.jackhuang.hellominecraft.launcher;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -128,11 +129,22 @@ public final class Launcher {
             System.err.println(advice);
             System.err.println(trace);
             LogWindow.instance.setVisible(true);
-
             flag = 1;
         }
 
         println("*** Game Exited ***");
         System.exit(flag);
+    }
+    
+    static Object getShutdownHaltLock() {
+        try {
+            Class z = Class.forName("java.lang.Shutdown");
+            Field haltLock = z.getDeclaredField("haltLock");
+            haltLock.setAccessible(true);
+            return haltLock.get(null);
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+            return new Object();
+        }
     }
 }

@@ -31,16 +31,16 @@ public final class OfflineAuthenticator extends IAuthenticator {
     }
 
     @Override
-    public UserProfileProvider login(LoginInfo info) {
+    public UserProfileProvider login(LoginInfo info) throws AuthenticationException {
+        if(StrUtils.isBlank(info.username))
+            throw new AuthenticationException(C.i18n("login.no_Player007"));
         UserProfileProvider result = new UserProfileProvider();
-        result.setSuccess(StrUtils.isNotBlank(info.username));
         result.setUserName(info.username);
         String uuid = getUUIDFromUserName(info.username);
         result.setSession(uuid);
         result.setUserId(uuid);
         result.setAccessToken(uuid);
         result.setUserType("Legacy");
-        result.setErrorReason(C.i18n("login.no_Player007"));
         return result;
     }
 

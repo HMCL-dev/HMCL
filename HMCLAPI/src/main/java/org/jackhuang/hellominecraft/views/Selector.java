@@ -49,6 +49,11 @@ public class Selector extends javax.swing.JDialog {
         for (String s : selList)
             jComboBox1.addItem(s);
     }
+    
+    public int getChoice() {
+        setVisible(true);
+        return sel;
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -61,7 +66,7 @@ public class Selector extends javax.swing.JDialog {
 
         jLabel1 = new javax.swing.JLabel();
         jComboBox1 = new javax.swing.JComboBox();
-        jButton1 = new javax.swing.JButton();
+        btnOK = new javax.swing.JButton();
         btnCancel = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -69,10 +74,10 @@ public class Selector extends javax.swing.JDialog {
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraft/launcher/I18N"); // NOI18N
         jLabel1.setText(bundle.getString("selector.choose")); // NOI18N
 
-        jButton1.setText(bundle.getString("button.ok")); // NOI18N
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        btnOK.setText(bundle.getString("button.ok")); // NOI18N
+        btnOK.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                btnOKActionPerformed(evt);
             }
         });
 
@@ -100,7 +105,7 @@ public class Selector extends javax.swing.JDialog {
                 .addContainerGap(212, Short.MAX_VALUE)
                 .addComponent(btnCancel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButton1)
+                .addComponent(btnOK)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -112,7 +117,7 @@ public class Selector extends javax.swing.JDialog {
                 .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton1)
+                    .addComponent(btnOK)
                     .addComponent(btnCancel))
                 .addContainerGap())
         );
@@ -125,14 +130,14 @@ public class Selector extends javax.swing.JDialog {
         this.dispose();
     }//GEN-LAST:event_btnCancelActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOKActionPerformed
         sel = jComboBox1.getSelectedIndex();
         this.dispose();
-    }//GEN-LAST:event_jButton1ActionPerformed
+    }//GEN-LAST:event_btnOKActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCancel;
-    private javax.swing.JButton jButton1;
+    private javax.swing.JButton btnOK;
     private javax.swing.JComboBox jComboBox1;
     private javax.swing.JLabel jLabel1;
     // End of variables declaration//GEN-END:variables

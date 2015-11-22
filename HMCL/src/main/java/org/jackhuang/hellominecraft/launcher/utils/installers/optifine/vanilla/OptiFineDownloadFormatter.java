@@ -38,7 +38,7 @@ public class OptiFineDownloadFormatter extends Task implements PreviousResult<St
     @Override
     public boolean executeTask() {
         try {
-            String content = NetUtils.doGet(url);
+            String content = NetUtils.get(url);
             Pattern p = Pattern.compile("\"downloadx\\?f=OptiFine(.*)\"");
             Matcher m = p.matcher(content);
             while (m.find())

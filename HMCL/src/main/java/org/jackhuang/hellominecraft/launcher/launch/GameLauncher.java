@@ -30,6 +30,7 @@ import org.jackhuang.hellominecraft.launcher.utils.auth.LoginInfo;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
+import org.jackhuang.hellominecraft.launcher.utils.auth.AuthenticationException;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.system.JavaProcess;
@@ -77,20 +78,10 @@ public class GameLauncher {
                 result = login.login(info);
             else
                 result = login.loginBySettings();
-        } catch (Exception e) {
-            HMCLog.err("An exception has thrown when logging in.", e);
-            result = new UserProfileProvider();
-            result.setSuccess(false);
-            result.setErrorReason(e.getLocalizedMessage());
-        }
-        if (result == null || result.isSuccessful() == false) {
-            String error;
-            if (result == null || result.getErrorReason() == null)
-                error = C.i18n("login.failed");
-            else {
-                error = C.i18n("login.failed") + result.getErrorReason();
-                HMCLog.warn("Login failed by method: " + login.getName() + ", state: " + result.isSuccessful() + ", error reason: " + result.getErrorReason());
-            }
+            if (result == null) throw new AuthenticationException("Result can not be null.");
+        } catch (Throwable e) {
+            String error = C.i18n("login.failed") + e.getMessage();
+            HMCLog.warn("Login failed by method: " + login.getName(), e);
             failEvent.execute(error);
             return null;
         }

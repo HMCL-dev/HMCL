@@ -58,8 +58,9 @@ public abstract class IAuthenticator {
      * @param info username & password
      *
      * @return login result
+     * @throws org.jackhuang.hellominecraft.launcher.utils.auth.AuthenticationException
      */
-    public abstract UserProfileProvider login(LoginInfo info);
+    public abstract UserProfileProvider login(LoginInfo info) throws AuthenticationException;
 
     /**
      *
@@ -84,7 +85,7 @@ public abstract class IAuthenticator {
 
     }
 
-    public abstract UserProfileProvider loginBySettings();
+    public abstract UserProfileProvider loginBySettings() throws AuthenticationException;
 
     public abstract void logout();
 }

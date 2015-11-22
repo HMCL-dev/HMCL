@@ -23,7 +23,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Authenticator;
+import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
+import java.net.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -57,6 +59,7 @@ import org.jackhuang.hellominecraft.launcher.views.MainFrame;
 import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
 import org.jackhuang.hellominecraft.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.utils.ArrayUtils;
+import org.jackhuang.hellominecraft.utils.MathUtils;
 import org.jackhuang.hellominecraft.utils.system.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.VersionNumber;
@@ -104,6 +107,7 @@ public final class Main implements Runnable {
     public static String launcherName = "Hello Minecraft! Launcher";
     public static byte firstVer = 2, secondVer = 3, thirdVer = 5, forthVer = 5;
     public static int minimumLauncherVersion = 16;
+    public static Proxy PROXY;
 
     /**
      * Make the version of HMCL.
@@ -125,6 +129,7 @@ public final class Main implements Runnable {
 
     public static final Main INSTANCE = new Main();
 
+    @SuppressWarnings( {"CallToPrintStackTrace", "UseSpecificCatch"})
     public static void main(String[] args) {
         {
             if (!ArrayUtils.contains(args, "nofound"))
@@ -183,7 +188,7 @@ public final class Main implements Runnable {
 
             Settings.UPDATE_CHECKER.start();
 
-            if (StrUtils.isNotBlank(Settings.getInstance().getProxyHost()) && StrUtils.isNotBlank(Settings.getInstance().getProxyPort())) {
+            if (StrUtils.isNotBlank(Settings.getInstance().getProxyHost()) && StrUtils.isNotBlank(Settings.getInstance().getProxyPort()) && MathUtils.canParseInt(Settings.getInstance().getProxyPort())) {
                 System.setProperty("http.proxyHost", Settings.getInstance().getProxyHost());
                 System.setProperty("http.proxyPort", Settings.getInstance().getProxyPort());
                 if (StrUtils.isNotBlank(Settings.getInstance().getProxyUserName()) && StrUtils.isNotBlank(Settings.getInstance().getProxyPassword()))
@@ -193,6 +198,9 @@ public final class Main implements Runnable {
                             return new PasswordAuthentication(Settings.getInstance().getProxyUserName(), Settings.getInstance().getProxyPassword().toCharArray());
                         }
                     });
+                PROXY = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(Settings.getInstance().getProxyHost(), Integer.parseInt(Settings.getInstance().getProxyPort())));
+            } else {
+                PROXY = Proxy.NO_PROXY;
             }
 
             try {

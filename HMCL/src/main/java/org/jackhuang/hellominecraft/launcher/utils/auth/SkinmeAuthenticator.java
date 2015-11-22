@@ -37,21 +37,15 @@ public final class SkinmeAuthenticator extends IAuthenticator {
     }
 
     public String getCharacter(String user, String hash, String $char) throws Exception {
-        if ($char == null)
-            return NetUtils.doGet(
-            "http://www.skinme.cc/api/login.php?user=" + user + "&hash=" + hash);
-        else
-            return NetUtils.doGet(
-            "http://www.skinme.cc/api/login.php?user=" + user + "&hash=" + hash + "&char=" + $char);
+        return NetUtils.get(
+        "http://www.skinme.cc/api/login.php?user=" + user + "&hash=" + hash + (($char == null) ? "" : ("&char=" + $char)));
     }
 
     @Override
-    public UserProfileProvider login(LoginInfo info) {
+    public UserProfileProvider login(LoginInfo info) throws AuthenticationException {
         UserProfileProvider req = new UserProfileProvider();
         if (info.username == null || !info.username.contains("@")) {
-            req.setSuccess(false);
-            req.setErrorReason(C.i18n("login.not_email"));
-            return req;
+            throw new AuthenticationException(C.i18n("login.not_email"));
         }
         try {
             String usr = info.username.toLowerCase();
@@ -64,13 +58,10 @@ public final class SkinmeAuthenticator extends IAuthenticator {
             if (null != sl[0])
                 switch (sl[0]) {
                     case "0":
-                        req.setSuccess(false);
                         if (sl[1].contains("No Valid Character"))
                             sl[1] = C.i18n("login.no_valid_character");
-                        req.setErrorReason(sl[1]);
-                        break;
+                        throw new AuthenticationException(sl[1]);
                     case "1": {
-                        req.setSuccess(true);
                         String[] s = parseType1(sl[1]);
                         req.setUserName(s[0]);
                         req.setSession(s[1]);
@@ -79,7 +70,6 @@ public final class SkinmeAuthenticator extends IAuthenticator {
                         break;
                     }
                     case "2": {
-                        req.setSuccess(true);
                         String[] charators = sl[1].split(";");
                         int len = charators.length;
                         String[] $char = new String[len];
@@ -93,8 +83,7 @@ public final class SkinmeAuthenticator extends IAuthenticator {
                         Selector s = new Selector(null, user, C.i18n("login.choose_charactor"));
                         s.setVisible(true);
                         if (s.sel == Selector.failedToSel) {
-                            req.setSuccess(false);
-                            req.setErrorReason(C.i18n("message.cancelled"));
+                            throw new AuthenticationException(C.i18n("message.cancelled"));
                         } else {
                             int index = s.sel;
                             String character = $char[index];
@@ -112,13 +101,7 @@ public final class SkinmeAuthenticator extends IAuthenticator {
             req.setUserType("Legacy");
             return req;
         } catch (Exception e) {
-            HMCLog.warn("Failed to login skinme.", e);
-
-            req.setUserName(info.username);
-            req.setSuccess(false);
-            req.setUserType("Legacy");
-            req.setErrorReason(e.getMessage());
-            return req;
+            throw new AuthenticationException(e);
         }
     }
 

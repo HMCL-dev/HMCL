@@ -16,6 +16,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.utils;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -120,7 +121,12 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         new Thread(() -> {
             HashMap<String, String> map = new HashMap<>();
             map.put("CrashReport", text);
-            System.out.println(NetUtils.post(NetUtils.constantURL("http://huangyuhui.duapp.com/crash.php"), map));
+            try {
+                System.out.println(NetUtils.post(NetUtils.constantURL("http://huangyuhui.duapp.com/crash.php"), map));
+            } catch (IOException ex) {
+                System.out.println("Failed to send post request to HMCL server.");
+                ex.printStackTrace();
+            }
         }).start();
     }
 

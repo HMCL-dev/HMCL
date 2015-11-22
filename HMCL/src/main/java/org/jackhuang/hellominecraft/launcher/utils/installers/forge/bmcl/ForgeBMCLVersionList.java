@@ -58,7 +58,7 @@ public class ForgeBMCLVersionList extends InstallerVersionList {
         for (String x : neededVersions) {
             if (versionMap.containsKey(x))
                 continue;
-            String s = NetUtils.doGet("http://bmclapi2.bangbang93.com/forge/minecraft/" + x);
+            String s = NetUtils.get("http://bmclapi2.bangbang93.com/forge/minecraft/" + x);
 
             if (s == null)
                 continue;

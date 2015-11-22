@@ -1,7 +1,5 @@
 package org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil;
 
-import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.GameProfile;
-
 public class Response {
 
     public String accessToken, clientToken;

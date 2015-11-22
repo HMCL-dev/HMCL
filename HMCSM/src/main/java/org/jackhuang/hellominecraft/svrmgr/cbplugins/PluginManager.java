@@ -48,7 +48,7 @@ public class PluginManager {
     }
 
     public static List<BukkitPlugin> getPlugins() throws Exception {
-        String result = NetUtils.doGet("http://api.bukget.org/3//plugins?fields=slug,plugin_name,description,versions.version,versions.game_versions");
+        String result = NetUtils.get("http://api.bukget.org/3//plugins?fields=slug,plugin_name,description,versions.version,versions.game_versions");
         Gson gson = new Gson();
         List<BukkitPlugin> list = gson.fromJson(result, new TypeToken<List<BukkitPlugin>>() {
                                                 }.getType());
@@ -61,7 +61,7 @@ public class PluginManager {
     CATEGORY_GENERAL = "General",
     CATEGORY_ANTI_GRIEFING_TOOLS = "Anti Griefing Tools",
     CATEGORY_MECHAICS = "Mechanics",
-    CATEGORY_Fixes = "Fixes",
+    CATEGORY_FIXES = "Fixes",
     CATEGORY_ROLE_PLAYING = "Role Playing",
     CATEGORY_WORLD_EDITING_AND_MANAGEMENT = "World Editing and Management",
     CATEGORY_TELEPORTATION = "Teleportation",
@@ -73,7 +73,7 @@ public class PluginManager {
     CATEGORY_WEBSITE_ADMINISTRATION = "Website Administration";
 
     public static List<BukkitPlugin> getPluginsByCategory(String category) throws Exception {
-        String result = NetUtils.doGet("http://api.bukget.org/3//categories/" + category + "?fields=slug,plugin_name,description,versions.version,versions.game_versions");
+        String result = NetUtils.get("http://api.bukget.org/3//categories/" + category + "?fields=slug,plugin_name,description,versions.version,versions.game_versions");
         Gson gson = new Gson();
         List<BukkitPlugin> list = gson.fromJson(result, new TypeToken<List<BukkitPlugin>>() {
                                                 }.getType());
@@ -81,7 +81,7 @@ public class PluginManager {
     }
 
     public static List<Category> getCategories() throws Exception {
-        String result = NetUtils.doGet("http://api.bukget.org/3//categories/");
+        String result = NetUtils.get("http://api.bukget.org/3//categories/");
         Gson gson = new Gson();
         List<Category> list = gson.fromJson(result, new TypeToken<List<Category>>() {
                                             }.getType());
@@ -90,7 +90,7 @@ public class PluginManager {
 
     public static PluginInfo getPluginInfo(String slug) throws Exception {
         if (StrUtils.isNotBlank(slug)) {
-            String result = NetUtils.doGet("http://api.bukget.org/3//plugins/bukkit/" + slug.toLowerCase());
+            String result = NetUtils.get("http://api.bukget.org/3//plugins/bukkit/" + slug.toLowerCase());
             if (StrUtils.isNotBlank(result))
                 if (!result.equals("null")) {
                     PluginInfo info = new Gson().fromJson(result, PluginInfo.class);

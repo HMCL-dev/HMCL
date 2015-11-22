@@ -1,5 +1,6 @@
 package org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil;
 
+import org.jackhuang.hellominecraft.launcher.utils.auth.AuthenticationException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
@@ -62,65 +63,22 @@ public class YggdrasilAuthentication {
         this.password = password;
     }
 
-    protected String getUsername() {
-        return this.username;
-    }
-
-    protected String getPassword() {
-        return this.password;
-    }
-
-    protected void setSelectedProfile(GameProfile selectedProfile) {
-        this.selectedProfile = selectedProfile;
-    }
-
     public GameProfile getSelectedProfile() {
         return this.selectedProfile;
     }
 
-    public String getUserID() {
+    public String getUserId() {
         return this.userid;
     }
 
     public PropertyMap getUserProperties() {
-        if (isLoggedIn()) {
-            PropertyMap result = new PropertyMap();
-            result.putAll(getModifiableUserProperties());
-            return result;
-        }
+        if (isLoggedIn())
+            return (PropertyMap) userProperties.clone();
         return new PropertyMap();
     }
 
-    protected PropertyMap getModifiableUserProperties() {
-        return this.userProperties;
-    }
-
-    protected void updateUserProperties(User user) {
-        if (user != null && user.properties != null)
-            getModifiableUserProperties().putAll(user.properties);
-    }
-
-    protected void setUserId(String userid) {
-        this.userid = userid;
-    }
-
-    public Proxy getProxy() {
-        return this.proxy;
-    }
-
-    public String getClientToken() {
-        return this.clientToken;
-    }
-
     public GameProfile[] getAvailableProfiles() {
-        return this.profiles;
-    }
-
-    @Deprecated
-    public String getSessionToken() {
-        if (isLoggedIn() && getSelectedProfile() != null && canPlayOnline())
-            return String.format("token:%s:%s", new Object[] {getAuthenticatedToken(), getSelectedProfile().id});
-        return null;
+        return profiles;
     }
 
     public String getAuthenticatedToken() {
@@ -134,7 +92,7 @@ public class YggdrasilAuthentication {
     }
 
     public boolean canLogIn() {
-        return !canPlayOnline() && StrUtils.isNotBlank(getUsername()) && (StrUtils.isNotBlank(getPassword()) || StrUtils.isNotBlank(getAuthenticatedToken()));
+        return !canPlayOnline() && StrUtils.isNotBlank(username) && (StrUtils.isNotBlank(password) || StrUtils.isNotBlank(getAuthenticatedToken()));
     }
 
     public boolean isLoggedIn() {
@@ -142,69 +100,62 @@ public class YggdrasilAuthentication {
     }
 
     public void logIn() throws AuthenticationException {
-        if (StrUtils.isBlank(getUsername()))
+        if (StrUtils.isBlank(username))
             throw new AuthenticationException(C.i18n("login.invalid_username"));
 
-        if (StrUtils.isNotBlank(getAuthenticatedToken()))
-            logInWithToken();
-        else if (StrUtils.isNotBlank(getPassword()))
-            logInWithPassword();
+        if (StrUtils.isNotBlank(getAuthenticatedToken())) {
+            if (StrUtils.isBlank(getUserId()))
+                if (StrUtils.isNotBlank(username))
+                    userid = username;
+                else
+                    throw new AuthenticationException(C.i18n("login.invalid_uuid_and_username"));
+
+            loggedIn(ROUTE_REFRESH, new RefreshRequest(getAuthenticatedToken(), clientToken));
+        } else if (StrUtils.isNotBlank(password))
+            loggedIn(ROUTE_AUTHENTICATE, new AuthenticationRequest(username, password, clientToken));
         else
             throw new AuthenticationException(C.i18n("login.invalid_password"));
     }
+    
+    private void loggedIn(URL url, Object input) throws AuthenticationException {
+        try {
+            String jsonResult = input == null ? NetUtils.get(url) : NetUtils.post(url, GSON.toJson(input), "application/json", proxy);
+            Response response = (Response) GSON.fromJson(jsonResult, Response.class);
 
-    private void logInWithPassword() throws AuthenticationException {
-        Response response = request(ROUTE_AUTHENTICATE, new AuthenticationRequest(getUsername(), getPassword(), clientToken));
-        if (!response.clientToken.equals(clientToken))
-            throw new AuthenticationException(C.i18n("login.changed_client_token"));
+            if (StrUtils.isNotBlank(response.error))
+                throw new AuthenticationException("Request error: " + response.errorMessage);
 
-        User user = response.user;
-        setUserId(user != null && user.id != null ? user.id : getUsername());
+            if (!clientToken.equals(response.clientToken))
+                throw new AuthenticationException(C.i18n("login.changed_client_token"));
 
-        this.isOnline = true;
-        this.accessToken = response.accessToken;
+            User user = response.user;
+            userid = user != null && user.id != null ? user.id : username;
 
-        this.profiles = response.availableProfiles;
-        setSelectedProfile(response.selectedProfile);
-        getModifiableUserProperties().clear();
+            isOnline = true;
+            profiles = response.availableProfiles;
+            selectedProfile = response.selectedProfile;
+            userProperties.clear();
+            this.accessToken = response.accessToken;
 
-        updateUserProperties(user);
-    }
-
-    protected void logInWithToken() throws AuthenticationException {
-        if (StrUtils.isBlank(getUserID()))
-            if (StrUtils.isBlank(getUsername()))
-                setUserId(getUsername());
-            else
-                throw new AuthenticationException(C.i18n("login.invalid_uuid_and_username"));
-
-        Response response = request(ROUTE_REFRESH, new RefreshRequest(getAuthenticatedToken(), getClientToken()));
-        if (!clientToken.equals(response.clientToken))
-            throw new AuthenticationException(C.i18n("login.changed_client_token"));
-
-        setUserId(response.user != null && response.user.id != null ? response.user.id : getUsername());
-
-        this.isOnline = true;
-        this.accessToken = response.accessToken;
-        this.profiles = response.availableProfiles;
-        setSelectedProfile(response.selectedProfile);
-        getModifiableUserProperties().clear();
-
-        updateUserProperties(response.user);
+            if (user != null && user.properties != null)
+                userProperties.putAll(user.properties);
+        } catch (IOException | IllegalStateException | JsonParseException e) {
+            throw new AuthenticationException(C.i18n("login.failed.connect_authentication_server"), e);
+        }
     }
 
     public void logOut() {
-        this.password = null;
-        this.userid = null;
-        setSelectedProfile(null);
-        getModifiableUserProperties().clear();
+        password = null;
+        userid = null;
+        selectedProfile = null;
+        userProperties.clear();
 
-        this.accessToken = null;
-        this.profiles = null;
-        this.isOnline = false;
+        accessToken = null;
+        profiles = null;
+        isOnline = false;
     }
-    // </editor-fold>
 
+    // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Settings Storage">
     public void loadFromStorage(Map<String, Object> credentials) {
         logOut();
@@ -212,18 +163,18 @@ public class YggdrasilAuthentication {
         setUsername((String) credentials.get(STORAGE_KEY_USER_NAME));
 
         if (credentials.containsKey(STORAGE_KEY_USER_ID))
-            this.userid = (String) credentials.get(STORAGE_KEY_USER_ID);
+            userid = (String) credentials.get(STORAGE_KEY_USER_ID);
         else
-            this.userid = this.username;
+            userid = username;
 
         if (credentials.containsKey(STORAGE_KEY_USER_PROPERTIES))
-            getModifiableUserProperties().fromList((List<Map<String, String>>) credentials.get(STORAGE_KEY_USER_PROPERTIES));
+            userProperties.fromList((List<Map<String, String>>) credentials.get(STORAGE_KEY_USER_PROPERTIES));
 
         if ((credentials.containsKey(STORAGE_KEY_PROFILE_NAME)) && (credentials.containsKey(STORAGE_KEY_PROFILE_ID))) {
             GameProfile profile = new GameProfile(UUIDTypeAdapter.fromString((String) credentials.get(STORAGE_KEY_PROFILE_ID)), (String) credentials.get(STORAGE_KEY_PROFILE_NAME));
             if (credentials.containsKey(STORAGE_KEY_PROFILE_PROPERTIES))
                 profile.properties.fromList((List<Map<String, String>>) credentials.get(STORAGE_KEY_PROFILE_PROPERTIES));
-            setSelectedProfile(profile);
+            selectedProfile = profile;
         }
 
         this.accessToken = (String) credentials.get(STORAGE_KEY_ACCESS_TOKEN);
@@ -232,10 +183,10 @@ public class YggdrasilAuthentication {
     public Map<String, Object> saveForStorage() {
         Map<String, Object> result = new HashMap<>();
 
-        if (getUsername() != null)
-            result.put(STORAGE_KEY_USER_NAME, getUsername());
-        if (getUserID() != null)
-            result.put(STORAGE_KEY_USER_ID, getUserID());
+        if (username != null)
+            result.put(STORAGE_KEY_USER_NAME, username);
+        if (getUserId() != null)
+            result.put(STORAGE_KEY_USER_ID, getUserId());
 
         if (!getUserProperties().isEmpty())
             result.put(STORAGE_KEY_USER_PROPERTIES, getUserProperties().list());
@@ -255,20 +206,4 @@ public class YggdrasilAuthentication {
     }
 
     // </editor-fold>
-    protected Response request(URL url, Object input) throws AuthenticationException {
-        try {
-            String jsonResult = input == null ? NetUtils.doGet(url) : NetUtils.post(url, GSON.toJson(input), "application/json", proxy);
-            Response result = (Response) GSON.fromJson(jsonResult, Response.class);
-
-            if (result == null)
-                return null;
-
-            if (StrUtils.isNotBlank(result.error))
-                throw new AuthenticationException("InvalidCredentials " + result.errorMessage);
-
-            return result;
-        } catch (IOException | IllegalStateException | JsonParseException e) {
-            throw new AuthenticationException(C.i18n("login.failed.connect_authentication_server"), e);
-        }
-    }
 }

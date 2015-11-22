@@ -33,7 +33,7 @@ public final class CollectionUtils {
             p.accept(t);
     }
 
-    public static <T> Collection<T> sortOut(Collection<T> coll, Predicate<T> p) {
+    public static <T> ArrayList<T> map(Collection<T> coll, Predicate<T> p) {
         ArrayList<T> newColl = new ArrayList<>();
         forEach(coll, t -> {
                     if (p.apply(t))

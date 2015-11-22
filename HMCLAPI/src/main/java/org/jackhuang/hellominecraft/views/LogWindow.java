@@ -16,7 +16,6 @@
  */
 package org.jackhuang.hellominecraft.views;
 
-import java.awt.Color;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
@@ -80,28 +79,28 @@ public class LogWindow extends javax.swing.JFrame {
         txtLog = new javax.swing.JTextPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle(C.I18N.getString("logwindow.title")); // NOI18N
+        setTitle(C.i18n("logwindow.title")); // NOI18N
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
                 formWindowClosed(evt);
             }
         });
 
-        btnClear.setText(C.I18N.getString("ui.button.clear")); // NOI18N
+        btnClear.setText(C.i18n("ui.button.clear")); // NOI18N
         btnClear.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnClearActionPerformed(evt);
             }
         });
 
-        btnClose.setText(C.I18N.getString("ui.button.close")); // NOI18N
+        btnClose.setText(C.i18n("ui.button.close")); // NOI18N
         btnClose.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnCloseActionPerformed(evt);
             }
         });
 
-        btnCopy.setText(C.I18N.getString("ui.button.copy")); // NOI18N
+        btnCopy.setText(C.i18n("ui.button.copy")); // NOI18N
         btnCopy.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnCopyActionPerformed(evt);
@@ -117,7 +116,7 @@ public class LogWindow extends javax.swing.JFrame {
             }
         });
 
-        btnTieBa.setText(C.I18N.getString("logwindow.tieba")); // NOI18N
+        btnTieBa.setText(C.i18n("logwindow.tieba")); // NOI18N
         btnTieBa.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnTieBaActionPerformed(evt);
@@ -131,7 +130,7 @@ public class LogWindow extends javax.swing.JFrame {
             }
         });
 
-        btnTerminateGame.setText(C.I18N.getString("logwindow.terminate_game")); // NOI18N
+        btnTerminateGame.setText(C.i18n("logwindow.terminate_game")); // NOI18N
         btnTerminateGame.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnTerminateGameActionPerformed(evt);

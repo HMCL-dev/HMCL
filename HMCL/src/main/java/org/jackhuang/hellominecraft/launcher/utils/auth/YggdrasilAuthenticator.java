@@ -17,11 +17,10 @@
 package org.jackhuang.hellominecraft.launcher.utils.auth;
 
 import com.google.gson.GsonBuilder;
-import java.net.Proxy;
 import java.util.Map;
 import javax.swing.JOptionPane;
 import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.utils.ArrayUtils;
 import org.jackhuang.hellominecraft.views.Selector;
 import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.GameProfile;
@@ -39,46 +38,34 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
 
     public YggdrasilAuthenticator(String clientToken) {
         super(clientToken);
-        ua = new YggdrasilAuthentication(Proxy.NO_PROXY, clientToken);
+        ua = new YggdrasilAuthentication(Main.PROXY, clientToken);
     }
 
     @Override
-    public UserProfileProvider login(LoginInfo info) {
-        if (ua.canPlayOnline()) {
-            UserProfileProvider result = new UserProfileProvider();
-            result.setUserName(info.username);
-            result.setSuccess(true);
-            result.setUserId(UUIDTypeAdapter.fromUUID(ua.getSelectedProfile().id));
-            result.setUserProperties(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.LegacySerializer()).create().toJson(ua.getUserProperties()));
-            result.setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()));
-            result.setAccessToken(ua.getAuthenticatedToken());
-            result.setSession(ua.getAuthenticatedToken());
-            result.setUserType("mojang");
-            return result;
-        }
+    public UserProfileProvider login(LoginInfo info) throws AuthenticationException {
         UserProfileProvider result = new UserProfileProvider();
-        String usr = info.username;
-        if (info.username == null || !info.username.contains("@")) {
-            result.setSuccess(false);
-            result.setErrorReason(C.i18n("login.not_email"));
-            return result;
-        }
-        String pwd = info.password;
+        result.setUserType("mojang");
+        if (ua.canPlayOnline()) {
+            result.setUserName(info.username);
+            result.setUserId(UUIDTypeAdapter.fromUUID(ua.getSelectedProfile().id));
+        } else {
+            String usr = info.username;
+            if (info.username == null || !info.username.contains("@"))
+                throw new AuthenticationException(C.i18n("login.not_email"));
+            String pwd = info.password;
 
-        if (!ua.isLoggedIn())
-            ua.setPassword(pwd);
-        ua.setUsername(usr);
-        try {
+            if (!ua.isLoggedIn())
+                ua.setPassword(pwd);
+            ua.setUsername(usr);
             ua.logIn();
             if (!ua.isLoggedIn())
-                throw new Exception(C.i18n("login.wrong_password"));
+                throw new AuthenticationException(C.i18n("login.wrong_password"));
             GameProfile selectedProfile = ua.getSelectedProfile();
             GameProfile[] profiles = ua.getAvailableProfiles();
-            String[] names;
             String username;
             if (selectedProfile == null)
                 if (ArrayUtils.isNotEmpty(profiles)) {
-                    names = new String[profiles.length];
+                    String[] names = new String[profiles.length];
                     for (int i = 0; i < profiles.length; i++)
                         names[i] = profiles[i].name;
                     Selector s = new Selector(null, names, C.i18n("login.choose_charactor"));
@@ -90,23 +77,12 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
             else
                 username = selectedProfile.name;
             result.setUserName(username);
-            result.setSuccess(true);
             result.setUserId(selectedProfile == null ? OfflineAuthenticator.getUUIDFromUserName(username) : UUIDTypeAdapter.fromUUID(selectedProfile.id));
-            result.setUserProperties(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.LegacySerializer()).create().toJson(ua.getUserProperties()));
-            result.setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()));
-            String authToken = ua.getAuthenticatedToken();
-            if (authToken == null)
-                authToken = "0";
-            result.setAccessToken(authToken);
-            result.setSession(authToken);
-        } catch (Exception ex) {
-            result.setErrorReason(ex.getMessage());
-            result.setSuccess(false);
-            result.setUserName(ua.getUserID());
-
-            HMCLog.err("Failed to login by yggdrasil authentication.", ex);
         }
-        result.setUserType("mojang");
+        result.setUserProperties(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.LegacySerializer()).create().toJson(ua.getUserProperties()));
+        result.setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()));
+        result.setAccessToken(ua.getAuthenticatedToken());
+        result.setSession(ua.getAuthenticatedToken());
         return result;
     }
 
@@ -131,23 +107,19 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
     }
 
     @Override
-    public UserProfileProvider loginBySettings() {
-        UserProfileProvider info = new UserProfileProvider();
-        try {
-            ua.logIn();
-            if (!ua.isLoggedIn())
-                throw new Exception(C.i18n("login.wrong_password"));
-            GameProfile profile = ua.getSelectedProfile();
-            info.setUserName(profile.name);
-            info.setSuccess(true);
-            info.setUserId(profile.id.toString());
-            info.setAccessToken(ua.getAuthenticatedToken());
-        } catch (Exception ex) {
-            info.setErrorReason(ex.getMessage());
-            info.setSuccess(false);
-            info.setUserName(ua.getUserID());
-        }
-        return info;
+    public UserProfileProvider loginBySettings() throws AuthenticationException {
+        UserProfileProvider result = new UserProfileProvider();
+        ua.logIn();
+        if (!ua.isLoggedIn())
+            throw new AuthenticationException(C.i18n("login.wrong_password"));
+        GameProfile profile = ua.getSelectedProfile();
+        result.setUserName(profile.name);
+        result.setUserId(profile.id.toString());
+        result.setUserProperties(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.LegacySerializer()).create().toJson(ua.getUserProperties()));
+        result.setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()));
+        result.setAccessToken(ua.getAuthenticatedToken());
+        result.setSession(ua.getAuthenticatedToken());
+        return result;
     }
 
     @Override

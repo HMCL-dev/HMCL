@@ -40,7 +40,7 @@ public class IPGet extends Thread {
             Elements iframe = d.getElementsByTag("iframe");
             if (iframe.size() > 0) {
                 String url = iframe.get(0).attr("src");
-                String s = NetUtils.doGet(url, "GBK");
+                String s = NetUtils.get(url, "GBK");
                 Pattern p = Pattern.compile("\\[(\\d|[1-9]\\d|1\\d\\d|2[0-4]\\d|25[0-5])(\\.(\\d|[1-9]\\d|1\\d\\d|2[0-4]\\d|25[0-5])){3}\\]");
                 Matcher m = p.matcher(s);
                 s = "";

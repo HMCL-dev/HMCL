@@ -50,7 +50,7 @@ public class LiteLoaderVersionList extends InstallerVersionList {
 
     @Override
     public void refreshList(String[] needed) throws Exception {
-        String s = NetUtils.doGet(C.URL_LITELOADER_LIST);
+        String s = NetUtils.get(C.URL_LITELOADER_LIST);
         if (root != null)
             return;
 

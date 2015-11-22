@@ -59,7 +59,7 @@ public class OptiFineVersionList extends InstallerVersionList {
 
     @Override
     public void refreshList(String[] sss) throws Exception {
-        String content = NetUtils.doGet("http://optifine.net/downloads");
+        String content = NetUtils.get("http://optifine.net/downloads");
         if (versions != null)
             return;
         versionMap = new HashMap<>();

@@ -4,7 +4,7 @@
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="2"/>
     <Property name="title" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-      <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="logwindow.title" replaceFormat="C.I18N.getString(&quot;{key}&quot;)"/>
+      <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="logwindow.title" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
     </Property>
   </Properties>
   <SyntheticProperties>
@@ -83,7 +83,7 @@
     <Component class="javax.swing.JButton" name="btnClear">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.clear" replaceFormat="C.I18N.getString(&quot;{key}&quot;)"/>
+          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.clear" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
@@ -93,7 +93,7 @@
     <Component class="javax.swing.JButton" name="btnClose">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.close" replaceFormat="C.I18N.getString(&quot;{key}&quot;)"/>
+          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.close" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
@@ -103,7 +103,7 @@
     <Component class="javax.swing.JButton" name="btnCopy">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.copy" replaceFormat="C.I18N.getString(&quot;{key}&quot;)"/>
+          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.copy" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
@@ -128,7 +128,7 @@
     <Component class="javax.swing.JButton" name="btnTieBa">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="logwindow.tieba" replaceFormat="C.I18N.getString(&quot;{key}&quot;)"/>
+          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="logwindow.tieba" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
@@ -146,7 +146,7 @@
     <Component class="javax.swing.JButton" name="btnTerminateGame">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="logwindow.terminate_game" replaceFormat="C.I18N.getString(&quot;{key}&quot;)"/>
+          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="logwindow.terminate_game" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
