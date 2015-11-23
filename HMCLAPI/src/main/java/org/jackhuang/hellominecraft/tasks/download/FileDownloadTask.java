@@ -131,7 +131,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                     tempFile.createNewFile();
 
                 // Open file and seek to the end of it.
-                file = new RandomAccessFile(tempFile, "rwd");
+                file = new RandomAccessFile(tempFile, "rw");
 
                 stream = connection.getInputStream();
                 int lastDownloaded = 0;
