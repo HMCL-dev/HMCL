@@ -78,6 +78,7 @@ public class LibraryDownloadTask extends FileDownloadTask {
         return super.executeTask();
     }
 
+    @SuppressWarnings("UnusedAssignment")
     public static void unpackLibrary(File output, File input)
     throws IOException {
         HMCLog.log("Unpacking " + input);

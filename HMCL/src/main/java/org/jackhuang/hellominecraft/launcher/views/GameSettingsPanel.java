@@ -1134,6 +1134,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         if (isLoading)
             return;
         profile = getProfile();
+        if (profile == null) return;
         if (profile.getMinecraftProvider().getVersionCount() <= 0)
             versionChanged(profile, null);
         prepare(profile);
@@ -1618,23 +1619,16 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
             public boolean executeTask() {
-                final MinecraftRemoteVersions v = MinecraftRemoteVersions.fromJson(tsk.getResult());
+                final MinecraftRemoteVersions v = C.gson.fromJson(tsk.getResult(), MinecraftRemoteVersions.class);
                 if (v == null || v.versions == null)
                     return true;
                 SwingUtilities.invokeLater(() -> {
                     DefaultTableModel model = (DefaultTableModel) lstDownloads.getModel();
                     while (model.getRowCount() > 0)
                         model.removeRow(0);
-                    for (MinecraftRemoteVersion ver : v.versions) {
-                        Object[] line = new Object[3];
-                        line[0] = ver.id;
-                        line[1] = ver.time;
-                        if (StrUtils.equalsOne(ver.type, "old_beta", "old_alpha", "release", "snapshot"))
-                            line[2] = C.i18n("versions." + ver.type);
-                        else
-                            line[2] = ver.type;
-                        model.addRow(line);
-                    }
+                    for (MinecraftRemoteVersion ver : v.versions)
+                        model.addRow(new Object[] {ver.id, ver.time,
+                                                   StrUtils.equalsOne(ver.type, "old_beta", "old_alpha", "release", "snapshot") ? C.i18n("versions." + ver.type) : ver.type});
                     lstDownloads.updateUI();
                 });
                 return true;

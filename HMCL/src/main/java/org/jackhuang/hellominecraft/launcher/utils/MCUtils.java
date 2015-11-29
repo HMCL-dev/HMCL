@@ -246,14 +246,11 @@ public final class MCUtils {
         .addTask(new FileDownloadTask(vurl + id + ".json", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".json"))
         .addTask(new FileDownloadTask(vurl + id + ".jar", IOUtils.tryGetCanonicalFile(mvj)).setTag(id + ".jar"))
         .start()) {
-            MinecraftVersion mv;
             try {
-                mv = C.gson.fromJson(FileUtils.readFileToStringQuietly(mvt), MinecraftVersion.class);
+                return C.gson.fromJson(FileUtils.readFileToStringQuietly(mvt), MinecraftVersion.class);
             } catch (JsonSyntaxException ex) {
                 HMCLog.err("Failed to parse minecraft version json.", ex);
-                mv = null;
             }
-            return mv;
         }
         return null;
     }
@@ -326,11 +323,6 @@ public final class MCUtils {
         if (renamed != null)
             renamed.renameTo(assetsIndex);
         return false;
-    }
-
-    public static MinecraftRemoteVersions getRemoteMinecraftVersions(DownloadType sourceType) throws IOException {
-        String result = NetUtils.get(sourceType.getProvider().getVersionsListDownloadURL());
-        return MinecraftRemoteVersions.fromJson(result);
     }
 
     public static String profile = "{\"selectedProfile\": \"(Default)\",\"profiles\": {\"(Default)\": {\"name\": \"(Default)\"}},\"clientToken\": \"88888888-8888-8888-8888-888888888888\"}";

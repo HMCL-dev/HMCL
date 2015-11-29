@@ -637,7 +637,7 @@
                       <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mods.default_information" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
                     </Property>
                     <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
-                      <Color id="Default Cursor"/>
+                      <Color id="&#x9ed8;&#x8ba4;&#x5149;&#x6807;"/>
                     </Property>
                   </Properties>
                   <Events>
