@@ -4,6 +4,7 @@ public class RefreshRequest {
 
     public String clientToken;
     public String accessToken;
+    public GameProfile selectedProfile;
     public boolean requestUser = true;
 
     public RefreshRequest(String accessToken, String clientToken) {

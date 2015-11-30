@@ -3164,7 +3164,7 @@ implements MonitorThread.MonitorThreadListener, Event<Integer> {
             javax.swing.JTable table = MainWindow.this.lstDownloads;
             DefaultTableModel model = (DefaultTableModel) table.getModel();
 
-            MinecraftRemoteVersions v = MinecraftRemoteVersions.fromJson(task.getResult());
+            MinecraftRemoteVersions v = C.gson.fromJson(task.getResult(), MinecraftRemoteVersions.class);
             for (MinecraftRemoteVersion ver : v.versions) {
                 String[] line = new String[4];
                 line[0] = ver.id;

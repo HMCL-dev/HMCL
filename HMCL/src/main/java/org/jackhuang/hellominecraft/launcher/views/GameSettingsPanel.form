@@ -617,7 +617,9 @@
                 </Container>
                 <Component class="javax.swing.JButton" name="btnAddMod">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="&#x6dfb;&#x52a0;"/>
+                    <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mods.add" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+                    </Property>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnAddModActionPerformed"/>
@@ -625,7 +627,9 @@
                 </Component>
                 <Component class="javax.swing.JButton" name="btnRemoveMod">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="&#x5220;&#x9664;"/>
+                    <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mods.remove" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+                    </Property>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnRemoveModActionPerformed"/>

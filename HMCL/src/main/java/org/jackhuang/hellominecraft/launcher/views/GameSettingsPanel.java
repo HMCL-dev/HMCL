@@ -677,14 +677,14 @@ public class GameSettingsPanel extends javax.swing.JPanel implements DropTargetL
         jScrollPane1.setViewportView(lstExternalMods);
         lstExternalMods.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
 
-        btnAddMod.setText("添加");
+        btnAddMod.setText(C.i18n("mods.add")); // NOI18N
         btnAddMod.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnAddModActionPerformed(evt);
             }
         });
 
-        btnRemoveMod.setText("删除");
+        btnRemoveMod.setText(C.i18n("mods.remove")); // NOI18N
         btnRemoveMod.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnRemoveModActionPerformed(evt);

@@ -51,6 +51,7 @@ public final class NetUtils {
 
     public static String getStreamContent(InputStream is, String encoding)
     throws IOException {
+        if (is == null) return null;
         StringBuilder sb = new StringBuilder();
         try (InputStreamReader br = new InputStreamReader(is, encoding)) {
             int len;
