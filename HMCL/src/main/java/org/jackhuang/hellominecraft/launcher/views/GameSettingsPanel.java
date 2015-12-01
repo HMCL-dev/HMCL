@@ -187,8 +187,7 @@ public class GameSettingsPanel extends javax.swing.JPanel implements DropTargetL
                 ModInfo m = mods.get(row);
                 boolean hasLink = m.url != null;
                 String text = "<html>" + (hasLink ? "<a href=\"" + m.url + "\">" : "") + m.getName() + (hasLink ? "</a>" : "");
-                if (m.authorList != null && m.authorList.length > 0)
-                    text += " by " + StrUtils.parseParams("", m.authorList, ", ");
+                text += " by " + m.getAuthor();
                 text += "<br>" + (m.description == null ? "No mcmod.info found" : SwingUtils.getParsedJPanelText(lblModInfo, m.description));
                 lblModInfo.setText(text);
                 lblModInfo.setCursor(new java.awt.Cursor(hasLink ? java.awt.Cursor.HAND_CURSOR : java.awt.Cursor.DEFAULT_CURSOR));

@@ -26,6 +26,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 
 /**
@@ -35,7 +36,7 @@ import org.jackhuang.hellominecraft.utils.system.FileUtils;
 public class ModInfo implements Comparable<ModInfo> {
 
     public File location;
-    public String modid, name, description, version, mcversion, url, updateUrl, credits;
+    public String modid, name, description, author, version, mcversion, url, updateUrl, credits;
     public String[] authorList;
 
     public boolean isActive() {
@@ -49,6 +50,14 @@ public class ModInfo implements Comparable<ModInfo> {
 
     public String getName() {
         return name == null ? FileUtils.removeExtension(location.getName()) : name;
+    }
+    
+    public String getAuthor() {
+        if (authorList != null && authorList.length > 0)
+            return StrUtils.parseParams("", authorList, ", ");
+        else if (StrUtils.isNotBlank(author))
+            return author;
+        else return "Unknown";
     }
 
     @Override
@@ -83,9 +92,12 @@ public class ModInfo implements Comparable<ModInfo> {
             ZipFile jar = new ZipFile(f);
             ZipEntry entry = jar.getEntry("mcmod.info");
             if (entry == null)
+                entry = jar.getEntry("litemod.json");
+            if (entry == null)
                 return i;
             else {
-                List<ModInfo> m = C.gson.fromJson(new InputStreamReader(jar.getInputStream(entry)), new TypeToken<List<ModInfo>>() {
+                List<ModInfo> m = C.gson.fromJson(new InputStreamReader(jar.getInputStream(entry)),
+                                                  new TypeToken<List<ModInfo>>() {
                                                   }.getType());
                 if (m != null && m.size() > 0) {
                     i = m.get(0);
@@ -93,12 +105,10 @@ public class ModInfo implements Comparable<ModInfo> {
                 }
             }
             jar.close();
-            return i;
         } catch (IOException ex) {
             HMCLog.warn("File " + f + " is not a jar.", ex);
-            return i;
-        } catch (JsonSyntaxException e) {
-            return i;
+        } catch (JsonSyntaxException ignore) {
         }
+        return i;
     }
 }
