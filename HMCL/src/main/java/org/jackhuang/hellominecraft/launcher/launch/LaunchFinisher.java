@@ -37,11 +37,11 @@ public class LaunchFinisher implements Event<List<String>> {
             if (obj.getProfile().getLauncherVisibility() == LauncherVisibility.CLOSE && !LogWindow.instance.isVisible())
                 System.exit(0);
             else if (obj.getProfile().getLauncherVisibility() == LauncherVisibility.KEEP)
-                MainFrame.instance.closeMessage();
+                MainFrame.INSTANCE.closeMessage();
             else {
                 if (LogWindow.instance.isVisible())
                     LogWindow.instance.setExit(TrueFunction.instance);
-                MainFrame.instance.dispose();
+                MainFrame.INSTANCE.dispose();
             }
             JavaProcessMonitor jpm = new JavaProcessMonitor(p);
             jpm.stoppedEvent.register((sender3, t) -> {

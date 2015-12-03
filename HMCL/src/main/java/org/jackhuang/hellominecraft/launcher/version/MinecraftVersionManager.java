@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -30,6 +29,7 @@ import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.launch.GameLauncher;
 import org.jackhuang.hellominecraft.launcher.launch.GameLauncher.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftLoader;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftModService;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.launch.MinecraftLoader;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
@@ -38,7 +38,6 @@ import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
-import org.jackhuang.hellominecraft.launcher.utils.ModInfo;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.system.MessageBox;
 import org.jackhuang.hellominecraft.utils.Utils;
@@ -225,33 +224,6 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     }
 
     @Override
-    public List<ModInfo> listMods() {
-        if (profile.getSelectedMinecraftVersion() == null)
-            return new ArrayList<>();
-        File modsFolder = new File(getRunDirectory(profile.getSelectedMinecraftVersion().id), "mods");
-        ArrayList<ModInfo> mods = new ArrayList<>();
-        File[] fs = modsFolder.listFiles();
-        if (fs != null)
-            for (File f : fs)
-                if (ModInfo.isFileMod(f)) {
-                    ModInfo m = ModInfo.readModInfo(f);
-                    if (m != null)
-                        mods.add(m);
-                } else if (f.isDirectory()) {
-                    File[] ss = f.listFiles();
-                    if (ss != null)
-                        for (File ff : ss)
-                            if (ModInfo.isFileMod(ff)) {
-                                ModInfo m = ModInfo.readModInfo(ff);
-                                if (m != null)
-                                    mods.add(m);
-                            }
-                }
-        Collections.sort(mods);
-        return mods;
-    }
-
-    @Override
     public List<GameLauncher.DownloadLibraryJob> getDownloadLibraries(DownloadType downloadType) {
         ArrayList<DownloadLibraryJob> downloadLibraries = new ArrayList<>();
         if (profile.getSelectedMinecraftVersion() == null)
@@ -274,13 +246,11 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     }
 
     @Override
-    public void openSelf(String mv) {
-        Utils.openFolder(getRunDirectory(mv));
-    }
-
-    @Override
     public void open(String mv, String name) {
-        Utils.openFolder(new File(getRunDirectory(mv), name));
+        if (name == null)
+            Utils.openFolder(getRunDirectory(mv));
+        else
+            Utils.openFolder(new File(getRunDirectory(mv), name));
     }
 
     @Override
@@ -347,5 +317,26 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
         File resourcePacks = getResourcePacks();
         if (!resourcePacks.exists())
             resourcePacks.mkdirs();
+    }
+
+    @Override
+    public void cleanFolder() {
+        for (MinecraftVersion s : getVersions()) {
+            FileUtils.deleteDirectoryQuietly(new File(profile.getGameDirFile(), "versions" + File.separator + s.id + File.separator + s.id + "-natives"));
+            File f = getRunDirectory(s.id);
+            String[] dir = {"logs", "asm", "NVIDIA", "crash-reports", "server-resource-packs", "natives", "native"};
+            for (String str : dir)
+                FileUtils.deleteDirectoryQuietly(new File(f, str));
+            String[] files = {"output-client.log", "usercache.json", "usernamecache.json", "hmclmc.log"};
+            for (String str : files)
+                new File(f, str).delete();
+        }
+    }
+
+    final MinecraftModService mms = new MinecraftModService(this);
+
+    @Override
+    public IMinecraftModService getModService() {
+        return mms;
     }
 }

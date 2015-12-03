@@ -256,7 +256,7 @@ public final class Main implements Runnable {
     }
 
     public static void invokeUpdate() {
-        MainFrame.instance.invokeUpdate();
+        MainFrame.INSTANCE.invokeUpdate();
     }
 
     public static ImageIcon getIcon(String path) {

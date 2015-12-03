@@ -95,11 +95,9 @@ public abstract class IAssetsHandler {
         }
 
         @Override
-        public boolean executeTask() {
-            if (assetsDownloadURLs == null) {
-                setFailReason(new RuntimeException(C.i18n("assets.not_refreshed")));
-                return false;
-            }
+        public void executeTask() {
+            if (assetsDownloadURLs == null)
+                throw new IllegalStateException(C.i18n("assets.not_refreshed"));
             int max = assetsDownloadURLs.size();
             al = new ArrayList<>();
             int hasDownloaded = 0;
@@ -132,7 +130,6 @@ public abstract class IAssetsHandler {
                 if (need)
                     al.add(new FileDownloadTask(url, location).setTag(mark));
             }
-            return true;
         }
 
         @Override

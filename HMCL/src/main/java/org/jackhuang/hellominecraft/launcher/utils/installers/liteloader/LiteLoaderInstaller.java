@@ -50,41 +50,32 @@ public class LiteLoaderInstaller extends Task implements PreviousResultRegistrar
     }
 
     @Override
-    public boolean executeTask() {
-        if (profile == null || profile.getSelectedMinecraftVersion() == null) {
-            setFailReason(new RuntimeException(C.i18n("install.no_version")));
-            return false;
-        }
+    public void executeTask() throws Exception {
+        if (profile == null || profile.getSelectedMinecraftVersion() == null)
+            throw new IllegalStateException(C.i18n("install.no_version"));
         if (pre.size() != 1 && installer == null)
             throw new IllegalStateException("No registered previous task.");
         if (installer == null)
             installer = pre.get(pre.size() - 1).getResult();
-        try {
-            MinecraftVersion mv = (MinecraftVersion) profile.getSelectedMinecraftVersion().clone();
-            mv.inheritsFrom = mv.id;
-            mv.jar = mv.jar == null ? mv.id : mv.jar;
-            mv.libraries = new ArrayList(Arrays.asList(version.libraries));
+        MinecraftVersion mv = (MinecraftVersion) profile.getSelectedMinecraftVersion().clone();
+        mv.inheritsFrom = mv.id;
+        mv.jar = mv.jar == null ? mv.id : mv.jar;
+        mv.libraries = new ArrayList(Arrays.asList(version.libraries));
 
-            MinecraftLibrary ml = new MinecraftLibrary("com.mumfrey:liteloader:" + version.selfVersion);
-            //ml.url = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + version.mcVersion + "/liteloader-" + version.selfVersion + ".jar";
-            mv.libraries.add(0, ml);
-            FileUtils.copyFile(installer, new File(profile.getCanonicalGameDir(), "libraries/com/mumfrey/liteloader/" + version.selfVersion + "/liteloader-" + version.selfVersion + ".jar"));
+        MinecraftLibrary ml = new MinecraftLibrary("com.mumfrey:liteloader:" + version.selfVersion);
+        //ml.url = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + version.mcVersion + "/liteloader-" + version.selfVersion + ".jar";
+        mv.libraries.add(0, ml);
+        FileUtils.copyFile(installer, new File(profile.getCanonicalGameDir(), "libraries/com/mumfrey/liteloader/" + version.selfVersion + "/liteloader-" + version.selfVersion + ".jar"));
 
-            mv.id += "-LiteLoader" + version.selfVersion;
+        mv.id += "-LiteLoader" + version.selfVersion;
 
-            mv.mainClass = "net.minecraft.launchwrapper.Launch";
-            mv.minecraftArguments += " --tweakClass " + version.tweakClass;
-            File folder = new File(profile.getCanonicalGameDir(), "versions/" + mv.id);
-            folder.mkdirs();
-            File json = new File(folder, mv.id + ".json");
-            HMCLog.log("Creating new version profile..." + mv.id + ".json");
-            FileUtils.write(json, C.gsonPrettyPrinting.toJson(mv));
-
-            return true;
-        } catch (Exception e) {
-            setFailReason(e);
-            return false;
-        }
+        mv.mainClass = "net.minecraft.launchwrapper.Launch";
+        mv.minecraftArguments += " --tweakClass " + version.tweakClass;
+        File folder = new File(profile.getCanonicalGameDir(), "versions/" + mv.id);
+        folder.mkdirs();
+        File json = new File(folder, mv.id + ".json");
+        HMCLog.log("Creating new version profile..." + mv.id + ".json");
+        FileUtils.write(json, C.gsonPrettyPrinting.toJson(mv));
     }
 
     @Override

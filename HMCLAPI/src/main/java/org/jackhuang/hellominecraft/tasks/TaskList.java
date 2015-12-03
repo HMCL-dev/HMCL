@@ -117,13 +117,14 @@ public class TaskList extends Thread {
         for (DoingDoneListener<Task> d : t.getTaskListeners())
             d.onDoing(t);
 
-        boolean returns = false;
+        boolean flag = true;
         try {
-            returns = t.executeTask();
+            t.executeTask();
         } catch (Throwable e) {
             t.setFailReason(e);
+            flag = false;
         }
-        if (returns) {
+        if (flag) {
             HMCLog.log((t.isAborted() ? "Task aborted: " : "Task finished: ") + t.getInfo());
             for (DoingDoneListener<Task> d : taskListener)
                 d.onDone(t);

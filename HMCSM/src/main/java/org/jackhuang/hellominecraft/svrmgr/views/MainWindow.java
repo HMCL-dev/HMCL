@@ -3160,7 +3160,7 @@ implements MonitorThread.MonitorThreadListener, Event<Integer> {
         }
 
         @Override
-        public boolean executeTask() {
+        public void executeTask() {
             javax.swing.JTable table = MainWindow.this.lstDownloads;
             DefaultTableModel model = (DefaultTableModel) table.getModel();
 
@@ -3173,7 +3173,6 @@ implements MonitorThread.MonitorThreadListener, Event<Integer> {
                 line[3] = ver.type;
                 model.addRow(line);
             }
-            return true;
         }
 
         @Override

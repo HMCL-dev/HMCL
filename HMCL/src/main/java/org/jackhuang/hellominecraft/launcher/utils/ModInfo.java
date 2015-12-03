@@ -27,6 +27,7 @@ import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.StrUtils;
+import org.jackhuang.hellominecraft.utils.Utils;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 
 /**
@@ -43,6 +44,21 @@ public class ModInfo implements Comparable<ModInfo> {
         return !location.getName().endsWith(".disabled");
     }
 
+    public void reverseModState() {
+        File f = location, newf;
+        if (f.getName().endsWith(".disabled"))
+            newf = new File(f.getParentFile(), f.getName().substring(0, f.getName().length() - ".disabled".length()));
+        else
+            newf = new File(f.getParentFile(), f.getName() + ".disabled");
+        if (f.renameTo(newf))
+            location = newf;
+    }
+    
+    public void showURL() {
+        if (url != null)
+            Utils.openLink(url);
+    }
+
     @Override
     public int compareTo(ModInfo o) {
         return getFileName().toLowerCase().compareTo(o.getFileName().toLowerCase());
@@ -51,13 +67,14 @@ public class ModInfo implements Comparable<ModInfo> {
     public String getName() {
         return name == null ? FileUtils.removeExtension(location.getName()) : name;
     }
-    
+
     public String getAuthor() {
         if (authorList != null && authorList.length > 0)
             return StrUtils.parseParams("", authorList, ", ");
         else if (StrUtils.isNotBlank(author))
             return author;
-        else return "Unknown";
+        else
+            return "Unknown";
     }
 
     @Override

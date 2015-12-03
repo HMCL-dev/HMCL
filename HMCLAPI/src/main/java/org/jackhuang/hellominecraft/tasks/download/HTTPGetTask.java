@@ -50,7 +50,8 @@ public class HTTPGetTask extends TaskInfo implements PreviousResult<String> {
     }
 
     @Override
-    public boolean executeTask() {
+    public void executeTask() throws Exception {
+        Exception t = null;
         for (int repeat = 0; repeat < 6; repeat++) {
             if (repeat > 0)
                 HMCLog.warn("Failed to download, repeat: " + repeat);
@@ -65,16 +66,16 @@ public class HTTPGetTask extends TaskInfo implements PreviousResult<String> {
                     if (ppl != null)
                         ppl.setProgress(this, ++read, size);
                     if (!shouldContinue)
-                        return true;
+                        return;
                 }
                 result = baos.toString();
                 tdtsl.execute(result);
-                return true;
+                return;
             } catch (Exception ex) {
-                setFailReason(new NetException("Failed to get " + url, ex));
+                t = new NetException("Failed to get " + url, ex);
             }
         }
-        return false;
+        if (t != null) throw t;
     }
 
     @Override

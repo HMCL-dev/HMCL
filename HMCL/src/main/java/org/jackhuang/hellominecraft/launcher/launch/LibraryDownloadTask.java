@@ -46,36 +46,31 @@ public class LibraryDownloadTask extends FileDownloadTask {
     }
 
     @Override
-    public boolean executeTask() {
-        try {
-            File packFile = new File(job.path.getParentFile(), job.path.getName() + ".pack.xz");
-            if (job.name.contains("typesafe") && download(new URL(job.url + ".pack.xz"), packFile)) {
-                unpackLibrary(job.path, packFile);
-                packFile.delete();
-                return true;
-            } else {
-                if (job.name.startsWith("net.minecraftforge:forge:")) {
-                    String[] s = job.name.split(":");
-                    if (s.length == 3)
-                        job.url = "http://files.minecraftforge.net/maven/net/minecraftforge/forge/" + s[2] + "/forge-" + s[2] + "-universal.jar";
-                }
-                if (job.name.startsWith("com.mumfrey:liteloader:")) {
-                    String[] s = job.name.split(":");
-                    if (s.length == 3 && s[2].length() > 3)
-                        job.url = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + s[2].substring(0, s[2].length() - 3) + "/liteloader-" + s[2] + ".jar";
-                }
-                return download(new URL(job.url), job.path);
+    public void executeTask() throws Throwable {
+        File packFile = new File(job.path.getParentFile(), job.path.getName() + ".pack.xz");
+        if (job.name.contains("typesafe")) {
+            download(new URL(job.url + ".pack.xz"), packFile);
+            unpackLibrary(job.path, packFile);
+            packFile.delete();
+        } else {
+            if (job.name.startsWith("net.minecraftforge:forge:")) {
+                String[] s = job.name.split(":");
+                if (s.length == 3)
+                    job.url = "http://files.minecraftforge.net/maven/net/minecraftforge/forge/" + s[2] + "/forge-" + s[2] + "-universal.jar";
             }
-        } catch (Exception ex) {
-            setFailReason(ex);
-            return false;
+            if (job.name.startsWith("com.mumfrey:liteloader:")) {
+                String[] s = job.name.split(":");
+                if (s.length == 3 && s[2].length() > 3)
+                    job.url = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + s[2].substring(0, s[2].length() - 3) + "/liteloader-" + s[2] + ".jar";
+            }
+            download(new URL(job.url), job.path);
         }
     }
 
-    boolean download(URL url, File filePath) {
+    void download(URL url, File filePath) throws Throwable {
         this.url = url;
         this.filePath = filePath;
-        return super.executeTask();
+        super.executeTask();
     }
 
     @SuppressWarnings("UnusedAssignment")

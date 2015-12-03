@@ -29,15 +29,13 @@ public class TaskRunnable extends TaskInfo {
         this.r = r;
     }
 
+    public TaskRunnable(Runnable r) {
+        this("TaskRunnable", r);
+    }
+
     @Override
-    public boolean executeTask() {
-        try {
-            r.run();
-            return true;
-        } catch (Throwable t) {
-            setFailReason(t);
-            return false;
-        }
+    public void executeTask() {
+        r.run();
     }
 
 }

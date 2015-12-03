@@ -274,7 +274,7 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
             path = IOUtils.removeLastSeparator(path);
             txtBackgroundPath.setText(path);
             Settings.getInstance().setBgpath(path);
-            MainFrame.instance.loadBackground();
+            MainFrame.INSTANCE.loadBackground();
         } catch (IOException e) {
             HMCLog.warn("Failed to set background path.", e);
             MessageBox.Show(C.i18n("ui.label.failed_set") + e.getMessage());
@@ -283,7 +283,7 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
 
     private void txtBackgroundPathFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtBackgroundPathFocusLost
         Settings.getInstance().setBgpath(txtBackgroundPath.getText());
-        MainFrame.instance.loadBackground();
+        MainFrame.INSTANCE.loadBackground();
     }//GEN-LAST:event_txtBackgroundPathFocusLost
 
     private void btnCheckUpdateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCheckUpdateActionPerformed
@@ -296,8 +296,7 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
 
     private void cboThemeItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboThemeItemStateChanged
         Settings.getInstance().setTheme(cboTheme.getSelectedIndex());
-        if (MainFrame.instance != null)
-            MainFrame.instance.reloadColor();
+        MainFrame.INSTANCE.reloadColor();
     }//GEN-LAST:event_cboThemeItemStateChanged
 
     private void txtProxyHostFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtProxyHostFocusLost

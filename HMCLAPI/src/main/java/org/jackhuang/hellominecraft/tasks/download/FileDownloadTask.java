@@ -92,7 +92,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
 
     // Download file.
     @Override
-    public boolean executeTask() {
+    public void executeTask() throws Throwable {
         for (PreviousResult<String> p : al)
             this.url = IOUtils.parseURL(p.getResult());
 
@@ -113,15 +113,13 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
 
                 // Make sure response code is in the 200 range.
                 if (connection.getResponseCode() / 100 != 2) {
-                    setFailReason(new NetException(C.i18n("download.not_200") + " " + connection.getResponseCode()));
-                    return false;
+                    throw new NetException(C.i18n("download.not_200") + " " + connection.getResponseCode());
                 }
 
                 // Check for valid content length.
                 int contentLength = connection.getContentLength();
                 if (contentLength < 1) {
-                    setFailReason(new NetException("The content length is invalid."));
-                    return false;
+                    throw new NetException("The content length is invalid.");
                 }
 
                 filePath.getParentFile().mkdirs();
@@ -173,17 +171,17 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                 }
                 if (ppl != null)
                     ppl.onProgressProviderDone(this);
-                return true;
+                return;
             } catch (Exception e) {
                 setFailReason(new NetException(C.i18n("download.failed") + " " + url, e));
             } finally {
                 closeFiles();
             }
         }
-        return false;
+        if (failReason != null) throw failReason;
     }
 
-    public static void download(String url, String file, DownloadListener dl) {
+    public static void download(String url, String file, DownloadListener dl) throws Throwable {
         ((Task) new FileDownloadTask(url, new File(file)).setProgressProviderListener(dl)).executeTask();
     }
 

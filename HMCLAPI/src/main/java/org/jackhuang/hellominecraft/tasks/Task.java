@@ -18,6 +18,7 @@ package org.jackhuang.hellominecraft.tasks;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import org.jackhuang.hellominecraft.HMCLog;
 
 /**
  *
@@ -27,10 +28,8 @@ public abstract class Task {
 
     /**
      * Run in a new thread(packed in TaskList).
-     *
-     * @return is task finished sucessfully.
      */
-    public abstract boolean executeTask();
+    public abstract void executeTask() throws Throwable;
 
     /**
      * if this func returns false, TaskList will force abort the thread. run in
@@ -100,5 +99,21 @@ public abstract class Task {
     public Task setProgressProviderListener(ProgressProviderListener p) {
         ppl = p;
         return this;
+    }
+    
+    public Task after(Task t) {
+        return new DoubleTask(this, t);
+    }
+    
+    public Task before(Task t) {
+        return new DoubleTask(t, this);
+    }
+    
+    public void run() {
+        try {
+            executeTask();
+        } catch(Throwable t) {
+            HMCLog.err("Failed to execute task", t);
+        }
     }
 }

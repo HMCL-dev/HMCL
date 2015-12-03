@@ -31,9 +31,9 @@ public class ContentGetAndShowTask extends HTTPGetTask implements Event<String> 
     }
 
     @Override
-    public boolean executeTask() {
+    public void executeTask() throws Exception {
         tdtsl.register(this);
-        return super.executeTask();
+        super.executeTask();
     }
 
     String info;

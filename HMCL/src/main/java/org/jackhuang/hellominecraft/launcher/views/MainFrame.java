@@ -52,7 +52,7 @@ import org.jackhuang.hellominecraft.views.BasicColors;
  */
 public final class MainFrame extends DraggableFrame {
 
-    public static final MainFrame instance = new MainFrame();
+    public static final MainFrame INSTANCE = new MainFrame();
 
     HeaderTab mainTab, gameTab, launcherTab;
     TintablePanel centralPanel;
@@ -321,8 +321,8 @@ public final class MainFrame extends DraggableFrame {
     }
 
     public static void showMainFrame(boolean firstLoad) {
-        instance.mainPanel.onShow(firstLoad);
-        instance.show();
+        INSTANCE.mainPanel.onShow(firstLoad);
+        INSTANCE.show();
     }
 
     Color borderColor = BasicColors.COLOR_BLUE;

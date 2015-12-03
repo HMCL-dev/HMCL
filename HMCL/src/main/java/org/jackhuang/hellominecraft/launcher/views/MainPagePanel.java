@@ -71,9 +71,9 @@ public class MainPagePanel extends javax.swing.JPanel {
         this.add(pnlButtons);
         pnlButtons.setBounds(0, 0, w, h);
 
-        this.setSize(new Dimension(deWidth, deHeight));
-        this.pnlButtons.setLocation(deWidth - pnlButtons.getWidth() - 25, deHeight - pnlButtons.getHeight() - 25);
-        pnlMore.setBounds(0, 0, pnlMore.getWidth(), deHeight);
+        this.setSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
+        this.pnlButtons.setLocation(DEFAULT_WIDTH - pnlButtons.getWidth() - 25, DEFAULT_HEIGHT - pnlButtons.getHeight() - 25);
+        pnlMore.setBounds(0, 0, pnlMore.getWidth(), DEFAULT_HEIGHT);
         pnlMore.setBackground(GraphicsUtils.getWebColorWithAlpha("FFFFFF7F"));
         pnlMore.setOpaque(true);
 
@@ -267,7 +267,7 @@ public class MainPagePanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void txtPlayerNameFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtPlayerNameFocusGained
-        MainFrame.instance.closeMessage();
+        MainFrame.INSTANCE.closeMessage();
     }//GEN-LAST:event_txtPlayerNameFocusGained
 
     private void txtPlayerNameFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtPlayerNameFocusLost
@@ -318,7 +318,7 @@ public class MainPagePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cboVersionsItemStateChanged
 
     private void txtPasswordFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtPasswordFocusGained
-        MainFrame.instance.closeMessage();
+        MainFrame.INSTANCE.closeMessage();
     }//GEN-LAST:event_txtPasswordFocusGained
 
     private void txtPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtPasswordActionPerformed
@@ -393,7 +393,7 @@ public class MainPagePanel extends javax.swing.JPanel {
                 gl.failEvent.register((sender, s) -> {
                     if (s != null)
                         MessageBox.Show(s);
-                    MainFrame.instance.closeMessage();
+                    MainFrame.INSTANCE.closeMessage();
                     isLaunching = false;
                     return true;
                 });
@@ -448,8 +448,8 @@ public class MainPagePanel extends javax.swing.JPanel {
                 if (!showedNoVersion)
                     SwingUtilities.invokeLater(() -> {
                         if (MessageBox.Show(C.i18n("mainwindow.no_version"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
-                            MainFrame.instance.selectTab("game");
-                            MainFrame.instance.gamePanel.showGameDownloads();
+                            MainFrame.INSTANCE.selectTab("game");
+                            MainFrame.INSTANCE.gamePanel.showGameDownloads();
                         }
                         showedNoVersion = true;
                     });
@@ -490,7 +490,7 @@ public class MainPagePanel extends javax.swing.JPanel {
     private boolean isLoading = false;
     private final javax.swing.JPanel pnlButtons;
     private final ConstomButton btnRun;
-    private static final int deWidth = 800, deHeight = 480;
+    private static final int DEFAULT_WIDTH = 800, DEFAULT_HEIGHT = 480;
     //</editor-fold>
 
     class PrepareAuthDoneListener implements Event<List<String>> {
@@ -503,7 +503,7 @@ public class MainPagePanel extends javax.swing.JPanel {
     }
 
     private void btnRunActionPerformed() {
-        MainFrame.instance.showMessage(C.i18n("ui.message.launching"));
+        MainFrame.INSTANCE.showMessage(C.i18n("ui.message.launching"));
         genLaunchCode(value -> {
             value.successEvent.register(new LaunchFinisher());
             value.successEvent.register(new PrepareAuthDoneListener());
@@ -511,7 +511,7 @@ public class MainPagePanel extends javax.swing.JPanel {
     }
 
     public void btnMakeLaunchCodeActionPerformed() {
-        MainFrame.instance.showMessage(C.i18n("ui.message.launching"));
+        MainFrame.INSTANCE.showMessage(C.i18n("ui.message.launching"));
         genLaunchCode(value -> {
             value.successEvent.register(new LaunchScriptFinisher());
             value.successEvent.register(new PrepareAuthDoneListener());
@@ -520,11 +520,11 @@ public class MainPagePanel extends javax.swing.JPanel {
 
     public void onShow(boolean showLeft) {
         if (showLeft)
-            SwingUtilities.invokeLater(() -> MainFrame.instance.showMessage(C.i18n("ui.message.first_load")));
+            SwingUtilities.invokeLater(() -> MainFrame.INSTANCE.showMessage(C.i18n("ui.message.first_load")));
         if (cboLoginMode.getSelectedIndex() >= 0 && cboLoginMode.getSelectedIndex() < cboLoginMode.getItemCount()) {
             IAuthenticator l = IAuthenticator.LOGINS.get(cboLoginMode.getSelectedIndex());
             if (!l.isHidePasswordBox() && !l.isLoggedIn())
-                SwingUtilities.invokeLater(() -> MainFrame.instance.showMessage(C.i18n("ui.message.enter_password")));
+                SwingUtilities.invokeLater(() -> MainFrame.INSTANCE.showMessage(C.i18n("ui.message.enter_password")));
         }
     }
 

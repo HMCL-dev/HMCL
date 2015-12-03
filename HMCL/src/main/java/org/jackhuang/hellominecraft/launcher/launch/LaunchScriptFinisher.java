@@ -43,7 +43,7 @@ public class LaunchScriptFinisher implements Event<List<String>> {
             MessageBox.Show(C.i18n("mainwindow.make_launch_script_failed"));
             HMCLog.err("Failed to create script file.", ex);
         }
-        MainFrame.instance.closeMessage();
+        MainFrame.INSTANCE.closeMessage();
         return flag;
     }
 

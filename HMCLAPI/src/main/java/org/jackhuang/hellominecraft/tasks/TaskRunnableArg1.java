@@ -36,16 +36,10 @@ public class TaskRunnableArg1<T> extends TaskInfo implements PreviousResultRegis
     }
 
     @Override
-    public boolean executeTask() {
+    public void executeTask() throws Exception {
         if (al.size() != 1)
             throw new IllegalStateException("the count of args is not one.");
-        try {
-            r.accept(al.get(0).getResult());
-            return true;
-        } catch (Throwable t) {
-            setFailReason(t);
-            return false;
-        }
+        r.accept(al.get(0).getResult());
     }
 
     ArrayList<PreviousResult<T>> al = new ArrayList();

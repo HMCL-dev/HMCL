@@ -48,14 +48,8 @@ import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.settings.LauncherVisibility;
 import org.jackhuang.hellominecraft.launcher.utils.MCUtils;
-import org.jackhuang.hellominecraft.launcher.utils.assets.IAssetsHandler;
 import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList;
 import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList.InstallerVersion;
-import org.jackhuang.hellominecraft.launcher.utils.installers.forge.ForgeInstaller;
-import org.jackhuang.hellominecraft.launcher.utils.installers.liteloader.LiteLoaderInstaller;
-import org.jackhuang.hellominecraft.launcher.utils.installers.liteloader.LiteLoaderVersionList.LiteLoaderInstallerVersion;
-import org.jackhuang.hellominecraft.launcher.utils.installers.optifine.OptiFineInstaller;
-import org.jackhuang.hellominecraft.launcher.utils.installers.optifine.vanilla.OptiFineDownloadFormatter;
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
@@ -64,10 +58,10 @@ import org.jackhuang.hellominecraft.launcher.utils.ModInfo;
 import org.jackhuang.hellominecraft.launcher.version.GameDirType;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.tasks.Task;
+import org.jackhuang.hellominecraft.tasks.TaskRunnable;
 import org.jackhuang.hellominecraft.tasks.TaskRunnableArg1;
 import org.jackhuang.hellominecraft.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.tasks.communication.DefaultPreviousResult;
-import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.tasks.download.HTTPGetTask;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.system.MessageBox;
@@ -75,8 +69,6 @@ import org.jackhuang.hellominecraft.version.MinecraftVersionRequest;
 import org.jackhuang.hellominecraft.utils.system.OS;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.SwingUtils;
-import org.jackhuang.hellominecraft.utils.Utils;
-import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.Java;
 import org.jackhuang.hellominecraft.version.MinecraftRemoteVersion;
 import org.jackhuang.hellominecraft.version.MinecraftRemoteVersions;
@@ -117,11 +109,7 @@ public class GameSettingsPanel extends javax.swing.JPanel implements DropTargetL
         }
         JMenuItem itm;
         itm = new JMenuItem(C.i18n("folder.game"));
-        itm.addActionListener((e) -> {
-            Profile v = getProfile();
-            if (v != null)
-                v.getMinecraftProvider().openSelf(mcVersion);
-        });
+        itm.addActionListener(new ImplementedActionListener(null));
         ppmExplore.add(itm);
         itm = new JMenuItem(C.i18n("folder.mod"));
         itm.addActionListener(new ImplementedActionListener("mods"));
@@ -183,6 +171,7 @@ public class GameSettingsPanel extends javax.swing.JPanel implements DropTargetL
         }
         lstExternalMods.getSelectionModel().addListSelectionListener(e -> {
             int row = lstExternalMods.getSelectedRow();
+            List<ModInfo> mods = profile.getMinecraftProvider().getModService().getMods();
             if (mods != null && 0 <= row && row < mods.size()) {
                 ModInfo m = mods.get(row);
                 boolean hasLink = m.url != null;
@@ -196,15 +185,9 @@ public class GameSettingsPanel extends javax.swing.JPanel implements DropTargetL
         ((DefaultTableModel) lstExternalMods.getModel()).addTableModelListener(e -> {
             if (e.getType() == TableModelEvent.UPDATE && e.getColumn() == 0) {
                 int row = lstExternalMods.getSelectedRow();
-                if (mods != null && mods.size() > row && row >= 0) {
-                    File f = mods.get(row).location, newf;
-                    if (f.getName().endsWith(".disabled"))
-                        newf = new File(f.getParentFile(), f.getName().substring(0, f.getName().length() - ".disabled".length()));
-                    else
-                        newf = new File(f.getParentFile(), f.getName() + ".disabled");
-                    if (f.renameTo(newf))
-                        mods.get(row).location = newf;
-                }
+                List<ModInfo> mods = profile.getMinecraftProvider().getModService().getMods();
+                if (mods != null && mods.size() > row && row >= 0)
+                    mods.get(row).reverseModState();
             }
         });
         tabVersionEdit.addChangeListener(new ChangeListener() {
@@ -222,26 +205,15 @@ public class GameSettingsPanel extends javax.swing.JPanel implements DropTargetL
             }
         });
         tabInstallers.addChangeListener(new ChangeListener() {
-            boolean a = false, b = false, c = false;
+            boolean refreshed[] = new boolean[] {false, false, false};
+            InstallerHelper helpers[] = new InstallerHelper[] {forge, optifine, liteloader};
 
             @Override
             public void stateChanged(ChangeEvent e) {
-                switch (tabInstallers.getSelectedIndex()) {
-                    case 0:
-                        if (!a)
-                            forge.refreshVersions();
-                        a = true;
-                        break;
-                    case 1:
-                        if (!b)
-                            optifine.refreshVersions();
-                        b = true;
-                        break;
-                    case 2:
-                        if (!c)
-                            liteloader.refreshVersions();
-                        c = true;
-                        break;
+                int idx = tabInstallers.getSelectedIndex();
+                if (0 <= idx && idx < 3 && !refreshed[idx]) {
+                    helpers[idx].refreshVersions();
+                    refreshed[idx] = true;
                 }
             }
         });
@@ -1133,7 +1105,8 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         if (isLoading)
             return;
         profile = getProfile();
-        if (profile == null) return;
+        if (profile == null)
+            return;
         if (profile.getMinecraftProvider().getVersionCount() <= 0)
             versionChanged(profile, null);
         prepare(profile);
@@ -1161,14 +1134,13 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_btnRemoveProfileActionPerformed
 
     private void cboVersionsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboVersionsItemStateChanged
-
         if (isLoading || evt.getStateChange() != ItemEvent.SELECTED || cboVersions.getSelectedIndex() < 0 || StrUtils.isBlank((String) cboVersions.getSelectedItem()) || getProfile() == null)
             return;
-        loadMinecraftVersion((String) cboVersions.getSelectedItem());
-        versionChanged(getProfile(), (String) cboVersions.getSelectedItem());
-
-        getProfile().setSelectedMinecraftVersion(cboVersions.getSelectedItem().toString());
-        cboVersions.setToolTipText(cboVersions.getSelectedItem().toString());
+        String mcv = (String) cboVersions.getSelectedItem();
+        loadMinecraftVersion(mcv);
+        versionChanged(getProfile(), mcv);
+        getProfile().setSelectedMinecraftVersion(mcv);
+        cboVersions.setToolTipText(mcv);
         Settings.save();
     }//GEN-LAST:event_cboVersionsItemStateChanged
 
@@ -1186,17 +1158,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
             MessageBox.Show(C.i18n("install.not_refreshed"));
             return;
         }
-        InstallerVersion v = forge.getVersion(idx);
-        String url;
-        File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "forge-installer.jar");
-        if (v.installer != null) {
-            url = Settings.getInstance().getDownloadSource().getProvider().getParsedLibraryDownloadURL(v.installer);
-            TaskWindow.getInstance()
-            .addTask(new FileDownloadTask(url, filepath).setTag("forge"))
-            .addTask(new ForgeInstaller(profile.getMinecraftProvider(), filepath, v))
-            .start();
-            refreshVersions();
-        }
+        profile.getInstallerService().downloadForge(forge.getVersion(idx)).after(new TaskRunnable(this::refreshVersions)).run();
     }//GEN-LAST:event_btnDownloadForgeActionPerformed
 
     private void btnRefreshOptifineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshOptifineActionPerformed
@@ -1209,17 +1171,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
             MessageBox.Show(C.i18n("install.not_refreshed"));
             return;
         }
-        InstallerVersion v = optifine.getVersion(idx);
-        File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "optifine-installer.jar");
-        if (v.installer != null)
-            SwingUtilities.invokeLater(() -> {
-                OptiFineDownloadFormatter task = new OptiFineDownloadFormatter(v.installer);
-                TaskWindow.getInstance().addTask(task)
-                .addTask(new FileDownloadTask(filepath).registerPreviousResult(task).setTag("optifine"))
-                .addTask(new OptiFineInstaller(profile, v.selfVersion, filepath))
-                .start();
-                refreshVersions();
-            });
+        profile.getInstallerService().downloadOptifine(optifine.getVersion(idx)).after(new TaskRunnable(this::refreshVersions)).run();
     }//GEN-LAST:event_btnDownloadOptifineActionPerformed
 
     private void btnInstallLiteLoaderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInstallLiteLoaderActionPerformed
@@ -1228,15 +1180,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
             MessageBox.Show(C.i18n("install.not_refreshed"));
             return;
         }
-        InstallerVersion v = liteloader.getVersion(idx);
-        String url;
-        File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "liteloader-universal.jar");
-        url = v.universal;
-        FileDownloadTask task = (FileDownloadTask) new FileDownloadTask(url, filepath).setTag("LiteLoader");
-        TaskWindow.getInstance()
-        .addTask(task).addTask(new LiteLoaderInstaller(profile, (LiteLoaderInstallerVersion) v).registerPreviousResult(task))
-        .start();
-        refreshVersions();
+        profile.getInstallerService().downloadLiteLoader(liteloader.getVersion(idx)).after(new TaskRunnable(this::refreshVersions)).run();
     }//GEN-LAST:event_btnInstallLiteLoaderActionPerformed
 
     private void btnRefreshLiteLoaderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshLiteLoaderActionPerformed
@@ -1320,7 +1264,8 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_cboLauncherVisibilityFocusLost
 
     private void btnDownloadAllAssetsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadAllAssetsActionPerformed
-        downloadAssets(IAssetsHandler.ASSETS_HANDLER);
+        if (mcVersion != null && profile != null)
+            profile.getMinecraftService().downloadAssets(mcVersion).run();
     }//GEN-LAST:event_btnDownloadAllAssetsActionPerformed
 
     private void txtMaxMemoryFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtMaxMemoryFocusLost
@@ -1394,45 +1339,15 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
             return;
         boolean flag = false;
         for (File f : fc.getSelectedFiles())
-            if (!addMod(f))
-                flag |= true;
+            flag |= !profile.getMinecraftProvider().getModService().addMod(f);
+        reloadMods();
         if (flag)
             MessageBox.Show(C.I18N.getString("mods.failed"));
     }//GEN-LAST:event_btnAddModActionPerformed
 
-    boolean addMod(File f) {
-        try {
-            if (!ModInfo.isFileMod(f) || mods == null)
-                return false;
-            File newf = profile.getFolder("mods");
-            if (newf == null)
-                return false;
-            newf.mkdirs();
-            newf = new File(newf, f.getName());
-            FileUtils.copyFile(f, newf);
-            ModInfo i = ModInfo.readModInfo(f);
-            mods.add(i);
-            ((DefaultTableModel) lstExternalMods.getModel()).addRow(new Object[] {i.isActive(), i.location.getName(), i.version});
-            return true;
-        } catch (IOException ex) {
-            HMCLog.warn("Failed to copy mod", ex);
-            return false;
-        }
-    }
-
     private void btnRemoveModActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveModActionPerformed
-        DefaultTableModel model = (DefaultTableModel) lstExternalMods.getModel();
-        int[] rows = lstExternalMods.getSelectedRows();
-        Arrays.sort(rows);
-        int removed = 0;
-        for (int idx : rows) {
-            ModInfo mi = mods.get(idx - removed);
-            File f = mi.location;
-            mods.remove(idx - removed);
-            model.removeRow(idx - removed);
-            removed++;
-            f.delete();
-        }
+        profile.getMinecraftProvider().getModService().removeMod(lstExternalMods.getSelectedRows());
+        reloadMods();
     }//GEN-LAST:event_btnRemoveModActionPerformed
 
     private void lstExternalModsKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_lstExternalModsKeyPressed
@@ -1442,11 +1357,8 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
 
     private void lblModInfoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblModInfoMouseClicked
         int idx = lstExternalMods.getSelectedRow();
-        if (idx > 0 && idx < mods.size()) {
-            ModInfo m = mods.get(idx);
-            if (m.url != null)
-                Utils.openLink(m.url);
-        }
+        if (idx > 0 && idx < profile.getMinecraftProvider().getModService().getMods().size())
+            profile.getMinecraftProvider().getModService().getMods().get(idx).showURL();
     }//GEN-LAST:event_lblModInfoMouseClicked
 
     private void btnChoosingGameDirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnChoosingGameDirActionPerformed
@@ -1468,7 +1380,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_btnChoosingGameDirActionPerformed
 
     private void btnMakeLaunchScriptActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMakeLaunchScriptActionPerformed
-        MainFrame.instance.mainPanel.btnMakeLaunchCodeActionPerformed();
+        MainFrame.INSTANCE.mainPanel.btnMakeLaunchCodeActionPerformed();
     }//GEN-LAST:event_btnMakeLaunchScriptActionPerformed
 
     private void btnShowLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnShowLogActionPerformed
@@ -1476,15 +1388,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_btnShowLogActionPerformed
 
     private void btnCleanGameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCleanGameActionPerformed
-        File f = getProfile().getMinecraftProvider().getRunDirectory(mcVersion);
-        String[] dir = {"logs", "asm", "NVIDIA", "crash-reports", "server-resource-packs", "natives", "native"};
-        for (String s : dir)
-            FileUtils.deleteDirectoryQuietly(new File(f, s));
-        String[] files = {"output-client.log", "usercache.json", "usernamecache.json", "hmclmc.log"};
-        for (String s : files)
-            new File(f, s).delete();
-        for (MinecraftVersion s : getProfile().getMinecraftProvider().getVersions())
-            FileUtils.deleteDirectoryQuietly(new File(getProfile().getGameDirFile(), "versions" + File.separator + s.id + File.separator + s.id + "-natives"));
+        profile.getMinecraftProvider().cleanFolder();
     }//GEN-LAST:event_btnCleanGameActionPerformed
 
     // </editor-fold>
@@ -1601,15 +1505,6 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     // <editor-fold defaultstate="collapsed" desc="Assets">
     public int assetsType;
 
-    private void downloadAssets(final IAssetsHandler type) {
-        if (mcVersion == null || profile == null)
-            return;
-        type.getList(profile.getMinecraftProvider().getVersionById(mcVersion), profile.getMinecraftProvider(), (value) -> {
-                         if (value != null)
-                             SwingUtilities.invokeLater(() -> TaskWindow.getInstance().addTask(type.getDownloadTask(Settings.getInstance().getDownloadSource().getProvider())).start());
-                     });
-    }
-
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Game Download">
     public void refreshDownloads(final DownloadType provider) {
@@ -1617,10 +1512,10 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
             HTTPGetTask tsk = new HTTPGetTask(provider.getProvider().getVersionsListDownloadURL());
 
             @Override
-            public boolean executeTask() {
+            public void executeTask() {
                 final MinecraftRemoteVersions v = C.gson.fromJson(tsk.getResult(), MinecraftRemoteVersions.class);
                 if (v == null || v.versions == null)
-                    return true;
+                    return;
                 SwingUtilities.invokeLater(() -> {
                     DefaultTableModel model = (DefaultTableModel) lstDownloads.getModel();
                     while (model.getRowCount() > 0)
@@ -1630,7 +1525,6 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
                                                    StrUtils.equalsOne(ver.type, "old_beta", "old_alpha", "release", "snapshot") ? C.i18n("versions." + ver.type) : ver.type});
                     lstDownloads.updateUI();
                 });
-                return true;
             }
 
             @Override
@@ -1672,7 +1566,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
                 Transferable tr = dtde.getTransferable();
                 List<File> files = (List<File>) tr.getTransferData(DataFlavor.javaFileListFlavor);
                 for (File file : files)
-                    addMod(file);
+                    profile.getMinecraftProvider().getModService().addMod(file);
             } catch (Exception ex) {
                 HMCLog.warn("Failed to drop file.", ex);
             }
@@ -1757,19 +1651,18 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     String mcVersion;
 
     // </editor-fold>
-    // <editor-fold>
-    List<ModInfo> mods;
+    // <editor-fold defaultstate="collapsed" desc="Mods">
     private final Object lockMod = new Object();
 
     private void reloadMods() {
         new Thread(() -> {
             synchronized (lockMod) {
-                mods = profile.getMinecraftProvider().listMods();
+                profile.getMinecraftProvider().getModService().recacheMods();
                 SwingUtilities.invokeLater(() -> {
                     synchronized (lockMod) {
                         SwingUtils.clearDefaultTable(lstExternalMods);
                         DefaultTableModel model = (DefaultTableModel) lstExternalMods.getModel();
-                        for (ModInfo info : mods)
+                        for (ModInfo info : profile.getMinecraftProvider().getModService().getMods())
                             model.addRow(new Object[] {info.isActive(), info.getFileName(), info.version});
                     }
                 });

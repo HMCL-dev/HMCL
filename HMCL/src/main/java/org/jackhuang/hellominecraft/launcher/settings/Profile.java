@@ -20,7 +20,9 @@ import java.io.File;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.launcher.utils.MCUtils;
+import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerService;
 import org.jackhuang.hellominecraft.launcher.version.GameDirType;
+import org.jackhuang.hellominecraft.launcher.version.MinecraftService;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.Utils;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
@@ -94,13 +96,17 @@ public final class Profile {
             minecraftProvider = new MinecraftVersionManager(this);
         return minecraftProvider;
     }
+    
+    public String getSelectedMinecraftVersionName() {
+        return selectedMinecraftVersion;
+    }
 
     public MinecraftVersion getSelectedMinecraftVersion() {
         if (StrUtils.isBlank(selectedMinecraftVersion)) {
             MinecraftVersion v = getMinecraftProvider().getOneVersion();
             if (v == null)
                 return null;
-            selectedMinecraftVersion = v.id;
+            setSelectedMinecraftVersion(v.id);
             return v;
         }
         MinecraftVersion v = getMinecraftProvider().getVersionById(selectedMinecraftVersion);
@@ -109,6 +115,10 @@ public final class Profile {
         if (v != null)
             setSelectedMinecraftVersion(v.id);
         return v;
+    }
+
+    public void setSelectedMinecraftVersion(String selectedMinecraftVersion) {
+        this.selectedMinecraftVersion = selectedMinecraftVersion;
     }
 
     public String getGameDir() {
@@ -187,7 +197,7 @@ public final class Profile {
     public File getFolder(String folder) {
         if (getSelectedMinecraftVersion() == null)
             return new File(getCanonicalGameDirFile(), folder);
-        return new File(getMinecraftProvider().getRunDirectory(getSelectedMinecraftVersion().id), folder);
+        return getMinecraftProvider().getRunDirectory(getSelectedMinecraftVersion().id, folder);
     }
 
     public String getName() {
@@ -196,10 +206,6 @@ public final class Profile {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public void setSelectedMinecraftVersion(String selectedMinecraftVersion) {
-        this.selectedMinecraftVersion = selectedMinecraftVersion;
     }
 
     public String getJavaArgs() {
@@ -350,5 +356,15 @@ public final class Profile {
 
     public void checkFormat() {
         gameDir = gameDir.replace('/', OS.os().fileSeparator).replace('\\', OS.os().fileSeparator);
+    }
+    
+    final InstallerService is = new InstallerService(this);
+    public InstallerService getInstallerService() {
+        return is;
+    }
+    
+    final MinecraftService ms = new MinecraftService(this);
+    public MinecraftService getMinecraftService() {
+        return ms;
     }
 }

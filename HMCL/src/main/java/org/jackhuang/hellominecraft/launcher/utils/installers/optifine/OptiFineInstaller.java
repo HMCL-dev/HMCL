@@ -17,7 +17,6 @@
 package org.jackhuang.hellominecraft.launcher.utils.installers.optifine;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.C;
@@ -50,37 +49,28 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
     }
 
     @Override
-    public boolean executeTask() {
-        if (profile == null || profile.getSelectedMinecraftVersion() == null) {
-            setFailReason(new RuntimeException(C.i18n("install.no_version")));
-            return false;
-        }
+    public void executeTask() throws Exception {
+        if (profile == null || profile.getSelectedMinecraftVersion() == null)
+            throw new Exception(C.i18n("install.no_version"));
         MinecraftVersion mv = (MinecraftVersion) profile.getSelectedMinecraftVersion().clone();
+        mv.inheritsFrom = mv.id;
+        mv.jar = mv.jar == null ? mv.id : mv.jar;
+        mv.libraries.clear();
+        mv.libraries.add(0, new MinecraftLibrary("optifine:OptiFine:" + version));
+        FileUtils.copyFile(installer, new File(profile.getCanonicalGameDir(), "libraries/optifine/OptiFine/" + version + "/OptiFine-" + version + ".jar"));
 
-        try {
-            mv.inheritsFrom = mv.id;
-            mv.jar = mv.jar == null ? mv.id : mv.jar;
-            mv.libraries.clear();
-            mv.libraries.add(0, new MinecraftLibrary("optifine:OptiFine:" + version));
-            FileUtils.copyFile(installer, new File(profile.getCanonicalGameDir(), "libraries/optifine/OptiFine/" + version + "/OptiFine-" + version + ".jar"));
-
-            mv.id += "-" + version;
-            if (new ZipFile(installer).getEntry("optifine/OptiFineTweaker.class") != null) {
-                if (!mv.mainClass.startsWith("net.minecraft.launchwrapper.")) {
-                    mv.mainClass = "net.minecraft.launchwrapper.Launch";
-                    mv.libraries.add(1, new MinecraftLibrary("net.minecraft:launchwrapper:1.7"));
-                }
-                mv.minecraftArguments += " --tweakClass optifine.OptiFineTweaker";
+        mv.id += "-" + version;
+        if (new ZipFile(installer).getEntry("optifine/OptiFineTweaker.class") != null) {
+            if (!mv.mainClass.startsWith("net.minecraft.launchwrapper.")) {
+                mv.mainClass = "net.minecraft.launchwrapper.Launch";
+                mv.libraries.add(1, new MinecraftLibrary("net.minecraft:launchwrapper:1.7"));
             }
-            File loc = new File(profile.getCanonicalGameDir(), "versions/" + mv.id);
-            loc.mkdirs();
-            File json = new File(loc, mv.id + ".json");
-            FileUtils.writeStringToFile(json, C.gsonPrettyPrinting.toJson(mv, MinecraftVersion.class));
-        } catch (IOException ex) {
-            setFailReason(ex);
-            return false;
+            mv.minecraftArguments += " --tweakClass optifine.OptiFineTweaker";
         }
-        return true;
+        File loc = new File(profile.getCanonicalGameDir(), "versions/" + mv.id);
+        loc.mkdirs();
+        File json = new File(loc, mv.id + ".json");
+        FileUtils.writeStringToFile(json, C.gsonPrettyPrinting.toJson(mv, MinecraftVersion.class));
     }
 
     @Override

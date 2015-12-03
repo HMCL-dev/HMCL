@@ -60,29 +60,23 @@ public class Upgrader extends Task {
     }
 
     @Override
-    public boolean executeTask() {
+    public void executeTask() throws Exception {
         HashMap<String, String> json = new HashMap<>();
         File f = getSelf(newestVersion);
-        try {
-            if (!f.getParentFile().exists())
-                f.getParentFile().mkdirs();
+        if (!f.getParentFile().exists())
+            f.getParentFile().mkdirs();
 
-            for (int i = 0; f.exists(); i++)
-                f = new File(BASE_FOLDER, "HMCL-" + newestVersion + (i > 0 ? "-" + i : "") + ".jar");
-            f.createNewFile();
+        for (int i = 0; f.exists(); i++)
+            f = new File(BASE_FOLDER, "HMCL-" + newestVersion + (i > 0 ? "-" + i : "") + ".jar");
+        f.createNewFile();
 
-            try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(f))) {
-                Pack200.newUnpacker().unpack(new XZInputStream(new FileInputStream(tempFile)), jos);
-            }
-            json.put("ver", newestVersion);
-            json.put("loc", f.getAbsolutePath());
-            String result = C.gson.toJson(json);
-            FileUtils.write(HMCL_VER_FILE, result);
-            return true;
-        } catch (IOException e) {
-            setFailReason(e);
-            return false;
+        try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(f))) {
+            Pack200.newUnpacker().unpack(new XZInputStream(new FileInputStream(tempFile)), jos);
         }
+        json.put("ver", newestVersion);
+        json.put("loc", f.getAbsolutePath());
+        String result = C.gson.toJson(json);
+        FileUtils.write(HMCL_VER_FILE, result);
     }
 
     @Override

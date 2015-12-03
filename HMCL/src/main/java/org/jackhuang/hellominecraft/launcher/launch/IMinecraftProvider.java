@@ -22,8 +22,8 @@ import java.util.List;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
-import org.jackhuang.hellominecraft.launcher.utils.ModInfo;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.utils.StrUtils;
 
 /**
  * Provide everything of the Minecraft of a Profile.
@@ -47,6 +47,10 @@ public abstract class IMinecraftProvider {
      * @return the run directory
      */
     public abstract File getRunDirectory(String id);
+    
+    public File getRunDirectory(String id, String subFolder) {
+        return new File(getRunDirectory(getSelectedMinecraftVersion().id), subFolder);
+    }
 
     /**
      * Get the libraries that need to download.
@@ -57,13 +61,11 @@ public abstract class IMinecraftProvider {
      */
     public abstract List<GameLauncher.DownloadLibraryJob> getDownloadLibraries(DownloadType type);
 
-    public abstract void openSelf(String version);
-
     public abstract void open(String version, String folder);
 
     public abstract File getAssets();
-
-    public abstract List<ModInfo> listMods();
+    
+    public abstract IMinecraftModService getModService();
 
     /**
      * Returns the thing like ".minecraft/resourcepacks".
@@ -158,6 +160,26 @@ public abstract class IMinecraftProvider {
      * @return the Minecraft json instance
      */
     public abstract MinecraftVersion getVersionById(String id);
+    
+    public MinecraftVersion getSelectedVersion() {
+        return profile.getSelectedMinecraftVersion();
+    }
+
+    public MinecraftVersion getSelectedMinecraftVersion() {
+        if (StrUtils.isBlank(profile.getSelectedMinecraftVersionName())) {
+            MinecraftVersion v = getOneVersion();
+            if (v == null)
+                return null;
+            profile.setSelectedMinecraftVersion(v.id);
+            return v;
+        }
+        MinecraftVersion v = getVersionById(profile.getSelectedMinecraftVersionName());
+        if (v == null)
+            v = getOneVersion();
+        if (v != null)
+            profile.setSelectedMinecraftVersion(v.id);
+        return v;
+    }
 
     /**
      * getVersions().size()
@@ -170,6 +192,11 @@ public abstract class IMinecraftProvider {
      * Refind the versions in this profile.
      */
     public abstract void refreshVersions();
+    
+    /**
+     * Clean redundancy files.
+     */
+    public abstract void cleanFolder();
 
     /**
      * Install a new version to this profile.

@@ -14,35 +14,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.
  */
-package org.jackhuang.hellominecraft.tasks;
+package org.jackhuang.hellominecraft.launcher.launch;
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.io.File;
+import java.util.List;
+import org.jackhuang.hellominecraft.launcher.utils.ModInfo;
 
 /**
  *
  * @author huangyuhui
  */
-public class ParallelTask extends Task {
+public interface IMinecraftModService {
 
-    Collection<Task> dependsTask = new HashSet<>();
+    List<ModInfo> getMods();
 
-    @Override
-    public void executeTask() {
-    }
+    List<ModInfo> recacheMods();
 
-    @Override
-    public String getInfo() {
-        return "PARALLEL";
-    }
+    boolean addMod(File f);
 
-    @Override
-    public Collection<Task> getDependTasks() {
-        return dependsTask;
-    }
-
-    public void addDependsTask(Task t) {
-        dependsTask.add(t);
-    }
-
+    void removeMod(int[] index);
 }
