@@ -1,18 +1,19 @@
 /*
- * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
+ * Hello Minecraft! Launcher.
+ * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
  * 
- * This program is free software; you can redistribute it and/or modify
+ * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
- * along with this program.
+ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
 package org.jackhuang.hellominecraft.launcher.utils;
 
@@ -28,7 +29,6 @@ import org.jackhuang.hellominecraft.launcher.utils.assets.AssetsIndex;
 import org.jackhuang.hellominecraft.launcher.utils.assets.AssetsObject;
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.version.MinecraftRemoteVersions;
 import org.jackhuang.hellominecraft.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.ArrayUtils;
@@ -73,20 +73,20 @@ public final class MCUtils {
         byte[] bytes = "Minecraft Minecraft ".getBytes("ASCII");
         int j;
         if ((j = ArrayUtils.matchArray(tmp, bytes)) < 0) {
-            r.type = MinecraftVersionRequest.Unkown;
+            r.type = MinecraftVersionRequest.UNKOWN;
             return r;
         }
         int i = j + bytes.length;
 
         if ((j = lessThan32(tmp, i)) < 0) {
-            r.type = MinecraftVersionRequest.Unkown;
+            r.type = MinecraftVersionRequest.UNKOWN;
             return r;
         }
         String ver = new String(tmp, i, j - i, "ASCII");
         r.version = ver;
 
         r.type = file.getEntry("META-INF/MANIFEST.MF") == null
-                 ? MinecraftVersionRequest.Modified : MinecraftVersionRequest.OK;
+                 ? MinecraftVersionRequest.MODIFIED : MinecraftVersionRequest.OK;
         return r;
     }
 
@@ -97,14 +97,14 @@ public final class MCUtils {
         byte[] str = "-server.txt".getBytes("ASCII");
         int j = ArrayUtils.matchArray(tmp, str);
         if (j < 0) {
-            r.type = MinecraftVersionRequest.Unkown;
+            r.type = MinecraftVersionRequest.UNKOWN;
             return r;
         }
         int i = j + str.length;
         i += 11;
         j = lessThan32(tmp, i);
         if (j < 0) {
-            r.type = MinecraftVersionRequest.Unkown;
+            r.type = MinecraftVersionRequest.UNKOWN;
             return r;
         }
         r.version = new String(tmp, i, j - i, "ASCII");
@@ -115,7 +115,7 @@ public final class MCUtils {
             str = "Can't keep up! Did the system time change, or is the server overloaded?".getBytes("ASCII");
             j = ArrayUtils.matchArray(tmp, str);
             if (j < 0) {
-                r.type = MinecraftVersionRequest.Unkown;
+                r.type = MinecraftVersionRequest.UNKOWN;
                 return r;
             }
             i = -1;
@@ -127,7 +127,7 @@ public final class MCUtils {
                 j--;
             }
             if (i == -1) {
-                r.type = MinecraftVersionRequest.Unkown;
+                r.type = MinecraftVersionRequest.UNKOWN;
                 return r;
             }
             int k = i;
@@ -137,22 +137,22 @@ public final class MCUtils {
             r.version = new String(tmp, k, i - k + 1);
         }
         r.type = file.getEntry("META-INF/MANIFEST.MF") == null
-                 ? MinecraftVersionRequest.Modified : MinecraftVersionRequest.OK;
+                 ? MinecraftVersionRequest.MODIFIED : MinecraftVersionRequest.OK;
         return r;
     }
 
     public static MinecraftVersionRequest minecraftVersion(File file) {
         MinecraftVersionRequest r = new MinecraftVersionRequest();
         if (!file.exists()) {
-            r.type = MinecraftVersionRequest.NotFound;
+            r.type = MinecraftVersionRequest.NOT_FOUND;
             return r;
         }
         if (!file.isFile()) {
-            r.type = MinecraftVersionRequest.NotAFile;
+            r.type = MinecraftVersionRequest.NOT_FILE;
             return r;
         }
         if (!file.canRead()) {
-            r.type = MinecraftVersionRequest.NotReadable;
+            r.type = MinecraftVersionRequest.UNREADABLE;
             return r;
         }
         ZipFile localZipFile = null;
@@ -166,11 +166,11 @@ public final class MCUtils {
             ZipEntry minecraftserver = localZipFile.getEntry("net/minecraft/server/MinecraftServer.class");
             if ((main != null) && (minecraftserver != null))
                 return getVersionOfNewMinecraft(localZipFile, minecraftserver);
-            r.type = MinecraftVersionRequest.Invaild;
+            r.type = MinecraftVersionRequest.INVALID;
             return r;
         } catch (IOException localException) {
             HMCLog.warn("Zip file is invalid", localException);
-            r.type = MinecraftVersionRequest.InvaildJar;
+            r.type = MinecraftVersionRequest.INVALID_JAR;
             return r;
         } finally {
             if (localZipFile != null)

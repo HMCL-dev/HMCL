@@ -1,18 +1,19 @@
 /*
- * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
+ * Hello Minecraft! Launcher.
+ * Copyright (C) 2013  huangyuhui
  * 
- * This program is free software; you can redistribute it and/or modify
+ * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
- * along with this program.
+ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
 package org.jackhuang.hellominecraft.launcher.launch;
 
@@ -29,7 +30,7 @@ import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.utils.system.JdkVersion;
 import org.jackhuang.hellominecraft.utils.MathUtils;
-import org.jackhuang.hellominecraft.utils.system.MessageBox;
+import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.system.OS;
 import org.jackhuang.hellominecraft.utils.system.Platform;
 import org.jackhuang.hellominecraft.utils.StrUtils;

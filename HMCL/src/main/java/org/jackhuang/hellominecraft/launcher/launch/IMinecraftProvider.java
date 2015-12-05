@@ -1,18 +1,19 @@
 /*
- * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
+ * Hello Minecraft! Launcher.
+ * Copyright (C) 2013  huangyuhui
  * 
- * This program is free software; you can redistribute it and/or modify
+ * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
- * along with this program.
+ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
 package org.jackhuang.hellominecraft.launcher.launch;
 
@@ -194,7 +195,7 @@ public abstract class IMinecraftProvider {
     public abstract void refreshVersions();
     
     /**
-     * Clean redundancy files.
+     * Clean redundant files.
      */
     public abstract void cleanFolder();
 
@@ -209,7 +210,7 @@ public abstract class IMinecraftProvider {
     public abstract boolean install(String version, DownloadType type);
 
     /**
-     * When GameLauncher launches the Minecraft, this function will be called.
+     * When GameLauncher launches the game, this function will be called.
      */
     public abstract void onLaunch();
 

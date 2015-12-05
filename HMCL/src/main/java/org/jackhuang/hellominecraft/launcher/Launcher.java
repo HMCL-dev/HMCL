@@ -1,37 +1,36 @@
 /*
- * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
+ * Hello Minecraft! Launcher.
+ * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
  * 
- * This program is free software; you can redistribute it and/or modify
+ * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
- * along with this program.
+ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
 package org.jackhuang.hellominecraft.launcher;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.utils.functions.TrueFunction;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.views.LogWindow;
 import org.jackhuang.hellominecraft.launcher.launch.MinecraftCrashAdvicer;
 import org.jackhuang.hellominecraft.utils.DoubleOutputStream;
 import org.jackhuang.hellominecraft.utils.LauncherPrintStream;
-import org.jackhuang.hellominecraft.utils.system.MessageBox;
+import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.Utils;
 
 /**
@@ -127,7 +126,7 @@ public final class Launcher {
             System.err.println(C.i18n("crash.minecraft"));
             System.err.println(advice);
             System.err.println(trace);
-            LogWindow.instance.setExit(TrueFunction.instance);
+            LogWindow.instance.setExit(() -> true);
             LogWindow.instance.setVisible(true);
             flag = 1;
         }
@@ -135,7 +134,7 @@ public final class Launcher {
         println("*** Game Exited ***");
         Utils.shutdownForcely(1);
     }
-    
+    /*
     static Object getShutdownHaltLock() {
         try {
             Class z = Class.forName("java.lang.Shutdown");
@@ -146,5 +145,5 @@ public final class Launcher {
             ex.printStackTrace();
             return new Object();
         }
-    }
+    }*/
 }

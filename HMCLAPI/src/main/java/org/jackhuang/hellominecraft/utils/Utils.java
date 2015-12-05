@@ -1,32 +1,30 @@
 /*
- * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
+ * Hello Minecraft! Launcher.
+ * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
  * 
- * This program is free software; you can redistribute it and/or modify
+ * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
- * along with this program.
+ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
 package org.jackhuang.hellominecraft.utils;
 
-import org.jackhuang.hellominecraft.utils.system.MessageBox;
 import com.sun.management.OperatingSystemMXBean;
 import java.awt.Desktop;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -53,25 +51,6 @@ public final class Utils {
                 HMCLog.warn("Unsupported UTF-8 encoding", ex);
             }
         return urlStrings;
-    }
-
-    public static void addDir(String s) throws IOException {
-        try {
-            Field field = ClassLoader.class.getDeclaredField("usr_paths");
-            field.setAccessible(true);
-            String[] paths = (String[]) field.get(null);
-            for (String path : paths)
-                if (s.equals(path))
-                    return;
-            String[] tmp = new String[paths.length + 1];
-            System.arraycopy(paths, 0, tmp, 0, paths.length);
-            tmp[paths.length] = s;
-            field.set(null, tmp);
-        } catch (IllegalAccessException e) {
-            throw new IOException("Failed to get permissions to set library path");
-        } catch (NoSuchFieldException e) {
-            throw new IOException("Failed to get field handle to set library path");
-        }
     }
 
     public static int getSuggestedMemorySize() {

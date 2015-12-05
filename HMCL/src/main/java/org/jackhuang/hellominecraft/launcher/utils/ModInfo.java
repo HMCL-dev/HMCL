@@ -1,18 +1,19 @@
 /*
- * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
+ * Hello Minecraft! Launcher.
+ * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
  * 
- * This program is free software; you can redistribute it and/or modify
+ * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
- * along with this program.
+ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
 package org.jackhuang.hellominecraft.launcher.utils;
 
@@ -106,22 +107,22 @@ public class ModInfo implements Comparable<ModInfo> {
         ModInfo i = new ModInfo();
         i.location = f;
         try {
-            ZipFile jar = new ZipFile(f);
-            ZipEntry entry = jar.getEntry("mcmod.info");
-            if (entry == null)
-                entry = jar.getEntry("litemod.json");
-            if (entry == null)
-                return i;
-            else {
-                List<ModInfo> m = C.gson.fromJson(new InputStreamReader(jar.getInputStream(entry)),
+            try (ZipFile jar = new ZipFile(f)) {
+                ZipEntry entry = jar.getEntry("mcmod.info");
+                if (entry == null)
+                    entry = jar.getEntry("litemod.json");
+                if (entry == null)
+                    return i;
+                else {
+                    List<ModInfo> m = C.gson.fromJson(new InputStreamReader(jar.getInputStream(entry)),
                                                   new TypeToken<List<ModInfo>>() {
                                                   }.getType());
-                if (m != null && m.size() > 0) {
-                    i = m.get(0);
-                    i.location = f;
+                    if (m != null && m.size() > 0) {
+                        i = m.get(0);
+                        i.location = f;
+                    }
                 }
             }
-            jar.close();
         } catch (IOException ex) {
             HMCLog.warn("File " + f + " is not a jar.", ex);
         } catch (JsonSyntaxException ignore) {

@@ -1,18 +1,19 @@
 /*
- * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
+ * Hello Minecraft! Launcher.
+ * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
  * 
- * This program is free software; you can redistribute it and/or modify
+ * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
- * along with this program.
+ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
 package org.jackhuang.hellominecraft.launcher.views;
 
@@ -62,7 +63,7 @@ public final class MainFrame extends DraggableFrame {
     LauncherSettingsPanel launcherPanel;
     CardLayout infoLayout;
     JPanel infoSwap;
-    JPanel launcherPanelWrapper, gamePanelWrapper;
+    JPanel mainPanelWrapper, launcherPanelWrapper, gamePanelWrapper;
     JLabel backgroundLabel, windowTitle;
     JPanel realPanel;
     DropShadowBorder border;
@@ -221,8 +222,9 @@ public final class MainFrame extends DraggableFrame {
         this.infoSwap.setLayout(infoLayout);
         this.infoSwap.setOpaque(false);
 
-        this.mainPanel = new MainPagePanel();
-        this.infoSwap.add(mainPanel, "main");
+        mainPanelWrapper = new JPanel();
+        mainPanelWrapper.setLayout(new GridLayout());
+        this.infoSwap.add(mainPanelWrapper, "main");
         gamePanelWrapper = new JPanel();
         gamePanelWrapper.setLayout(new GridLayout());
         this.infoSwap.add(gamePanelWrapper, "game");
@@ -247,6 +249,10 @@ public final class MainFrame extends DraggableFrame {
         this.launcherTab.setIsActive(false);
 
         if (tabName.equalsIgnoreCase("main")) {
+            if (mainPanel == null) {
+                mainPanel = new MainPagePanel();
+                mainPanelWrapper.add(mainPanel);
+            }
             this.mainTab.setIsActive(true);
             this.mainPanel.onSelected();
         } else if (tabName.equalsIgnoreCase("game")) {
