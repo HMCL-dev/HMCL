@@ -63,6 +63,15 @@ public class Schedulers {
     }
 
     /**
+     * {@link Scheduler} that queues work on the EventQueue thread to be executed on the Swing UI Thread.
+     * 
+     * @return {@link NewThreadScheduler} instance
+     */
+    public static Scheduler eventQueue() {
+        return EventQueueScheduler.getInstance();
+    }
+
+    /**
      * {@link Scheduler} that queues work on an {@link Executor}.
      * <p>
      * Note that this does not support scheduled actions with a delay.

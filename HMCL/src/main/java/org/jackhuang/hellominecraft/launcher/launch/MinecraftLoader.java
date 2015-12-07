@@ -38,6 +38,7 @@ import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
+import rx.concurrency.Schedulers;
 
 /**
  *
@@ -79,10 +80,10 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
 
         if (!checkAssetsExist())
             if (MessageBox.Show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                IAssetsHandler.ASSETS_HANDLER.getList(version, provider, (value) -> {
-                                                          if (value != null)
-                                                              TaskWindow.getInstance().addTask(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(dt.getProvider())).start();
-                                                      });
+                IAssetsHandler.ASSETS_HANDLER.getList(version, provider)
+                    .subscribeOn(Schedulers.newThread())
+                    .observeOn(Schedulers.eventQueue())
+                    .subscribe((value) -> TaskWindow.getInstance().addTask(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(dt.getProvider())).start());
 
         String game_assets = reconstructAssets().getAbsolutePath();
 

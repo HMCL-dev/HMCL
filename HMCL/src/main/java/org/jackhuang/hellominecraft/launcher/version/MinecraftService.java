@@ -22,6 +22,7 @@ import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.utils.assets.IAssetsHandler;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.tasks.TaskWindow;
+import rx.concurrency.Schedulers;
 
 /**
  *
@@ -41,10 +42,10 @@ public class MinecraftService {
             @Override
             public void executeTask() throws Throwable {
                 IAssetsHandler type = IAssetsHandler.ASSETS_HANDLER;
-                type.getList(profile.getMinecraftProvider().getVersionById(mcVersion), profile.getMinecraftProvider(), (value) -> {
-                         if (value != null)
-                             TaskWindow.getInstance().addTask(type.getDownloadTask(Settings.getInstance().getDownloadSource().getProvider())).start();
-                     });
+                type.getList(profile.getMinecraftProvider().getVersionById(mcVersion), profile.getMinecraftProvider())
+                    .subscribeOn(Schedulers.newThread())
+                    .observeOn(Schedulers.eventQueue())
+                    .subscribe((value) -> TaskWindow.getInstance().addTask(type.getDownloadTask(Settings.getInstance().getDownloadSource().getProvider())).start());
             }
 
             @Override

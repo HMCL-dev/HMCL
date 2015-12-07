@@ -21,14 +21,7 @@ public class Subscriptions {
      * @return {@link Subscription}
      */
     public static Subscription create(final Action0 unsubscribe) {
-        return new Subscription() {
-
-            @Override
-            public void unsubscribe() {
-                unsubscribe.call();
-            }
-
-        };
+        return unsubscribe::call;
     }
 
     /**
@@ -38,21 +31,11 @@ public class Subscriptions {
      */
     public static Subscription create(final Object unsubscribe) {
         final FuncN<?> f = Functions.from(unsubscribe);
-        return new Subscription() {
-
-            @Override
-            public void unsubscribe() {
-                f.call();
-            }
-
-        };
+        return f::call;
     }
 
     /**
      * A {@link Subscription} that does nothing when its unsubscribe method is called.
      */
-    private static Subscription EMPTY = new Subscription() {
-        public void unsubscribe() {
-        }
-    };
+    private static final Subscription EMPTY = () -> { };
 }

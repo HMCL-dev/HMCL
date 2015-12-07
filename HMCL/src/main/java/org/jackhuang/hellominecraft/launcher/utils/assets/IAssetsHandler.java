@@ -34,6 +34,7 @@ import org.jackhuang.hellominecraft.utils.functions.Consumer;
 import org.jackhuang.hellominecraft.utils.code.DigestUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.NetUtils;
+import rx.Observable;
 
 /**
  * Assets
@@ -73,7 +74,7 @@ public abstract class IAssetsHandler {
      * @param mp The Minecraft Provider
      * @param x  finished event
      */
-    public abstract void getList(MinecraftVersion mv, IMinecraftProvider mp, Consumer<String[]> x);
+    public abstract Observable<String[]> getList(MinecraftVersion mv, IMinecraftProvider mp);
 
     /**
      * Will be invoked when the user invoked "Download all assets".

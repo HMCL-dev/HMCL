@@ -120,6 +120,7 @@ public final class Profile {
 
     public void setSelectedMinecraftVersion(String selectedMinecraftVersion) {
         this.selectedMinecraftVersion = selectedMinecraftVersion;
+        Settings.save();
     }
 
     public String getGameDir() {

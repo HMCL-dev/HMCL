@@ -1142,7 +1142,6 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         versionChanged(getProfile(), mcv);
         getProfile().setSelectedMinecraftVersion(mcv);
         cboVersions.setToolTipText(mcv);
-        Settings.save();
     }//GEN-LAST:event_cboVersionsItemStateChanged
 
     private void btnRefreshVersionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshVersionsActionPerformed
@@ -1154,12 +1153,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_btnRefreshForgeActionPerformed
 
     private void btnDownloadForgeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadForgeActionPerformed
-        int idx = lstForge.getSelectedRow();
-        if (idx == -1) {
-            MessageBox.Show(C.i18n("install.not_refreshed"));
-            return;
-        }
-        profile.getInstallerService().downloadForge(forge.getVersion(idx)).after(new TaskRunnable(this::refreshVersions)).run();
+        forge.downloadSelectedRow();
     }//GEN-LAST:event_btnDownloadForgeActionPerformed
 
     private void btnRefreshOptifineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshOptifineActionPerformed
@@ -1167,21 +1161,11 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_btnRefreshOptifineActionPerformed
 
     private void btnDownloadOptifineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadOptifineActionPerformed
-        int idx = lstOptifine.getSelectedRow();
-        if (idx == -1) {
-            MessageBox.Show(C.i18n("install.not_refreshed"));
-            return;
-        }
-        profile.getInstallerService().downloadOptifine(optifine.getVersion(idx)).after(new TaskRunnable(this::refreshVersions)).run();
+        optifine.downloadSelectedRow();
     }//GEN-LAST:event_btnDownloadOptifineActionPerformed
 
     private void btnInstallLiteLoaderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInstallLiteLoaderActionPerformed
-        int idx = lstLiteLoader.getSelectedRow();
-        if (idx == -1) {
-            MessageBox.Show(C.i18n("install.not_refreshed"));
-            return;
-        }
-        profile.getInstallerService().downloadLiteLoader(liteloader.getVersion(idx)).after(new TaskRunnable(this::refreshVersions)).run();
+        liteloader.downloadSelectedRow();
     }//GEN-LAST:event_btnInstallLiteLoaderActionPerformed
 
     private void btnRefreshLiteLoaderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshLiteLoaderActionPerformed
@@ -1608,13 +1592,22 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         void refreshVersions() {
             list = Settings.getInstance().getDownloadSource().getProvider().getInstallerByType(id);
             if (TaskWindow.getInstance().addTask(new TaskRunnableArg1<>(C.i18n("install." + id + ".get_list"), list)
-            .registerPreviousResult(new DefaultPreviousResult<>(new String[] {getMinecraftVersionFormatted()})))
-            .start())
+                .registerPreviousResult(new DefaultPreviousResult<>(new String[] {getMinecraftVersionFormatted()})))
+                .start())
                 loadVersions();
         }
 
         public InstallerVersion getVersion(int idx) {
             return versions.get(idx);
+        }
+
+        void downloadSelectedRow() {
+            int idx = jt.getSelectedRow();
+            if (idx == -1) {
+                MessageBox.Show(C.i18n("install.not_refreshed"));
+                return;
+            }
+            profile.getInstallerService().downloadOptifine(getVersion(idx)).after(new TaskRunnable(this::refreshVersions)).run();
         }
 
         private List<InstallerVersionList.InstallerVersion> loadVersions(InstallerVersionList list, JTable table) {
