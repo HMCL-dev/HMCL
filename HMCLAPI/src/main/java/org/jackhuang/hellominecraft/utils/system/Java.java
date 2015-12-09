@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 
 /**
@@ -37,6 +38,14 @@ public class Java {
     }
 
     public String getName() {
+        return name;
+    }
+
+    public String getLocalizedName() {
+        if (name.equals("Default"))
+            return C.i18n("settings.default");
+        if (name.equals("Custom"))
+            return C.i18n("settings.custom");
         return name;
     }
 

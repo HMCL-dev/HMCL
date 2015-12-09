@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Set;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.utils.assets.AssetsIndex;
-import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.utils.ArrayUtils;
 
 /**
@@ -71,11 +70,11 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
         return new MinecraftVersion(minecraftArguments, mainClass, time, id, type, processArguments, releaseTime, assets, jar, inheritsFrom, minimumLauncherVersion, libraries, hidden);
     }
 
-    public MinecraftVersion resolve(IMinecraftProvider manager, DownloadType sourceType) {
-        return resolve(manager, new HashSet<>(), sourceType);
+    public MinecraftVersion resolve(IMinecraftProvider manager) {
+        return resolve(manager, new HashSet<>());
     }
 
-    protected MinecraftVersion resolve(IMinecraftProvider manager, Set<String> resolvedSoFar, DownloadType sourceType) {
+    protected MinecraftVersion resolve(IMinecraftProvider manager, Set<String> resolvedSoFar) {
         if (inheritsFrom == null)
             return this;
         if (!resolvedSoFar.add(id))
@@ -83,11 +82,11 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
 
         MinecraftVersion parent = manager.getVersionById(inheritsFrom);
         if (parent == null) {
-            if (!manager.install(inheritsFrom, sourceType))
+            if (!manager.getDownloadService().install(inheritsFrom))
                 return this;
             parent = manager.getVersionById(inheritsFrom);
         }
-        parent = parent.resolve(manager, resolvedSoFar, sourceType);
+        parent = parent.resolve(manager, resolvedSoFar);
         MinecraftVersion result = new MinecraftVersion(
         this.minecraftArguments != null ? this.minecraftArguments : parent.minecraftArguments,
         this.mainClass != null ? this.mainClass : parent.mainClass,

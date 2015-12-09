@@ -29,7 +29,6 @@ import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.utils.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.utils.auth.LoginInfo;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
-import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.utils.auth.AuthenticationException;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
@@ -54,18 +53,12 @@ public class GameLauncher {
     public final EventHandler<List<String>> successEvent = new EventHandler(this);
     public final EventHandler<JavaProcess> launchEvent = new EventHandler(this);
     public final EventHandler<DecompressLibraryJob> decompressNativesEvent = new EventHandler(this);
-    DownloadType downloadType;
 
     public GameLauncher(Profile version, LoginInfo info, IAuthenticator lg) {
-        this(version, info, lg, DownloadType.Mojang);
-    }
-
-    public GameLauncher(Profile version, LoginInfo info, IAuthenticator lg, DownloadType downloadType) {
         this.get = version;
         this.provider = get.getMinecraftProvider();
         this.info = info;
         this.login = lg;
-        this.downloadType = downloadType;
     }
 
     public Profile getProfile() {
@@ -89,7 +82,7 @@ public class GameLauncher {
         }
 
         try {
-            loader = provider.provideMinecraftLoader(result, downloadType);
+            loader = provider.provideMinecraftLoader(result);
         } catch (IllegalStateException e) {
             HMCLog.err("Failed to get minecraft loader", e);
             failEvent.execute(C.i18n("launch.circular_dependency_versions"));
@@ -101,7 +94,7 @@ public class GameLauncher {
             FileUtils.cleanDirectoryQuietly(file);
 
         HMCLog.log("Detecting libraries...");
-        if (!downloadLibrariesEvent.execute(provider.getDownloadLibraries(downloadType))) {
+        if (!downloadLibrariesEvent.execute(provider.getDownloadService().getDownloadLibraries())) {
             failEvent.execute(C.i18n("launch.failed"));
             return null;
         }

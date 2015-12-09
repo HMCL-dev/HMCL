@@ -19,9 +19,7 @@ package org.jackhuang.hellominecraft.launcher.launch;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.List;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
-import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.utils.StrUtils;
@@ -34,7 +32,7 @@ import org.jackhuang.hellominecraft.utils.StrUtils;
  */
 public abstract class IMinecraftProvider {
 
-    Profile profile;
+    protected Profile profile;
 
     public IMinecraftProvider(Profile profile) {
         this.profile = profile;
@@ -53,20 +51,13 @@ public abstract class IMinecraftProvider {
         return new File(getRunDirectory(getSelectedMinecraftVersion().id), subFolder);
     }
 
-    /**
-     * Get the libraries that need to download.
-     *
-     * @param type where to download
-     *
-     * @return the library collection
-     */
-    public abstract List<GameLauncher.DownloadLibraryJob> getDownloadLibraries(DownloadType type);
-
     public abstract void open(String version, String folder);
-
-    public abstract File getAssets();
     
     public abstract IMinecraftModService getModService();
+    
+    public abstract IMinecraftDownloadService getDownloadService();
+
+    public abstract IMinecraftAssetService getAssetService();
 
     /**
      * Returns the thing like ".minecraft/resourcepacks".
@@ -100,7 +91,7 @@ public abstract class IMinecraftProvider {
      *
      * @throws IllegalStateException circular denpendency versions
      */
-    public abstract IMinecraftLoader provideMinecraftLoader(UserProfileProvider p, DownloadType type) throws IllegalStateException;
+    public abstract IMinecraftLoader provideMinecraftLoader(UserProfileProvider p) throws IllegalStateException;
 
     /**
      * Rename version
@@ -124,20 +115,13 @@ public abstract class IMinecraftProvider {
     /**
      * Redownload the Minecraft json of the given version.
      *
-     * @param a the given version name
+     * @param id the given version name
      *
      * @return Is the action successful?
      */
-    public abstract boolean refreshJson(String a);
-
-    /**
-     * Redownload the Asset index json of the given version.
-     *
-     * @param a the given version name
-     *
-     * @return Is the action successful?
-     */
-    public abstract boolean refreshAssetsIndex(String a);
+    public boolean refreshJson(String id) {
+        return getDownloadService().downloadMinecraftVersionJson(id);
+    }
 
     /**
      * Choose a version randomly.
@@ -198,16 +182,6 @@ public abstract class IMinecraftProvider {
      * Clean redundant files.
      */
     public abstract void cleanFolder();
-
-    /**
-     * Install a new version to this profile.
-     *
-     * @param version the new version name
-     * @param type    where to download
-     *
-     * @return Is the action successful?
-     */
-    public abstract boolean install(String version, DownloadType type);
 
     /**
      * When GameLauncher launches the game, this function will be called.

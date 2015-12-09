@@ -24,12 +24,10 @@ import java.util.Map;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
-import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.launcher.utils.MCUtils;
 import org.jackhuang.hellominecraft.launcher.utils.download.IDownloadProvider;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.utils.VersionNumber;
@@ -55,10 +53,10 @@ public class AssetsMojangLoader extends IAssetsHandler {
                 return Subscriptions.empty();
             }
             String assetsId = mv.assets == null ? "legacy" : mv.assets;
-            File assets = mp.getAssets();
+            File assets = mp.getAssetService().getAssets();
             HMCLog.log("Get index: " + assetsId);
             File f = IOUtils.tryGetCanonicalFile(new File(assets, "indexes/" + assetsId + ".json"));
-            if (!f.exists() && !MCUtils.downloadMinecraftAssetsIndex(assets, assetsId, Settings.getInstance().getDownloadSource())) {
+            if (!f.exists() && !mp.getAssetService().downloadMinecraftAssetsIndex(assetsId)) {
                 t1.onError(null);
                 return Subscriptions.empty();
             }

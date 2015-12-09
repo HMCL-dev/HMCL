@@ -43,9 +43,22 @@ public final class InstallerService {
     public InstallerService(Profile p) {
         this.p = p;
     }
+    
+    public Task download(InstallerVersion v, String type) {
+        switch(type) {
+            case "forge":
+                return downloadForge(v);
+            case "optifine":
+                return downloadOptifine(v);
+            case "liteloader":
+                return downloadLiteLoader(v);
+            default:
+                return null;
+        }
+    }
 
     public Task downloadForge(InstallerVersion v) {
-        return new TaskInfo("OptiFine Downloader") {
+        return new TaskInfo("Forge Downloader") {
             @Override
             public void executeTask() {
                 File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "forge-installer.jar");
@@ -75,7 +88,7 @@ public final class InstallerService {
     }
 
     public Task downloadLiteLoader(InstallerVersion v) {
-        return new TaskInfo("OptiFine Downloader") {
+        return new TaskInfo("LiteLoader Downloader") {
             @Override
             public void executeTask() {
                 File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "liteloader-universal.jar");

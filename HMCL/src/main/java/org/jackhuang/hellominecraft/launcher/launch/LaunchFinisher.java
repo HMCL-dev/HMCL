@@ -34,18 +34,18 @@ public class LaunchFinisher implements Event<List<String>> {
     public boolean call(Object sender, List<String> str) {
         final GameLauncher obj = (GameLauncher) sender;
         obj.launchEvent.register((sender1, p) -> {
-            if (obj.getProfile().getLauncherVisibility() == LauncherVisibility.CLOSE && !LogWindow.instance.isVisible())
+            if (obj.getProfile().getLauncherVisibility() == LauncherVisibility.CLOSE && !LogWindow.INSTANCE.isVisible())
                 System.exit(0);
             else if (obj.getProfile().getLauncherVisibility() == LauncherVisibility.KEEP)
                 MainFrame.INSTANCE.closeMessage();
             else {
-                if (LogWindow.instance.isVisible())
-                    LogWindow.instance.setExit(() -> true);
+                if (LogWindow.INSTANCE.isVisible())
+                    LogWindow.INSTANCE.setExit(() -> true);
                 MainFrame.INSTANCE.dispose();
             }
             JavaProcessMonitor jpm = new JavaProcessMonitor(p);
             jpm.stoppedEvent.register((sender3, t) -> {
-                if (obj.getProfile().getLauncherVisibility() != LauncherVisibility.KEEP && !LogWindow.instance.isVisible())
+                if (obj.getProfile().getLauncherVisibility() != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible())
                     System.exit(0);
                 return true;
             });

@@ -22,13 +22,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.launch.GameLauncher;
-import org.jackhuang.hellominecraft.launcher.launch.GameLauncher.DownloadLibraryJob;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftAssetService;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftDownloadService;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftLoader;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftModService;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
@@ -36,9 +36,7 @@ import org.jackhuang.hellominecraft.launcher.launch.MinecraftLoader;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.launcher.utils.MCUtils;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
-import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
-import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.Utils;
@@ -49,9 +47,8 @@ import org.jackhuang.hellominecraft.utils.Utils;
  */
 public final class MinecraftVersionManager extends IMinecraftProvider {
 
-    private File baseFolder;
-    private final Profile profile;
-    private final Map<String, MinecraftVersion> versions = new TreeMap();
+    File baseFolder;
+    final Map<String, MinecraftVersion> versions = new TreeMap();
 
     /**
      *
@@ -59,7 +56,9 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
      */
     public MinecraftVersionManager(Profile p) {
         super(p);
-        this.profile = p;
+        mms = new MinecraftModService(p, this);
+        mds = new MinecraftDownloadService(p, this);
+        mas = new MinecraftAssetService(p, this);
         refreshVersions();
     }
 
@@ -192,76 +191,23 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     }
 
     @Override
-    public boolean refreshJson(String id) {
-        return MCUtils.downloadMinecraftVersionJson(baseFolder, id, Settings.getInstance().getDownloadSource());
-    }
-
-    @Override
-    public boolean refreshAssetsIndex(String id) {
-        MinecraftVersion mv = getVersionById(id);
-        if (mv == null)
-            return false;
-        return MCUtils.downloadMinecraftAssetsIndex(new File(baseFolder, "assets"), mv.assets, Settings.getInstance().getDownloadSource());
-    }
-
-    @Override
-    public boolean install(String id, DownloadType sourceType) {
-        MinecraftVersion v = MCUtils.downloadMinecraft(baseFolder, id, sourceType);
-        if (v != null) {
-            versions.put(v.id, v);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
     public File getRunDirectory(String id) {
         switch (profile.getGameDirType()) {
-            case VERSION_FOLDER:
-                return new File(baseFolder, "versions/" + id + "/");
-            default:
-                return baseFolder;
+        case VERSION_FOLDER:
+            return new File(baseFolder, "versions/" + id + "/");
+        default:
+            return baseFolder;
         }
-    }
-
-    @Override
-    public List<GameLauncher.DownloadLibraryJob> getDownloadLibraries(DownloadType downloadType) {
-        ArrayList<DownloadLibraryJob> downloadLibraries = new ArrayList<>();
-        if (profile.getSelectedMinecraftVersion() == null)
-            return downloadLibraries;
-        MinecraftVersion v = profile.getSelectedMinecraftVersion().resolve(this, Settings.getInstance().getDownloadSource());
-        if (v.libraries != null)
-            for (IMinecraftLibrary l : v.libraries) {
-                l.init();
-                if (l.allow()) {
-                    File ff = l.getFilePath(baseFolder);
-                    if (!ff.exists()) {
-                        String libURL = downloadType.getProvider().getLibraryDownloadURL() + "/";
-                        libURL = downloadType.getProvider().getParsedLibraryDownloadURL(l.getDownloadURL(libURL, downloadType));
-                        if (libURL != null)
-                            downloadLibraries.add(new DownloadLibraryJob(l.name, libURL, ff));
-                    }
-                }
-            }
-        return downloadLibraries;
     }
 
     @Override
     public void open(String mv, String name) {
-        if (name == null)
-            Utils.openFolder(getRunDirectory(mv));
-        else
-            Utils.openFolder(new File(getRunDirectory(mv), name));
-    }
-
-    @Override
-    public File getAssets() {
-        return new File(profile.getCanonicalGameDirFile(), "assets");
+        Utils.openFolder((name == null) ? getRunDirectory(mv) : new File(getRunDirectory(mv), name));
     }
 
     @Override
     public GameLauncher.DecompressLibraryJob getDecompressLibraries() {
-        MinecraftVersion v = profile.getSelectedMinecraftVersion().resolve(this, Settings.getInstance().getDownloadSource());
+        MinecraftVersion v = profile.getSelectedMinecraftVersion().resolve(this);
         if (v.libraries == null)
             return null;
         ArrayList<File> unzippings = new ArrayList<>();
@@ -288,9 +234,9 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     }
 
     @Override
-    public IMinecraftLoader provideMinecraftLoader(UserProfileProvider p, DownloadType type)
-    throws IllegalStateException {
-        return new MinecraftLoader(profile, this, p, type);
+    public IMinecraftLoader provideMinecraftLoader(UserProfileProvider p)
+        throws IllegalStateException {
+        return new MinecraftLoader(profile, this, p);
     }
 
     @Override
@@ -334,10 +280,24 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
         }
     }
 
-    final MinecraftModService mms = new MinecraftModService(this);
+    final MinecraftModService mms;
 
     @Override
     public IMinecraftModService getModService() {
         return mms;
+    }
+
+    final MinecraftDownloadService mds;
+
+    @Override
+    public IMinecraftDownloadService getDownloadService() {
+        return mds;
+    }
+
+    final MinecraftAssetService mas;
+
+    @Override
+    public IMinecraftAssetService getAssetService() {
+        return mas;
     }
 }

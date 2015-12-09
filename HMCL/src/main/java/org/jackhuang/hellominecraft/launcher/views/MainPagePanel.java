@@ -390,7 +390,7 @@ public class MainPagePanel extends javax.swing.JPanel {
             @Override
             public void run() {
                 Thread.currentThread().setName("Game Launcher");
-                DefaultGameLauncher gl = new DefaultGameLauncher(getCurrentProfile(), li, l, Settings.getInstance().getDownloadSource());
+                DefaultGameLauncher gl = new DefaultGameLauncher(getCurrentProfile(), li, l);
                 gl.failEvent.register((sender, s) -> {
                     if (s != null)
                         MessageBox.Show(s);

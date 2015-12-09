@@ -21,7 +21,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Set;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
-import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 
 /**
  *
@@ -49,7 +48,7 @@ public class MinecraftClassicVersion extends MinecraftVersion {
     }
 
     @Override
-    public MinecraftVersion resolve(IMinecraftProvider manager, Set<String> resolvedSoFar, DownloadType sourceType) {
+    public MinecraftVersion resolve(IMinecraftProvider manager, Set<String> resolvedSoFar) {
         return this;
     }
 

@@ -21,9 +21,9 @@ import java.io.File;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.launcher.utils.MCUtils;
+import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerService;
 import org.jackhuang.hellominecraft.launcher.version.GameDirType;
-import org.jackhuang.hellominecraft.launcher.version.MinecraftService;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.Utils;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
@@ -365,8 +365,7 @@ public final class Profile {
         return is;
     }
     
-    transient final MinecraftService ms = new MinecraftService(this);
-    public MinecraftService getMinecraftService() {
-        return ms;
+    public DownloadType getDownloadType() {
+        return Settings.getInstance().getDownloadSource();
     }
 }

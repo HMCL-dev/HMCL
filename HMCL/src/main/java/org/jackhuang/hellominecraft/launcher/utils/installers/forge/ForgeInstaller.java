@@ -18,18 +18,15 @@
 package org.jackhuang.hellominecraft.launcher.utils.installers.forge;
 
 import org.jackhuang.hellominecraft.launcher.utils.installers.InstallProfile;
-import com.google.gson.JsonSyntaxException;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
-import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList.InstallerVersion;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
@@ -67,7 +64,7 @@ public class ForgeInstaller extends Task {
         File from = new File(gameDir, "versions" + File.separator + profile.install.minecraft);
         if (!from.exists())
             if (MessageBox.Show(C.i18n("install.no_version_if_intall")) == MessageBox.YES_OPTION) {
-                if (!mp.install(profile.install.minecraft, Settings.getInstance().getDownloadSource()))
+                if (!mp.getDownloadService().install(profile.install.minecraft))
                     throw new IllegalStateException(C.i18n("install.no_version"));
             } else
                 throw new IllegalStateException(C.i18n("install.no_version"));

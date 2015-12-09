@@ -17,11 +17,11 @@
  */
 package org.jackhuang.hellominecraft.utils;
 
-import org.jackhuang.hellominecraft.utils.functions.Consumer;
 import org.jackhuang.hellominecraft.utils.functions.Predicate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import rx.Observable;
 
 /**
  *
@@ -29,17 +29,9 @@ import java.util.Iterator;
  */
 public final class CollectionUtils {
 
-    public static <T> void forEach(Collection<T> coll, Consumer<T> p) {
-        for (T t : coll)
-            p.accept(t);
-    }
-
     public static <T> ArrayList<T> map(Collection<T> coll, Predicate<T> p) {
         ArrayList<T> newColl = new ArrayList<>();
-        forEach(coll, t -> {
-                    if (p.apply(t))
-                        newColl.add(t);
-                });
+        Observable.from(coll).filter(p).subscribe(newColl::add);
         return newColl;
     }
 

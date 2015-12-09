@@ -27,7 +27,6 @@ import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
-import org.jackhuang.hellominecraft.launcher.utils.MCUtils;
 import org.jackhuang.hellominecraft.launcher.utils.assets.AssetsIndex;
 import org.jackhuang.hellominecraft.launcher.utils.assets.AssetsObject;
 import org.jackhuang.hellominecraft.launcher.utils.assets.IAssetsHandler;
@@ -46,17 +45,13 @@ import rx.concurrency.Schedulers;
  */
 public class MinecraftLoader extends AbstractMinecraftLoader {
 
-    private MinecraftVersion version;
+    private final MinecraftVersion version;
     DownloadType dt;
     String text;
 
     public MinecraftLoader(Profile ver, IMinecraftProvider provider, UserProfileProvider lr) throws IllegalStateException {
-        this(ver, provider, lr, DownloadType.Mojang);
-    }
-
-    public MinecraftLoader(Profile ver, IMinecraftProvider provider, UserProfileProvider lr, DownloadType downloadtype) throws IllegalStateException {
         super(ver, provider, lr);
-        version = ver.getSelectedMinecraftVersion().resolve(provider, dt = downloadtype);
+        version = ver.getSelectedMinecraftVersion().resolve(provider);
     }
 
     @Override
@@ -95,7 +90,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
             t = t.replace("${profile_name}", provider.profile.getName());
             t = t.replace("${game_directory}", provider.getRunDirectory(version.id).getAbsolutePath());
             t = t.replace("${game_assets}", game_assets);
-            t = t.replace("${assets_root}", provider.getAssets().getAbsolutePath());
+            t = t.replace("${assets_root}", provider.getAssetService().getAssets().getAbsolutePath());
             t = t.replace("${auth_access_token}", lr.getAccessToken());
             t = t.replace("${user_type}", lr.getUserType());
             t = t.replace("${assets_index_name}", version.getAssets());
@@ -115,7 +110,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
 
         try {
             if (OS.os() == OS.OSX) {
-                list.add("-Xdock:icon=" + MCUtils.getAssetObject(C.gson, v.getCanonicalGameDir(), version.assets, "icons/minecraft.icns").getAbsolutePath());
+                list.add("-Xdock:icon=" + provider.getAssetService().getAssetObject(version.assets, "icons/minecraft.icns").getAbsolutePath());
                 list.add("-Xdock:name=Minecraft");
             }
         } catch (IOException e) {

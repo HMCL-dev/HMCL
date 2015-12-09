@@ -55,12 +55,7 @@ public class OperationSubscribeOn {
 
         @Override
         public void unsubscribe() {
-            scheduler.schedule(new Action0() {
-                @Override
-                public void call() {
-                    underlying.unsubscribe();
-                }
-            });
+            scheduler.schedule(underlying::unsubscribe);
         }
     }
 

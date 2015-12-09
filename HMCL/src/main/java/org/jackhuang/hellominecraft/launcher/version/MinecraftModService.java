@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftModService;
+import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.utils.ModInfo;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 
@@ -32,10 +33,11 @@ import org.jackhuang.hellominecraft.utils.system.FileUtils;
  *
  * @author huangyuhui
  */
-public class MinecraftModService implements IMinecraftModService {
+public class MinecraftModService extends IMinecraftModService {
     MinecraftVersionManager mgr;
 
-    public MinecraftModService(MinecraftVersionManager mgr) {
+    public MinecraftModService(Profile p, MinecraftVersionManager mgr) {
+        super(p);
         this.mgr = mgr;
     }
     

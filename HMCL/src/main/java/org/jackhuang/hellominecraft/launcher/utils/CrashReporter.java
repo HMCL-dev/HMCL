@@ -99,7 +99,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                 System.out.println(text);
 
             if (checkThrowable(e)) {
-                SwingUtilities.invokeLater(() -> LogWindow.instance.showAsCrashWindow(UpdateChecker.OUT_DATED));
+                SwingUtilities.invokeLater(() -> LogWindow.INSTANCE.showAsCrashWindow(UpdateChecker.OUT_DATED));
                 if (!UpdateChecker.OUT_DATED)
                     reportToServer(text, s);
             }

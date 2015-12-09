@@ -66,7 +66,7 @@ public final class Launcher {
         int len = tokenized.length;
 
         if (showInfo) {
-            LogWindow.instance.setTerminateGame(() -> Utils.shutdownForcely(1));
+            LogWindow.INSTANCE.setTerminateGame(() -> Utils.shutdownForcely(1));
             try {
                 File logFile = new File("hmclmc.log");
                 if (!logFile.exists())
@@ -84,9 +84,7 @@ public final class Launcher {
             println("Arguments: {\n" + StrUtils.parseParams("    ", args, "\n") + "\n}");
             println("Main Class: " + mainClass);
             println("Class Path: {\n" + StrUtils.parseParams("    ", tokenized, "\n") + "\n}");
-            SwingUtilities.invokeLater(() -> {
-                LogWindow.instance.setVisible(true);
-            });
+            SwingUtilities.invokeLater(() -> LogWindow.INSTANCE.setVisible(true));
         }
 
         URL[] urls = new URL[len];
@@ -126,8 +124,8 @@ public final class Launcher {
             System.err.println(C.i18n("crash.minecraft"));
             System.err.println(advice);
             System.err.println(trace);
-            LogWindow.instance.setExit(() -> true);
-            LogWindow.instance.setVisible(true);
+            LogWindow.INSTANCE.setExit(() -> true);
+            LogWindow.INSTANCE.setVisible(true);
             flag = 1;
         }
 

@@ -46,23 +46,23 @@ public final class Settings {
 
     public static final String DEFAULT_PROFILE = "Default";
 
-    public static final File settingsFile = new File(IOUtils.currentDir(), "hmcl.json");
+    public static final File SETTINGS_FILE = new File(IOUtils.currentDir(), "hmcl.json");
 
-    private static boolean isFirstLoad;
-    private static final Config settings;
+    private static boolean isFirstLoading;
+    private static final Config SETTINGS;
     public static final UpdateChecker UPDATE_CHECKER;
     public static final List<Java> JAVA;
 
     public static Config getInstance() {
-        return settings;
+        return SETTINGS;
     }
 
-    public static boolean isFirstLoad() {
-        return isFirstLoad;
+    public static boolean isFirstLoading() {
+        return isFirstLoading;
     }
 
     static {
-        settings = initSettings();
+        SETTINGS = initSettings();
         if (!getProfiles().containsKey(DEFAULT_PROFILE))
             getProfiles().put(DEFAULT_PROFILE, new Profile());
 
@@ -84,9 +84,9 @@ public final class Settings {
 
     private static Config initSettings() {
         Config c = new Config();
-        if (settingsFile.exists()) {
+        if (SETTINGS_FILE.exists()) {
             try {
-                String str = FileUtils.readFileToString(settingsFile);
+                String str = FileUtils.readFileToString(SETTINGS_FILE);
                 if (str == null || str.trim().equals(""))
                     HMCLog.log("Settings file is empty, use the default settings.");
                 else {
@@ -102,17 +102,17 @@ public final class Settings {
                     System.exit(1);
                 }
             }
-            isFirstLoad = StrUtils.isBlank(c.getUsername());
+            isFirstLoading = StrUtils.isBlank(c.getUsername());
         } else {
             HMCLog.log("No settings file here, may be first loading.");
-            isFirstLoad = true;
+            isFirstLoading = true;
         }
         return c;
     }
 
     public static void save() {
         try {
-            FileUtils.write(settingsFile, C.gsonPrettyPrinting.toJson(settings));
+            FileUtils.write(SETTINGS_FILE, C.gsonPrettyPrinting.toJson(SETTINGS));
         } catch (IOException ex) {
             HMCLog.err("Failed to save config", ex);
         }
@@ -123,7 +123,7 @@ public final class Settings {
     }
 
     public static Map<String, Profile> getProfiles() {
-        return settings.getConfigurations();
+        return SETTINGS.getConfigurations();
     }
 
     public static void setProfile(Profile ver) {
@@ -135,7 +135,7 @@ public final class Settings {
     }
 
     public static Profile getOneProfile() {
-        return settings.getConfigurations().firstEntry().getValue();
+        return SETTINGS.getConfigurations().firstEntry().getValue();
     }
 
     public static boolean trySetProfile(Profile ver) {

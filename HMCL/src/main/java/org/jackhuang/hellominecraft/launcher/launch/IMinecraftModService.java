@@ -19,19 +19,24 @@ package org.jackhuang.hellominecraft.launcher.launch;
 
 import java.io.File;
 import java.util.List;
+import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.utils.ModInfo;
 
 /**
  *
  * @author huangyuhui
  */
-public interface IMinecraftModService {
+public abstract class IMinecraftModService extends IMinecraftService {
 
-    List<ModInfo> getMods();
+    public IMinecraftModService(Profile profile) {
+        super(profile);
+    }
 
-    List<ModInfo> recacheMods();
+    public abstract List<ModInfo> getMods();
 
-    boolean addMod(File f);
+    public abstract List<ModInfo> recacheMods();
 
-    void removeMod(int[] index);
+    public abstract boolean addMod(File f);
+
+    public abstract void removeMod(int[] index);
 }

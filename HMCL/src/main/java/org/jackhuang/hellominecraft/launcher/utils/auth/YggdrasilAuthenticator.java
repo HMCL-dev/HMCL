@@ -18,10 +18,10 @@
 package org.jackhuang.hellominecraft.launcher.utils.auth;
 
 import com.google.gson.GsonBuilder;
+import java.net.Proxy;
 import java.util.Map;
 import javax.swing.JOptionPane;
 import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.utils.ArrayUtils;
 import org.jackhuang.hellominecraft.views.Selector;
 import org.jackhuang.hellominecraft.launcher.utils.auth.yggdrasil.GameProfile;
@@ -39,7 +39,7 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
 
     public YggdrasilAuthenticator(String clientToken) {
         super(clientToken);
-        ua = new YggdrasilAuthentication(Main.PROXY, clientToken);
+        ua = new YggdrasilAuthentication(Proxy.NO_PROXY, clientToken);
     }
 
     @Override

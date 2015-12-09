@@ -23,7 +23,6 @@ import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.launch.GameLauncher.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.launcher.utils.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.utils.auth.LoginInfo;
-import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.tasks.ParallelTask;
 import org.jackhuang.hellominecraft.tasks.TaskWindow;
@@ -34,11 +33,6 @@ public class DefaultGameLauncher extends GameLauncher {
 
     public DefaultGameLauncher(Profile version, LoginInfo info, IAuthenticator lg) {
         super(version, info, lg);
-        register();
-    }
-
-    public DefaultGameLauncher(Profile version, LoginInfo info, IAuthenticator lg, DownloadType downloadType) {
-        super(version, info, lg, downloadType);
         register();
     }
 

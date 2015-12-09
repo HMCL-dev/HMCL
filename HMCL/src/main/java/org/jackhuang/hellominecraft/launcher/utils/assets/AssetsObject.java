@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.utils.assets;
 
+
 /**
  *
  * @author huangyuhui

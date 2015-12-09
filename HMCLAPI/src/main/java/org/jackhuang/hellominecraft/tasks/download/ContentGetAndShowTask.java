@@ -46,9 +46,9 @@ public class ContentGetAndShowTask extends HTTPGetTask implements Event<String> 
 
     @Override
     public boolean call(Object sender, String value) {
-        LogWindow.instance.clean();
-        LogWindow.instance.log(value);
-        LogWindow.instance.setVisible(true);
+        LogWindow.INSTANCE.clean();
+        LogWindow.INSTANCE.log(value);
+        LogWindow.INSTANCE.setVisible(true);
         return true;
     }
 }

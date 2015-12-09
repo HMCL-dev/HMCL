@@ -57,7 +57,7 @@ public class LogWindow extends javax.swing.JFrame {
         System.setErr(new LauncherPrintStream(err));
     }
 
-    public static LogWindow instance = new LogWindow();
+    public static final LogWindow INSTANCE = new LogWindow();
 
     /**
      * This method is called from within the constructor to initialize the form.

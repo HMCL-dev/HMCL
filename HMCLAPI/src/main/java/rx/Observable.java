@@ -2478,6 +2478,10 @@ public class Observable<T> {
     public Observable<T> where(Func1<T, Boolean> predicate) {
         return where(this, predicate);
     }
+    
+    public final <R> Observable<R> flatMap(Func1<? super T, ? extends Observable<? extends R>> func) {
+        return merge(map(func));
+    }
 
     /**
      * Returns the last element of an observable sequence with a specified source.

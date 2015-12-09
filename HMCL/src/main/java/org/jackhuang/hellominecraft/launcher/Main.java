@@ -24,9 +24,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Authenticator;
-import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
-import java.net.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -108,7 +106,7 @@ public final class Main implements Runnable {
     public static String launcherName = "Hello Minecraft! Launcher";
     public static byte firstVer = 2, secondVer = 3, thirdVer = 5, forthVer = 5;
     public static int minimumLauncherVersion = 16;
-    public static Proxy PROXY;
+    //public static Proxy PROXY;
 
     /**
      * Make the version of HMCL.
@@ -178,8 +176,8 @@ public final class Main implements Runnable {
 
             HMCLog.log("*** " + Main.makeTitle() + " ***");
 
-            LogWindow.instance.clean();
-            LogWindow.instance.setTerminateGame(GameLauncher.PROCESS_MANAGER::stopAllProcesses);
+            LogWindow.INSTANCE.clean();
+            LogWindow.INSTANCE.setTerminateGame(GameLauncher.PROCESS_MANAGER::stopAllProcesses);
 
             try {
                 UIManager.setLookAndFeel(new HelloMinecraftLookAndFeel());
@@ -200,13 +198,13 @@ public final class Main implements Runnable {
                             return new PasswordAuthentication(Settings.getInstance().getProxyUserName(), Settings.getInstance().getProxyPassword().toCharArray());
                         }
                     });
-                PROXY = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(Settings.getInstance().getProxyHost(), Integer.parseInt(Settings.getInstance().getProxyPort())));
+                //PROXY = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(Settings.getInstance().getProxyHost(), Integer.parseInt(Settings.getInstance().getProxyPort())));
             } else {
-                PROXY = Proxy.NO_PROXY;
+                //PROXY = Proxy.NO_PROXY;
             }
 
             try {
-                MainFrame.showMainFrame(Settings.isFirstLoad());
+                MainFrame.showMainFrame(Settings.isFirstLoading());
             } catch (Throwable t) {
                 new CrashReporter(false).uncaughtException(Thread.currentThread(), t);
                 System.exit(1);
