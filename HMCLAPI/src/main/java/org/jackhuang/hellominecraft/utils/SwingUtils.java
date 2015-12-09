@@ -161,7 +161,7 @@ public class SwingUtils {
         char[] chars = longString.toCharArray();
         FontMetrics fontMetrics = jLabel1.getFontMetrics(jLabel1.getFont());
         for (int beginIndex = 0, limit = 1;; limit++) {
-            if (beginIndex + limit >= chars.length)
+            if (beginIndex + limit > chars.length)
                 break;
             if (fontMetrics.charsWidth(chars, beginIndex, limit) < jLabel1.getWidth()) {
                 if (beginIndex + limit < chars.length)

@@ -31,7 +31,7 @@ public final class CollectionUtils {
 
     public static <T> ArrayList<T> map(Collection<T> coll, Predicate<T> p) {
         ArrayList<T> newColl = new ArrayList<>();
-        Observable.from(coll).filter(p).subscribe(newColl::add);
+        Observable.from(coll).filter(t -> p.apply(t)).subscribe(t -> newColl.add(t));
         return newColl;
     }
 

@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
@@ -37,7 +38,6 @@ import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
-import rx.concurrency.Schedulers;
 
 /**
  *
@@ -74,11 +74,19 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         String[] splitted = org.jackhuang.hellominecraft.utils.StrUtils.tokenize(arg);
 
         if (!checkAssetsExist())
-            if (MessageBox.Show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                IAssetsHandler.ASSETS_HANDLER.getList(version, provider)
-                    .subscribeOn(Schedulers.newThread())
-                    .observeOn(Schedulers.eventQueue())
-                    .subscribe((value) -> TaskWindow.getInstance().addTask(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(dt.getProvider())).start());
+            if (MessageBox.Show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
+                IAssetsHandler.ASSETS_HANDLER.getList(version, provider).subscribe(a -> {
+                });
+                Runnable r = ()
+                    -> TaskWindow.getInstance().addTask(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(provider.profile.getDownloadType().getProvider())).start();
+
+                try {
+                    SwingUtilities.invokeAndWait(r);
+                } catch (Exception e) {
+                    HMCLog.err("Failed invokeAndWait", e);
+                    r.run();
+                }
+            }
 
         String game_assets = reconstructAssets().getAbsolutePath();
 

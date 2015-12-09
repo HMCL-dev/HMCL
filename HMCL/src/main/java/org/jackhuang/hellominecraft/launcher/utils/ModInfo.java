@@ -54,7 +54,7 @@ public class ModInfo implements Comparable<ModInfo> {
         if (f.renameTo(newf))
             location = newf;
     }
-    
+
     public void showURL() {
         if (url != null)
             Utils.openLink(url);
@@ -100,7 +100,28 @@ public class ModInfo implements Comparable<ModInfo> {
         boolean disabled = name.endsWith(".disabled");
         if (disabled)
             name = name.substring(0, name.length() - ".disabled".length());
-        return name.endsWith(".zip") || name.endsWith(".jar");
+        return name.endsWith(".zip") || name.endsWith(".jar") || name.endsWith("litemod");
+    }
+
+    private static ModInfo getForgeModInfo(File f, ZipFile jar, ZipEntry entry) throws IOException {
+        ModInfo i = new ModInfo();
+        i.location = f;
+        List<ModInfo> m = C.gson.fromJson(new InputStreamReader(jar.getInputStream(entry)),
+                                          new TypeToken<List<ModInfo>>() {
+                                      }.getType());
+        if (m != null && m.size() > 0) {
+            i = m.get(0);
+            i.location = f;
+        }
+        return i;
+    }
+
+    private static ModInfo getLiteLoaderModInfo(File f, ZipFile jar, ZipEntry entry) throws IOException {
+        ModInfo m = C.gson.fromJson(new InputStreamReader(jar.getInputStream(entry)),
+                                          ModInfo.class);
+        if (m == null) m = new ModInfo();
+        m.location = f;
+        return m;
     }
 
     public static ModInfo readModInfo(File f) {
@@ -109,19 +130,12 @@ public class ModInfo implements Comparable<ModInfo> {
         try {
             try (ZipFile jar = new ZipFile(f)) {
                 ZipEntry entry = jar.getEntry("mcmod.info");
-                if (entry == null)
-                    entry = jar.getEntry("litemod.json");
-                if (entry == null)
-                    return i;
-                else {
-                    List<ModInfo> m = C.gson.fromJson(new InputStreamReader(jar.getInputStream(entry)),
-                                                  new TypeToken<List<ModInfo>>() {
-                                                  }.getType());
-                    if (m != null && m.size() > 0) {
-                        i = m.get(0);
-                        i.location = f;
-                    }
-                }
+                if (entry != null)
+                    return getForgeModInfo(f, jar, entry);
+                entry = jar.getEntry("litemod.json");
+                if (entry != null)
+                    return getLiteLoaderModInfo(f, jar, entry);
+                return i;
             }
         } catch (IOException ex) {
             HMCLog.warn("File " + f + " is not a jar.", ex);

@@ -185,7 +185,13 @@ public final class GameSettingsPanel extends javax.swing.JPanel implements DropT
                 boolean hasLink = m.url != null;
                 String text = "<html>" + (hasLink ? "<a href=\"" + m.url + "\">" : "") + m.getName() + (hasLink ? "</a>" : "");
                 text += " by " + m.getAuthor();
-                text += "<br>" + (m.description == null ? "No mcmod.info found" : SwingUtils.getParsedJPanelText(lblModInfo, m.description));
+                String description = "No mod description found";
+                if (m.description != null) {
+                    description = "";
+                    for (String desc : m.description.split("\n"))
+                        description += SwingUtils.getParsedJPanelText(lblModInfo, desc) + "<br/>";
+                }
+                text += "<br>" + description;
                 lblModInfo.setText(text);
                 lblModInfo.setCursor(new java.awt.Cursor(hasLink ? java.awt.Cursor.HAND_CURSOR : java.awt.Cursor.DEFAULT_CURSOR));
             }
@@ -208,7 +214,7 @@ public final class GameSettingsPanel extends javax.swing.JPanel implements DropT
             public void stateChanged(ChangeEvent e) {
                 if (tabVersionEdit.getSelectedComponent() == pnlGameDownloads && !a) {
                     a = true;
-                    refreshDownloads(Settings.getInstance().getDownloadSource());
+                    refreshDownloads();
                 } else if (tabVersionEdit.getSelectedComponent() == pnlAutoInstall && !b) {
                     b = true;
                     forge.refreshVersions();
@@ -1172,12 +1178,12 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_btnRefreshLiteLoaderActionPerformed
 
     private void btnDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadActionPerformed
-        downloadMinecraft(Settings.getInstance().getDownloadSource());
+        downloadMinecraft();
         refreshVersions();
     }//GEN-LAST:event_btnDownloadActionPerformed
 
     private void btnRefreshGameDownloadsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshGameDownloadsActionPerformed
-        refreshDownloads(Settings.getInstance().getDownloadSource());
+        refreshDownloads();
     }//GEN-LAST:event_btnRefreshGameDownloadsActionPerformed
 
     private void btnExploreMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnExploreMouseClicked
@@ -1487,7 +1493,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
 
     //</editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Game Download">
-    public void refreshDownloads(final DownloadType provider) {
+    public void refreshDownloads() {
         DefaultTableModel model = (DefaultTableModel) lstDownloads.getModel();
         while (model.getRowCount() > 0)
             model.removeRow(0);
@@ -1501,12 +1507,8 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
                        }, lstDownloads::updateUI);
     }
 
-    void downloadMinecraft(DownloadType index) {
-        if (profile == null)
-            return;
-        if (lstDownloads.getSelectedRow() < 0)
-            refreshDownloads(Settings.getInstance().getDownloadSource());
-        if (lstDownloads.getSelectedRow() < 0) {
+    void downloadMinecraft() {
+        if (profile == null || lstDownloads.getSelectedRow() < 0) {
             MessageBox.Show(C.i18n("gamedownload.not_refreshed"));
             return;
         }

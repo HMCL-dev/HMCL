@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.launch;
 
 import java.io.IOException;
+import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.launch.GameLauncher.DownloadLibraryJob;
@@ -30,6 +31,8 @@ import org.jackhuang.hellominecraft.utils.system.Compressor;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 
 public class DefaultGameLauncher extends GameLauncher {
+    
+    private boolean fuckingFlag;
 
     public DefaultGameLauncher(Profile version, LoginInfo info, IAuthenticator lg) {
         super(version, info, lg);
@@ -43,12 +46,23 @@ public class DefaultGameLauncher extends GameLauncher {
             for (DownloadLibraryJob s : t)
                 parallelTask.addDependsTask(new LibraryDownloadTask(s));
             dw.addTask(parallelTask);
-            boolean flag = true;
-            if (t.size() > 0)
-                flag = dw.start();
-            if (!flag && MessageBox.Show(C.i18n("launch.not_finished_downloading_libraries"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                flag = true;
-            return flag;
+            Runnable r = () -> {
+                boolean flag = true;
+                if (t.size() > 0)
+                    flag = dw.start();
+                if (!flag && MessageBox.Show(C.i18n("launch.not_finished_downloading_libraries"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+                    flag = true;
+                synchronized(DefaultGameLauncher.this) {
+                    fuckingFlag = flag;
+                }
+            };
+            try {
+                SwingUtilities.invokeAndWait(r);
+            } catch (Exception e) {
+                HMCLog.err("InvokeAndWait failed.", e);
+                r.run();
+            }
+            return fuckingFlag;
         });
         decompressNativesEvent.register((sender, value) -> {
             if (value == null)

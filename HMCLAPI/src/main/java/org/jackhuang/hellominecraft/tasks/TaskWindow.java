@@ -219,8 +219,8 @@ implements ProgressProviderListener, Runnable, DoingDoneListener<Task> {
 
     @Override
     public void run() {
+        SwingUtilities.invokeLater(this::dispose);
         suc = true;
-        this.dispose();
         HMCLog.log("Tasks are finished.");
     }
 

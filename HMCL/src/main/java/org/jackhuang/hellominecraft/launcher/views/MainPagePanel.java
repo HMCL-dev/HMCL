@@ -386,7 +386,7 @@ public class MainPagePanel extends javax.swing.JPanel {
         }
         final IAuthenticator l = IAuthenticator.LOGINS.get(index);
         final LoginInfo li = new LoginInfo(Settings.getInstance().getUsername(), l.isLoggedIn() || l.isHidePasswordBox() ? null : new String(txtPassword.getPassword()));
-        Thread t = new Thread() {
+        new Thread() {
             @Override
             public void run() {
                 Thread.currentThread().setName("Game Launcher");
@@ -405,8 +405,7 @@ public class MainPagePanel extends javax.swing.JPanel {
                 listener.accept(gl);
                 gl.makeLaunchCommand();
             }
-        };
-        t.start();
+        }.start();
     }
     //</editor-fold>
 
