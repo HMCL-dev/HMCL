@@ -20,16 +20,20 @@ package org.jackhuang.hellominecraft.launcher;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.lang.reflect.Method;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.C;
+import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.views.LogWindow;
 import org.jackhuang.hellominecraft.launcher.launch.MinecraftCrashAdvicer;
 import org.jackhuang.hellominecraft.utils.DoubleOutputStream;
 import org.jackhuang.hellominecraft.utils.LauncherPrintStream;
+import org.jackhuang.hellominecraft.utils.MathUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.Utils;
 
@@ -42,12 +46,13 @@ public final class Launcher {
     public static void println(String s) {
         System.out.println(s);
     }
+    
+    static String classPath = "", proxyHost = "", proxyPort = "", proxyUsername = "", proxyPassword = "";
 
     public static void main(String[] args) {
         println("*** " + Main.makeTitle() + " ***");
 
         boolean showInfo = false;
-        String classPath = "";
         String mainClass = "net.minecraft.client.Minecraft";
 
         ArrayList<String> cmdList = new ArrayList<>();
@@ -57,6 +62,14 @@ public final class Launcher {
                 classPath = classPath.concat(s.substring("-cp=".length()));
             else if (s.startsWith("-mainClass="))
                 mainClass = s.substring("-mainClass=".length());
+            else if (s.startsWith("-proxyHost="))
+                proxyHost = s.substring("-proxyHost=".length());
+            else if (s.startsWith("-proxyPort="))
+                proxyPort = s.substring("-proxyPort=".length());
+            else if (s.startsWith("-proxyUsername="))
+                proxyUsername = s.substring("-proxyUsername=".length());
+            else if (s.startsWith("-proxyPassword="))
+                proxyPassword = s.substring("-proxyPassword=".length());
             else if (s.equals("-debug"))
                 showInfo = true;
             else
@@ -85,6 +98,22 @@ public final class Launcher {
             println("Main Class: " + mainClass);
             println("Class Path: {\n" + StrUtils.parseParams("    ", tokenized, "\n") + "\n}");
             SwingUtilities.invokeLater(() -> LogWindow.INSTANCE.setVisible(true));
+        }
+
+        if (StrUtils.isNotBlank(proxyHost) && StrUtils.isNotBlank(proxyPort) && MathUtils.canParseInt(proxyPort)) {
+            HMCLog.log("Initializing customized proxy");
+            System.setProperty("http.proxyHost", proxyHost);
+            System.setProperty("http.proxyPort", proxyPort);
+            if (StrUtils.isNotBlank(proxyUsername) && StrUtils.isNotBlank(proxyPassword))
+                Authenticator.setDefault(new Authenticator() {
+                    @Override
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(proxyUsername, proxyPassword.toCharArray());
+                    }
+                });
+            //PROXY = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(Settings.getInstance().getProxyHost(), Integer.parseInt(Settings.getInstance().getProxyPort())));
+        } else {
+            //PROXY = Proxy.NO_PROXY;
         }
 
         URL[] urls = new URL[len];

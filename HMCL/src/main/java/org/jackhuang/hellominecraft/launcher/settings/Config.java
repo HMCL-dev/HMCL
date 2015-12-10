@@ -120,8 +120,9 @@ public final class Config {
     }
 
     public TreeMap<String, Profile> getConfigurations() {
-        if (configurations == null) {
+        if (configurations == null)
             configurations = new TreeMap<>();
+        if (configurations.isEmpty()) {
             Profile profile = new Profile();
             configurations.put(profile.getName(), profile);
         }

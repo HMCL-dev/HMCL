@@ -28,6 +28,7 @@ import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
+import rx.Observable;
 
 /**
  *
@@ -41,10 +42,8 @@ public class LauncherSettingsPanel extends javax.swing.JPanel {
     public LauncherSettingsPanel() {
         initComponents();
 
-        String[] strings = new String[DownloadType.values().length];
-        for (int i = 0; i < strings.length; i++)
-            strings[i] = DownloadType.values()[i].getName();
-        cboDownloadSource.setModel(new DefaultComboBoxModel(strings));
+        Observable.from(DownloadType.values()).map(t -> t.getName()).toList()
+            .subscribe(t -> cboDownloadSource.setModel(new DefaultComboBoxModel(t.toArray(new String[0]))));
 
         txtBackgroundPath.setText(Settings.getInstance().getBgpath());
         txtProxyHost.setText(Settings.getInstance().getProxyHost());

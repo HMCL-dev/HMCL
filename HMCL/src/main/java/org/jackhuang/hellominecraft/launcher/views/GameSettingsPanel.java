@@ -105,16 +105,15 @@ public final class GameSettingsPanel extends javax.swing.JPanel implements DropT
         ppmExplore = new JPopupMenu();
         class ImplementedActionListener implements ActionListener {
 
+            String a;
+
             ImplementedActionListener(String s) {
                 a = s;
             }
-            String a;
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                Profile v = getProfile();
-                if (v != null)
-                    v.getMinecraftProvider().open(mcVersion, a);
+                getProfile().getMinecraftProvider().open(mcVersion, a);
             }
         }
         JMenuItem itm;
@@ -142,35 +141,31 @@ public final class GameSettingsPanel extends javax.swing.JPanel implements DropT
         ppmManage = new JPopupMenu();
         JMenuItem itm = new JMenuItem(C.i18n("versions.manage.rename"));
         itm.addActionListener((e) -> {
-            Profile v = getProfile();
-            if (v != null && mcVersion != null) {
+            if (mcVersion != null) {
                 String newName = JOptionPane.showInputDialog(C.i18n("versions.manage.rename.message"), mcVersion);
                 if (newName != null)
-                    if (v.getMinecraftProvider().renameVersion(mcVersion, newName))
+                    if (getProfile().getMinecraftProvider().renameVersion(mcVersion, newName))
                         refreshVersions();
             }
         });
         ppmManage.add(itm);
         itm = new JMenuItem(C.i18n("versions.manage.remove"));
         itm.addActionListener((e) -> {
-            Profile v = getProfile();
-            if (v != null && mcVersion != null && MessageBox.Show(C.i18n("versions.manage.remove.confirm") + mcVersion, MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                if (v.getMinecraftProvider().removeVersionFromDisk(mcVersion))
+            if (mcVersion != null && MessageBox.Show(C.i18n("versions.manage.remove.confirm") + mcVersion, MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+                if (getProfile().getMinecraftProvider().removeVersionFromDisk(mcVersion))
                     refreshVersions();
         });
         ppmManage.add(itm);
         itm = new JMenuItem(C.i18n("versions.manage.redownload_json"));
         itm.addActionListener((e) -> {
-            Profile v = getProfile();
-            if (v != null && mcVersion != null)
-                v.getMinecraftProvider().refreshJson(mcVersion);
+            if (mcVersion != null)
+                getProfile().getMinecraftProvider().refreshJson(mcVersion);
         });
         ppmManage.add(itm);
         itm = new JMenuItem(C.i18n("versions.manage.redownload_assets_index"));
         itm.addActionListener((e) -> {
-            Profile v = getProfile();
-            if (v != null && mcVersion != null)
-                v.getMinecraftProvider().getAssetService().refreshAssetsIndex(mcVersion);
+            if (mcVersion != null)
+                getProfile().getMinecraftProvider().getAssetService().refreshAssetsIndex(mcVersion);
         });
         ppmManage.add(itm);
     }
@@ -1126,19 +1121,18 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_btnNewProfileActionPerformed
 
     private void btnRemoveProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveProfileActionPerformed
-        if (getProfile() == null)
-            return;
         if (MessageBox.Show(C.i18n("ui.message.sure_remove", getProfile().getName()), MessageBox.YES_NO_OPTION) == MessageBox.NO_OPTION)
             return;
+        String name = getProfile().getName();
         if (Settings.delProfile(getProfile())) {
-            cboProfiles.removeItem(getProfile().getName());
+            cboProfiles.removeItem(name);
             prepare(getProfile());
             loadVersions();
         }
     }//GEN-LAST:event_btnRemoveProfileActionPerformed
 
     private void cboVersionsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboVersionsItemStateChanged
-        if (isLoading || evt.getStateChange() != ItemEvent.SELECTED || cboVersions.getSelectedIndex() < 0 || StrUtils.isBlank((String) cboVersions.getSelectedItem()) || getProfile() == null)
+        if (isLoading || evt.getStateChange() != ItemEvent.SELECTED || cboVersions.getSelectedIndex() < 0 || StrUtils.isBlank((String) cboVersions.getSelectedItem()))
             return;
         String mcv = (String) cboVersions.getSelectedItem();
         loadMinecraftVersion(mcv);
@@ -1252,7 +1246,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_cboLauncherVisibilityFocusLost
 
     private void btnDownloadAllAssetsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadAllAssetsActionPerformed
-        if (mcVersion != null && getProfile() != null)
+        if (mcVersion != null)
             getProfile().getMinecraftProvider().getAssetService().downloadAssets(mcVersion).run();
     }//GEN-LAST:event_btnDownloadAllAssetsActionPerformed
 
@@ -1277,8 +1271,6 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_txtWidthFocusLost
 
     private void txtGameDirFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtGameDirFocusLost
-        if (getProfile() == null)
-            return;
         getProfile().setGameDir(txtGameDir.getText());
         loadVersions();
     }//GEN-LAST:event_txtGameDirFocusLost
@@ -1307,7 +1299,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }//GEN-LAST:event_btnChoosingJavaDirActionPerformed
 
     private void cboJavaItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboJavaItemStateChanged
-        if (isLoading || evt.getStateChange() != ItemEvent.SELECTED || cboJava.getSelectedIndex() < 0 || StrUtils.isBlank((String) cboJava.getSelectedItem()) || getProfile() == null)
+        if (isLoading || evt.getStateChange() != ItemEvent.SELECTED || cboJava.getSelectedIndex() < 0 || StrUtils.isBlank((String) cboJava.getSelectedItem()))
             return;
         int idx = cboJava.getSelectedIndex();
         if (idx != -1) {
@@ -1325,11 +1317,11 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         fc.setMultiSelectionEnabled(true);
         if (fc.showOpenDialog(this) != JFileChooser.APPROVE_OPTION)
             return;
-        boolean flag = false;
+        boolean flag = true;
         for (File f : fc.getSelectedFiles())
-            flag |= !getProfile().getMinecraftProvider().getModService().addMod(f);
+            flag &= getProfile().getMinecraftProvider().getModService().addMod(f);
         reloadMods();
-        if (flag)
+        if (!flag)
             MessageBox.Show(C.I18N.getString("mods.failed"));
     }//GEN-LAST:event_btnAddModActionPerformed
 
@@ -1384,20 +1376,13 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     private void loadProfiles() {
         isLoading = true;
         cboProfiles.removeAllItems();
-        Profile firstProfile = null, selectedProfile = null;
         int index = 0, i = 0;
         for (Profile s : Settings.getProfilesFiltered()) {
-            if (firstProfile == null)
-                firstProfile = s;
             cboProfiles.addItem(s.getName());
-            if (Settings.getInstance().getLast() != null && Settings.getInstance().getLast().equals(s.getName())) {
+            if (Settings.getInstance().getLast() != null && Settings.getInstance().getLast().equals(s.getName()))
                 index = i;
-                selectedProfile = s;
-            }
             i++;
         }
-        if (selectedProfile == null)
-            selectedProfile = Settings.getOneProfile();
 
         isLoading = false;
         if (index < cboProfiles.getItemCount()) {
@@ -1408,10 +1393,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }
 
     final Profile getProfile() {
-        if (cboProfiles.getSelectedIndex() >= 0)
-            return Settings.getProfile(cboProfiles.getSelectedItem().toString());
-        else
-            return Settings.getProfile(null);
+        return Settings.getProfile((String) cboProfiles.getSelectedItem());
     }
 
     void prepare(Profile profile) {
@@ -1444,8 +1426,6 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }
 
     void loadVersions() {
-        if (getProfile() == null)
-            return;
         isLoading = true;
         cboVersions.removeAllItems();
         int index = 0, i = 0;
@@ -1502,7 +1482,7 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
     }
 
     void downloadMinecraft() {
-        if (getProfile() == null || lstDownloads.getSelectedRow() < 0) {
+        if (lstDownloads.getSelectedRow() < 0) {
             MessageBox.Show(C.i18n("gamedownload.not_refreshed"));
             return;
         }
@@ -1586,18 +1566,12 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
         private List<InstallerVersionList.InstallerVersion> loadVersions(InstallerVersionList list, JTable table) {
             if (list == null)
                 return null;
-            DefaultTableModel model = (DefaultTableModel) table.getModel();
-            while (model.getRowCount() > 0)
-                model.removeRow(0);
+            DefaultTableModel model = SwingUtils.clearDefaultTable(table);
             String mcver = StrUtils.formatVersion(getMinecraftVersionFormatted());
             List<InstallerVersionList.InstallerVersion> ver = list.getVersions(mcver);
             if (ver != null) {
-                for (InstallerVersionList.InstallerVersion v : ver) {
-                    Object a = v.selfVersion == null ? "null" : v.selfVersion;
-                    Object b = v.mcVersion == null ? "null" : v.mcVersion;
-                    Object[] row = new Object[] {a, b};
-                    model.addRow(row);
-                }
+                for (InstallerVersionList.InstallerVersion v : ver)
+                    model.addRow(new Object[] {v.selfVersion == null ? "null" : v.selfVersion, v.mcVersion == null ? "null" : v.mcVersion});
                 table.updateUI();
             }
             return ver;
@@ -1634,8 +1608,6 @@ btnRefreshLiteLoader.addActionListener(new java.awt.event.ActionListener() {
 
     public void onSelected() {
         loadProfiles();
-        if (getProfile() == null)
-            return;
         if (getProfile().getMinecraftProvider().getVersionCount() <= 0)
             versionChanged(null);
         else

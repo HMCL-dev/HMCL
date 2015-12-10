@@ -276,14 +276,14 @@ public class MainPagePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_txtPlayerNameFocusLost
 
     private void cboLoginModeItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboLoginModeItemStateChanged
-        if (preaparingAuth)
+        if (preparingAuth)
             return;
         int index = cboLoginMode.getSelectedIndex();
         if (index < 0)
             return;
 
         IAuthenticator l = IAuthenticator.LOGINS.get(index);
-        if (l.isHidePasswordBox()) {
+        if (l.hasPassword()) {
             pnlPassword.setVisible(false);
             lblUserName.setText(C.i18n("login.username"));
         } else {
@@ -327,7 +327,7 @@ public class MainPagePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_txtPasswordActionPerformed
 
     private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
-        if (preaparingAuth)
+        if (preparingAuth)
             return;
         int index = cboLoginMode.getSelectedIndex();
 
@@ -345,7 +345,7 @@ public class MainPagePanel extends javax.swing.JPanel {
             if (index < 0)
                 return;
             IAuthenticator l = IAuthenticator.LOGINS.get(index);
-            if (l.isHidePasswordBox())
+            if (l.hasPassword())
                 btnRunActionPerformed();
             else if (!l.isLoggedIn())
                 txtPassword.requestFocus();
@@ -385,7 +385,7 @@ public class MainPagePanel extends javax.swing.JPanel {
             return;
         }
         final IAuthenticator l = IAuthenticator.LOGINS.get(index);
-        final LoginInfo li = new LoginInfo(Settings.getInstance().getUsername(), l.isLoggedIn() || l.isHidePasswordBox() ? null : new String(txtPassword.getPassword()));
+        final LoginInfo li = new LoginInfo(Settings.getInstance().getUsername(), l.isLoggedIn() || l.hasPassword() ? null : new String(txtPassword.getPassword()));
         new Thread() {
             @Override
             public void run() {
@@ -411,7 +411,7 @@ public class MainPagePanel extends javax.swing.JPanel {
 
     // <editor-fold defaultstate="collapsed" desc="Loads">
     private void prepareAuths() {
-        preaparingAuth = true;
+        preparingAuth = true;
         cboLoginMode.removeAllItems();
         for (IAuthenticator str : IAuthenticator.LOGINS)
             try {
@@ -421,7 +421,7 @@ public class MainPagePanel extends javax.swing.JPanel {
             }
         int loginType = Settings.getInstance().getLoginType();
         if (0 <= loginType && loginType < cboLoginMode.getItemCount()) {
-            preaparingAuth = false;
+            preparingAuth = false;
 
             //cboLoginMode.setSelectedIndex(loginType);
 
@@ -486,7 +486,7 @@ public class MainPagePanel extends javax.swing.JPanel {
     //</editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="Private Variables">
-    boolean preaparingAuth = true;
+    boolean preparingAuth = true;
     private boolean isLoading = false;
     private final javax.swing.JPanel pnlButtons;
     private final ConstomButton btnRun;
@@ -518,12 +518,12 @@ public class MainPagePanel extends javax.swing.JPanel {
         });
     }
 
-    public void onShow(boolean showLeft) {
-        if (showLeft)
+    public void onShow(boolean showFirstLoadingMessage) {
+        if (showFirstLoadingMessage)
             SwingUtilities.invokeLater(() -> MainFrame.INSTANCE.showMessage(C.i18n("ui.message.first_load")));
         if (cboLoginMode.getSelectedIndex() >= 0 && cboLoginMode.getSelectedIndex() < cboLoginMode.getItemCount()) {
             IAuthenticator l = IAuthenticator.LOGINS.get(cboLoginMode.getSelectedIndex());
-            if (!l.isHidePasswordBox() && !l.isLoggedIn())
+            if (!l.hasPassword() && !l.isLoggedIn())
                 SwingUtilities.invokeLater(() -> MainFrame.INSTANCE.showMessage(C.i18n("ui.message.enter_password")));
         }
     }

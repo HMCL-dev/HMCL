@@ -55,7 +55,7 @@ public final class OfflineAuthenticator extends IAuthenticator {
     }
 
     @Override
-    public boolean isHidePasswordBox() {
+    public boolean hasPassword() {
         return true;
     }
 

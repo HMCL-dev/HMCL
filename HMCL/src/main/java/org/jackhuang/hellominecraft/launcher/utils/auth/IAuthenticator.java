@@ -72,9 +72,9 @@ public abstract class IAuthenticator {
     /**
      * Has password?
      *
-     * @return Will I hide password box?
+     * @return Need to hide password box?
      */
-    public boolean isHidePasswordBox() {
+    public boolean hasPassword() {
         return false;
     }
 
