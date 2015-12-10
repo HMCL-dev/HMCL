@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.tasks;
 
+import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import javax.swing.SwingUtilities;
@@ -31,13 +32,13 @@ import org.jackhuang.hellominecraft.utils.SwingUtils;
  * @author huangyuhui
  */
 public class TaskWindow extends javax.swing.JDialog
-implements ProgressProviderListener, Runnable, DoingDoneListener<Task> {
+    implements ProgressProviderListener, Runnable, DoingDoneListener<Task> {
 
-    private static final TaskWindow instance = new TaskWindow();
+    private static final TaskWindow INSTANCE = new TaskWindow();
 
     private static TaskWindow inst() {
-        instance.clean();
-        return instance;
+        INSTANCE.clean();
+        return INSTANCE;
     }
 
     public static TaskWindowFactory getInstance() {
@@ -200,12 +201,13 @@ implements ProgressProviderListener, Runnable, DoingDoneListener<Task> {
     private javax.swing.JScrollPane srlDownload;
     // End of variables declaration//GEN-END:variables
 
-    ArrayList<Task> tasks = new ArrayList<>();
-    ArrayList<Integer> progresses = new ArrayList<>();
+    final ArrayList<Task> tasks = new ArrayList<>();
+    final ArrayList<Integer> progresses = new ArrayList<>();
 
     @Override
     public void setProgress(Task task, int progress, int max) {
         SwingUtilities.invokeLater(() -> {
+            if (task == null) return;
             int idx = tasks.indexOf(task);
             if (idx == -1)
                 return;
@@ -229,7 +231,7 @@ implements ProgressProviderListener, Runnable, DoingDoneListener<Task> {
         task.setProgressProviderListener(this);
 
         SwingUtilities.invokeLater(() -> {
-            if (taskList == null)
+            if (taskList == null || task == null)
                 return;
             tasks.add(task);
             progresses.add(0);
@@ -245,7 +247,7 @@ implements ProgressProviderListener, Runnable, DoingDoneListener<Task> {
     @Override
     public void onDone(Task task) {
         SwingUtilities.invokeLater(() -> {
-            if (taskList == null)
+            if (taskList == null || task == null)
                 return;
             pgsTotal.setMaximum(taskList.taskCount());
             pgsTotal.setValue(pgsTotal.getValue() + 1);
@@ -261,7 +263,7 @@ implements ProgressProviderListener, Runnable, DoingDoneListener<Task> {
     @Override
     public void onFailed(Task task) {
         SwingUtilities.invokeLater(() -> {
-            if (taskList == null)
+            if (taskList == null || task == null)
                 return;
             failReasons.add(task.getInfo() + ": " + (null == task.getFailReason() ? "No exception" : (StrUtils.isBlank(task.getFailReason().getLocalizedMessage()) ? task.getFailReason().getClass().getSimpleName() : task.getFailReason().getLocalizedMessage())));
             pgsTotal.setMaximum(taskList.taskCount());
@@ -283,7 +285,7 @@ implements ProgressProviderListener, Runnable, DoingDoneListener<Task> {
     @Override
     public void setStatus(Task task, String sta) {
         SwingUtilities.invokeLater(() -> {
-            if (taskList == null)
+            if (taskList == null || task == null)
                 return;
             int idx = tasks.indexOf(task);
             if (idx == -1)
@@ -295,6 +297,7 @@ implements ProgressProviderListener, Runnable, DoingDoneListener<Task> {
     public static class TaskWindowFactory {
 
         LinkedList<Task> ll = new LinkedList<>();
+        boolean flag;
 
         public TaskWindowFactory addTask(Task t) {
             ll.add(t);
@@ -302,14 +305,28 @@ implements ProgressProviderListener, Runnable, DoingDoneListener<Task> {
         }
 
         public boolean start() {
-            synchronized (instance) {
-                if (instance.isVisible())
-                    return false;
-                TaskWindow tw = inst();
-                for (Task t : ll)
-                    tw.addTask(t);
-                return tw.start();
-            }
+            Runnable r = () -> {
+                synchronized (INSTANCE) {
+                    if (INSTANCE.isVisible()) {
+                        flag = false;
+                        return;
+                    }
+                    TaskWindow tw = inst();
+                    for (Task t : ll)
+                        tw.addTask(t);
+                    flag = tw.start();
+                }
+            };
+            if (EventQueue.isDispatchThread())
+                r.run();
+            else
+                try {
+                    EventQueue.invokeAndWait(r);
+                } catch (Exception e) {
+                    HMCLog.err("Failed to invokeAndWait, the UI will work abnormally.", e);
+                    r.run();
+                }
+            return flag;
         }
     }
 }

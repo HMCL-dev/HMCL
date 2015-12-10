@@ -33,7 +33,6 @@ import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.utils.VersionNumber;
 import rx.Observable;
 import rx.Observer;
-import rx.subscriptions.Subscriptions;
 
 /**
  *
@@ -47,10 +46,10 @@ public class AssetsMojangLoader extends IAssetsHandler {
 
     @Override
     public Observable<String[]> getList(MinecraftVersion mv, IMinecraftProvider mp) {
-        return Observable.<String[]>create((Observer<String[]> t1) -> {
+        return Observable.<String[]>createWithEmptySubscription((Observer<String[]> t1) -> {
             if (mv == null) {
                 t1.onError(null);
-                return Subscriptions.empty();
+                return;
             }
             String assetsId = mv.assets == null ? "legacy" : mv.assets;
             File assets = mp.getAssetService().getAssets();
@@ -58,7 +57,7 @@ public class AssetsMojangLoader extends IAssetsHandler {
             File f = IOUtils.tryGetCanonicalFile(new File(assets, "indexes/" + assetsId + ".json"));
             if (!f.exists() && !mp.getAssetService().downloadMinecraftAssetsIndex(assetsId)) {
                 t1.onError(null);
-                return Subscriptions.empty();
+                return;
             }
 
             String result;
@@ -67,12 +66,12 @@ public class AssetsMojangLoader extends IAssetsHandler {
             } catch (IOException ex) {
                 HMCLog.warn("Failed to read index json: " + f, ex);
                 t1.onError(null);
-                return Subscriptions.empty();
+                return;
             }
             if (StrUtils.isBlank(result)) {
                 HMCLog.err("Index json is empty, please redownload it!");
                 t1.onError(null);
-                return Subscriptions.empty();
+                return;
             }
             AssetsIndex o;
             try {
@@ -80,7 +79,7 @@ public class AssetsMojangLoader extends IAssetsHandler {
             } catch (Exception e) {
                 HMCLog.err("Failed to parse index json, please redownload it!", e);
                 t1.onError(null);
-                return Subscriptions.empty();
+                return;
             }
             assetsDownloadURLs = new ArrayList<>();
             assetsLocalNames = new ArrayList<>();
@@ -100,7 +99,6 @@ public class AssetsMojangLoader extends IAssetsHandler {
 
             t1.onNext(al.toArray(new String[1]));
             t1.onCompleted();
-            return Subscriptions.empty();
         });
     }
 

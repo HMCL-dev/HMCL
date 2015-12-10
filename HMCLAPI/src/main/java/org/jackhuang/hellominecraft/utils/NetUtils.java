@@ -30,7 +30,6 @@ import java.util.Map;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import rx.Observable;
-import rx.subscriptions.Subscriptions;
 
 /**
  *
@@ -160,13 +159,12 @@ public final class NetUtils {
     }
     
     public static Observable<String> getRx(String url) {
-        return Observable.create(t1 -> {
+        return Observable.createWithEmptySubscription(t1 -> {
             try {
                 t1.onNext(get(url));
             } catch(Exception e) {
                 t1.onError(e);
             }
-            return Subscriptions.empty();
         });
     }
 }

@@ -293,7 +293,7 @@ public final class MainFrame extends DraggableFrame {
                 backgroundLabel.setIcon(background);
             centralPanel.add(backgroundLabel, -1);
         } else
-            HMCLog.warn("No Background Image, the background will be white!");
+            HMCLog.warn("No Background Image, the background will be empty!");
     }
 
     public JPanel getTitleBar() {

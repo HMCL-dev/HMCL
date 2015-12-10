@@ -131,12 +131,15 @@ public class SwingUtils {
      * Clear the JTable
      *
      * @param table JTable with DefaultTableModel.
+     * 
+     * @return To make the code succinct
      */
-    public static void clearDefaultTable(JTable table) {
+    public static DefaultTableModel clearDefaultTable(JTable table) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         while (model.getRowCount() > 0)
             model.removeRow(0);
         table.updateUI();
+        return model;
     }
 
     public static void appendLast(JTable table, Object... elements) {

@@ -62,7 +62,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                 t.printStackTrace();
             }
             return false;
-        } else if (s.contains("java.lang.NoClassDefFoundError") || s.contains("java.lang.IncompatibleClassChangeError") || s.contains("java.lang.ClassFormatError")) {
+        } else if (s.contains("java.lang.NoClassDefFoundError") || s.contains("java.lang.VerifyError") || s.contains("java.lang.NoSuchMethodError") || s.contains("java.lang.IncompatibleClassChangeError") || s.contains("java.lang.ClassFormatError")) {
             System.out.println(C.i18n("crash.NoClassDefFound"));
             try {
                 MessageBox.Show(C.i18n("crash.NoClassDefFound"));
@@ -98,7 +98,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             else
                 System.out.println(text);
 
-            if (checkThrowable(e)) {
+            if (checkThrowable(e) && !System.getProperty("java.vm.name").contains("OpenJDK")) {
                 SwingUtilities.invokeLater(() -> LogWindow.INSTANCE.showAsCrashWindow(UpdateChecker.OUT_DATED));
                 if (!UpdateChecker.OUT_DATED)
                     reportToServer(text, s);

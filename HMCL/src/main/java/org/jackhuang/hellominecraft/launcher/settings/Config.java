@@ -120,8 +120,11 @@ public final class Config {
     }
 
     public TreeMap<String, Profile> getConfigurations() {
-        if (configurations == null)
+        if (configurations == null) {
             configurations = new TreeMap<>();
+            Profile profile = new Profile();
+            configurations.put(profile.getName(), profile);
+        }
         return configurations;
     }
 
@@ -147,9 +150,6 @@ public final class Config {
         clientToken = UUID.randomUUID().toString();
         username = "";
         logintype = downloadtype = 0;
-        configurations = new TreeMap<>();
-        Profile profile = new Profile();
-        configurations.put(profile.getName(), profile);
         enableShadow = false;
         theme = 0;
     }

@@ -119,6 +119,7 @@ public final class Settings {
     }
 
     public static Profile getProfile(String name) {
+        if (name == null) return getProfiles().get("Default");
         return getProfiles().get(name);
     }
 

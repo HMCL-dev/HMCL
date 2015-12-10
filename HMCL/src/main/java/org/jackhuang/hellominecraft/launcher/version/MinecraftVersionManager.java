@@ -207,7 +207,9 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public GameLauncher.DecompressLibraryJob getDecompressLibraries() {
-        MinecraftVersion v = profile.getSelectedMinecraftVersion().resolve(this);
+        MinecraftVersion v = getSelectedMinecraftVersion();
+        if (v == null) return null;
+        v = v.resolve(this);
         if (v.libraries == null)
             return null;
         ArrayList<File> unzippings = new ArrayList<>();

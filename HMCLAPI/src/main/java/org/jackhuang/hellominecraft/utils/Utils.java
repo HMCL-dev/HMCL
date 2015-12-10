@@ -93,9 +93,10 @@ public final class Utils {
         return new ImageIcon(i.getImage().getScaledInstance(x, y, Image.SCALE_SMOOTH));
     }
 
-    public static ImageIcon searchBackgroundImage(ImageIcon background, String bgpath, int width, int height) {
+    public static ImageIcon searchBackgroundImage(ImageIcon init, String bgpath, int width, int height) {
         Random r = new Random();
         boolean loaded = false;
+        ImageIcon background = init;
 
         // bgpath
         if (StrUtils.isNotBlank(bgpath) && !loaded) {
@@ -142,6 +143,7 @@ public final class Utils {
             }
         }
 
+        if (background == null) return init;
         return background;
     }
 

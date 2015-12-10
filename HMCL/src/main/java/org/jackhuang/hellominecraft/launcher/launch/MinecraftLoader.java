@@ -77,15 +77,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
             if (MessageBox.Show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
                 IAssetsHandler.ASSETS_HANDLER.getList(version, provider).subscribe(a -> {
                 });
-                Runnable r = ()
-                    -> TaskWindow.getInstance().addTask(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(provider.profile.getDownloadType().getProvider())).start();
-
-                try {
-                    SwingUtilities.invokeAndWait(r);
-                } catch (Exception e) {
-                    HMCLog.err("Failed invokeAndWait", e);
-                    r.run();
-                }
+                TaskWindow.getInstance().addTask(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(provider.profile.getDownloadType().getProvider())).start();
             }
 
         String game_assets = reconstructAssets().getAbsolutePath();

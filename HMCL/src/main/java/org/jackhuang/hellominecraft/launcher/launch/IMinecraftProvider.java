@@ -85,7 +85,6 @@ public abstract class IMinecraftProvider {
      *
      * @see org.jackhuang.hellominecraft.launcher.launch.IMinecraftLoader
      * @param p    player informations, including username & auth_token
-     * @param type where to download
      *
      * @return what you want
      *
