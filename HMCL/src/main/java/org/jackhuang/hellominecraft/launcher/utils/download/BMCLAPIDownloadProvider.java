@@ -23,11 +23,10 @@ import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionLi
  *
  * @author huangyuhui
  */
-public class BMCLAPIDownloadProvider implements IDownloadProvider {
+public class BMCLAPIDownloadProvider extends IDownloadProvider {
 
     @Override
     public InstallerVersionList getForgeInstaller() {
-        //return org.jackhuang.hellominecraft.launcher.utils.installers.forge.bmcl.ForgeBMCLVersionList.getInstance();
         return org.jackhuang.hellominecraft.launcher.utils.installers.forge.vanilla.MinecraftForgeVersionList.getInstance();
     }
 
@@ -39,17 +38,6 @@ public class BMCLAPIDownloadProvider implements IDownloadProvider {
     @Override
     public InstallerVersionList getOptiFineInstaller() {
         return org.jackhuang.hellominecraft.launcher.utils.installers.optifine.bmcl.OptiFineBMCLVersionList.getInstance();
-    }
-
-    @Override
-    public InstallerVersionList getInstallerByType(String type) {
-        if (type.equalsIgnoreCase("forge"))
-            return getForgeInstaller();
-        if (type.equalsIgnoreCase("liteloader"))
-            return getLiteLoaderInstaller();
-        if (type.equalsIgnoreCase("optifine"))
-            return getOptiFineInstaller();
-        return null;
     }
 
     @Override

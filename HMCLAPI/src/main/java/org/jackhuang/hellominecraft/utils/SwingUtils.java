@@ -69,9 +69,9 @@ public class SwingUtils {
      *
      * @param link
      */
-    public static void openLink(URI link) {
+    public static void openLink(String link) {
         try {
-            java.awt.Desktop.getDesktop().browse(link);
+            java.awt.Desktop.getDesktop().browse(new URI(link));
         } catch (Throwable e) {
             HMCLog.warn("Failed to open link: " + link, e);
         }
@@ -138,7 +138,6 @@ public class SwingUtils {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         while (model.getRowCount() > 0)
             model.removeRow(0);
-        table.updateUI();
         return model;
     }
 

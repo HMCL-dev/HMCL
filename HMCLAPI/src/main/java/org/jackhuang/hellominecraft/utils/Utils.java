@@ -69,16 +69,6 @@ public final class Utils {
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text), null);
     }
 
-    public static boolean openLink(String url) {
-        try {
-            Desktop.getDesktop().browse(new URI(url));
-            return true;
-        } catch (Exception ex) {
-            HMCLog.warn("Failed to open link:" + url, ex);
-            return false;
-        }
-    }
-
     public static void openFolder(File f) {
         try {
             f.mkdirs();

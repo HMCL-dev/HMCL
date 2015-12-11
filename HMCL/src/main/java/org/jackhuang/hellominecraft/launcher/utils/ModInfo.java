@@ -28,7 +28,7 @@ import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.utils.Utils;
+import org.jackhuang.hellominecraft.utils.SwingUtils;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 
 /**
@@ -57,7 +57,7 @@ public class ModInfo implements Comparable<ModInfo> {
 
     public void showURL() {
         if (url != null)
-            Utils.openLink(url);
+            SwingUtils.openLink(url);
     }
 
     @Override

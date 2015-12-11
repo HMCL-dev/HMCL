@@ -17,13 +17,14 @@
  */
 package org.jackhuang.hellominecraft.launcher.utils.download;
 
+import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerType;
 import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList;
 
 /**
  *
  * @author huangyuhui
  */
-public class MojangDownloadProvider implements IDownloadProvider {
+public class MojangDownloadProvider extends IDownloadProvider {
 
     @Override
     public InstallerVersionList getForgeInstaller() {
@@ -38,17 +39,6 @@ public class MojangDownloadProvider implements IDownloadProvider {
     @Override
     public InstallerVersionList getOptiFineInstaller() {
         return org.jackhuang.hellominecraft.launcher.utils.installers.optifine.vanilla.OptiFineVersionList.getInstance();
-    }
-
-    @Override
-    public InstallerVersionList getInstallerByType(String type) {
-        if (type.equalsIgnoreCase("forge"))
-            return getForgeInstaller();
-        if (type.equalsIgnoreCase("liteloader"))
-            return getLiteLoaderInstaller();
-        if (type.equalsIgnoreCase("optifine"))
-            return getOptiFineInstaller();
-        return null;
     }
 
     @Override

@@ -29,6 +29,7 @@ import org.jackhuang.hellominecraft.utils.functions.NonFunction;
 import org.jackhuang.hellominecraft.utils.DoubleOutputStream;
 import org.jackhuang.hellominecraft.utils.LauncherPrintStream;
 import org.jackhuang.hellominecraft.utils.LogWindowOutputStream;
+import org.jackhuang.hellominecraft.utils.SwingUtils;
 import org.jackhuang.hellominecraft.utils.Utils;
 
 /**
@@ -224,15 +225,15 @@ public class LogWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCopyActionPerformed
 
     private void btnMCBBSActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMCBBSActionPerformed
-        Utils.openLink(C.URL_PUBLISH);
+        SwingUtils.openLink(C.URL_PUBLISH);
     }//GEN-LAST:event_btnMCBBSActionPerformed
 
     private void btnTieBaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTieBaActionPerformed
-        Utils.openLink(C.URL_TIEBA);
+        SwingUtils.openLink(C.URL_TIEBA);
     }//GEN-LAST:event_btnTieBaActionPerformed
 
     private void btnMCFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMCFActionPerformed
-        Utils.openLink(C.URL_MINECRAFTFORUM);
+        SwingUtils.openLink(C.URL_MINECRAFTFORUM);
     }//GEN-LAST:event_btnMCFActionPerformed
 
     private void btnTerminateGameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTerminateGameActionPerformed
@@ -241,7 +242,7 @@ public class LogWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_btnTerminateGameActionPerformed
 
     private void btnGitHubActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGitHubActionPerformed
-        Utils.openLink(C.URL_GITHUB);
+        SwingUtils.openLink(C.URL_GITHUB);
     }//GEN-LAST:event_btnGitHubActionPerformed
 
     public void log(String status) {

@@ -44,13 +44,13 @@ public final class InstallerService {
         this.p = p;
     }
     
-    public Task download(InstallerVersion v, String type) {
+    public Task download(InstallerVersion v, InstallerType type) {
         switch(type) {
-            case "forge":
+            case Forge:
                 return downloadForge(v);
-            case "optifine":
+            case Optifine:
                 return downloadOptifine(v);
-            case "liteloader":
+            case LiteLoader:
                 return downloadLiteLoader(v);
             default:
                 return null;

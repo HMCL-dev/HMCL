@@ -17,33 +17,45 @@
  */
 package org.jackhuang.hellominecraft.launcher.utils.download;
 
+import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerType;
 import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList;
 
 /**
  *
  * @author huangyuhui
  */
-public interface IDownloadProvider {
+public abstract class IDownloadProvider {
 
-    InstallerVersionList getInstallerByType(String type);
+    public InstallerVersionList getInstallerByType(InstallerType type) {
+        switch(type) {
+        case Forge:
+            return getForgeInstaller();
+        case LiteLoader:
+            return getLiteLoaderInstaller();
+        case Optifine:
+            return getOptiFineInstaller();
+        default:
+            return null;
+        }
+    }
+    
+    public abstract InstallerVersionList getForgeInstaller();
 
-    InstallerVersionList getForgeInstaller();
+    public abstract InstallerVersionList getLiteLoaderInstaller();
 
-    InstallerVersionList getLiteLoaderInstaller();
+    public abstract InstallerVersionList getOptiFineInstaller();
 
-    InstallerVersionList getOptiFineInstaller();
+    public abstract String getLibraryDownloadURL();
 
-    String getLibraryDownloadURL();
+    public abstract String getVersionsDownloadURL();
 
-    String getVersionsDownloadURL();
+    public abstract String getIndexesDownloadURL();
 
-    String getIndexesDownloadURL();
+    public abstract String getVersionsListDownloadURL();
 
-    String getVersionsListDownloadURL();
+    public abstract String getAssetsDownloadURL();
 
-    String getAssetsDownloadURL();
+    public abstract String getParsedLibraryDownloadURL(String str);
 
-    String getParsedLibraryDownloadURL(String str);
-
-    boolean isAllowedToUseSelfURL();
+    public abstract boolean isAllowedToUseSelfURL();
 }
