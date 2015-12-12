@@ -15,16 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.launcher.utils.installers.forge.vanilla;
+package org.jackhuang.hellominecraft.launcher.utils.installers.forge;
+
+import java.util.Map;
 
 /**
  *
  * @author huangyuhui
  */
-public class MinecraftForgeVersion {
+public class MinecraftForgeVersionRoot {
 
-    public String branch, mcversion, jobver, version;
-    public int build;
-    public double modified;
-    public String[][] files;
+    public String artifact, webpath, adfly, homepage, name;
+    public Map<String, int[]> branches, mcversion;
+    public Map<String, Integer> promos;
+    public Map<Integer, MinecraftForgeVersion> number;
 }

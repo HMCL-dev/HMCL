@@ -121,9 +121,6 @@ public class TaskWindow extends javax.swing.JDialog
             public void windowClosed(java.awt.event.WindowEvent evt) {
                 formWindowClosed(evt);
             }
-            public void windowClosing(java.awt.event.WindowEvent evt) {
-                formWindowClosing(evt);
-            }
         });
 
         btnCancel.setText(bundle.getString("taskwindow.cancel")); // NOI18N
@@ -190,10 +187,6 @@ public class TaskWindow extends javax.swing.JDialog
         taskList = null;
     }//GEN-LAST:event_formWindowClosed
 
-    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-        // TODO add your handling code here:
-    }//GEN-LAST:event_formWindowClosing
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCancel;
     private javax.swing.JTable lstDownload;
@@ -228,10 +221,11 @@ public class TaskWindow extends javax.swing.JDialog
 
     @Override
     public void onDoing(Task task) {
+        if (task == null) return;
         task.setProgressProviderListener(this);
 
         SwingUtilities.invokeLater(() -> {
-            if (taskList == null || task == null)
+            if (taskList == null)
                 return;
             tasks.add(task);
             progresses.add(0);

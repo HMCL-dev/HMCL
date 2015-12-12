@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.launcher.utils.installers.forge.vanilla;
+package org.jackhuang.hellominecraft.launcher.utils.installers.forge;
 
 import java.util.ArrayList;
 import java.util.Collections;

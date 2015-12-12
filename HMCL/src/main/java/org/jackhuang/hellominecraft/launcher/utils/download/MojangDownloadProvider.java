@@ -28,7 +28,7 @@ public class MojangDownloadProvider extends IDownloadProvider {
 
     @Override
     public InstallerVersionList getForgeInstaller() {
-        return org.jackhuang.hellominecraft.launcher.utils.installers.forge.vanilla.MinecraftForgeVersionList.getInstance();
+        return org.jackhuang.hellominecraft.launcher.utils.installers.forge.MinecraftForgeVersionList.getInstance();
     }
 
     @Override

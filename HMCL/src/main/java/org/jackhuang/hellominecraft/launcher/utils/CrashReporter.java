@@ -46,6 +46,12 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
     public boolean checkThrowable(Throwable e) {
         String s = StrUtils.getStackTrace(e);
+        if (s.contains("MessageBox") || s.contains("AWTError")) {
+            return false;
+        } else if (s.contains("JFileChooser") || s.contains("JceSecurityManager")) {
+            System.out.println("Is not your operating system installed completely? ");
+            return false;
+        }
         if (s.contains("sun.awt.shell.Win32ShellFolder2") || s.contains("UnsatisfiedLinkError")) {
             System.out.println(C.i18n("crash.user_fault"));
             try {
@@ -111,6 +117,10 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                 exx.printStackTrace();
             }
         }
+    }
+    
+    void showMessage() {
+        
     }
 
     private static final HashSet<String> throwableSet = new HashSet<>();

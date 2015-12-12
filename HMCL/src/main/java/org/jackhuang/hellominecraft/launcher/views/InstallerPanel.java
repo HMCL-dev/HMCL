@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.launcher.views;
 
 import java.util.List;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
@@ -145,7 +146,9 @@ public class InstallerPanel extends javax.swing.JPanel {
     }
 
     public void loadVersions() {
-        versions = loadVersions(list, lstInstallers);
+        SwingUtilities.invokeLater(() -> {
+            versions = loadVersions(list, lstInstallers);
+        });
     }
 
     private List<InstallerVersionList.InstallerVersion> loadVersions(InstallerVersionList list, JTable table) {

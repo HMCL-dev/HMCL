@@ -15,14 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.launcher.utils.installers.forge.bmcl;
+package org.jackhuang.hellominecraft.launcher.utils.installers.forge;
 
 /**
  *
  * @author huangyuhui
  */
-public class Downloads {
+public class MinecraftForgeVersion {
 
-    public String changelog;
-    public String[] universal, src, javadoc, installer;
+    public String branch, mcversion, jobver, version;
+    public int build;
+    public double modified;
+    public String[][] files;
 }
