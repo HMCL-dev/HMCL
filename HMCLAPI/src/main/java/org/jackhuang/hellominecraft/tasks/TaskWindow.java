@@ -175,7 +175,8 @@ public class TaskWindow extends javax.swing.JDialog
         tasks.clear();
 
         if (!this.failReasons.isEmpty()) {
-            SwingUtilities.invokeLater(() -> MessageBox.Show(StrUtils.parseParams("", failReasons.toArray(), "\n"), C.i18n("message.error"), MessageBox.ERROR_MESSAGE));
+            String str = StrUtils.parseParams("", failReasons.toArray(), "\n");
+            SwingUtilities.invokeLater(() -> MessageBox.Show(str, C.i18n("message.error"), MessageBox.ERROR_MESSAGE));
             failReasons.clear();
         }
 

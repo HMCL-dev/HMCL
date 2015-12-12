@@ -66,13 +66,13 @@ import rx.concurrency.Schedulers;
  *
  * @author huangyuhui
  */
-public final class GameSettingsPanel extends javax.swing.JPanel implements DropTargetListener {
+public final class GameSettingsPanel extends AnimatedPanel implements DropTargetListener {
 
     boolean isLoading = false;
     public MinecraftVersionRequest minecraftVersion;
     String mcVersion;
 
-    InstallerPanel installerPanels[] = new InstallerPanel[InstallerType.values().length];
+    final InstallerPanel installerPanels[] = new InstallerPanel[InstallerType.values().length];
 
     /**
      * Creates new form GameSettingsPanel
@@ -206,6 +206,8 @@ public final class GameSettingsPanel extends javax.swing.JPanel implements DropT
 
             @Override
             public void stateChanged(ChangeEvent e) {
+                if (tabVersionEdit.getSelectedComponent() instanceof AnimatedPanel)
+                    ((AnimatedPanel) tabVersionEdit.getSelectedComponent()).animate();
                 if (tabVersionEdit.getSelectedComponent() == pnlGameDownloads && !a) {
                     a = true;
                     refreshDownloads();
@@ -215,8 +217,8 @@ public final class GameSettingsPanel extends javax.swing.JPanel implements DropT
                 }
             }
         });
-        for (InstallerType type : InstallerType.values())
-            tabInstallers.addTab(type.getLocalizedName(), new InstallerPanel(this, type));
+        for (int i = 0; i < InstallerType.values().length; i++)
+            tabInstallers.addTab(InstallerType.values()[i].getLocalizedName(), installerPanels[i]);
 
         tabInstallers.addChangeListener(new ChangeListener() {
             boolean refreshed[] = new boolean[InstallerType.values().length];
@@ -242,7 +244,7 @@ public final class GameSettingsPanel extends javax.swing.JPanel implements DropT
     private void initComponents() {
 
         tabVersionEdit = new javax.swing.JTabbedPane();
-        pnlSettings = new javax.swing.JPanel();
+        pnlSettings = new AnimatedPanel();
         lblGameDir = new javax.swing.JLabel();
         txtGameDir = new javax.swing.JTextField();
         lblDimension = new javax.swing.JLabel();
@@ -263,7 +265,7 @@ public final class GameSettingsPanel extends javax.swing.JPanel implements DropT
         btnChoosingJavaDir = new javax.swing.JButton();
         cboJava = new javax.swing.JComboBox();
         btnChoosingGameDir = new javax.swing.JButton();
-        pnlAdvancedSettings = new javax.swing.JPanel();
+        pnlAdvancedSettings = new AnimatedPanel();
         chkDebug = new javax.swing.JCheckBox();
         lblJavaArgs = new javax.swing.JLabel();
         txtJavaArgs = new javax.swing.JTextField();
@@ -277,16 +279,16 @@ public final class GameSettingsPanel extends javax.swing.JPanel implements DropT
         txtPrecalledCommand = new javax.swing.JTextField();
         lblServerIP = new javax.swing.JLabel();
         txtServerIP = new javax.swing.JTextField();
-        pnlModManagement = new javax.swing.JPanel();
+        pnlModManagement = new AnimatedPanel();
         pnlModManagementContent = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         lstExternalMods = new javax.swing.JTable();
         btnAddMod = new javax.swing.JButton();
         btnRemoveMod = new javax.swing.JButton();
         lblModInfo = new javax.swing.JLabel();
-        pnlAutoInstall = new javax.swing.JPanel();
+        pnlAutoInstall = new AnimatedPanel();
         tabInstallers = new javax.swing.JTabbedPane();
-        pnlGameDownloads = new javax.swing.JPanel();
+        pnlGameDownloads = new AnimatedPanel();
         btnDownload = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         lstDownloads = new javax.swing.JTable();
@@ -310,6 +312,7 @@ public final class GameSettingsPanel extends javax.swing.JPanel implements DropT
         btnCleanGame = new javax.swing.JButton();
 
         setBackground(new java.awt.Color(255, 255, 255));
+        setOpaque(false);
 
         tabVersionEdit.setName("tabVersionEdit"); // NOI18N
 
@@ -1350,7 +1353,7 @@ public final class GameSettingsPanel extends javax.swing.JPanel implements DropT
     @Override
     public void drop(DropTargetDropEvent dtde) {
     }
-    
+
     private void refreshVersions() {
         getProfile().getMinecraftProvider().refreshVersions();
         loadVersions();

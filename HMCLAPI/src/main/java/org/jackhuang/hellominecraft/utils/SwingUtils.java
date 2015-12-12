@@ -46,7 +46,7 @@ public class SwingUtils {
      * @return
      */
     public static DefaultTableModel makeDefaultTableModel(String[] titleA, final Class[] typesA, final boolean[] canEditA) {
-        return new javax.swing.table.DefaultTableModel(
+        return new DefaultTableModel(
         new Object[][] {},
         titleA) {
             Class[] types = typesA;

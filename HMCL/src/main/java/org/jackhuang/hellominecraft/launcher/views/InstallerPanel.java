@@ -37,7 +37,7 @@ import org.jackhuang.hellominecraft.utils.SwingUtils;
  *
  * @author huangyuhui
  */
-public class InstallerPanel extends javax.swing.JPanel {
+public class InstallerPanel extends AnimatedPanel {
 
     GameSettingsPanel gsp;
 
@@ -50,10 +50,10 @@ public class InstallerPanel extends javax.swing.JPanel {
     public InstallerPanel(GameSettingsPanel gsp, InstallerType installerType) {
         initComponents();
 
+        setOpaque(false);
         this.gsp = gsp;
         id = installerType;
         list = Settings.getInstance().getDownloadSource().getProvider().getInstallerByType(id);
-        ((DefaultTableModel) lstInstallers.getModel()).addRow(new Object[] {"hehe", "hehe"});
     }
 
     /**
@@ -138,7 +138,7 @@ public class InstallerPanel extends javax.swing.JPanel {
 
     void downloadSelectedRow() {
         int idx = lstInstallers.getSelectedRow();
-        if (idx < 0 || idx >= versions.size()) {
+        if (versions == null || idx < 0 || idx >= versions.size()) {
             MessageBox.Show(C.i18n("install.not_refreshed"));
             return;
         }
@@ -147,20 +147,18 @@ public class InstallerPanel extends javax.swing.JPanel {
 
     public void loadVersions() {
         SwingUtilities.invokeLater(() -> {
-            versions = loadVersions(list, lstInstallers);
+            synchronized (InstallerPanel.this) {
+                DefaultTableModel model = (DefaultTableModel) lstInstallers.getModel();
+                String mcver = StrUtils.formatVersion(gsp.getMinecraftVersionFormatted());
+                versions = list.getVersions(mcver);
+                SwingUtils.clearDefaultTable(lstInstallers);
+                if (versions != null)
+                    for (InstallerVersionList.InstallerVersion v : versions)
+                        model.addRow(new Object[] {v.selfVersion == null ? "null" : v.selfVersion, v.mcVersion == null ? "null" : v.mcVersion});
+            }
         });
     }
 
-    private List<InstallerVersionList.InstallerVersion> loadVersions(InstallerVersionList list, JTable table) {
-        DefaultTableModel model = (DefaultTableModel) table.getModel();
-        String mcver = StrUtils.formatVersion(gsp.getMinecraftVersionFormatted());
-        List<InstallerVersionList.InstallerVersion> ver = list.getVersions(mcver);
-        SwingUtils.clearDefaultTable(table);
-        if (ver != null)
-            for (InstallerVersionList.InstallerVersion v : ver)
-                model.addRow(new Object[] {v.selfVersion == null ? "null" : v.selfVersion, v.mcVersion == null ? "null" : v.mcVersion});
-        return ver;
-    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnInstall;

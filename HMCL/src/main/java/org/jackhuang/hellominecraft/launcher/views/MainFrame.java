@@ -244,6 +244,7 @@ public final class MainFrame extends DraggableFrame {
     }
 
     public void selectTab(String tabName) {
+        boolean a = mainTab.isActive(), b = gameTab.isActive(), c = launcherTab.isActive();
         this.mainTab.setIsActive(false);
         this.gameTab.setIsActive(false);
         this.launcherTab.setIsActive(false);
@@ -255,6 +256,8 @@ public final class MainFrame extends DraggableFrame {
             }
             this.mainTab.setIsActive(true);
             this.mainPanel.onSelected();
+            if (!a)
+                mainPanel.animate();
         } else if (tabName.equalsIgnoreCase("game")) {
             if (gamePanel == null) {
                 gamePanel = new GameSettingsPanel();
@@ -262,12 +265,16 @@ public final class MainFrame extends DraggableFrame {
             }
             this.gameTab.setIsActive(true);
             this.gamePanel.onSelected();
+            if (!b)
+                gamePanel.animate();
         } else if (tabName.equalsIgnoreCase("launcher")) {
             if (launcherPanel == null) {
                 launcherPanel = new LauncherSettingsPanel();
                 launcherPanelWrapper.add(launcherPanel);
             }
             this.launcherTab.setIsActive(true);
+            if (!c)
+                launcherPanel.animate();
         }
 
         this.infoLayout.show(this.infoSwap, tabName);

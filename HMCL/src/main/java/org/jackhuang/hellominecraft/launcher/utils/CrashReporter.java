@@ -46,16 +46,16 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
     public boolean checkThrowable(Throwable e) {
         String s = StrUtils.getStackTrace(e);
-        if (s.contains("MessageBox") || s.contains("AWTError")) {
+        if (s.contains("MessageBox") || s.contains("AWTError"))
             return false;
-        } else if (s.contains("JFileChooser") || s.contains("JceSecurityManager")) {
+        else if (s.contains("JFileChooser") || s.contains("JceSecurityManager")) {
             System.out.println("Is not your operating system installed completely? ");
             return false;
         }
         if (s.contains("sun.awt.shell.Win32ShellFolder2") || s.contains("UnsatisfiedLinkError")) {
             System.out.println(C.i18n("crash.user_fault"));
             try {
-                MessageBox.Show(C.i18n("crash.user_fault"));
+                showMessage(C.i18n("crash.user_fault"));
             } catch (Throwable t) {
                 t.printStackTrace();
             }
@@ -63,7 +63,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         } else if (s.contains("java.awt.HeadlessException")) {
             System.out.println(C.i18n("crash.headless"));
             try {
-                MessageBox.Show(C.i18n("crash.headless"));
+                showMessage(C.i18n("crash.headless"));
             } catch (Throwable t) {
                 t.printStackTrace();
             }
@@ -71,7 +71,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         } else if (s.contains("java.lang.NoClassDefFoundError") || s.contains("java.lang.VerifyError") || s.contains("java.lang.NoSuchMethodError") || s.contains("java.lang.IncompatibleClassChangeError") || s.contains("java.lang.ClassFormatError")) {
             System.out.println(C.i18n("crash.NoClassDefFound"));
             try {
-                MessageBox.Show(C.i18n("crash.NoClassDefFound"));
+                showMessage(C.i18n("crash.NoClassDefFound"));
             } catch (Throwable t) {
                 t.printStackTrace();
             }
@@ -110,25 +110,26 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                     reportToServer(text, s);
             }
         } catch (Throwable ex) {
-            try {
-                MessageBox.Show(e.getMessage() + "\n" + ex.getMessage(), "ERROR", MessageBox.ERROR_MESSAGE);
-            } catch (Throwable exx) {
-                System.out.println("Failed to catch exception thrown by " + t + " on " + Main.makeVersion() + ".");
-                exx.printStackTrace();
-            }
+            showMessage(e.getMessage() + "\n" + ex.getMessage());
+            ex.printStackTrace();
         }
     }
-    
-    void showMessage() {
-        
+
+    void showMessage(String s) {
+        try {
+            MessageBox.Show(s, "ERROR", MessageBox.ERROR_MESSAGE);
+        } catch (Throwable e) {
+            System.err.println("ERROR: " + s);
+            e.printStackTrace();
+        }
     }
 
-    private static final HashSet<String> throwableSet = new HashSet<>();
+    private static final HashSet<String> THROWABLE_SET = new HashSet<>();
 
     void reportToServer(String text, String stacktrace) {
-        if (throwableSet.contains(stacktrace))
+        if (THROWABLE_SET.contains(stacktrace))
             return;
-        throwableSet.add(stacktrace);
+        THROWABLE_SET.add(stacktrace);
         new Thread(() -> {
             HashMap<String, String> map = new HashMap<>();
             map.put("CrashReport", text);

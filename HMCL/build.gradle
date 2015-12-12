@@ -80,7 +80,8 @@ jar {
 }
 
 launch4j {
-    launch4jCmd = 'D:\\Develop\\Java\\Launch4j\\launch4j.exe'
+    //launch4jCmd = 'D:\\Develop\\Java\\Launch4j\\launch4j.exe'
+    launch4jCmd = '/home/huangyuhui/softwares/launch4j/launch4j'
     supportUrl = 'http://www.mcbbs.net/thread-142335-1-1.html'
     jreMinVersion = '1.6.0'
     

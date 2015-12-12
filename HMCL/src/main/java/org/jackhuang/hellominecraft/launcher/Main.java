@@ -104,7 +104,7 @@ public final class Main implements Runnable {
     }
 
     public static String launcherName = "Hello Minecraft! Launcher";
-    public static byte firstVer = 2, secondVer = 3, thirdVer = 5, forthVer = 5;
+    public static byte firstVer = 2, secondVer = 3, thirdVer = 5, forthVer = 6;
     public static int minimumLauncherVersion = 16;
     //public static Proxy PROXY;
 

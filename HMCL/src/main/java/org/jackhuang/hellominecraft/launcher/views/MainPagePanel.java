@@ -47,7 +47,7 @@ import org.jackhuang.hellominecraft.utils.functions.Consumer;
  *
  * @author huangyuhui
  */
-public class MainPagePanel extends javax.swing.JPanel {
+public class MainPagePanel extends AnimatedPanel {
 
     /**
      * Creates new form MainPagePanel
@@ -336,6 +336,7 @@ public class MainPagePanel extends javax.swing.JPanel {
         if (l.isLoggedIn())
             l.logout();
         cl.first(pnlPassword);
+        pnlPassword.repaint();
     }//GEN-LAST:event_btnLogoutActionPerformed
 
     private void txtPlayerNameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPlayerNameKeyPressed
@@ -423,7 +424,7 @@ public class MainPagePanel extends javax.swing.JPanel {
         if (0 <= loginType && loginType < cboLoginMode.getItemCount()) {
             preparingAuth = false;
 
-            //cboLoginMode.setSelectedIndex(loginType);
+            cboLoginMode.setSelectedIndex(loginType);
 
             cboLoginModeItemStateChanged(null);
         }

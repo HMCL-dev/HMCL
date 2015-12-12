@@ -34,7 +34,7 @@ import rx.Observable;
  *
  * @author huangyuhui
  */
-public class LauncherSettingsPanel extends javax.swing.JPanel {
+public class LauncherSettingsPanel extends AnimatedPanel {
 
     /**
      * Creates new form LancherSettingsPanel
