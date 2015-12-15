@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.utils;
 
+import java.awt.EventQueue;
 import java.awt.FontMetrics;
 import java.net.URI;
 import javax.swing.DefaultListModel;
@@ -28,6 +29,7 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.table.DefaultTableModel;
 import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.functions.NonFunction;
 
 /**
  *
@@ -47,8 +49,8 @@ public class SwingUtils {
      */
     public static DefaultTableModel makeDefaultTableModel(String[] titleA, final Class[] typesA, final boolean[] canEditA) {
         return new DefaultTableModel(
-        new Object[][] {},
-        titleA) {
+            new Object[][] {},
+            titleA) {
             Class[] types = typesA;
             boolean[] canEdit = canEditA;
 
@@ -131,7 +133,7 @@ public class SwingUtils {
      * Clear the JTable
      *
      * @param table JTable with DefaultTableModel.
-     * 
+     *
      * @return To make the code succinct
      */
     public static DefaultTableModel clearDefaultTable(JTable table) {
@@ -176,5 +178,25 @@ public class SwingUtils {
             limit = 1;
         }
         return builder.toString();
+    }
+
+    private static final ThreadLocal<Object> THREAD_LOCAL = new ThreadLocal<>();
+
+    public static <T> T invokeAndWait(NonFunction<T> x) {
+        Runnable r = () -> THREAD_LOCAL.set(x.apply());
+        invokeAndWait(r);
+        return (T) THREAD_LOCAL.get();
+    }
+
+    public static void invokeAndWait(Runnable r) {
+        if (EventQueue.isDispatchThread())
+            r.run();
+        else
+            try {
+                EventQueue.invokeAndWait(r);
+            } catch (Exception e) {
+                HMCLog.err("Failed to invokeAndWait, the UI will work abnormally.", e);
+                r.run();
+            }
     }
 }

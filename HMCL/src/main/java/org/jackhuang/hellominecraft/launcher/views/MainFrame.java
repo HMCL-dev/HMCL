@@ -41,7 +41,6 @@ import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
-import org.jackhuang.hellominecraft.utils.UpdateChecker;
 import org.jackhuang.hellominecraft.utils.Utils;
 import org.jackhuang.hellominecraft.views.DropShadowBorder;
 import org.jackhuang.hellominecraft.views.TintablePanel;
@@ -187,8 +186,7 @@ public final class MainFrame extends DraggableFrame {
 
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (UpdateChecker.OUT_DATED)
-                    Main.update();
+                Settings.UPDATE_CHECKER.checkOutdate();
             }
 
             @Override
@@ -314,7 +312,7 @@ public final class MainFrame extends DraggableFrame {
             isShowedMessage = false;
             reloadColor();
             windowTitle.setText(defaultTitle);
-            windowTitle.setForeground(UpdateChecker.OUT_DATED ? Color.red : Color.white);
+            windowTitle.setForeground(Settings.UPDATE_CHECKER.OUT_DATED ? Color.red : Color.white);
         }
     }
 
@@ -354,14 +352,15 @@ public final class MainFrame extends DraggableFrame {
     }
 
     private void paintImpl(Graphics g) {
-        super.paint(g);
-        g.setColor(borderColor);
         int off = enableShadow ? 16 : 0;
         int width = 800;
         int height = header.getHeight() + 480 - 1;
+        super.paint(g);
+        g.setColor(borderColor);
         g.drawLine(off, off, off, height + off + 1);
         g.drawLine(off + width + 1, off, off + width + 1, height + off + 1);
         g.drawLine(off, height + off + 1, off + width + 1, height + off + 1);
+        g.dispose();
     }
 
     @Override

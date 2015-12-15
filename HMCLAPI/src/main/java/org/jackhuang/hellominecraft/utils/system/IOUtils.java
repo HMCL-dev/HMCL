@@ -112,6 +112,18 @@ public class IOUtils {
         return arr;
     }
 
+    public static String getRealPath() {
+        String realPath = IOUtils.class.getClassLoader().getResource("").getFile();
+        java.io.File file = new java.io.File(realPath);
+        realPath = file.getAbsolutePath();
+        try {
+            realPath = java.net.URLDecoder.decode(realPath, "utf-8");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return realPath;
+    }
+
     public static File currentDir() {
         return new File(".");
     }
@@ -219,19 +231,19 @@ public class IOUtils {
     }
 
     public static void write(byte[] data, OutputStream output)
-    throws IOException {
+        throws IOException {
         if (data != null)
             output.write(data);
     }
 
     public static void write(String data, OutputStream output, String encoding)
-    throws IOException {
+        throws IOException {
         if (data != null)
             output.write(data.getBytes(encoding));
     }
 
     public static FileInputStream openInputStream(File file)
-    throws IOException {
+        throws IOException {
         if (file.exists()) {
             if (file.isDirectory())
                 throw new IOException("File '" + file + "' exists but is a directory");

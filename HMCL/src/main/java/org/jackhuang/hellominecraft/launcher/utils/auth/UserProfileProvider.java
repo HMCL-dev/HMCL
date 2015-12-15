@@ -52,7 +52,8 @@ public final class UserProfileProvider {
     }
 
     public void setAccessToken(String accessToken) {
-        if (accessToken == null) accessToken = "0";
+        if (accessToken == null)
+            accessToken = "0";
         this.accessToken = accessToken;
     }
 
@@ -114,4 +115,13 @@ public final class UserProfileProvider {
     private String otherInfo = "";
     private String clientIdentifier = "";
     private String userType = "Offline";
+    private String serverIp = "";
+
+    public String getServerIp() {
+        return serverIp;
+    }
+
+    public void setServerIp(String serverIp) {
+        this.serverIp = serverIp;
+    }
 }

@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hellominecraft.tasks;
 
-import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import javax.swing.SwingUtilities;
@@ -300,28 +299,16 @@ public class TaskWindow extends javax.swing.JDialog
         }
 
         public boolean start() {
-            Runnable r = () -> {
+            return SwingUtils.invokeAndWait(() -> {
                 synchronized (INSTANCE) {
-                    if (INSTANCE.isVisible()) {
-                        flag = false;
-                        return;
-                    }
+                    if (INSTANCE.isVisible())
+                        return false;
                     TaskWindow tw = inst();
                     for (Task t : ll)
                         tw.addTask(t);
-                    flag = tw.start();
+                    return tw.start();
                 }
-            };
-            if (EventQueue.isDispatchThread())
-                r.run();
-            else
-                try {
-                    EventQueue.invokeAndWait(r);
-                } catch (Exception e) {
-                    HMCLog.err("Failed to invokeAndWait, the UI will work abnormally.", e);
-                    r.run();
-                }
-            return flag;
+            });
         }
     }
 }

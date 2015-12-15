@@ -25,12 +25,18 @@ import org.jackhuang.hellominecraft.HMCLog;
  */
 public final class VersionNumber implements Comparable<VersionNumber> {
 
-    public byte firstVer, secondVer, thirdVer;
+    public final byte firstVer, secondVer, thirdVer;
+    public final String version;
 
     public VersionNumber(byte a, byte b, byte c) {
+        this(a, b, c, null);
+    }
+
+    public VersionNumber(byte a, byte b, byte c, String version) {
         firstVer = a;
         secondVer = b;
         thirdVer = c;
+        this.version = version;
     }
 
     public static VersionNumber check(String data) {
@@ -46,7 +52,7 @@ public final class VersionNumber implements Comparable<VersionNumber> {
                 v1 = Byte.parseByte(ver[0]);
                 v2 = Byte.parseByte(ver[1]);
                 v3 = Byte.parseByte(ver[2]);
-                ur = new VersionNumber(v1, v2, v3);
+                ur = new VersionNumber(v1, v2, v3, data);
                 return ur;
             } catch (Exception e) {
                 HMCLog.warn("Failed to parse the version", e);

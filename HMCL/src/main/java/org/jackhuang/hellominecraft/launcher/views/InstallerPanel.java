@@ -18,7 +18,6 @@
 package org.jackhuang.hellominecraft.launcher.views;
 
 import java.util.List;
-import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import org.jackhuang.hellominecraft.C;
@@ -104,7 +103,7 @@ public class InstallerPanel extends AnimatedPanel {
     );
     layout.setVerticalGroup(
         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addComponent(jScrollPane12, javax.swing.GroupLayout.DEFAULT_SIZE, 308, Short.MAX_VALUE)
+        .addComponent(jScrollPane12, javax.swing.GroupLayout.DEFAULT_SIZE, 147, Short.MAX_VALUE)
         .addGroup(layout.createSequentialGroup()
             .addComponent(btnInstall)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)

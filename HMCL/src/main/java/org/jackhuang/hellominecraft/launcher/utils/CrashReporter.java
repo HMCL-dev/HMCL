@@ -26,8 +26,8 @@ import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
+import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.utils.NetUtils;
-import org.jackhuang.hellominecraft.utils.UpdateChecker;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.views.LogWindow;
@@ -105,8 +105,8 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                 System.out.println(text);
 
             if (checkThrowable(e) && !System.getProperty("java.vm.name").contains("OpenJDK")) {
-                SwingUtilities.invokeLater(() -> LogWindow.INSTANCE.showAsCrashWindow(UpdateChecker.OUT_DATED));
-                if (!UpdateChecker.OUT_DATED)
+                SwingUtilities.invokeLater(() -> LogWindow.INSTANCE.showAsCrashWindow(Settings.UPDATE_CHECKER.OUT_DATED));
+                if (!Settings.UPDATE_CHECKER.OUT_DATED)
                     reportToServer(text, s);
             }
         } catch (Throwable ex) {

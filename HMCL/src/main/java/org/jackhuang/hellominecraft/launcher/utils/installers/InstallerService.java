@@ -19,7 +19,6 @@ package org.jackhuang.hellominecraft.launcher.utils.installers;
 
 import java.io.File;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
-import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList.InstallerVersion;
 import org.jackhuang.hellominecraft.launcher.utils.installers.forge.ForgeInstaller;
 import org.jackhuang.hellominecraft.launcher.utils.installers.liteloader.LiteLoaderInstaller;
@@ -64,7 +63,7 @@ public final class InstallerService {
                 File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "forge-installer.jar");
                 if (v.installer != null)
                     TaskWindow.getInstance()
-                    .addTask(new FileDownloadTask(Settings.getInstance().getDownloadSource().getProvider().getParsedLibraryDownloadURL(v.installer), filepath).setTag("forge"))
+                    .addTask(new FileDownloadTask(p.getDownloadType().getProvider().getParsedLibraryDownloadURL(v.installer), filepath).setTag("forge"))
                     .addTask(new ForgeInstaller(p.getMinecraftProvider(), filepath, v))
                     .start();
             }

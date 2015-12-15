@@ -70,7 +70,7 @@ public final class Settings {
             e.checkFormat();
 
         UPDATE_CHECKER = new UpdateChecker(new VersionNumber(Main.firstVer, Main.secondVer, Main.thirdVer),
-                                           "hmcl", Main::invokeUpdate);
+                                           "hmcl");
 
         List<Java> temp = new ArrayList<>();
         temp.add(new Java("Default", System.getProperty("java.home")));
@@ -119,7 +119,8 @@ public final class Settings {
     }
 
     public static Profile getProfile(String name) {
-        if (name == null) return getProfiles().get("Default");
+        if (name == null)
+            return getProfiles().get("Default");
         return getProfiles().get(name);
     }
 

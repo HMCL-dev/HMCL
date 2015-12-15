@@ -97,9 +97,9 @@ public class MessageBox {
             case YES_NO_OPTION:
             case YES_NO_CANCEL_OPTION:
             case OK_CANCEL_OPTION:
-                return JOptionPane.showConfirmDialog(null, Msg, Title, Option - 10);
+                return SwingUtils.invokeAndWait(() -> JOptionPane.showConfirmDialog(null, Msg, Title, Option - 10));
             default:
-                JOptionPane.showMessageDialog(null, Msg, Title, Option);
+                SwingUtils.invokeAndWait(() -> JOptionPane.showMessageDialog(null, Msg, Title, Option));
         }
         return 0;
     }
