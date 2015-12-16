@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.utils;
 
+import org.jackhuang.hellominecraft.views.SwingUtils;
 import javax.swing.JOptionPane;
 import org.jackhuang.hellominecraft.C;
 

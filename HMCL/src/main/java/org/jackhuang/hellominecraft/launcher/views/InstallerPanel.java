@@ -30,7 +30,7 @@ import org.jackhuang.hellominecraft.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.tasks.communication.DefaultPreviousResult;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.utils.SwingUtils;
+import org.jackhuang.hellominecraft.views.SwingUtils;
 
 /**
  *

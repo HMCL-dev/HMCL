@@ -56,7 +56,7 @@ import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.version.MinecraftVersionRequest;
 import org.jackhuang.hellominecraft.utils.system.OS;
 import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.utils.SwingUtils;
+import org.jackhuang.hellominecraft.views.SwingUtils;
 import org.jackhuang.hellominecraft.utils.system.Java;
 import org.jackhuang.hellominecraft.views.LogWindow;
 import rx.Observable;

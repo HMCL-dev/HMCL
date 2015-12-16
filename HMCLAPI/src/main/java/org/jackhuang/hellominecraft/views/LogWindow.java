@@ -28,8 +28,6 @@ import org.jackhuang.hellominecraft.logging.Level;
 import org.jackhuang.hellominecraft.utils.functions.NonFunction;
 import org.jackhuang.hellominecraft.utils.DoubleOutputStream;
 import org.jackhuang.hellominecraft.utils.LauncherPrintStream;
-import org.jackhuang.hellominecraft.utils.LogWindowOutputStream;
-import org.jackhuang.hellominecraft.utils.SwingUtils;
 import org.jackhuang.hellominecraft.utils.Utils;
 
 /**

@@ -84,7 +84,7 @@ import org.jackhuang.hellominecraft.svrmgr.threads.MonitorThread;
 import org.jackhuang.hellominecraft.svrmgr.utils.FolderOpener;
 import org.jackhuang.hellominecraft.svrmgr.utils.IPGet;
 import org.jackhuang.hellominecraft.svrmgr.utils.Utilities;
-import org.jackhuang.hellominecraft.utils.SwingUtils;
+import org.jackhuang.hellominecraft.views.SwingUtils;
 import org.jackhuang.hellominecraft.version.MinecraftRemoteVersion;
 import org.jackhuang.hellominecraft.lookandfeel.components.ConstomButton;
 import org.jackhuang.hellominecraft.utils.Event;

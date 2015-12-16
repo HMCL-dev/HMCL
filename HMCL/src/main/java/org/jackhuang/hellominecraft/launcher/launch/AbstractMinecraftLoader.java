@@ -162,7 +162,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
         String serverIp = v.getServerIp();
         if (lr.getServerIp() != null) serverIp = lr.getServerIp();
         if (StrUtils.isNotBlank(serverIp)) {
-            String[] args = v.getServerIp().split(":");
+            String[] args = serverIp.split(":");
             res.add("--server");
             res.add(args[0]);
             res.add("--port");

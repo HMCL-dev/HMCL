@@ -37,6 +37,11 @@ public abstract class IMinecraftProvider {
     public IMinecraftProvider(Profile profile) {
         this.profile = profile;
     }
+    
+    /**
+     * To download mod packs.
+     */
+    public abstract void initializeMiencraft();
 
     /**
      * Get the run directory of given version.

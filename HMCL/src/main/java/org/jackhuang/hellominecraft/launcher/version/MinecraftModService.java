@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.version;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +28,7 @@ import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftModService;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.utils.ModInfo;
+import org.jackhuang.hellominecraft.utils.code.DigestUtils;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 
 /**
@@ -107,6 +109,14 @@ public class MinecraftModService extends IMinecraftModService {
             f.delete();
         }
         recacheMods();
+    }
+    
+    public String checkMd5s() throws IOException {
+        String res = "";
+        for (ModInfo i : getMods()) {
+            res += DigestUtils.md5Hex(new FileInputStream(i.location));
+        }
+        return res;
     }
     
 }

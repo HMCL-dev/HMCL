@@ -24,6 +24,7 @@ import java.awt.image.BufferedImage;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import org.jackhuang.hellominecraft.launcher.settings.Settings;
 
 /**
  *
@@ -40,7 +41,7 @@ public class AnimatedPanel extends JPanel {
                               offsetX += 0.15;
                               if (offsetX >= ANIMATION_LENGTH) {
                                   timer.stop();
-                              AnimatedPanel.this.repaint();
+                                  AnimatedPanel.this.repaint();
                               }
                           });
                       });
@@ -51,14 +52,16 @@ public class AnimatedPanel extends JPanel {
     Timer timer;
 
     public void animate() {
-        offsetX = 0;
-        timer.start();
+        if (Settings.getInstance().isEnableAnimation()) {
+            offsetX = 0;
+            timer.start();
+        }
     }
 
     @Override
     public void paint(Graphics g) {
         double pgs = 1 - Math.sin(Math.PI / 2 / ANIMATION_LENGTH * offsetX);
-        if(Math.abs(ANIMATION_LENGTH - offsetX) < 0.1) {
+        if (Math.abs(ANIMATION_LENGTH - offsetX) < 0.1) {
             super.paint(g);
             return;
         }

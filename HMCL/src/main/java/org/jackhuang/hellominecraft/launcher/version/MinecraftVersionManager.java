@@ -37,6 +37,9 @@ import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.launcher.utils.MCUtils;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
+import org.jackhuang.hellominecraft.tasks.DecompressTask;
+import org.jackhuang.hellominecraft.tasks.TaskWindow;
+import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.Utils;
@@ -301,5 +304,15 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public IMinecraftAssetService getAssetService() {
         return mas;
+    }
+
+    @Override
+    public void initializeMiencraft() {
+        
+    }
+    
+    private void downloadModpack(String url) throws IOException {
+        File tmp = File.createTempFile("hmcl", ".zip");
+        TaskWindow.getInstance().addTask(new FileDownloadTask(url, tmp)).addTask(new DecompressTask(tmp, baseFolder)).start();
     }
 }

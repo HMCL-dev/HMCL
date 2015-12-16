@@ -43,6 +43,9 @@ public final class Config {
     private String proxyHost, proxyPort, proxyUserName, proxyPassword;
     @SerializedName("enableShadow")
     private boolean enableShadow;
+
+    @SerializedName("enableAnimation")
+    private boolean enableAnimation;
     @SerializedName("theme")
     private int theme;
     @SerializedName("java")
@@ -85,6 +88,14 @@ public final class Config {
 
     public void setBgpath(String bgpath) {
         this.bgpath = bgpath;
+        Settings.save();
+    }
+    public boolean isEnableAnimation() {
+        return enableAnimation;
+    }
+
+    public void setEnableAnimation(boolean enableAnimation) {
+        this.enableAnimation = enableAnimation;
         Settings.save();
     }
 
@@ -151,7 +162,7 @@ public final class Config {
         clientToken = UUID.randomUUID().toString();
         username = "";
         logintype = downloadtype = 0;
-        enableShadow = false;
+        enableShadow = false; enableAnimation = true;
         theme = 0;
     }
 

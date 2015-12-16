@@ -93,8 +93,10 @@ public final class Profile {
     }
 
     public IMinecraftProvider getMinecraftProvider() {
-        if (minecraftProvider == null)
+        if (minecraftProvider == null) {
             minecraftProvider = new MinecraftVersionManager(this);
+            minecraftProvider.initializeMiencraft();
+        }
         return minecraftProvider;
     }
     

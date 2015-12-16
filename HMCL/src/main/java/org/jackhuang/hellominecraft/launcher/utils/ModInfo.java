@@ -28,7 +28,7 @@ import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.utils.SwingUtils;
+import org.jackhuang.hellominecraft.views.SwingUtils;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 
 /**

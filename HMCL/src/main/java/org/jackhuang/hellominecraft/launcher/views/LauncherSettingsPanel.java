@@ -53,6 +53,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         cboDownloadSource.setSelectedIndex(Settings.getInstance().getDownloadType());
         cboTheme.setSelectedIndex(Settings.getInstance().getTheme());
         chkEnableShadow.setSelected(Settings.getInstance().isEnableShadow());
+        chkEnableAnimation.setSelected(Settings.getInstance().isEnableAnimation());
 
         setBackground(Color.white);
         setOpaque(true);
@@ -86,6 +87,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         txtProxyUsername = new javax.swing.JTextField();
         txtProxyPassword = new javax.swing.JTextField();
         jLabel8 = new javax.swing.JLabel();
+        chkEnableAnimation = new javax.swing.JCheckBox();
 
         cboDownloadSource.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -172,6 +174,13 @@ public class LauncherSettingsPanel extends AnimatedPanel {
 
         jLabel8.setText(bundle.getString("proxy.password")); // NOI18N
 
+        chkEnableAnimation.setText("启用动态效果");
+        chkEnableAnimation.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                chkEnableAnimationFocusLost(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -210,12 +219,16 @@ public class LauncherSettingsPanel extends AnimatedPanel {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(txtProxyPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(0, 0, Short.MAX_VALUE))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
                             .addComponent(chkEnableShadow)
-                            .addComponent(btnCheckUpdate))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(chkEnableAnimation))
+                        .addGroup(layout.createSequentialGroup()
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(btnCheckUpdate))
+                            .addGap(0, 0, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -246,7 +259,9 @@ public class LauncherSettingsPanel extends AnimatedPanel {
                     .addComponent(txtProxyPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel8))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(chkEnableShadow)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(chkEnableShadow)
+                    .addComponent(chkEnableAnimation))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnCheckUpdate, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 71, Short.MAX_VALUE)
@@ -315,11 +330,16 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         Settings.getInstance().setProxyPassword(txtProxyPassword.getText());
     }//GEN-LAST:event_txtProxyPasswordFocusLost
 
+    private void chkEnableAnimationFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_chkEnableAnimationFocusLost
+        Settings.getInstance().setEnableAnimation(chkEnableAnimation.isSelected());
+    }//GEN-LAST:event_chkEnableAnimationFocusLost
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCheckUpdate;
     private javax.swing.JButton btnSelBackgroundPath;
     private javax.swing.JComboBox cboDownloadSource;
     private javax.swing.JComboBox cboTheme;
+    private javax.swing.JCheckBox chkEnableAnimation;
     private javax.swing.JCheckBox chkEnableShadow;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel14;
