@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -42,7 +42,6 @@ import org.jackhuang.hellominecraft.views.LogWindow;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.utils.upgrade.IUpgrader;
 import org.jackhuang.hellominecraft.launcher.views.MainFrame;
-import org.jackhuang.hellominecraft.launcher.views.ServerListView;
 import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
 import org.jackhuang.hellominecraft.utils.MathUtils;
 import org.jackhuang.hellominecraft.utils.StrUtils;
@@ -86,9 +85,9 @@ public final class Main implements Runnable {
         HttpsURLConnection.setDefaultHostnameVerifier(HNV);
     }
 
-    public static String launcherName = "Hello Minecraft! Launcher";
-    public static byte firstVer = 2, secondVer = 3, thirdVer = 1, forthVer = 6;
-    public static int minimumLauncherVersion = 16;
+    public static final String LAUNCHER_NAME = "Hello Minecraft! Launcher";
+    public static final byte VERSION_FIRST = 2, VERSION_SECOND = 3, VERSION_THIRD = 1, VERSION_FORTH = 6;
+    public static final int MINIMUM_LAUNCHER_VERSION = 16;
     //public static Proxy PROXY;
 
     /**
@@ -97,7 +96,7 @@ public final class Main implements Runnable {
      * @return the version: firstVer.secondVer.thirdVer
      */
     public static String makeVersion() {
-        return "" + firstVer + '.' + secondVer + '.' + thirdVer + '.' + forthVer;
+        return "" + VERSION_FIRST + '.' + VERSION_SECOND + '.' + VERSION_THIRD + '.' + VERSION_FORTH;
     }
 
     /**
@@ -106,15 +105,15 @@ public final class Main implements Runnable {
      * @return the MainWindow title.
      */
     public static String makeTitle() {
-        return launcherName + ' ' + makeVersion();
+        return LAUNCHER_NAME + ' ' + makeVersion();
     }
 
     public static final Main INSTANCE = new Main();
 
-    @SuppressWarnings( {"CallToPrintStackTrace", "UseSpecificCatch"})
+    @SuppressWarnings({"CallToPrintStackTrace", "UseSpecificCatch"})
     public static void main(String[] args) {
         {
-            if (IUpgrader.NOW_UPGRADER.parseArguments(new VersionNumber(firstVer, secondVer, thirdVer), args))
+            if (IUpgrader.NOW_UPGRADER.parseArguments(new VersionNumber(VERSION_FIRST, VERSION_SECOND, VERSION_THIRD), args))
                 return;
 
             System.setProperty("sun.java2d.noddraw", "true");
@@ -143,8 +142,8 @@ public final class Main implements Runnable {
             }
 
             Settings.UPDATE_CHECKER.outdated.register(IUpgrader.NOW_UPGRADER);
-            Settings.UPDATE_CHECKER.process(false).subscribeOn(Schedulers.newThread()).subscribe(t -> 
-                Main.invokeUpdate());
+            Settings.UPDATE_CHECKER.process(false).subscribeOn(Schedulers.newThread()).subscribe(t
+                -> Main.invokeUpdate());
 
             if (StrUtils.isNotBlank(Settings.getInstance().getProxyHost()) && StrUtils.isNotBlank(Settings.getInstance().getProxyPort()) && MathUtils.canParseInt(Settings.getInstance().getProxyPort())) {
                 HMCLog.log("Initializing customized proxy");

@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -50,7 +50,8 @@ public final class Settings {
 
     private static boolean isFirstLoading;
     private static final Config SETTINGS;
-    public static final UpdateChecker UPDATE_CHECKER;
+    public static final UpdateChecker UPDATE_CHECKER = new UpdateChecker(new VersionNumber(Main.VERSION_FIRST, Main.VERSION_SECOND, Main.VERSION_THIRD),
+                                                                         "hmcl");
     public static final List<Java> JAVA;
 
     public static Config getInstance() {
@@ -68,9 +69,6 @@ public final class Settings {
 
         for (Profile e : getProfiles().values())
             e.checkFormat();
-
-        UPDATE_CHECKER = new UpdateChecker(new VersionNumber(Main.firstVer, Main.secondVer, Main.thirdVer),
-                                           "hmcl");
 
         List<Java> temp = new ArrayList<>();
         temp.add(new Java("Default", System.getProperty("java.home")));

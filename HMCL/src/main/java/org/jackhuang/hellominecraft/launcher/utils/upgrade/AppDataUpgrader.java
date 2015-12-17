@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -17,9 +17,6 @@
  */
 package org.jackhuang.hellominecraft.launcher.utils.upgrade;
 
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -46,6 +43,7 @@ import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.ArrayUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.UpdateChecker;
+import org.jackhuang.hellominecraft.utils.Utils;
 import org.jackhuang.hellominecraft.utils.VersionNumber;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
@@ -118,9 +116,7 @@ public class AppDataUpgrader extends IUpgrader {
                     java.awt.Desktop.getDesktop().browse(new URI(url));
                 } catch (URISyntaxException | IOException e) {
                     HMCLog.warn("Failed to browse uri: " + url, e);
-
-                    Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
-                    cb.setContents(new StringSelection(url), null);
+                    Utils.setClipborad(url);
                     MessageBox.Show(C.i18n("update.no_browser"));
                 }
             }

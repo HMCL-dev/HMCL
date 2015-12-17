@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -26,6 +26,8 @@ import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.system.Compressor;
 import org.jackhuang.hellominecraft.svrmgr.settings.SettingsManager;
 import org.jackhuang.hellominecraft.svrmgr.utils.Utilities;
+import org.jackhuang.hellominecraft.utils.system.FileUtils;
+import org.jackhuang.hellominecraft.utils.system.IOUtils;
 
 /**
  *
@@ -39,7 +41,7 @@ public class BackupManager {
 
     public static ArrayList<String> getBackupList() {
         String gameDir = backupDir();
-        return Utilities.findAllFile(new File(gameDir));
+        return IOUtils.findAllFile(new File(gameDir));
     }
 
     public static void addWorldBackup(final String folder) {
@@ -61,27 +63,26 @@ public class BackupManager {
 
     public static ArrayList<String> findAllWorlds() {
         String gameDir = Utilities.getGameDir();
-        ArrayList<String> folders = Utilities.findAllDir(new File(gameDir));
-        ArrayList<String> result = new ArrayList<String>();
+        ArrayList<String> folders = IOUtils.findAllDir(new File(gameDir));
+        ArrayList<String> result = new ArrayList<>();
         for (String folder : folders) {
             String worldPath = gameDir + folder + File.separator;
-            ArrayList<String> files = Utilities.findAllFile(new File(worldPath));
+            ArrayList<String> files = IOUtils.findAllFile(new File(worldPath));
             if (files.contains("level.dat"))
                 result.add(folder);
         }
         return result;
     }
 
-    public static void restoreBackup(String backupFile) {
+    public static void restoreBackup(File backupFile) {
         try {
-            File file = new File(backupFile);
-            String name = Utilities.trimExtension(file.getName());
+            String name = FileUtils.getExtension(backupFile.getName());
             String[] info = name.split("\\+");
             String folder = info[2];
             File world = new File(Utilities.getGameDir() + folder + File.separator);
-            Utilities.deleteAll(world);
+            FileUtils.deleteDirectoryQuietly(world);
             world.mkdirs();
-            Compressor.unzip(backupFile, world.getAbsolutePath());
+            Compressor.unzip(backupFile, world);
         } catch (IOException ex) {
             HMCLog.warn("Failed to decompress world pack.", ex);
         }

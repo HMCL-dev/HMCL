@@ -88,6 +88,7 @@ import org.jackhuang.hellominecraft.views.SwingUtils;
 import org.jackhuang.hellominecraft.version.MinecraftRemoteVersion;
 import org.jackhuang.hellominecraft.lookandfeel.components.ConstomButton;
 import org.jackhuang.hellominecraft.utils.Event;
+import org.jackhuang.hellominecraft.utils.StrUtils;
 
 /**
  *
@@ -137,7 +138,7 @@ public final class MainWindow extends javax.swing.JFrame
 
         this.setIconImage(new ImageIcon(getClass().getResource("/icon.png")).getImage());
 
-        if (!Utilities.isEmpty(SettingsManager.settings.bgPath)) {
+        if (StrUtils.isNotBlank(SettingsManager.settings.bgPath)) {
             txtBackgroundPath.setText(SettingsManager.settings.bgPath);
             background = new ImageIcon(Toolkit.getDefaultToolkit().getImage(SettingsManager.settings.bgPath));
         }
@@ -154,7 +155,7 @@ public final class MainWindow extends javax.swing.JFrame
 
         setTitle(Main.makeTitle());
         String mainjar = SettingsManager.settings.mainjar;
-        if (!Utilities.isEmpty(mainjar))
+        if (StrUtils.isNotBlank(mainjar))
             ServerProperties.init(new File(mainjar).getParent());
         txtMainJar.setText(mainjar);
         commandSet = new ArrayList<>();
@@ -206,349 +207,140 @@ public final class MainWindow extends javax.swing.JFrame
         }, 0, 2000);
 
         //<editor-fold defaultstate="collapsed" desc="基本信息菜单">
+        class ActionListenerImpl implements ActionListener {
+
+            String s;
+
+            public ActionListenerImpl(String s) {
+                this.s = s;
+            }
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Server.getInstance().sendCommand(s);
+            }
+
+        }
         JMenuItem itm;
         ppmBasically = new JPopupMenu();
         itm = new JMenuItem("重置插件");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Server.getInstance().sendCommand("reload");
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("reload"));
         ppmBasically = new JPopupMenu();
         itm = new JMenuItem("午夜");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Server.getInstance().sendCommand("time set 18000");
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("time set 18000"));
         ppmBasically.add(itm);
         itm = new JMenuItem("凌晨");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Server.getInstance().sendCommand("time set 0");
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("time set 0"));
         ppmBasically.add(itm);
         itm = new JMenuItem("广播");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("广播讯息");
-                Server.getInstance().sendCommand("say " + s);
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("say " + JOptionPane.showInputDialog("广播讯息")));
         itm = new JMenuItem("红字广播");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("广播讯息");
-                Server.getInstance().sendCommand("me " + s);
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("me " + JOptionPane.showInputDialog("广播讯息")));
         itm = new JMenuItem("私聊");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                InputDialog id = new InputDialog(MainWindow.this, true, new String[] {"玩家", "讯息"});
-                id.setVisible(true);
-                Server.getInstance().sendCommand("tell " + id.result[0] + " " + id.result[1]);
-            }
+        itm.addActionListener(e -> {
+            InputDialog id = new InputDialog(MainWindow.this, true, new String[] {"玩家", "讯息"});
+            id.setVisible(true);
+            Server.getInstance().sendCommand("tell " + id.result[0] + " " + id.result[1]);
         });
         ppmBasically.add(itm);
         itm = new JMenuItem("给予OP");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("新OP的游戏名");
-                Server.getInstance().sendCommand("op " + s);
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("op " + JOptionPane.showInputDialog("新OP的游戏名")));
         ppmBasically.add(itm);
         itm = new JMenuItem("卸除OP");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("要卸除OP的游戏名");
-                Server.getInstance().sendCommand("deop " + s);
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("deop " + JOptionPane.showInputDialog("要卸除OP的游戏名")));
         ppmBasically.add(itm);
         itm = new JMenuItem("给予玩家白名单");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("要添入白名单的游戏名");
-                Server.getInstance().sendCommand("whitelist add " + s);
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("whitelist add " + JOptionPane.showInputDialog("要添入白名单的游戏名")));
         ppmBasically.add(itm);
         itm = new JMenuItem("解除玩家白名单");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("要解除白名单的游戏名");
-                Server.getInstance().sendCommand("whitelist remove " + s);
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("whitelist remove " + JOptionPane.showInputDialog("要解除白名单的游戏名")));
         ppmBasically.add(itm);
         itm = new JMenuItem("启用白名单");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Server.getInstance().sendCommand("whitelist on");
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("whitelist on"));
         ppmBasically.add(itm);
         itm = new JMenuItem("禁用白名单");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Server.getInstance().sendCommand("whitelist off");
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("whitelist off"));
         ppmBasically.add(itm);
         itm = new JMenuItem("列出白名单");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Server.getInstance().sendCommand("whitelist list");
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("whitelist list"));
         ppmBasically.add(itm);
         itm = new JMenuItem("封禁玩家");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("要封禁玩家的游戏名");
-                Server.getInstance().sendCommand("ban " + s);
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("ban " + JOptionPane.showInputDialog("要封禁玩家的游戏名")));
         ppmBasically.add(itm);
         itm = new JMenuItem("封禁玩家IP");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("要封禁玩家IP的游戏名");
-                Server.getInstance().sendCommand("ban-ip " + s);
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("ban-ip " + JOptionPane.showInputDialog("要封禁玩家IP的游戏名")));
         itm = new JMenuItem("解封玩家");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("要解封玩家的游戏名");
-                Server.getInstance().sendCommand("pardon " + s);
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("pardon " + JOptionPane.showInputDialog("要解封玩家的游戏名")));
         ppmBasically.add(itm);
         itm = new JMenuItem("解封玩家IP");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("要解封玩家IP的游戏名");
-                Server.getInstance().sendCommand("pardon-ip " + s);
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("pardon-ip " + JOptionPane.showInputDialog("要解封玩家IP的游戏名")));
         itm = new JMenuItem("封禁玩家");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("要封禁玩家的游戏名");
-                Server.getInstance().sendCommand("ban " + s);
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("ban " + JOptionPane.showInputDialog("要封禁玩家的游戏名")));
         ppmBasically.add(itm);
         itm = new JMenuItem("封禁玩家IP");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("要封禁玩家IP的游戏名");
-                Server.getInstance().sendCommand("ban-ip " + s);
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("ban-ip " + JOptionPane.showInputDialog("要封禁玩家IP的游戏名")));
         itm = new JMenuItem("封禁玩家列表");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Server.getInstance().sendCommand("banlist");
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("banlist"));
         ppmBasically.add(itm);
         itm = new JMenuItem("修改时间");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("要调整的时间值");
-                Server.getInstance().sendCommand("time set " + s);
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("time set " + JOptionPane.showInputDialog("要调整的时间值")));
         ppmBasically.add(itm);
         itm = new JMenuItem("往后调整时间");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("要往后调整的时间值");
-                Server.getInstance().sendCommand("time add " + s);
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("time add " + JOptionPane.showInputDialog("要往后调整的时间值")));
         ppmBasically.add(itm);
         itm = new JMenuItem("调整天气");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("要调整的天气（只能填：clear[意思是取消所有天气]或rain[意思是下雨]或thunder[意思是打雷]");
-                Server.getInstance().sendCommand("weather " + s);
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("weather " + JOptionPane.showInputDialog("要调整的天气（只能填：clear[意思是取消所有天气]或rain[意思是下雨]或thunder[意思是打雷]")));
         ppmBasically.add(itm);
         itm = new JMenuItem("调整一定时间的天气");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                InputDialog id = new InputDialog(MainWindow.this, true, new String[] {
-                    "要调整的天气（只能填：clear[意思是取消所有天气]或rain[意思是下雨]或thunder[意思是打雷]",
-                    "时间"
-                });
-                id.setVisible(true);
-                if (id.result != null) {
-                    String s = JOptionPane.showInputDialog("");
-                    Server.getInstance().sendCommand("weather " + id.result[0] + " " + id.result[1]);
-                }
+        itm.addActionListener(e -> {
+            InputDialog id = new InputDialog(MainWindow.this, true, new String[] {
+                "要调整的天气（只能填：clear[意思是取消所有天气]或rain[意思是下雨]或thunder[意思是打雷]",
+                "时间"
+            });
+            id.setVisible(true);
+            if (id.result != null) {
+                String s = JOptionPane.showInputDialog("");
+                Server.getInstance().sendCommand("weather " + id.result[0] + " " + id.result[1]);
             }
         });
         ppmBasically.add(itm);
         itm = new JMenuItem("清除背包");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("要被清除背包的玩家");
-                Server.getInstance().sendCommand("clear " + s);
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("clear" + JOptionPane.showInputDialog("要被清除背包的玩家")));
         ppmBasically.add(itm);
         itm = new JMenuItem("踢出玩家");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("要被踢出的玩家");
-                Server.getInstance().sendCommand("kick " + s);
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("kick " + JOptionPane.showInputDialog("要被踢出的玩家")));
         ppmBasically.add(itm);
         itm = new JMenuItem("在线玩家");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Server.getInstance().sendCommand("list");
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("list"));
         ppmBasically.add(itm);
         itm = new JMenuItem("插件列表");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Server.getInstance().sendCommand("plugins");
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("plugins"));
         ppmBasically.add(itm);
         itm = new JMenuItem("给予玩家物品");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                InputDialog id = new InputDialog(MainWindow.this, true, new String[] {"玩家", "物品ID", "数量"});
-                id.setVisible(true);
-                if (id.result != null)
-                    Server.getInstance().sendCommand("give " + id.result[0] + " " + id.result[1] + " " + id.result[2]);
-            }
+        itm.addActionListener(e -> {
+            InputDialog id = new InputDialog(MainWindow.this, true, new String[] {"玩家", "物品ID", "数量"});
+            id.setVisible(true);
+            if (id.result != null)
+                Server.getInstance().sendCommand("give " + id.result[0] + " " + id.result[1] + " " + id.result[2]);
         });
         ppmBasically.add(itm);
         itm = new JMenuItem("保存所有");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Server.getInstance().sendCommand("save-all");
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("save-all"));
         ppmBasically.add(itm);
         itm = new JMenuItem("开启bukkit自动保存");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Server.getInstance().sendCommand("save-on");
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("save-on"));
         ppmBasically.add(itm);
         itm = new JMenuItem("取消bukkit自动保存");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Server.getInstance().sendCommand("save-off");
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("save-off"));
         ppmBasically.add(itm);
         itm = new JMenuItem("难度");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("难度");
-                Server.getInstance().sendCommand("difficulty " + s);
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("difficulty " + JOptionPane.showInputDialog("难度")));
         ppmBasically.add(itm);
         itm = new JMenuItem("默认游戏模式");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("默认游戏模式");
-                Server.getInstance().sendCommand("defaultgamemode " + s);
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("defaultgamemode " + JOptionPane.showInputDialog("默认游戏模式")));
         ppmBasically.add(itm);
         itm = new JMenuItem("地图种子");
-        itm.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Server.getInstance().sendCommand("seed");
-            }
-        });
+        itm.addActionListener(new ActionListenerImpl("seed"));
         ppmBasically.add(itm);
         //</editor-fold>
     }
@@ -1711,15 +1503,14 @@ public final class MainWindow extends javax.swing.JFrame
             }
         });
 
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraftlauncher/VersionSettingsWindow"); // NOI18N
-        btnAddExternelMod.setText(bundle.getString("增加")); // NOI18N
+        btnAddExternelMod.setText(C.i18n("mods.add")); // NOI18N
         btnAddExternelMod.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnAddExternelModActionPerformed(evt);
             }
         });
 
-        btnDeleteExternelMod.setText(bundle.getString("删除")); // NOI18N
+        btnDeleteExternelMod.setText(C.i18n("mods.remove")); // NOI18N
         btnDeleteExternelMod.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnDeleteExternelModActionPerformed(evt);
@@ -1795,14 +1586,14 @@ public final class MainWindow extends javax.swing.JFrame
             }
         });
 
-        btnAddExternelCoreMod.setText(bundle.getString("增加")); // NOI18N
+        btnAddExternelCoreMod.setText(C.i18n("mods.add")); // NOI18N
         btnAddExternelCoreMod.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnAddExternelCoreModActionPerformed(evt);
             }
         });
 
-        btnDeleteExternelCoreMod.setText(bundle.getString("删除")); // NOI18N
+        btnDeleteExternelCoreMod.setText(C.i18n("mods.remove")); // NOI18N
         btnDeleteExternelCoreMod.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnDeleteExternelCoreModActionPerformed(evt);
@@ -1877,14 +1668,14 @@ public final class MainWindow extends javax.swing.JFrame
             }
         });
 
-        btnAddPlugins.setText(bundle.getString("增加")); // NOI18N
+        btnAddPlugins.setText(C.i18n("mods.add")); // NOI18N
         btnAddPlugins.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnAddPluginsActionPerformed(evt);
             }
         });
 
-        btnDeletePlugins.setText(bundle.getString("删除")); // NOI18N
+        btnDeletePlugins.setText(C.i18n("mods.remove")); // NOI18N
         btnDeletePlugins.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnDeletePluginsActionPerformed(evt);
@@ -2276,14 +2067,14 @@ public final class MainWindow extends javax.swing.JFrame
         lstCraftbukkit.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane18.setViewportView(lstCraftbukkit);
 
-        btnDownloadCraftbukkit.setText("下载");
+        btnDownloadCraftbukkit.setText(C.i18n("download")); // NOI18N
         btnDownloadCraftbukkit.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnDownloadCraftbukkitActionPerformed(evt);
             }
         });
 
-        lstRefreshCraftbukkit.setText("刷新");
+        lstRefreshCraftbukkit.setText(C.i18n("ui.button.refresh")); // NOI18N
         lstRefreshCraftbukkit.setToolTipText("");
         lstRefreshCraftbukkit.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -2365,6 +2156,7 @@ public final class MainWindow extends javax.swing.JFrame
         lstMCPC.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane19.setViewportView(lstMCPC);
 
+        btnDownloadMCPC.setText(C.i18n("download")); // NOI18N
         btnDownloadMCPC.setLabel("下载");
         btnDownloadMCPC.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -2372,6 +2164,7 @@ public final class MainWindow extends javax.swing.JFrame
             }
         });
 
+        lstRefreshMCPC.setText(C.i18n("ui.button.refresh")); // NOI18N
         lstRefreshMCPC.setToolTipText("");
         lstRefreshMCPC.setLabel("刷新");
         lstRefreshMCPC.addActionListener(new java.awt.event.ActionListener() {
@@ -2388,7 +2181,7 @@ public final class MainWindow extends javax.swing.JFrame
             }
         });
 
-        btnInstallMCPC.setText("重试");
+        btnInstallMCPC.setText(C.i18n("ui.button.retry")); // NOI18N
         btnInstallMCPC.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnInstallMCPCActionPerformed(evt);
@@ -2438,8 +2231,7 @@ public final class MainWindow extends javax.swing.JFrame
 
         jTabbedPane5.addTab("Cauldron", jPanel30);
 
-        java.util.ResourceBundle bundle1 = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraftlauncher/I18N"); // NOI18N
-        btnRefreshDownloads.setText(bundle1.getString("刷新")); // NOI18N
+        btnRefreshDownloads.setText(C.i18n("ui.button.refresh")); // NOI18N
         btnRefreshDownloads.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnRefreshDownloadsActionPerformed(evt);
@@ -2472,7 +2264,7 @@ public final class MainWindow extends javax.swing.JFrame
         lstDownloads.setToolTipText("");
         jScrollPane12.setViewportView(lstDownloads);
 
-        btnMinecraftServerDownload.setText(bundle1.getString("下载")); // NOI18N
+        btnMinecraftServerDownload.setText(C.i18n("download")); // NOI18N
         btnMinecraftServerDownload.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnMinecraftServerDownloadActionPerformed(evt);
@@ -2485,7 +2277,7 @@ public final class MainWindow extends javax.swing.JFrame
             jPanel21Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel21Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane12, javax.swing.GroupLayout.DEFAULT_SIZE, 450, Short.MAX_VALUE)
+                .addComponent(jScrollPane12, javax.swing.GroupLayout.DEFAULT_SIZE, 501, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel21Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(btnRefreshDownloads, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -2548,7 +2340,7 @@ public final class MainWindow extends javax.swing.JFrame
             }
         });
 
-        jButton11.setText("刷新");
+        jButton11.setText(C.i18n("ui.button.refresh")); // NOI18N
         jButton11.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton11ActionPerformed(evt);
@@ -2982,12 +2774,12 @@ public final class MainWindow extends javax.swing.JFrame
         String path = Utilities.getPath("mods");
         if (path == null)
             return;
-        ArrayList<String> sl = Utilities.findAllFile(new File(path));
+        ArrayList<String> sl = IOUtils.findAllFile(new File(path));
         DefaultTableModel model = (DefaultTableModel) lstExternalMods.getModel();
         while (model.getRowCount() > 0)
             model.removeRow(0);
         for (String s : sl)
-            model.addRow(new Object[] {!SettingsManager.settings.inactiveExtMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(Utilities.addSeparator(path) + s))});
+            model.addRow(new Object[] {!SettingsManager.settings.inactiveExtMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(IOUtils.addSeparator(path) + s))});
 
         lstExternalMods.updateUI();
     }
@@ -2996,7 +2788,7 @@ public final class MainWindow extends javax.swing.JFrame
         String path = Utilities.getPath("plugins");
         if (path == null)
             return;
-        ArrayList<String> sl = Utilities.findAllFile(new File(path));
+        ArrayList<String> sl = IOUtils.findAllFile(new File(path));
         DefaultTableModel model = (DefaultTableModel) lstPlugins.getModel();
         while (model.getRowCount() > 0)
             model.removeRow(0);
@@ -3017,12 +2809,12 @@ public final class MainWindow extends javax.swing.JFrame
         String path = Utilities.getPath("coremods");
         if (path == null)
             return;
-        ArrayList<String> sl = Utilities.findAllFile(new File(path));
+        ArrayList<String> sl = IOUtils.findAllFile(new File(path));
         DefaultTableModel model = (DefaultTableModel) lstCoreMods.getModel();
         while (model.getRowCount() > 0)
             model.removeRow(0);
         for (String s : sl)
-            model.addRow(new Object[] {!SettingsManager.settings.inactiveCoreMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(Utilities.addSeparator(path) + s))});
+            model.addRow(new Object[] {!SettingsManager.settings.inactiveCoreMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(IOUtils.addSeparator(path) + s))});
 
         lstCoreMods.updateUI();
     }
@@ -3043,7 +2835,7 @@ public final class MainWindow extends javax.swing.JFrame
         ArrayList<String> al = BackupManager.getBackupList();
         DefaultTableModel model = (DefaultTableModel) lstBackups.getModel();
         for (String backup : al) {
-            String[] names = Utilities.trimExtension(backup).split("\\+");
+            String[] names = FileUtils.getExtension(backup).split("\\+");
             model.addRow(new Object[] {
                 names[0], names[1], names[2]
             });
@@ -3208,15 +3000,15 @@ public final class MainWindow extends javax.swing.JFrame
     }
 
     void refreshInfos() {
-        ArrayList<String> al = Utilities.findAllFile(new File(Utilities.getGameDir() + "infos-HMCSM"));
+        ArrayList<String> al = IOUtils.findAllFile(new File(Utilities.getGameDir() + "infos-HMCSM"));
         DefaultTableModel model = (DefaultTableModel) lstInfos.getModel();
         for (String s : al)
-            model.addRow(new Object[] {s, Utilities.trimExtension(s)});
+            model.addRow(new Object[] {s, FileUtils.getExtension(s)});
         lstInfos.updateUI();
     }
 
     void refreshReports() {
-        ArrayList<String> al = Utilities.findAllFile(new File(Utilities.getGameDir() + "crash-reports"));
+        ArrayList<String> al = IOUtils.findAllFile(new File(Utilities.getGameDir() + "crash-reports"));
         for (String s : al)
             lstCrashReportsModel.addElement(s);
         lstReports.setModel(lstCrashReportsModel);
@@ -3610,10 +3402,9 @@ public final class MainWindow extends javax.swing.JFrame
     }//GEN-LAST:event_btnManageExtModsActionPerformed
 
     private void btnAddExternelModActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddExternelModActionPerformed
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraftlauncher/VersionSettingsWindow");
         JFileChooser fc = new JFileChooser();
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setDialogTitle(bundle.getString("选择模组"));
+        fc.setDialogTitle(C.i18n("mods.choose_mod"));
         fc.setMultiSelectionEnabled(false);
         fc.showOpenDialog(this);
         try {
@@ -3628,7 +3419,7 @@ public final class MainWindow extends javax.swing.JFrame
             model.addRow(new Object[] {fc.getSelectedFile().getName(), ModType.getModTypeShowName(ModType.getModType(newf))});
             lstExternalMods.updateUI();
         } catch (IOException e) {
-            MessageBox.Show(bundle.getString("添加失败"));
+            MessageBox.Show(C.i18n("mods.failed"));
             HMCLog.warn("Failed to add ext mods", e);
         }
     }//GEN-LAST:event_btnAddExternelModActionPerformed
@@ -3639,10 +3430,8 @@ public final class MainWindow extends javax.swing.JFrame
         String selectedName = (String) model.getValueAt(idx, 0);
         model.removeRow(idx);
         String path = Utilities.getPath("mods");
-        if (path == null) {
-            MessageBox.Show(java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraftlauncher/VersionSettingsWindow").getString("删除失败"));
+        if (path == null)
             return;
-        }
         File newf = new File(path + File.separator + selectedName);
         newf.delete();
     }//GEN-LAST:event_btnDeleteExternelModActionPerformed
@@ -3654,7 +3443,7 @@ public final class MainWindow extends javax.swing.JFrame
     private void btnAddExternelCoreModActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddExternelCoreModActionPerformed
         JFileChooser fc = new JFileChooser();
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setDialogTitle(java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraftlauncher/VersionSettingsWindow").getString("选择模组"));
+        fc.setDialogTitle(C.i18n("mods.choose_mod"));
         fc.setMultiSelectionEnabled(false);
         fc.showOpenDialog(this);
         try {
@@ -3669,7 +3458,7 @@ public final class MainWindow extends javax.swing.JFrame
             model.addRow(new Object[] {fc.getSelectedFile().getName(), ModType.getModTypeShowName(ModType.getModType(newf))});
             FileUtils.copyFile(new File(path), newf);
         } catch (IOException e) {
-            MessageBox.Show(java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraftlauncher/VersionSettingsWindow").getString("添加失败"));
+            MessageBox.Show(C.i18n("mods.failed"));
             HMCLog.warn("Failed to add ext core mod.", e);
         }
     }//GEN-LAST:event_btnAddExternelCoreModActionPerformed
@@ -3681,10 +3470,8 @@ public final class MainWindow extends javax.swing.JFrame
         model.removeRow(idx);
         lstCoreMods.updateUI();
         String path = Utilities.getPath("coremods");
-        if (path == null) {
-            MessageBox.Show(java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraftlauncher/VersionSettingsWindow").getString("删除失败"));
+        if (path == null)
             return;
-        }
         File newf = new File(path + File.separator + selectedName);
         newf.delete();
     }//GEN-LAST:event_btnDeleteExternelCoreModActionPerformed
@@ -3696,7 +3483,7 @@ public final class MainWindow extends javax.swing.JFrame
     private void btnAddPluginsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddPluginsActionPerformed
         JFileChooser fc = new JFileChooser();
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setDialogTitle(java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraftlauncher/VersionSettingsWindow").getString("选择模组"));
+        fc.setDialogTitle(C.i18n("mods.choose_mod"));
         fc.setMultiSelectionEnabled(false);
         fc.showOpenDialog(this);
         try {
@@ -3711,7 +3498,7 @@ public final class MainWindow extends javax.swing.JFrame
             model.addRow(new Object[] {fc.getSelectedFile().getName(), ModType.getModTypeShowName(ModType.getModType(newf))});
             FileUtils.copyFile(new File(path), newf);
         } catch (IOException e) {
-            MessageBox.Show(java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraftlauncher/VersionSettingsWindow").getString("添加失败"));
+            MessageBox.Show(C.i18n("mods.failed"));
             HMCLog.warn("Failed to add plugin", e);
         }
     }//GEN-LAST:event_btnAddPluginsActionPerformed
@@ -3723,10 +3510,8 @@ public final class MainWindow extends javax.swing.JFrame
         model.removeRow(idx);
         lstPlugins.updateUI();
         String path = Utilities.getPath("plugins");
-        if (path == null) {
-            MessageBox.Show(java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraftlauncher/VersionSettingsWindow").getString("删除失败"));
+        if (path == null)
             return;
-        }
         File newf = new File(path + File.separator + selectedName);
         newf.delete();
     }//GEN-LAST:event_btnDeletePluginsActionPerformed
@@ -3777,7 +3562,7 @@ public final class MainWindow extends javax.swing.JFrame
                 whitelist.saveAsBoth(new File(dir, "banned-players.txt"), new File(dir, "banned-players.json"));
             } catch (IOException ex) {
                 HMCLog.warn("Failed to save banned-players", ex);
-                MessageBox.Show("添加失败。。。");
+                MessageBox.Show(C.i18n("mods.failed"));
             }
         }
     }//GEN-LAST:event_btnAddBanActionPerformed
@@ -3797,7 +3582,6 @@ public final class MainWindow extends javax.swing.JFrame
                 whitelist.saveAsBoth(new File(dir, "banned-players.txt"), new File(dir, "banned-players.json"));
             } catch (IOException ex) {
                 HMCLog.warn("Failed to save white-list", ex);
-                MessageBox.Show("删除失败。。。");
             }
         }
     }//GEN-LAST:event_btnUnbanActionPerformed
@@ -3805,12 +3589,12 @@ public final class MainWindow extends javax.swing.JFrame
     private void btnSetBackgroundPathActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSetBackgroundPathActionPerformed
         JFileChooser fc = new JFileChooser();
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setDialogTitle(java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraftlauncher/I18N").getString("选择背景路径"));
+        fc.setDialogTitle(C.i18n("launcher.choose_bgpath"));
         fc.setMultiSelectionEnabled(false);
         fc.showOpenDialog(this);
         try {
             String path = fc.getSelectedFile().getCanonicalPath();
-            path = Utilities.removeLastSeparator(path);
+            path = IOUtils.removeLastSeparator(path);
             txtBackgroundPath.setText(path);
             SettingsManager.settings.bgPath = path;
             SettingsManager.save();
@@ -3818,7 +3602,7 @@ public final class MainWindow extends javax.swing.JFrame
             resizeBackgroundLabel();
         } catch (IOException e) {
             HMCLog.warn("Failed to set background path", e);
-            MessageBox.Show(java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraftlauncher/I18N").getString("设置失败：") + e.getMessage());
+            MessageBox.Show(C.i18n("ui.label.failed_set") + e.getMessage());
         }
     }//GEN-LAST:event_btnSetBackgroundPathActionPerformed
 
@@ -3896,15 +3680,20 @@ public final class MainWindow extends javax.swing.JFrame
         loadBackups();
     }//GEN-LAST:event_jButton1ActionPerformed
 
+    File getBackupFile(int index) {
+        DefaultTableModel model = (DefaultTableModel) lstBackups.getModel();
+        return new File(BackupManager.backupDir()
+                        + model.getValueAt(index, 0) + "+"
+                        + model.getValueAt(index, 1) + "+"
+                        + model.getValueAt(index, 2) + ".zip");
+    }
+
     private void btnDeleteBackupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteBackupActionPerformed
         int index = lstBackups.getSelectedRow();
         if (index == -1)
             return;
+        FileUtils.deleteDirectoryQuietly(getBackupFile(index));
         DefaultTableModel model = (DefaultTableModel) lstBackups.getModel();
-        Utilities.deleteAll(new File(BackupManager.backupDir()
-                                     + model.getValueAt(index, 0) + "+"
-                                     + model.getValueAt(index, 1) + "+"
-                                     + model.getValueAt(index, 2) + ".zip"));
         model.removeRow(index);
     }//GEN-LAST:event_btnDeleteBackupActionPerformed
 
@@ -3912,11 +3701,7 @@ public final class MainWindow extends javax.swing.JFrame
         int index = lstBackups.getSelectedRow();
         if (index == -1)
             return;
-        DefaultTableModel model = (DefaultTableModel) lstBackups.getModel();
-        BackupManager.restoreBackup(BackupManager.backupDir()
-                                    + model.getValueAt(index, 0) + "+"
-                                    + model.getValueAt(index, 1) + "+"
-                                    + model.getValueAt(index, 2) + ".zip");
+        BackupManager.restoreBackup(getBackupFile(index));
     }//GEN-LAST:event_btnRestoreBackupActionPerformed
 
     private void btnRefreshDownloadsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshDownloadsActionPerformed
@@ -3953,7 +3738,7 @@ public final class MainWindow extends javax.swing.JFrame
     }//GEN-LAST:event_btnShowInfoActionPerformed
 
     private void btnAutoSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAutoSearchActionPerformed
-        ArrayList<String> al = Utilities.findAllFile(IOUtils.currentDir());
+        ArrayList<String> al = IOUtils.findAllFile(IOUtils.currentDir());
         for (String s : al)
             if (ServerChecker.isServerJar(new File(s))) {
                 String path = IOUtils.tryGetCanonicalFilePath(new File(IOUtils.currentDir(), s));
@@ -4007,31 +3792,31 @@ public final class MainWindow extends javax.swing.JFrame
     }//GEN-LAST:event_chkOnlineModeActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        Utilities.openLink("http://www.mcbbs.net/");
+        SwingUtils.openLink("http://www.mcbbs.net/");
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-        Utilities.openLink("http://tieba.baidu.com/minecraft");
+        SwingUtils.openLink("http://tieba.baidu.com/minecraft");
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
-        Utilities.openLink("http://www.mcbbs.net/thread-171239-1-1.html");
+        SwingUtils.openLink("http://www.mcbbs.net/thread-171239-1-1.html");
     }//GEN-LAST:event_jButton6ActionPerformed
 
     private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
-        Utilities.openLink("http://www.minecraft.net/");
+        SwingUtils.openLink("http://www.minecraft.net/");
     }//GEN-LAST:event_jButton7ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        Utilities.openLink("http://www.oray.com/peanuthull/download_ddns_6.5.php");
+        SwingUtils.openLink("http://www.oray.com/peanuthull/download_ddns_6.5.php");
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
-        Utilities.openLink("http://www.bukkit.org/");
+        SwingUtils.openLink("http://www.bukkit.org/");
     }//GEN-LAST:event_jButton8ActionPerformed
 
     private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
-        Utilities.openLink("http://ci.md-5.net/job/MCPC-Plus/");
+        SwingUtils.openLink("http://ci.md-5.net/job/MCPC-Plus/");
     }//GEN-LAST:event_jButton9ActionPerformed
 
     private void jButton10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton10ActionPerformed

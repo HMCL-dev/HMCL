@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -32,6 +32,7 @@ import org.jackhuang.hellominecraft.svrmgr.views.MainWindow;
 import org.jackhuang.hellominecraft.utils.VersionNumber;
 import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
 import org.jackhuang.hellominecraft.utils.MessageBox;
+import rx.concurrency.Schedulers;
 
 /**
  *
@@ -41,10 +42,11 @@ public class Main {
 
     public static String launcherName = "Hello Minecraft! Server Manager";
     public static final String PUBLISH_URL = "http://www.mcbbs.net/thread-171239-1-1.html";
-    public static byte firstVer = 0, secondVer = 8, thirdVer = 6;
+    public static final byte VERSION_FIRST = 0, VERSION_SECOND = 8, VERSION_THIRD = 6;
+    public static final UpdateChecker UPDATE_CHECKER = new UpdateChecker(new VersionNumber(VERSION_FIRST, VERSION_SECOND, VERSION_THIRD), "hmcsm");
 
     public static String makeTitle() {
-        return launcherName + ' ' + firstVer + '.' + secondVer + '.' + thirdVer;
+        return launcherName + ' ' + VERSION_FIRST + '.' + VERSION_SECOND + '.' + VERSION_THIRD;
     }
 
     public static void main(String[] args) {
@@ -56,9 +58,8 @@ public class Main {
             } catch (ParseException | UnsupportedLookAndFeelException ex) {
                 HMCLog.warn("Failed to set look and feel", ex);
             }
-            new UpdateChecker(new VersionNumber(firstVer, secondVer, thirdVer), "hmcsm", () -> {
-                                  SwingUtilities.invokeLater(() -> MessageBox.Show("发现更新！"));
-                              }).start();
+            UPDATE_CHECKER.outdated.register(new AppDataUpgrader());
+            UPDATE_CHECKER.process(false).subscribeOn(Schedulers.newThread()).subscribe(t -> MessageBox.Show("发现更新！"));
             new MainWindow().setVisible(true);
         } catch (Throwable t) {
             HMCLog.err("There's something wrong when running server holder.", t);

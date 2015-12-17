@@ -1557,7 +1557,7 @@
                     <Component class="javax.swing.JButton" name="btnAddExternelMod">
                       <Properties>
                         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                          <ResourceString bundle="org/jackhuang/hellominecraftlauncher/VersionSettingsWindow.properties" key="&#x589e;&#x52a0;" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mods.add" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                         </Property>
                       </Properties>
                       <Events>
@@ -1570,7 +1570,7 @@
                     <Component class="javax.swing.JButton" name="btnDeleteExternelMod">
                       <Properties>
                         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                          <ResourceString bundle="org/jackhuang/hellominecraftlauncher/VersionSettingsWindow.properties" key="&#x5220;&#x9664;" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mods.remove" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                         </Property>
                       </Properties>
                       <Events>
@@ -1681,7 +1681,7 @@
                     <Component class="javax.swing.JButton" name="btnAddExternelCoreMod">
                       <Properties>
                         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                          <ResourceString bundle="org/jackhuang/hellominecraftlauncher/VersionSettingsWindow.properties" key="&#x589e;&#x52a0;" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mods.add" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                         </Property>
                       </Properties>
                       <Events>
@@ -1694,7 +1694,7 @@
                     <Component class="javax.swing.JButton" name="btnDeleteExternelCoreMod">
                       <Properties>
                         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                          <ResourceString bundle="org/jackhuang/hellominecraftlauncher/VersionSettingsWindow.properties" key="&#x5220;&#x9664;" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mods.remove" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                         </Property>
                       </Properties>
                       <Events>
@@ -1844,7 +1844,7 @@
                     <Component class="javax.swing.JButton" name="btnAddPlugins">
                       <Properties>
                         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                          <ResourceString bundle="org/jackhuang/hellominecraftlauncher/VersionSettingsWindow.properties" key="&#x589e;&#x52a0;" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mods.add" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                         </Property>
                       </Properties>
                       <Events>
@@ -1857,7 +1857,7 @@
                     <Component class="javax.swing.JButton" name="btnDeletePlugins">
                       <Properties>
                         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                          <ResourceString bundle="org/jackhuang/hellominecraftlauncher/VersionSettingsWindow.properties" key="&#x5220;&#x9664;" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mods.remove" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                         </Property>
                       </Properties>
                       <Events>
@@ -2554,7 +2554,9 @@
                     </Container>
                     <Component class="javax.swing.JButton" name="btnDownloadCraftbukkit">
                       <Properties>
-                        <Property name="text" type="java.lang.String" value="&#x4e0b;&#x8f7d;"/>
+                        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="download" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+                        </Property>
                       </Properties>
                       <Events>
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnDownloadCraftbukkitActionPerformed"/>
@@ -2565,7 +2567,9 @@
                     </Component>
                     <Component class="javax.swing.JButton" name="lstRefreshCraftbukkit">
                       <Properties>
-                        <Property name="text" type="java.lang.String" value="&#x5237;&#x65b0;"/>
+                        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.refresh" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+                        </Property>
                         <Property name="toolTipText" type="java.lang.String" value=""/>
                       </Properties>
                       <Events>
@@ -2705,6 +2709,9 @@
                     </Container>
                     <Component class="javax.swing.JButton" name="btnDownloadMCPC">
                       <Properties>
+                        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="download" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+                        </Property>
                         <Property name="label" type="java.lang.String" value="&#x4e0b;&#x8f7d;"/>
                       </Properties>
                       <Events>
@@ -2716,6 +2723,9 @@
                     </Component>
                     <Component class="javax.swing.JButton" name="lstRefreshMCPC">
                       <Properties>
+                        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.refresh" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+                        </Property>
                         <Property name="toolTipText" type="java.lang.String" value=""/>
                         <Property name="label" type="java.lang.String" value="&#x5237;&#x65b0;"/>
                       </Properties>
@@ -2743,7 +2753,9 @@
                     </Component>
                     <Component class="javax.swing.JButton" name="btnInstallMCPC">
                       <Properties>
-                        <Property name="text" type="java.lang.String" value="&#x91cd;&#x8bd5;"/>
+                        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.retry" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+                        </Property>
                       </Properties>
                       <Events>
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnInstallMCPCActionPerformed"/>
@@ -2768,7 +2780,7 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jScrollPane12" pref="450" max="32767" attributes="0"/>
+                              <Component id="jScrollPane12" pref="501" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                   <Component id="btnRefreshDownloads" max="32767" attributes="0"/>
@@ -2800,7 +2812,7 @@
                     <Component class="javax.swing.JButton" name="btnRefreshDownloads">
                       <Properties>
                         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                          <ResourceString bundle="org/jackhuang/hellominecraftlauncher/I18N.properties" key="&#x5237;&#x65b0;" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.refresh" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                         </Property>
                       </Properties>
                       <Events>
@@ -2862,7 +2874,7 @@
                     <Component class="javax.swing.JButton" name="btnMinecraftServerDownload">
                       <Properties>
                         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                          <ResourceString bundle="org/jackhuang/hellominecraftlauncher/I18N.properties" key="&#x4e0b;&#x8f7d;" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="download" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                         </Property>
                       </Properties>
                       <Events>
@@ -2998,7 +3010,9 @@
                     </Component>
                     <Component class="javax.swing.JButton" name="jButton11">
                       <Properties>
-                        <Property name="text" type="java.lang.String" value="&#x5237;&#x65b0;"/>
+                        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.refresh" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+                        </Property>
                       </Properties>
                       <Events>
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton11ActionPerformed"/>

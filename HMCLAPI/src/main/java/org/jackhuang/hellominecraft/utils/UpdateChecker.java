@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -27,20 +27,20 @@ import rx.Observable;
  * @author huangyuhui
  */
 public final class UpdateChecker implements IUpdateChecker {
-    
+
     public boolean OUT_DATED = false;
     public VersionNumber base;
     public String versionString;
     public String type;
     private Map<String, String> download_link = null;
-    
+
     public UpdateChecker(VersionNumber base, String type) {
         this.base = base;
         this.type = type;
     }
-    
+
     VersionNumber value;
-    
+
     @Override
     public Observable<VersionNumber> process(boolean showMessage) {
         return Observable.createWithEmptySubscription(t -> {
@@ -53,7 +53,7 @@ public final class UpdateChecker implements IUpdateChecker {
                 }
                 value = VersionNumber.check(versionString);
             }
-            
+
             if (value == null) {
                 HMCLog.warn("Failed to check update...");
                 if (showMessage)
@@ -64,12 +64,12 @@ public final class UpdateChecker implements IUpdateChecker {
                 t.onNext(value);
         });
     }
-    
+
     @Override
     public VersionNumber getNewVersion() {
         return value;
     }
-    
+
     @Override
     public synchronized Observable<Map<String, String>> requestDownloadLink() {
         return Observable.createWithEmptySubscription(t -> {
@@ -82,9 +82,9 @@ public final class UpdateChecker implements IUpdateChecker {
             t.onNext(download_link);
         });
     }
-    
+
     public final EventHandler<VersionNumber> outdated = new EventHandler<>(this);
-    
+
     @Override
     public void checkOutdate() {
         if (OUT_DATED)
