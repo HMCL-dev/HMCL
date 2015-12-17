@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -27,7 +27,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URI;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLDecoder;
@@ -40,6 +40,16 @@ import org.jackhuang.hellominecraft.HMCLog;
  * @author huangyuhui
  */
 public final class Utils {
+
+    @SuppressWarnings("ResultOfObjectAllocationIgnored")
+    public static boolean isURL(String s) {
+        try {
+            new URL(s);
+            return true;
+        } catch (MalformedURLException ex) {
+            return false;
+        }
+    }
 
     public static String[] getURL() {
         URL[] urls = ((URLClassLoader) Utils.class.getClassLoader()).getURLs();
@@ -133,7 +143,8 @@ public final class Utils {
             }
         }
 
-        if (background == null) return init;
+        if (background == null)
+            return init;
         return background;
     }
 

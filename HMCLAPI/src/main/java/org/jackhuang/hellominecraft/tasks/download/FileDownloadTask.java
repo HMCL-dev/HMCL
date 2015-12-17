@@ -183,7 +183,11 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
     }
 
     public static void download(String url, String file, DownloadListener dl) throws Throwable {
-        ((Task) new FileDownloadTask(url, new File(file)).setProgressProviderListener(dl)).executeTask();
+        download(url, new File(file), dl);
+    }
+
+    public static void download(String url, File file, DownloadListener dl) throws Throwable {
+        ((Task) new FileDownloadTask(url, file).setProgressProviderListener(dl)).executeTask();
     }
 
     @Override

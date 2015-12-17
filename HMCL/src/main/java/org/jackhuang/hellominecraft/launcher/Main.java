@@ -42,6 +42,7 @@ import org.jackhuang.hellominecraft.views.LogWindow;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.utils.upgrade.IUpgrader;
 import org.jackhuang.hellominecraft.launcher.views.MainFrame;
+import org.jackhuang.hellominecraft.launcher.views.ServerListView;
 import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
 import org.jackhuang.hellominecraft.utils.MathUtils;
 import org.jackhuang.hellominecraft.utils.StrUtils;

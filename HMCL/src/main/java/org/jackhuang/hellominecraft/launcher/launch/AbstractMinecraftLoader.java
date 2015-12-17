@@ -160,7 +160,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
         }
 
         String serverIp = v.getServerIp();
-        if (lr.getServerIp() != null) serverIp = lr.getServerIp();
+        if (lr.getServer() != null) serverIp = lr.getServer().addr;
         if (StrUtils.isNotBlank(serverIp)) {
             String[] args = serverIp.split(":");
             res.add("--server");
@@ -191,7 +191,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
     }
 
     /**
-     * You must do these things:<br />
+     * You must do these things:
      * <ul>
      * <li>minecraft class path</li>
      * <li>main class</li>

@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hellominecraft.launcher.utils.auth;
 
+import org.jackhuang.hellominecraft.launcher.version.ServerInfo;
+
 /**
  *
  * @author huangyuhui
@@ -115,13 +117,13 @@ public final class UserProfileProvider {
     private String otherInfo = "";
     private String clientIdentifier = "";
     private String userType = "Offline";
-    private String serverIp = "";
+    private ServerInfo server = null;
 
-    public String getServerIp() {
-        return serverIp;
+    public ServerInfo getServer() {
+        return server;
     }
 
-    public void setServerIp(String serverIp) {
-        this.serverIp = serverIp;
+    public void setServer(ServerInfo server) {
+        this.server = server;
     }
 }
