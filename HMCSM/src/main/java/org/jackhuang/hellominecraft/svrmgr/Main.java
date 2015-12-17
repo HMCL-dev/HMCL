@@ -21,7 +21,6 @@ import java.awt.Font;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.ParseException;
-import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import org.jackhuang.hellominecraft.HMCLog;
@@ -58,8 +57,7 @@ public class Main {
             } catch (ParseException | UnsupportedLookAndFeelException ex) {
                 HMCLog.warn("Failed to set look and feel", ex);
             }
-            UPDATE_CHECKER.outdated.register(new AppDataUpgrader());
-            UPDATE_CHECKER.process(false).subscribeOn(Schedulers.newThread()).subscribe(t -> MessageBox.Show("发现更新！"));
+            UPDATE_CHECKER.process(false).subscribeOn(Schedulers.newThread()).subscribe(t -> MessageBox.Show("发现更新！" + t.version));
             new MainWindow().setVisible(true);
         } catch (Throwable t) {
             HMCLog.err("There's something wrong when running server holder.", t);
