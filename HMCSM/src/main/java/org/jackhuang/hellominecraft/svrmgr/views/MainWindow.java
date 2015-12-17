@@ -1,16 +1,16 @@
 /*
  * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.
  */
@@ -94,7 +94,7 @@ import org.jackhuang.hellominecraft.utils.Event;
  * @author huangyuhui
  */
 public final class MainWindow extends javax.swing.JFrame
-implements MonitorThread.MonitorThreadListener, Event<Integer> {
+    implements MonitorThread.MonitorThreadListener, Event<Integer> {
 
     ImageIcon background = new ImageIcon(getClass().getResource("/background.jpg"));
     JLabel backgroundLabel;
@@ -2911,14 +2911,20 @@ implements MonitorThread.MonitorThreadListener, Event<Integer> {
         cboGameMode.setSelectedIndex(sp.getPropertyInt("gamemode", 0));
         cboDifficulty.setSelectedIndex(sp.getPropertyInt("difficulty", 1));
         String wt = sp.getProperty("level-type");
-        if (wt.equals("LARGEBIOMES"))
+        switch (wt) {
+        case "LARGEBIOMES":
             cboWorldType.setSelectedIndex(2);
-        else if (wt.equals("FLAT"))
+            break;
+        case "FLAT":
             cboWorldType.setSelectedIndex(1);
-        else if (wt.equals("DEFAULT"))
+            break;
+        case "DEFAULT":
             cboWorldType.setSelectedIndex(0);
-        else
+            break;
+        default:
             cboWorldType.setSelectedIndex(0);
+            break;
+        }
         txtMaxPlayer.setValue(sp.getPropertyInt("max-players", 20));
         chkAllowFlight.setSelected(sp.getPropertyBoolean("allow-flight", false));
         chkAllowNether.setSelected(sp.getPropertyBoolean("allow-nether", true));
@@ -3062,27 +3068,34 @@ implements MonitorThread.MonitorThreadListener, Event<Integer> {
         int idx = cboBukkitType.getSelectedIndex();
         if (idx == -1)
             return;
-        if (idx == 1) {
-            BukkitFormatThread thread = new BukkitFormatThread(
-            "http://dl.bukkit.org/downloads/craftbukkit/list/beta/", value -> {
-                craftBukkitBeta = value;
-                reloadBukkitList();
-            });
+        BukkitFormatThread thread;
+        switch (idx) {
+        case 1:
+            thread = new BukkitFormatThread(
+                "http://dl.bukkit.org/downloads/craftbukkit/list/beta/", value -> {
+                    craftBukkitBeta = value;
+                    reloadBukkitList();
+                });
             thread.start();
-        } else if (idx == 0) {
-            BukkitFormatThread thread = new BukkitFormatThread(
-            "http://dl.bukkit.org/downloads/craftbukkit/list/rb/", value -> {
-                craftBukkitRecommended = value;
-                reloadBukkitList();
-            });
+            break;
+        case 0:
+            thread = new BukkitFormatThread(
+                "http://dl.bukkit.org/downloads/craftbukkit/list/rb/", value -> {
+                    craftBukkitRecommended = value;
+                    reloadBukkitList();
+                });
             thread.start();
-        } else if (idx == 2) {
-            BukkitFormatThread thread = new BukkitFormatThread(
-            "http://dl.bukkit.org/downloads/craftbukkit/list/dev/", value -> {
-                craftBukkitDev = value;
-                reloadBukkitList();
-            });
+            break;
+        case 2:
+            thread = new BukkitFormatThread(
+                "http://dl.bukkit.org/downloads/craftbukkit/list/dev/", value -> {
+                    craftBukkitDev = value;
+                    reloadBukkitList();
+                });
             thread.start();
+            break;
+        default:
+            break;
         }
     }
 
@@ -3123,12 +3136,19 @@ implements MonitorThread.MonitorThreadListener, Event<Integer> {
         int idx = cboBukkitType.getSelectedIndex();
         if (idx == -1)
             return;
-        if (idx == 1)
+        switch (idx) {
+        case 1:
             useBukkitVersions(craftBukkitBeta);
-        else if (idx == 0)
+            break;
+        case 0:
             useBukkitVersions(craftBukkitRecommended);
-        else if (idx == 2)
+            break;
+        case 2:
             useBukkitVersions(craftBukkitDev);
+            break;
+        default:
+            break;
+        }
     }
 
     public void useBukkitVersions(List<BukkitVersion> list) {
@@ -3204,7 +3224,7 @@ implements MonitorThread.MonitorThreadListener, Event<Integer> {
 
     void getIP() {
         IPGet get = new IPGet();
-        get.dl = a -> lblIPAddress.setText("IP: " + a);;
+        get.dl = a -> lblIPAddress.setText("IP: " + a);
         get.start();
     }
 
@@ -3337,11 +3357,11 @@ implements MonitorThread.MonitorThreadListener, Event<Integer> {
 
         Server.init(SettingsManager.settings.mainjar, String.valueOf(SettingsManager.settings.maxMemory));
         Server.getInstance()
-        .addListener((MonitorThread.MonitorThreadListener) this);
+            .addListener((MonitorThread.MonitorThreadListener) this);
         Server.getInstance()
-        .addListener((Event<Integer>) this);
+            .addListener((Event<Integer>) this);
         Server.getInstance()
-        .clearSchedule();
+            .clearSchedule();
         for (Schedule s : SettingsManager.settings.schedules)
             Server.getInstance().addSchedule(s);
 
@@ -3369,14 +3389,21 @@ implements MonitorThread.MonitorThreadListener, Event<Integer> {
     private void txtCommandKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtCommandKeyPressed
         int newCommandIndex = commandIndex;
         int type = 0;
-        if (evt.getKeyCode() == KeyEvent.VK_UP) {
+        switch (evt.getKeyCode()) {
+        case KeyEvent.VK_UP:
             newCommandIndex--;
             type = 1;
-        } else if (evt.getKeyCode() == KeyEvent.VK_DOWN) {
+            break;
+        case KeyEvent.VK_DOWN:
             newCommandIndex++;
             type = 1;
-        } else if (evt.getKeyCode() == KeyEvent.VK_ENTER)
+            break;
+        case KeyEvent.VK_ENTER:
             type = 2;
+            break;
+        default:
+            break;
+        }
         if (type == 1) {
             if (outOfCommandSet(newCommandIndex))
                 return;
@@ -3468,12 +3495,19 @@ implements MonitorThread.MonitorThreadListener, Event<Integer> {
     private void cboWorldTypeItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboWorldTypeItemStateChanged
         int OAO = cboWorldType.getSelectedIndex();
         String type = "DEFAULT";
-        if (OAO == 0)
+        switch (OAO) {
+        case 0:
             type = "DEFAULT";
-        else if (OAO == 1)
+            break;
+        case 1:
             type = "FLAT";
-        else if (OAO == 2)
+            break;
+        case 2:
             type = "LARGEBIMOES";
+            break;
+        default:
+            break;
+        }
         ServerProperties.getInstance().setLevelType(type);
     }//GEN-LAST:event_cboWorldTypeItemStateChanged
 
@@ -3706,7 +3740,7 @@ implements MonitorThread.MonitorThreadListener, Event<Integer> {
     }//GEN-LAST:event_btnSaveActionPerformed
 
     private void btnSaveExtModActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveExtModActionPerformed
-        ArrayList<String> arrayList = new ArrayList<String>();
+        ArrayList<String> arrayList = new ArrayList<>();
         Vector strings = ((DefaultTableModel) lstExternalMods.getModel()).getDataVector();
         for (Object s : strings) {
             Vector v = (Vector) s;
@@ -3849,12 +3883,12 @@ implements MonitorThread.MonitorThreadListener, Event<Integer> {
 
     private void btnBackupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBackupActionPerformed
         switch (cboBackupTypes.getSelectedIndex()) {
-            case 0:
-                BackupManager.backupAllWorlds();
-                break;
-            case 1:
-                BackupManager.backupAllPlugins();
-                break;
+        case 0:
+            BackupManager.backupAllWorlds();
+            break;
+        case 1:
+            BackupManager.backupAllPlugins();
+            break;
         }
     }//GEN-LAST:event_btnBackupActionPerformed
 
@@ -4012,27 +4046,27 @@ implements MonitorThread.MonitorThreadListener, Event<Integer> {
         int idx = lstCraftbukkit.getSelectedRow();
         if (idx == -1)
             return;
-        String ext = "";
-        List<BukkitVersion> cb = null;
+        String ext;
+        List<BukkitVersion> cb;
         int idx2 = cboBukkitType.getSelectedIndex();
         if (idx2 == -1)
             return;
         switch (idx2) {
-            case 0:
-                ext = "rb";
-                cb = craftBukkitRecommended;
-                break;
-            case 1:
-                ext = "beta";
-                cb = craftBukkitBeta;
-                break;
-            default:
-                return;
+        case 0:
+            ext = "rb";
+            cb = craftBukkitRecommended;
+            break;
+        case 1:
+            ext = "beta";
+            cb = craftBukkitBeta;
+            break;
+        default:
+            return;
         }
         BukkitVersion v = cb.get(idx);
         File file = new File(IOUtils.currentDir(), "craftbukkit-" + ext + "-" + v.version + ".jar");
         TaskWindow.getInstance().addTask(new FileDownloadTask(v.downloadLink, IOUtils.tryGetCanonicalFile(file)).setTag("bukkit-" + ext + "-" + v.version))
-        .start();
+            .start();
     }//GEN-LAST:event_btnDownloadCraftbukkitActionPerformed
 
     private void btnDownloadMCPCActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadMCPCActionPerformed
@@ -4065,7 +4099,7 @@ implements MonitorThread.MonitorThreadListener, Event<Integer> {
     }//GEN-LAST:event_lstRefreshMCPCActionPerformed
 
     private void btnSaveCoreModActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveCoreModActionPerformed
-        ArrayList<String> arrayList = new ArrayList<String>();
+        ArrayList<String> arrayList = new ArrayList<>();
         Vector strings = ((DefaultTableModel) lstPlugins.getModel()).getDataVector();
         for (Object s : strings) {
             Vector v = (Vector) s;
@@ -4176,10 +4210,10 @@ implements MonitorThread.MonitorThreadListener, Event<Integer> {
 
     MonitorThread mainThread;
     DefaultListModel lstOPModel = new DefaultListModel(),
-    lstWhiteListModel = new DefaultListModel(),
-    lstBannedModel = new DefaultListModel(),
-    lstCrashReportsModel = new DefaultListModel(),
-    lstPlayersModel = new DefaultListModel();
+        lstWhiteListModel = new DefaultListModel(),
+        lstBannedModel = new DefaultListModel(),
+        lstCrashReportsModel = new DefaultListModel(),
+        lstPlayersModel = new DefaultListModel();
     List<BukkitPlugin> plugins;
     Map<String, List<ForgeVersion>> mcpcPackages;
     List<BukkitVersion> craftBukkitRecommended, craftBukkitBeta, craftBukkitDev;

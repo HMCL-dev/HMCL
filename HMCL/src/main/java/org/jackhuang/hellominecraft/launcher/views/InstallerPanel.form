@@ -42,7 +42,7 @@
     <Component class="javax.swing.JButton" name="btnInstall">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.install" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.install" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
@@ -74,7 +74,7 @@
     <Component class="javax.swing.JButton" name="btnRefresh">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.refresh" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.refresh" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>

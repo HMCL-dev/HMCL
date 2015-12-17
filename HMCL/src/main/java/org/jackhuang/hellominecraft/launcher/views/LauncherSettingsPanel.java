@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -95,43 +95,42 @@ public class LauncherSettingsPanel extends AnimatedPanel {
             }
         });
 
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraft/launcher/I18N"); // NOI18N
-        jLabel4.setText(bundle.getString("launcher.about")); // NOI18N
+        jLabel4.setText(C.i18n("launcher.about")); // NOI18N
 
-        btnSelBackgroundPath.setText(bundle.getString("ui.button.explore")); // NOI18N
+        btnSelBackgroundPath.setText(C.i18n("ui.button.explore")); // NOI18N
         btnSelBackgroundPath.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnSelBackgroundPathActionPerformed(evt);
             }
         });
 
-        jLabel14.setText(bundle.getString("launcher.background_location")); // NOI18N
+        jLabel14.setText(C.i18n("launcher.background_location")); // NOI18N
         jLabel14.setToolTipText("");
 
-        txtBackgroundPath.setToolTipText(bundle.getString("launcher.background_tooltip")); // NOI18N
+        txtBackgroundPath.setToolTipText(C.i18n("launcher.background_tooltip")); // NOI18N
         txtBackgroundPath.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 txtBackgroundPathFocusLost(evt);
             }
         });
 
-        jLabel7.setText(bundle.getString("launcher.download_source")); // NOI18N
+        jLabel7.setText(C.i18n("launcher.download_source")); // NOI18N
 
-        btnCheckUpdate.setText(bundle.getString("launcher.update_launcher")); // NOI18N
+        btnCheckUpdate.setText(C.i18n("launcher.update_launcher")); // NOI18N
         btnCheckUpdate.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnCheckUpdateActionPerformed(evt);
             }
         });
 
-        chkEnableShadow.setText(bundle.getString("launcher.enable_shadow")); // NOI18N
+        chkEnableShadow.setText(C.i18n("launcher.enable_shadow")); // NOI18N
         chkEnableShadow.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 chkEnableShadowFocusLost(evt);
             }
         });
 
-        jLabel1.setText(bundle.getString("launcher.theme")); // NOI18N
+        jLabel1.setText(C.i18n("launcher.theme")); // NOI18N
 
         cboTheme.setModel(new DefaultComboBoxModel(new String[]{C.i18n("color.blue"),C.i18n("color.green"),C.i18n("color.purple"),C.i18n("color.dark_blue"),C.i18n("color.orange"),C.i18n("color.red")}));
         cboTheme.addItemListener(new java.awt.event.ItemListener() {
@@ -140,7 +139,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
             }
         });
 
-        jLabel2.setText(bundle.getString("launcher.proxy")); // NOI18N
+        jLabel2.setText(C.i18n("launcher.proxy")); // NOI18N
 
         txtProxyHost.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
@@ -148,7 +147,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
             }
         });
 
-        jLabel3.setText(bundle.getString("proxy.host")); // NOI18N
+        jLabel3.setText(C.i18n("proxy.host")); // NOI18N
 
         txtProxyPort.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
@@ -156,9 +155,9 @@ public class LauncherSettingsPanel extends AnimatedPanel {
             }
         });
 
-        jLabel5.setText(bundle.getString("proxy.port")); // NOI18N
+        jLabel5.setText(C.i18n("proxy.port")); // NOI18N
 
-        jLabel6.setText(bundle.getString("proxy.username")); // NOI18N
+        jLabel6.setText(C.i18n("proxy.username")); // NOI18N
 
         txtProxyUsername.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
@@ -172,7 +171,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
             }
         });
 
-        jLabel8.setText(bundle.getString("proxy.password")); // NOI18N
+        jLabel8.setText(C.i18n("proxy.password")); // NOI18N
 
         chkEnableAnimation.setText("启用动态效果");
         chkEnableAnimation.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -219,16 +218,15 @@ public class LauncherSettingsPanel extends AnimatedPanel {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(txtProxyPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(0, 0, Short.MAX_VALUE))))
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(chkEnableShadow)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(chkEnableAnimation))
-                        .addGroup(layout.createSequentialGroup()
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(btnCheckUpdate))
-                            .addGap(0, 0, Short.MAX_VALUE))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(chkEnableShadow)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(chkEnableAnimation))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(btnCheckUpdate))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(

@@ -90,7 +90,7 @@
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="pnlPassword" min="-2" pref="26" max="-2" attributes="0"/>
-                  <EmptySpace pref="316" max="32767" attributes="0"/>
+                  <EmptySpace pref="314" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -106,7 +106,7 @@
         <Component class="javax.swing.JLabel" name="jLabel7">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="login.type" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+              <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="login.type" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -123,14 +123,14 @@
         <Component class="javax.swing.JLabel" name="lblUserName">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="login.username" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+              <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="login.username" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel10">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.label.profile" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+              <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.label.profile" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -150,7 +150,7 @@
               <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.label.version" replaceFormat="C.I18N.getString(&quot;{key}&quot;)"/>
             </Property>
             <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.label.version" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+              <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.label.version" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -201,7 +201,7 @@
                 <Component class="javax.swing.JLabel" name="jLabel9">
                   <Properties>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.label.password" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.label.password" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                 </Component>

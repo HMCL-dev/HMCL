@@ -4,7 +4,7 @@
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="2"/>
     <Property name="title" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-      <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="taskwindow.title" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+      <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="taskwindow.title" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
     </Property>
   </Properties>
   <SyntheticProperties>
@@ -42,11 +42,11 @@
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
-              <Component id="srlDownload" pref="291" max="32767" attributes="0"/>
+              <Component id="srlDownload" pref="290" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="btnCancel" alignment="1" min="-2" pref="22" max="-2" attributes="0"/>
-                  <Component id="pgsTotal" alignment="1" min="-2" pref="22" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="pgsTotal" alignment="3" min="-2" pref="22" max="-2" attributes="0"/>
+                  <Component id="btnCancel" alignment="3" min="-2" pref="22" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -57,7 +57,7 @@
     <Component class="javax.swing.JButton" name="btnCancel">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="taskwindow.cancel" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="taskwindow.cancel" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>

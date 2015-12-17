@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -316,8 +316,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
         tabVersionEdit.setName("tabVersionEdit"); // NOI18N
 
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraft/launcher/I18N"); // NOI18N
-        lblGameDir.setText(bundle.getString("settings.game_directory")); // NOI18N
+        lblGameDir.setText(C.i18n("settings.game_directory")); // NOI18N
 
         txtGameDir.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
@@ -325,7 +324,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             }
         });
 
-        lblDimension.setText(bundle.getString("settings.dimension")); // NOI18N
+        lblDimension.setText(C.i18n("settings.dimension")); // NOI18N
 
         txtWidth.setToolTipText("");
         txtWidth.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -342,7 +341,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
         lblDimensionX.setText("x");
 
-        chkFullscreen.setText(bundle.getString("settings.fullscreen")); // NOI18N
+        chkFullscreen.setText(C.i18n("settings.fullscreen")); // NOI18N
         chkFullscreen.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 chkFullscreenFocusLost(evt);
@@ -355,9 +354,9 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             }
         });
 
-        lblJavaDir.setText(bundle.getString("settings.java_dir")); // NOI18N
+        lblJavaDir.setText(C.i18n("settings.java_dir")); // NOI18N
 
-        lblMaxMemory.setText(bundle.getString("settings.max_memory")); // NOI18N
+        lblMaxMemory.setText(C.i18n("settings.max_memory")); // NOI18N
 
         txtMaxMemory.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
@@ -367,7 +366,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
         lblMaxMemorySize.setText(C.i18n("settings.physical_memory") + ": " + OS.getTotalPhysicalMemory() / 1024 / 1024 + "MB");
 
-        btnDownloadAllAssets.setText(bundle.getString("assets.download_all")); // NOI18N
+        btnDownloadAllAssets.setText(C.i18n("assets.download_all")); // NOI18N
         btnDownloadAllAssets.setToolTipText("");
         btnDownloadAllAssets.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -382,9 +381,9 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             }
         });
 
-        lblLauncherVisibility.setText(bundle.getString("advancedsettings.launcher_visible")); // NOI18N
+        lblLauncherVisibility.setText(C.i18n("advancedsettings.launcher_visible")); // NOI18N
 
-        lblRunDirectory.setText(bundle.getString("advancedsettings.run_directory")); // NOI18N
+        lblRunDirectory.setText(C.i18n("advancedsettings.run_directory")); // NOI18N
 
         cboRunDirectory.setModel(new javax.swing.DefaultComboBoxModel(new String[] { C.I18N.getString("advancedsettings.game_dir.default"), C.I18N.getString("advancedsettings.game_dir.independent") }));
         cboRunDirectory.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -393,7 +392,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             }
         });
 
-        btnChoosingJavaDir.setText(bundle.getString("ui.button.explore")); // NOI18N
+        btnChoosingJavaDir.setText(C.i18n("ui.button.explore")); // NOI18N
         btnChoosingJavaDir.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnChoosingJavaDirActionPerformed(evt);
@@ -406,7 +405,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             }
         });
 
-        btnChoosingGameDir.setText(bundle.getString("ui.button.explore")); // NOI18N
+        btnChoosingGameDir.setText(C.i18n("ui.button.explore")); // NOI18N
         btnChoosingGameDir.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnChoosingGameDirActionPerformed(evt);
@@ -498,18 +497,18 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                 .addContainerGap())
         );
 
-        tabVersionEdit.addTab(bundle.getString("settings"), pnlSettings); // NOI18N
+        tabVersionEdit.addTab(C.i18n("settings"), pnlSettings); // NOI18N
 
-        chkDebug.setText(bundle.getString("advencedsettings.debug_mode")); // NOI18N
+        chkDebug.setText(C.i18n("advencedsettings.debug_mode")); // NOI18N
         chkDebug.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 chkDebugFocusLost(evt);
             }
         });
 
-        lblJavaArgs.setText(bundle.getString("advancedsettings.jvm_args")); // NOI18N
+        lblJavaArgs.setText(C.i18n("advancedsettings.jvm_args")); // NOI18N
 
-        txtJavaArgs.setToolTipText(bundle.getString("advancedsettings.java_args_default")); // NOI18N
+        txtJavaArgs.setToolTipText(C.i18n("advancedsettings.java_args_default")); // NOI18N
         txtJavaArgs.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 txtJavaArgsFocusLost(evt);
@@ -522,9 +521,9 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             }
         });
 
-        lblMinecraftArgs.setText(bundle.getString("advancedsettings.Minecraft_arguments")); // NOI18N
+        lblMinecraftArgs.setText(C.i18n("advancedsettings.Minecraft_arguments")); // NOI18N
 
-        lblPermSize.setText(bundle.getString("advancedsettings.java_permanent_generation_space")); // NOI18N
+        lblPermSize.setText(C.i18n("advancedsettings.java_permanent_generation_space")); // NOI18N
 
         txtPermSize.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
@@ -532,21 +531,21 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             }
         });
 
-        chkNoJVMArgs.setText(bundle.getString("advancedsettings.no_jvm_args")); // NOI18N
+        chkNoJVMArgs.setText(C.i18n("advancedsettings.no_jvm_args")); // NOI18N
         chkNoJVMArgs.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 chkNoJVMArgsFocusLost(evt);
             }
         });
 
-        chkCancelWrapper.setText(bundle.getString("advancedsettings.cancel_wrapper_launcher")); // NOI18N
+        chkCancelWrapper.setText(C.i18n("advancedsettings.cancel_wrapper_launcher")); // NOI18N
         chkCancelWrapper.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 chkCancelWrapperFocusLost(evt);
             }
         });
 
-        lblPrecalledCommand.setText(bundle.getString("advancedsettings.wrapper_launcher")); // NOI18N
+        lblPrecalledCommand.setText(C.i18n("advancedsettings.wrapper_launcher")); // NOI18N
 
         txtPrecalledCommand.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
@@ -554,7 +553,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             }
         });
 
-        lblServerIP.setText(bundle.getString("advancedsettings.server_ip")); // NOI18N
+        lblServerIP.setText(C.i18n("advancedsettings.server_ip")); // NOI18N
 
         txtServerIP.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
@@ -625,7 +624,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                 .addContainerGap())
         );
 
-        tabVersionEdit.addTab(bundle.getString("advancedsettings"), pnlAdvancedSettings); // NOI18N
+        tabVersionEdit.addTab(C.i18n("advancedsettings"), pnlAdvancedSettings); // NOI18N
 
         lstExternalMods.setModel(SwingUtils.makeDefaultTableModel(new String[]{"", "Mod", C.i18n("ui.label.version")}, new Class[]{Boolean.class,String.class,String.class}, new boolean[]{true,false,false}));
         lstExternalMods.setColumnSelectionAllowed(true);
@@ -652,7 +651,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             }
         });
 
-        lblModInfo.setText(bundle.getString("mods.default_information")); // NOI18N
+        lblModInfo.setText(C.i18n("mods.default_information")); // NOI18N
         lblModInfo.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         lblModInfo.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -703,7 +702,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             .addComponent(pnlModManagementContent, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
-        tabVersionEdit.addTab(bundle.getString("mods"), pnlModManagement); // NOI18N
+        tabVersionEdit.addTab(C.i18n("mods"), pnlModManagement); // NOI18N
 
         javax.swing.GroupLayout pnlAutoInstallLayout = new javax.swing.GroupLayout(pnlAutoInstall);
         pnlAutoInstall.setLayout(pnlAutoInstallLayout);
@@ -716,9 +715,9 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             .addComponent(tabInstallers)
         );
 
-        tabVersionEdit.addTab(bundle.getString("settings.tabs.installers"), pnlAutoInstall); // NOI18N
+        tabVersionEdit.addTab(C.i18n("settings.tabs.installers"), pnlAutoInstall); // NOI18N
 
-        btnDownload.setText(bundle.getString("ui.button.download")); // NOI18N
+        btnDownload.setText(C.i18n("ui.button.download")); // NOI18N
         btnDownload.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnDownloadActionPerformed(evt);
@@ -730,7 +729,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         lstDownloads.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane2.setViewportView(lstDownloads);
 
-        btnRefreshGameDownloads.setText(bundle.getString("ui.button.refresh")); // NOI18N
+        btnRefreshGameDownloads.setText(C.i18n("ui.button.refresh")); // NOI18N
         btnRefreshGameDownloads.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnRefreshGameDownloadsActionPerformed(evt);
@@ -758,9 +757,9 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 325, Short.MAX_VALUE)
         );
 
-        tabVersionEdit.addTab(bundle.getString("settings.tabs.game_download"), pnlGameDownloads); // NOI18N
+        tabVersionEdit.addTab(C.i18n("settings.tabs.game_download"), pnlGameDownloads); // NOI18N
 
-        lblProfile.setText(bundle.getString("ui.label.profile")); // NOI18N
+        lblProfile.setText(C.i18n("ui.label.profile")); // NOI18N
 
         cboProfiles.setMinimumSize(new java.awt.Dimension(32, 23));
         cboProfiles.setPreferredSize(new java.awt.Dimension(32, 23));
@@ -776,7 +775,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             }
         });
 
-        lblVersions.setText(bundle.getString("ui.label.version")); // NOI18N
+        lblVersions.setText(C.i18n("ui.label.version")); // NOI18N
 
         javax.swing.GroupLayout pnlSelectionLayout = new javax.swing.GroupLayout(pnlSelection);
         pnlSelection.setLayout(pnlSelectionLayout);
@@ -808,14 +807,14 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        btnModify.setText(bundle.getString("settings.manage")); // NOI18N
+        btnModify.setText(C.i18n("settings.manage")); // NOI18N
         btnModify.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 btnModifyMouseClicked(evt);
             }
         });
 
-        btnRefreshVersions.setText(bundle.getString("ui.button.refresh")); // NOI18N
+        btnRefreshVersions.setText(C.i18n("ui.button.refresh")); // NOI18N
         btnRefreshVersions.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnRefreshVersionsActionPerformed(evt);
@@ -824,21 +823,21 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
         txtMinecraftVersion.setEditable(false);
 
-        btnNewProfile.setText(bundle.getString("setupwindow.new")); // NOI18N
+        btnNewProfile.setText(C.i18n("setupwindow.new")); // NOI18N
         btnNewProfile.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnNewProfileActionPerformed(evt);
             }
         });
 
-        btnRemoveProfile.setText(bundle.getString("ui.button.delete")); // NOI18N
+        btnRemoveProfile.setText(C.i18n("ui.button.delete")); // NOI18N
         btnRemoveProfile.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnRemoveProfileActionPerformed(evt);
             }
         });
 
-        btnExplore.setText(bundle.getString("settings.explore")); // NOI18N
+        btnExplore.setText(C.i18n("settings.explore")); // NOI18N
         btnExplore.setToolTipText("");
         btnExplore.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -899,28 +898,28 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                 .addGap(0, 0, Short.MAX_VALUE))
         );
 
-        btnIncludeMinecraft.setText(bundle.getString("setupwindow.include_minecraft")); // NOI18N
+        btnIncludeMinecraft.setText(C.i18n("setupwindow.include_minecraft")); // NOI18N
         btnIncludeMinecraft.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnIncludeMinecraftActionPerformed(evt);
             }
         });
 
-        btnMakeLaunchScript.setText(bundle.getString("mainwindow.make_launch_script")); // NOI18N
+        btnMakeLaunchScript.setText(C.i18n("mainwindow.make_launch_script")); // NOI18N
         btnMakeLaunchScript.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnMakeLaunchScriptActionPerformed(evt);
             }
         });
 
-        btnShowLog.setText(bundle.getString("mainwindow.show_log")); // NOI18N
+        btnShowLog.setText(C.i18n("mainwindow.show_log")); // NOI18N
         btnShowLog.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnShowLogActionPerformed(evt);
             }
         });
 
-        btnCleanGame.setText(bundle.getString("setupwindow.clean")); // NOI18N
+        btnCleanGame.setText(C.i18n("setupwindow.clean")); // NOI18N
         btnCleanGame.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnCleanGameActionPerformed(evt);
@@ -961,7 +960,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
-    // <editor-fold defaultstate="collapsed" desc="UI Events">    
+    // <editor-fold defaultstate="collapsed" desc="UI Events">
     private void cboProfilesItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboProfilesItemStateChanged
         if (isLoading)
             return;

@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -125,8 +125,7 @@ public class MainPagePanel extends AnimatedPanel {
             }
         });
 
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraft/launcher/I18N"); // NOI18N
-        jLabel7.setText(bundle.getString("login.type")); // NOI18N
+        jLabel7.setText(C.i18n("login.type")); // NOI18N
 
         cboLoginMode.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -134,9 +133,9 @@ public class MainPagePanel extends AnimatedPanel {
             }
         });
 
-        lblUserName.setText(bundle.getString("login.username")); // NOI18N
+        lblUserName.setText(C.i18n("login.username")); // NOI18N
 
-        jLabel10.setText(bundle.getString("ui.label.profile")); // NOI18N
+        jLabel10.setText(C.i18n("ui.label.profile")); // NOI18N
 
         cboProfiles.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -145,7 +144,7 @@ public class MainPagePanel extends AnimatedPanel {
         });
 
         jLabel1.setText(C.I18N.getString("ui.label.version")); // NOI18N
-        jLabel1.setToolTipText(bundle.getString("ui.label.version")); // NOI18N
+        jLabel1.setToolTipText(C.i18n("ui.label.version")); // NOI18N
 
         cboVersions.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -155,7 +154,7 @@ public class MainPagePanel extends AnimatedPanel {
 
         pnlPassword.setLayout(new java.awt.CardLayout());
 
-        jLabel9.setText(bundle.getString("ui.label.password")); // NOI18N
+        jLabel9.setText(C.i18n("ui.label.password")); // NOI18N
 
         txtPassword.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
@@ -208,7 +207,7 @@ public class MainPagePanel extends AnimatedPanel {
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(btnLogout, javax.swing.GroupLayout.DEFAULT_SIZE, 26, Short.MAX_VALUE)
+            .addComponent(btnLogout, javax.swing.GroupLayout.PREFERRED_SIZE, 26, Short.MAX_VALUE)
         );
 
         pnlPassword.add(jPanel3, "card3");
@@ -260,7 +259,7 @@ public class MainPagePanel extends AnimatedPanel {
                     .addComponent(txtPlayerName, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnlPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(316, Short.MAX_VALUE))
+                .addContainerGap(314, Short.MAX_VALUE))
         );
 
         add(pnlMore);

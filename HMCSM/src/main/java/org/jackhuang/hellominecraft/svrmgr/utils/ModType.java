@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -23,6 +23,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import org.jackhuang.hellominecraft.C;
 
 /**
  * 判断mod类型
@@ -31,11 +32,11 @@ import java.util.zip.ZipFile;
  */
 public class ModType {
 
-    public static final int ForgeMod = 0;
-    public static final int ModLoaderMod = 1;
-    public static final int Forge = 2;
-    public static final int ModLoader = 3;
-    public static final int Unknown = 4;
+    public static final int FORGE_MOD = 0;
+    public static final int MODLOADER_MOD = 1;
+    public static final int FORGE = 2;
+    public static final int MODLOADER = 3;
+    public static final int UNKOWN = 4;
 
     public static int getModType(String path) {
         return getModType(new File(path));
@@ -55,13 +56,13 @@ public class ModType {
                         continue;
                     gbkPath = zipEnt.getName();
                     if ("mcmod.info".equals(gbkPath))
-                        return ForgeMod;
+                        return FORGE_MOD;
                     else if ("mcpmod.info".equals(gbkPath))
-                        return Forge;
+                        return FORGE;
                     else if ("ModLoader.class".equals(gbkPath))
                         isModLoader = true;
                     else if (gbkPath.trim().startsWith("mod_"))
-                        return ModLoaderMod;
+                        return MODLOADER_MOD;
                 }
             }
         } catch (Exception e) {
@@ -77,24 +78,23 @@ public class ModType {
             }
         }
         if (isModLoader)
-            return ModLoaderMod;
+            return MODLOADER_MOD;
         else
-            return Unknown;
+            return UNKOWN;
     }
 
     public static String getModTypeShowName(int type) {
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraftlauncher/I18N"); // NOI18N
         switch (type) {
-            case ForgeMod:
-                return bundle.getString("ForgeMod");
-            case Forge:
-                return bundle.getString("Forge");
-            case ModLoader:
-                return bundle.getString("ModLoader");
-            case ModLoaderMod:
-                return bundle.getString("ModLoaderMod");
-            default:
-                return bundle.getString("Unknown");
+        case FORGE_MOD:
+            return C.i18n("ForgeMod");
+        case FORGE:
+            return C.i18n("Forge");
+        case MODLOADER:
+            return C.i18n("ModLoader");
+        case MODLOADER_MOD:
+            return C.i18n("ModLoaderMod");
+        default:
+            return C.i18n("Unknown");
         }
     }
 }

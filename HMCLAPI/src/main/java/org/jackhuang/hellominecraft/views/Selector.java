@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -16,6 +16,8 @@
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
 package org.jackhuang.hellominecraft.views;
+
+import org.jackhuang.hellominecraft.C;
 
 /**
  * The frame given to choose things.
@@ -50,7 +52,7 @@ public class Selector extends javax.swing.JDialog {
         for (String s : selList)
             jComboBox1.addItem(s);
     }
-    
+
     public int getChoice() {
         setVisible(true);
         return sel;
@@ -72,17 +74,16 @@ public class Selector extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraft/launcher/I18N"); // NOI18N
-        jLabel1.setText(bundle.getString("selector.choose")); // NOI18N
+        jLabel1.setText(C.i18n("selector.choose")); // NOI18N
 
-        btnOK.setText(bundle.getString("button.ok")); // NOI18N
+        btnOK.setText(C.i18n("button.ok")); // NOI18N
         btnOK.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnOKActionPerformed(evt);
             }
         });
 
-        btnCancel.setText(bundle.getString("button.cancel")); // NOI18N
+        btnCancel.setText(C.i18n("button.cancel")); // NOI18N
         btnCancel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnCancelActionPerformed(evt);

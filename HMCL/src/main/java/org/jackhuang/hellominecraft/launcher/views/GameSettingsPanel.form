@@ -75,7 +75,7 @@
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
               <JTabbedPaneConstraints tabName="&#x666e;&#x901a;&#x8bbe;&#x7f6e;">
                 <Property name="tabTitle" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </JTabbedPaneConstraints>
             </Constraint>
@@ -188,7 +188,7 @@
             <Component class="javax.swing.JLabel" name="lblGameDir">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.game_directory" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.game_directory" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
@@ -200,7 +200,7 @@
             <Component class="javax.swing.JLabel" name="lblDimension">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.dimension" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.dimension" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
@@ -225,7 +225,7 @@
             <Component class="javax.swing.JCheckBox" name="chkFullscreen">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.fullscreen" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.fullscreen" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Events>
@@ -240,14 +240,14 @@
             <Component class="javax.swing.JLabel" name="lblJavaDir">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.java_dir" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.java_dir" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="lblMaxMemory">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.max_memory" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.max_memory" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
@@ -266,7 +266,7 @@
             <Component class="javax.swing.JButton" name="btnDownloadAllAssets">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="assets.download_all" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="assets.download_all" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
                 <Property name="toolTipText" type="java.lang.String" value=""/>
               </Properties>
@@ -287,14 +287,14 @@
             <Component class="javax.swing.JLabel" name="lblLauncherVisibility">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.launcher_visible" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.launcher_visible" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="lblRunDirectory">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.run_directory" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.run_directory" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
@@ -311,7 +311,7 @@
             <Component class="javax.swing.JButton" name="btnChoosingJavaDir">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.explore" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.explore" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Events>
@@ -331,7 +331,7 @@
             <Component class="javax.swing.JButton" name="btnChoosingGameDir">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.explore" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.explore" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Events>
@@ -348,7 +348,7 @@
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
               <JTabbedPaneConstraints tabName="&#x9ad8;&#x7ea7;&#x8bbe;&#x7f6e;">
                 <Property name="tabTitle" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </JTabbedPaneConstraints>
             </Constraint>
@@ -435,7 +435,7 @@
             <Component class="javax.swing.JCheckBox" name="chkDebug">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advencedsettings.debug_mode" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advencedsettings.debug_mode" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Events>
@@ -445,14 +445,14 @@
             <Component class="javax.swing.JLabel" name="lblJavaArgs">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.jvm_args" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.jvm_args" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
             <Component class="javax.swing.JTextField" name="txtJavaArgs">
               <Properties>
                 <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.java_args_default" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.java_args_default" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Events>
@@ -467,14 +467,14 @@
             <Component class="javax.swing.JLabel" name="lblMinecraftArgs">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.Minecraft_arguments" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.Minecraft_arguments" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="lblPermSize">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.java_permanent_generation_space" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.java_permanent_generation_space" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
@@ -486,7 +486,7 @@
             <Component class="javax.swing.JCheckBox" name="chkNoJVMArgs">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.no_jvm_args" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.no_jvm_args" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Events>
@@ -496,7 +496,7 @@
             <Component class="javax.swing.JCheckBox" name="chkCancelWrapper">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.cancel_wrapper_launcher" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.cancel_wrapper_launcher" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Events>
@@ -506,7 +506,7 @@
             <Component class="javax.swing.JLabel" name="lblPrecalledCommand">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.wrapper_launcher" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.wrapper_launcher" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
@@ -518,7 +518,7 @@
             <Component class="javax.swing.JLabel" name="lblServerIP">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.server_ip" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.server_ip" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
@@ -537,7 +537,7 @@
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
               <JTabbedPaneConstraints tabName="Mod&#x7ba1;&#x7406;">
                 <Property name="tabTitle" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mods" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mods" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </JTabbedPaneConstraints>
             </Constraint>
@@ -649,7 +649,7 @@
                 <Component class="javax.swing.JLabel" name="lblModInfo">
                   <Properties>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mods.default_information" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mods.default_information" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                     </Property>
                     <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
                       <Color id="&#x9ed8;&#x8ba4;&#x5149;&#x6807;"/>
@@ -671,7 +671,7 @@
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
               <JTabbedPaneConstraints tabName="&#x81ea;&#x52a8;&#x5b89;&#x88c5;">
                 <Property name="tabTitle" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.tabs.installers" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.tabs.installers" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </JTabbedPaneConstraints>
             </Constraint>
@@ -704,7 +704,7 @@
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
               <JTabbedPaneConstraints tabName="&#x6e38;&#x620f;&#x4e0b;&#x8f7d;">
                 <Property name="tabTitle" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.tabs.game_download" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.tabs.game_download" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </JTabbedPaneConstraints>
             </Constraint>
@@ -739,7 +739,7 @@
             <Component class="javax.swing.JButton" name="btnDownload">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.download" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.download" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Events>
@@ -772,7 +772,7 @@
             <Component class="javax.swing.JButton" name="btnRefreshGameDownloads">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.refresh" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.refresh" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Events>
@@ -852,7 +852,7 @@
             <Component class="javax.swing.JLabel" name="lblProfile">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.label.profile" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.label.profile" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
@@ -885,7 +885,7 @@
             <Component class="javax.swing.JLabel" name="lblVersions">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.label.version" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.label.version" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
@@ -940,7 +940,7 @@
             <Component class="javax.swing.JButton" name="btnModify">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.manage" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.manage" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Events>
@@ -950,7 +950,7 @@
             <Component class="javax.swing.JButton" name="btnRefreshVersions">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.refresh" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.refresh" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Events>
@@ -965,7 +965,7 @@
             <Component class="javax.swing.JButton" name="btnNewProfile">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="setupwindow.new" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="setupwindow.new" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Events>
@@ -975,7 +975,7 @@
             <Component class="javax.swing.JButton" name="btnRemoveProfile">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.delete" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.delete" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Events>
@@ -985,7 +985,7 @@
             <Component class="javax.swing.JButton" name="btnExplore">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.explore" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.explore" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                 </Property>
                 <Property name="toolTipText" type="java.lang.String" value=""/>
               </Properties>
@@ -1000,7 +1000,7 @@
     <Component class="javax.swing.JButton" name="btnIncludeMinecraft">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="setupwindow.include_minecraft" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="setupwindow.include_minecraft" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
@@ -1010,7 +1010,7 @@
     <Component class="javax.swing.JButton" name="btnMakeLaunchScript">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mainwindow.make_launch_script" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mainwindow.make_launch_script" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
@@ -1020,7 +1020,7 @@
     <Component class="javax.swing.JButton" name="btnShowLog">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mainwindow.show_log" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mainwindow.show_log" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
@@ -1030,7 +1030,7 @@
     <Component class="javax.swing.JButton" name="btnCleanGame">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="setupwindow.clean" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="setupwindow.clean" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>

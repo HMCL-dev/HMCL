@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -70,8 +70,7 @@ public class InstallerPanel extends AnimatedPanel {
         lstInstallers = new javax.swing.JTable();
         btnRefresh = new javax.swing.JButton();
 
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraft/launcher/I18N"); // NOI18N
-        btnInstall.setText(bundle.getString("ui.button.install")); // NOI18N
+        btnInstall.setText(C.i18n("ui.button.install")); // NOI18N
         btnInstall.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnInstallActionPerformed(evt);
@@ -83,7 +82,7 @@ public class InstallerPanel extends AnimatedPanel {
     lstInstallers.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
     jScrollPane12.setViewportView(lstInstallers);
 
-    btnRefresh.setText(bundle.getString("ui.button.refresh")); // NOI18N
+    btnRefresh.setText(C.i18n("ui.button.refresh")); // NOI18N
     btnRefresh.addActionListener(new java.awt.event.ActionListener() {
         public void actionPerformed(java.awt.event.ActionEvent evt) {
             btnRefreshActionPerformed(evt);
@@ -157,7 +156,6 @@ public class InstallerPanel extends AnimatedPanel {
             }
         });
     }
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnInstall;

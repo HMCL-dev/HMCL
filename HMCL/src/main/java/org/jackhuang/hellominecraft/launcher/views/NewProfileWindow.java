@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.views;
 
+import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.utils.StrUtils;
@@ -54,10 +55,9 @@ public final class NewProfileWindow extends javax.swing.JDialog {
         btnOK = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraft/launcher/I18N"); // NOI18N
-        setTitle(bundle.getString("ui.newProfileWindow.title")); // NOI18N
+        setTitle(C.i18n("ui.newProfileWindow.title")); // NOI18N
 
-        jLabel1.setText(bundle.getString("ui.label.newProfileWindow.new_profile_name")); // NOI18N
+        jLabel1.setText(C.i18n("ui.label.newProfileWindow.new_profile_name")); // NOI18N
 
         txtNewProfileName.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyTyped(java.awt.event.KeyEvent evt) {
@@ -65,16 +65,16 @@ public final class NewProfileWindow extends javax.swing.JDialog {
             }
         });
 
-        jLabel2.setText(bundle.getString("ui.label.newProfileWindow.copy_from")); // NOI18N
+        jLabel2.setText(C.i18n("ui.label.newProfileWindow.copy_from")); // NOI18N
 
-        btnCancel.setText(bundle.getString("button.cancel")); // NOI18N
+        btnCancel.setText(C.i18n("button.cancel")); // NOI18N
         btnCancel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnCancelActionPerformed(evt);
             }
         });
 
-        btnOK.setText(bundle.getString("ui.button.ok")); // NOI18N
+        btnOK.setText(C.i18n("ui.button.ok")); // NOI18N
         btnOK.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnOKActionPerformed(evt);
@@ -126,12 +126,12 @@ public final class NewProfileWindow extends javax.swing.JDialog {
 
     private void txtNewProfileNameKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtNewProfileNameKeyTyped
         switch (evt.getKeyCode()) {
-            case 13:
-                Profile newProfile = new Profile(Settings.getProfile(cboProfiles.getSelectedItem().toString()));
-                newProfile.setName(txtNewProfileName.getText());
-                Settings.trySetProfile(newProfile);
-            case 27:
-                this.dispose();
+        case 13:
+            Profile newProfile = new Profile(Settings.getProfile(cboProfiles.getSelectedItem().toString()));
+            newProfile.setName(txtNewProfileName.getText());
+            Settings.trySetProfile(newProfile);
+        case 27:
+            this.dispose();
         }
     }//GEN-LAST:event_txtNewProfileNameKeyTyped
 

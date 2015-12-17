@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.launcher.views;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
+import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.launcher.version.ServerInfo;
 import rx.Observable;
 import rx.concurrency.Schedulers;
@@ -72,10 +73,9 @@ public class ServerListView extends javax.swing.JFrame {
         btnCancel = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraft/launcher/I18N"); // NOI18N
-        setTitle(bundle.getString("serverlistview.title")); // NOI18N
+        setTitle(C.i18n("serverlistview.title")); // NOI18N
 
-        btnOK.setText(bundle.getString("ui.button.ok")); // NOI18N
+        btnOK.setText(C.i18n("ui.button.ok")); // NOI18N
         btnOK.setToolTipText("");
         btnOK.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -83,7 +83,7 @@ public class ServerListView extends javax.swing.JFrame {
             }
         });
 
-        btnCancel.setText(bundle.getString("button.cancel")); // NOI18N
+        btnCancel.setText(C.i18n("button.cancel")); // NOI18N
         btnCancel.setToolTipText("");
         btnCancel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -98,9 +98,9 @@ public class ServerListView extends javax.swing.JFrame {
             .addComponent(srlList)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(298, Short.MAX_VALUE)
-                .addComponent(btnCancel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnOK)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnCancel)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
