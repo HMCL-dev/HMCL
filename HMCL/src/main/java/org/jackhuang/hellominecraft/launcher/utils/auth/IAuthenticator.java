@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -19,7 +19,7 @@ package org.jackhuang.hellominecraft.launcher.utils.auth;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.jackhuang.hellominecraft.launcher.settings.Settings;
+import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 
 /**
  * Login interface
@@ -28,23 +28,10 @@ import org.jackhuang.hellominecraft.launcher.settings.Settings;
  */
 public abstract class IAuthenticator {
 
-    public static final YggdrasilAuthenticator YGGDRASIL_LOGIN;
-    public static final OfflineAuthenticator OFFLINE_LOGIN;
-    public static final SkinmeAuthenticator SKINME_LOGIN;
-
-    public static final List<IAuthenticator> LOGINS;
+    public static final List<IAuthenticator> LOGINS = new ArrayList<>();
 
     static {
-        String clientToken = Settings.getInstance().getClientToken();
-        LOGINS = new ArrayList<>();
-        LOGINS.add(OFFLINE_LOGIN = new OfflineAuthenticator(clientToken));
-        LOGINS.add(YGGDRASIL_LOGIN = new YggdrasilAuthenticator(clientToken));
-        LOGINS.add(SKINME_LOGIN = new SkinmeAuthenticator(clientToken));
-        YGGDRASIL_LOGIN.onLoadSettings(Settings.getInstance().getYggdrasilConfig());
-
-        Runtime.getRuntime().addShutdownHook(new Thread(()
-        -> Settings.getInstance().setYggdrasilConfig(YGGDRASIL_LOGIN.onSaveSettings())
-        ));
+        PluginManager.NOW_PLUGIN.onRegisterAuthenticators(LOGINS::add);
     }
 
     protected String clientToken;
@@ -59,7 +46,8 @@ public abstract class IAuthenticator {
      * @param info username & password
      *
      * @return login result
-     * @throws org.jackhuang.hellominecraft.launcher.utils.auth.AuthenticationException
+     * @throws
+     * org.jackhuang.hellominecraft.launcher.utils.auth.AuthenticationException
      */
     public abstract UserProfileProvider login(LoginInfo info) throws AuthenticationException;
 
@@ -72,10 +60,10 @@ public abstract class IAuthenticator {
     /**
      * Has password?
      *
-     * @return Need to hide password box?
+     * @return has password?
      */
     public boolean hasPassword() {
-        return false;
+        return true;
     }
 
     public boolean isLoggedIn() {

@@ -48,6 +48,7 @@ public class TaskWindow extends javax.swing.JDialog
 
     private TaskList taskList;
     private final ArrayList<String> failReasons = new ArrayList();
+    private String stackTrace = null, lastStackTrace = null;
 
     /**
      * Creates new form DownloadWindow
@@ -91,7 +92,11 @@ public class TaskWindow extends javax.swing.JDialog
         try {
             taskList.start();
         } catch (Exception e) {
-            HMCLog.warn("Failed to start thread, maybe there're already a taskwindow here.", e);
+            HMCLog.err("Failed to start thread, maybe there're already a taskwindow here.", e);
+            HMCLog.err("There's the stacktrace of the this invoking.");
+            HMCLog.err(stackTrace);
+            HMCLog.err("There's the stacktrace of the last invoking.");
+            HMCLog.err(lastStackTrace);
             MessageBox.Show(C.i18n("taskwindow.no_more_instance"));
             return false;
         }
@@ -300,6 +305,7 @@ public class TaskWindow extends javax.swing.JDialog
         }
 
         public boolean start() {
+            String stacktrace = StrUtils.getStackTrace(new Throwable());
             return SwingUtils.invokeAndWait(() -> {
                 synchronized (INSTANCE) {
                     if (INSTANCE.isVisible())
@@ -307,6 +313,8 @@ public class TaskWindow extends javax.swing.JDialog
                     TaskWindow tw = inst();
                     for (Task t : ll)
                         tw.addTask(t);
+                    tw.lastStackTrace = tw.stackTrace;
+                    tw.stackTrace = stacktrace;
                     return tw.start();
                 }
             });

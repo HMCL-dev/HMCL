@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -37,7 +37,7 @@ public abstract class IMinecraftProvider {
     public IMinecraftProvider(Profile profile) {
         this.profile = profile;
     }
-    
+
     /**
      * To download mod packs.
      */
@@ -51,15 +51,15 @@ public abstract class IMinecraftProvider {
      * @return the run directory
      */
     public abstract File getRunDirectory(String id);
-    
+
     public File getRunDirectory(String id, String subFolder) {
         return new File(getRunDirectory(getSelectedMinecraftVersion().id), subFolder);
     }
 
     public abstract void open(String version, String folder);
-    
+
     public abstract IMinecraftModService getModService();
-    
+
     public abstract IMinecraftDownloadService getDownloadService();
 
     public abstract IMinecraftAssetService getAssetService();
@@ -89,7 +89,7 @@ public abstract class IMinecraftProvider {
      * Provide the Minecraft Loader to generate the launching command.
      *
      * @see org.jackhuang.hellominecraft.launcher.launch.IMinecraftLoader
-     * @param p    player informations, including username & auth_token
+     * @param p player informations, including username & auth_token
      *
      * @return what you want
      *
@@ -149,7 +149,7 @@ public abstract class IMinecraftProvider {
      * @return the Minecraft json instance
      */
     public abstract MinecraftVersion getVersionById(String id);
-    
+
     public MinecraftVersion getSelectedVersion() {
         return profile.getSelectedMinecraftVersion();
     }
@@ -181,7 +181,7 @@ public abstract class IMinecraftProvider {
      * Refind the versions in this profile.
      */
     public abstract void refreshVersions();
-    
+
     /**
      * Clean redundant files.
      */
@@ -189,7 +189,9 @@ public abstract class IMinecraftProvider {
 
     /**
      * When GameLauncher launches the game, this function will be called.
+     *
+     * @return if false, will break the launch process.
      */
-    public abstract void onLaunch();
+    public abstract boolean onLaunch();
 
 }

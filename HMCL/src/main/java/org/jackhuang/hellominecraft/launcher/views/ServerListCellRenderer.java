@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.views;
 
 import java.awt.Component;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.jackhuang.hellominecraft.C;
@@ -34,6 +35,7 @@ public class ServerListCellRenderer extends javax.swing.JPanel implements ListCe
      */
     public ServerListCellRenderer() {
         initComponents();
+        this.add(lblIcon, -1);
     }
 
     /**
@@ -46,7 +48,6 @@ public class ServerListCellRenderer extends javax.swing.JPanel implements ListCe
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        lblIcon = new javax.swing.JLabel();
         lblName = new javax.swing.JLabel();
         lblInfo = new javax.swing.JLabel();
         lblVersion = new javax.swing.JLabel();
@@ -67,32 +68,29 @@ public class ServerListCellRenderer extends javax.swing.JPanel implements ListCe
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lblIcon, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblInfo, javax.swing.GroupLayout.DEFAULT_SIZE, 267, Short.MAX_VALUE)
-                    .addComponent(lblVersion, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 267, Short.MAX_VALUE)
-                    .addComponent(lblType, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 267, Short.MAX_VALUE))
+                    .addComponent(lblInfo, javax.swing.GroupLayout.DEFAULT_SIZE, 359, Short.MAX_VALUE)
+                    .addComponent(lblVersion, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 359, Short.MAX_VALUE)
+                    .addComponent(lblType, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 359, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblName)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblVersion)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblType)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblInfo, javax.swing.GroupLayout.DEFAULT_SIZE, 83, Short.MAX_VALUE))
-                    .addComponent(lblIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(lblName)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblVersion)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblType)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblInfo, javax.swing.GroupLayout.DEFAULT_SIZE, 83, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    JLabel lblIcon = new JLabel();
 
     @Override
     public Component getListCellRendererComponent(JList<? extends ServerInfo> list, ServerInfo value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -102,18 +100,26 @@ public class ServerListCellRenderer extends javax.swing.JPanel implements ListCe
         lblInfo.setText("<html>" + C.i18n("serverlistview.info") + ": " + value.info + "</html>");
         if (value.icon != null)
             lblIcon.setIcon(value.icon);
+        lblIcon.setBounds(0, 0, list.getWidth(), (int) (((double) list.getWidth()) / value.icon.getIconWidth() * value.icon.getIconHeight()));
         if (isSelected) {
             setBackground(list.getSelectionBackground());
             setForeground(list.getSelectionForeground());
+            lblName.setForeground(list.getSelectionForeground());
+            lblType.setForeground(list.getSelectionForeground());
+            lblVersion.setForeground(list.getSelectionForeground());
+            lblInfo.setForeground(list.getSelectionForeground());
         } else {
             setBackground(list.getBackground());
             setForeground(list.getForeground());
+            lblName.setForeground(list.getForeground());
+            lblType.setForeground(list.getForeground());
+            lblVersion.setForeground(list.getForeground());
+            lblInfo.setForeground(list.getForeground());
         }
         setFont(list.getFont());
         return this;
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel lblIcon;
     private javax.swing.JLabel lblInfo;
     private javax.swing.JLabel lblName;
     private javax.swing.JLabel lblType;

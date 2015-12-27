@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -28,9 +28,9 @@ import org.jackhuang.hellominecraft.logging.layout.DefaultLayout;
  */
 public class Configuration {
 
-    public ArrayList<IAppender> appenders = new ArrayList<IAppender>();
+    public ArrayList<IAppender> appenders = new ArrayList<>();
 
-    public static Configuration DEFAULT;
+    public static final Configuration DEFAULT;
 
     static {
         DEFAULT = new Configuration();

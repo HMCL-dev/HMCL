@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -95,12 +95,12 @@ public class MessageBox {
      */
     public static int Show(String Msg, String Title, int Option) {
         switch (Option) {
-            case YES_NO_OPTION:
-            case YES_NO_CANCEL_OPTION:
-            case OK_CANCEL_OPTION:
-                return SwingUtils.invokeAndWait(() -> JOptionPane.showConfirmDialog(null, Msg, Title, Option - 10));
-            default:
-                SwingUtils.invokeAndWait(() -> JOptionPane.showMessageDialog(null, Msg, Title, Option));
+        case YES_NO_OPTION:
+        case YES_NO_CANCEL_OPTION:
+        case OK_CANCEL_OPTION:
+            return SwingUtils.invokeAndWait(() -> JOptionPane.showConfirmDialog(null, Msg, Title, Option - 10));
+        default:
+            SwingUtils.invokeAndWait(() -> JOptionPane.showMessageDialog(null, Msg, Title, Option));
         }
         return 0;
     }
@@ -126,5 +126,9 @@ public class MessageBox {
      */
     public static int Show(String Msg) {
         return Show(Msg, TITLE, INFORMATION_MESSAGE);
+    }
+
+    public static int ShowLocalized(String msg) {
+        return Show(C.i18n(msg));
     }
 }

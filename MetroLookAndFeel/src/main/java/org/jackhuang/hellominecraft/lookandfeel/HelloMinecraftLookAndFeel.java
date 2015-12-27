@@ -1,23 +1,32 @@
 /*
  * Copyright 2013 huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.
  */
 package org.jackhuang.hellominecraft.lookandfeel;
 
+import java.awt.Color;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.lang.reflect.Field;
 import java.text.ParseException;
+import java.util.Map;
+import javax.swing.UIDefaults;
+import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.synth.SynthLookAndFeel;
+import org.jackhuang.hellominecraft.utils.NetUtils;
+import sun.swing.DefaultLookup;
 
 /**
  *
@@ -25,12 +34,45 @@ import javax.swing.plaf.synth.SynthLookAndFeel;
  */
 public class HelloMinecraftLookAndFeel extends SynthLookAndFeel {
 
+    public static final Map<String, String> DEFAULT_SETTINGS = Theme.BLUE.settings;
+
     /**
      * Creates a new instance of NimbusLookAndFeel
-     * @throws java.text.ParseException error parsing the xml, it must not happen.
+     *
+     * @throws java.text.ParseException error parsing the xml, it must not
+     * happen.
      */
     public HelloMinecraftLookAndFeel() throws ParseException {
-        load(HelloMinecraftLookAndFeel.class.getResourceAsStream("/org/jackhuang/hellominecraft/lookandfeel/synth.xml"), HelloMinecraftLookAndFeel.class);
+        this(DEFAULT_SETTINGS);
+    }
+
+    public HelloMinecraftLookAndFeel(Map<String, String> settings) throws ParseException {
+        try {
+            String s = NetUtils.getStreamContent(HelloMinecraftLookAndFeel.class.getResourceAsStream("/org/jackhuang/hellominecraft/lookandfeel/synth.xml"));
+            for (String ss : settings.keySet())
+                s = s.replace("${" + ss + "}", settings.get(ss));
+            load(new ByteArrayInputStream(s.getBytes()), HelloMinecraftLookAndFeel.class);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            throw new ParseException("FUCKING BUG", 0);
+        }
+    }
+
+    UIDefaults uiDefaults;
+
+    @Override
+    public UIDefaults getDefaults() {
+        if (uiDefaults != null)
+            return uiDefaults;
+        uiDefaults = super.getDefaults();
+        //ui.put("Table.selectionForeground", new ColorUIResource(Color.red));
+        //ui.put("Table.focusCellForeground", new ColorUIResource(Color.red));
+        //ui.put("TabbedPane.isTabRollover", false);
+        //ui.put("ComboBox.selectionBackground", new ColorUIResource(Color.red));
+        //ui.put("List.background", new ColorUIResource(Color.red));
+        //uiDefaults.put("TabbedPane.selectedLabelShift", 0);
+        uiDefaults.put("Table.selectionBackground", Color.red);
+        return uiDefaults;
     }
 
     /**

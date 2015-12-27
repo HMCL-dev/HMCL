@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -30,7 +30,7 @@ import org.jackhuang.hellominecraft.launcher.settings.Settings;
  *
  * @author huangyuhui
  */
-public class AnimatedPanel extends JPanel {
+public class AnimatedPanel extends JPanel implements Selectable {
 
     private static final int ANIMATION_LENGTH = 10;
 
@@ -83,5 +83,10 @@ public class AnimatedPanel extends JPanel {
         g2d.dispose();
         gg.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, (float) (1 - pgs)));
         g.drawImage(image, 0, 0, this);
+    }
+
+    @Override
+    public void onSelected() {
+        animate();
     }
 }

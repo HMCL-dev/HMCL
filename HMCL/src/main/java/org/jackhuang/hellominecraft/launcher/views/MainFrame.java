@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -37,10 +37,14 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
+import org.jackhuang.hellominecraft.launcher.utils.auth.IAuthenticator;
+import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
+import org.jackhuang.hellominecraft.lookandfeel.Theme;
 import org.jackhuang.hellominecraft.utils.Utils;
 import org.jackhuang.hellominecraft.views.DropShadowBorder;
 import org.jackhuang.hellominecraft.views.TintablePanel;
@@ -93,13 +97,16 @@ public final class MainFrame extends DraggableFrame {
                 Settings.getInstance().setEnableShadow(false);
                 setSize(802, 511);
             }
-
         ((JPanel) getContentPane()).setOpaque(true);
+
+        Settings.getInstance().themeChangedEvent.register((sender, t) -> {
+            MainFrame.INSTANCE.reloadColor(t);
+            return true;
+        });
     }
 
     private void initComponents() {
-        borderColor = BasicColors.bgcolors[Settings.getInstance().getTheme()];
-        borderColorDarker = BasicColors.bgcolors_darker[Settings.getInstance().getTheme()];
+        initBorderColor(Settings.getInstance().getTheme());
 
         realPanel = new JPanel();
         realPanel.setLayout(null);
@@ -122,7 +129,7 @@ public final class MainFrame extends DraggableFrame {
 
         header.add(Box.createRigidArea(new Dimension(8, 0)));
 
-        ActionListener tabListener = (e) -> MainFrame.this.selectTab(e.getActionCommand());
+        ActionListener tabListener = e -> MainFrame.this.selectTab(e.getActionCommand());
 
         this.mainTab = new HeaderTab(C.i18n("launcher.title.main"));
         this.mainTab.setForeground(BasicColors.COLOR_WHITE_TEXT);
@@ -310,7 +317,7 @@ public final class MainFrame extends DraggableFrame {
     public void closeMessage() {
         if (isShowedMessage) {
             isShowedMessage = false;
-            reloadColor();
+            reloadColor(Settings.getInstance().getTheme());
             windowTitle.setText(defaultTitle);
             windowTitle.setForeground(Settings.UPDATE_CHECKER.OUT_DATED ? Color.red : Color.white);
         }
@@ -332,16 +339,24 @@ public final class MainFrame extends DraggableFrame {
     }
 
     public static void showMainFrame(boolean firstLoad) {
-        INSTANCE.mainPanel.onShow(firstLoad);
+        if (firstLoad)
+            SwingUtilities.invokeLater(() -> MainFrame.INSTANCE.showMessage(C.i18n("ui.message.first_load")));
+        IAuthenticator l = Settings.getInstance().getAuthenticator();
+        if (l.hasPassword() && !l.isLoggedIn())
+            SwingUtilities.invokeLater(() -> MainFrame.INSTANCE.showMessage(C.i18n("ui.message.enter_password")));
         INSTANCE.show();
     }
 
-    Color borderColor = BasicColors.COLOR_BLUE;
-    Color borderColorDarker = BasicColors.COLOR_BLUE_DARKER;
+    Color borderColor;
+    Color borderColorDarker;
 
-    public void reloadColor() {
-        borderColor = BasicColors.bgcolors[Settings.getInstance().getTheme()];
-        borderColorDarker = BasicColors.bgcolors_darker[Settings.getInstance().getTheme()];
+    private void initBorderColor(Theme t) {
+        borderColor = GraphicsUtils.getWebColor(t.settings.get("Customized.MainFrame.background"));
+        borderColorDarker = GraphicsUtils.getWebColor(t.settings.get("Customized.MainFrame.selected_background"));
+    }
+
+    public void reloadColor(Theme t) {
+        initBorderColor(t);
         if (border != null)
             border.setColor(borderColor);
         header.setBackground(borderColor);
@@ -360,7 +375,6 @@ public final class MainFrame extends DraggableFrame {
         g.drawLine(off, off, off, height + off + 1);
         g.drawLine(off + width + 1, off, off + width + 1, height + off + 1);
         g.drawLine(off, height + off + 1, off + width + 1, height + off + 1);
-        g.dispose();
     }
 
     @Override
@@ -374,7 +388,7 @@ public final class MainFrame extends DraggableFrame {
             int contentWidth = width - off - off;
             int contentHeight = height - off - off;
             BufferedImage contentImage = new BufferedImage(contentWidth,
-                                                           contentHeight, Transparency.OPAQUE);
+                    contentHeight, Transparency.OPAQUE);
             Graphics2D contentG2d = contentImage.createGraphics();
             contentG2d.translate(-off, -off);
             paintImpl(g);

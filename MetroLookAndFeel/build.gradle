@@ -34,6 +34,10 @@ buildscript {
     }
 }
 
+dependencies {
+    compile project(":HMCLAPI")
+}
+
 retrolambda {
     javaVersion = JavaVersion.VERSION_1_6
 }

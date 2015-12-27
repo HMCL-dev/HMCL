@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -27,11 +27,11 @@ import org.jackhuang.hellominecraft.logging.LogEvent;
  */
 public class DefaultLayout extends AbstractStringLayout {
 
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+    private static final SimpleDateFormat SDF = new SimpleDateFormat("HH:mm:ss");
 
     @Override
     public String toSerializable(LogEvent event) {
-        return "[" + sdf.format(new Date()) + "] [" + event.threadName + "/" + event.level.name() + "] " + event.message.getFormattedMessage() + "\n";
+        return "[" + SDF.format(new Date()) + "] [" + event.threadName + "/" + event.level.name() + "] " + event.message.getFormattedMessage() + "\n";
     }
 
 }

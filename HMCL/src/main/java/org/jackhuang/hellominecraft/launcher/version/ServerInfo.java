@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.version;
 
 import java.io.File;
+import java.util.HashMap;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
@@ -35,14 +36,19 @@ public class ServerInfo {
 
     public Icon icon;
 
+    public static final HashMap<String, Icon> CACHE = new HashMap<>();
+
     public void downloadIcon() {
         if (icon == null && Utils.isURL(picurl))
-            try {
-                File tmp = File.createTempFile("HMCLSERVER", ".png");
-                FileDownloadTask.download(picurl, tmp, null);
-                icon = new ImageIcon(tmp.getAbsolutePath());
-            } catch (Throwable e) {
-                throw new RuntimeException("Failed to download icon", e);
-            }
+            if (CACHE.containsKey(picurl))
+                icon = CACHE.get(picurl);
+            else
+                try {
+                    File tmp = File.createTempFile("HMCLSERVER", ".png");
+                    FileDownloadTask.download(picurl, tmp, null);
+                    CACHE.put(picurl, icon = new ImageIcon(tmp.getAbsolutePath()));
+                } catch (Throwable e) {
+                    throw new RuntimeException("Failed to download icon", e);
+                }
     }
 }

@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -31,7 +31,7 @@ import java.util.Set;
  * @author huangyuhui
  */
 public class ParameterizedMessage
-implements IMessage {
+    implements IMessage {
 
     public static final String RECURSION_PREFIX = "[...";
     public static final String RECURSION_SUFFIX = "...]";
@@ -203,19 +203,23 @@ implements IMessage {
         boolean isEscaped = false;
         for (int i = 0; i < messagePattern.length(); i++) {
             char curChar = messagePattern.charAt(i);
-            if (curChar == ESCAPE_CHAR)
+            switch (curChar) {
+            case ESCAPE_CHAR:
                 isEscaped = !isEscaped;
-            else if (curChar == DELIM_START) {
+                break;
+            case DELIM_START:
                 if ((!isEscaped)
                     && (i < messagePattern.length() - 1)
                     && (messagePattern.charAt(i + 1) == DELIM_STOP)) {
                     result++;
                     i++;
                 }
-
                 isEscaped = false;
-            } else
+                break;
+            default:
                 isEscaped = false;
+                break;
+            }
         }
         return result;
     }

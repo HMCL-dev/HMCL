@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.utils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -120,5 +121,20 @@ public class ArrayUtils {
                 return i;
         }
         return -1;
+    }
+
+    public static <T> boolean equals(T[] a, T[] b) {
+        if (a == null && b == null)
+            return true;
+        if (a == null || b == null)
+            return false;
+        if (a.length != b.length)
+            return false;
+        Arrays.sort(a);
+        Arrays.sort(b);
+        for (int i = 0; i < a.length; i++)
+            if (a[i] == null && b[i] != null || a[i] != null && b[i] == null || !a[i].equals(b[i]))
+                return false;
+        return true;
     }
 }

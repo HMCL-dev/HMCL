@@ -36,7 +36,7 @@ import org.jackhuang.hellominecraft.views.SwingUtils;
  *
  * @author huangyuhui
  */
-public class InstallerPanel extends AnimatedPanel {
+public class InstallerPanel extends AnimatedPanel implements Selectable {
 
     GameSettingsPanel gsp;
 
@@ -155,6 +155,16 @@ public class InstallerPanel extends AnimatedPanel {
                         model.addRow(new Object[] {v.selfVersion == null ? "null" : v.selfVersion, v.mcVersion == null ? "null" : v.mcVersion});
             }
         });
+    }
+
+    boolean refreshed = false;
+
+    @Override
+    public void onSelected() {
+        if (!refreshed) {
+            refreshVersions();
+            refreshed = true;
+        }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -59,14 +59,6 @@ public final class UserProfileProvider {
         this.accessToken = accessToken;
     }
 
-    public String getErrorReason() {
-        return error;
-    }
-
-    public void setErrorReason(String error) {
-        this.error = error;
-    }
-
     public String getUserProperties() {
         return userProperties;
     }
@@ -111,7 +103,6 @@ public final class UserProfileProvider {
     private String userId = "";
     private String session = "";
     private String accessToken = "";
-    private String error = "";
     private String userProperties = "{}";
     private String userPropertyMap = "{}";
     private String otherInfo = "";

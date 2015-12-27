@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -48,7 +48,7 @@ import org.jackhuang.hellominecraft.utils.Utils;
  *
  * @author huangyuhui
  */
-public final class MinecraftVersionManager extends IMinecraftProvider {
+public class MinecraftVersionManager extends IMinecraftProvider {
 
     File baseFolder;
     final Map<String, MinecraftVersion> versions = new TreeMap();
@@ -211,7 +211,8 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public GameLauncher.DecompressLibraryJob getDecompressLibraries() {
         MinecraftVersion v = getSelectedMinecraftVersion();
-        if (v == null) return null;
+        if (v == null)
+            return null;
         v = v.resolve(this);
         if (v.libraries == null)
             return null;
@@ -265,10 +266,11 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
     }
 
     @Override
-    public void onLaunch() {
+    public boolean onLaunch() {
         File resourcePacks = getResourcePacks();
         if (!resourcePacks.exists())
             resourcePacks.mkdirs();
+        return true;
     }
 
     @Override
@@ -308,9 +310,9 @@ public final class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public void initializeMiencraft() {
-        
+
     }
-    
+
     private void downloadModpack(String url) throws IOException {
         File tmp = File.createTempFile("hmcl", ".zip");
         TaskWindow.getInstance().addTask(new FileDownloadTask(url, tmp)).addTask(new DecompressTask(tmp, baseFolder)).start();

@@ -33,6 +33,7 @@ import javax.swing.ImageIcon;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.launcher.launch.GameLauncher;
 import org.jackhuang.hellominecraft.launcher.utils.CrashReporter;
 import org.jackhuang.hellominecraft.logging.Configuration;
@@ -75,7 +76,7 @@ public final class Main implements Runnable {
 
         try {
             sslContext = SSLContext.getInstance("TLS");
-            X509TrustManager[] xtmArray = new X509TrustManager[] {XTM};
+            X509TrustManager[] xtmArray = new X509TrustManager[]{XTM};
             sslContext.init(null, xtmArray, new java.security.SecureRandom());
         } catch (GeneralSecurityException gse) {
         }
@@ -86,7 +87,7 @@ public final class Main implements Runnable {
     }
 
     public static final String LAUNCHER_NAME = "Hello Minecraft! Launcher";
-    public static final byte VERSION_FIRST = 2, VERSION_SECOND = 3, VERSION_THIRD = 1, VERSION_FORTH = 6;
+    public static final byte VERSION_FIRST = 2, VERSION_SECOND = 3, VERSION_THIRD = 5, VERSION_FORTH = 7;
     public static final int MINIMUM_LAUNCHER_VERSION = 16;
     //public static Proxy PROXY;
 
@@ -109,10 +110,13 @@ public final class Main implements Runnable {
     }
 
     public static final Main INSTANCE = new Main();
+    public static HelloMinecraftLookAndFeel LOOK_AND_FEEL;
 
     @SuppressWarnings({"CallToPrintStackTrace", "UseSpecificCatch"})
     public static void main(String[] args) {
         {
+            //PluginManager.getServerPlugin();
+
             if (IUpgrader.NOW_UPGRADER.parseArguments(new VersionNumber(VERSION_FIRST, VERSION_SECOND, VERSION_THIRD), args))
                 return;
 
@@ -136,14 +140,15 @@ public final class Main implements Runnable {
             LogWindow.INSTANCE.setTerminateGame(GameLauncher.PROCESS_MANAGER::stopAllProcesses);
 
             try {
-                UIManager.setLookAndFeel(new HelloMinecraftLookAndFeel());
+                LOOK_AND_FEEL = new HelloMinecraftLookAndFeel(Settings.getInstance().getTheme().settings);
+                UIManager.setLookAndFeel(LOOK_AND_FEEL);
             } catch (ParseException | UnsupportedLookAndFeelException ex) {
                 HMCLog.warn("Failed to set look and feel...", ex);
             }
 
             Settings.UPDATE_CHECKER.outdated.register(IUpgrader.NOW_UPGRADER);
             Settings.UPDATE_CHECKER.process(false).subscribeOn(Schedulers.newThread()).subscribe(t
-                -> Main.invokeUpdate());
+                    -> Main.invokeUpdate());
 
             if (StrUtils.isNotBlank(Settings.getInstance().getProxyHost()) && StrUtils.isNotBlank(Settings.getInstance().getProxyPort()) && MathUtils.canParseInt(Settings.getInstance().getProxyPort())) {
                 HMCLog.log("Initializing customized proxy");
@@ -159,7 +164,7 @@ public final class Main implements Runnable {
             }
 
             try {
-                MainFrame.showMainFrame(Settings.isFirstLoading());
+                PluginManager.NOW_PLUGIN.showUI();
             } catch (Throwable t) {
                 new CrashReporter(false).uncaughtException(Thread.currentThread(), t);
                 System.exit(1);

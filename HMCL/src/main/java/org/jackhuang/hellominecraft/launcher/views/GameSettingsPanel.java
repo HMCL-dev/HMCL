@@ -51,6 +51,7 @@ import org.jackhuang.hellominecraft.launcher.utils.ModInfo;
 import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerType;
 import org.jackhuang.hellominecraft.launcher.version.GameDirType;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.utils.Event;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.version.MinecraftVersionRequest;
@@ -58,7 +59,6 @@ import org.jackhuang.hellominecraft.utils.system.OS;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.views.SwingUtils;
 import org.jackhuang.hellominecraft.utils.system.Java;
-import org.jackhuang.hellominecraft.views.LogWindow;
 import rx.Observable;
 import rx.concurrency.Schedulers;
 
@@ -66,7 +66,7 @@ import rx.concurrency.Schedulers;
  *
  * @author huangyuhui
  */
-public final class GameSettingsPanel extends AnimatedPanel implements DropTargetListener {
+public final class GameSettingsPanel extends AnimatedPanel implements DropTargetListener, Event<String> {
 
     boolean isLoading = false;
     public MinecraftVersionRequest minecraftVersion;
@@ -84,6 +84,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
         for (int i = 0; i < InstallerType.values().length; i++)
             installerPanels[i] = new InstallerPanel(this, InstallerType.values()[i]);
+        pnlGameDownloads = new GameDownloadPanel(this);
 
         initExplorationMenu();
         initManagementMenu();
@@ -202,36 +203,23 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
     void initTabs() {
         tabVersionEdit.addChangeListener(new ChangeListener() {
-            boolean a = false, b = false;
+            boolean b = false;
 
             @Override
             public void stateChanged(ChangeEvent e) {
-                if (tabVersionEdit.getSelectedComponent() instanceof AnimatedPanel)
-                    ((AnimatedPanel) tabVersionEdit.getSelectedComponent()).animate();
-                if (tabVersionEdit.getSelectedComponent() == pnlGameDownloads && !a) {
-                    a = true;
-                    refreshDownloads();
-                } else if (tabVersionEdit.getSelectedComponent() == pnlAutoInstall && !b) {
+                if (tabVersionEdit.getSelectedComponent() == pnlAutoInstall && !b) {
                     b = true;
                     installerPanels[0].refreshVersions();
                 }
             }
         });
+        ((NewTabPane) tabVersionEdit).initializing = true;
+        tabVersionEdit.addTab(C.i18n("settings.tabs.game_download"), pnlGameDownloads); // NOI18N
+        ((NewTabPane) tabVersionEdit).initializing = false;
+        ((NewTabPane) tabInstallers).initializing = true;
         for (int i = 0; i < InstallerType.values().length; i++)
             tabInstallers.addTab(InstallerType.values()[i].getLocalizedName(), installerPanels[i]);
-
-        tabInstallers.addChangeListener(new ChangeListener() {
-            boolean refreshed[] = new boolean[InstallerType.values().length];
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                int idx = tabInstallers.getSelectedIndex();
-                if (0 <= idx && idx < 3 && !refreshed[idx]) {
-                    installerPanels[idx].refreshVersions();
-                    refreshed[idx] = true;
-                }
-            }
-        });
+        ((NewTabPane) tabInstallers).initializing = false;
     }
 
     /**
@@ -243,7 +231,8 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        tabVersionEdit = new javax.swing.JTabbedPane();
+        tabVersionEdit = new NewTabPane();
+        ((NewTabPane)tabVersionEdit).initializing = true;
         pnlSettings = new AnimatedPanel();
         lblGameDir = new javax.swing.JLabel();
         txtGameDir = new javax.swing.JTextField();
@@ -287,12 +276,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         btnRemoveMod = new javax.swing.JButton();
         lblModInfo = new javax.swing.JLabel();
         pnlAutoInstall = new AnimatedPanel();
-        tabInstallers = new javax.swing.JTabbedPane();
-        pnlGameDownloads = new AnimatedPanel();
-        btnDownload = new javax.swing.JButton();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        lstDownloads = new javax.swing.JTable();
-        btnRefreshGameDownloads = new javax.swing.JButton();
+        tabInstallers = new NewTabPane();
         pnlTop = new javax.swing.JPanel();
         pnlSelection = new javax.swing.JPanel();
         lblProfile = new javax.swing.JLabel();
@@ -307,8 +291,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         btnRemoveProfile = new javax.swing.JButton();
         btnExplore = new javax.swing.JButton();
         btnIncludeMinecraft = new javax.swing.JButton();
-        btnMakeLaunchScript = new javax.swing.JButton();
-        btnShowLog = new javax.swing.JButton();
         btnCleanGame = new javax.swing.JButton();
 
         setBackground(new java.awt.Color(255, 255, 255));
@@ -628,6 +610,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
         lstExternalMods.setModel(SwingUtils.makeDefaultTableModel(new String[]{"", "Mod", C.i18n("ui.label.version")}, new Class[]{Boolean.class,String.class,String.class}, new boolean[]{true,false,false}));
         lstExternalMods.setColumnSelectionAllowed(true);
+        lstExternalMods.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         lstExternalMods.getTableHeader().setReorderingAllowed(false);
         lstExternalMods.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
@@ -716,48 +699,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         );
 
         tabVersionEdit.addTab(C.i18n("settings.tabs.installers"), pnlAutoInstall); // NOI18N
-
-        btnDownload.setText(C.i18n("ui.button.download")); // NOI18N
-        btnDownload.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnDownloadActionPerformed(evt);
-            }
-        });
-
-        lstDownloads.setModel(SwingUtils.makeDefaultTableModel(new String[]{C.I18N.getString("install.version"), C.I18N.getString("install.time"), C.I18N.getString("install.type")},new Class[]{String.class, String.class, String.class}, new boolean[]{false, false, false}));
-        lstDownloads.setToolTipText("");
-        lstDownloads.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        jScrollPane2.setViewportView(lstDownloads);
-
-        btnRefreshGameDownloads.setText(C.i18n("ui.button.refresh")); // NOI18N
-        btnRefreshGameDownloads.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnRefreshGameDownloadsActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout pnlGameDownloadsLayout = new javax.swing.GroupLayout(pnlGameDownloads);
-        pnlGameDownloads.setLayout(pnlGameDownloadsLayout);
-        pnlGameDownloadsLayout.setHorizontalGroup(
-            pnlGameDownloadsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlGameDownloadsLayout.createSequentialGroup()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 779, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(pnlGameDownloadsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(btnRefreshGameDownloads, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnDownload))
-                .addGap(0, 0, 0))
-        );
-        pnlGameDownloadsLayout.setVerticalGroup(
-            pnlGameDownloadsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlGameDownloadsLayout.createSequentialGroup()
-                .addComponent(btnRefreshGameDownloads)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(btnDownload))
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 325, Short.MAX_VALUE)
-        );
-
-        tabVersionEdit.addTab(C.i18n("settings.tabs.game_download"), pnlGameDownloads); // NOI18N
 
         lblProfile.setText(C.i18n("ui.label.profile")); // NOI18N
 
@@ -905,20 +846,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             }
         });
 
-        btnMakeLaunchScript.setText(C.i18n("mainwindow.make_launch_script")); // NOI18N
-        btnMakeLaunchScript.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnMakeLaunchScriptActionPerformed(evt);
-            }
-        });
-
-        btnShowLog.setText(C.i18n("mainwindow.show_log")); // NOI18N
-        btnShowLog.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnShowLogActionPerformed(evt);
-            }
-        });
-
         btnCleanGame.setText(C.i18n("setupwindow.clean")); // NOI18N
         btnCleanGame.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -937,11 +864,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                         .addContainerGap()
                         .addComponent(btnIncludeMinecraft)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(btnCleanGame)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnShowLog)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnMakeLaunchScript))
+                        .addComponent(btnCleanGame))
                     .addComponent(tabVersionEdit))
                 .addContainerGap())
         );
@@ -954,19 +877,16 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnIncludeMinecraft)
-                    .addComponent(btnMakeLaunchScript)
-                    .addComponent(btnShowLog)
                     .addComponent(btnCleanGame))
                 .addContainerGap())
         );
+
+        ((NewTabPane)tabVersionEdit).initializing = false;
     }// </editor-fold>//GEN-END:initComponents
     // <editor-fold defaultstate="collapsed" desc="UI Events">
     private void cboProfilesItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboProfilesItemStateChanged
-        if (isLoading)
-            return;
-        if (getProfile().getMinecraftProvider().getVersionCount() <= 0)
-            versionChanged(null);
-        prepare(getProfile());
+        if (!isLoading)
+            onSelected();
     }//GEN-LAST:event_cboProfilesItemStateChanged
 
     private void btnNewProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNewProfileActionPerformed
@@ -988,24 +908,19 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         if (isLoading || evt.getStateChange() != ItemEvent.SELECTED || cboVersions.getSelectedIndex() < 0 || StrUtils.isBlank((String) cboVersions.getSelectedItem()))
             return;
         String mcv = (String) cboVersions.getSelectedItem();
-        loadMinecraftVersion(mcv);
-        versionChanged(mcv);
         getProfile().setSelectedMinecraftVersion(mcv);
-        cboVersions.setToolTipText(mcv);
     }//GEN-LAST:event_cboVersionsItemStateChanged
+
+    @Override
+    public boolean call(Object sender, String mcv) {
+        versionChanged(mcv);
+        cboVersions.setToolTipText(mcv);
+        return true;
+    }
 
     private void btnRefreshVersionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshVersionsActionPerformed
         refreshVersions();
     }//GEN-LAST:event_btnRefreshVersionsActionPerformed
-
-    private void btnDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadActionPerformed
-        downloadMinecraft();
-        refreshVersions();
-    }//GEN-LAST:event_btnDownloadActionPerformed
-
-    private void btnRefreshGameDownloadsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshGameDownloadsActionPerformed
-        refreshDownloads();
-    }//GEN-LAST:event_btnRefreshGameDownloadsActionPerformed
 
     private void btnExploreMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnExploreMouseClicked
         ppmExplore.show(evt.getComponent(), evt.getPoint().x, evt.getPoint().y);
@@ -1187,14 +1102,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         }
     }//GEN-LAST:event_btnChoosingGameDirActionPerformed
 
-    private void btnMakeLaunchScriptActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMakeLaunchScriptActionPerformed
-        MainFrame.INSTANCE.mainPanel.btnMakeLaunchCodeActionPerformed();
-    }//GEN-LAST:event_btnMakeLaunchScriptActionPerformed
-
-    private void btnShowLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnShowLogActionPerformed
-        LogWindow.INSTANCE.setVisible(true);
-    }//GEN-LAST:event_btnShowLogActionPerformed
-
     private void btnCleanGameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCleanGameActionPerformed
         getProfile().getMinecraftProvider().cleanFolder();
     }//GEN-LAST:event_btnCleanGameActionPerformed
@@ -1226,6 +1133,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     void prepare(Profile profile) {
         if (profile == null)
             return;
+        profile.selectedVersionChangedEvent.register(this);
         txtWidth.setText(profile.getWidth());
         txtHeight.setText(profile.getHeight());
         txtMaxMemory.setText(profile.getMaxMemory());
@@ -1275,16 +1183,9 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         loadMinecraftVersion(getProfile().getSelectedMinecraftVersion());
     }
 
-    void loadMinecraftVersion(String v) {
-        loadMinecraftVersion(getProfile().getMinecraftProvider().getVersionById(v));
-    }
-
     /**
      * Anaylze the jar of selected minecraft version of current getProfile() to
-     * get
-     * the version.
-     *
-     * @param v
+     * get the version.
      */
     void loadMinecraftVersion(MinecraftVersion v) {
         txtMinecraftVersion.setText("");
@@ -1296,27 +1197,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
     //</editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Game Download">
-    public void refreshDownloads() {
-        DefaultTableModel model = SwingUtils.clearDefaultTable(lstDownloads);
-        getProfile().getMinecraftProvider().getDownloadService().getRemoteVersions()
-            .observeOn(Schedulers.eventQueue()).subscribeOn(Schedulers.newThread())
-            .subscribe((ver) -> model.addRow(new Object[] {ver.id, ver.time,
-                                                           StrUtils.equalsOne(ver.type, "old_beta", "old_alpha", "release", "snapshot") ? C.i18n("versions." + ver.type) : ver.type}),
-                       (e) -> {
-                           MessageBox.Show("Failed to refresh download: " + e.getLocalizedMessage());
-                           HMCLog.err("Failed to refresh download.", e);
-                       }, lstDownloads::updateUI);
-    }
-
-    void downloadMinecraft() {
-        if (lstDownloads.getSelectedRow() < 0) {
-            MessageBox.Show(C.i18n("gamedownload.not_refreshed"));
-            return;
-        }
-        String id = (String) lstDownloads.getModel().getValueAt(lstDownloads.getSelectedRow(), 0);
-        getProfile().getMinecraftProvider().getDownloadService().downloadMinecraft(id);
-    }
-
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Installer">
     String getMinecraftVersionFormatted() {
@@ -1353,22 +1233,27 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     public void drop(DropTargetDropEvent dtde) {
     }
 
-    private void refreshVersions() {
+    void refreshVersions() {
         getProfile().getMinecraftProvider().refreshVersions();
         loadVersions();
     }
 
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Mods">
-    private final Object lockMod = new Object();
+    private boolean reloadingMods = false;
 
     private void reloadMods() {
+        if (reloadingMods)
+            return;
+        reloadingMods = true;
         DefaultTableModel model = SwingUtils.clearDefaultTable(lstExternalMods);
         Observable.<List<ModInfo>>createWithEmptySubscription(
             t -> t.onNext(getProfile().getMinecraftProvider().getModService().recacheMods()))
             .subscribeOn(Schedulers.newThread()).observeOn(Schedulers.eventQueue())
             .flatMap(t -> Observable.from(t))
-            .subscribe(t -> model.addRow(new Object[] {t.isActive(), t.getFileName(), t.version}));
+            .subscribe(t -> model.addRow(new Object[] {t.isActive(), t.getFileName(), t.version}),
+                       null,
+                       () -> reloadingMods = false);
     }
 
     // </editor-fold>
@@ -1376,10 +1261,9 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         this.mcVersion = version;
         for (InstallerPanel p : installerPanels)
             p.loadVersions();
-
-        reloadMods();
     }
 
+    @Override
     public void onSelected() {
         loadProfiles();
         if (getProfile().getMinecraftProvider().getVersionCount() <= 0)
@@ -1401,18 +1285,14 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private javax.swing.JButton btnChoosingGameDir;
     private javax.swing.JButton btnChoosingJavaDir;
     private javax.swing.JButton btnCleanGame;
-    private javax.swing.JButton btnDownload;
     private javax.swing.JButton btnDownloadAllAssets;
     private javax.swing.JButton btnExplore;
     private javax.swing.JButton btnIncludeMinecraft;
-    private javax.swing.JButton btnMakeLaunchScript;
     private javax.swing.JButton btnModify;
     private javax.swing.JButton btnNewProfile;
-    private javax.swing.JButton btnRefreshGameDownloads;
     private javax.swing.JButton btnRefreshVersions;
     private javax.swing.JButton btnRemoveMod;
     private javax.swing.JButton btnRemoveProfile;
-    private javax.swing.JButton btnShowLog;
     private javax.swing.JComboBox cboJava;
     private javax.swing.JComboBox cboLauncherVisibility;
     private javax.swing.JComboBox cboProfiles;
@@ -1423,7 +1303,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private javax.swing.JCheckBox chkFullscreen;
     private javax.swing.JCheckBox chkNoJVMArgs;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel lblDimension;
     private javax.swing.JLabel lblDimensionX;
     private javax.swing.JLabel lblGameDir;
@@ -1440,11 +1319,9 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private javax.swing.JLabel lblRunDirectory;
     private javax.swing.JLabel lblServerIP;
     private javax.swing.JLabel lblVersions;
-    private javax.swing.JTable lstDownloads;
     private javax.swing.JTable lstExternalMods;
     private javax.swing.JPanel pnlAdvancedSettings;
     private javax.swing.JPanel pnlAutoInstall;
-    private javax.swing.JPanel pnlGameDownloads;
     private javax.swing.JPanel pnlManagement;
     private javax.swing.JPanel pnlModManagement;
     private javax.swing.JPanel pnlModManagementContent;
@@ -1465,5 +1342,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private javax.swing.JTextField txtServerIP;
     private javax.swing.JTextField txtWidth;
     // End of variables declaration//GEN-END:variables
-    // </editor-fold>
+
+    private javax.swing.JPanel pnlGameDownloads;
+// </editor-fold>
 }

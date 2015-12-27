@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -24,7 +24,7 @@ import org.jackhuang.hellominecraft.logging.message.ParameterizedMessageFactory;
 import org.jackhuang.hellominecraft.logging.message.StringFormattedMessage;
 
 public abstract class AbstractLogger
-implements ILogger {
+    implements ILogger {
 
     public static final Class<? extends IMessageFactory> DEFAULT_MESSAGE_FACTORY_CLASS = ParameterizedMessageFactory.class;
 
@@ -52,9 +52,7 @@ implements ILogger {
     private IMessageFactory createDefaultMessageFactory() {
         try {
             return (IMessageFactory) DEFAULT_MESSAGE_FACTORY_CLASS.newInstance();
-        } catch (InstantiationException e) {
-            throw new IllegalStateException(e);
-        } catch (IllegalAccessException e) {
+        } catch (InstantiationException | IllegalAccessException e) {
             throw new IllegalStateException(e);
         }
     }

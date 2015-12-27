@@ -23,7 +23,9 @@ import java.awt.Font;
 import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
@@ -35,19 +37,20 @@ import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.launcher.launch.GameLauncher;
-import org.jackhuang.hellominecraft.launcher.launch.LaunchFinisher;
-import org.jackhuang.hellominecraft.launcher.launch.LaunchScriptFinisher;
+import org.jackhuang.hellominecraft.launcher.settings.LauncherVisibility;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
 import org.jackhuang.hellominecraft.utils.Event;
 import org.jackhuang.hellominecraft.lookandfeel.components.ConstomButton;
 import org.jackhuang.hellominecraft.utils.functions.Consumer;
+import org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor;
+import org.jackhuang.hellominecraft.views.LogWindow;
 
 /**
  *
  * @author huangyuhui
  */
-public class MainPagePanel extends AnimatedPanel {
+public class MainPagePanel extends AnimatedPanel implements Event<String> {
 
     /**
      * Creates new form MainPagePanel
@@ -67,7 +70,7 @@ public class MainPagePanel extends AnimatedPanel {
 
         btnRun.setText(C.i18n("ui.button.run"));
         btnRun.setFont(newFont);
-        btnRun.addActionListener(e -> btnRunActionPerformed());
+        btnRun.addActionListener(e -> runGame());
 
         this.add(pnlButtons);
         pnlButtons.setBounds(0, 0, w, h);
@@ -105,12 +108,15 @@ public class MainPagePanel extends AnimatedPanel {
         txtPassword = new javax.swing.JPasswordField();
         jPanel3 = new javax.swing.JPanel();
         btnLogout = new javax.swing.JButton();
+        btnMakeLaunchScript = new javax.swing.JButton();
+        btnShowLog = new javax.swing.JButton();
 
         setLayout(null);
 
         pnlMore.setBackground(new java.awt.Color(204, 204, 204));
         pnlMore.setOpaque(false);
 
+        txtPlayerName.setText("");
         txtPlayerName.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 txtPlayerNameFocusGained(evt);
@@ -212,6 +218,20 @@ public class MainPagePanel extends AnimatedPanel {
 
         pnlPassword.add(jPanel3, "card3");
 
+        btnMakeLaunchScript.setText(C.i18n("mainwindow.make_launch_script")); // NOI18N
+        btnMakeLaunchScript.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnMakeLaunchScriptActionPerformed(evt);
+            }
+        });
+
+        btnShowLog.setText(C.i18n("mainwindow.show_log")); // NOI18N
+        btnShowLog.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnShowLogActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout pnlMoreLayout = new javax.swing.GroupLayout(pnlMore);
         pnlMore.setLayout(pnlMoreLayout);
         pnlMoreLayout.setHorizontalGroup(
@@ -226,7 +246,7 @@ public class MainPagePanel extends AnimatedPanel {
                             .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cboProfiles, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(cboProfiles, 0, 124, Short.MAX_VALUE)
                             .addComponent(cboVersions, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(pnlMoreLayout.createSequentialGroup()
                         .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -235,7 +255,9 @@ public class MainPagePanel extends AnimatedPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(cboLoginMode, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(txtPlayerName))))
+                            .addComponent(txtPlayerName)))
+                    .addComponent(btnMakeLaunchScript, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnShowLog, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         pnlMoreLayout.setVerticalGroup(
@@ -259,7 +281,11 @@ public class MainPagePanel extends AnimatedPanel {
                     .addComponent(txtPlayerName, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnlPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(314, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 238, Short.MAX_VALUE)
+                .addComponent(btnMakeLaunchScript)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnShowLog)
+                .addContainerGap())
         );
 
         add(pnlMore);
@@ -275,31 +301,11 @@ public class MainPagePanel extends AnimatedPanel {
     }//GEN-LAST:event_txtPlayerNameFocusLost
 
     private void cboLoginModeItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboLoginModeItemStateChanged
+        if (evt.getStateChange() != ItemEvent.SELECTED)
+            return;
         if (preparingAuth)
             return;
-        int index = cboLoginMode.getSelectedIndex();
-        if (index < 0)
-            return;
-
-        IAuthenticator l = IAuthenticator.LOGINS.get(index);
-        if (l.hasPassword()) {
-            pnlPassword.setVisible(false);
-            lblUserName.setText(C.i18n("login.username"));
-        } else {
-            pnlPassword.setVisible(true);
-            lblUserName.setText(C.i18n("login.account"));
-        }
-
-        CardLayout cl = (CardLayout) pnlPassword.getLayout();
-        if (l.isLoggedIn())
-            cl.last(pnlPassword);
-        else
-            cl.first(pnlPassword);
-        String username = Settings.getInstance().getUsername();
-        if (StrUtils.isNotBlank(username))
-            txtPlayerName.setText(username);
-
-        Settings.getInstance().setLoginType(index);
+        loginModeChanged();
     }//GEN-LAST:event_cboLoginModeItemStateChanged
 
     private void cboProfilesItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboProfilesItemStateChanged
@@ -312,25 +318,29 @@ public class MainPagePanel extends AnimatedPanel {
     private void cboVersionsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboVersionsItemStateChanged
         if (isLoading || evt.getStateChange() != ItemEvent.SELECTED || cboVersions.getSelectedIndex() < 0 || StrUtils.isBlank((String) cboVersions.getSelectedItem()) || getCurrentProfile() == null)
             return;
-        getCurrentProfile().setSelectedMinecraftVersion(cboVersions.getSelectedItem().toString());
-        cboVersions.setToolTipText(cboVersions.getSelectedItem().toString());
-        Settings.save();
+        String mcv = (String) cboVersions.getSelectedItem();
+        getCurrentProfile().setSelectedMinecraftVersion(mcv);
     }//GEN-LAST:event_cboVersionsItemStateChanged
+
+    @Override
+    public boolean call(Object sender, String mcv) {
+        cboVersions.setToolTipText(mcv);
+        return true;
+    }
 
     private void txtPasswordFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtPasswordFocusGained
         MainFrame.INSTANCE.closeMessage();
     }//GEN-LAST:event_txtPasswordFocusGained
 
     private void txtPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtPasswordActionPerformed
-        btnRunActionPerformed();
+        runGame();
     }//GEN-LAST:event_txtPasswordActionPerformed
 
     private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
         if (preparingAuth)
             return;
-        int index = cboLoginMode.getSelectedIndex();
 
-        IAuthenticator l = IAuthenticator.LOGINS.get(index);
+        IAuthenticator l = Settings.getInstance().getAuthenticator();
         CardLayout cl = (CardLayout) pnlPassword.getLayout();
         if (l.isLoggedIn())
             l.logout();
@@ -341,12 +351,9 @@ public class MainPagePanel extends AnimatedPanel {
     private void txtPlayerNameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPlayerNameKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             Settings.getInstance().setUsername(txtPlayerName.getText());
-            int index = cboLoginMode.getSelectedIndex();
-            if (index < 0)
-                return;
-            IAuthenticator l = IAuthenticator.LOGINS.get(index);
-            if (l.hasPassword())
-                btnRunActionPerformed();
+            IAuthenticator l = Settings.getInstance().getAuthenticator();
+            if (!l.hasPassword())
+                runGame();
             else if (!l.isLoggedIn())
                 txtPassword.requestFocus();
         }
@@ -354,8 +361,16 @@ public class MainPagePanel extends AnimatedPanel {
 
     private void txtPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPasswordKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER)
-            btnRunActionPerformed();
+            runGame();
     }//GEN-LAST:event_txtPasswordKeyPressed
+
+    private void btnMakeLaunchScriptActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMakeLaunchScriptActionPerformed
+        MainFrame.INSTANCE.mainPanel.makeLaunchScript();
+    }//GEN-LAST:event_btnMakeLaunchScriptActionPerformed
+
+    private void btnShowLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnShowLogActionPerformed
+        LogWindow.INSTANCE.setVisible(true);
+    }//GEN-LAST:event_btnShowLogActionPerformed
 
     boolean isLaunching = false;
 
@@ -368,24 +383,24 @@ public class MainPagePanel extends AnimatedPanel {
         File file = getCurrentProfile().getCanonicalGameDirFile();
         if (!file.exists()) {
             HMCLog.warn("The minecraft path is wrong, please check it yourself.");
-            MessageBox.Show(C.i18n("minecraft.wrong_path"));
+            MessageBox.ShowLocalized("minecraft.wrong_path");
             return;
         }
         final String name = (String) cboProfiles.getSelectedItem();
         if (StrUtils.isBlank(name) || getCurrentProfile().getSelectedMinecraftVersion() == null) {
             HMCLog.warn("There's no selected version, rechoose a version.");
-            MessageBox.Show(C.i18n("minecraft.no_selected_version"));
+            MessageBox.ShowLocalized("minecraft.no_selected_version");
             return;
         }
 
         final int index = cboLoginMode.getSelectedIndex();
         if (index < 0 || index >= IAuthenticator.LOGINS.size()) {
             HMCLog.warn("There's no login method.");
-            MessageBox.Show(C.i18n("login.methods.no_method"));
+            MessageBox.ShowLocalized("login.methods.no_method");
             return;
         }
         final IAuthenticator l = IAuthenticator.LOGINS.get(index);
-        final LoginInfo li = new LoginInfo(Settings.getInstance().getUsername(), l.isLoggedIn() || l.hasPassword() ? null : new String(txtPassword.getPassword()));
+        final LoginInfo li = new LoginInfo(Settings.getInstance().getUsername(), l.isLoggedIn() || !l.hasPassword() ? null : new String(txtPassword.getPassword()));
         new Thread() {
             @Override
             public void run() {
@@ -414,19 +429,38 @@ public class MainPagePanel extends AnimatedPanel {
         preparingAuth = true;
         cboLoginMode.removeAllItems();
         for (IAuthenticator str : IAuthenticator.LOGINS)
-            try {
-                cboLoginMode.addItem(str.getName());
-            } catch (Exception ex) {
-                HMCLog.warn("Failed to get login name", ex);
-            }
+            cboLoginMode.addItem(str.getName());
+        preparingAuth = false;
         int loginType = Settings.getInstance().getLoginType();
         if (0 <= loginType && loginType < cboLoginMode.getItemCount()) {
-            preparingAuth = false;
-
             cboLoginMode.setSelectedIndex(loginType);
-
-            cboLoginModeItemStateChanged(null);
+            loginModeChanged();
         }
+    }
+
+    private void loginModeChanged() {
+        int index = cboLoginMode.getSelectedIndex();
+        if (index < 0)
+            return;
+        Settings.getInstance().setLoginType(index);
+
+        IAuthenticator l = IAuthenticator.LOGINS.get(index);
+        if (l.hasPassword()) {
+            pnlPassword.setVisible(true);
+            lblUserName.setText(C.i18n("login.account"));
+        } else {
+            pnlPassword.setVisible(false);
+            lblUserName.setText(C.i18n("login.username"));
+        }
+
+        CardLayout cl = (CardLayout) pnlPassword.getLayout();
+        if (l.isLoggedIn())
+            cl.last(pnlPassword);
+        else
+            cl.first(pnlPassword);
+        String username = Settings.getInstance().getUsername();
+        if (StrUtils.isNotBlank(username))
+            txtPlayerName.setText(username);
     }
 
     void loadFromSettings() {
@@ -440,31 +474,30 @@ public class MainPagePanel extends AnimatedPanel {
         isLoading = true;
         cboVersions.removeAllItems();
         int index = 0, i = 0;
-        if (getCurrentProfile() != null) {
-            getCurrentProfile().getMinecraftProvider().refreshVersions();
-            MinecraftVersion selVersion = getCurrentProfile().getSelectedMinecraftVersion();
-            String selectedMC = selVersion == null ? null : selVersion.id;
-            if (getCurrentProfile().getMinecraftProvider().getVersions().isEmpty()) {
-                if (!showedNoVersion)
-                    SwingUtilities.invokeLater(() -> {
-                        if (MessageBox.Show(C.i18n("mainwindow.no_version"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
-                            MainFrame.INSTANCE.selectTab("game");
-                            MainFrame.INSTANCE.gamePanel.showGameDownloads();
-                        }
-                        showedNoVersion = true;
-                    });
-            } else {
-                for (MinecraftVersion mcVersion : getCurrentProfile().getMinecraftProvider().getVersions()) {
-                    if (mcVersion.hidden)
-                        continue;
-                    cboVersions.addItem(mcVersion.id);
-                    if (mcVersion.id.equals(selectedMC))
-                        index = i;
-                    i++;
-                }
-                if (index < cboVersions.getItemCount())
-                    cboVersions.setSelectedIndex(index);
+        getCurrentProfile().selectedVersionChangedEvent.register(this);
+        getCurrentProfile().getMinecraftProvider().refreshVersions();
+        MinecraftVersion selVersion = getCurrentProfile().getSelectedMinecraftVersion();
+        String selectedMC = selVersion == null ? null : selVersion.id;
+        if (getCurrentProfile().getMinecraftProvider().getVersions().isEmpty()) {
+            if (!showedNoVersion)
+                SwingUtilities.invokeLater(() -> {
+                    if (MessageBox.Show(C.i18n("mainwindow.no_version"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
+                        MainFrame.INSTANCE.selectTab("game");
+                        MainFrame.INSTANCE.gamePanel.showGameDownloads();
+                    }
+                    showedNoVersion = true;
+                });
+        } else {
+            for (MinecraftVersion mcVersion : getCurrentProfile().getMinecraftProvider().getVersions()) {
+                if (mcVersion.hidden)
+                    continue;
+                cboVersions.addItem(mcVersion.id);
+                if (mcVersion.id.equals(selectedMC))
+                    index = i;
+                i++;
             }
+            if (index < cboVersions.getItemCount())
+                cboVersions.setSelectedIndex(index);
         }
         isLoading = false;
     }
@@ -502,7 +535,7 @@ public class MainPagePanel extends AnimatedPanel {
         }
     }
 
-    private void btnRunActionPerformed() {
+    private void runGame() {
         MainFrame.INSTANCE.showMessage(C.i18n("ui.message.launching"));
         genLaunchCode(value -> {
             value.successEvent.register(new LaunchFinisher());
@@ -510,7 +543,7 @@ public class MainPagePanel extends AnimatedPanel {
         });
     }
 
-    public void btnMakeLaunchCodeActionPerformed() {
+    public void makeLaunchScript() {
         MainFrame.INSTANCE.showMessage(C.i18n("ui.message.launching"));
         genLaunchCode(value -> {
             value.successEvent.register(new LaunchScriptFinisher());
@@ -518,26 +551,68 @@ public class MainPagePanel extends AnimatedPanel {
         });
     }
 
-    public void onShow(boolean showFirstLoadingMessage) {
-        if (showFirstLoadingMessage)
-            SwingUtilities.invokeLater(() -> MainFrame.INSTANCE.showMessage(C.i18n("ui.message.first_load")));
-        if (cboLoginMode.getSelectedIndex() >= 0 && cboLoginMode.getSelectedIndex() < cboLoginMode.getItemCount()) {
-            IAuthenticator l = IAuthenticator.LOGINS.get(cboLoginMode.getSelectedIndex());
-            if (!l.hasPassword() && !l.isLoggedIn())
-                SwingUtilities.invokeLater(() -> MainFrame.INSTANCE.showMessage(C.i18n("ui.message.enter_password")));
+    public class LaunchFinisher implements Event<List<String>> {
+
+        @Override
+        public boolean call(Object sender, List<String> str) {
+            final GameLauncher obj = (GameLauncher) sender;
+            obj.launchEvent.register((sender1, p) -> {
+                if (obj.getProfile().getLauncherVisibility() == LauncherVisibility.CLOSE && !LogWindow.INSTANCE.isVisible())
+                    System.exit(0);
+                else if (obj.getProfile().getLauncherVisibility() == LauncherVisibility.KEEP)
+                    MainFrame.INSTANCE.closeMessage();
+                else {
+                    if (LogWindow.INSTANCE.isVisible())
+                        LogWindow.INSTANCE.setExit(() -> true);
+                    MainFrame.INSTANCE.dispose();
+                }
+                JavaProcessMonitor jpm = new JavaProcessMonitor(p);
+                jpm.stoppedEvent.register((sender3, t) -> {
+                    if (obj.getProfile().getLauncherVisibility() != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible())
+                        System.exit(0);
+                    return true;
+                });
+                jpm.start();
+                return true;
+            });
+            obj.launch(str);
+            return true;
         }
+    }
+
+    public class LaunchScriptFinisher implements Event<List<String>> {
+
+        @Override
+        public boolean call(Object sender, List str) {
+            boolean flag = false;
+            try {
+                String s = JOptionPane.showInputDialog(C.i18n("mainwindow.enter_script_name"));
+                if (s != null)
+                    MessageBox.Show(C.i18n("mainwindow.make_launch_succeed") + " " + ((GameLauncher) sender).makeLauncher(s, str).getAbsolutePath());
+                flag = true;
+            } catch (IOException ex) {
+                MessageBox.Show(C.i18n("mainwindow.make_launch_script_failed"));
+                HMCLog.err("Failed to create script file.", ex);
+            }
+            MainFrame.INSTANCE.closeMessage();
+            return flag;
+        }
+
     }
 
     public Profile getCurrentProfile() {
         return Settings.getProfile((String) cboProfiles.getSelectedItem());
     }
 
+    @Override
     public void onSelected() {
         refreshMinecrafts(Settings.getInstance().getLast());
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnLogout;
+    private javax.swing.JButton btnMakeLaunchScript;
+    private javax.swing.JButton btnShowLog;
     private javax.swing.JComboBox cboLoginMode;
     private javax.swing.JComboBox cboProfiles;
     private javax.swing.JComboBox cboVersions;

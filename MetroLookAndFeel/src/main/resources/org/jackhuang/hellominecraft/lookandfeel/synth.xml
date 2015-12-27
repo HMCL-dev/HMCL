@@ -238,7 +238,7 @@
     <!-- ########################################################################################################### -->
 
     <style id="progress">
-        <object id="ProgressPainter" class="org.jackhuang.hellominecraft.lookandfeel.painters.ProgressPainter"/>
+        <object id="ProgressPainter" class="org.jackhuang.hellominecraft.lookandfeel.painters.ProgressPainter" />
         <painter idref="ProgressPainter"/>
         <property key="ProgressBar.horizontalSize" type="dimension" value="50 20"/>
         <property key="ProgressBar.vertictalSize" type="dimension" value="20 50"/>
@@ -253,10 +253,10 @@
         <insets top="4" left="8" right="8" bottom="4"/>
         <state>
             <font name="微软雅黑" size="14" />
-            <color type="TEXT_FOREGROUND" value="#000000" />
+            <color type="TEXT_FOREGROUND" value="#000000" /> <!-- #000000 -->
         </state>
         <state value="SELECTED">
-            <color type="TEXT_FOREGROUND" value="#106CA3" />
+            <color type="TEXT_FOREGROUND" value="${Customized.TabbedPaneTab.selected_foreground}" /> <!-- #106CA3 -->
         </state>
     </style>
     <bind style="TabbedPaneTab" type="region" key="TabbedPaneTab"/>
@@ -264,47 +264,27 @@
         <insets top="3" left="10" right="10" bottom="5"/>
     </style>
     <bind style="TabbedPaneTabArea" type="region" key="TabbedPaneTabArea"/>
+    
+    <int id="TabbedPane.selectedLabelShift">0</int>
+    <int id="TabbedPane.labelShift">0</int>
+    <boolean id="TabbedPane.nudgeSelectedLabel">false</boolean>
+    <defaultsProperty key="TabbedPane.selectedLabelShift" type="idref" value="TabbedPane.selectedLabelShift" /> 
+    <defaultsProperty key="TabbedPane.labelShift" type="idref" value="TabbedPane.labelShift" />   
+    <defaultsProperty key="TabbedPane.nudgeSelectedLabel" type="idref" value="TabbedPane.nudgeSelectedLabel" /> 
 
     <!-- ########################################################################################################### -->
     <!-- COMBO BOX -->
     <!-- ########################################################################################################### -->
 
-    <object class="javax.swing.plaf.ColorUIResource" id="ComboBox.background">
-        <int>237</int>
-        <int>239</int>
-        <int>242</int>
-    </object>
+    <color id = "ComboBox.background" value="#EDEFF2" />
     <defaultsProperty key="ComboBox.background" type="idref" value="ComboBox.background"/>
-    <object class="javax.swing.plaf.ColorUIResource" id="ComboBox.selectionForeground">
-        <int>0</int>
-        <int>0</int>
-        <int>0</int>
-    </object>
+    <color id = "ComboBox.selectionForeground" value="#000000" />
     <defaultsProperty key="ComboBox.selectionForeground" type="idref" value="ComboBox.selectionForeground"/>
-    <object class="javax.swing.plaf.ColorUIResource" id="ComboBox.selectionBackground">
-        <int>160</int>
-        <int>216</int>
-        <int>240</int>
-    </object>
+    <color id = "ComboBox.selectionBackground" value="${Customized.ComboBox.selected_background}" /> <!-- #A0D8F0 -->
     <defaultsProperty key="ComboBox.selectionBackground" type="idref" value="ComboBox.selectionBackground"/>
-    <object class="javax.swing.plaf.ColorUIResource" id="ComboBox.foreground">
-        <int>35</int>
-        <int>35</int>
-        <int>36</int>
-    </object>
+    <color id = "ComboBox.foreground" value="#232324" />
     <defaultsProperty key="ComboBox.foreground" type="idref" value="ComboBox.foreground"/>
     
-    <style id="combobox">
-        <state value="SELECTED">
-            <color type="BACKGROUND" value="#A0D8F0" />
-            <color type="TEXT_FOREGROUND" value="#70C5E9" />
-        </state>
-        <state>
-            <color type="BACKGROUND" value="#A0D8F0" />
-            <color type="TEXT_FOREGROUND" value="#70C5E9" />
-        </state>
-        <property key="ComboBox.rendererUseListColors" type="boolean" value="false"/>
-    </style>
     <style id="Combo listRenderer">
         <insets top="2" left="2" bottom="3" right="2"/>
         <opaque value="true"/>
@@ -321,7 +301,7 @@
             <color type="TEXT_FOREGROUND" value="#70C5E9" />
         </state>
     </style>
-    <bind style="combobox" type="region" key="ComboBox" />
+    <!--bind style="combobox" type="region" key="ComboBox" /-->
     <bind style="Combo listRenderer" type="name" key="ComboBox.listRenderer"/>
     
     <defaultsProperty key="ComboBoxUI" type="string" value="org.jackhuang.hellominecraft.lookandfeel.ui.ComboBoxUI"/>
@@ -367,29 +347,13 @@
     <bind style="List listRenderer" type="name" key="List.listRenderer"/>
 
 
-    <object class="javax.swing.plaf.ColorUIResource" id="List.background">
-        <int>237</int>
-        <int>239</int>
-        <int>242</int>
-    </object>
+    <color id="List.background" value="#EDEFF2" />
     <defaultsProperty key="List.background" type="idref" value="List.background"/>
-    <object class="javax.swing.plaf.ColorUIResource" id="List.selectionForeground">
-        <int>255</int>
-        <int>255</int>
-        <int>255</int>
-    </object>
+    <color id="List.selectionForeground" value="#FFFFFF" />
     <defaultsProperty key="List.selectionForeground" type="idref" value="List.selectionForeground"/>
-    <object class="javax.swing.plaf.ColorUIResource" id="ListSelectionBackground">
-        <int>0</int>
-        <int>0</int>
-        <int>255</int>
-    </object>
+    <color id="ListSelectionBackground" value="#0000FF" />
     <defaultsProperty key="List.selectionBackground" type="idref" value="ListSelectionBackground"/>
-    <object class="javax.swing.plaf.ColorUIResource" id="List.foreground">
-        <int>35</int>
-        <int>35</int>
-        <int>36</int>
-    </object>
+    <color id="List.foreground" value="#232324" />
     <defaultsProperty key="List.foreground" type="idref" value="List.foreground"/>
 
     <defaultsProperty key="List.rendererUseListColors" type="boolean" value="false"/>
@@ -413,20 +377,9 @@
     <bind style="OptionPane" type="region" key="OptionPane"/>
     
     <style id="table">
-        <object class="javax.swing.plaf.ColorUIResource" id="color">         
-            <int>255</int>         
-            <int>0</int>         
-            <int>0</int>     
-        </object>     
-        <defaultsProperty key="Table.focusCellForeground" type="idref" value="color"/>     
-        <object class="javax.swing.plaf.ColorUIResource" id="gridColor">         
-            <int>30</int>         
-            <int>123</int>         
-            <int>135</int>     
-        </object>       
-        <defaultsProperty key="Table.gridColor" type="idref" value="gridColor"/>     
-        <defaultsProperty key="Table.selectionBackground" type="idref" value="gridColor"/>     
-        <defaultsProperty key="Table.selectionForeground" type="idref" value="gridColor"/>     
+        <color id="color" value="#FF0000" />
+        <color id="gridColor" value="#1E7B87" />
+        <defaultsProperty key="Table.gridColor" type="idref" value="gridColor"/>  
         <defaultsProperty key="Table.background" type="idref" value="gridColor"/>            
     </style>     
     <bind style="table" type="region" key="Table"/> 

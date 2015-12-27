@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -26,6 +26,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.launcher.utils.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.utils.auth.LoginInfo;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
@@ -73,7 +74,9 @@ public class GameLauncher {
                 result = login.login(info);
             else
                 result = login.loginBySettings();
-            if (result == null) throw new AuthenticationException("Result can not be null.");
+            if (result == null)
+                throw new IllegalStateException("Result can not be null.");
+            PluginManager.NOW_PLUGIN.onProcessingLoginResult(result);
         } catch (Throwable e) {
             String error = C.i18n("login.failed") + e.getMessage();
             HMCLog.warn("Login failed by method: " + login.getName(), e);
@@ -98,7 +101,7 @@ public class GameLauncher {
             failEvent.execute(C.i18n("launch.failed"));
             return null;
         }
-        
+
         HMCLog.log("Unpacking natives...");
         if (!decompressNativesEvent.execute(provider.getDecompressLibraries())) {
             failEvent.execute(C.i18n("launch.failed"));
@@ -115,7 +118,8 @@ public class GameLauncher {
      */
     public void launch(List str) {
         try {
-            provider.onLaunch();
+            if (!provider.onLaunch())
+                return;
             if (StrUtils.isNotBlank(getProfile().getPrecalledCommand())) {
                 Process p = Runtime.getRuntime().exec(getProfile().getPrecalledCommand());
                 try {
@@ -128,9 +132,9 @@ public class GameLauncher {
             HMCLog.log("Starting process");
             ProcessBuilder builder = new ProcessBuilder(str);
             if (get == null || get.getSelectedMinecraftVersion() == null || StrUtils.isBlank(get.getCanonicalGameDir()))
-                throw new NullPointerException("Fucking bug!");
+                throw new Error("Fucking bug!");
             builder.directory(provider.getRunDirectory(get.getSelectedMinecraftVersion().id))
-            .environment().put("APPDATA", get.getCanonicalGameDir());
+                .environment().put("APPDATA", get.getCanonicalGameDir());
             JavaProcess jp = new JavaProcess(str, builder.start(), PROCESS_MANAGER);
             launchEvent.execute(jp);
         } catch (Exception e) {

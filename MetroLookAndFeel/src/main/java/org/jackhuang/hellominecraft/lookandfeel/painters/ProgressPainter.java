@@ -37,23 +37,13 @@ import java.awt.LinearGradientPaint;
  */
 public class ProgressPainter extends SynthPainter {
 
-    private static final float[] NORMAL_BG_PTS = new float[]{0, 1};
-    private static final Color[] NORMAL_BG = new Color[]{
+    private static final float[] NORMAL_BG_PTS = new float[] {0, 1};
+    private static final Color[] NORMAL_BG = new Color[] {
         GraphicsUtils.getWebColor("c6c6c6"),
         GraphicsUtils.getWebColor("c6c6c6")
     };
-    private static final float[] NORMAL_FG_PTS = new float[]{0, 1};
-    private static final Color[] NORMAL_FG = new Color[]{
-        GraphicsUtils.getWebColor("c6c6c6"),
-        GraphicsUtils.getWebColor("c6c6c6")
-    };
-    private static final float[] BAR_BG_PTS = new float[]{0, 1};
-    private static final Color[] BAR_BG = new Color[]{
-        GraphicsUtils.getWebColor("41B1E1"),
-        GraphicsUtils.getWebColor("41B1E1")
-    };
-    private static final float[] BAR_FG_PTS = new float[]{0, 1};
-    private static final Color[] BAR_FG = new Color[]{
+    private static final float[] BAR_FG_PTS = new float[] {0, 1};
+    private static final Color[] BAR_FG = new Color[] {
         GraphicsUtils.getWebColor("41B1E1"),
         GraphicsUtils.getWebColor("41B1E1")
     };
@@ -61,39 +51,31 @@ public class ProgressPainter extends SynthPainter {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void paintProgressBarBackground(SynthContext context, Graphics g, int x, int y, int w, int h,
-            int orientation) {
+                                           int orientation) {
         Graphics2D g2 = (Graphics2D) g.create();
-        g2.setPaint(new LinearGradientPaint(x, y + 3, x, y + h - 4, NORMAL_BG_PTS, NORMAL_BG));
-        if (x + 2 < w - 5 && y + 2 < h - 5) {
+        g2.setPaint(new LinearGradientPaint(x, y + 2, x, y + h - 4, NORMAL_BG_PTS, NORMAL_BG));
+        if (x + 2 < w - 5 && y + 2 < h - 5)
             g2.fillRect(x + 2, y + 2, w - 5, h - 5);
-        }
-        g2.setPaint(new LinearGradientPaint(x, y + 2, x, y + h - 5, NORMAL_FG_PTS, NORMAL_FG));
-        if (x + 2 < w - 5 && y + 2 < h - 5) {
-            g2.drawRect(x + 2, y + 2, w - 5, h - 5);
-        }
     }
 
     /**
      * {@inheritDoc}
      */
+    @Override
     public void paintProgressBarForeground(SynthContext context, Graphics g, int x, int y, int w, int h,
-            int orientation) {
+                                           int orientation) {
         Graphics2D g2 = (Graphics2D) g.create();
-        g2.setPaint(new LinearGradientPaint(x, y + 3, x, y + h - 4, BAR_BG_PTS, BAR_BG));
-        if (x + 2 < w - 5 && y + 2 < h - 5) {
-            g2.fillRect(x + 2, y + 2, w - 5, h - 5);
-        }
         g2.setPaint(new LinearGradientPaint(x, y + 2, x, y + h - 2, BAR_FG_PTS, BAR_FG));
-        if (x + 2 < w - 5 && y + 2 < h - 5) {
+        if (x + 2 < w - 5 && y + 2 < h - 5)
             g2.drawRect(x + 2, y + 2, w - 5, h - 5);
-        }
-
     }
 
     /**
      * {@inheritDoc}
      */
+    @Override
     public void paintProgressBarBorder(SynthContext context, Graphics g, int x, int y, int w, int h, int orientation) {
     }
 }

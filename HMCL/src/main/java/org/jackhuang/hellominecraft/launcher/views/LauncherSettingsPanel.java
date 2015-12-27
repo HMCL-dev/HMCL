@@ -43,7 +43,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         initComponents();
 
         Observable.from(DownloadType.values()).map(t -> t.getName()).toList()
-            .subscribe(t -> cboDownloadSource.setModel(new DefaultComboBoxModel(t.toArray(new String[0]))));
+                .subscribe(t -> cboDownloadSource.setModel(new DefaultComboBoxModel(t.toArray(new String[0]))));
 
         txtBackgroundPath.setText(Settings.getInstance().getBgpath());
         txtProxyHost.setText(Settings.getInstance().getProxyHost());
@@ -51,7 +51,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         txtProxyUsername.setText(Settings.getInstance().getProxyUserName());
         txtProxyPassword.setText(Settings.getInstance().getProxyPassword());
         cboDownloadSource.setSelectedIndex(Settings.getInstance().getDownloadType());
-        cboTheme.setSelectedIndex(Settings.getInstance().getTheme());
+        cboTheme.setSelectedIndex(Settings.getInstance().getTheme().ordinal());
         chkEnableShadow.setSelected(Settings.getInstance().isEnableShadow());
         chkEnableAnimation.setSelected(Settings.getInstance().isEnableAnimation());
 
@@ -309,7 +309,6 @@ public class LauncherSettingsPanel extends AnimatedPanel {
 
     private void cboThemeItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboThemeItemStateChanged
         Settings.getInstance().setTheme(cboTheme.getSelectedIndex());
-        MainFrame.INSTANCE.reloadColor();
     }//GEN-LAST:event_cboThemeItemStateChanged
 
     private void txtProxyHostFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtProxyHostFocusLost

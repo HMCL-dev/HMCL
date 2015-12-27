@@ -17,7 +17,7 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with this library; if not, write to the Free Software
 * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/
+ */
 package org.jackhuang.hellominecraft.lookandfeel.ui;
 
 import javax.swing.DefaultListCellRenderer;
@@ -33,8 +33,9 @@ import java.awt.Component;
  */
 public class ListCellRender extends DefaultListCellRenderer {
 
-    @Override public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
-                                                            boolean cellHasFocus) {
+    @Override
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
+                                                  boolean cellHasFocus) {
         setOpaque(true);
         setBackground(Color.magenta);
         return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);

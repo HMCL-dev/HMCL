@@ -2712,7 +2712,6 @@
                         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                           <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="download" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                         </Property>
-                        <Property name="label" type="java.lang.String" value="&#x4e0b;&#x8f7d;"/>
                       </Properties>
                       <Events>
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnDownloadMCPCActionPerformed"/>
@@ -2727,7 +2726,6 @@
                           <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.refresh" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                         </Property>
                         <Property name="toolTipText" type="java.lang.String" value=""/>
-                        <Property name="label" type="java.lang.String" value="&#x5237;&#x65b0;"/>
                       </Properties>
                       <Events>
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="lstRefreshMCPCActionPerformed"/>

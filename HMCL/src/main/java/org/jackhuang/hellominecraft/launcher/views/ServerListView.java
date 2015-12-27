@@ -17,37 +17,35 @@
  */
 package org.jackhuang.hellominecraft.launcher.views;
 
+import java.awt.Color;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.launcher.version.ServerInfo;
-import rx.Observable;
-import rx.concurrency.Schedulers;
 
 /**
  *
  * @author huangyuhui
  */
-public class ServerListView extends javax.swing.JFrame {
+public class ServerListView extends javax.swing.JDialog {
 
     JList<ServerInfo> lstServer;
 
     public ServerListView(ServerInfo[] servers) {
+        setModal(true);
         initComponents();
+        setSize(800, 480);
+        setLocationRelativeTo(null);
         lstServer = new JList<>();
+        lstServer.setSelectionForeground(Color.ORANGE);
         lstServer.setModel(new DefaultListModel<>());
         lstServer.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         srlList.setViewportView(lstServer);
 
         lstServer.setCellRenderer(new ServerListCellRenderer());
         DefaultListModel<ServerInfo> model = (DefaultListModel) lstServer.getModel();
-        Observable.<ServerInfo[]>createWithEmptySubscription(t -> {
-            for (ServerInfo i : servers)
-                i.downloadIcon();
-            t.onNext(servers);
-        }).observeOn(Schedulers.eventQueue()).subscribeOn(Schedulers.newThread())
-            .flatMap(t -> Observable.from(t))
-            .subscribe(model::addElement);
+        for (ServerInfo i : servers)
+            model.addElement(i);
     }
 
     public int getChoice() {
@@ -55,7 +53,7 @@ public class ServerListView extends javax.swing.JFrame {
         return sel;
     }
 
-    public int sel;
+    public int sel = -1;
     public static final int FAILED_TO_SELECT = -1;
 
     /**
@@ -72,7 +70,7 @@ public class ServerListView extends javax.swing.JFrame {
         btnOK = new javax.swing.JButton();
         btnCancel = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(C.i18n("serverlistview.title")); // NOI18N
 
         btnOK.setText(C.i18n("ui.button.ok")); // NOI18N

@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.settings;
 
 import java.io.File;
+import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.launcher.utils.MCUtils;
@@ -27,7 +28,7 @@ import org.jackhuang.hellominecraft.launcher.version.GameDirType;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.Utils;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.launcher.version.MinecraftVersionManager;
+import org.jackhuang.hellominecraft.utils.EventHandler;
 import org.jackhuang.hellominecraft.utils.system.Java;
 import org.jackhuang.hellominecraft.utils.system.OS;
 
@@ -65,7 +66,12 @@ public final class Profile {
         gameDir = MCUtils.getInitGameDir().getPath();
         debug = fullscreen = canceledWrapper = false;
         launcherVisibility = gameDirType = 0;
+        PluginManager.NOW_PLUGIN.onInitializingProfile(this);
         javaDir = java = minecraftArgs = serverIp = precalledCommand = "";
+    }
+
+    public void initialize(int gameDirType) {
+        this.gameDirType = gameDirType;
     }
 
     public Profile(Profile v) {
@@ -94,12 +100,12 @@ public final class Profile {
 
     public IMinecraftProvider getMinecraftProvider() {
         if (minecraftProvider == null) {
-            minecraftProvider = new MinecraftVersionManager(this);
+            minecraftProvider = PluginManager.NOW_PLUGIN.provideMinecraftProvider(this);
             minecraftProvider.initializeMiencraft();
         }
         return minecraftProvider;
     }
-    
+
     public String getSelectedMinecraftVersionName() {
         return selectedMinecraftVersion;
     }
@@ -120,9 +126,12 @@ public final class Profile {
         return v;
     }
 
+    public transient final EventHandler<String> selectedVersionChangedEvent = new EventHandler<>(this);
+
     public void setSelectedMinecraftVersion(String selectedMinecraftVersion) {
         this.selectedMinecraftVersion = selectedMinecraftVersion;
         Settings.save();
+        selectedVersionChangedEvent.execute(selectedMinecraftVersion);
     }
 
     public String getGameDir() {
@@ -361,12 +370,13 @@ public final class Profile {
     public void checkFormat() {
         gameDir = gameDir.replace('/', OS.os().fileSeparator).replace('\\', OS.os().fileSeparator);
     }
-    
+
     transient final InstallerService is = new InstallerService(this);
+
     public InstallerService getInstallerService() {
         return is;
     }
-    
+
     public DownloadType getDownloadType() {
         return Settings.getInstance().getDownloadSource();
     }

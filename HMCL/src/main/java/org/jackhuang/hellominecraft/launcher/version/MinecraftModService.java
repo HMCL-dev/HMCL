@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -36,19 +36,22 @@ import org.jackhuang.hellominecraft.utils.system.FileUtils;
  * @author huangyuhui
  */
 public class MinecraftModService extends IMinecraftModService {
+
     MinecraftVersionManager mgr;
 
     public MinecraftModService(Profile p, MinecraftVersionManager mgr) {
         super(p);
         this.mgr = mgr;
     }
-    
+
     List<ModInfo> modCache;
-    
+
     @Override
     public List<ModInfo> getMods() {
-        if (modCache == null) return recacheMods();
-        else return modCache;
+        if (modCache == null)
+            return recacheMods();
+        else
+            return modCache;
     }
 
     @Override
@@ -110,13 +113,12 @@ public class MinecraftModService extends IMinecraftModService {
         }
         recacheMods();
     }
-    
-    public String checkMd5s() throws IOException {
-        String res = "";
-        for (ModInfo i : getMods()) {
-            res += DigestUtils.md5Hex(new FileInputStream(i.location));
-        }
+
+    public String[] checkMd5s() throws IOException {
+        String[] res = new String[getMods().size()];
+        for (int i = 0; i < res.length; i++)
+            res[i] = DigestUtils.md5Hex(new FileInputStream(getMods().get(i).location));
         return res;
     }
-    
+
 }

@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -33,7 +33,7 @@ public final class OfflineAuthenticator extends IAuthenticator {
 
     @Override
     public UserProfileProvider login(LoginInfo info) throws AuthenticationException {
-        if(StrUtils.isBlank(info.username))
+        if (StrUtils.isBlank(info.username))
             throw new AuthenticationException(C.i18n("login.no_Player007"));
         UserProfileProvider result = new UserProfileProvider();
         result.setUserName(info.username);
@@ -56,7 +56,7 @@ public final class OfflineAuthenticator extends IAuthenticator {
 
     @Override
     public boolean hasPassword() {
-        return true;
+        return false;
     }
 
     @Override

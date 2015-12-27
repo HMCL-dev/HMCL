@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -24,6 +24,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
+import org.jackhuang.hellominecraft.launcher.utils.auth.IAuthenticator;
+import org.jackhuang.hellominecraft.lookandfeel.Theme;
+import org.jackhuang.hellominecraft.utils.EventHandler;
 import org.jackhuang.hellominecraft.utils.system.JdkVersion;
 
 /**
@@ -55,12 +58,15 @@ public final class Config {
         return java == null ? java = new ArrayList<>() : java;
     }
 
-    public int getTheme() {
-        return theme;
+    public transient final EventHandler<Theme> themeChangedEvent = new EventHandler<>(this);
+
+    public Theme getTheme() {
+        return Theme.values()[theme];
     }
 
     public void setTheme(int theme) {
         this.theme = theme;
+        themeChangedEvent.execute(getTheme());
         Settings.save();
     }
 
@@ -90,6 +96,7 @@ public final class Config {
         this.bgpath = bgpath;
         Settings.save();
     }
+
     public boolean isEnableAnimation() {
         return enableAnimation;
     }
@@ -112,7 +119,13 @@ public final class Config {
         return clientToken;
     }
 
+    public IAuthenticator getAuthenticator() {
+        return IAuthenticator.LOGINS.get(getLoginType());
+    }
+
     public int getLoginType() {
+        if (logintype < 0 || logintype >= IAuthenticator.LOGINS.size())
+            logintype = 0;
         return logintype;
     }
 
@@ -162,8 +175,9 @@ public final class Config {
         clientToken = UUID.randomUUID().toString();
         username = "";
         logintype = downloadtype = 0;
-        enableShadow = false; enableAnimation = true;
-        theme = 0;
+        enableShadow = false;
+        enableAnimation = true;
+        theme = 4;
     }
 
     public DownloadType getDownloadSource() {

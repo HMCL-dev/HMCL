@@ -22,5 +22,6 @@ hs_err_pid*
 
 HMCLAPI/build/
 HMCL/build/
+HMCL/src/main/org/jackhuang/hellominecraft/launcher/servers/
 HMCSM/build/
 MetroLookAndFeel/build/

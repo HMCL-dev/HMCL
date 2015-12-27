@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -85,14 +85,14 @@ public class SimpleLogger extends AbstractLogger {
                 dateText = this.dateFormatter.format(now);
             }
             sb.append(dateText);
-            sb.append(' ');
+            sb.append(SPACE);
         }
 
         sb.append(level.toString());
-        sb.append(' ');
+        sb.append(SPACE);
         if ((this.logName != null) && (this.logName.length() > 0)) {
             sb.append(this.logName);
-            sb.append(' ');
+            sb.append(SPACE);
         }
         sb.append(msg.getFormattedMessage());
         Object[] params = msg.getParameters();
@@ -102,7 +102,7 @@ public class SimpleLogger extends AbstractLogger {
         else
             t = throwable;
         if (t != null) {
-            sb.append(' ');
+            sb.append(SPACE);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             t.printStackTrace(new PrintStream(baos));
             sb.append(baos.toString());
