@@ -610,7 +610,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
         lstExternalMods.setModel(SwingUtils.makeDefaultTableModel(new String[]{"", "Mod", C.i18n("ui.label.version")}, new Class[]{Boolean.class,String.class,String.class}, new boolean[]{true,false,false}));
         lstExternalMods.setColumnSelectionAllowed(true);
-        lstExternalMods.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         lstExternalMods.getTableHeader().setReorderingAllowed(false);
         lstExternalMods.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
@@ -1069,7 +1068,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }//GEN-LAST:event_btnAddModActionPerformed
 
     private void btnRemoveModActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveModActionPerformed
-        getProfile().getMinecraftProvider().getModService().removeMod(lstExternalMods.getSelectedRows());
+        getProfile().getMinecraftProvider().getModService().removeMod(SwingUtils.getValueBySelectedRow(lstExternalMods, lstExternalMods.getSelectedRows(), 1));
         reloadMods();
     }//GEN-LAST:event_btnRemoveModActionPerformed
 
@@ -1248,12 +1247,13 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         reloadingMods = true;
         DefaultTableModel model = SwingUtils.clearDefaultTable(lstExternalMods);
         Observable.<List<ModInfo>>createWithEmptySubscription(
-            t -> t.onNext(getProfile().getMinecraftProvider().getModService().recacheMods()))
-            .subscribeOn(Schedulers.newThread()).observeOn(Schedulers.eventQueue())
-            .flatMap(t -> Observable.from(t))
-            .subscribe(t -> model.addRow(new Object[] {t.isActive(), t.getFileName(), t.version}),
-                       null,
-                       () -> reloadingMods = false);
+                t -> t.onNext(getProfile().getMinecraftProvider().getModService().recacheMods()))
+                .subscribeOn(Schedulers.newThread()).observeOn(Schedulers.eventQueue())
+                .subscribe(t -> {
+                    for (ModInfo x : t)
+                        model.addRow(new Object[]{x.isActive(), x, x.version});
+                    reloadingMods = false;
+                });
     }
 
     // </editor-fold>

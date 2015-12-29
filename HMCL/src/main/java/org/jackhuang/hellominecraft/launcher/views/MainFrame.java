@@ -139,7 +139,7 @@ public final class MainFrame extends DraggableFrame {
 
         if (enableShadow)
             try {
-                //setBackground(new Color(0, 0, 0, 0));
+                setBackground(new Color(0, 0, 0, 0));
                 getRootPane().setBorder(border = new DropShadowBorder(borderColor, 4));
             } catch (Throwable ex) {
                 HMCLog.err("Failed to set window transparent.", ex);

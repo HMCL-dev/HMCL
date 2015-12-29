@@ -104,13 +104,14 @@ public class MinecraftModService extends IMinecraftModService {
     }
 
     @Override
-    public void removeMod(int[] rows) {
-        Arrays.sort(rows);
-        for (int idx : rows) {
-            ModInfo mi = getMods().get(idx);
-            File f = mi.location;
-            f.delete();
-        }
+    public void removeMod(Object[] rows) {
+        if (rows.length == 0)
+            return;
+        for (Object r : rows)
+            if (r instanceof ModInfo)
+                ((ModInfo) r).location.delete();
+            else if (r instanceof Number)
+                getMods().get(((Number) r).intValue()).location.delete();
         recacheMods();
     }
 

@@ -19,9 +19,7 @@ import rx.Observable;
 import rx.Observer;
 import rx.Scheduler;
 import rx.Subscription;
-import rx.util.functions.Action0;
 import rx.util.functions.Func1;
-
 
 public class OperationSubscribeOn {
 
@@ -30,6 +28,7 @@ public class OperationSubscribeOn {
     }
 
     private static class SubscribeOn<T> implements Func1<Observer<T>, Subscription> {
+
         private final Observable<T> source;
         private final Scheduler scheduler;
 
@@ -45,6 +44,7 @@ public class OperationSubscribeOn {
     }
 
     private static class ScheduledSubscription implements Subscription {
+
         private final Subscription underlying;
         private final Scheduler scheduler;
 

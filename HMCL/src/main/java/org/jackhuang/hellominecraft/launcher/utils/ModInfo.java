@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -88,6 +88,11 @@ public class ModInfo implements Comparable<ModInfo> {
         return location.hashCode();
     }
 
+    @Override
+    public String toString() {
+        return getFileName();
+    }
+
     public String getFileName() {
         String n = location.getName();
         return FileUtils.removeExtension(isActive() ? n : n.substring(0, n.length() - ".disabled".length()));
@@ -107,8 +112,8 @@ public class ModInfo implements Comparable<ModInfo> {
         ModInfo i = new ModInfo();
         i.location = f;
         List<ModInfo> m = C.gson.fromJson(new InputStreamReader(jar.getInputStream(entry)),
-                                          new TypeToken<List<ModInfo>>() {
-                                      }.getType());
+                new TypeToken<List<ModInfo>>() {
+        }.getType());
         if (m != null && m.size() > 0) {
             i = m.get(0);
             i.location = f;
@@ -118,8 +123,9 @@ public class ModInfo implements Comparable<ModInfo> {
 
     private static ModInfo getLiteLoaderModInfo(File f, ZipFile jar, ZipEntry entry) throws IOException {
         ModInfo m = C.gson.fromJson(new InputStreamReader(jar.getInputStream(entry)),
-                                          ModInfo.class);
-        if (m == null) m = new ModInfo();
+                ModInfo.class);
+        if (m == null)
+            m = new ModInfo();
         m.location = f;
         return m;
     }

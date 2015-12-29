@@ -1,12 +1,12 @@
 /**
  * Copyright 2013 Netflix, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,9 @@ package rx;
 
 /**
  * An object representing a notification sent to an {@link Observable}.
- * 
- * For the Microsoft Rx equivalent see: http://msdn.microsoft.com/en-us/library/hh229462(v=vs.103).aspx
+ *
+ * For the Microsoft Rx equivalent see:
+ * http://msdn.microsoft.com/en-us/library/hh229462(v=vs.103).aspx
  */
 public class Notification<T> {
 
@@ -28,9 +29,8 @@ public class Notification<T> {
 
     /**
      * A constructor used to represent an onNext notification.
-     * 
-     * @param value
-     *            The data passed to the onNext method.
+     *
+     * @param value The data passed to the onNext method.
      */
     public Notification(T value) {
         this.value = value;
@@ -40,9 +40,8 @@ public class Notification<T> {
 
     /**
      * A constructor used to represent an onError notification.
-     * 
-     * @param exception
-     *            The exception passed to the onError notification.
+     *
+     * @param exception The exception passed to the onError notification.
      */
     public Notification(Exception exception) {
         this.exception = exception;
@@ -61,7 +60,7 @@ public class Notification<T> {
 
     /**
      * Retrieves the exception associated with an onError notification.
-     * 
+     *
      * @return The exception associated with an onError notification.
      */
     public Exception getException() {
@@ -70,7 +69,7 @@ public class Notification<T> {
 
     /**
      * Retrieves the data associated with an onNext notification.
-     * 
+     *
      * @return The data associated with an onNext notification.
      */
     public T getValue() {
@@ -79,7 +78,7 @@ public class Notification<T> {
 
     /**
      * Retrieves a value indicating whether this notification has a value.
-     * 
+     *
      * @return a value indicating whether this notification has a value.
      */
     public boolean hasValue() {
@@ -88,7 +87,7 @@ public class Notification<T> {
 
     /**
      * Retrieves a value indicating whether this notification has an exception.
-     * 
+     *
      * @return a value indicating whether this notification has an exception.
      */
     public boolean hasException() {
@@ -97,7 +96,7 @@ public class Notification<T> {
 
     /**
      * The kind of notification: OnNext, OnError, OnCompleted
-     * 
+     *
      * @return
      */
     public Kind getKind() {
@@ -150,12 +149,8 @@ public class Notification<T> {
         if (obj.getClass() != getClass())
             return false;
         Notification<?> notification = (Notification<?>) obj;
-        if (notification.getKind() != getKind())
+        if (notification.getKind() != getKind() || hasValue() && !getValue().equals(notification.getValue()))
             return false;
-        if (hasValue() && !getValue().equals(notification.getValue()))
-            return false;
-        if (hasException() && !getException().equals(notification.getException()))
-            return false;
-        return true;
+        return !(hasException() && !getException().equals(notification.getException()));
     }
 }

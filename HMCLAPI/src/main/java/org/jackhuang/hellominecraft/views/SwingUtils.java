@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -42,16 +42,16 @@ public class SwingUtils {
      * Make DefaultTableModel by overriding getColumnClass and isCellEditable of
      * DefaultTableModel.
      *
-     * @param titleA   The title of each column.
-     * @param typesA   The type of each column value.
+     * @param titleA The title of each column.
+     * @param typesA The type of each column value.
      * @param canEditA Is column editable?
      *
      * @return
      */
     public static DefaultTableModel makeDefaultTableModel(String[] titleA, final Class[] typesA, final boolean[] canEditA) {
         return new DefaultTableModel(
-            new Object[][] {},
-            titleA) {
+                new Object[][]{},
+                titleA) {
             Class[] types = typesA;
             boolean[] canEdit = canEditA;
 
@@ -114,7 +114,7 @@ public class SwingUtils {
     /**
      * Append new element to JList
      *
-     * @param list    the JList
+     * @param list the JList
      * @param element the Element
      */
     public static void appendLast(JList list, Object element) {
@@ -152,6 +152,14 @@ public class SwingUtils {
     public static void setValueAt(JTable table, Object element, int row, int col) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.setValueAt(element, row, col);
+    }
+
+    public static Object[] getValueBySelectedRow(JTable table, int rows[], int col) {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        Object[] ret = new Object[rows.length];
+        for (int i = 0; i < rows.length; i++)
+            ret[i] = model.getValueAt(rows[i], col);
+        return ret;
     }
 
     public static void removeRow(JTable table, int row) {
