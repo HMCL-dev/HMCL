@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -27,14 +27,13 @@ import javax.swing.JFrame;
  * @author huangyuhui
  */
 public class DraggableFrame extends JFrame
-implements MouseListener, MouseMotionListener {
+        implements MouseListener, MouseMotionListener {
 
     private int dragGripX;
     private int dragGripY;
 
     @SuppressWarnings("LeakingThisInConstructor")
     public DraggableFrame() {
-        setUndecorated(true);
         addMouseListener(this);
         addMouseMotionListener(this);
     }
@@ -45,7 +44,7 @@ implements MouseListener, MouseMotionListener {
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if (e.getButton() == 1) {
+        if (e.getButton() == 1 && isUndecorated()) {
             this.dragGripX = e.getX();
             this.dragGripY = e.getY();
         }
@@ -65,7 +64,7 @@ implements MouseListener, MouseMotionListener {
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        if ((e.getModifiersEx() & 0x400) != 0)
+        if ((e.getModifiersEx() & 0x400) != 0 && isUndecorated())
             setLocation(e.getXOnScreen() - this.dragGripX, e.getYOnScreen() - this.dragGripY);
     }
 

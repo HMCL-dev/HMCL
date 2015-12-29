@@ -28,6 +28,7 @@ import org.jackhuang.hellominecraft.launcher.utils.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.lookandfeel.Theme;
 import org.jackhuang.hellominecraft.utils.EventHandler;
 import org.jackhuang.hellominecraft.utils.system.JdkVersion;
+import org.jackhuang.hellominecraft.utils.system.OS;
 
 /**
  *
@@ -46,7 +47,8 @@ public final class Config {
     private String proxyHost, proxyPort, proxyUserName, proxyPassword;
     @SerializedName("enableShadow")
     private boolean enableShadow;
-
+    @SerializedName("decorated")
+    private boolean decorated;
     @SerializedName("enableAnimation")
     private boolean enableAnimation;
     @SerializedName("theme")
@@ -68,6 +70,14 @@ public final class Config {
         this.theme = theme;
         themeChangedEvent.execute(getTheme());
         Settings.save();
+    }
+
+    public boolean isDecorated() {
+        return decorated;
+    }
+
+    public void setDecorated(boolean decorated) {
+        this.decorated = decorated;
     }
 
     public boolean isEnableShadow() {
@@ -178,6 +188,7 @@ public final class Config {
         enableShadow = false;
         enableAnimation = true;
         theme = 4;
+        decorated = OS.os() == OS.LINUX;
     }
 
     public DownloadType getDownloadSource() {

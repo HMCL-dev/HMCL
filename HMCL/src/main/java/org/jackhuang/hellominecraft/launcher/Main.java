@@ -121,7 +121,6 @@ public final class Main implements Runnable {
                 return;
 
             System.setProperty("sun.java2d.noddraw", "true");
-
             Thread.setDefaultUncaughtExceptionHandler(new CrashReporter(true));
 
             try {

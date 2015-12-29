@@ -54,6 +54,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         cboTheme.setSelectedIndex(Settings.getInstance().getTheme().ordinal());
         chkEnableShadow.setSelected(Settings.getInstance().isEnableShadow());
         chkEnableAnimation.setSelected(Settings.getInstance().isEnableAnimation());
+        chkDecorated.setSelected(Settings.getInstance().isDecorated());
 
         setBackground(Color.white);
         setOpaque(true);
@@ -88,6 +89,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         txtProxyPassword = new javax.swing.JTextField();
         jLabel8 = new javax.swing.JLabel();
         chkEnableAnimation = new javax.swing.JCheckBox();
+        chkDecorated = new javax.swing.JCheckBox();
 
         cboDownloadSource.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -180,6 +182,14 @@ public class LauncherSettingsPanel extends AnimatedPanel {
             }
         });
 
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraft/launcher/I18N"); // NOI18N
+        chkDecorated.setText(bundle.getString("launcher.decorated")); // NOI18N
+        chkDecorated.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                chkDecoratedFocusLost(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -222,11 +232,14 @@ public class LauncherSettingsPanel extends AnimatedPanel {
                         .addComponent(chkEnableShadow)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(chkEnableAnimation))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
                             .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(btnCheckUpdate))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                            .addGap(0, 0, Short.MAX_VALUE))
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(btnCheckUpdate)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(chkDecorated))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -261,7 +274,9 @@ public class LauncherSettingsPanel extends AnimatedPanel {
                     .addComponent(chkEnableShadow)
                     .addComponent(chkEnableAnimation))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnCheckUpdate, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btnCheckUpdate, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(chkDecorated))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 71, Short.MAX_VALUE)
                 .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -331,11 +346,16 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         Settings.getInstance().setEnableAnimation(chkEnableAnimation.isSelected());
     }//GEN-LAST:event_chkEnableAnimationFocusLost
 
+    private void chkDecoratedFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_chkDecoratedFocusLost
+        Settings.getInstance().setDecorated(chkDecorated.isSelected());
+    }//GEN-LAST:event_chkDecoratedFocusLost
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCheckUpdate;
     private javax.swing.JButton btnSelBackgroundPath;
     private javax.swing.JComboBox cboDownloadSource;
     private javax.swing.JComboBox cboTheme;
+    private javax.swing.JCheckBox chkDecorated;
     private javax.swing.JCheckBox chkEnableAnimation;
     private javax.swing.JCheckBox chkEnableShadow;
     private javax.swing.JLabel jLabel1;

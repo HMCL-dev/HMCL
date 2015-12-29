@@ -29,6 +29,8 @@ import java.awt.Transparency;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -73,13 +75,22 @@ public final class MainFrame extends DraggableFrame {
     boolean enableShadow;
     String defaultTitle;
 
+    private int tempW, tempH;
+
+    void setContentSize(int w, int h) {
+        setSize(w, h);
+        tempW = w;
+        tempH = h;
+    }
+
     MainFrame() {
-        defaultTitle = Main.makeTitle();
-        enableShadow = Settings.getInstance().isEnableShadow();
+        setUndecorated(!Settings.getInstance().isDecorated());
+        defaultTitle = isUndecorated() ? Main.makeTitle() : "";
+        enableShadow = Settings.getInstance().isEnableShadow() && isUndecorated();
         if (enableShadow)
-            setSize(834, 542);
+            setContentSize(834, 542);
         else
-            setSize(802, 511);
+            setContentSize(802, 511);
         setDefaultCloseOperation(3);
         setTitle(Main.makeTitle());
         initComponents();
@@ -87,10 +98,48 @@ public final class MainFrame extends DraggableFrame {
         loadBackground();
 
         setLocationRelativeTo(null);
+        if (MainFrame.this.isUndecorated())
+            setResizable(false);
+
+        this.addWindowListener(new WindowListener() {
+            @Override
+            public void windowOpened(WindowEvent e) {
+            }
+
+            @Override
+            public void windowClosing(WindowEvent e) {
+            }
+
+            @Override
+            public void windowClosed(WindowEvent e) {
+            }
+
+            @Override
+            public void windowIconified(WindowEvent e) {
+            }
+
+            @Override
+            public void windowDeiconified(WindowEvent e) {
+            }
+
+            @Override
+            public void windowActivated(WindowEvent e) {
+                if (!MainFrame.this.isUndecorated()) {
+                    int w = tempW + getWidth() - getContentPane().getWidth(), h = tempH + getHeight() - getContentPane().getHeight();
+                    setSize(w, h);
+                    setResizable(false);
+                    setLocationRelativeTo(null);
+                }
+            }
+
+            @Override
+            public void windowDeactivated(WindowEvent e) {
+            }
+        });
 
         if (enableShadow)
             try {
-                setBackground(new Color(0, 0, 0, 0));
+                //setBackground(new Color(0, 0, 0, 0));
                 getRootPane().setBorder(border = new DropShadowBorder(borderColor, 4));
             } catch (Throwable ex) {
                 HMCLog.err("Failed to set window transparent.", ex);
@@ -167,24 +216,25 @@ public final class MainFrame extends DraggableFrame {
         windowGadgetPanel.setLayout(new BoxLayout(windowGadgetPanel, BoxLayout.LINE_AXIS));
         windowGadgetPanel.setAlignmentX(1.0F);
 
-        ImageIcon minimizeIcon = Main.getIcon("minimize.png");
-        JButton minimizeButton = new JButton(minimizeIcon);
-        minimizeButton.setBorder(BorderFactory.createEmptyBorder());
-        minimizeButton.setContentAreaFilled(false);
-        minimizeButton.setCursor(new Cursor(12));
-        minimizeButton.setFocusable(false);
-        minimizeButton.addActionListener((e) -> MainFrame.this.minimizeWindow());
-        windowGadgetPanel.add(minimizeButton);
+        if (!Settings.getInstance().isDecorated()) {
+            ImageIcon minimizeIcon = Main.getIcon("minimize.png");
+            JButton minimizeButton = new JButton(minimizeIcon);
+            minimizeButton.setBorder(BorderFactory.createEmptyBorder());
+            minimizeButton.setContentAreaFilled(false);
+            minimizeButton.setCursor(new Cursor(12));
+            minimizeButton.setFocusable(false);
+            minimizeButton.addActionListener((e) -> MainFrame.this.minimizeWindow());
+            windowGadgetPanel.add(minimizeButton);
 
-        ImageIcon closeIcon = Main.getIcon("close.png");
-        JButton closeButton = new JButton(closeIcon);
-        closeButton.setBorder(BorderFactory.createEmptyBorder());
-        closeButton.setContentAreaFilled(false);
-        closeButton.addActionListener((e) -> MainFrame.this.closeWindow());
-        closeButton.setCursor(new Cursor(12));
-        closeButton.setFocusable(false);
-        windowGadgetPanel.add(closeButton);
-
+            ImageIcon closeIcon = Main.getIcon("close.png");
+            JButton closeButton = new JButton(closeIcon);
+            closeButton.setBorder(BorderFactory.createEmptyBorder());
+            closeButton.setContentAreaFilled(false);
+            closeButton.addActionListener((e) -> MainFrame.this.closeWindow());
+            closeButton.setCursor(new Cursor(12));
+            closeButton.setFocusable(false);
+            windowGadgetPanel.add(closeButton);
+        }
         rightHeaderPanel.add(windowGadgetPanel);
 
         windowTitle = new JLabel(defaultTitle);
@@ -297,14 +347,14 @@ public final class MainFrame extends DraggableFrame {
 
     public void loadBackground() {
         background = Utils.searchBackgroundImage(Main.getIcon("background.jpg"), Settings.getInstance().getBgpath(), 800, 480);
-        if (background != null) {
+        if (background != null)
             if (backgroundLabel == null) {
                 backgroundLabel = new JLabel(background);
                 backgroundLabel.setBounds(0, 0, 800, 480);
+                centralPanel.add(backgroundLabel, -1);
             } else
                 backgroundLabel.setIcon(background);
-            centralPanel.add(backgroundLabel, -1);
-        } else
+        else
             HMCLog.warn("No Background Image, the background will be empty!");
     }
 
@@ -344,7 +394,7 @@ public final class MainFrame extends DraggableFrame {
         IAuthenticator l = Settings.getInstance().getAuthenticator();
         if (l.hasPassword() && !l.isLoggedIn())
             SwingUtilities.invokeLater(() -> MainFrame.INSTANCE.showMessage(C.i18n("ui.message.enter_password")));
-        INSTANCE.show();
+        INSTANCE.setVisible(true);
     }
 
     Color borderColor;
@@ -367,14 +417,14 @@ public final class MainFrame extends DraggableFrame {
     }
 
     private void paintImpl(Graphics g) {
-        int off = enableShadow ? 16 : 0;
+        int off = enableShadow ? 16 : 0, yoff = getInsets().top + off, xoff = getInsets().left + off;
         int width = 800;
         int height = header.getHeight() + 480 - 1;
         super.paint(g);
         g.setColor(borderColor);
-        g.drawLine(off, off, off, height + off + 1);
-        g.drawLine(off + width + 1, off, off + width + 1, height + off + 1);
-        g.drawLine(off, height + off + 1, off + width + 1, height + off + 1);
+        g.drawLine(xoff, yoff, xoff, height + yoff + 1);
+        g.drawLine(xoff + width + 1, yoff, xoff + width + 1, height + yoff + 1);
+        g.drawLine(xoff, height + yoff + 1, xoff + width + 1, height + yoff + 1);
     }
 
     @Override
