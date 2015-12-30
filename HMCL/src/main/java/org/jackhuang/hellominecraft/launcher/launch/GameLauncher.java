@@ -31,7 +31,6 @@ import org.jackhuang.hellominecraft.launcher.utils.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.utils.auth.LoginInfo;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
-import org.jackhuang.hellominecraft.launcher.utils.auth.AuthenticationException;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.system.JavaProcess;
@@ -90,9 +89,13 @@ public class GameLauncher {
             HMCLog.err("Failed to get minecraft loader", e);
             failEvent.execute(C.i18n("launch.circular_dependency_versions"));
             return null;
+        } catch (Exception e) {
+            failEvent.execute(C.i18n("launch.failed"));
+            HMCLog.err("Failed to get minecraft loader", e);
+            return null;
         }
 
-        File file = provider.getDecompressNativesToLocation();
+        File file = provider.getDecompressNativesToLocation(loader.getMinecraftVersion());
         if (file != null)
             FileUtils.cleanDirectoryQuietly(file);
 
@@ -103,11 +106,20 @@ public class GameLauncher {
         }
 
         HMCLog.log("Unpacking natives...");
-        if (!decompressNativesEvent.execute(provider.getDecompressLibraries())) {
+        if (!decompressNativesEvent.execute(provider.getDecompressLibraries(loader.getMinecraftVersion()))) {
             failEvent.execute(C.i18n("launch.failed"));
             return null;
         }
-        successEvent.execute(loader.makeLaunchingCommand());
+
+        List<String> lst = null;
+        try {
+            lst = loader.makeLaunchingCommand();
+        } catch (Exception e) {
+            failEvent.execute(C.i18n("launch.failed"));
+            HMCLog.err("Failed to launch game", e);
+            return null;
+        }
+        successEvent.execute(lst);
         return loader;
     }
 
@@ -134,7 +146,7 @@ public class GameLauncher {
             if (get == null || get.getSelectedMinecraftVersion() == null || StrUtils.isBlank(get.getCanonicalGameDir()))
                 throw new Error("Fucking bug!");
             builder.directory(provider.getRunDirectory(get.getSelectedMinecraftVersion().id))
-                .environment().put("APPDATA", get.getCanonicalGameDir());
+                    .environment().put("APPDATA", get.getCanonicalGameDir());
             JavaProcess jp = new JavaProcess(str, builder.start(), PROCESS_MANAGER);
             launchEvent.execute(jp);
         } catch (Exception e) {
@@ -147,7 +159,7 @@ public class GameLauncher {
      * According to the name...
      *
      * @param launcherName the name of launch bat/sh
-     * @param str          launch command
+     * @param str launch command
      *
      * @return launcher location
      *

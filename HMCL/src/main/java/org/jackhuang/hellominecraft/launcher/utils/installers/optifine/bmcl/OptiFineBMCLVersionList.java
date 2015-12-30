@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -60,7 +60,7 @@ public class OptiFineBMCLVersionList extends InstallerVersionList {
         if (s == null)
             return;
         root = C.gson.fromJson(s, new TypeToken<ArrayList<OptiFineVersion>>() {
-                               }.getType());
+        }.getType());
         for (OptiFineVersion v : root) {
             v.mirror = v.mirror.replace("http://optifine.net/http://optifine.net/", "http://optifine.net/");
 
@@ -83,7 +83,7 @@ public class OptiFineBMCLVersionList extends InstallerVersionList {
     }
 
     @Override
-    public List<InstallerVersion> getVersions(String mcVersion) {
+    public List<InstallerVersion> getVersionsImpl(String mcVersion) {
         if (versions == null || versionMap == null)
             return null;
         if (StrUtils.isBlank(mcVersion))

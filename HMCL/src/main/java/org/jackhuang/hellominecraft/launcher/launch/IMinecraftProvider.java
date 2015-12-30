@@ -53,7 +53,7 @@ public abstract class IMinecraftProvider {
     public abstract File getRunDirectory(String id);
 
     public File getRunDirectory(String id, String subFolder) {
-        return new File(getRunDirectory(getSelectedMinecraftVersion().id), subFolder);
+        return new File(getRunDirectory(getSelectedVersion().id), subFolder);
     }
 
     public abstract void open(String version, String folder);
@@ -71,9 +71,14 @@ public abstract class IMinecraftProvider {
      */
     public abstract File getResourcePacks();
 
-    public abstract GameLauncher.DecompressLibraryJob getDecompressLibraries();
+    /**
+     *
+     * @param v should be resolved
+     * @return libraries of resolved minecraft version v.
+     */
+    public abstract GameLauncher.DecompressLibraryJob getDecompressLibraries(MinecraftVersion v);
 
-    public abstract File getDecompressNativesToLocation();
+    public abstract File getDecompressNativesToLocation(MinecraftVersion v);
 
     /**
      * @return the Minecraft jar of selected version.
@@ -101,7 +106,7 @@ public abstract class IMinecraftProvider {
      * Rename version
      *
      * @param from The old name
-     * @param to   The new name
+     * @param to The new name
      *
      * @return Is the action successful?
      */
@@ -151,18 +156,10 @@ public abstract class IMinecraftProvider {
     public abstract MinecraftVersion getVersionById(String id);
 
     public MinecraftVersion getSelectedVersion() {
-        return profile.getSelectedMinecraftVersion();
-    }
-
-    public MinecraftVersion getSelectedMinecraftVersion() {
-        if (StrUtils.isBlank(profile.getSelectedMinecraftVersionName())) {
-            MinecraftVersion v = getOneVersion();
-            if (v == null)
-                return null;
-            profile.setSelectedMinecraftVersion(v.id);
-            return v;
-        }
-        MinecraftVersion v = getVersionById(profile.getSelectedMinecraftVersionName());
+        String versionName = profile.getSelectedMinecraftVersionName();
+        MinecraftVersion v = null;
+        if (StrUtils.isNotBlank(versionName))
+            v = getVersionById(versionName);
         if (v == null)
             v = getOneVersion();
         if (v != null)

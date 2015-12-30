@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -108,7 +108,7 @@ public class LogWindow extends javax.swing.JFrame {
             }
         });
 
-        lblCrash.setText(C.I18N.getString("ui.label.crashing")); // NOI18N
+        lblCrash.setText(C.i18n("ui.label.crashing")); // NOI18N
 
         btnMCBBS.setText("MCBBS");
         btnMCBBS.addActionListener(new java.awt.event.ActionListener() {
@@ -200,8 +200,10 @@ public class LogWindow extends javax.swing.JFrame {
     private void btnCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCloseActionPerformed
         boolean flag = false;
         for (Frame f : Frame.getFrames()) {
-            if (f == this) continue;
-            if (f.isVisible()) flag = true;
+            if (f == this)
+                continue;
+            if (f.isVisible())
+                flag = true;
         }
         if (flag)
             this.dispose();

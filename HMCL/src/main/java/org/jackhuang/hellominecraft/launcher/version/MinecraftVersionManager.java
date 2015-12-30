@@ -196,10 +196,10 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public File getRunDirectory(String id) {
         switch (profile.getGameDirType()) {
-        case VERSION_FOLDER:
-            return new File(baseFolder, "versions/" + id + "/");
-        default:
-            return baseFolder;
+            case VERSION_FOLDER:
+                return new File(baseFolder, "versions/" + id + "/");
+            default:
+                return baseFolder;
         }
     }
 
@@ -209,13 +209,9 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     }
 
     @Override
-    public GameLauncher.DecompressLibraryJob getDecompressLibraries() {
-        MinecraftVersion v = getSelectedMinecraftVersion();
-        if (v == null)
-            return null;
-        v = v.resolve(this);
+    public GameLauncher.DecompressLibraryJob getDecompressLibraries(MinecraftVersion v) {
         if (v.libraries == null)
-            return null;
+            throw new IllegalStateException("Wrong format: minecraft.json");
         ArrayList<File> unzippings = new ArrayList<>();
         ArrayList<String[]> extractRules = new ArrayList<>();
         for (IMinecraftLibrary l : v.libraries) {
@@ -225,23 +221,22 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                 extractRules.add(l.getDecompressExtractRules());
             }
         }
-        return new GameLauncher.DecompressLibraryJob(unzippings.toArray(new File[0]), extractRules.toArray(new String[0][]), getDecompressNativesToLocation());
+        return new GameLauncher.DecompressLibraryJob(unzippings.toArray(new File[0]), extractRules.toArray(new String[0][]), getDecompressNativesToLocation(v));
     }
 
     @Override
-    public File getDecompressNativesToLocation() {
-        MinecraftVersion v = profile.getSelectedMinecraftVersion();
+    public File getDecompressNativesToLocation(MinecraftVersion v) {
         return v == null ? null : v.getNatives(profile.getCanonicalGameDirFile());
     }
 
     @Override
     public File getMinecraftJar() {
-        return profile.getSelectedMinecraftVersion().getJar(baseFolder);
+        return getSelectedVersion().getJar(baseFolder);
     }
 
     @Override
     public IMinecraftLoader provideMinecraftLoader(UserProfileProvider p)
-        throws IllegalStateException {
+            throws IllegalStateException {
         return new MinecraftLoader(profile, this, p);
     }
 

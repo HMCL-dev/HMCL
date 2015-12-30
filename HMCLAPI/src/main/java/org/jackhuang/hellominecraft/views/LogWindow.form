@@ -113,7 +113,7 @@
     <Component class="javax.swing.JLabel" name="lblCrash">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.label.crashing" replaceFormat="C.I18N.getString(&quot;{key}&quot;)"/>
+          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.label.crashing" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>

@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hellominecraft.launcher.utils.installers.optifine.vanilla;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.StringBufferInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -71,7 +71,7 @@ public class OptiFineVersionList extends InstallerVersionList {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = factory.newDocumentBuilder();
-            Document doc = db.parse(new StringBufferInputStream(content));
+            Document doc = db.parse(new ByteArrayInputStream(content.getBytes()));
             Element r = doc.getDocumentElement();
             NodeList tables = r.getElementsByTagName("table");
             for (int i = 0; i < tables.getLength(); i++) {
@@ -121,7 +121,7 @@ public class OptiFineVersionList extends InstallerVersionList {
     }
 
     @Override
-    public List<InstallerVersion> getVersions(String mcVersion) {
+    public List<InstallerVersion> getVersionsImpl(String mcVersion) {
         if (versions == null || versionMap == null)
             return null;
         if (StrUtils.isBlank(mcVersion))

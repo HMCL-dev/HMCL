@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.jackhuang.hellominecraft.HMCLog;
@@ -56,9 +55,9 @@ public class MinecraftModService extends IMinecraftModService {
 
     @Override
     public List<ModInfo> recacheMods() {
-        if (mgr.getSelectedMinecraftVersion() == null)
+        if (mgr.getSelectedVersion() == null)
             return modCache = new ArrayList<>();
-        File modsFolder = mgr.getRunDirectory(mgr.getSelectedMinecraftVersion().id, "mods");
+        File modsFolder = mgr.getRunDirectory(mgr.getSelectedVersion().id, "mods");
         ArrayList<ModInfo> mods = new ArrayList<>();
         File[] fs = modsFolder.listFiles();
         if (fs != null)
@@ -84,11 +83,11 @@ public class MinecraftModService extends IMinecraftModService {
     @Override
     public boolean addMod(File f) {
         try {
-            if (mgr.getSelectedMinecraftVersion() == null)
+            if (mgr.getSelectedVersion() == null)
                 return false;
             if (!ModInfo.isFileMod(f))
                 return false;
-            File modsFolder = mgr.getRunDirectory(mgr.getSelectedMinecraftVersion().id, "mods");
+            File modsFolder = mgr.getRunDirectory(mgr.getSelectedVersion().id, "mods");
             if (modsFolder == null)
                 return false;
             modsFolder.mkdirs();

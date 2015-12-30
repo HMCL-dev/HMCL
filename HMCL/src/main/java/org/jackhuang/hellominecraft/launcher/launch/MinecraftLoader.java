@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -33,7 +33,6 @@ import org.jackhuang.hellominecraft.launcher.utils.assets.IAssetsHandler;
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.utils.system.OS;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftLibrary;
-import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
@@ -44,13 +43,11 @@ import org.jackhuang.hellominecraft.utils.MessageBox;
  */
 public class MinecraftLoader extends AbstractMinecraftLoader {
 
-    private final MinecraftVersion version;
     DownloadType dt;
     String text;
 
     public MinecraftLoader(Profile ver, IMinecraftProvider provider, UserProfileProvider lr) throws IllegalStateException {
         super(ver, provider, lr);
-        version = ver.getSelectedMinecraftVersion().resolve(provider);
     }
 
     @Override
@@ -61,7 +58,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
             if (l.allow() && !l.isRequiredToUnzip())
                 library += l.getFilePath(gameDir).getAbsolutePath() + File.pathSeparator;
         }
-        library += IOUtils.tryGetCanonicalFilePath(provider.getMinecraftJar()) + File.pathSeparator;
+        library += IOUtils.tryGetCanonicalFilePath(version.getJar(provider.getBaseFolder())) + File.pathSeparator;
         library = library.substring(0, library.length() - File.pathSeparator.length());
         if (v.isCanceledWrapper())
             res.add("-cp");

@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -28,6 +28,7 @@ import org.jackhuang.hellominecraft.launcher.Launcher;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
+import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.utils.system.JdkVersion;
 import org.jackhuang.hellominecraft.utils.MathUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
@@ -46,6 +47,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
     protected UserProfileProvider lr;
     protected File gameDir;
     protected IMinecraftProvider provider;
+    protected final MinecraftVersion version;
 
     public AbstractMinecraftLoader(Profile ver, IMinecraftProvider provider, UserProfileProvider lr) {
         this.lr = lr;
@@ -53,6 +55,12 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
         v = ver;
         this.provider = provider;
         gameDir = v.getCanonicalGameDirFile();
+        version = provider.getSelectedVersion().resolve(provider);
+    }
+
+    @Override
+    public MinecraftVersion getMinecraftVersion() {
+        return version;
     }
 
     public void makeHeadCommand(List<String> res) {
@@ -126,7 +134,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
             res.add(a);
         }
 
-        res.add("-Djava.library.path=" + provider.getDecompressNativesToLocation().getPath());
+        res.add("-Djava.library.path=" + provider.getDecompressNativesToLocation(version).getPath());
         res.add("-Dfml.ignoreInvalidMinecraftCertificates=true");
         res.add("-Dfml.ignorePatchDiscrepancies=true");
 
@@ -160,7 +168,8 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
         }
 
         String serverIp = v.getServerIp();
-        if (lr.getServer() != null) serverIp = lr.getServer().addr;
+        if (lr.getServer() != null)
+            serverIp = lr.getServer().addr;
         if (StrUtils.isNotBlank(serverIp)) {
             String[] args = serverIp.split(":");
             res.add("--server");

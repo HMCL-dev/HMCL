@@ -111,19 +111,7 @@ public final class Profile {
     }
 
     public MinecraftVersion getSelectedMinecraftVersion() {
-        if (StrUtils.isBlank(selectedMinecraftVersion)) {
-            MinecraftVersion v = getMinecraftProvider().getOneVersion();
-            if (v == null)
-                return null;
-            setSelectedMinecraftVersion(v.id);
-            return v;
-        }
-        MinecraftVersion v = getMinecraftProvider().getVersionById(selectedMinecraftVersion);
-        if (v == null)
-            v = getMinecraftProvider().getOneVersion();
-        if (v != null)
-            setSelectedMinecraftVersion(v.id);
-        return v;
+        return getMinecraftProvider().getSelectedVersion();
     }
 
     public transient final EventHandler<String> selectedVersionChangedEvent = new EventHandler<>(this);
