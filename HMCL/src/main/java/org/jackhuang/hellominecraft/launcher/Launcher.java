@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -46,7 +46,7 @@ public final class Launcher {
     public static void println(String s) {
         System.out.println(s);
     }
-    
+
     static String classPath = "", proxyHost = "", proxyPort = "", proxyUsername = "", proxyPassword = "";
 
     public static void main(String[] args) {
@@ -79,7 +79,14 @@ public final class Launcher {
         int len = tokenized.length;
 
         if (showInfo) {
-            LogWindow.INSTANCE.setTerminateGame(() -> Utils.shutdownForcely(1));
+            LogWindow.INSTANCE.setTerminateGame(() -> {
+                try {
+                    Utils.shutdownForcely(1);
+                } catch (Exception e) {
+                    MessageBox.Show(C.i18n("launcher.exit_failed"));
+                    HMCLog.err("Failed to shutdown forcely", e);
+                }
+            });
             try {
                 File logFile = new File("hmclmc.log");
                 if (!logFile.exists())
@@ -144,7 +151,7 @@ public final class Launcher {
 
         int flag = 0;
         try {
-            minecraftMain.invoke(null, new Object[] {(String[]) cmdList.toArray(new String[cmdList.size()])});
+            minecraftMain.invoke(null, new Object[]{(String[]) cmdList.toArray(new String[cmdList.size()])});
         } catch (Throwable throwable) {
             String trace = StrUtils.getStackTrace(throwable);
             final String advice = MinecraftCrashAdvicer.getAdvice(trace);
@@ -159,7 +166,12 @@ public final class Launcher {
         }
 
         println("*** Game Exited ***");
-        Utils.shutdownForcely(1);
+        try {
+            Utils.shutdownForcely(flag);
+        } catch (Exception e) {
+            MessageBox.Show(C.i18n("launcher.exit_failed"));
+            HMCLog.err("Failed to shutdown forcely", e);
+        }
     }
     /*
     static Object getShutdownHaltLock() {

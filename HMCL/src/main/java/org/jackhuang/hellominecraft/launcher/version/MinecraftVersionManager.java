@@ -42,7 +42,7 @@ import org.jackhuang.hellominecraft.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
-import org.jackhuang.hellominecraft.utils.Utils;
+import org.jackhuang.hellominecraft.views.SwingUtils;
 
 /**
  *
@@ -196,16 +196,16 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public File getRunDirectory(String id) {
         switch (profile.getGameDirType()) {
-            case VERSION_FOLDER:
-                return new File(baseFolder, "versions/" + id + "/");
-            default:
-                return baseFolder;
+        case VERSION_FOLDER:
+            return new File(baseFolder, "versions/" + id + "/");
+        default:
+            return baseFolder;
         }
     }
 
     @Override
     public void open(String mv, String name) {
-        Utils.openFolder((name == null) ? getRunDirectory(mv) : new File(getRunDirectory(mv), name));
+        SwingUtils.openFolder((name == null) ? getRunDirectory(mv) : new File(getRunDirectory(mv), name));
     }
 
     @Override
@@ -236,7 +236,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public IMinecraftLoader provideMinecraftLoader(UserProfileProvider p)
-            throws IllegalStateException {
+        throws IllegalStateException {
         return new MinecraftLoader(profile, this, p);
     }
 

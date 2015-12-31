@@ -18,7 +18,6 @@
 package org.jackhuang.hellominecraft.launcher.utils.installers;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import org.jackhuang.hellominecraft.utils.functions.Consumer;

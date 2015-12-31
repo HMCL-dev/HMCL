@@ -28,6 +28,7 @@ import org.jackhuang.hellominecraft.logging.Level;
 import org.jackhuang.hellominecraft.utils.functions.NonFunction;
 import org.jackhuang.hellominecraft.utils.DoubleOutputStream;
 import org.jackhuang.hellominecraft.utils.LauncherPrintStream;
+import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.Utils;
 
 /**
@@ -208,7 +209,12 @@ public class LogWindow extends javax.swing.JFrame {
         if (flag)
             this.dispose();
         else
-            Utils.shutdownForcely(0);
+            try {
+                Utils.shutdownForcely(0);
+            } catch (Exception e) {
+                MessageBox.Show(C.i18n("launcher.exit_failed"));
+                HMCLog.err("Failed to shutdown forcely", e);
+            }
     }//GEN-LAST:event_btnCloseActionPerformed
 
     private void btnClearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearActionPerformed

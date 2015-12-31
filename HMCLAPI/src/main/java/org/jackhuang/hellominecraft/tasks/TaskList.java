@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -40,6 +40,7 @@ public class TaskList extends Thread {
     boolean shouldContinue = true;
 
     public TaskList() {
+        setDaemon(true);
     }
 
     public void clean() {
@@ -71,6 +72,7 @@ public class TaskList extends Thread {
         public InvokeThread(Task task, Set<InvokeThread> ss) {
             this.task = task;
             s = ss;
+            setDaemon(true);
         }
 
         @Override

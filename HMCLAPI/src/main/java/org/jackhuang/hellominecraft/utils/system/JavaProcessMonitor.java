@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -17,10 +17,8 @@
  */
 package org.jackhuang.hellominecraft.utils.system;
 
-import org.jackhuang.hellominecraft.utils.MessageBox;
 import java.util.Arrays;
 import java.util.HashSet;
-import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.utils.CollectionUtils;
 import org.jackhuang.hellominecraft.utils.Event;
 import org.jackhuang.hellominecraft.utils.EventHandler;
@@ -33,7 +31,20 @@ import org.jackhuang.hellominecraft.utils.StrUtils;
 public class JavaProcessMonitor {
 
     private final HashSet<Thread> al = new HashSet<>();
+    /**
+     * this event will be executed only if the application returned 0.
+     */
     public final EventHandler<JavaProcess> stoppedEvent = new EventHandler<>(this);
+    /**
+     * When the monitored application exited with exit code not zero, this event
+     * will be executed. Event args is the exit code.
+     */
+    public final EventHandler<Integer> applicationExitedAbnormallyEvent = new EventHandler<>(this);
+    /**
+     * When jvm crashed, this event will be executed. Event args is the exit
+     * code.
+     */
+    public final EventHandler<Integer> jvmLaunchFailedEvent = new EventHandler<>(this);
     private final JavaProcess p;
 
     public JavaProcessMonitor(JavaProcess p) {
@@ -43,7 +54,7 @@ public class JavaProcessMonitor {
     public void start() {
         Event<JavaProcess> event = (sender2, t) -> {
             if (t.getExitCode() != 0)
-                MessageBox.Show(C.i18n("launch.exited_abnormally"));
+                applicationExitedAbnormallyEvent.execute(t.getExitCode());
             processThreadStopped((ProcessThread) sender2, false);
             return true;
         };
@@ -51,7 +62,7 @@ public class JavaProcessMonitor {
             if (p1.getExitCode() != 0 && p1.getStdErrLines().size() > 0 && StrUtils.containsOne(p1.getStdErrLines(), Arrays.asList("Could not create the Java Virtual Machine.",
                                                                                                                                    "Error occurred during initialization of VM",
                                                                                                                                    "A fatal exception has occurred. Program will exit.")))
-                MessageBox.Show(C.i18n("launch.cannot_create_jvm"));
+                jvmLaunchFailedEvent.execute(p1.getExitCode());
             processThreadStopped((ProcessThread) sender3, false);
             return true;
         };

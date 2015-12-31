@@ -18,14 +18,12 @@
 package org.jackhuang.hellominecraft.utils;
 
 import com.sun.management.OperatingSystemMXBean;
-import java.awt.Desktop;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -33,7 +31,6 @@ import java.net.URLClassLoader;
 import java.net.URLDecoder;
 import java.util.Random;
 import javax.swing.ImageIcon;
-import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 
 /**
@@ -77,16 +74,6 @@ public final class Utils {
 
     public static void setClipborad(String text) {
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text), null);
-    }
-
-    public static void openFolder(File f) {
-        try {
-            f.mkdirs();
-            java.awt.Desktop.getDesktop().open(f);
-        } catch (Exception ex) {
-            MessageBox.Show(C.i18n("message.cannot_open_explorer") + ex.getMessage());
-            HMCLog.warn("Failed to open folder:" + f, ex);
-        }
     }
 
     public static ImageIcon scaleImage(ImageIcon i, int x, int y) {
@@ -153,16 +140,11 @@ public final class Utils {
      *
      * @param status exit code
      */
-    public static void shutdownForcely(int status) {
-        try {
-            Class z = Class.forName("java.lang.Shutdown");
-            Method exit = z.getDeclaredMethod("exit", int.class);
-            exit.setAccessible(true);
-            exit.invoke(z, status);
-        } catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-            MessageBox.Show(C.i18n("launcher.exit_failed"));
-            e.printStackTrace();
-        }
+    public static void shutdownForcely(int status) throws Exception {
+        Class z = Class.forName("java.lang.Shutdown");
+        Method exit = z.getDeclaredMethod("exit", int.class);
+        exit.setAccessible(true);
+        exit.invoke(z, status);
     }
 
     public static void requireNonNull(Object o) {

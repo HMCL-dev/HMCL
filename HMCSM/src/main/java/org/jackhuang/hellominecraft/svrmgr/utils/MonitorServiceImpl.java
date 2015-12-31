@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -37,7 +37,7 @@ public class MonitorServiceImpl implements IMonitorService {
     private static final int CPUTIME = 30;
     private static final int PERCENT = 100;
     private static final int FAULTLENGTH = 10;
-    private static String linuxVersion = null;
+    private static final String linuxVersion = null;
 
     /**
      * 获得当前的监控对象.
@@ -94,7 +94,6 @@ public class MonitorServiceImpl implements IMonitorService {
         BufferedReader brStat = null;
         StringTokenizer tokenStat;
         try {
-            System.out.println("Getting usage rate of CPU , linux version: " + linuxVersion);
             Process process = Runtime.getRuntime().exec("top -b -n 1");
             is = process.getInputStream();
             isr = new InputStreamReader(is);
@@ -248,27 +247,5 @@ public class MonitorServiceImpl implements IMonitorService {
             }
         }
         return null;
-    }
-
-    /**
-     * 测试方法.
-     *
-     * @param args
-     *
-     * @throws Exception
-     * @author GuoHuang
-     */
-    public static void main(String[] args) throws Exception {
-        IMonitorService service = new MonitorServiceImpl();
-        MonitorInfoBean monitorInfo = service.getMonitorInfoBean();
-        System.out.println("cpu占有率=" + monitorInfo.getCpuRatio());
-        System.out.println("可使用内存=" + monitorInfo.getTotalMemory());
-        System.out.println("剩余内存=" + monitorInfo.getFreeMemory());
-        System.out.println("最大可使用内存=" + monitorInfo.getMaxMemory());
-        System.out.println("操作系统=" + monitorInfo.getOsName());
-        System.out.println("总的物理内存=" + monitorInfo.getTotalMemorySize() + "kb");
-        System.out.println("剩余的物理内存=" + monitorInfo.getFreeMemory() + "kb");
-        System.out.println("已使用的物理内存=" + monitorInfo.getUsedMemory() + "kb");
-        System.out.println("线程总数=" + monitorInfo.getTotalThread() + "kb");
     }
 }

@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -18,7 +18,13 @@
 package org.jackhuang.hellominecraft.utils.system;
 
 import com.sun.management.OperatingSystemMXBean;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
+import java.util.StringTokenizer;
 import org.jackhuang.hellominecraft.HMCLog;
 
 /**
@@ -40,9 +46,8 @@ public enum OS {
     }
 
     public static OS os() {
-        String str;
-        if ((str = System.getProperty("os.name").toLowerCase())
-        .contains("win"))
+        String str = System.getProperty("os.name").toLowerCase();
+        if (str.contains("win"))
             return OS.WINDOWS;
         if (str.contains("mac"))
             return OS.OSX;
@@ -62,12 +67,45 @@ public enum OS {
      */
     public static long getTotalPhysicalMemory() {
         try {
-            OperatingSystemMXBean o = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-            return o.getTotalPhysicalMemorySize();
+            if (os() == LINUX)
+                return memoryInfoForLinux()[0] * 1024;
+            else {
+                OperatingSystemMXBean o = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+                return o.getTotalPhysicalMemorySize();
+            }
         } catch (Throwable t) {
-            HMCLog.warn("Failed to get total physical memory size");
+            HMCLog.warn("Failed to get total physical memory size", t);
             return -1;
         }
+    }
+
+    public static long[] memoryInfoForLinux() throws IOException {
+        File file = new File("/proc/meminfo");
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+            new FileInputStream(file)));
+        long[] result = new long[4];
+        String str = null;
+        StringTokenizer token;
+        while ((str = br.readLine()) != null) {
+            token = new StringTokenizer(str);
+            if (!token.hasMoreTokens())
+                continue;
+
+            str = token.nextToken();
+            if (!token.hasMoreTokens())
+                continue;
+
+            if (str.equalsIgnoreCase("MemTotal:"))
+                result[0] = Long.parseLong(token.nextToken());
+            else if (str.equalsIgnoreCase("MemFree:"))
+                result[1] = Long.parseLong(token.nextToken());
+            else if (str.equalsIgnoreCase("SwapTotal:"))
+                result[2] = Long.parseLong(token.nextToken());
+            else if (str.equalsIgnoreCase("SwapFree:"))
+                result[3] = Long.parseLong(token.nextToken());
+        }
+
+        return result;
     }
 
 }

@@ -19,6 +19,8 @@ package org.jackhuang.hellominecraft.views;
 
 import java.awt.EventQueue;
 import java.awt.FontMetrics;
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
@@ -28,9 +30,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.table.DefaultTableModel;
+import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.functions.NonFunction;
+import org.jackhuang.hellominecraft.utils.system.OS;
 
 /**
  *
@@ -50,8 +55,8 @@ public class SwingUtils {
      */
     public static DefaultTableModel makeDefaultTableModel(String[] titleA, final Class[] typesA, final boolean[] canEditA) {
         return new DefaultTableModel(
-                new Object[][]{},
-                titleA) {
+            new Object[][]{},
+            titleA) {
             Class[] types = typesA;
             boolean[] canEdit = canEditA;
 
@@ -67,6 +72,28 @@ public class SwingUtils {
         };
     }
 
+    public static void openFolder(File f) {
+        f.mkdirs();
+        String path = f.getAbsolutePath();
+        switch (OS.os()) {
+        case OSX:
+            try {
+                Runtime.getRuntime().exec(new String[]{"/usr/bin/open", path});
+            } catch (IOException ex) {
+                HMCLog.err("Failed to open " + path + " through /usr/bin/open", ex);
+            }
+            break;
+        default:
+            try {
+                java.awt.Desktop.getDesktop().open(f);
+            } catch (Throwable ex) {
+                MessageBox.Show(C.i18n("message.cannot_open_explorer") + ex.getMessage());
+                HMCLog.warn("Failed to open " + path + " through java.awt.Desktop.getDesktop().open()", ex);
+            }
+            break;
+        }
+    }
+
     /**
      * Open URL by java.awt.Desktop
      *
@@ -76,6 +103,12 @@ public class SwingUtils {
         try {
             java.awt.Desktop.getDesktop().browse(new URI(link));
         } catch (Throwable e) {
+            if (OS.os() == OS.OSX)
+                try {
+                    Runtime.getRuntime().exec(new String[]{"/usr/bin/open", link});
+                } catch (IOException ex) {
+                    HMCLog.warn("Failed to open link: " + link, ex);
+                }
             HMCLog.warn("Failed to open link: " + link, e);
         }
     }

@@ -567,7 +567,15 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
                     MainFrame.INSTANCE.dispose();
                 }
                 JavaProcessMonitor jpm = new JavaProcessMonitor(p);
-                jpm.stoppedEvent.register((sender3, t) -> {
+                jpm.applicationExitedAbnormallyEvent.register((sender2, t) -> {
+                    MessageBox.Show(C.i18n("launch.exited_abnormally") + ", exit code: " + t);
+                    return true;
+                });
+                jpm.jvmLaunchFailedEvent.register((sender2, t) -> {
+                    MessageBox.Show(C.i18n("launch.cannot_create_jvm") + ", exit code: " + t);
+                    return true;
+                });
+                jpm.stoppedEvent.register((sender2, t) -> {
                     if (obj.getProfile().getLauncherVisibility() != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible())
                         System.exit(0);
                     return true;
