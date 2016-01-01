@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -30,6 +30,7 @@ import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.utils.NetUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
+import org.jackhuang.hellominecraft.utils.system.OS;
 import org.jackhuang.hellominecraft.views.LogWindow;
 
 /**
@@ -96,7 +97,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             text += "\n  Content: \n    ";
             text += s + "\n\n";
             text += "-- System Details --\n";
-            text += "  Operating System: " + System.getProperty("os.name") + " (" + System.getProperty("os.arch") + ") version " + System.getProperty("os.version") + "\n";
+            text += "  Operating System: " + OS.getSystemVersion() + "\n";
             text += "  Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor") + "\n";
             text += "  Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor") + "\n";
             if (enableLogger)

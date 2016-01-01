@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -83,6 +83,13 @@ public final class StrUtils {
     public static boolean equalsOne(String base, String... a) {
         for (String s : a)
             if (base.equals(s))
+                return true;
+        return false;
+    }
+
+    public static boolean containsOne(String base, String... match) {
+        for (String s : match)
+            if (base.contains(s))
                 return true;
         return false;
     }

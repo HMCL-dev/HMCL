@@ -22,6 +22,9 @@ import java.awt.FontMetrics;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -222,12 +225,19 @@ public class SwingUtils {
         return builder.toString();
     }
 
-    private static final ThreadLocal<Object> THREAD_LOCAL = new ThreadLocal<>();
+    private static final Map<Integer, Object> INVOKE_AND_WAIT_MAP = Collections.synchronizedMap(new HashMap<>());
+    private static int INVOKE_AND_WAIT_ID = 0;
+    private static final Object INVOKE_AND_WAIT_LOCK = new Object();
 
     public static <T> T invokeAndWait(NonFunction<T> x) {
-        Runnable r = () -> THREAD_LOCAL.set(x.apply());
+        int id;
+        synchronized (INVOKE_AND_WAIT_LOCK) {
+            id = ++INVOKE_AND_WAIT_ID;
+        }
+        int fuck = id;
+        Runnable r = () -> INVOKE_AND_WAIT_MAP.put(fuck, x.apply());
         invokeAndWait(r);
-        return (T) THREAD_LOCAL.get();
+        return (T) INVOKE_AND_WAIT_MAP.remove(id);
     }
 
     public static void invokeAndWait(Runnable r) {

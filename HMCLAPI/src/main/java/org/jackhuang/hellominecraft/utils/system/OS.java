@@ -26,6 +26,7 @@ import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.util.StringTokenizer;
 import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.StrUtils;
 
 /**
  * @author huangyuhui
@@ -106,6 +107,20 @@ public enum OS {
         }
 
         return result;
+    }
+
+    public static String getLinuxReleaseVersion() throws IOException {
+        return FileUtils.readFileToString(new File("/etc/issue"));
+    }
+
+    public static String getSystemVersion() {
+        if (os() == LINUX)
+            try {
+                return getLinuxReleaseVersion();
+            } catch (IOException e) {
+                HMCLog.warn("Failed to catch /etc/issue");
+            }
+        return System.getProperty("os.name") + " (" + System.getProperty("os.arch") + "), " + System.getProperty("os.version");
     }
 
 }

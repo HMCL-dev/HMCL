@@ -37,13 +37,13 @@ import java.awt.LinearGradientPaint;
  */
 public class ProgressPainter extends SynthPainter {
 
-    private static final float[] NORMAL_BG_PTS = new float[] {0, 1};
-    private static final Color[] NORMAL_BG = new Color[] {
+    private static final float[] NORMAL_BG_PTS = new float[]{0, 1};
+    private static final Color[] NORMAL_BG = new Color[]{
         GraphicsUtils.getWebColor("c6c6c6"),
         GraphicsUtils.getWebColor("c6c6c6")
     };
-    private static final float[] BAR_FG_PTS = new float[] {0, 1};
-    private static final Color[] BAR_FG = new Color[] {
+    private static final float[] BAR_FG_PTS = new float[]{0, 1};
+    private static final Color[] BAR_FG = new Color[]{
         GraphicsUtils.getWebColor("41B1E1"),
         GraphicsUtils.getWebColor("41B1E1")
     };
@@ -69,7 +69,7 @@ public class ProgressPainter extends SynthPainter {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setPaint(new LinearGradientPaint(x, y + 2, x, y + h - 2, BAR_FG_PTS, BAR_FG));
         if (x + 2 < w - 5 && y + 2 < h - 5)
-            g2.drawRect(x + 2, y + 2, w - 5, h - 5);
+            g2.fillRect(x + 2, y + 2, w - 5, h - 5);
     }
 
     /**
