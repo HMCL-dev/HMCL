@@ -1247,13 +1247,13 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         reloadingMods = true;
         DefaultTableModel model = SwingUtils.clearDefaultTable(lstExternalMods);
         Observable.<List<ModInfo>>createWithEmptySubscription(
-                t -> t.onNext(getProfile().getMinecraftProvider().getModService().recacheMods()))
-                .subscribeOn(Schedulers.newThread()).observeOn(Schedulers.eventQueue())
-                .subscribe(t -> {
-                    for (ModInfo x : t)
-                        model.addRow(new Object[]{x.isActive(), x, x.version});
-                    reloadingMods = false;
-                });
+            t -> t.onNext(getProfile().getMinecraftProvider().getModService().recacheMods()))
+            .subscribeOn(Schedulers.newThread()).observeOn(Schedulers.eventQueue())
+            .subscribe(t -> {
+                for (ModInfo x : t)
+                    model.addRow(new Object[] { x.isActive(), x, x.version });
+                reloadingMods = false;
+            });
     }
 
     // </editor-fold>

@@ -273,10 +273,10 @@ public class MinecraftVersionManager extends IMinecraftProvider {
         for (MinecraftVersion s : getVersions()) {
             FileUtils.deleteDirectoryQuietly(new File(profile.getGameDirFile(), "versions" + File.separator + s.id + File.separator + s.id + "-natives"));
             File f = getRunDirectory(s.id);
-            String[] dir = {"logs", "asm", "NVIDIA", "crash-reports", "server-resource-packs", "natives", "native"};
+            String[] dir = { "logs", "asm", "NVIDIA", "crash-reports", "server-resource-packs", "natives", "native" };
             for (String str : dir)
                 FileUtils.deleteDirectoryQuietly(new File(f, str));
-            String[] files = {"output-client.log", "usercache.json", "usernamecache.json", "hmclmc.log"};
+            String[] files = { "output-client.log", "usercache.json", "usernamecache.json", "hmclmc.log" };
             for (String str : files)
                 new File(f, str).delete();
         }

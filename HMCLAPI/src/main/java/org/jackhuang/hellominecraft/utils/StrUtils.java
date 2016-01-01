@@ -54,10 +54,14 @@ public final class StrUtils {
                         cmdbuf.append("\\");
                     cmdbuf.append('"');
                 } else if (s.endsWith("\""))
-                    /* The argument has already been quoted. */
+                    /*
+                     * The argument has already been quoted.
+                     */
                     cmdbuf.append(s);
                 else
-                    /* Unmatched quote for the argument. */
+                    /*
+                     * Unmatched quote for the argument.
+                     */
                     throw new IllegalArgumentException();
             else
                 cmdbuf.append(s);

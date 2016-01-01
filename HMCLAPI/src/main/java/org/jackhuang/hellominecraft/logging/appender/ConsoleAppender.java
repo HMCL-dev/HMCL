@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -50,7 +50,7 @@ public class ConsoleAppender extends OutputStreamAppender {
 
         @Override
         public void write(byte[] b, int off, int len)
-        throws IOException {
+            throws IOException {
             System.out.write(b, off, len);
         }
 
@@ -78,7 +78,7 @@ public class ConsoleAppender extends OutputStreamAppender {
 
         @Override
         public void write(byte[] b, int off, int len)
-        throws IOException {
+            throws IOException {
             System.err.write(b, off, len);
         }
 

@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -25,7 +25,7 @@ import org.jackhuang.hellominecraft.utils.system.Compressor;
  * @author huangyuhui
  */
 public class DecompressTask extends Task {
-    
+
     File src, dest;
 
     public DecompressTask(File src, File dest) {
@@ -42,5 +42,5 @@ public class DecompressTask extends Task {
     public String getInfo() {
         return "Decompress: " + src.getAbsolutePath() + " to " + dest.getAbsolutePath();
     }
-    
+
 }

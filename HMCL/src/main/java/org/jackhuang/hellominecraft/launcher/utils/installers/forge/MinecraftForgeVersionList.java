@@ -72,15 +72,15 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
                     String filename = root.artifact + "-" + ver + "-" + f[1] + "." + f[0];
                     String url = Settings.getInstance().getDownloadSource().getProvider().getParsedLibraryDownloadURL(root.webpath + ver + "/" + filename);
                     switch (f[1]) {
-                        case "installer":
-                            iv.installer = url;
-                            break;
-                        case "universal":
-                            iv.universal = url;
-                            break;
-                        case "changelog":
-                            iv.changelog = url;
-                            break;
+                    case "installer":
+                        iv.installer = url;
+                        break;
+                    case "universal":
+                        iv.universal = url;
+                        break;
+                    case "changelog":
+                        iv.changelog = url;
+                        break;
                     }
                 }
                 if (StrUtils.isBlank(iv.installer) || StrUtils.isBlank(iv.universal))

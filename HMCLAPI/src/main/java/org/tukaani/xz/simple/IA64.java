@@ -15,7 +15,7 @@ public final class IA64 implements SimpleFilter {
         0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,
         4, 4, 6, 6, 0, 0, 7, 7,
-        4, 4, 0, 0, 4, 4, 0, 0};
+        4, 4, 0, 0, 4, 4, 0, 0 };
 
     private final boolean isEncoder;
     private int pos;

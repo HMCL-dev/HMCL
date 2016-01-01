@@ -9,9 +9,8 @@
 package org.tukaani.xz;
 
 /**
- * Generic {@link java.io.IOException IOException} specific to this package.
- * The other IOExceptions in this package extend
- * from <code>XZIOException</code>.
+ * Generic {@link java.io.IOException IOException} specific to this package. The
+ * other IOExceptions in this package extend from <code>XZIOException</code>.
  */
 public class XZIOException extends java.io.IOException {
 

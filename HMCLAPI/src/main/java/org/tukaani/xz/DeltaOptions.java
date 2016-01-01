@@ -11,19 +11,19 @@ package org.tukaani.xz;
 import java.io.InputStream;
 
 /**
- * Delta filter options. The Delta filter can be used only as a non-last
- * filter in the chain, for example Delta + LZMA2.
+ * Delta filter options. The Delta filter can be used only as a non-last filter
+ * in the chain, for example Delta + LZMA2.
  * <p>
- * Currently only simple byte-wise delta is supported. The only option
- * is the delta distance, which you should set to match your data.
- * It's not possible to provide a generic default value for it.
+ * Currently only simple byte-wise delta is supported. The only option is the
+ * delta distance, which you should set to match your data. It's not possible to
+ * provide a generic default value for it.
  * <p>
- * For example, with distance = 2 and eight-byte input
- * A1 B1 A2 B3 A3 B5 A4 B7, the output will be A1 B1 01 02 01 02 01 02.
+ * For example, with distance = 2 and eight-byte input A1 B1 A2 B3 A3 B5 A4 B7,
+ * the output will be A1 B1 01 02 01 02 01 02.
  * <p>
- * The Delta filter can be good with uncompressed bitmap images. It can
- * also help with PCM audio, although special-purpose compressors like
- * FLAC will give much smaller result at much better compression speed.
+ * The Delta filter can be good with uncompressed bitmap images. It can also
+ * help with PCM audio, although special-purpose compressors like FLAC will give
+ * much smaller result at much better compression speed.
  */
 public class DeltaOptions extends FilterOptions {
 
@@ -53,14 +53,14 @@ public class DeltaOptions extends FilterOptions {
     }
 
     /**
-     * Sets the delta distance in bytes. The new distance must be in
-     * the range [DISTANCE_MIN, DISTANCE_MAX].
+     * Sets the delta distance in bytes. The new distance must be in the range
+     * [DISTANCE_MIN, DISTANCE_MAX].
      */
     public void setDistance(int distance) throws UnsupportedOptionsException {
         if (distance < DISTANCE_MIN || distance > DISTANCE_MAX)
             throw new UnsupportedOptionsException(
-            "Delta distance must be in the range [" + DISTANCE_MIN
-            + ", " + DISTANCE_MAX + "]: " + distance);
+                "Delta distance must be in the range [" + DISTANCE_MIN
+                + ", " + DISTANCE_MAX + "]: " + distance);
 
         this.distance = distance;
     }
@@ -72,26 +72,32 @@ public class DeltaOptions extends FilterOptions {
         return distance;
     }
 
+    @Override
     public int getEncoderMemoryUsage() {
         return DeltaOutputStream.getMemoryUsage();
     }
 
+    @Override
     public FinishableOutputStream getOutputStream(FinishableOutputStream out) {
         return new DeltaOutputStream(out, this);
     }
 
+    @Override
     public int getDecoderMemoryUsage() {
         return 1;
     }
 
+    @Override
     public InputStream getInputStream(InputStream in) {
         return new DeltaInputStream(in, distance);
     }
 
+    @Override
     FilterEncoder getFilterEncoder() {
         return new DeltaEncoder(this);
     }
 
+    @Override
     public Object clone() {
         try {
             return super.clone();

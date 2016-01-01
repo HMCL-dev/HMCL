@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -37,7 +37,7 @@ import org.jackhuang.hellominecraft.utils.NetUtils;
 public class FileUtils {
 
     public static void deleteDirectory(File directory)
-    throws IOException {
+        throws IOException {
         if (!directory.exists())
             return;
 
@@ -72,7 +72,7 @@ public class FileUtils {
     }
 
     public static void cleanDirectory(File directory)
-    throws IOException {
+        throws IOException {
         if (!directory.exists()) {
             //String message = directory + " does not exist";
             //throw new IllegalArgumentException(message);
@@ -102,7 +102,7 @@ public class FileUtils {
     }
 
     public static void forceDelete(File file)
-    throws IOException {
+        throws IOException {
         if (file.isDirectory())
             deleteDirectory(file);
         else {
@@ -118,7 +118,7 @@ public class FileUtils {
     }
 
     public static boolean isSymlink(File file)
-    throws IOException {
+        throws IOException {
         if (file == null)
             throw new NullPointerException("File must not be null");
         if (File.separatorChar == '\\')
@@ -135,22 +135,22 @@ public class FileUtils {
     }
 
     public static void copyDirectory(File srcDir, File destDir)
-    throws IOException {
+        throws IOException {
         copyDirectory(srcDir, destDir, true);
     }
 
     public static void copyDirectory(File srcDir, File destDir, boolean preserveFileDate)
-    throws IOException {
+        throws IOException {
         copyDirectory(srcDir, destDir, null, preserveFileDate);
     }
 
     public static void copyDirectory(File srcDir, File destDir, FileFilter filter)
-    throws IOException {
+        throws IOException {
         copyDirectory(srcDir, destDir, filter, true);
     }
 
     public static void copyDirectory(File srcDir, File destDir, FileFilter filter, boolean preserveFileDate)
-    throws IOException {
+        throws IOException {
         if (srcDir == null)
             throw new NullPointerException("Source must not be null");
         if (destDir == null)
@@ -177,7 +177,7 @@ public class FileUtils {
     }
 
     private static void doCopyDirectory(File srcDir, File destDir, FileFilter filter, boolean preserveFileDate, List<String> exclusionList)
-    throws IOException {
+        throws IOException {
         File[] srcFiles = filter == null ? srcDir.listFiles() : srcDir.listFiles(filter);
         if (srcFiles == null)
             throw new IOException("Failed to list contents of " + srcDir);
@@ -204,7 +204,7 @@ public class FileUtils {
     }
 
     public static String readFileToString(File file)
-    throws IOException {
+        throws IOException {
         return NetUtils.getStreamContent(IOUtils.openInputStream(file));
     }
 
@@ -218,7 +218,7 @@ public class FileUtils {
     }
 
     public static String readFileToString(File file, String charset)
-    throws IOException {
+        throws IOException {
         return NetUtils.getStreamContent(IOUtils.openInputStream(file), charset);
     }
 
@@ -239,12 +239,12 @@ public class FileUtils {
     }
 
     public static void copyFile(File srcFile, File destFile)
-    throws IOException {
+        throws IOException {
         copyFile(srcFile, destFile, true);
     }
 
     public static void copyFile(File srcFile, File destFile, boolean preserveFileDate)
-    throws IOException {
+        throws IOException {
         if (srcFile == null)
             throw new NullPointerException("Source must not be null");
         if (destFile == null)
@@ -266,7 +266,7 @@ public class FileUtils {
     }
 
     private static void doCopyFile(File srcFile, File destFile, boolean preserveFileDate)
-    throws IOException {
+        throws IOException {
         if ((destFile.exists()) && (destFile.isDirectory()))
             throw new IOException("Destination '" + destFile + "' exists but is a directory");
 
@@ -356,38 +356,38 @@ public class FileUtils {
     }
 
     public static void write(File file, CharSequence data)
-    throws IOException {
+        throws IOException {
         write(file, data, "UTF-8", false);
     }
 
     public static void write(File file, CharSequence data, boolean append)
-    throws IOException {
+        throws IOException {
         write(file, data, "UTF-8", append);
     }
 
     public static void write(File file, CharSequence data, String encoding)
-    throws IOException {
+        throws IOException {
         write(file, data, encoding, false);
     }
 
     public static void write(File file, CharSequence data, String encoding, boolean append)
-    throws IOException {
+        throws IOException {
         String str = data == null ? null : data.toString();
         writeStringToFile(file, str, encoding, append);
     }
 
     public static void writeStringToFile(File file, String data)
-    throws IOException {
+        throws IOException {
         writeStringToFile(file, data, "UTF-8", false);
     }
 
     public static void writeStringToFile(File file, String data, String encoding)
-    throws IOException {
+        throws IOException {
         writeStringToFile(file, data, encoding, false);
     }
 
     public static void writeStringToFile(File file, String data, String encoding, boolean append)
-    throws IOException {
+        throws IOException {
         OutputStream out = null;
         try {
             out = openOutputStream(file, append);
@@ -399,7 +399,7 @@ public class FileUtils {
     }
 
     public static FileInputStream openInputStream(File file)
-    throws IOException {
+        throws IOException {
         if (file.exists()) {
             if (file.isDirectory())
                 throw new IOException("File '" + file + "' exists but is a directory");
@@ -411,12 +411,12 @@ public class FileUtils {
     }
 
     public static FileOutputStream openOutputStream(File file)
-    throws IOException {
+        throws IOException {
         return openOutputStream(file, false);
     }
 
     public static FileOutputStream openOutputStream(File file, boolean append)
-    throws IOException {
+        throws IOException {
         if (file.exists()) {
             if (file.isDirectory())
                 throw new IOException("File '" + file + "' exists but is a directory");

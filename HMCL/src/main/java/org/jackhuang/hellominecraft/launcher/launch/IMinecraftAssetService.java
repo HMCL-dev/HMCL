@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -27,11 +27,11 @@ import org.jackhuang.hellominecraft.tasks.Task;
  * @author huangyuhui
  */
 public abstract class IMinecraftAssetService extends IMinecraftService {
-    
+
     public IMinecraftAssetService(Profile profile) {
         super(profile);
     }
-    
+
     public abstract Task downloadAssets(String mcVersion);
 
     public abstract File getAssets();
@@ -44,8 +44,8 @@ public abstract class IMinecraftAssetService extends IMinecraftService {
      * @return Is the action successful?
      */
     public abstract boolean refreshAssetsIndex(String a);
-    
+
     public abstract boolean downloadMinecraftAssetsIndex(String assetsId);
-    
+
     public abstract File getAssetObject(String assetVersion, String name) throws IOException;
 }

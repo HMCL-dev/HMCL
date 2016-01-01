@@ -1,12 +1,12 @@
 /**
  * Copyright 2013 Netflix, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,15 +18,21 @@ package rx.plugins;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Registry for plugin implementations that allows global override and handles the retrieval of correct implementation based on order of precedence:
+ * Registry for plugin implementations that allows global override and handles
+ * the retrieval of correct implementation based on order of precedence:
  * <ol>
- * <li>plugin registered globally via <code>register</code> methods in this class</li>
- * <li>plugin registered and retrieved using {@link java.lang.System#getProperty(String)} (see get methods for property names)</li>
+ * <li>plugin registered globally via <code>register</code> methods in this
+ * class</li>
+ * <li>plugin registered and retrieved using
+ * {@link java.lang.System#getProperty(String)} (see get methods for property
+ * names)</li>
  * <li>default implementation</li>
  * </ol>
- * See the RxJava GitHub Wiki for more information: <a href="https://github.com/Netflix/RxJava/wiki/Plugins">https://github.com/Netflix/RxJava/wiki/Plugins</a>.
+ * See the RxJava GitHub Wiki for more information:
+ * <a href="https://github.com/Netflix/RxJava/wiki/Plugins">https://github.com/Netflix/RxJava/wiki/Plugins</a>.
  */
 public class RxJavaPlugins {
+
     private final static RxJavaPlugins INSTANCE = new RxJavaPlugins();
 
     private final AtomicReference<RxJavaErrorHandler> errorHandler = new AtomicReference<RxJavaErrorHandler>();
@@ -41,79 +47,82 @@ public class RxJavaPlugins {
     }
 
     /**
-     * Retrieve instance of {@link RxJavaErrorHandler} to use based on order of precedence as defined in {@link RxJavaPlugins} class header.
+     * Retrieve instance of {@link RxJavaErrorHandler} to use based on order of
+     * precedence as defined in {@link RxJavaPlugins} class header.
      * <p>
-     * Override default by using {@link #registerErrorHandler(RxJavaErrorHandler)} or setting property: <code>rxjava.plugin.RxJavaErrorHandler.implementation</code> with the full classname to
-     * load.
-     * 
+     * Override default by using
+     * {@link #registerErrorHandler(RxJavaErrorHandler)} or setting property:
+     * <code>rxjava.plugin.RxJavaErrorHandler.implementation</code> with the
+     * full classname to load.
+     *
      * @return {@link RxJavaErrorHandler} implementation to use
      */
     public RxJavaErrorHandler getErrorHandler() {
         if (errorHandler.get() == null) {
             // check for an implementation from System.getProperty first
             Object impl = getPluginImplementationViaProperty(RxJavaErrorHandler.class);
-            if (impl == null) {
-                // nothing set via properties so initialize with default 
-                errorHandler.compareAndSet(null, RxJavaErrorHandlerDefault.getInstance());
-                // we don't return from here but call get() again in case of thread-race so the winner will always get returned
-            } else {
+            if (impl == null)
+                // nothing set via properties so initialize with default
+                errorHandler.compareAndSet(null, RxJavaErrorHandlerDefault.getInstance()); // we don't return from here but call get() again in case of thread-race so the winner will always get returned
+            else
                 // we received an implementation from the system property so use it
                 errorHandler.compareAndSet(null, (RxJavaErrorHandler) impl);
-            }
         }
         return errorHandler.get();
     }
 
     /**
-     * Register a {@link RxJavaErrorHandler} implementation as a global override of any injected or default implementations.
-     * 
-     * @param impl
-     *            {@link RxJavaErrorHandler} implementation
-     * @throws IllegalStateException
-     *             if called more than once or after the default was initialized (if usage occurs before trying to register)
+     * Register a {@link RxJavaErrorHandler} implementation as a global override
+     * of any injected or default implementations.
+     *
+     * @param impl {@link RxJavaErrorHandler} implementation
+     *
+     * @throws IllegalStateException if called more than once or after the
+     *                               default was initialized (if usage occurs before trying to register)
      */
     public void registerErrorHandler(RxJavaErrorHandler impl) {
-        if (!errorHandler.compareAndSet(null, impl)) {
+        if (!errorHandler.compareAndSet(null, impl))
             throw new IllegalStateException("Another strategy was already registered.");
-        }
     }
 
     /**
-     * Retrieve instance of {@link RxJavaObservableExecutionHook} to use based on order of precedence as defined in {@link RxJavaPlugins} class header.
+     * Retrieve instance of {@link RxJavaObservableExecutionHook} to use based
+     * on order of precedence as defined in {@link RxJavaPlugins} class header.
      * <p>
-     * Override default by using {@link #registerObservableExecutionHook(RxJavaObservableExecutionHook)} or setting property: <code>rxjava.plugin.RxJavaObservableExecutionHook.implementation</code>
+     * Override default by using
+     * {@link #registerObservableExecutionHook(RxJavaObservableExecutionHook)}
+     * or setting property:
+     * <code>rxjava.plugin.RxJavaObservableExecutionHook.implementation</code>
      * with the full classname to load.
-     * 
+     *
      * @return {@link RxJavaObservableExecutionHook} implementation to use
      */
     public RxJavaObservableExecutionHook getObservableExecutionHook() {
         if (observableExecutionHook.get() == null) {
             // check for an implementation from System.getProperty first
             Object impl = getPluginImplementationViaProperty(RxJavaObservableExecutionHook.class);
-            if (impl == null) {
-                // nothing set via properties so initialize with default 
-                observableExecutionHook.compareAndSet(null, RxJavaObservableExecutionHookDefault.getInstance());
-                // we don't return from here but call get() again in case of thread-race so the winner will always get returned
-            } else {
+            if (impl == null)
+                // nothing set via properties so initialize with default
+                observableExecutionHook.compareAndSet(null, RxJavaObservableExecutionHookDefault.getInstance()); // we don't return from here but call get() again in case of thread-race so the winner will always get returned
+            else
                 // we received an implementation from the system property so use it
                 observableExecutionHook.compareAndSet(null, (RxJavaObservableExecutionHook) impl);
-            }
         }
         return observableExecutionHook.get();
     }
 
     /**
-     * Register a {@link RxJavaObservableExecutionHook} implementation as a global override of any injected or default implementations.
-     * 
-     * @param impl
-     *            {@link RxJavaObservableExecutionHook} implementation
-     * @throws IllegalStateException
-     *             if called more than once or after the default was initialized (if usage occurs before trying to register)
+     * Register a {@link RxJavaObservableExecutionHook} implementation as a
+     * global override of any injected or default implementations.
+     *
+     * @param impl {@link RxJavaObservableExecutionHook} implementation
+     *
+     * @throws IllegalStateException if called more than once or after the
+     *                               default was initialized (if usage occurs before trying to register)
      */
     public void registerObservableExecutionHook(RxJavaObservableExecutionHook impl) {
-        if (!observableExecutionHook.compareAndSet(null, impl)) {
+        if (!observableExecutionHook.compareAndSet(null, impl))
             throw new IllegalStateException("Another strategy was already registered.");
-        }
     }
 
     private static Object getPluginImplementationViaProperty(Class<?> pluginClass) {
@@ -121,11 +130,12 @@ public class RxJavaPlugins {
         /*
          * Check system properties for plugin class.
          * <p>
-         * This will only happen during system startup thus it's okay to use the synchronized System.getProperties
+         * This will only happen during system startup thus it's okay to use the
+         * synchronized System.getProperties
          * as it will never get called in normal operations.
          */
         String implementingClass = System.getProperty("rxjava.plugin." + classSimpleName + ".implementation");
-        if (implementingClass != null) {
+        if (implementingClass != null)
             try {
                 Class<?> cls = Class.forName(implementingClass);
                 // narrow the scope (cast) to the type we're expecting
@@ -140,8 +150,7 @@ public class RxJavaPlugins {
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(classSimpleName + " implementation not able to be accessed: " + implementingClass, e);
             }
-        } else {
+        else
             return null;
-        }
     }
 }

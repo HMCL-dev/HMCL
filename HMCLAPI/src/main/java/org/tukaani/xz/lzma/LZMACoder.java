@@ -44,11 +44,11 @@ abstract class LZMACoder {
     final short[] isRep2 = new short[State.STATES];
     final short[][] isRep0Long = new short[State.STATES][POS_STATES_MAX];
     final short[][] distSlots = new short[DIST_STATES][DIST_SLOTS];
-    final short[][] distSpecial = {new short[2], new short[2],
-                                   new short[4], new short[4],
-                                   new short[8], new short[8],
-                                   new short[16], new short[16],
-                                   new short[32], new short[32]};
+    final short[][] distSpecial = { new short[2], new short[2],
+                                    new short[4], new short[4],
+                                    new short[8], new short[8],
+                                    new short[16], new short[16],
+                                    new short[32], new short[32] };
     final short[] distAlign = new short[ALIGN_SIZE];
 
     static final int getDistState(int len) {

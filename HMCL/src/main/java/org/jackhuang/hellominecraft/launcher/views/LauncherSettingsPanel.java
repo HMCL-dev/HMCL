@@ -43,7 +43,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         initComponents();
 
         Observable.from(DownloadType.values()).map(t -> t.getName()).toList()
-                .subscribe(t -> cboDownloadSource.setModel(new DefaultComboBoxModel(t.toArray(new String[0]))));
+            .subscribe(t -> cboDownloadSource.setModel(new DefaultComboBoxModel(t.toArray(new String[0]))));
 
         txtBackgroundPath.setText(Settings.getInstance().getBgpath());
         txtProxyHost.setText(Settings.getInstance().getProxyHost());

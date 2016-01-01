@@ -26,7 +26,7 @@ public final class RangeDecoderFromBuffer extends RangeDecoder {
     }
 
     public void prepareInputBuffer(DataInputStream in, int len)
-    throws IOException {
+        throws IOException {
         if (len < INIT_SIZE)
             throw new CorruptedInputException();
 

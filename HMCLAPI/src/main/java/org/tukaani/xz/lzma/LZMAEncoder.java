@@ -22,10 +22,10 @@ public abstract class LZMAEncoder extends LZMACoder {
      * LZMA2 chunk is considered full when its uncompressed size exceeds
      * <code>LZMA2_UNCOMPRESSED_LIMIT</code>.
      * <p>
-     * A compressed LZMA2 chunk can hold 2 MiB of uncompressed data.
-     * A single LZMA symbol may indicate up to MATCH_LEN_MAX bytes
-     * of data, so the LZMA2 chunk is considered full when there is
-     * less space than MATCH_LEN_MAX bytes.
+     * A compressed LZMA2 chunk can hold 2 MiB of uncompressed data. A single
+     * LZMA symbol may indicate up to MATCH_LEN_MAX bytes of data, so the LZMA2
+     * chunk is considered full when there is less space than MATCH_LEN_MAX
+     * bytes.
      */
     private static final int LZMA2_UNCOMPRESSED_LIMIT
                              = (2 << 20) - MATCH_LEN_MAX;
@@ -34,11 +34,11 @@ public abstract class LZMAEncoder extends LZMACoder {
      * LZMA2 chunk is considered full when its compressed size exceeds
      * <code>LZMA2_COMPRESSED_LIMIT</code>.
      * <p>
-     * The maximum compressed size of a LZMA2 chunk is 64 KiB.
-     * A single LZMA symbol might use 20 bytes of space even though
-     * it usually takes just one byte or so. Two more bytes are needed
-     * for LZMA2 uncompressed chunks (see LZMA2OutputStream.writeChunk).
-     * Leave a little safety margin and use 26 bytes.
+     * The maximum compressed size of a LZMA2 chunk is 64 KiB. A single LZMA
+     * symbol might use 20 bytes of space even though it usually takes just one
+     * byte or so. Two more bytes are needed for LZMA2 uncompressed chunks (see
+     * LZMA2OutputStream.writeChunk). Leave a little safety margin and use 26
+     * bytes.
      */
     private static final int LZMA2_COMPRESSED_LIMIT = (64 << 10) - 26;
 
@@ -70,46 +70,46 @@ public abstract class LZMAEncoder extends LZMACoder {
         int m = 80;
 
         switch (mode) {
-            case MODE_FAST:
-                m += LZMAEncoderFast.getMemoryUsage(
+        case MODE_FAST:
+            m += LZMAEncoderFast.getMemoryUsage(
                 dictSize, extraSizeBefore, mf);
-                break;
+            break;
 
-            case MODE_NORMAL:
-                m += LZMAEncoderNormal.getMemoryUsage(
+        case MODE_NORMAL:
+            m += LZMAEncoderNormal.getMemoryUsage(
                 dictSize, extraSizeBefore, mf);
-                break;
+            break;
 
-            default:
-                throw new IllegalArgumentException();
+        default:
+            throw new IllegalArgumentException();
         }
 
         return m;
     }
 
     public static LZMAEncoder getInstance(
-    RangeEncoder rc, int lc, int lp, int pb, int mode,
-    int dictSize, int extraSizeBefore,
-    int niceLen, int mf, int depthLimit) {
+        RangeEncoder rc, int lc, int lp, int pb, int mode,
+        int dictSize, int extraSizeBefore,
+        int niceLen, int mf, int depthLimit) {
         switch (mode) {
-            case MODE_FAST:
-                return new LZMAEncoderFast(rc, lc, lp, pb,
-                                           dictSize, extraSizeBefore,
-                                           niceLen, mf, depthLimit);
+        case MODE_FAST:
+            return new LZMAEncoderFast(rc, lc, lp, pb,
+                                       dictSize, extraSizeBefore,
+                                       niceLen, mf, depthLimit);
 
-            case MODE_NORMAL:
-                return new LZMAEncoderNormal(rc, lc, lp, pb,
-                                             dictSize, extraSizeBefore,
-                                             niceLen, mf, depthLimit);
+        case MODE_NORMAL:
+            return new LZMAEncoderNormal(rc, lc, lp, pb,
+                                         dictSize, extraSizeBefore,
+                                         niceLen, mf, depthLimit);
         }
 
         throw new IllegalArgumentException();
     }
 
     /**
-     * Gets an integer [0, 63] matching the highest two bits of an integer.
-     * This is like bit scan reverse (BSR) on x86 except that this also
-     * cares about the second highest bit.
+     * Gets an integer [0, 63] matching the highest two bits of an integer. This
+     * is like bit scan reverse (BSR) on x86 except that this also cares about
+     * the second highest bit.
      */
     public static int getDistSlot(int dist) {
         if (dist <= DIST_MODEL_START)
@@ -147,19 +147,18 @@ public abstract class LZMAEncoder extends LZMACoder {
     /**
      * Gets the next LZMA symbol.
      * <p>
-     * There are three types of symbols: literal (a single byte),
-     * repeated match, and normal match. The symbol is indicated
-     * by the return value and by the variable <code>back</code>.
+     * There are three types of symbols: literal (a single byte), repeated
+     * match, and normal match. The symbol is indicated by the return value and
+     * by the variable <code>back</code>.
      * <p>
-     * Literal: <code>back == -1</code> and return value is <code>1</code>.
-     * The literal itself needs to be read from <code>lz</code> separately.
+     * Literal: <code>back == -1</code> and return value is <code>1</code>. The
+     * literal itself needs to be read from <code>lz</code> separately.
      * <p>
-     * Repeated match: <code>back</code> is in the range [0, 3] and
-     * the return value is the length of the repeated match.
+     * Repeated match: <code>back</code> is in the range [0, 3] and the return
+     * value is the length of the repeated match.
      * <p>
-     * Normal match: <code>back - REPS<code> (<code>back - 4</code>)
-     * is the distance of the match and the return value is the length
-     * of the match.
+     * Normal match: <code>back - REPS<code> (<code>back - 4</code>) is the
+     * distance of the match and the return value is the length of the match.
      */
     abstract int getNextSymbol();
 
@@ -293,8 +292,8 @@ public abstract class LZMAEncoder extends LZMACoder {
 
             if (distSlot < DIST_MODEL_END)
                 rc.encodeReverseBitTree(
-                distSpecial[distSlot - DIST_MODEL_START],
-                distReduced);
+                    distSpecial[distSlot - DIST_MODEL_START],
+                    distReduced);
             else {
                 rc.encodeDirectBits(distReduced >>> ALIGN_BITS,
                                     footerBits - ALIGN_BITS);
@@ -382,7 +381,7 @@ public abstract class LZMAEncoder extends LZMACoder {
         if (rep == 0)
             price += RangeEncoder.getBitPrice(isRep0[state.get()], 0)
                      + RangeEncoder.getBitPrice(
-            isRep0Long[state.get()][posState], 1);
+                    isRep0Long[state.get()][posState], 1);
         else {
             price += RangeEncoder.getBitPrice(isRep0[state.get()], 1);
 
@@ -430,7 +429,7 @@ public abstract class LZMAEncoder extends LZMACoder {
             for (int distSlot = 0; distSlot < distSlotPricesSize; ++distSlot)
                 distSlotPrices[distState][distSlot]
                 = RangeEncoder.getBitTreePrice(
-                distSlots[distState], distSlot);
+                        distSlots[distState], distSlot);
 
             for (int distSlot = DIST_MODEL_END; distSlot < distSlotPricesSize;
                  ++distSlot) {
@@ -454,8 +453,8 @@ public abstract class LZMAEncoder extends LZMACoder {
             for (int i = 0; i < limit; ++i) {
                 int distReduced = dist - base;
                 int price = RangeEncoder.getReverseBitTreePrice(
-                distSpecial[distSlot - DIST_MODEL_START],
-                distReduced);
+                    distSpecial[distSlot - DIST_MODEL_START],
+                    distReduced);
 
                 for (int distState = 0; distState < DIST_STATES; ++distState)
                     fullDistPrices[distState][dist]
@@ -477,9 +476,9 @@ public abstract class LZMAEncoder extends LZMACoder {
     }
 
     /**
-     * Updates the lookup tables used for calculating match distance
-     * and length prices. The updating is skipped for performance reasons
-     * if the tables haven't changed much since the previous update.
+     * Updates the lookup tables used for calculating match distance and length
+     * prices. The updating is skipped for performance reasons if the tables
+     * haven't changed much since the previous update.
      */
     void updatePrices() {
         if (distPriceCount <= 0)
@@ -527,7 +526,7 @@ public abstract class LZMAEncoder extends LZMACoder {
         int getPrice(int curByte, int matchByte,
                      int prevByte, int pos, State state) {
             int price = RangeEncoder.getBitPrice(
-            isMatch[state.get()][pos & posMask], 0);
+                isMatch[state.get()][pos & posMask], 0);
 
             int i = getSubcoderIndex(prevByte, pos);
             price += state.isLiteral()
@@ -621,8 +620,8 @@ public abstract class LZMAEncoder extends LZMACoder {
 
         /**
          * The prices are updated after at least
-         * <code>PRICE_UPDATE_INTERVAL</code> many lengths
-         * have been encoded with the same posState.
+         * <code>PRICE_UPDATE_INTERVAL</code> many lengths have been encoded
+         * with the same posState.
          */
         private static final int PRICE_UPDATE_INTERVAL = 32; // FIXME?
 

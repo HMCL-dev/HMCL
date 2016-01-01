@@ -60,9 +60,9 @@ final class LZMAEncoderNormal extends LZMAEncoder {
     }
 
     /**
-     * Converts the opts array from backward indexes to forward indexes.
-     * Then it will be simple to get the next symbol from the array
-     * in later calls to <code>getNextSymbol()</code>.
+     * Converts the opts array from backward indexes to forward indexes. Then it
+     * will be simple to get the next symbol from the array in later calls to
+     * <code>getNextSymbol()</code>.
      */
     private int convertOpts() {
         optEnd = optCur;

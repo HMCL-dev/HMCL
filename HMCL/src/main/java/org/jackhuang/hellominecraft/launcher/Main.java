@@ -76,7 +76,7 @@ public final class Main implements Runnable {
 
         try {
             sslContext = SSLContext.getInstance("TLS");
-            X509TrustManager[] xtmArray = new X509TrustManager[]{XTM};
+            X509TrustManager[] xtmArray = new X509TrustManager[] { XTM };
             sslContext.init(null, xtmArray, new java.security.SecureRandom());
         } catch (GeneralSecurityException gse) {
         }
@@ -112,7 +112,7 @@ public final class Main implements Runnable {
     public static final Main INSTANCE = new Main();
     public static HelloMinecraftLookAndFeel LOOK_AND_FEEL;
 
-    @SuppressWarnings({"CallToPrintStackTrace", "UseSpecificCatch"})
+    @SuppressWarnings({ "CallToPrintStackTrace", "UseSpecificCatch" })
     public static void main(String[] args) {
         {
             //PluginManager.getServerPlugin();
@@ -147,7 +147,7 @@ public final class Main implements Runnable {
 
             Settings.UPDATE_CHECKER.outdated.register(IUpgrader.NOW_UPGRADER);
             Settings.UPDATE_CHECKER.process(false).subscribeOn(Schedulers.newThread()).subscribe(t
-                    -> Main.invokeUpdate());
+                -> Main.invokeUpdate());
 
             if (StrUtils.isNotBlank(Settings.getInstance().getProxyHost()) && StrUtils.isNotBlank(Settings.getInstance().getProxyPort()) && MathUtils.canParseInt(Settings.getInstance().getProxyPort())) {
                 HMCLog.log("Initializing customized proxy");

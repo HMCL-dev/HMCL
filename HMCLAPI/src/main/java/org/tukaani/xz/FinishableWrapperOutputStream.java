@@ -35,6 +35,7 @@ public class FinishableWrapperOutputStream extends FinishableOutputStream {
     /**
      * Calls {@link java.io.OutputStream#write(int) out.write(b)}.
      */
+    @Override
     public void write(int b) throws IOException {
         out.write(b);
     }
@@ -42,6 +43,7 @@ public class FinishableWrapperOutputStream extends FinishableOutputStream {
     /**
      * Calls {@link java.io.OutputStream#write(byte[]) out.write(buf)}.
      */
+    @Override
     public void write(byte[] buf) throws IOException {
         out.write(buf);
     }
@@ -50,6 +52,7 @@ public class FinishableWrapperOutputStream extends FinishableOutputStream {
      * Calls {@link java.io.OutputStream#write(byte[],int,int)
      * out.write(buf, off, len)}.
      */
+    @Override
     public void write(byte[] buf, int off, int len) throws IOException {
         out.write(buf, off, len);
     }
@@ -57,6 +60,7 @@ public class FinishableWrapperOutputStream extends FinishableOutputStream {
     /**
      * Calls {@link java.io.OutputStream#flush() out.flush()}.
      */
+    @Override
     public void flush() throws IOException {
         out.flush();
     }
@@ -64,6 +68,7 @@ public class FinishableWrapperOutputStream extends FinishableOutputStream {
     /**
      * Calls {@link java.io.OutputStream#close() out.close()}.
      */
+    @Override
     public void close() throws IOException {
         out.close();
     }

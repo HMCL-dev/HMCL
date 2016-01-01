@@ -51,8 +51,9 @@ public final class AtomicObservableSubscription implements Subscription {
      * constructed)
      *
      * @param actualSubscription
+     *
      * @throws IllegalStateException if trying to set more than once (or use
-     * this method after setting via constructor)
+     *                               this method after setting via constructor)
      */
     public AtomicObservableSubscription wrap(Subscription actualSubscription) {
         if (!this.actualSubscription.compareAndSet(null, actualSubscription))

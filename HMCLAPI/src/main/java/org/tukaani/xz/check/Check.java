@@ -33,27 +33,27 @@ public abstract class Check {
     }
 
     public static Check getInstance(int checkType)
-    throws UnsupportedOptionsException {
+        throws UnsupportedOptionsException {
         switch (checkType) {
-            case XZ.CHECK_NONE:
-                return new None();
+        case XZ.CHECK_NONE:
+            return new None();
 
-            case XZ.CHECK_CRC32:
-                return new CRC32();
+        case XZ.CHECK_CRC32:
+            return new CRC32();
 
-            case XZ.CHECK_CRC64:
-                return new CRC64();
+        case XZ.CHECK_CRC64:
+            return new CRC64();
 
-            case XZ.CHECK_SHA256:
-                try {
-                    return new SHA256();
-                } catch (java.security.NoSuchAlgorithmException e) {
-                }
+        case XZ.CHECK_SHA256:
+            try {
+                return new SHA256();
+            } catch (java.security.NoSuchAlgorithmException e) {
+            }
 
-                break;
+            break;
         }
 
         throw new UnsupportedOptionsException(
-        "Unsupported Check ID " + checkType);
+            "Unsupported Check ID " + checkType);
     }
 }

@@ -111,7 +111,7 @@ public class GameLauncher {
             return null;
         }
 
-        List<String> lst = null;
+        List<String> lst;
         try {
             lst = loader.makeLaunchingCommand();
         } catch (Exception e) {
@@ -146,7 +146,7 @@ public class GameLauncher {
             if (get == null || get.getSelectedMinecraftVersion() == null || StrUtils.isBlank(get.getCanonicalGameDir()))
                 throw new Error("Fucking bug!");
             builder.directory(provider.getRunDirectory(get.getSelectedMinecraftVersion().id))
-                    .environment().put("APPDATA", get.getCanonicalGameDir());
+                .environment().put("APPDATA", get.getCanonicalGameDir());
             JavaProcess jp = new JavaProcess(str, builder.start(), PROCESS_MANAGER);
             launchEvent.execute(jp);
         } catch (Exception e) {
@@ -159,7 +159,7 @@ public class GameLauncher {
      * According to the name...
      *
      * @param launcherName the name of launch bat/sh
-     * @param str launch command
+     * @param str          launch command
      *
      * @return launcher location
      *

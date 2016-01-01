@@ -438,7 +438,7 @@ public final class MainFrame extends DraggableFrame {
             int contentWidth = width - off - off;
             int contentHeight = height - off - off;
             BufferedImage contentImage = new BufferedImage(contentWidth,
-                    contentHeight, Transparency.OPAQUE);
+                                                           contentHeight, Transparency.OPAQUE);
             Graphics2D contentG2d = contentImage.createGraphics();
             contentG2d.translate(-off, -off);
             paintImpl(g);

@@ -1,12 +1,12 @@
 /**
  * Copyright 2013 Netflix, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,8 @@ import rx.util.CompositeException;
 import rx.util.functions.Func1;
 
 /**
- * When an onError occurs the resumeFunction will be executed and it's response passed to onNext instead of calling onError.
+ * When an onError occurs the resumeFunction will be executed and it's response
+ * passed to onNext instead of calling onError.
  */
 public final class OperationOnErrorReturn<T> {
 
@@ -35,6 +36,7 @@ public final class OperationOnErrorReturn<T> {
     }
 
     private static class OnErrorReturn<T> implements Func1<Observer<T>, Subscription> {
+
         private final Func1<Exception, T> resumeFunction;
         private final Observable<T> originalSequence;
 
@@ -59,35 +61,50 @@ public final class OperationOnErrorReturn<T> {
                 }
 
                 /**
-                 * Instead of passing the onError forward, we intercept and "resume" with the resumeSequence.
+                 * Instead of passing the onError forward, we intercept and
+                 * "resume" with the resumeSequence.
                  */
                 @Override
                 public void onError(Exception ex) {
-                    /* remember what the current subscription is so we can determine if someone unsubscribes concurrently */
+                    /*
+                     * remember what the current subscription is so we can
+                     * determine if someone unsubscribes concurrently
+                     */
                     AtomicObservableSubscription currentSubscription = subscriptionRef.get();
                     // check that we have not been unsubscribed before we can process the error
-                    if (currentSubscription != null) {
+                    if (currentSubscription != null)
                         try {
-                            /* error occurred, so execute the function, give it the exception and call onNext with the response */
+                            /*
+                             * error occurred, so execute the function, give it
+                             * the exception and call onNext with the response
+                             */
                             onNext(resumeFunction.call(ex));
                             /*
-                             * we are not handling an exception thrown from this function ... should we do something?
-                             * error handling within an error handler is a weird one to determine what we should do
-                             * right now I'm going to just let it throw whatever exceptions occur (such as NPE)
-                             * but I'm considering calling the original Observer.onError to act as if this OnErrorReturn operator didn't happen
+                             * we are not handling an exception thrown from this
+                             * function ... should we do something?
+                             * error handling within an error handler is a weird
+                             * one to determine what we should do
+                             * right now I'm going to just let it throw whatever
+                             * exceptions occur (such as NPE)
+                             * but I'm considering calling the original
+                             * Observer.onError to act as if this OnErrorReturn
+                             * operator didn't happen
                              */
 
-                            /* we are now completed */
+ /*
+                             * we are now completed
+                             */
                             onCompleted();
 
-                            /* unsubscribe since it blew up */
+                            /*
+                             * unsubscribe since it blew up
+                             */
                             currentSubscription.unsubscribe();
                         } catch (Exception e) {
                             // the return function failed so we need to call onError
                             // I am using CompositeException so that both exceptions can be seen
                             observer.onError(new CompositeException("OnErrorReturn function failed", Arrays.asList(ex, e)));
                         }
-                    }
                 }
 
                 @Override

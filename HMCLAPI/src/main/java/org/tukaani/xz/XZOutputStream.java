@@ -20,25 +20,24 @@ import org.tukaani.xz.index.IndexEncoder;
  *
  * <h4>Examples</h4>
  * <p>
- * Getting an output stream to compress with LZMA2 using the default
- * settings and the default integrity check type (CRC64):
+ * Getting an output stream to compress with LZMA2 using the default settings
+ * and the default integrity check type (CRC64):
  * <p>
  * <blockquote><pre>
  * FileOutputStream outfile = new FileOutputStream("foo.xz");
  * XZOutputStream outxz = new XZOutputStream(outfile, new LZMA2Options());
  * </pre></blockquote>
  * <p>
- * Using the preset level <code>8</code> for LZMA2 (the default
- * is <code>6</code>) and SHA-256 instead of CRC64 for integrity checking:
+ * Using the preset level <code>8</code> for LZMA2 (the default is
+ * <code>6</code>) and SHA-256 instead of CRC64 for integrity checking:
  * <p>
  * <blockquote><pre>
  * XZOutputStream outxz = new XZOutputStream(outfile, new LZMA2Options(8),
  *                                           XZ.CHECK_SHA256);
  * </pre></blockquote>
  * <p>
- * Using the x86 BCJ filter together with LZMA2 to compress x86 executables
- * and printing the memory usage information before creating the
- * XZOutputStream:
+ * Using the x86 BCJ filter together with LZMA2 to compress x86 executables and
+ * printing the memory usage information before creating the XZOutputStream:
  * <p>
  * <blockquote><pre>
  * X86Options x86 = new X86Options();
@@ -64,9 +63,9 @@ public class XZOutputStream extends FinishableOutputStream {
     private FilterEncoder[] filters;
 
     /**
-     * True if the current filter chain supports flushing.
-     * If it doesn't support flushing, <code>flush()</code>
-     * will use <code>endBlock()</code> as a fallback.
+     * True if the current filter chain supports flushing. If it doesn't support
+     * flushing, <code>flush()</code> will use <code>endBlock()</code> as a
+     * fallback.
      */
     private boolean filtersSupportFlushing;
 
@@ -76,88 +75,80 @@ public class XZOutputStream extends FinishableOutputStream {
     private final byte[] tempBuf = new byte[1];
 
     /**
-     * Creates a new XZ compressor using one filter and CRC64 as
-     * the integrity check. This constructor is equivalent to passing
-     * a single-member FilterOptions array to
+     * Creates a new XZ compressor using one filter and CRC64 as the integrity
+     * check. This constructor is equivalent to passing a single-member
+     * FilterOptions array to
      * <code>XZOutputStream(OutputStream, FilterOptions[])</code>.
      *
-     * @param out           output stream to which the compressed data
-     *                      will be written
+     * @param out           output stream to which the compressed data will be
+     *                      written
      *
-     * @param filterOptions
-     *                      filter options to use
+     * @param filterOptions filter options to use
      *
-     * @throws UnsupportedOptionsException
-     *                                     invalid filter chain
+     * @throws UnsupportedOptionsException invalid filter chain
      *
      * @throws IOException                 may be thrown from <code>out</code>
      */
     public XZOutputStream(OutputStream out, FilterOptions filterOptions)
-    throws IOException {
+        throws IOException {
         this(out, filterOptions, XZ.CHECK_CRC64);
     }
 
     /**
-     * Creates a new XZ compressor using one filter and the specified
-     * integrity check type. This constructor is equivalent to
-     * passing a single-member FilterOptions array to
+     * Creates a new XZ compressor using one filter and the specified integrity
+     * check type. This constructor is equivalent to passing a single-member
+     * FilterOptions array to
      * <code>XZOutputStream(OutputStream, FilterOptions[], int)</code>.
      *
-     * @param out           output stream to which the compressed data
-     *                      will be written
+     * @param out           output stream to which the compressed data will be
+     *                      written
      *
-     * @param filterOptions
-     *                      filter options to use
+     * @param filterOptions filter options to use
      *
-     * @param checkType     type of the integrity check,
-     *                      for example XZ.CHECK_CRC32
+     * @param checkType     type of the integrity check, for example
+     *                      XZ.CHECK_CRC32
      *
-     * @throws UnsupportedOptionsException
-     *                                     invalid filter chain
+     * @throws UnsupportedOptionsException invalid filter chain
      *
      * @throws IOException                 may be thrown from <code>out</code>
      */
     public XZOutputStream(OutputStream out, FilterOptions filterOptions,
                           int checkType) throws IOException {
-        this(out, new FilterOptions[] {filterOptions}, checkType);
+        this(out, new FilterOptions[] { filterOptions }, checkType);
     }
 
     /**
-     * Creates a new XZ compressor using 1-4 filters and CRC64 as
-     * the integrity check. This constructor is equivalent
+     * Creates a new XZ compressor using 1-4 filters and CRC64 as the integrity
+     * check. This constructor is equivalent
      * <code>XZOutputStream(out, filterOptions, XZ.CHECK_CRC64)</code>.
      *
-     * @param out           output stream to which the compressed data
-     *                      will be written
+     * @param out           output stream to which the compressed data will be
+     *                      written
      *
-     * @param filterOptions
-     *                      array of filter options to use
+     * @param filterOptions array of filter options to use
      *
-     * @throws UnsupportedOptionsException
-     *                                     invalid filter chain
+     * @throws UnsupportedOptionsException invalid filter chain
      *
      * @throws IOException                 may be thrown from <code>out</code>
      */
     public XZOutputStream(OutputStream out, FilterOptions[] filterOptions)
-    throws IOException {
+        throws IOException {
         this(out, filterOptions, XZ.CHECK_CRC64);
     }
 
     /**
-     * Creates a new XZ compressor using 1-4 filters and the specified
-     * integrity check type.
+     * Creates a new XZ compressor using 1-4 filters and the specified integrity
+     * check type.
      *
-     * @param out           output stream to which the compressed data
-     *                      will be written
+     * @param out           output stream to which the compressed data will be
+     *                      written
      *
-     * @param filterOptions
-     *                      array of filter options to use
+     * @param filterOptions array of filter options to use
      *
-     * @param checkType     type of the integrity check,
-     *                      for example XZ.CHECK_CRC32
+     * @param checkType     type of the integrity check, for example
+     *                      XZ.CHECK_CRC32
      *
-     * @throws UnsupportedOptionsException
-     *                                     invalid filter chain
+     * @throws UnsupportedOptionsException invalid filter chain
      *
      * @throws IOException                 may be thrown from <code>out</code>
      */
@@ -173,19 +164,17 @@ public class XZOutputStream extends FinishableOutputStream {
     }
 
     /**
-     * Updates the filter chain with a single filter.
-     * This is equivalent to passing a single-member FilterOptions array
-     * to <code>updateFilters(FilterOptions[])</code>.
+     * Updates the filter chain with a single filter. This is equivalent to
+     * passing a single-member FilterOptions array to
+     * <code>updateFilters(FilterOptions[])</code>.
      *
-     * @param filterOptions
-     *                      new filter to use
+     * @param filterOptions new filter to use
      *
-     * @throws UnsupportedOptionsException
-     *                                     unsupported filter chain, or trying to change
-     *                                     the filter chain in the middle of a Block
+     * @throws UnsupportedOptionsException unsupported filter chain, or trying
+     *                                     to change the filter chain in the middle of a Block
      */
     public void updateFilters(FilterOptions filterOptions)
-    throws XZIOException {
+        throws XZIOException {
         FilterOptions[] opts = new FilterOptions[1];
         opts[0] = filterOptions;
         updateFilters(opts);
@@ -194,27 +183,25 @@ public class XZOutputStream extends FinishableOutputStream {
     /**
      * Updates the filter chain with 1-4 filters.
      * <p>
-     * Currently this cannot be used to update e.g. LZMA2 options in the
-     * middle of a XZ Block. Use <code>endBlock()</code> to finish the
-     * current XZ Block before calling this function. The new filter chain
-     * will then be used for the next XZ Block.
+     * Currently this cannot be used to update e.g. LZMA2 options in the middle
+     * of a XZ Block. Use <code>endBlock()</code> to finish the current XZ Block
+     * before calling this function. The new filter chain will then be used for
+     * the next XZ Block.
      *
-     * @param filterOptions
-     *                      new filter chain to use
+     * @param filterOptions new filter chain to use
      *
-     * @throws UnsupportedOptionsException
-     *                                     unsupported filter chain, or trying to change
-     *                                     the filter chain in the middle of a Block
+     * @throws UnsupportedOptionsException unsupported filter chain, or trying
+     *                                     to change the filter chain in the middle of a Block
      */
     public void updateFilters(FilterOptions[] filterOptions)
-    throws XZIOException {
+        throws XZIOException {
         if (blockEncoder != null)
             throw new UnsupportedOptionsException("Changing filter options "
                                                   + "in the middle of a XZ Block not implemented");
 
         if (filterOptions.length < 1 || filterOptions.length > 4)
             throw new UnsupportedOptionsException(
-            "XZ filter chain must be 1-4 filters");
+                "XZ filter chain must be 1-4 filters");
 
         filtersSupportFlushing = true;
         FilterEncoder[] newFilters = new FilterEncoder[filterOptions.length];
@@ -230,12 +217,10 @@ public class XZOutputStream extends FinishableOutputStream {
     /**
      * Writes one byte to be compressed.
      *
-     * @throws XZIOException
-     *                       XZ Stream has grown too big
+     * @throws XZIOException XZ Stream has grown too big
      *
-     * @throws XZIOException
-     *                       <code>finish()</code> or <code>close()</code>
-     *                       was already called
+     * @throws XZIOException <code>finish()</code> or <code>close()</code> was
+     *                       already called
      *
      * @throws IOException   may be thrown by the underlying output stream
      */
@@ -245,26 +230,22 @@ public class XZOutputStream extends FinishableOutputStream {
     }
 
     /**
-     * Writes an array of bytes to be compressed.
-     * The compressors tend to do internal buffering and thus the written
-     * data won't be readable from the compressed output immediately.
-     * Use <code>flush()</code> to force everything written so far to
-     * be written to the underlaying output stream, but be aware that
-     * flushing reduces compression ratio.
+     * Writes an array of bytes to be compressed. The compressors tend to do
+     * internal buffering and thus the written data won't be readable from the
+     * compressed output immediately. Use <code>flush()</code> to force
+     * everything written so far to be written to the underlaying output stream,
+     * but be aware that flushing reduces compression ratio.
      *
      * @param buf buffer of bytes to be written
      * @param off start offset in <code>buf</code>
      * @param len number of bytes to write
      *
-     * @throws XZIOException
-     *                       XZ Stream has grown too big: total file size
-     *                       about 8&nbsp;EiB or the Index field exceeds
-     *                       16&nbsp;GiB; you shouldn't reach these sizes
-     *                       in practice
+     * @throws XZIOException XZ Stream has grown too big: total file size about
+     *                       8&nbsp;EiB or the Index field exceeds 16&nbsp;GiB; you shouldn't reach
+     *                       these sizes in practice
      *
-     * @throws XZIOException
-     *                       <code>finish()</code> or <code>close()</code>
-     *                       was already called and len &gt; 0
+     * @throws XZIOException <code>finish()</code> or <code>close()</code> was
+     *                       already called and len &gt; 0
      *
      * @throws IOException   may be thrown by the underlying output stream
      */
@@ -290,27 +271,25 @@ public class XZOutputStream extends FinishableOutputStream {
     }
 
     /**
-     * Finishes the current XZ Block (but not the whole XZ Stream).
-     * This doesn't flush the stream so it's possible that not all data will
-     * be decompressible from the output stream when this function returns.
-     * Call also <code>flush()</code> if flushing is wanted in addition to
-     * finishing the current XZ Block.
+     * Finishes the current XZ Block (but not the whole XZ Stream). This doesn't
+     * flush the stream so it's possible that not all data will be
+     * decompressible from the output stream when this function returns. Call
+     * also <code>flush()</code> if flushing is wanted in addition to finishing
+     * the current XZ Block.
      * <p>
-     * If there is no unfinished Block open, this function will do nothing.
-     * (No empty XZ Block will be created.)
+     * If there is no unfinished Block open, this function will do nothing. (No
+     * empty XZ Block will be created.)
      * <p>
-     * This function can be useful, for example, to create
-     * random-accessible .xz files.
+     * This function can be useful, for example, to create random-accessible .xz
+     * files.
      * <p>
-     * Starting a new XZ Block means that the encoder state is reset.
-     * Doing this very often will increase the size of the compressed
-     * file a lot (more than plain <code>flush()</code> would do).
+     * Starting a new XZ Block means that the encoder state is reset. Doing this
+     * very often will increase the size of the compressed file a lot (more than
+     * plain <code>flush()</code> would do).
      *
-     * @throws XZIOException
-     *                       XZ Stream has grown too big
+     * @throws XZIOException XZ Stream has grown too big
      *
-     * @throws XZIOException
-     *                       stream finished or closed
+     * @throws XZIOException stream finished or closed
      *
      * @throws IOException   may be thrown by the underlying output stream
      */
@@ -337,24 +316,21 @@ public class XZOutputStream extends FinishableOutputStream {
     }
 
     /**
-     * Flushes the encoder and calls <code>out.flush()</code>.
-     * All buffered pending data will then be decompressible from
-     * the output stream.
+     * Flushes the encoder and calls <code>out.flush()</code>. All buffered
+     * pending data will then be decompressible from the output stream.
      * <p>
-     * Calling this function very often may increase the compressed
-     * file size a lot. The filter chain options may affect the size
-     * increase too. For example, with LZMA2 the HC4 match finder has
-     * smaller penalty with flushing than BT4.
+     * Calling this function very often may increase the compressed file size a
+     * lot. The filter chain options may affect the size increase too. For
+     * example, with LZMA2 the HC4 match finder has smaller penalty with
+     * flushing than BT4.
      * <p>
-     * Some filters don't support flushing. If the filter chain has
-     * such a filter, <code>flush()</code> will call <code>endBlock()</code>
-     * before flushing.
+     * Some filters don't support flushing. If the filter chain has such a
+     * filter, <code>flush()</code> will call <code>endBlock()</code> before
+     * flushing.
      *
-     * @throws XZIOException
-     *                       XZ Stream has grown too big
+     * @throws XZIOException XZ Stream has grown too big
      *
-     * @throws XZIOException
-     *                       stream finished or closed
+     * @throws XZIOException stream finished or closed
      *
      * @throws IOException   may be thrown by the underlying output stream
      */
@@ -384,20 +360,19 @@ public class XZOutputStream extends FinishableOutputStream {
     }
 
     /**
-     * Finishes compression without closing the underlying stream.
-     * No more data can be written to this stream after finishing
-     * (calling <code>write</code> with an empty buffer is OK).
+     * Finishes compression without closing the underlying stream. No more data
+     * can be written to this stream after finishing (calling <code>write</code>
+     * with an empty buffer is OK).
      * <p>
-     * Repeated calls to <code>finish()</code> do nothing unless
-     * an exception was thrown by this stream earlier. In that case
-     * the same exception is thrown again.
+     * Repeated calls to <code>finish()</code> do nothing unless an exception
+     * was thrown by this stream earlier. In that case the same exception is
+     * thrown again.
      * <p>
      * After finishing, the stream may be closed normally with
-     * <code>close()</code>. If the stream will be closed anyway, there
-     * usually is no need to call <code>finish()</code> separately.
+     * <code>close()</code>. If the stream will be closed anyway, there usually
+     * is no need to call <code>finish()</code> separately.
      *
-     * @throws XZIOException
-     *                       XZ Stream has grown too big
+     * @throws XZIOException XZ Stream has grown too big
      *
      * @throws IOException   may be thrown by the underlying output stream
      */
@@ -423,14 +398,13 @@ public class XZOutputStream extends FinishableOutputStream {
     }
 
     /**
-     * Finishes compression and closes the underlying stream.
-     * The underlying stream <code>out</code> is closed even if finishing
-     * fails. If both finishing and closing fail, the exception thrown
-     * by <code>finish()</code> is thrown and the exception from the failed
-     * <code>out.close()</code> is lost.
+     * Finishes compression and closes the underlying stream. The underlying
+     * stream <code>out</code> is closed even if finishing fails. If both
+     * finishing and closing fail, the exception thrown by <code>finish()</code>
+     * is thrown and the exception from the failed <code>out.close()</code> is
+     * lost.
      *
-     * @throws XZIOException
-     *                       XZ Stream has grown too big
+     * @throws XZIOException XZ Stream has grown too big
      *
      * @throws IOException   may be thrown by the underlying output stream
      */

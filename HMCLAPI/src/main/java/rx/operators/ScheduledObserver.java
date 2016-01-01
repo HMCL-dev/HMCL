@@ -19,7 +19,9 @@ import rx.Observer;
 import rx.Scheduler;
 import rx.util.functions.Action0;
 
-/* package */
+/*
+ * package
+ */
 class ScheduledObserver<T> implements Observer<T> {
 
     private final Observer<T> underlying;

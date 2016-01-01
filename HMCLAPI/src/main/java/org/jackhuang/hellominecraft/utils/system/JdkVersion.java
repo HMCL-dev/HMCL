@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -166,7 +166,7 @@ public final class JdkVersion {
     private static final Pattern p = Pattern.compile("java version \"[1-9]*\\.[1-9]*\\.[0-9]*(.*?)\"");
 
     public static JdkVersion getJavaVersionFromExecutable(String file) throws IOException {
-        String[] str = new String[] {file, "-version"};
+        String[] str = new String[] { file, "-version" };
         Platform platform = Platform.BIT_32;
         String ver = null;
         try {

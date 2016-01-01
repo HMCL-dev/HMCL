@@ -23,10 +23,10 @@ public class CRC32 extends Check {
 
     public byte[] finish() {
         long value = state.getValue();
-        byte[] buf = {(byte) (value),
-                      (byte) (value >>> 8),
-                      (byte) (value >>> 16),
-                      (byte) (value >>> 24)};
+        byte[] buf = { (byte) (value),
+                       (byte) (value >>> 8),
+                       (byte) (value >>> 16),
+                       (byte) (value >>> 24) };
         state.reset();
         return buf;
     }

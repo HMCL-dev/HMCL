@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -36,9 +36,9 @@ import org.jackhuang.hellominecraft.utils.StrUtils;
 public class YggdrasilAuthentication {
 
     public static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(GameProfile.class, new GameProfile.GameProfileSerializer())
-    .registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer())
-    .registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
+        .registerTypeAdapter(GameProfile.class, new GameProfile.GameProfileSerializer())
+        .registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer())
+        .registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
 
     protected static final String BASE_URL = "https://authserver.mojang.com/";
     protected static final URL ROUTE_AUTHENTICATE = NetUtils.constantURL(BASE_URL + "authenticate");
@@ -134,7 +134,7 @@ public class YggdrasilAuthentication {
         else
             throw new AuthenticationException(C.i18n("login.invalid_password"));
     }
-    
+
     private void loggedIn(URL url, Object input) throws AuthenticationException {
         try {
             String jsonResult = input == null ? NetUtils.get(url) : NetUtils.post(url, GSON.toJson(input), "application/json", proxy);

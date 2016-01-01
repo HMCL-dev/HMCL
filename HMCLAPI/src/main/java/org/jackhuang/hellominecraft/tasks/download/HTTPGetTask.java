@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -76,7 +76,8 @@ public class HTTPGetTask extends TaskInfo implements PreviousResult<String> {
                 t = new NetException("Failed to get " + url, ex);
             }
         }
-        if (t != null) throw t;
+        if (t != null)
+            throw t;
     }
 
     @Override

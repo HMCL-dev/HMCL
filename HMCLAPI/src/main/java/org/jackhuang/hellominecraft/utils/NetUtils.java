@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -52,8 +52,9 @@ public final class NetUtils {
     }
 
     public static String getStreamContent(InputStream is, String encoding)
-    throws IOException {
-        if (is == null) return null;
+        throws IOException {
+        if (is == null)
+            return null;
         StringBuilder sb = new StringBuilder();
         try (InputStreamReader br = new InputStreamReader(is, encoding)) {
             int len;
@@ -136,7 +137,7 @@ public final class NetUtils {
         con.disconnect();
         return result;
     }
-    
+
     private static final String DEFAULT_CHARSET = "UTF-8";
 
     public static URL constantURL(String url) {
@@ -157,12 +158,12 @@ public final class NetUtils {
             throw new IllegalArgumentException("Could not concatenate given URL with GET arguments!", ex);
         }
     }
-    
+
     public static Observable<String> getRx(String url) {
         return Observable.createWithEmptySubscription(t1 -> {
             try {
                 t1.onNext(get(url));
-            } catch(Exception e) {
+            } catch (Exception e) {
                 t1.onError(e);
             }
         });

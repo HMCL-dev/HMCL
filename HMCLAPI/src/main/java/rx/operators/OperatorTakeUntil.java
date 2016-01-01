@@ -1,12 +1,12 @@
 /**
  * Copyright 2013 Netflix, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,17 +23,18 @@ import rx.util.functions.Func1;
 public class OperatorTakeUntil {
 
     /**
-     * Returns the values from the source observable sequence until the other observable sequence produces a value.
-     * 
-     * @param source
-     *            the source sequence to propagate elements for.
-     * @param other
-     *            the observable sequence that terminates propagation of elements of the source sequence.
-     * @param <T>
-     *            the type of source.
-     * @param <E>
-     *            the other type.
-     * @return An observable sequence containing the elements of the source sequence up to the point the other sequence interrupted further propagation.
+     * Returns the values from the source observable sequence until the other
+     * observable sequence produces a value.
+     *
+     * @param source the source sequence to propagate elements for.
+     * @param other  the observable sequence that terminates propagation of
+     *               elements of the source sequence.
+     * @param <T>    the type of source.
+     * @param <E>    the other type.
+     *
+     * @return An observable sequence containing the elements of the source
+     *         sequence up to the point the other sequence interrupted further
+     *         propagation.
      */
     public static <T, E> Observable<T> takeUntil(final Observable<T> source, final Observable<E> other) {
         Observable<Notification<T>> s = Observable.create(new SourceObservable<T>(source));
@@ -41,9 +42,9 @@ public class OperatorTakeUntil {
 
         @SuppressWarnings("unchecked")
         /**
-         * In JDK 7 we could use 'varargs' instead of 'unchecked'.
-         * See http://stackoverflow.com/questions/1445233/is-it-possible-to-solve-the-a-generic-array-of-t-is-created-for-a-varargs-param
-         * and http://hg.openjdk.java.net/jdk7/tl/langtools/rev/46cf751559ae 
+         * In JDK 7 we could use 'varargs' instead of 'unchecked'. See
+         * http://stackoverflow.com/questions/1445233/is-it-possible-to-solve-the-a-generic-array-of-t-is-created-for-a-varargs-param
+         * and http://hg.openjdk.java.net/jdk7/tl/langtools/rev/46cf751559ae
          */
         Observable<Notification<T>> result = Observable.merge(s, o);
 
@@ -61,6 +62,7 @@ public class OperatorTakeUntil {
     }
 
     private static class Notification<T> {
+
         private final boolean halt;
         private final T value;
 
@@ -80,6 +82,7 @@ public class OperatorTakeUntil {
     }
 
     private static class SourceObservable<T> implements Func1<Observer<Notification<T>>, Subscription> {
+
         private final Observable<T> sequence;
 
         private SourceObservable(Observable<T> sequence) {
@@ -91,7 +94,7 @@ public class OperatorTakeUntil {
             return sequence.subscribe(new Observer<T>() {
                 @Override
                 public void onCompleted() {
-                    notificationObserver.onNext(Notification.<T> halt());
+                    notificationObserver.onNext(Notification.<T>halt());
                 }
 
                 @Override
@@ -108,6 +111,7 @@ public class OperatorTakeUntil {
     }
 
     private static class OtherObservable<T, E> implements Func1<Observer<Notification<T>>, Subscription> {
+
         private final Observable<E> sequence;
 
         private OtherObservable(Observable<E> sequence) {
@@ -129,7 +133,7 @@ public class OperatorTakeUntil {
 
                 @Override
                 public void onNext(E args) {
-                    notificationObserver.onNext(Notification.<T> halt());
+                    notificationObserver.onNext(Notification.<T>halt());
                 }
             });
         }

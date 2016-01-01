@@ -43,7 +43,7 @@ public class InstallerPanel extends AnimatedPanel implements Selectable {
     /**
      * Creates new form InstallerPanel
      *
-     * @param gsp To get the minecraft version
+     * @param gsp           To get the minecraft version
      * @param installerType load which installer
      */
     public InstallerPanel(GameSettingsPanel gsp, InstallerType installerType) {
@@ -124,7 +124,7 @@ public class InstallerPanel extends AnimatedPanel implements Selectable {
 
     void refreshVersions() {
         if (TaskWindow.getInstance().addTask(new TaskRunnableArg1<>(C.i18n("install." + id.id + ".get_list"), list)
-            .registerPreviousResult(new DefaultPreviousResult<>(new String[]{gsp.getMinecraftVersionFormatted()})))
+            .registerPreviousResult(new DefaultPreviousResult<>(new String[] { gsp.getMinecraftVersionFormatted() })))
             .start())
             loadVersions();
     }
@@ -152,7 +152,7 @@ public class InstallerPanel extends AnimatedPanel implements Selectable {
                 if (versions != null)
                     for (InstallerVersionList.InstallerVersion v : versions)
                         if (v != null)
-                            model.addRow(new Object[]{v.selfVersion == null ? "null" : v.selfVersion, v.mcVersion == null ? "null" : v.mcVersion});
+                            model.addRow(new Object[] { v.selfVersion == null ? "null" : v.selfVersion, v.mcVersion == null ? "null" : v.mcVersion });
             }
         });
     }

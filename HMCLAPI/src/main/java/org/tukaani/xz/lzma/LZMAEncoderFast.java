@@ -22,8 +22,8 @@ final class LZMAEncoderFast extends LZMAEncoder {
 
     static int getMemoryUsage(int dictSize, int extraSizeBefore, int mf) {
         return LZEncoder.getMemoryUsage(
-        dictSize, Math.max(extraSizeBefore, EXTRA_SIZE_BEFORE),
-        EXTRA_SIZE_AFTER, MATCH_LEN_MAX, mf);
+            dictSize, Math.max(extraSizeBefore, EXTRA_SIZE_BEFORE),
+            EXTRA_SIZE_AFTER, MATCH_LEN_MAX, mf);
     }
 
     LZMAEncoderFast(RangeEncoder rc, int lc, int lp, int pb,

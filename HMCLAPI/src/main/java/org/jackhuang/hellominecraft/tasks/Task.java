@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -101,19 +101,19 @@ public abstract class Task {
         ppl = p;
         return this;
     }
-    
+
     public Task after(Task t) {
         return new DoubleTask(this, t);
     }
-    
+
     public Task before(Task t) {
         return new DoubleTask(t, this);
     }
-    
+
     public void run() {
         try {
             executeTask();
-        } catch(Throwable t) {
+        } catch (Throwable t) {
             HMCLog.err("Failed to execute task", t);
         }
     }

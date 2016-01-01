@@ -74,9 +74,9 @@ public class AppDataUpgrader extends IUpgrader {
                                 if (mainClass != null) {
                                     ArrayList<String> al = new ArrayList<>(Arrays.asList(args));
                                     al.add("notfound");
-                                    new URLClassLoader(new URL[] {jar.toURI().toURL()},
+                                    new URLClassLoader(new URL[] { jar.toURI().toURL() },
                                                        URLClassLoader.getSystemClassLoader().getParent()).loadClass(mainClass)
-                                        .getMethod("main", String[].class).invoke(null, new Object[] {al.toArray(new String[0])});
+                                        .getMethod("main", String[].class).invoke(null, new Object[] { al.toArray(new String[0]) });
                                     return true;
                                 }
                             }
@@ -95,7 +95,7 @@ public class AppDataUpgrader extends IUpgrader {
             if (map != null && map.containsKey("pack"))
                 try {
                     if (TaskWindow.getInstance().addTask(new AppDataUpgraderTask(map.get("pack"), number.version)).start()) {
-                        new ProcessBuilder(new String[] {IOUtils.getJavaDir(), "-jar", AppDataUpgraderTask.getSelf(number.version).getAbsolutePath()}).directory(new File(".")).start();
+                        new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderTask.getSelf(number.version).getAbsolutePath() }).directory(new File(".")).start();
                         System.exit(0);
                     }
                 } catch (IOException ex) {

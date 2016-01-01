@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -26,7 +26,7 @@ import java.util.List;
 public class PluginInfo {
 
     public String website, dbo_page, description, slug, plugin_name,
-    link, stage, main;
+        link, stage, main;
     public List<String> authors, categories;
     public List<PluginVersion> versions;
 }

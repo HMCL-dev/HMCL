@@ -17,15 +17,17 @@ class DeltaDecoder extends DeltaCoder implements FilterDecoder {
     DeltaDecoder(byte[] props) throws UnsupportedOptionsException {
         if (props.length != 1)
             throw new UnsupportedOptionsException(
-            "Unsupported Delta filter properties");
+                "Unsupported Delta filter properties");
 
         distance = (props[0] & 0xFF) + 1;
     }
 
+    @Override
     public int getMemoryUsage() {
         return 1;
     }
 
+    @Override
     public InputStream getInputStream(InputStream in) {
         return new DeltaInputStream(in, distance);
     }

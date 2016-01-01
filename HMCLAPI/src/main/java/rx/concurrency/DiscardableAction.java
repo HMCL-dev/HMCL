@@ -1,12 +1,12 @@
 /**
  * Copyright 2013 Netflix, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,9 +22,15 @@ import rx.util.AtomicObservableSubscription;
 import rx.util.functions.Func0;
 
 /**
- * Combines standard {@link Subscription#unsubscribe()} functionality with ability to skip execution if an unsubscribe occurs before the {@link #call()} method is invoked.
+ * Combines standard {@link Subscription#unsubscribe()} functionality with
+ * ability to skip execution if an unsubscribe occurs before the {@link #call()}
+ * method is invoked.
  */
-/* package */class DiscardableAction implements Func0<Subscription>, Subscription {
+/*
+ * package
+ */
+class DiscardableAction implements Func0<Subscription>, Subscription {
+
     private final Func0<Subscription> underlying;
 
     private final AtomicObservableSubscription wrapper = new AtomicObservableSubscription();

@@ -15,18 +15,17 @@ public class OperationAll {
     }
 
     private static class AllObservable<T> implements Func1<Observer<Boolean>, Subscription> {
+
         private final Observable<T> sequence;
         private final Func1<T, Boolean> predicate;
 
         private final AtomicBoolean status = new AtomicBoolean(true);
         private final AtomicObservableSubscription subscription = new AtomicObservableSubscription();
 
-
         private AllObservable(Observable<T> sequence, Func1<T, Boolean> predicate) {
             this.sequence = sequence;
             this.predicate = predicate;
         }
-
 
         @Override
         public Subscription call(final Observer<Boolean> observer) {

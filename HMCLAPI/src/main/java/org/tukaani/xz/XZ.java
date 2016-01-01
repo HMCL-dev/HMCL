@@ -14,23 +14,23 @@ package org.tukaani.xz;
 public class XZ {
 
     /**
-     * XZ Header Magic Bytes begin a XZ file.
-     * This can be useful to detect XZ compressed data.
+     * XZ Header Magic Bytes begin a XZ file. This can be useful to detect XZ
+     * compressed data.
      */
     public static final byte[] HEADER_MAGIC = {
-        (byte) 0xFD, '7', 'z', 'X', 'Z', '\0'};
+        (byte) 0xFD, '7', 'z', 'X', 'Z', '\0' };
 
     /**
      * XZ Footer Magic Bytes are the last bytes of a XZ Stream.
      */
-    public static final byte[] FOOTER_MAGIC = {'Y', 'Z'};
+    public static final byte[] FOOTER_MAGIC = { 'Y', 'Z' };
 
     /**
      * Integrity check ID indicating that no integrity check is calculated.
      * <p>
-     * Omitting the integrity check is strongly discouraged except when
-     * the integrity of the data will be verified by other means anyway,
-     * and calculating the check twice would be useless.
+     * Omitting the integrity check is strongly discouraged except when the
+     * integrity of the data will be verified by other means anyway, and
+     * calculating the check twice would be useless.
      */
     public static final int CHECK_NONE = 0;
 

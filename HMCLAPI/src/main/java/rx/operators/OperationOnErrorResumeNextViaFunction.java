@@ -1,12 +1,12 @@
 /**
  * Copyright 2013 Netflix, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,30 +55,39 @@ public final class OperationOnErrorResumeNextViaFunction<T> {
                 }
 
                 /**
-                 * Instead of passing the onError forward, we intercept and "resume" with the resumeSequence.
+                 * Instead of passing the onError forward, we intercept and
+                 * "resume" with the resumeSequence.
                  */
                 @Override
                 public void onError(Exception ex) {
-                    /* remember what the current subscription is so we can determine if someone unsubscribes concurrently */
+                    /*
+                     * remember what the current subscription is so we can
+                     * determine if someone unsubscribes concurrently
+                     */
                     AtomicObservableSubscription currentSubscription = subscriptionRef.get();
                     // check that we have not been unsubscribed before we can process the error
-                    if (currentSubscription != null) {
+                    if (currentSubscription != null)
                         try {
                             Observable<T> resumeSequence = resumeFunction.call(ex);
-                            /* error occurred, so switch subscription to the 'resumeSequence' */
+                            /*
+                             * error occurred, so switch subscription to the
+                             * 'resumeSequence'
+                             */
                             AtomicObservableSubscription innerSubscription = new AtomicObservableSubscription(resumeSequence.subscribe(observer));
-                            /* we changed the sequence, so also change the subscription to the one of the 'resumeSequence' instead */
-                            if (!subscriptionRef.compareAndSet(currentSubscription, innerSubscription)) {
+                            /*
+                             * we changed the sequence, so also change the
+                             * subscription to the one of the 'resumeSequence'
+                             * instead
+                             */
+                            if (!subscriptionRef.compareAndSet(currentSubscription, innerSubscription))
                                 // we failed to set which means 'subscriptionRef' was set to NULL via the unsubscribe below
                                 // so we want to immediately unsubscribe from the resumeSequence we just subscribed to
                                 innerSubscription.unsubscribe();
-                            }
                         } catch (Exception e) {
                             // the resume function failed so we need to call onError
                             // I am using CompositeException so that both exceptions can be seen
                             observer.onError(new CompositeException("OnErrorResume function failed", Arrays.asList(ex, e)));
                         }
-                    }
                 }
 
                 @Override

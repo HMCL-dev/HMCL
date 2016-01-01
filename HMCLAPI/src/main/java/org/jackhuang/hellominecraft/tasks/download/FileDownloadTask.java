@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -113,15 +113,13 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                 connection.connect();
 
                 // Make sure response code is in the 200 range.
-                if (connection.getResponseCode() / 100 != 2) {
+                if (connection.getResponseCode() / 100 != 2)
                     throw new NetException(C.i18n("download.not_200") + " " + connection.getResponseCode());
-                }
 
                 // Check for valid content length.
                 int contentLength = connection.getContentLength();
-                if (contentLength < 1) {
+                if (contentLength < 1)
                     throw new NetException("The content length is invalid.");
-                }
 
                 filePath.getParentFile().mkdirs();
 
@@ -179,7 +177,8 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                 closeFiles();
             }
         }
-        if (failReason != null) throw failReason;
+        if (failReason != null)
+            throw failReason;
     }
 
     public static void download(String url, String file, DownloadListener dl) throws Throwable {

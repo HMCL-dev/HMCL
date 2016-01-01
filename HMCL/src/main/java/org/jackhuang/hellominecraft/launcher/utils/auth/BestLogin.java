@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -48,29 +48,29 @@ public final class BestLogin extends IAuthenticator {
             InputStream is = socket.getInputStream();
             int code = is.read();
             switch (code) {
-                case -1:
-                    throw new AuthenticationException("internet error.");
-                case 200:
-                    throw new AuthenticationException("server restarting.");
-                case 255:
-                    throw new AuthenticationException("unknown error");
-                case 3:
-                    throw new AuthenticationException("unregistered.");
-                case 50:
-                    throw new AuthenticationException("please update your launcher and act your account.");
-                case 2:
-                    throw new AuthenticationException("wrong password.");
-                case 100:
-                    throw new AuthenticationException("server reloading.");
-                case 0:
-                    byte[] b = new byte[64];
-                    is.read(b, 0, b.length);
-                    String[] ss = new String(b).split(":");
-                    lr.setUserName(info.username);
-                    lr.setUserId(ss[1]);
-                    lr.setSession(ss[0]);
-                    lr.setAccessToken(ss[0]);
-                    break;
+            case -1:
+                throw new AuthenticationException("internet error.");
+            case 200:
+                throw new AuthenticationException("server restarting.");
+            case 255:
+                throw new AuthenticationException("unknown error");
+            case 3:
+                throw new AuthenticationException("unregistered.");
+            case 50:
+                throw new AuthenticationException("please update your launcher and act your account.");
+            case 2:
+                throw new AuthenticationException("wrong password.");
+            case 100:
+                throw new AuthenticationException("server reloading.");
+            case 0:
+                byte[] b = new byte[64];
+                is.read(b, 0, b.length);
+                String[] ss = new String(b).split(":");
+                lr.setUserName(info.username);
+                lr.setUserId(ss[1]);
+                lr.setSession(ss[0]);
+                lr.setAccessToken(ss[0]);
+                break;
             }
             lr.setUserType("Legacy");
             return lr;

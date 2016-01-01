@@ -28,8 +28,8 @@ final class HC4 extends LZEncoder {
     }
 
     /**
-     * Creates a new LZEncoder with the HC4 match finder.
-     * See <code>LZEncoder.getInstance</code> for parameter descriptions.
+     * Creates a new LZEncoder with the HC4 match finder. See
+     * <code>LZEncoder.getInstance</code> for parameter descriptions.
      */
     HC4(int dictSize, int beforeSizeMin, int readAheadMax,
         int niceLen, int matchLenMax, int depthLimit) {
@@ -54,8 +54,8 @@ final class HC4 extends LZEncoder {
     }
 
     /**
-     * Moves to the next byte, checks that there is enough available space,
-     * and possibly normalizes the hash tables and the hash chain.
+     * Moves to the next byte, checks that there is enough available space, and
+     * possibly normalizes the hash tables and the hash chain.
      *
      * @return number of bytes available, including the current byte
      */

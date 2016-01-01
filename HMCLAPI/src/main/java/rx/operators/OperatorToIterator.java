@@ -16,12 +16,12 @@ public class OperatorToIterator {
 
     /**
      * Returns an iterator that iterates all values of the observable.
-     * 
-     * @param that
-     *            an observable sequence to get an iterator for.
-     * @param <T>
-     *            the type of source.
-     * @return the iterator that could be used to iterate over the elements of the observable.
+     *
+     * @param that an observable sequence to get an iterator for.
+     * @param <T>  the type of source.
+     *
+     * @return the iterator that could be used to iterate over the elements of
+     *         the observable.
      */
     public static <T> Iterator<T> toIterator(Observable<T> that) {
         final BlockingQueue<Notification<T>> notifications = new LinkedBlockingQueue<Notification<T>>();
@@ -48,20 +48,17 @@ public class OperatorToIterator {
 
             @Override
             public boolean hasNext() {
-                if (buf == null) {
+                if (buf == null)
                     buf = take();
-                }
                 return !buf.isOnCompleted();
             }
 
             @Override
             public T next() {
-                if (buf == null) {
+                if (buf == null)
                     buf = take();
-                }
-                if (buf.isOnError()) {
+                if (buf.isOnError())
                     throw Exceptions.propagate(buf.getException());
-                }
 
                 T result = buf.getValue();
                 buf = null;

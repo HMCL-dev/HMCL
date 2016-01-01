@@ -15,9 +15,9 @@ import org.tukaani.xz.delta.DeltaDecoder;
 /**
  * Decodes raw Delta-filtered data (no XZ headers).
  * <p>
- * The delta filter doesn't change the size of the data and thus it
- * cannot have an end-of-payload marker. It will simply decode until
- * its input stream indicates end of input.
+ * The delta filter doesn't change the size of the data and thus it cannot have
+ * an end-of-payload marker. It will simply decode until its input stream
+ * indicates end of input.
  */
 public class DeltaInputStream extends InputStream {
 
@@ -41,12 +41,10 @@ public class DeltaInputStream extends InputStream {
     /**
      * Creates a new Delta decoder with the given delta calculation distance.
      *
-     * @param in       input stream from which Delta filtered data
-     *                 is read
+     * @param in       input stream from which Delta filtered data is read
      *
-     * @param distance delta calculation distance, must be in the
-     *                 range [<code>DISTANCE_MIN</code>,
-     *                 <code>DISTANCE_MAX</code>]
+     * @param distance delta calculation distance, must be in the range
+     *                 [<code>DISTANCE_MIN</code>, <code>DISTANCE_MAX</code>]
      */
     public DeltaInputStream(InputStream in, int distance) {
         // Check for null because otherwise null isn't detect
@@ -61,11 +59,12 @@ public class DeltaInputStream extends InputStream {
     /**
      * Decode the next byte from this input stream.
      *
-     * @return the next decoded byte, or <code>-1</code> to indicate
-     * the end of input on the input stream <code>in</code>
+     * @return the next decoded byte, or <code>-1</code> to indicate the end of
+     *         input on the input stream <code>in</code>
      *
      * @throws IOException may be thrown by <code>in</code>
      */
+    @Override
     public int read() throws IOException {
         return read(tempBuf, 0, 1) == -1 ? -1 : (tempBuf[0] & 0xFF);
     }
@@ -73,21 +72,22 @@ public class DeltaInputStream extends InputStream {
     /**
      * Decode into an array of bytes.
      * <p>
-     * This calls <code>in.read(buf, off, len)</code> and defilters the
-     * returned data.
+     * This calls <code>in.read(buf, off, len)</code> and defilters the returned
+     * data.
      *
      * @param buf target buffer for decoded data
      * @param off start offset in <code>buf</code>
      * @param len maximum number of bytes to read
      *
-     * @return number of bytes read, or <code>-1</code> to indicate
-     * the end of the input stream <code>in</code>
+     * @return number of bytes read, or <code>-1</code> to indicate the end of
+     *         the input stream <code>in</code>
      *
      * @throws XZIOException if the stream has been closed
      *
-     * @throws IOException   may be thrown by underlaying input
-     *                       stream <code>in</code>
+     * @throws IOException   may be thrown by underlaying input stream
+     *                       <code>in</code>
      */
+    @Override
     public int read(byte[] buf, int off, int len) throws IOException {
         if (len == 0)
             return 0;
@@ -118,6 +118,7 @@ public class DeltaInputStream extends InputStream {
      *
      * @return the value returned by <code>in.available()</code>
      */
+    @Override
     public int available() throws IOException {
         if (in == null)
             throw new XZIOException("Stream closed");
@@ -129,11 +130,12 @@ public class DeltaInputStream extends InputStream {
     }
 
     /**
-     * Closes the stream and calls <code>in.close()</code>.
-     * If the stream was already closed, this does nothing.
+     * Closes the stream and calls <code>in.close()</code>. If the stream was
+     * already closed, this does nothing.
      *
      * @throws IOException if thrown by <code>in.close()</code>
      */
+    @Override
     public void close() throws IOException {
         if (in != null)
             try {

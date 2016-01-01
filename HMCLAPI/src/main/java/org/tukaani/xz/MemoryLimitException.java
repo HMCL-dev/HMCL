@@ -9,11 +9,11 @@
 package org.tukaani.xz;
 
 /**
- * Thrown when the memory usage limit given to the XZ decompressor
- * would be exceeded.
+ * Thrown when the memory usage limit given to the XZ decompressor would be
+ * exceeded.
  * <p>
- * The amount of memory required and the memory usage limit are
- * included in the error detail message in human readable format.
+ * The amount of memory required and the memory usage limit are included in the
+ * error detail message in human readable format.
  */
 public class MemoryLimitException extends XZIOException {
 
@@ -25,8 +25,8 @@ public class MemoryLimitException extends XZIOException {
     /**
      * Creates a new MemoryLimitException.
      * <p>
-     * The amount of memory needed and the memory usage limit are
-     * included in the error detail message.
+     * The amount of memory needed and the memory usage limit are included in
+     * the error detail message.
      *
      * @param memoryNeeded amount of memory needed as kibibytes (KiB)
      * @param memoryLimit  specified memory usage limit as kibibytes (KiB)
@@ -49,8 +49,8 @@ public class MemoryLimitException extends XZIOException {
     }
 
     /**
-     * Gets what the memory usage limit was at the time the exception
-     * was created.
+     * Gets what the memory usage limit was at the time the exception was
+     * created.
      *
      * @return memory usage limit as kibibytes (KiB)
      */

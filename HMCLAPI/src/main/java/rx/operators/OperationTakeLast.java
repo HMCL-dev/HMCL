@@ -1,12 +1,12 @@
 /**
  * Copyright 2013 Netflix, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,8 @@ import rx.util.AtomicObservableSubscription;
 import rx.util.functions.Func1;
 
 /**
- * Returns a specified number of contiguous elements from the end of an observable sequence.
+ * Returns a specified number of contiguous elements from the end of an
+ * observable sequence.
  */
 public final class OperationTakeLast {
 
@@ -34,6 +35,7 @@ public final class OperationTakeLast {
     }
 
     private static class TakeLast<T> implements Func1<Observer<T>, Subscription> {
+
         private final int count;
         private final Observable<T> items;
         private final AtomicObservableSubscription subscription = new AtomicObservableSubscription();
@@ -60,9 +62,8 @@ public final class OperationTakeLast {
             @Override
             public void onCompleted() {
                 Iterator<T> reverse = deque.descendingIterator();
-                while (reverse.hasNext()) {
+                while (reverse.hasNext())
                     observer.onNext(reverse.next());
-                }
                 observer.onCompleted();
             }
 
@@ -73,9 +74,8 @@ public final class OperationTakeLast {
 
             @Override
             public void onNext(T args) {
-                while (!deque.offerFirst(args)) {
+                while (!deque.offerFirst(args))
                     deque.removeLast();
-                }
             }
 
         }

@@ -25,25 +25,31 @@ public final class OperationFinally {
 
     /**
      * Call a given action when a sequence completes (with or without an
-     * exception).  The returned observable is exactly as threadsafe as the
+     * exception). The returned observable is exactly as threadsafe as the
      * source observable.
      * <p/>
      * Note that "finally" is a Java reserved word and cannot be an identifier,
      * so we use "finallyDo".
      *
      * @param sequence An observable sequence of elements
-     * @param action An action to be taken when the sequence is complete or throws an exception
-     * @return An observable sequence with the same elements as the input.
-     *         After the last element is consumed (and {@link Observer#onCompleted} has been called),
-     *         or after an exception is thrown (and {@link Observer#onError} has been called),
-     *         the given action will be called.
-     * @see <a href="http://msdn.microsoft.com/en-us/library/hh212133(v=vs.103).aspx">MSDN Observable.Finally method</a>
+     * @param action   An action to be taken when the sequence is complete or
+     *                 throws an exception
+     *
+     * @return An observable sequence with the same elements as the input. After
+     *         the last element is consumed (and {@link Observer#onCompleted} has been
+     *         called), or after an exception is thrown (and {@link Observer#onError}
+     *         has been called), the given action will be called.
+     *
+     * @see
+     * <a href="http://msdn.microsoft.com/en-us/library/hh212133(v=vs.103).aspx">MSDN
+     * Observable.Finally method</a>
      */
     public static <T> Func1<Observer<T>, Subscription> finallyDo(final Observable<T> sequence, final Action0 action) {
         return new Finally<>(sequence, action)::call;
     }
 
     private static class Finally<T> implements Func1<Observer<T>, Subscription> {
+
         private final Observable<T> sequence;
         private final Action0 finalAction;
 
@@ -58,6 +64,7 @@ public final class OperationFinally {
         }
 
         private class FinallyObserver implements Observer<T> {
+
             private final Observer<T> observer;
 
             FinallyObserver(Observer<T> observer) {

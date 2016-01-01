@@ -17,27 +17,32 @@ class BCJDecoder extends BCJCoder implements FilterDecoder {
     private final int startOffset;
 
     BCJDecoder(long filterID, byte[] props)
-    throws UnsupportedOptionsException {
+        throws UnsupportedOptionsException {
         assert isBCJFilterID(filterID);
         this.filterID = filterID;
 
-        if (props.length == 0)
+        switch (props.length) {
+        case 0:
             startOffset = 0;
-        else if (props.length == 4) {
+            break;
+        case 4:
             int n = 0;
             for (int i = 0; i < 4; ++i)
                 n |= (props[i] & 0xFF) << (i * 8);
-
             startOffset = n;
-        } else
+            break;
+        default:
             throw new UnsupportedOptionsException(
-            "Unsupported BCJ filter properties");
+                "Unsupported BCJ filter properties");
+        }
     }
 
+    @Override
     public int getMemoryUsage() {
         return SimpleInputStream.getMemoryUsage();
     }
 
+    @Override
     public InputStream getInputStream(InputStream in) {
         SimpleFilter simpleFilter = null;
 

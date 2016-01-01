@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -72,9 +72,9 @@ public class Java {
     }
 
     /*
-     -----------------------------------
-     MAC OS X
-     -----------------------------------
+     * -----------------------------------
+     * MAC OS X
+     * -----------------------------------
      */
     public static List<Java> queryAllJDKInMac() {
         List<Java> ans = new ArrayList<>();
@@ -88,9 +88,9 @@ public class Java {
     }
 
     /*
-     -----------------------------------
-     WINDOWS
-     -----------------------------------
+     * -----------------------------------
+     * WINDOWS
+     * -----------------------------------
      */
     public static List<Java> queryAllJavaHomeInWindowsByReg() {
         List<Java> ans = new ArrayList<>();
@@ -126,7 +126,7 @@ public class Java {
     }
 
     private static List<String> queryRegSubFolders(String location) throws IOException, InterruptedException {
-        String[] cmd = new String[] {"cmd", "/c", "reg", "query", location};
+        String[] cmd = new String[] { "cmd", "/c", "reg", "query", location };
         List<String> l = IOUtils.readProcessByInputStream(cmd);
         List<String> ans = new ArrayList<>();
         for (String line : l)
@@ -136,7 +136,7 @@ public class Java {
     }
 
     private static String queryRegValue(String location, String name) throws IOException, InterruptedException {
-        String[] cmd = new String[] {"cmd", "/c", "reg", "query", location, "/v", name};
+        String[] cmd = new String[] { "cmd", "/c", "reg", "query", location, "/v", name };
         List<String> l = IOUtils.readProcessByInputStream(cmd);
         boolean last = false;
         for (String s : l) {

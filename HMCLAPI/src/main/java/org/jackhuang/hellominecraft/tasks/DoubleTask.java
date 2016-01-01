@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,22 +22,23 @@ package org.jackhuang.hellominecraft.tasks;
  * @author huangyuhui
  */
 public class DoubleTask extends Task {
-    
+
     Task a, b;
 
     public DoubleTask(Task a, Task b) {
         this.a = a;
         this.b = b;
     }
-    
+
     @Override
     public void executeTask() throws Throwable {
-        a.executeTask(); b.executeTask();
+        a.executeTask();
+        b.executeTask();
     }
 
     @Override
     public String getInfo() {
         return "Double Task";
     }
-    
+
 }

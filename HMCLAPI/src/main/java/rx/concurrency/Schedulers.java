@@ -1,12 +1,12 @@
 /**
  * Copyright 2013 Netflix, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@ import rx.Scheduler;
  * Static factory methods for creating Schedulers.
  */
 public class Schedulers {
+
     private static final ScheduledExecutorService COMPUTATION_EXECUTOR = createComputationExecutor();
     private static final Executor IO_EXECUTOR = createIOExecutor();
 
@@ -37,7 +38,7 @@ public class Schedulers {
 
     /**
      * {@link Scheduler} that executes work immediately on the current thread.
-     * 
+     *
      * @return {@link ImmediateScheduler} instance
      */
     public static Scheduler immediate() {
@@ -45,8 +46,9 @@ public class Schedulers {
     }
 
     /**
-     * {@link Scheduler} that queues work on the current thread to be executed after the current work completes.
-     * 
+     * {@link Scheduler} that queues work on the current thread to be executed
+     * after the current work completes.
+     *
      * @return {@link CurrentThreadScheduler} instance
      */
     public static Scheduler currentThread() {
@@ -54,8 +56,9 @@ public class Schedulers {
     }
 
     /**
-     * {@link Scheduler} that creates a new {@link Thread} for each unit of work.
-     * 
+     * {@link Scheduler} that creates a new {@link Thread} for each unit of
+     * work.
+     *
      * @return {@link NewThreadScheduler} instance
      */
     public static Scheduler newThread() {
@@ -63,8 +66,9 @@ public class Schedulers {
     }
 
     /**
-     * {@link Scheduler} that queues work on the EventQueue thread to be executed on the Swing UI Thread.
-     * 
+     * {@link Scheduler} that queues work on the EventQueue thread to be
+     * executed on the Swing UI Thread.
+     *
      * @return {@link NewThreadScheduler} instance
      */
     public static Scheduler eventQueue() {
@@ -75,7 +79,7 @@ public class Schedulers {
      * {@link Scheduler} that queues work on an {@link Executor}.
      * <p>
      * Note that this does not support scheduled actions with a delay.
-     * 
+     *
      * @return {@link ExecutorScheduler} instance
      */
     public static Scheduler executor(Executor executor) {
@@ -83,8 +87,9 @@ public class Schedulers {
     }
 
     /**
-     * {@link Scheduler} that queues work on an {@link ScheduledExecutorService}.
-     * 
+     * {@link Scheduler} that queues work on an
+     * {@link ScheduledExecutorService}.
+     *
      * @return {@link ExecutorScheduler} instance
      */
     public static Scheduler executor(ScheduledExecutorService executor) {
@@ -94,12 +99,15 @@ public class Schedulers {
     /**
      * {@link Scheduler} intended for computational work.
      * <p>
-     * The implementation is backed by a {@link ScheduledExecutorService} thread-pool sized to the number of CPU cores.
+     * The implementation is backed by a {@link ScheduledExecutorService}
+     * thread-pool sized to the number of CPU cores.
      * <p>
-     * This can be used for event-loops, processing callbacks and other computational work.
+     * This can be used for event-loops, processing callbacks and other
+     * computational work.
      * <p>
-     * Do not perform IO-bound work on this scheduler. Use {@link #threadPoolForComputation()} instead.
-     * 
+     * Do not perform IO-bound work on this scheduler. Use
+     * {@link #threadPoolForComputation()} instead.
+     *
      * @return {@link ExecutorScheduler} for computation-bound work.
      */
     public static Scheduler threadPoolForComputation() {
@@ -109,12 +117,14 @@ public class Schedulers {
     /**
      * {@link Scheduler} intended for IO-bound work.
      * <p>
-     * The implementation is backed by an {@link Executor} thread-pool that will grow as needed.
+     * The implementation is backed by an {@link Executor} thread-pool that will
+     * grow as needed.
      * <p>
      * This can be used for asynchronously performing blocking IO.
      * <p>
-     * Do not perform computational work on this scheduler. Use {@link #threadPoolForComputation()} instead.
-     * 
+     * Do not perform computational work on this scheduler. Use
+     * {@link #threadPoolForComputation()} instead.
+     *
      * @return {@link ExecutorScheduler} for IO-bound work.
      */
     public static Scheduler threadPoolForIO() {
@@ -124,15 +134,15 @@ public class Schedulers {
     private static ScheduledExecutorService createComputationExecutor() {
         int cores = Runtime.getRuntime().availableProcessors();
         return Executors.newScheduledThreadPool(cores, new ThreadFactory() {
-            final AtomicInteger counter = new AtomicInteger();
+                                                final AtomicInteger counter = new AtomicInteger();
 
-            @Override
-            public Thread newThread(Runnable r) {
-                Thread t = new Thread(r, "RxComputationThreadPool-" + counter.incrementAndGet());
-                t.setDaemon(true);
-                return t;
-            }
-        });
+                                                @Override
+                                                public Thread newThread(Runnable r) {
+                                                    Thread t = new Thread(r, "RxComputationThreadPool-" + counter.incrementAndGet());
+                                                    t.setDaemon(true);
+                                                    return t;
+                                                }
+                                            });
     }
 
     private static Executor createIOExecutor() {

@@ -1,12 +1,12 @@
 /**
  * Copyright 2013 Netflix, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,23 +27,30 @@ import rx.util.CompositeException;
 import rx.util.functions.Func1;
 
 /**
- * Same functionality as OperationMerge except that onError events will be skipped so that all onNext calls are passed on until all sequences finish with onComplete or onError, and then the first
- * onError received (if any) will be passed on.
+ * Same functionality as OperationMerge except that onError events will be
+ * skipped so that all onNext calls are passed on until all sequences finish
+ * with onComplete or onError, and then the first onError received (if any) will
+ * be passed on.
  * <p>
- * This allows retrieving all successful onNext calls without being blocked by an onError early in a sequence.
+ * This allows retrieving all successful onNext calls without being blocked by
+ * an onError early in a sequence.
  * <p>
- * NOTE: If this is used on an infinite stream it will never call onError and effectively will swallow errors.
+ * NOTE: If this is used on an infinite stream it will never call onError and
+ * effectively will swallow errors.
  */
 public final class OperationMergeDelayError {
 
     /**
-     * Flattens the observable sequences from the list of Observables into one observable sequence without any transformation and delays any onError calls until after all sequences have called
-     * onError or onComplete so as to allow all successful
-     * onNext calls to be received.
-     * 
-     * @param source
-     *            An observable sequence of elements to project.
-     * @return An observable sequence whose elements are the result of flattening the output from the list of Observables.
+     * Flattens the observable sequences from the list of Observables into one
+     * observable sequence without any transformation and delays any onError
+     * calls until after all sequences have called onError or onComplete so as
+     * to allow all successful onNext calls to be received.
+     *
+     * @param source An observable sequence of elements to project.
+     *
+     * @return An observable sequence whose elements are the result of
+     *         flattening the output from the list of Observables.
+     *
      * @see http://msdn.microsoft.com/en-us/library/hh229099(v=vs.103).aspx
      */
     public static <T> Func1<Observer<T>, Subscription> mergeDelayError(final Observable<Observable<T>> sequences) {
@@ -63,17 +70,14 @@ public final class OperationMergeDelayError {
 
             @Override
             public Subscription call(Observer<Observable<T>> observer) {
-                for (Observable<T> o : sequences) {
-                    if (!unsubscribed) {
+                for (Observable<T> o : sequences)
+                    if (!unsubscribed)
                         observer.onNext(o);
-                    } else {
+                    else
                         // break out of the loop if we are unsubscribed
                         break;
-                    }
-                }
-                if (!unsubscribed) {
+                if (!unsubscribed)
                     observer.onCompleted();
-                }
                 return new Subscription() {
 
                     @Override
@@ -93,17 +97,14 @@ public final class OperationMergeDelayError {
 
             @Override
             public Subscription call(Observer<Observable<T>> observer) {
-                for (Observable<T> o : sequences) {
-                    if (!unsubscribed) {
+                for (Observable<T> o : sequences)
+                    if (!unsubscribed)
                         observer.onNext(o);
-                    } else {
+                    else
                         // break out of the loop if we are unsubscribed
                         break;
-                    }
-                }
-                if (!unsubscribed) {
+                if (!unsubscribed)
                     observer.onCompleted();
-                }
 
                 return new Subscription() {
 
@@ -118,17 +119,24 @@ public final class OperationMergeDelayError {
     }
 
     /**
-     * This class is NOT thread-safe if invoked and referenced multiple times. In other words, don't subscribe to it multiple times from different threads.
+     * This class is NOT thread-safe if invoked and referenced multiple times.
+     * In other words, don't subscribe to it multiple times from different
+     * threads.
      * <p>
-     * It IS thread-safe from within it while receiving onNext events from multiple threads.
+     * It IS thread-safe from within it while receiving onNext events from
+     * multiple threads.
      * <p>
-     * This should all be fine as long as it's kept as a private class and a new instance created from static factory method above.
+     * This should all be fine as long as it's kept as a private class and a new
+     * instance created from static factory method above.
      * <p>
-     * Note how the take() factory method above protects us from a single instance being exposed with the Observable wrapper handling the subscribe flow.
-     * 
+     * Note how the take() factory method above protects us from a single
+     * instance being exposed with the Observable wrapper handling the subscribe
+     * flow.
+     *
      * @param <T>
      */
     private static final class MergeDelayErrorObservable<T> implements Func1<Observer<T>, Subscription> {
+
         private final Observable<Observable<T>> sequences;
         private final MergeSubscription ourSubscription = new MergeSubscription();
         private AtomicBoolean stopped = new AtomicBoolean(false);
@@ -144,18 +152,23 @@ public final class OperationMergeDelayError {
 
         public Subscription call(Observer<T> actualObserver) {
             /**
-             * Subscribe to the parent Observable to get to the children Observables
+             * Subscribe to the parent Observable to get to the children
+             * Observables
              */
             sequences.subscribe(new ParentObserver(actualObserver));
 
-            /* return our subscription to allow unsubscribing */
+            /*
+             * return our subscription to allow unsubscribing
+             */
             return ourSubscription;
         }
 
         /**
-         * Manage the internal subscription with a thread-safe means of stopping/unsubscribing so we don't unsubscribe twice.
+         * Manage the internal subscription with a thread-safe means of
+         * stopping/unsubscribing so we don't unsubscribe twice.
          * <p>
-         * Also has the stop() method returning a boolean so callers know if their thread "won" and should perform further actions.
+         * Also has the stop() method returning a boolean so callers know if
+         * their thread "won" and should perform further actions.
          */
         private class MergeSubscription implements Subscription {
 
@@ -169,23 +182,23 @@ public final class OperationMergeDelayError {
                 boolean didSet = stopped.compareAndSet(false, true);
                 if (didSet) {
                     // this thread won the race to stop, so unsubscribe from the actualSubscription
-                    for (Subscription _s : childSubscriptions.values()) {
+                    for (Subscription _s : childSubscriptions.values())
                         _s.unsubscribe();
-                    }
                     return true;
-                } else {
+                } else
                     // another thread beat us
                     return false;
-                }
             }
         }
 
         /**
-         * Subscribe to the top level Observable to receive the sequence of Observable<T> children.
-         * 
+         * Subscribe to the top level Observable to receive the sequence of
+         * Observable<T> children.
+         *
          * @param <T>
          */
         private class ParentObserver implements Observer<Observable<T>> {
+
             private final Observer<T> actualObserver;
 
             public ParentObserver(Observer<T> actualObserver) {
@@ -199,22 +212,18 @@ public final class OperationMergeDelayError {
                 // but will let the child worry about it
                 // if however this completes and there are no children processing, then we will send onCompleted
 
-                if (childObservers.size() == 0) {
-                    if (!stopped.get()) {
-                        if (ourSubscription.stop()) {
-                            if (onErrorReceived.size() == 1) {
+                if (childObservers.size() == 0)
+                    if (!stopped.get())
+                        if (ourSubscription.stop())
+                            if (onErrorReceived.size() == 1)
                                 // an onError was received from 1 ChildObserver so we now send it as a delayed error
                                 actualObserver.onError(onErrorReceived.peek());
-                            } else if (onErrorReceived.size() > 1) {
+                            else if (onErrorReceived.size() > 1)
                                 // an onError was received from more than 1 ChildObserver so we now send it as a delayed error
                                 actualObserver.onError(new CompositeException(onErrorReceived));
-                            } else {
+                            else
                                 // no delayed error so send onCompleted
                                 actualObserver.onCompleted();
-                            }
-                        }
-                    }
-                }
             }
 
             @Override
@@ -224,20 +233,21 @@ public final class OperationMergeDelayError {
 
             @Override
             public void onNext(Observable<T> childObservable) {
-                if (stopped.get()) {
+                if (stopped.get())
                     // we won't act on any further items
                     return;
-                }
 
-                if (childObservable == null) {
+                if (childObservable == null)
                     throw new IllegalArgumentException("Observable<T> can not be null.");
-                }
 
                 /**
-                 * For each child Observable we receive we'll subscribe with a separate Observer
-                 * that will each then forward their sequences to the actualObserver.
+                 * For each child Observable we receive we'll subscribe with a
+                 * separate Observer that will each then forward their sequences
+                 * to the actualObserver.
                  * <p>
-                 * We use separate child Observers for each sequence to simplify the onComplete/onError handling so each sequence has its own lifecycle.
+                 * We use separate child Observers for each sequence to simplify
+                 * the onComplete/onError handling so each sequence has its own
+                 * lifecycle.
                  */
                 ChildObserver _w = new ChildObserver(actualObserver);
                 childObservers.put(_w, _w);
@@ -248,8 +258,9 @@ public final class OperationMergeDelayError {
         }
 
         /**
-         * Subscribe to each child Observable<T> and forward their sequence of data to the actualObserver
-         * 
+         * Subscribe to each child Observable<T> and forward their sequence of
+         * data to the actualObserver
+         *
          */
         private class ChildObserver implements Observer<T> {
 
@@ -266,9 +277,8 @@ public final class OperationMergeDelayError {
                 childObservers.remove(this);
                 // if there are now 0 Observers left, so if the parent is also completed we send the onComplete to the actualObserver
                 // if the parent is not complete that means there is another sequence (and child Observer) to come
-                if (!stopped.get()) {
+                if (!stopped.get())
                     finishObserver();
-                }
             }
 
             @Override
@@ -289,37 +299,37 @@ public final class OperationMergeDelayError {
             }
 
             /**
-             * onComplete and onError when called need to check for the parent being complete and if so send the onCompleted or onError to the actualObserver.
+             * onComplete and onError when called need to check for the parent
+             * being complete and if so send the onCompleted or onError to the
+             * actualObserver.
              * <p>
-             * This does NOT get invoked if synchronous execution occurs, but will when asynchronously executing.
+             * This does NOT get invoked if synchronous execution occurs, but
+             * will when asynchronously executing.
              * <p>
-             * TestCase testErrorDelayed4WithThreading specifically tests this use case.
+             * TestCase testErrorDelayed4WithThreading specifically tests this
+             * use case.
              */
             private void finishObserver() {
-                if (childObservers.size() == 0 && parentCompleted) {
-                    if (ourSubscription.stop()) {
+                if (childObservers.size() == 0 && parentCompleted)
+                    if (ourSubscription.stop())
                         // this thread 'won' the race to unsubscribe/stop so let's send onError or onCompleted
-                        if (onErrorReceived.size() == 1) {
+                        if (onErrorReceived.size() == 1)
                             // an onError was received from 1 ChildObserver so we now send it as a delayed error
                             actualObserver.onError(onErrorReceived.peek());
-                        } else if (onErrorReceived.size() > 1) {
+                        else if (onErrorReceived.size() > 1)
                             // an onError was received from more than 1 ChildObserver so we now send it as a delayed error
                             actualObserver.onError(new CompositeException(onErrorReceived));
-                        } else {
+                        else
                             // no delayed error so send onCompleted
                             actualObserver.onCompleted();
-                        }
-                    }
-                }
             }
 
             @Override
             public void onNext(T args) {
                 // in case the Observable is poorly behaved and doesn't listen to the unsubscribe request
                 // we'll ignore anything that comes in after we've unsubscribed or an onError has been received and delayed
-                if (!stopped.get() && !finished) {
+                if (!stopped.get() && !finished)
                     actualObserver.onNext(args);
-                }
             }
 
         }

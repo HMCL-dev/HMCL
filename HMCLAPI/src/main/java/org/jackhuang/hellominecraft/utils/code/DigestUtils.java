@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -31,7 +31,7 @@ public class DigestUtils {
     private static final int STREAM_BUFFER_LENGTH = 1024;
 
     private static byte[] digest(MessageDigest digest, InputStream data)
-    throws IOException {
+        throws IOException {
         return updateDigest(digest, data).digest();
     }
 
@@ -77,7 +77,7 @@ public class DigestUtils {
     }
 
     public static byte[] md2(InputStream data)
-    throws IOException {
+        throws IOException {
         return digest(getMd2Digest(), data);
     }
 
@@ -90,7 +90,7 @@ public class DigestUtils {
     }
 
     public static String md2Hex(InputStream data)
-    throws IOException {
+        throws IOException {
         return Hex.encodeHexString(md2(data));
     }
 
@@ -103,7 +103,7 @@ public class DigestUtils {
     }
 
     public static byte[] md5(InputStream data)
-    throws IOException {
+        throws IOException {
         return digest(getMd5Digest(), data);
     }
 
@@ -116,7 +116,7 @@ public class DigestUtils {
     }
 
     public static String md5Hex(InputStream data)
-    throws IOException {
+        throws IOException {
         return Hex.encodeHexString(md5(data));
     }
 
@@ -131,7 +131,7 @@ public class DigestUtils {
 
     @Deprecated
     public static byte[] sha(InputStream data)
-    throws IOException {
+        throws IOException {
         return sha1(data);
     }
 
@@ -145,7 +145,7 @@ public class DigestUtils {
     }
 
     public static byte[] sha1(InputStream data)
-    throws IOException {
+        throws IOException {
         return digest(getSha1Digest(), data);
     }
 
@@ -158,7 +158,7 @@ public class DigestUtils {
     }
 
     public static String sha1Hex(InputStream data)
-    throws IOException {
+        throws IOException {
         return Hex.encodeHexString(sha1(data));
     }
 
@@ -171,7 +171,7 @@ public class DigestUtils {
     }
 
     public static byte[] sha256(InputStream data)
-    throws IOException {
+        throws IOException {
         return digest(getSha256Digest(), data);
     }
 
@@ -184,7 +184,7 @@ public class DigestUtils {
     }
 
     public static String sha256Hex(InputStream data)
-    throws IOException {
+        throws IOException {
         return Hex.encodeHexString(sha256(data));
     }
 
@@ -197,7 +197,7 @@ public class DigestUtils {
     }
 
     public static byte[] sha384(InputStream data)
-    throws IOException {
+        throws IOException {
         return digest(getSha384Digest(), data);
     }
 
@@ -210,7 +210,7 @@ public class DigestUtils {
     }
 
     public static String sha384Hex(InputStream data)
-    throws IOException {
+        throws IOException {
         return Hex.encodeHexString(sha384(data));
     }
 
@@ -223,7 +223,7 @@ public class DigestUtils {
     }
 
     public static byte[] sha512(InputStream data)
-    throws IOException {
+        throws IOException {
         return digest(getSha512Digest(), data);
     }
 
@@ -236,7 +236,7 @@ public class DigestUtils {
     }
 
     public static String sha512Hex(InputStream data)
-    throws IOException {
+        throws IOException {
         return Hex.encodeHexString(sha512(data));
     }
 
@@ -251,7 +251,7 @@ public class DigestUtils {
 
     @Deprecated
     public static String shaHex(InputStream data)
-    throws IOException {
+        throws IOException {
         return sha1Hex(data);
     }
 
@@ -266,7 +266,7 @@ public class DigestUtils {
     }
 
     public static MessageDigest updateDigest(MessageDigest digest, InputStream data)
-    throws IOException {
+        throws IOException {
         byte[] buffer = new byte[STREAM_BUFFER_LENGTH];
         int read = data.read(buffer, 0, STREAM_BUFFER_LENGTH);
 

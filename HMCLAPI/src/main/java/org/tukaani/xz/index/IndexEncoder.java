@@ -25,7 +25,7 @@ public class IndexEncoder extends IndexBase {
     }
 
     public void add(long unpaddedSize, long uncompressedSize)
-    throws XZIOException {
+        throws XZIOException {
         super.add(unpaddedSize, uncompressedSize);
         records.add(new IndexRecord(unpaddedSize, uncompressedSize));
     }

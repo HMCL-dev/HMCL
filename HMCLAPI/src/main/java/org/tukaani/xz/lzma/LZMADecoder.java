@@ -37,10 +37,10 @@ public final class LZMADecoder extends LZMACoder {
     }
 
     /**
-     * Returns true if LZMA end marker was detected. It is encoded as
-     * the maximum match distance which with signed ints becomes -1. This
-     * function is needed only for LZMA1. LZMA2 doesn't use the end marker
-     * in the LZMA layer.
+     * Returns true if LZMA end marker was detected. It is encoded as the
+     * maximum match distance which with signed ints becomes -1. This function
+     * is needed only for LZMA1. LZMA2 doesn't use the end marker in the LZMA
+     * layer.
      */
     public boolean endMarkerDetected() {
         return reps[0] == -1;
@@ -87,7 +87,7 @@ public final class LZMADecoder extends LZMACoder {
 
             if (distSlot < DIST_MODEL_END)
                 reps[0] |= rc.decodeReverseBitTree(
-                distSpecial[distSlot - DIST_MODEL_START]);
+                    distSpecial[distSlot - DIST_MODEL_START]);
             else {
                 reps[0] |= rc.decodeDirectBits(limit - ALIGN_BITS)
                            << ALIGN_BITS;

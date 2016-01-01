@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,7 +22,7 @@ package org.jackhuang.hellominecraft.logging.message;
  * @author huangyuhui
  */
 public class SimpleMessage
-implements IMessage {
+    implements IMessage {
 
     private static final long serialVersionUID = -8398002534962715992L;
     private final String message;

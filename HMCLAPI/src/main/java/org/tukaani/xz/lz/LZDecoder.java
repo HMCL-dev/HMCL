@@ -104,7 +104,7 @@ public final class LZDecoder {
     }
 
     public void copyUncompressed(DataInputStream inData, int len)
-    throws IOException {
+        throws IOException {
         int copySize = Math.min(buf.length - pos, len);
         inData.readFully(buf, pos, copySize);
         pos += copySize;

@@ -58,8 +58,7 @@ final class Optimum {
     }
 
     /**
-     * Sets to indicate three LZMA symbols of which the second one
-     * is a literal.
+     * Sets to indicate three LZMA symbols of which the second one is a literal.
      */
     void set3(int newPrice, int optCur, int back2, int len2, int back) {
         price = newPrice;

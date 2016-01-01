@@ -53,16 +53,16 @@ public class ExecutorScheduler extends AbstractScheduler {
             count = 8;
         SYSTEM_SCHEDULED_EXECUTOR = Executors.newScheduledThreadPool(count, new ThreadFactory() {
 
-            final AtomicInteger counter = new AtomicInteger();
+                                                                     final AtomicInteger counter = new AtomicInteger();
 
-            @Override
-            public Thread newThread(Runnable r) {
-                Thread t = new Thread(r, "RxScheduledExecutorPool-" + counter.incrementAndGet());
-                t.setDaemon(true);
-                return t;
-            }
+                                                                     @Override
+                                                                     public Thread newThread(Runnable r) {
+                                                                         Thread t = new Thread(r, "RxScheduledExecutorPool-" + counter.incrementAndGet());
+                                                                         t.setDaemon(true);
+                                                                         return t;
+                                                                     }
 
-        });
+                                                                 });
 
     }
 

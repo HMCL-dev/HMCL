@@ -33,7 +33,7 @@ public class DecoderUtil extends Util {
     }
 
     public static StreamFlags decodeStreamHeader(byte[] buf)
-    throws IOException {
+        throws IOException {
         for (int i = 0; i < XZ.HEADER_MAGIC.length; ++i)
             if (buf[i] != XZ.HEADER_MAGIC[i])
                 throw new XZFormatException();
@@ -46,12 +46,12 @@ public class DecoderUtil extends Util {
             return decodeStreamFlags(buf, XZ.HEADER_MAGIC.length);
         } catch (UnsupportedOptionsException e) {
             throw new UnsupportedOptionsException(
-            "Unsupported options in XZ Stream Header");
+                "Unsupported options in XZ Stream Header");
         }
     }
 
     public static StreamFlags decodeStreamFooter(byte[] buf)
-    throws IOException {
+        throws IOException {
         if (buf[10] != XZ.FOOTER_MAGIC[0] || buf[11] != XZ.FOOTER_MAGIC[1])
             // NOTE: The exception could be XZFormatException too.
             // It depends on the situation which one is better.
@@ -65,7 +65,7 @@ public class DecoderUtil extends Util {
             streamFlags = decodeStreamFlags(buf, 8);
         } catch (UnsupportedOptionsException e) {
             throw new UnsupportedOptionsException(
-            "Unsupported options in XZ Stream Footer");
+                "Unsupported options in XZ Stream Footer");
         }
 
         streamFlags.backwardSize = 0;
@@ -78,7 +78,7 @@ public class DecoderUtil extends Util {
     }
 
     private static StreamFlags decodeStreamFlags(byte[] buf, int off)
-    throws UnsupportedOptionsException {
+        throws UnsupportedOptionsException {
         if (buf[off] != 0x00 || (buf[off + 1] & 0xFF) >= 0x10)
             throw new UnsupportedOptionsException();
 

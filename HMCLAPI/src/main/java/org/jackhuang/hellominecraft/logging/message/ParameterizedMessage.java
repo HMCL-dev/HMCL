@@ -68,11 +68,11 @@ public class ParameterizedMessage
     }
 
     public ParameterizedMessage(String messagePattern, Object arg) {
-        this(messagePattern, new Object[] {arg});
+        this(messagePattern, new Object[] { arg });
     }
 
     public ParameterizedMessage(String messagePattern, Object arg1, Object arg2) {
-        this(messagePattern, new Object[] {arg1, arg2});
+        this(messagePattern, new Object[] { arg1, arg2 });
     }
 
     private String[] parseArguments(Object[] arguments) {

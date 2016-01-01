@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -42,17 +42,17 @@ public final class InstallerService {
     public InstallerService(Profile p) {
         this.p = p;
     }
-    
+
     public Task download(InstallerVersion v, InstallerType type) {
-        switch(type) {
-            case Forge:
-                return downloadForge(v);
-            case Optifine:
-                return downloadOptifine(v);
-            case LiteLoader:
-                return downloadLiteLoader(v);
-            default:
-                return null;
+        switch (type) {
+        case Forge:
+            return downloadForge(v);
+        case Optifine:
+            return downloadOptifine(v);
+        case LiteLoader:
+            return downloadLiteLoader(v);
+        default:
+            return null;
         }
     }
 
@@ -63,9 +63,9 @@ public final class InstallerService {
                 File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "forge-installer.jar");
                 if (v.installer != null)
                     TaskWindow.getInstance()
-                    .addTask(new FileDownloadTask(p.getDownloadType().getProvider().getParsedLibraryDownloadURL(v.installer), filepath).setTag("forge"))
-                    .addTask(new ForgeInstaller(p.getMinecraftProvider(), filepath, v))
-                    .start();
+                        .addTask(new FileDownloadTask(p.getDownloadType().getProvider().getParsedLibraryDownloadURL(v.installer), filepath).setTag("forge"))
+                        .addTask(new ForgeInstaller(p.getMinecraftProvider(), filepath, v))
+                        .start();
             }
         };
     }
@@ -78,9 +78,9 @@ public final class InstallerService {
                 if (v.installer != null) {
                     OptiFineDownloadFormatter task = new OptiFineDownloadFormatter(v.installer);
                     TaskWindow.getInstance().addTask(task)
-                    .addTask(new FileDownloadTask(filepath).registerPreviousResult(task).setTag("optifine"))
-                    .addTask(new OptiFineInstaller(p, v.selfVersion, filepath))
-                    .start();
+                        .addTask(new FileDownloadTask(filepath).registerPreviousResult(task).setTag("optifine"))
+                        .addTask(new OptiFineInstaller(p, v.selfVersion, filepath))
+                        .start();
                 }
             }
         };
@@ -93,8 +93,8 @@ public final class InstallerService {
                 File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "liteloader-universal.jar");
                 FileDownloadTask task = (FileDownloadTask) new FileDownloadTask(v.universal, filepath).setTag("LiteLoader");
                 TaskWindow.getInstance()
-                .addTask(task).addTask(new LiteLoaderInstaller(p, (LiteLoaderVersionList.LiteLoaderInstallerVersion) v).registerPreviousResult(task))
-                .start();
+                    .addTask(task).addTask(new LiteLoaderInstaller(p, (LiteLoaderVersionList.LiteLoaderInstallerVersion) v).registerPreviousResult(task))
+                    .start();
             }
         };
     }

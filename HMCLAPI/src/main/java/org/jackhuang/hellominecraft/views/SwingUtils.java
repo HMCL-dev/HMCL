@@ -50,15 +50,15 @@ public class SwingUtils {
      * Make DefaultTableModel by overriding getColumnClass and isCellEditable of
      * DefaultTableModel.
      *
-     * @param titleA The title of each column.
-     * @param typesA The type of each column value.
+     * @param titleA   The title of each column.
+     * @param typesA   The type of each column value.
      * @param canEditA Is column editable?
      *
      * @return
      */
     public static DefaultTableModel makeDefaultTableModel(String[] titleA, final Class[] typesA, final boolean[] canEditA) {
         return new DefaultTableModel(
-            new Object[][]{},
+            new Object[][] {},
             titleA) {
             Class[] types = typesA;
             boolean[] canEdit = canEditA;
@@ -81,7 +81,7 @@ public class SwingUtils {
         switch (OS.os()) {
         case OSX:
             try {
-                Runtime.getRuntime().exec(new String[]{"/usr/bin/open", path});
+                Runtime.getRuntime().exec(new String[] { "/usr/bin/open", path });
             } catch (IOException ex) {
                 HMCLog.err("Failed to open " + path + " through /usr/bin/open", ex);
             }
@@ -108,7 +108,7 @@ public class SwingUtils {
         } catch (Throwable e) {
             if (OS.os() == OS.OSX)
                 try {
-                    Runtime.getRuntime().exec(new String[]{"/usr/bin/open", link});
+                    Runtime.getRuntime().exec(new String[] { "/usr/bin/open", link });
                 } catch (IOException ex) {
                     HMCLog.warn("Failed to open link: " + link, ex);
                 }
@@ -150,7 +150,7 @@ public class SwingUtils {
     /**
      * Append new element to JList
      *
-     * @param list the JList
+     * @param list    the JList
      * @param element the Element
      */
     public static void appendLast(JList list, Object element) {

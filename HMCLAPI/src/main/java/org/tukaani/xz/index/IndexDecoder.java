@@ -40,7 +40,7 @@ public class IndexDecoder extends IndexBase {
 
     public IndexDecoder(SeekableInputStream in, StreamFlags streamFooterFlags,
                         long streamPadding, int memoryLimit)
-    throws IOException {
+        throws IOException {
         super(new CorruptedInputException("XZ Index is corrupt"));
         this.streamFlags = streamFooterFlags;
         this.streamPadding = streamPadding;

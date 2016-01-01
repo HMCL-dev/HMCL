@@ -133,7 +133,7 @@ class LZMA2OutputStream extends FinishableOutputStream {
     }
 
     private void writeLZMA(int uncompressedSize, int compressedSize)
-    throws IOException {
+        throws IOException {
         int control;
 
         if (propsNeeded)

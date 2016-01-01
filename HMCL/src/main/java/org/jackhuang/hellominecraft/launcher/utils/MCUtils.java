@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -33,21 +33,21 @@ public final class MCUtils {
         String userhome = System.getProperty("user.home", ".");
         File file;
         switch (OS.os()) {
-            case LINUX:
+        case LINUX:
+            file = new File(userhome, '.' + baseName + '/');
+            break;
+        case WINDOWS:
+            String appdata = System.getenv("APPDATA");
+            if (appdata != null)
+                file = new File(appdata, "." + baseName + '/');
+            else
                 file = new File(userhome, '.' + baseName + '/');
-                break;
-            case WINDOWS:
-                String appdata = System.getenv("APPDATA");
-                if (appdata != null)
-                    file = new File(appdata, "." + baseName + '/');
-                else
-                    file = new File(userhome, '.' + baseName + '/');
-                break;
-            case OSX:
-                file = new File(userhome, "Library/Application Support/" + baseName);
-                break;
-            default:
-                file = new File(userhome, baseName + '/');
+            break;
+        case OSX:
+            file = new File(userhome, "Library/Application Support/" + baseName);
+            break;
+        default:
+            file = new File(userhome, baseName + '/');
         }
         return file;
     }

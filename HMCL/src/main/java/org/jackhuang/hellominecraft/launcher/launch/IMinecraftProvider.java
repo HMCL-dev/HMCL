@@ -74,6 +74,7 @@ public abstract class IMinecraftProvider {
     /**
      *
      * @param v should be resolved
+     *
      * @return libraries of resolved minecraft version v.
      */
     public abstract GameLauncher.DecompressLibraryJob getDecompressLibraries(MinecraftVersion v);
@@ -106,7 +107,7 @@ public abstract class IMinecraftProvider {
      * Rename version
      *
      * @param from The old name
-     * @param to The new name
+     * @param to   The new name
      *
      * @return Is the action successful?
      */

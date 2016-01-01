@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -79,7 +79,7 @@ public class Compressor {
             files = new File[1];
             files[0] = source;
         }
-        String pathName;//存相对路径(相对于待压缩的根目录)  
+        String pathName;//存相对路径(相对于待压缩的根目录)
         byte[] buf = new byte[1024];
         int length;
         for (File file : files)

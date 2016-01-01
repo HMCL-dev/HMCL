@@ -1,12 +1,12 @@
 /**
  * Copyright 2013 Netflix, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,10 +42,11 @@ public final class OperatorGroupBy {
     }
 
     public static <K, T> Func1<Observer<GroupedObservable<K, T>>, Subscription> groupBy(Observable<T> source, final Func1<T, K> keySelector) {
-        return groupBy(source, keySelector, Functions.<T> identity());
+        return groupBy(source, keySelector, Functions.<T>identity());
     }
 
     private static class GroupBy<K, V> implements Func1<Observer<GroupedObservable<K, V>>, Subscription> {
+
         private final Observable<KeyValue<K, V>> source;
         private final ConcurrentHashMap<K, Boolean> keys = new ConcurrentHashMap<K, Boolean>();
 
@@ -72,9 +73,8 @@ public final class OperatorGroupBy {
                 public void onNext(final KeyValue<K, V> args) {
                     K key = args.key;
                     boolean newGroup = keys.putIfAbsent(key, true) == null;
-                    if (newGroup) {
+                    if (newGroup)
                         observer.onNext(buildObservableFor(source, key));
-                    }
                 }
 
             });
@@ -95,15 +95,16 @@ public final class OperatorGroupBy {
         });
         return new GroupedObservable<K, R>(key, new Func1<Observer<R>, Subscription>() {
 
-            @Override
-            public Subscription call(Observer<R> observer) {
-                return observable.subscribe(observer);
-            }
+                                           @Override
+                                           public Subscription call(Observer<R> observer) {
+                                               return observable.subscribe(observer);
+                                           }
 
-        });
+                                       });
     }
 
     private static class KeyValue<K, V> {
+
         private final K key;
         private final V value;
 

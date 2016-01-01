@@ -35,7 +35,7 @@ class BlockInputStream extends InputStream {
     public BlockInputStream(InputStream in, Check check, int memoryLimit,
                             long unpaddedSizeInIndex,
                             long uncompressedSizeInIndex)
-    throws IOException, IndexIndicatorException {
+        throws IOException, IndexIndicatorException {
         this.check = check;
         inData = new DataInputStream(in);
 
@@ -59,7 +59,7 @@ class BlockInputStream extends InputStream {
         // Check for reserved bits in Block Flags.
         if ((buf[1] & 0x3C) != 0)
             throw new UnsupportedOptionsException(
-            "Unsupported options in XZ Block Header");
+                "Unsupported options in XZ Block Header");
 
         // Memory for the Filter Flags field
         int filterCount = (buf[1] & 0x03) + 1;
@@ -69,7 +69,7 @@ class BlockInputStream extends InputStream {
         // Use a stream to parse the fields after the Block Flags field.
         // Exclude the CRC32 field at the end.
         ByteArrayInputStream bufStream = new ByteArrayInputStream(
-        buf, 2, headerSize - 6);
+            buf, 2, headerSize - 6);
 
         try {
             // Set the maximum valid compressed size. This is overriden
@@ -114,7 +114,7 @@ class BlockInputStream extends InputStream {
         for (int i = bufStream.available(); i > 0; --i)
             if (bufStream.read() != 0x00)
                 throw new UnsupportedOptionsException(
-                "Unsupported options in XZ Block Header");
+                    "Unsupported options in XZ Block Header");
 
         // Validate the Blcok Header against the Index when doing
         // random access reading.
@@ -125,7 +125,7 @@ class BlockInputStream extends InputStream {
             int headerAndCheckSize = headerSize + check.getSize();
             if (headerAndCheckSize >= unpaddedSizeInIndex)
                 throw new CorruptedInputException(
-                "XZ Index does not match a Block Header");
+                    "XZ Index does not match a Block Header");
 
             // The compressed size calculated from Unpadded Size must
             // match the value stored in the Compressed Size field in
@@ -136,7 +136,7 @@ class BlockInputStream extends InputStream {
                 || (compressedSizeInHeader != -1
                     && compressedSizeInHeader != compressedSizeFromIndex))
                 throw new CorruptedInputException(
-                "XZ Index does not match a Block Header");
+                    "XZ Index does not match a Block Header");
 
             // The uncompressed size stored in the Index must match
             // the value stored in the Uncompressed Size field in
@@ -144,7 +144,7 @@ class BlockInputStream extends InputStream {
             if (uncompressedSizeInHeader != -1
                 && uncompressedSizeInHeader != uncompressedSizeInIndex)
                 throw new CorruptedInputException(
-                "XZ Index does not match a Block Header");
+                    "XZ Index does not match a Block Header");
 
             // For further validation, pretend that the values from the Index
             // were stored in the Block Header.
@@ -170,7 +170,7 @@ class BlockInputStream extends InputStream {
 
             else
                 throw new UnsupportedOptionsException(
-                "Unknown Filter ID " + filterIDs[i]);
+                    "Unknown Filter ID " + filterIDs[i]);
 
         RawCoder.validate(filters);
 

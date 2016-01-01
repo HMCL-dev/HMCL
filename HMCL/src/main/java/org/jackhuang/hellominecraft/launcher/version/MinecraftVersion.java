@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -33,7 +33,7 @@ import org.jackhuang.hellominecraft.utils.ArrayUtils;
 public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion> {
 
     public String minecraftArguments, mainClass, time, id, type, processArguments,
-    releaseTime, assets, jar, inheritsFrom;
+        releaseTime, assets, jar, inheritsFrom;
     public int minimumLauncherVersion;
     public boolean hidden;
 
@@ -88,13 +88,13 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
         }
         parent = parent.resolve(manager, resolvedSoFar);
         MinecraftVersion result = new MinecraftVersion(
-        this.minecraftArguments != null ? this.minecraftArguments : parent.minecraftArguments,
-        this.mainClass != null ? this.mainClass : parent.mainClass,
-        this.time, this.id, this.type, parent.processArguments, this.releaseTime,
-        this.assets != null ? this.assets : parent.assets,
-        this.jar != null ? this.jar : parent.jar,
-        null, parent.minimumLauncherVersion,
-        this.libraries != null ? ArrayUtils.merge(this.libraries, parent.libraries) : parent.libraries, this.hidden);
+            this.minecraftArguments != null ? this.minecraftArguments : parent.minecraftArguments,
+            this.mainClass != null ? this.mainClass : parent.mainClass,
+            this.time, this.id, this.type, parent.processArguments, this.releaseTime,
+            this.assets != null ? this.assets : parent.assets,
+            this.jar != null ? this.jar : parent.jar,
+            null, parent.minimumLauncherVersion,
+            this.libraries != null ? ArrayUtils.merge(this.libraries, parent.libraries) : parent.libraries, this.hidden);
 
         return result;
     }

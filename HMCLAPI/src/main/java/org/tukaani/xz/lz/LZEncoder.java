@@ -18,16 +18,16 @@ public abstract class LZEncoder {
     public static final int MF_BT4 = 0x14;
 
     /**
-     * Number of bytes to keep available before the current byte
-     * when moving the LZ window.
+     * Number of bytes to keep available before the current byte when moving the
+     * LZ window.
      */
     private final int keepSizeBefore;
 
     /**
-     * Number of bytes that must be available, the current byte included,
-     * to make hasEnoughData return true. Flushing and finishing are
-     * naturally exceptions to this since there cannot be any data after
-     * the end of the uncompressed input.
+     * Number of bytes that must be available, the current byte included, to
+     * make hasEnoughData return true. Flushing and finishing are naturally
+     * exceptions to this since there cannot be any data after the end of the
+     * uncompressed input.
      */
     private final int keepSizeAfter;
 
@@ -54,8 +54,8 @@ public abstract class LZEncoder {
      * Gets the size of the LZ window buffer that needs to be allocated.
      */
     private static int getBufSize(
-    int dictSize, int extraSizeBefore, int extraSizeAfter,
-    int matchLenMax) {
+        int dictSize, int extraSizeBefore, int extraSizeAfter,
+        int matchLenMax) {
         int keepSizeBefore = extraSizeBefore + dictSize;
         int keepSizeAfter = extraSizeAfter + matchLenMax;
         int reserveSize = Math.min(dictSize / 2 + (256 << 10), 512 << 20);
@@ -63,27 +63,27 @@ public abstract class LZEncoder {
     }
 
     /**
-     * Gets approximate memory usage of the LZEncoder base structure and
-     * the match finder as kibibytes.
+     * Gets approximate memory usage of the LZEncoder base structure and the
+     * match finder as kibibytes.
      */
     public static int getMemoryUsage(
-    int dictSize, int extraSizeBefore, int extraSizeAfter,
-    int matchLenMax, int mf) {
+        int dictSize, int extraSizeBefore, int extraSizeAfter,
+        int matchLenMax, int mf) {
         // Buffer size + a little extra
         int m = getBufSize(dictSize, extraSizeBefore, extraSizeAfter,
                            matchLenMax) / 1024 + 10;
 
         switch (mf) {
-            case MF_HC4:
-                m += HC4.getMemoryUsage(dictSize);
-                break;
+        case MF_HC4:
+            m += HC4.getMemoryUsage(dictSize);
+            break;
 
-            case MF_BT4:
-                m += BT4.getMemoryUsage(dictSize);
-                break;
+        case MF_BT4:
+            m += BT4.getMemoryUsage(dictSize);
+            break;
 
-            default:
-                throw new IllegalArgumentException();
+        default:
+            throw new IllegalArgumentException();
         }
 
         return m;
@@ -94,17 +94,15 @@ public abstract class LZEncoder {
      * <p>
      * @param dictSize        dictionary size
      *
-     * @param extraSizeBefore
-     *                        number of bytes to keep available in the
-     *                        history in addition to dictSize
+     * @param extraSizeBefore number of bytes to keep available in the history
+     *                        in addition to dictSize
      *
-     * @param extraSizeAfter
-     *                        number of bytes that must be available
-     *                        after current position + matchLenMax
+     * @param extraSizeAfter  number of bytes that must be available after
+     *                        current position + matchLenMax
      *
-     * @param niceLen         if a match of at least <code>niceLen</code>
-     *                        bytes is found, be happy with it and don't
-     *                        stop looking for longer matches
+     * @param niceLen         if a match of at least <code>niceLen</code> bytes
+     *                        is
+     *                        found, be happy with it and don't stop looking for longer matches
      *
      * @param matchLenMax     don't test for matches longer than
      *                        <code>matchLenMax</code> bytes
@@ -114,16 +112,16 @@ public abstract class LZEncoder {
      * @param depthLimit      match finder search depth limit
      */
     public static LZEncoder getInstance(
-    int dictSize, int extraSizeBefore, int extraSizeAfter,
-    int niceLen, int matchLenMax, int mf, int depthLimit) {
+        int dictSize, int extraSizeBefore, int extraSizeAfter,
+        int niceLen, int matchLenMax, int mf, int depthLimit) {
         switch (mf) {
-            case MF_HC4:
-                return new HC4(dictSize, extraSizeBefore, extraSizeAfter,
-                               niceLen, matchLenMax, depthLimit);
+        case MF_HC4:
+            return new HC4(dictSize, extraSizeBefore, extraSizeAfter,
+                           niceLen, matchLenMax, depthLimit);
 
-            case MF_BT4:
-                return new BT4(dictSize, extraSizeBefore, extraSizeAfter,
-                               niceLen, matchLenMax, depthLimit);
+        case MF_BT4:
+            return new BT4(dictSize, extraSizeBefore, extraSizeAfter,
+                           niceLen, matchLenMax, depthLimit);
         }
 
         throw new IllegalArgumentException();
@@ -145,9 +143,9 @@ public abstract class LZEncoder {
     }
 
     /**
-     * Sets a preset dictionary. If a preset dictionary is wanted, this
-     * function must be called immediately after creating the LZEncoder
-     * before any data has been encoded.
+     * Sets a preset dictionary. If a preset dictionary is wanted, this function
+     * must be called immediately after creating the LZEncoder before any data
+     * has been encoded.
      */
     public void setPresetDict(int dictSize, byte[] presetDict) {
         assert !isStarted();
@@ -165,8 +163,8 @@ public abstract class LZEncoder {
     }
 
     /**
-     * Moves data from the end of the buffer to the beginning, discarding
-     * old data and making space for new input.
+     * Moves data from the end of the buffer to the beginning, discarding old
+     * data and making space for new input.
      */
     private void moveWindow() {
         // Align the move to a multiple of 16 bytes. LZMA2 needs this
@@ -212,8 +210,8 @@ public abstract class LZEncoder {
     }
 
     /**
-     * Process pending bytes remaining from preset dictionary initialization
-     * or encoder flush operation.
+     * Process pending bytes remaining from preset dictionary initialization or
+     * encoder flush operation.
      */
     private void processPendingBytes() {
         // After flushing or setting a preset dictionary there will be
@@ -234,16 +232,16 @@ public abstract class LZEncoder {
     }
 
     /**
-     * Returns true if at least one byte has already been run through
-     * the match finder.
+     * Returns true if at least one byte has already been run through the match
+     * finder.
      */
     public boolean isStarted() {
         return readPos != -1;
     }
 
     /**
-     * Marks that all the input needs to be made available in
-     * the encoded output.
+     * Marks that all the input needs to be made available in the encoded
+     * output.
      */
     public void setFlushing() {
         readLimit = writePos - 1;
@@ -251,8 +249,8 @@ public abstract class LZEncoder {
     }
 
     /**
-     * Marks that there is no more input remaining. The read position
-     * can be advanced until the end of the data.
+     * Marks that there is no more input remaining. The read position can be
+     * advanced until the end of the data.
      */
     public void setFinishing() {
         readLimit = writePos - 1;
@@ -261,15 +259,15 @@ public abstract class LZEncoder {
     }
 
     /**
-     * Tests if there is enough input available to let the caller encode
-     * at least one more byte.
+     * Tests if there is enough input available to let the caller encode at
+     * least one more byte.
      */
     public boolean hasEnoughData(int alreadyReadLen) {
         return readPos - alreadyReadLen < readLimit;
     }
 
     public void copyUncompressed(OutputStream out, int backward, int len)
-    throws IOException {
+        throws IOException {
         out.write(buf, readPos + 1 - backward, len);
     }
 
@@ -277,8 +275,8 @@ public abstract class LZEncoder {
      * Get the number of bytes available, including the current byte.
      * <p>
      * Note that the result is undefined if <code>getMatches</code> or
-     * <code>skip</code> hasn't been called yet and no preset dictionary
-     * is being used.
+     * <code>skip</code> hasn't been called yet and no preset dictionary is
+     * being used.
      */
     public int getAvail() {
         assert isStarted();
@@ -296,9 +294,8 @@ public abstract class LZEncoder {
     /**
      * Gets the byte from the given backward offset.
      * <p>
-     * The current byte is at <code>0</code>, the previous byte
-     * at <code>1</code> etc. To get a byte at zero-based distance,
-     * use <code>getByte(dist + 1)<code>.
+     * The current byte is at <code>0</code>, the previous byte at
+     * <code>1</code> etc. To get a byte at zero-based distance, use <code>getByte(dist + 1)<code>.
      * <p>
      * This function is equivalent to <code>getByte(0, backward)</code>.
      */
@@ -307,9 +304,9 @@ public abstract class LZEncoder {
     }
 
     /**
-     * Gets the byte from the given forward minus backward offset.
-     * The forward offset is added to the current position. This lets
-     * one read bytes ahead of the current byte.
+     * Gets the byte from the given forward minus backward offset. The forward
+     * offset is added to the current position. This lets one read bytes ahead
+     * of the current byte.
      */
     public int getByte(int forward, int backward) {
         return buf[readPos + forward - backward] & 0xFF;
@@ -354,10 +351,10 @@ public abstract class LZEncoder {
     }
 
     /**
-     * Verifies that the matches returned by the match finder are valid.
-     * This is meant to be used in an assert statement. This is totally
-     * useless for actual encoding since match finder's results should
-     * naturally always be valid if it isn't broken.
+     * Verifies that the matches returned by the match finder are valid. This is
+     * meant to be used in an assert statement. This is totally useless for
+     * actual encoding since match finder's results should naturally always be
+     * valid if it isn't broken.
      *
      * @param matches return value from <code>getMatches</code>
      *
@@ -374,21 +371,17 @@ public abstract class LZEncoder {
     }
 
     /**
-     * Moves to the next byte, checks if there is enough input available,
-     * and returns the amount of input available.
+     * Moves to the next byte, checks if there is enough input available, and
+     * returns the amount of input available.
      *
-     * @param requiredForFlushing
-     *                             minimum number of available bytes when
-     *                             flushing; encoding may be continued with
-     *                             new input after flushing
-     * @param requiredForFinishing
-     *                             minimum number of available bytes when
-     *                             finishing; encoding must not be continued
-     *                             after finishing or the match finder state
-     *                             may be corrupt
+     * @param requiredForFlushing  minimum number of available bytes when
+     *                             flushing; encoding may be continued with new input after flushing
+     * @param requiredForFinishing minimum number of available bytes when
+     *                             finishing; encoding must not be continued after finishing or the match
+     *                             finder state may be corrupt
      *
-     * @return the number of bytes available or zero if there
-     * is not enough input available
+     * @return the number of bytes available or zero if there is not enough
+     *         input available
      */
     int movePos(int requiredForFlushing, int requiredForFinishing) {
         assert requiredForFlushing >= requiredForFinishing;

@@ -14,14 +14,14 @@ import java.io.IOException;
 import java.io.FileNotFoundException;
 
 /**
- * Wraps a {@link java.io.RandomAccessFile RandomAccessFile}
- * in a SeekableInputStream.
+ * Wraps a {@link java.io.RandomAccessFile RandomAccessFile} in a
+ * SeekableInputStream.
  */
 public class SeekableFileInputStream extends SeekableInputStream {
 
     /**
-     * The RandomAccessFile that has been wrapped
-     * into a SeekableFileInputStream.
+     * The RandomAccessFile that has been wrapped into a
+     * SeekableFileInputStream.
      */
     protected RandomAccessFile randomAccessFile;
 
@@ -33,8 +33,8 @@ public class SeekableFileInputStream extends SeekableInputStream {
     }
 
     /**
-     * Creates a new seekable input stream that reads from a file with
-     * the specified name.
+     * Creates a new seekable input stream that reads from a file with the
+     * specified name.
      */
     public SeekableFileInputStream(String name) throws FileNotFoundException {
         randomAccessFile = new RandomAccessFile(name, "r");
@@ -63,8 +63,7 @@ public class SeekableFileInputStream extends SeekableInputStream {
     }
 
     /**
-     * Calls
-     * {@link RandomAccessFile#read(byte[],int,int)
+     * Calls null null null null null null null null null null null     {@link RandomAccessFile#read(byte[],int,int)
      *        randomAccessFile.read(buf, off, len)}.
      */
     public int read(byte[] buf, int off, int len) throws IOException {

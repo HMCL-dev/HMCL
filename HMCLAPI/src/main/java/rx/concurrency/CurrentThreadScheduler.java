@@ -1,12 +1,12 @@
 /**
  * Copyright 2013 Netflix, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,9 +23,11 @@ import rx.Subscription;
 import rx.util.functions.Func0;
 
 /**
- * Schedules work on the current thread but does not execute immediately. Work is put in a queue and executed after the current unit of work is completed.
+ * Schedules work on the current thread but does not execute immediately. Work
+ * is put in a queue and executed after the current unit of work is completed.
  */
 public class CurrentThreadScheduler extends AbstractScheduler {
+
     private static final CurrentThreadScheduler INSTANCE = new CurrentThreadScheduler();
 
     public static CurrentThreadScheduler getInstance() {
@@ -61,9 +63,8 @@ public class CurrentThreadScheduler extends AbstractScheduler {
         queue.add(action);
 
         if (exec) {
-            while (!queue.isEmpty()) {
+            while (!queue.isEmpty())
                 queue.poll().call();
-            }
 
             QUEUE.set(null);
         }

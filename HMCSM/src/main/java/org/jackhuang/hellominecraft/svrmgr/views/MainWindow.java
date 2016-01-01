@@ -238,7 +238,7 @@ public final class MainWindow extends javax.swing.JFrame
         itm.addActionListener(new ActionListenerImpl("me " + JOptionPane.showInputDialog("广播讯息")));
         itm = new JMenuItem("私聊");
         itm.addActionListener(e -> {
-            InputDialog id = new InputDialog(MainWindow.this, true, new String[] {"玩家", "讯息"});
+            InputDialog id = new InputDialog(MainWindow.this, true, new String[] { "玩家", "讯息" });
             id.setVisible(true);
             Server.getInstance().sendCommand("tell " + id.result[0] + " " + id.result[1]);
         });
@@ -318,7 +318,7 @@ public final class MainWindow extends javax.swing.JFrame
         ppmBasically.add(itm);
         itm = new JMenuItem("给予玩家物品");
         itm.addActionListener(e -> {
-            InputDialog id = new InputDialog(MainWindow.this, true, new String[] {"玩家", "物品ID", "数量"});
+            InputDialog id = new InputDialog(MainWindow.this, true, new String[] { "玩家", "物品ID", "数量" });
             id.setVisible(true);
             if (id.result != null)
                 Server.getInstance().sendCommand("give " + id.result[0] + " " + id.result[1] + " " + id.result[2]);
@@ -2779,7 +2779,7 @@ public final class MainWindow extends javax.swing.JFrame
         while (model.getRowCount() > 0)
             model.removeRow(0);
         for (String s : sl)
-            model.addRow(new Object[] {!SettingsManager.settings.inactiveExtMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(IOUtils.addSeparator(path) + s))});
+            model.addRow(new Object[] { !SettingsManager.settings.inactiveExtMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(IOUtils.addSeparator(path) + s)) });
 
         lstExternalMods.updateUI();
     }
@@ -2795,11 +2795,11 @@ public final class MainWindow extends javax.swing.JFrame
         for (String s : sl) {
             PluginInformation p = PluginManager.getPluginYML(new File(Utilities.getGameDir() + "plugins" + File.separator + s));
             if (p == null)
-                model.addRow(new Object[] {!SettingsManager.settings.inactivePlugins.contains(s), s,
-                                           "", "", "", ""});
+                model.addRow(new Object[] { !SettingsManager.settings.inactivePlugins.contains(s), s,
+                                            "", "", "", "" });
             else
-                model.addRow(new Object[] {!SettingsManager.settings.inactivePlugins.contains(s), s,
-                                           p.name, p.version, p.author, p.description});
+                model.addRow(new Object[] { !SettingsManager.settings.inactivePlugins.contains(s), s,
+                                            p.name, p.version, p.author, p.description });
         }
 
         lstPlugins.updateUI();
@@ -2814,7 +2814,7 @@ public final class MainWindow extends javax.swing.JFrame
         while (model.getRowCount() > 0)
             model.removeRow(0);
         for (String s : sl)
-            model.addRow(new Object[] {!SettingsManager.settings.inactiveCoreMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(IOUtils.addSeparator(path) + s))});
+            model.addRow(new Object[] { !SettingsManager.settings.inactiveCoreMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(IOUtils.addSeparator(path) + s)) });
 
         lstCoreMods.updateUI();
     }
@@ -3003,7 +3003,7 @@ public final class MainWindow extends javax.swing.JFrame
         ArrayList<String> al = IOUtils.findAllFile(new File(Utilities.getGameDir() + "infos-HMCSM"));
         DefaultTableModel model = (DefaultTableModel) lstInfos.getModel();
         for (String s : al)
-            model.addRow(new Object[] {s, FileUtils.getExtension(s)});
+            model.addRow(new Object[] { s, FileUtils.getExtension(s) });
         lstInfos.updateUI();
     }
 
@@ -3416,7 +3416,7 @@ public final class MainWindow extends javax.swing.JFrame
             FileUtils.copyFile(new File(path), newf);
 
             DefaultTableModel model = (DefaultTableModel) lstExternalMods.getModel();
-            model.addRow(new Object[] {fc.getSelectedFile().getName(), ModType.getModTypeShowName(ModType.getModType(newf))});
+            model.addRow(new Object[] { fc.getSelectedFile().getName(), ModType.getModTypeShowName(ModType.getModType(newf)) });
             lstExternalMods.updateUI();
         } catch (IOException e) {
             MessageBox.Show(C.i18n("mods.failed"));
@@ -3455,7 +3455,7 @@ public final class MainWindow extends javax.swing.JFrame
 
             DefaultTableModel model = (DefaultTableModel) lstCoreMods.getModel();
             lstCoreMods.updateUI();
-            model.addRow(new Object[] {fc.getSelectedFile().getName(), ModType.getModTypeShowName(ModType.getModType(newf))});
+            model.addRow(new Object[] { fc.getSelectedFile().getName(), ModType.getModTypeShowName(ModType.getModType(newf)) });
             FileUtils.copyFile(new File(path), newf);
         } catch (IOException e) {
             MessageBox.Show(C.i18n("mods.failed"));
@@ -3495,7 +3495,7 @@ public final class MainWindow extends javax.swing.JFrame
 
             DefaultTableModel model = (DefaultTableModel) lstPlugins.getModel();
             lstPlugins.updateUI();
-            model.addRow(new Object[] {fc.getSelectedFile().getName(), ModType.getModTypeShowName(ModType.getModType(newf))});
+            model.addRow(new Object[] { fc.getSelectedFile().getName(), ModType.getModTypeShowName(ModType.getModType(newf)) });
             FileUtils.copyFile(new File(path), newf);
         } catch (IOException e) {
             MessageBox.Show(C.i18n("mods.failed"));

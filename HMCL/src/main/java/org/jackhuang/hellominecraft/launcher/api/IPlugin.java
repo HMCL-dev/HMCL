@@ -34,6 +34,7 @@ public interface IPlugin {
      * You can modify the application actions by this method.
      *
      * @param profile info to the Minecraft Loader
+     *
      * @return For example, you can implement IMinecraftProvider to support
      *         MultiMC
      */

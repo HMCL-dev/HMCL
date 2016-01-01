@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -52,7 +52,7 @@ public class NewFileUpgrader extends IUpgrader {
         File newf = new File(FileUtils.getName(str));
         if (TaskWindow.getInstance().addTask(new FileDownloadTask(str, newf)).start()) {
             try {
-                new ProcessBuilder(new String[] {IOUtils.tryGetCanonicalFilePath(newf), "--removeOldLauncher", IOUtils.getRealPath()}).directory(new File(".")).start();
+                new ProcessBuilder(new String[] { IOUtils.tryGetCanonicalFilePath(newf), "--removeOldLauncher", IOUtils.getRealPath() }).directory(new File(".")).start();
             } catch (IOException ex) {
                 HMCLog.err("Failed to start new app", ex);
             }

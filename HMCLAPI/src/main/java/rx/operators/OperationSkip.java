@@ -1,12 +1,12 @@
 /**
  * Copyright 2013 Netflix, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,17 +23,20 @@ import rx.Subscription;
 import rx.util.functions.Func1;
 
 /**
- * Skips a specified number of contiguous values from the start of a Observable sequence and then returns the remaining values.
+ * Skips a specified number of contiguous values from the start of a Observable
+ * sequence and then returns the remaining values.
  */
 public final class OperationSkip {
 
     /**
-     * Skips a specified number of contiguous values from the start of a Observable sequence and then returns the remaining values.
-     * 
+     * Skips a specified number of contiguous values from the start of a
+     * Observable sequence and then returns the remaining values.
+     *
      * @param items
      * @param num
+     *
      * @return
-     * 
+     *
      * @see http://msdn.microsoft.com/en-us/library/hh229847(v=vs.103).aspx
      */
     public static <T> Func1<Observer<T>, Subscription> skip(final Observable<T> items, final int num) {
@@ -42,13 +45,17 @@ public final class OperationSkip {
     }
 
     /**
-     * This class is NOT thread-safe if invoked and referenced multiple times. In other words, don't subscribe to it multiple times from different threads.
+     * This class is NOT thread-safe if invoked and referenced multiple times.
+     * In other words, don't subscribe to it multiple times from different
+     * threads.
      * <p>
-     * It IS thread-safe from within it while receiving onNext events from multiple threads.
-     * 
+     * It IS thread-safe from within it while receiving onNext events from
+     * multiple threads.
+     *
      * @param <T>
      */
     private static class Skip<T> implements Func1<Observer<T>, Subscription> {
+
         private final int num;
         private final Observable<T> items;
 
@@ -63,7 +70,8 @@ public final class OperationSkip {
         }
 
         /**
-         * Used to subscribe to the 'items' Observable sequence and forward to the actualObserver up to 'num' count.
+         * Used to subscribe to the 'items' Observable sequence and forward to
+         * the actualObserver up to 'num' count.
          */
         private class ItemObserver implements Observer<T> {
 
@@ -87,9 +95,8 @@ public final class OperationSkip {
             @Override
             public void onNext(T args) {
                 // skip them until we reach the 'num' value
-                if (counter.incrementAndGet() > num) {
+                if (counter.incrementAndGet() > num)
                     observer.onNext(args);
-                }
             }
 
         }

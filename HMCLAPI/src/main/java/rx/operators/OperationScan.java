@@ -1,12 +1,12 @@
 /**
  * Copyright 2013 Netflix, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,17 +23,19 @@ import rx.util.functions.Func1;
 import rx.util.functions.Func2;
 
 public final class OperationScan {
+
     /**
-     * Applies an accumulator function over an observable sequence and returns each intermediate result with the specified source and accumulator.
-     * 
-     * @param sequence
-     *            An observable sequence of elements to project.
-     * @param initialValue
-     *            The initial (seed) accumulator value.
-     * @param accumulator
-     *            An accumulator function to be invoked on each element from the sequence.
-     * 
-     * @return An observable sequence whose elements are the result of accumulating the output from the list of Observables.
+     * Applies an accumulator function over an observable sequence and returns
+     * each intermediate result with the specified source and accumulator.
+     *
+     * @param sequence     An observable sequence of elements to project.
+     * @param initialValue The initial (seed) accumulator value.
+     * @param accumulator  An accumulator function to be invoked on each element
+     *                     from the sequence.
+     *
+     * @return An observable sequence whose elements are the result of
+     *         accumulating the output from the list of Observables.
+     *
      * @see http://msdn.microsoft.com/en-us/library/hh211665(v=vs.103).aspx
      */
     public static <T> Func1<Observer<T>, Subscription> scan(Observable<T> sequence, T initialValue, Func2<T, T, T> accumulator) {
@@ -41,14 +43,16 @@ public final class OperationScan {
     }
 
     /**
-     * Applies an accumulator function over an observable sequence and returns each intermediate result with the specified source and accumulator.
-     * 
-     * @param sequence
-     *            An observable sequence of elements to project.
-     * @param accumulator
-     *            An accumulator function to be invoked on each element from the sequence.
-     * 
-     * @return An observable sequence whose elements are the result of accumulating the output from the list of Observables.
+     * Applies an accumulator function over an observable sequence and returns
+     * each intermediate result with the specified source and accumulator.
+     *
+     * @param sequence    An observable sequence of elements to project.
+     * @param accumulator An accumulator function to be invoked on each element
+     *                    from the sequence.
+     *
+     * @return An observable sequence whose elements are the result of
+     *         accumulating the output from the list of Observables.
+     *
      * @see http://msdn.microsoft.com/en-us/library/hh211665(v=vs.103).aspx
      */
     public static <T> Func1<Observer<T>, Subscription> scan(Observable<T> sequence, Func2<T, T, T> accumulator) {
@@ -56,6 +60,7 @@ public final class OperationScan {
     }
 
     private static class Accumulator<T> implements Func1<Observer<T>, Subscription> {
+
         private final Observable<T> sequence;
         private final T initialValue;
         private final Func2<T, T, T> accumlatorFunction;
@@ -75,11 +80,13 @@ public final class OperationScan {
                 private boolean hasSentInitialValue = false;
 
                 /**
-                 * We must synchronize this because we can't allow
-                 * multiple threads to execute the 'accumulatorFunction' at the same time because
-                 * the accumulator code very often will be doing mutation of the 'acc' object such as a non-threadsafe HashMap
-                 * 
-                 * Because it's synchronized it's using non-atomic variables since everything in this method is single-threaded
+                 * We must synchronize this because we can't allow multiple
+                 * threads to execute the 'accumulatorFunction' at the same time
+                 * because the accumulator code very often will be doing
+                 * mutation of the 'acc' object such as a non-threadsafe HashMap
+                 *
+                 * Because it's synchronized it's using non-atomic variables
+                 * since everything in this method is single-threaded
                  */
                 @Override
                 public synchronized void onNext(T value) {
@@ -119,9 +126,8 @@ public final class OperationScan {
                 @Override
                 public synchronized void onCompleted() {
                     // if only one sequence value existed, we send it without any accumulation
-                    if (!hasSentInitialValue) {
+                    if (!hasSentInitialValue)
                         observer.onNext(acc);
-                    }
                     observer.onCompleted();
                 }
             }));

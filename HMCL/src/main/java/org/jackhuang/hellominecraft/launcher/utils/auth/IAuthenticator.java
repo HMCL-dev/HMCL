@@ -46,6 +46,7 @@ public abstract class IAuthenticator {
      * @param info username & password
      *
      * @return login result
+     *
      * @throws
      * org.jackhuang.hellominecraft.launcher.utils.auth.AuthenticationException
      */

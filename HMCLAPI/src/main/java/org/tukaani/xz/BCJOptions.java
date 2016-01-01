@@ -18,15 +18,15 @@ abstract class BCJOptions extends FilterOptions {
     }
 
     /**
-     * Sets the start offset for the address conversions.
-     * Normally this is useless so you shouldn't use this function.
-     * The default value is <code>0</code>.
+     * Sets the start offset for the address conversions. Normally this is
+     * useless so you shouldn't use this function. The default value is
+     * <code>0</code>.
      */
     public void setStartOffset(int startOffset)
-    throws UnsupportedOptionsException {
+        throws UnsupportedOptionsException {
         if ((startOffset & (alignment - 1)) != 0)
             throw new UnsupportedOptionsException(
-            "Start offset must be a multiple of " + alignment);
+                "Start offset must be a multiple of " + alignment);
 
         this.startOffset = startOffset;
     }

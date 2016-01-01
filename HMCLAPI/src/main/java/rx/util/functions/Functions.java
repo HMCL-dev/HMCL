@@ -1,17 +1,17 @@
 /**
  * Copyright 2013 Netflix, Inc.
  * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package rx.util.functions;
 
@@ -74,16 +74,20 @@ public class Functions {
      *
      * @param function
      */
-    @SuppressWarnings({"rawtypes"})
+    @SuppressWarnings({ "rawtypes" })
     public static FuncN from(final Object function) {
         if (function == null)
             throw new RuntimeException("function is null. Can't send arguments to null function.");
 
-        /* check for typed Rx Function implementation first */
+        /*
+         * check for typed Rx Function implementation first
+         */
         if (function instanceof Function)
             return fromFunction((Function) function);
         else
-            /* not an Rx Function so try language adaptors */
+            /*
+             * not an Rx Function so try language adaptors
+             */
 
             // check for language adaptor
             for (final Class c : languageAdaptors.keySet())
@@ -107,7 +111,7 @@ public class Functions {
     //
     //    @SuppressWarnings("unchecked")
     //    private static <R> R executionRxFunction(Function function, Object... args) {
-    //        // check Func* classes 
+    //        // check Func* classes
     //        if (function instanceof Func0) {
     //            Func0<R> f = (Func0<R>) function;
     //            if (args.length != 0) {
@@ -203,9 +207,9 @@ public class Functions {
     //
     //        throw new RuntimeException("Unknown implementation of Function: " + function.getClass().getSimpleName());
     //    }
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     private static FuncN fromFunction(Function function) {
-        // check Func* classes 
+        // check Func* classes
         if (function instanceof Func0)
             return fromFunc((Func0) function);
         else if (function instanceof Func1)
@@ -245,6 +249,7 @@ public class Functions {
      * with different arities.
      *
      * @param f
+     *
      * @return {@link FuncN}
      */
     public static <R> FuncN<R> fromFunc(final Func0<R> f) {
@@ -260,6 +265,7 @@ public class Functions {
      * with different arities.
      *
      * @param f
+     *
      * @return {@link FuncN}
      */
     public static <T0, R> FuncN<R> fromFunc(final Func1<T0, R> f) {
@@ -275,6 +281,7 @@ public class Functions {
      * with different arities.
      *
      * @param f
+     *
      * @return {@link FuncN}
      */
     public static <T0, T1, R> FuncN<R> fromFunc(final Func2<T0, T1, R> f) {
@@ -290,6 +297,7 @@ public class Functions {
      * with different arities.
      *
      * @param f
+     *
      * @return {@link FuncN}
      */
     public static <T0, T1, T2, R> FuncN<R> fromFunc(final Func3<T0, T1, T2, R> f) {
@@ -305,6 +313,7 @@ public class Functions {
      * with different arities.
      *
      * @param f
+     *
      * @return {@link FuncN}
      */
     public static <T0, T1, T2, T3, R> FuncN<R> fromFunc(final Func4<T0, T1, T2, T3, R> f) {
@@ -320,6 +329,7 @@ public class Functions {
      * with different arities.
      *
      * @param f
+     *
      * @return {@link FuncN}
      */
     public static <T0, T1, T2, T3, T4, R> FuncN<R> fromFunc(final Func5<T0, T1, T2, T3, T4, R> f) {
@@ -335,6 +345,7 @@ public class Functions {
      * with different arities.
      *
      * @param f
+     *
      * @return {@link FuncN}
      */
     public static <T0, T1, T2, T3, T4, T5, R> FuncN<R> fromFunc(final Func6<T0, T1, T2, T3, T4, T5, R> f) {
@@ -350,6 +361,7 @@ public class Functions {
      * with different arities.
      *
      * @param f
+     *
      * @return {@link FuncN}
      */
     public static <T0, T1, T2, T3, T4, T5, T6, R> FuncN<R> fromFunc(final Func7<T0, T1, T2, T3, T4, T5, T6, R> f) {
@@ -365,6 +377,7 @@ public class Functions {
      * with different arities.
      *
      * @param f
+     *
      * @return {@link FuncN}
      */
     public static <T0, T1, T2, T3, T4, T5, T6, T7, R> FuncN<R> fromFunc(final Func8<T0, T1, T2, T3, T4, T5, T6, T7, R> f) {
@@ -380,6 +393,7 @@ public class Functions {
      * with different arities.
      *
      * @param f
+     *
      * @return {@link FuncN}
      */
     public static <T0, T1, T2, T3, T4, T5, T6, T7, T8, R> FuncN<R> fromFunc(final Func9<T0, T1, T2, T3, T4, T5, T6, T7, T8, R> f) {
@@ -395,6 +409,7 @@ public class Functions {
      * with different arities.
      *
      * @param f
+     *
      * @return {@link FuncN}
      */
     public static FuncN<Void> fromAction(final Action0 f) {
@@ -411,6 +426,7 @@ public class Functions {
      * with different arities.
      *
      * @param f
+     *
      * @return {@link FuncN}
      */
     public static <T0> FuncN<Void> fromAction(final Action1<T0> f) {
@@ -427,6 +443,7 @@ public class Functions {
      * with different arities.
      *
      * @param f
+     *
      * @return {@link FuncN}
      */
     public static <T0, T1> FuncN<Void> fromAction(final Action2<T0, T1> f) {
@@ -443,6 +460,7 @@ public class Functions {
      * with different arities.
      *
      * @param f
+     *
      * @return {@link FuncN}
      */
     public static <T0, T1, T2> FuncN<Void> fromAction(final Action3<T0, T1, T2> f) {

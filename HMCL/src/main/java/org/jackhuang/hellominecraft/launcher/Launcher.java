@@ -151,7 +151,7 @@ public final class Launcher {
 
         int flag = 0;
         try {
-            minecraftMain.invoke(null, new Object[]{(String[]) cmdList.toArray(new String[cmdList.size()])});
+            minecraftMain.invoke(null, new Object[] { (String[]) cmdList.toArray(new String[cmdList.size()]) });
         } catch (Throwable throwable) {
             String trace = StrUtils.getStackTrace(throwable);
             final String advice = MinecraftCrashAdvicer.getAdvice(trace);
@@ -174,15 +174,16 @@ public final class Launcher {
         }
     }
     /*
-    static Object getShutdownHaltLock() {
-        try {
-            Class z = Class.forName("java.lang.Shutdown");
-            Field haltLock = z.getDeclaredField("haltLock");
-            haltLock.setAccessible(true);
-            return haltLock.get(null);
-        } catch (Throwable ex) {
-            ex.printStackTrace();
-            return new Object();
-        }
-    }*/
+     * static Object getShutdownHaltLock() {
+     * try {
+     * Class z = Class.forName("java.lang.Shutdown");
+     * Field haltLock = z.getDeclaredField("haltLock");
+     * haltLock.setAccessible(true);
+     * return haltLock.get(null);
+     * } catch (Throwable ex) {
+     * ex.printStackTrace();
+     * return new Object();
+     * }
+     * }
+     */
 }

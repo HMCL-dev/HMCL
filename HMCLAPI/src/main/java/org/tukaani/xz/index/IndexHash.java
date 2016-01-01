@@ -33,7 +33,7 @@ public class IndexHash extends IndexBase {
     }
 
     public void add(long unpaddedSize, long uncompressedSize)
-    throws XZIOException {
+        throws XZIOException {
         super.add(unpaddedSize, uncompressedSize);
 
         ByteBuffer buf = ByteBuffer.allocate(2 * 8);

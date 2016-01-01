@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -76,7 +76,7 @@ public class LibraryDownloadTask extends FileDownloadTask {
 
     @SuppressWarnings("UnusedAssignment")
     public static void unpackLibrary(File output, File input)
-    throws IOException {
+        throws IOException {
         HMCLog.log("Unpacking " + input);
         if (output.exists())
             output.delete();

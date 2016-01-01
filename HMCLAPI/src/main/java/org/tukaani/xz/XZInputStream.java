@@ -17,9 +17,9 @@ import org.tukaani.xz.common.DecoderUtil;
 /**
  * Decompresses a .xz file in streamed mode (no seeking).
  * <p>
- * Use this to decompress regular standalone .xz files. This reads from
- * its input stream until the end of the input or until an error occurs.
- * This supports decompressing concatenated .xz files.
+ * Use this to decompress regular standalone .xz files. This reads from its
+ * input stream until the end of the input or until an error occurs. This
+ * supports decompressing concatenated .xz files.
  *
  * <h4>Typical use cases</h4>
  * <p>
@@ -30,18 +30,18 @@ import org.tukaani.xz.common.DecoderUtil;
  * XZInputStream inxz = new XZInputStream(infile);
  * </pre></blockquote>
  * <p>
- * It's important to keep in mind that decompressor memory usage depends
- * on the settings used to compress the file. The worst-case memory usage
- * of XZInputStream is currently 1.5&nbsp;GiB. Still, very few files will
- * require more than about 65&nbsp;MiB because that's how much decompressing
- * a file created with the highest preset level will need, and only a few
- * people use settings other than the predefined presets.
+ * It's important to keep in mind that decompressor memory usage depends on the
+ * settings used to compress the file. The worst-case memory usage of
+ * XZInputStream is currently 1.5&nbsp;GiB. Still, very few files will require
+ * more than about 65&nbsp;MiB because that's how much decompressing a file
+ * created with the highest preset level will need, and only a few people use
+ * settings other than the predefined presets.
  * <p>
  * It is possible to specify a memory usage limit for
- * <code>XZInputStream</code>. If decompression requires more memory than
- * the specified limit, MemoryLimitException will be thrown when reading
- * from the stream. For example, the following sets the memory usage limit
- * to 100&nbsp;MiB:
+ * <code>XZInputStream</code>. If decompression requires more memory than the
+ * specified limit, MemoryLimitException will be thrown when reading from the
+ * stream. For example, the following sets the memory usage limit to
+ * 100&nbsp;MiB:
  * <p>
  * <blockquote><pre>
  * InputStream infile = new FileInputStream("foo.xz");
@@ -50,13 +50,12 @@ import org.tukaani.xz.common.DecoderUtil;
  *
  * <h4>When uncompressed size is known beforehand</h4>
  * <p>
- * If you are decompressing complete files and your application knows
- * exactly how much uncompressed data there should be, it is good to try
- * reading one more byte by calling <code>read()</code> and checking
- * that it returns <code>-1</code>. This way the decompressor will parse the
- * file footers and verify the integrity checks, giving the caller more
- * confidence that the uncompressed data is valid. (This advice seems to
- * apply to
+ * If you are decompressing complete files and your application knows exactly
+ * how much uncompressed data there should be, it is good to try reading one
+ * more byte by calling <code>read()</code> and checking that it returns
+ * <code>-1</code>. This way the decompressor will parse the file footers and
+ * verify the integrity checks, giving the caller more confidence that the
+ * uncompressed data is valid. (This advice seems to apply to
  * {@link java.util.zip.GZIPInputStream java.util.zip.GZIPInputStream} too.)
  *
  * @see SingleXZInputStream
@@ -74,26 +73,22 @@ public class XZInputStream extends InputStream {
     /**
      * Creates a new XZ decompressor without a memory usage limit.
      * <p>
-     * This constructor reads and parses the XZ Stream Header (12 bytes)
-     * from <code>in</code>. The header of the first Block is not read
-     * until <code>read</code> is called.
+     * This constructor reads and parses the XZ Stream Header (12 bytes) from
+     * <code>in</code>. The header of the first Block is not read until
+     * <code>read</code> is called.
      *
-     * @param in input stream from which XZ-compressed
-     *           data is read
+     * @param in input stream from which XZ-compressed data is read
      *
-     * @throws XZFormatException
-     *                                     input is not in the XZ format
+     * @throws XZFormatException           input is not in the XZ format
      *
-     * @throws CorruptedInputException
-     *                                     XZ header CRC32 doesn't match
+     * @throws CorruptedInputException     XZ header CRC32 doesn't match
      *
-     * @throws UnsupportedOptionsException
-     *                                     XZ header is valid but specifies options
-     *                                     not supported by this implementation
+     * @throws UnsupportedOptionsException XZ header is valid but specifies
+     *                                     options not supported by this implementation
      *
-     * @throws EOFException
-     *                                     less than 12 bytes of input was available
-     *                                     from <code>in</code>
+     * @throws EOFException                less than 12 bytes of input was
+     *                                     available from
+     *                                     <code>in</code>
      *
      * @throws IOException                 may be thrown by <code>in</code>
      */
@@ -104,29 +99,24 @@ public class XZInputStream extends InputStream {
     /**
      * Creates a new XZ decompressor with an optional memory usage limit.
      * <p>
-     * This is identical to <code>XZInputStream(InputStream)</code> except
-     * that this takes also the <code>memoryLimit</code> argument.
+     * This is identical to <code>XZInputStream(InputStream)</code> except that
+     * this takes also the <code>memoryLimit</code> argument.
      *
-     * @param in          input stream from which XZ-compressed
-     *                    data is read
+     * @param in          input stream from which XZ-compressed data is read
      *
-     * @param memoryLimit memory usage limit in kibibytes (KiB)
-     *                    or <code>-1</code> to impose no
-     *                    memory usage limit
+     * @param memoryLimit memory usage limit in kibibytes (KiB) or
+     *                    <code>-1</code> to impose no memory usage limit
      *
-     * @throws XZFormatException
-     *                                     input is not in the XZ format
+     * @throws XZFormatException           input is not in the XZ format
      *
-     * @throws CorruptedInputException
-     *                                     XZ header CRC32 doesn't match
+     * @throws CorruptedInputException     XZ header CRC32 doesn't match
      *
-     * @throws UnsupportedOptionsException
-     *                                     XZ header is valid but specifies options
-     *                                     not supported by this implementation
+     * @throws UnsupportedOptionsException XZ header is valid but specifies
+     *                                     options not supported by this implementation
      *
-     * @throws EOFException
-     *                                     less than 12 bytes of input was available
-     *                                     from <code>in</code>
+     * @throws EOFException                less than 12 bytes of input was
+     *                                     available from
+     *                                     <code>in</code>
      *
      * @throws IOException                 may be thrown by <code>in</code>
      */
@@ -139,12 +129,12 @@ public class XZInputStream extends InputStream {
     /**
      * Decompresses the next byte from this input stream.
      * <p>
-     * Reading lots of data with <code>read()</code> from this input stream
-     * may be inefficient. Wrap it in {@link java.io.BufferedInputStream}
-     * if you need to read lots of data one byte at a time.
+     * Reading lots of data with <code>read()</code> from this input stream may
+     * be inefficient. Wrap it in {@link java.io.BufferedInputStream} if you
+     * need to read lots of data one byte at a time.
      *
-     * @return the next decompressed byte, or <code>-1</code>
-     * to indicate the end of the compressed stream
+     * @return the next decompressed byte, or <code>-1</code> to indicate the
+     *         end of the compressed stream
      *
      * @throws CorruptedInputException
      * @throws UnsupportedOptionsException
@@ -152,8 +142,8 @@ public class XZInputStream extends InputStream {
      *
      * @throws XZIOException               if the stream has been closed
      *
-     * @throws EOFException
-     *                                     compressed input is truncated or corrupt
+     * @throws EOFException                compressed input is truncated or
+     *                                     corrupt
      *
      * @throws IOException                 may be thrown by <code>in</code>
      */
@@ -164,16 +154,16 @@ public class XZInputStream extends InputStream {
     /**
      * Decompresses into an array of bytes.
      * <p>
-     * If <code>len</code> is zero, no bytes are read and <code>0</code>
-     * is returned. Otherwise this will try to decompress <code>len</code>
-     * bytes of uncompressed data. Less than <code>len</code> bytes may
-     * be read only in the following situations:
+     * If <code>len</code> is zero, no bytes are read and <code>0</code> is
+     * returned. Otherwise this will try to decompress <code>len</code> bytes of
+     * uncompressed data. Less than <code>len</code> bytes may be read only in
+     * the following situations:
      * <ul>
      * <li>The end of the compressed data was reached successfully.</li>
      * <li>An error is detected after at least one but less <code>len</code>
-     * bytes have already been successfully decompressed.
-     * The next call with non-zero <code>len</code> will immediately
-     * throw the pending exception.</li>
+     * bytes have already been successfully decompressed. The next call with
+     * non-zero <code>len</code> will immediately throw the pending
+     * exception.</li>
      * <li>An exception is thrown.</li>
      * </ul>
      *
@@ -181,8 +171,8 @@ public class XZInputStream extends InputStream {
      * @param off start offset in <code>buf</code>
      * @param len maximum number of uncompressed bytes to read
      *
-     * @return number of bytes read, or <code>-1</code> to indicate
-     * the end of the compressed stream
+     * @return number of bytes read, or <code>-1</code> to indicate the end of
+     *         the compressed stream
      *
      * @throws CorruptedInputException
      * @throws UnsupportedOptionsException
@@ -190,8 +180,8 @@ public class XZInputStream extends InputStream {
      *
      * @throws XZIOException               if the stream has been closed
      *
-     * @throws EOFException
-     *                                     compressed input is truncated or corrupt
+     * @throws EOFException                compressed input is truncated or
+     *                                     corrupt
      *
      * @throws IOException                 may be thrown by <code>in</code>
      */
@@ -271,20 +261,19 @@ public class XZInputStream extends InputStream {
             // Since this isn't the first .xz Stream, it is more
             // logical to tell that the data is corrupt.
             throw new CorruptedInputException(
-            "Garbage after a valid XZ Stream");
+                "Garbage after a valid XZ Stream");
         }
     }
 
     /**
-     * Returns the number of uncompressed bytes that can be read
-     * without blocking. The value is returned with an assumption
-     * that the compressed input data will be valid. If the compressed
-     * data is corrupt, <code>CorruptedInputException</code> may get
-     * thrown before the number of bytes claimed to be available have
-     * been read from this input stream.
+     * Returns the number of uncompressed bytes that can be read without
+     * blocking. The value is returned with an assumption that the compressed
+     * input data will be valid. If the compressed data is corrupt,
+     * <code>CorruptedInputException</code> may get thrown before the number of
+     * bytes claimed to be available have been read from this input stream.
      *
-     * @return the number of uncompressed bytes that can be read
-     * without blocking
+     * @return the number of uncompressed bytes that can be read without
+     *         blocking
      */
     public int available() throws IOException {
         if (in == null)
@@ -297,8 +286,8 @@ public class XZInputStream extends InputStream {
     }
 
     /**
-     * Closes the stream and calls <code>in.close()</code>.
-     * If the stream was already closed, this does nothing.
+     * Closes the stream and calls <code>in.close()</code>. If the stream was
+     * already closed, this does nothing.
      *
      * @throws IOException if thrown by <code>in.close()</code>
      */

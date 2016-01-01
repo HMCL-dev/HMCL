@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -76,9 +76,11 @@ public class ForgeInstaller extends Task {
         FileUtils.copyFile(new File(from, profile.install.minecraft + ".jar"),
                            new File(to, profile.install.target + ".jar"));
         HMCLog.log("Creating new version profile..." + profile.install.target + ".json");
-        /*for (MinecraftLibrary library : profile.versionInfo.libraries)
-                if (library.name.startsWith("net.minecraftforge:forge:"))
-                    library.url = installerVersion.universal;*/
+        /*
+         * for (MinecraftLibrary library : profile.versionInfo.libraries)
+         * if (library.name.startsWith("net.minecraftforge:forge:"))
+         * library.url = installerVersion.universal;
+         */
         FileUtils.write(new File(to, profile.install.target + ".json"), C.gsonPrettyPrinting.toJson(profile.versionInfo));
 
         HMCLog.log("Extracting universal forge pack..." + profile.install.filePath);

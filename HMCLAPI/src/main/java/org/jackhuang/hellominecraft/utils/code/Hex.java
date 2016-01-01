@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -23,9 +23,9 @@ public class Hex {
 
     public static final Charset DEFAULT_CHARSET = Charsets.UTF_8;
     public static final String DEFAULT_CHARSET_NAME = "UTF-8";
-    private static final char[] DIGITS_LOWER = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+    private static final char[] DIGITS_LOWER = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
-    private static final char[] DIGITS_UPPER = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+    private static final char[] DIGITS_UPPER = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
     private final Charset charset;
 
     public static byte[] decodeHex(char[] data) throws Exception {
@@ -109,7 +109,7 @@ public class Hex {
     }
 
     public Object encode(Object object)
-    throws Exception {
+        throws Exception {
         try {
             byte[] byteArray = (object instanceof String) ? ((String) object).getBytes(getCharset()) : (byte[]) (byte[]) object;
 

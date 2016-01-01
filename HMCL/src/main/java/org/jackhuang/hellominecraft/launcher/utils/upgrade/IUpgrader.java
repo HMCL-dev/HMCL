@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -27,7 +27,7 @@ import org.jackhuang.hellominecraft.utils.VersionNumber;
  * @author huangyuhui
  */
 public abstract class IUpgrader implements Event<VersionNumber> {
-    
+
     public static final IUpgrader NOW_UPGRADER = new AppDataUpgrader();
 
     /**
@@ -35,6 +35,7 @@ public abstract class IUpgrader implements Event<VersionNumber> {
      *
      * @param nowVersion now launcher version
      * @param args       Application CommandLine Arguments
+     *
      * @return true if it is needed to break the main thread to shutdown this
      *         application.
      */
@@ -45,6 +46,7 @@ public abstract class IUpgrader implements Event<VersionNumber> {
      *
      * @param sender Should be VersionChecker
      * @param number the newest version
+     *
      * @return should return true
      */
     @Override

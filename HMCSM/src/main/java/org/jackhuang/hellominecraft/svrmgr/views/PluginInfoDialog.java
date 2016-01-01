@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -232,9 +232,9 @@ public class PluginInfoDialog extends javax.swing.JDialog {
             return;
         String url = pi.versions.get(index).download;
         TaskWindow.getInstance()
-        .addTask(new FileDownloadTask(url, new File(Utilities.getGameDir() + "plugins"
-                                                    + File.separator + pi.versions.get(index).filename)))
-        .start();
+            .addTask(new FileDownloadTask(url, new File(Utilities.getGameDir() + "plugins"
+                                                        + File.separator + pi.versions.get(index).filename)))
+            .start();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

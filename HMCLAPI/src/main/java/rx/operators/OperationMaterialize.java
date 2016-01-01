@@ -1,12 +1,12 @@
 /**
  * Copyright 2013 Netflix, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,20 +22,27 @@ import rx.Subscription;
 import rx.util.functions.Func1;
 
 /**
- * Materializes the implicit notifications of an observable sequence as explicit notification values.
+ * Materializes the implicit notifications of an observable sequence as explicit
+ * notification values.
  * <p>
- * In other words, converts a sequence of OnNext, OnError and OnCompleted events into a sequence of ObservableNotifications containing the OnNext, OnError and OnCompleted values.
+ * In other words, converts a sequence of OnNext, OnError and OnCompleted events
+ * into a sequence of ObservableNotifications containing the OnNext, OnError and
+ * OnCompleted values.
  * <p>
- * See http://msdn.microsoft.com/en-us/library/hh229453(v=VS.103).aspx for the Microsoft Rx equivalent.
+ * See http://msdn.microsoft.com/en-us/library/hh229453(v=VS.103).aspx for the
+ * Microsoft Rx equivalent.
  */
 public final class OperationMaterialize {
 
     /**
-     * Materializes the implicit notifications of an observable sequence as explicit notification values.
-     * 
-     * @param sequence
-     *            An observable sequence of elements to project.
-     * @return An observable sequence whose elements are the result of materializing the notifications of the given sequence.
+     * Materializes the implicit notifications of an observable sequence as
+     * explicit notification values.
+     *
+     * @param sequence An observable sequence of elements to project.
+     *
+     * @return An observable sequence whose elements are the result of
+     *         materializing the notifications of the given sequence.
+     *
      * @see http://msdn.microsoft.com/en-us/library/hh229453(v=VS.103).aspx
      */
     public static <T> Func1<Observer<Notification<T>>, Subscription> materialize(final Observable<T> sequence) {

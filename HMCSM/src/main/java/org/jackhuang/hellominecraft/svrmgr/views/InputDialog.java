@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -71,24 +71,24 @@ public class InputDialog extends javax.swing.JDialog {
         javax.swing.GroupLayout jPanelLayout = new javax.swing.GroupLayout(panel);
         panel.setLayout(jPanelLayout);
         jPanelLayout.setHorizontalGroup(
-        jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addGroup(jPanelLayout.createSequentialGroup()
-        .addContainerGap()
-        .addGroup(jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addGroup(jPanelLayout.createSequentialGroup()
-        .addComponent(label)
-        .addGap(0, 0, Short.MAX_VALUE))
-        .addComponent(textField))
-        .addContainerGap())
+            jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanelLayout.createSequentialGroup()
+                        .addComponent(label)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(textField))
+                .addContainerGap())
         );
         jPanelLayout.setVerticalGroup(
-        jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addGroup(jPanelLayout.createSequentialGroup()
-        .addContainerGap()
-        .addComponent(label)
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addComponent(textField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            jPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(label)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(textField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         textFields.add(textField);
         panels.add(panel);
@@ -104,22 +104,22 @@ public class InputDialog extends javax.swing.JDialog {
                    .addGap(0, 0, Short.MAX_VALUE)
                    .addComponent(jButton1));
         layout.setHorizontalGroup(
-        layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addGroup(layout.createSequentialGroup()
-        .addContainerGap()
-        .addGroup(g)
-        .addContainerGap())
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(g)
+                .addContainerGap())
         );
         GroupLayout.SequentialGroup g2 = layout.createSequentialGroup()
-        .addContainerGap();
+            .addContainerGap();
         for (JPanel p : panels)
             g2 = g2.addComponent(p, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED);
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED);
         g2 = g2.addComponent(jButton1)
-        .addContainerGap();
+            .addContainerGap();
         layout.setVerticalGroup(
-        layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addGroup(g2)
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(g2)
         );
 
         pack();

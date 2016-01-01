@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -136,7 +136,7 @@ public class ForgeInstaller {
     }
 
     public static void unpackLibrary(File output, byte[] data)
-    throws IOException {
+        throws IOException {
         if (output.exists())
             output.delete();
 

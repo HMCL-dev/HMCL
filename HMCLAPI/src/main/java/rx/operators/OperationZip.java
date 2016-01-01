@@ -1,12 +1,12 @@
 /**
  * Copyright 2013 Netflix, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,6 +61,7 @@ public final class OperationZip {
      * ThreadSafe
      */
     private static class ZipObserver<R, T> implements Observer<T> {
+
         final Observable<T> w;
         final Aggregator<R> a;
         private final AtomicObservableSubscription subscription = new AtomicObservableSubscription();
@@ -72,10 +73,9 @@ public final class OperationZip {
         }
 
         public void startWatching() {
-            if (subscribed.compareAndSet(false, true)) {
+            if (subscribed.compareAndSet(false, true))
                 // only subscribe once even if called more than once
                 subscription.wrap(w.subscribe(this));
-            }
         }
 
         @Override
@@ -99,10 +99,12 @@ public final class OperationZip {
     }
 
     /**
-     * Receive notifications from each of the Observables we are reducing and execute the zipFunction whenever we have received events from all Observables.
-     * 
+     * Receive notifications from each of the Observables we are reducing and
+     * execute the zipFunction whenever we have received events from all
+     * Observables.
+     *
      * This class is thread-safe.
-     * 
+     *
      * @param <T>
      */
     private static class Aggregator<T> implements Func1<Observer<T>, Subscription> {
@@ -113,9 +115,17 @@ public final class OperationZip {
         private final AtomicBoolean running = new AtomicBoolean(true);
         private final ConcurrentHashMap<ZipObserver<T, ?>, Boolean> completed = new ConcurrentHashMap<>();
 
-        /* we use ConcurrentHashMap despite synchronization of methods because stop() does NOT use synchronization and this map is used by it and can be called by other threads */
+        /*
+         * we use ConcurrentHashMap despite synchronization of methods because
+         * stop() does NOT use synchronization and this map is used by it and
+         * can be called by other threads
+         */
         private final ConcurrentHashMap<ZipObserver<T, ?>, ConcurrentLinkedQueue<Object>> receivedValuesPerObserver = new ConcurrentHashMap<>();
-        /* we use a ConcurrentLinkedQueue to retain ordering (I'd like to just use a ConcurrentLinkedHashMap for 'receivedValuesPerObserver' but that doesn't exist in standard java */
+        /*
+         * we use a ConcurrentLinkedQueue to retain ordering (I'd like to just
+         * use a ConcurrentLinkedHashMap for 'receivedValuesPerObserver' but
+         * that doesn't exist in standard java
+         */
         private final ConcurrentLinkedQueue<ZipObserver<T, ?>> observers = new ConcurrentLinkedQueue<>();
 
         public Aggregator(FuncN<T> zipFunction) {
@@ -123,10 +133,13 @@ public final class OperationZip {
         }
 
         /**
-         * Receive notification of a Observer starting (meaning we should require it for aggregation)
+         * Receive notification of a Observer starting (meaning we should
+         * require it for aggregation)
          *
-         * Thread Safety => Invoke ONLY from the static factory methods at top of this class which are always an atomic execution by a single thread.
-         * 
+         * Thread Safety => Invoke ONLY from the static factory methods at top
+         * of this class which are always an atomic execution by a single
+         * thread.
+         *
          * @param w
          */
         private void addObserver(ZipObserver<T, ?> w) {
@@ -137,32 +150,33 @@ public final class OperationZip {
 
         /**
          * Receive notification of a Observer completing its iterations.
-         * 
+         *
          * @param w
          */
         void complete(ZipObserver<T, ?> w) {
             // store that this ZipObserver is completed
             completed.put(w, Boolean.TRUE);
             // if all ZipObservers are completed, we mark the whole thing as completed
-            if (completed.size() == observers.size()) {
-                if (running.compareAndSet(true, false)) {
+            if (completed.size() == observers.size())
+                if (running.compareAndSet(true, false))
                     // this thread succeeded in setting running=false so let's propagate the completion
                     // mark ourselves as done
                     observer.onCompleted();
-                }
-            }
         }
 
         /**
-         * Receive error for a Observer. Throw the error up the chain and stop processing.
-         * 
+         * Receive error for a Observer. Throw the error up the chain and stop
+         * processing.
+         *
          * @param w
          */
         void error(ZipObserver<T, ?> w, Exception e) {
             if (running.compareAndSet(true, false)) {
                 // this thread succeeded in setting running=false so let's propagate the error
                 observer.onError(e);
-                /* since we receive an error we want to tell everyone to stop */
+                /*
+                 * since we receive an error we want to tell everyone to stop
+                 */
                 stop();
             }
         }
@@ -170,20 +184,23 @@ public final class OperationZip {
         /**
          * Receive the next value from a Observer.
          * <p>
-         * If we have received values from all Observers, trigger the zip function, otherwise store the value and keep waiting.
-         * 
+         * If we have received values from all Observers, trigger the zip
+         * function, otherwise store the value and keep waiting.
+         *
          * @param w
          * @param arg
          */
         void next(ZipObserver<T, ?> w, Object arg) {
-            if (observer == null) {
+            if (observer == null)
                 throw new RuntimeException("This shouldn't be running if a Observer isn't registered");
-            }
 
-            /* if we've been 'unsubscribed' don't process anything further even if the things we're watching keep sending (likely because they are not responding to the unsubscribe call) */
-            if (!running.get()) {
+            /*
+             * if we've been 'unsubscribed' don't process anything further even
+             * if the things we're watching keep sending (likely because they
+             * are not responding to the unsubscribe call)
+             */
+            if (!running.get())
                 return;
-            }
 
             // store the value we received and below we'll decide if we are to send it to the Observer
             receivedValuesPerObserver.get(w).add(arg);
@@ -191,20 +208,21 @@ public final class OperationZip {
             // define here so the variable is out of the synchronized scope
             Object[] argsToZip = new Object[observers.size()];
 
-            /* we have to synchronize here despite using concurrent data structures because the compound logic here must all be done atomically */
+            /*
+             * we have to synchronize here despite using concurrent data
+             * structures because the compound logic here must all be done
+             * atomically
+             */
             synchronized (this) {
                 // if all ZipObservers in 'receivedValues' map have a value, invoke the zipFunction
-                for (ZipObserver<T, ?> rw : receivedValuesPerObserver.keySet()) {
-                    if (receivedValuesPerObserver.get(rw).peek() == null) {
+                for (ZipObserver<T, ?> rw : receivedValuesPerObserver.keySet())
+                    if (receivedValuesPerObserver.get(rw).peek() == null)
                         // we have a null meaning the queues aren't all populated so won't do anything
                         return;
-                    }
-                }
                 // if we get to here this means all the queues have data
                 int i = 0;
-                for (ZipObserver<T, ?> rw : observers) {
+                for (ZipObserver<T, ?> rw : observers)
                     argsToZip[i++] = receivedValuesPerObserver.get(rw).remove();
-                }
             }
             // if we did not return above from the synchronized block we can now invoke the zipFunction with all of the args
             // we do this outside the synchronized block as it is now safe to call this concurrently and don't need to block other threads from calling
@@ -217,41 +235,48 @@ public final class OperationZip {
             if (started.compareAndSet(false, true)) {
                 AtomicObservableSubscription subscription = new AtomicObservableSubscription();
                 this.observer = new SynchronizedObserver<>(observer, subscription);
-                /* start the Observers */
-                for (ZipObserver<T, ?> rw : observers) {
+                /*
+                 * start the Observers
+                 */
+                for (ZipObserver<T, ?> rw : observers)
                     rw.startWatching();
-                }
 
                 return subscription.wrap(this::stop);
-            } else {
-                /* a Observer already has subscribed so blow up */
+            } else
+                /*
+                 * a Observer already has subscribed so blow up
+                 */
                 throw new IllegalStateException("Only one Observer can subscribe to this Observable.");
-            }
         }
 
         /*
-         * Do NOT synchronize this because it gets called via unsubscribe which can occur on other threads
+         * Do NOT synchronize this because it gets called via unsubscribe which
+         * can occur on other threads
          * and result in deadlocks. (http://jira/browse/API-4060)
-         * 
-         * AtomicObservableSubscription uses compareAndSet instead of locking to avoid deadlocks but ensure single-execution.
-         * 
+         *
+         * AtomicObservableSubscription uses compareAndSet instead of locking to
+         * avoid deadlocks but ensure single-execution.
+         *
          * We do the same in the implementation of this method.
-         * 
+         *
          * ThreadSafety of this method is provided by:
          * - AtomicBoolean[running].compareAndSet
          * - ConcurrentLinkedQueue[Observers]
          * - ZipObserver.subscription being an AtomicObservableSubscription
          */
         private void stop() {
-            /* tell ourselves to stop processing onNext events by setting running=false */
-            if (running.compareAndSet(true, false)) {
-                /* propogate to all Observers to unsubscribe if this thread succeeded in setting running=false */
-                for (ZipObserver<T, ?> o : observers) {
-                    if (o.subscription != null) {
+            /*
+             * tell ourselves to stop processing onNext events by setting
+             * running=false
+             */
+            if (running.compareAndSet(true, false))
+                /*
+                 * propogate to all Observers to unsubscribe if this thread
+                 * succeeded in setting running=false
+                 */
+                for (ZipObserver<T, ?> o : observers)
+                    if (o.subscription != null)
                         o.subscription.unsubscribe();
-                    }
-                }
-            }
         }
 
     }

@@ -21,14 +21,17 @@ abstract class BCJCoder implements FilterCoder {
         return filterID >= 0x04 && filterID <= 0x09;
     }
 
+    @Override
     public boolean changesSize() {
         return false;
     }
 
+    @Override
     public boolean nonLastOK() {
         return true;
     }
 
+    @Override
     public boolean lastOK() {
         return false;
     }

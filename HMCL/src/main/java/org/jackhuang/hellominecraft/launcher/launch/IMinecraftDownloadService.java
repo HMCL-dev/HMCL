@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -38,8 +38,6 @@ public abstract class IMinecraftDownloadService extends IMinecraftService {
     public abstract boolean downloadMinecraftJar(String id);
 
     public abstract boolean downloadMinecraftVersionJson(String id);
-    
-    
 
     /**
      * Get the libraries that need to download.
@@ -56,7 +54,7 @@ public abstract class IMinecraftDownloadService extends IMinecraftService {
      * @return Is the action successful?
      */
     public abstract boolean install(String version);
-    
+
     public abstract Observable<MinecraftRemoteVersion> getRemoteVersions();
-    
+
 }

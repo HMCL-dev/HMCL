@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -27,7 +27,7 @@ import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionLi
 public abstract class IDownloadProvider {
 
     public InstallerVersionList getInstallerByType(InstallerType type) {
-        switch(type) {
+        switch (type) {
         case Forge:
             return getForgeInstaller();
         case LiteLoader:
@@ -38,7 +38,7 @@ public abstract class IDownloadProvider {
             return null;
         }
     }
-    
+
     public abstract InstallerVersionList getForgeInstaller();
 
     public abstract InstallerVersionList getLiteLoaderInstaller();

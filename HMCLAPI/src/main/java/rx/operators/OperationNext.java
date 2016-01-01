@@ -1,12 +1,12 @@
 /**
  * Copyright 2013 Netflix, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,8 @@ import rx.Observer;
 import rx.util.Exceptions;
 
 /**
- * Samples the next value (blocking without buffering) from in an observable sequence.
+ * Samples the next value (blocking without buffering) from in an observable
+ * sequence.
  */
 public final class OperationNext {
 
@@ -56,9 +57,8 @@ public final class OperationNext {
 
         @Override
         public T next() {
-            if (observer.isCompleted(true)) {
+            if (observer.isCompleted(true))
                 throw new IllegalStateException("Observable is completed");
-            }
 
             observer.await();
 
@@ -78,6 +78,7 @@ public final class OperationNext {
     }
 
     private static class NextObserver<T> implements Observer<Notification<T>> {
+
         private final BlockingQueue<Notification<T>> buf = new ArrayBlockingQueue<>(1);
         private final AtomicBoolean waiting = new AtomicBoolean(false);
 
@@ -100,9 +101,8 @@ public final class OperationNext {
                     Notification<T> concurrentItem = buf.poll();
 
                     // in case if we won race condition with onComplete/onError method
-                    if (!concurrentItem.isOnNext()) {
+                    if (!concurrentItem.isOnNext())
                         toOffer = concurrentItem;
-                    }
                 }
             }
 
@@ -114,17 +114,14 @@ public final class OperationNext {
 
         public boolean isCompleted(boolean rethrowExceptionIfExists) {
             Notification<T> lastItem = buf.peek();
-            if (lastItem == null) {
+            if (lastItem == null)
                 return false;
-            }
 
-            if (lastItem.isOnError()) {
-                if (rethrowExceptionIfExists) {
+            if (lastItem.isOnError())
+                if (rethrowExceptionIfExists)
                     throw Exceptions.propagate(lastItem.getException());
-                } else {
+                else
                     return true;
-                }
-            }
 
             return lastItem.isOnCompleted();
         }
@@ -132,13 +129,11 @@ public final class OperationNext {
         public T takeNext() throws InterruptedException {
             Notification<T> next = buf.take();
 
-            if (next.isOnError()) {
+            if (next.isOnError())
                 throw Exceptions.propagate(next.getException());
-            }
 
-            if (next.isOnCompleted()) {
+            if (next.isOnCompleted())
                 throw new IllegalStateException("Observable is completed");
-            }
 
             return next.getValue();
 

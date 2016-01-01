@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -18,7 +18,7 @@
 package org.jackhuang.hellominecraft.logging.message;
 
 public class ObjectMessage
-implements IMessage {
+    implements IMessage {
 
     private static final long serialVersionUID = -5903272448334166185L;
     private final transient Object obj;
@@ -41,7 +41,7 @@ implements IMessage {
 
     @Override
     public Object[] getParameters() {
-        return new Object[] {this.obj};
+        return new Object[] { this.obj };
     }
 
     @Override

@@ -48,6 +48,7 @@ public abstract class InstallerVersionList implements Consumer<String[]> {
      * Get installers you want.
      *
      * @param mcVersion the installers to this Minecraft version.
+     *
      * @return cached result.
      */
     protected abstract List<InstallerVersion> getVersionsImpl(String mcVersion);
@@ -56,8 +57,9 @@ public abstract class InstallerVersionList implements Consumer<String[]> {
      * Get installers you want, please cache this method's result to save time.
      *
      * @param mcVersion the installers to this Minecraft version.
+     *
      * @return a copy of the cached data to prevent
-     * ConcurrentModificationException.
+     *         ConcurrentModificationException.
      */
     public List<InstallerVersion> getVersions(String mcVersion) {
         List<InstallerVersion> a = getVersionsImpl(mcVersion);

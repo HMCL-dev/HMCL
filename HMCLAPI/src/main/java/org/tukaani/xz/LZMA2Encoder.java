@@ -18,7 +18,7 @@ class LZMA2Encoder extends LZMA2Coder implements FilterEncoder {
     LZMA2Encoder(LZMA2Options options) {
         if (options.getPresetDict() != null)
             throw new IllegalArgumentException(
-            "XZ doesn't support a preset dictionary for now");
+                "XZ doesn't support a preset dictionary for now");
 
         if (options.getMode() == LZMA2Options.MODE_UNCOMPRESSED)
             props[0] = (byte) 0;
@@ -32,18 +32,22 @@ class LZMA2Encoder extends LZMA2Coder implements FilterEncoder {
         this.options = (LZMA2Options) options.clone();
     }
 
+    @Override
     public long getFilterID() {
         return FILTER_ID;
     }
 
+    @Override
     public byte[] getFilterProps() {
         return props;
     }
 
+    @Override
     public boolean supportsFlushing() {
         return true;
     }
 
+    @Override
     public FinishableOutputStream getOutputStream(FinishableOutputStream out) {
         return options.getOutputStream(out);
     }
