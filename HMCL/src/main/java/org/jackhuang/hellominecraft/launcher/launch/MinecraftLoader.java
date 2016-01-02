@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
@@ -83,7 +84,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
             t = t.replace("${auth_player_name}", lr.getUserName());
             t = t.replace("${auth_session}", lr.getSession());
             t = t.replace("${auth_uuid}", lr.getUserId());
-            t = t.replace("${version_name}", version.id);
+            t = t.replace("${version_name}", Main.makeTitle());
             t = t.replace("${profile_name}", provider.profile.getName());
             t = t.replace("${game_directory}", provider.getRunDirectory(version.id).getAbsolutePath());
             t = t.replace("${game_assets}", game_assets);
