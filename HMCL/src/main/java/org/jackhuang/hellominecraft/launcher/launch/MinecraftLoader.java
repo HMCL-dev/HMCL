@@ -36,6 +36,7 @@ import org.jackhuang.hellominecraft.launcher.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
+import org.jackhuang.hellominecraft.utils.StrUtils;
 
 /**
  *
@@ -67,7 +68,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         res.add((v.isCanceledWrapper() ? "" : "-mainClass=") + mainClass);
 
         String arg = v.getSelectedMinecraftVersion().minecraftArguments;
-        String[] splitted = org.jackhuang.hellominecraft.utils.StrUtils.tokenize(arg);
+        String[] splitted = StrUtils.tokenize(arg);
 
         if (!checkAssetsExist())
             if (MessageBox.Show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {

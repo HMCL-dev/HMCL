@@ -105,6 +105,11 @@ public final class SkinmeAuthenticator extends IAuthenticator {
     }
 
     @Override
+    public String id() {
+        return "skinme";
+    }
+
+    @Override
     public String getName() {
         return "Skinme";
     }

@@ -20,6 +20,7 @@ package org.jackhuang.hellominecraft.launcher.settings;
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -40,8 +41,6 @@ public final class Config {
     private String last;
     @SerializedName("bgpath")
     private String bgpath;
-    @SerializedName("username")
-    private String username;
     @SerializedName("clientToken")
     private final String clientToken;
     private String proxyHost, proxyPort, proxyUserName, proxyPassword;
@@ -116,15 +115,6 @@ public final class Config {
         Settings.save();
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-        Settings.save();
-    }
-
     public String getClientToken() {
         return clientToken;
     }
@@ -163,12 +153,12 @@ public final class Config {
         return configurations;
     }
 
-    public Map getYggdrasilConfig() {
-        return yggdrasil;
+    public Map getAuthenticatorConfig(String authId) {
+        return auth.get(authId);
     }
 
-    public void setYggdrasilConfig(Map yggdrasil) {
-        this.yggdrasil = yggdrasil;
+    public void setAuthenticatorConfig(String authId, Map map) {
+        auth.put(authId, map);
         Settings.save();
     }
 
@@ -178,17 +168,17 @@ public final class Config {
     private int downloadtype;
     @SerializedName("configurations")
     private TreeMap<String, Profile> configurations;
-    @SerializedName("yggdrasil")
-    private Map yggdrasil;
+    @SerializedName("auth")
+    private Map<String, Map> auth;
 
     public Config() {
         clientToken = UUID.randomUUID().toString();
-        username = "";
         logintype = downloadtype = 0;
         enableShadow = false;
         enableAnimation = true;
         theme = 4;
         decorated = OS.os() == OS.LINUX;
+        auth = new HashMap<>();
     }
 
     public DownloadType getDownloadSource() {

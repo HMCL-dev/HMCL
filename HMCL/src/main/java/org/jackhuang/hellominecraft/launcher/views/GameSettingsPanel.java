@@ -1241,7 +1241,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     // <editor-fold defaultstate="collapsed" desc="Mods">
     private boolean reloadingMods = false;
 
-    private void reloadMods() {
+    private synchronized void reloadMods() {
         if (reloadingMods)
             return;
         reloadingMods = true;
@@ -1343,6 +1343,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private javax.swing.JTextField txtWidth;
     // End of variables declaration//GEN-END:variables
 
-    private javax.swing.JPanel pnlGameDownloads;
+    private final javax.swing.JPanel pnlGameDownloads;
 // </editor-fold>
 }

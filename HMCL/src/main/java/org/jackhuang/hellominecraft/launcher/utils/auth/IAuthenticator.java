@@ -18,7 +18,9 @@
 package org.jackhuang.hellominecraft.launcher.utils.auth;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 
 /**
@@ -34,7 +36,7 @@ public abstract class IAuthenticator {
         PluginManager.NOW_PLUGIN.onRegisterAuthenticators(LOGINS::add);
     }
 
-    protected String clientToken;
+    protected String clientToken, username;
 
     public IAuthenticator(String clientToken) {
         this.clientToken = clientToken;
@@ -51,6 +53,8 @@ public abstract class IAuthenticator {
      * org.jackhuang.hellominecraft.launcher.utils.auth.AuthenticationException
      */
     public abstract UserProfileProvider login(LoginInfo info) throws AuthenticationException;
+
+    public abstract String id();
 
     /**
      *
@@ -78,4 +82,24 @@ public abstract class IAuthenticator {
     public abstract UserProfileProvider loginBySettings() throws AuthenticationException;
 
     public abstract void logout();
+
+    public Map onSaveSettings() {
+        HashMap m = new HashMap();
+        m.put("IAuthenticator_UserName", username);
+        return m;
+    }
+
+    public void onLoadSettings(Map m) {
+        if (m == null)
+            return;
+        username = (String) m.get("IAuthenticator_UserName");
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String s) {
+        username = s;
+    }
 }

@@ -32,7 +32,6 @@ import org.jackhuang.hellominecraft.utils.CollectionUtils;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
-import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.UpdateChecker;
 import org.jackhuang.hellominecraft.utils.VersionNumber;
 import org.jackhuang.hellominecraft.utils.system.Java;
@@ -48,7 +47,6 @@ public final class Settings {
 
     public static final File SETTINGS_FILE = new File(IOUtils.currentDir(), "hmcl.json");
 
-    private static boolean isFirstLoading;
     private static final Config SETTINGS;
     public static final UpdateChecker UPDATE_CHECKER = new UpdateChecker(new VersionNumber(Main.VERSION_FIRST, Main.VERSION_SECOND, Main.VERSION_THIRD),
                                                                          "hmcl");
@@ -56,10 +54,6 @@ public final class Settings {
 
     public static Config getInstance() {
         return SETTINGS;
-    }
-
-    public static boolean isFirstLoading() {
-        return isFirstLoading;
     }
 
     static {
@@ -82,7 +76,7 @@ public final class Settings {
 
     private static Config initSettings() {
         Config c = new Config();
-        if (SETTINGS_FILE.exists()) {
+        if (SETTINGS_FILE.exists())
             try {
                 String str = FileUtils.readFileToString(SETTINGS_FILE);
                 if (str == null || str.trim().equals(""))
@@ -100,11 +94,8 @@ public final class Settings {
                     System.exit(1);
                 }
             }
-            isFirstLoading = StrUtils.isBlank(c.getUsername());
-        } else {
+        else
             HMCLog.log("No settings file here, may be first loading.");
-            isFirstLoading = true;
-        }
         return c;
     }
 

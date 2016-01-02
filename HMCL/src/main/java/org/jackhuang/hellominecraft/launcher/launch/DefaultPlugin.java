@@ -48,13 +48,17 @@ public class DefaultPlugin implements IPlugin {
     public void onRegisterAuthenticators(Consumer<IAuthenticator> apply) {
         String clientToken = Settings.getInstance().getClientToken();
         OFFLINE_LOGIN = new OfflineAuthenticator(clientToken);
+        OFFLINE_LOGIN.onLoadSettings(Settings.getInstance().getAuthenticatorConfig(OFFLINE_LOGIN.id()));
         YGGDRASIL_LOGIN = new YggdrasilAuthenticator(clientToken);
-        YGGDRASIL_LOGIN.onLoadSettings(Settings.getInstance().getYggdrasilConfig());
+        YGGDRASIL_LOGIN.onLoadSettings(Settings.getInstance().getAuthenticatorConfig(YGGDRASIL_LOGIN.id()));
         SKINME_LOGIN = new SkinmeAuthenticator(clientToken);
+        SKINME_LOGIN.onLoadSettings(Settings.getInstance().getAuthenticatorConfig(SKINME_LOGIN.id()));
 
-        Runtime.getRuntime().addShutdownHook(new Thread(()
-            -> Settings.getInstance().setYggdrasilConfig(YGGDRASIL_LOGIN.onSaveSettings())
-        ));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            Settings.getInstance().setAuthenticatorConfig(OFFLINE_LOGIN.id(), OFFLINE_LOGIN.onSaveSettings());
+            Settings.getInstance().setAuthenticatorConfig(YGGDRASIL_LOGIN.id(), YGGDRASIL_LOGIN.onSaveSettings());
+            Settings.getInstance().setAuthenticatorConfig(SKINME_LOGIN.id(), SKINME_LOGIN.onSaveSettings());
+        }));
         apply.accept(OFFLINE_LOGIN);
         apply.accept(YGGDRASIL_LOGIN);
         apply.accept(SKINME_LOGIN);
@@ -62,7 +66,7 @@ public class DefaultPlugin implements IPlugin {
 
     @Override
     public void showUI() {
-        MainFrame.showMainFrame(Settings.isFirstLoading());
+        MainFrame.showMainFrame();
     }
 
     @Override

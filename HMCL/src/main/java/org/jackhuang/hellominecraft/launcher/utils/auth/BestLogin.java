@@ -80,6 +80,11 @@ public final class BestLogin extends IAuthenticator {
     }
 
     @Override
+    public String id() {
+        return "best";
+    }
+
+    @Override
     public String getName() {
         return "BestLogin";
     }

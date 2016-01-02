@@ -297,7 +297,8 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
     }//GEN-LAST:event_txtPlayerNameFocusGained
 
     private void txtPlayerNameFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtPlayerNameFocusLost
-        Settings.getInstance().setUsername(txtPlayerName.getText());
+        IAuthenticator l = Settings.getInstance().getAuthenticator();
+        l.setUsername(txtPlayerName.getText());
     }//GEN-LAST:event_txtPlayerNameFocusLost
 
     private void cboLoginModeItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboLoginModeItemStateChanged
@@ -350,8 +351,8 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
 
     private void txtPlayerNameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPlayerNameKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
-            Settings.getInstance().setUsername(txtPlayerName.getText());
             IAuthenticator l = Settings.getInstance().getAuthenticator();
+            l.setUsername(txtPlayerName.getText());
             if (!l.hasPassword())
                 runGame();
             else if (!l.isLoggedIn())
@@ -400,7 +401,7 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
             return;
         }
         final IAuthenticator l = IAuthenticator.LOGINS.get(index);
-        final LoginInfo li = new LoginInfo(Settings.getInstance().getUsername(), l.isLoggedIn() || !l.hasPassword() ? null : new String(txtPassword.getPassword()));
+        final LoginInfo li = new LoginInfo(l.getUsername(), l.isLoggedIn() || !l.hasPassword() ? null : new String(txtPassword.getPassword()));
         new Thread() {
             @Override
             public void run() {
@@ -458,9 +459,10 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
             cl.last(pnlPassword);
         else
             cl.first(pnlPassword);
-        String username = Settings.getInstance().getUsername();
-        if (StrUtils.isNotBlank(username))
-            txtPlayerName.setText(username);
+        String username = l.getUsername();
+        if (username == null)
+            username = "";
+        txtPlayerName.setText(username);
     }
 
     void loadFromSettings() {

@@ -50,6 +50,11 @@ public final class OfflineAuthenticator extends IAuthenticator {
     }
 
     @Override
+    public String id() {
+        return "offline";
+    }
+
+    @Override
     public String getName() {
         return C.i18n("login.methods.offline");
     }

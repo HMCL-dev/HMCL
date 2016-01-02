@@ -93,15 +93,25 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
     }
 
     @Override
+    public String id() {
+        return "yggdrasil";
+    }
+
+    @Override
     public String getName() {
         return C.i18n("login.methods.yggdrasil");
     }
 
+    @Override
     public Map onSaveSettings() {
-        return ua.saveForStorage();
+        Map m = ua.saveForStorage();
+        m.putAll(super.onSaveSettings());
+        return m;
     }
 
+    @Override
     public void onLoadSettings(Map settings) {
+        super.onLoadSettings(settings);
         if (settings == null)
             return;
         ua.loadFromStorage(settings);

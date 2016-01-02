@@ -47,6 +47,7 @@ import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.utils.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
 import org.jackhuang.hellominecraft.lookandfeel.Theme;
+import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.Utils;
 import org.jackhuang.hellominecraft.views.DropShadowBorder;
 import org.jackhuang.hellominecraft.views.TintablePanel;
@@ -388,10 +389,10 @@ public final class MainFrame extends DraggableFrame {
         windowTitle.setForeground(Color.white);
     }
 
-    public static void showMainFrame(boolean firstLoad) {
-        if (firstLoad)
-            SwingUtilities.invokeLater(() -> MainFrame.INSTANCE.showMessage(C.i18n("ui.message.first_load")));
+    public static void showMainFrame() {
         IAuthenticator l = Settings.getInstance().getAuthenticator();
+        if (StrUtils.isBlank(l.getUsername()))
+            SwingUtilities.invokeLater(() -> MainFrame.INSTANCE.showMessage(C.i18n("ui.message.first_load")));
         if (l.hasPassword() && !l.isLoggedIn())
             SwingUtilities.invokeLater(() -> MainFrame.INSTANCE.showMessage(C.i18n("ui.message.enter_password")));
         INSTANCE.setVisible(true);
