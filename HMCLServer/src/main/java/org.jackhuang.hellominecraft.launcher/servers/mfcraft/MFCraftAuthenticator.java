@@ -60,6 +60,11 @@ public class MFCraftAuthenticator extends IAuthenticator {
     }
 
     @Override
+    public String id() {
+        return "mfcraft";
+    }
+
+    @Override
     public String getName() {
         return "MFCraft";
     }

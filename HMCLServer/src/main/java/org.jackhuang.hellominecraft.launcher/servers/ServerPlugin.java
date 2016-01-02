@@ -52,15 +52,20 @@ public class ServerPlugin implements IPlugin {
     public void onRegisterAuthenticators(Consumer<IAuthenticator> apply) {
         String clientToken = Settings.getInstance().getClientToken();
         MFCRAFT_LOGIN = new MFCraftAuthenticator(clientToken);
+        MFCRAFT_LOGIN.onLoadSettings(Settings.getInstance().getAuthenticatorConfig(MFCRAFT_LOGIN.id()));
         YGGDRASIL_LOGIN = new YggdrasilAuthenticator(clientToken);
-        YGGDRASIL_LOGIN.onLoadSettings(Settings.getInstance().getYggdrasilConfig());
+        YGGDRASIL_LOGIN.onLoadSettings(Settings.getInstance().getAuthenticatorConfig(YGGDRASIL_LOGIN.id()));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            Settings.getInstance().setAuthenticatorConfig(MFCRAFT_LOGIN.id(), MFCRAFT_LOGIN.onSaveSettings());
+            Settings.getInstance().setAuthenticatorConfig(YGGDRASIL_LOGIN.id(), YGGDRASIL_LOGIN.onSaveSettings());
+        }));
         apply.accept(MFCRAFT_LOGIN);
         apply.accept(YGGDRASIL_LOGIN);
     }
 
     @Override
     public void showUI() {
-        MainFrame.showMainFrame(Settings.isFirstLoading());
+        MainFrame.showMainFrame();
     }
 
     public static ServerInfo lastServerInfo;
