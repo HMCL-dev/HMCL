@@ -19,14 +19,11 @@ package org.jackhuang.hellominecraft.lookandfeel;
 import java.awt.Color;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.util.Map;
 import javax.swing.UIDefaults;
-import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.synth.SynthLookAndFeel;
 import org.jackhuang.hellominecraft.utils.NetUtils;
-import sun.swing.DefaultLookup;
 
 /**
  *
@@ -48,10 +45,10 @@ public class HelloMinecraftLookAndFeel extends SynthLookAndFeel {
 
     public HelloMinecraftLookAndFeel(Map<String, String> settings) throws ParseException {
         try {
-            String s = NetUtils.getStreamContent(HelloMinecraftLookAndFeel.class.getResourceAsStream("/org/jackhuang/hellominecraft/lookandfeel/synth.xml"));
+            String s = NetUtils.getStreamContent(HelloMinecraftLookAndFeel.class.getResourceAsStream("/org/jackhuang/hellominecraft/lookandfeel/synth.xml"), "UTF-8");
             for (String ss : settings.keySet())
                 s = s.replace("${" + ss + "}", settings.get(ss));
-            load(new ByteArrayInputStream(s.getBytes()), HelloMinecraftLookAndFeel.class);
+            load(new ByteArrayInputStream(s.getBytes("UTF-8")), HelloMinecraftLookAndFeel.class);
         } catch (IOException ex) {
             ex.printStackTrace();
             throw new ParseException("FUCKING BUG", 0);
