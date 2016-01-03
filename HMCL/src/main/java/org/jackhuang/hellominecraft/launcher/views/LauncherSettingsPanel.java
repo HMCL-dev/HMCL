@@ -28,6 +28,7 @@ import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
+import org.jackhuang.hellominecraft.views.SwingUtils;
 import rx.Observable;
 
 /**
@@ -90,6 +91,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         jLabel8 = new javax.swing.JLabel();
         chkEnableAnimation = new javax.swing.JCheckBox();
         chkDecorated = new javax.swing.JCheckBox();
+        jLabel9 = new javax.swing.JLabel();
 
         cboDownloadSource.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -190,6 +192,14 @@ public class LauncherSettingsPanel extends AnimatedPanel {
             }
         });
 
+        jLabel9.setText(C.i18n("launcher.modpack")); // NOI18N
+        jLabel9.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        jLabel9.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jLabel9MouseClicked(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -232,14 +242,15 @@ public class LauncherSettingsPanel extends AnimatedPanel {
                         .addComponent(chkEnableShadow)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(chkEnableAnimation))
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(btnCheckUpdate)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(chkDecorated))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGap(0, 0, Short.MAX_VALUE))
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(btnCheckUpdate)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(chkDecorated))))
+                            .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -277,7 +288,9 @@ public class LauncherSettingsPanel extends AnimatedPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnCheckUpdate, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(chkDecorated))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 71, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 49, Short.MAX_VALUE)
+                .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -349,6 +362,10 @@ public class LauncherSettingsPanel extends AnimatedPanel {
     private void chkDecoratedFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_chkDecoratedFocusLost
         Settings.getInstance().setDecorated(chkDecorated.isSelected());
     }//GEN-LAST:event_chkDecoratedFocusLost
+    
+    private void jLabel9MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel9MouseClicked
+        SwingUtils.openLink("http://blog.163.com/huanghongxun2008@126/blog/static/7738046920160323812771/");
+    }//GEN-LAST:event_jLabel9MouseClicked
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCheckUpdate;
@@ -367,6 +384,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JTextField txtBackgroundPath;
     private javax.swing.JTextField txtProxyHost;
     private javax.swing.JTextField txtProxyPassword;
