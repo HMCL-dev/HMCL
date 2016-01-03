@@ -1120,7 +1120,9 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
         isLoading = false;
         if (index < cboProfiles.getItemCount()) {
+            isLoading = true;
             cboProfiles.setSelectedIndex(index);
+            isLoading = false;
             prepare(getProfile());
         }
     }
