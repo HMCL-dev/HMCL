@@ -388,7 +388,7 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
             return;
         }
         final String name = (String) cboProfiles.getSelectedItem();
-        if (StrUtils.isBlank(name) || getCurrentProfile().getSelectedMinecraftVersion() == null) {
+        if (StrUtils.isBlank(name) || getCurrentProfile().getMinecraftProvider().getSelectedVersion() == null) {
             HMCLog.warn("There's no selected version, rechoose a version.");
             MessageBox.ShowLocalized("minecraft.no_selected_version");
             return;
@@ -478,7 +478,7 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
         int index = 0, i = 0;
         getCurrentProfile().selectedVersionChangedEvent.register(this);
         getCurrentProfile().getMinecraftProvider().refreshVersions();
-        MinecraftVersion selVersion = getCurrentProfile().getSelectedMinecraftVersion();
+        MinecraftVersion selVersion = getCurrentProfile().getMinecraftProvider().getSelectedVersion();
         String selectedMC = selVersion == null ? null : selVersion.id;
         if (getCurrentProfile().getMinecraftProvider().getVersions().isEmpty()) {
             if (!showedNoVersion)

@@ -1165,7 +1165,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         isLoading = true;
         cboVersions.removeAllItems();
         int index = 0, i = 0;
-        MinecraftVersion selVersion = getProfile().getSelectedMinecraftVersion();
+        MinecraftVersion selVersion = getProfile().getMinecraftProvider().getSelectedVersion();
         String selectedMC = selVersion == null ? null : selVersion.id;
         for (MinecraftVersion each : getProfile().getMinecraftProvider().getVersions()) {
             cboVersions.addItem(each.id);
@@ -1181,7 +1181,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }
 
     void loadMinecraftVersion() {
-        loadMinecraftVersion(getProfile().getSelectedMinecraftVersion());
+        loadMinecraftVersion(getProfile().getMinecraftProvider().getSelectedVersion());
     }
 
     /**

@@ -51,9 +51,9 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
 
     @Override
     public void executeTask() throws Exception {
-        if (profile == null || profile.getSelectedMinecraftVersion() == null)
+        if (profile == null || profile.getMinecraftProvider().getSelectedVersion() == null)
             throw new Exception(C.i18n("install.no_version"));
-        MinecraftVersion mv = (MinecraftVersion) profile.getSelectedMinecraftVersion().clone();
+        MinecraftVersion mv = (MinecraftVersion) profile.getMinecraftProvider().getSelectedVersion().clone();
         mv.inheritsFrom = mv.id;
         mv.jar = mv.jar == null ? mv.id : mv.jar;
         mv.libraries.clear();

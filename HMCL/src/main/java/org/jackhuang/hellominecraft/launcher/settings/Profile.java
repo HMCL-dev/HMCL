@@ -27,7 +27,6 @@ import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerService;
 import org.jackhuang.hellominecraft.launcher.version.GameDirType;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.Utils;
-import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.utils.EventHandler;
 import org.jackhuang.hellominecraft.utils.system.Java;
 import org.jackhuang.hellominecraft.utils.system.OS;
@@ -108,10 +107,6 @@ public final class Profile {
 
     public String getSelectedMinecraftVersionName() {
         return selectedMinecraftVersion;
-    }
-
-    public MinecraftVersion getSelectedMinecraftVersion() {
-        return getMinecraftProvider().getSelectedVersion();
     }
 
     public transient final EventHandler<String> selectedVersionChangedEvent = new EventHandler<>(this);
@@ -196,9 +191,9 @@ public final class Profile {
     }
 
     public File getFolder(String folder) {
-        if (getSelectedMinecraftVersion() == null)
+        if (getMinecraftProvider().getSelectedVersion() == null)
             return new File(getCanonicalGameDirFile(), folder);
-        return getMinecraftProvider().getRunDirectory(getSelectedMinecraftVersion().id, folder);
+        return getMinecraftProvider().getRunDirectory(getMinecraftProvider().getSelectedVersion().id, folder);
     }
 
     public String getName() {

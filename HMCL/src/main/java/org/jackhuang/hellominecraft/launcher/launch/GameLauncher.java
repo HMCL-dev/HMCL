@@ -143,9 +143,9 @@ public class GameLauncher {
             }
             HMCLog.log("Starting process");
             ProcessBuilder builder = new ProcessBuilder(str);
-            if (get == null || get.getSelectedMinecraftVersion() == null || StrUtils.isBlank(get.getCanonicalGameDir()))
+            if (get == null || provider.getSelectedVersion() == null || StrUtils.isBlank(get.getCanonicalGameDir()))
                 throw new Error("Fucking bug!");
-            builder.directory(provider.getRunDirectory(get.getSelectedMinecraftVersion().id))
+            builder.directory(provider.getRunDirectory(provider.getSelectedVersion().id))
                 .environment().put("APPDATA", get.getCanonicalGameDir());
             JavaProcess jp = new JavaProcess(str, builder.start(), PROCESS_MANAGER);
             launchEvent.execute(jp);

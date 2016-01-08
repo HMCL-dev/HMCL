@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hellominecraft.launcher.utils.auth;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.code.DigestUtils;
@@ -27,8 +29,27 @@ import org.jackhuang.hellominecraft.utils.code.DigestUtils;
  */
 public final class OfflineAuthenticator extends IAuthenticator {
 
+    Map<String, String> uuidMap = null;
+
     public OfflineAuthenticator(String clientToken) {
         super(clientToken);
+    }
+
+    @Override
+    public void onLoadSettings(Map m) {
+        super.onLoadSettings(m);
+        Object o = m.get("uuidMap");
+        if (o != null && o instanceof Map)
+            uuidMap = (Map) o;
+        else
+            uuidMap = new HashMap<>();
+    }
+
+    @Override
+    public Map onSaveSettings() {
+        Map m = super.onSaveSettings();
+        m.put("uuidMap", m);
+        return m;
     }
 
     @Override
@@ -38,6 +59,13 @@ public final class OfflineAuthenticator extends IAuthenticator {
         UserProfileProvider result = new UserProfileProvider();
         result.setUserName(info.username);
         String uuid = getUUIDFromUserName(info.username);
+        if (uuidMap != null && uuid.contains(uuid))
+            uuid = uuidMap.get(info.username);
+        else {
+            if (uuidMap == null)
+                uuidMap = new HashMap<>();
+            uuidMap.put(info.username, uuid);
+        }
         result.setSession(uuid);
         result.setUserId(uuid);
         result.setAccessToken(uuid);

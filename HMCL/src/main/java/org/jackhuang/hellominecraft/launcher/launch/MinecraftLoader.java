@@ -68,7 +68,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         String mainClass = version.mainClass;
         res.add((v.isCanceledWrapper() ? "" : "-mainClass=") + mainClass);
 
-        String arg = v.getSelectedMinecraftVersion().minecraftArguments;
+        String arg = provider.getSelectedVersion().minecraftArguments;
         String[] splitted = StrUtils.tokenize(arg);
 
         if (!checkAssetsExist())

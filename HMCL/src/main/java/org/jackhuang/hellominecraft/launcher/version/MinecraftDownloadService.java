@@ -51,9 +51,9 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
     @Override
     public List<GameLauncher.DownloadLibraryJob> getDownloadLibraries() {
         ArrayList<GameLauncher.DownloadLibraryJob> downloadLibraries = new ArrayList<>();
-        if (profile.getSelectedMinecraftVersion() == null)
+        if (mgr.getSelectedVersion() == null)
             return downloadLibraries;
-        MinecraftVersion v = profile.getSelectedMinecraftVersion().resolve(mgr);
+        MinecraftVersion v = mgr.getSelectedVersion().resolve(mgr);
         if (v.libraries != null)
             for (IMinecraftLibrary l : v.libraries) {
                 l.init();

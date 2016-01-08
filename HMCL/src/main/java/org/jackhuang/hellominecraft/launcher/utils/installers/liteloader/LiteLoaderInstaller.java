@@ -52,13 +52,13 @@ public class LiteLoaderInstaller extends Task implements PreviousResultRegistrar
 
     @Override
     public void executeTask() throws Exception {
-        if (profile == null || profile.getSelectedMinecraftVersion() == null)
+        if (profile == null || profile.getMinecraftProvider().getSelectedVersion() == null)
             throw new IllegalStateException(C.i18n("install.no_version"));
         if (pre.size() != 1 && installer == null)
             throw new IllegalStateException("No registered previous task.");
         if (installer == null)
             installer = pre.get(pre.size() - 1).getResult();
-        MinecraftVersion mv = (MinecraftVersion) profile.getSelectedMinecraftVersion().clone();
+        MinecraftVersion mv = (MinecraftVersion) profile.getMinecraftProvider().getSelectedVersion().clone();
         mv.inheritsFrom = mv.id;
         mv.jar = mv.jar == null ? mv.id : mv.jar;
         mv.libraries = new ArrayList(Arrays.asList(version.libraries));
