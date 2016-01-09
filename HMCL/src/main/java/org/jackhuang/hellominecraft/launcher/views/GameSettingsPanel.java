@@ -896,11 +896,8 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private void btnRemoveProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveProfileActionPerformed
         if (MessageBox.Show(C.i18n("ui.message.sure_remove", getProfile().getName()), MessageBox.YES_NO_OPTION) == MessageBox.NO_OPTION)
             return;
-        String name = getProfile().getName();
-        if (Settings.delProfile(getProfile())) {
-            cboProfiles.removeItem(name);
-            prepare(getProfile());
-        }
+        if (Settings.delProfile(getProfile()))
+            loadProfiles();
     }//GEN-LAST:event_btnRemoveProfileActionPerformed
 
     private void cboVersionsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboVersionsItemStateChanged
@@ -1197,8 +1194,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }
 
     //</editor-fold>
-    // <editor-fold defaultstate="collapsed" desc="Game Download">
-    // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Installer">
     String getMinecraftVersionFormatted() {
         return minecraftVersion == null ? "" : (StrUtils.formatVersion(minecraftVersion.version) == null) ? mcVersion : minecraftVersion.version;

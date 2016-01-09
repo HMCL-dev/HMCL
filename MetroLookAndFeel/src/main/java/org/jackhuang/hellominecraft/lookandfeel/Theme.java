@@ -79,6 +79,8 @@ public enum Theme {
     public final Map<String, String> settings;
 
     private Theme(String localizedName, Map<String, String> settings) {
+        if (settings == null)
+            throw new NullPointerException("Theme settings map should not be null.");
         this.localizedName = localizedName;
         this.settings = settings;
     }

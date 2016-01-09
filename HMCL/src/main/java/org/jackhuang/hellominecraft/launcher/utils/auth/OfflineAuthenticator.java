@@ -29,7 +29,7 @@ import org.jackhuang.hellominecraft.utils.code.DigestUtils;
  */
 public final class OfflineAuthenticator extends IAuthenticator {
 
-    Map<String, String> uuidMap = null;
+    Map<String, String> uuidMap = new HashMap<>();
 
     public OfflineAuthenticator(String clientToken) {
         super(clientToken);
@@ -38,11 +38,11 @@ public final class OfflineAuthenticator extends IAuthenticator {
     @Override
     public void onLoadSettings(Map m) {
         super.onLoadSettings(m);
+        if (m == null)
+            return;
         Object o = m.get("uuidMap");
         if (o != null && o instanceof Map)
-            uuidMap = (Map) o;
-        else
-            uuidMap = new HashMap<>();
+            uuidMap = (Map<String, String>) o;
     }
 
     @Override

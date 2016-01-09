@@ -23,6 +23,7 @@ import java.text.ParseException;
 import java.util.Map;
 import javax.swing.UIDefaults;
 import javax.swing.plaf.synth.SynthLookAndFeel;
+import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.NetUtils;
 
 /**
@@ -37,7 +38,7 @@ public class HelloMinecraftLookAndFeel extends SynthLookAndFeel {
      * Creates a new instance of NimbusLookAndFeel
      *
      * @throws java.text.ParseException error parsing the xml, it must not
-     * happen.
+     *                                  happen.
      */
     public HelloMinecraftLookAndFeel() throws ParseException {
         this(DEFAULT_SETTINGS);
@@ -49,9 +50,9 @@ public class HelloMinecraftLookAndFeel extends SynthLookAndFeel {
             for (String ss : settings.keySet())
                 s = s.replace("${" + ss + "}", settings.get(ss));
             load(new ByteArrayInputStream(s.getBytes("UTF-8")), HelloMinecraftLookAndFeel.class);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            throw new ParseException("FUCKING BUG", 0);
+        } catch (Throwable ex) {
+            HMCLog.err("This fucking exception should not happen. Retry backup solution.", ex);
+            load(HelloMinecraftLookAndFeel.class.getResourceAsStream("/org/jackhuang/hellominecraft/lookandfeel/synth_backup.xml"), HelloMinecraftLookAndFeel.class);
         }
     }
 

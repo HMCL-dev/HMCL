@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.launcher.launch.GameException;
 import org.jackhuang.hellominecraft.launcher.launch.GameLauncher;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftAssetService;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftDownloadService;
@@ -211,7 +212,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public GameLauncher.DecompressLibraryJob getDecompressLibraries(MinecraftVersion v) {
         if (v.libraries == null)
-            throw new IllegalStateException("Wrong format: minecraft.json");
+            throw new GameException("Wrong format: minecraft.json");
         ArrayList<File> unzippings = new ArrayList<>();
         ArrayList<String[]> extractRules = new ArrayList<>();
         for (IMinecraftLibrary l : v.libraries) {
@@ -236,7 +237,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public IMinecraftLoader provideMinecraftLoader(UserProfileProvider p)
-        throws IllegalStateException {
+        throws GameException {
         return new MinecraftLoader(profile, this, p);
     }
 

@@ -48,7 +48,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
     DownloadType dt;
     String text;
 
-    public MinecraftLoader(Profile ver, IMinecraftProvider provider, UserProfileProvider lr) throws IllegalStateException {
+    public MinecraftLoader(Profile ver, IMinecraftProvider provider, UserProfileProvider lr) throws GameException {
         super(ver, provider, lr);
     }
 

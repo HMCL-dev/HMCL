@@ -85,13 +85,8 @@ public class GameLauncher {
 
         try {
             loader = provider.provideMinecraftLoader(result);
-        } catch (IllegalStateException e) {
-            HMCLog.err("Failed to get minecraft loader", e);
-            failEvent.execute(C.i18n("launch.circular_dependency_versions"));
-            return null;
-        } catch (Exception e) {
-            failEvent.execute(C.i18n("launch.failed"));
-            HMCLog.err("Failed to get minecraft loader", e);
+        } catch (GameException e) {
+            failEvent.execute(C.i18n("launch.failed") + ", " + e.getMessage());
             return null;
         }
 
@@ -106,7 +101,14 @@ public class GameLauncher {
         }
 
         HMCLog.log("Unpacking natives...");
-        if (!decompressNativesEvent.execute(provider.getDecompressLibraries(loader.getMinecraftVersion()))) {
+        DecompressLibraryJob job = null;
+        try {
+            job = provider.getDecompressLibraries(loader.getMinecraftVersion());
+        } catch (GameException e) {
+            failEvent.execute(C.i18n("launch.failed") + ", " + e.getMessage());
+            return null;
+        }
+        if (!decompressNativesEvent.execute(job)) {
             failEvent.execute(C.i18n("launch.failed"));
             return null;
         }

@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.jackhuang.hellominecraft.C;
+import org.jackhuang.hellominecraft.launcher.launch.GameException;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.utils.assets.AssetsIndex;
 import org.jackhuang.hellominecraft.utils.ArrayUtils;
@@ -78,7 +80,7 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
         if (inheritsFrom == null)
             return this;
         if (!resolvedSoFar.add(id))
-            throw new IllegalStateException("Circular dependency detected.");
+            throw new GameException(C.i18n("launch.circular_dependency_versions"));
 
         MinecraftVersion parent = manager.getVersionById(inheritsFrom);
         if (parent == null) {
