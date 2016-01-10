@@ -259,7 +259,7 @@ public class LogWindow extends javax.swing.JFrame {
         log(status, Level.WARN);
     }
 
-    public void log(String status, Level c) {
+    public synchronized void log(String status, Level c) {
         status = status.replace("\t", "    ");
         Document d = txtLog.getStyledDocument();
         SimpleAttributeSet sas = new SimpleAttributeSet();

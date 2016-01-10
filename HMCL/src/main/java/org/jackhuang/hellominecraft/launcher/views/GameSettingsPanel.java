@@ -884,8 +884,11 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }// </editor-fold>//GEN-END:initComponents
     // <editor-fold defaultstate="collapsed" desc="UI Events">
     private void cboProfilesItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboProfilesItemStateChanged
-        if (!isLoading)
-            onSelected();
+        if (!isLoading) {
+            if (getProfile().getMinecraftProvider().getVersionCount() <= 0)
+                versionChanged(null);
+            prepare(getProfile());
+        }
     }//GEN-LAST:event_cboProfilesItemStateChanged
 
     private void btnNewProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNewProfileActionPerformed

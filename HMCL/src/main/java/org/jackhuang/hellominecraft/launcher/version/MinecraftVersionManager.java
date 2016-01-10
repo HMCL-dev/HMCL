@@ -63,7 +63,6 @@ public class MinecraftVersionManager extends IMinecraftProvider {
         mms = new MinecraftModService(p, this);
         mds = new MinecraftDownloadService(p, this);
         mas = new MinecraftAssetService(p, this);
-        refreshVersions();
     }
 
     public File getFolder() {
@@ -128,17 +127,16 @@ public class MinecraftVersionManager extends IMinecraftProvider {
             try {
                 mcVersion = C.gson.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
                 if (mcVersion == null)
-                    throw new RuntimeException("Wrong json format, got null.");
-            } catch (IOException | RuntimeException e) {
+                    throw new GameException("Wrong json format, got null.");
+            } catch (IOException | GameException e) {
                 HMCLog.warn("Found wrong format json, try to fix it.", e);
                 if (MessageBox.Show(C.i18n("launcher.versions_json_not_formatted", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
                     refreshJson(id);
                     try {
                         mcVersion = C.gson.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
                         if (mcVersion == null)
-                            throw new RuntimeException("Wrong json format, got null.");
-                    } catch (IOException | RuntimeException ex) {
-                        HMCLog.err("Retried but still failed.");
+                            throw new GameException("Wrong json format, got null.");
+                    } catch (IOException | GameException ex) {
                         HMCLog.warn("Ignoring: " + dir + ", the json of this Minecraft is malformed.", ex);
                         continue;
                     }
@@ -147,7 +145,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
             }
             try {
                 if (!id.equals(mcVersion.id)) {
-                    HMCLog.warn("Found: " + dir + ", it contains id: " + mcVersion.id + ", expected: " + id + ", the launcher will fix this problem.");
+                    HMCLog.warn("Found: " + dir + ", it contains id: " + mcVersion.id + ", expected: " + id + ", this app will fix this problem.");
                     mcVersion.id = id;
                     FileUtils.writeQuietly(jsonFile, C.gsonPrettyPrinting.toJson(mcVersion));
                 }
