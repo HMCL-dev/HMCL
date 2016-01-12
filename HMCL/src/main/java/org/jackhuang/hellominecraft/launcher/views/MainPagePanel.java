@@ -559,9 +559,10 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
         public boolean call(Object sender, List<String> str) {
             final GameLauncher obj = (GameLauncher) sender;
             obj.launchEvent.register((sender1, p) -> {
-                if (obj.getProfile().getLauncherVisibility() == LauncherVisibility.CLOSE && !LogWindow.INSTANCE.isVisible())
+                if (obj.getProfile().getLauncherVisibility() == LauncherVisibility.CLOSE && !LogWindow.INSTANCE.isVisible()) {
+                    HMCLog.log("Without the option of keeping the launcher visible, this application will exit and will NOT catch game logs, but you can turn on \"Debug Mode\".");
                     System.exit(0);
-                else if (obj.getProfile().getLauncherVisibility() == LauncherVisibility.KEEP)
+                } else if (obj.getProfile().getLauncherVisibility() == LauncherVisibility.KEEP)
                     MainFrame.INSTANCE.closeMessage();
                 else {
                     if (LogWindow.INSTANCE.isVisible())
@@ -570,16 +571,20 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
                 }
                 JavaProcessMonitor jpm = new JavaProcessMonitor(p);
                 jpm.applicationExitedAbnormallyEvent.register((sender2, t) -> {
+                    HMCLog.err("The game exited abnormally, exit code: " + t);
                     MessageBox.Show(C.i18n("launch.exited_abnormally") + ", exit code: " + t);
                     return true;
                 });
                 jpm.jvmLaunchFailedEvent.register((sender2, t) -> {
+                    HMCLog.err("Cannot create jvm, exit code: " + t);
                     MessageBox.Show(C.i18n("launch.cannot_create_jvm") + ", exit code: " + t);
                     return true;
                 });
                 jpm.stoppedEvent.register((sender2, t) -> {
-                    if (obj.getProfile().getLauncherVisibility() != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible())
+                    if (obj.getProfile().getLauncherVisibility() != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible()) {
+                        HMCLog.log("Without the option of keeping the launcher visible, this application will exit and will NOT catch game logs, but you can turn on \"Debug Mode\".");
                         System.exit(0);
+                    }
                     return true;
                 });
                 jpm.start();

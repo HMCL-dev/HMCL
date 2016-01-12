@@ -208,7 +208,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     }
 
     @Override
-    public GameLauncher.DecompressLibraryJob getDecompressLibraries(MinecraftVersion v) {
+    public GameLauncher.DecompressLibraryJob getDecompressLibraries(MinecraftVersion v) throws GameException {
         if (v.libraries == null)
             throw new GameException("Wrong format: minecraft.json");
         ArrayList<File> unzippings = new ArrayList<>();

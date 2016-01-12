@@ -74,8 +74,6 @@ public class FileUtils {
     public static void cleanDirectory(File directory)
         throws IOException {
         if (!directory.exists()) {
-            //String message = directory + " does not exist";
-            //throw new IllegalArgumentException(message);
             directory.mkdirs();
             return;
         }

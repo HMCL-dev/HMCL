@@ -74,7 +74,7 @@ public class GameLauncher {
             else
                 result = login.loginBySettings();
             if (result == null)
-                throw new IllegalStateException("Result can not be null.");
+                throw new GameException("Result can not be null.");
             PluginManager.NOW_PLUGIN.onProcessingLoginResult(result);
         } catch (Throwable e) {
             String error = C.i18n("login.failed") + e.getMessage();
@@ -150,6 +150,7 @@ public class GameLauncher {
             builder.directory(provider.getRunDirectory(provider.getSelectedVersion().id))
                 .environment().put("APPDATA", get.getCanonicalGameDir());
             JavaProcess jp = new JavaProcess(str, builder.start(), PROCESS_MANAGER);
+            HMCLog.log("The game process have been started");
             launchEvent.execute(jp);
         } catch (Exception e) {
             failEvent.execute(C.i18n("launch.failed_creating_process") + "\n" + e.getMessage());

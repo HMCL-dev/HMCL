@@ -21,7 +21,7 @@ package org.jackhuang.hellominecraft.launcher.launch;
  *
  * @author huangyuhui
  */
-public class GameException extends RuntimeException {
+public class GameException extends Exception {
 
     public GameException(String message) {
         super(message);

@@ -77,7 +77,7 @@ public abstract class IMinecraftProvider {
      *
      * @return libraries of resolved minecraft version v.
      */
-    public abstract GameLauncher.DecompressLibraryJob getDecompressLibraries(MinecraftVersion v);
+    public abstract GameLauncher.DecompressLibraryJob getDecompressLibraries(MinecraftVersion v) throws GameException;
 
     public abstract File getDecompressNativesToLocation(MinecraftVersion v);
 
@@ -99,9 +99,9 @@ public abstract class IMinecraftProvider {
      *
      * @return what you want
      *
-     * @throws IllegalStateException circular denpendency versions
+     * @throws GameException circular denpendency versions
      */
-    public abstract IMinecraftLoader provideMinecraftLoader(UserProfileProvider p) throws IllegalStateException;
+    public abstract IMinecraftLoader provideMinecraftLoader(UserProfileProvider p) throws GameException;
 
     /**
      * Rename version

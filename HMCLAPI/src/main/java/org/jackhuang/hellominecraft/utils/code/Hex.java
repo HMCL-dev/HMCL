@@ -72,10 +72,10 @@ public class Hex {
         return new String(encodeHex(data));
     }
 
-    protected static int toDigit(char ch, int index) throws Exception {
+    protected static int toDigit(char ch, int index) {
         int digit = Character.digit(ch, 16);
         if (digit == -1)
-            throw new Exception("Illegal hexadecimal character " + ch + " at index " + index);
+            throw new IllegalArgumentException("Illegal hexadecimal character " + ch + " at index " + index);
         return digit;
     }
 

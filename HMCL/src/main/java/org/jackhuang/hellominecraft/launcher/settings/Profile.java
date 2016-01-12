@@ -289,6 +289,8 @@ public final class Profile {
     }
 
     public GameDirType getGameDirType() {
+        if (gameDirType < 0 || gameDirType > 1)
+            setGameDirType(GameDirType.ROOT_FOLDER);
         return GameDirType.values()[gameDirType];
     }
 

@@ -72,11 +72,11 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
         return new MinecraftVersion(minecraftArguments, mainClass, time, id, type, processArguments, releaseTime, assets, jar, inheritsFrom, minimumLauncherVersion, libraries, hidden);
     }
 
-    public MinecraftVersion resolve(IMinecraftProvider manager) {
+    public MinecraftVersion resolve(IMinecraftProvider manager) throws GameException {
         return resolve(manager, new HashSet<>());
     }
 
-    protected MinecraftVersion resolve(IMinecraftProvider manager, Set<String> resolvedSoFar) {
+    protected MinecraftVersion resolve(IMinecraftProvider manager, Set<String> resolvedSoFar) throws GameException {
         if (inheritsFrom == null)
             return this;
         if (!resolvedSoFar.add(id))
