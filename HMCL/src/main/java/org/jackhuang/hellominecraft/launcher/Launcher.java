@@ -30,7 +30,7 @@ import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.views.LogWindow;
-import org.jackhuang.hellominecraft.launcher.core.MinecraftCrashAdvicer;
+import org.jackhuang.hellominecraft.launcher.utils.MinecraftCrashAdvicer;
 import org.jackhuang.hellominecraft.utils.DoubleOutputStream;
 import org.jackhuang.hellominecraft.utils.LauncherPrintStream;
 import org.jackhuang.hellominecraft.utils.MathUtils;

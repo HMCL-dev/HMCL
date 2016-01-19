@@ -15,10 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.launcher.core;
+package org.jackhuang.hellominecraft.launcher.settings;
 
+import org.jackhuang.hellominecraft.launcher.core.service.DefaultMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.api.IPlugin;
+import org.jackhuang.hellominecraft.launcher.core.Profile;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.OfflineAuthenticator;

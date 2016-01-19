@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.launcher.core.version;
+package org.jackhuang.hellominecraft.launcher.core.download;
 
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftDownloadService;
 import com.google.gson.JsonSyntaxException;
@@ -27,6 +27,8 @@ import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.launch.GameLauncher;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
+import org.jackhuang.hellominecraft.launcher.core.version.IMinecraftLibrary;
+import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.NetUtils;
