@@ -44,7 +44,7 @@ import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
-import org.jackhuang.hellominecraft.launcher.utils.auth.IAuthenticator;
+import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
 import org.jackhuang.hellominecraft.lookandfeel.Theme;
 import org.jackhuang.hellominecraft.utils.StrUtils;

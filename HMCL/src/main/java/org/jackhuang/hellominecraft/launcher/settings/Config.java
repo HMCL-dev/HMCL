@@ -17,7 +17,8 @@
  */
 package org.jackhuang.hellominecraft.launcher.settings;
 
-import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
+import org.jackhuang.hellominecraft.launcher.core.Profile;
+import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
-import org.jackhuang.hellominecraft.launcher.utils.auth.IAuthenticator;
+import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.lookandfeel.Theme;
 import org.jackhuang.hellominecraft.utils.EventHandler;
 import org.jackhuang.hellominecraft.utils.system.JdkVersion;

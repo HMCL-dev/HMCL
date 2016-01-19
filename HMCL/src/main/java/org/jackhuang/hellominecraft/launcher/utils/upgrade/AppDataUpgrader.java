@@ -36,7 +36,7 @@ import java.util.jar.Pack200;
 import java.util.zip.GZIPInputStream;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
-import org.jackhuang.hellominecraft.launcher.utils.MCUtils;
+import org.jackhuang.hellominecraft.launcher.core.MCUtils;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;

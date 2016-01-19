@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.settings;
 
+import org.jackhuang.hellominecraft.launcher.core.Profile;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
@@ -61,8 +62,13 @@ public final class Settings {
         if (!getProfiles().containsKey(DEFAULT_PROFILE))
             getProfiles().put(DEFAULT_PROFILE, new Profile());
 
-        for (Profile e : getProfiles().values())
+        for (Profile e : getProfiles().values()) {
             e.checkFormat();
+            e.propertyChanged.register((sender, t) -> {
+                save();
+                return true;
+            });
+        }
 
         List<Java> temp = new ArrayList<>();
         temp.add(new Java("Default", System.getProperty("java.home")));

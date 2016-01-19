@@ -34,7 +34,7 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.api.PluginManager;
-import org.jackhuang.hellominecraft.launcher.launch.GameLauncher;
+import org.jackhuang.hellominecraft.launcher.core.launch.GameLauncher;
 import org.jackhuang.hellominecraft.launcher.utils.CrashReporter;
 import org.jackhuang.hellominecraft.logging.Configuration;
 import org.jackhuang.hellominecraft.logging.appender.ConsoleAppender;

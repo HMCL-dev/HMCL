@@ -21,7 +21,7 @@ import java.awt.Color;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.launcher.version.ServerInfo;
+import org.jackhuang.hellominecraft.launcher.core.version.ServerInfo;
 
 /**
  *

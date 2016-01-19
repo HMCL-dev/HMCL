@@ -22,7 +22,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.launcher.version.ServerInfo;
+import org.jackhuang.hellominecraft.launcher.core.version.ServerInfo;
 
 /**
  *
