@@ -100,9 +100,11 @@ public class SwingUtils {
     /**
      * Open URL by java.awt.Desktop
      *
-     * @param link
+     * @param link null is allowed but will be ignored
      */
     public static void openLink(String link) {
+        if (link == null)
+            return;
         try {
             java.awt.Desktop.getDesktop().browse(new URI(link));
         } catch (Throwable e) {

@@ -28,7 +28,6 @@ import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.views.SwingUtils;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 
 /**
@@ -53,11 +52,6 @@ public class ModInfo implements Comparable<ModInfo> {
             newf = new File(f.getParentFile(), f.getName() + ".disabled");
         if (f.renameTo(newf))
             location = newf;
-    }
-
-    public void showURL() {
-        if (url != null)
-            SwingUtils.openLink(url);
     }
 
     @Override

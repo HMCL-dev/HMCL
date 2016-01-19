@@ -44,4 +44,17 @@ public enum DownloadType {
     public String getName() {
         return name;
     }
+
+    private static DownloadType suggestedDownloadType = Mojang;
+
+    public static DownloadType getSuggestedDownloadType() {
+        return suggestedDownloadType;
+    }
+
+    public static void setSuggestedDownloadType(DownloadType suggestedDownloadType) {
+        if (suggestedDownloadType == null)
+            throw new IllegalArgumentException("download type should not be null.");
+        DownloadType.suggestedDownloadType = suggestedDownloadType;
+    }
+
 }

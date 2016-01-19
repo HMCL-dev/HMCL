@@ -19,7 +19,6 @@ package org.jackhuang.hellominecraft.launcher.core.installers;
 
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftInstallerService;
 import java.io.File;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftBasicService;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.installers.InstallerVersionList.InstallerVersion;
 import org.jackhuang.hellominecraft.launcher.core.installers.forge.ForgeInstaller;

@@ -21,10 +21,7 @@ import java.io.File;
 import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
-import org.jackhuang.hellominecraft.launcher.core.MCUtils;
 import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
-import org.jackhuang.hellominecraft.launcher.settings.LauncherVisibility;
-import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.Utils;
 import org.jackhuang.hellominecraft.utils.EventHandler;
@@ -112,7 +109,7 @@ public final class Profile {
 
     public void setSelectedMinecraftVersion(String selectedMinecraftVersion) {
         this.selectedMinecraftVersion = selectedMinecraftVersion;
-        Settings.save();
+        propertyChanged.execute("selectedMinecraftVersion");
         selectedVersionChangedEvent.execute(selectedMinecraftVersion);
     }
 
@@ -163,13 +160,13 @@ public final class Profile {
     }
 
     public Java getJava() {
-        return Settings.JAVA.get(getJavaIndexInAllJavas());
+        return Java.JAVA.get(getJavaIndexInAllJavas());
     }
 
     public int getJavaIndexInAllJavas() {
         if (StrUtils.isBlank(java) && StrUtils.isNotBlank(javaDir))
             java = "Custom";
-        int idx = Settings.JAVA.indexOf(new Java(java, null));
+        int idx = Java.JAVA.indexOf(new Java(java, null));
         if (idx == -1) {
             java = "Default";
             idx = 0;
@@ -179,9 +176,9 @@ public final class Profile {
 
     public void setJava(Java java) {
         if (java == null)
-            this.java = Settings.JAVA.get(0).getName();
+            this.java = Java.JAVA.get(0).getName();
         else {
-            int idx = Settings.JAVA.indexOf(java);
+            int idx = Java.JAVA.indexOf(java);
             if (idx == -1)
                 return;
             this.java = java.getName();

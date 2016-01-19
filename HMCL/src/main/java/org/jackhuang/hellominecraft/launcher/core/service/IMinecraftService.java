@@ -37,7 +37,7 @@ public abstract class IMinecraftService {
     }
 
     public DownloadType getDownloadType() {
-        return Settings.getInstance().getDownloadSource();
+        return DownloadType.getSuggestedDownloadType();
     }
 
     public abstract IMinecraftAssetService asset();

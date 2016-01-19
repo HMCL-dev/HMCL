@@ -20,6 +20,7 @@ package org.jackhuang.hellominecraft.utils.system;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
@@ -29,6 +30,19 @@ import org.jackhuang.hellominecraft.HMCLog;
  * @author huangyuhui
  */
 public class Java {
+
+    public static final List<Java> JAVA;
+
+    static {
+        List<Java> temp = new ArrayList<>();
+        temp.add(new Java("Default", System.getProperty("java.home")));
+        temp.add(new Java("Custom", null));
+        if (OS.os() == OS.WINDOWS)
+            temp.addAll(Java.queryAllJavaHomeInWindowsByReg());
+        if (OS.os() == OS.OSX)
+            temp.addAll(Java.queryAllJDKInMac());
+        JAVA = Collections.unmodifiableList(temp);
+    }
 
     String name, home;
 

@@ -19,11 +19,10 @@ package org.jackhuang.hellominecraft.launcher.servers.mfcraft;
 
 import java.io.IOException;
 import org.jackhuang.hellominecraft.HMCLog;
-import org.jackhuang.hellominecraft.launcher.launch.IMinecraftService;
+import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.servers.ServerPlugin;
-import org.jackhuang.hellominecraft.launcher.settings.Profile;
-import org.jackhuang.hellominecraft.launcher.version.MinecraftModService;
-import org.jackhuang.hellominecraft.launcher.version.MinecraftVersionManager;
+import org.jackhuang.hellominecraft.launcher.core.version.MinecraftModService;
+import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersionManager;
 import org.jackhuang.hellominecraft.utils.ArrayUtils;
 
 /**

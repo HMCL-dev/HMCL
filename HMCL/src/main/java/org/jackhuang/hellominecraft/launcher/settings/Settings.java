@@ -29,14 +29,13 @@ import java.util.Map;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
+import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.utils.CollectionUtils;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.UpdateChecker;
 import org.jackhuang.hellominecraft.utils.VersionNumber;
-import org.jackhuang.hellominecraft.utils.system.Java;
-import org.jackhuang.hellominecraft.utils.system.OS;
 
 /**
  *
@@ -51,7 +50,6 @@ public final class Settings {
     private static final Config SETTINGS;
     public static final UpdateChecker UPDATE_CHECKER = new UpdateChecker(new VersionNumber(Main.VERSION_FIRST, Main.VERSION_SECOND, Main.VERSION_THIRD),
                                                                          "hmcl");
-    public static final List<Java> JAVA;
 
     public static Config getInstance() {
         return SETTINGS;
@@ -59,6 +57,11 @@ public final class Settings {
 
     static {
         SETTINGS = initSettings();
+        SETTINGS.downloadTypeChangedEvent.register((s, t) -> {
+            DownloadType.setSuggestedDownloadType(t);
+            return true;
+        });
+        DownloadType.setSuggestedDownloadType(SETTINGS.getDownloadSource());
         if (!getProfiles().containsKey(DEFAULT_PROFILE))
             getProfiles().put(DEFAULT_PROFILE, new Profile());
 
@@ -69,15 +72,6 @@ public final class Settings {
                 return true;
             });
         }
-
-        List<Java> temp = new ArrayList<>();
-        temp.add(new Java("Default", System.getProperty("java.home")));
-        temp.add(new Java("Custom", null));
-        if (OS.os() == OS.WINDOWS)
-            temp.addAll(Java.queryAllJavaHomeInWindowsByReg());
-        if (OS.os() == OS.OSX)
-            temp.addAll(Java.queryAllJDKInMac());
-        JAVA = Collections.unmodifiableList(temp);
     }
 
     private static Config initSettings() {

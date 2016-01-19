@@ -18,7 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.servers.mfcraft;
 
 import java.util.ArrayList;
-import org.jackhuang.hellominecraft.launcher.version.ServerInfo;
+import org.jackhuang.hellominecraft.launcher.core.version.ServerInfo;
 
 /**
  *

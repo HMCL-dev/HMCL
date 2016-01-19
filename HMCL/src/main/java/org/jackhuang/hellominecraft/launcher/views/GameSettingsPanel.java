@@ -43,7 +43,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
-import org.jackhuang.hellominecraft.launcher.settings.LauncherVisibility;
+import org.jackhuang.hellominecraft.launcher.core.LauncherVisibility;
 import org.jackhuang.hellominecraft.launcher.core.Profile;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.utils.FileNameFilter;
@@ -91,7 +91,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         initExternalModsTable();
         initTabs();
 
-        for (Java j : Settings.JAVA)
+        for (Java j : Java.JAVA)
             cboJava.addItem(j.getLocalizedName());
 
         dropTarget = new DropTarget(lstExternalMods, DnDConstants.ACTION_COPY_OR_MOVE, this);
@@ -1045,7 +1045,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             return;
         int idx = cboJava.getSelectedIndex();
         if (idx != -1) {
-            Java j = Settings.JAVA.get(idx);
+            Java j = Java.JAVA.get(idx);
             getProfile().setJava(j);
             txtJavaDir.setEnabled(idx == 1);
             txtJavaDir.setText(j.getHome() == null ? getProfile().getSettingsJavaDir() : j.getJava());
@@ -1080,7 +1080,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private void lblModInfoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblModInfoMouseClicked
         int idx = lstExternalMods.getSelectedRow();
         if (idx > 0 && idx < getProfile().service().mod().getMods().size())
-            getProfile().service().mod().getMods().get(idx).showURL();
+            SwingUtils.openLink(getProfile().service().mod().getMods().get(idx).url);
     }//GEN-LAST:event_lblModInfoMouseClicked
 
     private void btnChoosingGameDirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnChoosingGameDirActionPerformed

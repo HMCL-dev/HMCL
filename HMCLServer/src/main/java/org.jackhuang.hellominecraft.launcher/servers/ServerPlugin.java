@@ -18,17 +18,17 @@
 package org.jackhuang.hellominecraft.launcher.servers;
 
 import org.jackhuang.hellominecraft.launcher.api.IPlugin;
-import org.jackhuang.hellominecraft.launcher.launch.IMinecraftService;
+import org.jackhuang.hellominecraft.launcher.core.Profile;
+import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.servers.mfcraft.MFCraftAuthenticator;
 import org.jackhuang.hellominecraft.launcher.servers.mfcraft.MFCraftMinecraftService;
 import org.jackhuang.hellominecraft.launcher.servers.mfcraft.Servers;
-import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
-import org.jackhuang.hellominecraft.launcher.utils.auth.AuthenticationException;
-import org.jackhuang.hellominecraft.launcher.utils.auth.IAuthenticator;
-import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
-import org.jackhuang.hellominecraft.launcher.utils.auth.YggdrasilAuthenticator;
-import org.jackhuang.hellominecraft.launcher.version.ServerInfo;
+import org.jackhuang.hellominecraft.launcher.core.auth.AuthenticationException;
+import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
+import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
+import org.jackhuang.hellominecraft.launcher.core.auth.YggdrasilAuthenticator;
+import org.jackhuang.hellominecraft.launcher.core.version.ServerInfo;
 import org.jackhuang.hellominecraft.launcher.views.MainFrame;
 import org.jackhuang.hellominecraft.launcher.views.ServerListView;
 import org.jackhuang.hellominecraft.utils.functions.Consumer;
