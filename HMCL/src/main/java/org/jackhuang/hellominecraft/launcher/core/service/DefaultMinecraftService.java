@@ -18,12 +18,6 @@
 package org.jackhuang.hellominecraft.launcher.core.service;
 
 import org.jackhuang.hellominecraft.launcher.core.Profile;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftDownloadService;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftInstallerService;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftAssetService;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftModService;
 import org.jackhuang.hellominecraft.launcher.core.installers.MinecraftInstallerService;
 import org.jackhuang.hellominecraft.launcher.core.assets.MinecraftAssetService;
 import org.jackhuang.hellominecraft.launcher.core.download.MinecraftDownloadService;
