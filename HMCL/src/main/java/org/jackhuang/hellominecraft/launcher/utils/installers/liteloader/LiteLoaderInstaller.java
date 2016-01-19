@@ -22,10 +22,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftService;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.tasks.communication.PreviousResult;
 import org.jackhuang.hellominecraft.tasks.communication.PreviousResultRegistrar;
-import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
@@ -38,27 +38,27 @@ public class LiteLoaderInstaller extends Task implements PreviousResultRegistrar
 
     public LiteLoaderVersionList.LiteLoaderInstallerVersion version;
     public File installer;
-    public Profile profile;
+    public IMinecraftService service;
 
-    public LiteLoaderInstaller(Profile profile, LiteLoaderVersionList.LiteLoaderInstallerVersion v) {
-        this(profile, v, null);
+    public LiteLoaderInstaller(IMinecraftService service, LiteLoaderVersionList.LiteLoaderInstallerVersion v) {
+        this(service, v, null);
     }
 
-    public LiteLoaderInstaller(Profile profile, LiteLoaderVersionList.LiteLoaderInstallerVersion v, File installer) {
-        this.profile = profile;
+    public LiteLoaderInstaller(IMinecraftService service, LiteLoaderVersionList.LiteLoaderInstallerVersion v, File installer) {
+        this.service = service;
         this.version = v;
         this.installer = installer;
     }
 
     @Override
     public void executeTask() throws Exception {
-        if (profile == null || profile.getMinecraftProvider().getSelectedVersion() == null)
+        if (service.version().getSelectedVersion() == null)
             throw new IllegalStateException(C.i18n("install.no_version"));
         if (pre.size() != 1 && installer == null)
             throw new IllegalStateException("No registered previous task.");
         if (installer == null)
             installer = pre.get(pre.size() - 1).getResult();
-        MinecraftVersion mv = (MinecraftVersion) profile.getMinecraftProvider().getSelectedVersion().clone();
+        MinecraftVersion mv = (MinecraftVersion) service.version().getSelectedVersion().clone();
         mv.inheritsFrom = mv.id;
         mv.jar = mv.jar == null ? mv.id : mv.jar;
         mv.libraries = new ArrayList(Arrays.asList(version.libraries));
@@ -66,13 +66,13 @@ public class LiteLoaderInstaller extends Task implements PreviousResultRegistrar
         MinecraftLibrary ml = new MinecraftLibrary("com.mumfrey:liteloader:" + version.selfVersion);
         //ml.url = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + version.mcVersion + "/liteloader-" + version.selfVersion + ".jar";
         mv.libraries.add(0, ml);
-        FileUtils.copyFile(installer, new File(profile.getCanonicalGameDir(), "libraries/com/mumfrey/liteloader/" + version.selfVersion + "/liteloader-" + version.selfVersion + ".jar"));
+        FileUtils.copyFile(installer, new File(service.baseFolder, "libraries/com/mumfrey/liteloader/" + version.selfVersion + "/liteloader-" + version.selfVersion + ".jar"));
 
         mv.id += "-LiteLoader" + version.selfVersion;
 
         mv.mainClass = "net.minecraft.launchwrapper.Launch";
         mv.minecraftArguments += " --tweakClass " + version.tweakClass;
-        File folder = new File(profile.getCanonicalGameDir(), "versions/" + mv.id);
+        File folder = new File(service.baseFolder, "versions/" + mv.id);
         folder.mkdirs();
         File json = new File(folder, mv.id + ".json");
         HMCLog.log("Creating new version profile..." + mv.id + ".json");

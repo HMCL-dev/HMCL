@@ -109,7 +109,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                getProfile().getMinecraftProvider().open(mcVersion, a);
+                getProfile().service().version().open(mcVersion, a);
             }
         }
         JMenuItem itm;
@@ -140,7 +140,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             if (mcVersion != null) {
                 String newName = JOptionPane.showInputDialog(C.i18n("versions.manage.rename.message"), mcVersion);
                 if (newName != null)
-                    if (getProfile().getMinecraftProvider().renameVersion(mcVersion, newName))
+                    if (getProfile().service().version().renameVersion(mcVersion, newName))
                         refreshVersions();
             }
         });
@@ -148,20 +148,20 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         itm = new JMenuItem(C.i18n("versions.manage.remove"));
         itm.addActionListener((e) -> {
             if (mcVersion != null && MessageBox.Show(C.i18n("versions.manage.remove.confirm") + mcVersion, MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                if (getProfile().getMinecraftProvider().removeVersionFromDisk(mcVersion))
+                if (getProfile().service().version().removeVersionFromDisk(mcVersion))
                     refreshVersions();
         });
         ppmManage.add(itm);
         itm = new JMenuItem(C.i18n("versions.manage.redownload_json"));
         itm.addActionListener((e) -> {
             if (mcVersion != null)
-                getProfile().getMinecraftProvider().refreshJson(mcVersion);
+                getProfile().service().download().downloadMinecraftVersionJson(mcVersion);
         });
         ppmManage.add(itm);
         itm = new JMenuItem(C.i18n("versions.manage.redownload_assets_index"));
         itm.addActionListener((e) -> {
             if (mcVersion != null)
-                getProfile().getMinecraftProvider().getAssetService().refreshAssetsIndex(mcVersion);
+                getProfile().service().asset().refreshAssetsIndex(mcVersion);
         });
         ppmManage.add(itm);
     }
@@ -174,7 +174,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         }
         lstExternalMods.getSelectionModel().addListSelectionListener(e -> {
             int row = lstExternalMods.getSelectedRow();
-            List<ModInfo> mods = getProfile().getMinecraftProvider().getModService().getMods();
+            List<ModInfo> mods = getProfile().service().mod().getMods();
             if (mods != null && 0 <= row && row < mods.size()) {
                 ModInfo m = mods.get(row);
                 boolean hasLink = m.url != null;
@@ -194,7 +194,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         ((DefaultTableModel) lstExternalMods.getModel()).addTableModelListener(e -> {
             if (e.getType() == TableModelEvent.UPDATE && e.getColumn() == 0) {
                 int row = lstExternalMods.getSelectedRow();
-                List<ModInfo> mods = getProfile().getMinecraftProvider().getModService().getMods();
+                List<ModInfo> mods = getProfile().service().mod().getMods();
                 if (mods != null && mods.size() > row && row >= 0)
                     mods.get(row).reverseModState();
             }
@@ -885,7 +885,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     // <editor-fold defaultstate="collapsed" desc="UI Events">
     private void cboProfilesItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboProfilesItemStateChanged
         if (!isLoading) {
-            if (getProfile().getMinecraftProvider().getVersionCount() <= 0)
+            if (getProfile().service().version().getVersionCount() <= 0)
                 versionChanged(null);
             prepare(getProfile());
         }
@@ -989,7 +989,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
     private void btnDownloadAllAssetsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadAllAssetsActionPerformed
         if (mcVersion != null)
-            getProfile().getMinecraftProvider().getAssetService().downloadAssets(mcVersion).run();
+            getProfile().service().asset().downloadAssets(mcVersion).run();
     }//GEN-LAST:event_btnDownloadAllAssetsActionPerformed
 
     private void txtMaxMemoryFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtMaxMemoryFocusLost
@@ -1061,14 +1061,14 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             return;
         boolean flag = true;
         for (File f : fc.getSelectedFiles())
-            flag &= getProfile().getMinecraftProvider().getModService().addMod(f);
+            flag &= getProfile().service().mod().addMod(f);
         reloadMods();
         if (!flag)
             MessageBox.Show(C.I18N.getString("mods.failed"));
     }//GEN-LAST:event_btnAddModActionPerformed
 
     private void btnRemoveModActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveModActionPerformed
-        getProfile().getMinecraftProvider().getModService().removeMod(SwingUtils.getValueBySelectedRow(lstExternalMods, lstExternalMods.getSelectedRows(), 1));
+        getProfile().service().mod().removeMod(SwingUtils.getValueBySelectedRow(lstExternalMods, lstExternalMods.getSelectedRows(), 1));
         reloadMods();
     }//GEN-LAST:event_btnRemoveModActionPerformed
 
@@ -1079,8 +1079,8 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
     private void lblModInfoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblModInfoMouseClicked
         int idx = lstExternalMods.getSelectedRow();
-        if (idx > 0 && idx < getProfile().getMinecraftProvider().getModService().getMods().size())
-            getProfile().getMinecraftProvider().getModService().getMods().get(idx).showURL();
+        if (idx > 0 && idx < getProfile().service().mod().getMods().size())
+            getProfile().service().mod().getMods().get(idx).showURL();
     }//GEN-LAST:event_lblModInfoMouseClicked
 
     private void btnChoosingGameDirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnChoosingGameDirActionPerformed
@@ -1102,7 +1102,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }//GEN-LAST:event_btnChoosingGameDirActionPerformed
 
     private void btnCleanGameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCleanGameActionPerformed
-        getProfile().getMinecraftProvider().cleanFolder();
+        getProfile().service().version().cleanFolder();
     }//GEN-LAST:event_btnCleanGameActionPerformed
 
     // </editor-fold>
@@ -1165,9 +1165,9 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         isLoading = true;
         cboVersions.removeAllItems();
         int index = 0, i = 0;
-        MinecraftVersion selVersion = getProfile().getMinecraftProvider().getSelectedVersion();
+        MinecraftVersion selVersion = getProfile().service().version().getSelectedVersion();
         String selectedMC = selVersion == null ? null : selVersion.id;
-        for (MinecraftVersion each : getProfile().getMinecraftProvider().getVersions()) {
+        for (MinecraftVersion each : getProfile().service().version().getVersions()) {
             cboVersions.addItem(each.id);
             if (StrUtils.isEquals(each.id, selectedMC))
                 index = i;
@@ -1181,7 +1181,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }
 
     void loadMinecraftVersion() {
-        loadMinecraftVersion(getProfile().getMinecraftProvider().getSelectedVersion());
+        loadMinecraftVersion(getProfile().service().version().getSelectedVersion());
     }
 
     /**
@@ -1210,7 +1210,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                 Transferable tr = dtde.getTransferable();
                 List<File> files = (List<File>) tr.getTransferData(DataFlavor.javaFileListFlavor);
                 for (File file : files)
-                    getProfile().getMinecraftProvider().getModService().addMod(file);
+                    getProfile().service().mod().addMod(file);
             } catch (Exception ex) {
                 HMCLog.warn("Failed to drop file.", ex);
             }
@@ -1233,7 +1233,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }
 
     void refreshVersions() {
-        getProfile().getMinecraftProvider().refreshVersions();
+        getProfile().service().version().refreshVersions();
         loadVersions();
     }
 
@@ -1247,7 +1247,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         reloadingMods = true;
         DefaultTableModel model = SwingUtils.clearDefaultTable(lstExternalMods);
         Observable.<List<ModInfo>>createWithEmptySubscription(
-            t -> t.onNext(getProfile().getMinecraftProvider().getModService().recacheMods()))
+            t -> t.onNext(getProfile().service().mod().recacheMods()))
             .subscribeOn(Schedulers.newThread()).observeOn(Schedulers.eventQueue())
             .subscribe(t -> {
                 for (ModInfo x : t)
@@ -1266,7 +1266,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     @Override
     public void onSelected() {
         loadProfiles();
-        if (getProfile().getMinecraftProvider().getVersionCount() <= 0)
+        if (getProfile().service().version().getVersionCount() <= 0)
             versionChanged(null);
         else
             versionChanged((String) cboVersions.getSelectedItem());

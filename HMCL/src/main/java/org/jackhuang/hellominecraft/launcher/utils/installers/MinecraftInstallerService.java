@@ -17,8 +17,10 @@
  */
 package org.jackhuang.hellominecraft.launcher.utils.installers;
 
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftInstallerService;
 import java.io.File;
-import org.jackhuang.hellominecraft.launcher.settings.Profile;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftBasicService;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList.InstallerVersion;
 import org.jackhuang.hellominecraft.launcher.utils.installers.forge.ForgeInstaller;
 import org.jackhuang.hellominecraft.launcher.utils.installers.liteloader.LiteLoaderInstaller;
@@ -35,14 +37,13 @@ import org.jackhuang.hellominecraft.utils.system.IOUtils;
  *
  * @author huangyuhui
  */
-public final class InstallerService {
+public final class MinecraftInstallerService extends IMinecraftInstallerService {
 
-    Profile p;
-
-    public InstallerService(Profile p) {
-        this.p = p;
+    public MinecraftInstallerService(IMinecraftService service) {
+        super(service);
     }
 
+    @Override
     public Task download(InstallerVersion v, InstallerType type) {
         switch (type) {
         case Forge:
@@ -56,6 +57,7 @@ public final class InstallerService {
         }
     }
 
+    @Override
     public Task downloadForge(InstallerVersion v) {
         return new TaskInfo("Forge Downloader") {
             @Override
@@ -63,13 +65,14 @@ public final class InstallerService {
                 File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "forge-installer.jar");
                 if (v.installer != null)
                     TaskWindow.getInstance()
-                        .addTask(new FileDownloadTask(p.getDownloadType().getProvider().getParsedLibraryDownloadURL(v.installer), filepath).setTag("forge"))
-                        .addTask(new ForgeInstaller(p.getMinecraftProvider(), filepath, v))
+                        .addTask(new FileDownloadTask(service.getDownloadType().getProvider().getParsedLibraryDownloadURL(v.installer), filepath).setTag("forge"))
+                        .addTask(new ForgeInstaller(service, filepath, v))
                         .start();
             }
         };
     }
 
+    @Override
     public Task downloadOptifine(InstallerVersion v) {
         return new TaskInfo("OptiFine Downloader") {
             @Override
@@ -79,13 +82,14 @@ public final class InstallerService {
                     OptiFineDownloadFormatter task = new OptiFineDownloadFormatter(v.installer);
                     TaskWindow.getInstance().addTask(task)
                         .addTask(new FileDownloadTask(filepath).registerPreviousResult(task).setTag("optifine"))
-                        .addTask(new OptiFineInstaller(p, v.selfVersion, filepath))
+                        .addTask(new OptiFineInstaller(service, v.selfVersion, filepath))
                         .start();
                 }
             }
         };
     }
 
+    @Override
     public Task downloadLiteLoader(InstallerVersion v) {
         return new TaskInfo("LiteLoader Downloader") {
             @Override
@@ -93,7 +97,7 @@ public final class InstallerService {
                 File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "liteloader-universal.jar");
                 FileDownloadTask task = (FileDownloadTask) new FileDownloadTask(v.universal, filepath).setTag("LiteLoader");
                 TaskWindow.getInstance()
-                    .addTask(task).addTask(new LiteLoaderInstaller(p, (LiteLoaderVersionList.LiteLoaderInstallerVersion) v).registerPreviousResult(task))
+                    .addTask(task).addTask(new LiteLoaderInstaller(service, (LiteLoaderVersionList.LiteLoaderInstallerVersion) v).registerPreviousResult(task))
                     .start();
             }
         };

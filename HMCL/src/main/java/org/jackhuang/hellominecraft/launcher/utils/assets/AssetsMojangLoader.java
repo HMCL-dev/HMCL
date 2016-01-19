@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftAssetService;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
@@ -45,17 +46,17 @@ public class AssetsMojangLoader extends IAssetsHandler {
     }
 
     @Override
-    public Observable<String[]> getList(MinecraftVersion mv, IMinecraftProvider mp) {
+    public Observable<String[]> getList(MinecraftVersion mv, IMinecraftAssetService mp) {
         return Observable.<String[]>createWithEmptySubscription((Observer<String[]> t1) -> {
             if (mv == null) {
                 t1.onError(null);
                 return;
             }
             String assetsId = mv.assets == null ? "legacy" : mv.assets;
-            File assets = mp.getAssetService().getAssets();
+            File assets = mp.getAssets();
             HMCLog.log("Get index: " + assetsId);
             File f = IOUtils.tryGetCanonicalFile(new File(assets, "indexes/" + assetsId + ".json"));
-            if (!f.exists() && !mp.getAssetService().downloadMinecraftAssetsIndex(assetsId)) {
+            if (!f.exists() && !mp.downloadMinecraftAssetsIndex(assetsId)) {
                 t1.onError(null);
                 return;
             }

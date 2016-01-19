@@ -30,6 +30,7 @@ import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.launch.DefaultGameLauncher;
+import org.jackhuang.hellominecraft.launcher.launch.GameException;
 import org.jackhuang.hellominecraft.launcher.utils.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.utils.auth.LoginInfo;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
@@ -39,6 +40,7 @@ import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.launcher.launch.GameLauncher;
 import org.jackhuang.hellominecraft.launcher.settings.LauncherVisibility;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
+import org.jackhuang.hellominecraft.launcher.utils.auth.AuthenticationException;
 import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
 import org.jackhuang.hellominecraft.utils.Event;
 import org.jackhuang.hellominecraft.lookandfeel.components.ConstomButton;
@@ -388,7 +390,7 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
             return;
         }
         final String name = (String) cboProfiles.getSelectedItem();
-        if (StrUtils.isBlank(name) || getCurrentProfile().getMinecraftProvider().getSelectedVersion() == null) {
+        if (StrUtils.isBlank(name) || getCurrentProfile().service().version().getSelectedVersion() == null) {
             HMCLog.warn("There's no selected version, rechoose a version.");
             MessageBox.ShowLocalized("minecraft.no_selected_version");
             return;
@@ -407,19 +409,18 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
             public void run() {
                 Thread.currentThread().setName("Game Launcher");
                 DefaultGameLauncher gl = new DefaultGameLauncher(getCurrentProfile(), li, l);
-                gl.failEvent.register((sender, s) -> {
-                    if (s != null)
-                        MessageBox.Show(s);
-                    MainFrame.INSTANCE.closeMessage();
-                    isLaunching = false;
-                    return true;
-                });
                 gl.successEvent.register((sender, s) -> {
                     isLaunching = false;
                     return true;
                 });
                 listener.accept(gl);
-                gl.makeLaunchCommand();
+                try {
+                    gl.makeLaunchCommand();
+                } catch (GameException e) {
+                    failed(C.i18n("launch.failed") + ", " + e.getMessage());
+                } catch (AuthenticationException e) {
+                    failed(C.i18n("login.failed") + e.getMessage());
+                }
             }
         }.start();
     }
@@ -477,10 +478,10 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
         cboVersions.removeAllItems();
         int index = 0, i = 0;
         getCurrentProfile().selectedVersionChangedEvent.register(this);
-        getCurrentProfile().getMinecraftProvider().refreshVersions();
-        MinecraftVersion selVersion = getCurrentProfile().getMinecraftProvider().getSelectedVersion();
+        getCurrentProfile().service().version().refreshVersions();
+        MinecraftVersion selVersion = getCurrentProfile().service().version().getSelectedVersion();
         String selectedMC = selVersion == null ? null : selVersion.id;
-        if (getCurrentProfile().getMinecraftProvider().getVersions().isEmpty()) {
+        if (getCurrentProfile().service().version().getVersions().isEmpty()) {
             if (!showedNoVersion)
                 SwingUtilities.invokeLater(() -> {
                     if (MessageBox.Show(C.i18n("mainwindow.no_version"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
@@ -490,7 +491,7 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
                     showedNoVersion = true;
                 });
         } else {
-            for (MinecraftVersion mcVersion : getCurrentProfile().getMinecraftProvider().getVersions()) {
+            for (MinecraftVersion mcVersion : getCurrentProfile().service().version().getVersions()) {
                 if (mcVersion.hidden)
                     continue;
                 cboVersions.addItem(mcVersion.id);
@@ -553,6 +554,13 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
         });
     }
 
+    private void failed(String s) {
+        if (s != null)
+            MessageBox.Show(s);
+        MainFrame.INSTANCE.closeMessage();
+        isLaunching = false;
+    }
+
     public class LaunchFinisher implements Event<List<String>> {
 
         @Override
@@ -590,7 +598,12 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
                 jpm.start();
                 return true;
             });
-            obj.launch(str);
+            try {
+                obj.launch(str);
+            } catch (IOException e) {
+                failed(C.i18n("launch.failed_creating_process") + "\n" + e.getMessage());
+                HMCLog.err("Failed to launch when creating a new process.", e);
+            }
             return true;
         }
     }

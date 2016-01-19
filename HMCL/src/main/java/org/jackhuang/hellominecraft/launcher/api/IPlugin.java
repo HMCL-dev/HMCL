@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.api;
 
-import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.utils.auth.AuthenticationException;
 import org.jackhuang.hellominecraft.launcher.utils.auth.IAuthenticator;
@@ -38,7 +38,7 @@ public interface IPlugin {
      * @return For example, you can implement IMinecraftProvider to support
      *         MultiMC
      */
-    IMinecraftProvider provideMinecraftProvider(Profile profile);
+    IMinecraftService provideMinecraftService(Profile profile);
 
     /**
      * Register authenticators by calling IAuthenticator.LOGINS.add.

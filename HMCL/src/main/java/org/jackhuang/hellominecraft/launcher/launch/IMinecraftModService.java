@@ -19,16 +19,15 @@ package org.jackhuang.hellominecraft.launcher.launch;
 
 import java.io.File;
 import java.util.List;
-import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.utils.ModInfo;
 
 /**
  *
  * @author huangyuhui
  */
-public abstract class IMinecraftModService extends IMinecraftService {
+public abstract class IMinecraftModService extends IMinecraftBasicService {
 
-    public IMinecraftModService(Profile profile) {
+    public IMinecraftModService(IMinecraftService profile) {
         super(profile);
     }
 

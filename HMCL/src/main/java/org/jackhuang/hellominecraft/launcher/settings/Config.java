@@ -60,6 +60,7 @@ public final class Config {
     }
 
     public transient final EventHandler<Theme> themeChangedEvent = new EventHandler<>(this);
+    public transient final EventHandler<DownloadType> downloadTypeChangedEvent = new EventHandler<>(this);
 
     public Theme getTheme() {
         return Theme.values()[theme];
@@ -140,6 +141,7 @@ public final class Config {
 
     public void setDownloadType(int downloadtype) {
         this.downloadtype = downloadtype;
+        downloadTypeChangedEvent.execute(getDownloadSource());
         Settings.save();
     }
 

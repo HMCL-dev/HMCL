@@ -18,9 +18,9 @@
 package org.jackhuang.hellominecraft.launcher.servers;
 
 import org.jackhuang.hellominecraft.launcher.api.IPlugin;
-import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
-import org.jackhuang.hellominecraft.launcher.servers.mfcraft.CheckModsMinecraftProvider;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.servers.mfcraft.MFCraftAuthenticator;
+import org.jackhuang.hellominecraft.launcher.servers.mfcraft.MFCraftMinecraftService;
 import org.jackhuang.hellominecraft.launcher.servers.mfcraft.Servers;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
@@ -44,8 +44,8 @@ public class ServerPlugin implements IPlugin {
     protected static MFCraftAuthenticator MFCRAFT_LOGIN;
 
     @Override
-    public IMinecraftProvider provideMinecraftProvider(Profile profile) {
-        return new CheckModsMinecraftProvider(profile);
+    public IMinecraftService provideMinecraftService(Profile profile) {
+        return new MFCraftMinecraftService(profile);
     }
 
     @Override

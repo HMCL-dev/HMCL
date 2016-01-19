@@ -28,16 +28,13 @@ import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.launch.GameException;
 import org.jackhuang.hellominecraft.launcher.launch.GameLauncher;
-import org.jackhuang.hellominecraft.launcher.launch.IMinecraftAssetService;
-import org.jackhuang.hellominecraft.launcher.launch.IMinecraftDownloadService;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftLoader;
-import org.jackhuang.hellominecraft.launcher.launch.IMinecraftModService;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.launch.MinecraftLoader;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.launcher.utils.MCUtils;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
-import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.tasks.DecompressTask;
 import org.jackhuang.hellominecraft.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
@@ -58,11 +55,8 @@ public class MinecraftVersionManager extends IMinecraftProvider {
      *
      * @param p
      */
-    public MinecraftVersionManager(Profile p) {
+    public MinecraftVersionManager(IMinecraftService p) {
         super(p);
-        mms = new MinecraftModService(p, this);
-        mds = new MinecraftDownloadService(p, this);
-        mas = new MinecraftAssetService(p, this);
     }
 
     public File getFolder() {
@@ -81,7 +75,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public void refreshVersions() {
-        baseFolder = profile.getCanonicalGameDirFile();
+        baseFolder = service.profile.getCanonicalGameDirFile();
         try {
             MCUtils.tryWriteProfile(baseFolder);
         } catch (IOException ex) {
@@ -131,7 +125,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
             } catch (IOException | GameException e) {
                 HMCLog.warn("Found wrong format json, try to fix it.", e);
                 if (MessageBox.Show(C.i18n("launcher.versions_json_not_formatted", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
-                    refreshJson(id);
+                    service.download().downloadMinecraftVersionJson(id);
                     try {
                         mcVersion = C.gson.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
                         if (mcVersion == null)
@@ -194,12 +188,22 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public File getRunDirectory(String id) {
-        switch (profile.getGameDirType()) {
+        switch (gameDirType) {
         case VERSION_FOLDER:
             return new File(baseFolder, "versions/" + id + "/");
         default:
             return baseFolder;
         }
+    }
+
+    @Override
+    public boolean install(String id) {
+        MinecraftVersion v = service.download().downloadMinecraft(id);
+        if (v != null) {
+            refreshVersions();
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -225,7 +229,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public File getDecompressNativesToLocation(MinecraftVersion v) {
-        return v == null ? null : v.getNatives(profile.getCanonicalGameDirFile());
+        return v == null ? null : v.getNatives(baseFolder);
     }
 
     @Override
@@ -236,7 +240,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public IMinecraftLoader provideMinecraftLoader(UserProfileProvider p)
         throws GameException {
-        return new MinecraftLoader(profile, this, p);
+        return new MinecraftLoader(service, p);
     }
 
     @Override
@@ -251,7 +255,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public File getResourcePacks() {
-        return new File(profile.getCanonicalGameDirFile(), "resourcepacks");
+        return new File(baseFolder, "resourcepacks");
     }
 
     @Override
@@ -270,7 +274,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public void cleanFolder() {
         for (MinecraftVersion s : getVersions()) {
-            FileUtils.deleteDirectoryQuietly(new File(profile.getGameDirFile(), "versions" + File.separator + s.id + File.separator + s.id + "-natives"));
+            FileUtils.deleteDirectoryQuietly(new File(baseFolder, "versions" + File.separator + s.id + File.separator + s.id + "-natives"));
             File f = getRunDirectory(s.id);
             String[] dir = { "logs", "asm", "NVIDIA", "crash-reports", "server-resource-packs", "natives", "native" };
             for (String str : dir)
@@ -279,27 +283,6 @@ public class MinecraftVersionManager extends IMinecraftProvider {
             for (String str : files)
                 new File(f, str).delete();
         }
-    }
-
-    final MinecraftModService mms;
-
-    @Override
-    public IMinecraftModService getModService() {
-        return mms;
-    }
-
-    final MinecraftDownloadService mds;
-
-    @Override
-    public IMinecraftDownloadService getDownloadService() {
-        return mds;
-    }
-
-    final MinecraftAssetService mas;
-
-    @Override
-    public IMinecraftAssetService getAssetService() {
-        return mas;
     }
 
     @Override

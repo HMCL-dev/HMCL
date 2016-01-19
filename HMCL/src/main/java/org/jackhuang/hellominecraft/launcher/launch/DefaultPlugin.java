@@ -25,7 +25,6 @@ import org.jackhuang.hellominecraft.launcher.utils.auth.OfflineAuthenticator;
 import org.jackhuang.hellominecraft.launcher.utils.auth.SkinmeAuthenticator;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.utils.auth.YggdrasilAuthenticator;
-import org.jackhuang.hellominecraft.launcher.version.MinecraftVersionManager;
 import org.jackhuang.hellominecraft.launcher.views.MainFrame;
 import org.jackhuang.hellominecraft.utils.functions.Consumer;
 
@@ -40,8 +39,8 @@ public class DefaultPlugin implements IPlugin {
     protected static SkinmeAuthenticator SKINME_LOGIN;
 
     @Override
-    public IMinecraftProvider provideMinecraftProvider(Profile profile) {
-        return new MinecraftVersionManager(profile);
+    public IMinecraftService provideMinecraftService(Profile profile) {
+        return new DefaultMinecraftService(profile);
     }
 
     @Override

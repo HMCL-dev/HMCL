@@ -21,7 +21,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.launcher.settings.Profile;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftService;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.tasks.communication.PreviousResult;
 import org.jackhuang.hellominecraft.tasks.communication.PreviousResultRegistrar;
@@ -36,29 +36,29 @@ import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 public class OptiFineInstaller extends Task implements PreviousResultRegistrar<File> {
 
     public File installer;
-    public Profile profile;
+    public IMinecraftService service;
     public String version;
 
-    public OptiFineInstaller(Profile profile, String version) {
-        this(profile, version, null);
+    public OptiFineInstaller(IMinecraftService service, String version) {
+        this(service, version, null);
     }
 
-    public OptiFineInstaller(Profile profile, String version, File installer) {
-        this.profile = profile;
+    public OptiFineInstaller(IMinecraftService service, String version, File installer) {
+        this.service = service;
         this.installer = installer;
         this.version = version;
     }
 
     @Override
     public void executeTask() throws Exception {
-        if (profile == null || profile.getMinecraftProvider().getSelectedVersion() == null)
+        if (service.version().getSelectedVersion() == null)
             throw new Exception(C.i18n("install.no_version"));
-        MinecraftVersion mv = (MinecraftVersion) profile.getMinecraftProvider().getSelectedVersion().clone();
+        MinecraftVersion mv = (MinecraftVersion) service.version().getSelectedVersion().clone();
         mv.inheritsFrom = mv.id;
         mv.jar = mv.jar == null ? mv.id : mv.jar;
         mv.libraries.clear();
         mv.libraries.add(0, new MinecraftLibrary("optifine:OptiFine:" + version));
-        FileUtils.copyFile(installer, new File(profile.getCanonicalGameDir(), "libraries/optifine/OptiFine/" + version + "/OptiFine-" + version + ".jar"));
+        FileUtils.copyFile(installer, new File(service.baseFolder, "libraries/optifine/OptiFine/" + version + "/OptiFine-" + version + ".jar"));
 
         mv.id += "-" + version;
         if (new ZipFile(installer).getEntry("optifine/OptiFineTweaker.class") != null) {
@@ -68,7 +68,7 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
             }
             mv.minecraftArguments += " --tweakClass optifine.OptiFineTweaker";
         }
-        File loc = new File(profile.getCanonicalGameDir(), "versions/" + mv.id);
+        File loc = new File(service.baseFolder, "versions/" + mv.id);
         loc.mkdirs();
         File json = new File(loc, mv.id + ".json");
         FileUtils.writeStringToFile(json, C.gsonPrettyPrinting.toJson(mv, MinecraftVersion.class));

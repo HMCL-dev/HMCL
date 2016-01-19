@@ -26,7 +26,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
-import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList.InstallerVersion;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
@@ -42,11 +42,11 @@ public class ForgeInstaller extends Task {
 
     public File gameDir;
     public File forgeInstaller;
-    public IMinecraftProvider mp;
+    public IMinecraftService mp;
     public InstallerVersion installerVersion;
 
-    public ForgeInstaller(IMinecraftProvider mp, File forgeInstaller, InstallerVersion installerVersion) {
-        this.gameDir = mp.getBaseFolder();
+    public ForgeInstaller(IMinecraftService mp, File forgeInstaller, InstallerVersion installerVersion) {
+        this.gameDir = mp.baseFolder;
         this.forgeInstaller = forgeInstaller;
         this.mp = mp;
         this.installerVersion = installerVersion;
@@ -64,7 +64,7 @@ public class ForgeInstaller extends Task {
         File from = new File(gameDir, "versions" + File.separator + profile.install.minecraft);
         if (!from.exists())
             if (MessageBox.Show(C.i18n("install.no_version_if_intall")) == MessageBox.YES_OPTION) {
-                if (!mp.getDownloadService().install(profile.install.minecraft))
+                if (!mp.version().install(profile.install.minecraft))
                     throw new IllegalStateException(C.i18n("install.no_version"));
             } else
                 throw new IllegalStateException(C.i18n("install.no_version"));

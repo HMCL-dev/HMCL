@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hellominecraft.launcher.launch;
 
+import java.io.File;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
+import org.jackhuang.hellominecraft.launcher.settings.Settings;
+import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 
 /**
  *
@@ -25,10 +28,26 @@ import org.jackhuang.hellominecraft.launcher.settings.Profile;
  */
 public abstract class IMinecraftService {
 
-    public Profile profile;
+    public final Profile profile;
+    public final File baseFolder;
 
     public IMinecraftService(Profile profile) {
         this.profile = profile;
+        this.baseFolder = profile.getCanonicalGameDirFile();
     }
+
+    public DownloadType getDownloadType() {
+        return Settings.getInstance().getDownloadSource();
+    }
+
+    public abstract IMinecraftAssetService asset();
+
+    public abstract IMinecraftDownloadService download();
+
+    public abstract IMinecraftModService mod();
+
+    public abstract IMinecraftProvider version();
+
+    public abstract IMinecraftInstallerService install();
 
 }

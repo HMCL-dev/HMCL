@@ -116,7 +116,7 @@ public final class JdkVersion {
         if (StrUtils.isBlank(javaVersion))
             return UNKOWN;
         int a = UNKOWN;
-        if (javaVersion.contains("1.9."))
+        if (javaVersion.contains("1.9.") || javaVersion.startsWith("9"))
             a = JAVA_19;
         else if (javaVersion.contains("1.8."))
             a = JAVA_18;

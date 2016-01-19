@@ -72,23 +72,23 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
         return new MinecraftVersion(minecraftArguments, mainClass, time, id, type, processArguments, releaseTime, assets, jar, inheritsFrom, minimumLauncherVersion, libraries, hidden);
     }
 
-    public MinecraftVersion resolve(IMinecraftProvider manager) throws GameException {
-        return resolve(manager, new HashSet<>());
+    public MinecraftVersion resolve(IMinecraftProvider provider) throws GameException {
+        return resolve(provider, new HashSet<>());
     }
 
-    protected MinecraftVersion resolve(IMinecraftProvider manager, Set<String> resolvedSoFar) throws GameException {
+    protected MinecraftVersion resolve(IMinecraftProvider provider, Set<String> resolvedSoFar) throws GameException {
         if (inheritsFrom == null)
             return this;
         if (!resolvedSoFar.add(id))
             throw new GameException(C.i18n("launch.circular_dependency_versions"));
 
-        MinecraftVersion parent = manager.getVersionById(inheritsFrom);
+        MinecraftVersion parent = provider.getVersionById(inheritsFrom);
         if (parent == null) {
-            if (!manager.getDownloadService().install(inheritsFrom))
+            if (!provider.install(inheritsFrom))
                 return this;
-            parent = manager.getVersionById(inheritsFrom);
+            parent = provider.getVersionById(inheritsFrom);
         }
-        parent = parent.resolve(manager, resolvedSoFar);
+        parent = parent.resolve(provider, resolvedSoFar);
         MinecraftVersion result = new MinecraftVersion(
             this.minecraftArguments != null ? this.minecraftArguments : parent.minecraftArguments,
             this.mainClass != null ? this.mainClass : parent.mainClass,

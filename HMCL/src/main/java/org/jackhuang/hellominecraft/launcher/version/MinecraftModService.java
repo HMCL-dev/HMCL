@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftModService;
-import org.jackhuang.hellominecraft.launcher.settings.Profile;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.utils.ModInfo;
 import org.jackhuang.hellominecraft.utils.code.DigestUtils;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
@@ -36,14 +36,11 @@ import org.jackhuang.hellominecraft.utils.system.FileUtils;
  */
 public class MinecraftModService extends IMinecraftModService {
 
-    MinecraftVersionManager mgr;
-
-    public MinecraftModService(Profile p, MinecraftVersionManager mgr) {
-        super(p);
-        this.mgr = mgr;
-    }
-
     List<ModInfo> modCache;
+
+    public MinecraftModService(IMinecraftService profile) {
+        super(profile);
+    }
 
     @Override
     public List<ModInfo> getMods() {
@@ -55,9 +52,9 @@ public class MinecraftModService extends IMinecraftModService {
 
     @Override
     public List<ModInfo> recacheMods() {
-        if (mgr.getSelectedVersion() == null)
+        if (service.version().getSelectedVersion() == null)
             return modCache = new ArrayList<>();
-        File modsFolder = mgr.getRunDirectory(mgr.getSelectedVersion().id, "mods");
+        File modsFolder = service.version().getRunDirectory(service.version().getSelectedVersion().id, "mods");
         ArrayList<ModInfo> mods = new ArrayList<>();
         File[] fs = modsFolder.listFiles();
         if (fs != null)
@@ -83,11 +80,11 @@ public class MinecraftModService extends IMinecraftModService {
     @Override
     public boolean addMod(File f) {
         try {
-            if (mgr.getSelectedVersion() == null)
+            if (service.version().getSelectedVersion() == null)
                 return false;
             if (!ModInfo.isFileMod(f))
                 return false;
-            File modsFolder = mgr.getRunDirectory(mgr.getSelectedVersion().id, "mods");
+            File modsFolder = service.version().getRunDirectory(service.version().getSelectedVersion().id, "mods");
             if (modsFolder == null)
                 return false;
             modsFolder.mkdirs();

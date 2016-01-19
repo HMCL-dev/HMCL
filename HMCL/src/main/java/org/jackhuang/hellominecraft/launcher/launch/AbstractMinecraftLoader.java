@@ -46,16 +46,16 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
     protected Profile v;
     protected UserProfileProvider lr;
     protected File gameDir;
-    protected IMinecraftProvider provider;
+    protected IMinecraftService service;
     protected final MinecraftVersion version;
 
-    public AbstractMinecraftLoader(Profile ver, IMinecraftProvider provider, UserProfileProvider lr) {
+    public AbstractMinecraftLoader(Profile ver, IMinecraftService provider, UserProfileProvider lr) throws GameException {
         this.lr = lr;
 
         v = ver;
-        this.provider = provider;
+        service = provider;
         gameDir = v.getCanonicalGameDirFile();
-        version = provider.getSelectedVersion().resolve(provider);
+        version = service.version().getSelectedVersion().resolve(service.version());
     }
 
     @Override
@@ -134,7 +134,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
             res.add(a);
         }
 
-        res.add("-Djava.library.path=" + provider.getDecompressNativesToLocation(version).getPath());
+        res.add("-Djava.library.path=" + service.version().getDecompressNativesToLocation(version).getPath());
         res.add("-Dfml.ignoreInvalidMinecraftCertificates=true");
         res.add("-Dfml.ignorePatchDiscrepancies=true");
 

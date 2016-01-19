@@ -18,7 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.launch;
 
 import java.util.List;
-import org.jackhuang.hellominecraft.launcher.settings.Profile;
+import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.version.MinecraftRemoteVersion;
 import rx.Observable;
@@ -27,9 +27,9 @@ import rx.Observable;
  *
  * @author huangyuhui
  */
-public abstract class IMinecraftDownloadService extends IMinecraftService {
+public abstract class IMinecraftDownloadService extends IMinecraftBasicService {
 
-    public IMinecraftDownloadService(Profile profile) {
+    public IMinecraftDownloadService(IMinecraftService profile) {
         super(profile);
     }
 
@@ -44,16 +44,7 @@ public abstract class IMinecraftDownloadService extends IMinecraftService {
      *
      * @return the library collection
      */
-    public abstract List<GameLauncher.DownloadLibraryJob> getDownloadLibraries();
-
-    /**
-     * Install a new version to this profile.
-     *
-     * @param version the new version name
-     *
-     * @return Is the action successful?
-     */
-    public abstract boolean install(String version);
+    public abstract List<GameLauncher.DownloadLibraryJob> getDownloadLibraries(MinecraftVersion mv) throws GameException;
 
     public abstract Observable<MinecraftRemoteVersion> getRemoteVersions();
 

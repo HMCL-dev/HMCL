@@ -24,8 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.launcher.launch.GameException;
 import org.jackhuang.hellominecraft.launcher.launch.GameLauncher;
-import org.jackhuang.hellominecraft.launcher.settings.Profile;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftService;
 import org.jackhuang.hellominecraft.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.NetUtils;
@@ -41,27 +42,24 @@ import rx.Observable;
  */
 public class MinecraftDownloadService extends IMinecraftDownloadService {
 
-    MinecraftVersionManager mgr;
-
-    public MinecraftDownloadService(Profile p, MinecraftVersionManager mgr) {
-        super(p);
-        this.mgr = mgr;
+    public MinecraftDownloadService(IMinecraftService profile) {
+        super(profile);
     }
 
     @Override
-    public List<GameLauncher.DownloadLibraryJob> getDownloadLibraries() {
+    public List<GameLauncher.DownloadLibraryJob> getDownloadLibraries(MinecraftVersion mv) throws GameException {
         ArrayList<GameLauncher.DownloadLibraryJob> downloadLibraries = new ArrayList<>();
-        if (mgr.getSelectedVersion() == null)
+        if (mv == null)
             return downloadLibraries;
-        MinecraftVersion v = mgr.getSelectedVersion().resolve(mgr);
+        MinecraftVersion v = mv.resolve(service.version());
         if (v.libraries != null)
             for (IMinecraftLibrary l : v.libraries) {
                 l.init();
                 if (l.allow()) {
-                    File ff = l.getFilePath(profile.getCanonicalGameDirFile());
+                    File ff = l.getFilePath(service.baseFolder);
                     if (!ff.exists()) {
-                        String libURL = profile.getDownloadType().getProvider().getLibraryDownloadURL() + "/";
-                        libURL = profile.getDownloadType().getProvider().getParsedLibraryDownloadURL(l.getDownloadURL(libURL, profile.getDownloadType()));
+                        String libURL = service.getDownloadType().getProvider().getLibraryDownloadURL() + "/";
+                        libURL = service.getDownloadType().getProvider().getParsedLibraryDownloadURL(l.getDownloadURL(libURL, service.getDownloadType()));
                         if (libURL != null)
                             downloadLibraries.add(new GameLauncher.DownloadLibraryJob(l.name, libURL, ff));
                     }
@@ -71,19 +69,9 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
     }
 
     @Override
-    public boolean install(String id) {
-        MinecraftVersion v = downloadMinecraft(id);
-        if (v != null) {
-            mgr.versions.put(v.id, v);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
     public MinecraftVersion downloadMinecraft(String id) {
-        String vurl = profile.getDownloadType().getProvider().getVersionsDownloadURL() + id + "/";
-        File vpath = new File(profile.getCanonicalGameDirFile(), "versions/" + id);
+        String vurl = service.getDownloadType().getProvider().getVersionsDownloadURL() + id + "/";
+        File vpath = new File(service.baseFolder, "versions/" + id);
         File mvt = new File(vpath, id + ".json");
         File mvj = new File(vpath, id + ".jar");
         vpath.mkdirs();
@@ -106,8 +94,8 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
 
     @Override
     public boolean downloadMinecraftJar(String id) {
-        String vurl = profile.getDownloadType().getProvider().getVersionsDownloadURL() + id + "/";
-        File vpath = new File(profile.getCanonicalGameDirFile(), "versions/" + id);
+        String vurl = service.getDownloadType().getProvider().getVersionsDownloadURL() + id + "/";
+        File vpath = new File(service.baseFolder, "versions/" + id);
         File mvv = new File(vpath, id + ".jar"), moved = null;
         if (mvv.exists()) {
             moved = new File(vpath, id + "-renamed.jar");
@@ -131,8 +119,8 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
 
     @Override
     public boolean downloadMinecraftVersionJson(String id) {
-        String vurl = profile.getDownloadType().getProvider().getVersionsDownloadURL() + id + "/";
-        File vpath = new File(profile.getCanonicalGameDirFile(), "versions/" + id);
+        String vurl = service.getDownloadType().getProvider().getVersionsDownloadURL() + id + "/";
+        File vpath = new File(service.baseFolder, "versions/" + id);
         File mvv = new File(vpath, id + ".json"), moved = null;
         if (mvv.exists()) {
             moved = new File(vpath, id + "-renamed.json");
@@ -156,7 +144,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
 
     @Override
     public Observable<MinecraftRemoteVersion> getRemoteVersions() {
-        return NetUtils.getRx(profile.getDownloadType().getProvider().getVersionsListDownloadURL())
+        return NetUtils.getRx(service.getDownloadType().getProvider().getVersionsListDownloadURL())
             .map(r -> C.gson.fromJson(r, MinecraftRemoteVersions.class))
             .filter(r -> r != null && r.versions != null)
             .flatMap(r -> Observable.from(r.versions));

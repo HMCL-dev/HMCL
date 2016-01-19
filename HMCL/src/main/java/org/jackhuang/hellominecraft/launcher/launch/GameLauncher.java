@@ -31,6 +31,7 @@ import org.jackhuang.hellominecraft.launcher.utils.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.utils.auth.LoginInfo;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
+import org.jackhuang.hellominecraft.launcher.utils.auth.AuthenticationException;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.system.JavaProcess;
@@ -44,11 +45,10 @@ public class GameLauncher {
 
     public static final ProcessManager PROCESS_MANAGER = new ProcessManager();
     Profile get;
-    IMinecraftProvider provider;
+    IMinecraftService provider;
     LoginInfo info;
     UserProfileProvider result;
     IAuthenticator login;
-    public final EventHandler<String> failEvent = new EventHandler(this);
     public final EventHandler<List<DownloadLibraryJob>> downloadLibrariesEvent = new EventHandler(this);
     public final EventHandler<List<String>> successEvent = new EventHandler(this);
     public final EventHandler<JavaProcess> launchEvent = new EventHandler(this);
@@ -56,7 +56,7 @@ public class GameLauncher {
 
     public GameLauncher(Profile version, LoginInfo info, IAuthenticator lg) {
         this.get = version;
-        this.provider = get.getMinecraftProvider();
+        this.provider = get.service();
         this.info = info;
         this.login = lg;
     }
@@ -65,63 +65,33 @@ public class GameLauncher {
         return get;
     }
 
-    public IMinecraftLoader makeLaunchCommand() {
+    public IMinecraftLoader makeLaunchCommand() throws AuthenticationException, GameException {
         HMCLog.log("Logging in...");
         IMinecraftLoader loader;
-        try {
-            if (info != null)
-                result = login.login(info);
-            else
-                result = login.loginBySettings();
-            if (result == null)
-                throw new GameException("Result can not be null.");
-            PluginManager.NOW_PLUGIN.onProcessingLoginResult(result);
-        } catch (Throwable e) {
-            String error = C.i18n("login.failed") + e.getMessage();
-            HMCLog.warn("Login failed by method: " + login.getName(), e);
-            failEvent.execute(error);
-            return null;
-        }
+        if (info != null)
+            result = login.login(info);
+        else
+            result = login.loginBySettings();
+        if (result == null)
+            throw new AuthenticationException("Result can not be null.");
+        PluginManager.NOW_PLUGIN.onProcessingLoginResult(result);
 
-        try {
-            loader = provider.provideMinecraftLoader(result);
-        } catch (GameException e) {
-            failEvent.execute(C.i18n("launch.failed") + ", " + e.getMessage());
-            return null;
-        }
+        loader = provider.version().provideMinecraftLoader(result);
 
-        File file = provider.getDecompressNativesToLocation(loader.getMinecraftVersion());
+        File file = provider.version().getDecompressNativesToLocation(loader.getMinecraftVersion());
         if (file != null)
             FileUtils.cleanDirectoryQuietly(file);
 
         HMCLog.log("Detecting libraries...");
-        if (!downloadLibrariesEvent.execute(provider.getDownloadService().getDownloadLibraries())) {
-            failEvent.execute(C.i18n("launch.failed"));
-            return null;
-        }
+        if (!downloadLibrariesEvent.execute(provider.download().getDownloadLibraries(loader.getMinecraftVersion())))
+            throw new GameException("Failed to download libraries");
 
         HMCLog.log("Unpacking natives...");
-        DecompressLibraryJob job = null;
-        try {
-            job = provider.getDecompressLibraries(loader.getMinecraftVersion());
-        } catch (GameException e) {
-            failEvent.execute(C.i18n("launch.failed") + ", " + e.getMessage());
-            return null;
-        }
-        if (!decompressNativesEvent.execute(job)) {
-            failEvent.execute(C.i18n("launch.failed"));
-            return null;
-        }
+        DecompressLibraryJob job = provider.version().getDecompressLibraries(loader.getMinecraftVersion());
+        if (!decompressNativesEvent.execute(job))
+            throw new GameException("Failed to decompress natives");
 
-        List<String> lst;
-        try {
-            lst = loader.makeLaunchingCommand();
-        } catch (Exception e) {
-            failEvent.execute(C.i18n("launch.failed"));
-            HMCLog.err("Failed to launch game", e);
-            return null;
-        }
-        successEvent.execute(lst);
+        successEvent.execute(loader.makeLaunchingCommand());
         return loader;
     }
 
@@ -129,33 +99,30 @@ public class GameLauncher {
      * Launch the game "as soon as possible".
      *
      * @param str launch command
+     *
+     * @throws IOException failed creating process
      */
-    public void launch(List str) {
-        try {
-            if (!provider.onLaunch())
-                return;
-            if (StrUtils.isNotBlank(getProfile().getPrecalledCommand())) {
-                Process p = Runtime.getRuntime().exec(getProfile().getPrecalledCommand());
-                try {
-                    if (p != null && p.isAlive())
-                        p.waitFor();
-                } catch (InterruptedException ex) {
-                    HMCLog.warn("Failed to invoke precalled command", ex);
-                }
+    public void launch(List str) throws IOException {
+        if (!provider.version().onLaunch())
+            return;
+        if (StrUtils.isNotBlank(getProfile().getPrecalledCommand())) {
+            Process p = Runtime.getRuntime().exec(getProfile().getPrecalledCommand());
+            try {
+                if (p != null && p.isAlive())
+                    p.waitFor();
+            } catch (InterruptedException ex) {
+                HMCLog.warn("Failed to invoke precalled command", ex);
             }
-            HMCLog.log("Starting process");
-            ProcessBuilder builder = new ProcessBuilder(str);
-            if (get == null || provider.getSelectedVersion() == null || StrUtils.isBlank(get.getCanonicalGameDir()))
-                throw new Error("Fucking bug!");
-            builder.directory(provider.getRunDirectory(provider.getSelectedVersion().id))
-                .environment().put("APPDATA", get.getCanonicalGameDir());
-            JavaProcess jp = new JavaProcess(str, builder.start(), PROCESS_MANAGER);
-            HMCLog.log("The game process have been started");
-            launchEvent.execute(jp);
-        } catch (Exception e) {
-            failEvent.execute(C.i18n("launch.failed_creating_process") + "\n" + e.getMessage());
-            HMCLog.err("Failed to launch when creating a new process.", e);
         }
+        HMCLog.log("Starting process");
+        ProcessBuilder builder = new ProcessBuilder(str);
+        if (get == null || provider.version().getSelectedVersion() == null || StrUtils.isBlank(get.getCanonicalGameDir()))
+            throw new Error("Fucking bug!");
+        builder.directory(provider.version().getRunDirectory(provider.version().getSelectedVersion().id))
+            .environment().put("APPDATA", get.getCanonicalGameDir());
+        JavaProcess jp = new JavaProcess(str, builder.start(), PROCESS_MANAGER);
+        HMCLog.log("The game process have been started");
+        launchEvent.execute(jp);
     }
 
     /**
@@ -170,7 +137,7 @@ public class GameLauncher {
      */
     public File makeLauncher(String launcherName, List str) throws IOException {
         HMCLog.log("Making shell launcher...");
-        provider.onLaunch();
+        provider.version().onLaunch();
         boolean isWin = OS.os() == OS.WINDOWS;
         File f = new File(launcherName + (isWin ? ".bat" : ".sh"));
         if (!f.exists())

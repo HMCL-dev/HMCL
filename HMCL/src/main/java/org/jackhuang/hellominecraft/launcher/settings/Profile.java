@@ -19,11 +19,9 @@ package org.jackhuang.hellominecraft.launcher.settings;
 
 import java.io.File;
 import org.jackhuang.hellominecraft.launcher.api.PluginManager;
-import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftService;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.launcher.utils.MCUtils;
-import org.jackhuang.hellominecraft.launcher.utils.download.DownloadType;
-import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerService;
 import org.jackhuang.hellominecraft.launcher.version.GameDirType;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.Utils;
@@ -54,7 +52,7 @@ public final class Profile {
      */
     private int gameDirType;
 
-    protected transient IMinecraftProvider minecraftProvider;
+    protected transient IMinecraftService service;
 
     public Profile() {
         this("Default");
@@ -97,12 +95,10 @@ public final class Profile {
         serverIp = v.serverIp;
     }
 
-    public IMinecraftProvider getMinecraftProvider() {
-        if (minecraftProvider == null) {
-            minecraftProvider = PluginManager.NOW_PLUGIN.provideMinecraftProvider(this);
-            minecraftProvider.initializeMiencraft();
-        }
-        return minecraftProvider;
+    public IMinecraftService service() {
+        if (service == null)
+            service = PluginManager.NOW_PLUGIN.provideMinecraftService(this);
+        return service;
     }
 
     public String getSelectedMinecraftVersionName() {
@@ -137,7 +133,7 @@ public final class Profile {
 
     public Profile setGameDir(String gameDir) {
         this.gameDir = gameDir;
-        getMinecraftProvider().refreshVersions();
+        service().version().refreshVersions();
         Settings.save();
         return this;
     }
@@ -191,9 +187,9 @@ public final class Profile {
     }
 
     public File getFolder(String folder) {
-        if (getMinecraftProvider().getSelectedVersion() == null)
+        if (service().version().getSelectedVersion() == null)
             return new File(getCanonicalGameDirFile(), folder);
-        return getMinecraftProvider().getRunDirectory(getMinecraftProvider().getSelectedVersion().id, folder);
+        return service().version().getRunDirectory(service().version().getSelectedVersion().id, folder);
     }
 
     public String getName() {
@@ -296,6 +292,7 @@ public final class Profile {
 
     public void setGameDirType(GameDirType gameDirType) {
         this.gameDirType = gameDirType.ordinal();
+        service().version().setGameDirType(getGameDirType());
         Settings.save();
     }
 
@@ -354,15 +351,5 @@ public final class Profile {
 
     public void checkFormat() {
         gameDir = gameDir.replace('/', OS.os().fileSeparator).replace('\\', OS.os().fileSeparator);
-    }
-
-    transient final InstallerService is = new InstallerService(this);
-
-    public InstallerService getInstallerService() {
-        return is;
-    }
-
-    public DownloadType getDownloadType() {
-        return Settings.getInstance().getDownloadSource();
     }
 }

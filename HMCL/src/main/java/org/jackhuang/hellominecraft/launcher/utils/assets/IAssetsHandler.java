@@ -25,12 +25,11 @@ import java.util.Collection;
 import java.util.List;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
-import org.jackhuang.hellominecraft.launcher.launch.IMinecraftProvider;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftAssetService;
 import org.jackhuang.hellominecraft.launcher.utils.download.IDownloadProvider;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
-import org.jackhuang.hellominecraft.utils.functions.Consumer;
 import org.jackhuang.hellominecraft.utils.code.DigestUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.NetUtils;
@@ -71,10 +70,10 @@ public abstract class IAssetsHandler {
      * All the files assets needed
      *
      * @param mv The version that needs assets
-     * @param mp The Minecraft Provider
+     * @param mp Asset Service
      * @param x  finished event
      */
-    public abstract Observable<String[]> getList(MinecraftVersion mv, IMinecraftProvider mp);
+    public abstract Observable<String[]> getList(MinecraftVersion mv, IMinecraftAssetService mp);
 
     /**
      * Will be invoked when the user invoked "Download all assets".

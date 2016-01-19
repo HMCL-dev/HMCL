@@ -17,34 +17,28 @@
  */
 package org.jackhuang.hellominecraft.launcher.launch;
 
-import java.io.File;
-import java.io.IOException;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftBasicService;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftService;
+import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerType;
+import org.jackhuang.hellominecraft.launcher.utils.installers.InstallerVersionList;
 import org.jackhuang.hellominecraft.tasks.Task;
 
 /**
  *
  * @author huangyuhui
  */
-public abstract class IMinecraftAssetService extends IMinecraftBasicService {
+public abstract class IMinecraftInstallerService extends IMinecraftBasicService {
 
-    public IMinecraftAssetService(IMinecraftService profile) {
-        super(profile);
+    public IMinecraftInstallerService(IMinecraftService service) {
+        super(service);
     }
 
-    public abstract Task downloadAssets(String mcVersion);
+    public abstract Task download(InstallerVersionList.InstallerVersion v, InstallerType type);
 
-    public abstract File getAssets();
+    public abstract Task downloadForge(InstallerVersionList.InstallerVersion v);
 
-    /**
-     * Redownload the Asset index json of the given version.
-     *
-     * @param a the given version name
-     *
-     * @return Is the action successful?
-     */
-    public abstract boolean refreshAssetsIndex(String a);
+    public abstract Task downloadOptifine(InstallerVersionList.InstallerVersion v);
 
-    public abstract boolean downloadMinecraftAssetsIndex(String assetsId);
+    public abstract Task downloadLiteLoader(InstallerVersionList.InstallerVersion v);
 
-    public abstract File getAssetObject(String assetVersion, String name) throws IOException;
 }

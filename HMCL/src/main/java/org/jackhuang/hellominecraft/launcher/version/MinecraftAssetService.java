@@ -22,7 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.launcher.launch.IMinecraftAssetService;
-import org.jackhuang.hellominecraft.launcher.settings.Profile;
+import org.jackhuang.hellominecraft.launcher.launch.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.utils.assets.AssetsIndex;
 import org.jackhuang.hellominecraft.launcher.utils.assets.AssetsObject;
 import org.jackhuang.hellominecraft.launcher.utils.assets.IAssetsHandler;
@@ -39,12 +39,8 @@ import rx.concurrency.Schedulers;
  */
 public class MinecraftAssetService extends IMinecraftAssetService {
 
-    MinecraftVersionManager mgr;
-
-    public MinecraftAssetService(Profile profile, MinecraftVersionManager mvm) {
+    public MinecraftAssetService(IMinecraftService profile) {
         super(profile);
-
-        mgr = mvm;
     }
 
     @Override
@@ -54,10 +50,10 @@ public class MinecraftAssetService extends IMinecraftAssetService {
             @Override
             public void executeTask() throws Throwable {
                 IAssetsHandler type = IAssetsHandler.ASSETS_HANDLER;
-                type.getList(profile.getMinecraftProvider().getVersionById(mcVersion), profile.getMinecraftProvider())
+                type.getList(service.version().getVersionById(mcVersion), service.asset())
                     .subscribeOn(Schedulers.newThread())
                     .observeOn(Schedulers.eventQueue())
-                    .subscribe((value) -> TaskWindow.getInstance().addTask(type.getDownloadTask(profile.getDownloadType().getProvider())).start());
+                    .subscribe((t) -> TaskWindow.getInstance().addTask(type.getDownloadTask(service.getDownloadType().getProvider())).start());
             }
 
             @Override
@@ -69,7 +65,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
 
     @Override
     public boolean refreshAssetsIndex(String id) {
-        MinecraftVersion mv = mgr.getVersionById(id);
+        MinecraftVersion mv = service.version().getVersionById(id);
         if (mv == null)
             return false;
         return downloadMinecraftAssetsIndex(mv.assets);
@@ -77,7 +73,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
 
     @Override
     public boolean downloadMinecraftAssetsIndex(String assetsId) {
-        String aurl = profile.getDownloadType().getProvider().getIndexesDownloadURL();
+        String aurl = service.getDownloadType().getProvider().getIndexesDownloadURL();
 
         File assetsLocation = getAssets();
         assetsLocation.mkdirs();
@@ -101,7 +97,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
 
     @Override
     public File getAssets() {
-        return new File(profile.getCanonicalGameDirFile(), "assets");
+        return new File(service.profile.getCanonicalGameDirFile(), "assets");
     }
 
     @Override

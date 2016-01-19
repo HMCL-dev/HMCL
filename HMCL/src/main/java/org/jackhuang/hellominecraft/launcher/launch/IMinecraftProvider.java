@@ -20,7 +20,7 @@ package org.jackhuang.hellominecraft.launcher.launch;
 import java.io.File;
 import java.util.Collection;
 import org.jackhuang.hellominecraft.launcher.utils.auth.UserProfileProvider;
-import org.jackhuang.hellominecraft.launcher.settings.Profile;
+import org.jackhuang.hellominecraft.launcher.version.GameDirType;
 import org.jackhuang.hellominecraft.launcher.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 
@@ -32,10 +32,10 @@ import org.jackhuang.hellominecraft.utils.StrUtils;
  */
 public abstract class IMinecraftProvider {
 
-    protected Profile profile;
+    protected IMinecraftService service;
 
-    public IMinecraftProvider(Profile profile) {
-        this.profile = profile;
+    public IMinecraftProvider(IMinecraftService service) {
+        this.service = service;
     }
 
     /**
@@ -53,16 +53,19 @@ public abstract class IMinecraftProvider {
     public abstract File getRunDirectory(String id);
 
     public File getRunDirectory(String id, String subFolder) {
-        return new File(getRunDirectory(getSelectedVersion().id), subFolder);
+        return new File(getRunDirectory(id), subFolder);
     }
 
     public abstract void open(String version, String folder);
 
-    public abstract IMinecraftModService getModService();
-
-    public abstract IMinecraftDownloadService getDownloadService();
-
-    public abstract IMinecraftAssetService getAssetService();
+    /**
+     * Install a new version to this profile.
+     *
+     * @param version the new version name
+     *
+     * @return Is the action successful?
+     */
+    public abstract boolean install(String version);
 
     /**
      * Returns the thing like ".minecraft/resourcepacks".
@@ -103,6 +106,12 @@ public abstract class IMinecraftProvider {
      */
     public abstract IMinecraftLoader provideMinecraftLoader(UserProfileProvider p) throws GameException;
 
+    protected GameDirType gameDirType = GameDirType.ROOT_FOLDER;
+
+    public void setGameDirType(GameDirType gameDirType) {
+        this.gameDirType = gameDirType;
+    }
+
     /**
      * Rename version
      *
@@ -121,17 +130,6 @@ public abstract class IMinecraftProvider {
      * @return Is the action successful?
      */
     public abstract boolean removeVersionFromDisk(String a);
-
-    /**
-     * Redownload the Minecraft json of the given version.
-     *
-     * @param id the given version name
-     *
-     * @return Is the action successful?
-     */
-    public boolean refreshJson(String id) {
-        return getDownloadService().downloadMinecraftVersionJson(id);
-    }
 
     /**
      * Choose a version randomly.
@@ -157,14 +155,14 @@ public abstract class IMinecraftProvider {
     public abstract MinecraftVersion getVersionById(String id);
 
     public MinecraftVersion getSelectedVersion() {
-        String versionName = profile.getSelectedMinecraftVersionName();
+        String versionName = service.profile.getSelectedMinecraftVersionName();
         MinecraftVersion v = null;
         if (StrUtils.isNotBlank(versionName))
             v = getVersionById(versionName);
         if (v == null)
             v = getOneVersion();
         if (v != null)
-            profile.setSelectedMinecraftVersion(v.id);
+            service.profile.setSelectedMinecraftVersion(v.id);
         return v;
     }
 

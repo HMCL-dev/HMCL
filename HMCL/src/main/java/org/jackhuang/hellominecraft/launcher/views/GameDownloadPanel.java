@@ -107,7 +107,7 @@ public class GameDownloadPanel extends AnimatedPanel implements Selectable {
 
     public void refreshDownloads() {
         DefaultTableModel model = SwingUtils.clearDefaultTable(lstDownloads);
-        gsp.getProfile().getMinecraftProvider().getDownloadService().getRemoteVersions()
+        gsp.getProfile().service().download().getRemoteVersions()
             .observeOn(Schedulers.eventQueue()).subscribeOn(Schedulers.newThread())
             .subscribe((ver) -> model.addRow(new Object[] { ver.id, ver.time,
                                                             StrUtils.equalsOne(ver.type, "old_beta", "old_alpha", "release", "snapshot") ? C.i18n("versions." + ver.type) : ver.type }),
@@ -123,7 +123,7 @@ public class GameDownloadPanel extends AnimatedPanel implements Selectable {
             return;
         }
         String id = (String) lstDownloads.getModel().getValueAt(lstDownloads.getSelectedRow(), 0);
-        gsp.getProfile().getMinecraftProvider().getDownloadService().downloadMinecraft(id);
+        gsp.getProfile().service().download().downloadMinecraft(id);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
