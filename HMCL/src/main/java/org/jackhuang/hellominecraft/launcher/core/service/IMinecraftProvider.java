@@ -20,16 +20,16 @@ package org.jackhuang.hellominecraft.launcher.core.service;
 import java.io.File;
 import java.util.Collection;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
-import org.jackhuang.hellominecraft.launcher.core.launch.GameLauncher;
-import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
+import org.jackhuang.hellominecraft.launcher.core.version.DecompressLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.utils.StrUtils;
+import org.jackhuang.hellominecraft.utils.functions.Consumer;
 
 /**
  * Provide everything of the Minecraft of a Profile.
  *
- * @see org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersionManager
+ * @see
+ * org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersionManager
  * @author huangyuhui
  */
 public abstract class IMinecraftProvider {
@@ -67,7 +67,7 @@ public abstract class IMinecraftProvider {
      *
      * @return Is the action successful?
      */
-    public abstract boolean install(String version);
+    public abstract boolean install(String version, Consumer<MinecraftVersion> callback);
 
     /**
      * Returns the thing like ".minecraft/resourcepacks".
@@ -82,31 +82,14 @@ public abstract class IMinecraftProvider {
      *
      * @return libraries of resolved minecraft version v.
      */
-    public abstract GameLauncher.DecompressLibraryJob getDecompressLibraries(MinecraftVersion v) throws GameException;
+    public abstract DecompressLibraryJob getDecompressLibraries(MinecraftVersion v) throws GameException;
 
     public abstract File getDecompressNativesToLocation(MinecraftVersion v);
 
     /**
      * @return the Minecraft jar of selected version.
      */
-    public abstract File getMinecraftJar();
-
-    /**
-     * @return the base folder of the profile.
-     */
-    public abstract File getBaseFolder();
-
-    /**
-     * Provide the Minecraft Loader to generate the launching command.
-     *
-     * @see org.jackhuang.hellominecraft.launcher.core.service.IMinecraftLoader
-     * @param p player informations, including username & auth_token
-     *
-     * @return what you want
-     *
-     * @throws GameException circular denpendency versions
-     */
-    public abstract IMinecraftLoader provideMinecraftLoader(UserProfileProvider p) throws GameException;
+    public abstract File getMinecraftJar(String id);
 
     protected GameDirType gameDirType = GameDirType.ROOT_FOLDER;
 
@@ -155,18 +138,6 @@ public abstract class IMinecraftProvider {
      * @return the Minecraft json instance
      */
     public abstract MinecraftVersion getVersionById(String id);
-
-    public MinecraftVersion getSelectedVersion() {
-        String versionName = service.profile.getSelectedMinecraftVersionName();
-        MinecraftVersion v = null;
-        if (StrUtils.isNotBlank(versionName))
-            v = getVersionById(versionName);
-        if (v == null)
-            v = getOneVersion();
-        if (v != null)
-            service.profile.setSelectedMinecraftVersion(v.id);
-        return v;
-    }
 
     /**
      * getVersions().size()

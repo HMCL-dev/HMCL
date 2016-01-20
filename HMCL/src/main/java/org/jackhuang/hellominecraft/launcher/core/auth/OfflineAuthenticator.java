@@ -59,7 +59,7 @@ public final class OfflineAuthenticator extends IAuthenticator {
         UserProfileProvider result = new UserProfileProvider();
         result.setUserName(info.username);
         String uuid = getUUIDFromUserName(info.username);
-        if (uuidMap != null && uuid.contains(uuid))
+        if (uuidMap != null && uuidMap.containsKey(uuid))
             uuid = uuidMap.get(info.username);
         else {
             if (uuidMap == null)

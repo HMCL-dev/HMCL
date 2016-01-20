@@ -43,21 +43,21 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
     }
 
     @Override
-    public Task download(InstallerVersion v, InstallerType type) {
+    public Task download(String installId, InstallerVersion v, InstallerType type) {
         switch (type) {
         case Forge:
-            return downloadForge(v);
+            return downloadForge(installId, v);
         case Optifine:
-            return downloadOptifine(v);
+            return downloadOptifine(installId, v);
         case LiteLoader:
-            return downloadLiteLoader(v);
+            return downloadLiteLoader(installId, v);
         default:
             return null;
         }
     }
 
     @Override
-    public Task downloadForge(InstallerVersion v) {
+    public Task downloadForge(String installId, InstallerVersion v) {
         return new TaskInfo("Forge Downloader") {
             @Override
             public void executeTask() {
@@ -72,7 +72,7 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
     }
 
     @Override
-    public Task downloadOptifine(InstallerVersion v) {
+    public Task downloadOptifine(String installId, InstallerVersion v) {
         return new TaskInfo("OptiFine Downloader") {
             @Override
             public void executeTask() {
@@ -81,7 +81,7 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
                     OptiFineDownloadFormatter task = new OptiFineDownloadFormatter(v.installer);
                     TaskWindow.getInstance().addTask(task)
                         .addTask(new FileDownloadTask(filepath).registerPreviousResult(task).setTag("optifine"))
-                        .addTask(new OptiFineInstaller(service, v.selfVersion, filepath))
+                        .addTask(new OptiFineInstaller(service, installId, v, filepath))
                         .start();
                 }
             }
@@ -89,14 +89,14 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
     }
 
     @Override
-    public Task downloadLiteLoader(InstallerVersion v) {
+    public Task downloadLiteLoader(String installId, InstallerVersion v) {
         return new TaskInfo("LiteLoader Downloader") {
             @Override
             public void executeTask() {
                 File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "liteloader-universal.jar");
                 FileDownloadTask task = (FileDownloadTask) new FileDownloadTask(v.universal, filepath).setTag("LiteLoader");
                 TaskWindow.getInstance()
-                    .addTask(task).addTask(new LiteLoaderInstaller(service, (LiteLoaderVersionList.LiteLoaderInstallerVersion) v).registerPreviousResult(task))
+                    .addTask(task).addTask(new LiteLoaderInstaller(service, installId, (LiteLoaderVersionList.LiteLoaderInstallerVersion) v).registerPreviousResult(task))
                     .start();
             }
         };

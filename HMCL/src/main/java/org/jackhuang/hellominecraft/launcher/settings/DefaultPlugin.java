@@ -17,10 +17,9 @@
  */
 package org.jackhuang.hellominecraft.launcher.settings;
 
-import org.jackhuang.hellominecraft.launcher.core.service.DefaultMinecraftService;
+import org.jackhuang.hellominecraft.launcher.utils.DefaultMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.api.IPlugin;
-import org.jackhuang.hellominecraft.launcher.core.Profile;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.OfflineAuthenticator;

@@ -29,6 +29,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.tukaani.xz.XZInputStream;
@@ -39,9 +40,9 @@ import org.tukaani.xz.XZInputStream;
  */
 public class LibraryDownloadTask extends FileDownloadTask {
 
-    GameLauncher.DownloadLibraryJob job;
+    DownloadLibraryJob job;
 
-    public LibraryDownloadTask(GameLauncher.DownloadLibraryJob job) {
+    public LibraryDownloadTask(DownloadLibraryJob job) {
         super();
         this.job = job;
     }

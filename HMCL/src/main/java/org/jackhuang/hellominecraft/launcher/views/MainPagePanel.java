@@ -33,7 +33,7 @@ import org.jackhuang.hellominecraft.launcher.core.launch.DefaultGameLauncher;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.LoginInfo;
-import org.jackhuang.hellominecraft.launcher.core.Profile;
+import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
@@ -390,7 +390,7 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
             return;
         }
         final String name = (String) cboProfiles.getSelectedItem();
-        if (StrUtils.isBlank(name) || getCurrentProfile().service().version().getSelectedVersion() == null) {
+        if (StrUtils.isBlank(name) || getCurrentProfile().getSelectedVersion() == null) {
             HMCLog.warn("There's no selected version, rechoose a version.");
             MessageBox.ShowLocalized("minecraft.no_selected_version");
             return;
@@ -408,7 +408,8 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
             @Override
             public void run() {
                 Thread.currentThread().setName("Game Launcher");
-                DefaultGameLauncher gl = new DefaultGameLauncher(getCurrentProfile(), li, l);
+                DefaultGameLauncher gl = new DefaultGameLauncher(getCurrentProfile().createLaunchOptions(), getCurrentProfile().service(), li, l);
+                gl.setTag(getCurrentProfile().getLauncherVisibility());
                 gl.successEvent.register((sender, s) -> {
                     isLaunching = false;
                     return true;
@@ -479,8 +480,7 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
         int index = 0, i = 0;
         getCurrentProfile().selectedVersionChangedEvent.register(this);
         getCurrentProfile().service().version().refreshVersions();
-        MinecraftVersion selVersion = getCurrentProfile().service().version().getSelectedVersion();
-        String selectedMC = selVersion == null ? null : selVersion.id;
+        String selVersion = getCurrentProfile().getSelectedVersion();
         if (getCurrentProfile().service().version().getVersions().isEmpty()) {
             if (!showedNoVersion)
                 SwingUtilities.invokeLater(() -> {
@@ -495,7 +495,7 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
                 if (mcVersion.hidden)
                     continue;
                 cboVersions.addItem(mcVersion.id);
-                if (mcVersion.id.equals(selectedMC))
+                if (mcVersion.id.equals(selVersion))
                     index = i;
                 i++;
             }
@@ -567,10 +567,10 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
         public boolean call(Object sender, List<String> str) {
             final GameLauncher obj = (GameLauncher) sender;
             obj.launchEvent.register((sender1, p) -> {
-                if (obj.getProfile().getLauncherVisibility() == LauncherVisibility.CLOSE && !LogWindow.INSTANCE.isVisible()) {
+                if ((LauncherVisibility) obj.getTag() == LauncherVisibility.CLOSE && !LogWindow.INSTANCE.isVisible()) {
                     HMCLog.log("Without the option of keeping the launcher visible, this application will exit and will NOT catch game logs, but you can turn on \"Debug Mode\".");
                     System.exit(0);
-                } else if (obj.getProfile().getLauncherVisibility() == LauncherVisibility.KEEP)
+                } else if ((LauncherVisibility) obj.getTag() == LauncherVisibility.KEEP)
                     MainFrame.INSTANCE.closeMessage();
                 else {
                     if (LogWindow.INSTANCE.isVisible())
@@ -589,7 +589,7 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
                     return true;
                 });
                 jpm.stoppedEvent.register((sender2, t) -> {
-                    if (obj.getProfile().getLauncherVisibility() != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible()) {
+                    if ((LauncherVisibility) obj.getTag() != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible()) {
                         HMCLog.log("Without the option of keeping the launcher visible, this application will exit and will NOT catch game logs, but you can turn on \"Debug Mode\".");
                         System.exit(0);
                     }

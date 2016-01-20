@@ -18,9 +18,10 @@
 package org.jackhuang.hellominecraft.launcher.core.service;
 
 import java.io.File;
-import org.jackhuang.hellominecraft.launcher.core.Profile;
-import org.jackhuang.hellominecraft.launcher.settings.Settings;
+import org.jackhuang.hellominecraft.launcher.core.GameException;
+import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
+import org.jackhuang.hellominecraft.launcher.core.launch.LaunchOptions;
 
 /**
  *
@@ -28,13 +29,7 @@ import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
  */
 public abstract class IMinecraftService {
 
-    public final Profile profile;
-    public final File baseFolder;
-
-    public IMinecraftService(Profile profile) {
-        this.profile = profile;
-        this.baseFolder = profile.getCanonicalGameDirFile();
-    }
+    public abstract File baseDirectory();
 
     public DownloadType getDownloadType() {
         return DownloadType.getSuggestedDownloadType();
@@ -49,5 +44,17 @@ public abstract class IMinecraftService {
     public abstract IMinecraftProvider version();
 
     public abstract IMinecraftInstallerService install();
+
+    /**
+     * Provide the Minecraft Loader to generate the launching command.
+     *
+     * @see org.jackhuang.hellominecraft.launcher.core.service.IMinecraftLoader
+     * @param p player informations, including username & auth_token
+     *
+     * @return what you want
+     *
+     * @throws GameException circular denpendency versions
+     */
+    public abstract IMinecraftLoader launch(LaunchOptions options, UserProfileProvider p) throws GameException;
 
 }

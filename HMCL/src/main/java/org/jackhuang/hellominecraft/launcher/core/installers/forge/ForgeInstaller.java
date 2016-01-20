@@ -46,7 +46,7 @@ public class ForgeInstaller extends Task {
     public InstallerVersion installerVersion;
 
     public ForgeInstaller(IMinecraftService mp, File forgeInstaller, InstallerVersion installerVersion) {
-        this.gameDir = mp.baseFolder;
+        this.gameDir = mp.baseDirectory();
         this.forgeInstaller = forgeInstaller;
         this.mp = mp;
         this.installerVersion = installerVersion;
@@ -64,7 +64,7 @@ public class ForgeInstaller extends Task {
         File from = new File(gameDir, "versions" + File.separator + profile.install.minecraft);
         if (!from.exists())
             if (MessageBox.Show(C.i18n("install.no_version_if_intall")) == MessageBox.YES_OPTION) {
-                if (!mp.version().install(profile.install.minecraft))
+                if (!mp.version().install(profile.install.minecraft, null))
                     throw new IllegalStateException(C.i18n("install.no_version"));
             } else
                 throw new IllegalStateException(C.i18n("install.no_version"));

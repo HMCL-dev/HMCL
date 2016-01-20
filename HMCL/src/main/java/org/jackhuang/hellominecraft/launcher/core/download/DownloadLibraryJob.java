@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2013  huangyuhui
+ * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,19 +15,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.launcher.core.service;
+package org.jackhuang.hellominecraft.launcher.core.download;
 
-import java.util.List;
-import org.jackhuang.hellominecraft.launcher.core.GameException;
-import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import java.io.File;
+import org.jackhuang.hellominecraft.utils.system.IOUtils;
 
 /**
  *
  * @author huangyuhui
  */
-public interface IMinecraftLoader {
+public class DownloadLibraryJob {
 
-    MinecraftVersion getMinecraftVersion();
+    public String url, name;
+    public File path;
 
-    List<String> makeLaunchingCommand() throws GameException;
+    public DownloadLibraryJob(String n, String u, File p) {
+        url = u;
+        name = n;
+        path = IOUtils.tryGetCanonicalFile(p);
+    }
 }

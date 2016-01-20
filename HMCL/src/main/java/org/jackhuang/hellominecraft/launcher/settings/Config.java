@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hellominecraft.launcher.settings;
 
-import org.jackhuang.hellominecraft.launcher.core.Profile;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;

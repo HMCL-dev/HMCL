@@ -27,8 +27,8 @@ import org.jackhuang.hellominecraft.tasks.Task;
  */
 public abstract class IMinecraftAssetService extends IMinecraftBasicService {
 
-    public IMinecraftAssetService(IMinecraftService profile) {
-        super(profile);
+    public IMinecraftAssetService(IMinecraftService service) {
+        super(service);
     }
 
     public abstract Task downloadAssets(String mcVersion);

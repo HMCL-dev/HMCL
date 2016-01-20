@@ -27,15 +27,15 @@ import org.jackhuang.hellominecraft.launcher.core.ModInfo;
  */
 public abstract class IMinecraftModService extends IMinecraftBasicService {
 
-    public IMinecraftModService(IMinecraftService profile) {
-        super(profile);
+    public IMinecraftModService(IMinecraftService service) {
+        super(service);
     }
 
-    public abstract List<ModInfo> getMods();
+    public abstract List<ModInfo> getMods(String id);
 
-    public abstract List<ModInfo> recacheMods();
+    public abstract List<ModInfo> recacheMods(String id);
 
-    public abstract boolean addMod(File f);
+    public abstract boolean addMod(String id, File f);
 
-    public abstract void removeMod(Object[] mods);
+    public abstract void removeMod(String id, Object[] mods);
 }

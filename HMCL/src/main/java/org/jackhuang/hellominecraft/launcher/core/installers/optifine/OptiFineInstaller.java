@@ -21,6 +21,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.C;
+import org.jackhuang.hellominecraft.launcher.core.installers.InstallerVersionList;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.tasks.communication.PreviousResult;
@@ -37,30 +38,33 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
 
     public File installer;
     public IMinecraftService service;
-    public String version;
+    public InstallerVersionList.InstallerVersion version;
+    public String installId;
 
-    public OptiFineInstaller(IMinecraftService service, String version) {
-        this(service, version, null);
+    public OptiFineInstaller(IMinecraftService service, String installId, InstallerVersionList.InstallerVersion version) {
+        this(service, installId, version, null);
     }
 
-    public OptiFineInstaller(IMinecraftService service, String version, File installer) {
+    public OptiFineInstaller(IMinecraftService service, String installId, InstallerVersionList.InstallerVersion version, File installer) {
         this.service = service;
+        this.installId = installId;
         this.installer = installer;
         this.version = version;
     }
 
     @Override
     public void executeTask() throws Exception {
-        if (service.version().getSelectedVersion() == null)
+        if (installId == null)
             throw new Exception(C.i18n("install.no_version"));
-        MinecraftVersion mv = (MinecraftVersion) service.version().getSelectedVersion().clone();
+        String selfId = version.selfVersion;
+        MinecraftVersion mv = (MinecraftVersion) service.version().getVersionById(installId).clone();
         mv.inheritsFrom = mv.id;
         mv.jar = mv.jar == null ? mv.id : mv.jar;
         mv.libraries.clear();
-        mv.libraries.add(0, new MinecraftLibrary("optifine:OptiFine:" + version));
-        FileUtils.copyFile(installer, new File(service.baseFolder, "libraries/optifine/OptiFine/" + version + "/OptiFine-" + version + ".jar"));
+        mv.libraries.add(0, new MinecraftLibrary("optifine:OptiFine:" + selfId));
+        FileUtils.copyFile(installer, new File(service.baseDirectory(), "libraries/optifine/OptiFine/" + selfId + "/OptiFine-" + selfId + ".jar"));
 
-        mv.id += "-" + version;
+        mv.id += "-" + selfId;
         if (new ZipFile(installer).getEntry("optifine/OptiFineTweaker.class") != null) {
             if (!mv.mainClass.startsWith("net.minecraft.launchwrapper.")) {
                 mv.mainClass = "net.minecraft.launchwrapper.Launch";
@@ -68,7 +72,7 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
             }
             mv.minecraftArguments += " --tweakClass optifine.OptiFineTweaker";
         }
-        File loc = new File(service.baseFolder, "versions/" + mv.id);
+        File loc = new File(service.baseDirectory(), "versions/" + mv.id);
         loc.mkdirs();
         File json = new File(loc, mv.id + ".json");
         FileUtils.writeStringToFile(json, C.gsonPrettyPrinting.toJson(mv, MinecraftVersion.class));

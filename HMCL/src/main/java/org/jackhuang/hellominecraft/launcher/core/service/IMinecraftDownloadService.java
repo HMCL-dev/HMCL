@@ -19,8 +19,7 @@ package org.jackhuang.hellominecraft.launcher.core.service;
 
 import java.util.List;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
-import org.jackhuang.hellominecraft.launcher.core.launch.GameLauncher;
-import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
+import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.version.MinecraftRemoteVersion;
 import rx.Observable;
@@ -31,8 +30,8 @@ import rx.Observable;
  */
 public abstract class IMinecraftDownloadService extends IMinecraftBasicService {
 
-    public IMinecraftDownloadService(IMinecraftService profile) {
-        super(profile);
+    public IMinecraftDownloadService(IMinecraftService service) {
+        super(service);
     }
 
     public abstract MinecraftVersion downloadMinecraft(String id);
@@ -46,7 +45,7 @@ public abstract class IMinecraftDownloadService extends IMinecraftBasicService {
      *
      * @return the library collection
      */
-    public abstract List<GameLauncher.DownloadLibraryJob> getDownloadLibraries(MinecraftVersion mv) throws GameException;
+    public abstract List<DownloadLibraryJob> getDownloadLibraries(MinecraftVersion mv) throws GameException;
 
     public abstract Observable<MinecraftRemoteVersion> getRemoteVersions();
 

@@ -20,10 +20,10 @@ package org.jackhuang.hellominecraft.launcher.core.launch;
 import java.io.IOException;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
-import org.jackhuang.hellominecraft.launcher.core.launch.GameLauncher.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.LoginInfo;
-import org.jackhuang.hellominecraft.launcher.core.Profile;
+import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
+import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.tasks.ParallelTask;
 import org.jackhuang.hellominecraft.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.utils.system.Compressor;
@@ -31,8 +31,8 @@ import org.jackhuang.hellominecraft.utils.MessageBox;
 
 public class DefaultGameLauncher extends GameLauncher {
 
-    public DefaultGameLauncher(Profile version, LoginInfo info, IAuthenticator lg) {
-        super(version, info, lg);
+    public DefaultGameLauncher(LaunchOptions options, IMinecraftService service, LoginInfo info, IAuthenticator lg) {
+        super(options, service, info, lg);
         register();
     }
 

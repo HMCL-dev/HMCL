@@ -15,10 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.launcher.core;
+package org.jackhuang.hellominecraft.launcher.settings;
 
 import java.io.File;
+import java.io.IOException;
+import org.jackhuang.hellominecraft.C;
+import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.api.PluginManager;
+import org.jackhuang.hellominecraft.launcher.core.LauncherVisibility;
+import org.jackhuang.hellominecraft.launcher.core.MCUtils;
+import org.jackhuang.hellominecraft.launcher.core.launch.LaunchOptions;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
@@ -26,6 +33,7 @@ import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.Utils;
 import org.jackhuang.hellominecraft.utils.EventHandler;
 import org.jackhuang.hellominecraft.utils.system.Java;
+import org.jackhuang.hellominecraft.utils.system.JdkVersion;
 import org.jackhuang.hellominecraft.utils.system.OS;
 
 /**
@@ -101,8 +109,18 @@ public final class Profile {
         return service;
     }
 
-    public String getSelectedMinecraftVersionName() {
+    public String getSettingsSelectedMinecraftVersion() {
         return selectedMinecraftVersion;
+    }
+
+    public String getSelectedVersion() {
+        String v = selectedMinecraftVersion;
+        if (v == null) {
+            v = service.version().getOneVersion().id;
+            if (v != null)
+                setSelectedMinecraftVersion(v);
+        }
+        return v;
     }
 
     public transient final EventHandler<String> selectedVersionChangedEvent = new EventHandler<>(this);
@@ -187,9 +205,9 @@ public final class Profile {
     }
 
     public File getFolder(String folder) {
-        if (service().version().getSelectedVersion() == null)
+        if (getSelectedVersion() == null)
             return new File(getCanonicalGameDirFile(), folder);
-        return service().version().getRunDirectory(service().version().getSelectedVersion().id, folder);
+        return service().version().getRunDirectory(getSelectedVersion(), folder);
     }
 
     public String getName() {
@@ -355,5 +373,53 @@ public final class Profile {
 
     public void checkFormat() {
         gameDir = gameDir.replace('/', OS.os().fileSeparator).replace('\\', OS.os().fileSeparator);
+    }
+
+    public LaunchOptions createLaunchOptions() {
+        LaunchOptions x = new LaunchOptions();
+        x.setCanceledWrapper(isCanceledWrapper());
+        x.setDebug(isDebug());
+        x.setFullscreen(isFullscreen());
+        x.setGameDir(getCanonicalGameDirFile());
+        x.setGameDirType(getGameDirType());
+        x.setHeight(getHeight());
+        x.setJavaArgs(getJavaArgs());
+        x.setLaunchVersion(getSelectedVersion());
+        x.setMaxMemory(getMaxMemory());
+        x.setMinecraftArgs(getMinecraftArgs());
+        x.setName(getName());
+        x.setNoJVMArgs(isNoJVMArgs());
+        x.setPermSize(getPermSize());
+        x.setPrecalledCommand(getPrecalledCommand());
+        x.setProxyHost(Settings.getInstance().getProxyHost());
+        x.setProxyPort(Settings.getInstance().getProxyPort());
+        x.setProxyUser(Settings.getInstance().getProxyUserName());
+        x.setProxyPass(Settings.getInstance().getProxyPassword());
+        x.setServerIp(getServerIp());
+        x.setUserProperties(getUserProperties());
+        x.setVersionName(Main.makeTitle());
+        x.setWidth(getWidth());
+
+        String str = getJavaDir();
+        if (!getJavaDirFile().exists()) {
+            HMCLog.err(C.i18n("launch.wrong_javadir"));
+            setJava(null);
+            str = getJavaDir();
+        }
+        JdkVersion jv = new JdkVersion(str);
+        if (Settings.getInstance().getJava().contains(jv))
+            jv = Settings.getInstance().getJava().get(Settings.getInstance().getJava().indexOf(jv));
+        else
+            try {
+                jv = JdkVersion.getJavaVersionFromExecutable(str);
+                Settings.getInstance().getJava().add(jv);
+                Settings.save();
+            } catch (IOException ex) {
+                HMCLog.warn("Failed to get java version", ex);
+                jv = null;
+            }
+        x.setJava(jv);
+        x.setJavaDir(str);
+        return x;
     }
 }

@@ -20,7 +20,6 @@ package org.jackhuang.hellominecraft.launcher.core.launch;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftLoader;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,8 +28,6 @@ import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Launcher;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
-import org.jackhuang.hellominecraft.launcher.core.Profile;
-import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.utils.system.JdkVersion;
 import org.jackhuang.hellominecraft.utils.MathUtils;
@@ -46,19 +43,19 @@ import org.jackhuang.hellominecraft.utils.Utils;
  */
 public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
 
-    protected Profile v;
+    protected LaunchOptions options;
     protected UserProfileProvider lr;
     protected File gameDir;
     protected IMinecraftService service;
     protected final MinecraftVersion version;
 
-    public AbstractMinecraftLoader(Profile ver, IMinecraftService provider, UserProfileProvider lr) throws GameException {
+    public AbstractMinecraftLoader(LaunchOptions options, IMinecraftService service, String versionId, UserProfileProvider lr) throws GameException {
         this.lr = lr;
 
-        v = ver;
-        service = provider;
-        gameDir = v.getCanonicalGameDirFile();
-        version = service.version().getSelectedVersion().resolve(service.version());
+        this.options = options;
+        this.service = service;
+        this.gameDir = service.baseDirectory();
+        this.version = service.version().getVersionById(versionId).resolve(service.version());
     }
 
     @Override
@@ -69,30 +66,13 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
     public void makeHeadCommand(List<String> res) {
         HMCLog.log("On making head command.");
 
-        String str = v.getJavaDir();
-        if (!v.getJavaDirFile().exists()) {
-            MessageBox.Show(C.i18n("launch.wrong_javadir"));
-            v.setJava(null);
-            str = v.getJavaDir();
-        }
-        JdkVersion jv = new JdkVersion(str);
-        if (Settings.getInstance().getJava().contains(jv))
-            jv = Settings.getInstance().getJava().get(Settings.getInstance().getJava().indexOf(jv));
-        else
-            try {
-                jv = JdkVersion.getJavaVersionFromExecutable(str);
-                Settings.getInstance().getJava().add(jv);
-                Settings.save();
-            } catch (IOException ex) {
-                HMCLog.warn("Failed to get java version", ex);
-                jv = null;
-            }
-        res.add(str);
+        JdkVersion jv = options.getJava();
+        res.add(options.getJavaDir());
 
-        if (v.hasJavaArgs())
-            res.addAll(Arrays.asList(StrUtils.tokenize(v.getJavaArgs())));
+        if (options.hasJavaArgs())
+            res.addAll(Arrays.asList(StrUtils.tokenize(options.getJavaArgs())));
 
-        if (!v.isNoJVMArgs()) {
+        if (!options.isNoJVMArgs()) {
             appendJVMArgs(res);
 
             if (jv == null || !jv.isEarlyAccess()) {
@@ -105,11 +85,11 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
 
                 res.add("-Xmn128m");
             }
-            if (!StrUtils.isBlank(v.getPermSize()))
+            if (!StrUtils.isBlank(options.getPermSize()))
                 if (jv == null || jv.getParsedVersion() < JdkVersion.JAVA_18)
-                    res.add("-XX:PermSize=" + v.getPermSize() + "m");
+                    res.add("-XX:PermSize=" + options.getPermSize() + "m");
                 else if (jv.getParsedVersion() >= JdkVersion.JAVA_18)
-                    res.add("-XX:MetaspaceSize=" + v.getPermSize() + "m");
+                    res.add("-XX:MetaspaceSize=" + options.getPermSize() + "m");
         }
 
         if (jv != null) {
@@ -121,8 +101,8 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
         if (jv != null && jv.getPlatform() == Platform.BIT_32 && Platform.getPlatform() == Platform.BIT_64)
             MessageBox.Show(C.i18n("advice.os64butjdk32"));
 
-        if (!StrUtils.isBlank(v.getMaxMemory())) {
-            int mem = MathUtils.parseMemory(v.getMaxMemory(), 2147483647);
+        if (!StrUtils.isBlank(options.getMaxMemory())) {
+            int mem = MathUtils.parseMemory(options.getMaxMemory(), 2147483647);
             if (jv != null && jv.getPlatform() == Platform.BIT_32 && mem > 1024)
                 MessageBox.Show(C.i18n("launch.too_big_memory_alloc_64bit"));
             else {
@@ -131,8 +111,8 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
                 if (a > 0 && a < mem)
                     MessageBox.Show(C.i18n("launch.too_big_memory_alloc_free_space_too_low", a));
             }
-            String a = "-Xmx" + v.getMaxMemory();
-            if (MathUtils.canParseInt(v.getMaxMemory()))
+            String a = "-Xmx" + options.getMaxMemory();
+            if (MathUtils.canParseInt(options.getMaxMemory()))
                 a += "m";
             res.add(a);
         }
@@ -143,9 +123,8 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
 
         if (OS.os() != OS.WINDOWS)
             res.add("-Duser.home=" + gameDir.getParent());
-        res.add("-Dhellominecraftlauncher.gamedir=" + gameDir.getAbsolutePath());
 
-        if (!v.isCanceledWrapper()) {
+        if (!options.isCanceledWrapper()) {
             res.add("-cp");
             res.add(StrUtils.parseParams("", Utils.getURL(), File.pathSeparator));
             res.add(Launcher.class.getCanonicalName());
@@ -163,14 +142,14 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
 
         HMCLog.log("On making launcher args.");
 
-        if (StrUtils.isNotBlank(v.getHeight()) && StrUtils.isNotBlank(v.getWidth())) {
+        if (StrUtils.isNotBlank(options.getHeight()) && StrUtils.isNotBlank(options.getWidth())) {
             res.add("--height");
-            res.add(v.getHeight());
+            res.add(options.getHeight());
             res.add("--width");
-            res.add(v.getWidth());
+            res.add(options.getWidth());
         }
 
-        String serverIp = v.getServerIp();
+        String serverIp = options.getServerIp();
         if (lr.getServer() != null)
             serverIp = lr.getServer().addr;
         if (StrUtils.isNotBlank(serverIp)) {
@@ -181,23 +160,23 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
             res.add(args.length > 1 ? args[1] : "25565");
         }
 
-        if (v.isFullscreen())
+        if (options.isFullscreen())
             res.add("--fullscreen");
 
-        if (v.isDebug() && !v.isCanceledWrapper())
+        if (options.isDebug() && !options.isCanceledWrapper())
             res.add("-debug");
 
-        if (StrUtils.isNotBlank(Settings.getInstance().getProxyHost()) && StrUtils.isNotBlank(Settings.getInstance().getProxyPort()) && MathUtils.canParseInt(Settings.getInstance().getProxyPort())) {
-            res.add("-proxyHost=" + Settings.getInstance().getProxyHost());
-            res.add("-proxyPort=" + Settings.getInstance().getProxyPort());
-            if (StrUtils.isNotBlank(Settings.getInstance().getProxyUserName()) && StrUtils.isNotBlank(Settings.getInstance().getProxyPassword())) {
-                res.add("-proxyUsername=" + Settings.getInstance().getProxyUserName());
-                res.add("-proxyPassword=" + Settings.getInstance().getProxyPassword());
+        if (StrUtils.isNotBlank(options.getProxyHost()) && StrUtils.isNotBlank(options.getProxyPort()) && MathUtils.canParseInt(options.getProxyPort())) {
+            res.add("-proxyHost=" + options.getProxyHost());
+            res.add("-proxyPort=" + options.getProxyPort());
+            if (StrUtils.isNotBlank(options.getProxyUser()) && StrUtils.isNotBlank(options.getProxyPass())) {
+                res.add("-proxyUsername=" + options.getProxyUser());
+                res.add("-proxyPassword=" + options.getProxyPass());
             }
         }
 
-        if (StrUtils.isNotBlank(v.getMinecraftArgs()))
-            res.addAll(Arrays.asList(v.getMinecraftArgs().split(" ")));
+        if (StrUtils.isNotBlank(options.getMinecraftArgs()))
+            res.addAll(Arrays.asList(options.getMinecraftArgs().split(" ")));
 
         return res;
     }
@@ -215,9 +194,5 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
     protected abstract void makeSelf(List<String> list);
 
     protected void appendJVMArgs(List<String> list) {
-    }
-
-    public Profile getUserVersion() {
-        return v;
     }
 }

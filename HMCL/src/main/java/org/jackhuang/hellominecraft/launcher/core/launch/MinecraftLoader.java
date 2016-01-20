@@ -49,28 +49,27 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
     DownloadType dt;
     String text;
 
-    public MinecraftLoader(IMinecraftService provider, UserProfileProvider lr) throws GameException {
-        super(provider.profile, provider, lr);
+    public MinecraftLoader(LaunchOptions p, IMinecraftService provider, UserProfileProvider lr) throws GameException {
+        super(p, provider, p.getLaunchVersion(), lr);
     }
 
     @Override
     protected void makeSelf(List<String> res) {
-        String library = v.isCanceledWrapper() ? "" : "-cp=";
+        String library = options.isCanceledWrapper() ? "" : "-cp=";
         for (MinecraftLibrary l : version.libraries) {
             l.init();
             if (l.allow() && !l.isRequiredToUnzip())
                 library += l.getFilePath(gameDir).getAbsolutePath() + File.pathSeparator;
         }
-        library += IOUtils.tryGetCanonicalFilePath(version.getJar(v.getCanonicalGameDirFile())) + File.pathSeparator;
+        library += IOUtils.tryGetCanonicalFilePath(version.getJar(service.baseDirectory())) + File.pathSeparator;
         library = library.substring(0, library.length() - File.pathSeparator.length());
-        if (v.isCanceledWrapper())
+        if (options.isCanceledWrapper())
             res.add("-cp");
         res.add(library);
         String mainClass = version.mainClass;
-        res.add((v.isCanceledWrapper() ? "" : "-mainClass=") + mainClass);
+        res.add((options.isCanceledWrapper() ? "" : "-mainClass=") + mainClass);
 
-        String arg = service.version().getSelectedVersion().minecraftArguments;
-        String[] splitted = StrUtils.tokenize(arg);
+        String[] splitted = StrUtils.tokenize(version.minecraftArguments);
 
         if (!checkAssetsExist())
             if (MessageBox.Show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
@@ -86,7 +85,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
             t = t.replace("${auth_session}", lr.getSession());
             t = t.replace("${auth_uuid}", lr.getUserId());
             t = t.replace("${version_name}", Main.makeTitle());
-            t = t.replace("${profile_name}", v.getName());
+            t = t.replace("${profile_name}", options.getName());
             t = t.replace("${game_directory}", service.version().getRunDirectory(version.id).getAbsolutePath());
             t = t.replace("${game_assets}", game_assets);
             t = t.replace("${assets_root}", service.asset().getAssets().getAbsolutePath());
@@ -118,7 +117,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
     }
 
     private boolean checkAssetsExist() {
-        File assetsDir = new File(service.baseFolder, "assets");
+        File assetsDir = new File(service.baseDirectory(), "assets");
         File indexDir = new File(assetsDir, "indexes");
         File objectDir = new File(assetsDir, "objects");
         File indexFile = new File(indexDir, version.getAssets() + ".json");
@@ -141,7 +140,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
     }
 
     private File reconstructAssets() {
-        File assetsDir = new File(service.baseFolder, "assets");
+        File assetsDir = new File(service.baseDirectory(), "assets");
         File indexDir = new File(assetsDir, "indexes");
         File objectDir = new File(assetsDir, "objects");
         String assetVersion = version.getAssets();

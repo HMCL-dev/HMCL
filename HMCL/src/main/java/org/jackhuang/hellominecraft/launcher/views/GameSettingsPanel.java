@@ -44,7 +44,7 @@ import javax.swing.table.DefaultTableModel;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.LauncherVisibility;
-import org.jackhuang.hellominecraft.launcher.core.Profile;
+import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.utils.FileNameFilter;
 import org.jackhuang.hellominecraft.launcher.core.ModInfo;
@@ -174,7 +174,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         }
         lstExternalMods.getSelectionModel().addListSelectionListener(e -> {
             int row = lstExternalMods.getSelectedRow();
-            List<ModInfo> mods = getProfile().service().mod().getMods();
+            List<ModInfo> mods = getProfile().service().mod().getMods(getProfile().getSelectedVersion());
             if (mods != null && 0 <= row && row < mods.size()) {
                 ModInfo m = mods.get(row);
                 boolean hasLink = m.url != null;
@@ -194,7 +194,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         ((DefaultTableModel) lstExternalMods.getModel()).addTableModelListener(e -> {
             if (e.getType() == TableModelEvent.UPDATE && e.getColumn() == 0) {
                 int row = lstExternalMods.getSelectedRow();
-                List<ModInfo> mods = getProfile().service().mod().getMods();
+                List<ModInfo> mods = getProfile().service().mod().getMods(getProfile().getSelectedVersion());
                 if (mods != null && mods.size() > row && row >= 0)
                     mods.get(row).reverseModState();
             }
@@ -1061,14 +1061,14 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             return;
         boolean flag = true;
         for (File f : fc.getSelectedFiles())
-            flag &= getProfile().service().mod().addMod(f);
+            flag &= getProfile().service().mod().addMod(getProfile().getSelectedVersion(), f);
         reloadMods();
         if (!flag)
             MessageBox.Show(C.I18N.getString("mods.failed"));
     }//GEN-LAST:event_btnAddModActionPerformed
 
     private void btnRemoveModActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveModActionPerformed
-        getProfile().service().mod().removeMod(SwingUtils.getValueBySelectedRow(lstExternalMods, lstExternalMods.getSelectedRows(), 1));
+        getProfile().service().mod().removeMod(getProfile().getSelectedVersion(), SwingUtils.getValueBySelectedRow(lstExternalMods, lstExternalMods.getSelectedRows(), 1));
         reloadMods();
     }//GEN-LAST:event_btnRemoveModActionPerformed
 
@@ -1079,8 +1079,8 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
     private void lblModInfoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblModInfoMouseClicked
         int idx = lstExternalMods.getSelectedRow();
-        if (idx > 0 && idx < getProfile().service().mod().getMods().size())
-            SwingUtils.openLink(getProfile().service().mod().getMods().get(idx).url);
+        if (idx > 0 && idx < getProfile().service().mod().getMods(getProfile().getSelectedVersion()).size())
+            SwingUtils.openLink(getProfile().service().mod().getMods(getProfile().getSelectedVersion()).get(idx).url);
     }//GEN-LAST:event_lblModInfoMouseClicked
 
     private void btnChoosingGameDirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnChoosingGameDirActionPerformed
@@ -1165,8 +1165,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         isLoading = true;
         cboVersions.removeAllItems();
         int index = 0, i = 0;
-        MinecraftVersion selVersion = getProfile().service().version().getSelectedVersion();
-        String selectedMC = selVersion == null ? null : selVersion.id;
+        String selectedMC = getProfile().getSelectedVersion();
         for (MinecraftVersion each : getProfile().service().version().getVersions()) {
             cboVersions.addItem(each.id);
             if (StrUtils.isEquals(each.id, selectedMC))
@@ -1181,18 +1180,18 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }
 
     void loadMinecraftVersion() {
-        loadMinecraftVersion(getProfile().service().version().getSelectedVersion());
+        loadMinecraftVersion(getProfile().getSelectedVersion());
     }
 
     /**
      * Anaylze the jar of selected minecraft version of current getProfile() to
      * get the version.
      */
-    void loadMinecraftVersion(MinecraftVersion v) {
+    void loadMinecraftVersion(String id) {
         txtMinecraftVersion.setText("");
-        if (v == null)
+        if (id == null)
             return;
-        minecraftVersion = MinecraftVersionRequest.minecraftVersion(v.getJar(getProfile().getGameDirFile()));
+        minecraftVersion = MinecraftVersionRequest.minecraftVersion(getProfile().service().version().getMinecraftJar(id));
         txtMinecraftVersion.setText(MinecraftVersionRequest.getResponse(minecraftVersion));
     }
 
@@ -1210,7 +1209,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                 Transferable tr = dtde.getTransferable();
                 List<File> files = (List<File>) tr.getTransferData(DataFlavor.javaFileListFlavor);
                 for (File file : files)
-                    getProfile().service().mod().addMod(file);
+                    getProfile().service().mod().addMod(getProfile().getSelectedVersion(), file);
             } catch (Exception ex) {
                 HMCLog.warn("Failed to drop file.", ex);
             }
@@ -1247,7 +1246,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         reloadingMods = true;
         DefaultTableModel model = SwingUtils.clearDefaultTable(lstExternalMods);
         Observable.<List<ModInfo>>createWithEmptySubscription(
-            t -> t.onNext(getProfile().service().mod().recacheMods()))
+            t -> t.onNext(getProfile().service().mod().recacheMods(getProfile().getSelectedVersion())))
             .subscribeOn(Schedulers.newThread()).observeOn(Schedulers.eventQueue())
             .subscribe(t -> {
                 for (ModInfo x : t)

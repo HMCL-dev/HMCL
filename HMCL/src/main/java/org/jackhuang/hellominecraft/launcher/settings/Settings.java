@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hellominecraft.launcher.settings;
 
-import org.jackhuang.hellominecraft.launcher.core.Profile;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;

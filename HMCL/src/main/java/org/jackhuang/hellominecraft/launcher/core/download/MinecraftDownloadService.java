@@ -44,13 +44,13 @@ import rx.Observable;
  */
 public class MinecraftDownloadService extends IMinecraftDownloadService {
 
-    public MinecraftDownloadService(IMinecraftService profile) {
-        super(profile);
+    public MinecraftDownloadService(IMinecraftService service) {
+        super(service);
     }
 
     @Override
-    public List<GameLauncher.DownloadLibraryJob> getDownloadLibraries(MinecraftVersion mv) throws GameException {
-        ArrayList<GameLauncher.DownloadLibraryJob> downloadLibraries = new ArrayList<>();
+    public List<DownloadLibraryJob> getDownloadLibraries(MinecraftVersion mv) throws GameException {
+        ArrayList<DownloadLibraryJob> downloadLibraries = new ArrayList<>();
         if (mv == null)
             return downloadLibraries;
         MinecraftVersion v = mv.resolve(service.version());
@@ -58,12 +58,12 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
             for (IMinecraftLibrary l : v.libraries) {
                 l.init();
                 if (l.allow()) {
-                    File ff = l.getFilePath(service.baseFolder);
+                    File ff = l.getFilePath(service.baseDirectory());
                     if (!ff.exists()) {
                         String libURL = service.getDownloadType().getProvider().getLibraryDownloadURL() + "/";
                         libURL = service.getDownloadType().getProvider().getParsedLibraryDownloadURL(l.getDownloadURL(libURL, service.getDownloadType()));
                         if (libURL != null)
-                            downloadLibraries.add(new GameLauncher.DownloadLibraryJob(l.name, libURL, ff));
+                            downloadLibraries.add(new DownloadLibraryJob(l.name, libURL, ff));
                     }
                 }
             }
@@ -73,7 +73,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
     @Override
     public MinecraftVersion downloadMinecraft(String id) {
         String vurl = service.getDownloadType().getProvider().getVersionsDownloadURL() + id + "/";
-        File vpath = new File(service.baseFolder, "versions/" + id);
+        File vpath = new File(service.baseDirectory(), "versions/" + id);
         File mvt = new File(vpath, id + ".json");
         File mvj = new File(vpath, id + ".jar");
         vpath.mkdirs();
@@ -97,7 +97,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
     @Override
     public boolean downloadMinecraftJar(String id) {
         String vurl = service.getDownloadType().getProvider().getVersionsDownloadURL() + id + "/";
-        File vpath = new File(service.baseFolder, "versions/" + id);
+        File vpath = new File(service.baseDirectory(), "versions/" + id);
         File mvv = new File(vpath, id + ".jar"), moved = null;
         if (mvv.exists()) {
             moved = new File(vpath, id + "-renamed.jar");
@@ -122,7 +122,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
     @Override
     public boolean downloadMinecraftVersionJson(String id) {
         String vurl = service.getDownloadType().getProvider().getVersionsDownloadURL() + id + "/";
-        File vpath = new File(service.baseFolder, "versions/" + id);
+        File vpath = new File(service.baseDirectory(), "versions/" + id);
         File mvv = new File(vpath, id + ".json"), moved = null;
         if (mvv.exists()) {
             moved = new File(vpath, id + "-renamed.json");

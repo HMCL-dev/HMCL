@@ -33,8 +33,9 @@ import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.LoginInfo;
 import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
-import org.jackhuang.hellominecraft.launcher.core.Profile;
 import org.jackhuang.hellominecraft.launcher.core.auth.AuthenticationException;
+import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
+import org.jackhuang.hellominecraft.launcher.core.version.DecompressLibraryJob;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.system.JavaProcess;
@@ -47,8 +48,8 @@ import org.jackhuang.hellominecraft.utils.system.ProcessManager;
 public class GameLauncher {
 
     public static final ProcessManager PROCESS_MANAGER = new ProcessManager();
-    Profile get;
-    IMinecraftService provider;
+    LaunchOptions options;
+    IMinecraftService service;
     LoginInfo info;
     UserProfileProvider result;
     IAuthenticator login;
@@ -57,15 +58,21 @@ public class GameLauncher {
     public final EventHandler<JavaProcess> launchEvent = new EventHandler(this);
     public final EventHandler<DecompressLibraryJob> decompressNativesEvent = new EventHandler(this);
 
-    public GameLauncher(Profile version, LoginInfo info, IAuthenticator lg) {
-        this.get = version;
-        this.provider = get.service();
+    public GameLauncher(LaunchOptions options, IMinecraftService version, LoginInfo info, IAuthenticator lg) {
+        this.options = options;
+        this.service = version;
         this.info = info;
         this.login = lg;
     }
 
-    public Profile getProfile() {
-        return get;
+    private Object tag;
+
+    public Object getTag() {
+        return tag;
+    }
+
+    public void setTag(Object tag) {
+        this.tag = tag;
     }
 
     public IMinecraftLoader makeLaunchCommand() throws AuthenticationException, GameException {
@@ -79,18 +86,18 @@ public class GameLauncher {
             throw new AuthenticationException("Result can not be null.");
         PluginManager.NOW_PLUGIN.onProcessingLoginResult(result);
 
-        loader = provider.version().provideMinecraftLoader(result);
+        loader = service.launch(options, result);
 
-        File file = provider.version().getDecompressNativesToLocation(loader.getMinecraftVersion());
+        File file = service.version().getDecompressNativesToLocation(loader.getMinecraftVersion());
         if (file != null)
             FileUtils.cleanDirectoryQuietly(file);
 
         HMCLog.log("Detecting libraries...");
-        if (!downloadLibrariesEvent.execute(provider.download().getDownloadLibraries(loader.getMinecraftVersion())))
+        if (!downloadLibrariesEvent.execute(service.download().getDownloadLibraries(loader.getMinecraftVersion())))
             throw new GameException("Failed to download libraries");
 
         HMCLog.log("Unpacking natives...");
-        DecompressLibraryJob job = provider.version().getDecompressLibraries(loader.getMinecraftVersion());
+        DecompressLibraryJob job = service.version().getDecompressLibraries(loader.getMinecraftVersion());
         if (!decompressNativesEvent.execute(job))
             throw new GameException("Failed to decompress natives");
 
@@ -106,10 +113,10 @@ public class GameLauncher {
      * @throws IOException failed creating process
      */
     public void launch(List str) throws IOException {
-        if (!provider.version().onLaunch())
+        if (!service.version().onLaunch())
             return;
-        if (StrUtils.isNotBlank(getProfile().getPrecalledCommand())) {
-            Process p = Runtime.getRuntime().exec(getProfile().getPrecalledCommand());
+        if (StrUtils.isNotBlank(options.getPrecalledCommand())) {
+            Process p = Runtime.getRuntime().exec(options.getPrecalledCommand());
             try {
                 if (p != null && p.isAlive())
                     p.waitFor();
@@ -119,10 +126,10 @@ public class GameLauncher {
         }
         HMCLog.log("Starting process");
         ProcessBuilder builder = new ProcessBuilder(str);
-        if (get == null || provider.version().getSelectedVersion() == null || StrUtils.isBlank(get.getCanonicalGameDir()))
+        if (options.getLaunchVersion() == null || service.baseDirectory() == null)
             throw new Error("Fucking bug!");
-        builder.directory(provider.version().getRunDirectory(provider.version().getSelectedVersion().id))
-            .environment().put("APPDATA", get.getCanonicalGameDir());
+        builder.directory(service.version().getRunDirectory(options.getLaunchVersion()))
+            .environment().put("APPDATA", service.baseDirectory().getAbsolutePath());
         JavaProcess jp = new JavaProcess(str, builder.start(), PROCESS_MANAGER);
         HMCLog.log("The game process have been started");
         launchEvent.execute(jp);
@@ -140,7 +147,7 @@ public class GameLauncher {
      */
     public File makeLauncher(String launcherName, List str) throws IOException {
         HMCLog.log("Making shell launcher...");
-        provider.version().onLaunch();
+        service.version().onLaunch();
         boolean isWin = OS.os() == OS.WINDOWS;
         File f = new File(launcherName + (isWin ? ".bat" : ".sh"));
         if (!f.exists())
@@ -155,14 +162,14 @@ public class GameLauncher {
         if (isWin) {
             writer.write("@echo off");
             writer.newLine();
-            String appdata = IOUtils.tryGetCanonicalFilePath(get.getCanonicalGameDirFile());
+            String appdata = IOUtils.tryGetCanonicalFilePath(service.baseDirectory());
             if (appdata != null) {
                 writer.write("set appdata=" + appdata);
                 writer.newLine();
             }
         }
-        if (StrUtils.isNotBlank(getProfile().getPrecalledCommand())) {
-            writer.write(getProfile().getPrecalledCommand());
+        if (StrUtils.isNotBlank(options.getPrecalledCommand())) {
+            writer.write(options.getPrecalledCommand());
             writer.newLine();
         }
         writer.write(StrUtils.makeCommand(str));
@@ -179,29 +186,4 @@ public class GameLauncher {
         return f;
     }
 
-    public static class DownloadLibraryJob {
-
-        String url, name;
-        File path;
-
-        public DownloadLibraryJob(String n, String u, File p) {
-            url = u;
-            name = n;
-            path = IOUtils.tryGetCanonicalFile(p);
-        }
-    }
-
-    public static class DecompressLibraryJob {
-
-        File[] decompressFiles;
-        String[][] extractRules;
-        File decompressTo;
-
-        public DecompressLibraryJob(File[] decompressFiles, String[][] extractRules, File decompressTo) {
-            this.decompressFiles = decompressFiles;
-            this.extractRules = extractRules;
-            this.decompressTo = decompressTo;
-        }
-
-    }
 }

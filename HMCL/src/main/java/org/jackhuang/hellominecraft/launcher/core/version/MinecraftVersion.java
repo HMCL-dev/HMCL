@@ -35,7 +35,7 @@ import org.jackhuang.hellominecraft.utils.ArrayUtils;
 public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion> {
 
     public String minecraftArguments, mainClass, time, id, type, processArguments,
-        releaseTime, assets, jar, inheritsFrom;
+        releaseTime, assets, jar, inheritsFrom, runDir;
     public int minimumLauncherVersion;
     public boolean hidden;
 
@@ -44,7 +44,7 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
     public MinecraftVersion() {
     }
 
-    public MinecraftVersion(String minecraftArguments, String mainClass, String time, String id, String type, String processArguments, String releaseTime, String assets, String jar, String inheritsFrom, int minimumLauncherVersion, List<MinecraftLibrary> libraries, boolean hidden) {
+    public MinecraftVersion(String minecraftArguments, String mainClass, String time, String id, String type, String processArguments, String releaseTime, String assets, String jar, String inheritsFrom, String runDir, int minimumLauncherVersion, List<MinecraftLibrary> libraries, boolean hidden) {
         this();
         this.minecraftArguments = minecraftArguments;
         this.mainClass = mainClass;
@@ -58,6 +58,7 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
         this.inheritsFrom = inheritsFrom;
         this.minimumLauncherVersion = minimumLauncherVersion;
         this.hidden = hidden;
+        this.runDir = runDir;
         if (libraries == null)
             this.libraries = new ArrayList<>();
         else {
@@ -69,7 +70,7 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
 
     @Override
     public Object clone() {
-        return new MinecraftVersion(minecraftArguments, mainClass, time, id, type, processArguments, releaseTime, assets, jar, inheritsFrom, minimumLauncherVersion, libraries, hidden);
+        return new MinecraftVersion(minecraftArguments, mainClass, time, id, type, processArguments, releaseTime, assets, jar, inheritsFrom, runDir, minimumLauncherVersion, libraries, hidden);
     }
 
     public MinecraftVersion resolve(IMinecraftProvider provider) throws GameException {
@@ -84,7 +85,7 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
 
         MinecraftVersion parent = provider.getVersionById(inheritsFrom);
         if (parent == null) {
-            if (!provider.install(inheritsFrom))
+            if (!provider.install(inheritsFrom, t -> t.hidden = true))
                 return this;
             parent = provider.getVersionById(inheritsFrom);
         }
@@ -95,7 +96,7 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
             this.time, this.id, this.type, parent.processArguments, this.releaseTime,
             this.assets != null ? this.assets : parent.assets,
             this.jar != null ? this.jar : parent.jar,
-            null, parent.minimumLauncherVersion,
+            null, this.runDir, parent.minimumLauncherVersion,
             this.libraries != null ? ArrayUtils.merge(this.libraries, parent.libraries) : parent.libraries, this.hidden);
 
         return result;

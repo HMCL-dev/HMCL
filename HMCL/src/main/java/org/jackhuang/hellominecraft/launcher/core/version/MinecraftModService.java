@@ -22,7 +22,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.jackhuang.hellominecraft.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftModService;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
@@ -36,25 +38,23 @@ import org.jackhuang.hellominecraft.utils.system.FileUtils;
  */
 public class MinecraftModService extends IMinecraftModService {
 
-    List<ModInfo> modCache;
+    Map<String, List<ModInfo>> modCache = Collections.synchronizedMap(new HashMap<>());
 
-    public MinecraftModService(IMinecraftService profile) {
-        super(profile);
+    public MinecraftModService(IMinecraftService service) {
+        super(service);
     }
 
     @Override
-    public List<ModInfo> getMods() {
-        if (modCache == null)
-            return recacheMods();
+    public List<ModInfo> getMods(String id) {
+        if (modCache.containsKey(id))
+            return modCache.get(id);
         else
-            return modCache;
+            return recacheMods(id);
     }
 
     @Override
-    public List<ModInfo> recacheMods() {
-        if (service.version().getSelectedVersion() == null)
-            return modCache = new ArrayList<>();
-        File modsFolder = service.version().getRunDirectory(service.version().getSelectedVersion().id, "mods");
+    public List<ModInfo> recacheMods(String id) {
+        File modsFolder = service.version().getRunDirectory(id, "mods");
         ArrayList<ModInfo> mods = new ArrayList<>();
         File[] fs = modsFolder.listFiles();
         if (fs != null)
@@ -74,24 +74,22 @@ public class MinecraftModService extends IMinecraftModService {
                             }
                 }
         Collections.sort(mods);
-        return modCache = mods;
+        return modCache.put(id, mods);
     }
 
     @Override
-    public boolean addMod(File f) {
+    public boolean addMod(String id, File f) {
         try {
-            if (service.version().getSelectedVersion() == null)
-                return false;
             if (!ModInfo.isFileMod(f))
                 return false;
-            File modsFolder = service.version().getRunDirectory(service.version().getSelectedVersion().id, "mods");
+            File modsFolder = service.version().getRunDirectory(id, "mods");
             if (modsFolder == null)
                 return false;
             modsFolder.mkdirs();
             File newf = new File(modsFolder, f.getName());
             FileUtils.copyFile(f, newf);
             ModInfo i = ModInfo.readModInfo(f);
-            modCache.add(i);
+            modCache.get(id).add(i);
             return true;
         } catch (IOException ex) {
             HMCLog.warn("Failed to copy mod", ex);
@@ -100,21 +98,21 @@ public class MinecraftModService extends IMinecraftModService {
     }
 
     @Override
-    public void removeMod(Object[] rows) {
+    public void removeMod(String id, Object[] rows) {
         if (rows.length == 0)
             return;
         for (Object r : rows)
             if (r instanceof ModInfo)
                 ((ModInfo) r).location.delete();
             else if (r instanceof Number)
-                getMods().get(((Number) r).intValue()).location.delete();
-        recacheMods();
+                getMods(id).get(((Number) r).intValue()).location.delete();
+        recacheMods(id);
     }
 
-    public String[] checkMd5s() throws IOException {
-        String[] res = new String[getMods().size()];
+    public String[] checkMd5s(String id) throws IOException {
+        String[] res = new String[getMods(id).size()];
         for (int i = 0; i < res.length; i++)
-            res[i] = DigestUtils.md5Hex(new FileInputStream(getMods().get(i).location));
+            res[i] = DigestUtils.md5Hex(new FileInputStream(getMods(id).get(i).location));
         return res;
     }
 

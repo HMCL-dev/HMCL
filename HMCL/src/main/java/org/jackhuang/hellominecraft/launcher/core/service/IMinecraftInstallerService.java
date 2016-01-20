@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.service;
 
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftBasicService;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.installers.InstallerType;
 import org.jackhuang.hellominecraft.launcher.core.installers.InstallerVersionList;
 import org.jackhuang.hellominecraft.tasks.Task;
@@ -33,12 +31,12 @@ public abstract class IMinecraftInstallerService extends IMinecraftBasicService 
         super(service);
     }
 
-    public abstract Task download(InstallerVersionList.InstallerVersion v, InstallerType type);
+    public abstract Task download(String installId, InstallerVersionList.InstallerVersion v, InstallerType type);
 
-    public abstract Task downloadForge(InstallerVersionList.InstallerVersion v);
+    public abstract Task downloadForge(String installId, InstallerVersionList.InstallerVersion v);
 
-    public abstract Task downloadOptifine(InstallerVersionList.InstallerVersion v);
+    public abstract Task downloadOptifine(String installId, InstallerVersionList.InstallerVersion v);
 
-    public abstract Task downloadLiteLoader(InstallerVersionList.InstallerVersion v);
+    public abstract Task downloadLiteLoader(String installId, InstallerVersionList.InstallerVersion v);
 
 }

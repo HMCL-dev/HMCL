@@ -23,9 +23,6 @@ import java.io.IOException;
 import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftAssetService;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
-import org.jackhuang.hellominecraft.launcher.core.assets.AssetsIndex;
-import org.jackhuang.hellominecraft.launcher.core.assets.AssetsObject;
-import org.jackhuang.hellominecraft.launcher.core.assets.IAssetsHandler;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.tasks.Task;
 import org.jackhuang.hellominecraft.tasks.TaskWindow;
@@ -40,8 +37,8 @@ import rx.concurrency.Schedulers;
  */
 public class MinecraftAssetService extends IMinecraftAssetService {
 
-    public MinecraftAssetService(IMinecraftService profile) {
-        super(profile);
+    public MinecraftAssetService(IMinecraftService service) {
+        super(service);
     }
 
     @Override
@@ -98,7 +95,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
 
     @Override
     public File getAssets() {
-        return new File(service.profile.getCanonicalGameDirFile(), "assets");
+        return new File(service.baseDirectory(), "assets");
     }
 
     @Override
