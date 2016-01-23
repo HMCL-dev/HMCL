@@ -69,6 +69,14 @@ public final class ModpackManager {
             oldFile.renameTo(newFile);
         }
 
+        File preVersion = new File(versions, id), preVersionRenamed = null;
+        if (preVersion.exists()) {
+            String preId = id + "-" + System.currentTimeMillis();
+            preVersion.renameTo(preVersionRenamed = new File(versions, preId));
+            new File(preVersionRenamed, id + ".json").renameTo(new File(preVersionRenamed, preId + ".json"));
+            new File(preVersionRenamed, id + ".jar").renameTo(new File(preVersionRenamed, preId + ".jar"));
+        }
+
         try {
             AtomicInteger b = new AtomicInteger(0);
             HMCLog.log("Decompressing modpack");
@@ -76,7 +84,7 @@ public final class ModpackManager {
                              if (t.equals("minecraft/pack.json"))
                                  b.incrementAndGet();
                              return true;
-                         });
+                         }, true);
             if (b.get() < 1)
                 throw new FileNotFoundException(C.i18n("modpack.incorrect_format.no_json"));
             File nowFile = new File(versions, id);
@@ -91,6 +99,14 @@ public final class ModpackManager {
             FileUtils.writeStringToFile(json, C.gsonPrettyPrinting.toJson(mv));
             json.renameTo(new File(nowFile, id + ".json"));
 
+            if (preVersionRenamed != null) {
+                File presaves = new File(preVersionRenamed, "saves");
+                File saves = new File(nowFile, "saves");
+                if (presaves.exists()) {
+                    FileUtils.deleteDirectory(saves);
+                    FileUtils.copyDirectory(presaves, saves);
+                }
+            }
         } finally {
             FileUtils.deleteDirectoryQuietly(oldFile);
             if (newFile != null)

@@ -140,7 +140,7 @@ public class Compressor {
     }
 
     public static void unzip(File zipFileName, File extPlace) throws IOException {
-        unzip(zipFileName, extPlace, null);
+        unzip(zipFileName, extPlace, null, true);
     }
 
     /**
@@ -153,7 +153,7 @@ public class Compressor {
      *
      * @throws java.io.IOException 解压失败或无法写入
      */
-    public static void unzip(File zipFileName, File extPlace, Predicate<String> callback) throws IOException {
+    public static void unzip(File zipFileName, File extPlace, Predicate<String> callback, boolean ignoreExistsFile) throws IOException {
         extPlace.mkdirs();
         try (ZipInputStream zipFile = new ZipInputStream(new FileInputStream(zipFileName))) {
             if (zipFileName.exists()) {
@@ -182,6 +182,8 @@ public class Compressor {
                                 if (!subdir.exists())
                                     subdir.mkdir();
                             }
+                        if (ignoreExistsFile && new File(strtemp).exists())
+                            continue;
                         try (FileOutputStream fos = new FileOutputStream(strtemp); BufferedOutputStream bos = new BufferedOutputStream(fos)) {
                             int c;
                             while ((c = zipFile.read()) != -1)
@@ -192,43 +194,4 @@ public class Compressor {
             }
         }
     }
-
-    /**
-     * 将zip1合并到zip2里面，即保留zip2
-     *
-     * @param destFile zip1
-     * @param srcFile  zip2
-     *
-     * @throws java.io.IOException 无法写入或读取
-     *//*
-     * public static void merge(File destFile, File srcFile) throws IOException
-     * {
-     * try (ZipOutputStream os = new ZipOutputStream(new
-     * FileOutputStream(destFile))) {
-     * if (destFile.exists()) {
-     * File extPlace = new File(IOUtils.currentDir(), "HMCL-MERGE-TEMP");
-     * unzip(srcFile, extPlace);
-     * ZipFile zipFile = new ZipFile(srcFile);
-     * if (srcFile.exists()) {
-     * String gbkPath;//, strtemp, strPath;
-     * //strPath = extPlace.getAbsolutePath();
-     * java.util.Enumeration e = zipFile.entries();
-     * while (e.hasMoreElements()) {
-     * ZipEntry zipEnt = (ZipEntry) e.nextElement();
-     * //gbkPath = zipEnt.getName();
-     * if (zipEnt.isDirectory()) {
-     * //strtemp = strPath + File.separator + gbkPath;
-     * } else {
-     * gbkPath = zipEnt.getName();
-     * //strtemp = strPath + File.separator + gbkPath;
-     * os.putNextEntry(zipEnt);
-     * os.write(gbkPath.getBytes("UTF-8"));
-     * }
-     * }
-     * }
-     * }
-     * os.closeEntry();
-     * }
-     * }
-     */
 }

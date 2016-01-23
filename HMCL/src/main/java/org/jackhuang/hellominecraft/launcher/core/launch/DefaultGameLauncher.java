@@ -57,7 +57,7 @@ public class DefaultGameLauncher extends GameLauncher {
             for (int i = 0; i < value.decompressFiles.length; i++)
                 try {
                     String[] rules = value.extractRules[i];
-                    Compressor.unzip(value.decompressFiles[i], value.decompressTo, t -> !StrUtils.startsWithOne(rules, t));
+                    Compressor.unzip(value.decompressFiles[i], value.decompressTo, t -> !StrUtils.startsWithOne(rules, t), false);
                 } catch (IOException ex) {
                     HMCLog.err("Unable to decompress library file: " + value.decompressFiles[i] + " to " + value.decompressTo, ex);
                 }
