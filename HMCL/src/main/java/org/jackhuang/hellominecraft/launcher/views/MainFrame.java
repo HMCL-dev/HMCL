@@ -40,8 +40,8 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.C;
+import org.jackhuang.hellominecraft.utils.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
@@ -49,9 +49,9 @@ import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
 import org.jackhuang.hellominecraft.lookandfeel.Theme;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.Utils;
-import org.jackhuang.hellominecraft.views.DropShadowBorder;
-import org.jackhuang.hellominecraft.views.TintablePanel;
-import org.jackhuang.hellominecraft.views.BasicColors;
+import org.jackhuang.hellominecraft.utils.views.DropShadowBorder;
+import org.jackhuang.hellominecraft.utils.views.TintablePanel;
+import org.jackhuang.hellominecraft.utils.views.BasicColors;
 
 /**
  *

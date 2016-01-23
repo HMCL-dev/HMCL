@@ -19,7 +19,7 @@ package org.jackhuang.hellominecraft.lookandfeel;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.jackhuang.hellominecraft.C;
+import org.jackhuang.hellominecraft.utils.C;
 
 /**
  *

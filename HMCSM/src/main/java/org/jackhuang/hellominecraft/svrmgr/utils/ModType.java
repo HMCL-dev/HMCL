@@ -23,7 +23,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import org.jackhuang.hellominecraft.C;
+import org.jackhuang.hellominecraft.utils.C;
 
 /**
  * 判断mod类型

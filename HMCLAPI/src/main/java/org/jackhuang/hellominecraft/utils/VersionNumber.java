@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hellominecraft.utils;
 
-import org.jackhuang.hellominecraft.HMCLog;
-
 /**
  *
  * @author huangyuhui

@@ -21,7 +21,7 @@ import java.awt.Component;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
-import org.jackhuang.hellominecraft.C;
+import org.jackhuang.hellominecraft.utils.C;
 import org.jackhuang.hellominecraft.launcher.core.version.ServerInfo;
 
 /**

@@ -26,10 +26,10 @@ import org.jackhuang.hellominecraft.launcher.core.installers.liteloader.LiteLoad
 import org.jackhuang.hellominecraft.launcher.core.installers.liteloader.LiteLoaderVersionList;
 import org.jackhuang.hellominecraft.launcher.core.installers.optifine.OptiFineInstaller;
 import org.jackhuang.hellominecraft.launcher.core.installers.optifine.vanilla.OptiFineDownloadFormatter;
-import org.jackhuang.hellominecraft.tasks.Task;
-import org.jackhuang.hellominecraft.tasks.TaskInfo;
-import org.jackhuang.hellominecraft.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
+import org.jackhuang.hellominecraft.utils.tasks.Task;
+import org.jackhuang.hellominecraft.utils.tasks.TaskInfo;
+import org.jackhuang.hellominecraft.utils.tasks.TaskWindow;
+import org.jackhuang.hellominecraft.utils.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 
 /**

@@ -28,8 +28,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.C;
+import org.jackhuang.hellominecraft.utils.HMCLog;
 import org.jackhuang.hellominecraft.utils.NetUtils;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 

@@ -22,8 +22,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.C;
+import org.jackhuang.hellominecraft.utils.HMCLog;
 
 /**
  *

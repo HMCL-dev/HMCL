@@ -21,7 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.HMCLog;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 
 /**

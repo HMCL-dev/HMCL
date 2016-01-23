@@ -20,7 +20,7 @@ package org.jackhuang.hellominecraft.launcher.views;
 import java.awt.Color;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
-import org.jackhuang.hellominecraft.C;
+import org.jackhuang.hellominecraft.utils.C;
 import org.jackhuang.hellominecraft.launcher.core.version.ServerInfo;
 
 /**

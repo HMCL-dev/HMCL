@@ -17,7 +17,7 @@ package rx.util.functions;
 
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
-import org.jackhuang.hellominecraft.logging.logger.Logger;
+import org.jackhuang.hellominecraft.utils.logging.logger.Logger;
 
 /**
  * Allows execution of functions from multiple different languages.

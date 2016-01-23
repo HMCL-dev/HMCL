@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.api;
 
-import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.HMCLog;
 import org.jackhuang.hellominecraft.launcher.settings.DefaultPlugin;
 
 /**

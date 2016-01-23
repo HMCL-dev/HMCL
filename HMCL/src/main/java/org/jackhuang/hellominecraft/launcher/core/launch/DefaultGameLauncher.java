@@ -18,16 +18,17 @@
 package org.jackhuang.hellominecraft.launcher.core.launch;
 
 import java.io.IOException;
-import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.C;
+import org.jackhuang.hellominecraft.utils.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.LoginInfo;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
-import org.jackhuang.hellominecraft.tasks.ParallelTask;
-import org.jackhuang.hellominecraft.tasks.TaskWindow;
+import org.jackhuang.hellominecraft.utils.tasks.ParallelTask;
+import org.jackhuang.hellominecraft.utils.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.utils.system.Compressor;
 import org.jackhuang.hellominecraft.utils.MessageBox;
+import org.jackhuang.hellominecraft.utils.StrUtils;
 
 public class DefaultGameLauncher extends GameLauncher {
 
@@ -55,7 +56,8 @@ public class DefaultGameLauncher extends GameLauncher {
                 return false;
             for (int i = 0; i < value.decompressFiles.length; i++)
                 try {
-                    Compressor.unzip(value.decompressFiles[i], value.decompressTo, value.extractRules[i]);
+                    String[] rules = value.extractRules[i];
+                    Compressor.unzip(value.decompressFiles[i], value.decompressTo, t -> !StrUtils.startsWithOne(rules, t));
                 } catch (IOException ex) {
                     HMCLog.err("Unable to decompress library file: " + value.decompressFiles[i] + " to " + value.decompressTo, ex);
                 }

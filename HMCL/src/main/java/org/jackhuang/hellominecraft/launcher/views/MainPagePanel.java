@@ -27,8 +27,8 @@ import java.io.IOException;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.C;
+import org.jackhuang.hellominecraft.utils.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.launch.DefaultGameLauncher;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
@@ -46,7 +46,7 @@ import org.jackhuang.hellominecraft.utils.Event;
 import org.jackhuang.hellominecraft.lookandfeel.components.ConstomButton;
 import org.jackhuang.hellominecraft.utils.functions.Consumer;
 import org.jackhuang.hellominecraft.utils.system.JavaProcessMonitor;
-import org.jackhuang.hellominecraft.views.LogWindow;
+import org.jackhuang.hellominecraft.utils.views.LogWindow;
 
 /**
  *

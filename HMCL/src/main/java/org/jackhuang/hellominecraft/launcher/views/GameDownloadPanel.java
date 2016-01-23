@@ -18,11 +18,11 @@
 package org.jackhuang.hellominecraft.launcher.views;
 
 import javax.swing.table.DefaultTableModel;
-import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.C;
+import org.jackhuang.hellominecraft.utils.HMCLog;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.views.SwingUtils;
+import org.jackhuang.hellominecraft.utils.views.SwingUtils;
 import rx.concurrency.Schedulers;
 
 /**

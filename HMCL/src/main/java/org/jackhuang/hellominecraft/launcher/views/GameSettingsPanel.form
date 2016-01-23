@@ -88,7 +88,10 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
                               <Component id="btnDownloadAllAssets" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
+                              <Component id="btnImportModpack" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="btnExportModpack" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
@@ -109,7 +112,7 @@
                                       <Component id="lblDimensionX" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="txtHeight" min="-2" pref="100" max="-2" attributes="0"/>
-                                      <EmptySpace pref="425" max="32767" attributes="0"/>
+                                      <EmptySpace pref="444" max="32767" attributes="0"/>
                                       <Component id="chkFullscreen" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <Group type="102" alignment="1" attributes="0">
@@ -177,7 +180,11 @@
                           <Component id="txtWidth" alignment="3" min="-2" pref="26" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace pref="113" max="32767" attributes="0"/>
-                      <Component id="btnDownloadAllAssets" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="btnDownloadAllAssets" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="btnExportModpack" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="btnImportModpack" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -335,6 +342,22 @@
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnChoosingGameDirActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="btnExportModpack">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="&#x5bfc;&#x51fa;&#x6574;&#x5408;&#x5305;"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnExportModpackActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="btnImportModpack">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="&#x5bfc;&#x5165;&#x6574;&#x5408;&#x5305;"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnImportModpackActionPerformed"/>
               </Events>
             </Component>
           </SubComponents>

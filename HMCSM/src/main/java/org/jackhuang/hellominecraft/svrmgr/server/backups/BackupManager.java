@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.HMCLog;
 import org.jackhuang.hellominecraft.utils.system.Compressor;
 import org.jackhuang.hellominecraft.svrmgr.settings.SettingsManager;
 import org.jackhuang.hellominecraft.svrmgr.utils.Utilities;

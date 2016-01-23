@@ -32,14 +32,14 @@ import javax.net.ssl.X509TrustManager;
 import javax.swing.ImageIcon;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.HMCLog;
 import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.launcher.core.launch.GameLauncher;
 import org.jackhuang.hellominecraft.launcher.utils.CrashReporter;
-import org.jackhuang.hellominecraft.logging.Configuration;
-import org.jackhuang.hellominecraft.logging.appender.ConsoleAppender;
-import org.jackhuang.hellominecraft.logging.layout.DefaultLayout;
-import org.jackhuang.hellominecraft.views.LogWindow;
+import org.jackhuang.hellominecraft.utils.logging.Configuration;
+import org.jackhuang.hellominecraft.utils.logging.appender.ConsoleAppender;
+import org.jackhuang.hellominecraft.utils.logging.layout.DefaultLayout;
+import org.jackhuang.hellominecraft.utils.views.LogWindow;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.utils.upgrade.IUpgrader;
 import org.jackhuang.hellominecraft.launcher.views.MainFrame;
@@ -47,6 +47,7 @@ import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
 import org.jackhuang.hellominecraft.utils.MathUtils;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.VersionNumber;
+import org.jackhuang.hellominecraft.utils.system.Compressor;
 import rx.concurrency.Schedulers;
 
 /**
@@ -87,7 +88,7 @@ public final class Main implements Runnable {
     }
 
     public static final String LAUNCHER_NAME = "Hello Minecraft! Launcher";
-    public static final byte VERSION_FIRST = 2, VERSION_SECOND = 3, VERSION_THIRD = 5, VERSION_FORTH = 7;
+    public static final byte VERSION_FIRST = 2, VERSION_SECOND = 3, VERSION_THIRD = 5, VERSION_FORTH = 8;
     public static final int MINIMUM_LAUNCHER_VERSION = 16;
     //public static Proxy PROXY;
 
@@ -113,7 +114,7 @@ public final class Main implements Runnable {
     public static HelloMinecraftLookAndFeel LOOK_AND_FEEL;
 
     @SuppressWarnings({ "CallToPrintStackTrace", "UseSpecificCatch" })
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         {
             //PluginManager.getServerPlugin();
 

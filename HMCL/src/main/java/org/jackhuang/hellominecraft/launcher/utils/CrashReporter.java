@@ -23,15 +23,15 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import javax.swing.SwingUtilities;
-import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.C;
+import org.jackhuang.hellominecraft.utils.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.utils.NetUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.system.OS;
-import org.jackhuang.hellominecraft.views.LogWindow;
+import org.jackhuang.hellominecraft.utils.views.LogWindow;
 
 /**
  *

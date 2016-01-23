@@ -19,7 +19,7 @@ package org.jackhuang.hellominecraft.launcher.core.service;
 
 import org.jackhuang.hellominecraft.launcher.core.installers.InstallerType;
 import org.jackhuang.hellominecraft.launcher.core.installers.InstallerVersionList;
-import org.jackhuang.hellominecraft.tasks.Task;
+import org.jackhuang.hellominecraft.utils.tasks.Task;
 
 /**
  *

@@ -19,9 +19,9 @@ package org.jackhuang.hellominecraft.launcher.core.installers.optifine.vanilla;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.tasks.Task;
-import org.jackhuang.hellominecraft.tasks.communication.PreviousResult;
+import org.jackhuang.hellominecraft.utils.C;
+import org.jackhuang.hellominecraft.utils.tasks.Task;
+import org.jackhuang.hellominecraft.utils.tasks.communication.PreviousResult;
 import org.jackhuang.hellominecraft.utils.NetUtils;
 
 /**

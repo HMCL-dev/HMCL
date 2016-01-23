@@ -21,7 +21,7 @@ import java.util.List;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.version.MinecraftRemoteVersion;
+import org.jackhuang.hellominecraft.utils.version.MinecraftRemoteVersion;
 import rx.Observable;
 
 /**

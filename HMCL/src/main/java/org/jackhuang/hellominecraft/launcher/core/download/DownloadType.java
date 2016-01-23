@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.download;
 
-import org.jackhuang.hellominecraft.C;
+import org.jackhuang.hellominecraft.utils.C;
 
 /**
  *
@@ -27,7 +27,8 @@ public enum DownloadType {
 
     Mojang(C.i18n("download.mojang"), new MojangDownloadProvider()),
     BMCL(C.i18n("download.BMCL"), new BMCLAPIDownloadProvider()),
-    RapidData(C.i18n("download.rapid_data"), new RapidDataDownloadProvider());
+    RapidData(C.i18n("download.rapid_data"), new RapidDataDownloadProvider()),
+    Curse("Curse CDN", new CurseDownloadProvider());
 
     private final String name;
     private final IDownloadProvider provider;

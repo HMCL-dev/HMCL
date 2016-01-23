@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.utils;
 
-import org.jackhuang.hellominecraft.C;
+import org.jackhuang.hellominecraft.utils.C;
 
 /**
  * Give the advice to solve the Minecraft crashing.

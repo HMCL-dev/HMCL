@@ -20,17 +20,17 @@ package org.jackhuang.hellominecraft.launcher.views;
 import java.util.List;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
-import org.jackhuang.hellominecraft.C;
+import org.jackhuang.hellominecraft.utils.C;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.core.installers.InstallerType;
 import org.jackhuang.hellominecraft.launcher.core.installers.InstallerVersionList;
-import org.jackhuang.hellominecraft.tasks.TaskRunnable;
-import org.jackhuang.hellominecraft.tasks.TaskRunnableArg1;
-import org.jackhuang.hellominecraft.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.tasks.communication.DefaultPreviousResult;
+import org.jackhuang.hellominecraft.utils.tasks.TaskRunnable;
+import org.jackhuang.hellominecraft.utils.tasks.TaskRunnableArg1;
+import org.jackhuang.hellominecraft.utils.tasks.TaskWindow;
+import org.jackhuang.hellominecraft.utils.tasks.communication.DefaultPreviousResult;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.views.SwingUtils;
+import org.jackhuang.hellominecraft.utils.views.SwingUtils;
 
 /**
  *

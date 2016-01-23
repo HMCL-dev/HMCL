@@ -20,7 +20,7 @@ package org.jackhuang.hellominecraft.svrmgr.installer.bukkit;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.HMCLog;
 import org.jackhuang.hellominecraft.utils.functions.Consumer;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

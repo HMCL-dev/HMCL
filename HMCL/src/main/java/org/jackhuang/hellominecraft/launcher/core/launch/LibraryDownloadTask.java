@@ -27,10 +27,10 @@ import java.util.Arrays;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
-import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.C;
+import org.jackhuang.hellominecraft.utils.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
-import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
+import org.jackhuang.hellominecraft.utils.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.tukaani.xz.XZInputStream;
 

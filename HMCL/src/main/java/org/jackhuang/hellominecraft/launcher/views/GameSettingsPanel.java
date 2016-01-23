@@ -33,6 +33,8 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -40,24 +42,29 @@ import javax.swing.JPopupMenu;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
-import org.jackhuang.hellominecraft.C;
-import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.C;
+import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.LauncherVisibility;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.utils.FileNameFilter;
 import org.jackhuang.hellominecraft.launcher.core.ModInfo;
 import org.jackhuang.hellominecraft.launcher.core.installers.InstallerType;
+import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
 import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.utils.tasks.TaskRunnable;
+import org.jackhuang.hellominecraft.utils.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.utils.Event;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
-import org.jackhuang.hellominecraft.version.MinecraftVersionRequest;
+import org.jackhuang.hellominecraft.utils.version.MinecraftVersionRequest;
 import org.jackhuang.hellominecraft.utils.system.OS;
 import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.views.SwingUtils;
+import org.jackhuang.hellominecraft.utils.views.SwingUtils;
 import org.jackhuang.hellominecraft.utils.system.Java;
 import rx.Observable;
 import rx.concurrency.Schedulers;
@@ -254,6 +261,8 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         btnChoosingJavaDir = new javax.swing.JButton();
         cboJava = new javax.swing.JComboBox();
         btnChoosingGameDir = new javax.swing.JButton();
+        btnExportModpack = new javax.swing.JButton();
+        btnImportModpack = new javax.swing.JButton();
         pnlAdvancedSettings = new AnimatedPanel();
         chkDebug = new javax.swing.JCheckBox();
         lblJavaArgs = new javax.swing.JLabel();
@@ -394,6 +403,20 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             }
         });
 
+        btnExportModpack.setText("导出整合包");
+        btnExportModpack.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnExportModpackActionPerformed(evt);
+            }
+        });
+
+        btnImportModpack.setText("导入整合包");
+        btnImportModpack.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnImportModpackActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout pnlSettingsLayout = new javax.swing.GroupLayout(pnlSettings);
         pnlSettings.setLayout(pnlSettingsLayout);
         pnlSettingsLayout.setHorizontalGroup(
@@ -403,7 +426,10 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                 .addGroup(pnlSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnlSettingsLayout.createSequentialGroup()
                         .addComponent(btnDownloadAllAssets)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnImportModpack)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnExportModpack))
                     .addGroup(pnlSettingsLayout.createSequentialGroup()
                         .addGroup(pnlSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblJavaDir)
@@ -422,7 +448,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                                 .addComponent(lblDimensionX)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(txtHeight, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 425, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 444, Short.MAX_VALUE)
                                 .addComponent(chkFullscreen))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlSettingsLayout.createSequentialGroup()
                                 .addComponent(txtMaxMemory)
@@ -475,7 +501,10 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                     .addComponent(lblDimension)
                     .addComponent(txtWidth, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 113, Short.MAX_VALUE)
-                .addComponent(btnDownloadAllAssets)
+                .addGroup(pnlSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btnDownloadAllAssets)
+                    .addComponent(btnExportModpack)
+                    .addComponent(btnImportModpack))
                 .addContainerGap())
         );
 
@@ -1105,6 +1134,44 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         getProfile().service().version().cleanFolder();
     }//GEN-LAST:event_btnCleanGameActionPerformed
 
+    private void btnImportModpackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnImportModpackActionPerformed
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setDialogTitle(C.i18n("settings.modpack.choose"));
+        fc.setMultiSelectionEnabled(false);
+        fc.setFileFilter(new FileNameExtensionFilter(C.i18n("settings.modpack"), ".zip"));
+        fc.showOpenDialog(this);
+        if (fc.getSelectedFile() == null)
+            return;
+        TaskWindow.getInstance().addTask(new TaskRunnable(C.i18n("settings.modpack"), () -> {
+                                                          try {
+                                                              ModpackManager.install(fc.getSelectedFile(), getProfile().getCanonicalGameDirFile(), fc.getSelectedFile().getName());
+                                                          } catch (IOException ex) {
+                                                              MessageBox.Show(C.i18n("settings.modpack.install_error"));
+                                                              HMCLog.err("Failed to install modpack", ex);
+                                                          }
+                                                      })).start();
+    }//GEN-LAST:event_btnImportModpackActionPerformed
+
+    private void btnExportModpackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExportModpackActionPerformed
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setDialogTitle(C.i18n("settings.modpack.save"));
+        fc.setMultiSelectionEnabled(false);
+        fc.setFileFilter(new FileNameExtensionFilter(C.i18n("settings.modpack"), ".zip"));
+        fc.showSaveDialog(this);
+        if (fc.getSelectedFile() == null)
+            return;
+        TaskWindow.getInstance().addTask(new TaskRunnable(C.i18n("settings.modpack"), () -> {
+                                                          try {
+                                                              ModpackManager.export(fc.getSelectedFile(), getProfile().service().version(), getProfile().getSelectedVersion());
+                                                          } catch (IOException | GameException ex) {
+                                                              MessageBox.Show(C.i18n("settings.modpack.export_error"));
+                                                              HMCLog.err("Failed to export modpack", ex);
+                                                          }
+                                                      })).start();
+    }//GEN-LAST:event_btnExportModpackActionPerformed
+
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Load">
     private void loadProfiles() {
@@ -1286,6 +1353,8 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private javax.swing.JButton btnCleanGame;
     private javax.swing.JButton btnDownloadAllAssets;
     private javax.swing.JButton btnExplore;
+    private javax.swing.JButton btnExportModpack;
+    private javax.swing.JButton btnImportModpack;
     private javax.swing.JButton btnIncludeMinecraft;
     private javax.swing.JButton btnModify;
     private javax.swing.JButton btnNewProfile;

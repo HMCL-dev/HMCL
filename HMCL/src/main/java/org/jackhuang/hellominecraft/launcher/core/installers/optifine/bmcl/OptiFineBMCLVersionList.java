@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.jackhuang.hellominecraft.C;
+import org.jackhuang.hellominecraft.utils.C;
 import org.jackhuang.hellominecraft.utils.ArrayUtils;
 import org.jackhuang.hellominecraft.launcher.core.installers.InstallerVersionList;
 import org.jackhuang.hellominecraft.launcher.core.installers.optifine.OptiFineVersion;

@@ -21,7 +21,7 @@ import java.io.File;
 import java.util.HashMap;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import org.jackhuang.hellominecraft.tasks.download.FileDownloadTask;
+import org.jackhuang.hellominecraft.utils.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.Utils;
 
 /**

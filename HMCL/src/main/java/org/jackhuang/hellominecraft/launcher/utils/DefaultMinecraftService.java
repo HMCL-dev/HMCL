@@ -33,7 +33,7 @@ import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftLoader;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftModService;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
-import org.jackhuang.hellominecraft.launcher.core.version.MinecraftModService;
+import org.jackhuang.hellominecraft.launcher.core.mod.MinecraftModService;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersionManager;
 
 /**

@@ -31,7 +31,6 @@ import java.net.URLClassLoader;
 import java.net.URLDecoder;
 import java.util.Random;
 import javax.swing.ImageIcon;
-import org.jackhuang.hellominecraft.HMCLog;
 
 /**
  * @author huangyuhui

@@ -17,10 +17,10 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.auth;
 
-import org.jackhuang.hellominecraft.C;
+import org.jackhuang.hellominecraft.utils.C;
 import org.jackhuang.hellominecraft.utils.code.DigestUtils;
 import org.jackhuang.hellominecraft.utils.NetUtils;
-import org.jackhuang.hellominecraft.views.Selector;
+import org.jackhuang.hellominecraft.utils.views.Selector;
 
 /**
  *
