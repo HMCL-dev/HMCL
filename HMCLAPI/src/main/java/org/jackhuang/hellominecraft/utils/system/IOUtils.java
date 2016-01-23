@@ -37,7 +37,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
-import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 
 /**
  *

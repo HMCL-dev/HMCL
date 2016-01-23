@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.utils;
 
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.util.ResourceBundle;

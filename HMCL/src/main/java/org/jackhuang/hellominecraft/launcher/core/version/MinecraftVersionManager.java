@@ -25,7 +25,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
@@ -36,6 +36,7 @@ import org.jackhuang.hellominecraft.utils.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.utils.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
+import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.functions.Consumer;
 import org.jackhuang.hellominecraft.utils.views.SwingUtils;
 
@@ -232,7 +233,10 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public File getMinecraftJar(String id) {
-        return versions.get(id).getJar(service.baseDirectory());
+        if (versions.containsKey(id))
+            return versions.get(id).getJar(service.baseDirectory());
+        else
+            return null;
     }
 
     @Override
@@ -242,7 +246,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public MinecraftVersion getVersionById(String id) {
-        return id == null ? null : versions.get(id);
+        return StrUtils.isBlank(id) ? null : versions.get(id);
     }
 
     @Override

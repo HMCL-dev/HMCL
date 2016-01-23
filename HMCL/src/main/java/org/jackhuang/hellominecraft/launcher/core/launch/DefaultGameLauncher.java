@@ -19,7 +19,7 @@ package org.jackhuang.hellominecraft.launcher.core.launch;
 
 import java.io.IOException;
 import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.LoginInfo;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;

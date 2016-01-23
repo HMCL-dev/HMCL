@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.utils;
 
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import com.sun.management.OperatingSystemMXBean;
 import java.awt.Image;
 import java.awt.Toolkit;

@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.utils;
 
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import java.util.Map;
 import rx.Observable;
 

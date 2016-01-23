@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.utils.ArrayUtils;
 import org.jackhuang.hellominecraft.utils.NetUtils;
 
@@ -151,7 +151,7 @@ public class MinecraftVersionRequest {
 
     public static MinecraftVersionRequest minecraftVersion(File file) {
         MinecraftVersionRequest r = new MinecraftVersionRequest();
-        if (!file.exists()) {
+        if (file == null || !file.exists()) {
             r.type = MinecraftVersionRequest.NOT_FOUND;
             return r;
         }

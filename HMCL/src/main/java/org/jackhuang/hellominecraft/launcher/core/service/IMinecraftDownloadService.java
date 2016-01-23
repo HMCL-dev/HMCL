@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.service;
 
+import java.io.File;
 import java.util.List;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
@@ -37,6 +38,8 @@ public abstract class IMinecraftDownloadService extends IMinecraftBasicService {
     public abstract MinecraftVersion downloadMinecraft(String id);
 
     public abstract boolean downloadMinecraftJar(String id);
+
+    public abstract boolean downloadMinecraftJarTo(String id, File f);
 
     public abstract boolean downloadMinecraftVersionJson(String id);
 

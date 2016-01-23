@@ -28,6 +28,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.jackhuang.hellominecraft.utils.functions.Predicate;
 import java.util.zip.ZipInputStream;
+import org.jackhuang.hellominecraft.utils.functions.BiFunction;
 
 /**
  * 文件压缩/解压类
@@ -37,20 +38,21 @@ import java.util.zip.ZipInputStream;
 public class Compressor {
 
     public static void zip(String sourceDir, String zipFile) throws IOException {
-        zip(new File(sourceDir), new File(zipFile));
+        zip(new File(sourceDir), new File(zipFile), null);
     }
 
     /**
      * 功能：把 sourceDir 目录下的所有文件进行 zip 格式的压缩，保存为指定 zip 文件
      *
-     * @param sourceDir 源文件夹
-     * @param zipFile   压缩生成的zip文件路径。
+     * @param sourceDir        源文件夹
+     * @param zipFile          压缩生成的zip文件路径。
+     * @param pathNameCallback callback(pathName, isDirectory) returns your
+     *                         modified pathName
      *
      * @throws java.io.IOException 压缩失败或无法读取
      */
-    public static void zip(File sourceDir, File zipFile) throws IOException {
-        FileOutputStream os;
-        os = new FileOutputStream(zipFile);
+    public static void zip(File sourceDir, File zipFile, BiFunction<String, Boolean, String> pathNameCallback) throws IOException {
+        FileOutputStream os = new FileOutputStream(zipFile);
         BufferedOutputStream bos = new BufferedOutputStream(os);
         try (ZipOutputStream zos = new ZipOutputStream(bos)) {
             String basePath;
@@ -58,22 +60,46 @@ public class Compressor {
                 basePath = sourceDir.getPath();
             else//直接压缩单个文件时，取父目录
                 basePath = sourceDir.getParent();
-            zipFile(sourceDir, basePath, zos);
+            zipFile(sourceDir, basePath, zos, pathNameCallback);
             zos.closeEntry();
+        }
+    }
+
+    /**
+     * 功能：把 sourceDir 目录下的所有文件进行 zip 格式的压缩，保存为指定 zip 文件
+     *
+     * @param sourceDir        源文件夹
+     * @param zipFile          压缩生成的zip文件路径。
+     * @param pathNameCallback callback(pathName, isDirectory) returns your
+     *                         modified pathName
+     *
+     * @throws java.io.IOException 压缩失败或无法读取
+     */
+    public static ZipOutputStream zipContinuing(File sourceDir, File zipFile, BiFunction<String, Boolean, String> pathNameCallback) throws IOException {
+        FileOutputStream os = new FileOutputStream(zipFile);
+        BufferedOutputStream bos = new BufferedOutputStream(os);
+        try (ZipOutputStream zos = new ZipOutputStream(bos)) {
+            String basePath;
+            if (sourceDir.isDirectory())
+                basePath = sourceDir.getPath();
+            else//直接压缩单个文件时，取父目录
+                basePath = sourceDir.getParent();
+            zipFile(sourceDir, basePath, zos, pathNameCallback);
+            return zos;
         }
     }
 
     /**
      * 将文件压缩成zip文件
      *
-     * @param source   zip文件路径
-     * @param basePath 待压缩文件根目录
-     * @param zos      zip文件的os
-     *
-     * @param callback if the file is allowed to be zipped.
+     * @param source           zip文件路径
+     * @param basePath         待压缩文件根目录
+     * @param zos              zip文件的os
+     * @param pathNameCallback callback(pathName, isDirectory) returns your
+     *                         modified pathName, null if you dont want this file zipped
      */
     private static void zipFile(File source, String basePath,
-                                ZipOutputStream zos) throws IOException {
+                                ZipOutputStream zos, BiFunction<String, Boolean, String> pathNameCallback) throws IOException {
         File[] files;
         if (source.isDirectory())
             files = source.listFiles();
@@ -88,10 +114,18 @@ public class Compressor {
             if (file.isDirectory()) {
                 pathName = file.getPath().substring(basePath.length() + 1)
                            + "/";
+                if (pathNameCallback != null)
+                    pathName = pathNameCallback.apply(pathName, true);
+                if (pathName == null)
+                    continue;
                 zos.putNextEntry(new ZipEntry(pathName));
-                zipFile(file, basePath, zos);
+                zipFile(file, basePath, zos, pathNameCallback);
             } else {
                 pathName = file.getPath().substring(basePath.length() + 1);
+                if (pathNameCallback != null)
+                    pathName = pathNameCallback.apply(pathName, true);
+                if (pathName == null)
+                    continue;
                 try (InputStream is = new FileInputStream(file)) {
                     BufferedInputStream bis = new BufferedInputStream(is);
                     zos.putNextEntry(new ZipEntry(pathName));

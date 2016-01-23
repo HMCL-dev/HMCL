@@ -32,7 +32,9 @@ import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
@@ -45,7 +47,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.LauncherVisibility;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
@@ -56,6 +58,8 @@ import org.jackhuang.hellominecraft.launcher.core.installers.InstallerType;
 import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
 import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.launcher.views.modpack.ModpackInitializationPanel;
+import org.jackhuang.hellominecraft.launcher.views.modpack.ModpackWizard;
 import org.jackhuang.hellominecraft.utils.tasks.TaskRunnable;
 import org.jackhuang.hellominecraft.utils.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.utils.Event;
@@ -64,8 +68,10 @@ import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.version.MinecraftVersionRequest;
 import org.jackhuang.hellominecraft.utils.system.OS;
 import org.jackhuang.hellominecraft.utils.StrUtils;
+import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.views.SwingUtils;
 import org.jackhuang.hellominecraft.utils.system.Java;
+import org.jackhuang.hellominecraft.utils.views.wizard.api.WizardDisplayer;
 import rx.Observable;
 import rx.concurrency.Schedulers;
 
@@ -403,14 +409,14 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             }
         });
 
-        btnExportModpack.setText("导出整合包");
+        btnExportModpack.setText(C.i18n("settings.modpack.save.task")); // NOI18N
         btnExportModpack.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnExportModpackActionPerformed(evt);
             }
         });
 
-        btnImportModpack.setText("导入整合包");
+        btnImportModpack.setText(C.i18n("settings.modpack.install.task")); // NOI18N
         btnImportModpack.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnImportModpackActionPerformed(evt);
@@ -914,6 +920,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     // <editor-fold defaultstate="collapsed" desc="UI Events">
     private void cboProfilesItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboProfilesItemStateChanged
         if (!isLoading) {
+            Settings.getInstance().setLast((String) cboProfiles.getSelectedItem());
             if (getProfile().service().version().getVersionCount() <= 0)
                 versionChanged(null);
             prepare(getProfile());
@@ -1139,13 +1146,14 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setDialogTitle(C.i18n("settings.modpack.choose"));
         fc.setMultiSelectionEnabled(false);
-        fc.setFileFilter(new FileNameExtensionFilter(C.i18n("settings.modpack"), ".zip"));
+        fc.setFileFilter(new FileNameExtensionFilter(C.i18n("settings.modpack"), "zip"));
         fc.showOpenDialog(this);
         if (fc.getSelectedFile() == null)
             return;
-        TaskWindow.getInstance().addTask(new TaskRunnable(C.i18n("settings.modpack"), () -> {
+        String suggestedModpackId = JOptionPane.showInputDialog("Please enter your favourite game name", FileUtils.getBaseName(fc.getSelectedFile().getName()));
+        TaskWindow.getInstance().addTask(new TaskRunnable(C.i18n("settings.modpack.install.task"), () -> {
                                                           try {
-                                                              ModpackManager.install(fc.getSelectedFile(), getProfile().getCanonicalGameDirFile(), fc.getSelectedFile().getName());
+                                                              ModpackManager.install(fc.getSelectedFile(), getProfile().service(), suggestedModpackId);
                                                           } catch (IOException ex) {
                                                               MessageBox.Show(C.i18n("settings.modpack.install_error"));
                                                               HMCLog.err("Failed to install modpack", ex);
@@ -1154,22 +1162,20 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }//GEN-LAST:event_btnImportModpackActionPerformed
 
     private void btnExportModpackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExportModpackActionPerformed
-        JFileChooser fc = new JFileChooser();
-        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setDialogTitle(C.i18n("settings.modpack.save"));
-        fc.setMultiSelectionEnabled(false);
-        fc.setFileFilter(new FileNameExtensionFilter(C.i18n("settings.modpack"), ".zip"));
-        fc.showSaveDialog(this);
-        if (fc.getSelectedFile() == null)
-            return;
-        TaskWindow.getInstance().addTask(new TaskRunnable(C.i18n("settings.modpack"), () -> {
-                                                          try {
-                                                              ModpackManager.export(fc.getSelectedFile(), getProfile().service().version(), getProfile().getSelectedVersion());
-                                                          } catch (IOException | GameException ex) {
-                                                              MessageBox.Show(C.i18n("settings.modpack.export_error"));
-                                                              HMCLog.err("Failed to export modpack", ex);
-                                                          }
-                                                      })).start();
+        Map settings = (Map) WizardDisplayer.showWizard(new ModpackWizard(getProfile().service().version()).createWizard());
+        if (settings != null)
+            TaskWindow.getInstance().addTask(new TaskRunnable(C.i18n("settings.modpack.save.task"),
+                                                              () -> {
+                                                                  try {
+                                                                      ModpackManager.export(new File((String) settings.get(ModpackInitializationPanel.KEY_MODPACK_LOCATION)),
+                                                                                            getProfile().service().version(),
+                                                                                            (String) settings.get(ModpackInitializationPanel.KEY_GAME_VERSION),
+                                                                                            ((Boolean) settings.get(ModpackInitializationPanel.KEY_SAVE) == false) ? Arrays.asList("saves") : null);
+                                                                  } catch (IOException | GameException ex) {
+                                                                      MessageBox.Show(C.i18n("settings.modpack.export_error"));
+                                                                      HMCLog.err("Failed to export modpack", ex);
+                                                                  }
+                                                              })).start();
     }//GEN-LAST:event_btnExportModpackActionPerformed
 
     // </editor-fold>

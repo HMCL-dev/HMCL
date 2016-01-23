@@ -27,7 +27,7 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.views.LogWindow;
 import org.jackhuang.hellominecraft.launcher.utils.MinecraftCrashAdvicer;

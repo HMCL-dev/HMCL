@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Launcher;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
@@ -132,7 +132,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
     }
 
     @Override
-    public List<String> makeLaunchingCommand() {
+    public List<String> makeLaunchingCommand() throws GameException {
         HMCLog.log("*** Make shell command ***");
 
         ArrayList<String> res = new ArrayList<>();
@@ -191,7 +191,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
      *
      * @param list the command list you shoud edit.
      */
-    protected abstract void makeSelf(List<String> list);
+    protected abstract void makeSelf(List<String> list) throws GameException;
 
     protected void appendJVMArgs(List<String> list) {
     }

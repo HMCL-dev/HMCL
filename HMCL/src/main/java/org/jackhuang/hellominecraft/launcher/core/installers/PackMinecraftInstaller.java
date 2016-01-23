@@ -43,7 +43,7 @@ public class PackMinecraftInstaller {
         file.mkdirs();
         for (String src1 : src)
             Compressor.unzip(new File(src1), file);
-        Compressor.zip(file, dest);
+        Compressor.zip(file.getAbsolutePath(), dest.getAbsolutePath());
         FileUtils.deleteDirectory(file);
     }
 }

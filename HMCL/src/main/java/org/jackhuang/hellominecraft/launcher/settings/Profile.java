@@ -20,7 +20,7 @@ package org.jackhuang.hellominecraft.launcher.settings;
 import java.io.File;
 import java.io.IOException;
 import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.launcher.core.LauncherVisibility;
@@ -115,7 +115,7 @@ public final class Profile {
 
     public String getSelectedVersion() {
         String v = selectedMinecraftVersion;
-        if (v == null) {
+        if (StrUtils.isBlank(v) || service.version().getVersionById(v) == null) {
             v = service.version().getOneVersion().id;
             if (v != null)
                 setSelectedMinecraftVersion(v);

@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
@@ -54,14 +54,17 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
     }
 
     @Override
-    protected void makeSelf(List<String> res) {
+    protected void makeSelf(List<String> res) throws GameException {
         String library = options.isCanceledWrapper() ? "" : "-cp=";
         for (MinecraftLibrary l : version.libraries) {
             l.init();
             if (l.allow() && !l.isRequiredToUnzip())
                 library += l.getFilePath(gameDir).getAbsolutePath() + File.pathSeparator;
         }
-        library += IOUtils.tryGetCanonicalFilePath(version.getJar(service.baseDirectory())) + File.pathSeparator;
+        File f = version.getJar(service.baseDirectory());
+        if (!f.exists())
+            throw new GameException("Minecraft jar does not exists");
+        library += IOUtils.tryGetCanonicalFilePath(f) + File.pathSeparator;
         library = library.substring(0, library.length() - File.pathSeparator.length());
         if (options.isCanceledWrapper())
             res.add("-cp");

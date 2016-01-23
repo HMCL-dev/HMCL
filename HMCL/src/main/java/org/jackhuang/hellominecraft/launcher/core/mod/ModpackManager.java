@@ -22,14 +22,20 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystemException;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
+import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.utils.system.Compressor;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
+import org.jackhuang.hellominecraft.utils.system.ZipEngine;
+import org.jackhuang.hellominecraft.utils.version.MinecraftVersionRequest;
 
 /**
  * A mod pack(*.zip) includes these things:
@@ -51,8 +57,8 @@ import org.jackhuang.hellominecraft.utils.system.FileUtils;
  */
 public final class ModpackManager {
 
-    public static void install(File input, File installFolder, String id) throws IOException, FileAlreadyExistsException {
-        File versions = new File(installFolder, "versions");
+    public static void install(File input, IMinecraftService service, String id) throws IOException, FileAlreadyExistsException {
+        File versions = new File(service.baseDirectory(), "versions");
         File oldFile = new File(versions, "minecraft"), newFile = null;
         if (oldFile.exists()) {
             newFile = new File(versions, "minecraft-" + System.currentTimeMillis());
@@ -64,19 +70,29 @@ public final class ModpackManager {
         }
 
         try {
-            AtomicBoolean b = new AtomicBoolean(false);
+            AtomicInteger b = new AtomicInteger(0);
             HMCLog.log("Decompressing modpack");
             Compressor.unzip(input, versions, t -> {
                              if (t.equals("minecraft/pack.json"))
-                                 b.set(true);
+                                 b.incrementAndGet();
+                             if (t.equals("minecraft/pack.jar"))
+                                 b.incrementAndGet();
                              return true;
                          });
-            if (!b.get())
-                throw new FileNotFoundException("the mod pack is not in a correct format.");
+            if (b.get() < 2)
+                throw new FileNotFoundException("the mod pack is in an incorrect format.");
             File nowFile = new File(versions, id);
             oldFile.renameTo(nowFile);
 
-            new File(nowFile, "pack.json").renameTo(new File(nowFile, id + ".json"));
+            File json = new File(nowFile, "pack.json");
+            MinecraftVersion mv = C.gson.fromJson(FileUtils.readFileToString(json), MinecraftVersion.class);
+            if (mv.jar == null)
+                throw new FileSystemException("the mod pack is in an incorrect format, pack.json does not have attribute 'jar'.");
+            service.download().downloadMinecraftJarTo(mv.jar, new File(nowFile, id + ".jar"));
+            mv.jar = null;
+            FileUtils.writeStringToFile(json, C.gsonPrettyPrinting.toJson(mv));
+            json.renameTo(new File(nowFile, id + ".json"));
+
         } finally {
             FileUtils.deleteDirectoryQuietly(oldFile);
             if (newFile != null)
@@ -94,31 +110,34 @@ public final class ModpackManager {
      *
      * @throws IOException if create tmp directory failed
      */
-    public static void export(File output, IMinecraftProvider provider, String version) throws IOException, GameException {
-        File tmp = new File(System.getProperty("java.io.tmpdir"), "hmcl-modpack");
-        tmp.mkdirs();
-
-        File root = new File(tmp, "minecraft");
-
-        HMCLog.log("Copying files from game directory.");
-        FileUtils.copyDirectory(provider.getRunDirectory(version), root);
-        File pack = new File(root, "pack.json");
-        MinecraftVersion mv = provider.getVersionById(version).resolve(provider);
+    public static void export(File output, IMinecraftProvider provider, String version, List<String> blacklist) throws IOException, GameException {
+        ArrayList<String> b = new ArrayList<>(Arrays.asList(new String[] { "usernamecache.json", "asm", "logs", "backups", "versions", "assets", "usercache.json", "libraries", "crash-reports", "launcher_profiles.json", "NVIDIA", "TCNodeTracker" }));
+        if (blacklist != null)
+            b.addAll(blacklist);
+        HMCLog.log("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
+        ZipEngine zip = null;
         try {
-            FileUtils.writeStringToFile(pack, C.gsonPrettyPrinting.toJson(mv));
-            String[] blacklist = { "usernamecache.json", "asm", "logs", "backups", "versions", "assets", "usercache.json", "libraries", "crash-reports", "launcher_profiles.json", "NVIDIA", "TCNodeTracker" };
-            HMCLog.log("Removing files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
-            for (String s : blacklist) {
-                File f = new File(root, s);
-                if (f.isFile())
-                    f.delete();
-                else if (f.isDirectory())
-                    FileUtils.deleteDirectory(f);
-            }
-            HMCLog.log("Compressing game files");
-            Compressor.zip(tmp, output);
+            zip = new ZipEngine(output);
+            zip.putDirectory(provider.getRunDirectory(version), (String x, Boolean y) -> {
+                             for (String s : b)
+                                 if (y) {
+                                     if (x.startsWith(s + "/"))
+                                         return null;
+                                 } else if (x.equals(s))
+                                     return null;
+                             return "minecraft/" + x;
+                         });
+
+            MinecraftVersion mv = provider.getVersionById(version).resolve(provider);
+            mv.runDir = "version";
+            MinecraftVersionRequest r = MinecraftVersionRequest.minecraftVersion(provider.getMinecraftJar(version));
+            if (r.type != MinecraftVersionRequest.OK)
+                throw new FileSystemException("Cannot read vanilla version, " + MinecraftVersionRequest.getResponse(r));
+            mv.jar = r.version;
+            zip.putTextFile(C.gsonPrettyPrinting.toJson(mv), "minecraft/pack.json");
         } finally {
-            FileUtils.deleteDirectory(tmp);
+            if (zip != null)
+                zip.closeFile();
         }
     }
 

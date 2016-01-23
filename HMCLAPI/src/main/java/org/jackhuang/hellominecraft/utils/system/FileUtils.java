@@ -27,7 +27,7 @@ import java.io.OutputStream;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
-import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.utils.NetUtils;
 
 /**
@@ -321,6 +321,13 @@ public class FileUtils {
         return filename.substring(index + 1);
     }
 
+    /**
+     * Get the file name without extensions.
+     *
+     * @param filename
+     *
+     * @return the file name without extensions
+     */
     public static String getBaseName(String filename) {
         return removeExtension(getName(filename));
     }

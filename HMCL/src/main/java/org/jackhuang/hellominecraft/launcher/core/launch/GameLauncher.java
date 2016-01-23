@@ -27,7 +27,7 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
@@ -174,13 +174,10 @@ public class GameLauncher {
         }
         writer.write(StrUtils.makeCommand(str));
         writer.close();
-        if (!isWin)
-            try {
-                Runtime.getRuntime().exec("chmod +x " + IOUtils.tryGetCanonicalFilePath(f));
-            } catch (IOException e) {
-                HMCLog.warn("Failed to give sh file permission.", e);
-                MessageBox.Show(C.i18n("launch.failed_sh_permission"));
-            }
+        if (!f.setExecutable(true)) {
+            HMCLog.warn("Failed to give launcher permission.");
+            MessageBox.Show(C.i18n("launch.failed_sh_permission"));
+        }
 
         HMCLog.log("Command: " + StrUtils.parseParams("", str, " "));
         return f;

@@ -21,7 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.utils.tasks.TaskInfo;
 import org.jackhuang.hellominecraft.utils.tasks.communication.PreviousResult;
 import org.jackhuang.hellominecraft.utils.EventHandler;

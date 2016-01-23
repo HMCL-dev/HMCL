@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.views.SwingUtils;

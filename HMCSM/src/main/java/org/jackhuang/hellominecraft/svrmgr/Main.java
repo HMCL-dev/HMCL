@@ -23,7 +23,7 @@ import java.io.StringWriter;
 import java.text.ParseException;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.utils.views.LogWindow;
 import org.jackhuang.hellominecraft.svrmgr.settings.SettingsManager;
 import org.jackhuang.hellominecraft.utils.UpdateChecker;

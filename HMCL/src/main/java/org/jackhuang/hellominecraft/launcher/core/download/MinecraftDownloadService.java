@@ -23,9 +23,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
-import org.jackhuang.hellominecraft.launcher.core.launch.GameLauncher;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.IMinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
@@ -115,6 +114,19 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
             mvt.delete();
             if (moved != null)
                 moved.renameTo(mvt);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean downloadMinecraftJarTo(String id, File mvt) {
+        String vurl = service.getDownloadType().getProvider().getVersionsDownloadURL() + id + "/";
+        if (TaskWindow.getInstance()
+            .addTask(new FileDownloadTask(vurl + id + ".jar", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".jar"))
+            .start())
+            return true;
+        else {
+            mvt.delete();
             return false;
         }
     }

@@ -19,7 +19,7 @@ package org.jackhuang.hellominecraft.svrmgr.utils;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.utils.NetUtils;
 import org.jackhuang.hellominecraft.utils.functions.Consumer;
 import org.jsoup.Jsoup;

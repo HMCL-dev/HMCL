@@ -346,7 +346,9 @@
             </Component>
             <Component class="javax.swing.JButton" name="btnExportModpack">
               <Properties>
-                <Property name="text" type="java.lang.String" value="&#x5bfc;&#x51fa;&#x6574;&#x5408;&#x5305;"/>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.modpack.save.task" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+                </Property>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnExportModpackActionPerformed"/>
@@ -354,7 +356,9 @@
             </Component>
             <Component class="javax.swing.JButton" name="btnImportModpack">
               <Properties>
-                <Property name="text" type="java.lang.String" value="&#x5bfc;&#x5165;&#x6574;&#x5408;&#x5305;"/>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="settings.modpack.install.task" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+                </Property>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnImportModpackActionPerformed"/>

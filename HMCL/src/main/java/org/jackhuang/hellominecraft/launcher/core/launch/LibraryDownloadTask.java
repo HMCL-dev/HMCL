@@ -28,7 +28,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
 import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.utils.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
@@ -50,23 +50,25 @@ public class LibraryDownloadTask extends FileDownloadTask {
     @Override
     public void executeTask() throws Throwable {
         File packFile = new File(job.path.getParentFile(), job.path.getName() + ".pack.xz");
-        if (job.name.contains("typesafe")) {
-            download(new URL(job.url + ".pack.xz"), packFile);
-            unpackLibrary(job.path, packFile);
-            packFile.delete();
-        } else {
-            if (job.name.startsWith("net.minecraftforge:forge:")) {
-                String[] s = job.name.split(":");
-                if (s.length == 3)
-                    job.url = "http://files.minecraftforge.net/maven/net/minecraftforge/forge/" + s[2] + "/forge-" + s[2] + "-universal.jar";
-            }
-            if (job.name.startsWith("com.mumfrey:liteloader:")) {
-                String[] s = job.name.split(":");
-                if (s.length == 3 && s[2].length() > 3)
-                    job.url = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + s[2].substring(0, s[2].length() - 3) + "/liteloader-" + s[2] + ".jar";
-            }
-            download(new URL(job.url), job.path);
+        /*
+         * if (job.name.contains("typesafe")) {
+         * download(new URL(job.url + ".pack.xz"), packFile);
+         * unpackLibrary(job.path, packFile);
+         * packFile.delete();
+         * } else {
+         */
+        if (job.name.startsWith("net.minecraftforge:forge:")) {
+            String[] s = job.name.split(":");
+            if (s.length == 3)
+                job.url = "http://files.minecraftforge.net/maven/net/minecraftforge/forge/" + s[2] + "/forge-" + s[2] + "-universal.jar";
         }
+        if (job.name.startsWith("com.mumfrey:liteloader:")) {
+            String[] s = job.name.split(":");
+            if (s.length == 3 && s[2].length() > 3)
+                job.url = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + s[2].substring(0, s[2].length() - 3) + "/liteloader-" + s[2] + ".jar";
+        }
+        download(new URL(job.url), job.path);
+        //}
     }
 
     void download(URL url, File filePath) throws Throwable {

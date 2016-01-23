@@ -19,7 +19,7 @@ package org.jackhuang.hellominecraft.utils.tasks;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import org.jackhuang.hellominecraft.utils.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 
 /**
  *
