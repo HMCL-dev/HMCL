@@ -23,16 +23,14 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.UIManager;
+import org.jackhuang.hellominecraft.utils.C;
 
-import org.jackhuang.hellominecraft.utils.views.wizard.api.WizardDisplayer;
 import org.jackhuang.hellominecraft.utils.views.wizard.modules.MergeMap;
-import org.jackhuang.hellominecraft.utils.views.wizard.modules.NbBridge;
 import org.jackhuang.hellominecraft.utils.views.wizard.spi.DeferredWizardResult;
 import org.jackhuang.hellominecraft.utils.views.wizard.spi.Summary;
 import org.jackhuang.hellominecraft.utils.views.wizard.spi.Wizard;
 import org.jackhuang.hellominecraft.utils.views.wizard.spi.WizardException;
 import org.jackhuang.hellominecraft.utils.views.wizard.spi.WizardObserver;
-import org.jackhuang.hellominecraft.utils.views.wizard.spi.WizardPage;
 import org.jackhuang.hellominecraft.utils.views.wizard.spi.WizardPanel;
 import org.jackhuang.hellominecraft.utils.views.wizard.spi.WizardPanelNavResult;
 
@@ -84,9 +82,6 @@ public class NavButtonManager implements ActionListener {
 
     WizardDisplayerImpl parent;
 
-    String closeString = NbBridge.getString("org/jackhuang/hellominecraft/utils/views/wizard/api/Bundle", // NOI18N
-                                            WizardDisplayer.class, "Close"); // NOI18N
-
     boolean suppressMessageDialog = false;
     /**
      * Deferred status of not null means we are waiting for a deferred result to
@@ -102,44 +97,28 @@ public class NavButtonManager implements ActionListener {
 
     protected void buildButtons(Action helpAction) {
 
-        next = new JButton(NbBridge.getString("org/jackhuang/hellominecraft/utils/views/wizard/api/Bundle", // NOI18N
-                                              WizardDisplayer.class, "Next_>")); // NOI18N
+        next = new JButton(C.i18n("wizard.next_>"));
         next.setName(NAME_NEXT);
-        next.setMnemonic(NbBridge.getString("org/jackhuang/hellominecraft/utils/views/wizard/api/Bundle", // NOI18N
-                                            WizardDisplayer.class, "Next_mnemonic").charAt(0)); // NOI18N
+        next.setMnemonic(C.i18n("wizard.next_mnemonic").charAt(0));
 
-        prev = new JButton(NbBridge.getString("org/jackhuang/hellominecraft/utils/views/wizard/api/Bundle", // NOI18N
-                                              WizardDisplayer.class, "<_Prev")); // NOI18N
+        prev = new JButton(C.i18n("wizard.<_prev"));
         prev.setName(NAME_PREV);
-        prev.setMnemonic(NbBridge.getString("org/jackhuang/hellominecraft/utils/views/wizard/api/Bundle", // NOI18N
-                                            WizardDisplayer.class, "Prev_mnemonic").charAt(0)); // NOI18N
+        prev.setMnemonic(C.i18n("wizard.prev_mnemonic").charAt(0));
 
-        finish = new JButton(NbBridge.getString("org/jackhuang/hellominecraft/utils/views/wizard/api/Bundle", // NOI18N
-                                                WizardDisplayer.class, "Finish")); // NOI18N
+        finish = new JButton(C.i18n("wizard.finish")); // NOI18N
         finish.setName(NAME_FINISH);
-        finish.setMnemonic(NbBridge.getString("org/jackhuang/hellominecraft/utils/views/wizard/api/Bundle", // NOI18N
-                                              WizardDisplayer.class, "Finish_mnemonic").charAt(0)); // NOI18N
+        finish.setMnemonic(C.i18n("wizard.finish_mnemonic").charAt(0));
 
-        cancel = new JButton(NbBridge.getString("org/jackhuang/hellominecraft/utils/views/wizard/api/Bundle", // NOI18N
-                                                WizardDisplayer.class, "Cancel")); // NOI18N
+        cancel = new JButton(C.i18n("wizard.cancel"));
         cancel.setName(NAME_CANCEL);
-        cancel.setMnemonic(NbBridge.getString("org/jackhuang/hellominecraft/utils/views/wizard/api/Bundle", // NOI18N
-                                              WizardDisplayer.class, "Cancel_mnemonic").charAt(0)); // NOI18N
+        cancel.setMnemonic(C.i18n("wizard.cancel_mnemonic").charAt(0));
 
         help = new JButton();
-        if (helpAction != null) {
+        if (helpAction != null)
             help.setAction(helpAction);
-            if (helpAction.getValue(Action.NAME) == null) {
-                help.setText(NbBridge.getString("org/jackhuang/hellominecraft/utils/views/wizard/api/Bundle", // NOI18N
-                                                WizardDisplayer.class, "Help")); // NOI18N
-                help.setMnemonic(NbBridge.getString("org/jackhuang/hellominecraft/utils/views/wizard/api/Bundle", // NOI18N
-                                                    WizardDisplayer.class, "Help_mnemonic").charAt(0)); // NOI18N
-            }
-        } else {
-            help.setText(NbBridge.getString("org/jackhuang/hellominecraft/utils/views/wizard/api/Bundle", // NOI18N
-                                            WizardDisplayer.class, "Help")); // NOI18N
-            help.setMnemonic(NbBridge.getString("org/jackhuang/hellominecraft/utils/views/wizard/api/Bundle", // NOI18N
-                                                WizardDisplayer.class, "Help_mnemonic").charAt(0)); // NOI18N
+        if (helpAction == null || helpAction.getValue(Action.NAME) == null) {
+            help.setText(C.i18n("wizard.help"));
+            help.setMnemonic(C.i18n("wizard.help_mnemonic").charAt(0));
         }
 
         next.setDefaultCapable(true);
@@ -224,24 +203,20 @@ public class NavButtonManager implements ActionListener {
         final boolean enableNext = nextStep != null && canContinue && problem == null && !isDeferredResult;
         final boolean enablePrevious = wizard.getPreviousStep() != null && !isDeferredResult;
 
-        final Runnable runnable = new Runnable() {
-
-            public void run() {
-                next.setEnabled(enableNext);
-                prev.setEnabled(enablePrevious);
-                finish.setEnabled(enableFinish);
-                JRootPane root = next.getRootPane();
-                if (root != null)
-                    if (next.isEnabled())
-                        root.setDefaultButton(next);
-                    else if (finish.isEnabled())
-                        root.setDefaultButton(finish);
-                    else if (prev.isEnabled())
-                        root.setDefaultButton(prev);
-                    else
-                        root.setDefaultButton(null);
-
-            }
+        final Runnable runnable = () -> {
+            next.setEnabled(enableNext);
+            prev.setEnabled(enablePrevious);
+            finish.setEnabled(enableFinish);
+            JRootPane root = next.getRootPane();
+            if (root != null)
+                if (next.isEnabled())
+                    root.setDefaultButton(next);
+                else if (finish.isEnabled())
+                    root.setDefaultButton(finish);
+                else if (prev.isEnabled())
+                    root.setDefaultButton(prev);
+                else
+                    root.setDefaultButton(null);
         };
 
         if (EventQueue.isDispatchThread())
@@ -268,34 +243,42 @@ public class NavButtonManager implements ActionListener {
             return;
         }
 
-        if (NAME_NEXT.equals(name))
-            processNext();
-        else if (NAME_PREV.equals(name))
-            processPrev();
-        else if (NAME_FINISH.equals(name))
-            processFinish(event);
-        else if (NAME_CLOSE.equals(name))
-            processClose(event);
+        if (null != name)
+            switch (name) {
+            case NAME_NEXT:
+                processNext();
+                break;
+            case NAME_PREV:
+                processPrev();
+                break;
+            case NAME_FINISH:
+                processFinish(event);
+                break;
+            case NAME_CLOSE:
+                processClose(event);
+                // else ignore, we don't know it
+                break;
+            default:
+                break;
+            }
         // else ignore, we don't know it
 
         parent.updateProblem();
     }
 
     void deferredResultFailed(final boolean canGoBack) {
-        final Runnable runnable = new Runnable() {
-            public void run() {
-                if (!canGoBack)
-                    getCancel().setText(closeString);
-                getPrev().setEnabled(true);
-                getNext().setEnabled(false);
-                getCancel().setEnabled(true);
-                getFinish().setEnabled(false);
+        final Runnable runnable = () -> {
+            if (!canGoBack)
+                getCancel().setText(getCloseString());
+            getPrev().setEnabled(true);
+            getNext().setEnabled(false);
+            getCancel().setEnabled(true);
+            getFinish().setEnabled(false);
 
-                if (NAME_CLOSE.equals(deferredStatus)) {
-                    // no action
-                } else
-                    deferredStatus = DEFERRED_FAILED + deferredStatus;
-            }
+            if (NAME_CLOSE.equals(deferredStatus)) {
+                // no action
+            } else
+                deferredStatus = DEFERRED_FAILED + deferredStatus;
         };
         if (EventQueue.isDispatchThread())
             runnable.run();
@@ -326,23 +309,31 @@ public class NavButtonManager implements ActionListener {
             return;
         }
 
-        if (NAME_NEXT.equals(name))
+        switch (name) {
+        case NAME_NEXT:
             processNextProceed(o);
-        else if (NAME_PREV.equals(name))
+            break;
+        // else ignore, we don't know it
+        case NAME_PREV:
             processPrevProceed(o);
-        else if (NAME_CANCEL.equals(name))
+            break;
+        case NAME_CANCEL:
             processCancel(o instanceof ActionEvent ? (ActionEvent) o
                           : null, false);
-        else if (NAME_FINISH.equals(name))
+            break;
+        case NAME_FINISH:
             // allowFinish on the "down" click of the finish button
             processFinishProceed(o);
-        else if (NAME_CLOSE.equals(name)) {
+            break;
+        case NAME_CLOSE:
             // the "up" click of the finish button: wizard.finish was a deferred result
             Window dlg = getWindow();
             dlg.setVisible(false);
             dlg.dispose();
+            break;
+        default:
+            break;
         }
-        // else ignore, we don't know it
 
         parent.updateProblem();
     }
@@ -484,14 +475,10 @@ public class NavButtonManager implements ActionListener {
                     curr = settings.popAndCalve();
                 settings.push(id);
                 parent.navigateTo(id);
-                return;
             } catch (NoSuchElementException ex) {
                 IllegalStateException e = new IllegalStateException("Exception "
-                                                                    + // NOI18N
-                    "said to return to " + id + " but no such "
-                                                                    + // NOI18N
-                    "step found"); // NOI18N
-                e.initCause(ex);
+                                                                    + "said to return to " + id + " but no such "
+                                                                    + "step found", ex);
                 throw e;
             }
         }
@@ -504,11 +491,9 @@ public class NavButtonManager implements ActionListener {
         Wizard wizard = parent.getWizard();
         MergeMap settings = parent.getSettings();
 
-        // System.err.println("ProcessCancel " + reallyCancel + " receiver " + parent.receiver);
-        boolean closeWindow = false;
+        boolean closeWindow;
 
         if (reallyCancel && parent.cancel()) {
-            // System.err.println("DO CANCEL");
             logger.fine("calling wizard cancel method on " + wizard);
             wizard.cancel(settings);
             return;
@@ -545,9 +530,8 @@ public class NavButtonManager implements ActionListener {
         if (window != null && parent.receiver == null && window instanceof JDialog)
             ((JDialog) window).getRootPane().setDefaultButton(cancel);
 
-        cancel.setText(closeString); // NOI18N
-        cancel.setMnemonic(NbBridge.getString("org/jackhuang/hellominecraft/utils/views/wizard/api/Bundle", // NOI18N
-                                              WizardDisplayer.class, "Close_mnemonic").charAt(0)); // NOI18N
+        cancel.setText(getCloseString()); // NOI18N
+        cancel.setMnemonic(C.i18n("wizard.close_mnemonic").charAt(0));
         cancel.setName(NAME_CLOSE);
         deferredStatus = null;  // ?? should summary be different
     }
@@ -565,7 +549,7 @@ public class NavButtonManager implements ActionListener {
     }
 
     public String getCloseString() {
-        return closeString;
+        return C.i18n("wizard.close");
     }
 
     public Window getWindow() {
@@ -617,26 +601,22 @@ public class NavButtonManager implements ActionListener {
         }
 
         public void navigabilityChanged(final Wizard wizard) {
-            final Runnable runnable = new Runnable() {
-
-                public void run() {
-                    if (wizard.isBusy()) {
-                        next.setEnabled(false);
-                        prev.setEnabled(false);
-                        finish.setEnabled(false);
-                        cancel.setEnabled(false);
-                        parent.getOuterPanel().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                        wasBusy = true;
-                        return;
-                    } else if (wasBusy) {
-                        cancel.setEnabled(true);
-                        parent.getOuterPanel().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                    }
-                    configureNavigationButtons(wizard, prev, next, finish);
-
-                    parent.updateProblem();
-
+            final Runnable runnable = () -> {
+                if (wizard.isBusy()) {
+                    next.setEnabled(false);
+                    prev.setEnabled(false);
+                    finish.setEnabled(false);
+                    cancel.setEnabled(false);
+                    parent.getOuterPanel().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                    wasBusy = true;
+                    return;
+                } else if (wasBusy) {
+                    cancel.setEnabled(true);
+                    parent.getOuterPanel().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                 }
+                configureNavigationButtons(wizard, prev, next, finish);
+
+                parent.updateProblem();
             };
             if (EventQueue.isDispatchThread())
                 runnable.run();

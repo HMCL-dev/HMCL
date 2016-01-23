@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hellominecraft.launcher.views.modpack;
 
-import java.io.File;
 import java.util.Map;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFileChooser;
@@ -51,7 +50,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
         wizardData.put(KEY_SAVE, false);
 
         configureComboContents();
-        controller.setProblem("Not a valid file location");
+        controller.setProblem(C.i18n("modpack.not_a_valid_location"));
 
         controller.setForwardNavigationMode(WizardController.MODE_CAN_FINISH);
     }
@@ -78,8 +77,9 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
         lblGameVersion = new javax.swing.JLabel();
         cboGameVersion = new javax.swing.JComboBox<>();
         chkSave = new javax.swing.JCheckBox();
+        jLabel1 = new javax.swing.JLabel();
 
-        lblModpackLocation.setText(C.i18n("settings.modpack.save")); // NOI18N
+        lblModpackLocation.setText(C.i18n("modpack.save")); // NOI18N
 
         txtModpackLocation.addCaretListener(new javax.swing.event.CaretListener() {
             public void caretUpdate(javax.swing.event.CaretEvent evt) {
@@ -109,6 +109,8 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
             }
         });
 
+        jLabel1.setText(C.i18n("modpack.warning")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -118,42 +120,45 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblModpackLocation)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 175, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(cboModpackLocation))
                     .addComponent(txtModpackLocation)
                     .addComponent(cboGameVersion, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblGameVersion)
-                            .addComponent(chkSave))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                            .addComponent(chkSave)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 67, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 92, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblModpackLocation)
                     .addComponent(cboModpackLocation))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtModpackLocation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(29, 29, 29)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblGameVersion)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cboGameVersion, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkSave)
-                .addContainerGap(133, Short.MAX_VALUE))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void cboModpackLocationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cboModpackLocationActionPerformed
         JFileChooser fc = new JFileChooser();
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setDialogTitle(C.i18n("settings.modpack.save"));
+        fc.setDialogTitle(C.i18n("modpack.save"));
         fc.setMultiSelectionEnabled(false);
-        fc.setFileFilter(new FileNameExtensionFilter(C.i18n("settings.modpack") + "(*.zip)", "zip"));
+        fc.setFileFilter(new FileNameExtensionFilter(C.i18n("modpack") + "(*.zip)", "zip"));
         fc.showSaveDialog(this);
         if (fc.getSelectedFile() != null)
             txtModpackLocation.setText(fc.getSelectedFile().getAbsolutePath());
@@ -163,7 +168,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
         wizardData.put(KEY_MODPACK_LOCATION, txtModpackLocation.getText());
 
         if (txtModpackLocation.getText().trim().isEmpty())
-            controller.setProblem("Please choose a location!!!");
+            controller.setProblem(C.i18n("modpack.not_a_valid_location"));
         else
             controller.setProblem(null);
     }//GEN-LAST:event_txtModpackLocationCaretUpdate
@@ -180,6 +185,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
     private javax.swing.JComboBox<String> cboGameVersion;
     private javax.swing.JButton cboModpackLocation;
     private javax.swing.JCheckBox chkSave;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel lblGameVersion;
     private javax.swing.JLabel lblModpackLocation;
     private javax.swing.JTextField txtModpackLocation;

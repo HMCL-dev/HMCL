@@ -22,6 +22,7 @@ import java.util.Map;
 import javax.swing.JComponent;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.utils.C;
 import org.jackhuang.hellominecraft.utils.views.wizard.spi.WizardBranchController;
 import org.jackhuang.hellominecraft.utils.views.wizard.spi.WizardController;
 import org.jackhuang.hellominecraft.utils.views.wizard.spi.WizardPanelProvider;
@@ -33,7 +34,7 @@ import org.jackhuang.hellominecraft.utils.views.wizard.spi.WizardPanelProvider;
 public class ModpackWizard extends WizardBranchController {
 
     public ModpackWizard(IMinecraftProvider provider) {
-        super(new WizardPanelProvider("Modpack Wizard", new String[] { "Settings" }, new String[] { "Select location, version and allow version" }) {
+        super(new WizardPanelProvider(C.i18n("modpack.wizard"), new String[] { C.i18n("modpack.wizard.step.1") }, new String[] { C.i18n("modpack.wizard.step.1.title") }) {
 
             @Override
             protected JComponent createPanel(WizardController controller, String id, Map settings) {

@@ -43,6 +43,8 @@ import javax.swing.CellRendererPane;
 import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.UIManager;
+import org.jackhuang.hellominecraft.utils.C;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.utils.views.wizard.api.displayer.InstructionsPanel;
 import org.jackhuang.hellominecraft.utils.views.wizard.spi.Wizard;
 import org.jackhuang.hellominecraft.utils.views.wizard.spi.WizardObserver;
@@ -149,9 +151,9 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
         if (img == null)
             try {
                 img = ImageIO.read(InstructionsPanelImpl.class.getResourceAsStream(
-                    "defaultWizard.png")); //NOI18N
+                    "/org/jackhuang/hellominecraft/wizard.jpg")); //NOI18N
             } catch (IOException ioe) {
-                ioe.printStackTrace();
+                HMCLog.err("Failed to load wizard.jpg, maybe you fucking modified the launcher", ioe);
             }
         this.img = img;
         this.wizard = wizard;
@@ -202,9 +204,7 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
             steps = wizard.getAllSteps();
         String steps[] = this.steps;
         if (inSummaryPage) {
-            String summaryStep = NbBridge.getString(
-                "org/jackhuang/hellominecraft/utils/views/wizard/modules/Bundle", //NOI18N
-                InstructionsPanelImpl.class, "Summary"); //NOI18N
+            String summaryStep = C.i18n("wizard.summary");
             String[] nue = new String[steps.length + 1];
             System.arraycopy(steps, 0, nue, 0, steps.length);
             nue[nue.length - 1] = summaryStep;
@@ -217,8 +217,7 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
         Font boldFont = f.deriveFont(Font.BOLD);
 
         g.setFont(boldFont);
-        g.drawString(NbBridge.getString("org/jackhuang/hellominecraft/utils/views/wizard/modules/Bundle", //NOI18N
-                                        InstructionsPanelImpl.class, "Steps"), x, y); //NOI18N
+        g.drawString(C.i18n("wizard.steps"), x, y);
 
         int underlineY = ins.top + MARGIN + fm.getAscent() + 3;
         g.drawLine(x, underlineY, x + (getWidth() - (x + ins.left + MARGIN)),
@@ -230,8 +229,6 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
         y += h + 10;
         int first = 0;
         int stop = steps.length;
-        String elipsis = NbBridge.getString("org/jackhuang/hellominecraft/utils/views/wizard/modules/Bundle", //NOI18N
-                                            InstructionsPanelImpl.class, "elipsis"); //NOI18N
         boolean wontFit = y + (h * (steps.length)) > getHeight();
         if (wontFit) {
             //try to center the current step
@@ -255,33 +252,6 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
                 stop = rangeEnd;
             }
         }
-        /*
-         * if (wontFit) {
-         * int currStepIndex = Arrays.asList (steps).indexOf(currentStep);
-         * if (currStepIndex != -1) { //shouldn't happen
-         * steps = (String[]) steps.clone();
-         * first = Math.max (0, currStepIndex - 2);
-         * if (first != 0) {
-         * if (y + ((currStepIndex - first) * h) > getHeight()) {
-         * //Best effort to keep current step on screen
-         * first++;
-         * }
-         * if (first != currStepIndex) {
-         * steps[first] = elipsis;
-         * }
-         * }
-         * }
-         * }
-         * if (y + ((stop - first) * h) > bottom) {
-         * int avail = bottom - y;
-         * int willFit = avail / h;
-         * int last = first + willFit - 1;
-         * if (last < steps.length - 1) {
-         * steps[last] = elipsis;
-         * stop = last + 1;
-         * }
-         * }
-         */
 
         g.setFont(getFont());
         g.setColor(getForeground());
@@ -298,11 +268,9 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
                     curr = (i + 1) + ". " + steps[i];
                 else
                     curr = (i + 1) + ". " + (isUndetermined
-                                             ? NbBridge.getString("org/jackhuang/hellominecraft/utils/views/wizard/modules/Bundle", //NOI18N
-                                                                  InstructionsPanelImpl.class, "elipsis")
-                                             : //NOI18N
-                                             steps[i].equals(elipsis) ? elipsis
-                                             : wizard.getStepDescription(steps[i])); //NOI18N
+                                             ? elipsis
+                                             : steps[i].equals(elipsis) ? elipsis
+                                               : wizard.getStepDescription(steps[i]));
             else
                 curr = elipsis;
             if (curr != null) {
@@ -313,10 +281,7 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
 
                 int width = fm.stringWidth(curr);
                 while (width > getWidth() - (ins.left + ins.right) && curr.length() > 5)
-                    curr = curr.substring(0, curr.length() - 5)
-                           + NbBridge.getString(
-                            "org/jackhuang/hellominecraft/utils/views/wizard/modules/Bundle", //NOI18N
-                            InstructionsPanelImpl.class, "elipsis"); //NOI18N
+                    curr = curr.substring(0, curr.length() - 5) + elipsis;
 
                 g.drawString(curr, x, y);
                 if (selected)
@@ -327,6 +292,8 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
     }
 
     private int historicWidth = Integer.MIN_VALUE;
+
+    String elipsis = "...";
 
     public final Dimension getPreferredSize() {
         Font f = getFont() != null ? getFont()
@@ -344,8 +311,7 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
         int w = Integer.MIN_VALUE;
         for (int i = 0; i < steps.length; i++) {
             String desc = i + ". " + (Wizard.UNDETERMINED_STEP.equals(steps[i])
-                                      ? NbBridge.getString("org/jackhuang/hellominecraft/utils/views/wizard/modules/Bundle", //NOI18N
-                                                           InstructionsPanelImpl.class, "elipsis")
+                                      ? elipsis
                                       : //NOI18N
                                       wizard.getStepDescription(steps[i]));
             if (desc != null)
@@ -414,12 +380,6 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
             panel = pnl;
             if (pnl.getParent() instanceof Accessible)
                 setAccessibleParent((Accessible) pnl.getParent());
-            setAccessibleName(NbBridge.getString(
-                "org/jackhuang/hellominecraft/utils/views/wizard/modules/Bundle", //NOI18N
-                InstructionsPanelImpl.class, "ACN_InstructionsPanel")); //NOI18N
-            setAccessibleDescription(NbBridge.getString(
-                "org/jackhuang/hellominecraft/utils/views/wizard/modules/Bundle", //NOI18N
-                InstructionsPanelImpl.class, "ACSD_InstructionsPanel")); //NOI18N
         }
 
         JEditorPane pane;
@@ -444,12 +404,10 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
         }
 
         public String getText() {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             String[] s = wizard.getAllSteps();
-            for (int i = 0; i < s.length; i++) {
-                sb.append(wizard.getStepDescription(s[i]));
-                sb.append('\n');
-            }
+            for (String item : s)
+                sb.append(wizard.getStepDescription(item)).append('\n');
             return sb.toString();
         }
 

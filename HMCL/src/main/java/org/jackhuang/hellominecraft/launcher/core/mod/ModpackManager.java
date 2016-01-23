@@ -50,8 +50,8 @@ import org.jackhuang.hellominecraft.utils.version.MinecraftVersionRequest;
  *
  * This class can manage mod packs, for example, importing and exporting, the
  * format of game is the offical one.
- * Not compatible with MultiMC(no instance.cfg) & FTB(not leaving mcversion in
- * pack.json).
+ * Not compatible with MultiMC(no instance.cfg processor) & FTB(not leaving
+ * mcversion(jar) in pack.json).
  *
  * @author huangyuhui
  */
@@ -75,19 +75,17 @@ public final class ModpackManager {
             Compressor.unzip(input, versions, t -> {
                              if (t.equals("minecraft/pack.json"))
                                  b.incrementAndGet();
-                             if (t.equals("minecraft/pack.jar"))
-                                 b.incrementAndGet();
                              return true;
                          });
-            if (b.get() < 2)
-                throw new FileNotFoundException("the mod pack is in an incorrect format.");
+            if (b.get() < 1)
+                throw new FileNotFoundException(C.i18n("modpack.incorrect_format.no_json"));
             File nowFile = new File(versions, id);
             oldFile.renameTo(nowFile);
 
             File json = new File(nowFile, "pack.json");
             MinecraftVersion mv = C.gson.fromJson(FileUtils.readFileToString(json), MinecraftVersion.class);
             if (mv.jar == null)
-                throw new FileSystemException("the mod pack is in an incorrect format, pack.json does not have attribute 'jar'.");
+                throw new FileNotFoundException(C.i18n("modpack.incorrect_format.no_jar"));
             service.download().downloadMinecraftJarTo(mv.jar, new File(nowFile, id + ".jar"));
             mv.jar = null;
             FileUtils.writeStringToFile(json, C.gsonPrettyPrinting.toJson(mv));
@@ -132,7 +130,7 @@ public final class ModpackManager {
             mv.runDir = "version";
             MinecraftVersionRequest r = MinecraftVersionRequest.minecraftVersion(provider.getMinecraftJar(version));
             if (r.type != MinecraftVersionRequest.OK)
-                throw new FileSystemException("Cannot read vanilla version, " + MinecraftVersionRequest.getResponse(r));
+                throw new FileSystemException(C.i18n("modpack.cannot_read_version") + ": " + MinecraftVersionRequest.getResponse(r));
             mv.jar = r.version;
             zip.putTextFile(C.gsonPrettyPrinting.toJson(mv), "minecraft/pack.json");
         } finally {

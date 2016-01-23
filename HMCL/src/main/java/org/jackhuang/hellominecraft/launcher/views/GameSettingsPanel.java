@@ -35,8 +35,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -409,14 +407,14 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             }
         });
 
-        btnExportModpack.setText(C.i18n("settings.modpack.save.task")); // NOI18N
+        btnExportModpack.setText(C.i18n("modpack.save.task")); // NOI18N
         btnExportModpack.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnExportModpackActionPerformed(evt);
             }
         });
 
-        btnImportModpack.setText(C.i18n("settings.modpack.install.task")); // NOI18N
+        btnImportModpack.setText(C.i18n("modpack.install.task")); // NOI18N
         btnImportModpack.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnImportModpackActionPerformed(evt);
@@ -1144,18 +1142,18 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private void btnImportModpackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnImportModpackActionPerformed
         JFileChooser fc = new JFileChooser();
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setDialogTitle(C.i18n("settings.modpack.choose"));
+        fc.setDialogTitle(C.i18n("modpack.choose"));
         fc.setMultiSelectionEnabled(false);
-        fc.setFileFilter(new FileNameExtensionFilter(C.i18n("settings.modpack"), "zip"));
+        fc.setFileFilter(new FileNameExtensionFilter(C.i18n("modpack"), "zip"));
         fc.showOpenDialog(this);
         if (fc.getSelectedFile() == null)
             return;
         String suggestedModpackId = JOptionPane.showInputDialog("Please enter your favourite game name", FileUtils.getBaseName(fc.getSelectedFile().getName()));
-        TaskWindow.getInstance().addTask(new TaskRunnable(C.i18n("settings.modpack.install.task"), () -> {
+        TaskWindow.getInstance().addTask(new TaskRunnable(C.i18n("modpack.install.task"), () -> {
                                                           try {
                                                               ModpackManager.install(fc.getSelectedFile(), getProfile().service(), suggestedModpackId);
                                                           } catch (IOException ex) {
-                                                              MessageBox.Show(C.i18n("settings.modpack.install_error"));
+                                                              MessageBox.Show(C.i18n("modpack.install_error"));
                                                               HMCLog.err("Failed to install modpack", ex);
                                                           }
                                                       })).start();
@@ -1164,7 +1162,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private void btnExportModpackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExportModpackActionPerformed
         Map settings = (Map) WizardDisplayer.showWizard(new ModpackWizard(getProfile().service().version()).createWizard());
         if (settings != null)
-            TaskWindow.getInstance().addTask(new TaskRunnable(C.i18n("settings.modpack.save.task"),
+            TaskWindow.getInstance().addTask(new TaskRunnable(C.i18n("modpack.save.task"),
                                                               () -> {
                                                                   try {
                                                                       ModpackManager.export(new File((String) settings.get(ModpackInitializationPanel.KEY_MODPACK_LOCATION)),
@@ -1172,7 +1170,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                                                                                             (String) settings.get(ModpackInitializationPanel.KEY_GAME_VERSION),
                                                                                             ((Boolean) settings.get(ModpackInitializationPanel.KEY_SAVE) == false) ? Arrays.asList("saves") : null);
                                                                   } catch (IOException | GameException ex) {
-                                                                      MessageBox.Show(C.i18n("settings.modpack.export_error"));
+                                                                      MessageBox.Show(C.i18n("modpack.export_error"));
                                                                       HMCLog.err("Failed to export modpack", ex);
                                                                   }
                                                               })).start();
