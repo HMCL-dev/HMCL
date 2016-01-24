@@ -390,4 +390,48 @@
         </state> 
     </style> 
     <bind style="defaultBackground" type="region" key="Table.*"/>
+    
+        <int id="Tree.leftChildIndent">6</int>
+    <!-- TREE -->
+    <style id="tree">
+        <!-- Adding child indentation adn scrolling policy -->
+        <property key="Tree.rightChildIndent" type="integer" value="12"/>
+        <property key="Tree.scrollsHorizontallyAndVertically" type="boolean" value="true"/>
+
+        <imageIcon id="treeClosedIcon" path="images/tree_closed.gif" />
+        <imageIcon id="treeOpenIcon" path="images/tree_open.gif" />
+        <imageIcon id="treecollapsedicon" path="images/tree_collapsed.png"/>
+        <imageIcon id="treeexpandedicon" path="images/tree_expanded.png"/>
+        <imageIcon id="treeleaficon" path="images/tree_leaf.gif"/>
+
+        <property key="Tree.collapsedIcon" value="treecollapsedicon"/>
+        <property key="Tree.expandedIcon" value="treeexpandedicon"/>
+
+        <defaultsProperty key="Tree.openIcon" value="treeOpenIcon"/>
+        <defaultsProperty key="Tree.closedIcon" value="treeClosedIcon"/>
+        <defaultsProperty key="Tree.leafIcon" value="treeleaficon"/>
+
+        <state>
+        <color value="#FFFFFF" type="BACKGROUND"/>
+        <color value="#A0A0A0" type="FOREGROUND"/>
+        </state>
+
+        <insets top="3" left="8" bottom="3" right="8"/>
+    </style>
+    <bind style="tree" type="region" key="Tree"/>
+    
+    <style id="treecell" >
+        <opaque value="true"/>
+
+        <state>
+            <color value="#000000" type="TEXT_FOREGROUND"/>
+            <color value="#FFFFFF" type="BACKGROUND"/>
+        </state>
+        <state value="SELECTED">
+            <color value="#EEEEEE" type="BACKGROUND"/>
+            <color value="#000000" type="TEXT_FOREGROUND"/>
+        </state>
+    </style>
+    <defaultsProperty key="TreeUI" type="string" value="javax.swing.plaf.metal.MetalTreeUI"/>
+    <!--bind style="treecell" type="region" key="TreeCell"/-->
 </synth>

@@ -32,7 +32,6 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
 
     public static final String KEY_GAME_VERSION = "gameVersion";
     public static final String KEY_MODPACK_LOCATION = "modpackLocation";
-    public static final String KEY_SAVE = "save";
 
     private final WizardController controller;
     private final Map wizardData;
@@ -47,18 +46,15 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
         this.wizardData = wizardData;
         wizardData.put(KEY_GAME_VERSION, versions);
 
-        wizardData.put(KEY_SAVE, false);
-
         configureComboContents();
         controller.setProblem(C.i18n("modpack.not_a_valid_location"));
-
-        controller.setForwardNavigationMode(WizardController.MODE_CAN_FINISH);
     }
 
     private void configureComboContents() {
         String[] versions = (String[]) wizardData.get(KEY_GAME_VERSION);
         cboGameVersion.setModel(new DefaultComboBoxModel<>(versions));
-
+        if (versions.length > 0)
+            wizardData.put(KEY_GAME_VERSION, versions[0]);
     }
 
     /**
@@ -76,7 +72,6 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
         cboModpackLocation = new javax.swing.JButton();
         lblGameVersion = new javax.swing.JLabel();
         cboGameVersion = new javax.swing.JComboBox<>();
-        chkSave = new javax.swing.JCheckBox();
         jLabel1 = new javax.swing.JLabel();
 
         lblModpackLocation.setText(C.i18n("modpack.save")); // NOI18N
@@ -102,13 +97,6 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
             }
         });
 
-        chkSave.setText("允许导出存档");
-        chkSave.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                chkSaveItemStateChanged(evt);
-            }
-        });
-
         jLabel1.setText(C.i18n("modpack.warning")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -127,7 +115,6 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblGameVersion)
-                            .addComponent(chkSave)
                             .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(0, 67, Short.MAX_VALUE)))
                 .addContainerGap())
@@ -137,7 +124,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 92, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 120, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblModpackLocation)
                     .addComponent(cboModpackLocation))
@@ -147,8 +134,6 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
                 .addComponent(lblGameVersion)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cboGameVersion, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(chkSave)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -173,10 +158,6 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
             controller.setProblem(null);
     }//GEN-LAST:event_txtModpackLocationCaretUpdate
 
-    private void chkSaveItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkSaveItemStateChanged
-        wizardData.put(KEY_SAVE, chkSave.isSelected());
-    }//GEN-LAST:event_chkSaveItemStateChanged
-
     private void cboGameVersionItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboGameVersionItemStateChanged
         wizardData.put(KEY_GAME_VERSION, cboGameVersion.getSelectedItem());
     }//GEN-LAST:event_cboGameVersionItemStateChanged
@@ -184,7 +165,6 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cboGameVersion;
     private javax.swing.JButton cboModpackLocation;
-    private javax.swing.JCheckBox chkSave;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel lblGameVersion;
     private javax.swing.JLabel lblModpackLocation;

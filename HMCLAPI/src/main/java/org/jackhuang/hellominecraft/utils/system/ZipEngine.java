@@ -102,7 +102,7 @@ public class ZipEngine {
             } else {
                 pathName = file.getPath().substring(basePath.length() + 1);
                 if (pathNameCallback != null)
-                    pathName = pathNameCallback.apply(pathName, true);
+                    pathName = pathNameCallback.apply(pathName, false);
                 if (pathName == null)
                     continue;
                 putFile(file, pathName);

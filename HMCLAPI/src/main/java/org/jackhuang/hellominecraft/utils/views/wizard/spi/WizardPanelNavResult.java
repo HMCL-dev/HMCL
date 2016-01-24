@@ -5,23 +5,22 @@ compliance with the License.
 or http://www.netbeans.org/cddl.txt.
     When distributing Covered Code, include this CDDL Header Notice in each file
 and include the License file at http://www.netbeans.org/cddl.txt.
-*/
-
+ */
 package org.jackhuang.hellominecraft.utils.views.wizard.spi;
 
 import java.util.Map;
 
 /**
  * Result class for the methods in WizardPanel.
- * 
+ *
  * For immediate action, one of the two constantants PROCEED or REMAIN_ON_PAGE
- * should be returned.  Otherwise an instance of a subclass should be returned
+ * should be returned. Otherwise an instance of a subclass should be returned
  * that computes a Boolean result.
- * 
+ *
  * @author stanley@stanleyknutson.com
  */
-public abstract class WizardPanelNavResult extends DeferredWizardResult
-{
+public abstract class WizardPanelNavResult extends DeferredWizardResult {
+
     /**
      * value for procced to next step in the wizard.
      */
@@ -31,59 +30,43 @@ public abstract class WizardPanelNavResult extends DeferredWizardResult
      */
     public static final WizardPanelNavResult REMAIN_ON_PAGE = new WPNRimmediate(false);
 
-    public WizardPanelNavResult(boolean useBusy) {
-        super (false, useBusy);
+    private WizardPanelNavResult() {
+        super();
     }
 
-    public WizardPanelNavResult(boolean useBusy, boolean canAbort) {
-      super (canAbort, useBusy);
-   }
-
-    public WizardPanelNavResult() {
-        super (false, false);
-    }
-    
-    public boolean isDeferredComputation()
-    {
+    public boolean isDeferredComputation() {
         return true;
     }
-    
+
     /*
      * internal class for the constants only
      */
-    private final static class WPNRimmediate extends WizardPanelNavResult
-    {
+    private final static class WPNRimmediate extends WizardPanelNavResult {
+
         boolean value;
-        
-        WPNRimmediate (boolean v)
-        {
+
+        WPNRimmediate(boolean v) {
             value = v;
         }
-        public boolean isDeferredComputation()
-        {
+
+        public boolean isDeferredComputation() {
             return false;
         }
-        
-        public boolean equals (Object o)
-        {
-            if (o instanceof WPNRimmediate && ((WPNRimmediate)o).value == value)
-            {
+
+        public boolean equals(Object o) {
+            if (o instanceof WPNRimmediate && ((WPNRimmediate) o).value == value)
                 return true;
-            }
             return false;
         }
-        
-        public int hashCode()
-        {
+
+        public int hashCode() {
             return value ? 1 : 2;
         }
-        
-        public void start(Map settings, ResultProgressHandle progress)
-        {
+
+        public void start(Map settings, ResultProgressHandle progress) {
             // Should never get here, this is supposed to be immediate!
             throw new RuntimeException("Immediate result was called as deferral!");
         }
-        
+
     }
 }
-

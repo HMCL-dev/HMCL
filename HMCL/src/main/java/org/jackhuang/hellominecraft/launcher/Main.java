@@ -47,7 +47,6 @@ import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
 import org.jackhuang.hellominecraft.utils.MathUtils;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.VersionNumber;
-import org.jackhuang.hellominecraft.utils.system.Compressor;
 import rx.concurrency.Schedulers;
 
 /**

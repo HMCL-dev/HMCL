@@ -25,7 +25,7 @@ import org.jackhuang.hellominecraft.utils.logging.logger.Logger;
  */
 public class HMCLog {
 
-    public static Logger logger = new Logger("Hello Minecraft!");
+    private static final Logger logger = new Logger("Hello Minecraft!");
 
     public static void log(String message) {
         logger.info(message);

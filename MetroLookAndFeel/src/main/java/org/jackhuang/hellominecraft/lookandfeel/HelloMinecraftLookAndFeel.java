@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.Map;
 import javax.swing.UIDefaults;
+import javax.swing.UIManager;
 import javax.swing.plaf.synth.SynthLookAndFeel;
 import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.utils.NetUtils;

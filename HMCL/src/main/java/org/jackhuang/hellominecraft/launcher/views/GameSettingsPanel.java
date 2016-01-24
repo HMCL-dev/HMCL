@@ -1149,31 +1149,14 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         if (fc.getSelectedFile() == null)
             return;
         String suggestedModpackId = JOptionPane.showInputDialog("Please enter your favourite game name", FileUtils.getBaseName(fc.getSelectedFile().getName()));
-        TaskWindow.getInstance().addTask(new TaskRunnable(C.i18n("modpack.install.task"), () -> {
-                                                          try {
-                                                              ModpackManager.install(fc.getSelectedFile(), getProfile().service(), suggestedModpackId);
-                                                          } catch (IOException ex) {
-                                                              MessageBox.Show(C.i18n("modpack.install_error"));
-                                                              HMCLog.err("Failed to install modpack", ex);
-                                                          }
-                                                      })).start();
+        TaskWindow.getInstance().addTask(ModpackManager.install(fc.getSelectedFile(), getProfile().service(), suggestedModpackId)).start();
+        refreshVersions();
     }//GEN-LAST:event_btnImportModpackActionPerformed
 
     private void btnExportModpackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExportModpackActionPerformed
-        Map settings = (Map) WizardDisplayer.showWizard(new ModpackWizard(getProfile().service().version()).createWizard());
-        if (settings != null)
-            TaskWindow.getInstance().addTask(new TaskRunnable(C.i18n("modpack.save.task"),
-                                                              () -> {
-                                                                  try {
-                                                                      ModpackManager.export(new File((String) settings.get(ModpackInitializationPanel.KEY_MODPACK_LOCATION)),
-                                                                                            getProfile().service().version(),
-                                                                                            (String) settings.get(ModpackInitializationPanel.KEY_GAME_VERSION),
-                                                                                            ((Boolean) settings.get(ModpackInitializationPanel.KEY_SAVE) == false) ? Arrays.asList("saves") : null);
-                                                                  } catch (IOException | GameException ex) {
-                                                                      MessageBox.Show(C.i18n("modpack.export_error"));
-                                                                      HMCLog.err("Failed to export modpack", ex);
-                                                                  }
-                                                              })).start();
+        if (getProfile().service().version().getVersionCount() <= 0)
+            return;
+        WizardDisplayer.showWizard(new ModpackWizard(getProfile().service()).createWizard());
     }//GEN-LAST:event_btnExportModpackActionPerformed
 
     // </editor-fold>
@@ -1229,7 +1212,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         cboJavaItemStateChanged(new ItemEvent(cboJava, 0, cboJava.getSelectedItem(), ItemEvent.SELECTED));
 
         loadVersions();
-        loadMinecraftVersion();
     }
 
     void loadVersions() {
@@ -1248,6 +1230,8 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             cboVersions.setSelectedIndex(index);
 
         reloadMods();
+
+        loadMinecraftVersion();
     }
 
     void loadMinecraftVersion() {

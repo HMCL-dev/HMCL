@@ -33,6 +33,7 @@ import org.jackhuang.hellominecraft.utils.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.NetUtils;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
+import org.jackhuang.hellominecraft.utils.tasks.Task;
 import org.jackhuang.hellominecraft.utils.version.MinecraftRemoteVersion;
 import org.jackhuang.hellominecraft.utils.version.MinecraftRemoteVersions;
 import rx.Observable;
@@ -119,16 +120,9 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
     }
 
     @Override
-    public boolean downloadMinecraftJarTo(String id, File mvt) {
+    public Task downloadMinecraftJarTo(String id, File mvt) {
         String vurl = service.getDownloadType().getProvider().getVersionsDownloadURL() + id + "/";
-        if (TaskWindow.getInstance()
-            .addTask(new FileDownloadTask(vurl + id + ".jar", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".jar"))
-            .start())
-            return true;
-        else {
-            mvt.delete();
-            return false;
-        }
+        return new FileDownloadTask(vurl + id + ".jar", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".jar");
     }
 
     @Override

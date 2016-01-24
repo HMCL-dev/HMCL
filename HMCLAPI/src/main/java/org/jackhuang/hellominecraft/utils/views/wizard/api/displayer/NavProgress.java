@@ -3,11 +3,8 @@ package org.jackhuang.hellominecraft.utils.views.wizard.api.displayer;
 import java.awt.Container;
 import java.awt.EventQueue;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
 import java.util.logging.Logger;
 
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import javax.swing.border.EmptyBorder;
@@ -38,13 +35,9 @@ public class NavProgress implements ResultProgressHandle {
 
     JLabel lbl = new JLabel();
 
-    JLabel busy = new JLabel();
-
     WizardDisplayerImpl parent;
 
     String failMessage = null;
-
-    boolean isUseBusy = false;
 
     Container ipanel = null;
 
@@ -55,18 +48,13 @@ public class NavProgress implements ResultProgressHandle {
      */
     boolean isRunning = true;
 
-    NavProgress(WizardDisplayerImpl impl, boolean useBusy) {
+    NavProgress(WizardDisplayerImpl impl) {
         this.parent = impl;
-        isUseBusy = useBusy;
     }
 
     public void addProgressComponents(Container panel) {
         panel.add(lbl);
-        if (isUseBusy) {
-            ensureBusyInitialized();
-            panel.add(busy);
-        } else
-            panel.add(progressBar);
+        panel.add(progressBar);
         isInitialized = true;
         ipanel = panel;
     }
@@ -93,8 +81,6 @@ public class NavProgress implements ResultProgressHandle {
                 progressBar.setMaximum(totalSteps);
                 progressBar.setValue(currentStep);
             }
-
-            setUseBusy(false);
         });
     }
 
@@ -103,32 +89,7 @@ public class NavProgress implements ResultProgressHandle {
             lbl.setText(description == null ? " " : description);
 
             progressBar.setIndeterminate(true);
-
-            setUseBusy(true);
         });
-    }
-
-    protected void setUseBusy(boolean useBusy) {
-        if (isInitialized)
-            if (useBusy && (!isUseBusy)) {
-                ipanel.remove(progressBar);
-                ensureBusyInitialized();
-                ipanel.add(busy);
-                ipanel.invalidate();
-            } else if (!useBusy && isUseBusy) {
-                ipanel.remove(busy);
-                ipanel.add(progressBar);
-                ipanel.invalidate();
-            }
-        isUseBusy = useBusy;
-    }
-
-    private void ensureBusyInitialized() {
-        if (busy.getIcon() == null) {
-            URL url = getClass().getResource("/org/jackhuang/hellominecraft/busy.gif");
-            Icon icon = new ImageIcon(url);
-            busy.setIcon(icon);
-        }
     }
 
     private void invoke(Runnable r) {

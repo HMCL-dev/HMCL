@@ -413,8 +413,8 @@ public class WizardDisplayerImpl extends WizardDisplayer {
 
     }
 
-    protected ResultProgressHandle createProgressDisplay(boolean isUseBusy) {
-        return new NavProgress(this, isUseBusy);
+    protected ResultProgressHandle createProgressDisplay() {
+        return new NavProgress(this);
     }
 
     void handleDeferredWizardResult(final DeferredWizardResult r, final boolean inSummary) {
@@ -422,7 +422,7 @@ public class WizardDisplayerImpl extends WizardDisplayer {
             deferredResult = r;
         }
         wizardPanel.setEnabled(false);
-        progress = createProgressDisplay(r.isUseBusy());
+        progress = createProgressDisplay();
         Container inst = instructions.getComponent();
         progress.addProgressComponents(inst);
         inst.invalidate();

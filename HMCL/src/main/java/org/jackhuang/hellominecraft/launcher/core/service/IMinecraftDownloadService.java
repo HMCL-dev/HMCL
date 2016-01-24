@@ -22,6 +22,7 @@ import java.util.List;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.utils.tasks.Task;
 import org.jackhuang.hellominecraft.utils.version.MinecraftRemoteVersion;
 import rx.Observable;
 
@@ -39,7 +40,7 @@ public abstract class IMinecraftDownloadService extends IMinecraftBasicService {
 
     public abstract boolean downloadMinecraftJar(String id);
 
-    public abstract boolean downloadMinecraftJarTo(String id, File f);
+    public abstract Task downloadMinecraftJarTo(String id, File f);
 
     public abstract boolean downloadMinecraftVersionJson(String id);
 

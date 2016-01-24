@@ -17,14 +17,29 @@
  */
 package org.jackhuang.hellominecraft.launcher.views.modpack;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import javax.swing.JComponent;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
+import org.jackhuang.hellominecraft.launcher.core.GameException;
+import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
+import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.utils.C;
+import org.jackhuang.hellominecraft.utils.MessageBox;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
+import org.jackhuang.hellominecraft.utils.views.checktree.CheckBoxTreeNode;
+import org.jackhuang.hellominecraft.utils.views.wizard.spi.DeferredWizardResult;
+import org.jackhuang.hellominecraft.utils.views.wizard.spi.ResultProgressHandle;
+import org.jackhuang.hellominecraft.utils.views.wizard.spi.Summary;
 import org.jackhuang.hellominecraft.utils.views.wizard.spi.WizardBranchController;
 import org.jackhuang.hellominecraft.utils.views.wizard.spi.WizardController;
+import org.jackhuang.hellominecraft.utils.views.wizard.spi.WizardException;
 import org.jackhuang.hellominecraft.utils.views.wizard.spi.WizardPanelProvider;
 
 /**
@@ -33,18 +48,62 @@ import org.jackhuang.hellominecraft.utils.views.wizard.spi.WizardPanelProvider;
  */
 public class ModpackWizard extends WizardBranchController {
 
-    public ModpackWizard(IMinecraftProvider provider) {
-        super(new WizardPanelProvider(C.i18n("modpack.wizard"), new String[] { C.i18n("modpack.wizard.step.1") }, new String[] { C.i18n("modpack.wizard.step.1.title") }) {
+    static void process(CheckBoxTreeNode node, String basePath, List<String> list) {
+        if (node.isSelected()) {
+            if (basePath.length() > "minecraft/".length())
+                list.add(basePath.substring("minecraft/".length()));
+            return;
+        }
+        Enumeration<CheckBoxTreeNode> e = node.children();
+        for (; e.hasMoreElements();) {
+            CheckBoxTreeNode n = e.nextElement();
+            process(n, basePath + "/" + n.getUserObject(), list);
+        }
+    }
+
+    public ModpackWizard(IMinecraftService service) {
+        super(new WizardPanelProvider(C.i18n("modpack.wizard"), new String[] { C.i18n("modpack.wizard.step.1"), C.i18n("modpack.wizard.step.2") }, new String[] { C.i18n("modpack.wizard.step.1.title"), C.i18n("modpack.wizard.step.2.title") }) {
+
+            @Override
+            protected Object finish(Map settings) throws WizardException {
+                return new DeferredWizardResult(false) {
+                    @Override
+                    public void start(Map settings, ResultProgressHandle progress) {
+                        progress.setBusy("Processing modpack");
+                        ArrayList<String> blackList = new ArrayList<>(ModpackManager.MODPACK_BLACK_LIST);
+                        CheckBoxTreeNode root = (CheckBoxTreeNode) settings.get("blackList");
+                        process(root, "minecraft", blackList);
+                        try {
+                            File loc = new File((String) settings.get(ModpackInitializationPanel.KEY_MODPACK_LOCATION));
+                            ModpackManager.export(loc,
+                                                  service.version(),
+                                                  (String) settings.get(ModpackInitializationPanel.KEY_GAME_VERSION),
+                                                  blackList);
+                            progress.finished(Summary.create(C.i18n("modpack.export_finished") + ": " + loc.getAbsolutePath(), null));
+                        } catch (IOException | GameException ex) {
+                            HMCLog.err("Failed to export modpack", ex);
+                            progress.failed(C.i18n("modpack.export_error") + ": " + ex.getClass().getName() + ", " + ex.getLocalizedMessage(), true);
+                        }
+                    }
+                };
+            }
 
             @Override
             protected JComponent createPanel(WizardController controller, String id, Map settings) {
                 switch (indexOfStep(id)) {
                 case 0:
-                    String[] s = new String[provider.getVersionCount()];
-                    Iterator<MinecraftVersion> it = provider.getVersions().iterator();
+                    String[] s = new String[service.version().getVersionCount()];
+                    Iterator<MinecraftVersion> it = service.version().getVersions().iterator();
                     for (int i = 0; i < s.length; i++)
                         s[i] = it.next().id;
+
+                    controller.setForwardNavigationMode(WizardController.MODE_CAN_CONTINUE);
+
                     return new ModpackInitializationPanel(controller, settings, s);
+                case 1:
+                    controller.setForwardNavigationMode(WizardController.MODE_CAN_FINISH);
+
+                    return new ModpackFileSelectionPanel(controller, settings, service.baseDirectory(), ModpackManager.MODPACK_PREDICATE);
                 default:
                     throw new IllegalArgumentException(id);
                 }

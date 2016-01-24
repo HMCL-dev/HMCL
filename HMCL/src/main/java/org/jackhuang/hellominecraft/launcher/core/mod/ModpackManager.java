@@ -20,10 +20,10 @@ package org.jackhuang.hellominecraft.launcher.core.mod;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystemException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.jackhuang.hellominecraft.utils.C;
@@ -32,10 +32,13 @@ import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.utils.functions.BiFunction;
 import org.jackhuang.hellominecraft.utils.system.Compressor;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.ZipEngine;
+import org.jackhuang.hellominecraft.utils.tasks.Task;
 import org.jackhuang.hellominecraft.utils.version.MinecraftVersionRequest;
+import org.jackhuang.hellominecraft.utils.views.wizard.spi.ResultProgressHandle;
 
 /**
  * A mod pack(*.zip) includes these things:
@@ -57,61 +60,112 @@ import org.jackhuang.hellominecraft.utils.version.MinecraftVersionRequest;
  */
 public final class ModpackManager {
 
-    public static void install(File input, IMinecraftService service, String id) throws IOException, FileAlreadyExistsException {
-        File versions = new File(service.baseDirectory(), "versions");
-        File oldFile = new File(versions, "minecraft"), newFile = null;
-        if (oldFile.exists()) {
-            newFile = new File(versions, "minecraft-" + System.currentTimeMillis());
-            if (newFile.isDirectory())
-                FileUtils.deleteDirectory(newFile);
-            else if (newFile.isFile())
-                newFile.delete();
-            oldFile.renameTo(newFile);
-        }
+    public static Task install(File input, IMinecraftService service, String id) {
+        return new Task() {
+            Collection<Task> c = new ArrayList<>();
 
-        File preVersion = new File(versions, id), preVersionRenamed = null;
-        if (preVersion.exists()) {
-            String preId = id + "-" + System.currentTimeMillis();
-            preVersion.renameTo(preVersionRenamed = new File(versions, preId));
-            new File(preVersionRenamed, id + ".json").renameTo(new File(preVersionRenamed, preId + ".json"));
-            new File(preVersionRenamed, id + ".jar").renameTo(new File(preVersionRenamed, preId + ".jar"));
-        }
+            @Override
+            public void executeTask() throws Throwable {
+                File versions = new File(service.baseDirectory(), "versions");
+                File oldFile = new File(versions, "minecraft"), newFile = null;
+                if (oldFile.exists()) {
+                    newFile = new File(versions, "minecraft-" + System.currentTimeMillis());
+                    if (newFile.isDirectory())
+                        FileUtils.deleteDirectory(newFile);
+                    else if (newFile.isFile())
+                        newFile.delete();
+                    oldFile.renameTo(newFile);
+                }
 
-        try {
-            AtomicInteger b = new AtomicInteger(0);
-            HMCLog.log("Decompressing modpack");
-            Compressor.unzip(input, versions, t -> {
-                             if (t.equals("minecraft/pack.json"))
-                                 b.incrementAndGet();
-                             return true;
-                         }, true);
-            if (b.get() < 1)
-                throw new FileNotFoundException(C.i18n("modpack.incorrect_format.no_json"));
-            File nowFile = new File(versions, id);
-            oldFile.renameTo(nowFile);
+                File preVersion = new File(versions, id), preVersionRenamed = null;
+                if (preVersion.exists()) {
+                    HMCLog.log("Backing up the game");
+                    String preId = id + "-" + System.currentTimeMillis();
+                    preVersion.renameTo(preVersionRenamed = new File(versions, preId));
+                    new File(preVersionRenamed, id + ".json").renameTo(new File(preVersionRenamed, preId + ".json"));
+                    new File(preVersionRenamed, id + ".jar").renameTo(new File(preVersionRenamed, preId + ".jar"));
+                }
 
-            File json = new File(nowFile, "pack.json");
-            MinecraftVersion mv = C.gson.fromJson(FileUtils.readFileToString(json), MinecraftVersion.class);
-            if (mv.jar == null)
-                throw new FileNotFoundException(C.i18n("modpack.incorrect_format.no_jar"));
-            service.download().downloadMinecraftJarTo(mv.jar, new File(nowFile, id + ".jar"));
-            mv.jar = null;
-            FileUtils.writeStringToFile(json, C.gsonPrettyPrinting.toJson(mv));
-            json.renameTo(new File(nowFile, id + ".json"));
+                try {
+                    AtomicInteger b = new AtomicInteger(0);
+                    HMCLog.log("Decompressing modpack");
+                    Compressor.unzip(input, versions, t -> {
+                                     if (t.equals("minecraft/pack.json"))
+                                         b.incrementAndGet();
+                                     return true;
+                                 }, true);
+                    if (b.get() < 1)
+                        throw new FileNotFoundException(C.i18n("modpack.incorrect_format.no_json"));
+                    File nowFile = new File(versions, id);
+                    oldFile.renameTo(nowFile);
 
-            if (preVersionRenamed != null) {
-                File presaves = new File(preVersionRenamed, "saves");
-                File saves = new File(nowFile, "saves");
-                if (presaves.exists()) {
-                    FileUtils.deleteDirectory(saves);
-                    FileUtils.copyDirectory(presaves, saves);
+                    File json = new File(nowFile, "pack.json");
+                    MinecraftVersion mv = C.gson.fromJson(FileUtils.readFileToString(json), MinecraftVersion.class);
+                    if (mv.jar == null)
+                        throw new FileNotFoundException(C.i18n("modpack.incorrect_format.no_jar"));
+
+                    c.add(service.download().downloadMinecraftJarTo(mv.jar, new File(nowFile, id + ".jar")));
+                    mv.jar = null;
+                    FileUtils.writeStringToFile(json, C.gsonPrettyPrinting.toJson(mv));
+                    json.renameTo(new File(nowFile, id + ".json"));
+
+                    if (preVersionRenamed != null) {
+                        HMCLog.log("Restoring saves");
+                        File presaves = new File(preVersionRenamed, "saves");
+                        File saves = new File(nowFile, "saves");
+                        if (presaves.exists()) {
+                            FileUtils.deleteDirectory(saves);
+                            FileUtils.copyDirectory(presaves, saves);
+                        }
+                    }
+                } finally {
+                    FileUtils.deleteDirectoryQuietly(oldFile);
+                    if (newFile != null)
+                        newFile.renameTo(oldFile);
                 }
             }
-        } finally {
-            FileUtils.deleteDirectoryQuietly(oldFile);
-            if (newFile != null)
-                newFile.renameTo(oldFile);
-        }
+
+            @Override
+            public String getInfo() {
+                return C.i18n("modpack.install.task");
+            }
+
+            @Override
+            public Collection<Task> getAfterTasks() {
+                return c;
+            }
+        };
+
+    }
+
+    public static final List<String> MODPACK_BLACK_LIST = Arrays.asList(new String[] { "usernamecache.json", "asm", "logs", "backups", "versions", "assets", "usercache.json", "libraries", "crash-reports", "launcher_profiles.json", "NVIDIA", "TCNodeTracker", "screenshots", "natives", "native" });
+    public static final List<String> MODPACK_SUGGESTED_BLACK_LIST = Arrays.asList(new String[] { "saves", "servers.dat", "options.txt", "optionsshaders.txt", "mods/VoxelMods" });
+
+    /**
+     * &lt; String, Boolean, Boolean &gt;: Folder/File name, Is Directory,
+     * Return 0: non blocked, 1: non shown, 2: suggested, checked.
+     */
+    public static final BiFunction<String, Boolean, Integer> MODPACK_PREDICATE = (String x, Boolean y) -> {
+        if (ModpackManager.MODPACK_BLACK_LIST_PREDICATE.apply(x, y))
+            return 1;
+        if (ModpackManager.MODPACK_SUGGESTED_BLACK_LIST_PREDICATE.apply(x, y))
+            return 2;
+        return 0;
+    };
+
+    public static final BiFunction<String, Boolean, Boolean> MODPACK_BLACK_LIST_PREDICATE = modpackPredicateMaker(MODPACK_BLACK_LIST);
+    public static final BiFunction<String, Boolean, Boolean> MODPACK_SUGGESTED_BLACK_LIST_PREDICATE = modpackPredicateMaker(MODPACK_SUGGESTED_BLACK_LIST);
+
+    private static BiFunction<String, Boolean, Boolean> modpackPredicateMaker(List<String> l) {
+        return (String x, Boolean y) -> {
+            for (String s : l)
+                if (y) {
+                    if (x.startsWith(s + "/"))
+                        return true;
+                } else if (x.equals(s))
+                    return true;
+            return false;
+        };
     }
 
     /**
@@ -125,7 +179,7 @@ public final class ModpackManager {
      * @throws IOException if create tmp directory failed
      */
     public static void export(File output, IMinecraftProvider provider, String version, List<String> blacklist) throws IOException, GameException {
-        ArrayList<String> b = new ArrayList<>(Arrays.asList(new String[] { "usernamecache.json", "asm", "logs", "backups", "versions", "assets", "usercache.json", "libraries", "crash-reports", "launcher_profiles.json", "NVIDIA", "TCNodeTracker" }));
+        ArrayList<String> b = new ArrayList<>(MODPACK_BLACK_LIST);
         if (blacklist != null)
             b.addAll(blacklist);
         HMCLog.log("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");

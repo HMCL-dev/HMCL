@@ -116,11 +116,12 @@ public final class Profile {
     public String getSelectedVersion() {
         String v = selectedMinecraftVersion;
         if (StrUtils.isBlank(v) || service.version().getVersionById(v) == null) {
-            v = service.version().getOneVersion().id;
-            if (v != null)
+            if (service.version().getVersionCount() > 0)
+                v = service.version().getOneVersion().id;
+            if (StrUtils.isNotBlank(v))
                 setSelectedMinecraftVersion(v);
         }
-        return v;
+        return StrUtils.isBlank(v) ? null : v;
     }
 
     public transient final EventHandler<String> selectedVersionChangedEvent = new EventHandler<>(this);

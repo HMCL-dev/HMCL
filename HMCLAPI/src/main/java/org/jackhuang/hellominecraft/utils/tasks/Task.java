@@ -110,11 +110,13 @@ public abstract class Task {
         return new DoubleTask(t, this);
     }
 
-    public void run() {
+    public boolean run() {
         try {
             executeTask();
+            return true;
         } catch (Throwable t) {
             HMCLog.err("Failed to execute task", t);
+            return false;
         }
     }
 }
