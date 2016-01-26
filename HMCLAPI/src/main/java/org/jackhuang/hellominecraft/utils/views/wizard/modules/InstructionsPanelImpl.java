@@ -72,7 +72,7 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
 
     public InstructionsPanelImpl(Wizard wiz) {
         this(null, wiz);
-        Font f = UIManager.getFont("Tree.font"); //NOI18N
+        Font f = UIManager.getFont("Tree.font");
         if (f != null)
             setFont(f);
     }
@@ -123,9 +123,9 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
             //In the event of classloader issues, also have a way to get
             //the image from UIManager - slightly more portable for large
             //apps
-            img = (BufferedImage) UIManager.get("wizard.sidebar.image"); //NOI18N
+            img = (BufferedImage) UIManager.get("wizard.sidebar.image");
 
-        String imgStr = System.getProperty("wizard.sidebar.image"); //NOI18N
+        String imgStr = System.getProperty("wizard.sidebar.image");
         //image has not been loaded and user wishes to supply their own image
         if (img == null && imgStr != null) {
             //get an URL, works for jars
@@ -137,21 +137,20 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
                     img = ImageIO.read(url);
                 } catch (IOException ioe) {
                     System.err.println("Could not load wizard image "
-                                       + //NOI18N
-                        ioe.getMessage());
-                    System.setProperty("wizard.sidebar.image", null); //NOI18N
+                                       + ioe.getMessage());
+                    System.setProperty("wizard.sidebar.image", null);
                     img = null; //error loading img, set to null to use default
                 }
             else { //URL was not successfully parsed, set img to null to use default
-                System.err.println("Bad URL for wizard image " + imgStr); //NOI18N
-                System.setProperty("wizard.sidebar.image", null); //NOI18N
+                System.err.println("Bad URL for wizard image " + imgStr);
+                System.setProperty("wizard.sidebar.image", null);
                 img = null;
             }
         }
         if (img == null)
             try {
                 img = ImageIO.read(InstructionsPanelImpl.class.getResourceAsStream(
-                    "/org/jackhuang/hellominecraft/wizard.jpg")); //NOI18N
+                    "/org/jackhuang/hellominecraft/wizard.jpg"));
             } catch (IOException ioe) {
                 HMCLog.err("Failed to load wizard.jpg, maybe you fucking modified the launcher", ioe);
             }
@@ -189,7 +188,7 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
 
     public final void paintComponent(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
-        Font f = getFont() != null ? getFont() : UIManager.getFont("controlFont"); //NOI18N
+        Font f = getFont() != null ? getFont() : UIManager.getFont("controlFont");
         FontMetrics fm = g.getFontMetrics(f);
         Insets ins = getInsets();
         int dx = ins.left;
@@ -202,13 +201,13 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
             //Don't fetch step list if in summary page, there will
             //only be the base ones
             steps = wizard.getAllSteps();
-        String steps[] = this.steps;
+        String[] steps2 = this.steps;
         if (inSummaryPage) {
             String summaryStep = C.i18n("wizard.summary");
-            String[] nue = new String[steps.length + 1];
-            System.arraycopy(steps, 0, nue, 0, steps.length);
+            String[] nue = new String[steps2.length + 1];
+            System.arraycopy(steps2, 0, nue, 0, steps2.length);
             nue[nue.length - 1] = summaryStep;
-            steps = nue;
+            steps2 = nue;
         }
         int y = fm.getMaxAscent() + ins.top + MARGIN;
         int x = ins.left + MARGIN;
@@ -228,27 +227,27 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
 
         y += h + 10;
         int first = 0;
-        int stop = steps.length;
-        boolean wontFit = y + (h * (steps.length)) > getHeight();
+        int stop = steps2.length;
+        boolean wontFit = y + (h * (steps2.length)) > getHeight();
         if (wontFit) {
             //try to center the current step
             int availHeight = bottom - y;
             int willFit = availHeight / h;
-            int currStepIndex = Arrays.asList(steps).indexOf(currentStep);
+            int currStepIndex = Arrays.asList(steps2).indexOf(currentStep);
             int rangeStart = Math.max(0, currStepIndex - (willFit / 2));
-            int rangeEnd = Math.min(rangeStart + willFit, steps.length);
-            if (rangeStart + willFit > steps.length) {
+            int rangeEnd = Math.min(rangeStart + willFit, steps2.length);
+            if (rangeStart + willFit > steps2.length) {
                 //Don't scroll off if there's room
-                rangeStart = steps.length - willFit;
-                rangeEnd = steps.length;
+                rangeStart = steps2.length - willFit;
+                rangeEnd = steps2.length;
             }
-            steps = (String[]) steps.clone();
+            steps2 = (String[]) steps2.clone();
             if (rangeStart != 0) {
-                steps[rangeStart] = elipsis;
+                steps2[rangeStart] = elipsis;
                 first = rangeStart;
             }
-            if (rangeEnd != steps.length && rangeEnd > 0) {
-                steps[rangeEnd - 1] = elipsis;
+            if (rangeEnd != steps2.length && rangeEnd > 0) {
+                steps2[rangeEnd - 1] = elipsis;
                 stop = rangeEnd;
             }
         }
@@ -257,25 +256,25 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
         g.setColor(getForeground());
 
         for (int i = first; i < stop; i++) {
-            boolean isUndetermined = Wizard.UNDETERMINED_STEP.equals(steps[i]);
+            boolean isUndetermined = Wizard.UNDETERMINED_STEP.equals(steps2[i]);
             boolean canOnlyFinish = wizard.getForwardNavigationMode()
                                     == Wizard.MODE_CAN_FINISH;
             if (isUndetermined && canOnlyFinish)
                 break;
             String curr;
-            if (!elipsis.equals(steps[i]))
+            if (!elipsis.equals(steps2[i]))
                 if (inSummaryPage && i == this.steps.length)
-                    curr = (i + 1) + ". " + steps[i];
+                    curr = (i + 1) + ". " + steps2[i];
                 else
                     curr = (i + 1) + ". " + (isUndetermined
                                              ? elipsis
-                                             : steps[i].equals(elipsis) ? elipsis
-                                               : wizard.getStepDescription(steps[i]));
+                                             : steps2[i].equals(elipsis) ? elipsis
+                                               : wizard.getStepDescription(steps2[i]));
             else
                 curr = elipsis;
             if (curr != null) {
-                boolean selected = (steps[i].equals(currentStep) && !inSummaryPage)
-                                   || (inSummaryPage && i == steps.length - 1);
+                boolean selected = (steps2[i].equals(currentStep) && !inSummaryPage)
+                                   || (inSummaryPage && i == steps2.length - 1);
                 if (selected)
                     g.setFont(boldFont);
 
@@ -297,7 +296,7 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
 
     public final Dimension getPreferredSize() {
         Font f = getFont() != null ? getFont()
-                 : UIManager.getFont("controlFont"); //NOI18N
+                 : UIManager.getFont("controlFont");
 
         Graphics g = getGraphics();
         if (g == null)
@@ -307,25 +306,24 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
         Insets ins = getInsets();
         int h = fm.getHeight();
 
-        String[] steps = wizard.getAllSteps();
+        String[] steps2 = wizard.getAllSteps();
         int w = Integer.MIN_VALUE;
-        for (int i = 0; i < steps.length; i++) {
-            String desc = i + ". " + (Wizard.UNDETERMINED_STEP.equals(steps[i])
+        for (int i = 0; i < steps2.length; i++) {
+            String desc = i + ". " + (Wizard.UNDETERMINED_STEP.equals(steps2[i])
                                       ? elipsis
-                                      : //NOI18N
-                                      wizard.getStepDescription(steps[i]));
+                                      : wizard.getStepDescription(steps2[i]));
             if (desc != null)
                 w = Math.max(w, fm.stringWidth(desc) + MARGIN);
         }
         if (Integer.MIN_VALUE == w)
             w = 250;
-        BufferedImage img = getImage();
-        if (img != null)
-            w = Math.max(w, img.getWidth());
+        BufferedImage image = getImage();
+        if (image != null)
+            w = Math.max(w, image.getWidth());
         //Make sure we can grow but not shrink
         w = Math.max(w, historicWidth);
         historicWidth = w;
-        return new Dimension(w, ins.top + ins.bottom + ((h + 3) * steps.length));
+        return new Dimension(w, ins.top + ins.bottom + ((h + 3) * steps2.length));
     }
 
     private boolean inSummaryPage;

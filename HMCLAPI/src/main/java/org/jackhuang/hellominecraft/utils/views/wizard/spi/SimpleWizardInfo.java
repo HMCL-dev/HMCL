@@ -172,11 +172,8 @@ final class SimpleWizardInfo implements WizardControllerImplementation {
     }
 
     private int index() {
-        SimpleWizard wizard = getWizard();
-        if (wizard != null)
-            return wizard.currentStepIndex();
-        else
-            return 0;
+        SimpleWizard a = getWizard();
+        return a == null ? 0 : a.currentStepIndex();
     }
 
     public final void setBusy(boolean value) {
@@ -281,11 +278,9 @@ final class SimpleWizardInfo implements WizardControllerImplementation {
 
     // lookup the step by name
     boolean containsStep(String name) {
-        for (int i = 0; i < steps.length; i++) {
-            String step = steps[i];
+        for (String step : steps)
             if (name.equals(step))
                 return true;
-        }
         return false;
     }
 
@@ -308,7 +303,7 @@ final class SimpleWizardInfo implements WizardControllerImplementation {
 
             return Arrays.equals(info.descriptions, descriptions)
                    && Arrays.equals(info.steps, steps)
-                   && info.title == title;
+                   && (info.title == null ? title == null : info.title.equals(title));
         } else
             return false;
     }
@@ -322,10 +317,5 @@ final class SimpleWizardInfo implements WizardControllerImplementation {
 
     boolean cancel(Map settings) {
         return provider.cancel(settings);
-    }
-
-    public String toString() {
-        return "SimpleWizardInfo@" + System.identityHashCode(this) + " for "
-               + provider;
     }
 }

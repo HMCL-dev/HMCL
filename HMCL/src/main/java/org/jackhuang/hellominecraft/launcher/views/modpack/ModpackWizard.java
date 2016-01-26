@@ -77,7 +77,7 @@ public class ModpackWizard extends WizardBranchController {
                                                   service.version(),
                                                   (String) settings.get(ModpackInitializationPanel.KEY_GAME_VERSION),
                                                   blackList);
-                            progress.finished(Summary.create(C.i18n("modpack.export_finished") + ": " + loc.getAbsolutePath(), null));
+                            progress.finished(new Summary(C.i18n("modpack.export_finished") + ": " + loc.getAbsolutePath(), null));
                         } catch (IOException | GameException ex) {
                             HMCLog.err("Failed to export modpack", ex);
                             progress.failed(C.i18n("modpack.export_error") + ": " + ex.getClass().getName() + ", " + ex.getLocalizedMessage(), true);

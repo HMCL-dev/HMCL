@@ -34,8 +34,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
@@ -125,7 +123,7 @@ public class WizardDisplayerImpl extends WizardDisplayer {
         ttlLabel = new JLabel(wizard.getStepDescription(wizard.getAllSteps()[0]));
         ttlLabel.setBorder(BorderFactory.createCompoundBorder(BorderFactory
             .createEmptyBorder(5, 5, 12, 5), BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager
-                                                                             .getColor("textText")))); // NOI18N
+                                                                             .getColor("textText"))));
         ttlPanel = new JPanel() {
             public void doLayout() {
                 Dimension d = ttlLabel.getPreferredSize();
@@ -142,7 +140,7 @@ public class WizardDisplayerImpl extends WizardDisplayer {
         ttlPanel.add(ttlLabel);
         Font f = ttlLabel.getFont();
         if (f == null)
-            f = UIManager.getFont("controlFont"); // NOI18N
+            f = UIManager.getFont("controlFont");
         if (f != null) {
             f = f.deriveFont(Font.BOLD);
             ttlLabel.setFont(f);
@@ -173,7 +171,7 @@ public class WizardDisplayerImpl extends WizardDisplayer {
         outerPanel = new JPanel();
 
         if (wizard.getAllSteps().length == 0)
-            throw new IllegalArgumentException("Wizard has no steps"); // NOI18N
+            throw new IllegalArgumentException("Wizard has no steps");
 
         // initialize the ttl* stuff
         buildStepTitle();
@@ -190,8 +188,8 @@ public class WizardDisplayerImpl extends WizardDisplayer {
             }
         };
         outerPanel.getInputMap(JPanel.WHEN_IN_FOCUSED_WINDOW).put(
-            KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "cancel"); //NOI18N
-        outerPanel.getActionMap().put("cancel", kbdCancel); //NOI18N
+            KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "cancel");
+        outerPanel.getActionMap().put("cancel", kbdCancel);
 
         instructions = createInstructionsPanel();
 
@@ -202,7 +200,7 @@ public class WizardDisplayerImpl extends WizardDisplayer {
         inner.add(ttlPanel, BorderLayout.NORTH);
 
         problem = new JLabel("  ");
-        Color fg = UIManager.getColor("nb.errorColor"); // NOI18N
+        Color fg = UIManager.getColor("nb.errorColor");
         problem.setForeground(fg == null ? Color.BLUE : fg);
         inner.add(problem, BorderLayout.SOUTH);
         problem.setPreferredSize(new Dimension(20, 20));
@@ -254,10 +252,9 @@ public class WizardDisplayerImpl extends WizardDisplayer {
     public Object show(final Wizard awizard, Rectangle bounds, Action helpAction,
                        Map initialProperties) {
         if (!EventQueue.isDispatchThread() && !warned) {
-            Logger.getLogger(WizardDisplayerImpl.class.getName()).log(Level.WARNING,
-                                                                      "show() should be called from the AWT Event Thread. This "
-                                                                      + "call may deadlock - c.f. "
-                                                                      + "http://java.net/jira/browse/WIZARD-33", new Throwable());
+            HMCLog.warn("WizardDisplayerImpl: show() should be called from the AWT Event Thread. This "
+                        + "call may deadlock - c.f. "
+                        + "http://java.net/jira/browse/WIZARD-33", new Throwable());
             warned = true;
         }
         createOuterPanel(awizard, bounds, helpAction, initialProperties);
@@ -364,8 +361,7 @@ public class WizardDisplayerImpl extends WizardDisplayer {
             return;
         default:
             throw new IllegalArgumentException("Illegal forward "
-                                               + // NOI18N
-                "navigation mode: " + i); // NOI18N
+                                               + "navigation mode: " + i);
         }
     }
 
@@ -450,7 +446,7 @@ public class WizardDisplayerImpl extends WizardDisplayer {
                         }
                     }
                 else {
-                    synchronized (this) {
+                    synchronized (WizardDisplayerImpl.this) {
                         deferredResult = null;
                     }
                     buttonManager.getCancel().setEnabled(true);
@@ -463,7 +459,7 @@ public class WizardDisplayerImpl extends WizardDisplayer {
                 }
             }
         };
-        Thread runner = new Thread(run, "Wizard Background Result Thread " + r); // NOI18N
+        Thread runner = new Thread(run, "Wizard Background Result Thread " + r);
         runner.start();
     }
 
@@ -553,7 +549,7 @@ public class WizardDisplayerImpl extends WizardDisplayer {
 
     void updateProblem() {
         String prob = wizard.getProblem();
-        problem.setText(prob == null ? " " : prob); // NOI18N
+        problem.setText(prob == null ? " " : prob);
         if (prob != null && prob.trim().length() == 0)
             // Issue 3 - provide ability to disable next w/o
             // showing the error line

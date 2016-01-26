@@ -3,12 +3,12 @@ package org.jackhuang.hellominecraft.utils.views.wizard.api.displayer;
 import java.awt.Container;
 import java.awt.EventQueue;
 import java.lang.reflect.InvocationTargetException;
-import java.util.logging.Logger;
 
 import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import javax.swing.border.EmptyBorder;
 import org.jackhuang.hellominecraft.utils.C;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 
 import org.jackhuang.hellominecraft.utils.views.wizard.spi.ResultProgressHandle;
 import org.jackhuang.hellominecraft.utils.views.wizard.spi.Summary;
@@ -27,9 +27,6 @@ import org.jackhuang.hellominecraft.utils.views.wizard.spi.Summary;
  * @author stanley@stanleyknutson.com
  */
 public class NavProgress implements ResultProgressHandle {
-
-    private static final Logger logger
-                                = Logger.getLogger(NavProgress.class.getName());
 
     JProgressBar progressBar = new JProgressBar();
 
@@ -61,7 +58,7 @@ public class NavProgress implements ResultProgressHandle {
 
     public void setProgress(final String description, final int currentStep, final int totalSteps) {
         invoke(() -> {
-            lbl.setText(description == null ? " " : description); // NOI18N
+            lbl.setText(description == null ? " " : description);
             setProgress(currentStep, totalSteps);
         });
     }
@@ -99,8 +96,7 @@ public class NavProgress implements ResultProgressHandle {
             try {
                 EventQueue.invokeAndWait(r);
             } catch (InvocationTargetException | InterruptedException ex) {
-                ex.printStackTrace();
-                logger.severe("Error invoking operation " + ex.getClass().getName() + " " + ex.getMessage());
+                HMCLog.err("NavProgress: Error invoking operation", ex);
             }
     }
 
@@ -127,7 +123,7 @@ public class NavProgress implements ResultProgressHandle {
 
         Runnable r = () -> {
             // cheap word wrap
-            JLabel comp = new JLabel("<html><body>" + message); // NOI18N
+            JLabel comp = new JLabel("<html><body>" + message);
             comp.setBorder(new EmptyBorder(5, 5, 5, 5));
             parent.setCurrentWizardPanel(comp);
             parent.getTtlLabel().setText(C.i18n("wizard.failed"));

@@ -207,15 +207,13 @@ public abstract class WizardDisplayer {
         if (new HashSet(Arrays.asList(s)).size() != s.length)
             throw new RuntimeException("steps are duplicated: " + Arrays.asList(s));
         if (s.length == 1 && Wizard.UNDETERMINED_STEP.equals(s[0]))
-            // assert false : "Only ID may not be UNDETERMINED_ID"; //NOI18N
+            // assert false : "Only ID may not be UNDETERMINED_ID";
             throw new RuntimeException("Only ID may not be UNDETERMINED_ID");
         for (int i = 0; i < s.length; i++)
             if (Wizard.UNDETERMINED_STEP.equals(s[i]) && i != s.length - 1)
-                //  assert false :  "UNDETERMINED_ID may only be last element in" + //NOI18N
-                //        " ids array " + Arrays.asList(s); //NOI18N
-                throw new RuntimeException("UNDETERMINED_ID may only be last element in"
-                                           + //NOI18N
-                    " ids array " + Arrays.asList(s)); //NOI18N)
+                //  assert false :  "UNDETERMINED_ID may only be last element in" +
+                //        " ids array " + Arrays.asList(s);
+                throw new RuntimeException("UNDETERMINED_ID may only be last element in ids array " + Arrays.asList(s));
         return true;
     }
 

@@ -9,12 +9,11 @@ If applicable, add the following below the CDDL Header, with the fields
 enclosed by brackets [] replaced by your own identifying information:
 "Portions Copyrighted [year] [name of copyright owner]" */
 
-/*
+ /*
  * GenericListener.java
  *
  * Created on October 5, 2004, 12:36 AM
  */
-
 package org.jackhuang.hellominecraft.utils.views.wizard.spi;
 
 import java.awt.Component;
@@ -30,8 +29,6 @@ import java.util.EventObject;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.logging.Logger;
-import java.util.logging.Level;
 import javax.swing.*;
 import javax.swing.table.*;
 import javax.swing.tree.*;
@@ -56,17 +53,15 @@ import javax.swing.tree.TreeSelectionModel;
  * validate its contents.
  *
  * If you use subclasses of the swing components, you will also need to subclass
- * this listener and override at least the methods isProbablyContainer, attachTo and detachFrom.
+ * this listener and override at least the methods isProbablyContainer, attachTo
+ * and detachFrom.
  *
  * @author Tim Boudreau
  */
 final class GenericListener
-        implements ActionListener, PropertyChangeListener, ItemListener,
-        ContainerListener, DocumentListener, ChangeListener,
-        ListSelectionListener, TreeSelectionListener, TableModelListener {
-
-    private static final Logger logger =
-            Logger.getLogger(GenericListener.class.getName());
+    implements ActionListener, PropertyChangeListener, ItemListener,
+               ContainerListener, DocumentListener, ChangeListener,
+               ListSelectionListener, TreeSelectionListener, TableModelListener {
 
     private final WizardPage wizardPage;
 
@@ -76,218 +71,191 @@ final class GenericListener
      * Set of components that we're listening to models of, so we can look
      * up the component from the model as needed
      */
-    private Set listenedTo = new HashSet();
+    private final Set listenedTo = new HashSet();
 
     private final WizardPage.CustomComponentListener extListener;
     private final WizardPage.CustomComponentNotifier extNotifier;
+
     public GenericListener(WizardPage wizardPage, WizardPage.CustomComponentListener l,
-            WizardPage.CustomComponentNotifier n) {
+                           WizardPage.CustomComponentNotifier n) {
         this.extListener = l;
         this.extNotifier = n;
-        if ((extListener == null) != (extNotifier == null)) {
+        if ((extListener == null) != (extNotifier == null))
             throw new RuntimeException();
-        }
-        // assert wizardPage != null : "WizardPage may not be null"; // NOI18N
-        if (wizardPage == null) {
-            throw new IllegalArgumentException("WizardPage may not be null"); // NOI18N)
-        }
+        // assert wizardPage != null : "WizardPage may not be null";
+        if (wizardPage == null)
+            throw new IllegalArgumentException("WizardPage may not be null");
         this.wizardPage = wizardPage;
         wizardPage.addContainerListener(this);
     }
-    
-    public GenericListener (WizardPage page) {
-        this (page, null, null);
+
+    public GenericListener(WizardPage page) {
+        this(page, null, null);
     }
 
     /**
-     * Return true if the given component is likely to be a container such the each
+     * Return true if the given component is likely to be a container such the
+     * each
      * component within the container should be be considered as a user input.
-     * 
+     *
      * @param c
+     *
      * @return true if the component children should have this listener added.
      */
-    protected boolean isProbablyAContainer (Component c) {
+    protected boolean isProbablyAContainer(Component c) {
         boolean result = extListener != null ? extListener.isContainer(c) : false;
         if (!result) {
             boolean isSwing = isSwingClass(c);
-            if (isSwing) {
-               result = c instanceof JPanel || c instanceof JSplitPane || c instanceof
-                       JToolBar || c instanceof JViewport || c instanceof JScrollPane ||
-                       c instanceof JFrame || c instanceof JRootPane || c instanceof
-                       Window || c instanceof Frame || c instanceof Dialog ||
-                       c instanceof JTabbedPane || c instanceof JInternalFrame ||
-                       c instanceof JDesktopPane || c instanceof JLayeredPane ||
-                       c instanceof Box;
-            } else {
+            if (isSwing)
+                result = c instanceof JPanel || c instanceof JSplitPane || c instanceof JToolBar || c instanceof JViewport || c instanceof JScrollPane
+                         || c instanceof JFrame || c instanceof JRootPane || c instanceof Window || c instanceof Frame || c instanceof Dialog
+                         || c instanceof JTabbedPane || c instanceof JInternalFrame
+                         || c instanceof JDesktopPane || c instanceof JLayeredPane
+                         || c instanceof Box;
+            else
                 result = c instanceof Container;
-            }
         }
         return result;
     }
-    
+
     /**
-     * Return true if the given component is likely to be a swing primitive or a subclass.
-     * The default implmentation here just checks for the package of the component to be "javax.swing" 
-     * If you use subclasses of swing components, you will need to override this method
+     * Return true if the given component is likely to be a swing primitive or a
+     * subclass.
+     * The default implmentation here just checks for the package of the
+     * component to be "javax.swing"
+     * If you use subclasses of swing components, you will need to override this
+     * method
      * to get proper behavior.
      *
      * @param c
-     * @return true if the component should be examined more closely (see isProbablyAContainer)
+     *
+     * @return true if the component should be examined more closely (see
+     *         isProbablyAContainer)
      */
-    protected boolean isSwingClass (Component c)
-    {
+    protected boolean isSwingClass(Component c) {
         String packageName = c.getClass().getPackage().getName();
-        boolean swing = packageName.equals ("javax.swing"); //NOI18N
+        boolean swing = packageName.equals("javax.swing");
         return swing;
     }
 
     protected void attachTo(Component jc) {
-        if (extListener != null && extListener.accept (jc)) {
+        if (extListener != null && extListener.accept(jc)) {
             extListener.startListeningTo(jc, extNotifier);
-            listenedTo.add (jc);
-            if (wizardPage.getMapKeyFor(jc) != null) {
+            listenedTo.add(jc);
+            if (wizardPage.getMapKeyFor(jc) != null)
                 wizardPage.maybeUpdateMap(jc);
-            }
             return;
         }
-        if (isProbablyAContainer(jc)) {
+        if (isProbablyAContainer(jc))
             attachToHierarchyOf((Container) jc);
-        } else if (jc instanceof JList) {
+        else if (jc instanceof JList) {
             listenedTo.add(jc);
             ((JList) jc).addListSelectionListener(this);
-        } else if (jc instanceof JComboBox) {
+        } else if (jc instanceof JComboBox)
             ((JComboBox) jc).addActionListener(this);
-        } else if (jc instanceof JTree) {
+        else if (jc instanceof JTree) {
             listenedTo.add(jc);
             ((JTree) jc).getSelectionModel().addTreeSelectionListener(this);
-        } else if (jc instanceof JToggleButton) {
+        } else if (jc instanceof JToggleButton)
             ((AbstractButton) jc).addItemListener(this);
-        } else if (jc instanceof JFormattedTextField) {        //JFormattedTextField must be tested before JTextCompoent
+        else if (jc instanceof JFormattedTextField)        //JFormattedTextField must be tested before JTextCompoent
             jc.addPropertyChangeListener("value", this);
-        } else if (jc instanceof JTextComponent) {
+        else if (jc instanceof JTextComponent) {
             listenedTo.add(jc);
             ((JTextComponent) jc).getDocument().addDocumentListener(this);
         } else if (jc instanceof JColorChooser) {
             listenedTo.add(jc);
             ((JColorChooser) jc).getSelectionModel().addChangeListener(this);
-        } else if (jc instanceof JSpinner) {
+        } else if (jc instanceof JSpinner)
             ((JSpinner) jc).addChangeListener(this);
-        } else if (jc instanceof JSlider) {
+        else if (jc instanceof JSlider)
             ((JSlider) jc).addChangeListener(this);
-        } else if (jc instanceof JTable) {
+        else if (jc instanceof JTable) {
             listenedTo.add(jc);
             ((JTable) jc).getSelectionModel().addListSelectionListener(this);
-        } else {
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("Don't know how to listen to a " + // NOI18N
-                        jc.getClass().getName());
-            }
         }
 
         if (accept(jc) && !(jc instanceof JPanel)) {
             jc.addPropertyChangeListener("name", this);
-            if (wizardPage.getMapKeyFor(jc) != null) {
+            if (wizardPage.getMapKeyFor(jc) != null)
                 wizardPage.maybeUpdateMap(jc);
-            }
-        }
-
-        if (logger.isLoggable(Level.FINE) && accept(jc)) {
-            logger.fine("Begin listening to " + jc); // NOI18N
         }
     }
 
     protected void detachFrom(Component jc) {
         listenedTo.remove(jc);
-        if (extListener != null && extListener.accept (jc)) {
+        if (extListener != null && extListener.accept(jc))
             extListener.stopListeningTo(jc);
-        }
-        if (isProbablyAContainer(jc)) {
+        if (isProbablyAContainer(jc))
             detachFromHierarchyOf((Container) jc);
-        } else if (jc instanceof JList) {
+        else if (jc instanceof JList)
             ((JList) jc).removeListSelectionListener(this);
-        } else if (jc instanceof JComboBox) {
+        else if (jc instanceof JComboBox)
             ((JComboBox) jc).removeActionListener(this);
-        } else if (jc instanceof JTree) {
+        else if (jc instanceof JTree)
             ((JTree) jc).getSelectionModel().removeTreeSelectionListener(this);
-        } else if (jc instanceof JToggleButton) {
+        else if (jc instanceof JToggleButton)
             ((AbstractButton) jc).removeActionListener(this);
-        } else if (jc instanceof JTextComponent) {
+        else if (jc instanceof JTextComponent) {
         } else if (jc instanceof JFormattedTextField) {        //JFormattedTextField must be tested before JTextCompoent
             jc.removePropertyChangeListener("value", this);
             ((JTextComponent) jc).getDocument().removeDocumentListener(this);
-        } else if (jc instanceof JColorChooser) {
+        } else if (jc instanceof JColorChooser)
             ((JColorChooser) jc).getSelectionModel().removeChangeListener(this);
-        } else if (jc instanceof JSpinner) {
+        else if (jc instanceof JSpinner)
             ((JSpinner) jc).removeChangeListener(this);
-        } else if (jc instanceof JSlider) {
+        else if (jc instanceof JSlider)
             ((JSlider) jc).removeChangeListener(this);
-        } else if (jc instanceof JTable) {
+        else if (jc instanceof JTable)
             ((JTable) jc).getSelectionModel().removeListSelectionListener(this);
-        }
 
         if (accept(jc) && !(jc instanceof JPanel)) {
             jc.removePropertyChangeListener("name", this);
             Object key = wizardPage.getMapKeyFor(jc);
 
-            if (key != null) {
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.fine("Named component removed from hierarchy: " + // NOI18N
-                            key + ".  Removing any corresponding " + // NOI18N
-                            "value from the wizard settings map."); // NOI18N
-                }
-
+            if (key != null)
                 wizardPage.removeFromMap(key);
-            }
-        }
-
-        if (logger.isLoggable(Level.FINE) && accept(jc)) {
-            logger.fine("Stop listening to " + jc); // NOI18N
         }
     }
 
     private void detachFromHierarchyOf(Container container) {
         container.removeContainerListener(this);
         Component[] components = container.getComponents();
-        for (int i = 0; i < components.length; i++) {
-            detachFrom(components[i]); // Will callback recursively any nested JPanels
-        }
+        for (Component component : components)
+            detachFrom(component); // Will callback recursively any nested JPanels
     }
 
     void attachToHierarchyOf(Container container) {
-        if (!Arrays.asList (container.getContainerListeners()).contains(this)) {
+        if (!Arrays.asList(container.getContainerListeners()).contains(this))
             container.addContainerListener(this);
-        }
         Component[] components = container.getComponents();
-        for (int i = 0; i < components.length; i++) {
-            attachTo(components[i]); // Will recursively add any child components in
-        }
+        for (Component component : components)
+            attachTo(component); // Will recursively add any child components in
     }
 
     protected boolean accept(Component jc) {
-        if (extListener != null && extListener.accept(jc)) {
+        if (extListener != null && extListener.accept(jc))
             return true;
-        }
-        if (!(jc instanceof JComponent)) {
+        if (!(jc instanceof JComponent))
             return false;
-        }
-        if (jc instanceof TableCellEditor || jc instanceof TreeCellEditor || 
-                SwingUtilities.getAncestorOfClass(JTable.class, jc) != null || 
-                SwingUtilities.getAncestorOfClass(JTree.class, jc) != null || 
-                SwingUtilities.getAncestorOfClass(JList.class, jc) != null){
+        if (jc instanceof TableCellEditor || jc instanceof TreeCellEditor
+            || SwingUtilities.getAncestorOfClass(JTable.class, jc) != null
+            || SwingUtilities.getAncestorOfClass(JTree.class, jc) != null
+            || SwingUtilities.getAncestorOfClass(JList.class, jc) != null)
             //Don't listen to cell editors, we can end up listening to them
             //multiple times, and the tree/table model will give us the event
             //we need
             return false;
-        }
-        return isProbablyAContainer (jc) || 
-                jc instanceof JList ||
-                jc instanceof JComboBox ||
-                jc instanceof JTree ||
-                jc instanceof JToggleButton || //covers toggle, radio, checkbox
-                jc instanceof JTextComponent ||
-                jc instanceof JColorChooser ||
-                jc instanceof JSpinner ||
-                jc instanceof JSlider;
+        return isProbablyAContainer(jc)
+               || jc instanceof JList
+               || jc instanceof JComboBox
+               || jc instanceof JTree
+               || jc instanceof JToggleButton
+               || //covers toggle, radio, checkbox
+            jc instanceof JTextComponent
+               || jc instanceof JColorChooser
+               || jc instanceof JSpinner
+               || jc instanceof JSlider;
     }
 
     void setIgnoreEvents(boolean val) {
@@ -299,59 +267,40 @@ final class GenericListener
             setIgnoreEvents(true);
             try {
                 //XXX this could be prettier...
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.fine("Event received: " + e); // NOI18N
-                }
-                if (e instanceof EventObject && ((EventObject) e).getSource() instanceof Component) {
+                if (e instanceof EventObject && ((EventObject) e).getSource() instanceof Component)
                     wizardPage.userInputReceived((Component) ((EventObject) e).getSource(), e);
-                } else if (e instanceof TreeSelectionEvent) {
-                    logger.fine("Looking for a tree for a tree selection event"); // NOI18N
+                else if (e instanceof TreeSelectionEvent) {
                     TreeSelectionModel mdl = (TreeSelectionModel) ((TreeSelectionEvent) e).getSource();
                     for (Iterator i = listenedTo.iterator(); i.hasNext();) {
                         Object o = i.next();
                         if (o instanceof JTree && ((JTree) o).getSelectionModel() == mdl) {
-                            if (logger.isLoggable(Level.FINE)) {
-                                logger.fine("  found it: " + o); // NOI18N
-                            }
                             wizardPage.userInputReceived((Component) o, e);
                             break;
                         }
                     }
                 } else if (e instanceof DocumentEvent) {
-                    logger.fine("Looking for a JTextComponent for a DocumentEvent"); // NOI18N
                     Document document = ((DocumentEvent) e).getDocument();
                     for (Iterator i = listenedTo.iterator(); i.hasNext();) {
                         Object o = i.next();
                         if (o instanceof JTextComponent && ((JTextComponent) o).getDocument() == document) {
-                            if (logger.isLoggable(Level.FINE)) {
-                                logger.fine("  found it: " + o); // NOI18N
-                            }
                             wizardPage.userInputReceived((Component) o, e);
                             break;
                         }
                     }
                 } else if (e instanceof ListSelectionEvent) {
-                    logger.fine("Looking for a JList or JTable for a ListSelectionEvent"); // NOI18N
                     ListSelectionModel model = (ListSelectionModel) ((ListSelectionEvent) e).getSource();
                     for (Iterator i = listenedTo.iterator(); i.hasNext();) {
                         Object o = i.next();
                         if (o instanceof JList && ((JList) o).getSelectionModel() == model) {
-                            if (logger.isLoggable(Level.FINE)) {
-                                logger.fine("  found it: " + o); // NOI18N
-                            }
                             wizardPage.userInputReceived((Component) o, e);
                             break;
                         } else if (o instanceof JTable && ((JTable) o).getSelectionModel() == model) {
-                            if (logger.isLoggable(Level.FINE)) {
-                                logger.fine("  found it: " + o); // NOI18N
-                            }
                             wizardPage.userInputReceived((Component) o, e);
                             break;
                         }
                     }
-                } else {
+                } else
                     wizardPage.userInputReceived(null, e);
-                }
             } finally {
                 setIgnoreEvents(false);
             }
@@ -366,19 +315,8 @@ final class GenericListener
         if (e.getSource() instanceof JComponent && "name".equals(e.getPropertyName())) {
             // Note - most components do NOT fire a property change on
             // setName(), but it is possible for this to be done intentionally
-            if (e.getOldValue() instanceof String) {
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.fine("Name of component changed from " + e.getOldValue() + // NOI18N
-                            " to " + e.getNewValue() + ".  Removing any values for " +  // NOI18N
-                            e.getOldValue() + " from the wizard data map"); // NOI18N
-                }
+            if (e.getOldValue() instanceof String)
                 wizardPage.removeFromMap(e.getOldValue());
-            }
-
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("Possibly update map for renamed component " + // NOI18N
-                    e.getSource());
-            }
 
         } else if (e.getSource() instanceof JFormattedTextField && "value".equals(e.getPropertyName())) {
             fire(e);
@@ -395,18 +333,16 @@ final class GenericListener
 //            extListener.startListeningTo(e.getChild(), extNotifier);
 //            listenedTo.add (e.getChild());
 //        } else if (accept(e.getChild())) {
-        if (accept (e.getChild())) {
+        if (accept(e.getChild()))
             attachTo(e.getChild());
-        }
     }
 
     public void componentRemoved(ContainerEvent e) {
-        if (extListener != null && extListener.accept (e.getChild())) {
-            extListener.stopListeningTo (e.getChild());
-            listenedTo.remove (e.getChild());
-        } else if (accept(e.getChild())) {
+        if (extListener != null && extListener.accept(e.getChild())) {
+            extListener.stopListeningTo(e.getChild());
+            listenedTo.remove(e.getChild());
+        } else if (accept(e.getChild()))
             detachFrom(e.getChild());
-        }
     }
 
     public void insertUpdate(DocumentEvent e) {

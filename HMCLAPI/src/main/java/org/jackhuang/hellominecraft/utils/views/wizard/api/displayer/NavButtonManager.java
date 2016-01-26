@@ -12,7 +12,6 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.NoSuchElementException;
-import java.util.logging.Logger;
 
 import javax.swing.Action;
 import javax.swing.BorderFactory;
@@ -62,9 +61,6 @@ public class NavButtonManager implements ActionListener {
      */
     static final String DEFERRED_FAILED = "FAILED_";
 
-    private static final Logger logger
-                                = Logger.getLogger(NavButtonManager.class.getName());
-
     JButton next = null;
 
     JButton prev = null;
@@ -105,7 +101,7 @@ public class NavButtonManager implements ActionListener {
         prev.setName(NAME_PREV);
         prev.setMnemonic(C.i18n("wizard.prev_mnemonic").charAt(0));
 
-        finish = new JButton(C.i18n("wizard.finish")); // NOI18N
+        finish = new JButton(C.i18n("wizard.finish"));
         finish.setName(NAME_FINISH);
         finish.setMnemonic(C.i18n("wizard.finish_mnemonic").charAt(0));
 
@@ -127,7 +123,7 @@ public class NavButtonManager implements ActionListener {
         help.setVisible(helpAction != null);
 
         // Use standard default-button-last order on Aqua L&F
-        final boolean aqua = "Aqua".equals(UIManager.getLookAndFeel().getID()); // NOI18N
+        final boolean aqua = "Aqua".equals(UIManager.getLookAndFeel().getID());
 
         buttons = new JPanel() {
             public void doLayout() {
@@ -163,7 +159,7 @@ public class NavButtonManager implements ActionListener {
             }
         };
         buttons.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager
-                                                          .getColor("textText"))); // NOI18N
+                                                          .getColor("textText")));
 
         buttons.add(prev);
         buttons.add(next);
@@ -494,7 +490,6 @@ public class NavButtonManager implements ActionListener {
         boolean closeWindow;
 
         if (reallyCancel && parent.cancel()) {
-            logger.fine("calling wizard cancel method on " + wizard);
             wizard.cancel(settings);
             return;
         }
@@ -530,7 +525,7 @@ public class NavButtonManager implements ActionListener {
         if (window != null && parent.receiver == null && window instanceof JDialog)
             ((JDialog) window).getRootPane().setDefaultButton(cancel);
 
-        cancel.setText(getCloseString()); // NOI18N
+        cancel.setText(getCloseString());
         cancel.setMnemonic(C.i18n("wizard.close_mnemonic").charAt(0));
         cancel.setName(NAME_CLOSE);
         deferredStatus = null;  // ?? should summary be different
