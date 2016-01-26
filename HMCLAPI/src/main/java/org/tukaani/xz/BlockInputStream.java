@@ -159,13 +159,7 @@ class BlockInputStream extends InputStream {
         FilterDecoder[] filters = new FilterDecoder[filterIDs.length];
 
         for (int i = 0; i < filters.length; ++i)
-            if (filterIDs[i] == LZMA2Coder.FILTER_ID)
-                filters[i] = new LZMA2Decoder(filterProps[i]);
-
-            else if (filterIDs[i] == DeltaCoder.FILTER_ID)
-                filters[i] = new DeltaDecoder(filterProps[i]);
-
-            else if (BCJDecoder.isBCJFilterID(filterIDs[i]))
+            if (BCJDecoder.isBCJFilterID(filterIDs[i]))
                 filters[i] = new BCJDecoder(filterIDs[i], filterProps[i]);
 
             else

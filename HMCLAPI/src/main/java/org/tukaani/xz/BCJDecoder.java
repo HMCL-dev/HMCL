@@ -52,10 +52,6 @@ class BCJDecoder extends BCJCoder implements FilterDecoder {
             simpleFilter = new PowerPC(false, startOffset);
         else if (filterID == IA64_FILTER_ID)
             simpleFilter = new IA64(false, startOffset);
-        else if (filterID == ARM_FILTER_ID)
-            simpleFilter = new ARM(false, startOffset);
-        else if (filterID == ARMTHUMB_FILTER_ID)
-            simpleFilter = new ARMThumb(false, startOffset);
         else if (filterID == SPARC_FILTER_ID)
             simpleFilter = new SPARC(false, startOffset);
         else
