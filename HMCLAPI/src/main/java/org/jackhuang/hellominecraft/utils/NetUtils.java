@@ -29,7 +29,6 @@ import java.net.Proxy;
 import java.net.URL;
 import java.util.Map;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
-import rx.Observable;
 
 /**
  *
@@ -157,15 +156,5 @@ public final class NetUtils {
         } catch (MalformedURLException ex) {
             throw new IllegalArgumentException("Could not concatenate given URL with GET arguments!", ex);
         }
-    }
-
-    public static Observable<String> getRx(String url) {
-        return Observable.createWithEmptySubscription(t1 -> {
-            try {
-                t1.onNext(get(url));
-            } catch (Exception e) {
-                t1.onError(e);
-            }
-        });
     }
 }

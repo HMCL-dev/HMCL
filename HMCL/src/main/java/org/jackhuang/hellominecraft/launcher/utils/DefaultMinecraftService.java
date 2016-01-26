@@ -100,4 +100,8 @@ public class DefaultMinecraftService extends IMinecraftService {
         return new MinecraftLoader(options, this, p);
     }
 
+    public Profile getProfile() {
+        return p;
+    }
+
 }

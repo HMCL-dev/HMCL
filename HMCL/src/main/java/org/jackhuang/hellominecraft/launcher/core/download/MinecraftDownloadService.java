@@ -31,12 +31,12 @@ import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.utils.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.utils.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.NetUtils;
+import org.jackhuang.hellominecraft.utils.OverridableSwingWorker;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.tasks.Task;
 import org.jackhuang.hellominecraft.utils.version.MinecraftRemoteVersion;
 import org.jackhuang.hellominecraft.utils.version.MinecraftRemoteVersions;
-import rx.Observable;
 
 /**
  *
@@ -151,10 +151,14 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
     }
 
     @Override
-    public Observable<MinecraftRemoteVersion> getRemoteVersions() {
-        return NetUtils.getRx(service.getDownloadType().getProvider().getVersionsListDownloadURL())
-            .map(r -> C.gson.fromJson(r, MinecraftRemoteVersions.class))
-            .filter(r -> r != null && r.versions != null)
-            .flatMap(r -> Observable.from(r.versions));
+    public OverridableSwingWorker<MinecraftRemoteVersion> getRemoteVersions() {
+        return new OverridableSwingWorker<MinecraftRemoteVersion>() {
+            @Override
+            protected void work() throws Exception {
+                MinecraftRemoteVersions r = C.gson.fromJson(NetUtils.get(service.getDownloadType().getProvider().getVersionsListDownloadURL()), MinecraftRemoteVersions.class);
+                if (r != null && r.versions != null)
+                    publish(r.versions.toArray(new MinecraftRemoteVersion[0]));
+            }
+        };
     }
 }

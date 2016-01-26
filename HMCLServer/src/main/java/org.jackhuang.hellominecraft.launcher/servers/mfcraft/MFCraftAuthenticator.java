@@ -19,12 +19,12 @@ package org.jackhuang.hellominecraft.launcher.servers.mfcraft;
 
 import com.google.gson.JsonSyntaxException;
 import java.io.IOException;
-import org.jackhuang.hellominecraft.C;
 import org.jackhuang.hellominecraft.launcher.core.auth.AuthenticationException;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.LoginInfo;
 import static org.jackhuang.hellominecraft.launcher.core.auth.OfflineAuthenticator.getUUIDFromUserName;
 import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
+import org.jackhuang.hellominecraft.utils.C;
 import org.jackhuang.hellominecraft.utils.NetUtils;
 
 /**

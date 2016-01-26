@@ -47,7 +47,6 @@ import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
 import org.jackhuang.hellominecraft.utils.MathUtils;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.VersionNumber;
-import rx.concurrency.Schedulers;
 
 /**
  *
@@ -146,8 +145,7 @@ public final class Main implements Runnable {
             }
 
             Settings.UPDATE_CHECKER.outdated.register(IUpgrader.NOW_UPGRADER);
-            Settings.UPDATE_CHECKER.process(false).subscribeOn(Schedulers.newThread()).subscribe(t
-                -> Main.invokeUpdate());
+            Settings.UPDATE_CHECKER.process(false).reg(t -> Main.invokeUpdate()).execute();
 
             if (StrUtils.isNotBlank(Settings.getInstance().getProxyHost()) && StrUtils.isNotBlank(Settings.getInstance().getProxyPort()) && MathUtils.canParseInt(Settings.getInstance().getProxyPort())) {
                 HMCLog.log("Initializing customized proxy");

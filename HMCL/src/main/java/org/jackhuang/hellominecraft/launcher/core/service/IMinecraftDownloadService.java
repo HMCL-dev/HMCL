@@ -22,9 +22,9 @@ import java.util.List;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.utils.OverridableSwingWorker;
 import org.jackhuang.hellominecraft.utils.tasks.Task;
 import org.jackhuang.hellominecraft.utils.version.MinecraftRemoteVersion;
-import rx.Observable;
 
 /**
  *
@@ -51,6 +51,6 @@ public abstract class IMinecraftDownloadService extends IMinecraftBasicService {
      */
     public abstract List<DownloadLibraryJob> getDownloadLibraries(MinecraftVersion mv) throws GameException;
 
-    public abstract Observable<MinecraftRemoteVersion> getRemoteVersions();
+    public abstract OverridableSwingWorker<MinecraftRemoteVersion> getRemoteVersions();
 
 }

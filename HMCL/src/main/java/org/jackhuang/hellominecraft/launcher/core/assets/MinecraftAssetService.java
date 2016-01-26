@@ -29,7 +29,6 @@ import org.jackhuang.hellominecraft.utils.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.utils.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
-import rx.concurrency.Schedulers;
 
 /**
  *
@@ -49,9 +48,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
             public void executeTask() throws Throwable {
                 IAssetsHandler type = IAssetsHandler.ASSETS_HANDLER;
                 type.getList(service.version().getVersionById(mcVersion), service.asset())
-                    .subscribeOn(Schedulers.newThread())
-                    .observeOn(Schedulers.eventQueue())
-                    .subscribe((t) -> TaskWindow.getInstance().addTask(type.getDownloadTask(service.getDownloadType().getProvider())).start());
+                    .reg((t) -> TaskWindow.getInstance().addTask(type.getDownloadTask(service.getDownloadType().getProvider())).start()).execute();
             }
 
             @Override

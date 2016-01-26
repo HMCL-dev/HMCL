@@ -48,7 +48,6 @@ import org.jackhuang.hellominecraft.utils.VersionNumber;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.system.OS;
-import rx.concurrency.Schedulers;
 
 /**
  *
@@ -91,7 +90,7 @@ public class AppDataUpgrader extends IUpgrader {
 
     @Override
     public boolean call(Object sender, VersionNumber number) {
-        ((UpdateChecker) sender).requestDownloadLink().subscribeOn(Schedulers.newThread()).observeOn(Schedulers.eventQueue()).subscribe(map -> {
+        ((UpdateChecker) sender).requestDownloadLink().reg(map -> {
             if (map != null && map.containsKey("pack"))
                 try {
                     if (TaskWindow.getInstance().addTask(new AppDataUpgraderTask(map.get("pack"), number.version)).start()) {
@@ -120,7 +119,7 @@ public class AppDataUpgrader extends IUpgrader {
                     MessageBox.Show(C.i18n("update.no_browser"));
                 }
             }
-        });
+        }).execute();
         return true;
     }
 

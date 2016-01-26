@@ -18,7 +18,6 @@
 package org.jackhuang.hellominecraft.utils;
 
 import java.util.Map;
-import rx.Observable;
 
 /**
  *
@@ -50,13 +49,13 @@ public interface IUpdateChecker {
      *
      * @return the process observable.
      */
-    Observable process(boolean showMessage);
+    OverridableSwingWorker<VersionNumber> process(boolean showMessage);
 
     /**
      * Get the download links.
      *
      * @return a JSON, which contains the server response.
      */
-    Observable<Map<String, String>> requestDownloadLink();
+    OverridableSwingWorker<Map<String, String>> requestDownloadLink();
 
 }

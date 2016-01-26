@@ -31,7 +31,6 @@ import org.jackhuang.hellominecraft.svrmgr.views.MainWindow;
 import org.jackhuang.hellominecraft.utils.VersionNumber;
 import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
 import org.jackhuang.hellominecraft.utils.MessageBox;
-import rx.concurrency.Schedulers;
 
 /**
  *
@@ -57,7 +56,7 @@ public class Main {
             } catch (ParseException | UnsupportedLookAndFeelException ex) {
                 HMCLog.warn("Failed to set look and feel", ex);
             }
-            UPDATE_CHECKER.process(false).subscribeOn(Schedulers.newThread()).subscribe(t -> MessageBox.Show("发现更新！" + t.version));
+            UPDATE_CHECKER.process(false).reg(t -> MessageBox.Show("发现更新！" + t.version)).execute();
             new MainWindow().setVisible(true);
         } catch (Throwable t) {
             HMCLog.err("There's something wrong when running server holder.", t);

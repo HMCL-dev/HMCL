@@ -32,9 +32,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -46,7 +44,6 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import org.jackhuang.hellominecraft.utils.C;
 import org.jackhuang.hellominecraft.utils.logging.HMCLog;
-import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.LauncherVisibility;
 import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.settings.Settings;
@@ -56,13 +53,12 @@ import org.jackhuang.hellominecraft.launcher.core.installers.InstallerType;
 import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
 import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.launcher.views.modpack.ModpackInitializationPanel;
 import org.jackhuang.hellominecraft.launcher.views.modpack.ModpackWizard;
-import org.jackhuang.hellominecraft.utils.tasks.TaskRunnable;
 import org.jackhuang.hellominecraft.utils.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.utils.Event;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
+import org.jackhuang.hellominecraft.utils.OverridableSwingWorker;
 import org.jackhuang.hellominecraft.utils.version.MinecraftVersionRequest;
 import org.jackhuang.hellominecraft.utils.system.OS;
 import org.jackhuang.hellominecraft.utils.StrUtils;
@@ -70,8 +66,6 @@ import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.views.SwingUtils;
 import org.jackhuang.hellominecraft.utils.system.Java;
 import org.jackhuang.hellominecraft.utils.views.wizard.api.WizardDisplayer;
-import rx.Observable;
-import rx.concurrency.Schedulers;
 
 /**
  *
@@ -1300,14 +1294,16 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             return;
         reloadingMods = true;
         DefaultTableModel model = SwingUtils.clearDefaultTable(lstExternalMods);
-        Observable.<List<ModInfo>>createWithEmptySubscription(
-            t -> t.onNext(getProfile().service().mod().recacheMods(getProfile().getSelectedVersion())))
-            .subscribeOn(Schedulers.newThread()).observeOn(Schedulers.eventQueue())
-            .subscribe(t -> {
-                for (ModInfo x : t)
-                    model.addRow(new Object[] { x.isActive(), x, x.version });
-                reloadingMods = false;
-            });
+        new OverridableSwingWorker<List<ModInfo>>() {
+            @Override
+            protected void work() throws Exception {
+                publish(getProfile().service().mod().recacheMods(getProfile().getSelectedVersion()));
+            }
+        }.reg(t -> {
+            for (ModInfo x : t)
+                model.addRow(new Object[] { x.isActive(), x, x.version });
+            reloadingMods = false;
+        }).execute();
     }
 
     // </editor-fold>

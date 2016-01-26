@@ -29,7 +29,6 @@ import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.views.SwingUtils;
-import rx.Observable;
 
 /**
  *
@@ -43,8 +42,10 @@ public class LauncherSettingsPanel extends AnimatedPanel {
     public LauncherSettingsPanel() {
         initComponents();
 
-        Observable.from(DownloadType.values()).map(t -> t.getName()).toList()
-            .subscribe(t -> cboDownloadSource.setModel(new DefaultComboBoxModel(t.toArray(new String[0]))));
+        DefaultComboBoxModel d = new DefaultComboBoxModel();
+        for (DownloadType type : DownloadType.values())
+            d.addElement(type.getName());
+        cboDownloadSource.setModel(d);
 
         txtBackgroundPath.setText(Settings.getInstance().getBgpath());
         txtProxyHost.setText(Settings.getInstance().getProxyHost());
@@ -362,7 +363,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
     private void chkDecoratedFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_chkDecoratedFocusLost
         Settings.getInstance().setDecorated(chkDecorated.isSelected());
     }//GEN-LAST:event_chkDecoratedFocusLost
-    
+
     private void jLabel9MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel9MouseClicked
         SwingUtils.openLink("http://blog.163.com/huanghongxun2008@126/blog/static/7738046920160323812771/");
     }//GEN-LAST:event_jLabel9MouseClicked

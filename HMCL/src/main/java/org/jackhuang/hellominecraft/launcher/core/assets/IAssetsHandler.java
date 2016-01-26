@@ -33,7 +33,7 @@ import org.jackhuang.hellominecraft.utils.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.utils.code.DigestUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.NetUtils;
-import rx.Observable;
+import org.jackhuang.hellominecraft.utils.OverridableSwingWorker;
 
 /**
  * Assets
@@ -73,7 +73,7 @@ public abstract class IAssetsHandler {
      * @param mp Asset Service
      * @param x  finished event
      */
-    public abstract Observable<String[]> getList(MinecraftVersion mv, IMinecraftAssetService mp);
+    public abstract OverridableSwingWorker<String[]> getList(MinecraftVersion mv, IMinecraftAssetService mp);
 
     /**
      * Will be invoked when the user invoked "Download all assets".

@@ -18,7 +18,6 @@
 package org.jackhuang.hellominecraft.launcher.core.assets;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 import org.jackhuang.hellominecraft.utils.C;
@@ -30,9 +29,8 @@ import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.launcher.core.download.IDownloadProvider;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.utils.OverridableSwingWorker;
 import org.jackhuang.hellominecraft.utils.VersionNumber;
-import rx.Observable;
-import rx.Observer;
 
 /**
  *
@@ -45,61 +43,42 @@ public class AssetsMojangLoader extends IAssetsHandler {
     }
 
     @Override
-    public Observable<String[]> getList(MinecraftVersion mv, IMinecraftAssetService mp) {
-        return Observable.<String[]>createWithEmptySubscription((Observer<String[]> t1) -> {
-            if (mv == null) {
-                t1.onError(null);
-                return;
-            }
-            String assetsId = mv.assets == null ? "legacy" : mv.assets;
-            File assets = mp.getAssets();
-            HMCLog.log("Get index: " + assetsId);
-            File f = IOUtils.tryGetCanonicalFile(new File(assets, "indexes/" + assetsId + ".json"));
-            if (!f.exists() && !mp.downloadMinecraftAssetsIndex(assetsId)) {
-                t1.onError(null);
-                return;
-            }
+    public OverridableSwingWorker<String[]> getList(MinecraftVersion mv, IMinecraftAssetService mp) {
+        return new OverridableSwingWorker<String[]>() {
+            @Override
+            protected void work() throws Exception {
+                if (mv == null)
+                    throw new IllegalArgumentException("AssetsMojangLoader: null argument: MinecraftVersion");
+                String assetsId = mv.assets == null ? "legacy" : mv.assets;
+                File assets = mp.getAssets();
+                HMCLog.log("Gathering asset index: " + assetsId);
+                File f = IOUtils.tryGetCanonicalFile(new File(assets, "indexes/" + assetsId + ".json"));
+                if (!f.exists() && !mp.downloadMinecraftAssetsIndex(assetsId))
+                    throw new IllegalStateException("Failed to get index json");
 
-            String result;
-            try {
-                result = FileUtils.readFileToString(f);
-            } catch (IOException ex) {
-                HMCLog.warn("Failed to read index json: " + f, ex);
-                t1.onError(null);
-                return;
-            }
-            if (StrUtils.isBlank(result)) {
-                HMCLog.err("Index json is empty, please redownload it!");
-                t1.onError(null);
-                return;
-            }
-            AssetsIndex o;
-            try {
-                o = C.gson.fromJson(result, AssetsIndex.class);
-            } catch (Exception e) {
-                HMCLog.err("Failed to parse index json, please redownload it!", e);
-                t1.onError(null);
-                return;
-            }
-            assetsDownloadURLs = new ArrayList<>();
-            assetsLocalNames = new ArrayList<>();
-            ArrayList<String> al = new ArrayList<>();
-            contents = new ArrayList<>();
-            if (o != null && o.getFileMap() != null)
-                for (Map.Entry<String, AssetsObject> e : o.getFileMap().entrySet()) {
-                    Contents c = new Contents();
-                    c.eTag = e.getValue().getHash();
-                    c.key = c.eTag.substring(0, 2) + "/" + e.getValue().getHash();
-                    c.size = e.getValue().getSize();
-                    contents.add(c);
-                    assetsDownloadURLs.add(c.key);
-                    assetsLocalNames.add(new File(assets, "objects" + File.separator + c.key.replace("/", File.separator)));
-                    al.add(e.getKey());
-                }
+                String result = FileUtils.readFileToString(f);
+                if (StrUtils.isBlank(result))
+                    throw new IllegalStateException("Index json is empty, please redownload it!");
+                AssetsIndex o = C.gson.fromJson(result, AssetsIndex.class);
+                assetsDownloadURLs = new ArrayList<>();
+                assetsLocalNames = new ArrayList<>();
+                ArrayList<String> al = new ArrayList<>();
+                contents = new ArrayList<>();
+                if (o != null && o.getFileMap() != null)
+                    for (Map.Entry<String, AssetsObject> e : o.getFileMap().entrySet()) {
+                        Contents c = new Contents();
+                        c.eTag = e.getValue().getHash();
+                        c.key = c.eTag.substring(0, 2) + "/" + e.getValue().getHash();
+                        c.size = e.getValue().getSize();
+                        contents.add(c);
+                        assetsDownloadURLs.add(c.key);
+                        assetsLocalNames.add(new File(assets, "objects" + File.separator + c.key.replace("/", File.separator)));
+                        al.add(e.getKey());
+                    }
 
-            t1.onNext(al.toArray(new String[1]));
-            t1.onCompleted();
-        });
+                publish(al.toArray(new String[1]));
+            }
+        };
     }
 
     @Override

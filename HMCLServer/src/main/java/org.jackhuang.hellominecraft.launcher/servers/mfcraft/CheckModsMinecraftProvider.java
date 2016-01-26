@@ -18,11 +18,12 @@
 package org.jackhuang.hellominecraft.launcher.servers.mfcraft;
 
 import java.io.IOException;
-import org.jackhuang.hellominecraft.HMCLog;
+import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.servers.ServerPlugin;
-import org.jackhuang.hellominecraft.launcher.core.version.MinecraftModService;
+import org.jackhuang.hellominecraft.launcher.core.mod.MinecraftModService;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersionManager;
+import org.jackhuang.hellominecraft.launcher.utils.DefaultMinecraftService;
 import org.jackhuang.hellominecraft.utils.ArrayUtils;
 
 /**
@@ -39,7 +40,7 @@ public class CheckModsMinecraftProvider extends MinecraftVersionManager {
     public boolean onLaunch() {
         try {
             super.onLaunch();
-            String[] md5s = ((MinecraftModService) service.mod()).checkMd5s();
+            String[] md5s = ((MinecraftModService) service.mod()).checkMd5s(((DefaultMinecraftService) service).getProfile().getSelectedVersion());
             String[] md5 = ServerPlugin.lastServerInfo.md5;
             return ArrayUtils.equals(md5s, md5);
         } catch (IOException ex) {

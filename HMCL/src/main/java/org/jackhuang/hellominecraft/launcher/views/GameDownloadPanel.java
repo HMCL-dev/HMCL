@@ -23,7 +23,6 @@ import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.StrUtils;
 import org.jackhuang.hellominecraft.utils.views.SwingUtils;
-import rx.concurrency.Schedulers;
 
 /**
  *
@@ -108,13 +107,13 @@ public class GameDownloadPanel extends AnimatedPanel implements Selectable {
     public void refreshDownloads() {
         DefaultTableModel model = SwingUtils.clearDefaultTable(lstDownloads);
         gsp.getProfile().service().download().getRemoteVersions()
-            .observeOn(Schedulers.eventQueue()).subscribeOn(Schedulers.newThread())
-            .subscribe((ver) -> model.addRow(new Object[] { ver.id, ver.time,
-                                                            StrUtils.equalsOne(ver.type, "old_beta", "old_alpha", "release", "snapshot") ? C.i18n("versions." + ver.type) : ver.type }),
-                       (e) -> {
+            .reg((ver) -> model.addRow(new Object[] { ver.id, ver.time,
+                                                      StrUtils.equalsOne(ver.type, "old_beta", "old_alpha", "release", "snapshot") ? C.i18n("versions." + ver.type) : ver.type }))
+            .regDone(lstDownloads::updateUI).execute();
+        /*(e) -> {
                            MessageBox.Show("Failed to refresh download: " + e.getLocalizedMessage());
                            HMCLog.err("Failed to refresh download.", e);
-                       }, lstDownloads::updateUI);
+                       }, );*/
     }
 
     void downloadMinecraft() {
