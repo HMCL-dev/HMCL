@@ -15,11 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.launcher.utils;
+package org.jackhuang.hellominecraft.launcher.settings;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
-import org.jackhuang.hellominecraft.launcher.settings.Profile;
 import org.jackhuang.hellominecraft.launcher.core.installers.MinecraftInstallerService;
 import org.jackhuang.hellominecraft.launcher.core.assets.MinecraftAssetService;
 import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
@@ -34,7 +35,8 @@ import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftModService;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.mod.MinecraftModService;
-import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersionManager;
+import org.jackhuang.hellominecraft.utils.C;
+import org.jackhuang.hellominecraft.utils.system.FileUtils;
 
 /**
  *
@@ -44,15 +46,51 @@ public class DefaultMinecraftService extends IMinecraftService {
 
     File base;
     Profile p;
+    final Map<String, VersionSetting> versionSettings = new HashMap<>();
 
     public DefaultMinecraftService(Profile p) {
         this.p = p;
-        this.provider = new MinecraftVersionManager(this);
+        this.provider = new HMCLGameProvider(this);
         provider.initializeMiencraft();
+        provider.onRefreshingVersions.register((sender, x) -> {
+            versionSettings.clear();
+            return true;
+        });
+        provider.onLoadedVersion.register((sender, id) -> {
+            VersionSetting vs = new VersionSetting();
+            File f = new File(provider.versionRoot(id), "hmclversion.cfg");
+            if (f.exists()) {
+                String s = FileUtils.readFileToStringQuietly(f);
+                if (s != null)
+                    vs = C.gson.fromJson(s, VersionSetting.class);
+            }
+            vs.id = id;
+            versionSettings.put(id, vs);
+            return true;
+        });
         this.mms = new MinecraftModService(this);
         this.mds = new MinecraftDownloadService(this);
         this.mas = new MinecraftAssetService(this);
         this.mis = new MinecraftInstallerService(this);
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                for (String key : versionSettings.keySet())
+                    saveVersionSetting(key);
+            }
+        });
+    }
+
+    public VersionSetting getVersionSetting(String id) {
+        return versionSettings.get(id);
+    }
+
+    public void saveVersionSetting(String id) {
+        if (!versionSettings.containsKey(id))
+            return;
+        File f = new File(provider.versionRoot(id), "hmclversion.cfg");
+        FileUtils.writeQuietly(f, C.gson.toJson(versionSettings.get(id)));
     }
 
     @Override

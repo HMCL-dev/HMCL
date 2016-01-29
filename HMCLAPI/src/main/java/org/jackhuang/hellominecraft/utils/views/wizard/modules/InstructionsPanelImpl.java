@@ -29,7 +29,6 @@ import java.awt.IllegalComponentStateException;
 import java.awt.Insets;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Locale;
 import java.util.Arrays;
 import javax.accessibility.Accessible;
@@ -119,34 +118,6 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
     }
 
     public InstructionsPanelImpl(BufferedImage img, Wizard wizard) {
-        if (img == null)
-            //In the event of classloader issues, also have a way to get
-            //the image from UIManager - slightly more portable for large
-            //apps
-            img = (BufferedImage) UIManager.get("wizard.sidebar.image");
-
-        String imgStr = System.getProperty("wizard.sidebar.image");
-        //image has not been loaded and user wishes to supply their own image
-        if (img == null && imgStr != null) {
-            //get an URL, works for jars
-            ClassLoader cl = this.getClass().getClassLoader();
-            URL url = cl.getResource(imgStr);
-            //successfully parsed the URL
-            if (url != null)
-                try {
-                    img = ImageIO.read(url);
-                } catch (IOException ioe) {
-                    System.err.println("Could not load wizard image "
-                                       + ioe.getMessage());
-                    System.setProperty("wizard.sidebar.image", null);
-                    img = null; //error loading img, set to null to use default
-                }
-            else { //URL was not successfully parsed, set img to null to use default
-                System.err.println("Bad URL for wizard image " + imgStr);
-                System.setProperty("wizard.sidebar.image", null);
-                img = null;
-            }
-        }
         if (img == null)
             try {
                 img = ImageIO.read(InstructionsPanelImpl.class.getResourceAsStream(

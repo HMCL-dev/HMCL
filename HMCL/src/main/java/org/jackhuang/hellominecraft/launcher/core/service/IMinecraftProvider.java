@@ -21,8 +21,8 @@ import java.io.File;
 import java.util.Collection;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.version.DecompressLibraryJob;
-import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.utils.EventHandler;
 import org.jackhuang.hellominecraft.utils.functions.Consumer;
 
 /**
@@ -53,6 +53,8 @@ public abstract class IMinecraftProvider {
      * @return the run directory
      */
     public abstract File getRunDirectory(String id);
+
+    public abstract File versionRoot(String id);
 
     public File getRunDirectory(String id, String subFolder) {
         return new File(getRunDirectory(id), subFolder);
@@ -90,12 +92,6 @@ public abstract class IMinecraftProvider {
      * @return the Minecraft jar of selected version.
      */
     public abstract File getMinecraftJar(String id);
-
-    protected GameDirType gameDirType = GameDirType.ROOT_FOLDER;
-
-    public void setGameDirType(GameDirType gameDirType) {
-        this.gameDirType = gameDirType;
-    }
 
     /**
      * Rename version
@@ -148,8 +144,14 @@ public abstract class IMinecraftProvider {
 
     /**
      * Refind the versions in this profile.
+     * Must call onRefreshingVersions, onRefreshedVersions, onLoadedVersion
+     * Events.
      */
     public abstract void refreshVersions();
+
+    public final EventHandler<Void> onRefreshingVersions = new EventHandler<>(this),
+        onRefreshedVersions = new EventHandler<>(this);
+    public final EventHandler<String> onLoadedVersion = new EventHandler<>(this);
 
     /**
      * Clean redundant files.
@@ -162,5 +164,9 @@ public abstract class IMinecraftProvider {
      * @return if false, will break the launch process.
      */
     public abstract boolean onLaunch();
+
+    public File baseDirectory() {
+        return service.baseDirectory();
+    }
 
 }

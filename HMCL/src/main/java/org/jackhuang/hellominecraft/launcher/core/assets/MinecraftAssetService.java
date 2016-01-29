@@ -41,7 +41,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
     }
 
     @Override
-    public Task downloadAssets(String mcVersion) {
+    public Task downloadAssets(final String mcVersion) {
         return new Task() {
 
             @Override

@@ -40,7 +40,7 @@ public final class UpdateChecker implements IUpdateChecker {
     VersionNumber value;
 
     @Override
-    public OverridableSwingWorker<VersionNumber> process(boolean showMessage) {
+    public OverridableSwingWorker<VersionNumber> process(final boolean showMessage) {
         return new OverridableSwingWorker() {
             @Override
             protected void work() throws Exception {

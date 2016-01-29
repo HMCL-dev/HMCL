@@ -87,11 +87,11 @@ public abstract class Task {
 
     public abstract String getInfo();
 
-    public Collection<Task> getDependTasks() {
+    public Collection<? extends Task> getDependTasks() {
         return null;
     }
 
-    public Collection<Task> getAfterTasks() {
+    public Collection<? extends Task> getAfterTasks() {
         return null;
     }
 

@@ -319,10 +319,10 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
     }//GEN-LAST:event_cboProfilesItemStateChanged
 
     private void cboVersionsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboVersionsItemStateChanged
-        if (isLoading || evt.getStateChange() != ItemEvent.SELECTED || cboVersions.getSelectedIndex() < 0 || StrUtils.isBlank((String) cboVersions.getSelectedItem()) || getCurrentProfile() == null)
+        if (isLoading || evt.getStateChange() != ItemEvent.SELECTED || cboVersions.getSelectedIndex() < 0 || StrUtils.isBlank((String) cboVersions.getSelectedItem()) || getProfile() == null)
             return;
         String mcv = (String) cboVersions.getSelectedItem();
-        getCurrentProfile().setSelectedMinecraftVersion(mcv);
+        getProfile().setSelectedMinecraftVersion(mcv);
     }//GEN-LAST:event_cboVersionsItemStateChanged
 
     @Override
@@ -379,18 +379,18 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
 
     // <editor-fold defaultstate="collapsed" desc="Game Launch">
     void genLaunchCode(final Consumer<GameLauncher> listener) {
-        if (isLaunching || getCurrentProfile() == null)
+        if (isLaunching || getProfile() == null)
             return;
         isLaunching = true;
         HMCLog.log("Start generating launching command...");
-        File file = getCurrentProfile().getCanonicalGameDirFile();
+        File file = getProfile().getCanonicalGameDirFile();
         if (!file.exists()) {
             HMCLog.warn("The minecraft path is wrong, please check it yourself.");
             MessageBox.ShowLocalized("minecraft.wrong_path");
             return;
         }
         final String name = (String) cboProfiles.getSelectedItem();
-        if (StrUtils.isBlank(name) || getCurrentProfile().getSelectedVersion() == null) {
+        if (StrUtils.isBlank(name) || getProfile().getSelectedVersion() == null) {
             HMCLog.warn("There's no selected version, rechoose a version.");
             MessageBox.ShowLocalized("minecraft.no_selected_version");
             return;
@@ -408,8 +408,8 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
             @Override
             public void run() {
                 Thread.currentThread().setName("Game Launcher");
-                DefaultGameLauncher gl = new DefaultGameLauncher(getCurrentProfile().createLaunchOptions(), getCurrentProfile().service(), li, l);
-                gl.setTag(getCurrentProfile().getLauncherVisibility());
+                DefaultGameLauncher gl = new DefaultGameLauncher(getProfile().getSelectedVersionSetting().createLaunchOptions(getProfile().getCanonicalGameDirFile()), getProfile().service(), li, l);
+                gl.setTag(getProfile().getSelectedVersionSetting().getLauncherVisibility());
                 gl.successEvent.register((sender, s) -> {
                     isLaunching = false;
                     return true;
@@ -478,10 +478,10 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
         isLoading = true;
         cboVersions.removeAllItems();
         int index = 0, i = 0;
-        getCurrentProfile().selectedVersionChangedEvent.register(this);
-        getCurrentProfile().service().version().refreshVersions();
-        String selVersion = getCurrentProfile().getSelectedVersion();
-        if (getCurrentProfile().service().version().getVersions().isEmpty()) {
+        getProfile().selectedVersionChangedEvent.register(this);
+        getProfile().service().version().refreshVersions();
+        String selVersion = getProfile().getSelectedVersion();
+        if (getProfile().service().version().getVersions().isEmpty()) {
             if (!showedNoVersion)
                 SwingUtilities.invokeLater(() -> {
                     if (MessageBox.Show(C.i18n("mainwindow.no_version"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
@@ -491,7 +491,7 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
                     showedNoVersion = true;
                 });
         } else {
-            for (MinecraftVersion mcVersion : getCurrentProfile().service().version().getVersions()) {
+            for (MinecraftVersion mcVersion : getProfile().service().version().getVersions()) {
                 if (mcVersion.hidden)
                     continue;
                 cboVersions.addItem(mcVersion.id);
@@ -628,7 +628,7 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
 
     }
 
-    public Profile getCurrentProfile() {
+    public Profile getProfile() {
         return Settings.getProfile((String) cboProfiles.getSelectedItem());
     }
 

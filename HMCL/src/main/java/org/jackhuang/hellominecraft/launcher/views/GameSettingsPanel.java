@@ -53,6 +53,8 @@ import org.jackhuang.hellominecraft.launcher.core.installers.InstallerType;
 import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
 import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.launcher.settings.DefaultMinecraftService;
+import org.jackhuang.hellominecraft.launcher.settings.VersionSetting;
 import org.jackhuang.hellominecraft.launcher.views.modpack.ModpackWizard;
 import org.jackhuang.hellominecraft.utils.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.utils.Event;
@@ -372,7 +374,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
         lblLauncherVisibility.setText(C.i18n("advancedsettings.launcher_visible")); // NOI18N
 
-        lblRunDirectory.setText(C.i18n("advancedsettings.run_directory")); // NOI18N
+        lblRunDirectory.setText(C.i18n("settings.run_directory")); // NOI18N
 
         cboRunDirectory.setModel(new javax.swing.DefaultComboBoxModel(new String[] { C.I18N.getString("advancedsettings.game_dir.default"), C.I18N.getString("advancedsettings.game_dir.independent") }));
         cboRunDirectory.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -446,7 +448,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                                 .addComponent(lblDimensionX)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(txtHeight, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 444, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 410, Short.MAX_VALUE)
                                 .addComponent(chkFullscreen))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlSettingsLayout.createSequentialGroup()
                                 .addComponent(txtMaxMemory)
@@ -508,7 +510,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
         tabVersionEdit.addTab(C.i18n("settings"), pnlSettings); // NOI18N
 
-        chkDebug.setText(C.i18n("advencedsettings.debug_mode")); // NOI18N
+        chkDebug.setText(C.i18n("advancedsettings.debug_mode")); // NOI18N
         chkDebug.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 chkDebugFocusLost(evt);
@@ -915,7 +917,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             Settings.getInstance().setLast((String) cboProfiles.getSelectedItem());
             if (getProfile().service().version().getVersionCount() <= 0)
                 versionChanged(null);
-            prepare(getProfile());
+            prepareProfile(getProfile());
         }
     }//GEN-LAST:event_cboProfilesItemStateChanged
 
@@ -974,45 +976,45 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }//GEN-LAST:event_btnModifyMouseClicked
 
     private void txtJavaArgsFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtJavaArgsFocusLost
-        getProfile().setJavaArgs(txtJavaArgs.getText());
+        getProfile().getSelectedVersionSetting().setJavaArgs(txtJavaArgs.getText());
     }//GEN-LAST:event_txtJavaArgsFocusLost
 
     private void txtMinecraftArgsFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtMinecraftArgsFocusLost
-        getProfile().setMinecraftArgs(txtMinecraftArgs.getText());
+        getProfile().getSelectedVersionSetting().setMinecraftArgs(txtMinecraftArgs.getText());
     }//GEN-LAST:event_txtMinecraftArgsFocusLost
 
     private void txtPermSizeFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtPermSizeFocusLost
-        getProfile().setPermSize(txtPermSize.getText());
+        getProfile().getSelectedVersionSetting().setPermSize(txtPermSize.getText());
     }//GEN-LAST:event_txtPermSizeFocusLost
 
     private void chkDebugFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_chkDebugFocusLost
-        getProfile().setDebug(chkDebug.isSelected());
+        getProfile().getSelectedVersionSetting().setDebug(chkDebug.isSelected());
     }//GEN-LAST:event_chkDebugFocusLost
 
     private void chkNoJVMArgsFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_chkNoJVMArgsFocusLost
-        getProfile().setNoJVMArgs(chkNoJVMArgs.isSelected());
+        getProfile().getSelectedVersionSetting().setNoJVMArgs(chkNoJVMArgs.isSelected());
     }//GEN-LAST:event_chkNoJVMArgsFocusLost
 
     private void chkCancelWrapperFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_chkCancelWrapperFocusLost
-        getProfile().setCanceledWrapper(chkCancelWrapper.isSelected());
+        getProfile().getSelectedVersionSetting().setCanceledWrapper(chkCancelWrapper.isSelected());
     }//GEN-LAST:event_chkCancelWrapperFocusLost
 
     private void txtPrecalledCommandFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtPrecalledCommandFocusLost
-        getProfile().setPrecalledCommand(txtPrecalledCommand.getText());
+        getProfile().getSelectedVersionSetting().setPrecalledCommand(txtPrecalledCommand.getText());
     }//GEN-LAST:event_txtPrecalledCommandFocusLost
 
     private void txtServerIPFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtServerIPFocusLost
-        getProfile().setServerIp(txtServerIP.getText());
+        getProfile().getSelectedVersionSetting().setServerIp(txtServerIP.getText());
     }//GEN-LAST:event_txtServerIPFocusLost
 
     private void cboRunDirectoryFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_cboRunDirectoryFocusLost
         if (cboRunDirectory.getSelectedIndex() >= 0)
-            getProfile().setGameDirType(GameDirType.values()[cboRunDirectory.getSelectedIndex()]);
+            getProfile().getSelectedVersionSetting().setGameDirType(GameDirType.values()[cboRunDirectory.getSelectedIndex()]);
     }//GEN-LAST:event_cboRunDirectoryFocusLost
 
     private void cboLauncherVisibilityFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_cboLauncherVisibilityFocusLost
         if (cboLauncherVisibility.getSelectedIndex() >= 0)
-            getProfile().setLauncherVisibility(LauncherVisibility.values()[cboLauncherVisibility.getSelectedIndex()]);
+            getProfile().getSelectedVersionSetting().setLauncherVisibility(LauncherVisibility.values()[cboLauncherVisibility.getSelectedIndex()]);
     }//GEN-LAST:event_cboLauncherVisibilityFocusLost
 
     private void btnDownloadAllAssetsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadAllAssetsActionPerformed
@@ -1021,23 +1023,23 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }//GEN-LAST:event_btnDownloadAllAssetsActionPerformed
 
     private void txtMaxMemoryFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtMaxMemoryFocusLost
-        getProfile().setMaxMemory(txtMaxMemory.getText());
+        getProfile().getSelectedVersionSetting().setMaxMemory(txtMaxMemory.getText());
     }//GEN-LAST:event_txtMaxMemoryFocusLost
 
     private void txtJavaDirFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtJavaDirFocusLost
-        getProfile().setJavaDir(txtJavaDir.getText());
+        getProfile().getSelectedVersionSetting().setJavaDir(txtJavaDir.getText());
     }//GEN-LAST:event_txtJavaDirFocusLost
 
     private void chkFullscreenFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_chkFullscreenFocusLost
-        getProfile().setFullscreen(chkFullscreen.isSelected());
+        getProfile().getSelectedVersionSetting().setFullscreen(chkFullscreen.isSelected());
     }//GEN-LAST:event_chkFullscreenFocusLost
 
     private void txtHeightFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtHeightFocusLost
-        getProfile().setHeight(txtHeight.getText());
+        getProfile().getSelectedVersionSetting().setHeight(txtHeight.getText());
     }//GEN-LAST:event_txtHeightFocusLost
 
     private void txtWidthFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtWidthFocusLost
-        getProfile().setWidth(txtWidth.getText());
+        getProfile().getSelectedVersionSetting().setWidth(txtWidth.getText());
     }//GEN-LAST:event_txtWidthFocusLost
 
     private void txtGameDirFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtGameDirFocusLost
@@ -1061,7 +1063,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         try {
             String path = fc.getSelectedFile().getCanonicalPath();
             txtJavaDir.setText(path);
-            getProfile().setJavaDir(txtJavaDir.getText());
+            getProfile().getSelectedVersionSetting().setJavaDir(txtJavaDir.getText());
         } catch (IOException e) {
             HMCLog.warn("Failed to set java path.", e);
             MessageBox.Show(C.i18n("ui.label.failed_set") + e.getMessage());
@@ -1074,9 +1076,9 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         int idx = cboJava.getSelectedIndex();
         if (idx != -1) {
             Java j = Java.JAVA.get(idx);
-            getProfile().setJava(j);
+            getProfile().getSelectedVersionSetting().setJava(j);
             txtJavaDir.setEnabled(idx == 1);
-            txtJavaDir.setText(j.getHome() == null ? getProfile().getSettingsJavaDir() : j.getJava());
+            txtJavaDir.setText(j.getHome() == null ? getProfile().getSelectedVersionSetting().getSettingsJavaDir() : j.getJava());
         }
     }//GEN-LAST:event_cboJavaItemStateChanged
 
@@ -1171,7 +1173,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             isLoading = true;
             cboProfiles.setSelectedIndex(index);
             isLoading = false;
-            prepare(getProfile());
+            prepareProfile(getProfile());
         }
     }
 
@@ -1179,15 +1181,26 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         return Settings.getProfile((String) cboProfiles.getSelectedItem());
     }
 
-    void prepare(Profile profile) {
+    final String mcVersion() {
+        return getProfile().getSelectedVersion();
+    }
+
+    void prepareProfile(Profile profile) {
         if (profile == null)
             return;
         profile.selectedVersionChangedEvent.register(this);
+        txtGameDir.setText(profile.getGameDir());
+
+        loadVersions();
+    }
+
+    void prepareVersionSetting(VersionSetting profile) {
+        if (profile == null)
+            return;
         txtWidth.setText(profile.getWidth());
         txtHeight.setText(profile.getHeight());
         txtMaxMemory.setText(profile.getMaxMemory());
         txtPermSize.setText(profile.getPermSize());
-        txtGameDir.setText(profile.getGameDir());
         txtJavaArgs.setText(profile.getJavaArgs());
         txtMinecraftArgs.setText(profile.getMinecraftArgs());
         txtJavaDir.setText(profile.getSettingsJavaDir());
@@ -1204,8 +1217,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         cboJava.setSelectedIndex(profile.getJavaIndexInAllJavas());
         isLoading = false;
         cboJavaItemStateChanged(new ItemEvent(cboJava, 0, cboJava.getSelectedItem(), ItemEvent.SELECTED));
-
-        loadVersions();
     }
 
     void loadVersions() {
@@ -1224,11 +1235,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             cboVersions.setSelectedIndex(index);
 
         reloadMods();
-
-        loadMinecraftVersion();
-    }
-
-    void loadMinecraftVersion() {
+        prepareVersionSetting(((DefaultMinecraftService) getProfile().service()).getVersionSetting(getProfile().getSelectedVersion()));
         loadMinecraftVersion(getProfile().getSelectedVersion());
     }
 
@@ -1309,6 +1316,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     // </editor-fold>
     public void versionChanged(String version) {
         this.mcVersion = version;
+        prepareVersionSetting(getProfile().getVersionSetting(version));
         for (InstallerPanel p : installerPanels)
             p.loadVersions();
     }

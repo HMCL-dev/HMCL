@@ -17,10 +17,8 @@
  */
 package org.jackhuang.hellominecraft.launcher.settings;
 
-import org.jackhuang.hellominecraft.launcher.utils.DefaultMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.api.IPlugin;
-import org.jackhuang.hellominecraft.launcher.settings.Settings;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.OfflineAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.SkinmeAuthenticator;
@@ -54,11 +52,14 @@ public class DefaultPlugin implements IPlugin {
         SKINME_LOGIN = new SkinmeAuthenticator(clientToken);
         SKINME_LOGIN.onLoadSettings(Settings.getInstance().getAuthenticatorConfig(SKINME_LOGIN.id()));
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            Settings.getInstance().setAuthenticatorConfig(OFFLINE_LOGIN.id(), OFFLINE_LOGIN.onSaveSettings());
-            Settings.getInstance().setAuthenticatorConfig(YGGDRASIL_LOGIN.id(), YGGDRASIL_LOGIN.onSaveSettings());
-            Settings.getInstance().setAuthenticatorConfig(SKINME_LOGIN.id(), SKINME_LOGIN.onSaveSettings());
-        }));
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                Settings.getInstance().setAuthenticatorConfig(OFFLINE_LOGIN.id(), OFFLINE_LOGIN.onSaveSettings());
+                Settings.getInstance().setAuthenticatorConfig(YGGDRASIL_LOGIN.id(), YGGDRASIL_LOGIN.onSaveSettings());
+                Settings.getInstance().setAuthenticatorConfig(SKINME_LOGIN.id(), SKINME_LOGIN.onSaveSettings());
+            }
+        });
         apply.accept(OFFLINE_LOGIN);
         apply.accept(YGGDRASIL_LOGIN);
         apply.accept(SKINME_LOGIN);

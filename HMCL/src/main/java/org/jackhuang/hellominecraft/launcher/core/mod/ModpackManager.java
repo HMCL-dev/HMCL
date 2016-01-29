@@ -33,12 +33,12 @@ import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.utils.functions.BiFunction;
+import org.jackhuang.hellominecraft.utils.functions.Predicate;
 import org.jackhuang.hellominecraft.utils.system.Compressor;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.ZipEngine;
 import org.jackhuang.hellominecraft.utils.tasks.Task;
 import org.jackhuang.hellominecraft.utils.version.MinecraftVersionRequest;
-import org.jackhuang.hellominecraft.utils.views.wizard.spi.ResultProgressHandle;
 
 /**
  * A mod pack(*.zip) includes these things:
@@ -60,7 +60,7 @@ import org.jackhuang.hellominecraft.utils.views.wizard.spi.ResultProgressHandle;
  */
 public final class ModpackManager {
 
-    public static Task install(File input, IMinecraftService service, String id) {
+    public static Task install(final File input, final IMinecraftService service, final String id) {
         return new Task() {
             Collection<Task> c = new ArrayList<>();
 
@@ -87,12 +87,15 @@ public final class ModpackManager {
                 }
 
                 try {
-                    AtomicInteger b = new AtomicInteger(0);
+                    final AtomicInteger b = new AtomicInteger(0);
                     HMCLog.log("Decompressing modpack");
-                    Compressor.unzip(input, versions, t -> {
-                                     if (t.equals("minecraft/pack.json"))
-                                         b.incrementAndGet();
-                                     return true;
+                    Compressor.unzip(input, versions, new Predicate<String>() {
+                                     @Override
+                                     public boolean apply(String t) {
+                                         if (t.equals("minecraft/pack.json"))
+                                             b.incrementAndGet();
+                                         return true;
+                                     }
                                  }, true);
                     if (b.get() < 1)
                         throw new FileNotFoundException(C.i18n("modpack.incorrect_format.no_json"));
@@ -138,33 +141,39 @@ public final class ModpackManager {
 
     }
 
-    public static final List<String> MODPACK_BLACK_LIST = Arrays.asList(new String[] { "usernamecache.json", "asm", "logs", "backups", "versions", "assets", "usercache.json", "libraries", "crash-reports", "launcher_profiles.json", "NVIDIA", "TCNodeTracker", "screenshots", "natives", "native" });
+    public static final List<String> MODPACK_BLACK_LIST = Arrays.asList(new String[] { "usernamecache.json", "asm", "logs", "backups", "versions", "assets", "usercache.json", "libraries", "crash-reports", "launcher_profiles.json", "NVIDIA", "TCNodeTracker", "screenshots", "natives", "native", "hmclversion.cfg", "pack.json" });
     public static final List<String> MODPACK_SUGGESTED_BLACK_LIST = Arrays.asList(new String[] { "saves", "servers.dat", "options.txt", "optionsshaders.txt", "mods/VoxelMods" });
 
     /**
      * &lt; String, Boolean, Boolean &gt;: Folder/File name, Is Directory,
      * Return 0: non blocked, 1: non shown, 2: suggested, checked.
      */
-    public static final BiFunction<String, Boolean, Integer> MODPACK_PREDICATE = (String x, Boolean y) -> {
-        if (ModpackManager.MODPACK_BLACK_LIST_PREDICATE.apply(x, y))
-            return 1;
-        if (ModpackManager.MODPACK_SUGGESTED_BLACK_LIST_PREDICATE.apply(x, y))
-            return 2;
-        return 0;
+    public static final BiFunction<String, Boolean, Integer> MODPACK_PREDICATE = new BiFunction<String, Boolean, Integer>() {
+        @Override
+        public Integer apply(String x, Boolean y) {
+            if (ModpackManager.MODPACK_BLACK_LIST_PREDICATE.apply(x, y))
+                return 1;
+            if (ModpackManager.MODPACK_SUGGESTED_BLACK_LIST_PREDICATE.apply(x, y))
+                return 2;
+            return 0;
+        }
     };
 
     public static final BiFunction<String, Boolean, Boolean> MODPACK_BLACK_LIST_PREDICATE = modpackPredicateMaker(MODPACK_BLACK_LIST);
     public static final BiFunction<String, Boolean, Boolean> MODPACK_SUGGESTED_BLACK_LIST_PREDICATE = modpackPredicateMaker(MODPACK_SUGGESTED_BLACK_LIST);
 
-    private static BiFunction<String, Boolean, Boolean> modpackPredicateMaker(List<String> l) {
-        return (String x, Boolean y) -> {
-            for (String s : l)
-                if (y) {
-                    if (x.startsWith(s + "/"))
+    private static BiFunction<String, Boolean, Boolean> modpackPredicateMaker(final List<String> l) {
+        return new BiFunction<String, Boolean, Boolean>() {
+            @Override
+            public Boolean apply(String x, Boolean y) {
+                for (String s : l)
+                    if (y) {
+                        if (x.startsWith(s + "/"))
+                            return true;
+                    } else if (x.equals(s))
                         return true;
-                } else if (x.equals(s))
-                    return true;
-            return false;
+                return false;
+            }
         };
     }
 
@@ -179,29 +188,34 @@ public final class ModpackManager {
      * @throws IOException if create tmp directory failed
      */
     public static void export(File output, IMinecraftProvider provider, String version, List<String> blacklist) throws IOException, GameException {
-        ArrayList<String> b = new ArrayList<>(MODPACK_BLACK_LIST);
+        final ArrayList<String> b = new ArrayList<>(MODPACK_BLACK_LIST);
         if (blacklist != null)
             b.addAll(blacklist);
+        b.add(version + ".jar");
+        b.add(version + ".json");
         HMCLog.log("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
         ZipEngine zip = null;
         try {
             zip = new ZipEngine(output);
-            zip.putDirectory(provider.getRunDirectory(version), (String x, Boolean y) -> {
-                             for (String s : b)
-                                 if (y) {
-                                     if (x.startsWith(s + "/"))
+            zip.putDirectory(provider.getRunDirectory(version), new BiFunction<String, Boolean, String>() {
+                             @Override
+                             public String apply(String x, Boolean y) {
+                                 for (String s : b)
+                                     if (y) {
+                                         if (x.startsWith(s + "/"))
+                                             return null;
+                                     } else if (x.equals(s))
                                          return null;
-                                 } else if (x.equals(s))
-                                     return null;
-                             return "minecraft/" + x;
+                                 return "minecraft/" + x;
+                             }
                          });
 
             MinecraftVersion mv = provider.getVersionById(version).resolve(provider);
-            mv.runDir = "version";
             MinecraftVersionRequest r = MinecraftVersionRequest.minecraftVersion(provider.getMinecraftJar(version));
             if (r.type != MinecraftVersionRequest.OK)
                 throw new FileSystemException(C.i18n("modpack.cannot_read_version") + ": " + MinecraftVersionRequest.getResponse(r));
             mv.jar = r.version;
+            mv.runDir = "version";
             zip.putTextFile(C.gsonPrettyPrinting.toJson(mv), "minecraft/pack.json");
         } finally {
             if (zip != null)

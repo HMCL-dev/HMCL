@@ -45,6 +45,7 @@ import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.UpdateChecker;
 import org.jackhuang.hellominecraft.utils.Utils;
 import org.jackhuang.hellominecraft.utils.VersionNumber;
+import org.jackhuang.hellominecraft.utils.functions.Consumer;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.system.OS;
@@ -89,34 +90,37 @@ public class AppDataUpgrader extends IUpgrader {
     }
 
     @Override
-    public boolean call(Object sender, VersionNumber number) {
-        ((UpdateChecker) sender).requestDownloadLink().reg(map -> {
-            if (map != null && map.containsKey("pack"))
-                try {
-                    if (TaskWindow.getInstance().addTask(new AppDataUpgraderTask(map.get("pack"), number.version)).start()) {
-                        new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderTask.getSelf(number.version).getAbsolutePath() }).directory(new File(".")).start();
-                        System.exit(0);
+    public boolean call(Object sender, final VersionNumber number) {
+        ((UpdateChecker) sender).requestDownloadLink().reg(new Consumer<Map<String, String>>() {
+            @Override
+            public void accept(Map<String, String> map) {
+                if (map != null && map.containsKey("pack"))
+                    try {
+                        if (TaskWindow.getInstance().addTask(new AppDataUpgraderTask(map.get("pack"), number.version)).start()) {
+                            new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderTask.getSelf(number.version).getAbsolutePath() }).directory(new File(".")).start();
+                            System.exit(0);
+                        }
+                    } catch (IOException ex) {
+                        HMCLog.err("Failed to create upgrader", ex);
                     }
-                } catch (IOException ex) {
-                    HMCLog.err("Failed to create upgrader", ex);
-                }
-            if (MessageBox.Show(C.i18n("update.newest_version") + number.firstVer + "." + number.secondVer + "." + number.thirdVer + "\n"
-                                + C.i18n("update.should_open_link"),
-                                MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
-                String url = C.URL_PUBLISH;
-                if (map != null)
-                    if (map.containsKey(OS.os().checked_name))
-                        url = map.get(OS.os().checked_name);
-                    else if (map.containsKey(OS.UNKOWN.checked_name))
-                        url = map.get(OS.UNKOWN.checked_name);
-                if (url == null)
-                    url = C.URL_PUBLISH;
-                try {
-                    java.awt.Desktop.getDesktop().browse(new URI(url));
-                } catch (URISyntaxException | IOException e) {
-                    HMCLog.warn("Failed to browse uri: " + url, e);
-                    Utils.setClipborad(url);
-                    MessageBox.Show(C.i18n("update.no_browser"));
+                if (MessageBox.Show(C.i18n("update.newest_version") + number.firstVer + "." + number.secondVer + "." + number.thirdVer + "\n"
+                                    + C.i18n("update.should_open_link"),
+                                    MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
+                    String url = C.URL_PUBLISH;
+                    if (map != null)
+                        if (map.containsKey(OS.os().checked_name))
+                            url = map.get(OS.os().checked_name);
+                        else if (map.containsKey(OS.UNKOWN.checked_name))
+                            url = map.get(OS.UNKOWN.checked_name);
+                    if (url == null)
+                        url = C.URL_PUBLISH;
+                    try {
+                        java.awt.Desktop.getDesktop().browse(new URI(url));
+                    } catch (URISyntaxException | IOException e) {
+                        HMCLog.warn("Failed to browse uri: " + url, e);
+                        Utils.setClipborad(url);
+                        MessageBox.Show(C.i18n("update.no_browser"));
+                    }
                 }
             }
         }).execute();
@@ -142,7 +146,7 @@ public class AppDataUpgrader extends IUpgrader {
         }
 
         @Override
-        public Collection<Task> getDependTasks() {
+        public Collection<? extends Task> getDependTasks() {
             return Arrays.asList(new FileDownloadTask(downloadLink, tempFile));
         }
 

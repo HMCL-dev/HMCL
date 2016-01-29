@@ -79,15 +79,15 @@ public class TaskList extends Thread {
         public void run() {
             executeTask(task);
             s.remove(this);
-            threadPool.remove(this);
+            THREAD_POOL.remove(this);
         }
 
     }
 
-    static final Set<InvokeThread> threadPool = Collections.synchronizedSet(new HashSet<InvokeThread>());
-    static final Set<Task> taskPool = Collections.synchronizedSet(new HashSet<Task>());
+    static final Set<InvokeThread> THREAD_POOL = Collections.synchronizedSet(new HashSet<InvokeThread>());
+    static final Set<Task> TASK_POOL = Collections.synchronizedSet(new HashSet<Task>());
 
-    private void processTasks(Collection<Task> c) {
+    private void processTasks(Collection<? extends Task> c) {
         if (c == null)
             return;
         this.totTask += c.size();
@@ -95,7 +95,7 @@ public class TaskList extends Thread {
         for (Task t2 : c) {
             t2.setParallelExecuting(true);
             InvokeThread thread = new InvokeThread(t2, runningThread);
-            threadPool.add(thread);
+            THREAD_POOL.add(thread);
             runningThread.add(thread);
             thread.start();
         }
@@ -147,7 +147,7 @@ public class TaskList extends Thread {
     public void run() {
         Thread.currentThread().setName("TaskList");
 
-        threadPool.clear();
+        THREAD_POOL.clear();
         totTask = taskQueue.size();
         while (!taskQueue.isEmpty())
             executeTask(taskQueue.remove(0));
@@ -162,12 +162,12 @@ public class TaskList extends Thread {
 
     public void abort() {
         shouldContinue = false;
-        while (!threadPool.isEmpty())
-            synchronized (threadPool) {
-                InvokeThread it = threadPool.iterator().next();
+        while (!THREAD_POOL.isEmpty())
+            synchronized (THREAD_POOL) {
+                InvokeThread it = THREAD_POOL.iterator().next();
                 if (!it.task.abort())
                     it.interrupt();
-                threadPool.remove(it);
+                THREAD_POOL.remove(it);
             }
         this.interrupt();
     }

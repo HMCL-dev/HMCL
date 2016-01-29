@@ -68,6 +68,8 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public void refreshVersions() {
+        onRefreshingVersions.execute(null);
+
         try {
             MCUtils.tryWriteProfile(service.baseDirectory());
         } catch (IOException ex) {
@@ -140,15 +142,22 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                     for (MinecraftLibrary ml : mcVersion.libraries)
                         ml.init();
                 versions.put(id, mcVersion);
+                onLoadedVersion.execute(id);
             } catch (Exception e) {
                 HMCLog.warn("Ignoring: " + dir + ", the json of this Minecraft is malformed.", e);
             }
         }
+        onRefreshedVersions.execute(null);
+    }
+
+    @Override
+    public File versionRoot(String id) {
+        return new File(service.baseDirectory(), "versions/" + id);
     }
 
     @Override
     public boolean removeVersionFromDisk(String name) {
-        File version = new File(service.baseDirectory(), "versions/" + name);
+        File version = versionRoot(name);
         if (!version.exists())
             return true;
 
@@ -159,12 +168,12 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public boolean renameVersion(String from, String to) {
         try {
-            File fromJson = new File(service.baseDirectory(), "versions/" + from + "/" + from + ".json");
+            File fromJson = new File(versionRoot(from), from + ".json");
             MinecraftVersion mcVersion = C.gson.fromJson(FileUtils.readFileToString(fromJson), MinecraftVersion.class);
             mcVersion.id = to;
             FileUtils.writeQuietly(fromJson, C.gsonPrettyPrinting.toJson(mcVersion));
-            File toDir = new File(service.baseDirectory(), "versions/" + to);
-            new File(service.baseDirectory(), "versions/" + from).renameTo(toDir);
+            File toDir = versionRoot(to);
+            versionRoot(from).renameTo(toDir);
             File toJson = new File(toDir, to + ".json");
             File toJar = new File(toDir, to + ".jar");
             new File(toDir, from + ".json").renameTo(toJson);
@@ -180,14 +189,9 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public File getRunDirectory(String id) {
-        if ("version".equals(versions.get(id).runDir))
-            return new File(service.baseDirectory(), "versions/" + id + "/");
-        switch (gameDirType) {
-        case VERSION_FOLDER:
-            return new File(service.baseDirectory(), "versions/" + id + "/");
-        default:
-            return service.baseDirectory();
-        }
+        if ("version".equals(getVersionById(id).runDir))
+            return versionRoot(id);
+        return baseDirectory();
     }
 
     @Override
@@ -195,7 +199,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
         MinecraftVersion v = service.download().downloadMinecraft(id);
         if (callback != null) {
             callback.accept(v);
-            File mvt = new File(service.baseDirectory(), "versions/" + id + "/" + id + ".json");
+            File mvt = new File(versionRoot(id), id + ".json");
             FileUtils.writeQuietly(mvt, C.gsonPrettyPrinting.toJson(v));
         }
         if (v != null) {
@@ -265,9 +269,9 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public void cleanFolder() {
         for (MinecraftVersion s : getVersions()) {
-            FileUtils.deleteDirectoryQuietly(new File(service.baseDirectory(), "versions" + File.separator + s.id + File.separator + s.id + "-natives"));
+            FileUtils.deleteDirectoryQuietly(new File(versionRoot(s.id), s.id + "-natives"));
             File f = getRunDirectory(s.id);
-            String[] dir = { "logs", "asm", "NVIDIA", "crash-reports", "server-resource-packs", "natives", "native" };
+            String[] dir = { "asm", "NVIDIA", "server-resource-packs", "natives", "native" };
             for (String str : dir)
                 FileUtils.deleteDirectoryQuietly(new File(f, str));
             String[] files = { "output-client.log", "usercache.json", "usernamecache.json", "hmclmc.log" };

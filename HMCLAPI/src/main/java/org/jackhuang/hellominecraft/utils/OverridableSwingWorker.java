@@ -46,11 +46,13 @@ public abstract class OverridableSwingWorker<T> extends SwingWorker<Void, T> {
     }
 
     public OverridableSwingWorker reg(Consumer<T> c) {
+        Utils.requireNonNull(c);
         processListeners.add(c);
         return this;
     }
 
     public OverridableSwingWorker regDone(Runnable c) {
+        Utils.requireNonNull(c);
         doneListeners.add(c);
         return this;
     }

@@ -20,21 +20,20 @@ package org.jackhuang.hellominecraft.launcher.settings;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import org.jackhuang.hellominecraft.utils.C;
 import org.jackhuang.hellominecraft.utils.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.utils.CollectionUtils;
+import org.jackhuang.hellominecraft.utils.Event;
 import org.jackhuang.hellominecraft.utils.system.FileUtils;
 import org.jackhuang.hellominecraft.utils.system.IOUtils;
 import org.jackhuang.hellominecraft.utils.MessageBox;
 import org.jackhuang.hellominecraft.utils.UpdateChecker;
 import org.jackhuang.hellominecraft.utils.VersionNumber;
+import org.jackhuang.hellominecraft.utils.functions.Predicate;
 
 /**
  *
@@ -56,9 +55,12 @@ public final class Settings {
 
     static {
         SETTINGS = initSettings();
-        SETTINGS.downloadTypeChangedEvent.register((s, t) -> {
-            DownloadType.setSuggestedDownloadType(t);
-            return true;
+        SETTINGS.downloadTypeChangedEvent.register(new Event<DownloadType>() {
+            @Override
+            public boolean call(Object sender, DownloadType t) {
+                DownloadType.setSuggestedDownloadType(t);
+                return true;
+            }
         });
         DownloadType.setSuggestedDownloadType(SETTINGS.getDownloadSource());
         if (!getProfiles().containsKey(DEFAULT_PROFILE))
@@ -66,9 +68,12 @@ public final class Settings {
 
         for (Profile e : getProfiles().values()) {
             e.checkFormat();
-            e.propertyChanged.register((sender, t) -> {
-                save();
-                return true;
+            e.propertyChanged.register(new Event<String>() {
+                @Override
+                public boolean call(Object sender, String t) {
+                    save();
+                    return true;
+                }
             });
         }
     }
@@ -121,7 +126,12 @@ public final class Settings {
     }
 
     public static Collection<Profile> getProfilesFiltered() {
-        return CollectionUtils.map(getProfiles().values(), (t) -> t != null && t.getName() != null);
+        return CollectionUtils.map(getProfiles().values(), new Predicate<Profile>() {
+                                   @Override
+                                   public boolean apply(Profile t) {
+                                       return t != null && t.getName() != null;
+                                   }
+                               });
     }
 
     public static Profile getOneProfile() {

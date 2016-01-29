@@ -43,7 +43,7 @@ public class AssetsMojangLoader extends IAssetsHandler {
     }
 
     @Override
-    public OverridableSwingWorker<String[]> getList(MinecraftVersion mv, IMinecraftAssetService mp) {
+    public OverridableSwingWorker<String[]> getList(final MinecraftVersion mv, final IMinecraftAssetService mp) {
         return new OverridableSwingWorker<String[]>() {
             @Override
             protected void work() throws Exception {

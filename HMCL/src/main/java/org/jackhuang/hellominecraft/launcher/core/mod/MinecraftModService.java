@@ -74,7 +74,8 @@ public class MinecraftModService extends IMinecraftModService {
                             }
                 }
         Collections.sort(mods);
-        return modCache.put(id, mods);
+        modCache.put(id, mods);
+        return mods;
     }
 
     @Override

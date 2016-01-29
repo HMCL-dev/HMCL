@@ -106,7 +106,12 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                 System.out.println(text);
 
             if (checkThrowable(e) && !System.getProperty("java.vm.name").contains("OpenJDK")) {
-                SwingUtilities.invokeLater(() -> LogWindow.INSTANCE.showAsCrashWindow(Settings.UPDATE_CHECKER.OUT_DATED));
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        LogWindow.INSTANCE.showAsCrashWindow(Settings.UPDATE_CHECKER.OUT_DATED);
+                    }
+                });
                 if (!Settings.UPDATE_CHECKER.OUT_DATED)
                     reportToServer(text, s);
             }
@@ -127,20 +132,23 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
     private static final HashSet<String> THROWABLE_SET = new HashSet<>();
 
-    void reportToServer(String text, String stacktrace) {
+    void reportToServer(final String text, String stacktrace) {
         if (THROWABLE_SET.contains(stacktrace))
             return;
         THROWABLE_SET.add(stacktrace);
-        new Thread(() -> {
-            HashMap<String, String> map = new HashMap<>();
-            map.put("CrashReport", text);
-            try {
-                System.out.println(NetUtils.post(NetUtils.constantURL("http://huangyuhui.duapp.com/crash.php"), map));
-            } catch (IOException ex) {
-                System.out.println("Failed to send post request to HMCL server.");
-                ex.printStackTrace();
+        new Thread() {
+            @Override
+            public void run() {
+                HashMap<String, String> map = new HashMap<>();
+                map.put("CrashReport", text);
+                try {
+                    System.out.println(NetUtils.post(NetUtils.constantURL("http://huangyuhui.duapp.com/crash.php"), map));
+                } catch (IOException ex) {
+                    System.out.println("Failed to send post request to HMCL server.");
+                    ex.printStackTrace();
+                }
             }
-        }).start();
+        }.start();
     }
 
 }

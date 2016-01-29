@@ -29,7 +29,7 @@ import org.jackhuang.hellominecraft.utils.system.JdkVersion;
  */
 public class LaunchOptions {
 
-    private String name, versionName, javaArgs, minecraftArgs, maxMemory, permSize, width, height, userProperties, serverIp;
+    private String name, versionName, javaArgs, minecraftArgs, maxMemory, permSize, width, height, serverIp;
     private String proxyHost, proxyPort, proxyUser, proxyPass, javaDir, launchVersion;
     private boolean fullscreen, debug, noJVMArgs, canceledWrapper;
     private JdkVersion java;
@@ -112,16 +112,6 @@ public class LaunchOptions {
 
     public void setHeight(String height) {
         this.height = height;
-    }
-
-    public String getUserProperties() {
-        if (userProperties == null)
-            return "";
-        return userProperties;
-    }
-
-    public void setUserProperties(String userProperties) {
-        this.userProperties = userProperties;
     }
 
     public boolean isFullscreen() {
