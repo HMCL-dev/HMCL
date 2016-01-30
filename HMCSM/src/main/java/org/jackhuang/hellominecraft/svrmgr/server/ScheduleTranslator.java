@@ -17,9 +17,12 @@
  */
 package org.jackhuang.hellominecraft.svrmgr.server;
 
+import org.jackhuang.hellominecraft.svrmgr.server.schedule.AutoBackupSchedule;
+import org.jackhuang.hellominecraft.svrmgr.server.schedule.AutoRestartSchedule;
+import org.jackhuang.hellominecraft.svrmgr.server.schedule.AutoSaveSchedule;
+import org.jackhuang.hellominecraft.svrmgr.server.schedule.AutoBroadcastSchedule;
 import java.util.TimerTask;
-import org.jackhuang.hellominecraft.svrmgr.server.schedules.*;
-import org.jackhuang.hellominecraft.svrmgr.settings.Schedule;
+import org.jackhuang.hellominecraft.svrmgr.setting.Schedule;
 
 /**
  *
