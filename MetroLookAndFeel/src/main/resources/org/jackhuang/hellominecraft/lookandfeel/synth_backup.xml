@@ -58,7 +58,7 @@
     <!-- ########################################################################################################### -->
 
     <style id="button">
-        <object id="ButtonPainter" class="org.jackhuang.hellominecraft.lookandfeel.painters.ButtonPainter"/>
+        <object id="ButtonPainter" class="org.jackhuang.hellominecraft.lookandfeel.painter.ButtonPainter"/>
         <painter idref="ButtonPainter"/>
         <state value="DISABLED">
             <color value="#ACAEB2" type="TEXT_FOREGROUND"/>
@@ -70,7 +70,7 @@
     </style>
     <bind style="button" type="region" key="Button"/>
     <style id="togglebutton">
-        <object id="ButtonPainter" class="org.jackhuang.hellominecraft.lookandfeel.painters.ButtonPainter"/>
+        <object id="ButtonPainter" class="org.jackhuang.hellominecraft.lookandfeel.painter.ButtonPainter"/>
         <painter idref="ButtonPainter"/>
         <state value="DISABLED">
             <color value="#ACAEB2" type="TEXT_FOREGROUND"/>
@@ -160,7 +160,7 @@
     <!-- ########################################################################################################### -->
 
     <style id="textfield">
-        <object id="TextFieldPainter" class="org.jackhuang.hellominecraft.lookandfeel.painters.TextFieldPainter"/>
+        <object id="TextFieldPainter" class="org.jackhuang.hellominecraft.lookandfeel.painter.TextFieldPainter"/>
         <painter idref="TextFieldPainter"/>
         <state>
             <font name="微软雅黑" size="12" />
@@ -177,7 +177,7 @@
     <!-- ########################################################################################################### -->
 
     <style id="scrollpane">
-        <object id="TextFieldPainter" class="org.jackhuang.hellominecraft.lookandfeel.painters.TextFieldPainter"/>
+        <object id="TextFieldPainter" class="org.jackhuang.hellominecraft.lookandfeel.painter.TextFieldPainter"/>
         <painter idref="TextFieldPainter"/>
         <insets top="4" left="6" bottom="4" right="6"/>
     </style>
@@ -238,7 +238,7 @@
     <!-- ########################################################################################################### -->
 
     <style id="progress">
-        <object id="ProgressPainter" class="org.jackhuang.hellominecraft.lookandfeel.painters.ProgressPainter" />
+        <object id="ProgressPainter" class="org.jackhuang.hellominecraft.lookandfeel.painter.ProgressPainter" />
         <painter idref="ProgressPainter"/>
         <property key="ProgressBar.horizontalSize" type="dimension" value="50 20"/>
         <property key="ProgressBar.vertictalSize" type="dimension" value="20 50"/>
