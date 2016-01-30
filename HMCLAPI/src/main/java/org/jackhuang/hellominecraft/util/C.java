@@ -1,5 +1,5 @@
 /*
- * Hello Minecraft! Launcher.
+ * Hello Minecraft!.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -28,8 +28,7 @@ import java.util.ResourceBundle;
  */
 public final class C {
 
-    public static final Gson gsonPrettyPrinting = new GsonBuilder().setPrettyPrinting().create();
-    public static final Gson gson = new Gson();
+    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public static final ResourceBundle I18N;
 

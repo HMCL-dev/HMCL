@@ -102,7 +102,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
         File objectsDir = new File(assetsDir, "objects");
         File indexFile = new File(indexDir, assetVersion + ".json");
         try {
-            AssetsIndex index = (AssetsIndex) C.gson.fromJson(FileUtils.readFileToString(indexFile, "UTF-8"), AssetsIndex.class);
+            AssetsIndex index = (AssetsIndex) C.GSON.fromJson(FileUtils.readFileToString(indexFile, "UTF-8"), AssetsIndex.class);
 
             String hash = ((AssetsObject) index.getFileMap().get(name)).getHash();
             return new File(objectsDir, hash.substring(0, 2) + "/" + hash);

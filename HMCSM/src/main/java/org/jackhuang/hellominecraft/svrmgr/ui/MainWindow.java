@@ -2974,7 +2974,7 @@ public final class MainWindow extends javax.swing.JFrame
             javax.swing.JTable table = MainWindow.this.lstDownloads;
             DefaultTableModel model = (DefaultTableModel) table.getModel();
 
-            MinecraftRemoteVersions v = C.gson.fromJson(task.getResult(), MinecraftRemoteVersions.class);
+            MinecraftRemoteVersions v = C.GSON.fromJson(task.getResult(), MinecraftRemoteVersions.class);
             for (MinecraftRemoteVersion ver : v.versions) {
                 String[] line = new String[4];
                 line[0] = ver.id;

@@ -128,7 +128,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
             return false;
 
         try {
-            AssetsIndex index = (AssetsIndex) C.gson.fromJson(FileUtils.readFileToString(indexFile, "UTF-8"), AssetsIndex.class);
+            AssetsIndex index = (AssetsIndex) C.GSON.fromJson(FileUtils.readFileToString(indexFile, "UTF-8"), AssetsIndex.class);
 
             if (index == null)
                 return false;
@@ -155,7 +155,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         }
 
         try {
-            AssetsIndex index = (AssetsIndex) C.gson.fromJson(FileUtils.readFileToString(indexFile, "UTF-8"), AssetsIndex.class);
+            AssetsIndex index = (AssetsIndex) C.GSON.fromJson(FileUtils.readFileToString(indexFile, "UTF-8"), AssetsIndex.class);
 
             if (index == null)
                 return assetsDir;

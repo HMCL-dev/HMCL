@@ -140,6 +140,9 @@ public class YggdrasilAuthentication {
             String jsonResult = input == null ? NetUtils.get(url) : NetUtils.post(url, GSON.toJson(input), "application/json", proxy);
             Response response = (Response) GSON.fromJson(jsonResult, Response.class);
 
+            if (response == null)
+                throw new AuthenticationException("No valid response here");
+
             if (StrUtils.isNotBlank(response.error)) {
                 HMCLog.err("Failed to log in, the auth server returned an error: " + response.error + ", message: " + response.errorMessage + ", cause: " + response.cause);
                 if (response.errorMessage.contains("Invalid token"))

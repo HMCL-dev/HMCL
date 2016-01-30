@@ -62,7 +62,7 @@ public class DefaultMinecraftService extends IMinecraftService {
             if (f.exists()) {
                 String s = FileUtils.readFileToStringQuietly(f);
                 if (s != null)
-                    vs = C.gson.fromJson(s, VersionSetting.class);
+                    vs = C.GSON.fromJson(s, VersionSetting.class);
             }
             vs.id = id;
             versionSettings.put(id, vs);
@@ -90,7 +90,7 @@ public class DefaultMinecraftService extends IMinecraftService {
         if (!versionSettings.containsKey(id))
             return;
         File f = new File(provider.versionRoot(id), "hmclversion.cfg");
-        FileUtils.writeQuietly(f, C.gson.toJson(versionSettings.get(id)));
+        FileUtils.writeQuietly(f, C.GSON.toJson(versionSettings.get(id)));
     }
 
     @Override

@@ -34,7 +34,7 @@ public final class Profile {
 
     private String name, selectedMinecraftVersion = "", gameDir;
 
-    protected transient IMinecraftService service;
+    private transient IMinecraftService service;
     public transient final EventHandler<String> propertyChanged = new EventHandler<>(this);
 
     public Profile() {
@@ -74,9 +74,9 @@ public final class Profile {
 
     public String getSelectedVersion() {
         String v = selectedMinecraftVersion;
-        if (StrUtils.isBlank(v) || service.version().getVersionById(v) == null) {
-            if (service.version().getVersionCount() > 0)
-                v = service.version().getOneVersion().id;
+        if (StrUtils.isBlank(v) || service().version().getVersionById(v) == null) {
+            if (service().version().getVersionCount() > 0)
+                v = service().version().getOneVersion().id;
             if (StrUtils.isNotBlank(v))
                 setSelectedMinecraftVersion(v);
         }

@@ -105,7 +105,7 @@ public class ModInfo implements Comparable<ModInfo> {
     private static ModInfo getForgeModInfo(File f, ZipFile jar, ZipEntry entry) throws IOException {
         ModInfo i = new ModInfo();
         i.location = f;
-        List<ModInfo> m = C.gson.fromJson(new InputStreamReader(jar.getInputStream(entry)),
+        List<ModInfo> m = C.GSON.fromJson(new InputStreamReader(jar.getInputStream(entry)),
                                           new TypeToken<List<ModInfo>>() {
                                       }.getType());
         if (m != null && m.size() > 0) {
@@ -116,7 +116,7 @@ public class ModInfo implements Comparable<ModInfo> {
     }
 
     private static ModInfo getLiteLoaderModInfo(File f, ZipFile jar, ZipEntry entry) throws IOException {
-        ModInfo m = C.gson.fromJson(new InputStreamReader(jar.getInputStream(entry)),
+        ModInfo m = C.GSON.fromJson(new InputStreamReader(jar.getInputStream(entry)),
                                     ModInfo.class);
         if (m == null)
             m = new ModInfo();

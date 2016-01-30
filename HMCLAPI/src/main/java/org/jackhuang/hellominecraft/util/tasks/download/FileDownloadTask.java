@@ -1,5 +1,5 @@
 /*
- * Hello Minecraft! Launcher.
+ * Hello Minecraft!.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -107,7 +107,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                                   = (HttpURLConnection) url.openConnection();
 
                 connection.setConnectTimeout(5000);
-                connection.setRequestProperty("User-Agent", "Hello Minecraft! Launcher");
+                connection.setRequestProperty("User-Agent", "Hello Minecraft!");
 
                 // Connect to server.
                 connection.connect();

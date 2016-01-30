@@ -55,7 +55,7 @@ public class LiteLoaderVersionList extends InstallerVersionList {
         if (root != null)
             return;
 
-        root = C.gson.fromJson(s, LiteLoaderVersionsRoot.class);
+        root = C.GSON.fromJson(s, LiteLoaderVersionsRoot.class);
 
         versionMap = new HashMap<>();
         versions = new ArrayList<>();

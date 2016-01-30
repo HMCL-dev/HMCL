@@ -55,12 +55,9 @@ public final class Settings {
 
     static {
         SETTINGS = initSettings();
-        SETTINGS.downloadTypeChangedEvent.register(new Event<DownloadType>() {
-            @Override
-            public boolean call(Object sender, DownloadType t) {
-                DownloadType.setSuggestedDownloadType(t);
-                return true;
-            }
+        SETTINGS.downloadTypeChangedEvent.register((sender, t) -> {
+            DownloadType.setSuggestedDownloadType(t);
+            return true;
         });
         DownloadType.setSuggestedDownloadType(SETTINGS.getDownloadSource());
         if (!getProfiles().containsKey(DEFAULT_PROFILE))
@@ -68,12 +65,9 @@ public final class Settings {
 
         for (Profile e : getProfiles().values()) {
             e.checkFormat();
-            e.propertyChanged.register(new Event<String>() {
-                @Override
-                public boolean call(Object sender, String t) {
-                    save();
-                    return true;
-                }
+            e.propertyChanged.register((sender, t) -> {
+                save();
+                return true;
             });
         }
     }
@@ -86,7 +80,7 @@ public final class Settings {
                 if (str == null || str.trim().equals(""))
                     HMCLog.log("Settings file is empty, use the default settings.");
                 else {
-                    Config d = C.gsonPrettyPrinting.fromJson(str, Config.class);
+                    Config d = C.GSON.fromJson(str, Config.class);
                     if (d != null)
                         c = d;
                 }
@@ -105,7 +99,7 @@ public final class Settings {
 
     public static void save() {
         try {
-            FileUtils.write(SETTINGS_FILE, C.gsonPrettyPrinting.toJson(SETTINGS));
+            FileUtils.write(SETTINGS_FILE, C.GSON.toJson(SETTINGS));
         } catch (IOException ex) {
             HMCLog.err("Failed to save config", ex);
         }
@@ -126,12 +120,7 @@ public final class Settings {
     }
 
     public static Collection<Profile> getProfilesFiltered() {
-        return CollectionUtils.map(getProfiles().values(), new Predicate<Profile>() {
-                                   @Override
-                                   public boolean apply(Profile t) {
-                                       return t != null && t.getName() != null;
-                                   }
-                               });
+        return CollectionUtils.map(getProfiles().values(), t -> t != null && t.getName() != null);
     }
 
     public static Profile getOneProfile() {

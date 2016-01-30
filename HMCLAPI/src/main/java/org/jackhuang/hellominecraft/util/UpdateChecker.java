@@ -1,5 +1,5 @@
 /*
- * Hello Minecraft! Launcher.
+ * Hello Minecraft!.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -74,7 +74,7 @@ public final class UpdateChecker implements IUpdateChecker {
             protected void work() throws Exception {
                 if (download_link == null)
                     try {
-                        download_link = C.gson.fromJson(NetUtils.get("http://huangyuhui.duapp.com/update_link.php?type=" + type), Map.class);
+                        download_link = C.GSON.fromJson(NetUtils.get("http://huangyuhui.duapp.com/update_link.php?type=" + type), Map.class);
                     } catch (Exception e) {
                         HMCLog.warn("Failed to get update link.", e);
                     }

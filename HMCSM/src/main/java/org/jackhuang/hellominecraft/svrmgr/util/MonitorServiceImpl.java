@@ -1,5 +1,5 @@
 /*
- * Hello Minecraft! Launcher.
+ * Hello Minecraft! Server Manager.
  * Copyright (C) 2013  huangyuhui
  *
  * This program is free software: you can redistribute it and/or modify

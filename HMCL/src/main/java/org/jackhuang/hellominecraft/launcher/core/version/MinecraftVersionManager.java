@@ -113,7 +113,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
             }
             MinecraftVersion mcVersion;
             try {
-                mcVersion = C.gson.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
+                mcVersion = C.GSON.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
                 if (mcVersion == null)
                     throw new GameException("Wrong json format, got null.");
             } catch (IOException | GameException e) {
@@ -121,7 +121,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                 if (MessageBox.Show(C.i18n("launcher.versions_json_not_formatted", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
                     service.download().downloadMinecraftVersionJson(id);
                     try {
-                        mcVersion = C.gson.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
+                        mcVersion = C.GSON.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
                         if (mcVersion == null)
                             throw new GameException("Wrong json format, got null.");
                     } catch (IOException | GameException ex) {
@@ -135,7 +135,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                 if (!id.equals(mcVersion.id)) {
                     HMCLog.warn("Found: " + dir + ", it contains id: " + mcVersion.id + ", expected: " + id + ", this app will fix this problem.");
                     mcVersion.id = id;
-                    FileUtils.writeQuietly(jsonFile, C.gsonPrettyPrinting.toJson(mcVersion));
+                    FileUtils.writeQuietly(jsonFile, C.GSON.toJson(mcVersion));
                 }
 
                 if (mcVersion.libraries != null)
@@ -169,9 +169,9 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     public boolean renameVersion(String from, String to) {
         try {
             File fromJson = new File(versionRoot(from), from + ".json");
-            MinecraftVersion mcVersion = C.gson.fromJson(FileUtils.readFileToString(fromJson), MinecraftVersion.class);
+            MinecraftVersion mcVersion = C.GSON.fromJson(FileUtils.readFileToString(fromJson), MinecraftVersion.class);
             mcVersion.id = to;
-            FileUtils.writeQuietly(fromJson, C.gsonPrettyPrinting.toJson(mcVersion));
+            FileUtils.writeQuietly(fromJson, C.GSON.toJson(mcVersion));
             File toDir = versionRoot(to);
             versionRoot(from).renameTo(toDir);
             File toJson = new File(toDir, to + ".json");
@@ -200,7 +200,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
         if (callback != null) {
             callback.accept(v);
             File mvt = new File(versionRoot(id), id + ".json");
-            FileUtils.writeQuietly(mvt, C.gsonPrettyPrinting.toJson(v));
+            FileUtils.writeQuietly(mvt, C.GSON.toJson(v));
         }
         if (v != null) {
             refreshVersions();

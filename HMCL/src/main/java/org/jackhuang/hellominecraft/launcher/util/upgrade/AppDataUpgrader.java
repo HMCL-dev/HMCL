@@ -62,7 +62,7 @@ public class AppDataUpgrader extends IUpgrader {
             try {
                 File f = AppDataUpgraderTask.HMCL_VER_FILE;
                 if (f.exists()) {
-                    Map<String, String> m = C.gson.fromJson(FileUtils.readFileToString(f), Map.class);
+                    Map<String, String> m = C.GSON.fromJson(FileUtils.readFileToString(f), Map.class);
                     String s = m.get("ver");
                     if (s != null && VersionNumber.check(s).compareTo(nowVersion) > 0) {
                         String j = m.get("loc");
@@ -166,7 +166,7 @@ public class AppDataUpgrader extends IUpgrader {
             }
             json.put("ver", newestVersion);
             json.put("loc", f.getAbsolutePath());
-            String result = C.gson.toJson(json);
+            String result = C.GSON.toJson(json);
             FileUtils.write(HMCL_VER_FILE, result);
         }
 

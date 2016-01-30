@@ -85,7 +85,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
             .addTask(new FileDownloadTask(vurl + id + ".jar", IOUtils.tryGetCanonicalFile(mvj)).setTag(id + ".jar"))
             .start())
             try {
-                return C.gson.fromJson(FileUtils.readFileToStringQuietly(mvt), MinecraftVersion.class);
+                return C.GSON.fromJson(FileUtils.readFileToStringQuietly(mvt), MinecraftVersion.class);
             } catch (JsonSyntaxException ex) {
                 HMCLog.err("Failed to parse minecraft version json.", ex);
             }
@@ -155,7 +155,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
         return new OverridableSwingWorker<MinecraftRemoteVersion>() {
             @Override
             protected void work() throws Exception {
-                MinecraftRemoteVersions r = C.gson.fromJson(NetUtils.get(service.getDownloadType().getProvider().getVersionsListDownloadURL()), MinecraftRemoteVersions.class);
+                MinecraftRemoteVersions r = C.GSON.fromJson(NetUtils.get(service.getDownloadType().getProvider().getVersionsListDownloadURL()), MinecraftRemoteVersions.class);
                 if (r != null && r.versions != null)
                     publish(r.versions.toArray(new MinecraftRemoteVersion[0]));
             }

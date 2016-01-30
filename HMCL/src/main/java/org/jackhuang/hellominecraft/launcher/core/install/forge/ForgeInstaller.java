@@ -59,7 +59,7 @@ public class ForgeInstaller extends Task {
         ZipFile zipFile = new ZipFile(forgeInstaller);
         ZipEntry entry = zipFile.getEntry("install_profile.json");
         String content = NetUtils.getStreamContent(zipFile.getInputStream(entry));
-        InstallProfile profile = C.gsonPrettyPrinting.fromJson(content, InstallProfile.class);
+        InstallProfile profile = C.GSON.fromJson(content, InstallProfile.class);
 
         File from = new File(gameDir, "versions" + File.separator + profile.install.minecraft);
         if (!from.exists())
@@ -81,7 +81,7 @@ public class ForgeInstaller extends Task {
          * if (library.name.startsWith("net.minecraftforge:forge:"))
          * library.url = installerVersion.universal;
          */
-        FileUtils.write(new File(to, profile.install.target + ".json"), C.gsonPrettyPrinting.toJson(profile.versionInfo));
+        FileUtils.write(new File(to, profile.install.target + ".json"), C.GSON.toJson(profile.versionInfo));
 
         HMCLog.log("Extracting universal forge pack..." + profile.install.filePath);
 

@@ -53,7 +53,7 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
             return;
         String s = NetUtils.get(DownloadType.getSuggestedDownloadType().getProvider().getParsedLibraryDownloadURL(C.URL_FORGE_LIST));
 
-        root = C.gson.fromJson(s, MinecraftForgeVersionRoot.class);
+        root = C.GSON.fromJson(s, MinecraftForgeVersionRoot.class);
 
         versionMap = new HashMap<>();
         versions = new ArrayList<>();

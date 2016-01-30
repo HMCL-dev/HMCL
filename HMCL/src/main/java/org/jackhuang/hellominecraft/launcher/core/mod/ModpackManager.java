@@ -33,7 +33,6 @@ import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.func.BiFunction;
-import org.jackhuang.hellominecraft.util.func.Predicate;
 import org.jackhuang.hellominecraft.util.system.Compressor;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.ZipEngine;
@@ -89,13 +88,10 @@ public final class ModpackManager {
                 try {
                     final AtomicInteger b = new AtomicInteger(0);
                     HMCLog.log("Decompressing modpack");
-                    Compressor.unzip(input, versions, new Predicate<String>() {
-                                     @Override
-                                     public boolean apply(String t) {
-                                         if (t.equals("minecraft/pack.json"))
-                                             b.incrementAndGet();
-                                         return true;
-                                     }
+                    Compressor.unzip(input, versions, t -> {
+                                     if (t.equals("minecraft/pack.json"))
+                                         b.incrementAndGet();
+                                     return true;
                                  }, true);
                     if (b.get() < 1)
                         throw new FileNotFoundException(C.i18n("modpack.incorrect_format.no_json"));
@@ -103,13 +99,13 @@ public final class ModpackManager {
                     oldFile.renameTo(nowFile);
 
                     File json = new File(nowFile, "pack.json");
-                    MinecraftVersion mv = C.gson.fromJson(FileUtils.readFileToString(json), MinecraftVersion.class);
+                    MinecraftVersion mv = C.GSON.fromJson(FileUtils.readFileToString(json), MinecraftVersion.class);
                     if (mv.jar == null)
                         throw new FileNotFoundException(C.i18n("modpack.incorrect_format.no_jar"));
 
                     c.add(service.download().downloadMinecraftJarTo(mv.jar, new File(nowFile, id + ".jar")));
                     mv.jar = null;
-                    FileUtils.writeStringToFile(json, C.gsonPrettyPrinting.toJson(mv));
+                    FileUtils.writeStringToFile(json, C.GSON.toJson(mv));
                     json.renameTo(new File(nowFile, id + ".json"));
 
                     if (preVersionRenamed != null) {
@@ -216,7 +212,7 @@ public final class ModpackManager {
                 throw new FileSystemException(C.i18n("modpack.cannot_read_version") + ": " + MinecraftVersionRequest.getResponse(r));
             mv.jar = r.version;
             mv.runDir = "version";
-            zip.putTextFile(C.gsonPrettyPrinting.toJson(mv), "minecraft/pack.json");
+            zip.putTextFile(C.GSON.toJson(mv), "minecraft/pack.json");
         } finally {
             if (zip != null)
                 zip.closeFile();
