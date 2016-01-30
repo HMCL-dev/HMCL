@@ -22,21 +22,21 @@ import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.IMinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.utils.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.utils.tasks.download.FileDownloadTask;
-import org.jackhuang.hellominecraft.utils.NetUtils;
-import org.jackhuang.hellominecraft.utils.OverridableSwingWorker;
-import org.jackhuang.hellominecraft.utils.system.FileUtils;
-import org.jackhuang.hellominecraft.utils.system.IOUtils;
-import org.jackhuang.hellominecraft.utils.tasks.Task;
-import org.jackhuang.hellominecraft.utils.version.MinecraftRemoteVersion;
-import org.jackhuang.hellominecraft.utils.version.MinecraftRemoteVersions;
+import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
+import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
+import org.jackhuang.hellominecraft.util.NetUtils;
+import org.jackhuang.hellominecraft.util.OverridableSwingWorker;
+import org.jackhuang.hellominecraft.util.system.FileUtils;
+import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.tasks.Task;
+import org.jackhuang.hellominecraft.util.version.MinecraftRemoteVersion;
+import org.jackhuang.hellominecraft.util.version.MinecraftRemoteVersions;
 
 /**
  *

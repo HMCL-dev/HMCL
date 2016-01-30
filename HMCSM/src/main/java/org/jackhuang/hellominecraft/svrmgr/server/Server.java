@@ -35,19 +35,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.jackhuang.hellominecraft.utils.logging.HMCLog;
-import org.jackhuang.hellominecraft.utils.system.IOUtils;
-import org.jackhuang.hellominecraft.utils.MessageBox;
-import org.jackhuang.hellominecraft.utils.Pair;
-import org.jackhuang.hellominecraft.utils.StrUtils;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.MessageBox;
+import org.jackhuang.hellominecraft.util.Pair;
+import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.svrmgr.settings.Schedule;
 import org.jackhuang.hellominecraft.svrmgr.settings.SettingsManager;
 import org.jackhuang.hellominecraft.svrmgr.threads.MonitorThread;
 import org.jackhuang.hellominecraft.svrmgr.threads.WaitForThread;
 import org.jackhuang.hellominecraft.svrmgr.utils.Utilities;
-import org.jackhuang.hellominecraft.utils.Event;
-import org.jackhuang.hellominecraft.utils.EventHandler;
-import org.jackhuang.hellominecraft.utils.functions.Consumer;
+import org.jackhuang.hellominecraft.util.Event;
+import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.util.func.Consumer;
 
 /**
  *

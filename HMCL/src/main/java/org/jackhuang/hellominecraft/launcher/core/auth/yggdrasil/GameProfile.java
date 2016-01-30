@@ -26,7 +26,7 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 import java.util.UUID;
-import org.jackhuang.hellominecraft.utils.StrUtils;
+import org.jackhuang.hellominecraft.util.StrUtils;
 
 public class GameProfile {
 

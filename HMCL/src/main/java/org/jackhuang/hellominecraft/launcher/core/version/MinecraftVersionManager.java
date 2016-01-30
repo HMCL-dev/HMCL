@@ -24,21 +24,21 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
-import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
-import org.jackhuang.hellominecraft.utils.system.FileUtils;
+import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.launcher.core.MCUtils;
-import org.jackhuang.hellominecraft.utils.tasks.DecompressTask;
-import org.jackhuang.hellominecraft.utils.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.utils.tasks.download.FileDownloadTask;
-import org.jackhuang.hellominecraft.utils.system.IOUtils;
-import org.jackhuang.hellominecraft.utils.MessageBox;
-import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.utils.functions.Consumer;
-import org.jackhuang.hellominecraft.utils.views.SwingUtils;
+import org.jackhuang.hellominecraft.util.tasks.DecompressTask;
+import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
+import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
+import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.MessageBox;
+import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.func.Consumer;
+import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 
 /**
  *

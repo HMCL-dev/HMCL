@@ -21,9 +21,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
-import org.jackhuang.hellominecraft.utils.system.OS;
-import org.jackhuang.hellominecraft.utils.system.Platform;
-import org.jackhuang.hellominecraft.utils.StrUtils;
+import org.jackhuang.hellominecraft.util.system.OS;
+import org.jackhuang.hellominecraft.util.system.Platform;
+import org.jackhuang.hellominecraft.util.StrUtils;
 
 /**
  *

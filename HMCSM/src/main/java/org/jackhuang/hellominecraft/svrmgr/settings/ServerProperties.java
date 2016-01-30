@@ -25,7 +25,7 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
-import org.jackhuang.hellominecraft.utils.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
 
 /**
  *

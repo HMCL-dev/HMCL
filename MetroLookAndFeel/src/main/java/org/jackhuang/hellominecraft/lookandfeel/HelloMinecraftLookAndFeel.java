@@ -24,8 +24,8 @@ import java.util.Map;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.plaf.synth.SynthLookAndFeel;
-import org.jackhuang.hellominecraft.utils.logging.HMCLog;
-import org.jackhuang.hellominecraft.utils.NetUtils;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.NetUtils;
 
 /**
  *

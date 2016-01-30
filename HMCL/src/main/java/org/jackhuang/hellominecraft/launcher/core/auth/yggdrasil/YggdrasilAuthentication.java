@@ -28,10 +28,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.logging.HMCLog;
-import org.jackhuang.hellominecraft.utils.NetUtils;
-import org.jackhuang.hellominecraft.utils.StrUtils;
+import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.NetUtils;
+import org.jackhuang.hellominecraft.util.StrUtils;
 
 public class YggdrasilAuthentication {
 

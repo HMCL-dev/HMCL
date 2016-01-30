@@ -19,9 +19,9 @@ package org.jackhuang.hellominecraft.launcher.core.launch;
 
 import java.io.File;
 import java.net.URL;
-import org.jackhuang.hellominecraft.utils.C;
+import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
-import org.jackhuang.hellominecraft.utils.tasks.download.FileDownloadTask;
+import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
 
 /**
  *

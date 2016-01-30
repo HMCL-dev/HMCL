@@ -22,11 +22,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.jackhuang.hellominecraft.utils.C;
+import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
-import org.jackhuang.hellominecraft.launcher.core.assets.AssetsIndex;
-import org.jackhuang.hellominecraft.utils.ArrayUtils;
+import org.jackhuang.hellominecraft.launcher.core.asset.AssetsIndex;
+import org.jackhuang.hellominecraft.util.ArrayUtils;
 
 /**
  *

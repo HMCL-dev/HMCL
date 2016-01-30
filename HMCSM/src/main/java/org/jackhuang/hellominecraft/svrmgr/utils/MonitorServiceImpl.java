@@ -24,7 +24,7 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.util.StringTokenizer;
 import com.sun.management.OperatingSystemMXBean;
-import org.jackhuang.hellominecraft.utils.StrUtils;
+import org.jackhuang.hellominecraft.util.StrUtils;
 
 /**
  *

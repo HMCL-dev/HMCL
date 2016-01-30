@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hellominecraft.launcher.api;
 
-import org.jackhuang.hellominecraft.utils.logging.HMCLog;
-import org.jackhuang.hellominecraft.launcher.settings.DefaultPlugin;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.launcher.setting.DefaultPlugin;
 
 /**
  *
@@ -31,7 +31,7 @@ public class PluginManager {
     public static void getServerPlugin() {
         try {
             ClassLoader cl = Thread.currentThread().getContextClassLoader();
-            Class c = cl.loadClass("org.jackhuang.hellominecraft.launcher.servers.ServerPlugin");
+            Class c = cl.loadClass("org.jackhuang.hellominecraft.launcher.server.ServerPlugin");
             IPlugin p = (IPlugin) c.newInstance();
             NOW_PLUGIN = p;
         } catch (ClassNotFoundException ignore) {

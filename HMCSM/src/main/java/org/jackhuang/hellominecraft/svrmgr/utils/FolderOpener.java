@@ -18,7 +18,7 @@
 package org.jackhuang.hellominecraft.svrmgr.utils;
 
 import java.io.File;
-import org.jackhuang.hellominecraft.utils.MessageBox;
+import org.jackhuang.hellominecraft.util.MessageBox;
 
 /**
  *

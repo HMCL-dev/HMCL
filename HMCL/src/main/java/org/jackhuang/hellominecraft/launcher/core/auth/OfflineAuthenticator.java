@@ -19,9 +19,9 @@ package org.jackhuang.hellominecraft.launcher.core.auth;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.utils.code.DigestUtils;
+import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.code.DigestUtils;
 
 /**
  *

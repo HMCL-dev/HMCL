@@ -26,8 +26,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
-import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
@@ -36,14 +36,14 @@ import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.core.auth.AuthenticationException;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.version.DecompressLibraryJob;
-import org.jackhuang.hellominecraft.utils.system.FileUtils;
-import org.jackhuang.hellominecraft.utils.system.IOUtils;
-import org.jackhuang.hellominecraft.utils.system.JavaProcess;
-import org.jackhuang.hellominecraft.utils.MessageBox;
-import org.jackhuang.hellominecraft.utils.system.OS;
-import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.utils.EventHandler;
-import org.jackhuang.hellominecraft.utils.system.ProcessManager;
+import org.jackhuang.hellominecraft.util.system.FileUtils;
+import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.system.JavaProcess;
+import org.jackhuang.hellominecraft.util.MessageBox;
+import org.jackhuang.hellominecraft.util.system.OS;
+import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.util.system.ProcessManager;
 
 public class GameLauncher {
 

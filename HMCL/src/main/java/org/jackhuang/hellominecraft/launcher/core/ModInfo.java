@@ -25,10 +25,10 @@ import java.io.InputStreamReader;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.logging.HMCLog;
-import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.utils.system.FileUtils;
+import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.system.FileUtils;
 
 /**
  *

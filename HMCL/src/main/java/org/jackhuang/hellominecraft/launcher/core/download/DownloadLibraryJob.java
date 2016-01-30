@@ -18,7 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.core.download;
 
 import java.io.File;
-import org.jackhuang.hellominecraft.utils.system.IOUtils;
+import org.jackhuang.hellominecraft.util.system.IOUtils;
 
 /**
  *

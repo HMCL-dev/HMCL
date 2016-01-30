@@ -20,7 +20,7 @@ package org.jackhuang.hellominecraft.svrmgr.server;
 import java.io.File;
 import java.io.IOException;
 import java.util.zip.ZipFile;
-import org.jackhuang.hellominecraft.utils.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
 
 /**
  *

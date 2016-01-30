@@ -17,12 +17,14 @@
  */
 package org.jackhuang.hellominecraft.launcher.api;
 
+import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
-import org.jackhuang.hellominecraft.launcher.settings.Profile;
+import org.jackhuang.hellominecraft.launcher.setting.Profile;
 import org.jackhuang.hellominecraft.launcher.core.auth.AuthenticationException;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
-import org.jackhuang.hellominecraft.utils.functions.Consumer;
+import org.jackhuang.hellominecraft.launcher.core.launch.LaunchOptions;
+import org.jackhuang.hellominecraft.util.func.Consumer;
 
 /**
  *
@@ -59,5 +61,5 @@ public interface IPlugin {
      */
     void onProcessingLoginResult(UserProfileProvider result) throws AuthenticationException;
 
-    void onInitializingProfile(Profile p);
+    void onProcessingLaunchOptions(LaunchOptions p) throws GameException;
 }

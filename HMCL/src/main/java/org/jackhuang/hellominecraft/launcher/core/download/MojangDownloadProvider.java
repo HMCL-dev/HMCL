@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.download;
 
-import org.jackhuang.hellominecraft.launcher.core.installers.InstallerVersionList;
+import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
 
 /**
  *
@@ -27,17 +27,17 @@ public class MojangDownloadProvider extends IDownloadProvider {
 
     @Override
     public InstallerVersionList getForgeInstaller() {
-        return org.jackhuang.hellominecraft.launcher.core.installers.forge.MinecraftForgeVersionList.getInstance();
+        return org.jackhuang.hellominecraft.launcher.core.install.forge.MinecraftForgeVersionList.getInstance();
     }
 
     @Override
     public InstallerVersionList getLiteLoaderInstaller() {
-        return org.jackhuang.hellominecraft.launcher.core.installers.liteloader.LiteLoaderVersionList.getInstance();
+        return org.jackhuang.hellominecraft.launcher.core.install.liteloader.LiteLoaderVersionList.getInstance();
     }
 
     @Override
     public InstallerVersionList getOptiFineInstaller() {
-        return org.jackhuang.hellominecraft.launcher.core.installers.optifine.vanilla.OptiFineVersionList.getInstance();
+        return org.jackhuang.hellominecraft.launcher.core.install.optifine.vanilla.OptiFineVersionList.getInstance();
     }
 
     @Override

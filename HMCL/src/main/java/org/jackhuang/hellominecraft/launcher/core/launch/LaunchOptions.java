@@ -18,10 +18,9 @@
 package org.jackhuang.hellominecraft.launcher.core.launch;
 
 import java.io.File;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
-import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.utils.system.JdkVersion;
+import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.system.JdkVersion;
 
 /**
  *
@@ -35,8 +34,6 @@ public class LaunchOptions {
     private JdkVersion java;
     private File gameDir;
     private GameDirType gameDirType;
-
-    protected transient IMinecraftService service;
 
     public String getVersionName() {
         return versionName;

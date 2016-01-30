@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.download;
 
-import org.jackhuang.hellominecraft.utils.C;
+import org.jackhuang.hellominecraft.util.C;
 
 /**
  *

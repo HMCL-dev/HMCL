@@ -22,8 +22,8 @@ import java.util.Collection;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.version.DecompressLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.utils.EventHandler;
-import org.jackhuang.hellominecraft.utils.functions.Consumer;
+import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.util.func.Consumer;
 
 /**
  * Provide everything of the Minecraft of a Profile.

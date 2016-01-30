@@ -23,14 +23,14 @@ import java.io.StringWriter;
 import java.text.ParseException;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-import org.jackhuang.hellominecraft.utils.logging.HMCLog;
-import org.jackhuang.hellominecraft.utils.views.LogWindow;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.ui.LogWindow;
 import org.jackhuang.hellominecraft.svrmgr.settings.SettingsManager;
-import org.jackhuang.hellominecraft.utils.UpdateChecker;
+import org.jackhuang.hellominecraft.util.UpdateChecker;
 import org.jackhuang.hellominecraft.svrmgr.views.MainWindow;
-import org.jackhuang.hellominecraft.utils.VersionNumber;
+import org.jackhuang.hellominecraft.util.VersionNumber;
 import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
-import org.jackhuang.hellominecraft.utils.MessageBox;
+import org.jackhuang.hellominecraft.util.MessageBox;
 
 /**
  *

@@ -26,16 +26,16 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import javax.swing.SwingUtilities;
-import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.logging.HMCLog;
-import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.utils.views.LogWindow;
-import org.jackhuang.hellominecraft.launcher.utils.MinecraftCrashAdvicer;
-import org.jackhuang.hellominecraft.utils.DoubleOutputStream;
-import org.jackhuang.hellominecraft.utils.LauncherPrintStream;
-import org.jackhuang.hellominecraft.utils.MathUtils;
-import org.jackhuang.hellominecraft.utils.MessageBox;
-import org.jackhuang.hellominecraft.utils.Utils;
+import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.ui.LogWindow;
+import org.jackhuang.hellominecraft.launcher.util.MinecraftCrashAdvicer;
+import org.jackhuang.hellominecraft.util.DoubleOutputStream;
+import org.jackhuang.hellominecraft.util.LauncherPrintStream;
+import org.jackhuang.hellominecraft.util.MathUtils;
+import org.jackhuang.hellominecraft.util.MessageBox;
+import org.jackhuang.hellominecraft.util.Utils;
 
 /**
  *

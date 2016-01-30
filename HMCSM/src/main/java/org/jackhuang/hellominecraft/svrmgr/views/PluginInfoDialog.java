@@ -19,9 +19,9 @@ package org.jackhuang.hellominecraft.svrmgr.views;
 
 import java.io.File;
 import javax.swing.table.DefaultTableModel;
-import org.jackhuang.hellominecraft.utils.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.utils.tasks.download.FileDownloadTask;
-import org.jackhuang.hellominecraft.utils.StrUtils;
+import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
+import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
+import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.svrmgr.cbplugins.PluginInfo;
 import org.jackhuang.hellominecraft.svrmgr.cbplugins.PluginVersion;
 import org.jackhuang.hellominecraft.svrmgr.utils.Utilities;

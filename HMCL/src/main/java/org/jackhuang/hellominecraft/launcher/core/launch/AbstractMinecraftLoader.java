@@ -23,19 +23,19 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Launcher;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.utils.system.JdkVersion;
-import org.jackhuang.hellominecraft.utils.MathUtils;
-import org.jackhuang.hellominecraft.utils.MessageBox;
-import org.jackhuang.hellominecraft.utils.system.OS;
-import org.jackhuang.hellominecraft.utils.system.Platform;
-import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.utils.Utils;
+import org.jackhuang.hellominecraft.util.system.JdkVersion;
+import org.jackhuang.hellominecraft.util.MathUtils;
+import org.jackhuang.hellominecraft.util.MessageBox;
+import org.jackhuang.hellominecraft.util.system.OS;
+import org.jackhuang.hellominecraft.util.system.Platform;
+import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.Utils;
 
 /**
  *
@@ -150,8 +150,6 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
         }
 
         String serverIp = options.getServerIp();
-        if (lr.getServer() != null)
-            serverIp = lr.getServer().addr;
         if (StrUtils.isNotBlank(serverIp)) {
             String[] args = serverIp.split(":");
             res.add("--server");

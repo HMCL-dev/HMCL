@@ -19,7 +19,7 @@ package org.jackhuang.hellominecraft.launcher.core.service;
 
 import java.io.File;
 import java.io.IOException;
-import org.jackhuang.hellominecraft.utils.tasks.Task;
+import org.jackhuang.hellominecraft.util.tasks.Task;
 
 /**
  *

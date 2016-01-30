@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.download;
 
-import org.jackhuang.hellominecraft.launcher.core.installers.InstallerType;
-import org.jackhuang.hellominecraft.launcher.core.installers.InstallerVersionList;
+import org.jackhuang.hellominecraft.launcher.core.install.InstallerType;
+import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
 
 /**
  *

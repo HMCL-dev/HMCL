@@ -32,21 +32,21 @@ import javax.net.ssl.X509TrustManager;
 import javax.swing.ImageIcon;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-import org.jackhuang.hellominecraft.utils.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.launcher.core.launch.GameLauncher;
-import org.jackhuang.hellominecraft.launcher.utils.CrashReporter;
-import org.jackhuang.hellominecraft.utils.logging.Configuration;
-import org.jackhuang.hellominecraft.utils.logging.appender.ConsoleAppender;
-import org.jackhuang.hellominecraft.utils.logging.layout.DefaultLayout;
-import org.jackhuang.hellominecraft.utils.views.LogWindow;
-import org.jackhuang.hellominecraft.launcher.settings.Settings;
-import org.jackhuang.hellominecraft.launcher.utils.upgrade.IUpgrader;
-import org.jackhuang.hellominecraft.launcher.views.MainFrame;
+import org.jackhuang.hellominecraft.launcher.util.CrashReporter;
+import org.jackhuang.hellominecraft.util.logging.Configuration;
+import org.jackhuang.hellominecraft.util.logging.appender.ConsoleAppender;
+import org.jackhuang.hellominecraft.util.logging.layout.DefaultLayout;
+import org.jackhuang.hellominecraft.util.ui.LogWindow;
+import org.jackhuang.hellominecraft.launcher.setting.Settings;
+import org.jackhuang.hellominecraft.launcher.util.upgrade.IUpgrader;
+import org.jackhuang.hellominecraft.launcher.ui.MainFrame;
 import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
-import org.jackhuang.hellominecraft.utils.MathUtils;
-import org.jackhuang.hellominecraft.utils.StrUtils;
-import org.jackhuang.hellominecraft.utils.VersionNumber;
+import org.jackhuang.hellominecraft.util.MathUtils;
+import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.VersionNumber;
 
 /**
  *

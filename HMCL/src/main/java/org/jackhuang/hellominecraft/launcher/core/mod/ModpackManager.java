@@ -26,19 +26,19 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.utils.functions.BiFunction;
-import org.jackhuang.hellominecraft.utils.functions.Predicate;
-import org.jackhuang.hellominecraft.utils.system.Compressor;
-import org.jackhuang.hellominecraft.utils.system.FileUtils;
-import org.jackhuang.hellominecraft.utils.system.ZipEngine;
-import org.jackhuang.hellominecraft.utils.tasks.Task;
-import org.jackhuang.hellominecraft.utils.version.MinecraftVersionRequest;
+import org.jackhuang.hellominecraft.util.func.BiFunction;
+import org.jackhuang.hellominecraft.util.func.Predicate;
+import org.jackhuang.hellominecraft.util.system.Compressor;
+import org.jackhuang.hellominecraft.util.system.FileUtils;
+import org.jackhuang.hellominecraft.util.system.ZipEngine;
+import org.jackhuang.hellominecraft.util.tasks.Task;
+import org.jackhuang.hellominecraft.util.version.MinecraftVersionRequest;
 
 /**
  * A mod pack(*.zip) includes these things:

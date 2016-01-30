@@ -19,7 +19,7 @@ package org.jackhuang.hellominecraft.svrmgr.utils;
 
 import java.io.File;
 import org.jackhuang.hellominecraft.svrmgr.settings.SettingsManager;
-import org.jackhuang.hellominecraft.utils.system.IOUtils;
+import org.jackhuang.hellominecraft.util.system.IOUtils;
 
 /**
  *

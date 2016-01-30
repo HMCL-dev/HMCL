@@ -19,7 +19,7 @@ package org.jackhuang.hellominecraft.svrmgr.threads;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jackhuang.hellominecraft.utils.EventHandler;
+import org.jackhuang.hellominecraft.util.EventHandler;
 
 /**
  *

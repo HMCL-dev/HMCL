@@ -1,0 +1,229 @@
+/*
+ * Hello Minecraft! Launcher.
+ * Copyright (C) 2013  huangyuhui
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see {http://www.gnu.org/licenses/}.
+ */
+package org.jackhuang.hellominecraft.launcher.setting;
+
+import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
+import com.google.gson.annotations.SerializedName;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
+import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
+import org.jackhuang.hellominecraft.lookandfeel.Theme;
+import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.util.system.JdkVersion;
+import org.jackhuang.hellominecraft.util.system.OS;
+
+/**
+ *
+ * @author huangyuhui
+ */
+public final class Config {
+
+    @SerializedName("last")
+    private String last;
+    @SerializedName("bgpath")
+    private String bgpath;
+    @SerializedName("clientToken")
+    private final String clientToken;
+    private String proxyHost, proxyPort, proxyUserName, proxyPassword;
+    @SerializedName("enableShadow")
+    private boolean enableShadow;
+    @SerializedName("decorated")
+    private boolean decorated;
+    @SerializedName("enableAnimation")
+    private boolean enableAnimation;
+    @SerializedName("theme")
+    private int theme;
+    @SerializedName("java")
+    private List<JdkVersion> java;
+
+    public List<JdkVersion> getJava() {
+        return java == null ? java = new ArrayList<>() : java;
+    }
+
+    public transient final EventHandler<Theme> themeChangedEvent = new EventHandler<>(this);
+    public transient final EventHandler<DownloadType> downloadTypeChangedEvent = new EventHandler<>(this);
+
+    public Theme getTheme() {
+        return Theme.values()[theme];
+    }
+
+    public void setTheme(int theme) {
+        this.theme = theme;
+        themeChangedEvent.execute(getTheme());
+        Settings.save();
+    }
+
+    public boolean isDecorated() {
+        return decorated;
+    }
+
+    public void setDecorated(boolean decorated) {
+        this.decorated = decorated;
+    }
+
+    public boolean isEnableShadow() {
+        return enableShadow;
+    }
+
+    public void setEnableShadow(boolean enableShadow) {
+        this.enableShadow = enableShadow;
+        Settings.save();
+    }
+
+    public String getLast() {
+        return last;
+    }
+
+    public void setLast(String last) {
+        this.last = last;
+        Settings.save();
+    }
+
+    public String getBgpath() {
+        return bgpath;
+    }
+
+    public void setBgpath(String bgpath) {
+        this.bgpath = bgpath;
+        Settings.save();
+    }
+
+    public boolean isEnableAnimation() {
+        return enableAnimation;
+    }
+
+    public void setEnableAnimation(boolean enableAnimation) {
+        this.enableAnimation = enableAnimation;
+        Settings.save();
+    }
+
+    public String getClientToken() {
+        return clientToken;
+    }
+
+    public IAuthenticator getAuthenticator() {
+        return IAuthenticator.LOGINS.get(getLoginType());
+    }
+
+    public int getLoginType() {
+        if (logintype < 0 || logintype >= IAuthenticator.LOGINS.size())
+            logintype = 0;
+        return logintype;
+    }
+
+    public void setLoginType(int logintype) {
+        this.logintype = logintype;
+        Settings.save();
+    }
+
+    public int getDownloadType() {
+        return downloadtype;
+    }
+
+    public void setDownloadType(int downloadtype) {
+        this.downloadtype = downloadtype;
+        downloadTypeChangedEvent.execute(getDownloadSource());
+        Settings.save();
+    }
+
+    public TreeMap<String, Profile> getConfigurations() {
+        if (configurations == null)
+            configurations = new TreeMap<>();
+        if (configurations.isEmpty()) {
+            Profile profile = new Profile();
+            configurations.put(profile.getName(), profile);
+        }
+        return configurations;
+    }
+
+    public Map getAuthenticatorConfig(String authId) {
+        return auth.get(authId);
+    }
+
+    public void setAuthenticatorConfig(String authId, Map map) {
+        auth.put(authId, map);
+        Settings.save();
+    }
+
+    @SerializedName("logintype")
+    private int logintype;
+    @SerializedName("downloadtype")
+    private int downloadtype;
+    @SerializedName("configurations")
+    private TreeMap<String, Profile> configurations;
+    @SerializedName("auth")
+    private Map<String, Map> auth;
+
+    public Config() {
+        clientToken = UUID.randomUUID().toString();
+        logintype = downloadtype = 0;
+        enableShadow = false;
+        enableAnimation = true;
+        theme = 4;
+        decorated = OS.os() == OS.LINUX;
+        auth = new HashMap<>();
+    }
+
+    public DownloadType getDownloadSource() {
+        if (downloadtype >= DownloadType.values().length || downloadtype < 0) {
+            downloadtype = 0;
+            Settings.save();
+        }
+        return DownloadType.values()[downloadtype];
+    }
+
+    public String getProxyHost() {
+        return proxyHost == null ? "" : proxyHost;
+    }
+
+    public void setProxyHost(String proxyHost) {
+        this.proxyHost = proxyHost;
+        Settings.save();
+    }
+
+    public String getProxyPort() {
+        return proxyPort == null ? "" : proxyPort;
+    }
+
+    public void setProxyPort(String proxyPort) {
+        this.proxyPort = proxyPort;
+        Settings.save();
+    }
+
+    public String getProxyUserName() {
+        return proxyUserName == null ? "" : proxyUserName;
+    }
+
+    public void setProxyUserName(String proxyUserName) {
+        this.proxyUserName = proxyUserName;
+        Settings.save();
+    }
+
+    public String getProxyPassword() {
+        return proxyPassword == null ? "" : proxyPassword;
+    }
+
+    public void setProxyPassword(String proxyPassword) {
+        this.proxyPassword = proxyPassword;
+        Settings.save();
+    }
+}

@@ -23,22 +23,22 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import org.jackhuang.hellominecraft.utils.C;
-import org.jackhuang.hellominecraft.utils.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
-import org.jackhuang.hellominecraft.utils.system.IOUtils;
-import org.jackhuang.hellominecraft.launcher.core.assets.AssetsIndex;
-import org.jackhuang.hellominecraft.launcher.core.assets.AssetsObject;
-import org.jackhuang.hellominecraft.launcher.core.assets.IAssetsHandler;
+import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.launcher.core.asset.AssetsIndex;
+import org.jackhuang.hellominecraft.launcher.core.asset.AssetsObject;
+import org.jackhuang.hellominecraft.launcher.core.asset.IAssetsHandler;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
-import org.jackhuang.hellominecraft.utils.system.OS;
+import org.jackhuang.hellominecraft.util.system.OS;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
-import org.jackhuang.hellominecraft.utils.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.utils.system.FileUtils;
-import org.jackhuang.hellominecraft.utils.MessageBox;
-import org.jackhuang.hellominecraft.utils.StrUtils;
+import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
+import org.jackhuang.hellominecraft.util.system.FileUtils;
+import org.jackhuang.hellominecraft.util.MessageBox;
+import org.jackhuang.hellominecraft.util.StrUtils;
 
 /**
  *

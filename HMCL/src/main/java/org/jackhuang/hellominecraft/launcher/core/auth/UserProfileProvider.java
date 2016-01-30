@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.auth;
 
-import org.jackhuang.hellominecraft.launcher.core.version.ServerInfo;
-
 /**
  *
  * @author huangyuhui
@@ -108,13 +106,4 @@ public final class UserProfileProvider {
     private String otherInfo = "";
     private String clientIdentifier = "";
     private String userType = "Offline";
-    private ServerInfo server = null;
-
-    public ServerInfo getServer() {
-        return server;
-    }
-
-    public void setServer(ServerInfo server) {
-        this.server = server;
-    }
 }
