@@ -25,6 +25,7 @@ import java.net.PasswordAuthentication;
 import java.security.GeneralSecurityException;
 import java.security.cert.X509Certificate;
 import java.text.ParseException;
+import java.util.Locale;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -46,6 +47,7 @@ import org.jackhuang.hellominecraft.launcher.ui.MainFrame;
 import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
 import org.jackhuang.hellominecraft.util.MathUtils;
 import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.SupportedLocales;
 import org.jackhuang.hellominecraft.util.VersionNumber;
 
 /**
@@ -133,6 +135,13 @@ public final class Main implements Runnable {
             }
 
             HMCLog.log("*** " + Main.makeTitle() + " ***");
+
+            String s = Settings.getInstance().getLocalization();
+            for (SupportedLocales sl : SupportedLocales.values())
+                if (sl.name().equals(s)) {
+                    SupportedLocales.NOW_LOCALE = sl;
+                    Locale.setDefault(sl.self);
+                }
 
             LogWindow.INSTANCE.clean();
             LogWindow.INSTANCE.setTerminateGame(GameLauncher.PROCESS_MANAGER::stopAllProcesses);

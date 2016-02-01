@@ -27,13 +27,11 @@ import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.CollectionUtils;
-import org.jackhuang.hellominecraft.util.Event;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.UpdateChecker;
 import org.jackhuang.hellominecraft.util.VersionNumber;
-import org.jackhuang.hellominecraft.util.func.Predicate;
 
 /**
  *
@@ -87,10 +85,6 @@ public final class Settings {
                 HMCLog.log("Initialized settings.");
             } catch (IOException | JsonSyntaxException e) {
                 HMCLog.warn("Something happened wrongly when load settings.", e);
-                if (MessageBox.Show(C.i18n("settings.failed_load"), MessageBox.YES_NO_OPTION) == MessageBox.NO_OPTION) {
-                    HMCLog.err("Cancelled loading settings.");
-                    System.exit(1);
-                }
             }
         else
             HMCLog.log("No settings file here, may be first loading.");

@@ -76,7 +76,7 @@ public class InstallerPanel extends AnimatedPanel implements Selectable {
             }
         });
 
-        lstInstallers.setModel(SwingUtils.makeDefaultTableModel(new String[]{C.I18N.getString("install.version"), C.I18N.getString("install.mcversion")},
+        lstInstallers.setModel(SwingUtils.makeDefaultTableModel(new String[]{C.i18n("install.version"), C.i18n("install.mcversion")},
             new Class[]{String.class, String.class}, new boolean[]{false, false}));
     lstInstallers.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
     jScrollPane12.setViewportView(lstInstallers);

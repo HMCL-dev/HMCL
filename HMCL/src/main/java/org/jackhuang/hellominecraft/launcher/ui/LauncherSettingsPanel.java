@@ -28,6 +28,7 @@ import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
+import org.jackhuang.hellominecraft.util.SupportedLocales;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 
 /**
@@ -46,6 +47,16 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         for (DownloadType type : DownloadType.values())
             d.addElement(type.getName());
         cboDownloadSource.setModel(d);
+
+        d = new DefaultComboBoxModel();
+        int id = 0;
+        for (SupportedLocales type : SupportedLocales.values()) {
+            d.addElement(type.showString());
+            if (type.name().equals(Settings.getInstance().getLocalization()))
+                id = type.ordinal();
+        }
+        cboLang.setModel(d);
+        cboLang.setSelectedIndex(id);
 
         txtBackgroundPath.setText(Settings.getInstance().getBgpath());
         txtProxyHost.setText(Settings.getInstance().getProxyHost());
@@ -72,27 +83,29 @@ public class LauncherSettingsPanel extends AnimatedPanel {
     private void initComponents() {
 
         cboDownloadSource = new javax.swing.JComboBox();
-        jLabel4 = new javax.swing.JLabel();
+        lblAbout = new javax.swing.JLabel();
         btnSelBackgroundPath = new javax.swing.JButton();
-        jLabel14 = new javax.swing.JLabel();
+        lblBackground = new javax.swing.JLabel();
         txtBackgroundPath = new javax.swing.JTextField();
-        jLabel7 = new javax.swing.JLabel();
+        lblDownloadSource = new javax.swing.JLabel();
         btnCheckUpdate = new javax.swing.JButton();
         chkEnableShadow = new javax.swing.JCheckBox();
-        jLabel1 = new javax.swing.JLabel();
+        lblTheme = new javax.swing.JLabel();
         cboTheme = new javax.swing.JComboBox();
-        jLabel2 = new javax.swing.JLabel();
+        lblProxy = new javax.swing.JLabel();
         txtProxyHost = new javax.swing.JTextField();
-        jLabel3 = new javax.swing.JLabel();
+        lblProxyHost = new javax.swing.JLabel();
         txtProxyPort = new javax.swing.JTextField();
-        jLabel5 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
+        lblProxyPort = new javax.swing.JLabel();
+        lblProxyUserName = new javax.swing.JLabel();
         txtProxyUsername = new javax.swing.JTextField();
         txtProxyPassword = new javax.swing.JTextField();
-        jLabel8 = new javax.swing.JLabel();
+        lblProxyPassword = new javax.swing.JLabel();
         chkEnableAnimation = new javax.swing.JCheckBox();
         chkDecorated = new javax.swing.JCheckBox();
-        jLabel9 = new javax.swing.JLabel();
+        lblModpack = new javax.swing.JLabel();
+        cboLang = new javax.swing.JComboBox();
+        lblLang = new javax.swing.JLabel();
 
         cboDownloadSource.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -100,7 +113,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
             }
         });
 
-        jLabel4.setText(C.i18n("launcher.about")); // NOI18N
+        lblAbout.setText(C.i18n("launcher.about")); // NOI18N
 
         btnSelBackgroundPath.setText(C.i18n("ui.button.explore")); // NOI18N
         btnSelBackgroundPath.addActionListener(new java.awt.event.ActionListener() {
@@ -109,8 +122,8 @@ public class LauncherSettingsPanel extends AnimatedPanel {
             }
         });
 
-        jLabel14.setText(C.i18n("launcher.background_location")); // NOI18N
-        jLabel14.setToolTipText("");
+        lblBackground.setText(C.i18n("launcher.background_location")); // NOI18N
+        lblBackground.setToolTipText("");
 
         txtBackgroundPath.setToolTipText(C.i18n("launcher.background_tooltip")); // NOI18N
         txtBackgroundPath.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -119,7 +132,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
             }
         });
 
-        jLabel7.setText(C.i18n("launcher.download_source")); // NOI18N
+        lblDownloadSource.setText(C.i18n("launcher.download_source")); // NOI18N
 
         btnCheckUpdate.setText(C.i18n("launcher.update_launcher")); // NOI18N
         btnCheckUpdate.addActionListener(new java.awt.event.ActionListener() {
@@ -135,7 +148,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
             }
         });
 
-        jLabel1.setText(C.i18n("launcher.theme")); // NOI18N
+        lblTheme.setText(C.i18n("launcher.theme")); // NOI18N
 
         cboTheme.setModel(new DefaultComboBoxModel(new String[]{C.i18n("color.blue"),C.i18n("color.green"),C.i18n("color.purple"),C.i18n("color.dark_blue"),C.i18n("color.orange"),C.i18n("color.red")}));
         cboTheme.addItemListener(new java.awt.event.ItemListener() {
@@ -144,7 +157,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
             }
         });
 
-        jLabel2.setText(C.i18n("launcher.proxy")); // NOI18N
+        lblProxy.setText(C.i18n("launcher.proxy")); // NOI18N
 
         txtProxyHost.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
@@ -152,7 +165,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
             }
         });
 
-        jLabel3.setText(C.i18n("proxy.host")); // NOI18N
+        lblProxyHost.setText(C.i18n("proxy.host")); // NOI18N
 
         txtProxyPort.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
@@ -160,9 +173,9 @@ public class LauncherSettingsPanel extends AnimatedPanel {
             }
         });
 
-        jLabel5.setText(C.i18n("proxy.port")); // NOI18N
+        lblProxyPort.setText(C.i18n("proxy.port")); // NOI18N
 
-        jLabel6.setText(C.i18n("proxy.username")); // NOI18N
+        lblProxyUserName.setText(C.i18n("proxy.username")); // NOI18N
 
         txtProxyUsername.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
@@ -176,30 +189,38 @@ public class LauncherSettingsPanel extends AnimatedPanel {
             }
         });
 
-        jLabel8.setText(C.i18n("proxy.password")); // NOI18N
+        lblProxyPassword.setText(C.i18n("proxy.password")); // NOI18N
 
-        chkEnableAnimation.setText("启用动态效果");
+        chkEnableAnimation.setText(C.i18n("launcher.enable_animation")); // NOI18N
         chkEnableAnimation.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 chkEnableAnimationFocusLost(evt);
             }
         });
 
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraft/launcher/I18N"); // NOI18N
-        chkDecorated.setText(bundle.getString("launcher.decorated")); // NOI18N
+        chkDecorated.setText(C.i18n("launcher.decorated")); // NOI18N
         chkDecorated.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 chkDecoratedFocusLost(evt);
             }
         });
 
-        jLabel9.setText(C.i18n("launcher.modpack")); // NOI18N
-        jLabel9.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        jLabel9.addMouseListener(new java.awt.event.MouseAdapter() {
+        lblModpack.setText(C.i18n("launcher.modpack")); // NOI18N
+        lblModpack.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblModpack.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jLabel9MouseClicked(evt);
+                lblModpackMouseClicked(evt);
             }
         });
+
+        cboLang.setModel(new DefaultComboBoxModel(new String[]{C.i18n("color.blue"),C.i18n("color.green"),C.i18n("color.purple"),C.i18n("color.dark_blue"),C.i18n("color.orange"),C.i18n("color.red")}));
+        cboLang.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                cboLangItemStateChanged(evt);
+            }
+        });
+
+        lblLang.setText(C.i18n("launcher.lang")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -209,37 +230,6 @@ public class LauncherSettingsPanel extends AnimatedPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel7)
-                            .addComponent(jLabel1)
-                            .addComponent(jLabel14)
-                            .addComponent(jLabel2))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(txtBackgroundPath)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnSelBackgroundPath))
-                            .addComponent(cboDownloadSource, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(cboTheme, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel3)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtProxyHost, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel5)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtProxyPort, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel6)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtProxyUsername, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel8)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtProxyPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))))
-                    .addGroup(layout.createSequentialGroup()
                         .addComponent(chkEnableShadow)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(chkEnableAnimation))
@@ -248,10 +238,43 @@ public class LauncherSettingsPanel extends AnimatedPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(chkDecorated))
                     .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblProxy)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lblProxyHost)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtProxyHost, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblProxyPort)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtProxyPort, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblProxyUserName)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtProxyUsername, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblProxyPassword)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtProxyPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                            .addComponent(lblAbout, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lblModpack, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblDownloadSource)
+                            .addComponent(lblTheme)
+                            .addComponent(lblBackground)
+                            .addComponent(lblLang))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cboLang, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(txtBackgroundPath, javax.swing.GroupLayout.DEFAULT_SIZE, 664, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnSelBackgroundPath))
+                            .addComponent(cboDownloadSource, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(cboTheme, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -259,28 +282,32 @@ public class LauncherSettingsPanel extends AnimatedPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel14)
+                    .addComponent(lblBackground)
                     .addComponent(btnSelBackgroundPath, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(txtBackgroundPath, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel7)
+                    .addComponent(lblDownloadSource)
                     .addComponent(cboDownloadSource, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
+                    .addComponent(lblTheme)
                     .addComponent(cboTheme, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblLang)
+                    .addComponent(cboLang, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtProxyHost, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel2)
-                    .addComponent(jLabel3)
+                    .addComponent(lblProxy)
+                    .addComponent(lblProxyHost)
                     .addComponent(txtProxyPort, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel5)
+                    .addComponent(lblProxyPort)
                     .addComponent(txtProxyUsername, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel6)
+                    .addComponent(lblProxyUserName)
                     .addComponent(txtProxyPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel8))
+                    .addComponent(lblProxyPassword))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(chkEnableShadow)
@@ -289,10 +316,10 @@ public class LauncherSettingsPanel extends AnimatedPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnCheckUpdate, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(chkDecorated))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 49, Short.MAX_VALUE)
-                .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 85, Short.MAX_VALUE)
+                .addComponent(lblModpack, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(lblAbout, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -364,28 +391,34 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         Settings.getInstance().setDecorated(chkDecorated.isSelected());
     }//GEN-LAST:event_chkDecoratedFocusLost
 
-    private void jLabel9MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel9MouseClicked
+    private void lblModpackMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblModpackMouseClicked
         SwingUtils.openLink("http://blog.163.com/huanghongxun2008@126/blog/static/7738046920160323812771/");
-    }//GEN-LAST:event_jLabel9MouseClicked
+    }//GEN-LAST:event_lblModpackMouseClicked
+
+    private void cboLangItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboLangItemStateChanged
+        Settings.getInstance().setLocalization(SupportedLocales.values()[cboLang.getSelectedIndex()].name());
+    }//GEN-LAST:event_cboLangItemStateChanged
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCheckUpdate;
     private javax.swing.JButton btnSelBackgroundPath;
     private javax.swing.JComboBox cboDownloadSource;
+    private javax.swing.JComboBox cboLang;
     private javax.swing.JComboBox cboTheme;
     private javax.swing.JCheckBox chkDecorated;
     private javax.swing.JCheckBox chkEnableAnimation;
     private javax.swing.JCheckBox chkEnableShadow;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel14;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JLabel jLabel8;
-    private javax.swing.JLabel jLabel9;
+    private javax.swing.JLabel lblAbout;
+    private javax.swing.JLabel lblBackground;
+    private javax.swing.JLabel lblDownloadSource;
+    private javax.swing.JLabel lblLang;
+    private javax.swing.JLabel lblModpack;
+    private javax.swing.JLabel lblProxy;
+    private javax.swing.JLabel lblProxyHost;
+    private javax.swing.JLabel lblProxyPassword;
+    private javax.swing.JLabel lblProxyPort;
+    private javax.swing.JLabel lblProxyUserName;
+    private javax.swing.JLabel lblTheme;
     private javax.swing.JTextField txtBackgroundPath;
     private javax.swing.JTextField txtProxyHost;
     private javax.swing.JTextField txtProxyPassword;

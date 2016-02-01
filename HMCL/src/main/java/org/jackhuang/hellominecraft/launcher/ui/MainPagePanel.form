@@ -41,11 +41,11 @@
                       <Group type="102" alignment="0" attributes="0">
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="jLabel10" alignment="1" min="-2" max="-2" attributes="0"/>
-                              <Component id="jLabel1" alignment="1" min="-2" max="-2" attributes="0"/>
+                              <Component id="lblVersion" alignment="1" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="cboProfiles" alignment="0" pref="124" max="32767" attributes="0"/>
+                              <Component id="cboProfiles" alignment="0" max="32767" attributes="0"/>
                               <Component id="cboVersions" alignment="0" max="32767" attributes="0"/>
                           </Group>
                       </Group>
@@ -60,8 +60,11 @@
                               <Component id="txtPlayerName" max="32767" attributes="0"/>
                           </Group>
                       </Group>
-                      <Component id="btnMakeLaunchScript" alignment="0" max="32767" attributes="0"/>
+                      <Component id="btnMakeLaunchScript" alignment="0" pref="0" max="32767" attributes="0"/>
                       <Component id="btnShowLog" alignment="0" max="32767" attributes="0"/>
+                      <Component id="btnIncludeMinecraft" alignment="0" max="32767" attributes="0"/>
+                      <Component id="btnExportModpack" alignment="0" max="32767" attributes="0"/>
+                      <Component id="btnImportModpack" alignment="0" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
@@ -78,7 +81,7 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="cboVersions" alignment="3" min="-2" pref="26" max="-2" attributes="0"/>
-                      <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="lblVersion" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
@@ -92,7 +95,13 @@
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="pnlPassword" min="-2" pref="26" max="-2" attributes="0"/>
-                  <EmptySpace pref="238" max="32767" attributes="0"/>
+                  <EmptySpace pref="146" max="32767" attributes="0"/>
+                  <Component id="btnImportModpack" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="btnExportModpack" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="btnIncludeMinecraft" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Component id="btnMakeLaunchScript" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="btnShowLog" min="-2" max="-2" attributes="0"/>
@@ -112,7 +121,7 @@
         <Component class="javax.swing.JLabel" name="jLabel7">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="login.type" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+              <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="login.type" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -129,14 +138,14 @@
         <Component class="javax.swing.JLabel" name="lblUserName">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="login.username" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+              <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="login.username" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel10">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.label.profile" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+              <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="ui.label.profile" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -150,13 +159,13 @@
             <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="cboProfilesItemStateChanged"/>
           </Events>
         </Component>
-        <Component class="javax.swing.JLabel" name="jLabel1">
+        <Component class="javax.swing.JLabel" name="lblVersion">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.label.version" replaceFormat="C.I18N.getString(&quot;{key}&quot;)"/>
+              <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="ui.label.version" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
             </Property>
             <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.label.version" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+              <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="ui.label.version" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -207,7 +216,7 @@
                 <Component class="javax.swing.JLabel" name="jLabel9">
                   <Properties>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.label.password" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="ui.label.password" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                 </Component>
@@ -243,7 +252,7 @@
                 <Component class="javax.swing.JButton" name="btnLogout">
                   <Properties>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="ui.button.logout" replaceFormat="C.I18N.getString(&quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="ui.button.logout" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                   <Events>
@@ -257,7 +266,7 @@
         <Component class="javax.swing.JButton" name="btnMakeLaunchScript">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mainwindow.make_launch_script" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+              <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="mainwindow.make_launch_script" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>
@@ -267,11 +276,41 @@
         <Component class="javax.swing.JButton" name="btnShowLog">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="mainwindow.show_log" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+              <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="mainwindow.show_log" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnShowLogActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JButton" name="btnIncludeMinecraft">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="setupwindow.include_minecraft" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnIncludeMinecraftActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JButton" name="btnImportModpack">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="modpack.install.task" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnImportModpackActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JButton" name="btnExportModpack">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="modpack.save.task" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnExportModpackActionPerformed"/>
           </Events>
         </Component>
       </SubComponents>

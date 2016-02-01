@@ -3863,7 +3863,7 @@ public final class MainWindow extends javax.swing.JFrame
         File filepath = new File(IOUtils.currentDir(), "forge-installer.jar");
         url = v.installer[1];
         if (!TaskWindow.getInstance().addTask(new FileDownloadTask(url, filepath).setTag("cauldron-" + v.ver)).start())
-            MessageBox.Show(C.I18N.getString("install.failed_download_forge"));
+            MessageBox.Show(C.i18n("install.failed_download_forge"));
         else
             installMCPC(filepath);
     }//GEN-LAST:event_btnDownloadMCPCActionPerformed
@@ -3872,10 +3872,10 @@ public final class MainWindow extends javax.swing.JFrame
         try {
             ForgeInstaller installer = new ForgeInstaller(IOUtils.currentDir(), filepath);
             installer.install();
-            MessageBox.Show(C.I18N.getString("install.success"));
+            MessageBox.Show(C.i18n("install.success"));
         } catch (Exception e) {
             HMCLog.warn("Failed to install liteloader", e);
-            MessageBox.Show(C.I18N.getString("install.failed_forge"));
+            MessageBox.Show(C.i18n("install.failed_forge"));
         }
     }
 

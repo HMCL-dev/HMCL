@@ -25,9 +25,9 @@ import org.jackhuang.hellominecraft.util.C;
  */
 public enum DownloadType {
 
-    Mojang(C.i18n("download.mojang"), new MojangDownloadProvider()),
-    BMCL(C.i18n("download.BMCL"), new BMCLAPIDownloadProvider()),
-    RapidData(C.i18n("download.rapid_data"), new RapidDataDownloadProvider()),
+    Mojang("download.mojang", new MojangDownloadProvider()),
+    BMCL("download.BMCL", new BMCLAPIDownloadProvider()),
+    RapidData("download.rapid_data", new RapidDataDownloadProvider()),
     Curse("Curse CDN", new CurseDownloadProvider());
 
     private final String name;
@@ -43,7 +43,7 @@ public enum DownloadType {
     }
 
     public String getName() {
-        return name;
+        return C.i18n(name);
     }
 
     private static DownloadType suggestedDownloadType = Mojang;

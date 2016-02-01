@@ -30,20 +30,6 @@ public final class C {
 
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    public static final ResourceBundle I18N;
-
-    static {
-        ResourceBundle rb = null;
-        try {
-            rb = ResourceBundle.getBundle("org/jackhuang/hellominecraft/launcher/I18N");
-        } catch (Throwable t) {
-            rb = null;
-            System.out.println("Did you delete I18N.properties?");
-            t.printStackTrace();
-        }
-        I18N = rb;
-    }
-
     //http://repo1.maven.org/maven2
     public static final String URL_PUBLISH = "http://www.mcbbs.net/thread-142335-1-1.html";
     public static final String URL_TIEBA = "http://tieba.baidu.com/f?kw=hellominecraftlauncher";
@@ -61,12 +47,7 @@ public final class C {
     }
 
     public static String i18n(String a, Object... format) {
-        try {
-            return String.format(C.I18N.getString(a), format);
-        } catch (Exception e) {
-            HMCLog.warn("Failed to read localization key: " + a, e);
-            return a;
-        }
+        return SupportedLocales.NOW_LOCALE.translate(a, format);
     }
 
 }

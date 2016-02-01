@@ -140,7 +140,7 @@ public class ForgeInstaller {
         if (output.exists())
             output.delete();
 
-        byte[] decompressed = IOUtils.readFully(new XZInputStream(new ByteArrayInputStream(data)));
+        byte[] decompressed = IOUtils.readFully(new XZInputStream(new ByteArrayInputStream(data))).toByteArray();
 
         String end = new String(decompressed, decompressed.length - 4, 4);
         if (!end.equals("SIGN")) {
@@ -185,7 +185,7 @@ public class ForgeInstaller {
         try (JarInputStream jar = new JarInputStream(new ByteArrayInputStream(data))) {
             JarEntry entry = jar.getNextJarEntry();
             while (entry != null) {
-                byte[] eData = IOUtils.readFully(jar);
+                byte[] eData = IOUtils.readFully(jar).toByteArray();
 
                 if (entry.getName().equals("checksums.sha1"))
                     hashes = new String(eData, Charset.forName("UTF-8")).split("\n");

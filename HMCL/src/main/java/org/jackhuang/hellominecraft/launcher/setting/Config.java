@@ -54,6 +54,8 @@ public final class Config {
     private int theme;
     @SerializedName("java")
     private List<JdkVersion> java;
+    @SerializedName("localization")
+    private String localization;
 
     public List<JdkVersion> getJava() {
         return java == null ? java = new ArrayList<>() : java;
@@ -224,6 +226,15 @@ public final class Config {
 
     public void setProxyPassword(String proxyPassword) {
         this.proxyPassword = proxyPassword;
+        Settings.save();
+    }
+
+    public String getLocalization() {
+        return localization;
+    }
+
+    public void setLocalization(String localization) {
+        this.localization = localization;
         Settings.save();
     }
 }

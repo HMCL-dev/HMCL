@@ -25,8 +25,10 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
@@ -43,12 +45,18 @@ import org.jackhuang.hellominecraft.launcher.core.LauncherVisibility;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.core.auth.AuthenticationException;
 import org.jackhuang.hellominecraft.launcher.core.launch.LaunchOptions;
+import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
+import org.jackhuang.hellominecraft.launcher.ui.modpack.ModpackWizard;
 import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
 import org.jackhuang.hellominecraft.util.Event;
 import org.jackhuang.hellominecraft.lookandfeel.comp.ConstomButton;
 import org.jackhuang.hellominecraft.util.func.Consumer;
+import org.jackhuang.hellominecraft.util.system.FileUtils;
+import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.system.JavaProcessMonitor;
+import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.util.ui.LogWindow;
+import org.jackhuang.hellominecraft.util.ui.wizard.api.WizardDisplayer;
 
 /**
  *
@@ -104,7 +112,7 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
         lblUserName = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
         cboProfiles = new javax.swing.JComboBox();
-        jLabel1 = new javax.swing.JLabel();
+        lblVersion = new javax.swing.JLabel();
         cboVersions = new javax.swing.JComboBox();
         pnlPassword = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
@@ -114,6 +122,9 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
         btnLogout = new javax.swing.JButton();
         btnMakeLaunchScript = new javax.swing.JButton();
         btnShowLog = new javax.swing.JButton();
+        btnIncludeMinecraft = new javax.swing.JButton();
+        btnImportModpack = new javax.swing.JButton();
+        btnExportModpack = new javax.swing.JButton();
 
         setLayout(null);
 
@@ -152,8 +163,8 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
             }
         });
 
-        jLabel1.setText(C.I18N.getString("ui.label.version")); // NOI18N
-        jLabel1.setToolTipText(C.i18n("ui.label.version")); // NOI18N
+        lblVersion.setText(C.i18n("ui.label.version")); // NOI18N
+        lblVersion.setToolTipText(C.i18n("ui.label.version")); // NOI18N
 
         cboVersions.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -201,7 +212,7 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
 
         pnlPassword.add(jPanel1, "card2");
 
-        btnLogout.setText(C.I18N.getString("ui.button.logout")); // NOI18N
+        btnLogout.setText(C.i18n("ui.button.logout")); // NOI18N
         btnLogout.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnLogoutActionPerformed(evt);
@@ -235,6 +246,27 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
             }
         });
 
+        btnIncludeMinecraft.setText(C.i18n("setupwindow.include_minecraft")); // NOI18N
+        btnIncludeMinecraft.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnIncludeMinecraftActionPerformed(evt);
+            }
+        });
+
+        btnImportModpack.setText(C.i18n("modpack.install.task")); // NOI18N
+        btnImportModpack.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnImportModpackActionPerformed(evt);
+            }
+        });
+
+        btnExportModpack.setText(C.i18n("modpack.save.task")); // NOI18N
+        btnExportModpack.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnExportModpackActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout pnlMoreLayout = new javax.swing.GroupLayout(pnlMore);
         pnlMore.setLayout(pnlMoreLayout);
         pnlMoreLayout.setHorizontalGroup(
@@ -246,10 +278,10 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
                     .addGroup(pnlMoreLayout.createSequentialGroup()
                         .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel10, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING))
+                            .addComponent(lblVersion, javax.swing.GroupLayout.Alignment.TRAILING))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cboProfiles, 0, 124, Short.MAX_VALUE)
+                            .addComponent(cboProfiles, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(cboVersions, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(pnlMoreLayout.createSequentialGroup()
                         .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -259,8 +291,11 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
                         .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(cboLoginMode, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(txtPlayerName)))
-                    .addComponent(btnMakeLaunchScript, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnShowLog, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(btnMakeLaunchScript, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addComponent(btnShowLog, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnIncludeMinecraft, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnExportModpack, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnImportModpack, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         pnlMoreLayout.setVerticalGroup(
@@ -273,7 +308,7 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cboVersions, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1))
+                    .addComponent(lblVersion))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel7)
@@ -284,7 +319,13 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
                     .addComponent(txtPlayerName, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnlPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 238, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 146, Short.MAX_VALUE)
+                .addComponent(btnImportModpack)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnExportModpack)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnIncludeMinecraft)
+                .addGap(18, 18, 18)
                 .addComponent(btnMakeLaunchScript)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnShowLog)
@@ -375,6 +416,42 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
     private void btnShowLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnShowLogActionPerformed
         LogWindow.INSTANCE.setVisible(true);
     }//GEN-LAST:event_btnShowLogActionPerformed
+
+    private void btnIncludeMinecraftActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnIncludeMinecraftActionPerformed
+        JFileChooser fc = new JFileChooser(IOUtils.currentDir());
+        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File newGameDir = fc.getSelectedFile();
+            String name = JOptionPane.showInputDialog(C.i18n("setupwindow.give_a_name"));
+            if (StrUtils.isBlank(name)) {
+                MessageBox.Show(C.i18n("setupwindow.no_empty_name"));
+                return;
+            }
+            Settings.trySetProfile(new Profile(name).setGameDir(newGameDir.getAbsolutePath()));
+            MessageBox.Show(C.i18n("setupwindow.find_in_configurations"));
+            refreshMinecrafts(name);
+        }
+    }//GEN-LAST:event_btnIncludeMinecraftActionPerformed
+
+    private void btnImportModpackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnImportModpackActionPerformed
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setDialogTitle(C.i18n("modpack.choose"));
+        fc.setMultiSelectionEnabled(false);
+        fc.setFileFilter(new FileNameExtensionFilter(C.i18n("modpack"), "zip"));
+        fc.showOpenDialog(this);
+        if (fc.getSelectedFile() == null)
+            return;
+        String suggestedModpackId = JOptionPane.showInputDialog("Please enter your favourite game name", FileUtils.getBaseName(fc.getSelectedFile().getName()));
+        TaskWindow.getInstance().addTask(ModpackManager.install(fc.getSelectedFile(), getProfile().service(), suggestedModpackId)).start();
+        loadMinecraftVersions();
+    }//GEN-LAST:event_btnImportModpackActionPerformed
+
+    private void btnExportModpackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExportModpackActionPerformed
+        if (getProfile().service().version().getVersionCount() <= 0)
+            return;
+        WizardDisplayer.showWizard(new ModpackWizard(getProfile().service()).createWizard());
+    }//GEN-LAST:event_btnExportModpackActionPerformed
 
     boolean isLaunching = false;
 
@@ -641,19 +718,22 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnExportModpack;
+    private javax.swing.JButton btnImportModpack;
+    private javax.swing.JButton btnIncludeMinecraft;
     private javax.swing.JButton btnLogout;
     private javax.swing.JButton btnMakeLaunchScript;
     private javax.swing.JButton btnShowLog;
     private javax.swing.JComboBox cboLoginMode;
     private javax.swing.JComboBox cboProfiles;
     private javax.swing.JComboBox cboVersions;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JLabel lblUserName;
+    private javax.swing.JLabel lblVersion;
     private javax.swing.JPanel pnlMore;
     private javax.swing.JPanel pnlPassword;
     private javax.swing.JPasswordField txtPassword;

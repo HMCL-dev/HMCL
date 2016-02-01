@@ -192,7 +192,7 @@ public class IOUtils {
             return path + "java";
     }
 
-    public static byte[] readFully(InputStream stream) throws IOException {
+    public static ByteArrayOutputStream readFully(InputStream stream) throws IOException {
         byte[] data = new byte[4096];
         ByteArrayOutputStream entryBuffer = new ByteArrayOutputStream();
         int len;
@@ -203,7 +203,7 @@ public class IOUtils {
             entryBuffer.write(data, 0, len);
         } while (len != -1);
 
-        return entryBuffer.toByteArray();
+        return entryBuffer;
     }
 
     public static void closeQuietly(Reader input) {

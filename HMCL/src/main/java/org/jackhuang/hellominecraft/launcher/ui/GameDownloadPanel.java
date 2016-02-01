@@ -61,7 +61,7 @@ public class GameDownloadPanel extends AnimatedPanel implements Selectable {
             }
         });
 
-        lstDownloads.setModel(SwingUtils.makeDefaultTableModel(new String[]{C.I18N.getString("install.version"), C.I18N.getString("install.time"), C.I18N.getString("install.type")},new Class[]{String.class, String.class, String.class}, new boolean[]{false, false, false}));
+        lstDownloads.setModel(SwingUtils.makeDefaultTableModel(new String[]{C.i18n("install.version"), C.i18n("install.time"), C.i18n("install.type")},new Class[]{String.class, String.class, String.class}, new boolean[]{false, false, false}));
         lstDownloads.setToolTipText("");
         lstDownloads.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane2.setViewportView(lstDownloads);

@@ -40,7 +40,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
@@ -50,24 +49,18 @@ import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.util.FileNameFilter;
 import org.jackhuang.hellominecraft.launcher.core.ModInfo;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerType;
-import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
 import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.launcher.setting.DefaultMinecraftService;
 import org.jackhuang.hellominecraft.launcher.setting.VersionSetting;
-import org.jackhuang.hellominecraft.launcher.ui.modpack.ModpackWizard;
-import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.util.Event;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.OverridableSwingWorker;
 import org.jackhuang.hellominecraft.util.version.MinecraftVersionRequest;
 import org.jackhuang.hellominecraft.util.system.OS;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 import org.jackhuang.hellominecraft.util.system.Java;
-import org.jackhuang.hellominecraft.util.ui.wizard.api.WizardDisplayer;
 
 /**
  *
@@ -261,8 +254,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         btnChoosingJavaDir = new javax.swing.JButton();
         cboJava = new javax.swing.JComboBox();
         btnChoosingGameDir = new javax.swing.JButton();
-        btnExportModpack = new javax.swing.JButton();
-        btnImportModpack = new javax.swing.JButton();
+        btnCleanGame = new javax.swing.JButton();
         pnlAdvancedSettings = new AnimatedPanel();
         chkDebug = new javax.swing.JCheckBox();
         lblJavaArgs = new javax.swing.JLabel();
@@ -299,8 +291,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         btnNewProfile = new javax.swing.JButton();
         btnRemoveProfile = new javax.swing.JButton();
         btnExplore = new javax.swing.JButton();
-        btnIncludeMinecraft = new javax.swing.JButton();
-        btnCleanGame = new javax.swing.JButton();
 
         setBackground(new java.awt.Color(255, 255, 255));
         setOpaque(false);
@@ -365,7 +355,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             }
         });
 
-        cboLauncherVisibility.setModel(new javax.swing.DefaultComboBoxModel(new String[] { C.I18N.getString("advancedsettings.launcher_visibility.close"), C.I18N.getString("advancedsettings.launcher_visibility.hide"), C.I18N.getString("advancedsettings.launcher_visibility.keep") }));
+        cboLauncherVisibility.setModel(new javax.swing.DefaultComboBoxModel(new String[] { C.i18n("advancedsettings.launcher_visibility.close"), C.i18n("advancedsettings.launcher_visibility.hide"), C.i18n("advancedsettings.launcher_visibility.keep") }));
         cboLauncherVisibility.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 cboLauncherVisibilityFocusLost(evt);
@@ -376,7 +366,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
         lblRunDirectory.setText(C.i18n("settings.run_directory")); // NOI18N
 
-        cboRunDirectory.setModel(new javax.swing.DefaultComboBoxModel(new String[] { C.I18N.getString("advancedsettings.game_dir.default"), C.I18N.getString("advancedsettings.game_dir.independent") }));
+        cboRunDirectory.setModel(new javax.swing.DefaultComboBoxModel(new String[] { C.i18n("advancedsettings.game_dir.default"), C.i18n("advancedsettings.game_dir.independent") }));
         cboRunDirectory.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 cboRunDirectoryFocusLost(evt);
@@ -403,17 +393,10 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             }
         });
 
-        btnExportModpack.setText(C.i18n("modpack.save.task")); // NOI18N
-        btnExportModpack.addActionListener(new java.awt.event.ActionListener() {
+        btnCleanGame.setText(C.i18n("setupwindow.clean")); // NOI18N
+        btnCleanGame.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnExportModpackActionPerformed(evt);
-            }
-        });
-
-        btnImportModpack.setText(C.i18n("modpack.install.task")); // NOI18N
-        btnImportModpack.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnImportModpackActionPerformed(evt);
+                btnCleanGameActionPerformed(evt);
             }
         });
 
@@ -425,12 +408,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                 .addContainerGap()
                 .addGroup(pnlSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnlSettingsLayout.createSequentialGroup()
-                        .addComponent(btnDownloadAllAssets)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(btnImportModpack)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnExportModpack))
-                    .addGroup(pnlSettingsLayout.createSequentialGroup()
                         .addGroup(pnlSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblJavaDir)
                             .addComponent(lblMaxMemory)
@@ -440,7 +417,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                             .addComponent(lblDimension))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(pnlSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cboRunDirectory, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(cboLauncherVisibility, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(pnlSettingsLayout.createSequentialGroup()
                                 .addComponent(txtWidth, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -448,7 +424,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                                 .addComponent(lblDimensionX)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(txtHeight, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 410, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 414, Short.MAX_VALUE)
                                 .addComponent(chkFullscreen))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlSettingsLayout.createSequentialGroup()
                                 .addComponent(txtMaxMemory)
@@ -463,7 +439,12 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(txtJavaDir)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnChoosingJavaDir)))))
+                                .addComponent(btnChoosingJavaDir))
+                            .addComponent(cboRunDirectory, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(pnlSettingsLayout.createSequentialGroup()
+                        .addComponent(btnDownloadAllAssets)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnCleanGame)))
                 .addGap(0, 0, 0))
         );
         pnlSettingsLayout.setVerticalGroup(
@@ -500,11 +481,10 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                     .addComponent(lblDimensionX, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lblDimension)
                     .addComponent(txtWidth, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 113, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 84, Short.MAX_VALUE)
                 .addGroup(pnlSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnDownloadAllAssets)
-                    .addComponent(btnExportModpack)
-                    .addComponent(btnImportModpack))
+                    .addComponent(btnCleanGame))
                 .addContainerGap())
         );
 
@@ -627,7 +607,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                 .addComponent(lblServerIP)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtServerIP, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 102, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 76, Short.MAX_VALUE)
                 .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(chkDebug)
                     .addComponent(chkNoJVMArgs)
@@ -677,14 +657,14 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             .addGroup(pnlModManagementContentLayout.createSequentialGroup()
                 .addGroup(pnlModManagementContentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnlModManagementContentLayout.createSequentialGroup()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 779, Short.MAX_VALUE)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 913, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(pnlModManagementContentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(btnRemoveMod)
                             .addComponent(btnAddMod)))
                     .addGroup(pnlModManagementContentLayout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(lblModInfo, javax.swing.GroupLayout.DEFAULT_SIZE, 815, Short.MAX_VALUE)))
+                        .addComponent(lblModInfo, javax.swing.GroupLayout.DEFAULT_SIZE, 1009, Short.MAX_VALUE)))
                 .addGap(0, 0, 0))
         );
         pnlModManagementContentLayout.setVerticalGroup(
@@ -696,9 +676,9 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnRemoveMod)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 264, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 272, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblModInfo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(lblModInfo)
                 .addContainerGap())
         );
 
@@ -867,46 +847,20 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                 .addGap(0, 0, Short.MAX_VALUE))
         );
 
-        btnIncludeMinecraft.setText(C.i18n("setupwindow.include_minecraft")); // NOI18N
-        btnIncludeMinecraft.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnIncludeMinecraftActionPerformed(evt);
-            }
-        });
-
-        btnCleanGame.setText(C.i18n("setupwindow.clean")); // NOI18N
-        btnCleanGame.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnCleanGameActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(pnlTop, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(btnIncludeMinecraft)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(btnCleanGame))
-                    .addComponent(tabVersionEdit))
-                .addContainerGap())
+            .addComponent(tabVersionEdit)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(pnlTop, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tabVersionEdit)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnIncludeMinecraft)
-                    .addComponent(btnCleanGame))
-                .addContainerGap())
+                .addComponent(tabVersionEdit, javax.swing.GroupLayout.PREFERRED_SIZE, 338, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         ((NewTabPane)tabVersionEdit).initializing = false;
@@ -954,22 +908,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private void btnExploreMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnExploreMouseClicked
         ppmExplore.show(evt.getComponent(), evt.getPoint().x, evt.getPoint().y);
     }//GEN-LAST:event_btnExploreMouseClicked
-
-    private void btnIncludeMinecraftActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnIncludeMinecraftActionPerformed
-        JFileChooser fc = new JFileChooser(IOUtils.currentDir());
-        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            File newGameDir = fc.getSelectedFile();
-            String name = JOptionPane.showInputDialog(C.i18n("setupwindow.give_a_name"));
-            if (StrUtils.isBlank(name)) {
-                MessageBox.Show(C.i18n("setupwindow.no_empty_name"));
-                return;
-            }
-            Settings.trySetProfile(new Profile(name).setGameDir(newGameDir.getAbsolutePath()));
-            MessageBox.Show(C.i18n("setupwindow.find_in_configurations"));
-            loadProfiles();
-        }
-    }//GEN-LAST:event_btnIncludeMinecraftActionPerformed
 
     private void btnModifyMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnModifyMouseClicked
         ppmManage.show(evt.getComponent(), evt.getPoint().x, evt.getPoint().y);
@@ -1085,7 +1023,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private void btnAddModActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddModActionPerformed
         JFileChooser fc = new JFileChooser();
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setDialogTitle(C.I18N.getString("mods.choose_mod"));
+        fc.setDialogTitle(C.i18n("mods.choose_mod"));
         fc.setMultiSelectionEnabled(true);
         if (fc.showOpenDialog(this) != JFileChooser.APPROVE_OPTION)
             return;
@@ -1094,7 +1032,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             flag &= getProfile().service().mod().addMod(getProfile().getSelectedVersion(), f);
         reloadMods();
         if (!flag)
-            MessageBox.Show(C.I18N.getString("mods.failed"));
+            MessageBox.Show(C.i18n("mods.failed"));
     }//GEN-LAST:event_btnAddModActionPerformed
 
     private void btnRemoveModActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveModActionPerformed
@@ -1134,26 +1072,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private void btnCleanGameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCleanGameActionPerformed
         getProfile().service().version().cleanFolder();
     }//GEN-LAST:event_btnCleanGameActionPerformed
-
-    private void btnImportModpackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnImportModpackActionPerformed
-        JFileChooser fc = new JFileChooser();
-        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setDialogTitle(C.i18n("modpack.choose"));
-        fc.setMultiSelectionEnabled(false);
-        fc.setFileFilter(new FileNameExtensionFilter(C.i18n("modpack"), "zip"));
-        fc.showOpenDialog(this);
-        if (fc.getSelectedFile() == null)
-            return;
-        String suggestedModpackId = JOptionPane.showInputDialog("Please enter your favourite game name", FileUtils.getBaseName(fc.getSelectedFile().getName()));
-        TaskWindow.getInstance().addTask(ModpackManager.install(fc.getSelectedFile(), getProfile().service(), suggestedModpackId)).start();
-        refreshVersions();
-    }//GEN-LAST:event_btnImportModpackActionPerformed
-
-    private void btnExportModpackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExportModpackActionPerformed
-        if (getProfile().service().version().getVersionCount() <= 0)
-            return;
-        WizardDisplayer.showWizard(new ModpackWizard(getProfile().service()).createWizard());
-    }//GEN-LAST:event_btnExportModpackActionPerformed
 
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Load">
@@ -1345,9 +1263,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private javax.swing.JButton btnCleanGame;
     private javax.swing.JButton btnDownloadAllAssets;
     private javax.swing.JButton btnExplore;
-    private javax.swing.JButton btnExportModpack;
-    private javax.swing.JButton btnImportModpack;
-    private javax.swing.JButton btnIncludeMinecraft;
     private javax.swing.JButton btnModify;
     private javax.swing.JButton btnNewProfile;
     private javax.swing.JButton btnRefreshVersions;
