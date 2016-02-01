@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.util;
 
+import org.jackhuang.hellominecraft.util.lang.SupportedLocales;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

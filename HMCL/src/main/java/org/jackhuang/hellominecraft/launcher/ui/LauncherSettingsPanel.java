@@ -28,7 +28,7 @@ import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
-import org.jackhuang.hellominecraft.util.SupportedLocales;
+import org.jackhuang.hellominecraft.util.lang.SupportedLocales;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 
 /**

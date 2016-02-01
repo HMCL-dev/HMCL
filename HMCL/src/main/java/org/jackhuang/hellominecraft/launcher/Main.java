@@ -47,7 +47,7 @@ import org.jackhuang.hellominecraft.launcher.ui.MainFrame;
 import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
 import org.jackhuang.hellominecraft.util.MathUtils;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.SupportedLocales;
+import org.jackhuang.hellominecraft.util.lang.SupportedLocales;
 import org.jackhuang.hellominecraft.util.VersionNumber;
 
 /**

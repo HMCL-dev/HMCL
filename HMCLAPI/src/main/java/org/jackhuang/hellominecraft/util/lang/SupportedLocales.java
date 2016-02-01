@@ -15,10 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.util;
+package org.jackhuang.hellominecraft.util.lang;
 
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 /**
  *
@@ -29,17 +28,16 @@ public enum SupportedLocales {
 
     public Locale self;
     private String showString, customized;
-    private ResourceBundle bundle;
+    private Localization bundle;
 
     private SupportedLocales(Locale self, String customized) {
         this.self = self;
-
         try {
-            bundle = ResourceBundle.getBundle("org/jackhuang/hellominecraft/lang/I18N", self);
-            showString = bundle.getString("lang");
+            bundle = Localization.get(self);
+            showString = bundle.localize("lang");
             this.customized = customized;
         } catch (Throwable t) {
-            showString = self.toString();
+            showString = name();
             t.printStackTrace();
         }
     }
@@ -55,7 +53,7 @@ public enum SupportedLocales {
 
     public String translate(String key, Object... format) {
         try {
-            return bundle.getString(key);
+            return bundle.localize(key);
         } catch (Exception ex) {
             ex.printStackTrace();
             return key;
