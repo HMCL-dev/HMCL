@@ -97,6 +97,8 @@ public class ForgeInstaller extends Task {
             while ((c = is.read()) != -1)
                 bos.write((byte) c);
         }
+
+        mp.version().refreshVersions();
     }
 
     @Override

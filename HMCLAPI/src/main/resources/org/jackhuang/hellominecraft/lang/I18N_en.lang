@@ -246,7 +246,7 @@ advancedsettings.launcher_visibility.close=Close the launcher when the game laun
 advancedsettings.launcher_visibility.hide=Hide the launcher when the game launched.
 advancedsettings.launcher_visibility.keep=Keep the launcher visible.
 advancedsettings.game_dir.default=Default (.minecraft/)
-advancedsettings.game_dir.independent=Independent (.minecraft/versions/<version name>/,除assets,libraries)
+advancedsettings.game_dir.independent=Independent (.minecraft/versions/<version name>/, except assets,libraries)
 advancedsettings.no_jvm_args=No JVM Args
 advancedsettings.java_args_default=Default java args: -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy -XX:MaxPermSize=???m -Xmx???m -Dfml.ignoreInvalidMinecraftCertificates=true -Dfml.ignorePatchDiscrepancies=true
 advancedsettings.wrapper_launcher=Wrapper Launcher(like optirun...)

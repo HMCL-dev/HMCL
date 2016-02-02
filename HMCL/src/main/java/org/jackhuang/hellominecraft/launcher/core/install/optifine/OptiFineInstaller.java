@@ -76,6 +76,8 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
         loc.mkdirs();
         File json = new File(loc, mv.id + ".json");
         FileUtils.writeStringToFile(json, C.GSON.toJson(mv, MinecraftVersion.class));
+
+        service.version().refreshVersions();
     }
 
     @Override

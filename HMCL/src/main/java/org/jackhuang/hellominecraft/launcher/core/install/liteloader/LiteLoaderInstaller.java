@@ -79,6 +79,8 @@ public class LiteLoaderInstaller extends Task implements PreviousResultRegistrar
         File json = new File(folder, mv.id + ".json");
         HMCLog.log("Creating new version profile..." + mv.id + ".json");
         FileUtils.write(json, C.GSON.toJson(mv));
+
+        service.version().refreshVersions();
     }
 
     @Override

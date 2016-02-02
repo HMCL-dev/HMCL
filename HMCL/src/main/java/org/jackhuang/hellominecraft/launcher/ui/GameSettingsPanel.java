@@ -66,7 +66,7 @@ import org.jackhuang.hellominecraft.util.system.Java;
  *
  * @author huangyuhui
  */
-public final class GameSettingsPanel extends AnimatedPanel implements DropTargetListener, Event<String> {
+public final class GameSettingsPanel extends AnimatedPanel implements DropTargetListener {
 
     boolean isLoading = false;
     public MinecraftVersionRequest minecraftVersion;
@@ -891,13 +891,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         getProfile().setSelectedMinecraftVersion(mcv);
     }//GEN-LAST:event_cboVersionsItemStateChanged
 
-    @Override
-    public boolean call(Object sender, String mcv) {
-        versionChanged(mcv);
-        cboVersions.setToolTipText(mcv);
-        return true;
-    }
-
     private void btnRefreshVersionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshVersionsActionPerformed
         refreshVersions();
     }//GEN-LAST:event_btnRefreshVersionsActionPerformed
@@ -1100,10 +1093,16 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         return getProfile().getSelectedVersion();
     }
 
+    Event<Void> onRefreshedVersions = (sender, e) -> {
+        loadVersions();
+        return true;
+    };
+
     void prepareProfile(Profile profile) {
         if (profile == null)
             return;
-        profile.selectedVersionChangedEvent.register(this);
+        profile.selectedVersionChangedEvent.register(selectedVersionChangedEvent);
+        profile.service().version().onRefreshedVersions.register(onRefreshedVersions);
         txtGameDir.setText(profile.getGameDir());
 
         loadVersions();
@@ -1204,7 +1203,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
     void refreshVersions() {
         getProfile().service().version().refreshVersions();
-        loadVersions();
     }
 
     // </editor-fold>
@@ -1318,4 +1316,10 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
     private final javax.swing.JPanel pnlGameDownloads;
 // </editor-fold>
+
+    Event<String> selectedVersionChangedEvent = (Object sender, String e) -> {
+        versionChanged(e);
+        cboVersions.setToolTipText(e);
+        return true;
+    };
 }
