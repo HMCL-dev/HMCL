@@ -23,7 +23,11 @@
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
           <Component id="pnlTop" alignment="0" max="32767" attributes="0"/>
-          <Component id="tabVersionEdit" alignment="0" max="32767" attributes="0"/>
+          <Group type="102" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="tabVersionEdit" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+          </Group>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
@@ -31,8 +35,8 @@
           <Group type="102" alignment="0" attributes="0">
               <Component id="pnlTop" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="tabVersionEdit" min="-2" pref="338" max="-2" attributes="0"/>
-              <EmptySpace max="32767" attributes="0"/>
+              <Component id="tabVersionEdit" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -68,7 +72,7 @@
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
-                      <EmptySpace max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
@@ -88,7 +92,7 @@
                                       <Component id="lblDimensionX" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="txtHeight" min="-2" pref="100" max="-2" attributes="0"/>
-                                      <EmptySpace pref="414" max="32767" attributes="0"/>
+                                      <EmptySpace pref="402" max="32767" attributes="0"/>
                                       <Component id="chkFullscreen" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <Group type="102" alignment="1" attributes="0">
@@ -355,7 +359,7 @@
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
-                      <EmptySpace max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="txtPrecalledCommand" alignment="0" max="32767" attributes="0"/>
                           <Component id="txtServerIP" alignment="0" max="32767" attributes="0"/>
@@ -559,21 +563,16 @@
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="102" alignment="0" attributes="0">
-                                  <Component id="jScrollPane1" pref="913" max="32767" attributes="0"/>
-                                  <EmptySpace max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="btnRemoveMod" min="-2" max="-2" attributes="0"/>
-                                      <Component id="btnAddMod" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                              </Group>
-                              <Group type="102" alignment="0" attributes="0">
-                                  <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="lblModInfo" pref="1009" max="32767" attributes="0"/>
-                              </Group>
+                          <Component id="jScrollPane1" pref="889" max="32767" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                              <Component id="btnRemoveMod" max="32767" attributes="0"/>
+                              <Component id="btnAddMod" max="32767" attributes="0"/>
                           </Group>
-                          <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
+                      </Group>
+                      <Group type="102" alignment="1" attributes="0">
+                          <Component id="lblModInfo" pref="985" max="32767" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -587,11 +586,10 @@
                                   <Component id="btnRemoveMod" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               </Group>
-                              <Component id="jScrollPane1" pref="272" max="32767" attributes="0"/>
+                              <Component id="jScrollPane1" pref="284" max="32767" attributes="0"/>
                           </Group>
-                          <EmptySpace max="-2" attributes="0"/>
+                          <EmptySpace min="-2" max="-2" attributes="0"/>
                           <Component id="lblModInfo" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -731,16 +729,13 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="lblProfile" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="cboProfiles" max="32767" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="lblVersions" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="cboVersions" max="32767" attributes="0"/>
-                          </Group>
+                          <Component id="lblVersions" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblProfile" alignment="0" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="cboProfiles" max="32767" attributes="0"/>
+                          <Component id="cboVersions" max="32767" attributes="0"/>
                       </Group>
                   </Group>
               </Group>

@@ -139,7 +139,9 @@ public class MinecraftVersionRequest {
                 return r;
             }
             int k = i;
-            while (tmp[k] >= 48 && tmp[k] <= 57 || tmp[k] == 46)
+            if (tmp[i + 1] >= (int) 'a' && tmp[i + 1] <= (int) 'z')
+                i++;
+            while (tmp[k] >= 48 && tmp[k] <= 57 || tmp[k] == (int) '.' || tmp[k] == (int) 'w')
                 k--;
             k++;
             r.version = new String(tmp, k, i - k + 1);

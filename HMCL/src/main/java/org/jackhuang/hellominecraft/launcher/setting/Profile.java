@@ -60,7 +60,12 @@ public final class Profile {
         return service;
     }
 
+    private transient final VersionSetting defaultVersionSetting = new VersionSetting();
+
     public VersionSetting getSelectedVersionSetting() {
+        String s = getSelectedVersion();
+        if (s == null)
+            return defaultVersionSetting;
         return getVersionSetting(getSelectedVersion());
     }
 

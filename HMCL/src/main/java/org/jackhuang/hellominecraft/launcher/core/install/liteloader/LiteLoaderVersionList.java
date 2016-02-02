@@ -63,6 +63,8 @@ public class LiteLoaderVersionList extends InstallerVersionList {
         for (Map.Entry<String, LiteLoaderMCVersions> arr : root.versions.entrySet()) {
             ArrayList<InstallerVersion> al = new ArrayList<>();
             LiteLoaderMCVersions mcv = arr.getValue();
+            if (mcv == null || mcv.artefacts == null || mcv.artefacts.get("com.mumfrey:liteloader") == null)
+                continue;
             for (Map.Entry<String, LiteLoaderVersion> entry : mcv.artefacts.get("com.mumfrey:liteloader").entrySet()) {
                 if ("latest".equals(entry.getKey()))
                     continue;

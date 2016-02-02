@@ -239,14 +239,14 @@ mods.default_information=<html><font color=#c0392b>Please ensure that you have i
 advancedsettings=Advanced
 advancedsettings.launcher_visible=Launcher Visibility
 advancedsettings.debug_mode=Debug Mode
-advancedsettings.java_permanent_generation_space=Permanent Generation Space/MB
+advancedsettings.java_permanent_generation_space=PermGen Space/MB
 advancedsettings.jvm_args=Java VM Arguments
 advancedsettings.Minecraft_arguments=Minecraft Arguments
 advancedsettings.launcher_visibility.close=Close the launcher when the game launched.
 advancedsettings.launcher_visibility.hide=Hide the launcher when the game launched.
 advancedsettings.launcher_visibility.keep=Keep the launcher visible.
 advancedsettings.game_dir.default=Default (.minecraft/)
-advancedsettings.game_dir.independent=Independent (.minecraft/versions/<version name>/,\u9664assets,libraries)
+advancedsettings.game_dir.independent=Independent (.minecraft/versions/<version name>/,除assets,libraries)
 advancedsettings.no_jvm_args=No JVM Args
 advancedsettings.java_args_default=Default java args: -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy -XX:MaxPermSize=???m -Xmx???m -Dfml.ignoreInvalidMinecraftCertificates=true -Dfml.ignorePatchDiscrepancies=true
 advancedsettings.wrapper_launcher=Wrapper Launcher(like optirun...)
@@ -260,7 +260,7 @@ mainwindow.enter_script_name=Enter the script name.
 mainwindow.make_launch_succeed=Finished script creation.
 mainwindow.no_version=No version found. Switch to Game Downloads Tab?
 
-launcher.about=<html>About Author<br/>\nEmail\uff1ahuanghongxun2008@126.com<br/>\nMinecraft Forum ID: klkl6523<br/>\nCopyright (c) 2013 huangyuhui<br/>Opened source under GPL v3 license:http://github.com/huanghongxun/HMCL/<br/>This software used project Gson which is under Apache License 2.0, thanks contributors.</html>
+launcher.about=<html>About Author<br/>\nEmail：huanghongxun2008@126.com<br/>\nMinecraft Forum ID: klkl6523<br/>\nCopyright (c) 2013 huangyuhui<br/>Opened source under GPL v3 license:http://github.com/huanghongxun/HMCL/<br/>This software used project Gson which is under Apache License 2.0, thanks contributors.</html>
 launcher.download_source=Download Source
 launcher.background_location=Background Location
 launcher.exit_failed=Failed to shutdown.
@@ -315,7 +315,7 @@ taskwindow.total_progress=Total progress
 taskwindow.cancel=Cancel
 taskwindow.no_more_instance=Maybe you opened more than one task window, dont open it again!
 taskwindow.file_name=Task
-taskwindow.download_progress=Progress
+taskwindow.download_progress=Pgs.
 
 setupwindow.include_minecraft=Import game
 setupwindow.find_in_configurations=Finished importing. You can find it in the configuration selection bar.
