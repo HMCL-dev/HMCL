@@ -71,6 +71,8 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
                         names[i] = profiles[i].name;
                     Selector s = new Selector(null, names, C.i18n("login.choose_charactor"));
                     s.setVisible(true);
+                    if (s.sel == Selector.FAILED_TO_SELECT)
+                        throw new AuthenticationException("No selection");
                     selectedProfile = profiles[s.sel];
                     username = names[s.sel];
                 } else
