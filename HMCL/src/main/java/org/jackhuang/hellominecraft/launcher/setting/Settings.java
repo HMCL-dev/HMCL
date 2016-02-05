@@ -53,20 +53,14 @@ public final class Settings {
 
     static {
         SETTINGS = initSettings();
-        SETTINGS.downloadTypeChangedEvent.register((sender, t) -> {
-            DownloadType.setSuggestedDownloadType(t);
-            return true;
-        });
+        SETTINGS.downloadTypeChangedEvent.register(DownloadType::setSuggestedDownloadType);
         DownloadType.setSuggestedDownloadType(SETTINGS.getDownloadSource());
         if (!getProfiles().containsKey(DEFAULT_PROFILE))
             getProfiles().put(DEFAULT_PROFILE, new Profile());
 
         for (Profile e : getProfiles().values()) {
             e.checkFormat();
-            e.propertyChanged.register((sender, t) -> {
-                save();
-                return true;
-            });
+            e.propertyChanged.register(Settings::save);
         }
     }
 

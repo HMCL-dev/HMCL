@@ -23,10 +23,27 @@
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
           <Component id="pnlTop" alignment="0" max="32767" attributes="0"/>
-          <Group type="102" attributes="0">
+          <Group type="102" alignment="1" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="tabVersionEdit" max="32767" attributes="0"/>
+              <Group type="103" groupAlignment="1" attributes="0">
+                  <Component id="tabVersionEdit" alignment="1" max="32767" attributes="0"/>
+                  <Group type="102" alignment="1" attributes="0">
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <Component id="btnMakeLaunchScript" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="btnShowLog" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="btnTestGame" min="-2" max="-2" attributes="0"/>
+                  </Group>
+              </Group>
               <EmptySpace max="-2" attributes="0"/>
+          </Group>
+          <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
+              <Group type="102" alignment="0" attributes="0">
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="btnIncludeMinecraft" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace pref="916" max="32767" attributes="0"/>
+              </Group>
           </Group>
       </Group>
     </DimensionLayout>
@@ -37,6 +54,19 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="tabVersionEdit" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="btnTestGame" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnShowLog" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnMakeLaunchScript" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+          </Group>
+          <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
+              <Group type="102" alignment="1" attributes="0">
+                  <EmptySpace pref="402" max="32767" attributes="0"/>
+                  <Component id="btnIncludeMinecraft" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+              </Group>
           </Group>
       </Group>
     </DimensionLayout>
@@ -165,7 +195,7 @@
                           <Component id="lblDimension" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="txtWidth" alignment="3" min="-2" pref="26" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="84" max="32767" attributes="0"/>
+                      <EmptySpace pref="54" max="32767" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="btnDownloadAllAssets" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="btnCleanGame" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -421,7 +451,7 @@
                       <Component id="lblServerIP" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="txtServerIP" min="-2" pref="26" max="-2" attributes="0"/>
-                      <EmptySpace pref="76" max="32767" attributes="0"/>
+                      <EmptySpace pref="46" max="32767" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="chkDebug" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="chkNoJVMArgs" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -586,7 +616,7 @@
                                   <Component id="btnRemoveMod" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               </Group>
-                              <Component id="jScrollPane1" pref="284" max="32767" attributes="0"/>
+                              <Component id="jScrollPane1" pref="254" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace min="-2" max="-2" attributes="0"/>
                           <Component id="lblModInfo" min="-2" max="-2" attributes="0"/>
@@ -907,5 +937,43 @@
         </Container>
       </SubComponents>
     </Container>
+    <Component class="javax.swing.JButton" name="btnTestGame">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#x6d4b;&#x8bd5;&#x6e38;&#x620f;"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnTestGameActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="btnShowLog">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="mainwindow.show_log" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnShowLogActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="btnMakeLaunchScript">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="mainwindow.make_launch_script" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnMakeLaunchScriptActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="btnIncludeMinecraft">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="setupwindow.include_minecraft" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnIncludeMinecraftActionPerformed"/>
+      </Events>
+    </Component>
   </SubComponents>
 </Form>

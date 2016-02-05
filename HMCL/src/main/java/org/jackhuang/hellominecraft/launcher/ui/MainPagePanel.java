@@ -29,13 +29,9 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.launcher.core.launch.DefaultGameLauncher;
-import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
-import org.jackhuang.hellominecraft.launcher.core.auth.LoginInfo;
 import org.jackhuang.hellominecraft.launcher.setting.Profile;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
@@ -43,14 +39,11 @@ import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.launcher.core.launch.GameLauncher;
 import org.jackhuang.hellominecraft.launcher.core.LauncherVisibility;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
-import org.jackhuang.hellominecraft.launcher.core.auth.AuthenticationException;
-import org.jackhuang.hellominecraft.launcher.core.launch.LaunchOptions;
 import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
 import org.jackhuang.hellominecraft.launcher.ui.modpack.ModpackWizard;
 import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
 import org.jackhuang.hellominecraft.util.Event;
 import org.jackhuang.hellominecraft.lookandfeel.comp.ConstomButton;
-import org.jackhuang.hellominecraft.util.func.Consumer;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.system.JavaProcessMonitor;
@@ -62,7 +55,7 @@ import org.jackhuang.hellominecraft.util.ui.wizard.api.WizardDisplayer;
  *
  * @author huangyuhui
  */
-public class MainPagePanel extends AnimatedPanel implements Event<String> {
+public class MainPagePanel extends AnimatedPanel {
 
     /**
      * Creates new form MainPagePanel
@@ -94,6 +87,8 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
         pnlMore.setOpaque(true);
 
         prepareAuths();
+
+        Settings.getInstance().authChangedEvent.register(onAuthChanged);
     }
 
     /**
@@ -120,9 +115,6 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
         txtPassword = new javax.swing.JPasswordField();
         jPanel3 = new javax.swing.JPanel();
         btnLogout = new javax.swing.JButton();
-        btnMakeLaunchScript = new javax.swing.JButton();
-        btnShowLog = new javax.swing.JButton();
-        btnIncludeMinecraft = new javax.swing.JButton();
         btnImportModpack = new javax.swing.JButton();
         btnExportModpack = new javax.swing.JButton();
 
@@ -232,27 +224,6 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
 
         pnlPassword.add(jPanel3, "card3");
 
-        btnMakeLaunchScript.setText(C.i18n("mainwindow.make_launch_script")); // NOI18N
-        btnMakeLaunchScript.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnMakeLaunchScriptActionPerformed(evt);
-            }
-        });
-
-        btnShowLog.setText(C.i18n("mainwindow.show_log")); // NOI18N
-        btnShowLog.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnShowLogActionPerformed(evt);
-            }
-        });
-
-        btnIncludeMinecraft.setText(C.i18n("setupwindow.include_minecraft")); // NOI18N
-        btnIncludeMinecraft.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnIncludeMinecraftActionPerformed(evt);
-            }
-        });
-
         btnImportModpack.setText(C.i18n("modpack.install.task")); // NOI18N
         btnImportModpack.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -281,7 +252,7 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
                             .addComponent(lblVersion, javax.swing.GroupLayout.Alignment.TRAILING))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cboProfiles, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(cboProfiles, 0, 128, Short.MAX_VALUE)
                             .addComponent(cboVersions, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(pnlMoreLayout.createSequentialGroup()
                         .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -291,9 +262,6 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
                         .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(cboLoginMode, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(txtPlayerName)))
-                    .addComponent(btnMakeLaunchScript, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(btnShowLog, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnIncludeMinecraft, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnExportModpack, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnImportModpack, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
@@ -319,16 +287,10 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
                     .addComponent(txtPlayerName, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnlPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 146, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 248, Short.MAX_VALUE)
                 .addComponent(btnImportModpack)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnExportModpack)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnIncludeMinecraft)
-                .addGap(18, 18, 18)
-                .addComponent(btnMakeLaunchScript)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnShowLog)
                 .addContainerGap())
         );
 
@@ -350,7 +312,7 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
             return;
         if (preparingAuth)
             return;
-        loginModeChanged();
+        Settings.getInstance().setLoginType(cboLoginMode.getSelectedIndex());
     }//GEN-LAST:event_cboLoginModeItemStateChanged
 
     private void cboProfilesItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboProfilesItemStateChanged
@@ -366,12 +328,6 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
         String mcv = (String) cboVersions.getSelectedItem();
         getProfile().setSelectedMinecraftVersion(mcv);
     }//GEN-LAST:event_cboVersionsItemStateChanged
-
-    @Override
-    public boolean call(Object sender, String mcv) {
-        cboVersions.setToolTipText(mcv);
-        return true;
-    }
 
     private void txtPasswordFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtPasswordFocusGained
         MainFrame.INSTANCE.closeMessage();
@@ -409,30 +365,6 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
             runGame();
     }//GEN-LAST:event_txtPasswordKeyPressed
 
-    private void btnMakeLaunchScriptActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMakeLaunchScriptActionPerformed
-        MainFrame.INSTANCE.mainPanel.makeLaunchScript();
-    }//GEN-LAST:event_btnMakeLaunchScriptActionPerformed
-
-    private void btnShowLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnShowLogActionPerformed
-        LogWindow.INSTANCE.setVisible(true);
-    }//GEN-LAST:event_btnShowLogActionPerformed
-
-    private void btnIncludeMinecraftActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnIncludeMinecraftActionPerformed
-        JFileChooser fc = new JFileChooser(IOUtils.currentDir());
-        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            File newGameDir = fc.getSelectedFile();
-            String name = JOptionPane.showInputDialog(C.i18n("setupwindow.give_a_name"));
-            if (StrUtils.isBlank(name)) {
-                MessageBox.Show(C.i18n("setupwindow.no_empty_name"));
-                return;
-            }
-            Settings.trySetProfile(new Profile(name).setGameDir(newGameDir.getAbsolutePath()));
-            MessageBox.Show(C.i18n("setupwindow.find_in_configurations"));
-            refreshMinecrafts(name);
-        }
-    }//GEN-LAST:event_btnIncludeMinecraftActionPerformed
-
     private void btnImportModpackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnImportModpackActionPerformed
         JFileChooser fc = new JFileChooser();
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -453,60 +385,6 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
         WizardDisplayer.showWizard(new ModpackWizard(getProfile().service()).createWizard());
     }//GEN-LAST:event_btnExportModpackActionPerformed
 
-    boolean isLaunching = false;
-
-    // <editor-fold defaultstate="collapsed" desc="Game Launch">
-    void genLaunchCode(final Consumer<GameLauncher> listener) {
-        if (isLaunching || getProfile() == null)
-            return;
-        isLaunching = true;
-        HMCLog.log("Start generating launching command...");
-        File file = getProfile().getCanonicalGameDirFile();
-        if (!file.exists()) {
-            HMCLog.warn("The minecraft path is wrong, please check it yourself.");
-            MessageBox.ShowLocalized("minecraft.wrong_path");
-            return;
-        }
-        final String name = (String) cboProfiles.getSelectedItem();
-        if (StrUtils.isBlank(name) || getProfile().getSelectedVersion() == null) {
-            HMCLog.warn("There's no selected version, rechoose a version.");
-            MessageBox.ShowLocalized("minecraft.no_selected_version");
-            return;
-        }
-
-        final int index = cboLoginMode.getSelectedIndex();
-        if (index < 0 || index >= IAuthenticator.LOGINS.size()) {
-            HMCLog.warn("There's no login method.");
-            MessageBox.ShowLocalized("login.methods.no_method");
-            return;
-        }
-        final IAuthenticator l = IAuthenticator.LOGINS.get(index);
-        final LoginInfo li = new LoginInfo(l.getUsername(), l.isLoggedIn() || !l.hasPassword() ? null : new String(txtPassword.getPassword()));
-        new Thread() {
-            @Override
-            public void run() {
-                Thread.currentThread().setName("Game Launcher");
-                try {
-                    LaunchOptions options = getProfile().getSelectedVersionSetting().createLaunchOptions(getProfile().getCanonicalGameDirFile());
-                    PluginManager.NOW_PLUGIN.onProcessingLaunchOptions(options);
-                    DefaultGameLauncher gl = new DefaultGameLauncher(options, getProfile().service(), li, l);
-                    gl.setTag(getProfile().getSelectedVersionSetting().getLauncherVisibility());
-                    gl.successEvent.register((sender, s) -> {
-                        isLaunching = false;
-                        return true;
-                    });
-                    listener.accept(gl);
-                    gl.makeLaunchCommand();
-                } catch (GameException e) {
-                    failed(C.i18n("launch.failed") + ", " + e.getMessage());
-                } catch (AuthenticationException e) {
-                    failed(C.i18n("login.failed") + ", " + e.getMessage());
-                }
-            }
-        }.start();
-    }
-    //</editor-fold>
-
     // <editor-fold defaultstate="collapsed" desc="Loads">
     private void prepareAuths() {
         preparingAuth = true;
@@ -517,34 +395,8 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
         int loginType = Settings.getInstance().getLoginType();
         if (0 <= loginType && loginType < cboLoginMode.getItemCount()) {
             cboLoginMode.setSelectedIndex(loginType);
-            loginModeChanged();
+            Settings.getInstance().setLoginType(loginType);
         }
-    }
-
-    private void loginModeChanged() {
-        int index = cboLoginMode.getSelectedIndex();
-        if (index < 0)
-            return;
-        Settings.getInstance().setLoginType(index);
-
-        IAuthenticator l = IAuthenticator.LOGINS.get(index);
-        if (l.hasPassword()) {
-            pnlPassword.setVisible(true);
-            lblUserName.setText(C.i18n("login.account"));
-        } else {
-            pnlPassword.setVisible(false);
-            lblUserName.setText(C.i18n("login.username"));
-        }
-
-        CardLayout cl = (CardLayout) pnlPassword.getLayout();
-        if (l.isLoggedIn())
-            cl.last(pnlPassword);
-        else
-            cl.first(pnlPassword);
-        String username = l.getUsername();
-        if (username == null)
-            username = "";
-        txtPlayerName.setText(username);
     }
 
     void loadFromSettings() {
@@ -558,7 +410,7 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
         isLoading = true;
         cboVersions.removeAllItems();
         int index = 0, i = 0;
-        getProfile().selectedVersionChangedEvent.register(this);
+        getProfile().selectedVersionChangedEvent.register(onVersionChanged);
         getProfile().service().version().refreshVersions();
         String selVersion = getProfile().getSelectedVersion();
         if (getProfile().service().version().getVersions().isEmpty()) {
@@ -609,36 +461,26 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
     private static final int DEFAULT_WIDTH = 800, DEFAULT_HEIGHT = 480;
     //</editor-fold>
 
-    class PrepareAuthDoneListener implements Event<List<String>> {
-
-        @Override
-        public boolean call(Object sender, List<String> value) {
-            prepareAuths();
-            return true;
-        }
-    }
-
-    private void runGame() {
+    void runGame() {
         MainFrame.INSTANCE.showMessage(C.i18n("ui.message.launching"));
-        genLaunchCode(value -> {
+        getProfile().launcher().genLaunchCode(value -> {
             value.successEvent.register(new LaunchFinisher());
-            value.successEvent.register(new PrepareAuthDoneListener());
-        });
+            value.successEvent.register(this::prepareAuths);
+        }, this::failed, txtPassword.getText());
     }
 
-    public void makeLaunchScript() {
+    void makeLaunchScript() {
         MainFrame.INSTANCE.showMessage(C.i18n("ui.message.launching"));
-        genLaunchCode(value -> {
+        getProfile().launcher().genLaunchCode(value -> {
             value.successEvent.register(new LaunchScriptFinisher());
-            value.successEvent.register(new PrepareAuthDoneListener());
-        });
+            value.successEvent.register(this::prepareAuths);
+        }, this::failed, txtPassword.getText());
     }
 
     private void failed(String s) {
         if (s != null)
             MessageBox.Show(s);
         MainFrame.INSTANCE.closeMessage();
-        isLaunching = false;
     }
 
     public class LaunchFinisher implements Event<List<String>> {
@@ -646,7 +488,7 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
         @Override
         public boolean call(Object sender, List<String> str) {
             final GameLauncher obj = (GameLauncher) sender;
-            obj.launchEvent.register((sender1, p) -> {
+            obj.launchEvent.register(p -> {
                 if ((LauncherVisibility) obj.getTag() == LauncherVisibility.CLOSE && !LogWindow.INSTANCE.isVisible()) {
                     HMCLog.log("Without the option of keeping the launcher visible, this application will exit and will NOT catch game logs, but you can turn on \"Debug Mode\".");
                     System.exit(0);
@@ -658,25 +500,21 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
                     MainFrame.INSTANCE.dispose();
                 }
                 JavaProcessMonitor jpm = new JavaProcessMonitor(p);
-                jpm.applicationExitedAbnormallyEvent.register((sender2, t) -> {
+                jpm.applicationExitedAbnormallyEvent.register(t -> {
                     HMCLog.err("The game exited abnormally, exit code: " + t);
                     MessageBox.Show(C.i18n("launch.exited_abnormally") + ", exit code: " + t);
-                    return true;
                 });
-                jpm.jvmLaunchFailedEvent.register((sender2, t) -> {
+                jpm.jvmLaunchFailedEvent.register(t -> {
                     HMCLog.err("Cannot create jvm, exit code: " + t);
                     MessageBox.Show(C.i18n("launch.cannot_create_jvm") + ", exit code: " + t);
-                    return true;
                 });
-                jpm.stoppedEvent.register((sender2, t) -> {
+                jpm.stoppedEvent.register(() -> {
                     if ((LauncherVisibility) obj.getTag() != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible()) {
                         HMCLog.log("Without the option of keeping the launcher visible, this application will exit and will NOT catch game logs, but you can turn on \"Debug Mode\".");
                         System.exit(0);
                     }
-                    return true;
                 });
                 jpm.start();
-                return true;
             });
             try {
                 obj.launch(str);
@@ -720,10 +558,7 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnExportModpack;
     private javax.swing.JButton btnImportModpack;
-    private javax.swing.JButton btnIncludeMinecraft;
     private javax.swing.JButton btnLogout;
-    private javax.swing.JButton btnMakeLaunchScript;
-    private javax.swing.JButton btnShowLog;
     private javax.swing.JComboBox cboLoginMode;
     private javax.swing.JComboBox cboProfiles;
     private javax.swing.JComboBox cboVersions;
@@ -739,4 +574,32 @@ public class MainPagePanel extends AnimatedPanel implements Event<String> {
     private javax.swing.JPasswordField txtPassword;
     private javax.swing.JTextField txtPlayerName;
     // End of variables declaration//GEN-END:variables
+
+    final Event<String> onVersionChanged = (sender, v) -> {
+        cboVersions.setToolTipText(v);
+        return true;
+    };
+
+    final Event<IAuthenticator> onAuthChanged = (sender, l) -> {
+        if (l.hasPassword()) {
+            pnlPassword.setVisible(true);
+            lblUserName.setText(C.i18n("login.account"));
+        } else {
+            pnlPassword.setVisible(false);
+            lblUserName.setText(C.i18n("login.username"));
+        }
+
+        CardLayout cl = (CardLayout) pnlPassword.getLayout();
+        if (l.isLoggedIn())
+            cl.last(pnlPassword);
+        else
+            cl.first(pnlPassword);
+        String username = l.getUsername();
+        if (username == null)
+            username = "";
+        txtPlayerName.setText(username);
+
+        return true;
+    };
+
 }

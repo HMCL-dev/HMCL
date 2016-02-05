@@ -149,10 +149,7 @@ public final class MainFrame extends DraggableFrame {
             }
         ((JPanel) getContentPane()).setOpaque(true);
 
-        Settings.getInstance().themeChangedEvent.register((sender, t) -> {
-            MainFrame.INSTANCE.reloadColor(t);
-            return true;
-        });
+        Settings.getInstance().themeChangedEvent.register(this::reloadColor);
     }
 
     private void initComponents() {

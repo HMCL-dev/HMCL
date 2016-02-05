@@ -106,12 +106,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                 System.out.println(text);
 
             if (checkThrowable(e) && !System.getProperty("java.vm.name").contains("OpenJDK")) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        LogWindow.INSTANCE.showAsCrashWindow(Settings.UPDATE_CHECKER.OUT_DATED);
-                    }
-                });
+                SwingUtilities.invokeLater(() -> LogWindow.INSTANCE.showAsCrashWindow(Settings.UPDATE_CHECKER.OUT_DATED));
                 if (!Settings.UPDATE_CHECKER.OUT_DATED)
                     reportToServer(text, s);
             }

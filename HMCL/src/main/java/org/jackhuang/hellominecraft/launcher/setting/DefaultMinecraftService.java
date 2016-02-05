@@ -52,11 +52,8 @@ public class DefaultMinecraftService extends IMinecraftService {
         this.p = p;
         this.provider = new HMCLGameProvider(this);
         provider.initializeMiencraft();
-        provider.onRefreshingVersions.register((sender, x) -> {
-            versionSettings.clear();
-            return true;
-        });
-        provider.onLoadedVersion.register((sender, id) -> {
+        provider.onRefreshingVersions.register(versionSettings::clear);
+        provider.onLoadedVersion.register(id -> {
             VersionSetting vs = new VersionSetting();
             File f = new File(provider.versionRoot(id), "hmclversion.cfg");
             if (f.exists()) {
@@ -66,7 +63,6 @@ public class DefaultMinecraftService extends IMinecraftService {
             }
             vs.id = id;
             versionSettings.put(id, vs);
-            return true;
         });
         this.mms = new MinecraftModService(this);
         this.mds = new MinecraftDownloadService(this);

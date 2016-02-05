@@ -63,6 +63,7 @@ public final class Config {
 
     public transient final EventHandler<Theme> themeChangedEvent = new EventHandler<>(this);
     public transient final EventHandler<DownloadType> downloadTypeChangedEvent = new EventHandler<>(this);
+    public transient final EventHandler<IAuthenticator> authChangedEvent = new EventHandler<>(this);
 
     public Theme getTheme() {
         return Theme.values()[theme];
@@ -133,7 +134,10 @@ public final class Config {
     }
 
     public void setLoginType(int logintype) {
+        if (logintype < 0 || logintype >= IAuthenticator.LOGINS.size())
+            return;
         this.logintype = logintype;
+        authChangedEvent.execute(IAuthenticator.LOGINS.get(logintype));
         Settings.save();
     }
 

@@ -35,6 +35,7 @@ public final class Profile {
     private String name, selectedMinecraftVersion = "", gameDir;
 
     private transient IMinecraftService service;
+    private transient HMCLGameLauncher launcher = new HMCLGameLauncher(this);
     public transient final EventHandler<String> propertyChanged = new EventHandler<>(this);
 
     public Profile() {
@@ -58,6 +59,10 @@ public final class Profile {
         if (service == null)
             service = PluginManager.NOW_PLUGIN.provideMinecraftService(this);
         return service;
+    }
+
+    public HMCLGameLauncher launcher() {
+        return launcher;
     }
 
     private transient final VersionSetting defaultVersionSetting = new VersionSetting();

@@ -45,7 +45,7 @@
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="cboProfiles" alignment="0" max="32767" attributes="0"/>
+                              <Component id="cboProfiles" alignment="0" pref="128" max="32767" attributes="0"/>
                               <Component id="cboVersions" alignment="0" max="32767" attributes="0"/>
                           </Group>
                       </Group>
@@ -60,9 +60,6 @@
                               <Component id="txtPlayerName" max="32767" attributes="0"/>
                           </Group>
                       </Group>
-                      <Component id="btnMakeLaunchScript" alignment="0" pref="0" max="32767" attributes="0"/>
-                      <Component id="btnShowLog" alignment="0" max="32767" attributes="0"/>
-                      <Component id="btnIncludeMinecraft" alignment="0" max="32767" attributes="0"/>
                       <Component id="btnExportModpack" alignment="0" max="32767" attributes="0"/>
                       <Component id="btnImportModpack" alignment="0" max="32767" attributes="0"/>
                   </Group>
@@ -95,16 +92,10 @@
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="pnlPassword" min="-2" pref="26" max="-2" attributes="0"/>
-                  <EmptySpace pref="146" max="32767" attributes="0"/>
+                  <EmptySpace pref="248" max="32767" attributes="0"/>
                   <Component id="btnImportModpack" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="btnExportModpack" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Component id="btnIncludeMinecraft" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace type="separate" max="-2" attributes="0"/>
-                  <Component id="btnMakeLaunchScript" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Component id="btnShowLog" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
           </Group>
@@ -263,36 +254,6 @@
             </Container>
           </SubComponents>
         </Container>
-        <Component class="javax.swing.JButton" name="btnMakeLaunchScript">
-          <Properties>
-            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="mainwindow.make_launch_script" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
-            </Property>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnMakeLaunchScriptActionPerformed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JButton" name="btnShowLog">
-          <Properties>
-            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="mainwindow.show_log" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
-            </Property>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnShowLogActionPerformed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JButton" name="btnIncludeMinecraft">
-          <Properties>
-            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="setupwindow.include_minecraft" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
-            </Property>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnIncludeMinecraftActionPerformed"/>
-          </Events>
-        </Component>
         <Component class="javax.swing.JButton" name="btnImportModpack">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">

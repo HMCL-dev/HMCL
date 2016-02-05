@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.util;
 
 import java.util.HashSet;
+import org.jackhuang.hellominecraft.util.func.Consumer;
 
 /**
  *
@@ -26,11 +27,12 @@ import java.util.HashSet;
  */
 public class EventHandler<T> {
 
-    HashSet<Event<T>> handlers;
+    HashSet<Event<T>> handlers = new HashSet<>();
+    HashSet<Consumer<T>> consumers = new HashSet<>();
+    HashSet<Runnable> runnables = new HashSet<>();
     Object sender;
 
     public EventHandler(Object sender) {
-        handlers = new HashSet<>();
         this.sender = sender;
     }
 
@@ -38,8 +40,24 @@ public class EventHandler<T> {
         handlers.add(t);
     }
 
+    public void register(Consumer<T> t) {
+        consumers.add(t);
+    }
+
+    public void register(Runnable t) {
+        runnables.add(t);
+    }
+
     public void unregister(Event<T> t) {
         handlers.remove(t);
+    }
+
+    public void unregister(Consumer<T> t) {
+        consumers.remove(t);
+    }
+
+    public void unregister(Runnable t) {
+        runnables.remove(t);
     }
 
     public boolean execute(T x) {
@@ -47,6 +65,10 @@ public class EventHandler<T> {
         for (Event<T> t : handlers)
             if (!t.call(sender, x))
                 flag = false;
+        for (Consumer<T> t : consumers)
+            t.accept(x);
+        for (Runnable t : runnables)
+            t.run();
         return flag;
     }
 

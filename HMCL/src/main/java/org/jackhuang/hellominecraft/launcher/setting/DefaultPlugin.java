@@ -26,6 +26,7 @@ import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.core.auth.YggdrasilAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.launch.LaunchOptions;
 import org.jackhuang.hellominecraft.launcher.ui.MainFrame;
+import org.jackhuang.hellominecraft.util.EventHandler;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 
 /**
@@ -75,8 +76,11 @@ public class DefaultPlugin implements IPlugin {
     public void onProcessingLoginResult(UserProfileProvider result) {
     }
 
+    public transient final EventHandler<LaunchOptions> onProcessingLaunchOptionsEvent = new EventHandler<>(this);
+
     @Override
     public void onProcessingLaunchOptions(LaunchOptions p) {
+        onProcessingLaunchOptionsEvent.execute(p);
     }
 
 }
