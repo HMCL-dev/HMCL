@@ -54,9 +54,7 @@ public abstract class WizardPanelNavResult extends DeferredWizardResult {
         }
 
         public boolean equals(Object o) {
-            if (o instanceof WPNRimmediate && ((WPNRimmediate) o).value == value)
-                return true;
-            return false;
+            return o instanceof WPNRimmediate && ((WPNRimmediate) o).value == value;
         }
 
         public int hashCode() {

@@ -22,7 +22,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import javax.swing.JFileChooser;
@@ -45,7 +44,6 @@ import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
 import org.jackhuang.hellominecraft.util.Event;
 import org.jackhuang.hellominecraft.lookandfeel.comp.ConstomButton;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.system.JavaProcessMonitor;
 import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.util.ui.LogWindow;
@@ -86,9 +84,9 @@ public class MainPagePanel extends AnimatedPanel {
         pnlMore.setBackground(GraphicsUtils.getWebColorWithAlpha("FFFFFF7F"));
         pnlMore.setOpaque(true);
 
-        prepareAuths();
-
         Settings.getInstance().authChangedEvent.register(onAuthChanged);
+
+        prepareAuths();
     }
 
     /**
@@ -464,7 +462,7 @@ public class MainPagePanel extends AnimatedPanel {
     void runGame() {
         MainFrame.INSTANCE.showMessage(C.i18n("ui.message.launching"));
         getProfile().launcher().genLaunchCode(value -> {
-            value.successEvent.register(new LaunchFinisher());
+            value.successEvent.register(launchFinisher);
             value.successEvent.register(this::prepareAuths);
         }, this::failed, txtPassword.getText());
     }
@@ -472,7 +470,7 @@ public class MainPagePanel extends AnimatedPanel {
     void makeLaunchScript() {
         MainFrame.INSTANCE.showMessage(C.i18n("ui.message.launching"));
         getProfile().launcher().genLaunchCode(value -> {
-            value.successEvent.register(new LaunchScriptFinisher());
+            value.successEvent.register(launchScriptFinisher);
             value.successEvent.register(this::prepareAuths);
         }, this::failed, txtPassword.getText());
     }
@@ -483,68 +481,59 @@ public class MainPagePanel extends AnimatedPanel {
         MainFrame.INSTANCE.closeMessage();
     }
 
-    public class LaunchFinisher implements Event<List<String>> {
-
-        @Override
-        public boolean call(Object sender, List<String> str) {
-            final GameLauncher obj = (GameLauncher) sender;
-            obj.launchEvent.register(p -> {
-                if ((LauncherVisibility) obj.getTag() == LauncherVisibility.CLOSE && !LogWindow.INSTANCE.isVisible()) {
+    final Event<List<String>> launchFinisher = (sender, str) -> {
+        final GameLauncher obj = (GameLauncher) sender;
+        obj.launchEvent.register(p -> {
+            if ((LauncherVisibility) obj.getTag() == LauncherVisibility.CLOSE && !LogWindow.INSTANCE.isVisible()) {
+                HMCLog.log("Without the option of keeping the launcher visible, this application will exit and will NOT catch game logs, but you can turn on \"Debug Mode\".");
+                System.exit(0);
+            } else if ((LauncherVisibility) obj.getTag() == LauncherVisibility.KEEP)
+                MainFrame.INSTANCE.closeMessage();
+            else {
+                if (LogWindow.INSTANCE.isVisible())
+                    LogWindow.INSTANCE.setExit(() -> true);
+                MainFrame.INSTANCE.dispose();
+            }
+            JavaProcessMonitor jpm = new JavaProcessMonitor(p);
+            jpm.applicationExitedAbnormallyEvent.register(t -> {
+                HMCLog.err("The game exited abnormally, exit code: " + t);
+                MessageBox.Show(C.i18n("launch.exited_abnormally") + ", exit code: " + t);
+            });
+            jpm.jvmLaunchFailedEvent.register(t -> {
+                HMCLog.err("Cannot create jvm, exit code: " + t);
+                MessageBox.Show(C.i18n("launch.cannot_create_jvm") + ", exit code: " + t);
+            });
+            jpm.stoppedEvent.register(() -> {
+                if ((LauncherVisibility) obj.getTag() != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible()) {
                     HMCLog.log("Without the option of keeping the launcher visible, this application will exit and will NOT catch game logs, but you can turn on \"Debug Mode\".");
                     System.exit(0);
-                } else if ((LauncherVisibility) obj.getTag() == LauncherVisibility.KEEP)
-                    MainFrame.INSTANCE.closeMessage();
-                else {
-                    if (LogWindow.INSTANCE.isVisible())
-                        LogWindow.INSTANCE.setExit(() -> true);
-                    MainFrame.INSTANCE.dispose();
                 }
-                JavaProcessMonitor jpm = new JavaProcessMonitor(p);
-                jpm.applicationExitedAbnormallyEvent.register(t -> {
-                    HMCLog.err("The game exited abnormally, exit code: " + t);
-                    MessageBox.Show(C.i18n("launch.exited_abnormally") + ", exit code: " + t);
-                });
-                jpm.jvmLaunchFailedEvent.register(t -> {
-                    HMCLog.err("Cannot create jvm, exit code: " + t);
-                    MessageBox.Show(C.i18n("launch.cannot_create_jvm") + ", exit code: " + t);
-                });
-                jpm.stoppedEvent.register(() -> {
-                    if ((LauncherVisibility) obj.getTag() != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible()) {
-                        HMCLog.log("Without the option of keeping the launcher visible, this application will exit and will NOT catch game logs, but you can turn on \"Debug Mode\".");
-                        System.exit(0);
-                    }
-                });
-                jpm.start();
             });
-            try {
-                obj.launch(str);
-            } catch (IOException e) {
-                failed(C.i18n("launch.failed_creating_process") + "\n" + e.getMessage());
-                HMCLog.err("Failed to launch when creating a new process.", e);
-            }
-            return true;
+            jpm.start();
+        });
+        try {
+            obj.launch(str);
+        } catch (IOException e) {
+            failed(C.i18n("launch.failed_creating_process") + "\n" + e.getMessage());
+            HMCLog.err("Failed to launch when creating a new process.", e);
         }
-    }
+        return true;
+    };
 
-    public class LaunchScriptFinisher implements Event<List<String>> {
-
-        @Override
-        public boolean call(Object sender, List str) {
-            boolean flag = false;
-            try {
-                String s = JOptionPane.showInputDialog(C.i18n("mainwindow.enter_script_name"));
-                if (s != null)
-                    MessageBox.Show(C.i18n("mainwindow.make_launch_succeed") + " " + ((GameLauncher) sender).makeLauncher(s, str).getAbsolutePath());
-                flag = true;
-            } catch (IOException ex) {
-                MessageBox.Show(C.i18n("mainwindow.make_launch_script_failed"));
-                HMCLog.err("Failed to create script file.", ex);
-            }
-            MainFrame.INSTANCE.closeMessage();
-            return flag;
+    final Event<List<String>> launchScriptFinisher = (sender, str) -> {
+        boolean flag = false;
+        try {
+            String s = JOptionPane.showInputDialog(C.i18n("mainwindow.enter_script_name"));
+            if (s != null)
+                MessageBox.Show(C.i18n("mainwindow.make_launch_succeed") + " " + ((GameLauncher) sender).makeLauncher(s, str).getAbsolutePath());
+            flag = true;
+        } catch (IOException ex) {
+            MessageBox.Show(C.i18n("mainwindow.make_launch_script_failed"));
+            HMCLog.err("Failed to create script file.", ex);
         }
-
-    }
+        MainFrame.INSTANCE.closeMessage();
+        return flag;
+    };
 
     public Profile getProfile() {
         return Settings.getProfile((String) cboProfiles.getSelectedItem());

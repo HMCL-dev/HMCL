@@ -18,8 +18,6 @@
 package org.jackhuang.hellominecraft.launcher.util.upgrade;
 
 import org.jackhuang.hellominecraft.util.Event;
-import org.jackhuang.hellominecraft.util.Event;
-import org.jackhuang.hellominecraft.util.VersionNumber;
 import org.jackhuang.hellominecraft.util.VersionNumber;
 
 /**

@@ -198,23 +198,20 @@ public class NavButtonManager implements ActionListener {
         final boolean enableNext = nextStep != null && canContinue && problem == null && !isDeferredResult;
         final boolean enablePrevious = wizard.getPreviousStep() != null && !isDeferredResult;
 
-        final Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                next.setEnabled(enableNext);
-                prev.setEnabled(enablePrevious);
-                finish.setEnabled(enableFinish);
-                JRootPane root = next.getRootPane();
-                if (root != null)
-                    if (next.isEnabled())
-                        root.setDefaultButton(next);
-                    else if (finish.isEnabled())
-                        root.setDefaultButton(finish);
-                    else if (prev.isEnabled())
-                        root.setDefaultButton(prev);
-                    else
-                        root.setDefaultButton(null);
-            }
+        final Runnable runnable = () -> {
+            next.setEnabled(enableNext);
+            prev.setEnabled(enablePrevious);
+            finish.setEnabled(enableFinish);
+            JRootPane root = next.getRootPane();
+            if (root != null)
+                if (next.isEnabled())
+                    root.setDefaultButton(next);
+                else if (finish.isEnabled())
+                    root.setDefaultButton(finish);
+                else if (prev.isEnabled())
+                    root.setDefaultButton(prev);
+                else
+                    root.setDefaultButton(null);
         };
 
         if (EventQueue.isDispatchThread())
@@ -265,21 +262,18 @@ public class NavButtonManager implements ActionListener {
     }
 
     void deferredResultFailed(final boolean canGoBack) {
-        final Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                if (!canGoBack)
-                    getCancel().setText(getCloseString());
-                getPrev().setEnabled(true);
-                getNext().setEnabled(false);
-                getCancel().setEnabled(true);
-                getFinish().setEnabled(false);
+        final Runnable runnable = () -> {
+            if (!canGoBack)
+                getCancel().setText(getCloseString());
+            getPrev().setEnabled(true);
+            getNext().setEnabled(false);
+            getCancel().setEnabled(true);
+            getFinish().setEnabled(false);
 
-                if (NAME_CLOSE.equals(deferredStatus)) {
-                    // no action
-                } else
-                    deferredStatus = DEFERRED_FAILED + deferredStatus;
-            }
+            if (NAME_CLOSE.equals(deferredStatus)) {
+                // no action
+            } else
+                deferredStatus = DEFERRED_FAILED + deferredStatus;
         };
         if (EventQueue.isDispatchThread())
             runnable.run();
@@ -601,25 +595,22 @@ public class NavButtonManager implements ActionListener {
         }
 
         public void navigabilityChanged(final Wizard wizard) {
-            final Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                    if (wizard.isBusy()) {
-                        next.setEnabled(false);
-                        prev.setEnabled(false);
-                        finish.setEnabled(false);
-                        cancel.setEnabled(false);
-                        parent.getOuterPanel().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                        wasBusy = true;
-                        return;
-                    } else if (wasBusy) {
-                        cancel.setEnabled(true);
-                        parent.getOuterPanel().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                    }
-                    configureNavigationButtons(wizard, prev, next, finish);
-
-                    parent.updateProblem();
+            final Runnable runnable = () -> {
+                if (wizard.isBusy()) {
+                    next.setEnabled(false);
+                    prev.setEnabled(false);
+                    finish.setEnabled(false);
+                    cancel.setEnabled(false);
+                    parent.getOuterPanel().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                    wasBusy = true;
+                    return;
+                } else if (wasBusy) {
+                    cancel.setEnabled(true);
+                    parent.getOuterPanel().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                 }
+                configureNavigationButtons(wizard, prev, next, finish);
+
+                parent.updateProblem();
             };
             if (EventQueue.isDispatchThread())
                 runnable.run();

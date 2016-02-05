@@ -150,14 +150,10 @@ final class Util {
         try {
             m.setAccessible(true);
             result = (String) m.invoke(null, (Object[]) null);
-        } catch (InvocationTargetException ite) {
+        } catch (InvocationTargetException | IllegalAccessException ite) {
             throw new IllegalArgumentException("Could not invoke "
                                                + "public static String " + clazz.getName()
-                                               + ".getDescription() - make sure it exists.");
-        } catch (IllegalAccessException iae) {
-            throw new IllegalArgumentException("Could not invoke "
-                                               + "public static String " + clazz.getName()
-                                               + ".getDescription() - make sure it exists.");
+                                               + ".getDescription() - make sure it exists.", ite);
         }
         return result;
     }

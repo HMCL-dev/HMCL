@@ -51,6 +51,7 @@ public class PropertyMap extends HashMap<String, Property> {
             for (Map<String, String> propertyMap : list) {
                 String name = propertyMap.get("name");
                 String value = propertyMap.get("value");
+                put(name, new Property(name, value));
             }
         } catch (Throwable t) {
             HMCLog.warn("Failed to deserialize properties", t);
@@ -76,6 +77,7 @@ public class PropertyMap extends HashMap<String, Property> {
                         JsonObject object = (JsonObject) element;
                         String name = object.getAsJsonPrimitive("name").getAsString();
                         String value = object.getAsJsonPrimitive("value").getAsString();
+                        result.put(name, new Property(name, value));
                     }
 
             return result;
@@ -101,10 +103,10 @@ public class PropertyMap extends HashMap<String, Property> {
         @Override
         public JsonElement serialize(PropertyMap src, Type typeOfSrc, JsonSerializationContext context) {
             JsonObject result = new JsonObject();
-            for (String key : src.keySet()) {
+            for (PropertyMap.Entry<String, Property> entry : src.entrySet()) {
                 JsonArray values = new JsonArray();
-                values.add(new JsonPrimitive(src.get(key).value));
-                result.add(key, values);
+                values.add(new JsonPrimitive(entry.getValue().value));
+                result.add(entry.getKey(), values);
             }
             return result;
         }

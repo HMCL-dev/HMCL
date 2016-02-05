@@ -21,9 +21,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 
-import javax.swing.Icon;
 import javax.swing.JLabel;
-import javax.swing.UIManager;
 import javax.swing.plaf.ColorUIResource;
 
 public class CheckBoxTreeLabel extends JLabel {

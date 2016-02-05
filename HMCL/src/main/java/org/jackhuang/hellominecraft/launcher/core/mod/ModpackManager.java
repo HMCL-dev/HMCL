@@ -144,32 +144,26 @@ public final class ModpackManager {
      * &lt; String, Boolean, Boolean &gt;: Folder/File name, Is Directory,
      * Return 0: non blocked, 1: non shown, 2: suggested, checked.
      */
-    public static final BiFunction<String, Boolean, Integer> MODPACK_PREDICATE = new BiFunction<String, Boolean, Integer>() {
-        @Override
-        public Integer apply(String x, Boolean y) {
-            if (ModpackManager.MODPACK_BLACK_LIST_PREDICATE.apply(x, y))
-                return 1;
-            if (ModpackManager.MODPACK_SUGGESTED_BLACK_LIST_PREDICATE.apply(x, y))
-                return 2;
-            return 0;
-        }
+    public static final BiFunction<String, Boolean, Integer> MODPACK_PREDICATE = (String x, Boolean y) -> {
+        if (ModpackManager.MODPACK_BLACK_LIST_PREDICATE.apply(x, y))
+            return 1;
+        if (ModpackManager.MODPACK_SUGGESTED_BLACK_LIST_PREDICATE.apply(x, y))
+            return 2;
+        return 0;
     };
 
     public static final BiFunction<String, Boolean, Boolean> MODPACK_BLACK_LIST_PREDICATE = modpackPredicateMaker(MODPACK_BLACK_LIST);
     public static final BiFunction<String, Boolean, Boolean> MODPACK_SUGGESTED_BLACK_LIST_PREDICATE = modpackPredicateMaker(MODPACK_SUGGESTED_BLACK_LIST);
 
     private static BiFunction<String, Boolean, Boolean> modpackPredicateMaker(final List<String> l) {
-        return new BiFunction<String, Boolean, Boolean>() {
-            @Override
-            public Boolean apply(String x, Boolean y) {
-                for (String s : l)
-                    if (y) {
-                        if (x.startsWith(s + "/"))
-                            return true;
-                    } else if (x.equals(s))
+        return (String x, Boolean y) -> {
+            for (String s : l)
+                if (y) {
+                    if (x.startsWith(s + "/"))
                         return true;
-                return false;
-            }
+                } else if (x.equals(s))
+                    return true;
+            return false;
         };
     }
 
@@ -193,17 +187,14 @@ public final class ModpackManager {
         ZipEngine zip = null;
         try {
             zip = new ZipEngine(output);
-            zip.putDirectory(provider.getRunDirectory(version), new BiFunction<String, Boolean, String>() {
-                             @Override
-                             public String apply(String x, Boolean y) {
-                                 for (String s : b)
-                                     if (y) {
-                                         if (x.startsWith(s + "/"))
-                                             return null;
-                                     } else if (x.equals(s))
+            zip.putDirectory(provider.getRunDirectory(version), (String x, Boolean y) -> {
+                             for (String s : b)
+                                 if (y) {
+                                     if (x.startsWith(s + "/"))
                                          return null;
-                                 return "minecraft/" + x;
-                             }
+                                 } else if (x.equals(s))
+                                     return null;
+                             return "minecraft/" + x;
                          });
 
             MinecraftVersion mv = provider.getVersionById(version).resolve(provider);

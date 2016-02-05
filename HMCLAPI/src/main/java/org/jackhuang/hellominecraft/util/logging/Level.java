@@ -60,18 +60,29 @@ public enum Level {
         if (m.find()) {
             // New style logs from log4j
             String levelStr = m.group("level");
-            if ("INFO".equals(levelStr))
-                level = INFO;
-            else if ("WARN".equals(levelStr))
-                level = WARN;
-            else if ("ERROR".equals(levelStr))
-                level = ERROR;
-            else if ("FATAL".equals(levelStr))
-                level = FATAL;
-            else if ("TRACE".equals(levelStr))
-                level = TRACE;
-            else if ("DEBUG".equals(levelStr))
-                level = DEBUG;
+            if (null != levelStr)
+                switch (levelStr) {
+                case "INFO":
+                    level = INFO;
+                    break;
+                case "WARN":
+                    level = WARN;
+                    break;
+                case "ERROR":
+                    level = ERROR;
+                    break;
+                case "FATAL":
+                    level = FATAL;
+                    break;
+                case "TRACE":
+                    level = TRACE;
+                    break;
+                case "DEBUG":
+                    level = DEBUG;
+                    break;
+                default:
+                    break;
+                }
         } else {
             if (line.contains("[INFO]") || line.contains("[CONFIG]") || line.contains("[FINE]")
                 || line.contains("[FINER]") || line.contains("[FINEST]"))

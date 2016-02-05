@@ -84,7 +84,7 @@ public class AppDataUpgrader extends IUpgrader {
                     }
                 }
             } catch (Throwable t) {
-                t.printStackTrace();
+                HMCLog.err("Failed to execute newer version application", t);
             }
         return false;
     }

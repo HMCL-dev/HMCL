@@ -26,11 +26,7 @@ public class Natives implements Cloneable {
     public String windows, osx, linux;
 
     @Override
-    protected Object clone() {
-        Natives n = new Natives();
-        n.windows = windows;
-        n.osx = osx;
-        n.linux = linux;
-        return n;
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 }

@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hellominecraft.svrmgr.install.cauldron;
 
+import java.util.Arrays;
+
 /**
  *
  * @author huangyuhui
@@ -29,6 +31,6 @@ public class ForgeVersion {
 
     @Override
     public String toString() {
-        return "ForgeVersion{" + "vername=" + vername + ", ver=" + ver + ", mcver=" + mcver + ", releasetime=" + releasetime + ", changelog=" + changelog + ", installer=" + installer + ", javadoc=" + javadoc + ", src=" + src + ", universal=" + universal + ", userdev=" + userdev + ", typeint=" + typeint + '}';
+        return "ForgeVersion{" + "vername=" + vername + ", ver=" + ver + ", mcver=" + mcver + ", releasetime=" + releasetime + ", changelog=" + changelog + ", installer=" + Arrays.toString(installer) + ", javadoc=" + Arrays.toString(javadoc) + ", src=" + Arrays.toString(src) + ", universal=" + universal + ", userdev=" + userdev + ", typeint=" + typeint + '}';
     }
 }

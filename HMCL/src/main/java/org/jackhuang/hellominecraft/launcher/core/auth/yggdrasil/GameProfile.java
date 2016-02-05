@@ -25,6 +25,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
+import java.util.Objects;
 import java.util.UUID;
 import org.jackhuang.hellominecraft.util.StrUtils;
 
@@ -47,8 +48,15 @@ public class GameProfile {
     }
 
     @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 29 * hash + Objects.hashCode(this.id);
+        hash = 29 * hash + Objects.hashCode(this.name);
+        return hash;
+    }
+
+    @Override
     public boolean equals(Object o) {
-        System.out.println("hello?");
         if (this == o)
             return true;
         if (o == null || getClass() != o.getClass())

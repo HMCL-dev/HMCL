@@ -26,7 +26,6 @@ import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.util.StringTokenizer;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.StrUtils;
 
 /**
  * @author huangyuhui
@@ -85,7 +84,7 @@ public enum OS {
         BufferedReader br = new BufferedReader(new InputStreamReader(
             new FileInputStream(file)));
         long[] result = new long[4];
-        String str = null;
+        String str;
         StringTokenizer token;
         while ((str = br.readLine()) != null) {
             token = new StringTokenizer(str);

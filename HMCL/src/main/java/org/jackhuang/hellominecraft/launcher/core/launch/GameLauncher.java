@@ -118,7 +118,7 @@ public class GameLauncher {
         if (StrUtils.isNotBlank(options.getPrecalledCommand())) {
             Process p = Runtime.getRuntime().exec(options.getPrecalledCommand());
             try {
-                if (p != null && p.isAlive())
+                if (p.isAlive())
                     p.waitFor();
             } catch (InterruptedException ex) {
                 HMCLog.warn("Failed to invoke precalled command", ex);

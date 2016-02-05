@@ -27,10 +27,10 @@ import java.awt.event.MouseEvent;
  */
 public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
 
-    private static final BufferedImage combo_normal = loadImage("combo_normal.png");
-    private static final BufferedImage combo_over = loadImage("combo_over.png");
-    private static final BufferedImage combo_pressed = loadImage("combo_pressed.png");
-    private static final BufferedImage combo_disabled = loadImage("combo_disabled.png");
+    private static final BufferedImage COMBO_NORMAL = loadImage("combo_normal.png");
+    private static final BufferedImage COMBO_OVER = loadImage("combo_over.png");
+    private static final BufferedImage COMBO_PRESSED = loadImage("combo_pressed.png");
+    private static final BufferedImage COMBO_DISABLED = loadImage("combo_disabled.png");
     private static final Dimension BTN_SIZE = new Dimension(17, 20);
     private final Dimension btnSize = new Dimension(BTN_SIZE);
 
@@ -39,6 +39,7 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
      * method that all UI deligates must have.
      *
      * @param c The component that the UI is for
+     *
      * @return a new instance of NimbusComboBoxUI
      */
     public static ComponentUI createUI(JComponent c) {
@@ -66,13 +67,13 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
     /**
      * The minumum size is the size of the display area plus insets plus the
      * button.
+     *
      * @return the size yeah.
      */
     @Override
     public Dimension getMinimumSize(JComponent c) {
-        if (!isMinimumSizeDirty) {
+        if (!isMinimumSizeDirty)
             return new Dimension(cachedMinimumSize);
-        }
         Dimension size = getDisplaySize();
         Insets insets = getInsets();
         btnSize.height = size.height = Math.max(size.height, BTN_SIZE.height);
@@ -92,17 +93,16 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
             @Override
             protected void paintComponent(Graphics g) {
                 if (comboBox.isEditable()) {
-                    BufferedImage img = combo_normal;
-                    if (mouseDown) {
-                        img = combo_pressed;
-                    } else if (!comboBox.isEnabled()) {
-                        img = combo_normal;
-                    } else if (mouseInside) {
-                        img = combo_over;
-                    }
+                    BufferedImage img = COMBO_NORMAL;
+                    if (mouseDown)
+                        img = COMBO_PRESSED;
+                    else if (!comboBox.isEnabled())
+                        img = COMBO_NORMAL;
+                    else if (mouseInside)
+                        img = COMBO_OVER;
                     g.drawImage(img,
-                            0, 0, getWidth(), getHeight(),
-                            0, 0, img.getWidth(), img.getHeight(), comboBox);
+                                0, 0, getWidth(), getHeight(),
+                                0, 0, img.getWidth(), img.getHeight(), comboBox);
                 }
             }
         };
@@ -125,32 +125,30 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
                 ((JComponent) renderer).setForeground(comboBox.getForeground());
             }
             paintCurrentValue(g, rectangleForCurrentValue(), false);
-            if (renderer instanceof JComponent) {
+            if (renderer instanceof JComponent)
                 ((JComponent) renderer).setOpaque(true);
-            }
         }
     }
 
     @Override
     public void paintCurrentValueBackground(Graphics g, Rectangle bounds, boolean hasFocus) {
         if (!comboBox.isEditable()) {
-            BufferedImage img = combo_normal;
-            if (!comboBox.isEnabled()) {
-                img = combo_disabled;
-            } else if (mouseDown) {
-                img = combo_pressed;
-            } else if (mouseInside) {
-                img = combo_over;
-            }
+            BufferedImage img = COMBO_NORMAL;
+            if (!comboBox.isEnabled())
+                img = COMBO_DISABLED;
+            else if (mouseDown)
+                img = COMBO_PRESSED;
+            else if (mouseInside)
+                img = COMBO_OVER;
             g.drawImage(img,
-                    bounds.x, bounds.y, bounds.x + 4, bounds.y + bounds.height,
-                    0, 0, 1, 26, comboBox);
+                        bounds.x, bounds.y, bounds.x + 4, bounds.y + bounds.height,
+                        0, 0, 1, 26, comboBox);
             g.drawImage(img,
-                    bounds.x + 1, bounds.y, bounds.x + bounds.width - 25, bounds.y + bounds.height,
-                    1, 0, 3, 26, comboBox);
+                        bounds.x + 1, bounds.y, bounds.x + bounds.width - 25, bounds.y + bounds.height,
+                        1, 0, 3, 26, comboBox);
             g.drawImage(img,
-                    bounds.x + bounds.width - 25, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height,
-                    4, 0, 29, 26, comboBox);
+                        bounds.x + bounds.width - 25, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height,
+                        4, 0, 29, 26, comboBox);
         } else {
             /*g.setColor(Color.WHITE);
             g.fillRect(bounds.x, bounds.y, bounds.width - btnSize.width, bounds.height - 1);
@@ -194,9 +192,8 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
     @Override
     public void mouseEntered(MouseEvent e) {
         if (comboBox.isEditable()) {
-            if (e.getComponent() == arrowButton) {
+            if (e.getComponent() == arrowButton)
                 mouseInside = true;
-            }
         } else {
             mouseInside = true;
             comboBox.repaint();
@@ -206,9 +203,8 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
     @Override
     public void mouseExited(MouseEvent e) {
         if (comboBox.isEditable()) {
-            if (e.getComponent() == arrowButton) {
+            if (e.getComponent() == arrowButton)
                 mouseInside = false;
-            }
         } else {
             mouseInside = false;
             comboBox.repaint();
@@ -218,9 +214,8 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
     @Override
     public void mousePressed(MouseEvent e) {
         if (comboBox.isEditable()) {
-            if (e.getComponent() == arrowButton) {
+            if (e.getComponent() == arrowButton)
                 mouseDown = true;
-            }
         } else {
             mouseDown = true;
             comboBox.repaint();
@@ -230,9 +225,8 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
     @Override
     public void mouseReleased(MouseEvent e) {
         if (comboBox.isEditable()) {
-            if (e.getComponent() == arrowButton) {
+            if (e.getComponent() == arrowButton)
                 mouseDown = false;
-            }
         } else {
             mouseDown = false;
             comboBox.repaint();
@@ -269,16 +263,14 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
             Insets insets = getInsets();
             Rectangle cvb;
 
-            if (arrowButton != null) {
-                if (cb.getComponentOrientation().isLeftToRight()) {
+            if (arrowButton != null)
+                if (cb.getComponentOrientation().isLeftToRight())
                     arrowButton.setBounds(width - (insets.right + btnSize.width),
-                            insets.top,
-                            btnSize.width, btnSize.height);
-                } else {
+                                          insets.top,
+                                          btnSize.width, btnSize.height);
+                else
                     arrowButton.setBounds(insets.left, insets.top,
-                            btnSize.width, btnSize.height);
-                }
-            }
+                                          btnSize.width, btnSize.height);
             if (editor != null) {
                 cvb = rectangleForCurrentValue();
                 editor.setBounds(cvb.x, cvb.y, cvb.width, cvb.height);

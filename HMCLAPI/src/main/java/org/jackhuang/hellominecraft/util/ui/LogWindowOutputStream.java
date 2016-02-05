@@ -21,7 +21,6 @@ import java.io.OutputStream;
 import java.util.Timer;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.util.logging.Level;
-import org.jackhuang.hellominecraft.util.ui.LogWindow;
 
 /**
  *

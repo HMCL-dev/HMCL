@@ -70,7 +70,7 @@ public abstract class PlayerList<T extends BasePlayer> {
 
     public void initByText(String s) {
         String[] lines = s.split("\n");
-        op = new HashSet<T>();
+        op = new HashSet<>();
         for (String l : lines) {
             if (l.startsWith("#"))
                 continue;
@@ -86,17 +86,7 @@ public abstract class PlayerList<T extends BasePlayer> {
     }
 
     public void initByBoth(File txt, File json) {
-        HashSet<T> player = new HashSet<T>();
-        /*op = null;
-         if(json.exists()) {
-         try {
-         initByJson(FileUtils.readFileToStringIgnoreFileNotFound(json));
-         if(op != null)
-         player.addAll(op);
-         } catch(IOException e) {
-         HMCLLog.warn("Failed to load playerlist by json", e);
-         }
-         }*/
+        HashSet<T> player = new HashSet<>();
         op = null;
         if (txt.exists())
             try {

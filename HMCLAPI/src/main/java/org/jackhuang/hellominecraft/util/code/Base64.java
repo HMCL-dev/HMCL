@@ -41,13 +41,13 @@ public class Base64 {
                 val |= (0xFF & (int) data[i + 2]);
                 quad = true;
             }
-            out[index + 3] = alphabet[(quad ? (val & 0x3F) : 64)];
+            out[index + 3] = ALPHABET[(quad ? (val & 0x3F) : 64)];
             val >>= 6;
-            out[index + 2] = alphabet[(trip ? (val & 0x3F) : 64)];
+            out[index + 2] = ALPHABET[(trip ? (val & 0x3F) : 64)];
             val >>= 6;
-            out[index + 1] = alphabet[val & 0x3F];
+            out[index + 1] = ALPHABET[val & 0x3F];
             val >>= 6;
-            out[index + 0] = alphabet[val & 0x3F];
+            out[index + 0] = ALPHABET[val & 0x3F];
         }
         return out;
     }
@@ -71,7 +71,7 @@ public class Base64 {
         int accum = 0;
         int index = 0;
         for (int ix = 0; ix < data.length; ix++) {
-            int value = codes[data[ix] & 0xFF];
+            int value = CODES[data[ix] & 0xFF];
             if (value >= 0) {
                 accum <<= 6;
                 shift += 6;
@@ -86,20 +86,20 @@ public class Base64 {
             throw new Error("miscalculated data length!");
         return out;
     }
-    private static final char[] alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+    private static final char[] ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
         .toCharArray();
-    private static final byte[] codes = new byte[256];
+    private static final byte[] CODES = new byte[256];
 
     static {
         for (int i = 0; i < 256; i++)
-            codes[i] = -1;
+            CODES[i] = -1;
         for (int i = 'A'; i <= 'Z'; i++)
-            codes[i] = (byte) (i - 'A');
+            CODES[i] = (byte) (i - 'A');
         for (int i = 'a'; i <= 'z'; i++)
-            codes[i] = (byte) (26 + i - 'a');
+            CODES[i] = (byte) (26 + i - 'a');
         for (int i = '0'; i <= '9'; i++)
-            codes[i] = (byte) (52 + i - '0');
-        codes['+'] = 62;
-        codes['/'] = 63;
+            CODES[i] = (byte) (52 + i - '0');
+        CODES['+'] = 62;
+        CODES['/'] = 63;
     }
 }

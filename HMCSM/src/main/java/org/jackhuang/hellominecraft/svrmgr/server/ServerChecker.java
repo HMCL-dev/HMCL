@@ -38,9 +38,7 @@ public class ServerChecker {
         }
         if (file.getEntry("org/bukkit/craftbukkit/Main.class") != null)
             return true;
-        if (file.getEntry("net/minecraft/server/MinecraftServer.class") != null)
-            return true;
-        return false;
+        return file.getEntry("net/minecraft/server/MinecraftServer.class") != null;
     }
 
 }

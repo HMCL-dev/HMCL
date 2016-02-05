@@ -97,7 +97,7 @@ public abstract class IAssetsHandler {
 
         @Override
         public void executeTask() {
-            if (assetsDownloadURLs == null)
+            if (assetsDownloadURLs == null || assetsLocalNames == null)
                 throw new IllegalStateException(C.i18n("assets.not_refreshed"));
             int max = assetsDownloadURLs.size();
             al = new ArrayList<>();

@@ -37,7 +37,7 @@ import org.jackhuang.hellominecraft.util.StrUtils;
  */
 public class LiteLoaderVersionList extends InstallerVersionList {
 
-    private static LiteLoaderVersionList instance;
+    private static volatile LiteLoaderVersionList instance = null;
 
     public static LiteLoaderVersionList getInstance() {
         if (instance == null)

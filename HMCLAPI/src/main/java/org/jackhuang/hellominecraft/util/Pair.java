@@ -72,9 +72,7 @@ public class Pair<K, V> implements Map.Entry<K, V> {
         final Pair<?, ?> other = (Pair<?, ?>) obj;
         if (!Objects.equals(this.key, other.key))
             return false;
-        if (!Objects.equals(this.value, other.value))
-            return false;
-        return true;
+        return Objects.equals(this.value, other.value);
     }
 
 }

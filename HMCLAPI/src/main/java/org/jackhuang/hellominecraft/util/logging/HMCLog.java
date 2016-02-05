@@ -25,34 +25,34 @@ import org.jackhuang.hellominecraft.util.logging.logger.Logger;
  */
 public class HMCLog {
 
-    private static final Logger logger = new Logger("Hello Minecraft!");
+    private static final Logger LOGGER = new Logger("Hello Minecraft!");
 
     public static void log(String message) {
-        logger.info(message);
+        LOGGER.info(message);
     }
 
     public static void warn(String message) {
-        logger.warn(message);
+        LOGGER.warn(message);
     }
 
     public static void debug(String message) {
-        logger.debug(message);
+        LOGGER.debug(message);
     }
 
     public static void warn(String msg, Throwable t) {
-        logger.warn(msg, t);
+        LOGGER.warn(msg, t);
     }
 
     public static void debug(String msg, Throwable t) {
-        logger.debug(msg, t);
+        LOGGER.debug(msg, t);
     }
 
     public static void err(String msg) {
-        logger.error(msg);
+        LOGGER.error(msg);
     }
 
     public static void err(String msg, Throwable t) {
-        logger.error(msg, t);
+        LOGGER.error(msg, t);
     }
 
 }

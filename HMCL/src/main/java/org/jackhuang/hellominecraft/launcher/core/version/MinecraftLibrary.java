@@ -52,8 +52,12 @@ public class MinecraftLibrary extends IMinecraftLibrary {
     }
 
     @Override
-    public Object clone() {
-        return new MinecraftLibrary(rules, url, checksums, natives, name, extract);
+    public Object clone() throws CloneNotSupportedException {
+        MinecraftLibrary ml = (MinecraftLibrary) super.clone();
+        ml.extract = (Extract) ml.extract.clone();
+        ml.natives = (Natives) ml.natives.clone();
+        ml.rules = (ArrayList<Rules>) ml.rules.clone();
+        return ml;
     }
 
     /**
@@ -69,11 +73,11 @@ public class MinecraftLibrary extends IMinecraftLibrary {
         else
             for (Rules r : rules)
                 if (r.action.equals("disallow")) {
-                    if (r.os != null && (StrUtils.isBlank(r.os.name) || r.os.name.equalsIgnoreCase(OS.os().toString()))) {
+                    if (r.os != null && (StrUtils.isBlank(r.os.getName()) || r.os.getName().equalsIgnoreCase(OS.os().toString()))) {
                         flag = false;
                         break;
                     }
-                } else if (r.os == null || (r.os != null && (StrUtils.isBlank(r.os.name) || r.os.name.equalsIgnoreCase(OS.os().toString()))))
+                } else if (r.os == null || (r.os != null && (StrUtils.isBlank(r.os.getName()) || r.os.getName().equalsIgnoreCase(OS.os().toString()))))
                     flag = true;
         return flag;
     }
@@ -83,13 +87,14 @@ public class MinecraftLibrary extends IMinecraftLibrary {
     }
 
     private String getNative() {
-        OS os = OS.os();
-        if (os == OS.WINDOWS)
+        switch (OS.os()) {
+        case WINDOWS:
             return formatArch(natives.windows);
-        else if (os == OS.OSX)
+        case OSX:
             return formatArch(natives.osx);
-        else
+        default:
             return formatArch(natives.linux);
+        }
     }
 
     @Override

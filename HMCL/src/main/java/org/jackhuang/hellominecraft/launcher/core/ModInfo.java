@@ -22,6 +22,7 @@ import com.google.gson.reflect.TypeToken;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -56,7 +57,7 @@ public class ModInfo implements Comparable<ModInfo> {
 
     @Override
     public int compareTo(ModInfo o) {
-        return getFileName().toLowerCase().compareTo(o.getFileName().toLowerCase());
+        return getFileName().compareToIgnoreCase(o.getFileName());
     }
 
     public String getName() {
@@ -102,12 +103,13 @@ public class ModInfo implements Comparable<ModInfo> {
         return name.endsWith(".zip") || name.endsWith(".jar") || name.endsWith("litemod");
     }
 
+    private static final Type TYPE = new TypeToken<List<ModInfo>>() {
+    }.getType();
+
     private static ModInfo getForgeModInfo(File f, ZipFile jar, ZipEntry entry) throws IOException {
         ModInfo i = new ModInfo();
         i.location = f;
-        List<ModInfo> m = C.GSON.fromJson(new InputStreamReader(jar.getInputStream(entry)),
-                                          new TypeToken<List<ModInfo>>() {
-                                      }.getType());
+        List<ModInfo> m = C.GSON.fromJson(new InputStreamReader(jar.getInputStream(entry)), TYPE);
         if (m != null && m.size() > 0) {
             i = m.get(0);
             i.location = f;
@@ -116,8 +118,7 @@ public class ModInfo implements Comparable<ModInfo> {
     }
 
     private static ModInfo getLiteLoaderModInfo(File f, ZipFile jar, ZipEntry entry) throws IOException {
-        ModInfo m = C.GSON.fromJson(new InputStreamReader(jar.getInputStream(entry)),
-                                    ModInfo.class);
+        ModInfo m = C.GSON.fromJson(new InputStreamReader(jar.getInputStream(entry)), ModInfo.class);
         if (m == null)
             m = new ModInfo();
         m.location = f;

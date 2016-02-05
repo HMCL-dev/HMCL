@@ -59,5 +59,7 @@ public abstract class IMinecraftLibrary implements Cloneable {
     }
 
     @Override
-    public abstract Object clone();
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
 }

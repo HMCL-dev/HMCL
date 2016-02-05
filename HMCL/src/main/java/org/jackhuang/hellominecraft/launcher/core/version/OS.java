@@ -23,5 +23,21 @@ package org.jackhuang.hellominecraft.launcher.core.version;
  */
 public class OS {
 
-    public String version, name;
+    private String version, name;
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 }

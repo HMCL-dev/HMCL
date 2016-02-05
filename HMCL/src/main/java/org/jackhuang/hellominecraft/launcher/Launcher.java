@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.launcher;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
@@ -89,14 +90,16 @@ public final class Launcher {
             });
             try {
                 File logFile = new File("hmclmc.log");
-                if (!logFile.exists())
-                    logFile.createNewFile();
-                FileOutputStream tc = new FileOutputStream(logFile);
-                DoubleOutputStream out = new DoubleOutputStream(tc, System.out);
-                System.setOut(new LauncherPrintStream(out));
-                DoubleOutputStream err = new DoubleOutputStream(tc, System.err);
-                System.setErr(new LauncherPrintStream(err));
-            } catch (Exception e) {
+                if (!logFile.exists() && !logFile.createNewFile())
+                    println("Failed to create log file");
+                else {
+                    FileOutputStream tc = new FileOutputStream(logFile);
+                    DoubleOutputStream out = new DoubleOutputStream(tc, System.out);
+                    System.setOut(new LauncherPrintStream(out));
+                    DoubleOutputStream err = new DoubleOutputStream(tc, System.err);
+                    System.setErr(new LauncherPrintStream(err));
+                }
+            } catch (IOException e) {
                 println("Failed to add log file appender.");
                 e.printStackTrace();
             }

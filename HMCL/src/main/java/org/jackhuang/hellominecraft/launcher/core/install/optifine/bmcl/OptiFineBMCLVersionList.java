@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.core.install.optifine.bmcl;
 
 import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,6 +51,9 @@ public class OptiFineBMCLVersionList extends InstallerVersionList {
     public Map<String, List<InstallerVersion>> versionMap;
     public List<InstallerVersion> versions;
 
+    private static final Type TYPE = new TypeToken<ArrayList<OptiFineVersion>>() {
+    }.getType();
+
     @Override
     public void refreshList(String[] needed) throws Exception {
         String s = NetUtils.get("http://bmclapi.bangbang93.com/optifine/versionlist");
@@ -59,8 +63,7 @@ public class OptiFineBMCLVersionList extends InstallerVersionList {
 
         if (s == null)
             return;
-        root = C.GSON.fromJson(s, new TypeToken<ArrayList<OptiFineVersion>>() {
-                           }.getType());
+        root = C.GSON.fromJson(s, TYPE);
         for (OptiFineVersion v : root) {
             v.mirror = v.mirror.replace("http://optifine.net/http://optifine.net/", "http://optifine.net/");
 

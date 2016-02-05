@@ -19,7 +19,6 @@ package org.jackhuang.hellominecraft.launcher.ui;
 
 import javax.swing.table.DefaultTableModel;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;

@@ -17,7 +17,7 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with this library; if not, write to the Free Software
 * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/
+ */
 package org.jackhuang.hellominecraft.lookandfeel.painter;
 
 import javax.swing.plaf.synth.SynthContext;
@@ -36,18 +36,19 @@ import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
 public class TextFieldPainter extends SynthPainter {
 
     private boolean fill = true;
-    
-    private static final Color disabled = GraphicsUtils.getWebColor("F3F3F3"),
-            normal = GraphicsUtils.getWebColor("CCCCCC"),
-            focused = GraphicsUtils.getWebColor("000000"),
-            over = GraphicsUtils.getWebColor("7F7F7F");
 
-    public TextFieldPainter() {}
+    private static final Color DISABLED = GraphicsUtils.getWebColor("F3F3F3"),
+        NORMAL = GraphicsUtils.getWebColor("CCCCCC"),
+        FOCUSED = GraphicsUtils.getWebColor("000000"),
+        OVER = GraphicsUtils.getWebColor("7F7F7F");
+
+    public TextFieldPainter() {
+    }
 
     public TextFieldPainter(boolean fill) {
         this.fill = fill;
     }
-    
+
     private void paintFieldBackground(SynthContext context, Graphics g, int x, int y, int w, int h) {
         w--;
         h--;
@@ -55,16 +56,15 @@ public class TextFieldPainter extends SynthPainter {
             g.setColor(Color.WHITE);
             g.fillRect(x, y, w, h);
         }
-        Color color = null;
-        if((context.getComponentState() & SynthConstants.MOUSE_OVER) != 0) {
-            color = over;
-        } else if((context.getComponentState() & SynthConstants.DISABLED) != 0) {
-            color = disabled;
-        } else if((context.getComponentState() & SynthConstants.FOCUSED) != 0) {
-            color = focused;
-        } else {
-            color = normal;
-        }
+        Color color;
+        if ((context.getComponentState() & SynthConstants.MOUSE_OVER) != 0)
+            color = OVER;
+        else if ((context.getComponentState() & SynthConstants.DISABLED) != 0)
+            color = DISABLED;
+        else if ((context.getComponentState() & SynthConstants.FOCUSED) != 0)
+            color = FOCUSED;
+        else
+            color = NORMAL;
         g.setColor(color);
         g.drawLine(x, y, x + w, y);
         g.drawLine(x, y, x, y + w);

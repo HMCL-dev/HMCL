@@ -51,7 +51,7 @@ public class Logger extends AbstractLogger {
             this.config = new PrivateConfig(this.config, level);
     }
 
-    public Level getLevel() {
+    public synchronized Level getLevel() {
         return this.config.level;
     }
 

@@ -18,11 +18,9 @@ package org.jackhuang.hellominecraft.lookandfeel;
 
 import java.awt.Color;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.text.ParseException;
 import java.util.Map;
 import javax.swing.UIDefaults;
-import javax.swing.UIManager;
 import javax.swing.plaf.synth.SynthLookAndFeel;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.NetUtils;

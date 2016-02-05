@@ -130,8 +130,12 @@ public final class NewProfileWindow extends javax.swing.JDialog {
             Profile newProfile = new Profile(Settings.getProfile(cboProfiles.getSelectedItem().toString()));
             newProfile.setName(txtNewProfileName.getText());
             Settings.trySetProfile(newProfile);
+            break;
         case 27:
             this.dispose();
+            break;
+        default:
+            break;
         }
     }//GEN-LAST:event_txtNewProfileNameKeyTyped
 
