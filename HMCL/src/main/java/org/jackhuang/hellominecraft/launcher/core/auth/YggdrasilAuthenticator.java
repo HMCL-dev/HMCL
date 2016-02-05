@@ -57,7 +57,7 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
 
             if (!ua.isLoggedIn())
                 ua.setPassword(pwd);
-            ua.setUsername(usr);
+            ua.setUserName(usr);
             ua.logIn();
             if (!ua.isLoggedIn())
                 throw new AuthenticationException(C.i18n("login.wrong_password"));
@@ -136,7 +136,7 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
     }
 
     @Override
-    public void logout() {
+    public void logOut() {
         ua.logOut();
     }
 }

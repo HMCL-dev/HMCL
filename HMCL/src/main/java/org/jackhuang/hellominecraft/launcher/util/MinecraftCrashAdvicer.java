@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.util;
 
 import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.lang.SupportedLocales;
 
 /**
  * Give the advice to solve the Minecraft crashing.
@@ -31,7 +32,7 @@ public final class MinecraftCrashAdvicer {
     }
 
     public static String getAdvice(String trace, boolean selfCrash) {
-        trace = trace.toLowerCase();
+        trace = trace.toLowerCase(SupportedLocales.NOW_LOCALE.self);
         if (trace.contains("pixel format not accelerated"))
             return C.i18n("crash.advice.LWJGLException");
         else if (trace.contains("unsupportedclassversionrrror"))

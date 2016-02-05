@@ -35,7 +35,7 @@ import org.jackhuang.hellominecraft.util.NetUtils;
  */
 public class MinecraftForgeVersionList extends InstallerVersionList {
 
-    private static MinecraftForgeVersionList instance;
+    private static volatile MinecraftForgeVersionList instance;
 
     public static MinecraftForgeVersionList getInstance() {
         if (instance == null)
@@ -80,6 +80,8 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
                         break;
                     case "changelog":
                         iv.changelog = url;
+                        break;
+                    default:
                         break;
                     }
                 }

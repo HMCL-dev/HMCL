@@ -24,6 +24,58 @@ package org.jackhuang.hellominecraft.launcher.core.asset;
 public class Contents {
 
     public String key, eTag, lastModified, storageClass;
+
+    public Contents() {
+    }
+
+    public Contents(String key, String eTag, String lastModified, String storageClass, long size) {
+        this();
+        this.key = key;
+        this.eTag = eTag;
+        this.lastModified = lastModified;
+        this.storageClass = storageClass;
+        this.size = size;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    public String geteTag() {
+        return eTag;
+    }
+
+    public void seteTag(String eTag) {
+        this.eTag = eTag;
+    }
+
+    public String getLastModified() {
+        return lastModified;
+    }
+
+    public void setLastModified(String lastModified) {
+        this.lastModified = lastModified;
+    }
+
+    public String getStorageClass() {
+        return storageClass;
+    }
+
+    public void setStorageClass(String storageClass) {
+        this.storageClass = storageClass;
+    }
+
+    public long getSize() {
+        return size;
+    }
+
+    public void setSize(long size) {
+        this.size = size;
+    }
     public long size;
 
 }

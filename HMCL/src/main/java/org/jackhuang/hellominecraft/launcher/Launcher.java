@@ -26,6 +26,9 @@ import java.net.PasswordAuthentication;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
@@ -44,14 +47,12 @@ import org.jackhuang.hellominecraft.util.Utils;
  */
 public final class Launcher {
 
-    public static void println(String s) {
-        System.out.println(s);
-    }
+    static final Logger LOGGER = LogManager.getLogManager().getLogger(Launcher.class.getName());
 
     static String classPath = "", proxyHost = "", proxyPort = "", proxyUsername = "", proxyPassword = "";
 
     public static void main(String[] args) {
-        println("*** " + Main.makeTitle() + " ***");
+        LOGGER.log(Level.INFO, "*** {0} ***", Main.makeTitle());
 
         boolean showInfo = false;
         String mainClass = "net.minecraft.client.Minecraft";
@@ -91,7 +92,7 @@ public final class Launcher {
             try {
                 File logFile = new File("hmclmc.log");
                 if (!logFile.exists() && !logFile.createNewFile())
-                    println("Failed to create log file");
+                    LOGGER.info("Failed to create log file");
                 else {
                     FileOutputStream tc = new FileOutputStream(logFile);
                     DoubleOutputStream out = new DoubleOutputStream(tc, System.out);
@@ -100,13 +101,12 @@ public final class Launcher {
                     System.setErr(new LauncherPrintStream(err));
                 }
             } catch (IOException e) {
-                println("Failed to add log file appender.");
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Failed to add log file appender.", e);
             }
 
-            println("Arguments: {\n" + StrUtils.parseParams("    ", args, "\n") + "\n}");
-            println("Main Class: " + mainClass);
-            println("Class Path: {\n" + StrUtils.parseParams("    ", tokenized, "\n") + "\n}");
+            LOGGER.log(Level.INFO, "Arguments: '{'\n{0}\n'}'", StrUtils.parseParams("    ", args, "\n"));
+            LOGGER.log(Level.INFO, "Main Class: {0}", mainClass);
+            LOGGER.log(Level.INFO, "Class Path: '{'\n{0}\n'}'", StrUtils.parseParams("    ", tokenized, "\n"));
             SwingUtilities.invokeLater(() -> LogWindow.INSTANCE.setVisible(true));
         }
 
@@ -133,8 +133,7 @@ public final class Launcher {
                 urls[j] = new File(tokenized[j]).toURI().toURL();
         } catch (Throwable e) {
             MessageBox.Show(C.i18n("crash.main_class_not_found"));
-            println("Failed to get classpath.");
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to get classpath.", e);
             return;
         }
 
@@ -145,12 +144,11 @@ public final class Launcher {
             minecraftMain = ucl.loadClass(mainClass).getMethod("main", String[].class);
         } catch (ClassNotFoundException | NoSuchMethodException | SecurityException t) {
             MessageBox.Show(C.i18n("crash.main_class_not_found"));
-            println("Minecraft main class not found.");
-            t.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Minecraft main class not found.", t);
             return;
         }
 
-        println("*** Launching Game ***");
+        LOGGER.info("*** Launching Game ***");
 
         int flag = 0;
         try {
@@ -168,7 +166,7 @@ public final class Launcher {
             flag = 1;
         }
 
-        println("*** Game Exited ***");
+        LOGGER.info("*** Game Exited ***");
         try {
             Utils.shutdownForcely(flag);
         } catch (Exception e) {

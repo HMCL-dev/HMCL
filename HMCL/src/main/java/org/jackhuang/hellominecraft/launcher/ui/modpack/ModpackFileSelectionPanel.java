@@ -35,9 +35,9 @@ import org.jackhuang.hellominecraft.util.ui.wizard.spi.WizardController;
  */
 public class ModpackFileSelectionPanel extends javax.swing.JPanel {
 
-    private final WizardController controller;
+    private transient final WizardController controller;
     private final Map wizardData;
-    private final BiFunction<String, Boolean, Integer> blackList;
+    private transient final BiFunction<String, Boolean, Integer> blackList;
     private final Set<String> bannedFiles = new HashSet<>();
 
     /**

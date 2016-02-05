@@ -39,7 +39,7 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
     public int minimumLauncherVersion;
     public boolean hidden;
 
-    public List<MinecraftLibrary> libraries;
+    public ArrayList<MinecraftLibrary> libraries;
 
     public MinecraftVersion() {
     }
@@ -70,7 +70,13 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
 
     @Override
     public Object clone() {
-        return new MinecraftVersion(minecraftArguments, mainClass, time, id, type, processArguments, releaseTime, assets, jar, inheritsFrom, runDir, minimumLauncherVersion, libraries, hidden);
+        try {
+            MinecraftVersion mv = (MinecraftVersion) super.clone();
+            mv.libraries = (ArrayList<MinecraftLibrary>) mv.libraries.clone();
+            return mv;
+        } catch (CloneNotSupportedException ex) {
+            throw new InternalError();
+        }
     }
 
     public MinecraftVersion resolve(IMinecraftProvider provider) throws GameException {
@@ -127,6 +133,6 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
 
     @Override
     public int compareTo(MinecraftVersion o) {
-        return id.compareTo(((MinecraftVersion) o).id);
+        return id.compareTo(o.id);
     }
 }

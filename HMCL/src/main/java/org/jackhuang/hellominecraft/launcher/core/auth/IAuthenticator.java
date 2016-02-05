@@ -33,13 +33,17 @@ public abstract class IAuthenticator {
     public static final List<IAuthenticator> LOGINS = new ArrayList<>();
 
     static {
-        PluginManager.NOW_PLUGIN.onRegisterAuthenticators(LOGINS::add);
+        PluginManager.plugin().onRegisterAuthenticators(LOGINS::add);
     }
 
     protected String clientToken, username;
 
     public IAuthenticator(String clientToken) {
         this.clientToken = clientToken;
+    }
+
+    public String getClientToken() {
+        return clientToken;
     }
 
     /**
@@ -81,7 +85,7 @@ public abstract class IAuthenticator {
 
     public abstract UserProfileProvider loginBySettings() throws AuthenticationException;
 
-    public abstract void logout();
+    public abstract void logOut();
 
     public Map onSaveSettings() {
         HashMap m = new HashMap();
@@ -95,11 +99,11 @@ public abstract class IAuthenticator {
         username = (String) m.get("IAuthenticator_UserName");
     }
 
-    public String getUsername() {
+    public String getUserName() {
         return username;
     }
 
-    public void setUsername(String s) {
+    public void setUserName(String s) {
         username = s;
     }
 }

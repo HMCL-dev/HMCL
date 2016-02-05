@@ -67,7 +67,7 @@ public class YggdrasilAuthentication {
     }
 
     // <editor-fold defaultstate="collapsed" desc="Get/Set">
-    public void setUsername(String username) {
+    public void setUserName(String username) {
         if ((isLoggedIn()) && (canPlayOnline()))
             throw new IllegalStateException("Cannot change username while logged in & online");
 
@@ -96,7 +96,7 @@ public class YggdrasilAuthentication {
     }
 
     public GameProfile[] getAvailableProfiles() {
-        return profiles;
+        return profiles.clone();
     }
 
     public String getAuthenticatedToken() {
@@ -154,7 +154,7 @@ public class YggdrasilAuthentication {
                 throw new AuthenticationException(C.i18n("login.changed_client_token"));
 
             User user = response.user;
-            userid = user != null && user.id != null ? user.id : username;
+            userid = user != null && user.getId() != null ? user.getId() : username;
 
             isOnline = true;
             profiles = response.availableProfiles;
@@ -162,8 +162,8 @@ public class YggdrasilAuthentication {
             userProperties.clear();
             this.accessToken = response.accessToken;
 
-            if (user != null && user.properties != null)
-                userProperties.putAll(user.properties);
+            if (user != null && user.getProperties() != null)
+                userProperties.putAll(user.getProperties());
         } catch (IOException | IllegalStateException | JsonParseException e) {
             throw new AuthenticationException(C.i18n("login.failed.connect_authentication_server"), e);
         }
@@ -185,7 +185,7 @@ public class YggdrasilAuthentication {
     public void loadFromStorage(Map<String, Object> credentials) {
         logOut();
 
-        setUsername((String) credentials.get(STORAGE_KEY_USER_NAME));
+        setUserName((String) credentials.get(STORAGE_KEY_USER_NAME));
 
         if (credentials.containsKey(STORAGE_KEY_USER_ID))
             userid = (String) credentials.get(STORAGE_KEY_USER_ID);

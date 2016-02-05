@@ -1294,22 +1294,27 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Mods">
     private boolean reloadingMods = false;
+    private final Object modLock = new Object();
 
-    private synchronized void reloadMods() {
-        if (reloadingMods)
-            return;
-        reloadingMods = true;
-        DefaultTableModel model = SwingUtils.clearDefaultTable(lstExternalMods);
-        new OverridableSwingWorker<List<ModInfo>>() {
-            @Override
-            protected void work() throws Exception {
-                publish(getProfile().service().mod().recacheMods(getProfile().getSelectedVersion()));
-            }
-        }.reg(t -> {
-            for (ModInfo x : t)
-                model.addRow(new Object[] { x.isActive(), x, x.version });
-            reloadingMods = false;
-        }).execute();
+    private void reloadMods() {
+        synchronized (modLock) {
+            if (reloadingMods)
+                return;
+            reloadingMods = true;
+            DefaultTableModel model = SwingUtils.clearDefaultTable(lstExternalMods);
+            new OverridableSwingWorker<List<ModInfo>>() {
+                @Override
+                protected void work() throws Exception {
+                    publish(getProfile().service().mod().recacheMods(getProfile().getSelectedVersion()));
+                }
+            }.reg(t -> {
+                synchronized (modLock) {
+                    for (ModInfo x : t)
+                        model.addRow(new Object[] { x.isActive(), x, x.version });
+                    reloadingMods = false;
+                }
+            }).execute();
+        }
     }
 
     // </editor-fold>

@@ -35,6 +35,8 @@ import org.jackhuang.hellominecraft.util.logging.HMCLog;
 
 public class PropertyMap extends HashMap<String, Property> {
 
+    private static final long serialVersionUID = 362498820763181265L;
+
     public List<Map<String, String>> list() {
         List<Map<String, String>> properties = new ArrayList<>();
         for (Property profileProperty : values()) {

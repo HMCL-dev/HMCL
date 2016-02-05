@@ -33,7 +33,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
     public static final String KEY_GAME_VERSION = "gameVersion";
     public static final String KEY_MODPACK_LOCATION = "modpackLocation";
 
-    private final WizardController controller;
+    private final transient WizardController controller;
     private final Map wizardData;
 
     /**

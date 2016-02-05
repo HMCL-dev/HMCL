@@ -23,10 +23,39 @@ package org.jackhuang.hellominecraft.launcher.core.version;
  */
 public class Natives implements Cloneable {
 
-    public String windows, osx, linux;
+    private String windows, osx, linux;
+
+    public String getWindows() {
+        return windows;
+    }
+
+    public void setWindows(String windows) {
+        this.windows = windows;
+    }
+
+    public String getOsx() {
+        return osx;
+    }
+
+    public void setOsx(String osx) {
+        this.osx = osx;
+    }
+
+    public String getLinux() {
+        return linux;
+    }
+
+    public void setLinux(String linux) {
+        this.linux = linux;
+    }
 
     @Override
-    protected Object clone() throws CloneNotSupportedException {
-        return super.clone();
+    @SuppressWarnings("CloneDeclaresCloneNotSupported")
+    protected Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException ex) {
+            throw new InternalError(ex);
+        }
     }
 }

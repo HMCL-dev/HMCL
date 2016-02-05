@@ -237,29 +237,7 @@ public final class MainFrame extends DraggableFrame {
 
         windowTitle = new JLabel(defaultTitle);
         windowTitle.setForeground(BasicColors.COLOR_WHITE_TEXT);
-        windowTitle.addMouseListener(new MouseListener() {
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                Settings.UPDATE_CHECKER.checkOutdate();
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-            }
-        });
+        windowTitle.addMouseListener(MouseListenerImpl.INSTANCE);
         header.add(windowTitle);
         header.add(Box.createHorizontalGlue());
         header.add(rightHeaderPanel);
@@ -388,7 +366,7 @@ public final class MainFrame extends DraggableFrame {
 
     public static void showMainFrame() {
         IAuthenticator l = Settings.getInstance().getAuthenticator();
-        if (StrUtils.isBlank(l.getUsername()))
+        if (StrUtils.isBlank(l.getUserName()))
             SwingUtilities.invokeLater(() -> MainFrame.INSTANCE.showMessage(C.i18n("ui.message.first_load")));
         if (l.hasPassword() && !l.isLoggedIn())
             SwingUtilities.invokeLater(() -> MainFrame.INSTANCE.showMessage(C.i18n("ui.message.enter_password")));
@@ -451,6 +429,32 @@ public final class MainFrame extends DraggableFrame {
         if (!isShowedMessage) {
             windowTitle.setText(defaultTitle);
             windowTitle.setForeground(Color.red);
+        }
+    }
+
+    private static class MouseListenerImpl implements MouseListener {
+
+        public static final MouseListenerImpl INSTANCE = new MouseListenerImpl();
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            Settings.UPDATE_CHECKER.checkOutdate();
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
         }
     }
 

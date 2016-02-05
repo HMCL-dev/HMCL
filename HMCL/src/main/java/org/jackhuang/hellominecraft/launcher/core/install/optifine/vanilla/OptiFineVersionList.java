@@ -71,7 +71,7 @@ public class OptiFineVersionList extends InstallerVersionList {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = factory.newDocumentBuilder();
-            Document doc = db.parse(new ByteArrayInputStream(content.getBytes()));
+            Document doc = db.parse(new ByteArrayInputStream(content.getBytes("UTF-8")));
             Element r = doc.getDocumentElement();
             NodeList tables = r.getElementsByTagName("table");
             for (int i = 0; i < tables.getLength(); i++) {
@@ -84,26 +84,26 @@ public class OptiFineVersionList extends InstallerVersionList {
                         for (int j = 0; j < downloadLine.getLength(); j++) {
                             Element td = (Element) downloadLine.item(j);
                             if (StrUtils.startsWith(td.getAttribute("class"), "downloadLineMirror"))
-                                v.mirror = ((Element) td.getElementsByTagName("a").item(0)).getAttribute("href");
+                                v.setMirror(((Element) td.getElementsByTagName("a").item(0)).getAttribute("href"));
                             if (StrUtils.startsWith(td.getAttribute("class"), "downloadLineDownload"))
-                                v.dl = ((Element) td.getElementsByTagName("a").item(0)).getAttribute("href");
+                                v.setDownloadLink(((Element) td.getElementsByTagName("a").item(0)).getAttribute("href"));
                             if (StrUtils.startsWith(td.getAttribute("class"), "downloadLineDate"))
-                                v.date = td.getTextContent();
+                                v.setDate(td.getTextContent());
                             if (StrUtils.startsWith(td.getAttribute("class"), "downloadLineFile"))
-                                v.ver = td.getTextContent();
+                                v.setVersion(td.getTextContent());
                         }
-                        if (StrUtils.isBlank(v.mcver)) {
+                        if (StrUtils.isBlank(v.getMCVersion())) {
                             Pattern p = Pattern.compile("OptiFine (.*?) ");
-                            Matcher m = p.matcher(v.ver);
+                            Matcher m = p.matcher(v.getVersion());
                             while (m.find())
-                                v.mcver = StrUtils.formatVersion(m.group(1));
+                                v.setMCVersion(StrUtils.formatVersion(m.group(1)));
                         }
-                        InstallerVersion iv = new InstallerVersion(v.ver, StrUtils.formatVersion(v.mcver));
-                        iv.installer = iv.universal = v.mirror;
+                        InstallerVersion iv = new InstallerVersion(v.getVersion(), StrUtils.formatVersion(v.getMCVersion()));
+                        iv.installer = iv.universal = v.getMirror();
                         root.add(v);
                         versions.add(iv);
 
-                        List<InstallerVersion> ivl = ArrayUtils.tryGetMapWithList(versionMap, StrUtils.formatVersion(v.mcver));
+                        List<InstallerVersion> ivl = ArrayUtils.tryGetMapWithList(versionMap, StrUtils.formatVersion(v.getMCVersion()));
                         ivl.add(iv);
                     }
                 }

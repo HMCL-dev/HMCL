@@ -110,6 +110,7 @@ public class LiteLoaderVersionList extends InstallerVersionList {
         public LiteLoaderInstallerVersion(String selfVersion, String mcVersion) {
             super(selfVersion, mcVersion);
         }
+
     }
 
 }

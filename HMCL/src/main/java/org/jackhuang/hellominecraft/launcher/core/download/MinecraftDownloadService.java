@@ -76,9 +76,12 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
         File vpath = new File(service.baseDirectory(), "versions/" + id);
         File mvt = new File(vpath, id + ".json");
         File mvj = new File(vpath, id + ".jar");
-        vpath.mkdirs();
-        mvt.delete();
-        mvj.delete();
+        if (!vpath.exists() && !vpath.mkdirs())
+            HMCLog.warn("Failed to make directories: " + vpath);
+        if (mvt.exists() && !mvt.delete())
+            HMCLog.warn("Failed to delete " + mvt);
+        if (mvj.exists() && !mvj.delete())
+            HMCLog.warn("Failed to delete " + mvj);
 
         if (TaskWindow.getInstance()
             .addTask(new FileDownloadTask(vurl + id + ".json", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".json"))
@@ -101,20 +104,23 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
         File mvv = new File(vpath, id + ".jar"), moved = null;
         if (mvv.exists()) {
             moved = new File(vpath, id + "-renamed.jar");
-            mvv.renameTo(moved);
+            if (!mvv.renameTo(moved))
+                HMCLog.warn("Failed to rename " + mvv + " to " + moved);
         }
         File mvt = new File(vpath, id + ".jar");
-        vpath.mkdirs();
+        if (!vpath.exists() && !vpath.mkdirs())
+            HMCLog.warn("Failed to make version folder " + vpath);
         if (TaskWindow.getInstance()
             .addTask(new FileDownloadTask(vurl + id + ".jar", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".jar"))
             .start()) {
-            if (moved != null)
-                moved.delete();
+            if (moved != null && moved.exists() && !moved.delete())
+                HMCLog.warn("Failed to delete " + moved);
             return true;
         } else {
-            mvt.delete();
-            if (moved != null)
-                moved.renameTo(mvt);
+            if (mvt.exists() && !mvt.delete())
+                HMCLog.warn("Failed to delete game jar " + mvt);
+            if (moved != null && moved.exists() && !moved.renameTo(mvt))
+                HMCLog.warn("Failed to rename " + moved + " to " + mvt);
             return false;
         }
     }
@@ -132,20 +138,23 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
         File mvv = new File(vpath, id + ".json"), moved = null;
         if (mvv.exists()) {
             moved = new File(vpath, id + "-renamed.json");
-            mvv.renameTo(moved);
+            if (!mvv.renameTo(moved))
+                HMCLog.warn("Failed to rename " + mvv + " to " + moved);
         }
         File mvt = new File(vpath, id + ".json");
-        vpath.mkdirs();
+        if (!vpath.exists() && !vpath.mkdirs())
+            HMCLog.warn("Failed to make version folder " + vpath);
         if (TaskWindow.getInstance()
             .addTask(new FileDownloadTask(vurl + id + ".json", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".json"))
             .start()) {
-            if (moved != null)
-                moved.delete();
+            if (moved != null && moved.exists() && !moved.delete())
+                HMCLog.warn("Failed to delete " + moved);
             return true;
         } else {
-            mvt.delete();
-            if (moved != null)
-                moved.renameTo(mvt);
+            if (mvt.exists() && !mvt.delete())
+                HMCLog.warn("Failed to delete minecraft version json" + mvt);
+            if (moved != null && moved.exists() && !moved.renameTo(mvt))
+                HMCLog.warn("Failed to rename " + moved + " to " + mvt);
             return false;
         }
     }
@@ -157,7 +166,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
             protected void work() throws Exception {
                 MinecraftRemoteVersions r = C.GSON.fromJson(NetUtils.get(service.getDownloadType().getProvider().getVersionsListDownloadURL()), MinecraftRemoteVersions.class);
                 if (r != null && r.versions != null)
-                    publish(r.versions.toArray(new MinecraftRemoteVersion[0]));
+                    publish(r.versions.toArray(new MinecraftRemoteVersion[r.versions.size()]));
             }
         };
     }

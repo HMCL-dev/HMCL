@@ -20,6 +20,7 @@ package org.jackhuang.hellominecraft.launcher.core.install;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.system.Compressor;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
@@ -40,7 +41,8 @@ public class PackMinecraftInstaller {
 
     public void install() throws IOException {
         File file = new File(IOUtils.currentDir(), "HMCL-MERGE-TEMP");
-        file.mkdirs();
+        if (!file.exists() && !file.mkdirs())
+            HMCLog.warn("Failed to make directories: " + file);
         for (String src1 : src)
             Compressor.unzip(new File(src1), file);
         Compressor.zip(file.getAbsolutePath(), dest.getAbsolutePath());

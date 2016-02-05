@@ -27,7 +27,6 @@ import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
-import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList.InstallerVersion;
 import org.jackhuang.hellominecraft.util.tasks.Task;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.NetUtils;
@@ -43,62 +42,51 @@ public class ForgeInstaller extends Task {
     public File gameDir;
     public File forgeInstaller;
     public IMinecraftService mp;
-    public InstallerVersion installerVersion;
 
-    public ForgeInstaller(IMinecraftService mp, File forgeInstaller, InstallerVersion installerVersion) {
+    public ForgeInstaller(IMinecraftService mp, File forgeInstaller) {
         this.gameDir = mp.baseDirectory();
         this.forgeInstaller = forgeInstaller;
         this.mp = mp;
-        this.installerVersion = installerVersion;
     }
 
     @Override
     public void executeTask() throws Exception {
         HMCLog.log("Extracting install profiles...");
 
-        ZipFile zipFile = new ZipFile(forgeInstaller);
-        ZipEntry entry = zipFile.getEntry("install_profile.json");
-        String content = NetUtils.getStreamContent(zipFile.getInputStream(entry));
-        InstallProfile profile = C.GSON.fromJson(content, InstallProfile.class);
-
-        File from = new File(gameDir, "versions" + File.separator + profile.install.minecraft);
-        if (!from.exists())
-            if (MessageBox.Show(C.i18n("install.no_version_if_intall")) == MessageBox.YES_OPTION) {
-                if (!mp.version().install(profile.install.minecraft, null))
+        try (ZipFile zipFile = new ZipFile(forgeInstaller)) {
+            ZipEntry entry = zipFile.getEntry("install_profile.json");
+            String content = NetUtils.getStreamContent(zipFile.getInputStream(entry));
+            InstallProfile profile = C.GSON.fromJson(content, InstallProfile.class);
+            File from = new File(gameDir, "versions" + File.separator + profile.install.getMinecraft());
+            if (!from.exists())
+                if (MessageBox.Show(C.i18n("install.no_version_if_intall")) == MessageBox.YES_OPTION) {
+                    if (!mp.version().install(profile.install.getMinecraft(), null))
+                        throw new IllegalStateException(C.i18n("install.no_version"));
+                } else
                     throw new IllegalStateException(C.i18n("install.no_version"));
-            } else
-                throw new IllegalStateException(C.i18n("install.no_version"));
-
-        File to = new File(gameDir, "versions" + File.separator + profile.install.target);
-        to.mkdirs();
-
-        HMCLog.log("Copying jar..." + profile.install.minecraft + ".jar to " + profile.install.target + ".jar");
-        FileUtils.copyFile(new File(from, profile.install.minecraft + ".jar"),
-                           new File(to, profile.install.target + ".jar"));
-        HMCLog.log("Creating new version profile..." + profile.install.target + ".json");
-        /*
-         * for (MinecraftLibrary library : profile.versionInfo.libraries)
-         * if (library.name.startsWith("net.minecraftforge:forge:"))
-         * library.url = installerVersion.universal;
-         */
-        FileUtils.write(new File(to, profile.install.target + ".json"), C.GSON.toJson(profile.versionInfo));
-
-        HMCLog.log("Extracting universal forge pack..." + profile.install.filePath);
-
-        entry = zipFile.getEntry(profile.install.filePath);
-        InputStream is = zipFile.getInputStream(entry);
-
-        MinecraftLibrary forge = new MinecraftLibrary(profile.install.path);
-        forge.init();
-        File file = new File(gameDir, "libraries/" + forge.formatted);
-        file.getParentFile().mkdirs();
-        try (FileOutputStream fos = new FileOutputStream(file); BufferedOutputStream bos = new BufferedOutputStream(fos)) {
-            int c;
-            while ((c = is.read()) != -1)
-                bos.write((byte) c);
+            File to = new File(gameDir, "versions" + File.separator + profile.install.getTarget());
+            if (!to.exists() && !to.mkdirs())
+                HMCLog.warn("Failed to make new version folder " + to);
+            HMCLog.log("Copying jar..." + profile.install.getMinecraft() + ".jar to " + profile.install.getTarget() + ".jar");
+            FileUtils.copyFile(new File(from, profile.install.getMinecraft() + ".jar"),
+                               new File(to, profile.install.getTarget() + ".jar"));
+            HMCLog.log("Creating new version profile..." + profile.install.getTarget() + ".json");
+            FileUtils.write(new File(to, profile.install.getTarget() + ".json"), C.GSON.toJson(profile.versionInfo));
+            HMCLog.log("Extracting universal forge pack..." + profile.install.getFilePath());
+            entry = zipFile.getEntry(profile.install.getFilePath());
+            InputStream is = zipFile.getInputStream(entry);
+            MinecraftLibrary forge = new MinecraftLibrary(profile.install.getPath());
+            forge.init();
+            File file = new File(gameDir, "libraries/" + forge.formatted);
+            if (file.getParentFile().mkdirs())
+                HMCLog.warn("Failed to make library directory " + file.getParent());
+            try (FileOutputStream fos = new FileOutputStream(file); BufferedOutputStream bos = new BufferedOutputStream(fos)) {
+                int c;
+                while ((c = is.read()) != -1)
+                    bos.write((byte) c);
+            }
+            mp.version().refreshVersions();
         }
-
-        mp.version().refreshVersions();
     }
 
     @Override

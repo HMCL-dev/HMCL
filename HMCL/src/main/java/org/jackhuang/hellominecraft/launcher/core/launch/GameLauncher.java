@@ -84,7 +84,7 @@ public class GameLauncher {
             result = login.loginBySettings();
         if (result == null)
             throw new AuthenticationException("Result can not be null.");
-        PluginManager.NOW_PLUGIN.onProcessingLoginResult(result);
+        PluginManager.plugin().onProcessingLoginResult(result);
 
         loader = service.launch(options, result);
 
@@ -150,8 +150,8 @@ public class GameLauncher {
         service.version().onLaunch();
         boolean isWin = OS.os() == OS.WINDOWS;
         File f = new File(launcherName + (isWin ? ".bat" : ".sh"));
-        if (!f.exists())
-            f.createNewFile();
+        if (!f.exists() && !f.createNewFile())
+            HMCLog.warn("Failed to create " + f);
         BufferedWriter writer;
         try {
             writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f), System.getProperty("sun.jnu.encoding", "UTF-8")));

@@ -19,6 +19,31 @@ package org.jackhuang.hellominecraft.launcher.core.auth.yggdrasil;
 
 public class User {
 
-    public String id;
-    public PropertyMap properties;
+    private String id;
+    private PropertyMap properties;
+
+    public User() {
+    }
+
+    public User(String id, PropertyMap properties) {
+        this.id = id;
+        this.properties = properties;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public PropertyMap getProperties() {
+        return properties;
+    }
+
+    public void setProperties(PropertyMap properties) {
+        this.properties = properties;
+    }
+
 }

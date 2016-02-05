@@ -97,7 +97,7 @@ public abstract class IAssetsHandler {
 
         @Override
         public void executeTask() {
-            if (assetsDownloadURLs == null || assetsLocalNames == null)
+            if (assetsDownloadURLs == null || assetsLocalNames == null || contents == null)
                 throw new IllegalStateException(C.i18n("assets.not_refreshed"));
             int max = assetsDownloadURLs.size();
             al = new ArrayList<>();
@@ -106,8 +106,8 @@ public abstract class IAssetsHandler {
                 String mark = assetsDownloadURLs.get(i);
                 String url = u + mark;
                 File location = assetsLocalNames.get(i);
-                if (!location.getParentFile().exists())
-                    location.getParentFile().mkdirs();
+                if (!location.getParentFile().exists() && !location.getParentFile().mkdirs())
+                    HMCLog.warn("Failed to make directories: " + location.getParent());
                 if (location.isDirectory())
                     continue;
                 boolean need = true;
@@ -116,7 +116,7 @@ public abstract class IAssetsHandler {
                         FileInputStream fis = new FileInputStream(location);
                         String sha = DigestUtils.sha1Hex(NetUtils.getBytesFromStream(fis));
                         IOUtils.closeQuietly(fis);
-                        if (contents.get(i).eTag.equals(sha)) {
+                        if (contents.get(i).geteTag().equals(sha)) {
                             hasDownloaded++;
                             HMCLog.log("File " + assetsLocalNames.get(i) + " has downloaded successfully, skipped downloading.");
                             if (ppl != null)

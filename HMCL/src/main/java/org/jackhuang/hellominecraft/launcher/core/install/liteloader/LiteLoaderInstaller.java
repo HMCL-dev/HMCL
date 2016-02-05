@@ -75,7 +75,8 @@ public class LiteLoaderInstaller extends Task implements PreviousResultRegistrar
         mv.mainClass = "net.minecraft.launchwrapper.Launch";
         mv.minecraftArguments += " --tweakClass " + version.tweakClass;
         File folder = new File(service.baseDirectory(), "versions/" + mv.id);
-        folder.mkdirs();
+        if (!folder.exists() && folder.mkdirs())
+            HMCLog.warn("Failed to create new liteloader version " + folder);
         File json = new File(folder, mv.id + ".json");
         HMCLog.log("Creating new version profile..." + mv.id + ".json");
         FileUtils.write(json, C.GSON.toJson(mv));

@@ -177,6 +177,7 @@ public final class Config {
     @SerializedName("configurations")
     private TreeMap<String, Profile> configurations;
     @SerializedName("auth")
+    @SuppressWarnings("FieldMayBeFinal")
     private Map<String, Map> auth;
 
     public Config() {

@@ -19,7 +19,6 @@ package org.jackhuang.hellominecraft.launcher.core.version;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.system.OS;
 import org.jackhuang.hellominecraft.util.system.Platform;
@@ -33,8 +32,6 @@ public class MinecraftLibrary extends IMinecraftLibrary {
 
     public ArrayList<Rules> rules;
     public String url, formatted = null;
-    //public boolean serverreq=true, clientreq=true;
-    public String[] checksums;
     public Natives natives;
     public Extract extract;
 
@@ -42,17 +39,16 @@ public class MinecraftLibrary extends IMinecraftLibrary {
         super(name);
     }
 
-    public MinecraftLibrary(ArrayList<Rules> rules, String url, String[] checksums, Natives natives, String name, Extract extract) {
+    public MinecraftLibrary(ArrayList<Rules> rules, String url, Natives natives, String name, Extract extract) {
         super(name);
         this.rules = rules == null ? null : (ArrayList<Rules>) rules.clone();
         this.url = url;
-        this.checksums = checksums == null ? null : Arrays.copyOf(checksums, checksums.length);
         this.natives = natives == null ? null : (Natives) natives.clone();
         this.extract = extract == null ? null : (Extract) extract.clone();
     }
 
     @Override
-    public Object clone() throws CloneNotSupportedException {
+    public Object clone() {
         MinecraftLibrary ml = (MinecraftLibrary) super.clone();
         ml.extract = (Extract) ml.extract.clone();
         ml.natives = (Natives) ml.natives.clone();
@@ -72,12 +68,12 @@ public class MinecraftLibrary extends IMinecraftLibrary {
             flag = true;
         else
             for (Rules r : rules)
-                if (r.action.equals("disallow")) {
-                    if (r.os != null && (StrUtils.isBlank(r.os.getName()) || r.os.getName().equalsIgnoreCase(OS.os().toString()))) {
+                if ("disallow".equals(r.getAction())) {
+                    if (r.getOS() != null && (StrUtils.isBlank(r.getOS().getName()) || r.getOS().getName().equalsIgnoreCase(OS.os().toString()))) {
                         flag = false;
                         break;
                     }
-                } else if (r.os == null || (r.os != null && (StrUtils.isBlank(r.os.getName()) || r.os.getName().equalsIgnoreCase(OS.os().toString()))))
+                } else if (r.getOS() == null || (r.getOS() != null && (StrUtils.isBlank(r.getOS().getName()) || r.getOS().getName().equalsIgnoreCase(OS.os().toString()))))
                     flag = true;
         return flag;
     }
@@ -89,11 +85,11 @@ public class MinecraftLibrary extends IMinecraftLibrary {
     private String getNative() {
         switch (OS.os()) {
         case WINDOWS:
-            return formatArch(natives.windows);
+            return formatArch(natives.getWindows());
         case OSX:
-            return formatArch(natives.osx);
+            return formatArch(natives.getOsx());
         default:
-            return formatArch(natives.linux);
+            return formatArch(natives.getLinux());
         }
     }
 

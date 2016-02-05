@@ -23,6 +23,32 @@ package org.jackhuang.hellominecraft.launcher.core.version;
  */
 public class Rules {
 
-    public String action;
-    public OS os;
+    private String action;
+    private OS os;
+
+    public Rules() {
+    }
+
+    public Rules(String action, OS os) {
+        this();
+        this.action = action;
+        this.os = os;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
+    }
+
+    public OS getOS() {
+        return os;
+    }
+
+    public void setOS(OS os) {
+        this.os = os;
+    }
+
 }

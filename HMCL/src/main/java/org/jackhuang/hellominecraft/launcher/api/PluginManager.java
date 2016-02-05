@@ -26,7 +26,7 @@ import org.jackhuang.hellominecraft.launcher.setting.DefaultPlugin;
  */
 public class PluginManager {
 
-    public static IPlugin NOW_PLUGIN = new DefaultPlugin();
+    private static IPlugin NOW_PLUGIN = new DefaultPlugin();
 
     public static void getServerPlugin() {
         try {
@@ -38,6 +38,10 @@ public class PluginManager {
         } catch (Exception e) {
             HMCLog.err("Failed  to new instance");
         }
+    }
+
+    public static IPlugin plugin() {
+        return NOW_PLUGIN;
     }
 
 }

@@ -59,19 +59,14 @@ public class MinecraftModService extends IMinecraftModService {
         File[] fs = modsFolder.listFiles();
         if (fs != null)
             for (File f : fs)
-                if (ModInfo.isFileMod(f)) {
-                    ModInfo m = ModInfo.readModInfo(f);
-                    if (m != null)
-                        mods.add(m);
-                } else if (f.isDirectory()) {
+                if (ModInfo.isFileMod(f))
+                    mods.add(ModInfo.readModInfo(f));
+                else if (f.isDirectory()) {
                     File[] ss = f.listFiles();
                     if (ss != null)
                         for (File ff : ss)
-                            if (ModInfo.isFileMod(ff)) {
-                                ModInfo m = ModInfo.readModInfo(ff);
-                                if (m != null)
-                                    mods.add(m);
-                            }
+                            if (ModInfo.isFileMod(ff))
+                                mods.add(ModInfo.readModInfo(ff));
                 }
         Collections.sort(mods);
         modCache.put(id, mods);
@@ -84,9 +79,8 @@ public class MinecraftModService extends IMinecraftModService {
             if (!ModInfo.isFileMod(f))
                 return false;
             File modsFolder = service.version().getRunDirectory(id, "mods");
-            if (modsFolder == null)
-                return false;
-            modsFolder.mkdirs();
+            if (!modsFolder.exists() && !modsFolder.mkdirs())
+                HMCLog.warn("Failed to make directories: " + modsFolder);
             File newf = new File(modsFolder, f.getName());
             FileUtils.copyFile(f, newf);
             ModInfo i = ModInfo.readModInfo(f);
@@ -103,10 +97,12 @@ public class MinecraftModService extends IMinecraftModService {
         if (rows.length == 0)
             return;
         for (Object r : rows)
-            if (r instanceof ModInfo)
-                ((ModInfo) r).location.delete();
-            else if (r instanceof Number)
-                getMods(id).get(((Number) r).intValue()).location.delete();
+            if (r instanceof ModInfo) {
+                if (!((ModInfo) r).location.delete())
+                    HMCLog.warn("Failed to delete mod" + r);
+            } else if (r instanceof Number)
+                if (!getMods(id).get(((Number) r).intValue()).location.delete())
+                    HMCLog.warn("Failed to delete mod " + r + ", maybe not a file?");
         recacheMods(id);
     }
 

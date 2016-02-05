@@ -36,7 +36,7 @@ import org.jackhuang.hellominecraft.util.ui.SwingUtils;
  *
  * @author huangyuhui
  */
-public class InstallerPanel extends AnimatedPanel implements Selectable {
+public class InstallerPanel extends AnimatedPanel {
 
     GameSettingsPanel gsp;
 
@@ -118,8 +118,8 @@ public class InstallerPanel extends AnimatedPanel implements Selectable {
         refreshVersions();
     }//GEN-LAST:event_btnRefreshActionPerformed
 
-    List<InstallerVersionList.InstallerVersion> versions;
-    InstallerVersionList list;
+    transient List<InstallerVersionList.InstallerVersion> versions;
+    transient InstallerVersionList list;
     InstallerType id;
 
     void refreshVersions() {
@@ -129,11 +129,11 @@ public class InstallerPanel extends AnimatedPanel implements Selectable {
             loadVersions();
     }
 
-    public InstallerVersionList.InstallerVersion getVersion(int idx) {
+    public synchronized InstallerVersionList.InstallerVersion getVersion(int idx) {
         return versions.get(idx);
     }
 
-    void downloadSelectedRow() {
+    synchronized void downloadSelectedRow() {
         int idx = lstInstallers.getSelectedRow();
         if (versions == null || idx < 0 || idx >= versions.size()) {
             MessageBox.Show(C.i18n("install.not_refreshed"));

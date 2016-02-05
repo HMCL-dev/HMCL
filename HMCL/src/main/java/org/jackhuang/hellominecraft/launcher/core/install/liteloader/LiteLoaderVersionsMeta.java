@@ -23,5 +23,39 @@ package org.jackhuang.hellominecraft.launcher.core.install.liteloader;
  */
 public class LiteLoaderVersionsMeta {
 
-    public String description, authors, url;
+    private String description, authors, url;
+
+    public LiteLoaderVersionsMeta() {
+    }
+
+    public LiteLoaderVersionsMeta(String description, String authors, String url) {
+        this();
+        this.description = description;
+        this.authors = authors;
+        this.url = url;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getAuthors() {
+        return authors;
+    }
+
+    public void setAuthors(String authors) {
+        this.authors = authors;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
 }

@@ -20,6 +20,7 @@ package org.jackhuang.hellominecraft.launcher.core.auth;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.code.DigestUtils;
 import org.jackhuang.hellominecraft.util.NetUtils;
+import org.jackhuang.hellominecraft.util.lang.SupportedLocales;
 import org.jackhuang.hellominecraft.util.ui.Selector;
 
 /**
@@ -47,7 +48,7 @@ public final class SkinmeAuthenticator extends IAuthenticator {
         if (info.username == null || !info.username.contains("@"))
             throw new AuthenticationException(C.i18n("login.not_email"));
         try {
-            String usr = info.username.toLowerCase();
+            String usr = info.username.toLowerCase(SupportedLocales.NOW_LOCALE.self);
             String pwd = info.password;
 
             String str = DigestUtils.sha1Hex(usr);
@@ -120,7 +121,7 @@ public final class SkinmeAuthenticator extends IAuthenticator {
     }
 
     @Override
-    public void logout() {
+    public void logOut() {
 
     }
 }

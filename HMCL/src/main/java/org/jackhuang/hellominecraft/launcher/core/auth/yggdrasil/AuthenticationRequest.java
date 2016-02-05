@@ -21,9 +21,49 @@ import java.util.HashMap;
 
 public class AuthenticationRequest {
 
-    public HashMap<String, Object> agent;
-    public String username, password, clientToken;
-    public boolean requestUser = true;
+    private HashMap<String, Object> agent;
+    private String username, password, clientToken;
+    private boolean requestUser = true;
+
+    public HashMap<String, Object> getAgent() {
+        return agent;
+    }
+
+    public void setAgent(HashMap<String, Object> agent) {
+        this.agent = agent;
+    }
+
+    public String getUserName() {
+        return username;
+    }
+
+    public void setUserName(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getClientToken() {
+        return clientToken;
+    }
+
+    public void setClientToken(String clientToken) {
+        this.clientToken = clientToken;
+    }
+
+    public boolean isRequestUser() {
+        return requestUser;
+    }
+
+    public void setRequestUser(boolean requestUser) {
+        this.requestUser = requestUser;
+    }
 
     public AuthenticationRequest(String username, String password, String clientToken) {
         agent = new HashMap<>();

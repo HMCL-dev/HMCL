@@ -29,6 +29,7 @@ import org.jackhuang.hellominecraft.util.tasks.communication.PreviousResultRegis
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
 
 /**
  *
@@ -65,15 +66,18 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
         FileUtils.copyFile(installer, new File(service.baseDirectory(), "libraries/optifine/OptiFine/" + selfId + "/OptiFine-" + selfId + ".jar"));
 
         mv.id += "-" + selfId;
-        if (new ZipFile(installer).getEntry("optifine/OptiFineTweaker.class") != null) {
-            if (!mv.mainClass.startsWith("net.minecraft.launchwrapper.")) {
-                mv.mainClass = "net.minecraft.launchwrapper.Launch";
-                mv.libraries.add(1, new MinecraftLibrary("net.minecraft:launchwrapper:1.7"));
+        try (ZipFile zipFile = new ZipFile(installer)) {
+            if (zipFile.getEntry("optifine/OptiFineTweaker.class") != null) {
+                if (!mv.mainClass.startsWith("net.minecraft.launchwrapper.")) {
+                    mv.mainClass = "net.minecraft.launchwrapper.Launch";
+                    mv.libraries.add(1, new MinecraftLibrary("net.minecraft:launchwrapper:1.7"));
+                }
+                mv.minecraftArguments += " --tweakClass optifine.OptiFineTweaker";
             }
-            mv.minecraftArguments += " --tweakClass optifine.OptiFineTweaker";
         }
         File loc = new File(service.baseDirectory(), "versions/" + mv.id);
-        loc.mkdirs();
+        if (!loc.exists() && loc.mkdirs())
+            HMCLog.warn("Failed to make directories: " + loc);
         File json = new File(loc, mv.id + ".json");
         FileUtils.writeStringToFile(json, C.GSON.toJson(mv, MinecraftVersion.class));
 

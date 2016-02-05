@@ -302,7 +302,7 @@ public class MainPagePanel extends AnimatedPanel {
 
     private void txtPlayerNameFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtPlayerNameFocusLost
         IAuthenticator l = Settings.getInstance().getAuthenticator();
-        l.setUsername(txtPlayerName.getText());
+        l.setUserName(txtPlayerName.getText());
     }//GEN-LAST:event_txtPlayerNameFocusLost
 
     private void cboLoginModeItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboLoginModeItemStateChanged
@@ -342,7 +342,7 @@ public class MainPagePanel extends AnimatedPanel {
         IAuthenticator l = Settings.getInstance().getAuthenticator();
         CardLayout cl = (CardLayout) pnlPassword.getLayout();
         if (l.isLoggedIn())
-            l.logout();
+            l.logOut();
         cl.first(pnlPassword);
         pnlPassword.repaint();
     }//GEN-LAST:event_btnLogoutActionPerformed
@@ -350,7 +350,7 @@ public class MainPagePanel extends AnimatedPanel {
     private void txtPlayerNameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPlayerNameKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             IAuthenticator l = Settings.getInstance().getAuthenticator();
-            l.setUsername(txtPlayerName.getText());
+            l.setUserName(txtPlayerName.getText());
             if (!l.hasPassword())
                 runGame();
             else if (!l.isLoggedIn())
@@ -583,7 +583,7 @@ public class MainPagePanel extends AnimatedPanel {
             cl.last(pnlPassword);
         else
             cl.first(pnlPassword);
-        String username = l.getUsername();
+        String username = l.getUserName();
         if (username == null)
             username = "";
         txtPlayerName.setText(username);

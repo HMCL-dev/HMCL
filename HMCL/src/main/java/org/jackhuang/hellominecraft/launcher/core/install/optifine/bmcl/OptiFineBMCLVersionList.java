@@ -65,19 +65,19 @@ public class OptiFineBMCLVersionList extends InstallerVersionList {
             return;
         root = C.GSON.fromJson(s, TYPE);
         for (OptiFineVersion v : root) {
-            v.mirror = v.mirror.replace("http://optifine.net/http://optifine.net/", "http://optifine.net/");
+            v.setMirror(v.getMirror().replace("http://optifine.net/http://optifine.net/", "http://optifine.net/"));
 
-            if (StrUtils.isBlank(v.mcver)) {
+            if (StrUtils.isBlank(v.getMCVersion())) {
                 Pattern p = Pattern.compile("OptiFine (.*) HD");
-                Matcher m = p.matcher(v.ver);
+                Matcher m = p.matcher(v.getVersion());
                 while (m.find())
-                    v.mcver = m.group(1);
+                    v.setMCVersion(m.group(1));
             }
-            InstallerVersion iv = new InstallerVersion(v.ver, StrUtils.formatVersion(v.mcver));
+            InstallerVersion iv = new InstallerVersion(v.getVersion(), StrUtils.formatVersion(v.getMCVersion()));
 
-            List<InstallerVersion> al = ArrayUtils.tryGetMapWithList(versionMap, StrUtils.formatVersion(v.mcver));
-            String url = "http://bmclapi.bangbang93.com/optifine/" + iv.selfVersion.replace(" ", "%20");
-            iv.installer = iv.universal = v.mirror;
+            List<InstallerVersion> al = ArrayUtils.tryGetMapWithList(versionMap, StrUtils.formatVersion(v.getMCVersion()));
+            //String url = "http://bmclapi.bangbang93.com/optifine/" + iv.selfVersion.replace(" ", "%20");
+            iv.installer = iv.universal = v.getMirror();
             al.add(iv);
             versions.add(iv);
         }

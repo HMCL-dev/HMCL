@@ -60,6 +60,10 @@ public class AnimatedPanel extends JPanel implements Selectable {
 
     @Override
     public void paint(Graphics g) {
+        if (!(g instanceof Graphics2D)) {
+            super.paint(g);
+            return;
+        }
         double pgs = 1 - Math.sin(Math.PI / 2 / ANIMATION_LENGTH * offsetX);
         if (Math.abs(ANIMATION_LENGTH - offsetX) < 0.1) {
             super.paint(g);

@@ -57,7 +57,7 @@ public final class Profile {
 
     public IMinecraftService service() {
         if (service == null)
-            service = PluginManager.NOW_PLUGIN.provideMinecraftService(this);
+            service = PluginManager.plugin().provideMinecraftService(this);
         return service;
     }
 

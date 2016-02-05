@@ -65,7 +65,7 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
                 if (v.installer != null)
                     TaskWindow.getInstance()
                         .addTask(new FileDownloadTask(service.getDownloadType().getProvider().getParsedLibraryDownloadURL(v.installer), filepath).setTag("forge"))
-                        .addTask(new ForgeInstaller(service, filepath, v))
+                        .addTask(new ForgeInstaller(service, filepath))
                         .start();
             }
         };

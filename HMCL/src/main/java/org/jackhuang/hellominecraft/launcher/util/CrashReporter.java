@@ -22,6 +22,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
@@ -39,6 +42,8 @@ import org.jackhuang.hellominecraft.util.ui.LogWindow;
  */
 public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
+    private static final Logger LOGGER = LogManager.getLogManager().getLogger(CrashReporter.class.getName());
+
     boolean enableLogger = false;
 
     public CrashReporter(boolean enableLogger) {
@@ -50,35 +55,35 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         if (s.contains("MessageBox") || s.contains("AWTError"))
             return false;
         else if (s.contains("JFileChooser") || s.contains("JceSecurityManager")) {
-            System.out.println("Is not your operating system installed completely? ");
+            LOGGER.severe("Is not your operating system installed completely? ");
             return false;
         }
         if (s.contains("sun.awt.shell.Win32ShellFolder2") || s.contains("UnsatisfiedLinkError")) {
-            System.out.println(C.i18n("crash.user_fault"));
+            LOGGER.severe(C.i18n("crash.user_fault"));
             try {
                 showMessage(C.i18n("crash.user_fault"));
             } catch (Throwable t) {
-                t.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Failed to show message", t);
             }
             return false;
         } else if (s.contains("java.awt.HeadlessException")) {
-            System.out.println(C.i18n("crash.headless"));
+            LOGGER.severe(C.i18n("crash.headless"));
             try {
                 showMessage(C.i18n("crash.headless"));
             } catch (Throwable t) {
-                t.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Failed to show message", t);
             }
             return false;
         } else if (s.contains("java.lang.NoClassDefFoundError") || s.contains("java.lang.VerifyError") || s.contains("java.lang.NoSuchMethodError") || s.contains("java.lang.IncompatibleClassChangeError") || s.contains("java.lang.ClassFormatError")) {
-            System.out.println(C.i18n("crash.NoClassDefFound"));
+            LOGGER.severe(C.i18n("crash.NoClassDefFound"));
             try {
                 showMessage(C.i18n("crash.NoClassDefFound"));
             } catch (Throwable t) {
-                t.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Failed to show message", t);
             }
             return false;
         } else if (s.contains("java.lang.OutOfMemoryError")) {
-            System.out.println("FUCKING MEMORY LIMIT!");
+            LOGGER.severe("FUCKING MEMORY LIMIT!");
             return false;
         }
         return true;
@@ -111,8 +116,8 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                     reportToServer(text, s);
             }
         } catch (Throwable ex) {
-            showMessage(e.getMessage() + "\n" + ex.getMessage());
-            ex.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to caught exception", ex);
+            LOGGER.log(Level.SEVERE, "There is the original exception", e);
         }
     }
 
@@ -120,8 +125,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         try {
             MessageBox.Show(s, "ERROR", MessageBox.ERROR_MESSAGE);
         } catch (Throwable e) {
-            System.err.println("ERROR: " + s);
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "ERROR", e);
         }
     }
 
@@ -131,19 +135,15 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         if (THROWABLE_SET.contains(stacktrace))
             return;
         THROWABLE_SET.add(stacktrace);
-        new Thread() {
-            @Override
-            public void run() {
-                HashMap<String, String> map = new HashMap<>();
-                map.put("CrashReport", text);
-                try {
-                    System.out.println(NetUtils.post(NetUtils.constantURL("http://huangyuhui.duapp.com/crash.php"), map));
-                } catch (IOException ex) {
-                    System.out.println("Failed to send post request to HMCL server.");
-                    ex.printStackTrace();
-                }
+        new Thread(() -> {
+            HashMap<String, String> map = new HashMap<>();
+            map.put("CrashReport", text);
+            try {
+                NetUtils.post(NetUtils.constantURL("http://huangyuhui.duapp.com/crash.php"), map);
+            } catch (IOException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to post HMCL server.", ex);
             }
-        }.start();
+        }).start();
     }
 
 }

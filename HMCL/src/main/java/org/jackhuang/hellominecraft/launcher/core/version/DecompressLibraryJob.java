@@ -27,11 +27,19 @@ public class DecompressLibraryJob {
 
     public File[] decompressFiles;
     public String[][] extractRules;
-    public File decompressTo;
+    private File decompressTo;
 
     public DecompressLibraryJob(File[] decompressFiles, String[][] extractRules, File decompressTo) {
-        this.decompressFiles = decompressFiles;
-        this.extractRules = extractRules;
+        this.decompressFiles = decompressFiles.clone();
+        this.extractRules = extractRules.clone();
+        this.decompressTo = decompressTo;
+    }
+
+    public File getDecompressTo() {
+        return decompressTo;
+    }
+
+    public void setDecompressTo(File decompressTo) {
         this.decompressTo = decompressTo;
     }
 

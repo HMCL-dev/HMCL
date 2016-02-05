@@ -26,6 +26,8 @@ import java.security.GeneralSecurityException;
 import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -67,7 +69,7 @@ public final class Main implements Runnable {
 
         @Override
         public X509Certificate[] getAcceptedIssuers() {
-            return null;
+            return new X509Certificate[0];
         }
     };
     private static final HostnameVerifier HNV = (hostname, session) -> true;
@@ -111,7 +113,9 @@ public final class Main implements Runnable {
     }
 
     public static final Main INSTANCE = new Main();
-    public static HelloMinecraftLookAndFeel LOOK_AND_FEEL;
+    private static HelloMinecraftLookAndFeel LOOK_AND_FEEL;
+
+    private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
 
     @SuppressWarnings({ "CallToPrintStackTrace", "UseSpecificCatch" })
     public static void main(String[] args) throws IOException {
@@ -126,12 +130,11 @@ public final class Main implements Runnable {
 
             try {
                 File file = new File("hmcl.log");
-                if (!file.exists())
-                    file.createNewFile();
+                if (!file.exists() && !file.createNewFile())
+                    HMCLog.warn("Failed to create log file " + file);
                 Configuration.DEFAULT.appenders.add(new ConsoleAppender("File", new DefaultLayout(), true, new FileOutputStream(file), true));
             } catch (IOException ex) {
-                System.err.println("Failed to add log appender File because an error occurred while creating or opening hmcl.log");
-                ex.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Failed to add log appender File because an error occurred while creating or opening hmcl.log", ex);
             }
 
             HMCLog.log("*** " + Main.makeTitle() + " ***");
@@ -170,7 +173,7 @@ public final class Main implements Runnable {
             }
 
             try {
-                PluginManager.NOW_PLUGIN.showUI();
+                PluginManager.plugin().showUI();
             } catch (Throwable t) {
                 new CrashReporter(false).uncaughtException(Thread.currentThread(), t);
                 System.exit(1);

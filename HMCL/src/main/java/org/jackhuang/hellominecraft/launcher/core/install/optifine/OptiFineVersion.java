@@ -23,5 +23,45 @@ package org.jackhuang.hellominecraft.launcher.core.install.optifine;
  */
 public class OptiFineVersion {
 
-    public String dl, ver, date, mirror, mcver;
+    private String dl, ver, date, mirror, mcver;
+
+    public String getDownloadLink() {
+        return dl;
+    }
+
+    public void setDownloadLink(String dl) {
+        this.dl = dl;
+    }
+
+    public String getVersion() {
+        return ver;
+    }
+
+    public void setVersion(String ver) {
+        this.ver = ver;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public String getMirror() {
+        return mirror;
+    }
+
+    public void setMirror(String mirror) {
+        this.mirror = mirror;
+    }
+
+    public String getMCVersion() {
+        return mcver;
+    }
+
+    public void setMCVersion(String mcver) {
+        this.mcver = mcver;
+    }
 }

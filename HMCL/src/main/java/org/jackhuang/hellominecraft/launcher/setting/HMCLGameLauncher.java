@@ -62,14 +62,14 @@ public class HMCLGameLauncher {
         }
 
         final IAuthenticator l = IAuthenticator.LOGINS.get(Settings.getInstance().getLoginType());
-        final LoginInfo li = new LoginInfo(l.getUsername(), l.isLoggedIn() || !l.hasPassword() ? null : passwordIfNeeded);
+        final LoginInfo li = new LoginInfo(l.getUserName(), l.isLoggedIn() || !l.hasPassword() ? null : passwordIfNeeded);
         new Thread() {
             @Override
             public void run() {
                 Thread.currentThread().setName("Game Launcher");
                 try {
                     LaunchOptions options = profile.getSelectedVersionSetting().createLaunchOptions(profile.getCanonicalGameDirFile());
-                    PluginManager.NOW_PLUGIN.onProcessingLaunchOptions(options);
+                    PluginManager.plugin().onProcessingLaunchOptions(options);
                     DefaultGameLauncher gl = new DefaultGameLauncher(options, profile.service(), li, l);
                     gl.setTag(profile.getSelectedVersionSetting().getLauncherVisibility());
                     gl.successEvent.register(() -> isLaunching = false);

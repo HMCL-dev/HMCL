@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.util.version;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.util.C;
@@ -29,7 +30,7 @@ import org.jackhuang.hellominecraft.util.NetUtils;
 /**
  * @author huangyuhui
  */
-public class MinecraftVersionRequest {
+public class MinecraftVersionRequest implements Serializable {
 
     public static final int UNKOWN = 0, INVALID = 1, INVALID_JAR = 2,
         MODIFIED = 3, OK = 4, NOT_FOUND = 5, UNREADABLE = 6, NOT_FILE = 7;

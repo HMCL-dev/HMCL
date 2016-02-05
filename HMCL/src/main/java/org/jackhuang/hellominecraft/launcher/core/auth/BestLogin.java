@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.nio.charset.Charset;
 import org.jackhuang.hellominecraft.util.code.DigestUtils;
 
 /**
@@ -41,7 +42,7 @@ public final class BestLogin extends IAuthenticator {
             Socket socket = new Socket("auth.zhh0000zhh.com", 8);
             OutputStream os = socket.getOutputStream();
             os.write(request.length());
-            os.write(request.getBytes());
+            os.write(request.getBytes(Charset.forName("UTF-8")));
 
             UserProfileProvider lr = new UserProfileProvider();
 
@@ -64,12 +65,16 @@ public final class BestLogin extends IAuthenticator {
                 throw new AuthenticationException("server reloading.");
             case 0:
                 byte[] b = new byte[64];
-                is.read(b, 0, b.length);
-                String[] ss = new String(b).split(":");
+                int x = is.read(b, 0, b.length);
+                if (x != -1)
+                    throw new AuthenticationException("server response does not follow the protocol.");
+                String[] ss = new String(b, Charset.forName("UTF-8")).split(":");
                 lr.setUserName(info.username);
                 lr.setUserId(ss[1]);
                 lr.setSession(ss[0]);
                 lr.setAccessToken(ss[0]);
+                break;
+            default:
                 break;
             }
             lr.setUserType("Legacy");
@@ -95,7 +100,7 @@ public final class BestLogin extends IAuthenticator {
     }
 
     @Override
-    public void logout() {
+    public void logOut() {
     }
 
 }

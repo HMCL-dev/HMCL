@@ -27,4 +27,65 @@ public class MinecraftForgeVersion {
     public int build;
     public double modified;
     public String[][] files;
+
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
+    }
+
+    public String getMCVersion() {
+        return mcversion;
+    }
+
+    public void setMCVersion(String mcversion) {
+        this.mcversion = mcversion;
+    }
+
+    public String getJobver() {
+        return jobver;
+    }
+
+    public void setJobver(String jobver) {
+        this.jobver = jobver;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public int getBuild() {
+        return build;
+    }
+
+    public void setBuild(int build) {
+        this.build = build;
+    }
+
+    public double getModified() {
+        return modified;
+    }
+
+    public void setModified(double modified) {
+        this.modified = modified;
+    }
+
+    public MinecraftForgeVersion() {
+    }
+
+    public MinecraftForgeVersion(String branch, String mcversion, String jobver, String version, int build, double modified) {
+        this.branch = branch;
+        this.mcversion = mcversion;
+        this.jobver = jobver;
+        this.version = version;
+        this.build = build;
+        this.modified = modified;
+    }
+
 }

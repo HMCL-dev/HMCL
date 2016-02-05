@@ -19,13 +19,46 @@ package org.jackhuang.hellominecraft.launcher.core.auth.yggdrasil;
 
 public class RefreshRequest {
 
-    public String clientToken;
-    public String accessToken;
-    public GameProfile selectedProfile;
-    public boolean requestUser = true;
+    private String clientToken;
+    private String accessToken;
+    private GameProfile selectedProfile;
+    private boolean requestUser = true;
 
     public RefreshRequest(String accessToken, String clientToken) {
         this.clientToken = clientToken;
         this.accessToken = accessToken;
     }
+
+    public String getClientToken() {
+        return clientToken;
+    }
+
+    public void setClientToken(String clientToken) {
+        this.clientToken = clientToken;
+    }
+
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
+    }
+
+    public GameProfile getSelectedProfile() {
+        return selectedProfile;
+    }
+
+    public void setSelectedProfile(GameProfile selectedProfile) {
+        this.selectedProfile = selectedProfile;
+    }
+
+    public boolean isRequestUser() {
+        return requestUser;
+    }
+
+    public void setRequestUser(boolean requestUser) {
+        this.requestUser = requestUser;
+    }
+
 }

@@ -72,17 +72,22 @@ public final class ModpackManager {
                     if (newFile.isDirectory())
                         FileUtils.deleteDirectory(newFile);
                     else if (newFile.isFile())
-                        newFile.delete();
-                    oldFile.renameTo(newFile);
+                        if (!newFile.delete())
+                            HMCLog.warn("Failed to delete file " + newFile);
+                    if (!oldFile.renameTo(newFile))
+                        HMCLog.warn("Failed to rename " + oldFile + " to " + newFile);
                 }
 
                 File preVersion = new File(versions, id), preVersionRenamed = null;
                 if (preVersion.exists()) {
                     HMCLog.log("Backing up the game");
                     String preId = id + "-" + System.currentTimeMillis();
-                    preVersion.renameTo(preVersionRenamed = new File(versions, preId));
-                    new File(preVersionRenamed, id + ".json").renameTo(new File(preVersionRenamed, preId + ".json"));
-                    new File(preVersionRenamed, id + ".jar").renameTo(new File(preVersionRenamed, preId + ".jar"));
+                    if (!preVersion.renameTo(preVersionRenamed = new File(versions, preId)))
+                        HMCLog.warn("Failed to rename pre-version folder " + preVersion + " to a temp folder " + preVersionRenamed);
+                    if (!new File(preVersionRenamed, id + ".json").renameTo(new File(preVersionRenamed, preId + ".json")))
+                        HMCLog.warn("Failed to rename pre json to new json");
+                    if (!new File(preVersionRenamed, id + ".jar").renameTo(new File(preVersionRenamed, preId + ".jar")))
+                        HMCLog.warn("Failed to rename pre jar to new jar");
                 }
 
                 try {
@@ -96,7 +101,8 @@ public final class ModpackManager {
                     if (b.get() < 1)
                         throw new FileNotFoundException(C.i18n("modpack.incorrect_format.no_json"));
                     File nowFile = new File(versions, id);
-                    oldFile.renameTo(nowFile);
+                    if (oldFile.exists() && !oldFile.renameTo(nowFile))
+                        HMCLog.warn("Failed to rename incorrect json " + oldFile + " to " + nowFile);
 
                     File json = new File(nowFile, "pack.json");
                     MinecraftVersion mv = C.GSON.fromJson(FileUtils.readFileToString(json), MinecraftVersion.class);
@@ -106,7 +112,8 @@ public final class ModpackManager {
                     c.add(service.download().downloadMinecraftJarTo(mv.jar, new File(nowFile, id + ".jar")));
                     mv.jar = null;
                     FileUtils.writeStringToFile(json, C.GSON.toJson(mv));
-                    json.renameTo(new File(nowFile, id + ".json"));
+                    if (!json.renameTo(new File(nowFile, id + ".json")))
+                        HMCLog.warn("Failed to rename pack.json to new id");
 
                     if (preVersionRenamed != null) {
                         HMCLog.log("Restoring saves");

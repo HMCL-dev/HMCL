@@ -32,7 +32,6 @@ import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.launcher.core.asset.AssetsIndex;
 import org.jackhuang.hellominecraft.launcher.core.asset.AssetsObject;
 import org.jackhuang.hellominecraft.launcher.core.asset.IAssetsHandler;
-import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.system.OS;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
@@ -46,29 +45,25 @@ import org.jackhuang.hellominecraft.util.StrUtils;
  */
 public class MinecraftLoader extends AbstractMinecraftLoader {
 
-    DownloadType dt;
-    String text;
-
     public MinecraftLoader(LaunchOptions p, IMinecraftService provider, UserProfileProvider lr) throws GameException {
         super(p, provider, p.getLaunchVersion(), lr);
     }
 
     @Override
     protected void makeSelf(List<String> res) throws GameException {
-        String library = options.isCanceledWrapper() ? "" : "-cp=";
+        StringBuilder library = new StringBuilder(options.isCanceledWrapper() ? "" : "-cp=");
         for (MinecraftLibrary l : version.libraries) {
             l.init();
             if (l.allow() && !l.isRequiredToUnzip())
-                library += l.getFilePath(gameDir).getAbsolutePath() + File.pathSeparator;
+                library.append(l.getFilePath(gameDir).getAbsolutePath()).append(File.pathSeparator);
         }
         File f = version.getJar(service.baseDirectory());
         if (!f.exists())
             throw new GameException("Minecraft jar does not exists");
-        library += IOUtils.tryGetCanonicalFilePath(f) + File.pathSeparator;
-        library = library.substring(0, library.length() - File.pathSeparator.length());
+        library.append(IOUtils.tryGetCanonicalFilePath(f)).append(File.pathSeparator);
         if (options.isCanceledWrapper())
             res.add("-cp");
-        res.add(library);
+        res.add(library.toString().substring(0, library.length() - File.pathSeparator.length()));
         String mainClass = version.mainClass;
         res.add((options.isCanceledWrapper() ? "" : "-mainClass=") + mainClass);
 

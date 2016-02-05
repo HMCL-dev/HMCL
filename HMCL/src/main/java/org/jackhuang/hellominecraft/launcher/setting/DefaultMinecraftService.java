@@ -44,7 +44,6 @@ import org.jackhuang.hellominecraft.util.system.FileUtils;
  */
 public class DefaultMinecraftService extends IMinecraftService {
 
-    File base;
     Profile p;
     final Map<String, VersionSetting> versionSettings = new HashMap<>();
 

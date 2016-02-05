@@ -98,7 +98,7 @@ public final class OfflineAuthenticator extends IAuthenticator {
     }
 
     @Override
-    public void logout() {
+    public void logOut() {
     }
 
 }

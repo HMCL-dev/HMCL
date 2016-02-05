@@ -104,7 +104,8 @@ public class MinecraftVersionManager extends IMinecraftProvider {
             if (ask) {
                 HMCLog.warn("Found not matched filenames version: " + id + ", json: " + jsons[0].getName());
                 if (MessageBox.Show(String.format(C.i18n("launcher.versions_json_not_matched"), id, jsons[0].getName()), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                    jsons[0].renameTo(new File(jsons[0].getParent(), id + ".json"));
+                    if (!jsons[0].renameTo(new File(jsons[0].getParent(), id + ".json")))
+                        HMCLog.warn("Failed to rename version json " + jsons[0]);
             }
             if (!jsonFile.exists()) {
                 if (MessageBox.Show(C.i18n("launcher.versions_json_not_matched_cannot_auto_completion", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
@@ -173,13 +174,15 @@ public class MinecraftVersionManager extends IMinecraftProvider {
             mcVersion.id = to;
             FileUtils.writeQuietly(fromJson, C.GSON.toJson(mcVersion));
             File toDir = versionRoot(to);
-            versionRoot(from).renameTo(toDir);
+            if (!versionRoot(from).renameTo(toDir))
+                HMCLog.warn("MinecraftVersionManager.RenameVersion: Failed to rename version root " + from + " to " + to);
             File toJson = new File(toDir, to + ".json");
             File toJar = new File(toDir, to + ".jar");
-            new File(toDir, from + ".json").renameTo(toJson);
+            if (new File(toDir, from + ".json").renameTo(toJson))
+                HMCLog.warn("MinecraftVersionManager.RenameVersion: Failed to rename json");
             File newJar = new File(toDir, from + ".jar");
-            if (newJar.exists())
-                newJar.renameTo(toJar);
+            if (newJar.exists() && !newJar.renameTo(toJar))
+                HMCLog.warn("Failed to rename pre jar " + newJar + " to new jar " + toJar);
             return true;
         } catch (IOException | JsonSyntaxException e) {
             HMCLog.warn("Failed to rename " + from + " to " + to + ", the json of this Minecraft is malformed.", e);
@@ -227,7 +230,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                 extractRules.add(l.getDecompressExtractRules());
             }
         }
-        return new DecompressLibraryJob(unzippings.toArray(new File[0]), extractRules.toArray(new String[0][]), getDecompressNativesToLocation(v));
+        return new DecompressLibraryJob(unzippings.toArray(new File[unzippings.size()]), extractRules.toArray(new String[extractRules.size()][]), getDecompressNativesToLocation(v));
     }
 
     @Override
@@ -261,8 +264,8 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public boolean onLaunch() {
         File resourcePacks = getResourcePacks();
-        if (!resourcePacks.exists())
-            resourcePacks.mkdirs();
+        if (!resourcePacks.exists() && !resourcePacks.mkdirs())
+            HMCLog.warn("Failed to make resourcePacks: " + resourcePacks);
         return true;
     }
 
@@ -276,7 +279,8 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                 FileUtils.deleteDirectoryQuietly(new File(f, str));
             String[] files = { "output-client.log", "usercache.json", "usernamecache.json", "hmclmc.log" };
             for (String str : files)
-                new File(f, str).delete();
+                if (!new File(f, str).delete())
+                    HMCLog.warn("Failed to delete " + str);
         }
     }
 
@@ -285,7 +289,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     }
 
-    private void downloadModpack(String url) throws IOException {
+    public void downloadModpack(String url) throws IOException {
         File tmp = File.createTempFile("hmcl", ".zip");
         TaskWindow.getInstance().addTask(new FileDownloadTask(url, tmp)).addTask(new DecompressTask(tmp, service.baseDirectory())).start();
     }

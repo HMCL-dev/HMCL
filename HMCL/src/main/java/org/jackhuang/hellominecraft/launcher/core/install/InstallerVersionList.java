@@ -17,9 +17,11 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.install;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 
 /**
@@ -84,9 +86,29 @@ public abstract class InstallerVersionList implements Consumer<String[]> {
         public int compareTo(InstallerVersion o) {
             return selfVersion.compareTo(o.selfVersion);
         }
+
+        @Override
+        public int hashCode() {
+            return selfVersion.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            final InstallerVersion other = (InstallerVersion) obj;
+            return Objects.equals(this.selfVersion, other.selfVersion);
+        }
+
     }
 
-    public static class InstallerVersionComparator implements Comparator<InstallerVersion> {
+    public static class InstallerVersionComparator implements Comparator<InstallerVersion>, Serializable {
+
+        private static final long serialVersionUID = 3276198781795213723L;
 
         public static final InstallerVersionComparator INSTANCE = new InstallerVersionComparator();
 

@@ -27,7 +27,7 @@ import org.jackhuang.hellominecraft.util.ui.SwingUtils;
  *
  * @author huangyuhui
  */
-public class GameDownloadPanel extends AnimatedPanel implements Selectable {
+public class GameDownloadPanel extends AnimatedPanel {
 
     GameSettingsPanel gsp;
 

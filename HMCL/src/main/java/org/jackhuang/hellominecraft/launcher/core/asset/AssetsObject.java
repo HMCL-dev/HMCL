@@ -26,6 +26,19 @@ public class AssetsObject {
     private String hash;
     private long size;
 
+    public AssetsObject(String hash, long size) {
+        this.hash = hash;
+        this.size = size;
+    }
+
+    public void setHash(String hash) {
+        this.hash = hash;
+    }
+
+    public void setSize(long size) {
+        this.size = size;
+    }
+
     public AssetsObject() {
     }
 

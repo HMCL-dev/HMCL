@@ -17,21 +17,30 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.version;
 
-import java.util.Arrays;
-
 /**
  *
  * @author huangyuhui
  */
-public class Extract extends Object implements Cloneable {
+public class Extract implements Cloneable {
 
-    String[] exclude;
+    public String[] exclude;
+
+    public Extract(String[] exclude) {
+        this();
+        this.exclude = exclude.clone();
+    }
+
+    public Extract() {
+    }
 
     @Override
-    protected Object clone() {
-        Extract e = new Extract();
-        e.exclude = exclude == null ? null : Arrays.copyOf(exclude, exclude.length);
-        return e;
+    @SuppressWarnings("CloneDeclaresCloneNotSupported")
+    public Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException ex) {
+            throw new InternalError(ex);
+        }
     }
 
 }

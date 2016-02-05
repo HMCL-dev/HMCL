@@ -26,7 +26,7 @@ import java.util.ArrayList;
  */
 public class ModpackUpdater {
 
-    ModpackInfo info;
+    private ModpackInfo info;
 
     public ModpackUpdater(File baseFolder, ModpackInfo info) {
         this.info = info;
@@ -34,6 +34,14 @@ public class ModpackUpdater {
 
     void update() {
 
+    }
+
+    public ModpackInfo getInfo() {
+        return info;
+    }
+
+    public void setInfo(ModpackInfo info) {
+        this.info = info;
     }
 
     public static class ModpackInfo {

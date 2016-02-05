@@ -24,6 +24,7 @@ import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftAssetService;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.tasks.Task;
 import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
@@ -71,22 +72,24 @@ public class MinecraftAssetService extends IMinecraftAssetService {
         String aurl = service.getDownloadType().getProvider().getIndexesDownloadURL();
 
         File assetsLocation = getAssets();
-        assetsLocation.mkdirs();
+        if (!assetsLocation.exists() && !assetsLocation.mkdirs())
+            HMCLog.warn("Failed to make directories: " + assetsLocation);
         File assetsIndex = new File(assetsLocation, "indexes/" + assetsId + ".json");
         File renamed = null;
         if (assetsIndex.exists()) {
             renamed = new File(assetsLocation, "indexes/" + assetsId + "-renamed.json");
-            assetsIndex.renameTo(renamed);
+            if (assetsIndex.renameTo(renamed))
+                HMCLog.warn("Failed to rename " + assetsIndex + " to " + renamed);
         }
         if (TaskWindow.getInstance()
             .addTask(new FileDownloadTask(aurl + assetsId + ".json", IOUtils.tryGetCanonicalFile(assetsIndex)).setTag(assetsId + ".json"))
             .start()) {
-            if (renamed != null)
-                renamed.delete();
+            if (renamed != null && !renamed.delete())
+                HMCLog.warn("Failed to delete " + renamed + ", maybe you should do it.");
             return true;
         }
-        if (renamed != null)
-            renamed.renameTo(assetsIndex);
+        if (renamed != null && !renamed.renameTo(assetsIndex))
+            HMCLog.warn("Failed to rename " + renamed + " to " + assetsIndex);
         return false;
     }
 

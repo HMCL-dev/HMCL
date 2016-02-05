@@ -51,7 +51,7 @@ public class MinecraftOldLibrary extends MinecraftLibrary {
 
     @Override
     public Object clone() {
-        return new MinecraftOldLibrary(name);
+        return super.clone();
     }
 
     @Override

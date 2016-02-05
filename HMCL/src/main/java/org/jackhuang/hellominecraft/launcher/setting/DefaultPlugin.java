@@ -35,9 +35,9 @@ import org.jackhuang.hellominecraft.util.func.Consumer;
  */
 public class DefaultPlugin implements IPlugin {
 
-    protected static YggdrasilAuthenticator YGGDRASIL_LOGIN;
-    protected static OfflineAuthenticator OFFLINE_LOGIN;
-    protected static SkinmeAuthenticator SKINME_LOGIN;
+    YggdrasilAuthenticator YGGDRASIL_LOGIN = null;
+    OfflineAuthenticator OFFLINE_LOGIN = null;
+    SkinmeAuthenticator SKINME_LOGIN = null;
 
     @Override
     public IMinecraftService provideMinecraftService(Profile profile) {

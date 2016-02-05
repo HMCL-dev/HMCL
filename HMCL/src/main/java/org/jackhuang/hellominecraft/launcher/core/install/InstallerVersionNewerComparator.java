@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.install;
 
+import java.io.Serializable;
 import java.util.Comparator;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList.InstallerVersion;
 
@@ -24,10 +25,12 @@ import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList.I
  *
  * @author huangyuhui
  */
-public class InstallerVersionNewerComparator implements Comparator<InstallerVersion> {
+public class InstallerVersionNewerComparator implements Comparator<InstallerVersion>, Serializable {
+
+    private static final long serialVersionUID = 14758562453742645L;
 
     @Override
     public int compare(InstallerVersion o1, InstallerVersion o2) {
-        return -o1.compareTo(o2);
+        return o2.compareTo(o1);
     }
 }
