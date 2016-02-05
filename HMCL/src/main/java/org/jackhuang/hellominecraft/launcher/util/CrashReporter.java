@@ -23,7 +23,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.util.C;
@@ -42,7 +41,7 @@ import org.jackhuang.hellominecraft.util.ui.LogWindow;
  */
 public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
-    private static final Logger LOGGER = LogManager.getLogManager().getLogger(CrashReporter.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CrashReporter.class.getName());
 
     boolean enableLogger = false;
 

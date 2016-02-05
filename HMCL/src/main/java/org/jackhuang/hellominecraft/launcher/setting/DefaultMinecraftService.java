@@ -52,17 +52,7 @@ public class DefaultMinecraftService extends IMinecraftService {
         this.provider = new HMCLGameProvider(this);
         provider.initializeMiencraft();
         provider.onRefreshingVersions.register(versionSettings::clear);
-        provider.onLoadedVersion.register(id -> {
-            VersionSetting vs = new VersionSetting();
-            File f = new File(provider.versionRoot(id), "hmclversion.cfg");
-            if (f.exists()) {
-                String s = FileUtils.readFileToStringQuietly(f);
-                if (s != null)
-                    vs = C.GSON.fromJson(s, VersionSetting.class);
-            }
-            vs.id = id;
-            versionSettings.put(id, vs);
-        });
+        provider.onLoadedVersion.register(this::loadVersionSetting);
         this.mms = new MinecraftModService(this);
         this.mds = new MinecraftDownloadService(this);
         this.mas = new MinecraftAssetService(this);
@@ -77,7 +67,23 @@ public class DefaultMinecraftService extends IMinecraftService {
         });
     }
 
+    private void loadVersionSetting(String id) {
+        if (provider.getVersionById(id) == null)
+            return;
+        VersionSetting vs = new VersionSetting();
+        File f = new File(provider.versionRoot(id), "hmclversion.cfg");
+        if (f.exists()) {
+            String s = FileUtils.readFileToStringQuietly(f);
+            if (s != null)
+                vs = C.GSON.fromJson(s, VersionSetting.class);
+        }
+        vs.id = id;
+        versionSettings.put(id, vs);
+    }
+
     public VersionSetting getVersionSetting(String id) {
+        if (!versionSettings.containsKey(id))
+            loadVersionSetting(id);
         return versionSettings.get(id);
     }
 

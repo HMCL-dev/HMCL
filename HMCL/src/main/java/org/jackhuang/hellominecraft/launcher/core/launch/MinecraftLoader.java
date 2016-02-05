@@ -71,7 +71,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
 
         if (!checkAssetsExist())
             if (MessageBox.Show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
-                IAssetsHandler.ASSETS_HANDLER.getList(version, service.asset()).execute();
+                IAssetsHandler.ASSETS_HANDLER.getList(version, service.asset()).run();
                 TaskWindow.getInstance().addTask(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(service.getDownloadType().getProvider())).start();
             }
 

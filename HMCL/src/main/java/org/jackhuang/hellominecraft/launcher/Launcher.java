@@ -27,7 +27,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.util.C;
@@ -47,7 +46,7 @@ import org.jackhuang.hellominecraft.util.Utils;
  */
 public final class Launcher {
 
-    static final Logger LOGGER = LogManager.getLogManager().getLogger(Launcher.class.getName());
+    static final Logger LOGGER = Logger.getLogger(Launcher.class.getName());
 
     static String classPath = "", proxyHost = "", proxyPort = "", proxyUsername = "", proxyPassword = "";
 

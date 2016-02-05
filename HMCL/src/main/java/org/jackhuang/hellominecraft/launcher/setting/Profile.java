@@ -69,9 +69,10 @@ public final class Profile {
 
     public VersionSetting getSelectedVersionSetting() {
         String s = getSelectedVersion();
-        if (s == null)
-            return defaultVersionSetting;
-        return getVersionSetting(getSelectedVersion());
+        VersionSetting vs = defaultVersionSetting;
+        if (s != null)
+            vs = getVersionSetting(getSelectedVersion());
+        return vs;
     }
 
     public VersionSetting getVersionSetting(String id) {
