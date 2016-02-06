@@ -21,10 +21,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.code.DigestUtils;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.tasks.Task;
 import org.jackhuang.hellominecraft.util.tasks.communication.PreviousResult;
@@ -44,6 +47,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
     protected URL url; // download URL
     protected int downloaded = 0; // number of bytes downloaded
     protected File filePath;
+    protected String expectedHash;
 
     public FileDownloadTask() {
     }
@@ -56,10 +60,18 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
         this(IOUtils.parseURL(url), filePath);
     }
 
-    // Constructor for Download.
     public FileDownloadTask(URL url, File filePath) {
+        this(url, filePath, null);
+    }
+
+    public FileDownloadTask(String url, File filePath, String hash) {
+        this(IOUtils.parseURL(url), filePath, hash);
+    }
+
+    public FileDownloadTask(URL url, File file, String hash) {
         this.url = url;
-        this.filePath = filePath;
+        this.filePath = file;
+        this.expectedHash = hash;
     }
 
     // Get this download's URL.
@@ -130,6 +142,8 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                 // Open file and seek to the end of it.
                 file = new RandomAccessFile(tempFile, "rw");
 
+                MessageDigest digest = DigestUtils.getSha1Digest();
+
                 stream = connection.getInputStream();
                 int lastDownloaded = 0;
                 downloaded = 0;
@@ -148,6 +162,8 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                     int read = stream.read(buffer);
                     if (read == -1)
                         break;
+
+                    digest.update(buffer, 0, read);
 
                     // Write buffer to file.
                     file.write(buffer, 0, read);
@@ -169,6 +185,10 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                         filePath.delete();
                     tempFile.renameTo(filePath);
                 }
+                String hashCode = String.format("%1$040x", new Object[] { new BigInteger(1, digest.digest()) });
+                if (expectedHash != null && !expectedHash.equals(hashCode))
+                    throw new IllegalStateException("Unexpected hash code: " + hashCode + ", expected: " + expectedHash);
+
                 if (ppl != null)
                     ppl.onProgressProviderDone(this);
                 return;

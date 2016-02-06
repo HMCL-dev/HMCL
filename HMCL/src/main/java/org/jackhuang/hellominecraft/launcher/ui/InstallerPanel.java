@@ -123,9 +123,9 @@ public class InstallerPanel extends AnimatedPanel {
     InstallerType id;
 
     void refreshVersions() {
-        if (TaskWindow.getInstance().addTask(new TaskRunnableArg1<>(C.i18n("install." + id.id + ".get_list"), list)
+        if (TaskWindow.factory().append(new TaskRunnableArg1<>(C.i18n("install." + id.id + ".get_list"), list)
             .registerPreviousResult(new DefaultPreviousResult<>(new String[] { gsp.getMinecraftVersionFormatted() })))
-            .start())
+            .create())
             loadVersions();
     }
 

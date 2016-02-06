@@ -29,7 +29,7 @@ import org.jackhuang.hellominecraft.util.system.JdkVersion;
 public class LaunchOptions {
 
     private String name, versionName, javaArgs, minecraftArgs, maxMemory, permSize, width, height, serverIp;
-    private String proxyHost, proxyPort, proxyUser, proxyPass, javaDir, launchVersion;
+    private String proxyHost, proxyPort, proxyUser, proxyPass, javaDir, launchVersion, type, precalledCommand;
     private boolean fullscreen, debug, noJVMArgs, canceledWrapper;
     private JdkVersion java;
     private File gameDir;
@@ -207,8 +207,6 @@ public class LaunchOptions {
         this.proxyPass = proxyPass;
     }
 
-    private String precalledCommand;
-
     public String getPrecalledCommand() {
         return precalledCommand;
     }
@@ -223,5 +221,13 @@ public class LaunchOptions {
 
     public void setLaunchVersion(String launchVersion) {
         this.launchVersion = launchVersion;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

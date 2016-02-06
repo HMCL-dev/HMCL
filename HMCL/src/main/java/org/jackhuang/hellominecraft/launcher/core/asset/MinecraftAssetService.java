@@ -23,6 +23,7 @@ import java.io.IOException;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftAssetService;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
+import org.jackhuang.hellominecraft.launcher.core.version.AssetIndexDownloadInfo;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.tasks.Task;
@@ -49,7 +50,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
             public void executeTask() throws Throwable {
                 IAssetsHandler type = IAssetsHandler.ASSETS_HANDLER;
                 type.getList(service.version().getVersionById(mcVersion), service.asset())
-                    .reg((t) -> TaskWindow.getInstance().addTask(type.getDownloadTask(service.getDownloadType().getProvider())).start()).execute();
+                    .reg((t) -> TaskWindow.factory().append(type.getDownloadTask(service.getDownloadType().getProvider())).create()).execute();
             }
 
             @Override
@@ -64,26 +65,28 @@ public class MinecraftAssetService extends IMinecraftAssetService {
         MinecraftVersion mv = service.version().getVersionById(id);
         if (mv == null)
             return false;
-        return downloadMinecraftAssetsIndex(mv.assets);
+        return downloadMinecraftAssetsIndex(mv.getAssetsIndex());
     }
 
     @Override
-    public boolean downloadMinecraftAssetsIndex(String assetsId) {
-        String aurl = service.getDownloadType().getProvider().getIndexesDownloadURL();
+    public boolean downloadMinecraftAssetsIndex(AssetIndexDownloadInfo assets) {
+        String aurl = service.getDownloadType().getProvider().getIndexesDownloadURL() + assets.getId() + ".json";
+        if (assets.url != null && service.getDownloadType().getProvider().isAllowedToUseSelfURL())
+            aurl = assets.url;
 
         File assetsLocation = getAssets();
         if (!assetsLocation.exists() && !assetsLocation.mkdirs())
             HMCLog.warn("Failed to make directories: " + assetsLocation);
-        File assetsIndex = new File(assetsLocation, "indexes/" + assetsId + ".json");
+        File assetsIndex = new File(assetsLocation, "indexes/" + assets.getId() + ".json");
         File renamed = null;
         if (assetsIndex.exists()) {
-            renamed = new File(assetsLocation, "indexes/" + assetsId + "-renamed.json");
+            renamed = new File(assetsLocation, "indexes/" + assets.getId() + "-renamed.json");
             if (assetsIndex.renameTo(renamed))
                 HMCLog.warn("Failed to rename " + assetsIndex + " to " + renamed);
         }
-        if (TaskWindow.getInstance()
-            .addTask(new FileDownloadTask(aurl + assetsId + ".json", IOUtils.tryGetCanonicalFile(assetsIndex)).setTag(assetsId + ".json"))
-            .start()) {
+        if (TaskWindow.factory()
+            .append(new FileDownloadTask(aurl, IOUtils.tryGetCanonicalFile(assetsIndex), assets.sha1).setTag(assets.getId() + ".json"))
+            .create()) {
             if (renamed != null && !renamed.delete())
                 HMCLog.warn("Failed to delete " + renamed + ", maybe you should do it.");
             return true;

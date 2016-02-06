@@ -87,22 +87,22 @@ public class ForgeInstaller {
 
         File minecraftserver = new File(gameDir, "minecraft_server." + profile.install.minecraft + ".jar");
         if (minecraftserver.exists() && JOptionPane.showConfirmDialog(null, "已发现官方服务端文件，是否要重新下载？") == JOptionPane.YES_OPTION)
-            if (!TaskWindow.getInstance().addTask(new FileDownloadTask("https://s3.amazonaws.com/Minecraft.Download/versions/{MCVER}/minecraft_server.{MCVER}.jar".replace("{MCVER}", profile.install.minecraft),
-                                                                       minecraftserver).setTag("minecraft_server")).start())
+            if (!TaskWindow.factory().append(new FileDownloadTask("https://s3.amazonaws.com/Minecraft.Download/versions/{MCVER}/minecraft_server.{MCVER}.jar".replace("{MCVER}", profile.install.minecraft),
+                                                                       minecraftserver).setTag("minecraft_server")).create())
                 MessageBox.Show("Minecraft官方服务端下载失败！");
-        TaskWindow.TaskWindowFactory tw = TaskWindow.getInstance();
+        TaskWindow.TaskWindowFactory tw = TaskWindow.factory();
         for (MinecraftLibrary library : profile.versionInfo.libraries) {
             library.init();
             File lib = new File(gameDir, "libraries" + File.separator + library.formatted + ".pack.xz");
             String libURL = "https://libraries.minecraft.net/";
             if (StrUtils.isNotBlank(library.url))
                 libURL = library.url;
-            tw.addTask(new FileDownloadTask(libURL + library.formatted.replace("\\", "/"), lib).setTag(library.name));
+            tw.append(new FileDownloadTask(libURL + library.formatted.replace("\\", "/"), lib).setTag(library.name));
         }
-        if (!tw.start())
+        if (!tw.create())
             MessageBox.Show("压缩库下载失败！");
 
-        tw = TaskWindow.getInstance();
+        tw = TaskWindow.factory();
         for (MinecraftLibrary library : profile.versionInfo.libraries) {
             File packxz = new File(gameDir, "libraries" + File.separator + library.formatted + ".pack.xz");
             if (packxz.exists())
@@ -112,9 +112,9 @@ public class ForgeInstaller {
             String libURL = "https://libraries.minecraft.net/";
             if (StrUtils.isNotBlank(library.url))
                 libURL = library.url;
-            tw.addTask(new FileDownloadTask(libURL + library.formatted.replace("\\", "/"), lib).setTag(library.name));
+            tw.append(new FileDownloadTask(libURL + library.formatted.replace("\\", "/"), lib).setTag(library.name));
         }
-        if (!tw.start())
+        if (!tw.create())
             MessageBox.Show("库下载失败！");
 
         ArrayList<String> badLibs = new ArrayList<>();

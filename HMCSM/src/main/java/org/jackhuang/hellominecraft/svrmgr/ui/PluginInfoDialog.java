@@ -231,10 +231,10 @@ public class PluginInfoDialog extends javax.swing.JDialog {
         if (index == -1)
             return;
         String url = pi.versions.get(index).download;
-        TaskWindow.getInstance()
-            .addTask(new FileDownloadTask(url, new File(Utilities.getGameDir() + "plugins"
+        TaskWindow.factory()
+            .append(new FileDownloadTask(url, new File(Utilities.getGameDir() + "plugins"
                                                         + File.separator + pi.versions.get(index).filename)))
-            .start();
+            .create();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

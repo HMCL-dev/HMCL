@@ -2994,7 +2994,7 @@ public final class MainWindow extends javax.swing.JFrame
 
     void refreshDownloads() {
         clearListDownloads();
-        TaskWindow.getInstance().addTask(new RefreshDownloadsDone()).start();
+        TaskWindow.factory().append(new RefreshDownloadsDone()).create();
     }
 
     void refreshInfos() {
@@ -3716,7 +3716,7 @@ public final class MainWindow extends javax.swing.JFrame
         serverjar.delete();
 
         String downloadURL = url + "minecraft_server." + id + ".jar";
-        TaskWindow.getInstance().addTask(new FileDownloadTask(downloadURL, serverjar).setTag(id)).start();
+        TaskWindow.factory().append(new FileDownloadTask(downloadURL, serverjar).setTag(id)).create();
     }//GEN-LAST:event_btnMinecraftServerDownloadActionPerformed
 
     private void btnRefreshInfosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshInfosActionPerformed
@@ -3850,8 +3850,8 @@ public final class MainWindow extends javax.swing.JFrame
         }
         BukkitVersion v = cb.get(idx);
         File file = new File(IOUtils.currentDir(), "craftbukkit-" + ext + "-" + v.version + ".jar");
-        TaskWindow.getInstance().addTask(new FileDownloadTask(v.downloadLink, IOUtils.tryGetCanonicalFile(file)).setTag("bukkit-" + ext + "-" + v.version))
-            .start();
+        TaskWindow.factory().append(new FileDownloadTask(v.downloadLink, IOUtils.tryGetCanonicalFile(file)).setTag("bukkit-" + ext + "-" + v.version))
+            .create();
     }//GEN-LAST:event_btnDownloadCraftbukkitActionPerformed
 
     private void btnDownloadMCPCActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadMCPCActionPerformed
@@ -3862,7 +3862,7 @@ public final class MainWindow extends javax.swing.JFrame
         String url;
         File filepath = new File(IOUtils.currentDir(), "forge-installer.jar");
         url = v.installer[1];
-        if (!TaskWindow.getInstance().addTask(new FileDownloadTask(url, filepath).setTag("cauldron-" + v.ver)).start())
+        if (!TaskWindow.factory().append(new FileDownloadTask(url, filepath).setTag("cauldron-" + v.ver)).create())
             MessageBox.Show(C.i18n("install.failed_download_forge"));
         else
             installMCPC(filepath);

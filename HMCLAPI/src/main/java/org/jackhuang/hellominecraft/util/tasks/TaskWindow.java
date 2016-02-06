@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.util.tasks;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.util.C;
@@ -35,12 +36,12 @@ public class TaskWindow extends javax.swing.JDialog
 
     private static final TaskWindow INSTANCE = new TaskWindow();
 
-    private static TaskWindow inst() {
+    private static TaskWindow instance() {
         INSTANCE.clean();
         return INSTANCE;
     }
 
-    public static TaskWindowFactory getInstance() {
+    public static TaskWindowFactory factory() {
         return new TaskWindowFactory();
     }
 
@@ -225,7 +226,7 @@ public class TaskWindow extends javax.swing.JDialog
     }
 
     @Override
-    public void onDoing(Task task) {
+    public void onDoing(Task task, Collection<Task> taskCollection) {
         if (task == null)
             return;
         task.setProgressProviderListener(this);
@@ -245,7 +246,7 @@ public class TaskWindow extends javax.swing.JDialog
     }
 
     @Override
-    public void onDone(Task task) {
+    public void onDone(Task task, Collection<Task> taskCollection) {
         SwingUtilities.invokeLater(() -> {
             if (taskList == null || task == null)
                 return;
@@ -299,18 +300,18 @@ public class TaskWindow extends javax.swing.JDialog
         LinkedList<Task> ll = new LinkedList<>();
         boolean flag;
 
-        public TaskWindowFactory addTask(Task t) {
+        public TaskWindowFactory append(Task t) {
             ll.add(t);
             return this;
         }
 
-        public boolean start() {
+        public boolean create() {
             String stacktrace = StrUtils.getStackTrace(new Throwable());
             return SwingUtils.invokeAndWait(() -> {
                 synchronized (INSTANCE) {
                     if (INSTANCE.isVisible())
                         return false;
-                    TaskWindow tw = inst();
+                    TaskWindow tw = instance();
                     for (Task t : ll)
                         tw.addTask(t);
                     tw.lastStackTrace = tw.stackTrace;

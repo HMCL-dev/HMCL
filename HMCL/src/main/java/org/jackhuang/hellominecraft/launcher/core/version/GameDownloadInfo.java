@@ -1,5 +1,5 @@
 /*
- * Hello Minecraft!.
+ * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,34 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.util.tasks;
-
-import java.util.Collection;
+package org.jackhuang.hellominecraft.launcher.core.version;
 
 /**
  *
  * @author huangyuhui
  */
-public interface DoingDoneListener<K> {
+public class GameDownloadInfo {
 
-    /**
-     * Task done.
-     *
-     * @param k
-     */
-    void onDone(K k, Collection<Task> tasks);
+    public String sha1, url;
+    public int size;
 
-    /**
-     * Before task executing.
-     *
-     * @param k
-     */
-    void onDoing(K k, Collection<Task> tasks);
-
-    /**
-     * Task failed.
-     *
-     * @param k
-     */
-    void onFailed(K k);
 }

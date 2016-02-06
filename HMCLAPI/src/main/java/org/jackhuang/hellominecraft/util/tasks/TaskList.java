@@ -88,7 +88,7 @@ public class TaskList extends Thread {
     static final Set<Task> TASK_POOL = Collections.synchronizedSet(new HashSet<Task>());
 
     private void processTasks(Collection<? extends Task> c) {
-        if (c == null)
+        if (c == null || c.isEmpty())
             return;
         this.totTask += c.size();
         Set<InvokeThread> runningThread = Collections.synchronizedSet(new HashSet<InvokeThread>());
@@ -112,13 +112,16 @@ public class TaskList extends Thread {
     private void executeTask(Task t) {
         if (!shouldContinue || t == null)
             return;
-        processTasks(t.getDependTasks());
 
+        Collection<Task> c = t.getDependTasks();
+        if (c == null)
+            c = new HashSet<>();
         HMCLog.log("Executing task: " + t.getInfo());
         for (DoingDoneListener<Task> d : taskListener)
-            d.onDoing(t);
+            d.onDoing(t, c);
         for (DoingDoneListener<Task> d : t.getTaskListeners())
-            d.onDoing(t);
+            d.onDoing(t, c);
+        processTasks(c);
 
         boolean flag = true;
         try {
@@ -129,11 +132,14 @@ public class TaskList extends Thread {
         }
         if (flag) {
             HMCLog.log((t.isAborted() ? "Task aborted: " : "Task finished: ") + t.getInfo());
+            Collection<Task> at = t.getAfterTasks();
+            if (at == null)
+                at = new HashSet<>();
             for (DoingDoneListener<Task> d : taskListener)
-                d.onDone(t);
+                d.onDone(t, at);
             for (DoingDoneListener<Task> d : t.getTaskListeners())
-                d.onDone(t);
-            processTasks(t.getAfterTasks());
+                d.onDone(t, at);
+            processTasks(at);
         } else {
             HMCLog.err("Task failed: " + t.getInfo(), t.getFailReason());
             for (DoingDoneListener<Task> d : taskListener)

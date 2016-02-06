@@ -287,6 +287,7 @@ public class VersionSetting {
         x.setMaxMemory(getMaxMemory());
         x.setMinecraftArgs(getMinecraftArgs());
         x.setName(Main.makeTitle());
+        x.setType(Main.makeTitle());
         x.setNoJVMArgs(isNoJVMArgs());
         x.setPermSize(getPermSize());
         x.setPrecalledCommand(getPrecalledCommand());

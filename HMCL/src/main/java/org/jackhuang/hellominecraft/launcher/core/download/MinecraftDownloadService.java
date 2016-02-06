@@ -21,11 +21,14 @@ import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftDownloadServ
 import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
+import org.jackhuang.hellominecraft.launcher.core.version.GameDownloadInfo;
 import org.jackhuang.hellominecraft.launcher.core.version.IMinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
@@ -33,7 +36,7 @@ import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.util.NetUtils;
 import org.jackhuang.hellominecraft.util.OverridableSwingWorker;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.tasks.DoingDoneListener;
 import org.jackhuang.hellominecraft.util.tasks.Task;
 import org.jackhuang.hellominecraft.util.version.MinecraftRemoteVersion;
 import org.jackhuang.hellominecraft.util.version.MinecraftRemoteVersions;
@@ -83,18 +86,50 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
         if (mvj.exists() && !mvj.delete())
             HMCLog.warn("Failed to delete " + mvj);
 
-        if (TaskWindow.getInstance()
-            .addTask(new FileDownloadTask(vurl + id + ".json", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".json"))
-            .addTask(new FileDownloadTask(vurl + id + ".jar", IOUtils.tryGetCanonicalFile(mvj)).setTag(id + ".jar"))
-            .start())
-            try {
-                return C.GSON.fromJson(FileUtils.readFileToStringQuietly(mvt), MinecraftVersion.class);
-            } catch (JsonSyntaxException ex) {
-                HMCLog.err("Failed to parse minecraft version json.", ex);
+        Task t = new FileDownloadTask(vurl + id + ".json", mvt).setTag(id + ".json");
+        t.addTaskListener(new DoingDoneListener<Task>() {
+            @Override
+            public void onDone(Task k, Collection<Task> taskCollection) {
+                MinecraftVersion mv;
+                try {
+                    mv = C.GSON.fromJson(FileUtils.readFileToStringQuietly(mvt), MinecraftVersion.class);
+                } catch (JsonSyntaxException ex) {
+                    HMCLog.err("Failed to parse minecraft version json.", ex);
+                    onFailed(k);
+                    return;
+                }
+                String jarURL = vurl + id + ".jar", hash = null;
+                if (service.getDownloadType().getProvider().isAllowedToUseSelfURL() && mv.downloads != null) {
+                    GameDownloadInfo gdi = mv.downloads.get("client");
+                    if (gdi != null) {
+                        if (gdi.url != null)
+                            jarURL = gdi.url;
+                        if (gdi.sha1 != null)
+                            hash = gdi.sha1;
+                    }
+                }
+
+                taskCollection.add(new FileDownloadTask(jarURL, mvj, hash).setTag(id + ".jar"));
             }
-        else
-            FileUtils.deleteDirectoryQuietly(vpath);
-        return null;
+
+            @Override
+            public void onDoing(Task k, Collection<Task> taskCollection) {
+            }
+
+            @Override
+            public void onFailed(Task k) {
+                FileUtils.deleteDirectoryQuietly(vpath);
+            }
+        });
+
+        if (!TaskWindow.factory().append(t).create())
+            return null;
+        try {
+            return C.GSON.fromJson(FileUtils.readFileToStringQuietly(mvt), MinecraftVersion.class);
+        } catch (JsonSyntaxException ex) {
+            HMCLog.err("Failed to parse minecraft version json.", ex);
+            return null;
+        }
     }
 
     @Override
@@ -110,9 +145,9 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
         File mvt = new File(vpath, id + ".jar");
         if (!vpath.exists() && !vpath.mkdirs())
             HMCLog.warn("Failed to make version folder " + vpath);
-        if (TaskWindow.getInstance()
-            .addTask(new FileDownloadTask(vurl + id + ".jar", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".jar"))
-            .start()) {
+        if (TaskWindow.factory()
+            .append(new FileDownloadTask(vurl + id + ".jar", mvt).setTag(id + ".jar"))
+            .create()) {
             if (moved != null && moved.exists() && !moved.delete())
                 HMCLog.warn("Failed to delete " + moved);
             return true;
@@ -128,7 +163,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
     @Override
     public Task downloadMinecraftJarTo(String id, File mvt) {
         String vurl = service.getDownloadType().getProvider().getVersionsDownloadURL() + id + "/";
-        return new FileDownloadTask(vurl + id + ".jar", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".jar");
+        return new FileDownloadTask(vurl + id + ".jar", mvt).setTag(id + ".jar");
     }
 
     @Override
@@ -144,9 +179,9 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
         File mvt = new File(vpath, id + ".json");
         if (!vpath.exists() && !vpath.mkdirs())
             HMCLog.warn("Failed to make version folder " + vpath);
-        if (TaskWindow.getInstance()
-            .addTask(new FileDownloadTask(vurl + id + ".json", IOUtils.tryGetCanonicalFile(mvt)).setTag(id + ".json"))
-            .start()) {
+        if (TaskWindow.factory()
+            .append(new FileDownloadTask(vurl + id + ".json", mvt).setTag(id + ".json"))
+            .create()) {
             if (moved != null && moved.exists() && !moved.delete())
                 HMCLog.warn("Failed to delete " + moved);
             return true;

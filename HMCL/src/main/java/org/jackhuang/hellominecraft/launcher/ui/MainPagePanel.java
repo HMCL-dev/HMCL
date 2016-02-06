@@ -373,7 +373,7 @@ public class MainPagePanel extends AnimatedPanel {
         if (fc.getSelectedFile() == null)
             return;
         String suggestedModpackId = JOptionPane.showInputDialog("Please enter your favourite game name", FileUtils.getBaseName(fc.getSelectedFile().getName()));
-        TaskWindow.getInstance().addTask(ModpackManager.install(fc.getSelectedFile(), getProfile().service(), suggestedModpackId)).start();
+        TaskWindow.factory().append(ModpackManager.install(fc.getSelectedFile(), getProfile().service(), suggestedModpackId)).create();
         loadMinecraftVersions();
     }//GEN-LAST:event_btnImportModpackActionPerformed
 

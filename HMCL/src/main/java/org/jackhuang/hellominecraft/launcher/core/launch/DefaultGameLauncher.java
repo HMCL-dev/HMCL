@@ -39,14 +39,14 @@ public class DefaultGameLauncher extends GameLauncher {
 
     private void register() {
         downloadLibrariesEvent.register((sender, t) -> {
-            final TaskWindow.TaskWindowFactory dw = TaskWindow.getInstance();
+            final TaskWindow.TaskWindowFactory dw = TaskWindow.factory();
             ParallelTask parallelTask = new ParallelTask();
             for (DownloadLibraryJob s : t)
                 parallelTask.addDependsTask(new LibraryDownloadTask(s));
-            dw.addTask(parallelTask);
+            dw.append(parallelTask);
             boolean flag = true;
             if (t.size() > 0)
-                flag = dw.start();
+                flag = dw.create();
             if (!flag && MessageBox.Show(C.i18n("launch.not_finished_downloading_libraries"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                 flag = true;
             return flag;

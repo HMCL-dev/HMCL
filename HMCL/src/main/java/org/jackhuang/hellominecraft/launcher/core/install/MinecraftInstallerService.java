@@ -63,10 +63,10 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
             public void executeTask() {
                 File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "forge-installer.jar");
                 if (v.installer != null)
-                    TaskWindow.getInstance()
-                        .addTask(new FileDownloadTask(service.getDownloadType().getProvider().getParsedLibraryDownloadURL(v.installer), filepath).setTag("forge"))
-                        .addTask(new ForgeInstaller(service, filepath))
-                        .start();
+                    TaskWindow.factory()
+                        .append(new FileDownloadTask(service.getDownloadType().getProvider().getParsedLibraryDownloadURL(v.installer), filepath).setTag("forge"))
+                        .append(new ForgeInstaller(service, filepath))
+                        .create();
             }
         };
     }
@@ -79,10 +79,10 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
                 File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "optifine-installer.jar");
                 if (v.installer != null) {
                     OptiFineDownloadFormatter task = new OptiFineDownloadFormatter(v.installer);
-                    TaskWindow.getInstance().addTask(task)
-                        .addTask(new FileDownloadTask(filepath).registerPreviousResult(task).setTag("optifine"))
-                        .addTask(new OptiFineInstaller(service, installId, v, filepath))
-                        .start();
+                    TaskWindow.factory().append(task)
+                        .append(new FileDownloadTask(filepath).registerPreviousResult(task).setTag("optifine"))
+                        .append(new OptiFineInstaller(service, installId, v, filepath))
+                        .create();
                 }
             }
         };
@@ -95,9 +95,9 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
             public void executeTask() {
                 File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "liteloader-universal.jar");
                 FileDownloadTask task = (FileDownloadTask) new FileDownloadTask(v.universal, filepath).setTag("LiteLoader");
-                TaskWindow.getInstance()
-                    .addTask(task).addTask(new LiteLoaderInstaller(service, installId, (LiteLoaderVersionList.LiteLoaderInstallerVersion) v).registerPreviousResult(task))
-                    .start();
+                TaskWindow.factory()
+                    .append(task).append(new LiteLoaderInstaller(service, installId, (LiteLoaderVersionList.LiteLoaderInstallerVersion) v).registerPreviousResult(task))
+                    .create();
             }
         };
     }

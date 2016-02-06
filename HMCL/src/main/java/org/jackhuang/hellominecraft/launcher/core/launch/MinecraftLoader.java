@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
@@ -72,7 +71,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         if (!checkAssetsExist())
             if (MessageBox.Show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
                 IAssetsHandler.ASSETS_HANDLER.getList(version, service.asset()).run();
-                TaskWindow.getInstance().addTask(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(service.getDownloadType().getProvider())).start();
+                TaskWindow.factory().append(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(service.getDownloadType().getProvider())).create();
             }
 
         String game_assets = reconstructAssets().getAbsolutePath();
@@ -81,14 +80,15 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
             t = t.replace("${auth_player_name}", lr.getUserName());
             t = t.replace("${auth_session}", lr.getSession());
             t = t.replace("${auth_uuid}", lr.getUserId());
-            t = t.replace("${version_name}", Main.makeTitle());
+            t = t.replace("${version_name}", options.getVersionName());
             t = t.replace("${profile_name}", options.getName());
+            t = t.replace("${version_type}", options.getType());
             t = t.replace("${game_directory}", service.version().getRunDirectory(version.id).getAbsolutePath());
             t = t.replace("${game_assets}", game_assets);
             t = t.replace("${assets_root}", service.asset().getAssets().getAbsolutePath());
             t = t.replace("${auth_access_token}", lr.getAccessToken());
             t = t.replace("${user_type}", lr.getUserType());
-            t = t.replace("${assets_index_name}", version.getAssets());
+            t = t.replace("${assets_index_name}", version.getAssetsIndex().getId());
             t = t.replace("${user_properties}", lr.getUserProperties());
             res.add(t);
         }
@@ -105,7 +105,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
 
         try {
             if (OS.os() == OS.OSX) {
-                list.add("-Xdock:icon=" + service.asset().getAssetObject(version.assets, "icons/minecraft.icns").getAbsolutePath());
+                list.add("-Xdock:icon=" + service.asset().getAssetObject(version.getAssetsIndex().getId(), "icons/minecraft.icns").getAbsolutePath());
                 list.add("-Xdock:name=Minecraft");
             }
         } catch (IOException e) {
@@ -117,7 +117,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         File assetsDir = new File(service.baseDirectory(), "assets");
         File indexDir = new File(assetsDir, "indexes");
         File objectDir = new File(assetsDir, "objects");
-        File indexFile = new File(indexDir, version.getAssets() + ".json");
+        File indexFile = new File(indexDir, version.getAssetsIndex().getId() + ".json");
 
         if (!assetsDir.exists() && !indexFile.isFile())
             return false;
@@ -140,7 +140,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         File assetsDir = new File(service.baseDirectory(), "assets");
         File indexDir = new File(assetsDir, "indexes");
         File objectDir = new File(assetsDir, "objects");
-        String assetVersion = version.getAssets();
+        String assetVersion = version.getAssetsIndex().getId();
         File indexFile = new File(indexDir, assetVersion + ".json");
         File virtualRoot = new File(new File(assetsDir, "virtual"), assetVersion);
 

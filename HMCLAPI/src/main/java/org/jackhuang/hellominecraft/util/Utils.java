@@ -151,4 +151,11 @@ public final class Utils {
         if (o == null)
             throw new NullPointerException("Oh dear, there is a problem...");
     }
+
+    public static Object firstNonNull(Object... o) {
+        for (Object s : o)
+            if (s != null)
+                return s;
+        return null;
+    }
 }

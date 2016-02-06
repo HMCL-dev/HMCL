@@ -21,12 +21,14 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.asset.AssetsIndex;
 import org.jackhuang.hellominecraft.util.ArrayUtils;
+import org.jackhuang.hellominecraft.util.Utils;
 
 /**
  *
@@ -35,9 +37,12 @@ import org.jackhuang.hellominecraft.util.ArrayUtils;
 public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion> {
 
     public String minecraftArguments, mainClass, time, id, type, processArguments,
-        releaseTime, assets, jar, inheritsFrom, runDir;
+        releaseTime, jar, inheritsFrom, runDir;
+    protected String assets;
     public int minimumLauncherVersion;
     public boolean hidden;
+    public AssetIndexDownloadInfo assetIndex;
+    public Map<String, GameDownloadInfo> downloads;
 
     public ArrayList<MinecraftLibrary> libraries;
 
@@ -127,12 +132,14 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
         return true;
     }
 
-    public String getAssets() {
-        return assets == null ? AssetsIndex.DEFAULT_ASSET_NAME : assets;
-    }
-
     @Override
     public int compareTo(MinecraftVersion o) {
         return id.compareTo(o.id);
+    }
+
+    public AssetIndexDownloadInfo getAssetsIndex() {
+        if (assetIndex == null)
+            assetIndex = new AssetIndexDownloadInfo((String) Utils.firstNonNull(assets, AssetsIndex.DEFAULT_ASSET_NAME));
+        return assetIndex;
     }
 }

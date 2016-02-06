@@ -291,6 +291,6 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     public void downloadModpack(String url) throws IOException {
         File tmp = File.createTempFile("hmcl", ".zip");
-        TaskWindow.getInstance().addTask(new FileDownloadTask(url, tmp)).addTask(new DecompressTask(tmp, service.baseDirectory())).start();
+        TaskWindow.factory().append(new FileDownloadTask(IOUtils.parseURL(url), tmp)).append(new DecompressTask(tmp, service.baseDirectory())).create();
     }
 }

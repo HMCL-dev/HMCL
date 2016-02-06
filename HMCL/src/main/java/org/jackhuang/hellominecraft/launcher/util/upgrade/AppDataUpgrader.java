@@ -98,7 +98,7 @@ public class AppDataUpgrader extends IUpgrader {
         ((UpdateChecker) sender).requestDownloadLink().reg(map -> {
             if (map != null && map.containsKey("pack"))
                 try {
-                    if (TaskWindow.getInstance().addTask(new AppDataUpgraderTask(map.get("pack"), number.version)).start()) {
+                    if (TaskWindow.factory().append(new AppDataUpgraderTask(map.get("pack"), number.version)).create()) {
                         new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderTask.getSelf(number.version).getAbsolutePath() }).directory(new File(".")).start();
                         System.exit(0);
                     }
@@ -147,7 +147,7 @@ public class AppDataUpgrader extends IUpgrader {
         }
 
         @Override
-        public Collection<? extends Task> getDependTasks() {
+        public Collection<Task> getDependTasks() {
             return Arrays.asList(new FileDownloadTask(downloadLink, tempFile));
         }
 

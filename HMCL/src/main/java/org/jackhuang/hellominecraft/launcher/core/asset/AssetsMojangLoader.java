@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.launcher.core.asset;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Map;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
@@ -49,11 +50,11 @@ public class AssetsMojangLoader extends IAssetsHandler {
             protected void work() throws Exception {
                 if (mv == null)
                     throw new IllegalArgumentException("AssetsMojangLoader: null argument: MinecraftVersion");
-                String assetsId = mv.assets == null ? "legacy" : mv.assets;
+                String assetsId = mv.getAssetsIndex().getId();
                 File assets = mp.getAssets();
                 HMCLog.log("Gathering asset index: " + assetsId);
                 File f = IOUtils.tryGetCanonicalFile(new File(assets, "indexes/" + assetsId + ".json"));
-                if (!f.exists() && !mp.downloadMinecraftAssetsIndex(assetsId))
+                if (!f.exists() && !mp.downloadMinecraftAssetsIndex(mv.getAssetsIndex()))
                     throw new IllegalStateException("Failed to get index json");
 
                 String result = FileUtils.readFileToString(f);
@@ -64,8 +65,12 @@ public class AssetsMojangLoader extends IAssetsHandler {
                 assetsLocalNames = new ArrayList<>();
                 ArrayList<String> al = new ArrayList<>();
                 contents = new ArrayList<>();
+                HashSet<String> loadedHashes = new HashSet<>();
                 if (o != null && o.getFileMap() != null)
                     for (Map.Entry<String, AssetsObject> e : o.getFileMap().entrySet()) {
+                        if (loadedHashes.contains(e.getValue().getHash()))
+                            continue;
+                        loadedHashes.add(e.getValue().getHash());
                         Contents c = new Contents();
                         c.eTag = e.getValue().getHash();
                         c.key = c.eTag.substring(0, 2) + "/" + e.getValue().getHash();
