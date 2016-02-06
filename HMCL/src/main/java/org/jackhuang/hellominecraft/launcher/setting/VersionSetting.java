@@ -286,8 +286,9 @@ public class VersionSetting {
         x.setLaunchVersion(id);
         x.setMaxMemory(getMaxMemory());
         x.setMinecraftArgs(getMinecraftArgs());
-        x.setName(Main.makeTitle());
-        x.setType(Main.makeTitle());
+        x.setName(Main.shortTitle());
+        x.setType(Main.shortTitle());
+        x.setVersionName(Main.shortTitle());
         x.setNoJVMArgs(isNoJVMArgs());
         x.setPermSize(getPermSize());
         x.setPrecalledCommand(getPrecalledCommand());
@@ -296,7 +297,6 @@ public class VersionSetting {
         x.setProxyUser(Settings.getInstance().getProxyUserName());
         x.setProxyPass(Settings.getInstance().getProxyPassword());
         x.setServerIp(getServerIp());
-        x.setVersionName(Main.makeTitle());
         x.setWidth(getWidth());
 
         String str = getJavaDir();

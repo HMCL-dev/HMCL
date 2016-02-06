@@ -165,11 +165,15 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
             res.add("-debug");
 
         if (StrUtils.isNotBlank(options.getProxyHost()) && StrUtils.isNotBlank(options.getProxyPort()) && MathUtils.canParseInt(options.getProxyPort())) {
-            res.add("-proxyHost=" + options.getProxyHost());
-            res.add("-proxyPort=" + options.getProxyPort());
+            res.add("--proxyHost");
+            res.add(options.getProxyHost());
+            res.add("--proxyPort");
+            res.add(options.getProxyPort());
             if (StrUtils.isNotBlank(options.getProxyUser()) && StrUtils.isNotBlank(options.getProxyPass())) {
-                res.add("-proxyUsername=" + options.getProxyUser());
-                res.add("-proxyPassword=" + options.getProxyPass());
+                res.add("--proxyUser");
+                res.add(options.getProxyUser());
+                res.add("-=proxyPass");
+                res.add(options.getProxyPass());
             }
         }
 

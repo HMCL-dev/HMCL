@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.launcher.Main;
+import static org.jackhuang.hellominecraft.launcher.Main.LAUNCHER_VERSION;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.util.NetUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
@@ -95,7 +95,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             return;
         try {
             String text = "\n---- Hello Minecraft! Crash Report ----\n";
-            text += "  Version: " + Main.makeVersion() + "\n";
+            text += "  Version: " + LAUNCHER_VERSION + "\n";
             text += "  Time: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + "\n";
             text += "  Thread: " + t.toString() + "\n";
             text += "\n  Content: \n    ";

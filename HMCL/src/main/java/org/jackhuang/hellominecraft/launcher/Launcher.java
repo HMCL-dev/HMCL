@@ -21,8 +21,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -36,7 +34,6 @@ import org.jackhuang.hellominecraft.util.ui.LogWindow;
 import org.jackhuang.hellominecraft.launcher.util.MinecraftCrashAdvicer;
 import org.jackhuang.hellominecraft.util.DoubleOutputStream;
 import org.jackhuang.hellominecraft.util.LauncherPrintStream;
-import org.jackhuang.hellominecraft.util.MathUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.Utils;
 
@@ -48,7 +45,8 @@ public final class Launcher {
 
     static final Logger LOGGER = Logger.getLogger(Launcher.class.getName());
 
-    static String classPath = "", proxyHost = "", proxyPort = "", proxyUsername = "", proxyPassword = "";
+    static String classPath = "";
+    //state String proxyHost = "", proxyPort = "", proxyUsername = "", proxyPassword = "";
 
     public static void main(String[] args) {
         LOGGER.log(Level.INFO, "*** {0} ***", Main.makeTitle());
@@ -63,14 +61,14 @@ public final class Launcher {
                 classPath = classPath.concat(s.substring("-cp=".length()));
             else if (s.startsWith("-mainClass="))
                 mainClass = s.substring("-mainClass=".length());
-            else if (s.startsWith("-proxyHost="))
+            /*else if (s.startsWith("-proxyHost="))
                 proxyHost = s.substring("-proxyHost=".length());
             else if (s.startsWith("-proxyPort="))
                 proxyPort = s.substring("-proxyPort=".length());
             else if (s.startsWith("-proxyUsername="))
                 proxyUsername = s.substring("-proxyUsername=".length());
             else if (s.startsWith("-proxyPassword="))
-                proxyPassword = s.substring("-proxyPassword=".length());
+                proxyPassword = s.substring("-proxyPassword=".length());*/
             else if (s.equals("-debug"))
                 showInfo = true;
             else
@@ -108,7 +106,7 @@ public final class Launcher {
             LOGGER.log(Level.INFO, "Class Path: '{'\n{0}\n'}'", StrUtils.parseParams("    ", tokenized, "\n"));
             SwingUtilities.invokeLater(() -> LogWindow.INSTANCE.setVisible(true));
         }
-
+        /*
         if (StrUtils.isNotBlank(proxyHost) && StrUtils.isNotBlank(proxyPort) && MathUtils.canParseInt(proxyPort)) {
             HMCLog.log("Initializing customized proxy");
             System.setProperty("http.proxyHost", proxyHost);
@@ -123,7 +121,7 @@ public final class Launcher {
             //PROXY = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(Settings.getInstance().getProxyHost(), Integer.parseInt(Settings.getInstance().getProxyPort())));
         } else {
             //PROXY = Proxy.NO_PROXY;
-        }
+        }*/
 
         URL[] urls = new URL[len];
 

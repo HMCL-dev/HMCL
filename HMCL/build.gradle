@@ -26,16 +26,26 @@ if (!hasProperty('mainClass')) {
     ext.mainClass = 'org.jackhuang.hellominecraft.launcher.Main'
 }
 
-def buildnumber = System.getenv("BUILD_NUMBER") == null ? ".9" : "."+System.getenv("BUILD_NUMBER")
+def buildnumber = System.getenv("BUILD_NUMBER") == null ? ".10" : "."+System.getenv("BUILD_NUMBER")
 
 String mavenGroupId = 'HMCL'
-String mavenVersion = '2.3.5' + buildnumber
+String mavenVersion = '2.4.0' + buildnumber
 String bundleName = "Hello Minecraft! Launcher"
 
 group = mavenGroupId
 version = mavenVersion
 
 String mavenArtifactId = name
+
+task generateSources(type: Copy) {
+    from 'src/main/java'
+    into "$buildDir/generated-src"
+    filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [
+            'HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING': mavenVersion
+    ])
+}
+compileJava.setSource "$buildDir/generated-src"
+compileJava.dependsOn generateSources
 
 buildscript {
     repositories {

@@ -90,17 +90,11 @@ public final class Main implements Runnable {
     }
 
     public static final String LAUNCHER_NAME = "Hello Minecraft! Launcher";
-    public static final byte VERSION_FIRST = 2, VERSION_SECOND = 3, VERSION_THIRD = 5, VERSION_FORTH = 9;
+    public static final String LAUNCHER_VERSION = "@HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING@";
     public static final int MINIMUM_LAUNCHER_VERSION = 16;
-    //public static Proxy PROXY;
 
-    /**
-     * Make the version of HMCL.
-     *
-     * @return the version: firstVer.secondVer.thirdVer
-     */
-    public static String makeVersion() {
-        return "" + VERSION_FIRST + '.' + VERSION_SECOND + '.' + VERSION_THIRD + '.' + VERSION_FORTH;
+    public static VersionNumber getVersionNumber() {
+        return VersionNumber.check(LAUNCHER_VERSION);
     }
 
     /**
@@ -109,7 +103,11 @@ public final class Main implements Runnable {
      * @return the MainWindow title.
      */
     public static String makeTitle() {
-        return LAUNCHER_NAME + ' ' + makeVersion();
+        return LAUNCHER_NAME + ' ' + LAUNCHER_VERSION;
+    }
+
+    public static String shortTitle() {
+        return "HMCL" + ' ' + LAUNCHER_VERSION;
     }
 
     public static final Main INSTANCE = new Main();
@@ -122,7 +120,7 @@ public final class Main implements Runnable {
         {
             //PluginManager.getServerPlugin();
 
-            if (IUpgrader.NOW_UPGRADER.parseArguments(new VersionNumber(VERSION_FIRST, VERSION_SECOND, VERSION_THIRD), args))
+            if (IUpgrader.NOW_UPGRADER.parseArguments(getVersionNumber(), args))
                 return;
 
             System.setProperty("sun.java2d.noddraw", "true");

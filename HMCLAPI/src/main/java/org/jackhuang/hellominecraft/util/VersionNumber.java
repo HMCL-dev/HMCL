@@ -39,6 +39,11 @@ public final class VersionNumber implements Comparable<VersionNumber> {
         this.version = version;
     }
 
+    @Override
+    public String toString() {
+        return "" + firstVer + '.' + secondVer + '.' + thirdVer;
+    }
+
     public static VersionNumber check(String data) {
         while (!data.isEmpty() && ((data.charAt(0) < '0' || data.charAt(0) > '9') && data.charAt(0) != '.'))
             data = data.substring(1);
@@ -46,7 +51,7 @@ public final class VersionNumber implements Comparable<VersionNumber> {
             return null;
         VersionNumber ur;
         String[] ver = data.split("\\.");
-        if (ver.length == 3) {
+        if (ver.length >= 3) {
             byte v1, v2, v3;
             try {
                 v1 = Byte.parseByte(ver[0]);

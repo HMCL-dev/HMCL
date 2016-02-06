@@ -31,7 +31,6 @@ import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.UpdateChecker;
-import org.jackhuang.hellominecraft.util.VersionNumber;
 
 /**
  *
@@ -44,8 +43,7 @@ public final class Settings {
     public static final File SETTINGS_FILE = new File(IOUtils.currentDir(), "hmcl.json");
 
     private static final Config SETTINGS;
-    public static final UpdateChecker UPDATE_CHECKER = new UpdateChecker(new VersionNumber(Main.VERSION_FIRST, Main.VERSION_SECOND, Main.VERSION_THIRD),
-                                                                         "hmcl");
+    public static final UpdateChecker UPDATE_CHECKER = new UpdateChecker(Main.getVersionNumber(), "hmcl");
 
     public static Config getInstance() {
         return SETTINGS;
