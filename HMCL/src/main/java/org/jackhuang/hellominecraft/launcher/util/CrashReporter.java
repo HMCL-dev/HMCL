@@ -43,6 +43,24 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
     private static final Logger LOGGER = Logger.getLogger(CrashReporter.class.getName());
 
+    private static final HashMap<String, String> SOURCE = new HashMap<String, String>() {
+        {
+            put("MessageBox", "");
+            put("AWTError", "");
+            put("JFileChooser", "Has your operating system been installed completely or is a ghost system? ");
+            put("JceSecurityManager", "Has your operating system been installed completely or is a ghost system? ");
+            put("sun.awt.shell.Win32ShellFolder2", "crash.user_fault");
+            put("UnsatisfiedLinkError", "crash.user_fault");
+            put("java.awt.HeadlessException", "crash.headless");
+            put("java.lang.NoClassDefFoundError", "crash.NoClassDefFound");
+            put("java.lang.VerifyError", "crash.NoClassDefFound");
+            put("java.lang.NoSuchMethodError", "crash.NoClassDefFound");
+            put("java.lang.IncompatibleClassChangeError", "crash.NoClassDefFound");
+            put("java.lang.ClassFormatError", "crash.NoClassDefFound");
+            put("java.lang.OutOfMemoryError", "FUCKING MEMORY LIMIT!");
+        }
+    };
+
     boolean enableLogger = false;
 
     public CrashReporter(boolean enableLogger) {
@@ -51,47 +69,26 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
     public boolean checkThrowable(Throwable e) {
         String s = StrUtils.getStackTrace(e);
-        if (s.contains("MessageBox") || s.contains("AWTError"))
-            return false;
-        else if (s.contains("JFileChooser") || s.contains("JceSecurityManager")) {
-            LOGGER.severe("Is not your operating system installed completely? ");
-            return false;
-        }
-        if (s.contains("sun.awt.shell.Win32ShellFolder2") || s.contains("UnsatisfiedLinkError")) {
-            LOGGER.severe(C.i18n("crash.user_fault"));
-            try {
-                showMessage(C.i18n("crash.user_fault"));
-            } catch (Throwable t) {
-                LOGGER.log(Level.SEVERE, "Failed to show message", t);
+        for (HashMap.Entry<String, String> entry : SOURCE.entrySet())
+            if (s.contains(entry.getKey())) {
+                if (StrUtils.isNotBlank(entry.getValue())) {
+                    String info = C.i18n(entry.getKey());
+                    LOGGER.severe(info);
+                    try {
+                        showMessage(info);
+                    } catch (Throwable t) {
+                        LOGGER.log(Level.SEVERE, "Failed to show message", t);
+                    }
+                }
+                return false;
             }
-            return false;
-        } else if (s.contains("java.awt.HeadlessException")) {
-            LOGGER.severe(C.i18n("crash.headless"));
-            try {
-                showMessage(C.i18n("crash.headless"));
-            } catch (Throwable t) {
-                LOGGER.log(Level.SEVERE, "Failed to show message", t);
-            }
-            return false;
-        } else if (s.contains("java.lang.NoClassDefFoundError") || s.contains("java.lang.VerifyError") || s.contains("java.lang.NoSuchMethodError") || s.contains("java.lang.IncompatibleClassChangeError") || s.contains("java.lang.ClassFormatError")) {
-            LOGGER.severe(C.i18n("crash.NoClassDefFound"));
-            try {
-                showMessage(C.i18n("crash.NoClassDefFound"));
-            } catch (Throwable t) {
-                LOGGER.log(Level.SEVERE, "Failed to show message", t);
-            }
-            return false;
-        } else if (s.contains("java.lang.OutOfMemoryError")) {
-            LOGGER.severe("FUCKING MEMORY LIMIT!");
-            return false;
-        }
         return true;
     }
 
     @Override
     public void uncaughtException(Thread t, Throwable e) {
         String s = StrUtils.getStackTrace(e);
-        if (!s.contains("org.jackhuang.hellominecraft"))
+        if (!s.contains("org.jackhuang"))
             return;
         try {
             String text = "\n---- Hello Minecraft! Crash Report ----\n";

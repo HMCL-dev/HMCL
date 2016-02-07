@@ -32,6 +32,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
 
     public static final String KEY_GAME_VERSION = "gameVersion";
     public static final String KEY_MODPACK_LOCATION = "modpackLocation";
+    public static final String KEY_MODPACK_NAME = "modpackName";
 
     private final transient WizardController controller;
     private final Map wizardData;
@@ -73,6 +74,8 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
         lblGameVersion = new javax.swing.JLabel();
         cboGameVersion = new javax.swing.JComboBox<>();
         jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        txtModpackName = new javax.swing.JTextField();
 
         lblModpackLocation.setText(C.i18n("modpack.save")); // NOI18N
 
@@ -99,6 +102,15 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
 
         jLabel1.setText(C.i18n("modpack.warning")); // NOI18N
 
+        jLabel2.setText(C.i18n("modpack.name")); // NOI18N
+
+        txtModpackName.setToolTipText("");
+        txtModpackName.addCaretListener(new javax.swing.event.CaretListener() {
+            public void caretUpdate(javax.swing.event.CaretEvent evt) {
+                txtModpackNameCaretUpdate(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -106,25 +118,31 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(txtModpackName)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblModpackLocation)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 353, Short.MAX_VALUE)
                         .addComponent(cboModpackLocation))
                     .addComponent(txtModpackLocation)
                     .addComponent(cboGameVersion, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblGameVersion)
-                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 67, Short.MAX_VALUE)))
+                            .addComponent(jLabel1)
+                            .addComponent(jLabel2))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 120, Short.MAX_VALUE)
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 70, Short.MAX_VALUE)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(txtModpackName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblModpackLocation)
                     .addComponent(cboModpackLocation))
@@ -162,12 +180,23 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
         wizardData.put(KEY_GAME_VERSION, cboGameVersion.getSelectedItem());
     }//GEN-LAST:event_cboGameVersionItemStateChanged
 
+    private void txtModpackNameCaretUpdate(javax.swing.event.CaretEvent evt) {//GEN-FIRST:event_txtModpackNameCaretUpdate
+        wizardData.put(KEY_MODPACK_NAME, txtModpackName.getText());
+
+        if (txtModpackName.getText().trim().isEmpty())
+            controller.setProblem(C.i18n("modpack.not_a_valid_name"));
+        else
+            controller.setProblem(null);
+    }//GEN-LAST:event_txtModpackNameCaretUpdate
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cboGameVersion;
     private javax.swing.JButton cboModpackLocation;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel lblGameVersion;
     private javax.swing.JLabel lblModpackLocation;
     private javax.swing.JTextField txtModpackLocation;
+    private javax.swing.JTextField txtModpackName;
     // End of variables declaration//GEN-END:variables
 }

@@ -85,69 +85,67 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
         File version = new File(service.baseDirectory(), "versions");
         File[] files = version.listFiles();
-        if (files == null || files.length == 0)
-            return;
+        if (files != null && files.length > 0)
+            for (File dir : files) {
+                String id = dir.getName();
+                File jsonFile = new File(dir, id + ".json");
 
-        for (File dir : files) {
-            String id = dir.getName();
-            File jsonFile = new File(dir, id + ".json");
-
-            if (!dir.isDirectory())
-                continue;
-            boolean ask = false;
-            File[] jsons = null;
-            if (!jsonFile.exists()) {
-                jsons = FileUtils.searchSuffix(dir, "json");
-                if (jsons.length == 1)
-                    ask = true;
-            }
-            if (ask) {
-                HMCLog.warn("Found not matched filenames version: " + id + ", json: " + jsons[0].getName());
-                if (MessageBox.Show(String.format(C.i18n("launcher.versions_json_not_matched"), id, jsons[0].getName()), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                    if (!jsons[0].renameTo(new File(jsons[0].getParent(), id + ".json")))
-                        HMCLog.warn("Failed to rename version json " + jsons[0]);
-            }
-            if (!jsonFile.exists()) {
-                if (MessageBox.Show(C.i18n("launcher.versions_json_not_matched_cannot_auto_completion", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                    FileUtils.deleteDirectoryQuietly(dir);
-                continue;
-            }
-            MinecraftVersion mcVersion;
-            try {
-                mcVersion = C.GSON.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
-                if (mcVersion == null)
-                    throw new GameException("Wrong json format, got null.");
-            } catch (IOException | GameException e) {
-                HMCLog.warn("Found wrong format json, try to fix it.", e);
-                if (MessageBox.Show(C.i18n("launcher.versions_json_not_formatted", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
-                    service.download().downloadMinecraftVersionJson(id);
-                    try {
-                        mcVersion = C.GSON.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
-                        if (mcVersion == null)
-                            throw new GameException("Wrong json format, got null.");
-                    } catch (IOException | GameException ex) {
-                        HMCLog.warn("Ignoring: " + dir + ", the json of this Minecraft is malformed.", ex);
-                        continue;
-                    }
-                } else
+                if (!dir.isDirectory())
                     continue;
-            }
-            try {
-                if (!id.equals(mcVersion.id)) {
-                    HMCLog.warn("Found: " + dir + ", it contains id: " + mcVersion.id + ", expected: " + id + ", this app will fix this problem.");
-                    mcVersion.id = id;
-                    FileUtils.writeQuietly(jsonFile, C.GSON.toJson(mcVersion));
+                boolean ask = false;
+                File[] jsons = null;
+                if (!jsonFile.exists()) {
+                    jsons = FileUtils.searchSuffix(dir, "json");
+                    if (jsons.length == 1)
+                        ask = true;
                 }
+                if (ask) {
+                    HMCLog.warn("Found not matched filenames version: " + id + ", json: " + jsons[0].getName());
+                    if (MessageBox.Show(String.format(C.i18n("launcher.versions_json_not_matched"), id, jsons[0].getName()), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+                        if (!jsons[0].renameTo(new File(jsons[0].getParent(), id + ".json")))
+                            HMCLog.warn("Failed to rename version json " + jsons[0]);
+                }
+                if (!jsonFile.exists()) {
+                    if (MessageBox.Show(C.i18n("launcher.versions_json_not_matched_cannot_auto_completion", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+                        FileUtils.deleteDirectoryQuietly(dir);
+                    continue;
+                }
+                MinecraftVersion mcVersion;
+                try {
+                    mcVersion = C.GSON.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
+                    if (mcVersion == null)
+                        throw new GameException("Wrong json format, got null.");
+                } catch (IOException | GameException e) {
+                    HMCLog.warn("Found wrong format json, try to fix it.", e);
+                    if (MessageBox.Show(C.i18n("launcher.versions_json_not_formatted", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
+                        service.download().downloadMinecraftVersionJson(id);
+                        try {
+                            mcVersion = C.GSON.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
+                            if (mcVersion == null)
+                                throw new GameException("Wrong json format, got null.");
+                        } catch (IOException | GameException ex) {
+                            HMCLog.warn("Ignoring: " + dir + ", the json of this Minecraft is malformed.", ex);
+                            continue;
+                        }
+                    } else
+                        continue;
+                }
+                try {
+                    if (!id.equals(mcVersion.id)) {
+                        HMCLog.warn("Found: " + dir + ", it contains id: " + mcVersion.id + ", expected: " + id + ", this app will fix this problem.");
+                        mcVersion.id = id;
+                        FileUtils.writeQuietly(jsonFile, C.GSON.toJson(mcVersion));
+                    }
 
-                if (mcVersion.libraries != null)
-                    for (MinecraftLibrary ml : mcVersion.libraries)
-                        ml.init();
-                versions.put(id, mcVersion);
-                onLoadedVersion.execute(id);
-            } catch (Exception e) {
-                HMCLog.warn("Ignoring: " + dir + ", the json of this Minecraft is malformed.", e);
+                    if (mcVersion.libraries != null)
+                        for (MinecraftLibrary ml : mcVersion.libraries)
+                            ml.init();
+                    versions.put(id, mcVersion);
+                    onLoadedVersion.execute(id);
+                } catch (Exception e) {
+                    HMCLog.warn("Ignoring: " + dir + ", the json of this Minecraft is malformed.", e);
+                }
             }
-        }
         onRefreshedVersions.execute(null);
     }
 

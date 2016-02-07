@@ -23,11 +23,11 @@ import java.util.Map;
 import javax.swing.JOptionPane;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.ArrayUtils;
-import org.jackhuang.hellominecraft.util.ui.Selector;
 import org.jackhuang.hellominecraft.launcher.core.auth.yggdrasil.GameProfile;
 import org.jackhuang.hellominecraft.launcher.core.auth.yggdrasil.PropertyMap;
 import org.jackhuang.hellominecraft.launcher.core.auth.yggdrasil.YggdrasilAuthentication;
 import org.jackhuang.hellominecraft.launcher.core.auth.yggdrasil.UUIDTypeAdapter;
+import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 
 /**
  *
@@ -69,12 +69,11 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
                     String[] names = new String[profiles.length];
                     for (int i = 0; i < profiles.length; i++)
                         names[i] = profiles[i].name;
-                    Selector s = new Selector(null, names, C.i18n("login.choose_charactor"));
-                    s.setVisible(true);
-                    if (s.sel == Selector.FAILED_TO_SELECT)
+                    int sel = SwingUtils.select(names, C.i18n("login.choose_charactor"));
+                    if (sel == -1)
                         throw new AuthenticationException("No selection");
-                    selectedProfile = profiles[s.sel];
-                    username = names[s.sel];
+                    selectedProfile = profiles[sel];
+                    username = names[sel];
                 } else
                     username = JOptionPane.showInputDialog(C.i18n("login.no_charactor"));
             else

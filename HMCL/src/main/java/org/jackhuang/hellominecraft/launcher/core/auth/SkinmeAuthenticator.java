@@ -21,7 +21,7 @@ import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.code.DigestUtils;
 import org.jackhuang.hellominecraft.util.NetUtils;
 import org.jackhuang.hellominecraft.util.lang.SupportedLocales;
-import org.jackhuang.hellominecraft.util.ui.Selector;
+import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 
 /**
  *
@@ -61,15 +61,14 @@ public final class SkinmeAuthenticator extends IAuthenticator {
                     if (sl[1].contains("No Valid Character"))
                         sl[1] = C.i18n("login.no_valid_character");
                     throw new AuthenticationException(sl[1]);
-                case "1": {
+                case "1":
                     String[] s = parseType1(sl[1]);
                     req.setUserName(s[0]);
                     req.setSession(s[1]);
                     req.setUserId(s[1]);
                     req.setAccessToken(s[1]);
                     break;
-                }
-                case "2": {
+                case "2":
                     String[] charators = sl[1].split(";");
                     int len = charators.length;
                     String[] $char = new String[len];
@@ -80,12 +79,10 @@ public final class SkinmeAuthenticator extends IAuthenticator {
                         $char[i] = charator[0];
                         user[i] = charator[1];
                     }
-                    Selector s = new Selector(null, user, C.i18n("login.choose_charactor"));
-                    s.setVisible(true);
-                    if (s.sel == Selector.FAILED_TO_SELECT)
+                    int index = SwingUtils.select(user, C.i18n("login.choose_charactor"));
+                    if (index == -1)
                         throw new AuthenticationException(C.i18n("message.cancelled"));
                     else {
-                        int index = s.sel;
                         String character = $char[index];
                         sl = getCharacter(usr, hashCode, character).split(":");
                         String[] s2 = parseType1(sl[1]);
@@ -95,7 +92,6 @@ public final class SkinmeAuthenticator extends IAuthenticator {
                         req.setAccessToken(s2[1]);
                     }
                     break;
-                }
                 }
 
             req.setUserType("Legacy");

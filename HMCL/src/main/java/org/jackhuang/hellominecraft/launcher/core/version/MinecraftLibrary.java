@@ -31,7 +31,8 @@ import org.jackhuang.hellominecraft.util.StrUtils;
 public class MinecraftLibrary extends IMinecraftLibrary {
 
     public ArrayList<Rules> rules;
-    public String url, formatted = null;
+    public String url;
+    public transient String formatted = null;
     public Natives natives;
     public Extract extract;
 

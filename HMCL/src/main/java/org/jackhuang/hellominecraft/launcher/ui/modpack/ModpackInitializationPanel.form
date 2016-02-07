@@ -16,12 +16,13 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="txtModpackName" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="lblModpackLocation" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace pref="353" max="32767" attributes="0"/>
                       <Component id="cboModpackLocation" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Component id="txtModpackLocation" max="32767" attributes="0"/>
@@ -30,8 +31,9 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="lblGameVersion" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabel2" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="0" pref="67" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -43,7 +45,11 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="120" max="32767" attributes="0"/>
+              <EmptySpace pref="70" max="32767" attributes="0"/>
+              <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="txtModpackName" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="lblModpackLocation" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cboModpackLocation" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -63,7 +69,7 @@
     <Component class="javax.swing.JLabel" name="lblModpackLocation">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="modpack.save" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+          <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="modpack.save" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
@@ -104,6 +110,21 @@
           <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="modpack.warning" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel2">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="modpack.name" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtModpackName">
+      <Properties>
+        <Property name="toolTipText" type="java.lang.String" value=""/>
+      </Properties>
+      <Events>
+        <EventHandler event="caretUpdate" listener="javax.swing.event.CaretListener" parameters="javax.swing.event.CaretEvent" handler="txtModpackNameCaretUpdate"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

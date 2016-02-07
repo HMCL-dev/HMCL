@@ -20,18 +20,23 @@ package org.jackhuang.hellominecraft.launcher.core.mod;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.FileSystemException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.func.BiFunction;
 import org.jackhuang.hellominecraft.util.system.Compressor;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
@@ -59,12 +64,25 @@ import org.jackhuang.hellominecraft.util.version.MinecraftVersionRequest;
  */
 public final class ModpackManager {
 
-    public static Task install(final File input, final IMinecraftService service, final String id) {
+    /**
+     * Install the compressed modpack.
+     *
+     * @param input   modpack.zip
+     * @param service MinecraftService, whose version service only supports
+     *                MinecraftVersionManager.
+     * @param id      new version id, if null, will use suggested name from
+     *                modpack
+     *
+     * @return The installing Task, may take long time, please consider
+     *         TaskWindow.
+     */
+    public static Task install(final File input, final IMinecraftService service, final String idFUCK) {
         return new Task() {
             Collection<Task> c = new ArrayList<>();
 
             @Override
             public void executeTask() throws Throwable {
+                String id = idFUCK;
                 File versions = new File(service.baseDirectory(), "versions");
                 File oldFile = new File(versions, "minecraft"), newFile = null;
                 if (oldFile.exists()) {
@@ -77,6 +95,24 @@ public final class ModpackManager {
                     if (!oldFile.renameTo(newFile))
                         HMCLog.warn("Failed to rename " + oldFile + " to " + newFile);
                 }
+
+                String description = C.i18n("modpack.install.will_install");
+
+                try (ZipFile zip = new ZipFile(input)) {
+                    HashMap map = C.GSON.fromJson(new InputStreamReader(zip.getInputStream(zip.getEntry("modpack.json"))), HashMap.class);
+                    if (map != null) {
+                        if (id == null)
+                            if (map.containsKey("name") && map.get("name") instanceof String)
+                                id = (String) map.get("name");
+                        if (map.containsKey("description") && map.get("description") instanceof String)
+                            description += "\n" + (String) map.get("description");
+                    }
+                    if (id == null)
+                        throw new IllegalStateException("Illegal modpack id!");
+                }
+
+                if (MessageBox.Show(description, C.i18n("modpack.install.task"), MessageBox.YES_NO_OPTION) == MessageBox.NO_OPTION)
+                    return;
 
                 File preVersion = new File(versions, id), preVersionRenamed = null;
                 if (preVersion.exists()) {
@@ -184,7 +220,7 @@ public final class ModpackManager {
      *
      * @throws IOException if create tmp directory failed
      */
-    public static void export(File output, IMinecraftProvider provider, String version, List<String> blacklist) throws IOException, GameException {
+    public static void export(File output, IMinecraftProvider provider, String version, List<String> blacklist, Map modpackJson) throws IOException, GameException {
         final ArrayList<String> b = new ArrayList<>(MODPACK_BLACK_LIST);
         if (blacklist != null)
             b.addAll(blacklist);
@@ -211,6 +247,7 @@ public final class ModpackManager {
             mv.jar = r.version;
             mv.runDir = "version";
             zip.putTextFile(C.GSON.toJson(mv), "minecraft/pack.json");
+            zip.putTextFile(C.GSON.toJson(modpackJson), "modpack.json");
         } finally {
             if (zip != null)
                 zip.closeFile();

@@ -68,10 +68,9 @@ public final class Profile {
     private transient final VersionSetting defaultVersionSetting = new VersionSetting();
 
     public VersionSetting getSelectedVersionSetting() {
-        String s = getSelectedVersion();
-        VersionSetting vs = defaultVersionSetting;
-        if (s != null)
-            vs = getVersionSetting(getSelectedVersion());
+        VersionSetting vs = getVersionSetting(getSelectedVersion());
+        if (vs == null)
+            vs = defaultVersionSetting;
         return vs;
     }
 

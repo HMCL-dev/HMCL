@@ -26,8 +26,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.DefaultListModel;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -252,5 +254,15 @@ public class SwingUtils {
                 HMCLog.err("Failed to invokeAndWait, the UI will work abnormally.", e);
                 r.run();
             }
+    }
+
+    public static int select(String[] selList, String msg) {
+        Object msgs[] = new Object[2];
+        msgs[0] = msg;
+        msgs[1] = new JComboBox(selList);
+        int result = JOptionPane.showOptionDialog(null, msgs, msg, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
+        if (result == JOptionPane.CANCEL_OPTION)
+            return -1;
+        return ((JComboBox) msgs[1]).getSelectedIndex();
     }
 }

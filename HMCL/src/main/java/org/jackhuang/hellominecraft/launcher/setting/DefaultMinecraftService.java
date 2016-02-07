@@ -35,8 +35,10 @@ import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftModService;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.mod.MinecraftModService;
+import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
+import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
 
 /**
  *
@@ -52,6 +54,7 @@ public class DefaultMinecraftService extends IMinecraftService {
         this.provider = new HMCLGameProvider(this);
         provider.initializeMiencraft();
         provider.onRefreshingVersions.register(versionSettings::clear);
+        provider.onRefreshedVersions.register(this::checkModpack);
         provider.onLoadedVersion.register(this::loadVersionSetting);
         this.mms = new MinecraftModService(this);
         this.mds = new MinecraftDownloadService(this);
@@ -65,6 +68,14 @@ public class DefaultMinecraftService extends IMinecraftService {
                     saveVersionSetting(key);
             }
         });
+    }
+
+    private void checkModpack() {
+        if (version().getVersionCount() == 0) {
+            File modpack = new File("modpack.zip");
+            if (modpack.exists())
+                TaskWindow.factory().append(ModpackManager.install(modpack, this, null)).create();
+        }
     }
 
     private void loadVersionSetting(String id) {

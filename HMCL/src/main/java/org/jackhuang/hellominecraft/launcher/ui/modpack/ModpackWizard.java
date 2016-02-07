@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +61,7 @@ public class ModpackWizard extends WizardBranchController {
     }
 
     public ModpackWizard(IMinecraftService service) {
-        super(new WizardPanelProvider(C.i18n("modpack.wizard"), new String[] { C.i18n("modpack.wizard.step.1"), C.i18n("modpack.wizard.step.2") }, new String[] { C.i18n("modpack.wizard.step.1.title"), C.i18n("modpack.wizard.step.2.title") }) {
+        super(new WizardPanelProvider(C.i18n("modpack.wizard"), new String[] { C.i18n("modpack.wizard.step.1"), C.i18n("modpack.wizard.step.2"), C.i18n("modpack.wizard.step.3") }, new String[] { C.i18n("modpack.wizard.step.1.title"), C.i18n("modpack.wizard.step.2.title"), C.i18n("modpack.wizard.step.3.title") }) {
 
             @Override
             protected Object finish(Map settings) throws WizardException {
@@ -71,12 +72,16 @@ public class ModpackWizard extends WizardBranchController {
                         ArrayList<String> blackList = new ArrayList<>(ModpackManager.MODPACK_BLACK_LIST);
                         CheckBoxTreeNode root = (CheckBoxTreeNode) settings.get("blackList");
                         process(root, "minecraft", blackList);
+                        HashMap map = new HashMap();
+                        map.put("name", (String) settings.get(ModpackInitializationPanel.KEY_MODPACK_NAME));
+                        if (settings.containsKey(ModpackDescriptionPanel.KEY_MODPACK_DESCRITION))
+                            map.put("description", (String) settings.get(ModpackDescriptionPanel.KEY_MODPACK_DESCRITION));
                         try {
                             File loc = new File((String) settings.get(ModpackInitializationPanel.KEY_MODPACK_LOCATION));
                             ModpackManager.export(loc,
                                                   service.version(),
                                                   (String) settings.get(ModpackInitializationPanel.KEY_GAME_VERSION),
-                                                  blackList);
+                                                  blackList, map);
                             progress.finished(new Summary(C.i18n("modpack.export_finished") + ": " + loc.getAbsolutePath(), null));
                         } catch (IOException | GameException ex) {
                             HMCLog.err("Failed to export modpack", ex);
@@ -99,9 +104,13 @@ public class ModpackWizard extends WizardBranchController {
 
                     return new ModpackInitializationPanel(controller, settings, s);
                 case 1:
-                    controller.setForwardNavigationMode(WizardController.MODE_CAN_FINISH);
+                    controller.setForwardNavigationMode(WizardController.MODE_CAN_CONTINUE_OR_FINISH);
 
                     return new ModpackFileSelectionPanel(controller, settings, service.baseDirectory(), ModpackManager.MODPACK_PREDICATE);
+                case 2:
+                    controller.setForwardNavigationMode(WizardController.MODE_CAN_FINISH);
+
+                    return new ModpackDescriptionPanel(controller, settings);
                 default:
                     throw new IllegalArgumentException(id);
                 }
