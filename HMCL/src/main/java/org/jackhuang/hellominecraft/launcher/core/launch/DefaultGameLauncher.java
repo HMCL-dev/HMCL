@@ -28,7 +28,6 @@ import org.jackhuang.hellominecraft.util.tasks.ParallelTask;
 import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.util.system.Compressor;
 import org.jackhuang.hellominecraft.util.MessageBox;
-import org.jackhuang.hellominecraft.util.StrUtils;
 
 public class DefaultGameLauncher extends GameLauncher {
 
@@ -56,8 +55,7 @@ public class DefaultGameLauncher extends GameLauncher {
                 return false;
             for (int i = 0; i < value.decompressFiles.length; i++)
                 try {
-                    String[] rules = value.extractRules[i];
-                    Compressor.unzip(value.decompressFiles[i], value.getDecompressTo(), t -> !StrUtils.startsWithOne(rules, t), false);
+                    Compressor.unzip(value.decompressFiles[i], value.getDecompressTo(), value.extractRules[i]::allow, false);
                 } catch (IOException ex) {
                     HMCLog.err("Unable to decompress library file: " + value.decompressFiles[i] + " to " + value.getDecompressTo(), ex);
                 }

@@ -17,20 +17,20 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.version;
 
+import java.util.ArrayList;
+import java.util.List;
+import org.jackhuang.hellominecraft.util.StrUtils;
+
 /**
  *
  * @author huangyuhui
  */
 public class Extract implements Cloneable {
 
-    public String[] exclude;
+    public List<String> exclude = new ArrayList<>();
 
-    public Extract(String[] exclude) {
-        this();
-        this.exclude = exclude.clone();
-    }
-
-    public Extract() {
+    public boolean allow(String path) {
+        return !StrUtils.startsWithOne(exclude, path);
     }
 
     @Override

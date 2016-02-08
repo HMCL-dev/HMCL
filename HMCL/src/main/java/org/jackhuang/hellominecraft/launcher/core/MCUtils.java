@@ -56,11 +56,6 @@ public final class MCUtils {
         return getWorkingDirectory("minecraft");
     }
 
-    public static boolean is16Folder(String path) {
-        path = IOUtils.addSeparator(path);
-        return new File(path, "versions").exists();
-    }
-
     public static String minecraft() {
         if (OS.os() == OS.OSX)
             return "minecraft";

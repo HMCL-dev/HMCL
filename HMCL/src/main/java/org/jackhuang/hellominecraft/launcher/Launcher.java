@@ -46,7 +46,6 @@ public final class Launcher {
     static final Logger LOGGER = Logger.getLogger(Launcher.class.getName());
 
     static String classPath = "";
-    //state String proxyHost = "", proxyPort = "", proxyUsername = "", proxyPassword = "";
 
     public static void main(String[] args) {
         LOGGER.log(Level.INFO, "*** {0} ***", Main.makeTitle());
@@ -61,14 +60,6 @@ public final class Launcher {
                 classPath = classPath.concat(s.substring("-cp=".length()));
             else if (s.startsWith("-mainClass="))
                 mainClass = s.substring("-mainClass=".length());
-            /*else if (s.startsWith("-proxyHost="))
-                proxyHost = s.substring("-proxyHost=".length());
-            else if (s.startsWith("-proxyPort="))
-                proxyPort = s.substring("-proxyPort=".length());
-            else if (s.startsWith("-proxyUsername="))
-                proxyUsername = s.substring("-proxyUsername=".length());
-            else if (s.startsWith("-proxyPassword="))
-                proxyPassword = s.substring("-proxyPassword=".length());*/
             else if (s.equals("-debug"))
                 showInfo = true;
             else
@@ -106,22 +97,6 @@ public final class Launcher {
             LOGGER.log(Level.INFO, "Class Path: '{'\n{0}\n'}'", StrUtils.parseParams("    ", tokenized, "\n"));
             SwingUtilities.invokeLater(() -> LogWindow.INSTANCE.setVisible(true));
         }
-        /*
-        if (StrUtils.isNotBlank(proxyHost) && StrUtils.isNotBlank(proxyPort) && MathUtils.canParseInt(proxyPort)) {
-            HMCLog.log("Initializing customized proxy");
-            System.setProperty("http.proxyHost", proxyHost);
-            System.setProperty("http.proxyPort", proxyPort);
-            if (StrUtils.isNotBlank(proxyUsername) && StrUtils.isNotBlank(proxyPassword))
-                Authenticator.setDefault(new Authenticator() {
-                    @Override
-                    protected PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication(proxyUsername, proxyPassword.toCharArray());
-                    }
-                });
-            //PROXY = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(Settings.getInstance().getProxyHost(), Integer.parseInt(Settings.getInstance().getProxyPort())));
-        } else {
-            //PROXY = Proxy.NO_PROXY;
-        }*/
 
         URL[] urls = new URL[len];
 

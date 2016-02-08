@@ -17,11 +17,14 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.version;
 
+import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.system.OS;
+
 /**
  *
  * @author huangyuhui
  */
-public class OS {
+public class OSRestriction {
 
     private String version, name;
 
@@ -39,5 +42,9 @@ public class OS {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public boolean isCurrentOS() {
+        return StrUtils.isBlank(getName()) || OS.os().name().equalsIgnoreCase(getName());
     }
 }

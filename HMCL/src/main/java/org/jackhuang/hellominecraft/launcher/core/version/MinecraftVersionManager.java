@@ -220,7 +220,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
         if (v.libraries == null)
             throw new GameException("Wrong format: minecraft.json");
         ArrayList<File> unzippings = new ArrayList<>();
-        ArrayList<String[]> extractRules = new ArrayList<>();
+        ArrayList<Extract> extractRules = new ArrayList<>();
         for (IMinecraftLibrary l : v.libraries) {
             l.init();
             if (l.isRequiredToUnzip() && v.isAllowedToUnpackNatives()) {
@@ -228,7 +228,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                 extractRules.add(l.getDecompressExtractRules());
             }
         }
-        return new DecompressLibraryJob(unzippings.toArray(new File[unzippings.size()]), extractRules.toArray(new String[extractRules.size()][]), getDecompressNativesToLocation(v));
+        return new DecompressLibraryJob(unzippings.toArray(new File[unzippings.size()]), extractRules.toArray(new Extract[extractRules.size()]), getDecompressNativesToLocation(v));
     }
 
     @Override

@@ -48,7 +48,7 @@ public class Localization {
 
         this.lang = new HashMap<>();
         try {
-            String[] strings = IOUtils.readFully(is).toString().split("\n");
+            String[] strings = IOUtils.readFully(is).toString("UTF-8").split("\n");
             for (String s : strings)
                 if (!s.isEmpty() && s.charAt(0) != 35) {
                     int i = s.indexOf("=");

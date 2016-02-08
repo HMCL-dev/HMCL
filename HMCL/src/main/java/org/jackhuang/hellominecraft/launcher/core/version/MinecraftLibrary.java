@@ -48,15 +48,6 @@ public class MinecraftLibrary extends IMinecraftLibrary {
         this.extract = extract == null ? null : (Extract) extract.clone();
     }
 
-    @Override
-    public Object clone() {
-        MinecraftLibrary ml = (MinecraftLibrary) super.clone();
-        ml.extract = (Extract) ml.extract.clone();
-        ml.natives = (Natives) ml.natives.clone();
-        ml.rules = (ArrayList<Rules>) ml.rules.clone();
-        return ml;
-    }
-
     /**
      * is the library allowed to load.
      *
@@ -64,19 +55,14 @@ public class MinecraftLibrary extends IMinecraftLibrary {
      */
     @Override
     public boolean allow() {
-        boolean flag = false;
-        if (rules == null || rules.isEmpty())
-            flag = true;
-        else
+        if (rules != null) {
+            String action = "disallow";
             for (Rules r : rules)
-                if ("disallow".equals(r.getAction())) {
-                    if (r.getOS() != null && (StrUtils.isBlank(r.getOS().getName()) || r.getOS().getName().equalsIgnoreCase(OS.os().toString()))) {
-                        flag = false;
-                        break;
-                    }
-                } else if (r.getOS() == null || (r.getOS() != null && (StrUtils.isBlank(r.getOS().getName()) || r.getOS().getName().equalsIgnoreCase(OS.os().toString()))))
-                    flag = true;
-        return flag;
+                if (r.action() != null)
+                    action = r.action();
+            return "allow".equals(action);
+        }
+        return true;
     }
 
     private String formatArch(String nati) {
@@ -86,11 +72,11 @@ public class MinecraftLibrary extends IMinecraftLibrary {
     private String getNative() {
         switch (OS.os()) {
         case WINDOWS:
-            return formatArch(natives.getWindows());
+            return formatArch(natives.windows);
         case OSX:
-            return formatArch(natives.getOsx());
+            return formatArch(natives.osx);
         default:
-            return formatArch(natives.getLinux());
+            return formatArch(natives.linux);
         }
     }
 
@@ -101,25 +87,16 @@ public class MinecraftLibrary extends IMinecraftLibrary {
 
     @Override
     public void init() {
-        String str = name;
-        String[] s = str.split(":");
-        str = s[0];
-        str = str.replace('.', File.separatorChar);
-        if (natives == null)
-            str += File.separator + s[1] + File.separator + s[2]
-                   + File.separator + s[1] + '-' + s[2] + ".jar";
-        else {
-            str += File.separator + s[1] + File.separator + s[2]
-                   + File.separator + s[1] + '-' + s[2] + '-';
-            str += getNative();
-            str += ".jar";
-        }
-        formatted = str;
+        String[] s = name.split(":");
+        StringBuilder sb = new StringBuilder(s[0].replace('.', '/')).append('/').append(s[1]).append('/').append(s[2]).append('/').append(s[1]).append('-').append(s[2]);
+        if (natives != null)
+            sb.append('-').append(getNative());
+        formatted = sb.append(".jar").toString();
     }
 
     @Override
     public File getFilePath(File gameDir) {
-        return new File(gameDir, "libraries" + File.separatorChar + formatted);
+        return new File(gameDir, "libraries/" + formatted);
     }
 
     @Override
@@ -132,7 +109,7 @@ public class MinecraftLibrary extends IMinecraftLibrary {
     }
 
     @Override
-    public String[] getDecompressExtractRules() {
-        return extract == null || extract.exclude == null ? new String[0] : extract.exclude;
+    public Extract getDecompressExtractRules() {
+        return extract == null ? new Extract() : extract;
     }
 }

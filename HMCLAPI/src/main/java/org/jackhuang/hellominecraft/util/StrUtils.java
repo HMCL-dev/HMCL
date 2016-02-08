@@ -84,6 +84,15 @@ public final class StrUtils {
         return false;
     }
 
+    public static boolean startsWithOne(Collection<String> a, String match) {
+        if (a == null)
+            return false;
+        for (String b : a)
+            if (startsWith(match, b))
+                return true;
+        return false;
+    }
+
     public static boolean equalsOne(String base, String... a) {
         for (String s : a)
             if (base.equals(s))

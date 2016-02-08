@@ -34,7 +34,7 @@ public abstract class IMinecraftLibrary implements Cloneable {
 
     public abstract boolean isRequiredToUnzip();
 
-    public abstract String[] getDecompressExtractRules();
+    public abstract Extract getDecompressExtractRules();
 
     public abstract void init();
 

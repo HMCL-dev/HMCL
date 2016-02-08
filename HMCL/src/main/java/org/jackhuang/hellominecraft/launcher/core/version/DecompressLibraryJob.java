@@ -26,10 +26,10 @@ import java.io.File;
 public class DecompressLibraryJob {
 
     public File[] decompressFiles;
-    public String[][] extractRules;
+    public Extract[] extractRules;
     private File decompressTo;
 
-    public DecompressLibraryJob(File[] decompressFiles, String[][] extractRules, File decompressTo) {
+    public DecompressLibraryJob(File[] decompressFiles, Extract[] extractRules, File decompressTo) {
         this.decompressFiles = decompressFiles.clone();
         this.extractRules = extractRules.clone();
         this.decompressTo = decompressTo;
