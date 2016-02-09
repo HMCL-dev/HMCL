@@ -118,7 +118,7 @@ public abstract class IAssetsHandler {
                         IOUtils.closeQuietly(fis);
                         if (contents.get(i).geteTag().equals(sha)) {
                             hasDownloaded++;
-                            HMCLog.log("File " + assetsLocalNames.get(i) + " has downloaded successfully, skipped downloading.");
+                            HMCLog.log("File " + assetsLocalNames.get(i) + " has been downloaded successfully, skipped download.");
                             if (ppl != null)
                                 ppl.setProgress(this, hasDownloaded, max);
                             continue;

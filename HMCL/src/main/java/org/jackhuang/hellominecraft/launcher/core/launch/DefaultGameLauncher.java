@@ -57,7 +57,7 @@ public class DefaultGameLauncher extends GameLauncher {
                 try {
                     Compressor.unzip(value.decompressFiles[i], value.getDecompressTo(), value.extractRules[i]::allow, false);
                 } catch (IOException ex) {
-                    HMCLog.err("Unable to decompress library file: " + value.decompressFiles[i] + " to " + value.getDecompressTo(), ex);
+                    HMCLog.err("Unable to decompress library: " + value.decompressFiles[i] + " to " + value.getDecompressTo(), ex);
                 }
             return true;
         });

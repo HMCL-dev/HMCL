@@ -147,7 +147,9 @@ public class DefaultMinecraftService extends IMinecraftService {
 
     @Override
     public IMinecraftLoader launch(LaunchOptions options, UserProfileProvider p) throws GameException {
-        return new MinecraftLoader(options, this, p);
+        MinecraftLoader l = new MinecraftLoader(options, this, p);
+        l.setAssetProvider(mas.ASSET_PROVIDER_IMPL);
+        return l;
     }
 
     public Profile getProfile() {

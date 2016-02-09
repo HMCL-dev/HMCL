@@ -36,7 +36,7 @@ public abstract class IAuthenticator {
         PluginManager.plugin().onRegisterAuthenticators(LOGINS::add);
     }
 
-    protected String clientToken, username;
+    protected String clientToken, username, password;
 
     public IAuthenticator(String clientToken) {
         this.clientToken = clientToken;
@@ -105,5 +105,13 @@ public abstract class IAuthenticator {
 
     public void setUserName(String s) {
         username = s;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

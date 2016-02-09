@@ -32,6 +32,9 @@ import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -47,6 +50,7 @@ import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
 import org.jackhuang.hellominecraft.lookandfeel.Theme;
+import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.Utils;
 import org.jackhuang.hellominecraft.util.ui.DropShadowBorder;
@@ -61,17 +65,10 @@ public final class MainFrame extends DraggableFrame {
 
     public static final MainFrame INSTANCE = new MainFrame();
 
-    HeaderTab mainTab, gameTab, launcherTab;
     TintablePanel centralPanel;
-    JPanel header;
-    MainPagePanel mainPanel;
-    GameSettingsPanel gamePanel;
-    LauncherSettingsPanel launcherPanel;
+    JPanel header, infoSwap, realPanel;
     CardLayout infoLayout;
-    JPanel infoSwap;
-    JPanel mainPanelWrapper, launcherPanelWrapper, gamePanelWrapper;
     JLabel backgroundLabel, windowTitle;
-    JPanel realPanel;
     DropShadowBorder border;
     boolean enableShadow;
     String defaultTitle;
@@ -95,7 +92,6 @@ public final class MainFrame extends DraggableFrame {
         setDefaultCloseOperation(3);
         setTitle(Main.makeTitle());
         initComponents();
-        selectTab("main");
         loadBackground();
 
         setLocationRelativeTo(null);
@@ -150,6 +146,8 @@ public final class MainFrame extends DraggableFrame {
         ((JPanel) getContentPane()).setOpaque(true);
 
         Settings.getInstance().themeChangedEvent.register(this::reloadColor);
+
+        SwingUtilities.invokeLater(() -> selectTab("main"));
     }
 
     private void initComponents() {
@@ -176,31 +174,9 @@ public final class MainFrame extends DraggableFrame {
 
         header.add(Box.createRigidArea(new Dimension(8, 0)));
 
-        ActionListener tabListener = e -> MainFrame.this.selectTab(e.getActionCommand());
-
-        this.mainTab = new HeaderTab(C.i18n("launcher.title.main"));
-        this.mainTab.setForeground(BasicColors.COLOR_WHITE_TEXT);
-        this.mainTab.setBackground(borderColorDarker);
-        this.mainTab.setActionCommand("main");
-        this.mainTab.addActionListener(tabListener);
-        header.add(this.mainTab);
-
-        this.gameTab = new HeaderTab(C.i18n("launcher.title.game"));
-        this.gameTab.setForeground(BasicColors.COLOR_WHITE_TEXT);
-        this.gameTab.setBackground(borderColorDarker);
-        this.gameTab.setIsActive(true);
-        this.gameTab.setHorizontalTextPosition(10);
-        this.gameTab.addActionListener(tabListener);
-        this.gameTab.setActionCommand("game");
-        header.add(this.gameTab);
-
-        this.launcherTab = new HeaderTab(C.i18n("launcher.title.launcher"));
-        this.launcherTab.setForeground(BasicColors.COLOR_WHITE_TEXT);
-        this.launcherTab.setBackground(borderColorDarker);
-        this.launcherTab.setLayout(null);
-        this.launcherTab.addActionListener(tabListener);
-        this.launcherTab.setActionCommand("launcher");
-        header.add(this.launcherTab);
+        initializeTab(MainPagePanel.class, "main");
+        initializeTab(GameSettingsPanel.class, "game");
+        initializeTab(LauncherSettingsPanel.class, "launcher");
 
         header.add(Box.createHorizontalGlue());
 
@@ -253,15 +229,13 @@ public final class MainFrame extends DraggableFrame {
         this.infoSwap.setLayout(infoLayout);
         this.infoSwap.setOpaque(false);
 
-        mainPanelWrapper = new JPanel();
-        mainPanelWrapper.setLayout(new GridLayout());
-        this.infoSwap.add(mainPanelWrapper, "main");
-        gamePanelWrapper = new JPanel();
-        gamePanelWrapper.setLayout(new GridLayout());
-        this.infoSwap.add(gamePanelWrapper, "game");
-        launcherPanelWrapper = new JPanel();
-        launcherPanelWrapper.setLayout(new GridLayout());
-        this.infoSwap.add(launcherPanelWrapper, "launcher");
+        tabWrapper = new JPanel[tabHeader.size()];
+        tabContent = new AnimatedPanel[tabHeader.size()];
+        for (int i = 0; i < tabHeader.size(); i++) {
+            tabWrapper[i] = new JPanel();
+            tabWrapper[i].setLayout(new GridLayout());
+            infoSwap.add(tabWrapper[i], tabHeader.get(i).getActionCommand());
+        }
 
         truePanel.add(this.infoSwap, "Center");
         centralPanel.setLayout(null);
@@ -274,39 +248,47 @@ public final class MainFrame extends DraggableFrame {
         add(realPanel);
     }
 
-    public void selectTab(String tabName) {
-        boolean a = mainTab.isActive(), b = gameTab.isActive(), c = launcherTab.isActive();
-        this.mainTab.setIsActive(false);
-        this.gameTab.setIsActive(false);
-        this.launcherTab.setIsActive(false);
+    private final ActionListener tabListener = e -> MainFrame.this.selectTab(e.getActionCommand());
 
-        if (tabName.equalsIgnoreCase("main")) {
-            if (mainPanel == null) {
-                mainPanel = new MainPagePanel();
-                mainPanelWrapper.add(mainPanel);
-            }
-            this.mainTab.setIsActive(true);
-            this.mainPanel.onSelected();
-            if (!a)
-                mainPanel.animate();
-        } else if (tabName.equalsIgnoreCase("game")) {
-            if (gamePanel == null) {
-                gamePanel = new GameSettingsPanel();
-                gamePanelWrapper.add(gamePanel);
-            }
-            this.gameTab.setIsActive(true);
-            this.gamePanel.onSelected();
-            if (!b)
-                gamePanel.animate();
-        } else if (tabName.equalsIgnoreCase("launcher")) {
-            if (launcherPanel == null) {
-                launcherPanel = new LauncherSettingsPanel();
-                launcherPanelWrapper.add(launcherPanel);
-            }
-            this.launcherTab.setIsActive(true);
-            if (!c)
-                launcherPanel.animate();
+    private void initializeTab(Class<? extends AnimatedPanel> c, String cmd) {
+        HeaderTab tab = new HeaderTab(C.i18n("launcher.title." + cmd));
+        tab.setActionCommand(cmd);
+        tab.setForeground(BasicColors.COLOR_WHITE_TEXT);
+        tab.setBackground(borderColorDarker);
+        tab.setLayout(null);
+        tab.addActionListener(tabListener);
+        header.add(tab);
+        tabHeader.add(tab);
+        tabClasses.add(c);
+    }
+
+    private List<HeaderTab> tabHeader = new ArrayList<>();
+    private List<Class<? extends AnimatedPanel>> tabClasses = new ArrayList<>();
+    private JPanel tabWrapper[];
+    private AnimatedPanel tabContent[];
+
+    public void selectTab(String tabName) {
+        boolean[] activation = new boolean[tabHeader.size()];
+        for (int i = 0; i < tabHeader.size(); i++) {
+            activation[i] = tabHeader.get(i).isActive();
+            tabHeader.get(i).setIsActive(false);
         }
+
+        for (int i = 0; i < tabHeader.size(); i++)
+            if (tabName.equalsIgnoreCase(tabHeader.get(i).getActionCommand())) {
+                if (tabContent[i] == null) {
+                    try {
+                        tabContent[i] = tabClasses.get(i).newInstance();
+                    } catch (Exception mustnothappen) {
+                        throw new InternalError(mustnothappen);
+                    }
+                    tabWrapper[i].add(tabContent[i]);
+                }
+                tabHeader.get(i).setIsActive(true);
+                tabContent[i].onSelected();
+                if (!activation[i])
+                    tabContent[i].animate();
+            }
 
         this.infoLayout.show(this.infoSwap, tabName);
     }
@@ -322,7 +304,7 @@ public final class MainFrame extends DraggableFrame {
     ImageIcon background;
 
     public void loadBackground() {
-        background = Utils.searchBackgroundImage(Main.getIcon("background.jpg"), Settings.getInstance().getBgpath(), 800, 480);
+        background = Utils.searchBackgroundImage(Main.getIcon(Settings.getInstance().getTheme().settings.get("Customized.MainFrame.background_image")), Settings.getInstance().getBgpath(), 800, 480);
         if (background != null)
             if (backgroundLabel == null) {
                 backgroundLabel = new JLabel(background);
@@ -331,7 +313,7 @@ public final class MainFrame extends DraggableFrame {
             } else
                 backgroundLabel.setIcon(background);
         else
-            HMCLog.warn("No Background Image, the background will be empty!");
+            HMCLog.warn("No background image here! The background will be empty!");
     }
 
     public JPanel getTitleBar() {
@@ -354,9 +336,8 @@ public final class MainFrame extends DraggableFrame {
         borderColor = BasicColors.COLOR_RED;
         borderColorDarker = BasicColors.COLOR_RED_DARKER;
         header.setBackground(borderColor);
-        mainTab.setBackground(borderColorDarker);
-        gameTab.setBackground(borderColorDarker);
-        launcherTab.setBackground(borderColorDarker);
+        for (HeaderTab tab : tabHeader)
+            tab.setBackground(borderColorDarker);
         if (border != null)
             border.setColor(borderColor);
         repaint();
@@ -386,9 +367,8 @@ public final class MainFrame extends DraggableFrame {
         if (border != null)
             border.setColor(borderColor);
         header.setBackground(borderColor);
-        mainTab.setBackground(borderColorDarker);
-        gameTab.setBackground(borderColorDarker);
-        launcherTab.setBackground(borderColorDarker);
+        for (HeaderTab tab : tabHeader)
+            tab.setBackground(borderColorDarker);
         repaint();
     }
 
@@ -458,4 +438,18 @@ public final class MainFrame extends DraggableFrame {
         }
     }
 
+    public void failed(String s) {
+        if (s != null)
+            MessageBox.Show(s);
+        closeMessage();
+    }
+
+    LaunchingUIDaemon daemon = new LaunchingUIDaemon();
+
+    HashMap<String, Runnable> actions = new HashMap<>();
+
+    void invokeAction(String name) {
+        if (actions.containsKey(name))
+            actions.get(name).run();
+    }
 }

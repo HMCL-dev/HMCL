@@ -84,6 +84,11 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         setBackground(Color.white);
         setOpaque(true);
 
+        MainFrame.INSTANCE.actions.put("showGameDownloads", () -> {
+                                       MainFrame.INSTANCE.selectTab("game");
+                                       showGameDownloads();
+                                   });
+
         for (int i = 0; i < InstallerType.values().length; i++)
             installerPanels[i] = new InstallerPanel(this, InstallerType.values()[i]);
         pnlGameDownloads = new GameDownloadPanel(this);
@@ -1122,7 +1127,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
     private void btnTestGameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTestGameActionPerformed
         LogWindow.INSTANCE.setVisible(true);
-        MainFrame.INSTANCE.mainPanel.runGame();
+        MainFrame.INSTANCE.daemon.runGame(getProfile());
     }//GEN-LAST:event_btnTestGameActionPerformed
 
     private void btnShowLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnShowLogActionPerformed
@@ -1130,7 +1135,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }//GEN-LAST:event_btnShowLogActionPerformed
 
     private void btnMakeLaunchScriptActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMakeLaunchScriptActionPerformed
-        MainFrame.INSTANCE.mainPanel.makeLaunchScript();
+        MainFrame.INSTANCE.daemon.makeLaunchScript(getProfile());
     }//GEN-LAST:event_btnMakeLaunchScriptActionPerformed
 
     private void btnIncludeMinecraftActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnIncludeMinecraftActionPerformed

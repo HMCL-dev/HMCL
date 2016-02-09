@@ -20,11 +20,15 @@ package org.jackhuang.hellominecraft.launcher.core.asset;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftAssetService;
+import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.AssetIndexDownloadInfo;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.util.MessageBox;
+import org.jackhuang.hellominecraft.util.func.Function;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.tasks.Task;
 import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
@@ -116,4 +120,78 @@ public class MinecraftAssetService extends IMinecraftAssetService {
             throw new IOException("Assets file format malformed.", e);
         }
     }
+
+    private boolean checkAssetsExistance(AssetIndexDownloadInfo assetIndex) {
+        File assetsDir = getAssets();
+        File indexDir = new File(assetsDir, "indexes");
+        File objectDir = new File(assetsDir, "objects");
+        File indexFile = new File(indexDir, assetIndex.getId() + ".json");
+
+        if (!assetsDir.exists() && !indexFile.isFile())
+            return false;
+
+        try {
+            AssetsIndex index = (AssetsIndex) C.GSON.fromJson(FileUtils.readFileToString(indexFile, "UTF-8"), AssetsIndex.class);
+
+            if (index == null)
+                return false;
+            for (Map.Entry entry : index.getFileMap().entrySet())
+                if (!new File(new File(objectDir, ((AssetsObject) entry.getValue()).getHash().substring(0, 2)), ((AssetsObject) entry.getValue()).getHash()).exists())
+                    return false;
+            return true;
+        } catch (IOException | JsonSyntaxException e) {
+            return false;
+        }
+    }
+
+    private File reconstructAssets(AssetIndexDownloadInfo assetIndex) {
+        File assetsDir = getAssets();
+        File indexDir = new File(assetsDir, "indexes");
+        File objectDir = new File(assetsDir, "objects");
+        String assetVersion = assetIndex.getId();
+        File indexFile = new File(indexDir, assetVersion + ".json");
+        File virtualRoot = new File(new File(assetsDir, "virtual"), assetVersion);
+
+        if (!indexFile.isFile()) {
+            HMCLog.warn("No assets index file " + virtualRoot + "; can't reconstruct assets");
+            return assetsDir;
+        }
+
+        try {
+            AssetsIndex index = (AssetsIndex) C.GSON.fromJson(FileUtils.readFileToString(indexFile, "UTF-8"), AssetsIndex.class);
+
+            if (index == null)
+                return assetsDir;
+            if (index.isVirtual()) {
+                int cnt = 0;
+                HMCLog.log("Reconstructing virtual assets folder at " + virtualRoot);
+                int tot = index.getFileMap().entrySet().size();
+                for (Map.Entry entry : index.getFileMap().entrySet()) {
+                    File target = new File(virtualRoot, (String) entry.getKey());
+                    File original = new File(new File(objectDir, ((AssetsObject) entry.getValue()).getHash().substring(0, 2)), ((AssetsObject) entry.getValue()).getHash());
+                    if (original.exists()) {
+                        cnt++;
+                        if (!target.isFile())
+                            FileUtils.copyFile(original, target, false);
+                    }
+                }
+                // If the scale new format existent file is lower then 0.1, use the old format.
+                if (cnt * 10 < tot)
+                    return assetsDir;
+            }
+        } catch (IOException | JsonSyntaxException e) {
+            HMCLog.warn("Failed to create virutal assets.", e);
+        }
+
+        return virtualRoot;
+    }
+
+    public final Function<MinecraftVersion, String> ASSET_PROVIDER_IMPL = t -> {
+        if (!checkAssetsExistance(t.getAssetsIndex()))
+            if (MessageBox.Show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
+                IAssetsHandler.ASSETS_HANDLER.getList(t, MinecraftAssetService.this).run();
+                TaskWindow.factory().append(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(service.getDownloadType().getProvider())).create();
+            }
+        return reconstructAssets(t.getAssetsIndex()).getAbsolutePath();
+    };
 }

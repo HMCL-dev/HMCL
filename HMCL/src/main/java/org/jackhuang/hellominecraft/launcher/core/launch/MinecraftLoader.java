@@ -17,26 +17,19 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.launch;
 
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
-import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
-import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.func.Function;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.system.OS;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
-import org.jackhuang.hellominecraft.launcher.core.asset.AssetsIndex;
-import org.jackhuang.hellominecraft.launcher.core.asset.AssetsObject;
-import org.jackhuang.hellominecraft.launcher.core.asset.IAssetsHandler;
-import org.jackhuang.hellominecraft.util.system.OS;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
-import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.MessageBox;
-import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 
 /**
  *
@@ -68,13 +61,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
 
         String[] splitted = StrUtils.tokenize(version.minecraftArguments);
 
-        if (!checkAssetsExist())
-            if (MessageBox.Show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
-                IAssetsHandler.ASSETS_HANDLER.getList(version, service.asset()).run();
-                TaskWindow.factory().append(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(service.getDownloadType().getProvider())).create();
-            }
-
-        String game_assets = reconstructAssets().getAbsolutePath();
+        String game_assets = assetProvider.apply(version);
 
         for (String t : splitted) {
             t = t.replace("${auth_player_name}", lr.getUserName());
@@ -113,68 +100,16 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         }
     }
 
-    private boolean checkAssetsExist() {
-        File assetsDir = new File(service.baseDirectory(), "assets");
-        File indexDir = new File(assetsDir, "indexes");
-        File objectDir = new File(assetsDir, "objects");
-        File indexFile = new File(indexDir, version.getAssetsIndex().getId() + ".json");
+    private final Function<MinecraftVersion, String> DEFAULT_ASSET_PROVIDER = t -> {
+        return new File(service.baseDirectory(), "assets").getAbsolutePath();
+    };
 
-        if (!assetsDir.exists() && !indexFile.isFile())
-            return false;
+    private Function<MinecraftVersion, String> assetProvider = DEFAULT_ASSET_PROVIDER;
 
-        try {
-            AssetsIndex index = (AssetsIndex) C.GSON.fromJson(FileUtils.readFileToString(indexFile, "UTF-8"), AssetsIndex.class);
-
-            if (index == null)
-                return false;
-            for (Map.Entry entry : index.getFileMap().entrySet())
-                if (!new File(new File(objectDir, ((AssetsObject) entry.getValue()).getHash().substring(0, 2)), ((AssetsObject) entry.getValue()).getHash()).exists())
-                    return false;
-            return true;
-        } catch (IOException | JsonSyntaxException e) {
-            return false;
-        }
-    }
-
-    private File reconstructAssets() {
-        File assetsDir = new File(service.baseDirectory(), "assets");
-        File indexDir = new File(assetsDir, "indexes");
-        File objectDir = new File(assetsDir, "objects");
-        String assetVersion = version.getAssetsIndex().getId();
-        File indexFile = new File(indexDir, assetVersion + ".json");
-        File virtualRoot = new File(new File(assetsDir, "virtual"), assetVersion);
-
-        if (!indexFile.isFile()) {
-            HMCLog.warn("No assets index file " + virtualRoot + "; can't reconstruct assets");
-            return assetsDir;
-        }
-
-        try {
-            AssetsIndex index = (AssetsIndex) C.GSON.fromJson(FileUtils.readFileToString(indexFile, "UTF-8"), AssetsIndex.class);
-
-            if (index == null)
-                return assetsDir;
-            if (index.isVirtual()) {
-                int cnt = 0;
-                HMCLog.log("Reconstructing virtual assets folder at " + virtualRoot);
-                int tot = index.getFileMap().entrySet().size();
-                for (Map.Entry entry : index.getFileMap().entrySet()) {
-                    File target = new File(virtualRoot, (String) entry.getKey());
-                    File original = new File(new File(objectDir, ((AssetsObject) entry.getValue()).getHash().substring(0, 2)), ((AssetsObject) entry.getValue()).getHash());
-                    if (original.exists()) {
-                        cnt++;
-                        if (!target.isFile())
-                            FileUtils.copyFile(original, target, false);
-                    }
-                }
-                // If the scale new format existent file is lower then 0.1, use the old format.
-                if (cnt * 10 < tot)
-                    return assetsDir;
-            }
-        } catch (IOException | JsonSyntaxException e) {
-            HMCLog.warn("Failed to create virutal assets.", e);
-        }
-
-        return virtualRoot;
+    public void setAssetProvider(Function<MinecraftVersion, String> assetProvider) {
+        if (assetProvider == null)
+            this.assetProvider = DEFAULT_ASSET_PROVIDER;
+        else
+            this.assetProvider = assetProvider;
     }
 }

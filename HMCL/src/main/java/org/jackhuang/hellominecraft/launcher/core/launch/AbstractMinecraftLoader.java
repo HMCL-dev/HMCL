@@ -17,18 +17,12 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.launch;
 
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftLoader;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.launcher.Launcher;
-import org.jackhuang.hellominecraft.launcher.core.GameException;
-import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
-import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.system.JdkVersion;
 import org.jackhuang.hellominecraft.util.MathUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
@@ -36,6 +30,12 @@ import org.jackhuang.hellominecraft.util.system.OS;
 import org.jackhuang.hellominecraft.util.system.Platform;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.Utils;
+import org.jackhuang.hellominecraft.launcher.Launcher;
+import org.jackhuang.hellominecraft.launcher.core.GameException;
+import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
+import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
+import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftLoader;
 
 /**
  *

@@ -48,6 +48,8 @@ import org.jackhuang.hellominecraft.util.ui.wizard.spi.WizardPanelProvider;
 public class ModpackWizard extends WizardBranchController {
 
     static void process(CheckBoxTreeNode node, String basePath, List<String> list) {
+        if (node == null)
+            return;
         if (node.isSelected()) {
             if (basePath.length() > "minecraft/".length())
                 list.add(basePath.substring("minecraft/".length()));

@@ -22,21 +22,16 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
-import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.setting.Profile;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.launcher.core.launch.GameLauncher;
-import org.jackhuang.hellominecraft.launcher.core.LauncherVisibility;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
 import org.jackhuang.hellominecraft.launcher.ui.modpack.ModpackWizard;
@@ -44,9 +39,7 @@ import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
 import org.jackhuang.hellominecraft.util.Event;
 import org.jackhuang.hellominecraft.lookandfeel.comp.ConstomButton;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.system.JavaProcessMonitor;
 import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.util.ui.LogWindow;
 import org.jackhuang.hellominecraft.util.ui.wizard.api.WizardDisplayer;
 
 /**
@@ -73,7 +66,7 @@ public class MainPagePanel extends AnimatedPanel {
 
         btnRun.setText(C.i18n("ui.button.run"));
         btnRun.setFont(newFont);
-        btnRun.addActionListener(e -> runGame());
+        btnRun.addActionListener(e -> MainFrame.INSTANCE.daemon.runGame(getProfile()));
 
         this.add(pnlButtons);
         pnlButtons.setBounds(0, 0, w, h);
@@ -85,6 +78,8 @@ public class MainPagePanel extends AnimatedPanel {
         pnlMore.setOpaque(true);
 
         Settings.getInstance().authChangedEvent.register(onAuthChanged);
+
+        MainFrame.INSTANCE.daemon.customizedSuccessEvent = this::prepareAuths;
 
         prepareAuths();
     }
@@ -166,6 +161,11 @@ public class MainPagePanel extends AnimatedPanel {
 
         jLabel9.setText(C.i18n("ui.label.password")); // NOI18N
 
+        txtPassword.addCaretListener(new javax.swing.event.CaretListener() {
+            public void caretUpdate(javax.swing.event.CaretEvent evt) {
+                txtPasswordCaretUpdate(evt);
+            }
+        });
         txtPassword.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 txtPasswordFocusGained(evt);
@@ -332,7 +332,7 @@ public class MainPagePanel extends AnimatedPanel {
     }//GEN-LAST:event_txtPasswordFocusGained
 
     private void txtPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtPasswordActionPerformed
-        runGame();
+        MainFrame.INSTANCE.daemon.runGame(getProfile());
     }//GEN-LAST:event_txtPasswordActionPerformed
 
     private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
@@ -352,7 +352,7 @@ public class MainPagePanel extends AnimatedPanel {
             IAuthenticator l = Settings.getInstance().getAuthenticator();
             l.setUserName(txtPlayerName.getText());
             if (!l.hasPassword())
-                runGame();
+                MainFrame.INSTANCE.daemon.runGame(getProfile());
             else if (!l.isLoggedIn())
                 txtPassword.requestFocus();
         }
@@ -360,7 +360,7 @@ public class MainPagePanel extends AnimatedPanel {
 
     private void txtPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPasswordKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER)
-            runGame();
+            MainFrame.INSTANCE.daemon.runGame(getProfile());
     }//GEN-LAST:event_txtPasswordKeyPressed
 
     private void btnImportModpackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnImportModpackActionPerformed
@@ -382,6 +382,10 @@ public class MainPagePanel extends AnimatedPanel {
             return;
         WizardDisplayer.showWizard(new ModpackWizard(getProfile().service()).createWizard());
     }//GEN-LAST:event_btnExportModpackActionPerformed
+
+    private void txtPasswordCaretUpdate(javax.swing.event.CaretEvent evt) {//GEN-FIRST:event_txtPasswordCaretUpdate
+        Settings.getInstance().getAuthenticator().setPassword(txtPassword.getText());
+    }//GEN-LAST:event_txtPasswordCaretUpdate
 
     // <editor-fold defaultstate="collapsed" desc="Loads">
     private void prepareAuths() {
@@ -414,10 +418,8 @@ public class MainPagePanel extends AnimatedPanel {
         if (getProfile().service().version().getVersions().isEmpty()) {
             if (!showedNoVersion)
                 SwingUtilities.invokeLater(() -> {
-                    if (MessageBox.Show(C.i18n("mainwindow.no_version"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
-                        MainFrame.INSTANCE.selectTab("game");
-                        MainFrame.INSTANCE.gamePanel.showGameDownloads();
-                    }
+                    if (MessageBox.Show(C.i18n("mainwindow.no_version"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+                        MainFrame.INSTANCE.invokeAction("showGameDownloads");
                     showedNoVersion = true;
                 });
         } else {
@@ -458,82 +460,6 @@ public class MainPagePanel extends AnimatedPanel {
     private final ConstomButton btnRun;
     private static final int DEFAULT_WIDTH = 800, DEFAULT_HEIGHT = 480;
     //</editor-fold>
-
-    void runGame() {
-        MainFrame.INSTANCE.showMessage(C.i18n("ui.message.launching"));
-        getProfile().launcher().genLaunchCode(value -> {
-            value.successEvent.register(launchFinisher);
-            value.successEvent.register(this::prepareAuths);
-        }, this::failed, txtPassword.getText());
-    }
-
-    void makeLaunchScript() {
-        MainFrame.INSTANCE.showMessage(C.i18n("ui.message.launching"));
-        getProfile().launcher().genLaunchCode(value -> {
-            value.successEvent.register(launchScriptFinisher);
-            value.successEvent.register(this::prepareAuths);
-        }, this::failed, txtPassword.getText());
-    }
-
-    private void failed(String s) {
-        if (s != null)
-            MessageBox.Show(s);
-        MainFrame.INSTANCE.closeMessage();
-    }
-
-    final Event<List<String>> launchFinisher = (sender, str) -> {
-        final GameLauncher obj = (GameLauncher) sender;
-        obj.launchEvent.register(p -> {
-            if ((LauncherVisibility) obj.getTag() == LauncherVisibility.CLOSE && !LogWindow.INSTANCE.isVisible()) {
-                HMCLog.log("Without the option of keeping the launcher visible, this application will exit and will NOT catch game logs, but you can turn on \"Debug Mode\".");
-                System.exit(0);
-            } else if ((LauncherVisibility) obj.getTag() == LauncherVisibility.KEEP)
-                MainFrame.INSTANCE.closeMessage();
-            else {
-                if (LogWindow.INSTANCE.isVisible())
-                    LogWindow.INSTANCE.setExit(() -> true);
-                MainFrame.INSTANCE.dispose();
-            }
-            JavaProcessMonitor jpm = new JavaProcessMonitor(p);
-            jpm.applicationExitedAbnormallyEvent.register(t -> {
-                HMCLog.err("The game exited abnormally, exit code: " + t);
-                MessageBox.Show(C.i18n("launch.exited_abnormally") + ", exit code: " + t);
-            });
-            jpm.jvmLaunchFailedEvent.register(t -> {
-                HMCLog.err("Cannot create jvm, exit code: " + t);
-                MessageBox.Show(C.i18n("launch.cannot_create_jvm") + ", exit code: " + t);
-            });
-            jpm.stoppedEvent.register(() -> {
-                if ((LauncherVisibility) obj.getTag() != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible()) {
-                    HMCLog.log("Without the option of keeping the launcher visible, this application will exit and will NOT catch game logs, but you can turn on \"Debug Mode\".");
-                    System.exit(0);
-                }
-            });
-            jpm.start();
-        });
-        try {
-            obj.launch(str);
-        } catch (IOException e) {
-            failed(C.i18n("launch.failed_creating_process") + "\n" + e.getMessage());
-            HMCLog.err("Failed to launch when creating a new process.", e);
-        }
-        return true;
-    };
-
-    final Event<List<String>> launchScriptFinisher = (sender, str) -> {
-        boolean flag = false;
-        try {
-            String s = JOptionPane.showInputDialog(C.i18n("mainwindow.enter_script_name"));
-            if (s != null)
-                MessageBox.Show(C.i18n("mainwindow.make_launch_succeed") + " " + ((GameLauncher) sender).makeLauncher(s, str).getAbsolutePath());
-            flag = true;
-        } catch (IOException ex) {
-            MessageBox.Show(C.i18n("mainwindow.make_launch_script_failed"));
-            HMCLog.err("Failed to create script file.", ex);
-        }
-        MainFrame.INSTANCE.closeMessage();
-        return flag;
-    };
 
     public Profile getProfile() {
         return Settings.getProfile((String) cboProfiles.getSelectedItem());
