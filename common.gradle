@@ -15,6 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
+import java.util.jar.JarFile
+import java.util.jar.Pack200
+import java.util.zip.GZIPOutputStream
+
+
 apply plugin: 'java'
 apply plugin: 'maven'
 
@@ -77,4 +82,18 @@ task makeExecutable(dependsOn: jar) << {
         fos.write(bytes, 0, read);
     is.close()
     fos.close()
+}
+
+task makePackGZ(dependsOn: jar) << {
+    ext {
+        jar.classifier = ''
+        makeExecutableinjar = jar.archivePath
+        jar.classifier = ''
+        makeExecutableoutjar = jar.archivePath
+        jar.classifier = ''
+    }
+    def loc = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".pack.gz")
+    def os = new GZIPOutputStream(new FileOutputStream(loc))
+    Pack200.newPacker().pack(new JarFile(makeExecutableinjar), os)
+    os.close()
 }

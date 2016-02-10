@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.launcher.setting;
+package org.jackhuang.hellominecraft.launcher.util;
 
 import java.io.File;
 import org.jackhuang.hellominecraft.launcher.api.PluginManager;
@@ -26,6 +26,8 @@ import org.jackhuang.hellominecraft.launcher.core.auth.LoginInfo;
 import org.jackhuang.hellominecraft.launcher.core.launch.DefaultGameLauncher;
 import org.jackhuang.hellominecraft.launcher.core.launch.GameLauncher;
 import org.jackhuang.hellominecraft.launcher.core.launch.LaunchOptions;
+import org.jackhuang.hellominecraft.launcher.setting.Profile;
+import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;

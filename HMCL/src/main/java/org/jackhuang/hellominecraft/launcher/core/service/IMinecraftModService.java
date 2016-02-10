@@ -19,7 +19,7 @@ package org.jackhuang.hellominecraft.launcher.core.service;
 
 import java.io.File;
 import java.util.List;
-import org.jackhuang.hellominecraft.launcher.core.ModInfo;
+import org.jackhuang.hellominecraft.launcher.core.mod.ModInfo;
 
 /**
  *

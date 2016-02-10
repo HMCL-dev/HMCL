@@ -268,26 +268,25 @@ public final class MainFrame extends DraggableFrame {
     private AnimatedPanel tabContent[];
 
     public void selectTab(String tabName) {
-        boolean[] activation = new boolean[tabHeader.size()];
-        for (int i = 0; i < tabHeader.size(); i++) {
-            activation[i] = tabHeader.get(i).isActive();
-            tabHeader.get(i).setIsActive(false);
-        }
-
         for (int i = 0; i < tabHeader.size(); i++)
             if (tabName.equalsIgnoreCase(tabHeader.get(i).getActionCommand())) {
                 if (tabContent[i] == null) {
                     try {
                         tabContent[i] = tabClasses.get(i).newInstance();
                     } catch (Exception mustnothappen) {
-                        throw new InternalError(mustnothappen);
+                        throw new Error(mustnothappen);
                     }
                     tabWrapper[i].add(tabContent[i]);
                 }
+                boolean flag = tabHeader.get(i).isActive();
+                for (int j = 0; j < tabHeader.size(); j++)
+                    if (j != i)
+                        tabHeader.get(j).setIsActive(false);
                 tabHeader.get(i).setIsActive(true);
                 tabContent[i].onSelected();
-                if (!activation[i])
+                if (!flag)
                     tabContent[i].animate();
+                break;
             }
 
         this.infoLayout.show(this.infoSwap, tabName);

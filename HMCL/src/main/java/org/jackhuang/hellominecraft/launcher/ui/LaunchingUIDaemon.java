@@ -20,7 +20,7 @@ package org.jackhuang.hellominecraft.launcher.ui;
 import java.io.IOException;
 import java.util.List;
 import javax.swing.JOptionPane;
-import org.jackhuang.hellominecraft.launcher.core.LauncherVisibility;
+import org.jackhuang.hellominecraft.launcher.util.LauncherVisibility;
 import org.jackhuang.hellominecraft.launcher.core.launch.GameLauncher;
 import org.jackhuang.hellominecraft.launcher.setting.Profile;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;

@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.launcher.setting;
+package org.jackhuang.hellominecraft.launcher.util;
 
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.api.IPlugin;
@@ -25,6 +25,8 @@ import org.jackhuang.hellominecraft.launcher.core.auth.SkinmeAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.core.auth.YggdrasilAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.launch.LaunchOptions;
+import org.jackhuang.hellominecraft.launcher.setting.Profile;
+import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.ui.MainFrame;
 import org.jackhuang.hellominecraft.util.EventHandler;
 import org.jackhuang.hellominecraft.util.func.Consumer;

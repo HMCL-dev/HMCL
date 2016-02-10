@@ -265,7 +265,7 @@ mainwindow.enter_script_name=輸入要生成腳本的資料名
 mainwindow.make_launch_succeed=啟動腳本已生成完畢:
 mainwindow.no_version=未找到任何版本，是否進入遊戲下載？
 
-launcher.about=<html>默認背景圖來自Liberty Dome服務器。 <br/>關於作者：<br/>\n百度ID：huanghongxun20<br/>\nmcbbs：huanghongxun<br/>\n郵箱：huanghongxun2008@126.com<br/>\nMinecraft Forum ID: klkl6523<br />\n歡迎提交Bug哦<br/>\nCopyright (c) 2013-2015 huangyuhui.<br/>免責聲明：Minecraft軟體版權歸Mojang AB所有，遊戲由於誤操作本啟動器而丟失數據的概不負責。 <br/>本啟動器在GPLv3協議下開源:http://github.com/huanghongxun/HMCL/<br/>本軟體使用了基於Apache License 2.0的Gson項目，感謝貢獻者。</html>
+launcher.about=<html>默認背景圖來自Liberty Dome服務器。 <br/>關於作者：<br/>百度ID：huanghongxun20<br/>mcbbs：huanghongxun<br/>郵箱：huanghongxun2008@126.com<br/>Minecraft Forum ID: klkl6523<br />歡迎提交Bug哦<br/>Copyright (c) 2013-2015 huangyuhui.<br/>免責聲明：Minecraft軟體版權歸Mojang AB所有，遊戲由於誤操作本啟動器而丟失數據的概不負責。 <br/>本啟動器在GPLv3協議下開源:http://github.com/huanghongxun/HMCL/<br/>本軟體使用了基於Apache License 2.0的Gson項目，感謝貢獻者。</html>
 launcher.download_source=下載源
 launcher.background_location=背景地址
 launcher.exit_failed=強制退出失敗，可能是Forge 1.7.10及更高版本導致的，無法解決。
@@ -273,7 +273,7 @@ launcher.versions_json_not_matched=版本%s格式不規範！該版本資料夾�
 launcher.versions_json_not_matched_cannot_auto_completion=版本%s缺失必要的版本信息資料，是否删除该版本？
 launcher.versions_json_not_formatted=版本%s信息資料格式错误，是否重新下载？
 launcher.choose_bgpath=選擇背景路徑
-launcher.background_tooltip=<html>\n<body>\n啟動器默認使用自帶的背景<br />\n如果當前目錄有background.png，則會使用該資料作為背景<br />\n如果當前目錄有bg子目錄，則會隨機使用裡面的一張圖作為背景<br />\n如果該背景地址被修改，則會使用背景地址裡的一張圖作為背景<br />\n背景地址允許有多個地址，使用半角分號";"(不包含雙引號)分隔\n</body>\n</html>
+launcher.background_tooltip=<html><body>啟動器默認使用自帶的背景<br />如果當前目錄有background.png，則會使用該資料作為背景<br />如果當前目錄有bg子目錄，則會隨機使用裡面的一張圖作為背景<br />如果該背景地址被修改，則會使用背景地址裡的一張圖作為背景<br />背景地址允許有多個地址，使用半角分號";"(不包含雙引號)分隔</body></html>
 launcher.update_launcher=检查更新
 launcher.enable_shadow=启用窗口阴影(重启启动器生效)
 launcher.theme=主题

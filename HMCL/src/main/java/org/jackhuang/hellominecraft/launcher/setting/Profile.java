@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hellominecraft.launcher.setting;
 
+import org.jackhuang.hellominecraft.launcher.util.HMCLGameLauncher;
+import org.jackhuang.hellominecraft.launcher.util.DefaultMinecraftService;
 import java.io.File;
 import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.launcher.core.MCUtils;

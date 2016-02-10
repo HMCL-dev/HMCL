@@ -20,7 +20,7 @@ package org.jackhuang.hellominecraft.launcher.setting;
 import java.io.File;
 import java.io.IOException;
 import org.jackhuang.hellominecraft.launcher.Main;
-import org.jackhuang.hellominecraft.launcher.core.LauncherVisibility;
+import org.jackhuang.hellominecraft.launcher.util.LauncherVisibility;
 import org.jackhuang.hellominecraft.launcher.core.launch.LaunchOptions;
 import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
 import org.jackhuang.hellominecraft.util.C;

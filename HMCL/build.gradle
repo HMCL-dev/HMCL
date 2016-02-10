@@ -113,3 +113,4 @@ processResources {
 }
 
 build.dependsOn makeExecutable
+build.dependsOn makePackGZ
