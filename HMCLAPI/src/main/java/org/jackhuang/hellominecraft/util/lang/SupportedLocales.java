@@ -53,7 +53,7 @@ public enum SupportedLocales {
 
     public String translate(String key, Object... format) {
         try {
-            return bundle.localize(key);
+            return String.format(bundle.localize(key), format);
         } catch (Exception ex) {
             ex.printStackTrace();
             return key;
