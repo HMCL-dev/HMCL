@@ -107,7 +107,7 @@ ui.more=更多
 
 crash.advice.UnsupportedClassVersionError=這可能是因為您的Java版本過於老舊，可以嘗試更換最新Java並在版本設定的Java路徑中設定.
 crash.advice.ConcurrentModificationException=這可能是因為您的Java版本高於Java 1.8.0_11導致的,可以嘗試卸載Java8安裝Java7。
-crash.advice.ClassNotFoundException=Minecraft不完整或Mod衝突，如果有未能下载的資料请下载成功后重试或是客户端损坏请重试请重新制作客户端或下載整合包解決問題。
+crash.advice.ClassNotFoundException=Minecraft不完整或Mod衝突，如果有未能下载的資料请下载成功后重试或是客户端损坏请重试请重新制作客户端或下載整合包解決問題，另可尝试游戏设定->（版本）管理->删除库资料解决问题
 crash.advice.NoSuchFieldError=Minecraft不完整或Mod衝突，如果有未能下载的資料请下载成功后重试或是客户端损坏请重试请重新制作客户端或下載整合包解決問題。
 crash.advice.LWJGLException=您的电脑不正常，可能需要使用驱动精灵或其他安装器更新显卡驱动。
 crash.advice.SecurityException=可能是您修改了minecraft.jar但未刪除META-INF資料夾的原因。請通過壓縮軟體刪除jar中的META-INF資料夾。
@@ -298,6 +298,7 @@ versions.manage.remove=刪除該版本
 versions.manage.remove.confirm=真的要刪除版本
 versions.manage.redownload_json=重新下載版本配置(minecraft.json)
 versions.manage.redownload_assets_index=重新下載資源配置(assets_index.json)
+versions.mamage.remove_libraries=刪除所有庫文件
 
 advice.os64butjdk32=您的系統是64位的但是Java是32位的，推薦您安裝64位Java.
 

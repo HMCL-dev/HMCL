@@ -107,7 +107,7 @@ ui.more=More
 
 crash.advice.UnsupportedClassVersionError=Maybe your java is too old, try to update the java.
 crash.advice.ConcurrentModificationException=Maybe your Java is newer than 1.8.0_11, you could downgrade to Java 7.
-crash.advice.ClassNotFoundException=Minecraft or mods are incomplete. Retry if there are some libraries that have not downloaded or update your game and mods!
+crash.advice.ClassNotFoundException=Minecraft or mods are incomplete. Retry if there are some libraries that have not downloaded or update your game and mods! Or you can try Game Settings -> Manage (Version) -> Delete library files to solve the problem.
 crash.advice.NoSuchFieldError=Minecraft or mods are incomplete. Retry if there are some libraries that have not downloaded or update your game and mods!
 crash.advice.LWJGLException=Maybe your video driver does not work well, please update your video driver.
 crash.advice.SecurityException=Maybe you have modified minecraft.jar but have not removed the META-INF.
@@ -298,6 +298,7 @@ versions.manage.remove=Delete this version
 versions.manage.remove.confirm=Sure to remove the version
 versions.manage.redownload_json=Redownload Minecraft Configuration(minecraft.json)
 versions.manage.redownload_assets_index=Redownload Assets Index
+versions.mamage.remove_libraries=Delete library files
 
 advice.os64butjdk32=Your OS is 64-Bit but your Java is 32-Bit. The 64-Bit Java is recommended.
 

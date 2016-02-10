@@ -28,6 +28,7 @@ import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.AssetIndexDownloadInfo;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.MessageBox;
+import org.jackhuang.hellominecraft.util.code.DigestUtils;
 import org.jackhuang.hellominecraft.util.func.Function;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.tasks.Task;
@@ -127,11 +128,12 @@ public class MinecraftAssetService extends IMinecraftAssetService {
         File objectDir = new File(assetsDir, "objects");
         File indexFile = new File(indexDir, assetIndex.getId() + ".json");
 
-        if (!assetsDir.exists() && !indexFile.isFile())
+        if (!assetsDir.exists() || !indexFile.isFile())
             return false;
 
         try {
-            AssetsIndex index = (AssetsIndex) C.GSON.fromJson(FileUtils.readFileToString(indexFile, "UTF-8"), AssetsIndex.class);
+            String assetIndexContent = FileUtils.readFileToString(indexFile, "UTF-8");
+            AssetsIndex index = (AssetsIndex) C.GSON.fromJson(assetIndexContent, AssetsIndex.class);
 
             if (index == null)
                 return false;
@@ -158,7 +160,8 @@ public class MinecraftAssetService extends IMinecraftAssetService {
         }
 
         try {
-            AssetsIndex index = (AssetsIndex) C.GSON.fromJson(FileUtils.readFileToString(indexFile, "UTF-8"), AssetsIndex.class);
+            String assetIndexContent = FileUtils.readFileToString(indexFile, "UTF-8");
+            AssetsIndex index = (AssetsIndex) C.GSON.fromJson(assetIndexContent, AssetsIndex.class);
 
             if (index == null)
                 return assetsDir;

@@ -59,6 +59,7 @@ import org.jackhuang.hellominecraft.util.OverridableSwingWorker;
 import org.jackhuang.hellominecraft.util.version.MinecraftVersionRequest;
 import org.jackhuang.hellominecraft.util.system.OS;
 import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 import org.jackhuang.hellominecraft.util.system.Java;
@@ -169,6 +170,12 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         itm.addActionListener((e) -> {
             if (mcVersion != null)
                 getProfile().service().asset().refreshAssetsIndex(mcVersion);
+        });
+        ppmManage.add(itm);
+        itm = new JMenuItem(C.i18n("versions.mamage.remove_libraries"));
+        itm.addActionListener((e) -> {
+            if (mcVersion != null)
+                FileUtils.deleteDirectoryQuietly(new File(getProfile().service().baseDirectory(), "libraries"));
         });
         ppmManage.add(itm);
     }
