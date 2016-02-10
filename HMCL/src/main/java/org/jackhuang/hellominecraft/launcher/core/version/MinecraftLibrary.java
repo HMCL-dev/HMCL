@@ -56,13 +56,15 @@ public class MinecraftLibrary extends IMinecraftLibrary {
     @Override
     public boolean allow() {
         if (rules != null) {
-            String action = "disallow";
+            boolean flag = false;
             for (Rules r : rules)
-                if (r.action() != null)
-                    action = r.action();
-            return "allow".equals(action);
-        }
-        return true;
+                if ("disallow".equals(r.action()))
+                    return false;
+                else if ("allow".equals(r.action()))
+                    flag = true;
+            return flag;
+        } else
+            return true;
     }
 
     private String formatArch(String nati) {
