@@ -142,9 +142,9 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         });
 
         chkEnableShadow.setText(C.i18n("launcher.enable_shadow")); // NOI18N
-        chkEnableShadow.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                chkEnableShadowFocusLost(evt);
+        chkEnableShadow.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                chkEnableShadowItemStateChanged(evt);
             }
         });
 
@@ -192,16 +192,16 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         lblProxyPassword.setText(C.i18n("proxy.password")); // NOI18N
 
         chkEnableAnimation.setText(C.i18n("launcher.enable_animation")); // NOI18N
-        chkEnableAnimation.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                chkEnableAnimationFocusLost(evt);
+        chkEnableAnimation.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                chkEnableAnimationItemStateChanged(evt);
             }
         });
 
         chkDecorated.setText(C.i18n("launcher.decorated")); // NOI18N
-        chkDecorated.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                chkDecoratedFocusLost(evt);
+        chkDecorated.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                chkDecoratedItemStateChanged(evt);
             }
         });
 
@@ -359,13 +359,29 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         Settings.UPDATE_CHECKER.process(true);
     }//GEN-LAST:event_btnCheckUpdateActionPerformed
 
-    private void chkEnableShadowFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_chkEnableShadowFocusLost
-        Settings.getInstance().setEnableShadow(chkEnableShadow.isSelected());
-    }//GEN-LAST:event_chkEnableShadowFocusLost
-
     private void cboThemeItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboThemeItemStateChanged
         Settings.getInstance().setTheme(cboTheme.getSelectedIndex());
     }//GEN-LAST:event_cboThemeItemStateChanged
+
+    private void lblModpackMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblModpackMouseClicked
+        SwingUtils.openLink("http://blog.163.com/huanghongxun2008@126/blog/static/7738046920160323812771/");
+    }//GEN-LAST:event_lblModpackMouseClicked
+
+    private void cboLangItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboLangItemStateChanged
+        Settings.getInstance().setLocalization(SupportedLocales.values()[cboLang.getSelectedIndex()].name());
+    }//GEN-LAST:event_cboLangItemStateChanged
+
+    private void chkEnableShadowItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkEnableShadowItemStateChanged
+        Settings.getInstance().setEnableShadow(chkEnableShadow.isSelected());
+    }//GEN-LAST:event_chkEnableShadowItemStateChanged
+
+    private void chkDecoratedItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkDecoratedItemStateChanged
+        Settings.getInstance().setDecorated(chkDecorated.isSelected());
+    }//GEN-LAST:event_chkDecoratedItemStateChanged
+
+    private void chkEnableAnimationItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkEnableAnimationItemStateChanged
+        Settings.getInstance().setEnableAnimation(chkEnableAnimation.isSelected());
+    }//GEN-LAST:event_chkEnableAnimationItemStateChanged
 
     private void txtProxyHostFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtProxyHostFocusLost
         Settings.getInstance().setProxyHost(txtProxyHost.getText());
@@ -382,22 +398,6 @@ public class LauncherSettingsPanel extends AnimatedPanel {
     private void txtProxyPasswordFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtProxyPasswordFocusLost
         Settings.getInstance().setProxyPassword(txtProxyPassword.getText());
     }//GEN-LAST:event_txtProxyPasswordFocusLost
-
-    private void chkEnableAnimationFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_chkEnableAnimationFocusLost
-        Settings.getInstance().setEnableAnimation(chkEnableAnimation.isSelected());
-    }//GEN-LAST:event_chkEnableAnimationFocusLost
-
-    private void chkDecoratedFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_chkDecoratedFocusLost
-        Settings.getInstance().setDecorated(chkDecorated.isSelected());
-    }//GEN-LAST:event_chkDecoratedFocusLost
-
-    private void lblModpackMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblModpackMouseClicked
-        SwingUtils.openLink("http://blog.163.com/huanghongxun2008@126/blog/static/7738046920160323812771/");
-    }//GEN-LAST:event_lblModpackMouseClicked
-
-    private void cboLangItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboLangItemStateChanged
-        Settings.getInstance().setLocalization(SupportedLocales.values()[cboLang.getSelectedIndex()].name());
-    }//GEN-LAST:event_cboLangItemStateChanged
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCheckUpdate;

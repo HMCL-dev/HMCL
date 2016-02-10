@@ -149,7 +149,7 @@ public abstract class IMinecraftProvider {
      */
     public abstract void refreshVersions();
 
-    public final EventHandler<Void> onRefreshingVersions = new EventHandler<>(this),
+    public final EventHandler<IMinecraftService> onRefreshingVersions = new EventHandler<>(this),
         onRefreshedVersions = new EventHandler<>(this);
     public final EventHandler<String> onLoadedVersion = new EventHandler<>(this);
 

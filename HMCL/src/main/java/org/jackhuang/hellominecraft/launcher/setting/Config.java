@@ -98,6 +98,7 @@ public final class Config {
 
     public void setLast(String last) {
         this.last = last;
+        Settings.onProfileChanged();
         Settings.save();
     }
 

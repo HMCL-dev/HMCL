@@ -24,4 +24,8 @@ package org.jackhuang.hellominecraft.launcher.ui;
 public interface Selectable {
 
     void onSelected();
+
+    boolean isSelected();
+
+    void onLeaving();
 }

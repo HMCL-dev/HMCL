@@ -27,6 +27,7 @@ import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.CollectionUtils;
+import org.jackhuang.hellominecraft.util.EventHandler;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
@@ -56,7 +57,9 @@ public final class Settings {
         if (!getProfiles().containsKey(DEFAULT_PROFILE))
             getProfiles().put(DEFAULT_PROFILE, new Profile());
 
-        for (Profile e : getProfiles().values()) {
+        for (Map.Entry<String, Profile> entry : getProfiles().entrySet()) {
+            Profile e = entry.getValue();
+            e.setName(entry.getKey());
             e.checkFormat();
             e.propertyChanged.register(Settings::save);
         }
@@ -91,6 +94,10 @@ public final class Settings {
         }
     }
 
+    public static Profile getLastProfile() {
+        return getProfile(getInstance().getLast());
+    }
+
     public static Profile getProfile(String name) {
         if (name == null)
             return getProfiles().get("Default");
@@ -113,7 +120,7 @@ public final class Settings {
         return SETTINGS.getConfigurations().firstEntry().getValue();
     }
 
-    public static boolean trySetProfile(Profile ver) {
+    public static boolean putProfile(Profile ver) {
         if (ver == null || ver.getName() == null || getProfiles().containsKey(ver.getName()))
             return false;
         getProfiles().put(ver.getName(), ver);
@@ -130,5 +137,19 @@ public final class Settings {
             return false;
         }
         return getProfiles().remove(ver) != null;
+    }
+
+    public static final EventHandler<Profile> profileChangedEvent = new EventHandler(null);
+    public static final EventHandler<Void> profileLoadingEvent = new EventHandler(null);
+
+    static void onProfileChanged() {
+        Profile p = getLastProfile();
+        profileChangedEvent.execute(p);
+        p.onSelected();
+    }
+
+    public static void onProfileLoading() {
+        profileLoadingEvent.execute(null);
+        onProfileChanged();
     }
 }

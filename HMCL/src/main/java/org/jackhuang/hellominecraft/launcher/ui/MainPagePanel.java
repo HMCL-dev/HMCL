@@ -22,6 +22,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -34,10 +35,12 @@ import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
+import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.ui.modpack.ModpackWizard;
 import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
 import org.jackhuang.hellominecraft.util.Event;
 import org.jackhuang.hellominecraft.lookandfeel.comp.ConstomButton;
+import org.jackhuang.hellominecraft.util.func.Consumer;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.util.ui.wizard.api.WizardDisplayer;
@@ -78,6 +81,8 @@ public class MainPagePanel extends AnimatedPanel {
         pnlMore.setOpaque(true);
 
         Settings.getInstance().authChangedEvent.register(onAuthChanged);
+        Settings.profileLoadingEvent.register(onLoadingProfiles);
+        Settings.profileChangedEvent.register(onSelectedProfilesChanged);
 
         MainFrame.INSTANCE.daemon.customizedSuccessEvent = this::prepareAuths;
 
@@ -314,10 +319,8 @@ public class MainPagePanel extends AnimatedPanel {
     }//GEN-LAST:event_cboLoginModeItemStateChanged
 
     private void cboProfilesItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboProfilesItemStateChanged
-        if (!isLoading && cboProfiles.getSelectedIndex() != -1 && !StrUtils.isBlank((String) cboProfiles.getSelectedItem())) {
+        if (!isLoading && cboProfiles.getSelectedIndex() != -1 && !StrUtils.isBlank((String) cboProfiles.getSelectedItem()))
             Settings.getInstance().setLast((String) cboProfiles.getSelectedItem());
-            loadMinecraftVersions();
-        }
     }//GEN-LAST:event_cboProfilesItemStateChanged
 
     private void cboVersionsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboVersionsItemStateChanged
@@ -374,7 +377,7 @@ public class MainPagePanel extends AnimatedPanel {
             return;
         String suggestedModpackId = JOptionPane.showInputDialog("Please enter your favourite game name", FileUtils.getBaseName(fc.getSelectedFile().getName()));
         TaskWindow.factory().append(ModpackManager.install(fc.getSelectedFile(), getProfile().service(), suggestedModpackId)).create();
-        loadMinecraftVersions();
+        getProfile().service().version().refreshVersions();
     }//GEN-LAST:event_btnImportModpackActionPerformed
 
     private void btnExportModpackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExportModpackActionPerformed
@@ -400,57 +403,6 @@ public class MainPagePanel extends AnimatedPanel {
             Settings.getInstance().setLoginType(loginType);
         }
     }
-
-    void loadFromSettings() {
-        for (Profile s : Settings.getProfilesFiltered())
-            cboProfiles.addItem(s.getName());
-    }
-
-    boolean showedNoVersion = false;
-
-    void loadMinecraftVersions() {
-        isLoading = true;
-        cboVersions.removeAllItems();
-        int index = 0, i = 0;
-        getProfile().selectedVersionChangedEvent.register(onVersionChanged);
-        getProfile().service().version().refreshVersions();
-        String selVersion = getProfile().getSelectedVersion();
-        if (getProfile().service().version().getVersions().isEmpty()) {
-            if (!showedNoVersion)
-                SwingUtilities.invokeLater(() -> {
-                    if (MessageBox.Show(C.i18n("mainwindow.no_version"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                        MainFrame.INSTANCE.invokeAction("showGameDownloads");
-                    showedNoVersion = true;
-                });
-        } else {
-            for (MinecraftVersion mcVersion : getProfile().service().version().getVersions()) {
-                if (mcVersion.hidden)
-                    continue;
-                cboVersions.addItem(mcVersion.id);
-                if (mcVersion.id.equals(selVersion))
-                    index = i;
-                i++;
-            }
-            if (index < cboVersions.getItemCount())
-                cboVersions.setSelectedIndex(index);
-        }
-        isLoading = false;
-    }
-
-    private void refreshMinecrafts(String last) {
-        isLoading = true;
-        cboProfiles.removeAllItems();
-        loadFromSettings();
-        for (int i = 0; i < cboProfiles.getItemCount(); i++) {
-            String s = (String) cboProfiles.getItemAt(i);
-            if (s != null && s.equals(last)) {
-                cboProfiles.setSelectedIndex(i);
-                break;
-            }
-        }
-        isLoading = false;
-        loadMinecraftVersions();
-    }
     //</editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="Private Variables">
@@ -462,12 +414,13 @@ public class MainPagePanel extends AnimatedPanel {
     //</editor-fold>
 
     public Profile getProfile() {
-        return Settings.getProfile((String) cboProfiles.getSelectedItem());
+        return Settings.getProfile(Settings.getInstance().getLast());
     }
 
     @Override
     public void onSelected() {
-        refreshMinecrafts(Settings.getInstance().getLast());
+        super.onSelected();
+        Settings.onProfileLoading();
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -489,11 +442,6 @@ public class MainPagePanel extends AnimatedPanel {
     private javax.swing.JPasswordField txtPassword;
     private javax.swing.JTextField txtPlayerName;
     // End of variables declaration//GEN-END:variables
-
-    final Event<String> onVersionChanged = (sender, v) -> {
-        cboVersions.setToolTipText(v);
-        return true;
-    };
 
     final Event<IAuthenticator> onAuthChanged = (sender, l) -> {
         if (l.hasPassword()) {
@@ -517,4 +465,55 @@ public class MainPagePanel extends AnimatedPanel {
         return true;
     };
 
+    final Runnable onLoadingProfiles = this::loadProfiles;
+
+    private void loadProfiles() {
+        DefaultComboBoxModel model = new DefaultComboBoxModel();
+        for (Profile s : Settings.getProfilesFiltered())
+            model.addElement(s.getName());
+        cboProfiles.setModel(model);
+    }
+
+    final Consumer<IMinecraftService> onRefreshedVersions = t -> {
+        if (getProfile().service() == t)
+            loadVersions();
+    };
+
+    boolean showedNoVersion = false;
+
+    void loadVersions() {
+        isLoading = true;
+        cboVersions.removeAllItems();
+        String selVersion = getProfile().getSelectedVersion();
+        if (getProfile().service().version().getVersions().isEmpty()) {
+            if (!showedNoVersion)
+                SwingUtilities.invokeLater(() -> {
+                    if (MessageBox.Show(C.i18n("mainwindow.no_version"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+                        MainFrame.INSTANCE.invokeAction("showGameDownloads");
+                    showedNoVersion = true;
+                });
+        } else {
+            for (MinecraftVersion mcVersion : getProfile().service().version().getVersions()) {
+                if (mcVersion.hidden)
+                    continue;
+                cboVersions.addItem(mcVersion.id);
+            }
+            versionChanged.accept(selVersion);
+        }
+        isLoading = false;
+    }
+
+    final Consumer<String> versionChanged = this::versionChanged;
+
+    void versionChanged(String selectedVersion) {
+        ((DefaultComboBoxModel) cboVersions.getModel()).setSelectedItem(selectedVersion);
+        cboVersions.setToolTipText(selectedVersion);
+    }
+
+    final Consumer<Profile> onSelectedProfilesChanged = t -> {
+        t.service().version().onRefreshedVersions.register(onRefreshedVersions);
+        t.selectedVersionChangedEvent.register(versionChanged);
+
+        ((DefaultComboBoxModel) cboProfiles.getModel()).setSelectedItem(t.getName());
+    };
 }

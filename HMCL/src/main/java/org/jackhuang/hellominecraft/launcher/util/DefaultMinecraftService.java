@@ -91,6 +91,10 @@ public class DefaultMinecraftService extends IMinecraftService {
                 vs = C.GSON.fromJson(s, VersionSetting.class);
         }
         vs.id = id;
+        vs.propertyChanged.register((sender, t) -> {
+            saveVersionSetting(((VersionSetting) sender).id);
+            return true;
+        });
         versionSettings.put(id, vs);
     }
 

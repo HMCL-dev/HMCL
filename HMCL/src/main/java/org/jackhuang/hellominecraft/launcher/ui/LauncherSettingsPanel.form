@@ -204,7 +204,7 @@
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="chkEnableShadowFocusLost"/>
+        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="chkEnableShadowItemStateChanged"/>
       </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="lblTheme">
@@ -286,7 +286,7 @@
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="chkEnableAnimationFocusLost"/>
+        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="chkEnableAnimationItemStateChanged"/>
       </Events>
     </Component>
     <Component class="javax.swing.JCheckBox" name="chkDecorated">
@@ -296,7 +296,7 @@
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="chkDecoratedFocusLost"/>
+        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="chkDecoratedItemStateChanged"/>
       </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="lblModpack">

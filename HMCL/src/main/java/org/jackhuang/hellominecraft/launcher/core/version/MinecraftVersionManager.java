@@ -68,7 +68,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public void refreshVersions() {
-        onRefreshingVersions.execute(null);
+        onRefreshingVersions.execute(service);
 
         try {
             MCUtils.tryWriteProfile(service.baseDirectory());
@@ -146,7 +146,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                     HMCLog.warn("Ignoring: " + dir + ", the json of this Minecraft is malformed.", e);
                 }
             }
-        onRefreshedVersions.execute(null);
+        onRefreshedVersions.execute(service);
     }
 
     @Override

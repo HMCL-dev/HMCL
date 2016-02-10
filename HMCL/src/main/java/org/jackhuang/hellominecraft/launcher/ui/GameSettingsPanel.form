@@ -250,7 +250,7 @@
                 </Property>
               </Properties>
               <Events>
-                <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="chkFullscreenFocusLost"/>
+                <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="chkFullscreenItemStateChanged"/>
               </Events>
             </Component>
             <Component class="javax.swing.JTextField" name="txtJavaDir">
@@ -302,7 +302,7 @@
                 </Property>
               </Properties>
               <Events>
-                <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="cboLauncherVisibilityFocusLost"/>
+                <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="cboLauncherVisibilityItemStateChanged"/>
               </Events>
             </Component>
             <Component class="javax.swing.JLabel" name="lblLauncherVisibility">
@@ -326,7 +326,7 @@
                 </Property>
               </Properties>
               <Events>
-                <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="cboRunDirectoryFocusLost"/>
+                <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="cboRunDirectoryItemStateChanged"/>
               </Events>
             </Component>
             <Component class="javax.swing.JButton" name="btnChoosingJavaDir">
@@ -470,7 +470,7 @@
                 </Property>
               </Properties>
               <Events>
-                <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="chkDebugFocusLost"/>
+                <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="chkDebugItemStateChanged"/>
               </Events>
             </Component>
             <Component class="javax.swing.JLabel" name="lblJavaArgs">
@@ -521,7 +521,7 @@
                 </Property>
               </Properties>
               <Events>
-                <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="chkNoJVMArgsFocusLost"/>
+                <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="chkNoJVMArgsItemStateChanged"/>
               </Events>
             </Component>
             <Component class="javax.swing.JCheckBox" name="chkCancelWrapper">
@@ -531,7 +531,7 @@
                 </Property>
               </Properties>
               <Events>
-                <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="chkCancelWrapperFocusLost"/>
+                <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="chkCancelWrapperItemStateChanged"/>
               </Events>
             </Component>
             <Component class="javax.swing.JLabel" name="lblPrecalledCommand">

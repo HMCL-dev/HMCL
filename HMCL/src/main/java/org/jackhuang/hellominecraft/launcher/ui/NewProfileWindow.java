@@ -127,9 +127,7 @@ public final class NewProfileWindow extends javax.swing.JDialog {
     private void txtNewProfileNameKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtNewProfileNameKeyTyped
         switch (evt.getKeyCode()) {
         case 13:
-            Profile newProfile = new Profile(Settings.getProfile(cboProfiles.getSelectedItem().toString()));
-            newProfile.setName(txtNewProfileName.getText());
-            Settings.trySetProfile(newProfile);
+            act();
             break;
         case 27:
             this.dispose();
@@ -140,13 +138,16 @@ public final class NewProfileWindow extends javax.swing.JDialog {
     }//GEN-LAST:event_txtNewProfileNameKeyTyped
 
     private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOKActionPerformed
+        act();
+    }//GEN-LAST:event_btnOKActionPerformed
+
+    void act() {
         if (!StrUtils.isBlank(txtNewProfileName.getText())) {
-            Profile newProfile = new Profile(Settings.getProfile(cboProfiles.getSelectedItem().toString()));
-            newProfile.setName(txtNewProfileName.getText());
-            Settings.trySetProfile(newProfile);
+            Profile newProfile = new Profile(txtNewProfileName.getText(), Settings.getProfile(cboProfiles.getSelectedItem().toString()));
+            Settings.putProfile(newProfile);
         }
         this.dispose();
-    }//GEN-LAST:event_btnOKActionPerformed
+    }
 
     private void btnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelActionPerformed
         this.dispose();

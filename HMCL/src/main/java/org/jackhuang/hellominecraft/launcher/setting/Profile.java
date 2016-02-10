@@ -49,7 +49,7 @@ public final class Profile {
         gameDir = MCUtils.getInitGameDir().getPath();
     }
 
-    public Profile(Profile v) {
+    public Profile(String name, Profile v) {
         this();
         if (v == null)
             return;
@@ -132,12 +132,16 @@ public final class Profile {
         return name;
     }
 
-    public void setName(String name) {
+    void setName(String name) {
         this.name = name;
         propertyChanged.execute("name");
     }
 
     public void checkFormat() {
         gameDir = gameDir.replace('/', OS.os().fileSeparator).replace('\\', OS.os().fileSeparator);
+    }
+
+    public void onSelected() {
+        service().version().refreshVersions();
     }
 }

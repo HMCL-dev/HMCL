@@ -89,8 +89,22 @@ public class AnimatedPanel extends JPanel implements Selectable {
         g.drawImage(image, 0, 0, this);
     }
 
+    boolean selected = false;
+
+    @Override
+    public boolean isSelected() {
+        return selected;
+    }
+
     @Override
     public void onSelected() {
-        animate();
+        if (!selected)
+            animate();
+        selected = true;
+    }
+
+    @Override
+    public void onLeaving() {
+        selected = false;
     }
 }

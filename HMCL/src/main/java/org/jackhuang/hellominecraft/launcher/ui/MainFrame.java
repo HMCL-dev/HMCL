@@ -105,6 +105,7 @@ public final class MainFrame extends DraggableFrame {
 
             @Override
             public void windowClosing(WindowEvent e) {
+                closing();
             }
 
             @Override
@@ -268,6 +269,7 @@ public final class MainFrame extends DraggableFrame {
     private AnimatedPanel tabContent[];
 
     public void selectTab(String tabName) {
+        int chosen = -1;
         for (int i = 0; i < tabHeader.size(); i++)
             if (tabName.equalsIgnoreCase(tabHeader.get(i).getActionCommand())) {
                 if (tabContent[i] == null) {
@@ -277,22 +279,36 @@ public final class MainFrame extends DraggableFrame {
                         throw new Error(mustnothappen);
                     }
                     tabWrapper[i].add(tabContent[i]);
-                }
-                boolean flag = tabHeader.get(i).isActive();
-                for (int j = 0; j < tabHeader.size(); j++)
-                    if (j != i)
-                        tabHeader.get(j).setIsActive(false);
-                tabHeader.get(i).setIsActive(true);
-                tabContent[i].onSelected();
-                if (!flag)
-                    tabContent[i].animate();
+                } else if (tabContent[i].isSelected())
+                    continue;
+                chosen = i;
                 break;
             }
+        if (chosen != -1) {
+            for (int i = 0; i < tabHeader.size(); i++)
+                if (i != chosen && tabContent[i] != null && tabContent[i].isSelected())
+                    tabContent[i].onLeaving();
+            for (int i = 0; i < tabHeader.size(); i++)
+                if (i == chosen) {
+                    for (int j = 0; j < tabHeader.size(); j++)
+                        if (j != i)
+                            tabHeader.get(j).setIsActive(false);
+                    tabHeader.get(i).setIsActive(true);
+                    tabContent[i].onSelected();
+                }
 
-        this.infoLayout.show(this.infoSwap, tabName);
+            this.infoLayout.show(this.infoSwap, tabName);
+        }
+    }
+
+    protected void closing() {
+        for (int i = 0; i < tabHeader.size(); i++)
+            if (tabContent[i] != null && tabContent[i].isSelected())
+                tabContent[i].onLeaving();
     }
 
     protected void closeWindow() {
+        closing();
         System.exit(0);
     }
 
