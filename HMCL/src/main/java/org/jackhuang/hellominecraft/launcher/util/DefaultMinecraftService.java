@@ -83,13 +83,15 @@ public class DefaultMinecraftService extends IMinecraftService {
     private void loadVersionSetting(String id) {
         if (provider.getVersionById(id) == null)
             return;
-        VersionSetting vs = new VersionSetting();
+        VersionSetting vs = null;
         File f = new File(provider.versionRoot(id), "hmclversion.cfg");
         if (f.exists()) {
             String s = FileUtils.readFileToStringQuietly(f);
             if (s != null)
                 vs = C.GSON.fromJson(s, VersionSetting.class);
         }
+        if (vs == null)
+            vs = new VersionSetting();
         vs.id = id;
         vs.propertyChanged.register((sender, t) -> {
             saveVersionSetting(((VersionSetting) sender).id);
@@ -98,6 +100,13 @@ public class DefaultMinecraftService extends IMinecraftService {
         versionSettings.put(id, vs);
     }
 
+    /**
+     * Get the version setting for version id.
+     *
+     * @param id version id
+     *
+     * @return may return null if the id not exists
+     */
     public VersionSetting getVersionSetting(String id) {
         if (!versionSettings.containsKey(id))
             loadVersionSetting(id);

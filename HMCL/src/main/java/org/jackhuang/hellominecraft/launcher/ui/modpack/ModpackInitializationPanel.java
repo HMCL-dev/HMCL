@@ -48,7 +48,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
         wizardData.put(KEY_GAME_VERSION, versions);
 
         configureComboContents();
-        controller.setProblem(C.i18n("modpack.not_a_valid_location"));
+        checkProblem();
     }
 
     private void configureComboContents() {
@@ -170,10 +170,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
     private void txtModpackLocationCaretUpdate(javax.swing.event.CaretEvent evt) {//GEN-FIRST:event_txtModpackLocationCaretUpdate
         wizardData.put(KEY_MODPACK_LOCATION, txtModpackLocation.getText());
 
-        if (txtModpackLocation.getText().trim().isEmpty())
-            controller.setProblem(C.i18n("modpack.not_a_valid_location"));
-        else
-            controller.setProblem(null);
+        checkProblem();
     }//GEN-LAST:event_txtModpackLocationCaretUpdate
 
     private void cboGameVersionItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboGameVersionItemStateChanged
@@ -183,11 +180,16 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
     private void txtModpackNameCaretUpdate(javax.swing.event.CaretEvent evt) {//GEN-FIRST:event_txtModpackNameCaretUpdate
         wizardData.put(KEY_MODPACK_NAME, txtModpackName.getText());
 
+        checkProblem();
+    }//GEN-LAST:event_txtModpackNameCaretUpdate
+
+    void checkProblem() {
+        controller.setProblem(null);
+        if (txtModpackLocation.getText().trim().isEmpty())
+            controller.setProblem(C.i18n("modpack.not_a_valid_location"));
         if (txtModpackName.getText().trim().isEmpty())
             controller.setProblem(C.i18n("modpack.not_a_valid_name"));
-        else
-            controller.setProblem(null);
-    }//GEN-LAST:event_txtModpackNameCaretUpdate
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cboGameVersion;

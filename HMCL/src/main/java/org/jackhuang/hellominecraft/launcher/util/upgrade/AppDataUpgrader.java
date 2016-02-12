@@ -57,6 +57,24 @@ import org.jackhuang.hellominecraft.util.system.OS;
  */
 public class AppDataUpgrader extends IUpgrader {
 
+    private boolean launchNewerVersion(String[] args, File jar) throws Exception {
+        try (JarFile jarFile = new JarFile(jar)) {
+            String mainClass = jarFile.getManifest().getMainAttributes().getValue("Main-Class");
+            if (mainClass != null) {
+                ArrayList<String> al = new ArrayList<>(Arrays.asList(args));
+                al.add("nofound");
+                AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
+                    new URLClassLoader(new URL[] { jar.toURI().toURL() },
+                                       URLClassLoader.getSystemClassLoader().getParent()).loadClass(mainClass)
+                        .getMethod("main", String[].class).invoke(null, new Object[] { al.toArray(new String[0]) });
+                    return null;
+                });
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public boolean parseArguments(VersionNumber nowVersion, String[] args) {
         if (!ArrayUtils.contains(args, "nofound"))
@@ -70,20 +88,7 @@ public class AppDataUpgrader extends IUpgrader {
                         if (j != null) {
                             File jar = new File(j);
                             if (jar.exists())
-                                try (JarFile jarFile = new JarFile(jar)) {
-                                    String mainClass = jarFile.getManifest().getMainAttributes().getValue("Main-Class");
-                                    if (mainClass != null) {
-                                        ArrayList<String> al = new ArrayList<>(Arrays.asList(args));
-                                        al.add("notfound");
-                                        AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
-                                            new URLClassLoader(new URL[] { jar.toURI().toURL() },
-                                                               URLClassLoader.getSystemClassLoader().getParent()).loadClass(mainClass)
-                                                .getMethod("main", String[].class).invoke(null, new Object[] { al.toArray(new String[0]) });
-                                            return null;
-                                        });
-                                        return true;
-                                    }
-                                }
+                                return launchNewerVersion(args, jar);
                         }
                     }
                 }
@@ -98,7 +103,10 @@ public class AppDataUpgrader extends IUpgrader {
         ((UpdateChecker) sender).requestDownloadLink().reg(map -> {
             if (map != null && map.containsKey("pack"))
                 try {
-                    if (TaskWindow.factory().append(new AppDataUpgraderTask(map.get("pack"), number.version)).create()) {
+                    String hash = null;
+                    if (map.containsKey("packsha1"))
+                        hash = map.get("packsha1");
+                    if (TaskWindow.factory().append(new AppDataUpgraderTask(map.get("pack"), number.version, hash)).create()) {
                         new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderTask.getSelf(number.version).getAbsolutePath() }).directory(new File(".")).start();
                         System.exit(0);
                     }
@@ -137,18 +145,19 @@ public class AppDataUpgrader extends IUpgrader {
             return new File(BASE_FOLDER, "HMCL-" + ver + ".jar");
         }
 
-        private final String downloadLink, newestVersion;
+        private final String downloadLink, newestVersion, expectedHash;
         File tempFile;
 
-        public AppDataUpgraderTask(String downloadLink, String newestVersion) throws IOException {
+        public AppDataUpgraderTask(String downloadLink, String newestVersion, String hash) throws IOException {
             this.downloadLink = downloadLink;
             this.newestVersion = newestVersion;
-            tempFile = File.createTempFile("hmcl", ".pack.xz");
+            this.expectedHash = hash;
+            tempFile = File.createTempFile("hmcl", ".pack.gz");
         }
 
         @Override
         public Collection<Task> getDependTasks() {
-            return Arrays.asList(new FileDownloadTask(downloadLink, tempFile));
+            return Arrays.asList(new FileDownloadTask(downloadLink, tempFile, expectedHash));
         }
 
         @Override
@@ -169,7 +178,7 @@ public class AppDataUpgrader extends IUpgrader {
             json.put("ver", newestVersion);
             json.put("loc", f.getAbsolutePath());
             String result = C.GSON.toJson(json);
-            FileUtils.write(HMCL_VER_FILE, result);
+            FileUtils.writeStringToFile(HMCL_VER_FILE, result);
         }
 
         @Override

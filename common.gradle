@@ -18,6 +18,8 @@
 import java.util.jar.JarFile
 import java.util.jar.Pack200
 import java.util.zip.GZIPOutputStream
+import java.security.MessageDigest
+
 
 
 apply plugin: 'java'
@@ -94,6 +96,15 @@ task makePackGZ(dependsOn: jar) << {
     }
     def loc = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".pack.gz")
     def os = new GZIPOutputStream(new FileOutputStream(loc))
-    Pack200.newPacker().pack(new JarFile(makeExecutableinjar), os)
+    Pack200.newPacker().pack new JarFile(makeExecutableinjar), os
     os.close()
+    
+    def messageDigest = MessageDigest.getInstance("SHA1")
+    loc.eachByte 1024 * 1024, { byte[] buf, int bytesRead ->
+        messageDigest.update(buf, 0, bytesRead);
+    }
+    def sha1Hex = new BigInteger(1, messageDigest.digest()).toString(16).padLeft(40, '0')
+    def fileEx = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".sha1")
+    if (!fileEx.exists()) fileEx.createNewFile()
+    fileEx.append sha1Hex
 }

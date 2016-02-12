@@ -99,9 +99,15 @@ public final class Settings {
     }
 
     public static Profile getProfile(String name) {
+        Profile p;
         if (name == null)
-            return getProfiles().get("Default");
-        return getProfiles().get(name);
+            p = getProfiles().get("Default");
+        else
+            p = getProfiles().get(name);
+        if (p == null)
+            if (!getProfiles().containsKey(DEFAULT_PROFILE))
+                getProfiles().put(DEFAULT_PROFILE, p = new Profile());
+        return p;
     }
 
     public static Map<String, Profile> getProfiles() {
@@ -144,6 +150,8 @@ public final class Settings {
 
     static void onProfileChanged() {
         Profile p = getLastProfile();
+        if (p == null)
+            throw new Error("No profiles here, it should not happen");
         profileChangedEvent.execute(p);
         p.onSelected();
     }

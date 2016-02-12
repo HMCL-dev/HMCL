@@ -20,6 +20,7 @@ package org.jackhuang.hellominecraft.launcher.util;
 import java.io.File;
 import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersionManager;
+import org.jackhuang.hellominecraft.launcher.setting.VersionSetting;
 
 /**
  *
@@ -33,8 +34,12 @@ public class HMCLGameProvider extends MinecraftVersionManager {
 
     @Override
     public File getRunDirectory(String id) {
-        return ((DefaultMinecraftService) service).getVersionSetting(id).getGameDirType() == GameDirType.VERSION_FOLDER
-               ? service.version().versionRoot(id)
-               : super.getRunDirectory(id);
+        VersionSetting vs = ((DefaultMinecraftService) service).getVersionSetting(id);
+        if (vs == null)
+            return super.getRunDirectory(id);
+        else
+            return ((DefaultMinecraftService) service).getVersionSetting(id).getGameDirType() == GameDirType.VERSION_FOLDER
+                   ? service.version().versionRoot(id)
+                   : super.getRunDirectory(id);
     }
 }

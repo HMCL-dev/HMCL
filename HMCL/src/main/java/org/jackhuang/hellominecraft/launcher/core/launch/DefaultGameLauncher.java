@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.core.launch;
 
 import java.io.IOException;
+import java.util.HashSet;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
@@ -40,8 +41,13 @@ public class DefaultGameLauncher extends GameLauncher {
         downloadLibrariesEvent.register((sender, t) -> {
             final TaskWindow.TaskWindowFactory dw = TaskWindow.factory();
             ParallelTask parallelTask = new ParallelTask();
-            for (DownloadLibraryJob s : t)
+            HashSet<String> names = new HashSet<>();
+            for (DownloadLibraryJob s : t) {
+                if (names.contains(s.name))
+                    continue;
+                names.add(s.name);
                 parallelTask.addDependsTask(new LibraryDownloadTask(s));
+            }
             dw.append(parallelTask);
             boolean flag = true;
             if (t.size() > 0)

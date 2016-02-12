@@ -44,7 +44,6 @@ public final class UpdateChecker implements IUpdateChecker {
         return new OverridableSwingWorker() {
             @Override
             protected void work() throws Exception {
-
                 if (value == null) {
                     versionString = NetUtils.get("http://huangyuhui.duapp.com/info.php?type=" + type);
                     value = VersionNumber.check(versionString);

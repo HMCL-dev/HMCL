@@ -177,6 +177,8 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                         lastTime = now;
                     }
                 }
+                if (downloaded != contentLength)
+                    throw new IllegalStateException("Unexptected file size: " + downloaded + ", expected: " + contentLength);
                 closeFiles();
                 if (aborted)
                     tempFile.delete();

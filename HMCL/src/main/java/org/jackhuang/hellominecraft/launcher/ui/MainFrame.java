@@ -275,6 +275,7 @@ public final class MainFrame extends DraggableFrame {
                 if (tabContent[i] == null) {
                     try {
                         tabContent[i] = tabClasses.get(i).newInstance();
+                        tabContent[i].onCreated();
                     } catch (Exception mustnothappen) {
                         throw new Error(mustnothappen);
                     }

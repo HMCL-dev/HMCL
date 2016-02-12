@@ -29,7 +29,7 @@ if (!hasProperty('mainClass')) {
 def buildnumber = System.getenv("BUILD_NUMBER") == null ? ".10" : "."+System.getenv("BUILD_NUMBER")
 
 String mavenGroupId = 'HMCL'
-String mavenVersion = '2.4.0' + buildnumber
+String mavenVersion = '2.3.5' + buildnumber
 String bundleName = "Hello Minecraft! Launcher"
 
 group = mavenGroupId

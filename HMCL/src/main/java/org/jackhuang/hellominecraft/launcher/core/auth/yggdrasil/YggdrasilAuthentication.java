@@ -96,7 +96,10 @@ public class YggdrasilAuthentication {
     }
 
     public GameProfile[] getAvailableProfiles() {
-        return profiles.clone();
+        if (profiles == null)
+            return null;
+        else
+            return profiles.clone();
     }
 
     public String getAuthenticatedToken() {

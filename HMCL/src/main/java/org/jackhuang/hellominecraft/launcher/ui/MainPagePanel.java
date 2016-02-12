@@ -418,8 +418,8 @@ public class MainPagePanel extends AnimatedPanel {
     }
 
     @Override
-    public void onSelected() {
-        super.onSelected();
+    public void onCreated() {
+        super.onCreated();
         Settings.onProfileLoading();
     }
 

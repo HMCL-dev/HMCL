@@ -50,6 +50,8 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
     protected final MinecraftVersion version;
 
     public AbstractMinecraftLoader(LaunchOptions options, IMinecraftService service, String versionId, UserProfileProvider lr) throws GameException {
+        if (service.version().getVersionById(versionId) == null)
+            throw new GameException("No version: " + versionId);
         this.lr = lr;
 
         this.options = options;

@@ -1300,8 +1300,8 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }
 
     @Override
-    public void onSelected() {
-        super.onSelected();
+    public void onCreated() {
+        super.onCreated();
         Settings.onProfileLoading();
     }
 
@@ -1387,6 +1387,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private final javax.swing.JPanel pnlGameDownloads;
 // </editor-fold>
 
+    //<editor-fold defaultstate="collapesd" desc="Profiles & Versions Loading">
     final Runnable onLoadingProfiles = this::loadProfiles;
 
     private void loadProfiles() {
@@ -1436,4 +1437,5 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         ((DefaultComboBoxModel) cboProfiles.getModel()).setSelectedItem(t.getName());
         txtGameDir.setText(t.getGameDir());
     };
+    //</editor-fold>
 }
