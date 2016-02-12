@@ -26,7 +26,7 @@ if (!hasProperty('mainClass')) {
     ext.mainClass = 'org.jackhuang.hellominecraft.launcher.Main'
 }
 
-def buildnumber = System.getenv("BUILD_NUMBER") == null ? ".27" : "."+System.getenv("BUILD_NUMBER")
+def buildnumber = System.getenv("BUILD_NUMBER") == null ? ".10" : "."+System.getenv("BUILD_NUMBER")
 
 String mavenGroupId = 'HMCL'
 String mavenVersion = '2.4.0' + buildnumber

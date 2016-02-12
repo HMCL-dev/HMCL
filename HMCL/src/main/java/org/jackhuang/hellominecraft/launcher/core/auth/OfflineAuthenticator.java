@@ -48,7 +48,7 @@ public final class OfflineAuthenticator extends IAuthenticator {
     @Override
     public Map onSaveSettings() {
         Map m = super.onSaveSettings();
-        m.put("uuidMap", m);
+        m.put("uuidMap", uuidMap);
         return m;
     }
 

@@ -198,16 +198,15 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public boolean install(String id, Consumer<MinecraftVersion> callback) {
         MinecraftVersion v = service.download().downloadMinecraft(id);
+        if (v == null)
+            return false;
         if (callback != null) {
             callback.accept(v);
             File mvt = new File(versionRoot(id), id + ".json");
             FileUtils.writeQuietly(mvt, C.GSON.toJson(v));
         }
-        if (v != null) {
-            refreshVersions();
-            return true;
-        }
-        return false;
+        refreshVersions();
+        return true;
     }
 
     @Override

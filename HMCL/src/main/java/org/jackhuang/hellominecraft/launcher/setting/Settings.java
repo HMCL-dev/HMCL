@@ -95,19 +95,27 @@ public final class Settings {
     }
 
     public static Profile getLastProfile() {
+        if (!hasProfile(getInstance().getLast()))
+            getInstance().setLast(DEFAULT_PROFILE);
         return getProfile(getInstance().getLast());
     }
 
     public static Profile getProfile(String name) {
-        Profile p;
         if (name == null)
-            p = getProfiles().get("Default");
-        else
-            p = getProfiles().get(name);
+            name = DEFAULT_PROFILE;
+        Profile p = getProfiles().get(name);
         if (p == null)
-            if (!getProfiles().containsKey(DEFAULT_PROFILE))
+            if (getProfiles().containsKey(DEFAULT_PROFILE))
+                p = getProfiles().get(DEFAULT_PROFILE);
+            else
                 getProfiles().put(DEFAULT_PROFILE, p = new Profile());
         return p;
+    }
+
+    public static boolean hasProfile(String name) {
+        if (name == null)
+            name = DEFAULT_PROFILE;
+        return getProfiles().containsKey(name);
     }
 
     public static Map<String, Profile> getProfiles() {

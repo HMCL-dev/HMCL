@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.ui;
 
 import javax.swing.table.DefaultTableModel;
+import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
@@ -104,7 +105,7 @@ public class GameDownloadPanel extends AnimatedPanel {
 
     public void refreshDownloads() {
         DefaultTableModel model = SwingUtils.clearDefaultTable(lstDownloads);
-        gsp.getProfile().service().download().getRemoteVersions()
+        Settings.getLastProfile().service().download().getRemoteVersions()
             .reg((ver) -> model.addRow(new Object[] { ver.id, ver.time,
                                                       StrUtils.equalsOne(ver.type, "old_beta", "old_alpha", "release", "snapshot") ? C.i18n("versions." + ver.type) : ver.type }))
             .regDone(lstDownloads::updateUI).execute();
@@ -120,7 +121,7 @@ public class GameDownloadPanel extends AnimatedPanel {
             return;
         }
         String id = (String) lstDownloads.getModel().getValueAt(lstDownloads.getSelectedRow(), 0);
-        gsp.getProfile().service().download().downloadMinecraft(id);
+        Settings.getLastProfile().service().download().downloadMinecraft(id);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -130,13 +131,13 @@ public class GameDownloadPanel extends AnimatedPanel {
     private javax.swing.JTable lstDownloads;
     // End of variables declaration//GEN-END:variables
 
-    boolean selected = false;
+    boolean refreshedDownloads = false;
 
     @Override
     public void onSelected() {
         super.onSelected();
-        if (!selected) {
-            selected = true;
+        if (!refreshedDownloads) {
+            refreshedDownloads = true;
             refreshDownloads();
         }
     }

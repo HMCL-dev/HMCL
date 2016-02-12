@@ -139,7 +139,7 @@ public class InstallerPanel extends AnimatedPanel {
             MessageBox.Show(C.i18n("install.not_refreshed"));
             return;
         }
-        gsp.getProfile().service().install().download(gsp.getProfile().getSelectedVersion(), getVersion(idx), id).after(new TaskRunnable(this::refreshVersions)).run();
+        Settings.getLastProfile().service().install().download(Settings.getLastProfile().getSelectedVersion(), getVersion(idx), id).after(new TaskRunnable(this::refreshVersions)).run();
     }
 
     public void loadVersions() {

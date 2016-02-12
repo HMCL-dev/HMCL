@@ -93,6 +93,8 @@ public final class Config {
     }
 
     public String getLast() {
+        if (last == null)
+            last = Settings.DEFAULT_PROFILE;
         return last;
     }
 

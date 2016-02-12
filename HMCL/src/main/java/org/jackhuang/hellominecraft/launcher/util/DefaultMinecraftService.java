@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.util;
 
+import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,6 +40,7 @@ import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
 import org.jackhuang.hellominecraft.launcher.setting.Profile;
 import org.jackhuang.hellominecraft.launcher.setting.VersionSetting;
 import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
 
@@ -88,7 +90,12 @@ public class DefaultMinecraftService extends IMinecraftService {
         if (f.exists()) {
             String s = FileUtils.readFileToStringQuietly(f);
             if (s != null)
-                vs = C.GSON.fromJson(s, VersionSetting.class);
+                try {
+                    vs = C.GSON.fromJson(s, VersionSetting.class);
+                } catch (JsonSyntaxException ex) {
+                    HMCLog.warn("Failed to load version setting: " + id, ex);
+                    vs = null;
+                }
         }
         if (vs == null)
             vs = new VersionSetting();

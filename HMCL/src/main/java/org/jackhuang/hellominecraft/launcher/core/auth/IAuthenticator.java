@@ -88,7 +88,7 @@ public abstract class IAuthenticator {
     public abstract void logOut();
 
     public Map onSaveSettings() {
-        HashMap m = new HashMap();
+        HashMap<String, String> m = new HashMap<>();
         m.put("IAuthenticator_UserName", username);
         return m;
     }

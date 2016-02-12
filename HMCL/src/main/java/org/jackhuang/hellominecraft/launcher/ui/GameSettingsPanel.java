@@ -121,7 +121,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                getProfile().service().version().open(mcVersion, a);
+                Settings.getLastProfile().service().version().open(mcVersion, a);
             }
         }
         JMenuItem itm;
@@ -152,7 +152,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             if (mcVersion != null) {
                 String newName = JOptionPane.showInputDialog(C.i18n("versions.manage.rename.message"), mcVersion);
                 if (newName != null)
-                    if (getProfile().service().version().renameVersion(mcVersion, newName))
+                    if (Settings.getLastProfile().service().version().renameVersion(mcVersion, newName))
                         refreshVersions();
             }
         });
@@ -160,26 +160,26 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         itm = new JMenuItem(C.i18n("versions.manage.remove"));
         itm.addActionListener((e) -> {
             if (mcVersion != null && MessageBox.Show(C.i18n("versions.manage.remove.confirm") + mcVersion, MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                if (getProfile().service().version().removeVersionFromDisk(mcVersion))
+                if (Settings.getLastProfile().service().version().removeVersionFromDisk(mcVersion))
                     refreshVersions();
         });
         ppmManage.add(itm);
         itm = new JMenuItem(C.i18n("versions.manage.redownload_json"));
         itm.addActionListener((e) -> {
             if (mcVersion != null)
-                getProfile().service().download().downloadMinecraftVersionJson(mcVersion);
+                Settings.getLastProfile().service().download().downloadMinecraftVersionJson(mcVersion);
         });
         ppmManage.add(itm);
         itm = new JMenuItem(C.i18n("versions.manage.redownload_assets_index"));
         itm.addActionListener((e) -> {
             if (mcVersion != null)
-                getProfile().service().asset().refreshAssetsIndex(mcVersion);
+                Settings.getLastProfile().service().asset().refreshAssetsIndex(mcVersion);
         });
         ppmManage.add(itm);
         itm = new JMenuItem(C.i18n("versions.mamage.remove_libraries"));
         itm.addActionListener((e) -> {
             if (mcVersion != null)
-                FileUtils.deleteDirectoryQuietly(new File(getProfile().service().baseDirectory(), "libraries"));
+                FileUtils.deleteDirectoryQuietly(new File(Settings.getLastProfile().service().baseDirectory(), "libraries"));
         });
         ppmManage.add(itm);
     }
@@ -192,7 +192,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         }
         lstExternalMods.getSelectionModel().addListSelectionListener(e -> {
             int row = lstExternalMods.getSelectedRow();
-            List<ModInfo> mods = getProfile().service().mod().getMods(getProfile().getSelectedVersion());
+            List<ModInfo> mods = Settings.getLastProfile().service().mod().getMods(Settings.getLastProfile().getSelectedVersion());
             if (mods != null && 0 <= row && row < mods.size()) {
                 ModInfo m = mods.get(row);
                 boolean hasLink = m.url != null;
@@ -212,7 +212,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         ((DefaultTableModel) lstExternalMods.getModel()).addTableModelListener(e -> {
             if (e.getType() == TableModelEvent.UPDATE && e.getColumn() == 0) {
                 int row = lstExternalMods.getSelectedRow();
-                List<ModInfo> mods = getProfile().service().mod().getMods(getProfile().getSelectedVersion());
+                List<ModInfo> mods = Settings.getLastProfile().service().mod().getMods(Settings.getLastProfile().getSelectedVersion());
                 if (mods != null && mods.size() > row && row >= 0)
                     mods.get(row).reverseModState();
             }
@@ -947,16 +947,16 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }//GEN-LAST:event_btnNewProfileActionPerformed
 
     private void btnRemoveProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveProfileActionPerformed
-        if (MessageBox.Show(C.i18n("ui.message.sure_remove", getProfile().getName()), MessageBox.YES_NO_OPTION) == MessageBox.NO_OPTION)
+        if (MessageBox.Show(C.i18n("ui.message.sure_remove", Settings.getLastProfile().getName()), MessageBox.YES_NO_OPTION) == MessageBox.NO_OPTION)
             return;
-        if (Settings.delProfile(getProfile()))
+        if (Settings.delProfile(Settings.getLastProfile()))
             loadProfiles();
     }//GEN-LAST:event_btnRemoveProfileActionPerformed
 
     private void cboVersionsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboVersionsItemStateChanged
         if (isLoading || evt.getStateChange() != ItemEvent.SELECTED || cboVersions.getSelectedIndex() < 0 || StrUtils.isBlank((String) cboVersions.getSelectedItem()))
             return;
-        getProfile().setSelectedMinecraftVersion((String) cboVersions.getSelectedItem());
+        Settings.getLastProfile().setSelectedMinecraftVersion((String) cboVersions.getSelectedItem());
     }//GEN-LAST:event_cboVersionsItemStateChanged
 
     private void btnRefreshVersionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshVersionsActionPerformed
@@ -973,11 +973,11 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
     private void btnDownloadAllAssetsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadAllAssetsActionPerformed
         if (mcVersion != null)
-            getProfile().service().asset().downloadAssets(mcVersion).run();
+            Settings.getLastProfile().service().asset().downloadAssets(mcVersion).run();
     }//GEN-LAST:event_btnDownloadAllAssetsActionPerformed
 
     private void txtGameDirFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtGameDirFocusLost
-        getProfile().setGameDir(txtGameDir.getText());
+        Settings.getLastProfile().setGameDir(txtGameDir.getText());
         loadVersions();
     }//GEN-LAST:event_txtGameDirFocusLost
 
@@ -997,7 +997,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         try {
             String path = fc.getSelectedFile().getCanonicalPath();
             txtJavaDir.setText(path);
-            getProfile().getSelectedVersionSetting().setJavaDir(txtJavaDir.getText());
+            Settings.getLastProfile().getSelectedVersionSetting().setJavaDir(txtJavaDir.getText());
         } catch (IOException e) {
             HMCLog.warn("Failed to set java path.", e);
             MessageBox.Show(C.i18n("ui.label.failed_set") + e.getMessage());
@@ -1010,9 +1010,9 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         int idx = cboJava.getSelectedIndex();
         if (idx != -1) {
             Java j = Java.JAVA.get(idx);
-            getProfile().getSelectedVersionSetting().setJava(j);
+            Settings.getLastProfile().getSelectedVersionSetting().setJava(j);
             txtJavaDir.setEnabled(idx == 1);
-            txtJavaDir.setText(j.getHome() == null ? getProfile().getSelectedVersionSetting().getSettingsJavaDir() : j.getJava());
+            txtJavaDir.setText(j.getHome() == null ? Settings.getLastProfile().getSelectedVersionSetting().getSettingsJavaDir() : j.getJava());
         }
     }//GEN-LAST:event_cboJavaItemStateChanged
 
@@ -1025,14 +1025,14 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             return;
         boolean flag = true;
         for (File f : fc.getSelectedFiles())
-            flag &= getProfile().service().mod().addMod(getProfile().getSelectedVersion(), f);
+            flag &= Settings.getLastProfile().service().mod().addMod(Settings.getLastProfile().getSelectedVersion(), f);
         reloadMods();
         if (!flag)
             MessageBox.Show(C.i18n("mods.failed"));
     }//GEN-LAST:event_btnAddModActionPerformed
 
     private void btnRemoveModActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveModActionPerformed
-        getProfile().service().mod().removeMod(getProfile().getSelectedVersion(), SwingUtils.getValueBySelectedRow(lstExternalMods, lstExternalMods.getSelectedRows(), 1));
+        Settings.getLastProfile().service().mod().removeMod(Settings.getLastProfile().getSelectedVersion(), SwingUtils.getValueBySelectedRow(lstExternalMods, lstExternalMods.getSelectedRows(), 1));
         reloadMods();
     }//GEN-LAST:event_btnRemoveModActionPerformed
 
@@ -1043,8 +1043,8 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
     private void lblModInfoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblModInfoMouseClicked
         int idx = lstExternalMods.getSelectedRow();
-        if (idx > 0 && idx < getProfile().service().mod().getMods(getProfile().getSelectedVersion()).size())
-            SwingUtils.openLink(getProfile().service().mod().getMods(getProfile().getSelectedVersion()).get(idx).url);
+        if (idx > 0 && idx < Settings.getLastProfile().service().mod().getMods(Settings.getLastProfile().getSelectedVersion()).size())
+            SwingUtils.openLink(Settings.getLastProfile().service().mod().getMods(Settings.getLastProfile().getSelectedVersion()).get(idx).url);
     }//GEN-LAST:event_lblModInfoMouseClicked
 
     private void btnChoosingGameDirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnChoosingGameDirActionPerformed
@@ -1058,7 +1058,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         try {
             String path = fc.getSelectedFile().getCanonicalPath();
             txtGameDir.setText(path);
-            getProfile().setGameDir(path);
+            Settings.getLastProfile().setGameDir(path);
         } catch (IOException e) {
             HMCLog.warn("Failed to set game dir.", e);
             MessageBox.Show(C.i18n("ui.label.failed_set") + e.getMessage());
@@ -1066,12 +1066,12 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }//GEN-LAST:event_btnChoosingGameDirActionPerformed
 
     private void btnCleanGameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCleanGameActionPerformed
-        getProfile().service().version().cleanFolder();
+        Settings.getLastProfile().service().version().cleanFolder();
     }//GEN-LAST:event_btnCleanGameActionPerformed
 
     private void btnTestGameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTestGameActionPerformed
         LogWindow.INSTANCE.setVisible(true);
-        MainFrame.INSTANCE.daemon.runGame(getProfile());
+        MainFrame.INSTANCE.daemon.runGame(Settings.getLastProfile());
     }//GEN-LAST:event_btnTestGameActionPerformed
 
     private void btnShowLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnShowLogActionPerformed
@@ -1079,7 +1079,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }//GEN-LAST:event_btnShowLogActionPerformed
 
     private void btnMakeLaunchScriptActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMakeLaunchScriptActionPerformed
-        MainFrame.INSTANCE.daemon.makeLaunchScript(getProfile());
+        MainFrame.INSTANCE.daemon.makeLaunchScript(Settings.getLastProfile());
     }//GEN-LAST:event_btnMakeLaunchScriptActionPerformed
 
     private void btnIncludeMinecraftActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnIncludeMinecraftActionPerformed
@@ -1100,80 +1100,72 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
     private void cboRunDirectoryItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboRunDirectoryItemStateChanged
         if (!isLoading && cboRunDirectory.getSelectedIndex() >= 0)
-            getProfile().getSelectedVersionSetting().setGameDirType(GameDirType.values()[cboRunDirectory.getSelectedIndex()]);
+            Settings.getLastProfile().getSelectedVersionSetting().setGameDirType(GameDirType.values()[cboRunDirectory.getSelectedIndex()]);
     }//GEN-LAST:event_cboRunDirectoryItemStateChanged
 
     private void cboLauncherVisibilityItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboLauncherVisibilityItemStateChanged
         if (!isLoading && cboLauncherVisibility.getSelectedIndex() >= 0)
-            getProfile().getSelectedVersionSetting().setLauncherVisibility(LauncherVisibility.values()[cboLauncherVisibility.getSelectedIndex()]);
+            Settings.getLastProfile().getSelectedVersionSetting().setLauncherVisibility(LauncherVisibility.values()[cboLauncherVisibility.getSelectedIndex()]);
     }//GEN-LAST:event_cboLauncherVisibilityItemStateChanged
 
     private void chkFullscreenItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkFullscreenItemStateChanged
         if (!isLoading)
-            getProfile().getSelectedVersionSetting().setFullscreen(chkFullscreen.isSelected());
+            Settings.getLastProfile().getSelectedVersionSetting().setFullscreen(chkFullscreen.isSelected());
     }//GEN-LAST:event_chkFullscreenItemStateChanged
 
     private void chkDebugItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkDebugItemStateChanged
         if (!isLoading)
-            getProfile().getSelectedVersionSetting().setDebug(chkDebug.isSelected());
+            Settings.getLastProfile().getSelectedVersionSetting().setDebug(chkDebug.isSelected());
     }//GEN-LAST:event_chkDebugItemStateChanged
 
     private void chkCancelWrapperItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkCancelWrapperItemStateChanged
         if (!isLoading)
-            getProfile().getSelectedVersionSetting().setCanceledWrapper(chkCancelWrapper.isSelected());
+            Settings.getLastProfile().getSelectedVersionSetting().setCanceledWrapper(chkCancelWrapper.isSelected());
     }//GEN-LAST:event_chkCancelWrapperItemStateChanged
 
     private void chkNoJVMArgsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkNoJVMArgsItemStateChanged
         if (!isLoading)
-            getProfile().getSelectedVersionSetting().setNoJVMArgs(chkNoJVMArgs.isSelected());
+            Settings.getLastProfile().getSelectedVersionSetting().setNoJVMArgs(chkNoJVMArgs.isSelected());
     }//GEN-LAST:event_chkNoJVMArgsItemStateChanged
 
     private void txtMaxMemoryFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtMaxMemoryFocusLost
-        getProfile().getSelectedVersionSetting().setMaxMemory(txtMaxMemory.getText());
+        Settings.getLastProfile().getSelectedVersionSetting().setMaxMemory(txtMaxMemory.getText());
     }//GEN-LAST:event_txtMaxMemoryFocusLost
 
     private void txtWidthFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtWidthFocusLost
-        getProfile().getSelectedVersionSetting().setWidth(txtWidth.getText());
+        Settings.getLastProfile().getSelectedVersionSetting().setWidth(txtWidth.getText());
     }//GEN-LAST:event_txtWidthFocusLost
 
     private void txtHeightFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtHeightFocusLost
-        getProfile().getSelectedVersionSetting().setHeight(txtHeight.getText());
+        Settings.getLastProfile().getSelectedVersionSetting().setHeight(txtHeight.getText());
     }//GEN-LAST:event_txtHeightFocusLost
 
     private void txtJavaDirFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtJavaDirFocusLost
-        getProfile().getSelectedVersionSetting().setJavaDir(txtJavaDir.getText());
+        Settings.getLastProfile().getSelectedVersionSetting().setJavaDir(txtJavaDir.getText());
     }//GEN-LAST:event_txtJavaDirFocusLost
 
     private void txtJavaArgsFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtJavaArgsFocusLost
-        getProfile().getSelectedVersionSetting().setJavaArgs(txtJavaArgs.getText());
+        Settings.getLastProfile().getSelectedVersionSetting().setJavaArgs(txtJavaArgs.getText());
     }//GEN-LAST:event_txtJavaArgsFocusLost
 
     private void txtMinecraftArgsFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtMinecraftArgsFocusLost
-        getProfile().getSelectedVersionSetting().setMinecraftArgs(txtMinecraftArgs.getText());
+        Settings.getLastProfile().getSelectedVersionSetting().setMinecraftArgs(txtMinecraftArgs.getText());
     }//GEN-LAST:event_txtMinecraftArgsFocusLost
 
     private void txtPermSizeFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtPermSizeFocusLost
-        getProfile().getSelectedVersionSetting().setPermSize(txtPermSize.getText());
+        Settings.getLastProfile().getSelectedVersionSetting().setPermSize(txtPermSize.getText());
     }//GEN-LAST:event_txtPermSizeFocusLost
 
     private void txtPrecalledCommandFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtPrecalledCommandFocusLost
-        getProfile().getSelectedVersionSetting().setPrecalledCommand(txtPrecalledCommand.getText());
+        Settings.getLastProfile().getSelectedVersionSetting().setPrecalledCommand(txtPrecalledCommand.getText());
     }//GEN-LAST:event_txtPrecalledCommandFocusLost
 
     private void txtServerIPFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtServerIPFocusLost
-        getProfile().getSelectedVersionSetting().setServerIp(txtServerIP.getText());
+        Settings.getLastProfile().getSelectedVersionSetting().setServerIp(txtServerIP.getText());
     }//GEN-LAST:event_txtServerIPFocusLost
 
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Load">
-    final Profile getProfile() {
-        return Settings.getProfile((String) cboProfiles.getSelectedItem());
-    }
-
-    final String mcVersion() {
-        return getProfile().getSelectedVersion();
-    }
-
     void prepareVersionSetting(VersionSetting profile) {
         if (profile == null)
             return;
@@ -1206,7 +1198,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         txtMinecraftVersion.setText("");
         if (id == null)
             return;
-        minecraftVersion = MinecraftVersionRequest.minecraftVersion(getProfile().service().version().getMinecraftJar(id));
+        minecraftVersion = MinecraftVersionRequest.minecraftVersion(Settings.getLastProfile().service().version().getMinecraftJar(id));
         txtMinecraftVersion.setText(MinecraftVersionRequest.getResponse(minecraftVersion));
     }
 
@@ -1224,7 +1216,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                 Transferable tr = dtde.getTransferable();
                 List<File> files = (List<File>) tr.getTransferData(DataFlavor.javaFileListFlavor);
                 for (File file : files)
-                    getProfile().service().mod().addMod(getProfile().getSelectedVersion(), file);
+                    Settings.getLastProfile().service().mod().addMod(Settings.getLastProfile().getSelectedVersion(), file);
             } catch (Exception ex) {
                 HMCLog.warn("Failed to drop file.", ex);
             }
@@ -1247,7 +1239,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }
 
     void refreshVersions() {
-        getProfile().service().version().refreshVersions();
+        Settings.getLastProfile().service().version().refreshVersions();
     }
 
     // </editor-fold>
@@ -1264,7 +1256,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             new OverridableSwingWorker<List<ModInfo>>() {
                 @Override
                 protected void work() throws Exception {
-                    publish(getProfile().service().mod().recacheMods(getProfile().getSelectedVersion()));
+                    publish(Settings.getLastProfile().service().mod().recacheMods(Settings.getLastProfile().getSelectedVersion()));
                 }
             }.reg(t -> {
                 synchronized (modLock) {
@@ -1278,7 +1270,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
     // </editor-fold>
     void save() {
-        VersionSetting vs = getProfile().getSelectedVersionSetting();
+        VersionSetting vs = Settings.getLastProfile().getSelectedVersionSetting();
         if (txtServerIP.hasFocus())
             vs.setServerIp(txtServerIP.getText());
         if (txtPrecalledCommand.hasFocus())
@@ -1398,20 +1390,20 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }
 
     final Consumer<IMinecraftService> onRefreshedVersions = t -> {
-        if (getProfile().service() == t)
+        if (Settings.getLastProfile().service() == t)
             loadVersions();
     };
 
     void loadVersions() {
         DefaultComboBoxModel model = new DefaultComboBoxModel();
-        for (MinecraftVersion each : getProfile().service().version().getVersions()) {
+        for (MinecraftVersion each : Settings.getLastProfile().service().version().getVersions()) {
             if (each.hidden)
                 continue;
             model.addElement(each.id);
         }
         cboVersions.setModel(model);
-        if (getProfile().getSelectedVersion() != null)
-            selectedVersionChangedEvent.accept(getProfile().getSelectedVersion());
+        if (Settings.getLastProfile().getSelectedVersion() != null)
+            selectedVersionChangedEvent.accept(Settings.getLastProfile().getSelectedVersion());
     }
 
     final Consumer<String> selectedVersionChangedEvent = this::versionChanged;
@@ -1423,7 +1415,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
         this.mcVersion = version;
         reloadMods();
-        prepareVersionSetting(getProfile().getVersionSetting(version));
+        prepareVersionSetting(Settings.getLastProfile().getVersionSetting(version));
         loadMinecraftVersion(version);
         for (InstallerPanel p : installerPanels)
             p.loadVersions();

@@ -69,7 +69,7 @@ public class MainPagePanel extends AnimatedPanel {
 
         btnRun.setText(C.i18n("ui.button.run"));
         btnRun.setFont(newFont);
-        btnRun.addActionListener(e -> MainFrame.INSTANCE.daemon.runGame(getProfile()));
+        btnRun.addActionListener(e -> MainFrame.INSTANCE.daemon.runGame(Settings.getLastProfile()));
 
         this.add(pnlButtons);
         pnlButtons.setBounds(0, 0, w, h);
@@ -324,10 +324,10 @@ public class MainPagePanel extends AnimatedPanel {
     }//GEN-LAST:event_cboProfilesItemStateChanged
 
     private void cboVersionsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboVersionsItemStateChanged
-        if (isLoading || evt.getStateChange() != ItemEvent.SELECTED || cboVersions.getSelectedIndex() < 0 || StrUtils.isBlank((String) cboVersions.getSelectedItem()) || getProfile() == null)
+        if (isLoading || evt.getStateChange() != ItemEvent.SELECTED || cboVersions.getSelectedIndex() < 0 || StrUtils.isBlank((String) cboVersions.getSelectedItem()))
             return;
         String mcv = (String) cboVersions.getSelectedItem();
-        getProfile().setSelectedMinecraftVersion(mcv);
+        Settings.getLastProfile().setSelectedMinecraftVersion(mcv);
     }//GEN-LAST:event_cboVersionsItemStateChanged
 
     private void txtPasswordFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtPasswordFocusGained
@@ -335,7 +335,7 @@ public class MainPagePanel extends AnimatedPanel {
     }//GEN-LAST:event_txtPasswordFocusGained
 
     private void txtPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtPasswordActionPerformed
-        MainFrame.INSTANCE.daemon.runGame(getProfile());
+        MainFrame.INSTANCE.daemon.runGame(Settings.getLastProfile());
     }//GEN-LAST:event_txtPasswordActionPerformed
 
     private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
@@ -355,7 +355,7 @@ public class MainPagePanel extends AnimatedPanel {
             IAuthenticator l = Settings.getInstance().getAuthenticator();
             l.setUserName(txtPlayerName.getText());
             if (!l.hasPassword())
-                MainFrame.INSTANCE.daemon.runGame(getProfile());
+                MainFrame.INSTANCE.daemon.runGame(Settings.getLastProfile());
             else if (!l.isLoggedIn())
                 txtPassword.requestFocus();
         }
@@ -363,7 +363,7 @@ public class MainPagePanel extends AnimatedPanel {
 
     private void txtPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPasswordKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER)
-            MainFrame.INSTANCE.daemon.runGame(getProfile());
+            MainFrame.INSTANCE.daemon.runGame(Settings.getLastProfile());
     }//GEN-LAST:event_txtPasswordKeyPressed
 
     private void btnImportModpackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnImportModpackActionPerformed
@@ -376,14 +376,14 @@ public class MainPagePanel extends AnimatedPanel {
         if (fc.getSelectedFile() == null)
             return;
         String suggestedModpackId = JOptionPane.showInputDialog("Please enter your favourite game name", FileUtils.getBaseName(fc.getSelectedFile().getName()));
-        TaskWindow.factory().append(ModpackManager.install(fc.getSelectedFile(), getProfile().service(), suggestedModpackId)).create();
-        getProfile().service().version().refreshVersions();
+        TaskWindow.factory().append(ModpackManager.install(fc.getSelectedFile(), Settings.getLastProfile().service(), suggestedModpackId)).create();
+        Settings.getLastProfile().service().version().refreshVersions();
     }//GEN-LAST:event_btnImportModpackActionPerformed
 
     private void btnExportModpackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExportModpackActionPerformed
-        if (getProfile().service().version().getVersionCount() <= 0)
+        if (Settings.getLastProfile().service().version().getVersionCount() <= 0)
             return;
-        WizardDisplayer.showWizard(new ModpackWizard(getProfile().service()).createWizard());
+        WizardDisplayer.showWizard(new ModpackWizard(Settings.getLastProfile().service()).createWizard());
     }//GEN-LAST:event_btnExportModpackActionPerformed
 
     private void txtPasswordCaretUpdate(javax.swing.event.CaretEvent evt) {//GEN-FIRST:event_txtPasswordCaretUpdate
@@ -412,10 +412,6 @@ public class MainPagePanel extends AnimatedPanel {
     private final ConstomButton btnRun;
     private static final int DEFAULT_WIDTH = 800, DEFAULT_HEIGHT = 480;
     //</editor-fold>
-
-    public Profile getProfile() {
-        return Settings.getProfile(Settings.getInstance().getLast());
-    }
 
     @Override
     public void onCreated() {
@@ -475,7 +471,7 @@ public class MainPagePanel extends AnimatedPanel {
     }
 
     final Consumer<IMinecraftService> onRefreshedVersions = t -> {
-        if (getProfile().service() == t)
+        if (Settings.getLastProfile().service() == t)
             loadVersions();
     };
 
@@ -484,8 +480,8 @@ public class MainPagePanel extends AnimatedPanel {
     void loadVersions() {
         isLoading = true;
         cboVersions.removeAllItems();
-        String selVersion = getProfile().getSelectedVersion();
-        if (getProfile().service().version().getVersions().isEmpty()) {
+        String selVersion = Settings.getLastProfile().getSelectedVersion();
+        if (Settings.getLastProfile().service().version().getVersions().isEmpty()) {
             if (!showedNoVersion)
                 SwingUtilities.invokeLater(() -> {
                     if (MessageBox.Show(C.i18n("mainwindow.no_version"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
@@ -493,7 +489,7 @@ public class MainPagePanel extends AnimatedPanel {
                     showedNoVersion = true;
                 });
         } else {
-            for (MinecraftVersion mcVersion : getProfile().service().version().getVersions()) {
+            for (MinecraftVersion mcVersion : Settings.getLastProfile().service().version().getVersions()) {
                 if (mcVersion.hidden)
                     continue;
                 cboVersions.addItem(mcVersion.id);
