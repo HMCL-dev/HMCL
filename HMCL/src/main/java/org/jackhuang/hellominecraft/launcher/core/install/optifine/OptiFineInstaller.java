@@ -86,7 +86,7 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
 
     @Override
     public String getInfo() {
-        return "Optifine Installer";
+        return "OptiFine Installer";
     }
 
     ArrayList<PreviousResult<File>> pre = new ArrayList();

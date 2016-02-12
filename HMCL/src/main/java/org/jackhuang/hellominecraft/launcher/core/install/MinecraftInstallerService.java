@@ -47,8 +47,8 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
         switch (type) {
         case Forge:
             return downloadForge(installId, v);
-        case Optifine:
-            return downloadOptifine(installId, v);
+        case OptiFine:
+            return downloadOptiFine(installId, v);
         case LiteLoader:
             return downloadLiteLoader(installId, v);
         default:
@@ -72,7 +72,7 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
     }
 
     @Override
-    public Task downloadOptifine(String installId, InstallerVersion v) {
+    public Task downloadOptiFine(String installId, InstallerVersion v) {
         return new TaskInfo("OptiFine Downloader") {
             @Override
             public void executeTask() {

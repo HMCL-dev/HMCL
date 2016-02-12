@@ -51,8 +51,10 @@ public class AnimatedPanel extends JPanel implements Selectable {
 
     Timer timer;
 
+    boolean animationEnabled = true;
+
     public void animate() {
-        if (Settings.getInstance().isEnableAnimation()) {
+        if (Settings.getInstance().isEnableAnimation() && animationEnabled) {
             offsetX = 0;
             timer.start();
         }

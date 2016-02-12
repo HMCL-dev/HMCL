@@ -44,10 +44,10 @@ install.optifine.get_list=获取OptiFine列表
 install.optifine.get_download_link=获取OptiFine下载地址
 
 install.failed_forge=安装Forge失败
-install.failed_optifine=安装Optifine失败
+install.failed_optifine=安装OptiFine失败
 install.failed_liteloader=安装LiteLoader失败
 install.failed_download_forge=下载Forge失败
-install.failed_download_optifine=下载Optifine失败
+install.failed_download_optifine=下载OptiFine失败
 install.failed=安装失败
 install.success=安装成功
 install.no_forge=没有安装Forge
@@ -265,7 +265,7 @@ mainwindow.enter_script_name=输入要生成脚本的文件名
 mainwindow.make_launch_succeed=启动脚本已生成完毕:
 mainwindow.no_version=未找到任何版本，是否进入游戏下载？
 
-launcher.about=<html>默认背景图来自Liberty Dome服务器。<br/>关于作者：<br/>百度ID：huanghongxun20<br/>mcbbs：huanghongxun<br/>邮箱：huanghongxun2008@126.com<br/>Minecraft Forum ID: klkl6523<br/>欢迎提交Bug哦<br/>Copyright (c) 2013-2015 huangyuhui.<br/>免责声明：Minecraft软件版权归Mojang AB所有，游戏由于误操作本启动器而丢失数据的概不负责。<br/>本启动器在GPLv3协议下开源:https://github.com/huanghongxun/HMCL/<br/>本软件使用了基于Apache License 2.0的Gson项目，感谢贡献者。</html>
+launcher.about=<html>默认背景图来自Liberty Dome服务器。<br/>关于作者：<br/>百度ID：huanghongxun20<br/>mcbbs：huanghongxun<br/>邮箱：huanghongxun2008@126.com<br/>Minecraft Forum ID: klkl6523<br/>欢迎提交Bug哦<br/>Copyright (c) 2013-2016 huangyuhui.<br/>免责声明：Minecraft软件版权归Mojang AB所有，游戏由于误操作本启动器而丢失数据的概不负责。<br/>本启动器在GPLv3协议下开源:https://github.com/huanghongxun/HMCL/ ,感谢issues和pull requests贡献者<br/>本软件使用了基于Apache License 2.0的Gson项目，感谢贡献者。</html>
 launcher.download_source=下载源
 launcher.background_location=背景地址
 launcher.exit_failed=强制退出失败，可能是Forge 1.7.10及更高版本导致的，无法解决。
@@ -275,13 +275,14 @@ launcher.versions_json_not_formatted=版本%s信息文件格式错误，是否�
 launcher.choose_bgpath=选择背景路径
 launcher.background_tooltip=<html><body>启动器默认使用自带的背景<br />如果当前目录有background.png，则会使用该文件作为背景<br />如果当前目录有bg子目录，则会随机使用里面的一张图作为背景<br />如果该背景地址被修改，则会使用背景地址里的一张图作为背景<br />背景地址允许有多个地址，使用半角分号";"(不包含双引号)分隔</body></html>
 launcher.update_launcher=检查更新
-launcher.enable_shadow=启用窗口阴影(重启启动器生效,可加快渲染速度)
+launcher.enable_shadow=启用窗口阴影
 launcher.theme=主题
 launcher.proxy=代理
 launcher.decorated=启用窗口边框(Linux下可解决程序界面全灰问题)
 launcher.modpack=<html><a href="http://blog.163.com/huanghongxun2008@126/blog/static/7738046920160323812771/">整合包作者帮助</a></html>
 launcher.enable_animation=启用动态效果
 launcher.lang=语言
+launcher.restart=本界面选项需要重启本启动器生效
 
 launcher.title.game=游戏设置
 launcher.title.main=主页

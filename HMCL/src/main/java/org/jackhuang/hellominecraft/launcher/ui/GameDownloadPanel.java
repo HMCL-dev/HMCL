@@ -108,7 +108,7 @@ public class GameDownloadPanel extends AnimatedPanel {
         Settings.getLastProfile().service().download().getRemoteVersions()
             .reg((ver) -> model.addRow(new Object[] { ver.id, ver.time,
                                                       StrUtils.equalsOne(ver.type, "old_beta", "old_alpha", "release", "snapshot") ? C.i18n("versions." + ver.type) : ver.type }))
-            .regDone(lstDownloads::updateUI).execute();
+            .regDone(lstDownloads::requestFocus).execute();
         /*(e) -> {
                            MessageBox.Show("Failed to refresh download: " + e.getLocalizedMessage());
                            HMCLog.err("Failed to refresh download.", e);

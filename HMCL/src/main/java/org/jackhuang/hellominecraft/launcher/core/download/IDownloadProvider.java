@@ -32,7 +32,7 @@ public abstract class IDownloadProvider {
             return getForgeInstaller();
         case LiteLoader:
             return getLiteLoaderInstaller();
-        case Optifine:
+        case OptiFine:
             return getOptiFineInstaller();
         default:
             return null;

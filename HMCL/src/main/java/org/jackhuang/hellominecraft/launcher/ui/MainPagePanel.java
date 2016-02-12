@@ -87,6 +87,8 @@ public class MainPagePanel extends AnimatedPanel {
         MainFrame.INSTANCE.daemon.customizedSuccessEvent = this::prepareAuths;
 
         prepareAuths();
+
+        animationEnabled = false;
     }
 
     /**

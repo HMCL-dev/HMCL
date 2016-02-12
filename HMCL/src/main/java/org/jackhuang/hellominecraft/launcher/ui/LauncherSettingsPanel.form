@@ -48,13 +48,6 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="txtProxyPassword" min="-2" pref="80" max="-2" attributes="0"/>
                   </Group>
-                  <Group type="102" attributes="0">
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="lblAbout" min="-2" max="-2" attributes="0"/>
-                          <Component id="lblModpack" alignment="0" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                  </Group>
                   <Group type="102" alignment="0" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="lblDownloadSource" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -73,6 +66,14 @@
                           <Component id="cboDownloadSource" alignment="1" max="32767" attributes="0"/>
                           <Component id="cboTheme" alignment="1" max="32767" attributes="0"/>
                       </Group>
+                  </Group>
+                  <Group type="102" attributes="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="lblAbout" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblModpack" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblRestart" alignment="0" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -125,7 +126,9 @@
                   <Component id="btnCheckUpdate" alignment="3" min="-2" pref="26" max="-2" attributes="0"/>
                   <Component id="chkDecorated" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace pref="85" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="lblRestart" min="-2" max="-2" attributes="0"/>
+              <EmptySpace pref="65" max="32767" attributes="0"/>
               <Component id="lblModpack" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblAbout" min="-2" max="-2" attributes="0"/>
@@ -326,6 +329,13 @@
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="launcher.lang" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblRestart">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="launcher.restart" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>

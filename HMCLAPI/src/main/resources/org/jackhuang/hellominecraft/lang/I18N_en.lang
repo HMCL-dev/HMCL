@@ -44,10 +44,10 @@ install.optifine.get_list=Get OptiFine Download List
 install.optifine.get_download_link=Get the Download Link of OptiFine
 
 install.failed_forge=Failed to Install Forge
-install.failed_optifine=Failed to Install Optifine
+install.failed_optifine=Failed to Install OptiFine
 install.failed_liteloader=Failed to Install LiteLoader
 install.failed_download_forge=Failed to Download Forge
-install.failed_download_optifine=Failed to Download Optifine
+install.failed_download_optifine=Failed to Download OptiFine
 install.failed=Failed to install
 install.success=Install successfully
 install.no_forge=No Forge
@@ -282,6 +282,7 @@ launcher.decorated=Enable system window border(in order to fix the problem that 
 launcher.modpack=<html><a href="http://blog.163.com/huanghongxun2008@126/blog/static/7738046920160323812771/">Documentations for modpacks.</a></html>
 launcher.enable_animation=Enable Animation
 launcher.lang=Language
+launcher.restart=Options will be in operations only if restart this app.
 
 launcher.title.game=Games
 launcher.title.main=Home

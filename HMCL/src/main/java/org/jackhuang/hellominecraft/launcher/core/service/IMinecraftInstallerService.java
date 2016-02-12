@@ -35,7 +35,7 @@ public abstract class IMinecraftInstallerService extends IMinecraftBasicService 
 
     public abstract Task downloadForge(String installId, InstallerVersionList.InstallerVersion v);
 
-    public abstract Task downloadOptifine(String installId, InstallerVersionList.InstallerVersion v);
+    public abstract Task downloadOptiFine(String installId, InstallerVersionList.InstallerVersion v);
 
     public abstract Task downloadLiteLoader(String installId, InstallerVersionList.InstallerVersion v);
 

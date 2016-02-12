@@ -22,7 +22,7 @@ package org.jackhuang.hellominecraft.launcher.core.install;
  * @author huangyuhui
  */
 public enum InstallerType {
-    Forge("forge"), Optifine("optifine"), LiteLoader("liteloader");
+    Forge("forge"), OptiFine("optifine"), LiteLoader("liteloader");
 
     public final String id;
 
