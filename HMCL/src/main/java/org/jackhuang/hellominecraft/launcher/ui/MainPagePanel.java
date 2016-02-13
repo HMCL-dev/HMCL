@@ -504,8 +504,10 @@ public class MainPagePanel extends AnimatedPanel {
     final Consumer<String> versionChanged = this::versionChanged;
 
     void versionChanged(String selectedVersion) {
+        isLoading = true;
         ((DefaultComboBoxModel) cboVersions.getModel()).setSelectedItem(selectedVersion);
         cboVersions.setToolTipText(selectedVersion);
+        isLoading = false;
     }
 
     final Consumer<Profile> onSelectedProfilesChanged = t -> {

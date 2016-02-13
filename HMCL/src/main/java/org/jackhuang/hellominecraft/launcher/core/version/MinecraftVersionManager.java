@@ -115,7 +115,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                     mcVersion = C.GSON.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
                     if (mcVersion == null)
                         throw new GameException("Wrong json format, got null.");
-                } catch (IOException | GameException e) {
+                } catch (Exception e) {
                     HMCLog.warn("Found wrong format json, try to fix it.", e);
                     if (MessageBox.Show(C.i18n("launcher.versions_json_not_formatted", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
                         service.download().downloadMinecraftVersionJson(id);
@@ -190,8 +190,9 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public File getRunDirectory(String id) {
-        if ("version".equals(getVersionById(id).runDir))
-            return versionRoot(id);
+        if (getVersionById(id) != null)
+            if ("version".equals(getVersionById(id).runDir))
+                return versionRoot(id);
         return baseDirectory();
     }
 

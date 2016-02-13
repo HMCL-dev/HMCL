@@ -119,7 +119,6 @@ public final class Main implements Runnable {
     public static void main(String[] args) throws IOException {
         {
             //PluginManager.getServerPlugin();
-
             if (IUpgrader.NOW_UPGRADER.parseArguments(getVersionNumber(), args))
                 return;
 
@@ -169,6 +168,8 @@ public final class Main implements Runnable {
                         }
                     });
             }
+            if (true)
+                throw new IOException("???");
 
             try {
                 PluginManager.plugin().showUI();

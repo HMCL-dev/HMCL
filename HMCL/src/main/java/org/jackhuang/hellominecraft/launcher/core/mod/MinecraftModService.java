@@ -77,6 +77,8 @@ public class MinecraftModService extends IMinecraftModService {
         try {
             if (!ModInfo.isFileMod(f))
                 return false;
+            if (!modCache.containsKey(id))
+                recacheMods(id);
             File modsFolder = service.version().getRunDirectory(id, "mods");
             if (!modsFolder.exists() && !modsFolder.mkdirs())
                 HMCLog.warn("Failed to make directories: " + modsFolder);

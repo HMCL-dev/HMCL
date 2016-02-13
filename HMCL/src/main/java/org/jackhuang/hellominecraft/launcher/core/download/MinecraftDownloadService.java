@@ -22,7 +22,6 @@ import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
@@ -93,13 +92,15 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
                 MinecraftVersion mv;
                 try {
                     mv = C.GSON.fromJson(FileUtils.readFileToStringQuietly(mvt), MinecraftVersion.class);
+                    if (mv == null)
+                        throw new JsonSyntaxException("incorrect version");
                 } catch (JsonSyntaxException ex) {
                     HMCLog.err("Failed to parse minecraft version json.", ex);
                     onFailed(k);
                     return;
                 }
                 String jarURL = vurl + id + ".jar", hash = null;
-                if (service.getDownloadType().getProvider().isAllowedToUseSelfURL() && mv.downloads != null) {
+                if (mv != null && mv.downloads != null && service.getDownloadType().getProvider().isAllowedToUseSelfURL()) {
                     GameDownloadInfo gdi = mv.downloads.get("client");
                     if (gdi != null) {
                         if (gdi.url != null)

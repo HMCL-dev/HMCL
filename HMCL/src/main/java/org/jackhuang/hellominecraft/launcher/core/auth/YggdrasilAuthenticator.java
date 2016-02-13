@@ -78,6 +78,8 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
                     username = JOptionPane.showInputDialog(C.i18n("login.no_charactor"));
             else
                 username = selectedProfile.name;
+            if (username == null)
+                throw new AuthenticationException("No player");
             result.setUserName(username);
             result.setUserId(selectedProfile == null ? OfflineAuthenticator.getUUIDFromUserName(username) : UUIDTypeAdapter.fromUUID(selectedProfile.id));
         }
