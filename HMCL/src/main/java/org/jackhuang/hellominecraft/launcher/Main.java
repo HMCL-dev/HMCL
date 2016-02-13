@@ -168,8 +168,6 @@ public final class Main implements Runnable {
                         }
                     });
             }
-            if (true)
-                throw new IOException("???");
 
             try {
                 PluginManager.plugin().showUI();

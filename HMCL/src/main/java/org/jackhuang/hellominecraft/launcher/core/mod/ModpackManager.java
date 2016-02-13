@@ -99,7 +99,7 @@ public final class ModpackManager {
                 String description = C.i18n("modpack.install.will_install");
 
                 try (ZipFile zip = new ZipFile(input)) {
-                    HashMap map = C.GSON.fromJson(new InputStreamReader(zip.getInputStream(zip.getEntry("modpack.json"))), HashMap.class);
+                    HashMap map = C.GSON.fromJson(new InputStreamReader(zip.getInputStream(zip.getEntry("modpack.json")), "UTF-8"), HashMap.class);
                     if (map != null) {
                         if (id == null)
                             if (map.containsKey("name") && map.get("name") instanceof String)
