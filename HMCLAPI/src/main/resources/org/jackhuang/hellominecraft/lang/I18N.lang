@@ -218,6 +218,8 @@ modpack.save=选择要导出到的游戏整合包位置
 modpack.save.task=导出整合包
 modpack.export_error=导出失败，可能是您的游戏文件夹格式不正确或操作文件失败
 modpack.export_finished=整合包导出完成，参见
+modpack.included_launcher=整合包已包含启动器，可直接发布
+modpack.not_included_launcher=整合包未包含启动器，可使用本软件的导入整合包功能导入整合包
 modpack.enter_name=给游戏起个你喜欢的名字
 modpack.wizard=导出整合包向导
 modpack.wizard.step.1=基本设置
@@ -233,6 +235,16 @@ modpack.not_a_valid_location=不是一个有效整合包位置
 modpack.warning=<html>在制作整合包前，请您确认您选择的版本可以正常启动，<br/>并保证您的Minecraft是正式版而非快照版，<br/>而且不应当将不允许非官方途径传播的Mod纳入整合包。</html>
 modpack.name=整合包名称
 modpack.not_a_valid_name=整合包名称不能为空
+
+modpack.files.servers_dat=多人游戏服务器列表
+modpack.files.saves=游戏存档
+modpack.files.mods=Mod
+modpack.files.config=Mod配置文件
+modpack.files.liteconfig=Mod配置文件
+modpack.files.resourcepacks=资源包(材质包)
+modpack.files.options_txt=游戏设定
+modpack.files.optionsshaders_txt=光影设定
+modpack.files.mods.voxelmods=VoxelMods配置，如小地图
 
 mods=Mod管理
 mods.choose_mod=选择模组
@@ -265,7 +277,7 @@ mainwindow.enter_script_name=输入要生成脚本的文件名
 mainwindow.make_launch_succeed=启动脚本已生成完毕:
 mainwindow.no_version=未找到任何版本，是否进入游戏下载？
 
-launcher.about=<html>默认背景图来自Liberty Dome服务器。<br/>关于作者：<br/>百度ID：huanghongxun20<br/>mcbbs：huanghongxun<br/>邮箱：huanghongxun2008@126.com<br/>Minecraft Forum ID: klkl6523<br/>欢迎提交Bug哦<br/>Copyright (c) 2013-2016 huangyuhui.<br/>免责声明：Minecraft软件版权归Mojang AB所有，游戏由于误操作本启动器而丢失数据的概不负责。<br/>本启动器在GPLv3协议下开源:https://github.com/huanghongxun/HMCL/ ,感谢issues和pull requests贡献者<br/>本软件使用了基于Apache License 2.0的Gson项目，感谢贡献者。</html>
+launcher.about=<html>默认背景图来自Liberty Dome服务器。<br/>关于作者：<br/>百度ID：huanghongxun20<br/>mcbbs：huanghongxun<br/>邮箱：huanghongxun2008@126.com<br/>Minecraft Forum ID: klkl6523<br/>欢迎提交Bug哦<br/>Copyright (c) 2013-2016 huangyuhui.<br/>免责声明：Minecraft软件版权归Mojang AB所有，使用本软件产生的版权问题本软件制作方概不负责。<br/>本启动器在GPLv3协议下开源:https://github.com/huanghongxun/HMCL/ ,感谢issues和pull requests贡献者<br/>本软件使用了基于Apache License 2.0的Gson项目，感谢贡献者。</html>
 launcher.download_source=下载源
 launcher.background_location=背景地址
 launcher.exit_failed=强制退出失败，可能是Forge 1.7.10及更高版本导致的，无法解决。

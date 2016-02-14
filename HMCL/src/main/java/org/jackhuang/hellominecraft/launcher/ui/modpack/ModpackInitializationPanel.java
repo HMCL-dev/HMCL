@@ -33,6 +33,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
     public static final String KEY_GAME_VERSION = "gameVersion";
     public static final String KEY_MODPACK_LOCATION = "modpackLocation";
     public static final String KEY_MODPACK_NAME = "modpackName";
+    public static final String KEY_INCLUDING_LAUNCHER = "launcher";
 
     private final transient WizardController controller;
     private final Map wizardData;
@@ -46,6 +47,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
         this.controller = controller;
         this.wizardData = wizardData;
         wizardData.put(KEY_GAME_VERSION, versions);
+        wizardData.put(KEY_INCLUDING_LAUNCHER, false);
 
         configureComboContents();
         checkProblem();
@@ -76,6 +78,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         txtModpackName = new javax.swing.JTextField();
+        chkIncludeLauncher = new javax.swing.JCheckBox();
 
         lblModpackLocation.setText(C.i18n("modpack.save")); // NOI18N
 
@@ -111,6 +114,13 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
             }
         });
 
+        chkIncludeLauncher.setText("包含启动器");
+        chkIncludeLauncher.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                chkIncludeLauncherItemStateChanged(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -129,7 +139,8 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblGameVersion)
                             .addComponent(jLabel1)
-                            .addComponent(jLabel2))
+                            .addComponent(jLabel2)
+                            .addComponent(chkIncludeLauncher))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -138,7 +149,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 70, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 61, Short.MAX_VALUE)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtModpackName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -152,6 +163,8 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
                 .addComponent(lblGameVersion)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cboGameVersion, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkIncludeLauncher)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -183,6 +196,10 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
         checkProblem();
     }//GEN-LAST:event_txtModpackNameCaretUpdate
 
+    private void chkIncludeLauncherItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkIncludeLauncherItemStateChanged
+        wizardData.put(KEY_INCLUDING_LAUNCHER, chkIncludeLauncher.isSelected());
+    }//GEN-LAST:event_chkIncludeLauncherItemStateChanged
+
     void checkProblem() {
         controller.setProblem(null);
         if (txtModpackLocation.getText().trim().isEmpty())
@@ -194,6 +211,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cboGameVersion;
     private javax.swing.JButton cboModpackLocation;
+    private javax.swing.JCheckBox chkIncludeLauncher;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel lblGameVersion;

@@ -218,6 +218,8 @@ modpack.save=Choose a location which you want to export the game files to.
 modpack.save.task=Export the modpack
 modpack.export_error=Failed to export the modpack, maybe the format of your game directory is incorrect or failed to manage files.
 modpack.export_finished=Exporting the modpack finished. See
+modpack.included_launcher=The modpack has already included the launcher, you can publish it directly.
+modpack.not_included_launcher=Use the modpack by "import modpack".
 modpack.enter_name=Give this game a name which is your favorite.
 modpack.wizard=Exporting the modpack wizard
 modpack.wizard.step.1=Basic options
@@ -233,6 +235,16 @@ modpack.not_a_valid_location=Not a valid modpack location
 modpack.warning=<html>Before making modpack, you should ensure that your game can launch successfully,<br/>and that your Minecraft is release, not snapshot.<br/>and that it is not allowed to add mods which is not allowed to distribute to the modpack.</html>
 modpack.name=Modpack Name
 modpack.not_a_valid_name=Modpack Name cannot be empty.
+
+modpack.files.servers_dat=Multiplayer servers list
+modpack.files.saves=Saved games
+modpack.files.mods=Mods
+modpack.files.config=Mod configurations
+modpack.files.liteconfig=Mod configurations
+modpack.files.resourcepacks=Resource(Texutre) packs
+modpack.files.options_txt=Game options
+modpack.files.optionsshaders_txt=Shaders options
+modpack.files.mods.voxelmods=VoxelMods(including VoxelMap) options
 
 mods=Mods
 mods.choose_mod=Choose your mods

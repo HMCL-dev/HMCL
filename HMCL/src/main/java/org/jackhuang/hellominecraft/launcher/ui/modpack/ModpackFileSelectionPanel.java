@@ -18,10 +18,13 @@
 package org.jackhuang.hellominecraft.launcher.ui.modpack;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import javax.swing.tree.DefaultTreeModel;
+import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.Pair;
 import org.jackhuang.hellominecraft.util.func.BiFunction;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.ui.checktree.CheckBoxTreeCellRenderer;
@@ -62,12 +65,26 @@ public class ModpackFileSelectionPanel extends javax.swing.JPanel {
         wizardData.put("blackList", root);
     }
 
+    private static final HashMap<String, String> TRANSLATION = new HashMap<String, String>() {
+        {
+            put("minecraft/servers.dat", C.i18n("modpack.files.servers_dat"));
+            put("minecraft/saves", C.i18n("modpack.files.saves"));
+            put("minecraft/mods", C.i18n("modpack.files.mods"));
+            put("minecraft/config", C.i18n("modpack.files.config"));
+            put("minecraft/liteconfig", C.i18n("modpack.files.liteconfig"));
+            put("minecraft/resourcepacks", C.i18n("modpack.files.resourcepacks"));
+            put("minecraft/options.txt", C.i18n("modpack.files.options_txt"));
+            put("minecraft/optionsshaders.txt", C.i18n("modpack.files.optionsshaders_txt"));
+            put("minecraft/mods/VoxelMods", C.i18n("modpack.files.mods.voxelmods"));
+        }
+    };
+
     CheckBoxTreeNode create(File file, String basePath) {
         int state = 0;
         if (basePath.length() > "minecraft/".length())
             if ((state = blackList.apply(basePath.substring("minecraft/".length()) + (file.isDirectory() ? "/" : ""), file.isDirectory())) == 1)
                 return null;
-        CheckBoxTreeNode node = new CheckBoxTreeNode(FileUtils.getName(basePath));
+        CheckBoxTreeNode node = new CheckBoxTreeNode(TRANSLATION.containsKey(basePath) ? new Pair<>(FileUtils.getName(basePath), TRANSLATION.get(basePath)) : FileUtils.getName(basePath));
         if (state == 2)
             node.setSelected(true);
 

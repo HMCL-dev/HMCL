@@ -180,7 +180,7 @@ public final class ModpackManager {
 
     }
 
-    public static final List<String> MODPACK_BLACK_LIST = Arrays.asList(new String[] { "usernamecache.json", "asm", "logs", "backups", "versions", "assets", "usercache.json", "libraries", "crash-reports", "launcher_profiles.json", "NVIDIA", "TCNodeTracker", "screenshots", "natives", "native", "hmclversion.cfg", "pack.json" });
+    public static final List<String> MODPACK_BLACK_LIST = Arrays.asList(new String[] { "usernamecache.json", "asm", "logs", "backups", "versions", "assets", "usercache.json", "libraries", "crash-reports", "launcher_profiles.json", "NVIDIA", "TCNodeTracker", "screenshots", "natives", "native", "$native", "hmclversion.cfg", "pack.json", "launcher.jar", "launcher.pack.lzma" });
     public static final List<String> MODPACK_SUGGESTED_BLACK_LIST = Arrays.asList(new String[] { "saves", "servers.dat", "options.txt", "optionsshaders.txt", "mods/VoxelMods" });
 
     /**

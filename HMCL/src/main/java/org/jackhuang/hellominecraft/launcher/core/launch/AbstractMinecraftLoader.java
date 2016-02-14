@@ -128,7 +128,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
 
         if (!options.isCanceledWrapper()) {
             res.add("-cp");
-            res.add(StrUtils.parseParams("", Utils.getURL(), File.pathSeparator));
+            res.add(StrUtils.parseParams("", Utils.getURLString(), File.pathSeparator));
             res.add(Launcher.class.getCanonicalName());
         }
     }

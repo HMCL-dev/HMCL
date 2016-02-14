@@ -72,7 +72,7 @@ login.invalid_username=無效的用戶名
 login.invalid_uuid_and_username=無效的UUID和用戶名
 login.invalid_password=無效的密碼
 login.invalid_access_token=無效的訪問令牌
-login.changed_client_token=服務器回應已經修改客戶端令牌
+login.changed_client_token=伺服器回應已經修改客戶端令牌
 login.not_email=用戶名必須是郵箱
 login.type=登錄
 login.username=名字
@@ -85,7 +85,7 @@ proxy.password=密碼
 proxy.host=主机
 proxy.port=端口
 
-login.failed.connect_authentication_server=無法連接認證服務器,可能是網絡問題
+login.failed.connect_authentication_server=無法連接認證伺服器,可能是網絡問題
 
 login.profile.not_logged_in=無法修改遊戲資料同時未登錄
 login.profile.selected=無法修改遊戲資料. 你必須登出再返回.
@@ -218,6 +218,8 @@ modpack.save=選擇要導出到的遊戲懶人包位置
 modpack.save.task=導出懶人包
 modpack.export_error=導出失敗，可能是您的遊戲資料夾格式不正確或操作資料失敗
 modpack.export_finished=懶人包導出完成，参见
+modpack.included_launcher=懶人包已包含啟動器，可直接發布
+modpack.not_included_launcher=懶人包未包含啟動器，可使用本軟件的導入懶人包功能導入懶人包
 modpack.enter_name=給遊戲起個你喜歡的名字
 modpack.wizard=導出懶人包嚮導
 modpack.wizard.step.1=基本設定
@@ -233,6 +235,16 @@ modpack.not_a_valid_location=不是一个有效懒人包位置
 modpack.warning=<html>在製作懶人包前,請您確認您選擇的版本可以正常啟動,​​<br/>並保證您的Minecraft是正式版而非快照版,<br/>而且不應當將不允許非官方途徑傳播的Mod納入整合包。 </html>
 modpack.name=懶人包名稱
 modpack.not_a_valid_name=懶人包名稱不能為空
+
+modpack.files.servers_dat=多人遊戲伺服器列表
+modpack.files.saves=遊戲存檔
+modpack.files.mods=Mod
+modpack.files.config=Mod配置文件
+modpack.files.liteconfig=Mod配置文件
+modpack.files.resourcepacks=資源包(材質包)
+modpack.files.options_txt=遊戲設定
+modpack.files.optionsshaders_txt=光影設定
+modpack.files.mods.voxelmods=VoxelMods設定，如小地圖
 
 mods=Mod管理
 mods.choose_mod=选择模组
@@ -255,7 +267,7 @@ advancedsettings.game_dir.independent=各版本獨立(.minecraft/versions/<版�
 advancedsettings.no_jvm_args=不添加JVM參數(使用Java9時必勾)
 advancedsettings.java_args_default=啟動器默認添加的參數（請不要重複添加）：-XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy -XX:MaxPermSize=???m -Xmx???m -Dfml. ignoreInvalidMinecraftCertificates=true -Dfml.ignorePatchDiscrepancies=true
 advancedsettings.wrapper_launcher=前置啟動指令(不必填寫，內容將加在啟動腳本最前，如optirun...)
-advancedsettings.server_ip=直入服務器ip地址(不必填寫，啟動遊戲後直接進入對應服務器)
+advancedsettings.server_ip=直入伺服器ip地址(不必填寫，啟動遊戲後直接進入對應伺服器)
 advancedsettings.cancel_wrapper_launcher=取消包裹啟動器(出現奇怪問題時可嘗試使用,與調試模式衝突)
 
 mainwindow.show_log=查看日誌
@@ -265,7 +277,7 @@ mainwindow.enter_script_name=輸入要生成腳本的資料名
 mainwindow.make_launch_succeed=啟動腳本已生成完畢:
 mainwindow.no_version=未找到任何版本，是否進入遊戲下載？
 
-launcher.about=<html>默認背景圖來自Liberty Dome服務器。 <br/>關於作者：<br/>百度ID：huanghongxun20<br/>mcbbs：huanghongxun<br/>郵箱：huanghongxun2008@126.com<br/>Minecraft Forum ID: klkl6523<br />歡迎提交Bug哦<br/>Copyright (c) 2013-2016 huangyuhui.<br/>免責聲明：Minecraft軟體版權歸Mojang AB所有，遊戲由於誤操作本啟動器而丟失數據的概不負責。 <br/>本啟動器在GPLv3協議下開源:http://github.com/huanghongxun/HMCL/ ,感谢issues和pull requests贡献者<br/>本軟體使用了基於Apache License 2.0的Gson項目，感謝貢獻者。</html>
+launcher.about=<html>默認背景圖來自Liberty Dome伺服器。 <br/>關於作者：<br/>百度ID：huanghongxun20<br/>mcbbs：huanghongxun<br/>郵箱：huanghongxun2008@126.com<br/>Minecraft Forum ID: klkl6523<br />歡迎提交Bug哦<br/>Copyright (c) 2013-2016 huangyuhui.<br/>免責聲明：Minecraft軟體版權歸Mojang AB所有，遊戲由於誤操作本啟動器而丟失數據的概不負責。 <br/>本啟動器在GPLv3協議下開源:http://github.com/huanghongxun/HMCL/ ,感谢issues和pull requests贡献者<br/>本軟體使用了基於Apache License 2.0的Gson項目，感謝貢獻者。</html>
 launcher.download_source=下載源
 launcher.background_location=背景地址
 launcher.exit_failed=強制退出失敗，可能是Forge 1.7.10及更高版本導致的，無法解決。
@@ -343,7 +355,7 @@ logwindow.title=日志
 
 selector.choose=選擇
 
-serverlistview.title=選擇服務器
+serverlistview.title=選擇伺服器
 serverlistview.name=名称
 serverlistview.type=类型
 serverlistview.version=版本

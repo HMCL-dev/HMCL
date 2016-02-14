@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.util.ui.checktree;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import org.jackhuang.hellominecraft.util.Pair;
 
 /**
  *
@@ -38,6 +39,14 @@ public class CheckBoxTreeNode extends DefaultMutableTreeNode {
     public CheckBoxTreeNode(Object userObject, boolean allowsChildren, boolean isSelected) {
         super(userObject, allowsChildren);
         this.isSelected = isSelected;
+    }
+
+    @Override
+    public String toString() {
+        if (userObject instanceof Pair)
+            return "<html>" + ((Pair) userObject).key + "<font color=gray>&nbsp;-&nbsp;" + ((Pair) userObject).value + "</font></html>";
+        else
+            return userObject.toString();
     }
 
     public boolean isSelected() {

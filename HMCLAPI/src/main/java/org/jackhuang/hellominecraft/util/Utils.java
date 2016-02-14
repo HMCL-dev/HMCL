@@ -48,7 +48,11 @@ public final class Utils {
         }
     }
 
-    public static String[] getURL() {
+    public static URL[] getURL() {
+        return ((URLClassLoader) Utils.class.getClassLoader()).getURLs();
+    }
+
+    public static String[] getURLString() {
         URL[] urls = ((URLClassLoader) Utils.class.getClassLoader()).getURLs();
         String[] urlStrings = new String[urls.length];
         for (int i = 0; i < urlStrings.length; i++)

@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.launcher.ui.modpack;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -31,7 +32,11 @@ import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.Pair;
+import org.jackhuang.hellominecraft.util.Utils;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.system.FileUtils;
+import org.jackhuang.hellominecraft.util.system.ZipEngine;
 import org.jackhuang.hellominecraft.util.ui.checktree.CheckBoxTreeNode;
 import org.jackhuang.hellominecraft.util.ui.wizard.spi.DeferredWizardResult;
 import org.jackhuang.hellominecraft.util.ui.wizard.spi.ResultProgressHandle;
@@ -58,7 +63,12 @@ public class ModpackWizard extends WizardBranchController {
         Enumeration<CheckBoxTreeNode> e = node.children();
         for (; e.hasMoreElements();) {
             CheckBoxTreeNode n = e.nextElement();
-            process(n, basePath + "/" + n.getUserObject(), list);
+            String s = null;
+            if (n.getUserObject() instanceof Pair)
+                s = ((Pair<String, String>) n.getUserObject()).key;
+            else
+                s = n.getUserObject().toString();
+            process(n, basePath + "/" + s, list);
         }
     }
 
@@ -80,11 +90,38 @@ public class ModpackWizard extends WizardBranchController {
                             map.put("description", (String) settings.get(ModpackDescriptionPanel.KEY_MODPACK_DESCRITION));
                         try {
                             File loc = new File((String) settings.get(ModpackInitializationPanel.KEY_MODPACK_LOCATION));
-                            ModpackManager.export(loc,
+                            File modpack = loc;
+                            if ((Boolean) settings.get(ModpackInitializationPanel.KEY_INCLUDING_LAUNCHER))
+                                modpack = File.createTempFile("hmcl", ".zip");
+                            ModpackManager.export(modpack,
                                                   service.version(),
                                                   (String) settings.get(ModpackInitializationPanel.KEY_GAME_VERSION),
                                                   blackList, map);
-                            progress.finished(new Summary(C.i18n("modpack.export_finished") + ": " + loc.getAbsolutePath(), null));
+                            String summary = C.i18n("modpack.export_finished") + ": " + loc.getAbsolutePath();
+                            boolean including = false;
+                            if ((Boolean) settings.get(ModpackInitializationPanel.KEY_INCLUDING_LAUNCHER)) {
+                                boolean flag = true;
+                                ZipEngine engine = new ZipEngine(loc);
+                                engine.putFile(loc, "modpack.zip");
+                                for (URL u : Utils.getURL())
+                                    try {
+                                        File f = new File(u.toURI());
+                                        if (f.getName().endsWith(".exe") || f.getName().endsWith(".jar"))
+                                            engine.putFile(f, f.getName());
+                                    } catch (Exception e) {
+                                        HMCLog.err("Failed to add launcher files.", e);
+                                        flag = false;
+                                        break;
+                                    }
+                                engine.closeFile();
+                                if (!flag) {
+                                    loc.delete();
+                                    FileUtils.copyFile(modpack, loc);
+                                } else
+                                    including = true;
+                            }
+                            summary += "<br/>" + C.i18n(including ? "modpack.included_launcher" : "modpack.not_included_launcher");
+                            progress.finished(new Summary(summary, null));
                         } catch (IOException | GameException ex) {
                             HMCLog.err("Failed to export modpack", ex);
                             progress.failed(C.i18n("modpack.export_error") + ": " + ex.getClass().getName() + ", " + ex.getLocalizedMessage(), true);

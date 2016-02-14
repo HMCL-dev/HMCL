@@ -27,6 +27,7 @@ import javax.swing.JTree;
 import javax.swing.UIManager;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.tree.TreeCellRenderer;
+import org.jackhuang.hellominecraft.util.Pair;
 
 public class CheckBoxTreeCellRenderer extends JPanel implements TreeCellRenderer {
 
