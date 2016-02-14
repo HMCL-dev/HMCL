@@ -1005,12 +1005,13 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }//GEN-LAST:event_btnChoosingJavaDirActionPerformed
 
     private void cboJavaItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboJavaItemStateChanged
-        if (isLoading || evt.getStateChange() != ItemEvent.SELECTED || cboJava.getSelectedIndex() < 0 || StrUtils.isBlank((String) cboJava.getSelectedItem()))
+        if (evt.getStateChange() != ItemEvent.SELECTED || cboJava.getSelectedIndex() < 0 || StrUtils.isBlank((String) cboJava.getSelectedItem()))
             return;
         int idx = cboJava.getSelectedIndex();
         if (idx != -1) {
             Java j = Java.JAVA.get(idx);
-            Settings.getLastProfile().getSelectedVersionSetting().setJava(j);
+            if (!isLoading)
+                Settings.getLastProfile().getSelectedVersionSetting().setJava(j);
             txtJavaDir.setEnabled(idx == 1);
             txtJavaDir.setText(j.getHome() == null ? Settings.getLastProfile().getSelectedVersionSetting().getSettingsJavaDir() : j.getJava());
         }
@@ -1187,7 +1188,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         cboRunDirectory.setSelectedIndex(profile.getGameDirType().ordinal());
         cboJava.setSelectedIndex(profile.getJavaIndexInAllJavas());
         isLoading = false;
-        cboJavaItemStateChanged(new ItemEvent(cboJava, 0, cboJava.getSelectedItem(), ItemEvent.SELECTED));
     }
 
     /**

@@ -64,14 +64,6 @@ public class DefaultMinecraftService extends IMinecraftService {
         this.mds = new MinecraftDownloadService(this);
         this.mas = new MinecraftAssetService(this);
         this.mis = new MinecraftInstallerService(this);
-
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                for (String key : versionSettings.keySet())
-                    saveVersionSetting(key);
-            }
-        });
     }
 
     private void checkModpack() {
