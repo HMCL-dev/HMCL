@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.ui.modpack;
 
 import java.util.Map;
+import java.util.Vector;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -41,12 +42,13 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
     /**
      * Creates new form ModpackInitializationPanel
      */
-    public ModpackInitializationPanel(WizardController controller, Map wizardData, String[] versions) {
+    public ModpackInitializationPanel(WizardController controller, Map wizardData, Vector<String> versions, String selVersion) {
         initComponents();
 
         this.controller = controller;
         this.wizardData = wizardData;
         wizardData.put(KEY_GAME_VERSION, versions);
+        wizardData.put("selVersion", selVersion);
         wizardData.put(KEY_INCLUDING_LAUNCHER, false);
 
         configureComboContents();
@@ -54,10 +56,9 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
     }
 
     private void configureComboContents() {
-        String[] versions = (String[]) wizardData.get(KEY_GAME_VERSION);
+        Vector<String> versions = (Vector<String>) wizardData.get(KEY_GAME_VERSION);
         cboGameVersion.setModel(new DefaultComboBoxModel<>(versions));
-        if (versions.length > 0)
-            wizardData.put(KEY_GAME_VERSION, versions[0]);
+        wizardData.put(KEY_GAME_VERSION, wizardData.get("selVersion"));
     }
 
     /**

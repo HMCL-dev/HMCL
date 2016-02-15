@@ -74,6 +74,7 @@ configure(install.repositories.mavenInstaller) {
 dependencies {
     compile project(":MetroLookAndFeel")
     compile project(":HMCLAPI")
+    compile group: "org.commonjava.googlecode.markdown4j", name: "markdown4j", version: "2.2-cj-1.0"
 }
 
 retrolambda {

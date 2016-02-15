@@ -863,7 +863,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                 .addGap(0, 0, Short.MAX_VALUE))
         );
 
-        btnTestGame.setText("测试游戏");
+        btnTestGame.setText(C.i18n("settings.test_game")); // NOI18N
         btnTestGame.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnTestGameActionPerformed(evt);

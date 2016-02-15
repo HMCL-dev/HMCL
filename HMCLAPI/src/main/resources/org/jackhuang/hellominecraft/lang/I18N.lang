@@ -148,6 +148,7 @@ ui.button.copy=复制
 ui.button.clear=清除
 ui.button.close=关闭
 ui.button.explore=浏览
+ui.button.test=测试
 button.cancel=取消
 button.ok=确定
 
@@ -208,6 +209,7 @@ settings.default=默认
 settings.custom=自定义
 settings.choose_gamedir=选择游戏路径
 settings.failed_load=设置文件加载失败，可能是升级了启动器或被人工修改造成错误，是否清除？
+settings.test_game=测试游戏
 
 modpack=整合包
 modpack.choose=选择要导入的游戏整合包文件，如果您希望更新整合包，请输入要更新的版本名
@@ -227,7 +229,8 @@ modpack.wizard.step.1.title=设置整合包的主要信息
 modpack.wizard.step.2=文件选择
 modpack.wizard.step.2.title=选中你不想加到整合包中的文件(夹)
 modpack.wizard.step.3=整合包描述
-modpack.wizard.step.3.title=描述你要制作的整合包，比如整合包注意事项和更新记录，支持HTML 3。
+modpack.wizard.step.3.title=描述你要制作的整合包
+modpack.desc=描述你要制作的整合包，比如整合包注意事项和更新记录，支持Markdown(图片请用网络图片)。
 modpack.incorrect_format.no_json=整合包格式错误，pack.json丢失
 modpack.incorrect_format.no_jar=整合包格式错误，pack.json丢失jar字段
 modpack.cannot_read_version=读取游戏版本失败

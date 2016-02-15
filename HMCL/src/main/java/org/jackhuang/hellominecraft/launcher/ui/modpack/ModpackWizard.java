@@ -23,20 +23,22 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 import javax.swing.JComponent;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.launcher.setting.Profile;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.Pair;
+import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.Utils;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.ZipEngine;
+import org.jackhuang.hellominecraft.util.ui.WebPage;
 import org.jackhuang.hellominecraft.util.ui.checktree.CheckBoxTreeNode;
 import org.jackhuang.hellominecraft.util.ui.wizard.spi.DeferredWizardResult;
 import org.jackhuang.hellominecraft.util.ui.wizard.spi.ResultProgressHandle;
@@ -63,7 +65,7 @@ public class ModpackWizard extends WizardBranchController {
         Enumeration<CheckBoxTreeNode> e = node.children();
         for (; e.hasMoreElements();) {
             CheckBoxTreeNode n = e.nextElement();
-            String s = null;
+            String s;
             if (n.getUserObject() instanceof Pair)
                 s = ((Pair<String, String>) n.getUserObject()).key;
             else
@@ -72,7 +74,7 @@ public class ModpackWizard extends WizardBranchController {
         }
     }
 
-    public ModpackWizard(IMinecraftService service) {
+    public ModpackWizard(Profile profile) {
         super(new WizardPanelProvider(C.i18n("modpack.wizard"), new String[] { C.i18n("modpack.wizard.step.1"), C.i18n("modpack.wizard.step.2"), C.i18n("modpack.wizard.step.3") }, new String[] { C.i18n("modpack.wizard.step.1.title"), C.i18n("modpack.wizard.step.2.title"), C.i18n("modpack.wizard.step.3.title") }) {
 
             @Override
@@ -86,23 +88,28 @@ public class ModpackWizard extends WizardBranchController {
                         process(root, "minecraft", blackList);
                         HashMap map = new HashMap();
                         map.put("name", (String) settings.get(ModpackInitializationPanel.KEY_MODPACK_NAME));
+
                         if (settings.containsKey(ModpackDescriptionPanel.KEY_MODPACK_DESCRITION))
-                            map.put("description", (String) settings.get(ModpackDescriptionPanel.KEY_MODPACK_DESCRITION));
+                            try {
+                                map.put("description", new org.markdown4j.Markdown4jProcessor().process((String) settings.get(ModpackDescriptionPanel.KEY_MODPACK_DESCRITION)));
+                            } catch (Exception ex) {
+                                progress.failed(C.i18n("modpack.export_error") + ": " + StrUtils.getStackTrace(ex), true);
+                            }
                         try {
                             File loc = new File((String) settings.get(ModpackInitializationPanel.KEY_MODPACK_LOCATION));
                             File modpack = loc;
                             if ((Boolean) settings.get(ModpackInitializationPanel.KEY_INCLUDING_LAUNCHER))
-                                modpack = File.createTempFile("hmcl", ".zip");
+                                modpack = new File(loc.getAbsolutePath() + ".temp");
                             ModpackManager.export(modpack,
-                                                  service.version(),
+                                                  profile.service().version(),
                                                   (String) settings.get(ModpackInitializationPanel.KEY_GAME_VERSION),
                                                   blackList, map);
-                            String summary = C.i18n("modpack.export_finished") + ": " + loc.getAbsolutePath();
+                            String summary = "<html>" + C.i18n("modpack.export_finished") + ": " + loc.getAbsolutePath();
                             boolean including = false;
                             if ((Boolean) settings.get(ModpackInitializationPanel.KEY_INCLUDING_LAUNCHER)) {
                                 boolean flag = true;
                                 ZipEngine engine = new ZipEngine(loc);
-                                engine.putFile(loc, "modpack.zip");
+                                engine.putFile(modpack, "modpack.zip");
                                 for (URL u : Utils.getURL())
                                     try {
                                         File f = new File(u.toURI());
@@ -114,38 +121,39 @@ public class ModpackWizard extends WizardBranchController {
                                         break;
                                     }
                                 engine.closeFile();
-                                if (!flag) {
-                                    loc.delete();
-                                    FileUtils.copyFile(modpack, loc);
-                                } else
+                                if (flag) {
                                     including = true;
+                                    if (!modpack.delete())
+                                        HMCLog.warn("Failed to delete modpack.zip.temp, maybe the file is in using.");
+                                }
                             }
-                            summary += "<br/>" + C.i18n(including ? "modpack.included_launcher" : "modpack.not_included_launcher");
-                            progress.finished(new Summary(summary, null));
+                            summary += "<br/>" + C.i18n(including ? "modpack.included_launcher" : "modpack.not_included_launcher") + "</html>";
+                            progress.finished(new Summary(new WebPage(summary), null));
                         } catch (IOException | GameException ex) {
                             HMCLog.err("Failed to export modpack", ex);
-                            progress.failed(C.i18n("modpack.export_error") + ": " + ex.getClass().getName() + ", " + ex.getLocalizedMessage(), true);
+                            progress.failed(C.i18n("modpack.export_error") + ": " + StrUtils.getStackTrace(ex), true);
                         }
                     }
                 };
             }
 
             @Override
+
             protected JComponent createPanel(WizardController controller, String id, Map settings) {
                 switch (indexOfStep(id)) {
                 case 0:
-                    String[] s = new String[service.version().getVersionCount()];
-                    Iterator<MinecraftVersion> it = service.version().getVersions().iterator();
-                    for (int i = 0; i < s.length; i++)
-                        s[i] = it.next().id;
+                    Vector<String> s = new Vector<>(profile.service().version().getVersionCount());
+                    for (MinecraftVersion v : profile.service().version().getVersions())
+                        if (!v.hidden)
+                            s.add(v.id);
 
                     controller.setForwardNavigationMode(WizardController.MODE_CAN_CONTINUE);
 
-                    return new ModpackInitializationPanel(controller, settings, s);
+                    return new ModpackInitializationPanel(controller, settings, s, profile.getSelectedVersion());
                 case 1:
                     controller.setForwardNavigationMode(WizardController.MODE_CAN_CONTINUE_OR_FINISH);
 
-                    return new ModpackFileSelectionPanel(controller, settings, service.baseDirectory(), ModpackManager.MODPACK_PREDICATE);
+                    return new ModpackFileSelectionPanel(controller, settings, profile.service().baseDirectory(), ModpackManager.MODPACK_PREDICATE);
                 case 2:
                     controller.setForwardNavigationMode(WizardController.MODE_CAN_FINISH);
 
@@ -154,7 +162,8 @@ public class ModpackWizard extends WizardBranchController {
                     throw new IllegalArgumentException(id);
                 }
             }
-        });
+        }
+        );
     }
 
     @Override

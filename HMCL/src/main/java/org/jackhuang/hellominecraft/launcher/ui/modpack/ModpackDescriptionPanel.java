@@ -17,8 +17,15 @@
  */
 package org.jackhuang.hellominecraft.launcher.ui.modpack;
 
+import java.awt.Dimension;
 import java.util.Map;
+import javax.swing.JOptionPane;
+import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.MessageBox;
+import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.ui.WebPage;
 import org.jackhuang.hellominecraft.util.ui.wizard.spi.WizardController;
+import org.markdown4j.Markdown4jProcessor;
 
 /**
  *
@@ -53,6 +60,7 @@ public class ModpackDescriptionPanel extends javax.swing.JPanel {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         txtDescription = new javax.swing.JTextPane();
+        jButton1 = new javax.swing.JButton();
 
         txtDescription.addCaretListener(new javax.swing.event.CaretListener() {
             public void caretUpdate(javax.swing.event.CaretEvent evt) {
@@ -61,15 +69,28 @@ public class ModpackDescriptionPanel extends javax.swing.JPanel {
         });
         jScrollPane1.setViewportView(txtDescription);
 
+        jButton1.setText(C.i18n("ui.button.test")); // NOI18N
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(0, 0, Short.MAX_VALUE)
+                .addComponent(jButton1))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 270, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButton1))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -77,7 +98,20 @@ public class ModpackDescriptionPanel extends javax.swing.JPanel {
         wizardData.put(KEY_MODPACK_DESCRITION, txtDescription.getText());
     }//GEN-LAST:event_txtDescriptionCaretUpdate
 
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        try {
+            Object msgs[] = new Object[2];
+            msgs[0] = C.i18n("ui.button.test");
+            msgs[1] = new WebPage(new Markdown4jProcessor().process(txtDescription.getText()));
+            ((WebPage) msgs[1]).setPreferredSize(new Dimension(800, 350));
+            JOptionPane.showOptionDialog(null, msgs, (String) msgs[0], JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
+        } catch (Exception e) {
+            MessageBox.Show(StrUtils.getStackTrace(e), "Error", MessageBox.WARNING_MESSAGE);
+        }
+    }//GEN-LAST:event_jButton1ActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jButton1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextPane txtDescription;
     // End of variables declaration//GEN-END:variables

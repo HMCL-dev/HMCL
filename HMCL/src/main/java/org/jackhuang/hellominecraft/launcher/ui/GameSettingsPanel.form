@@ -939,7 +939,9 @@
     </Container>
     <Component class="javax.swing.JButton" name="btnTestGame">
       <Properties>
-        <Property name="text" type="java.lang.String" value="&#x6d4b;&#x8bd5;&#x6e38;&#x620f;"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="settings.test_game" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+        </Property>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnTestGameActionPerformed"/>

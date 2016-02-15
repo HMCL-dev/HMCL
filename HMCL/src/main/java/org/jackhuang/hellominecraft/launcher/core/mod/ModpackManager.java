@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.mod;
 
+import java.awt.Dimension;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -30,18 +31,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipFile;
+import javax.swing.JOptionPane;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.func.BiFunction;
 import org.jackhuang.hellominecraft.util.system.Compressor;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.ZipEngine;
 import org.jackhuang.hellominecraft.util.tasks.Task;
+import org.jackhuang.hellominecraft.util.ui.WebPage;
 import org.jackhuang.hellominecraft.util.version.MinecraftVersionRequest;
 
 /**
@@ -111,7 +113,12 @@ public final class ModpackManager {
                         throw new IllegalStateException("Illegal modpack id!");
                 }
 
-                if (MessageBox.Show(description, C.i18n("modpack.install.task"), MessageBox.YES_NO_OPTION) == MessageBox.NO_OPTION)
+                Object msgs[] = new Object[2];
+                msgs[0] = C.i18n("modpack.install.task");
+                msgs[1] = new WebPage(description);
+                ((WebPage) msgs[1]).setPreferredSize(new Dimension(800, 350));
+                int result = JOptionPane.showOptionDialog(null, msgs, (String) msgs[0], JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
+                if (result == JOptionPane.NO_OPTION)
                     return;
 
                 File preVersion = new File(versions, id), preVersionRenamed = null;

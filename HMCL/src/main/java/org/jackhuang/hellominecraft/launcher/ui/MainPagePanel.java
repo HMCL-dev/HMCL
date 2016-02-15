@@ -385,7 +385,7 @@ public class MainPagePanel extends AnimatedPanel {
     private void btnExportModpackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExportModpackActionPerformed
         if (Settings.getLastProfile().service().version().getVersionCount() <= 0)
             return;
-        WizardDisplayer.showWizard(new ModpackWizard(Settings.getLastProfile().service()).createWizard());
+        WizardDisplayer.showWizard(new ModpackWizard(Settings.getLastProfile()).createWizard());
     }//GEN-LAST:event_btnExportModpackActionPerformed
 
     private void txtPasswordCaretUpdate(javax.swing.event.CaretEvent evt) {//GEN-FIRST:event_txtPasswordCaretUpdate

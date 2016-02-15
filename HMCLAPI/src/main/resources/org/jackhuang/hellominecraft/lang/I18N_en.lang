@@ -148,6 +148,7 @@ ui.button.copy=Copy
 ui.button.clear=Clear
 ui.button.close=Close
 ui.button.explore=Explore
+ui.button.test=Test
 button.cancel=Cancel
 button.ok=OK
 
@@ -208,6 +209,7 @@ settings.default=Default
 settings.custom=Custom
 settings.choose_gamedir=Choose Game Directory
 settings.failed_load=Failed to load settings file. Remove it?
+settings.test_game=Test game
 
 modpack=Mod pack
 modpack.choose=Choose a modpack zip file which you want to import. If you want to update the modpack, please enter the version you want to update.
@@ -227,7 +229,8 @@ modpack.wizard.step.1.title=Set the basic options to the modpack.
 modpack.wizard.step.2=Files selection
 modpack.wizard.step.2.title=Choose the files you do not want to put in the modpack.
 modpack.wizard.step.3=Description
-modpack.wizard.step.3.title=Describe your modpack, including precautions, changlog, supporting HTML 3.
+modpack.wizard.step.3.title=Describe your modpack.
+modpack.desc=Describe your modpack, including precautions, changlog, supporting Markdown(also supporting online pictures).
 modpack.incorrect_format.no_json=The format of the modpack is incorrect, pack.json is missing.
 modpack.incorrect_format.no_jar=The format of the modpack is incorrect, pack.json does not have attribute 'jar'
 modpack.cannot_read_version=Failed to gather the game version
