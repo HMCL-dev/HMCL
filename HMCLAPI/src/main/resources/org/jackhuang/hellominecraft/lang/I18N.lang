@@ -149,6 +149,7 @@ ui.button.clear=清除
 ui.button.close=关闭
 ui.button.explore=浏览
 ui.button.test=测试
+ui.button.preview=预览
 button.cancel=取消
 button.ok=确定
 
@@ -235,7 +236,7 @@ modpack.incorrect_format.no_json=整合包格式错误，pack.json丢失
 modpack.incorrect_format.no_jar=整合包格式错误，pack.json丢失jar字段
 modpack.cannot_read_version=读取游戏版本失败
 modpack.not_a_valid_location=不是一个有效整合包位置
-modpack.warning=<html>在制作整合包前，请您确认您选择的版本可以正常启动，<br/>并保证您的Minecraft是正式版而非快照版，<br/>而且不应当将不允许非官方途径传播的Mod纳入整合包。</html>
+modpack.warning=<html>在制作整合包前，请您确认您选择的版本可以正常启动，<br/>并保证您的Minecraft是正式版而非快照版，<br/>而且不应当将不允许非官方途径传播的Mod、材质包等纳入整合包。</html>
 modpack.name=整合包名称
 modpack.not_a_valid_name=整合包名称不能为空
 

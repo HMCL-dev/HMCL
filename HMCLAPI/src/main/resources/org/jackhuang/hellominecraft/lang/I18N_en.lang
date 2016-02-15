@@ -149,6 +149,7 @@ ui.button.clear=Clear
 ui.button.close=Close
 ui.button.explore=Explore
 ui.button.test=Test
+ui.button.preview=Preview
 button.cancel=Cancel
 button.ok=OK
 

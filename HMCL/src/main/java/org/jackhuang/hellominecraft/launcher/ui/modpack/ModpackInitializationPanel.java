@@ -177,8 +177,12 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
         fc.setMultiSelectionEnabled(false);
         fc.setFileFilter(new FileNameExtensionFilter(C.i18n("modpack") + "(*.zip)", "zip"));
         fc.showSaveDialog(this);
-        if (fc.getSelectedFile() != null)
-            txtModpackLocation.setText(fc.getSelectedFile().getAbsolutePath());
+        if (fc.getSelectedFile() != null) {
+            String path = fc.getSelectedFile().getAbsolutePath();
+            if (!path.endsWith(".zip"))
+                path += ".zip";
+            txtModpackLocation.setText(path);
+        }
     }//GEN-LAST:event_cboModpackLocationActionPerformed
 
     private void txtModpackLocationCaretUpdate(javax.swing.event.CaretEvent evt) {//GEN-FIRST:event_txtModpackLocationCaretUpdate

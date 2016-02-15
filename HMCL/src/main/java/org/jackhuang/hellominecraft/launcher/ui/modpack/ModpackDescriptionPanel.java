@@ -61,6 +61,7 @@ public class ModpackDescriptionPanel extends javax.swing.JPanel {
         jScrollPane1 = new javax.swing.JScrollPane();
         txtDescription = new javax.swing.JTextPane();
         jButton1 = new javax.swing.JButton();
+        lblTitle = new javax.swing.JLabel();
 
         txtDescription.addCaretListener(new javax.swing.event.CaretListener() {
             public void caretUpdate(javax.swing.event.CaretEvent evt) {
@@ -69,26 +70,33 @@ public class ModpackDescriptionPanel extends javax.swing.JPanel {
         });
         jScrollPane1.setViewportView(txtDescription);
 
-        jButton1.setText(C.i18n("ui.button.test")); // NOI18N
+        jButton1.setText(C.i18n("ui.button.preview")); // NOI18N
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton1ActionPerformed(evt);
             }
         });
 
+        lblTitle.setText(C.i18n("modpack.desc")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
+            .addComponent(jScrollPane1)
             .addGroup(layout.createSequentialGroup()
                 .addGap(0, 0, Short.MAX_VALUE)
                 .addComponent(jButton1))
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(lblTitle)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 270, Short.MAX_VALUE)
+                .addComponent(lblTitle)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton1))
         );
@@ -101,18 +109,19 @@ public class ModpackDescriptionPanel extends javax.swing.JPanel {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         try {
             Object msgs[] = new Object[2];
-            msgs[0] = C.i18n("ui.button.test");
+            msgs[0] = C.i18n("ui.button.preview");
             msgs[1] = new WebPage(new Markdown4jProcessor().process(txtDescription.getText()));
             ((WebPage) msgs[1]).setPreferredSize(new Dimension(800, 350));
             JOptionPane.showOptionDialog(null, msgs, (String) msgs[0], JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
         } catch (Exception e) {
-            MessageBox.Show(StrUtils.getStackTrace(e), "Error", MessageBox.WARNING_MESSAGE);
+            MessageBox.Show(StrUtils.getStackTrace(e), C.i18n("message.error"), MessageBox.WARNING_MESSAGE);
         }
     }//GEN-LAST:event_jButton1ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblTitle;
     private javax.swing.JTextPane txtDescription;
     // End of variables declaration//GEN-END:variables
 }

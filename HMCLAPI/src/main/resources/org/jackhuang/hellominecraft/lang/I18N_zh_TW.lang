@@ -149,6 +149,7 @@ ui.button.clear=清除
 ui.button.close=關閉
 ui.button.explore=瀏覽
 ui.button.test=測試
+ui.button.preview=預覽
 button.cancel=取消
 button.ok=確定
 
@@ -235,7 +236,7 @@ modpack.incorrect_format.no_json=懶人包格式錯誤，pack.json丟失
 modpack.incorrect_format.no_jar=懶人包格式錯誤，pack.json丟失jar字段
 modpack.cannot_read_version=讀取遊戲版本失敗
 modpack.not_a_valid_location=不是一个有效懒人包位置
-modpack.warning=<html>在製作懶人包前,請您確認您選擇的版本可以正常啟動,​​<br/>並保證您的Minecraft是正式版而非快照版,<br/>而且不應當將不允許非官方途徑傳播的Mod納入整合包。 </html>
+modpack.warning=<html>在製作懶人包前,請您確認您選擇的版本可以正常啟動,​​<br/>並保證您的Minecraft是正式版而非快照版,<br/>而且不應當將不允許非官方途徑傳播的Mod、材質包等納入整合包。 </html>
 modpack.name=懶人包名稱
 modpack.not_a_valid_name=懶人包名稱不能為空
 
