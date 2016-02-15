@@ -86,9 +86,9 @@ public final class Profile {
 
     public String getSelectedVersion() {
         String v = selectedMinecraftVersion;
-        if (StrUtils.isBlank(v) || service().version().getVersionById(v) == null) {
+        if (StrUtils.isBlank(v) || service().version().getVersionById(v) == null || service().version().getVersionById(v).hidden) {
             if (service().version().getVersionCount() > 0)
-                v = service().version().getOneVersion().id;
+                v = service().version().getOneVersion(t -> !t.hidden).id;
             if (StrUtils.isNotBlank(v))
                 setSelectedMinecraftVersion(v);
         }

@@ -38,6 +38,7 @@ import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.func.Consumer;
+import org.jackhuang.hellominecraft.util.func.Predicate;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 
 /**
@@ -245,8 +246,11 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     }
 
     @Override
-    public MinecraftVersion getOneVersion() {
-        return versions.isEmpty() ? null : versions.values().iterator().next();
+    public MinecraftVersion getOneVersion(Predicate<MinecraftVersion> pred) {
+        for (MinecraftVersion v : versions.values())
+            if (pred == null || pred.apply(v))
+                return v;
+        return null;
     }
 
     @Override

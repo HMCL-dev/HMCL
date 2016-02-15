@@ -24,6 +24,7 @@ import org.jackhuang.hellominecraft.launcher.core.version.DecompressLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.EventHandler;
 import org.jackhuang.hellominecraft.util.func.Consumer;
+import org.jackhuang.hellominecraft.util.func.Predicate;
 
 /**
  * Provide everything of the Minecraft of a Profile.
@@ -117,7 +118,7 @@ public abstract class IMinecraftProvider {
      *
      * @return the version
      */
-    public abstract MinecraftVersion getOneVersion();
+    public abstract MinecraftVersion getOneVersion(Predicate<MinecraftVersion> p);
 
     /**
      * All Minecraft version in this profile.
