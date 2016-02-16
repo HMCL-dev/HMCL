@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.StringTokenizer;
+import org.jackhuang.hellominecraft.util.func.Function;
+import org.jackhuang.hellominecraft.util.func.Predicate;
 
 /**
  *
@@ -115,6 +117,14 @@ public final class StrUtils {
         return false;
     }
 
+    public static boolean containsOne(List<String> base, List<String> match, Predicate<String> pred) {
+        for (String a : base)
+            for (String b : match)
+                if (pred.apply(a) && a.toLowerCase().contains(b.toLowerCase()))
+                    return true;
+        return false;
+    }
+
     public static int getCharShowTime(String s, char c) {
         int res = 0;
         for (int i = 0; i < s.length(); i++)
@@ -141,33 +151,37 @@ public final class StrUtils {
         return parseParams(addBefore, paramArrayOfObject.toArray(), paramString);
     }
 
-    public static String parseParams(String addBefore, Object[] paramArrayOfObject, String paramString) {
-        if (paramArrayOfObject == null)
-            return "";
-        StringBuilder localStringBuffer = new StringBuilder();
-        for (int i = 0; i < paramArrayOfObject.length; i++) {
-            Object localObject = paramArrayOfObject[i];
-            if (i > 0)
-                localStringBuffer.append(addBefore).append(paramString);
-            if (localObject == null)
-                localStringBuffer.append("null");
-            else if (localObject.getClass().isArray()) {
-                localStringBuffer.append("[");
+    public static String parseParams(String addBefore, Object[] params, String addAfter) {
+        return parseParams(t -> addBefore, params, t -> addAfter);
+    }
 
-                if ((localObject instanceof Object[])) {
-                    Object[] arrayOfObject = (Object[]) localObject;
-                    localStringBuffer.append(parseParams(addBefore, arrayOfObject, paramString));
+    public static String parseParams(Function<Object, String> beforeFunc, Object[] params, Function<Object, String> afterFunc) {
+        if (params == null)
+            return "";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < params.length; i++) {
+            Object param = params[i];
+            String addBefore = beforeFunc.apply(param), addAfter = afterFunc.apply(param);
+            if (i > 0)
+                sb.append(addAfter).append(addBefore);
+            if (param == null)
+                sb.append("null");
+            else if (param.getClass().isArray()) {
+                sb.append("[");
+                if ((param instanceof Object[])) {
+                    Object[] objs = (Object[]) param;
+                    sb.append(parseParams(beforeFunc, objs, afterFunc));
                 } else
-                    for (int j = 0; j < Array.getLength(localObject); j++) {
+                    for (int j = 0; j < Array.getLength(param); j++) {
                         if (j > 0)
-                            localStringBuffer.append(paramString);
-                        localStringBuffer.append(addBefore).append(Array.get(localObject, j));
+                            sb.append(addAfter);
+                        sb.append(addBefore).append(Array.get(param, j));
                     }
-                localStringBuffer.append("]");
+                sb.append("]");
             } else
-                localStringBuffer.append(addBefore).append(paramArrayOfObject[i]);
+                sb.append(addBefore).append(params[i]);
         }
-        return localStringBuffer.toString();
+        return sb.toString();
     }
 
     public static boolean isEquals(String base, String to) {

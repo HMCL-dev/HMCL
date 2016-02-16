@@ -17,7 +17,7 @@
 package org.jackhuang.hellominecraft.lookandfeel.comp;
 
 import java.awt.Color;
-import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
+import org.jackhuang.hellominecraft.util.ui.GraphicsUtils;
 
 /**
  *

@@ -38,13 +38,14 @@ public class LibraryDownloadTask extends FileDownloadTask {
 
     @Override
     public void executeTask() throws Throwable {
-        if (job.name.startsWith("net.minecraftforge:forge:")) {
-            String[] s = job.name.split(":");
+        String name = job.lib.name;
+        if (name.startsWith("net.minecraftforge:forge:")) {
+            String[] s = name.split(":");
             if (s.length == 3)
                 job.url = "http://files.minecraftforge.net/maven/net/minecraftforge/forge/" + s[2] + "/forge-" + s[2] + "-universal.jar";
         }
-        if (job.name.startsWith("com.mumfrey:liteloader:")) {
-            String[] s = job.name.split(":");
+        if (name.startsWith("com.mumfrey:liteloader:")) {
+            String[] s = name.split(":");
             if (s.length == 3 && s[2].length() > 3)
                 job.url = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + s[2].substring(0, s[2].length() - 3) + "/liteloader-" + s[2] + ".jar";
         }
@@ -59,7 +60,7 @@ public class LibraryDownloadTask extends FileDownloadTask {
 
     @Override
     public String getInfo() {
-        return C.i18n("download") + ": " + job.name;
+        return C.i18n("download") + ": " + job.lib.name;
     }
 
 }

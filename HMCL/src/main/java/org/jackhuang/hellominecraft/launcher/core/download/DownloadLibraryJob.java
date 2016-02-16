@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.core.download;
 
 import java.io.File;
+import org.jackhuang.hellominecraft.launcher.core.version.IMinecraftLibrary;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 
 /**
@@ -26,12 +27,13 @@ import org.jackhuang.hellominecraft.util.system.IOUtils;
  */
 public class DownloadLibraryJob {
 
-    public String url, name;
+    public IMinecraftLibrary lib;
+    public String url;
     public File path;
 
-    public DownloadLibraryJob(String n, String u, File p) {
+    public DownloadLibraryJob(IMinecraftLibrary n, String u, File p) {
         url = u;
-        name = n;
+        lib = n;
         path = IOUtils.tryGetCanonicalFile(p);
     }
 }

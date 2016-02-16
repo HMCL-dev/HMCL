@@ -30,7 +30,6 @@ public class JavaProcess {
     private final List<String> commands;
     private final Process process;
     private final ArrayList<String> stdOutLines = new ArrayList<>();
-    private final ArrayList<String> stdErrLines = new ArrayList<>();
 
     public JavaProcess(List<String> commands, Process process, ProcessManager pm) {
         this.commands = commands;
@@ -57,10 +56,6 @@ public class JavaProcess {
 
     public ArrayList<String> getStdOutLines() {
         return this.stdOutLines;
-    }
-
-    public ArrayList<String> getStdErrLines() {
-        return this.stdErrLines;
     }
 
     public boolean isRunning() {

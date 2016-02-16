@@ -20,7 +20,7 @@
  */
 package org.jackhuang.hellominecraft.lookandfeel.painter;
 
-import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
+import org.jackhuang.hellominecraft.util.ui.GraphicsUtils;
 
 import javax.swing.plaf.synth.SynthContext;
 import javax.swing.plaf.synth.SynthPainter;

@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.download;
 
+import java.util.Locale;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
+import org.jackhuang.hellominecraft.util.lang.SupportedLocales;
 
 /**
  *
@@ -72,7 +74,15 @@ public class MojangDownloadProvider extends IDownloadProvider {
 
     @Override
     public String getParsedLibraryDownloadURL(String str) {
-        return str;
+        if (str == null)
+            return null;
+        else if (str.contains("typesafe"))
+            if (SupportedLocales.NOW_LOCALE.self == Locale.CHINA)
+                return str.replace("http://files.minecraftforge.net/maven", "http://maven.oschina.net/content/groups/public");
+            else
+                return str.replace("http://files.minecraftforge.net/maven", "http://repo1.maven.org/maven2");
+        else
+            return str;
     }
 
 }

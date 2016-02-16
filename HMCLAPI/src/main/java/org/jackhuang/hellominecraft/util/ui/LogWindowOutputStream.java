@@ -33,31 +33,6 @@ public class LogWindowOutputStream extends OutputStream {
     private final LogWindow txt;
     private final Level sas;
 
-    /*
-     * private final CacheTask t = new CacheTask();
-     * private class CacheTask extends TimerTask {
-     * private final Object lock = new Object();
-     * private StringBuilder cachedString = new StringBuilder();
-     *
-     * @Override
-     * public void run() {
-     * synchronized(lock) {
-     * SwingUtilities.invokeLater(() -> {
-     * String t = txt.getText() + cachedString.toString().replace("\t", " ");
-     * txt.setText(t);
-     * txt.setCaretPosition(t.length());
-     * cachedString = new StringBuilder();
-     * });
-     * }
-     * }
-     *
-     * void cache(String s) {
-     * synchronized(lock) {
-     * cachedString.append(s);
-     * }
-     * }
-     * }
-     */
     public LogWindowOutputStream(LogWindow logWindow, Level l) {
         txt = logWindow;
         this.sas = l;

@@ -26,16 +26,11 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.ui.LogWindow;
 import org.jackhuang.hellominecraft.launcher.util.MinecraftCrashAdvicer;
 import org.jackhuang.hellominecraft.util.DoubleOutputStream;
 import org.jackhuang.hellominecraft.util.LauncherPrintStream;
-import org.jackhuang.hellominecraft.util.MessageBox;
-import org.jackhuang.hellominecraft.util.Utils;
 
 /**
  *
@@ -69,14 +64,6 @@ public final class Launcher {
         int len = tokenized.length;
 
         if (showInfo) {
-            LogWindow.INSTANCE.setTerminateGame(() -> {
-                try {
-                    Utils.shutdownForcely(1);
-                } catch (Exception e) {
-                    MessageBox.Show(C.i18n("launcher.exit_failed"));
-                    HMCLog.err("Failed to shutdown forcely", e);
-                }
-            });
             try {
                 File logFile = new File("hmclmc.log");
                 if (!logFile.exists() && !logFile.createNewFile())
@@ -95,7 +82,6 @@ public final class Launcher {
             LOGGER.log(Level.INFO, "Arguments: '{'\n{0}\n'}'", StrUtils.parseParams("    ", args, "\n"));
             LOGGER.log(Level.INFO, "Main Class: {0}", mainClass);
             LOGGER.log(Level.INFO, "Class Path: '{'\n{0}\n'}'", StrUtils.parseParams("    ", tokenized, "\n"));
-            SwingUtilities.invokeLater(() -> LogWindow.INSTANCE.setVisible(true));
         }
 
         URL[] urls = new URL[len];
@@ -104,7 +90,6 @@ public final class Launcher {
             for (int j = 0; j < len; j++)
                 urls[j] = new File(tokenized[j]).toURI().toURL();
         } catch (Throwable e) {
-            MessageBox.Show(C.i18n("crash.main_class_not_found"));
             LOGGER.log(Level.SEVERE, "Failed to get classpath.", e);
             return;
         }
@@ -115,48 +100,21 @@ public final class Launcher {
         try {
             minecraftMain = ucl.loadClass(mainClass).getMethod("main", String[].class);
         } catch (ClassNotFoundException | NoSuchMethodException | SecurityException t) {
-            MessageBox.Show(C.i18n("crash.main_class_not_found"));
             LOGGER.log(Level.SEVERE, "Minecraft main class not found.", t);
             return;
         }
 
         LOGGER.info("*** Launching Game ***");
 
-        int flag = 0;
         try {
             minecraftMain.invoke(null, new Object[] { (String[]) cmdList.toArray(new String[cmdList.size()]) });
         } catch (Throwable throwable) {
             String trace = StrUtils.getStackTrace(throwable);
-            final String advice = MinecraftCrashAdvicer.getAdvice(trace);
-            MessageBox.Show(C.i18n("crash.minecraft") + ": " + advice);
-
             System.err.println(C.i18n("crash.minecraft"));
-            System.err.println(advice);
+            System.err.println(MinecraftCrashAdvicer.getAdvice(trace));
             System.err.println(trace);
-            LogWindow.INSTANCE.setExit(() -> true);
-            LogWindow.INSTANCE.setVisible(true);
-            flag = 1;
         }
 
-        LOGGER.info("*** Game Exited ***");
-        try {
-            Utils.shutdownForcely(flag);
-        } catch (Exception e) {
-            MessageBox.Show(C.i18n("launcher.exit_failed"));
-            HMCLog.err("Failed to shutdown forcely", e);
-        }
+        LOGGER.info("*** Game exited ***");
     }
-    /*
-     * static Object getShutdownHaltLock() {
-     * try {
-     * Class z = Class.forName("java.lang.Shutdown");
-     * Field haltLock = z.getDeclaredField("haltLock");
-     * haltLock.setAccessible(true);
-     * return haltLock.get(null);
-     * } catch (Throwable ex) {
-     * ex.printStackTrace();
-     * return new Object();
-     * }
-     * }
-     */
 }

@@ -30,7 +30,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.plaf.synth.SynthConstants;
 import javax.swing.plaf.synth.SynthContext;
 import javax.swing.plaf.synth.SynthPainter;
-import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
+import org.jackhuang.hellominecraft.util.ui.GraphicsUtils;
 import org.jackhuang.hellominecraft.lookandfeel.comp.ConstomButton;
 
 /**

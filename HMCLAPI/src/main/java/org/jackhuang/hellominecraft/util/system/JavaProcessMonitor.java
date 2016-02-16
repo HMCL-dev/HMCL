@@ -20,9 +20,10 @@ package org.jackhuang.hellominecraft.util.system;
 import java.util.Arrays;
 import java.util.HashSet;
 import org.jackhuang.hellominecraft.util.CollectionUtils;
-import org.jackhuang.hellominecraft.util.Event;
 import org.jackhuang.hellominecraft.util.EventHandler;
 import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.logging.Level;
 
 /**
  *
@@ -51,31 +52,28 @@ public class JavaProcessMonitor {
         this.p = p;
     }
 
+    public JavaProcess getJavaProcess() {
+        return p;
+    }
+
     public void start() {
-        Event<JavaProcess> event = (sender2, t) -> {
-            if (t.getExitCode() != 0)
+        ProcessThread a = new ProcessThread(p);
+        a.stopEvent.register((sender, t) -> {
+            HMCLog.log("Process exit code: " + t.getExitCode());
+            if (t.getExitCode() != 0 || StrUtils.containsOne(t.getStdOutLines(),
+                                                             Arrays.asList("Unable to launch"),
+                                                             x -> Level.guessLevel(x, Level.INFO).lessOrEqual(Level.ERROR)))
                 applicationExitedAbnormallyEvent.execute(t.getExitCode());
-            processThreadStopped((ProcessThread) sender2, false);
+            if (t.getExitCode() != 0 && StrUtils.containsOne(t.getStdOutLines(),
+                                                             Arrays.asList("Could not create the Java Virtual Machine.",
+                                                                           "Error occurred during initialization of VM",
+                                                                           "A fatal exception has occurred. Program will exit.",
+                                                                           "Unable to launch"),
+                                                             x -> Level.guessLevel(x, Level.INFO).lessOrEqual(Level.ERROR)))
+                jvmLaunchFailedEvent.execute(t.getExitCode());
+            processThreadStopped((ProcessThread) sender, false);
             return true;
-        };
-        Event<JavaProcess> event2 = (sender3, p1) -> {
-            if (p1.getExitCode() != 0 && p1.getStdErrLines().size() > 0 && StrUtils.containsOne(p1.getStdErrLines(), Arrays.asList("Could not create the Java Virtual Machine.",
-                                                                                                                                   "Error occurred during initialization of VM",
-                                                                                                                                   "A fatal exception has occurred. Program will exit.")))
-                jvmLaunchFailedEvent.execute(p1.getExitCode());
-            processThreadStopped((ProcessThread) sender3, false);
-            return true;
-        };
-        ProcessThread a = new ProcessThread(p, true, true);
-        a.stopEvent.register(event2);
-        a.start();
-        al.add(a);
-        a = new ProcessThread(p, false, true);
-        a.stopEvent.register(event2);
-        a.start();
-        al.add(a);
-        a = new ProcessThread(p, false, false);
-        a.stopEvent.register(event);
+        });
         a.start();
         al.add(a);
     }

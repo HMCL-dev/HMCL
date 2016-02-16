@@ -65,7 +65,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
                         String libURL = service.getDownloadType().getProvider().getLibraryDownloadURL() + "/";
                         libURL = service.getDownloadType().getProvider().getParsedLibraryDownloadURL(l.getDownloadURL(libURL, service.getDownloadType()));
                         if (libURL != null)
-                            downloadLibraries.add(new DownloadLibraryJob(l.name, libURL, ff));
+                            downloadLibraries.add(new DownloadLibraryJob(l, libURL, ff));
                     }
                 }
             }
@@ -100,7 +100,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
                     return;
                 }
                 String jarURL = vurl + id + ".jar", hash = null;
-                if (mv != null && mv.downloads != null && service.getDownloadType().getProvider().isAllowedToUseSelfURL()) {
+                if (mv.downloads != null && service.getDownloadType().getProvider().isAllowedToUseSelfURL()) {
                     GameDownloadInfo gdi = mv.downloads.get("client");
                     if (gdi != null) {
                         if (gdi.url != null)

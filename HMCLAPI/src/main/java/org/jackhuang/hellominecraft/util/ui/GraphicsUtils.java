@@ -1,4 +1,4 @@
-package org.jackhuang.hellominecraft.lookandfeel;
+package org.jackhuang.hellominecraft.util.ui;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -28,23 +28,23 @@ public class GraphicsUtils extends SynthGraphicsUtils {
      * value of that hint is obtained from the Graphics and stored as the value
      * for the key in savedHints.
      *
-     * @param g2d the graphics surface
+     * @param g2d         the graphics surface
      * @param hintsToSave the list of rendering hints to set on the graphics
-     * @param savedHints a set where to save the previous rendering hints, might
-     * be null
+     * @param savedHints  a set where to save the previous rendering hints,
+     *                    might
+     *                    be null
+     *
      * @return the previous set of rendering hints
      */
     public static RenderingHints getRenderingHints(Graphics2D g2d,
-            Map<?, ?> hintsToSave,
-            RenderingHints savedHints) {
-        if (savedHints == null) {
+                                                   Map<?, ?> hintsToSave,
+                                                   RenderingHints savedHints) {
+        if (savedHints == null)
             savedHints = new RenderingHints(null);
-        } else {
+        else
             savedHints.clear();
-        }
-        if (hintsToSave.isEmpty()) {
+        if (hintsToSave.isEmpty())
             return savedHints;
-        }
         /* RenderingHints.keySet() returns Set */
         for (Object o : hintsToSave.keySet()) {
             RenderingHints.Key key = (RenderingHints.Key) o;
@@ -77,17 +77,16 @@ public class GraphicsUtils extends SynthGraphicsUtils {
         } else {
             oldAA = g2.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING);
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                    RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                                RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         }
 
         super.paintText(ss, g, text, x, y, mnemonicIndex);
 
-        if (oldHints != null) {
+        if (oldHints != null)
             g2.addRenderingHints(oldHints);
-        } else if (oldAA != null) {
+        else if (oldAA != null)
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                    oldAA);
-        }
+                                oldAA);
     }
 
     /**
@@ -96,6 +95,7 @@ public class GraphicsUtils extends SynthGraphicsUtils {
      * so that it can safely be used in a static context.
      *
      * @param imgName The name of the image to load, eg. "border.png"
+     *
      * @return The loaded image
      */
     public static BufferedImage loadImage(String imgName) {
@@ -108,21 +108,25 @@ public class GraphicsUtils extends SynthGraphicsUtils {
         return null;
     }
 
+    public static String getColor(Color c) {
+        return Integer.toHexString(c.getRGB() & 0xFFFFFF);
+    }
+
     /**
      * Get a Color object from a web color string of the form "FF00AB" or
      * "#FF00AB".
      *
      * @param c The color string
+     *
      * @return The Color described
      */
     public static Color getWebColor(String c) {
-        if (c.startsWith("#")) {
+        if (c.startsWith("#"))
             c = c.substring(1);
-        }
         return new Color(
-                Integer.parseInt(c.substring(0, 2), 16),
-                Integer.parseInt(c.substring(2, 4), 16),
-                Integer.parseInt(c.substring(4, 6), 16)
+            Integer.parseInt(c.substring(0, 2), 16),
+            Integer.parseInt(c.substring(2, 4), 16),
+            Integer.parseInt(c.substring(4, 6), 16)
         );
     }
 
@@ -131,17 +135,17 @@ public class GraphicsUtils extends SynthGraphicsUtils {
      * "#FF00AB".
      *
      * @param c The color string
+     *
      * @return The Color described
      */
     public static Color getWebColorWithAlpha(String c) {
-        if (c.startsWith("#")) {
+        if (c.startsWith("#"))
             c = c.substring(1);
-        }
         return new Color(
-                Integer.parseInt(c.substring(0, 2), 16),
-                Integer.parseInt(c.substring(2, 4), 16),
-                Integer.parseInt(c.substring(4, 6), 16),
-                Integer.parseInt(c.substring(6, 8), 16)
+            Integer.parseInt(c.substring(0, 2), 16),
+            Integer.parseInt(c.substring(2, 4), 16),
+            Integer.parseInt(c.substring(4, 6), 16),
+            Integer.parseInt(c.substring(6, 8), 16)
         );
     }
 
@@ -151,6 +155,7 @@ public class GraphicsUtils extends SynthGraphicsUtils {
      *
      * @param c1 The first color string
      * @param c2 The second color string
+     *
      * @return The Color middle color
      */
     public static Color getMidWebColor(String c1, String c2) {
@@ -163,15 +168,14 @@ public class GraphicsUtils extends SynthGraphicsUtils {
      *
      * @param c1 The first color string
      * @param c2 The second color string
+     *
      * @return The Color middle color
      */
     public static Color getMidWebColor(String c1, String c2, int percent) {
-        if (c1.startsWith("#")) {
+        if (c1.startsWith("#"))
             c1 = c1.substring(1);
-        }
-        if (c2.startsWith("#")) {
+        if (c2.startsWith("#"))
             c2 = c2.substring(1);
-        }
         int rTop = Integer.parseInt(c1.substring(0, 2), 16);
         int gTop = Integer.parseInt(c1.substring(2, 4), 16);
         int bTop = Integer.parseInt(c1.substring(4, 6), 16);

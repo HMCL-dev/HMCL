@@ -37,7 +37,7 @@ import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.ui.modpack.ModpackWizard;
-import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
+import org.jackhuang.hellominecraft.util.ui.GraphicsUtils;
 import org.jackhuang.hellominecraft.util.Event;
 import org.jackhuang.hellominecraft.lookandfeel.comp.ConstomButton;
 import org.jackhuang.hellominecraft.util.func.Consumer;

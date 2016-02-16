@@ -25,7 +25,7 @@ import javax.swing.plaf.synth.SynthPainter;
 import java.awt.Color;
 import java.awt.Graphics;
 import javax.swing.plaf.synth.SynthConstants;
-import org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils;
+import org.jackhuang.hellominecraft.util.ui.GraphicsUtils;
 
 /**
  * TextFieldPainter

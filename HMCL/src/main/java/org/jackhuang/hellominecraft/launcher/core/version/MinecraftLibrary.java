@@ -40,7 +40,7 @@ public class MinecraftLibrary extends IMinecraftLibrary {
         super(name);
     }
 
-    public MinecraftLibrary(ArrayList<Rules> rules, String url, Natives natives, String name, Extract extract) {
+    public MinecraftLibrary(ArrayList<Rules> rules, String url, Natives natives, String name, Extract extract, LibraryDownloadInfo downloads) {
         super(name);
         this.rules = rules == null ? null : (ArrayList<Rules>) rules.clone();
         this.url = url;

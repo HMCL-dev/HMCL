@@ -60,7 +60,8 @@ public class VersionSetting {
 
     public VersionSetting() {
         debug = fullscreen = canceledWrapper = false;
-        launcherVisibility = gameDirType = 0;
+        launcherVisibility = 1;
+        gameDirType = 0;
         javaDir = java = minecraftArgs = serverIp = precalledCommand = "";
     }
 

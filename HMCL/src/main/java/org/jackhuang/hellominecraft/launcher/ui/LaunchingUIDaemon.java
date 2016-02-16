@@ -30,6 +30,7 @@ import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.system.JavaProcessMonitor;
 import org.jackhuang.hellominecraft.util.ui.LogWindow;
+import org.jackhuang.hellominecraft.util.ui.WebFrame;
 
 /**
  *
@@ -71,15 +72,21 @@ public class LaunchingUIDaemon {
             JavaProcessMonitor jpm = new JavaProcessMonitor(p);
             jpm.applicationExitedAbnormallyEvent.register(t -> {
                 HMCLog.err("The game exited abnormally, exit code: " + t);
-                MessageBox.Show(C.i18n("launch.exited_abnormally") + ", exit code: " + t);
+                MessageBox.Show(C.i18n("launch.exited_abnormally") + " exit code: " + t);
+                WebFrame f = new WebFrame(jpm.getJavaProcess().getStdOutLines().toArray(new String[0]));
+                f.setTitle("Game output");
+                f.setVisible(true);
             });
             jpm.jvmLaunchFailedEvent.register(t -> {
                 HMCLog.err("Cannot create jvm, exit code: " + t);
-                MessageBox.Show(C.i18n("launch.cannot_create_jvm") + ", exit code: " + t);
+                MessageBox.Show(C.i18n("launch.cannot_create_jvm") + " exit code: " + t);
+                WebFrame f = new WebFrame(jpm.getJavaProcess().getStdOutLines().toArray(new String[0]));
+                f.setTitle("Game output");
+                f.setVisible(true);
             });
             jpm.stoppedEvent.register(() -> {
-                if ((LauncherVisibility) obj.getTag() != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible()) {
-                    HMCLog.log("Without the option of keeping the launcher visible, this application will exit and will NOT catch game logs, but you can turn on \"Debug Mode\".");
+                if ((LauncherVisibility) obj.getTag() == LauncherVisibility.CLOSE && !LogWindow.INSTANCE.isVisible()) {
+                    HMCLog.log("With the option of closing the launcher anyway, the launcher will exit and will NOT catch game logs.");
                     System.exit(0);
                 }
             });

@@ -1,6 +1,6 @@
 package org.jackhuang.hellominecraft.lookandfeel.ui;
 
-import static org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils.loadImage;
+import static org.jackhuang.hellominecraft.util.ui.GraphicsUtils.loadImage;
 
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicComboBoxUI;

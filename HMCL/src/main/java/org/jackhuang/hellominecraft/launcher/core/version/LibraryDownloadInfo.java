@@ -21,17 +21,7 @@ package org.jackhuang.hellominecraft.launcher.core.version;
  *
  * @author huangyuhui
  */
-public class GameDownloadInfo implements Cloneable {
+public class LibraryDownloadInfo extends GameDownloadInfo {
 
-    public String sha1, url;
-    public int size;
-
-    @Override
-    protected Object clone() {
-        try {
-            return super.clone();
-        } catch (CloneNotSupportedException ex) {
-            throw new Error(ex);
-        }
-    }
+    public String path;
 }

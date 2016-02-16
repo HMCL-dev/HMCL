@@ -30,15 +30,12 @@ import org.jackhuang.hellominecraft.util.EventHandler;
 public class ProcessThread extends Thread {
 
     JavaProcess p;
-    boolean readError = false, enableReading = true;
 
     public final EventHandler<String> printlnEvent = new EventHandler<>(this);
     public final EventHandler<JavaProcess> stopEvent = new EventHandler<>(this);
 
-    public ProcessThread(JavaProcess process, boolean readError, boolean enableReading) {
+    public ProcessThread(JavaProcess process) {
         p = process;
-        this.readError = readError;
-        this.enableReading = enableReading;
     }
 
     public JavaProcess getProcess() {
@@ -47,58 +44,33 @@ public class ProcessThread extends Thread {
 
     @Override
     public void run() {
+        setName("ProcessMonitor");
+        InputStreamReader br = null;
         try {
-            InputStreamReader br;
-            if (enableReading) {
-                InputStream in = readError ? p.getRawProcess().getErrorStream() : p.getRawProcess().getInputStream();
-                try {
-                    br = new InputStreamReader(in, System.getProperty("sun.jnu.encoding", "UTF-8"));
-                } catch (UnsupportedEncodingException ex) {
-                    HMCLog.warn("Unsupported encoding: " + System.getProperty("sun.jnu.encoding", "UTF-8"), ex);
-                    br = new InputStreamReader(in);
-                }
-            } else
-                br = null;
+            InputStream in = p.getRawProcess().getInputStream();
+            try {
+                br = new InputStreamReader(in, System.getProperty("sun.jnu.encoding", "UTF-8"));
+            } catch (UnsupportedEncodingException ex) {
+                HMCLog.warn("Unsupported encoding: " + System.getProperty("sun.jnu.encoding", "UTF-8"), ex);
+                br = new InputStreamReader(in);
+            }
 
             int ch;
             String line = "";
             while (p.isRunning())
-                if (br != null)
-                    while ((ch = br.read()) != -1)
-                        if (ch == '\n') {
-                            printlnEvent.execute(line);
-                            if (readError) {
-                                System.err.println(line);
-                                p.getStdErrLines().add(line);
-                            } else {
-                                System.out.println(line);
-                                p.getStdOutLines().add(line);
-                            }
-                            line = "";
-                        } else
-                            line += (char) ch;
-                else
-                    try {
-                        Thread.sleep(1);
-                    } catch (Exception e) {
-                    }
-            if (br != null)
                 while ((ch = br.read()) != -1)
                     if (ch == '\n') {
                         printlnEvent.execute(line);
-                        if (readError) {
-                            System.err.println(line);
-                            p.getStdErrLines().add(line);
-                        } else {
-                            System.out.println(line);
-                            p.getStdOutLines().add(line);
-                        }
+                        System.out.println("Minecraft: " + line);
+                        p.getStdOutLines().add(line);
                         line = "";
                     } else
                         line += (char) ch;
             stopEvent.execute(p);
         } catch (Exception e) {
-            e.printStackTrace();
+            HMCLog.err("An error occured when reading process stdout/stderr.", e);
+        } finally {
+            IOUtils.closeQuietly(br);
         }
     }
 }

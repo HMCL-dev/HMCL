@@ -43,9 +43,9 @@ public class DefaultGameLauncher extends GameLauncher {
             ParallelTask parallelTask = new ParallelTask();
             HashSet<String> names = new HashSet<>();
             for (DownloadLibraryJob s : t) {
-                if (names.contains(s.name))
+                if (names.contains(s.lib.name))
                     continue;
-                names.add(s.name);
+                names.add(s.lib.name);
                 parallelTask.addDependsTask(new LibraryDownloadTask(s));
             }
             dw.append(parallelTask);

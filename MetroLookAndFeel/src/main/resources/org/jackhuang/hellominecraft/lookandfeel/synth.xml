@@ -26,7 +26,7 @@
             <color value="#9CC5D8" type="TEXT_BACKGROUND"/>
             <font name="微软雅黑" size="12" />
         </state>
-        <object id="GraphicsUtils" class="org.jackhuang.hellominecraft.lookandfeel.GraphicsUtils"/>
+        <object id="GraphicsUtils" class="org.jackhuang.hellominecraft.util.ui.GraphicsUtils"/>
         <graphicsUtils idref="GraphicsUtils"/>
     </style>
     <bind style="default" type="region" key=".*"/>

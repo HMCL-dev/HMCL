@@ -128,7 +128,7 @@ public class GameLauncher {
         ProcessBuilder builder = new ProcessBuilder(str);
         if (options.getLaunchVersion() == null || service.baseDirectory() == null)
             throw new Error("Fucking bug!");
-        builder.directory(service.version().getRunDirectory(options.getLaunchVersion()))
+        builder.redirectErrorStream(true).directory(service.version().getRunDirectory(options.getLaunchVersion()))
             .environment().put("APPDATA", service.baseDirectory().getAbsolutePath());
         JavaProcess jp = new JavaProcess(str, builder.start(), PROCESS_MANAGER);
         HMCLog.log("The game process have been started");
