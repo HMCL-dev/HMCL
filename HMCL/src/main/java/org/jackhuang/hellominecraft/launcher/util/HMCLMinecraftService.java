@@ -48,12 +48,12 @@ import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
  *
  * @author huangyuhui
  */
-public class DefaultMinecraftService extends IMinecraftService {
+public class HMCLMinecraftService extends IMinecraftService {
 
     Profile p;
     final Map<String, VersionSetting> versionSettings = new HashMap<>();
 
-    public DefaultMinecraftService(Profile p) {
+    public HMCLMinecraftService(Profile p) {
         this.p = p;
         this.provider = new HMCLGameProvider(this);
         provider.initializeMiencraft();
@@ -69,8 +69,10 @@ public class DefaultMinecraftService extends IMinecraftService {
     private void checkModpack() {
         if (version().getVersionCount() == 0) {
             File modpack = new File("modpack.zip");
-            if (modpack.exists())
+            if (modpack.exists()) {
                 TaskWindow.factory().append(ModpackManager.install(modpack, this, null)).create();
+                version().refreshVersions();
+            }
         }
     }
 

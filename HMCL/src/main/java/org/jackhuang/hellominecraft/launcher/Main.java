@@ -123,6 +123,7 @@ public final class Main implements Runnable {
                 return;
 
             System.setProperty("sun.java2d.noddraw", "true");
+            System.setProperty("sun.java2d.apiaware", "false");
             Thread.setDefaultUncaughtExceptionHandler(new CrashReporter(true));
 
             try {

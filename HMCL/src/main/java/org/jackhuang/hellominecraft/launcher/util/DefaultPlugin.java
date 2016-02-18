@@ -43,7 +43,7 @@ public class DefaultPlugin implements IPlugin {
 
     @Override
     public IMinecraftService provideMinecraftService(Profile profile) {
-        return new DefaultMinecraftService(profile);
+        return new HMCLMinecraftService(profile);
     }
 
     @Override

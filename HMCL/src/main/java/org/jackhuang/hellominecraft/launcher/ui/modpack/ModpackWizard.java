@@ -30,13 +30,15 @@ import javax.swing.JComponent;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.launcher.setting.Config;
 import org.jackhuang.hellominecraft.launcher.setting.Profile;
+import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.Pair;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.Utils;
+import org.jackhuang.hellominecraft.util.func.CallbackIO;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.ZipEngine;
 import org.jackhuang.hellominecraft.util.ui.WebPage;
 import org.jackhuang.hellominecraft.util.ui.checktree.CheckBoxTreeNode;
@@ -103,13 +105,26 @@ public class ModpackWizard extends WizardBranchController {
                             ModpackManager.export(modpack,
                                                   profile.service().version(),
                                                   (String) settings.get(ModpackInitializationPanel.KEY_GAME_VERSION),
-                                                  blackList, map);
+                                                  blackList, map, null);
                             String summary = "<html>" + C.i18n("modpack.export_finished") + ": " + loc.getAbsolutePath();
                             boolean including = false;
                             if ((Boolean) settings.get(ModpackInitializationPanel.KEY_INCLUDING_LAUNCHER)) {
                                 boolean flag = true;
                                 ZipEngine engine = new ZipEngine(loc);
+                                Config s = new Config();
+                                //s.setBgpath(Settings.getInstance().getBgpath());
+                                s.setDownloadType(Settings.getInstance().getDownloadType());
+                                engine.putTextFile(C.GSON.toJson(s), "hmcl.json");
                                 engine.putFile(modpack, "modpack.zip");
+                                File bg = new File("bg");
+                                if (bg.isDirectory())
+                                    engine.putDirectory(bg);
+                                bg = new File("background.png");
+                                if (bg.isFile())
+                                    engine.putFile(bg, "background.png");
+                                bg = new File("background.jpg");
+                                if (bg.isFile())
+                                    engine.putFile(bg, "background.jpg");
                                 for (URL u : Utils.getURL())
                                     try {
                                         File f = new File(u.toURI());

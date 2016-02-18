@@ -236,9 +236,9 @@ modpack.incorrect_format.no_json=整合包格式错误，pack.json丢失
 modpack.incorrect_format.no_jar=整合包格式错误，pack.json丢失jar字段
 modpack.cannot_read_version=读取游戏版本失败
 modpack.not_a_valid_location=不是一个有效整合包位置
-modpack.warning=<html>在制作整合包前，请您确认您选择的版本可以正常启动，<br/>并保证您的Minecraft是正式版而非快照版，<br/>而且不应当将不允许非官方途径传播的Mod、材质包等纳入整合包。</html>
+modpack.warning=<html>在制作整合包前，请您确认您选择的版本可以正常启动，<br/>并保证您的Minecraft是正式版而非快照版，<br/>而且不应当将不允许非官方途径传播的Mod、材质包等纳入整合包。<br/>整合包会保存您目前的下载源设置</html>
 modpack.name=整合包名称
-modpack.not_a_valid_name=整合包名称不能为空
+modpack.not_a_valid_name=不是一个有效的整合包名称
 
 modpack.files.servers_dat=多人游戏服务器列表
 modpack.files.saves=游戏存档
@@ -249,6 +249,9 @@ modpack.files.resourcepacks=资源包(材质包)
 modpack.files.options_txt=游戏设定
 modpack.files.optionsshaders_txt=光影设定
 modpack.files.mods.voxelmods=VoxelMods配置，如小地图
+modpack.files.dumps=NEI调试输出
+modpack.files.scripts=MineTweaker配置
+modpack.files.blueprints=BuildCraft蓝图
 
 mods=Mod管理
 mods.choose_mod=选择模组

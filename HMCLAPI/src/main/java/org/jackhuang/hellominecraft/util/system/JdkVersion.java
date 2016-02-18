@@ -28,7 +28,7 @@ import org.jackhuang.hellominecraft.util.StrUtils;
  *
  * @author huangyuhui
  */
-public final class JdkVersion {
+public final class JdkVersion implements Cloneable {
 
     private String ver;
 
@@ -69,6 +69,15 @@ public final class JdkVersion {
         return location == null ? 0 : new File(location).hashCode();
     }
 
+    @Override
+    protected Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException ex) {
+            throw new Error(ex);
+        }
+    }
+
     public JdkVersion(String location) {
         File f = new File(location);
         if (f.exists() && f.isFile())
@@ -103,13 +112,13 @@ public final class JdkVersion {
      */
     public static final int JAVA_19 = 6;
 
-    private static final String javaVersion;
-    private static final int majorJavaVersion;
+    private static final String JAVA_VER;
+    private static final int MAJOR_JAVA_VER;
 
     static {
-        javaVersion = System.getProperty("java.version");
+        JAVA_VER = System.getProperty("java.version");
         // version String should look like "1.4.2_10"
-        majorJavaVersion = parseVersion(javaVersion);
+        MAJOR_JAVA_VER = parseVersion(JAVA_VER);
     }
 
     private static int parseVersion(String javaVersion) {
@@ -136,7 +145,7 @@ public final class JdkVersion {
      * @see System#getProperty(String)
      */
     public static String getJavaVersion() {
-        return javaVersion;
+        return JAVA_VER;
     }
 
     /**
@@ -155,7 +164,7 @@ public final class JdkVersion {
      * @see #JAVA_17
      */
     public static int getMajorJavaVersion() {
-        return majorJavaVersion;
+        return MAJOR_JAVA_VER;
     }
 
     public static boolean isJava64Bit() {

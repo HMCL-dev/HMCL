@@ -104,7 +104,7 @@ task makePackGZ(dependsOn: jar) << {
         messageDigest.update(buf, 0, bytesRead);
     }
     def sha1Hex = new BigInteger(1, messageDigest.digest()).toString(16).padLeft(40, '0')
-    def fileEx = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".sha1")
+    def fileEx = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".pack.gz.sha1")
     if (!fileEx.exists()) fileEx.createNewFile()
     fileEx.append sha1Hex
 }

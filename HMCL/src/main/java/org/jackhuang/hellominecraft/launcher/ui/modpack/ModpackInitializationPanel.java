@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.launcher.ui.modpack;
 
 import java.util.Map;
 import java.util.Vector;
+import java.util.regex.Pattern;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -205,11 +206,13 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
         wizardData.put(KEY_INCLUDING_LAUNCHER, chkIncludeLauncher.isSelected());
     }//GEN-LAST:event_chkIncludeLauncherItemStateChanged
 
+    static final Pattern PATTERN = Pattern.compile("[a-zA-Z0-9_u4e00-u9fa5]+$");
+
     void checkProblem() {
         controller.setProblem(null);
         if (txtModpackLocation.getText().trim().isEmpty())
             controller.setProblem(C.i18n("modpack.not_a_valid_location"));
-        if (txtModpackName.getText().trim().isEmpty())
+        if (!PATTERN.matcher(txtModpackName.getText()).matches())
             controller.setProblem(C.i18n("modpack.not_a_valid_name"));
     }
 

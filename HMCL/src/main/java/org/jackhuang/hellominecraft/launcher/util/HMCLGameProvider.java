@@ -28,17 +28,17 @@ import org.jackhuang.hellominecraft.launcher.setting.VersionSetting;
  */
 public class HMCLGameProvider extends MinecraftVersionManager {
 
-    public HMCLGameProvider(DefaultMinecraftService p) {
+    public HMCLGameProvider(HMCLMinecraftService p) {
         super(p);
     }
 
     @Override
     public File getRunDirectory(String id) {
-        VersionSetting vs = ((DefaultMinecraftService) service).getVersionSetting(id);
+        VersionSetting vs = ((HMCLMinecraftService) service).getVersionSetting(id);
         if (vs == null)
             return super.getRunDirectory(id);
         else
-            return ((DefaultMinecraftService) service).getVersionSetting(id).getGameDirType() == GameDirType.VERSION_FOLDER
+            return ((HMCLMinecraftService) service).getVersionSetting(id).getGameDirType() == GameDirType.VERSION_FOLDER
                    ? service.version().versionRoot(id)
                    : super.getRunDirectory(id);
     }

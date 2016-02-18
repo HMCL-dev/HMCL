@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hellominecraft.util;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 
 /**
@@ -27,9 +27,7 @@ import org.jackhuang.hellominecraft.util.func.Consumer;
  */
 public class EventHandler<T> {
 
-    HashSet<Event<T>> handlers = new HashSet<>();
-    HashSet<Consumer<T>> consumers = new HashSet<>();
-    HashSet<Runnable> runnables = new HashSet<>();
+    ArrayList<Object> events = new ArrayList<>();
     Object sender;
 
     public EventHandler(Object sender) {
@@ -37,38 +35,42 @@ public class EventHandler<T> {
     }
 
     public void register(Event<T> t) {
-        handlers.add(t);
+        if (!events.contains(t))
+            events.add(t);
     }
 
     public void register(Consumer<T> t) {
-        consumers.add(t);
+        if (!events.contains(t))
+            events.add(t);
     }
 
     public void register(Runnable t) {
-        runnables.add(t);
+        if (!events.contains(t))
+            events.add(t);
     }
 
     public void unregister(Event<T> t) {
-        handlers.remove(t);
+        events.remove(t);
     }
 
     public void unregister(Consumer<T> t) {
-        consumers.remove(t);
+        events.remove(t);
     }
 
     public void unregister(Runnable t) {
-        runnables.remove(t);
+        events.remove(t);
     }
 
     public boolean execute(T x) {
         boolean flag = true;
-        for (Event<T> t : handlers)
-            if (!t.call(sender, x))
-                flag = false;
-        for (Consumer<T> t : consumers)
-            t.accept(x);
-        for (Runnable t : runnables)
-            t.run();
+        for (Object t : events)
+            if (t instanceof Event) {
+                if (!((Event) t).call(sender, x))
+                    flag = false;
+            } else if (t instanceof Consumer)
+                ((Consumer) t).accept(x);
+            else if (t instanceof Runnable)
+                ((Runnable) t).run();
         return flag;
     }
 

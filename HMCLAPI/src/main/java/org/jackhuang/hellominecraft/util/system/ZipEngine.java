@@ -115,10 +115,11 @@ public class ZipEngine {
 
     public void putStream(InputStream is, String pathName) throws IOException {
         int length;
-        BufferedInputStream bis = new BufferedInputStream(is);
-        zos.putNextEntry(new ZipEntry(pathName));
-        while ((length = bis.read(buf)) > 0)
-            zos.write(buf, 0, length);
+        try (BufferedInputStream bis = new BufferedInputStream(is)) {
+            zos.putNextEntry(new ZipEntry(pathName));
+            while ((length = bis.read(buf)) > 0)
+                zos.write(buf, 0, length);
+        }
     }
 
     public void putTextFile(String text, String pathName) throws IOException {

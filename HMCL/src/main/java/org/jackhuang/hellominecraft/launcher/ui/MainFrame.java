@@ -270,12 +270,13 @@ public final class MainFrame extends DraggableFrame {
 
     public void selectTab(String tabName) {
         int chosen = -1;
+        AnimatedPanel onCreate = null, onSelect = null;
         for (int i = 0; i < tabHeader.size(); i++)
             if (tabName.equalsIgnoreCase(tabHeader.get(i).getActionCommand())) {
                 if (tabContent[i] == null) {
                     try {
                         tabContent[i] = tabClasses.get(i).newInstance();
-                        tabContent[i].onCreated();
+                        onCreate = tabContent[i];
                     } catch (Exception mustnothappen) {
                         throw new Error(mustnothappen);
                     }
@@ -295,10 +296,14 @@ public final class MainFrame extends DraggableFrame {
                         if (j != i)
                             tabHeader.get(j).setIsActive(false);
                     tabHeader.get(i).setIsActive(true);
-                    tabContent[i].onSelected();
+                    onSelect = tabContent[i];
                 }
 
             this.infoLayout.show(this.infoSwap, tabName);
+            if (onCreate != null)
+                onCreate.onCreated();
+            if (onSelect != null)
+                onSelect.onSelected();
         }
     }
 

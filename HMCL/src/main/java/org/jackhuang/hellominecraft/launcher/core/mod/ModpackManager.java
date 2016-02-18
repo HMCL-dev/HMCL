@@ -39,6 +39,7 @@ import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.func.BiFunction;
+import org.jackhuang.hellominecraft.util.func.CallbackIO;
 import org.jackhuang.hellominecraft.util.system.Compressor;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.ZipEngine;
@@ -106,6 +107,8 @@ public final class ModpackManager {
                         if (id == null)
                             if (map.containsKey("name") && map.get("name") instanceof String)
                                 id = (String) map.get("name");
+                        if (id != null)
+                            description += id;
                         if (map.containsKey("description") && map.get("description") instanceof String)
                             description += "\n" + (String) map.get("description");
                     }
@@ -187,7 +190,7 @@ public final class ModpackManager {
 
     }
 
-    public static final List<String> MODPACK_BLACK_LIST = Arrays.asList(new String[] { "usernamecache.json", "asm", "logs", "backups", "versions", "assets", "usercache.json", "libraries", "crash-reports", "launcher_profiles.json", "NVIDIA", "TCNodeTracker", "screenshots", "natives", "native", "$native", "hmclversion.cfg", "pack.json", "launcher.jar", "launcher.pack.lzma" });
+    public static final List<String> MODPACK_BLACK_LIST = Arrays.asList(new String[] { "usernamecache.json", "asm", "logs", "backups", "versions", "assets", "usercache.json", "libraries", "crash-reports", "launcher_profiles.json", "NVIDIA", "AMD", "TCNodeTracker", "screenshots", "natives", "native", "$native", "hmclversion.cfg", "pack.json", "launcher.jar", "launcher.pack.lzma", "hmclmc.log" });
     public static final List<String> MODPACK_SUGGESTED_BLACK_LIST = Arrays.asList(new String[] { "saves", "servers.dat", "options.txt", "optionsshaders.txt", "mods/VoxelMods" });
 
     /**
@@ -227,7 +230,7 @@ public final class ModpackManager {
      *
      * @throws IOException if create tmp directory failed
      */
-    public static void export(File output, IMinecraftProvider provider, String version, List<String> blacklist, Map modpackJson) throws IOException, GameException {
+    public static void export(File output, IMinecraftProvider provider, String version, List<String> blacklist, Map modpackJson, CallbackIO<ZipEngine> callback) throws IOException, GameException {
         final ArrayList<String> b = new ArrayList<>(MODPACK_BLACK_LIST);
         if (blacklist != null)
             b.addAll(blacklist);
@@ -255,6 +258,8 @@ public final class ModpackManager {
             mv.runDir = "version";
             zip.putTextFile(C.GSON.toJson(mv), "minecraft/pack.json");
             zip.putTextFile(C.GSON.toJson(modpackJson), "modpack.json");
+            if (callback != null)
+                callback.call(zip);
         } finally {
             if (zip != null)
                 zip.closeFile();

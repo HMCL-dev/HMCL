@@ -76,6 +76,7 @@ public class GameLauncher {
     }
 
     public IMinecraftLoader makeLaunchCommand() throws AuthenticationException, GameException {
+        HMCLog.log("Building process");
         HMCLog.log("Logging in...");
         IMinecraftLoader loader;
         if (info != null)
@@ -131,7 +132,7 @@ public class GameLauncher {
         builder.redirectErrorStream(true).directory(service.version().getRunDirectory(options.getLaunchVersion()))
             .environment().put("APPDATA", service.baseDirectory().getAbsolutePath());
         JavaProcess jp = new JavaProcess(str, builder.start(), PROCESS_MANAGER);
-        HMCLog.log("The game process have been started");
+        HMCLog.log("Have started the process");
         launchEvent.execute(jp);
     }
 

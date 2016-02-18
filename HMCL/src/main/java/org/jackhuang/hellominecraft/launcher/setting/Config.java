@@ -35,7 +35,7 @@ import org.jackhuang.hellominecraft.util.system.OS;
  *
  * @author huangyuhui
  */
-public final class Config {
+public final class Config implements Cloneable {
 
     @SerializedName("last")
     private String last;
@@ -56,6 +56,15 @@ public final class Config {
     private List<JdkVersion> java;
     @SerializedName("localization")
     private String localization;
+    @SerializedName("logintype")
+    private int logintype;
+    @SerializedName("downloadtype")
+    private int downloadtype;
+    @SerializedName("configurations")
+    private TreeMap<String, Profile> configurations;
+    @SerializedName("auth")
+    @SuppressWarnings("FieldMayBeFinal")
+    private Map<String, Map> auth;
 
     public List<JdkVersion> getJava() {
         return java == null ? java = new ArrayList<>() : java;
@@ -173,16 +182,6 @@ public final class Config {
         Settings.save();
     }
 
-    @SerializedName("logintype")
-    private int logintype;
-    @SerializedName("downloadtype")
-    private int downloadtype;
-    @SerializedName("configurations")
-    private TreeMap<String, Profile> configurations;
-    @SerializedName("auth")
-    @SuppressWarnings("FieldMayBeFinal")
-    private Map<String, Map> auth;
-
     public Config() {
         clientToken = UUID.randomUUID().toString();
         logintype = downloadtype = 0;
@@ -245,4 +244,14 @@ public final class Config {
         this.localization = localization;
         Settings.save();
     }
+
+    @Override
+    public Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new Error(e);
+        }
+    }
+
 }

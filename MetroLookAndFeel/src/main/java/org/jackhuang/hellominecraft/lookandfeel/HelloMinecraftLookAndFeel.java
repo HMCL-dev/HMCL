@@ -51,7 +51,11 @@ public class HelloMinecraftLookAndFeel extends SynthLookAndFeel {
             load(new ByteArrayInputStream(s.getBytes("UTF-8")), HelloMinecraftLookAndFeel.class);
         } catch (Throwable ex) {
             HMCLog.err("This fucking exception should not happen. Retry backup solution.", ex);
-            load(HelloMinecraftLookAndFeel.class.getResourceAsStream("/org/jackhuang/hellominecraft/lookandfeel/synth_backup.xml"), HelloMinecraftLookAndFeel.class);
+            try {
+                load(HelloMinecraftLookAndFeel.class.getResourceAsStream("/org/jackhuang/hellominecraft/lookandfeel/synth_backup.xml"), HelloMinecraftLookAndFeel.class);
+            } catch (Throwable e) {
+                HMCLog.err("User fault", e);
+            }
         }
     }
 

@@ -18,7 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.setting;
 
 import org.jackhuang.hellominecraft.launcher.util.HMCLGameLauncher;
-import org.jackhuang.hellominecraft.launcher.util.DefaultMinecraftService;
+import org.jackhuang.hellominecraft.launcher.util.HMCLMinecraftService;
 import java.io.File;
 import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.launcher.core.MCUtils;
@@ -77,7 +77,7 @@ public final class Profile {
     }
 
     public VersionSetting getVersionSetting(String id) {
-        return ((DefaultMinecraftService) service()).getVersionSetting(id);
+        return ((HMCLMinecraftService) service()).getVersionSetting(id);
     }
 
     public String getSettingsSelectedMinecraftVersion() {
