@@ -131,7 +131,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         if (THROWABLE_SET.contains(stacktrace))
             return;
         THROWABLE_SET.add(stacktrace);
-        new Thread(() -> {
+        Thread t = new Thread(() -> {
             HashMap<String, String> map = new HashMap<>();
             map.put("CrashReport", text);
             try {
@@ -139,7 +139,9 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             } catch (IOException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to post HMCL server.", ex);
             }
-        }).start();
+        });
+        t.setDaemon(true);
+        t.start();
     }
 
 }

@@ -31,6 +31,7 @@ import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.launcher.util.MinecraftCrashAdvicer;
 import org.jackhuang.hellominecraft.util.DoubleOutputStream;
 import org.jackhuang.hellominecraft.util.LauncherPrintStream;
+import org.jackhuang.hellominecraft.util.Utils;
 
 /**
  *
@@ -106,6 +107,7 @@ public final class Launcher {
 
         LOGGER.info("*** Launching Game ***");
 
+        int flag = 0;
         try {
             minecraftMain.invoke(null, new Object[] { (String[]) cmdList.toArray(new String[cmdList.size()]) });
         } catch (Throwable throwable) {
@@ -113,8 +115,15 @@ public final class Launcher {
             System.err.println(C.i18n("crash.minecraft"));
             System.err.println(MinecraftCrashAdvicer.getAdvice(trace));
             System.err.println(trace);
+            flag = 1;
         }
 
-        LOGGER.info("*** Game exited ***");
+        LOGGER.info("*** Game Exited ***");
+
+        try {
+            Utils.shutdownForcely(flag);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to shut down this process...", e);
+        }
     }
 }

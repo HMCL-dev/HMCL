@@ -82,23 +82,31 @@ public class HeaderTab extends JLabel
 
     @Override
     public void mousePressed(MouseEvent e) {
+        if (!isEnabled())
+            return;
         this.model.setPressed(true);
         this.model.setArmed(true);
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
+        if (!isEnabled())
+            return;
         this.model.setPressed(false);
         this.model.setArmed(false);
     }
 
     @Override
     public void mouseEntered(MouseEvent e) {
+        if (!isEnabled())
+            return;
         this.model.setRollover(true);
     }
 
     @Override
     public void mouseExited(MouseEvent e) {
+        if (!isEnabled())
+            return;
         this.model.setRollover(false);
     }
 }

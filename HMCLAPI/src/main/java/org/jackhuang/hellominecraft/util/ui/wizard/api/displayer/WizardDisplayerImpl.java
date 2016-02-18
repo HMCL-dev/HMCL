@@ -460,6 +460,7 @@ public class WizardDisplayerImpl extends WizardDisplayer {
             }
         };
         Thread runner = new Thread(run, "Wizard Background Result Thread " + r);
+        runner.setDaemon(true);
         runner.start();
     }
 

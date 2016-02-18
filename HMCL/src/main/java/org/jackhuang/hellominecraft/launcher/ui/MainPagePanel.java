@@ -43,6 +43,7 @@ import org.jackhuang.hellominecraft.lookandfeel.comp.ConstomButton;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
+import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 import org.jackhuang.hellominecraft.util.ui.wizard.api.WizardDisplayer;
 
 /**
@@ -501,6 +502,8 @@ public class MainPagePanel extends AnimatedPanel {
         isLoading = false;
     }
 
+    final Consumer<Boolean> launchingStateChanged = t -> SwingUtils.setEnabled(MainFrame.INSTANCE.getRootPane(), !t);
+
     final Consumer<String> versionChanged = this::versionChanged;
 
     void versionChanged(String selectedVersion) {
@@ -513,6 +516,7 @@ public class MainPagePanel extends AnimatedPanel {
     final Consumer<Profile> onSelectedProfilesChanged = t -> {
         t.service().version().onRefreshedVersions.register(onRefreshedVersions);
         t.selectedVersionChangedEvent.register(versionChanged);
+        t.launcher().launchingStateChanged.register(launchingStateChanged);
 
         ((DefaultComboBoxModel) cboProfiles.getModel()).setSelectedItem(t.getName());
     };

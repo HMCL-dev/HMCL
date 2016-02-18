@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.util.ui;
 
+import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.FontMetrics;
 import java.io.File;
@@ -27,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.swing.DefaultListModel;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
@@ -264,5 +266,14 @@ public class SwingUtils {
         if (result == JOptionPane.CANCEL_OPTION)
             return -1;
         return ((JComboBox) msgs[1]).getSelectedIndex();
+    }
+
+    public static void setEnabled(JComponent component, boolean t) {
+        synchronized (component.getTreeLock()) {
+            for (Component c : component.getComponents())
+                if (c instanceof JComponent)
+                    setEnabled((JComponent) c, t);
+        }
+        component.setEnabled(t);
     }
 }

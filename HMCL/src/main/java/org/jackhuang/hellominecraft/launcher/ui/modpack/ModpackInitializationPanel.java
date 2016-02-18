@@ -206,7 +206,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
         wizardData.put(KEY_INCLUDING_LAUNCHER, chkIncludeLauncher.isSelected());
     }//GEN-LAST:event_chkIncludeLauncherItemStateChanged
 
-    static final Pattern PATTERN = Pattern.compile("[-a-zA-Z0-9_\\.\u4E00-\u9FA5]+$");
+    static final Pattern PATTERN = Pattern.compile("[-a-zA-Z0-9_\\.\\(\\)\\[\\]\\{\\}\\<\\>\"\'\u4E00-\u9FA5]+$");
 
     void checkProblem() {
         controller.setProblem(null);

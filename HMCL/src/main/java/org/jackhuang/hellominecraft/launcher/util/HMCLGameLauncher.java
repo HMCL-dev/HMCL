@@ -29,6 +29,7 @@ import org.jackhuang.hellominecraft.launcher.core.launch.LaunchOptions;
 import org.jackhuang.hellominecraft.launcher.setting.Profile;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.EventHandler;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 
@@ -41,31 +42,39 @@ public class HMCLGameLauncher {
     Profile profile;
     boolean isLaunching = false;
 
+    public final EventHandler<Boolean> launchingStateChanged = new EventHandler<>(this);
+
     public HMCLGameLauncher(Profile p) {
         this.profile = p;
+    }
+
+    void setLaunching(boolean isLaunching) {
+        if (isLaunching != this.isLaunching)
+            launchingStateChanged.execute(isLaunching);
+        this.isLaunching = isLaunching;
     }
 
     public void genLaunchCode(final Consumer<GameLauncher> listener, final Consumer<String> failed, String passwordIfNeeded) {
         if (isLaunching || profile == null)
             return;
-        isLaunching = true;
+        setLaunching(true);
         HMCLog.log("Start generating launching command...");
         File file = profile.getCanonicalGameDirFile();
         if (!file.exists()) {
             failed.accept(C.i18n("minecraft.wrong_path"));
-            isLaunching = false;
+            setLaunching(false);
             return;
         }
 
         if (profile.getSelectedVersion() == null) {
             failed.accept(C.i18n("minecraft.no_selected_version"));
-            isLaunching = false;
+            setLaunching(false);
             return;
         }
 
         final IAuthenticator l = IAuthenticator.LOGINS.get(Settings.getInstance().getLoginType());
         final LoginInfo li = new LoginInfo(l.getUserName(), l.isLoggedIn() || !l.hasPassword() ? null : passwordIfNeeded);
-        new Thread() {
+        Thread t = new Thread() {
             @Override
             public void run() {
                 Thread.currentThread().setName("Game Launcher");
@@ -74,18 +83,20 @@ public class HMCLGameLauncher {
                     PluginManager.plugin().onProcessingLaunchOptions(options);
                     DefaultGameLauncher gl = new DefaultGameLauncher(options, profile.service(), li, l);
                     gl.setTag(profile.getSelectedVersionSetting().getLauncherVisibility());
-                    gl.successEvent.register(() -> isLaunching = false);
+                    gl.successEvent.register(() -> setLaunching(false));
                     listener.accept(gl);
                     gl.makeLaunchCommand();
                 } catch (GameException e) {
                     failed.accept(C.i18n("launch.failed") + ", " + e.getMessage());
-                    isLaunching = false;
+                    setLaunching(false);
                 } catch (AuthenticationException e) {
                     failed.accept(C.i18n("login.failed") + ", " + e.getMessage());
-                    isLaunching = false;
+                    setLaunching(false);
                 }
             }
-        }.start();
+        };
+        t.setDaemon(true);
+        t.start();
     }
 
 }
