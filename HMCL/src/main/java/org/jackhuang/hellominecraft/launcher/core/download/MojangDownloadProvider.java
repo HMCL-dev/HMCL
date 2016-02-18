@@ -76,7 +76,7 @@ public class MojangDownloadProvider extends IDownloadProvider {
     public String getParsedLibraryDownloadURL(String str) {
         if (str == null)
             return null;
-        else if (str.contains("forge"))
+        else if (str.contains("typesafe") || str.contains("scala"))
             if (SupportedLocales.NOW_LOCALE.self == Locale.CHINA)
                 return str.replace("http://files.minecraftforge.net/maven", "http://maven.oschina.net/content/groups/public");
             else
