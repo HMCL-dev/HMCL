@@ -172,7 +172,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
 
         @Override
         public String apply(Integer t) {
-            return DownloadType.values()[t / 3].getProvider().getVersionsDownloadURL() + suffix;
+            return DownloadType.values()[t / 2].getProvider().getVersionsDownloadURL() + suffix;
         }
 
     }

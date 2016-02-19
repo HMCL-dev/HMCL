@@ -121,8 +121,11 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
             if (repeat > 0) {
                 HMCLog.warn("Failed to download, repeat: " + repeat);
                 if (failedCallbackReturnsNewURL != null) {
-                    url = IOUtils.parseURL(failedCallbackReturnsNewURL.apply(repeat));
-                    HMCLog.warn("Switch to: " + url);
+                    URL tmp = IOUtils.parseURL(failedCallbackReturnsNewURL.apply(repeat));
+                    if (tmp != null) {
+                        url = tmp;
+                        HMCLog.warn("Switch to: " + url);
+                    }
                 }
             }
             try {
