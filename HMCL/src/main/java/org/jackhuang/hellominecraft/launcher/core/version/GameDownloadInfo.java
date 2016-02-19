@@ -27,7 +27,7 @@ public class GameDownloadInfo implements Cloneable {
     public int size;
 
     @Override
-    protected Object clone() {
+    public Object clone() {
         try {
             return super.clone();
         } catch (CloneNotSupportedException ex) {

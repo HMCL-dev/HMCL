@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.launcher.core.version;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +50,7 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
     public MinecraftVersion() {
     }
 
-    public MinecraftVersion(String minecraftArguments, String mainClass, String time, String id, String type, String processArguments, String releaseTime, String assets, String jar, String inheritsFrom, String runDir, int minimumLauncherVersion, List<MinecraftLibrary> libraries, boolean hidden) {
+    public MinecraftVersion(String minecraftArguments, String mainClass, String time, String id, String type, String processArguments, String releaseTime, String assets, String jar, String inheritsFrom, String runDir, int minimumLauncherVersion, List<MinecraftLibrary> libraries, boolean hidden, Map<String, GameDownloadInfo> downloads, AssetIndexDownloadInfo assetIndexDownloadInfo) {
         this();
         this.minecraftArguments = minecraftArguments;
         this.mainClass = mainClass;
@@ -64,12 +65,23 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
         this.minimumLauncherVersion = minimumLauncherVersion;
         this.hidden = hidden;
         this.runDir = runDir;
+        if (assetIndexDownloadInfo == null)
+            this.assetIndex = null;
+        else
+            this.assetIndex = (AssetIndexDownloadInfo) assetIndexDownloadInfo.clone();
         if (libraries == null)
             this.libraries = new ArrayList<>();
         else {
             this.libraries = new ArrayList<>(libraries.size());
             for (IMinecraftLibrary library : libraries)
                 this.libraries.add((MinecraftLibrary) library.clone());
+        }
+        if (downloads == null)
+            this.downloads = null;
+        else {
+            this.downloads = new HashMap<>(downloads.size());
+            for (Map.Entry<String, GameDownloadInfo> entry : downloads.entrySet())
+                this.downloads.put(entry.getKey(), (GameDownloadInfo) entry.getValue().clone());
         }
     }
 
@@ -108,7 +120,9 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
             this.assets != null ? this.assets : parent.assets,
             this.jar != null ? this.jar : parent.jar,
             null, this.runDir, parent.minimumLauncherVersion,
-            this.libraries != null ? ArrayUtils.merge(this.libraries, parent.libraries) : parent.libraries, this.hidden);
+            this.libraries != null ? ArrayUtils.merge(this.libraries, parent.libraries) : parent.libraries, this.hidden,
+            this.downloads != null ? this.downloads : parent.downloads,
+            this.assetIndex != null ? this.assetIndex : parent.assetIndex);
 
         return result;
     }
