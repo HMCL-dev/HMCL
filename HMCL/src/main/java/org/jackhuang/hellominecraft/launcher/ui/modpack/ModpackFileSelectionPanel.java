@@ -76,9 +76,9 @@ public class ModpackFileSelectionPanel extends javax.swing.JPanel {
             put("minecraft/options.txt", C.i18n("modpack.files.options_txt"));
             put("minecraft/optionsshaders.txt", C.i18n("modpack.files.optionsshaders_txt"));
             put("minecraft/mods/VoxelMods", C.i18n("modpack.files.mods.voxelmods"));
-            put("minecraft/dumps", C.i18n("modpack.files.mods.dumps"));
-            put("minecraft/blueprints", C.i18n("modpack.files.mods.blueprints"));
-            put("minecraft/scripts", C.i18n("modpack.files.mods.scripts"));
+            put("minecraft/dumps", C.i18n("modpack.files.dumps"));
+            put("minecraft/blueprints", C.i18n("modpack.files.blueprints"));
+            put("minecraft/scripts", C.i18n("modpack.files.scripts"));
         }
     };
 

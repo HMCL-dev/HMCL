@@ -34,6 +34,7 @@ import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.util.NetUtils;
 import org.jackhuang.hellominecraft.util.OverridableSwingWorker;
+import org.jackhuang.hellominecraft.util.func.Function;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.tasks.DoingDoneListener;
 import org.jackhuang.hellominecraft.util.tasks.Task;
@@ -110,7 +111,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
                     }
                 }
 
-                taskCollection.add(new FileDownloadTask(jarURL, mvj, hash).setTag(id + ".jar"));
+                taskCollection.add(new FileDownloadTask(jarURL, mvj, hash).setFailedCallbackReturnsNewURL(new DownloadTypeSwitcher(id + "/" + id + ".jar")).setTag(id + ".jar"));
             }
 
             @Override
@@ -147,7 +148,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
         if (!vpath.exists() && !vpath.mkdirs())
             HMCLog.warn("Failed to make version folder " + vpath);
         if (TaskWindow.factory()
-            .append(new FileDownloadTask(vurl + id + ".jar", mvt).setTag(id + ".jar"))
+            .append(new FileDownloadTask(vurl + id + ".jar", mvt).setFailedCallbackReturnsNewURL(new DownloadTypeSwitcher(id + "/" + id + ".jar")).setTag(id + ".jar"))
             .create()) {
             if (moved != null && moved.exists() && !moved.delete())
                 HMCLog.warn("Failed to delete " + moved);
@@ -161,10 +162,38 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
         }
     }
 
+    private static class DownloadTypeSwitcher implements Function<Integer, String> {
+
+        String suffix;
+
+        public DownloadTypeSwitcher(String suffix) {
+            this.suffix = suffix;
+        }
+
+        @Override
+        public String apply(Integer t) {
+            return DownloadType.values()[t / 3].getProvider().getVersionsDownloadURL() + suffix;
+        }
+
+    }
+
     @Override
-    public Task downloadMinecraftJarTo(String id, File mvt) {
-        String vurl = service.getDownloadType().getProvider().getVersionsDownloadURL() + id + "/";
-        return new FileDownloadTask(vurl + id + ".jar", mvt).setTag(id + ".jar");
+    public Task downloadMinecraftJarTo(MinecraftVersion mv, File mvt) {
+        String jar = mv.jar == null ? mv.id : mv.jar;
+        String vurl = service.getDownloadType().getProvider().getVersionsDownloadURL() + jar + "/";
+        String jarURL = vurl + jar + ".jar", hash = null;
+        if (mv.downloads != null) {
+            // Dont consider adding isAllowedToUseSelfURL, because some modpacks want to use their own download source.
+            GameDownloadInfo gdi = mv.downloads.get("client");
+            if (gdi != null) {
+                if (gdi.url != null)
+                    jarURL = gdi.url;
+                if (gdi.sha1 != null)
+                    hash = gdi.sha1;
+            }
+        }
+
+        return new FileDownloadTask(jarURL, mvt, hash).setTag(jar + ".jar");
     }
 
     @Override

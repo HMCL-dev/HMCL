@@ -155,7 +155,7 @@ public final class ModpackManager {
                     if (mv.jar == null)
                         throw new FileNotFoundException(C.i18n("modpack.incorrect_format.no_jar"));
 
-                    c.add(service.download().downloadMinecraftJarTo(mv.jar, new File(nowFile, id + ".jar")));
+                    c.add(service.download().downloadMinecraftJarTo(mv, new File(nowFile, id + ".jar")));
                     mv.jar = null;
                     FileUtils.writeStringToFile(json, C.GSON.toJson(mv));
                     if (!json.renameTo(new File(nowFile, id + ".json")))
@@ -190,7 +190,7 @@ public final class ModpackManager {
 
     }
 
-    public static final List<String> MODPACK_BLACK_LIST = Arrays.asList(new String[] { "usernamecache.json", "asm", "logs", "backups", "versions", "assets", "usercache.json", "libraries", "crash-reports", "launcher_profiles.json", "NVIDIA", "AMD", "TCNodeTracker", "screenshots", "natives", "native", "$native", "hmclversion.cfg", "pack.json", "launcher.jar", "launcher.pack.lzma", "hmclmc.log" });
+    public static final List<String> MODPACK_BLACK_LIST = Arrays.asList(new String[] { "usernamecache.json", "asm", "logs", "backups", "versions", "assets", "usercache.json", "libraries", "crash-reports", "launcher_profiles.json", "NVIDIA", "AMD", "TCNodeTracker", "screenshots", "natives", "native", "$native", "pack.json", "launcher.jar", "launcher.pack.lzma", "hmclmc.log" });
     public static final List<String> MODPACK_SUGGESTED_BLACK_LIST = Arrays.asList(new String[] { "saves", "servers.dat", "options.txt", "optionsshaders.txt", "mods/VoxelMods" });
 
     /**

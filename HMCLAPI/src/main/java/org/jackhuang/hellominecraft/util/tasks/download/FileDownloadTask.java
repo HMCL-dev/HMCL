@@ -28,6 +28,7 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.code.DigestUtils;
+import org.jackhuang.hellominecraft.util.func.Function;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.tasks.Task;
 import org.jackhuang.hellominecraft.util.tasks.communication.PreviousResult;
@@ -48,6 +49,13 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
     protected int downloaded = 0; // number of bytes downloaded
     protected File filePath;
     protected String expectedHash;
+
+    protected Function<Integer, String> failedCallbackReturnsNewURL;
+
+    public FileDownloadTask setFailedCallbackReturnsNewURL(Function<Integer, String> failedCallbackReturnsNewURL) {
+        this.failedCallbackReturnsNewURL = failedCallbackReturnsNewURL;
+        return this;
+    }
 
     public FileDownloadTask() {
     }
@@ -110,8 +118,13 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
             this.url = IOUtils.parseURL(p.getResult());
 
         for (int repeat = 0; repeat < 6; repeat++) {
-            if (repeat > 0)
+            if (repeat > 0) {
                 HMCLog.warn("Failed to download, repeat: " + repeat);
+                if (failedCallbackReturnsNewURL != null) {
+                    url = IOUtils.parseURL(failedCallbackReturnsNewURL.apply(repeat));
+                    HMCLog.warn("Switch to: " + url);
+                }
+            }
             try {
 
                 // Open connection to URL.

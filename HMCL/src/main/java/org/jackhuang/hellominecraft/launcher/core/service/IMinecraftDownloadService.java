@@ -40,7 +40,7 @@ public abstract class IMinecraftDownloadService extends IMinecraftBasicService {
 
     public abstract boolean downloadMinecraftJar(String id);
 
-    public abstract Task downloadMinecraftJarTo(String id, File f);
+    public abstract Task downloadMinecraftJarTo(MinecraftVersion mv, File f);
 
     public abstract boolean downloadMinecraftVersionJson(String id);
 
