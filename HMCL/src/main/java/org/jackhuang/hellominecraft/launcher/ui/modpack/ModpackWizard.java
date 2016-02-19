@@ -33,6 +33,7 @@ import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.launcher.setting.Config;
 import org.jackhuang.hellominecraft.launcher.setting.Profile;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
+import org.jackhuang.hellominecraft.launcher.util.HMCLMinecraftService;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.Pair;
 import org.jackhuang.hellominecraft.util.StrUtils;
@@ -97,14 +98,13 @@ public class ModpackWizard extends WizardBranchController {
                                 progress.failed(C.i18n("modpack.export_error") + ": " + StrUtils.getStackTrace(ex), true);
                             }
                         try {
+                            String gameVersion = (String) settings.get(ModpackInitializationPanel.KEY_GAME_VERSION);
                             File loc = new File((String) settings.get(ModpackInitializationPanel.KEY_MODPACK_LOCATION));
                             File modpack = loc;
                             if ((Boolean) settings.get(ModpackInitializationPanel.KEY_INCLUDING_LAUNCHER))
                                 modpack = new File(loc.getAbsolutePath() + ".temp");
-                            ModpackManager.export(modpack,
-                                                  profile.service().version(),
-                                                  (String) settings.get(ModpackInitializationPanel.KEY_GAME_VERSION),
-                                                  blackList, map, null);
+                            ModpackManager.export(modpack, profile.service().version(), gameVersion, blackList, map,
+                                                  t -> t.putTextFile(C.GSON.toJson(((HMCLMinecraftService) profile.service()).getVersionSetting(gameVersion)), "minecraft/hmclversion.cfg"));
                             String summary = "<html>" + C.i18n("modpack.export_finished") + ": " + loc.getAbsolutePath();
                             boolean including = false;
                             if ((Boolean) settings.get(ModpackInitializationPanel.KEY_INCLUDING_LAUNCHER)) {
