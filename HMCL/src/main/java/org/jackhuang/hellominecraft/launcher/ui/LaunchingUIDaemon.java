@@ -76,6 +76,7 @@ public class LaunchingUIDaemon {
                 WebFrame f = new WebFrame(jpm.getJavaProcess().getStdOutLines().toArray(new String[0]));
                 f.setTitle("Game output");
                 f.setVisible(true);
+                checkExit((LauncherVisibility) obj.getTag());
             });
             jpm.jvmLaunchFailedEvent.register(t -> {
                 HMCLog.err("Cannot create jvm, exit code: " + t);
@@ -83,13 +84,9 @@ public class LaunchingUIDaemon {
                 WebFrame f = new WebFrame(jpm.getJavaProcess().getStdOutLines().toArray(new String[0]));
                 f.setTitle("Game output");
                 f.setVisible(true);
+                checkExit((LauncherVisibility) obj.getTag());
             });
-            jpm.stoppedEvent.register(() -> {
-                if ((LauncherVisibility) obj.getTag() == LauncherVisibility.CLOSE && !LogWindow.INSTANCE.isVisible()) {
-                    HMCLog.log("With the option of closing the launcher anyway, the launcher will exit and will NOT catch game logs.");
-                    System.exit(0);
-                }
-            });
+            jpm.stoppedEvent.register(() -> checkExit((LauncherVisibility) obj.getTag()));
             jpm.start();
         });
         try {
@@ -100,6 +97,11 @@ public class LaunchingUIDaemon {
         }
         return true;
     };
+
+    private static void checkExit(LauncherVisibility v) {
+        if (v != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible())
+            System.exit(0);
+    }
 
     private static final Event<List<String>> LAUNCH_SCRIPT_FINISHER = (sender, str) -> {
         boolean flag = false;

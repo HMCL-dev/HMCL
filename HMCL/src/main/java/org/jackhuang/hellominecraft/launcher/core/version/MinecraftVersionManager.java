@@ -124,7 +124,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                             mcVersion = C.GSON.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
                             if (mcVersion == null)
                                 throw new GameException("Wrong json format, got null.");
-                        } catch (IOException | GameException ex) {
+                        } catch (IOException | GameException | JsonSyntaxException ex) {
                             HMCLog.warn("Ignoring: " + dir + ", the json of this Minecraft is malformed.", ex);
                             continue;
                         }
@@ -276,7 +276,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
         for (MinecraftVersion s : getVersions()) {
             FileUtils.deleteDirectoryQuietly(new File(versionRoot(s.id), s.id + "-natives"));
             File f = getRunDirectory(s.id);
-            String[] dir = { "asm", "NVIDIA", "server-resource-packs", "natives", "native" };
+            String[] dir = { "natives", "native", "$native", "AMD", "crash-reports", "logs", "asm", "NVIDIA", "server-resource-packs", "natives", "native" };
             for (String str : dir)
                 FileUtils.deleteDirectoryQuietly(new File(f, str));
             String[] files = { "output-client.log", "usercache.json", "usernamecache.json", "hmclmc.log" };

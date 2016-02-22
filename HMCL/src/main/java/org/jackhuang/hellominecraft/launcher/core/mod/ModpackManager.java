@@ -86,21 +86,9 @@ public final class ModpackManager {
             @Override
             public void executeTask() throws Throwable {
                 String id = idFUCK;
-                File versions = new File(service.baseDirectory(), "versions");
-                File oldFile = new File(versions, "minecraft"), newFile = null;
-                if (oldFile.exists()) {
-                    newFile = new File(versions, "minecraft-" + System.currentTimeMillis());
-                    if (newFile.isDirectory())
-                        FileUtils.deleteDirectory(newFile);
-                    else if (newFile.isFile())
-                        if (!newFile.delete())
-                            HMCLog.warn("Failed to delete file " + newFile);
-                    if (!oldFile.renameTo(newFile))
-                        HMCLog.warn("Failed to rename " + oldFile + " to " + newFile);
-                }
-
                 String description = C.i18n("modpack.install.will_install");
 
+                // Read modpack name and description from `modpack.json`
                 try (ZipFile zip = new ZipFile(input)) {
                     HashMap map = C.GSON.fromJson(new InputStreamReader(zip.getInputStream(zip.getEntry("modpack.json")), "UTF-8"), HashMap.class);
                     if (map != null) {
@@ -116,6 +104,7 @@ public final class ModpackManager {
                         throw new IllegalStateException("Illegal modpack id!");
                 }
 
+                // Show a window to let the user know that what and how the modpack is.
                 Object msgs[] = new Object[2];
                 msgs[0] = C.i18n("modpack.install.task");
                 msgs[1] = new WebPage(description);
@@ -124,6 +113,25 @@ public final class ModpackManager {
                 if (result == JOptionPane.NO_OPTION)
                     return;
 
+                File versions = new File(service.baseDirectory(), "versions");
+
+                // `minecraft` folder is the existent root folder of the modpack
+                // Then we will decompress the modpack and there would be a folder named `minecraft`
+                // So if `minecraft` folder does exist, backup it and then restore it.
+                File oldFile = new File(versions, "minecraft"), newFile = null;
+                if (oldFile.exists()) {
+                    newFile = new File(versions, "minecraft-" + System.currentTimeMillis());
+                    if (newFile.isDirectory())
+                        FileUtils.deleteDirectory(newFile);
+                    else if (newFile.isFile())
+                        if (!newFile.delete())
+                            HMCLog.warn("Failed to delete file " + newFile);
+                    if (!oldFile.renameTo(newFile))
+                        HMCLog.warn("Failed to rename " + oldFile + " to " + newFile);
+                }
+
+                // If the user install the modpack into an existent version, maybe it wants to update the modpack
+                // So backup the game, copy the saved games.
                 File preVersion = new File(versions, id), preVersionRenamed = null;
                 if (preVersion.exists()) {
                     HMCLog.log("Backing up the game");
@@ -132,6 +140,7 @@ public final class ModpackManager {
                         HMCLog.warn("Failed to rename pre-version folder " + preVersion + " to a temp folder " + preVersionRenamed);
                     if (!new File(preVersionRenamed, id + ".json").renameTo(new File(preVersionRenamed, preId + ".json")))
                         HMCLog.warn("Failed to rename pre json to new json");
+
                     if (!new File(preVersionRenamed, id + ".jar").renameTo(new File(preVersionRenamed, preId + ".jar")))
                         HMCLog.warn("Failed to rename pre jar to new jar");
                 }
@@ -144,6 +153,8 @@ public final class ModpackManager {
                                          b.incrementAndGet();
                                      return true;
                                  }, true);
+
+                    // No pack.json here, illegal modpack.
                     if (b.get() < 1)
                         throw new FileNotFoundException(C.i18n("modpack.incorrect_format.no_json"));
                     File nowFile = new File(versions, id);
@@ -161,6 +172,7 @@ public final class ModpackManager {
                     if (!json.renameTo(new File(nowFile, id + ".json")))
                         HMCLog.warn("Failed to rename pack.json to new id");
 
+                    // Restore the saved game from the old version.
                     if (preVersionRenamed != null) {
                         HMCLog.log("Restoring saves");
                         File presaves = new File(preVersionRenamed, "saves");

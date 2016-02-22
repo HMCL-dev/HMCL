@@ -39,6 +39,7 @@ import org.jackhuang.hellominecraft.util.Pair;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.Utils;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.system.ZipEngine;
 import org.jackhuang.hellominecraft.util.ui.WebPage;
 import org.jackhuang.hellominecraft.util.ui.checktree.CheckBoxTreeNode;
@@ -111,7 +112,8 @@ public class ModpackWizard extends WizardBranchController {
                                 boolean flag = true;
                                 ZipEngine engine = new ZipEngine(loc);
                                 Config s = new Config();
-                                //s.setBgpath(Settings.getInstance().getBgpath());
+                                if (!IOUtils.isAbsolutePath(Settings.getInstance().getBgpath()))
+                                    s.setBgpath(Settings.getInstance().getBgpath());
                                 s.setDownloadType(Settings.getInstance().getDownloadType());
                                 engine.putTextFile(C.GSON.toJson(s), "hmcl.json");
                                 engine.putFile(modpack, "modpack.zip");

@@ -124,6 +124,10 @@ public class IOUtils {
         return realPath;
     }
 
+    public static boolean isAbsolutePath(String path) {
+        return path.startsWith("/") || path.indexOf(":") > 0;
+    }
+
     public static File currentDir() {
         return new File(".");
     }

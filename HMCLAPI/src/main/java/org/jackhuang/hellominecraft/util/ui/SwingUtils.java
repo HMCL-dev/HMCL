@@ -20,6 +20,7 @@ package org.jackhuang.hellominecraft.util.ui;
 import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.FontMetrics;
+import java.awt.Frame;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -41,6 +42,7 @@ import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.Utils;
 import org.jackhuang.hellominecraft.util.func.NonFunction;
 import org.jackhuang.hellominecraft.util.system.OS;
 
@@ -275,5 +277,28 @@ public class SwingUtils {
                     setEnabled((JComponent) c, t);
         }
         component.setEnabled(t);
+    }
+
+    public static void exitIfNoWindow(Frame thisFrame) {
+        exitIfNoWindow(thisFrame, false);
+    }
+
+    public static void exitIfNoWindow(Frame thisFrame, boolean neededDispose) {
+        boolean flag = false;
+        for (Frame f : Frame.getFrames()) {
+            if (f == thisFrame)
+                continue;
+            if (f.isVisible())
+                flag = true;
+        }
+        if (!flag)
+            try {
+                Utils.shutdownForcely(0);
+            } catch (Exception e) {
+                MessageBox.Show(C.i18n("launcher.exit_failed"));
+                HMCLog.err("Failed to shutdown forcely", e);
+            }
+        else
+            thisFrame.dispose();
     }
 }

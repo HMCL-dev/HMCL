@@ -84,6 +84,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
                 res.add("-XX:+CMSIncrementalMode");
                 res.add("-XX:-UseAdaptiveSizePolicy");
                 res.add("-XX:-OmitStackTraceInFastThrow");
+                res.add("-Xincgc");
 
                 res.add("-Xmn128m");
             }

@@ -83,8 +83,8 @@ public class LogWindow extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(C.i18n("logwindow.title")); // NOI18N
         addWindowListener(new java.awt.event.WindowAdapter() {
-            public void windowClosed(java.awt.event.WindowEvent evt) {
-                formWindowClosed(evt);
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
             }
         });
 
@@ -172,14 +172,14 @@ public class LogWindow extends javax.swing.JFrame {
                         .addComponent(btnClear)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnClose))
-                    .addComponent(lblCrash, javax.swing.GroupLayout.Alignment.LEADING))
+                    .addComponent(lblCrash, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lblCrash, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(lblCrash)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 356, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -199,32 +199,14 @@ public class LogWindow extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCloseActionPerformed
-        boolean flag = false;
-        for (Frame f : Frame.getFrames()) {
-            if (f == this)
-                continue;
-            if (f.isVisible())
-                flag = true;
-        }
-        if (flag)
-            this.dispose();
-        else
-            try {
-                Utils.shutdownForcely(0);
-            } catch (Exception e) {
-                MessageBox.Show(C.i18n("launcher.exit_failed"));
-                HMCLog.err("Failed to shutdown forcely", e);
-            }
+        if (listener != null && listener.apply() && terminateGameListener != null)
+            terminateGameListener.run();
+        SwingUtils.exitIfNoWindow(this, true);
     }//GEN-LAST:event_btnCloseActionPerformed
 
     private void btnClearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearActionPerformed
         this.txtLog.setText("");
     }//GEN-LAST:event_btnClearActionPerformed
-
-    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
-        if (listener != null && listener.apply() && terminateGameListener != null)
-            terminateGameListener.run();
-    }//GEN-LAST:event_formWindowClosed
 
     private void btnCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCopyActionPerformed
         Utils.setClipborad(this.txtLog.getText());
@@ -250,6 +232,12 @@ public class LogWindow extends javax.swing.JFrame {
     private void btnGitHubActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGitHubActionPerformed
         SwingUtils.openLink(C.URL_GITHUB);
     }//GEN-LAST:event_btnGitHubActionPerformed
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        if (listener != null && listener.apply() && terminateGameListener != null)
+            terminateGameListener.run();
+        SwingUtils.exitIfNoWindow(this);
+    }//GEN-LAST:event_formWindowClosing
 
     public void log(String status) {
         log(status, Level.INFO);

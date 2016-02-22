@@ -45,15 +45,7 @@ public class WebFrame extends JFrame {
 
             @Override
             public void windowClosing(WindowEvent e) {
-                boolean flag = false;
-                for (Frame f : Frame.getFrames()) {
-                    if (f == WebFrame.this)
-                        continue;
-                    if (f.isVisible())
-                        flag = true;
-                }
-                if (!flag)
-                    System.exit(0);
+                SwingUtils.exitIfNoWindow(WebFrame.this);
             }
 
             @Override
