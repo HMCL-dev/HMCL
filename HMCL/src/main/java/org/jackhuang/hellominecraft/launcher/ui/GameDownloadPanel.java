@@ -130,8 +130,8 @@ public class GameDownloadPanel extends AnimatedPanel {
     boolean refreshedDownloads = false;
 
     @Override
-    public void onSelected() {
-        super.onSelected();
+    public void onSelect() {
+        super.onSelect();
         if (!refreshedDownloads) {
             refreshedDownloads = true;
             refreshDownloads();

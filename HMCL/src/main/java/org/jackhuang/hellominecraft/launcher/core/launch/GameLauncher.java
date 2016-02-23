@@ -53,10 +53,11 @@ public class GameLauncher {
     LoginInfo info;
     UserProfileProvider result;
     IAuthenticator login;
-    public final EventHandler<List<DownloadLibraryJob>> downloadLibrariesEvent = new EventHandler(this);
-    public final EventHandler<List<String>> successEvent = new EventHandler(this);
-    public final EventHandler<JavaProcess> launchEvent = new EventHandler(this);
-    public final EventHandler<DecompressLibraryJob> decompressNativesEvent = new EventHandler(this);
+    public final EventHandler<List<DownloadLibraryJob>> downloadLibrariesEvent = new EventHandler<>(this);
+    public final EventHandler<List<String>> successEvent = new EventHandler<>(this);
+    public final EventHandler<JavaProcess> launchEvent = new EventHandler<>(this);
+    public final EventHandler<LaunchingState> launchingStateChangedEvent = new EventHandler<>(this);
+    public final EventHandler<DecompressLibraryJob> decompressNativesEvent = new EventHandler<>(this);
 
     public GameLauncher(LaunchOptions options, IMinecraftService version, LoginInfo info, IAuthenticator lg) {
         this.options = options;
@@ -78,6 +79,7 @@ public class GameLauncher {
     public IMinecraftLoader makeLaunchCommand() throws AuthenticationException, GameException {
         HMCLog.log("Building process");
         HMCLog.log("Logging in...");
+        launchingStateChangedEvent.execute(LaunchingState.LoggingIn);
         IMinecraftLoader loader;
         if (info != null)
             result = login.login(info);
@@ -87,6 +89,7 @@ public class GameLauncher {
             throw new AuthenticationException("Result can not be null.");
         PluginManager.plugin().onProcessingLoginResult(result);
 
+        launchingStateChangedEvent.execute(LaunchingState.GeneratingLaunchingCodes);
         loader = service.launch(options, result);
 
         File file = service.version().getDecompressNativesToLocation(loader.getMinecraftVersion());
@@ -94,10 +97,12 @@ public class GameLauncher {
             FileUtils.cleanDirectoryQuietly(file);
 
         HMCLog.log("Detecting libraries...");
+        launchingStateChangedEvent.execute(LaunchingState.DownloadingLibraries);
         if (!downloadLibrariesEvent.execute(service.download().getDownloadLibraries(loader.getMinecraftVersion())))
             throw new GameException("Failed to download libraries");
 
         HMCLog.log("Unpacking natives...");
+        launchingStateChangedEvent.execute(LaunchingState.DecompressingNatives);
         DecompressLibraryJob job = service.version().getDecompressLibraries(loader.getMinecraftVersion());
         if (!decompressNativesEvent.execute(job))
             throw new GameException("Failed to decompress natives");

@@ -99,18 +99,26 @@ public class AnimatedPanel extends JPanel implements Selectable {
     }
 
     @Override
-    public void onSelected() {
+    public void onSelect() {
         if (!selected)
             animate();
         selected = true;
     }
 
     @Override
-    public void onLeaving() {
+    public void onLeave() {
         selected = false;
     }
 
+    boolean created = false;
+
     @Override
-    public void onCreated() {
+    public void onCreate() {
+        created = true;
+    }
+
+    @Override
+    public boolean isCreated() {
+        return created;
     }
 }

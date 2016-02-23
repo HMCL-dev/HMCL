@@ -160,7 +160,7 @@ public class InstallerPanel extends AnimatedPanel {
     boolean refreshed = false;
 
     @Override
-    public void onSelected() {
+    public void onSelect() {
         if (!refreshed) {
             refreshVersions();
             refreshed = true;

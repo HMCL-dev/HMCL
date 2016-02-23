@@ -81,15 +81,17 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     /**
      * Creates new form GameSettingsPanel
      */
-    public GameSettingsPanel() {
+    public GameSettingsPanel(MainFrame mf) {
+        mf.actions.put("showGameDownloads", () -> {
+                       MainFrame.INSTANCE.selectTab("game");
+                       showGameDownloads();
+                   });
+    }
+
+    void initGui() {
         initComponents();
         setBackground(Color.white);
         setOpaque(true);
-
-        MainFrame.INSTANCE.actions.put("showGameDownloads", () -> {
-                                       MainFrame.INSTANCE.selectTab("game");
-                                       showGameDownloads();
-                                   });
 
         for (int i = 0; i < InstallerType.values().length; i++)
             installerPanels[i] = new InstallerPanel(this, InstallerType.values()[i]);
@@ -1010,10 +1012,10 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         int idx = cboJava.getSelectedIndex();
         if (idx != -1) {
             Java j = Java.JAVA.get(idx);
+            txtJavaDir.setText(j.getHome() == null ? Settings.getLastProfile().getSelectedVersionSetting().getSettingsJavaDir() : j.getJava());
+            txtJavaDir.setEnabled(idx == 1);
             if (!isLoading)
                 Settings.getLastProfile().getSelectedVersionSetting().setJava(j);
-            txtJavaDir.setEnabled(idx == 1);
-            txtJavaDir.setText(j.getHome() == null ? Settings.getLastProfile().getSelectedVersionSetting().getSettingsJavaDir() : j.getJava());
         }
     }//GEN-LAST:event_cboJavaItemStateChanged
 
@@ -1177,7 +1179,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         txtPermSize.setText(profile.getPermSize());
         txtJavaArgs.setText(profile.getJavaArgs());
         txtMinecraftArgs.setText(profile.getMinecraftArgs());
-        txtJavaDir.setText(profile.getSettingsJavaDir());
         txtPrecalledCommand.setText(profile.getPrecalledCommand());
         txtServerIP.setText(profile.getServerIp());
         chkDebug.setSelected(profile.isDebug());
@@ -1292,13 +1293,15 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }
 
     @Override
-    public void onCreated() {
-        super.onCreated();
+    public void onCreate() {
+        initGui();
+
+        super.onCreate();
         Settings.onProfileLoading();
     }
 
-    public void onLeaving() {
-        super.onLeaving();
+    public void onLeave() {
+        super.onLeave();
         save();
     }
 
@@ -1376,7 +1379,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private javax.swing.JTextField txtWidth;
     // End of variables declaration//GEN-END:variables
 
-    private final javax.swing.JPanel pnlGameDownloads;
+    private javax.swing.JPanel pnlGameDownloads;
 // </editor-fold>
 
     //<editor-fold defaultstate="collapesd" desc="Profiles & Versions Loading">
@@ -1410,7 +1413,12 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
     public void versionChanged(String version) {
         isLoading = true;
-        ((DefaultComboBoxModel) cboVersions.getModel()).setSelectedItem(version);
+        DefaultComboBoxModel model = (DefaultComboBoxModel) cboVersions.getModel();
+        for (int i = 0; i < model.getSize(); ++i)
+            if (model.getElementAt(i).equals(version)) {
+                model.setSelectedItem(version);
+                break;
+            }
         cboVersions.setToolTipText(version);
 
         this.mcVersion = version;
@@ -1426,8 +1434,13 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         t.service().version().onRefreshedVersions.register(onRefreshedVersions);
         t.selectedVersionChangedEvent.register(selectedVersionChangedEvent);
 
-        ((DefaultComboBoxModel) cboProfiles.getModel()).setSelectedItem(t.getName());
         txtGameDir.setText(t.getGameDir());
+        DefaultComboBoxModel model = (DefaultComboBoxModel) cboProfiles.getModel();
+        for (int i = 0; i < model.getSize(); ++i)
+            if (model.getElementAt(i).equals(t.getName())) {
+                model.setSelectedItem(t.getName());
+                break;
+            }
     };
     //</editor-fold>
 }

@@ -27,6 +27,11 @@ launch.not_finished_decompressing_natives=未能解压游戏本地库，还要�
 launch.wrong_javadir=错误的Java路径，将自动重置为默认Java路径。
 launch.exited_abnormally=游戏非正常退出，请查看日志文件，或联系他人寻求帮助。
 
+launch.state.logging_in=登录中
+launch.state.generating_launching_codes=正在生成启动代码
+launch.state.downloading_libraries=正在下载必要文件
+launch.state.decompressing_natives=正在释放本地文件
+
 install.no_version=未找到要安装的对应MC版本
 install.no_version_if_intall=未找到要安装的对应MC版本，是否自动安装需要的MC版本？
 install.not_refreshed=未刷新列表

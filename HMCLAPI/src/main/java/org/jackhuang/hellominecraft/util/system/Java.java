@@ -92,8 +92,9 @@ public class Java {
      */
     public static List<Java> queryAllJDKInMac() {
         List<Java> ans = new ArrayList<>();
-        if (new File("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home").exists())
-            ans.add(new Java("JRE", "/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home"));
+        File jre = new File("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home");
+        if (jre.exists())
+            ans.add(new Java("JRE", jre.getPath()));
         File f = new File("/Library/Java/JavaVirtualMachines/");
         if (f.exists())
             for (File a : f.listFiles())
@@ -109,34 +110,26 @@ public class Java {
     public static List<Java> queryAllJavaHomeInWindowsByReg() {
         List<Java> ans = new ArrayList<>();
         try {
-            List<String> javas = queryRegSubFolders("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment");
-            for (String java : javas) {
-                int s = 0;
-                for (char c : java.toCharArray())
-                    if (c == '.')
-                        s++;
-                if (s <= 1)
-                    continue;
-                String javahome = queryRegValue(java, "JavaHome");
-                if (javahome != null)
-                    ans.add(new Java(java.substring("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\".length()), javahome));
-            }
-            javas = queryRegSubFolders("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit");
-            for (String java : javas) {
-                int s = 0;
-                for (char c : java.toCharArray())
-                    if (c == '.')
-                        s++;
-                if (s <= 1)
-                    continue;
-                String javahome = queryRegValue(java, "JavaHome");
-                if (javahome != null)
-                    ans.add(new Java(java.substring("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\".length()), javahome));
-            }
+            queryJava(ans, "HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment");
+            queryJava(ans, "HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit");
         } catch (IOException | InterruptedException ex) {
             HMCLog.err("Faield to query java", ex);
         }
         return ans;
+    }
+
+    private static void queryJava(List<Java> ans, String location) throws IOException, InterruptedException {
+        for (String java : queryRegSubFolders(location)) {
+            int s = 0;
+            for (char c : java.toCharArray())
+                if (c == '.')
+                    ++s;
+            if (s <= 1)
+                continue;
+            String javahome = queryRegValue(java, "JavaHome");
+            if (javahome != null)
+                ans.add(new Java(java.substring(location.length()), javahome));
+        }
     }
 
     private static List<String> queryRegSubFolders(String location) throws IOException, InterruptedException {

@@ -41,6 +41,9 @@ public class LauncherSettingsPanel extends AnimatedPanel {
      * Creates new form LancherSettingsPanel
      */
     public LauncherSettingsPanel() {
+    }
+
+    void initGui() {
         initComponents();
 
         DefaultComboBoxModel d = new DefaultComboBoxModel();
@@ -71,6 +74,12 @@ public class LauncherSettingsPanel extends AnimatedPanel {
 
         setBackground(Color.white);
         setOpaque(true);
+    }
+
+    @Override
+    public void onCreate() {
+        initGui();
+        super.onCreate();
     }
 
     /**

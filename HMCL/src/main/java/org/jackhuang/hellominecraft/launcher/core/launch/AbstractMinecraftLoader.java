@@ -81,7 +81,6 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
                 if (OS.os() == OS.WINDOWS)
                     res.add("-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump");
                 res.add("-XX:+UseConcMarkSweepGC");
-                res.add("-XX:+CMSIncrementalMode");
                 res.add("-XX:-UseAdaptiveSizePolicy");
                 res.add("-XX:-OmitStackTraceInFastThrow");
                 res.add("-Xincgc");

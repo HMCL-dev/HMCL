@@ -22,11 +22,13 @@ import java.util.List;
 import javax.swing.JOptionPane;
 import org.jackhuang.hellominecraft.launcher.util.LauncherVisibility;
 import org.jackhuang.hellominecraft.launcher.core.launch.GameLauncher;
+import org.jackhuang.hellominecraft.launcher.core.launch.LaunchingState;
 import org.jackhuang.hellominecraft.launcher.setting.Profile;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.Event;
 import org.jackhuang.hellominecraft.util.MessageBox;
+import org.jackhuang.hellominecraft.util.func.Consumer;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.system.JavaProcessMonitor;
 import org.jackhuang.hellominecraft.util.ui.LogWindow;
@@ -43,6 +45,7 @@ public class LaunchingUIDaemon {
     void runGame(Profile profile) {
         MainFrame.INSTANCE.showMessage(C.i18n("ui.message.launching"));
         profile.launcher().genLaunchCode(value -> {
+            value.launchingStateChangedEvent.register(LAUNCHING_STATE_CHANGED);
             value.successEvent.register(LAUNCH_FINISHER);
             value.successEvent.register(customizedSuccessEvent);
         }, MainFrame.INSTANCE::failed, Settings.getInstance().getAuthenticator().getPassword());
@@ -51,10 +54,30 @@ public class LaunchingUIDaemon {
     void makeLaunchScript(Profile profile) {
         MainFrame.INSTANCE.showMessage(C.i18n("ui.message.launching"));
         profile.launcher().genLaunchCode(value -> {
+            value.launchingStateChangedEvent.register(LAUNCHING_STATE_CHANGED);
             value.successEvent.register(LAUNCH_SCRIPT_FINISHER);
             value.successEvent.register(customizedSuccessEvent);
         }, MainFrame.INSTANCE::failed, Settings.getInstance().getAuthenticator().getPassword());
     }
+
+    private static final Consumer<LaunchingState> LAUNCHING_STATE_CHANGED = t -> {
+        String message = null;
+        switch (t) {
+        case LoggingIn:
+            message = "launch.state.logging_in";
+            break;
+        case GeneratingLaunchingCodes:
+            message = "launch.state.generating_launching_codes";
+            break;
+        case DownloadingLibraries:
+            message = "launch.state.downloading_libraries";
+            break;
+        case DecompressingNatives:
+            message = "launch.state.decompressing_natives";
+            break;
+        }
+        MainFrame.INSTANCE.showMessage(C.i18n(message));
+    };
 
     private static final Event<List<String>> LAUNCH_FINISHER = (sender, str) -> {
         final GameLauncher obj = (GameLauncher) sender;

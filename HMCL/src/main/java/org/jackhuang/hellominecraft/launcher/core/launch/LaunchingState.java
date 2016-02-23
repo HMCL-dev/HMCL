@@ -15,34 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.launcher.ui;
-
-import javax.swing.JTabbedPane;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+package org.jackhuang.hellominecraft.launcher.core.launch;
 
 /**
  *
  * @author huangyuhui
  */
-public class NewTabPane extends JTabbedPane implements ChangeListener {
-
-    public NewTabPane() {
-        super();
-        addChangeListener(this);
-    }
-
-    public boolean initializing;
-
-    @Override
-    public void stateChanged(ChangeEvent e) {
-        if (initializing)
-            return;
-        for (int i = 0; i < getComponentCount(); ++i)
-            if (getSelectedIndex() != i && getComponent(i) instanceof Selectable)
-                ((Selectable) getComponent(i)).onLeave();
-        if (getSelectedComponent() instanceof Selectable)
-            ((Selectable) getSelectedComponent()).onSelect();
-    }
-
+public enum LaunchingState {
+    LoggingIn,
+    GeneratingLaunchingCodes,
+    DownloadingLibraries,
+    DecompressingNatives
 }

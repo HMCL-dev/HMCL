@@ -56,6 +56,9 @@ public class MainPagePanel extends AnimatedPanel {
      * Creates new form MainPagePanel
      */
     public MainPagePanel() {
+    }
+
+    void initGui() {
         initComponents();
 
         pnlButtons = new javax.swing.JPanel();
@@ -411,14 +414,15 @@ public class MainPagePanel extends AnimatedPanel {
     // <editor-fold defaultstate="collapsed" desc="Private Variables">
     boolean preparingAuth = true;
     private boolean isLoading = false;
-    private final javax.swing.JPanel pnlButtons;
-    private final ConstomButton btnRun;
+    private javax.swing.JPanel pnlButtons;
+    private ConstomButton btnRun;
     private static final int DEFAULT_WIDTH = 800, DEFAULT_HEIGHT = 480;
     //</editor-fold>
 
     @Override
-    public void onCreated() {
-        super.onCreated();
+    public void onCreate() {
+        initGui();
+        super.onCreate();
         Settings.onProfileLoading();
     }
 
@@ -485,12 +489,13 @@ public class MainPagePanel extends AnimatedPanel {
         cboVersions.removeAllItems();
         String selVersion = Settings.getLastProfile().getSelectedVersion();
         if (Settings.getLastProfile().service().version().getVersions().isEmpty()) {
-            if (!showedNoVersion)
+            if (!showedNoVersion) {
+                showedNoVersion = true;
                 SwingUtilities.invokeLater(() -> {
                     if (MessageBox.Show(C.i18n("mainwindow.no_version"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                         MainFrame.INSTANCE.invokeAction("showGameDownloads");
-                    showedNoVersion = true;
                 });
+            }
         } else {
             for (MinecraftVersion mcVersion : Settings.getLastProfile().service().version().getVersions()) {
                 if (mcVersion.hidden)
@@ -508,7 +513,12 @@ public class MainPagePanel extends AnimatedPanel {
 
     void versionChanged(String selectedVersion) {
         isLoading = true;
-        ((DefaultComboBoxModel) cboVersions.getModel()).setSelectedItem(selectedVersion);
+        DefaultComboBoxModel model = (DefaultComboBoxModel) cboVersions.getModel();
+        for (int i = 0; i < model.getSize(); ++i)
+            if (model.getElementAt(i).equals(selectedVersion)) {
+                model.setSelectedItem(selectedVersion);
+                break;
+            }
         cboVersions.setToolTipText(selectedVersion);
         isLoading = false;
     }
@@ -518,6 +528,11 @@ public class MainPagePanel extends AnimatedPanel {
         t.selectedVersionChangedEvent.register(versionChanged);
         t.launcher().launchingStateChanged.register(launchingStateChanged);
 
-        ((DefaultComboBoxModel) cboProfiles.getModel()).setSelectedItem(t.getName());
+        DefaultComboBoxModel model = (DefaultComboBoxModel) cboProfiles.getModel();
+        for (int i = 0; i < model.getSize(); ++i)
+            if (model.getElementAt(i).equals(t.getName())) {
+                model.setSelectedItem(t.getName());
+                break;
+            }
     };
 }

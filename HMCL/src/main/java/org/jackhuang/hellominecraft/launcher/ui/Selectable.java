@@ -23,11 +23,13 @@ package org.jackhuang.hellominecraft.launcher.ui;
  */
 public interface Selectable {
 
-    void onCreated();
+    void onCreate();
 
-    void onSelected();
+    boolean isCreated();
+
+    void onSelect();
 
     boolean isSelected();
 
-    void onLeaving();
+    void onLeave();
 }

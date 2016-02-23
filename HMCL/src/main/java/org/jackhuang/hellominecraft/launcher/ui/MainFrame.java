@@ -175,9 +175,9 @@ public final class MainFrame extends DraggableFrame {
 
         header.add(Box.createRigidArea(new Dimension(8, 0)));
 
-        initializeTab(MainPagePanel.class, "main");
-        initializeTab(GameSettingsPanel.class, "game");
-        initializeTab(LauncherSettingsPanel.class, "launcher");
+        initializeTab(new MainPagePanel(), "main");
+        initializeTab(new GameSettingsPanel(this), "game");
+        initializeTab(new LauncherSettingsPanel(), "launcher");
 
         header.add(Box.createHorizontalGlue());
 
@@ -231,7 +231,6 @@ public final class MainFrame extends DraggableFrame {
         this.infoSwap.setOpaque(false);
 
         tabWrapper = new JPanel[tabHeader.size()];
-        tabContent = new AnimatedPanel[tabHeader.size()];
         for (int i = 0; i < tabHeader.size(); i++) {
             tabWrapper[i] = new JPanel();
             tabWrapper[i].setLayout(new GridLayout());
@@ -251,7 +250,7 @@ public final class MainFrame extends DraggableFrame {
 
     private final ActionListener tabListener = e -> MainFrame.this.selectTab(e.getActionCommand());
 
-    private void initializeTab(Class<? extends AnimatedPanel> c, String cmd) {
+    private void initializeTab(AnimatedPanel inst, String cmd) {
         HeaderTab tab = new HeaderTab(C.i18n("launcher.title." + cmd));
         tab.setActionCommand(cmd);
         tab.setForeground(BasicColors.COLOR_WHITE_TEXT);
@@ -260,57 +259,51 @@ public final class MainFrame extends DraggableFrame {
         tab.addActionListener(tabListener);
         header.add(tab);
         tabHeader.add(tab);
-        tabClasses.add(c);
+        tabContent.add(inst);
     }
 
-    private List<HeaderTab> tabHeader = new ArrayList<>();
-    private List<Class<? extends AnimatedPanel>> tabClasses = new ArrayList<>();
+    private final List<HeaderTab> tabHeader = new ArrayList<>();
     private JPanel tabWrapper[];
-    private AnimatedPanel tabContent[];
+    private final List<AnimatedPanel> tabContent = new ArrayList<>();
 
     public void selectTab(String tabName) {
         int chosen = -1;
         AnimatedPanel onCreate = null, onSelect = null;
         for (int i = 0; i < tabHeader.size(); i++)
             if (tabName.equalsIgnoreCase(tabHeader.get(i).getActionCommand())) {
-                if (tabContent[i] == null) {
-                    try {
-                        tabContent[i] = tabClasses.get(i).newInstance();
-                        onCreate = tabContent[i];
-                    } catch (Exception mustnothappen) {
-                        throw new Error(mustnothappen);
-                    }
-                    tabWrapper[i].add(tabContent[i]);
-                } else if (tabContent[i].isSelected())
+                if (!tabContent.get(i).isCreated()) {
+                    onCreate = tabContent.get(i);
+                    tabWrapper[i].add(tabContent.get(i));
+                } else if (tabContent.get(i).isSelected())
                     continue;
                 chosen = i;
                 break;
             }
         if (chosen != -1) {
             for (int i = 0; i < tabHeader.size(); i++)
-                if (i != chosen && tabContent[i] != null && tabContent[i].isSelected())
-                    tabContent[i].onLeaving();
+                if (i != chosen && tabContent.get(i) != null && tabContent.get(i).isSelected())
+                    tabContent.get(i).onLeave();
             for (int i = 0; i < tabHeader.size(); i++)
                 if (i == chosen) {
                     for (int j = 0; j < tabHeader.size(); j++)
                         if (j != i)
                             tabHeader.get(j).setIsActive(false);
                     tabHeader.get(i).setIsActive(true);
-                    onSelect = tabContent[i];
+                    onSelect = tabContent.get(i);
                 }
 
             this.infoLayout.show(this.infoSwap, tabName);
             if (onCreate != null)
-                onCreate.onCreated();
+                onCreate.onCreate();
             if (onSelect != null)
-                onSelect.onSelected();
+                onSelect.onSelect();
         }
     }
 
     protected void closing() {
         for (int i = 0; i < tabHeader.size(); i++)
-            if (tabContent[i] != null && tabContent[i].isSelected())
-                tabContent[i].onLeaving();
+            if (tabContent.get(i) != null && tabContent.get(i).isSelected())
+                tabContent.get(i).onLeave();
     }
 
     protected void closeWindow() {
@@ -467,7 +460,7 @@ public final class MainFrame extends DraggableFrame {
 
     LaunchingUIDaemon daemon = new LaunchingUIDaemon();
 
-    HashMap<String, Runnable> actions = new HashMap<>();
+    final HashMap<String, Runnable> actions = new HashMap<>();
 
     void invokeAction(String name) {
         if (actions.containsKey(name))

@@ -27,6 +27,11 @@ launch.not_finished_decompressing_natives=Did not finish decompressing native li
 launch.wrong_javadir=Wrong Java Dir, will reset to default Java dir.
 launch.exited_abnormally=Game exited abnormally, please visit the log, or ask someone for help.
 
+launch.state.logging_in=Logging In
+launch.state.generating_launching_codes=Generating Launching Codes
+launch.state.downloading_libraries=Downloading dependencies
+launch.state.decompressing_natives=Decompressing natives
+
 install.no_version=The version is not found.
 install.no_version_if_intall=The needed version is not found, should install the version automatically?
 install.not_refreshed=The installer list is not refreshed.
