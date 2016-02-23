@@ -26,7 +26,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
-import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.plaf.synth.SynthConstants;
 import javax.swing.plaf.synth.SynthContext;
 import javax.swing.plaf.synth.SynthPainter;
@@ -76,15 +76,20 @@ public class ButtonPainter extends SynthPainter {
     };
 
     private static boolean processCustomButton(final ConstomButton c, int add) {
-        if (System.currentTimeMillis() > c.lastDrawTime) {
-            c.lastDrawTime = System.currentTimeMillis();
-            c.drawPercent += add;
-            if (c.drawPercent > 100 && add > 0)
-                c.drawPercent = 100;
-            else if (c.drawPercent < 0 && add < 0)
-                c.drawPercent = 0;
-            else
-                SwingUtilities.invokeLater(c::updateUI);
+        if (c.drawPercent == 0 || c.drawPercent == 100) {
+            Timer t = new Timer(1, null);
+            t.addActionListener(x -> {
+                c.drawPercent += add;
+                if (c.drawPercent > 100 && add > 0) {
+                    c.drawPercent = 100;
+                    t.stop();
+                } else if (c.drawPercent < 0 && add < 0) {
+                    c.drawPercent = 0;
+                    t.stop();
+                } else
+                    c.updateUI();
+            });
+            t.start();
         }
         return true;
     }

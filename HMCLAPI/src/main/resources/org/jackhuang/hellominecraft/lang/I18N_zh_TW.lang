@@ -27,8 +27,8 @@ launch.not_finished_decompressing_natives=未能解壓遊戲本地庫，還要�
 launch.wrong_javadir=錯誤的Java路徑，將自動重置為默認Java路徑。
 launch.exited_abnormally=遊戲非正常退出，請查看日誌資料，或聯繫他人尋求幫助。
 
-launch.state.logging in=登錄中
-launch.state.generating launching codes=正在生成啟動代碼
+launch.state.logging_in=登錄中
+launch.state.generating_launching_codes=正在生成啟動代碼
 launch.state.downloading_libraries=正在下載必要文件
 launch.state.decompressing_natives=正在釋放本地文件
 
