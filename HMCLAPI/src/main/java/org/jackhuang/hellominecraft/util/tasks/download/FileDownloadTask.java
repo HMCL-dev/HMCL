@@ -154,6 +154,8 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                 File tempFile = new File(filePath.getAbsolutePath() + ".hmd");
                 if (!tempFile.exists())
                     tempFile.createNewFile();
+                else if (!tempFile.renameTo(tempFile)) // check file lock
+                    throw new RuntimeException("The temp file is locked, maybe there is an application using the file?");
 
                 // Open file and seek to the end of it.
                 file = new RandomAccessFile(tempFile, "rw");

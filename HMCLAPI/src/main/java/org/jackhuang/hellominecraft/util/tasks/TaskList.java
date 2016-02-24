@@ -24,6 +24,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 
 /**
@@ -64,40 +66,36 @@ public class TaskList extends Thread {
         return totTask;
     }
 
-    private class InvokeThread extends Thread {
+    private class Invoker implements Runnable {
 
         Task task;
-        Set<InvokeThread> s;
+        Set<Invoker> s;
 
-        public InvokeThread(Task task, Set<InvokeThread> ss) {
+        public Invoker(Task task, Set<Invoker> ss) {
             this.task = task;
             s = ss;
-            setDaemon(true);
         }
 
         @Override
         public void run() {
             executeTask(task);
             s.remove(this);
-            THREAD_POOL.remove(this);
         }
 
     }
 
-    static final Set<InvokeThread> THREAD_POOL = Collections.synchronizedSet(new HashSet<InvokeThread>());
-    static final Set<Task> TASK_POOL = Collections.synchronizedSet(new HashSet<Task>());
+    static final ExecutorService EXECUTOR_SERVICE = Executors.newFixedThreadPool(64);
 
     private void processTasks(Collection<? extends Task> c) {
         if (c == null || c.isEmpty())
             return;
         this.totTask += c.size();
-        Set<InvokeThread> runningThread = Collections.synchronizedSet(new HashSet<InvokeThread>());
+        Set<Invoker> runningThread = Collections.synchronizedSet(new HashSet<Invoker>());
         for (Task t2 : c) {
             t2.setParallelExecuting(true);
-            InvokeThread thread = new InvokeThread(t2, runningThread);
-            THREAD_POOL.add(thread);
+            Invoker thread = new Invoker(t2, runningThread);
             runningThread.add(thread);
-            thread.start();
+            EXECUTOR_SERVICE.execute(thread);
         }
         while (!runningThread.isEmpty())
             try {
@@ -153,7 +151,6 @@ public class TaskList extends Thread {
     public void run() {
         Thread.currentThread().setName("TaskList");
 
-        THREAD_POOL.clear();
         totTask = taskQueue.size();
         while (!taskQueue.isEmpty())
             executeTask(taskQueue.remove(0));
@@ -168,13 +165,7 @@ public class TaskList extends Thread {
 
     public void abort() {
         shouldContinue = false;
-        while (!THREAD_POOL.isEmpty())
-            synchronized (THREAD_POOL) {
-                InvokeThread it = THREAD_POOL.iterator().next();
-                if (!it.task.abort())
-                    it.interrupt();
-                THREAD_POOL.remove(it);
-            }
+        EXECUTOR_SERVICE.shutdownNow();
         this.interrupt();
     }
 
