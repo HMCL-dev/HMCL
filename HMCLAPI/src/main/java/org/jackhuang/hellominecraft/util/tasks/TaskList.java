@@ -95,7 +95,8 @@ public class TaskList extends Thread {
             t2.setParallelExecuting(true);
             Invoker thread = new Invoker(t2, runningThread);
             runningThread.add(thread);
-            EXECUTOR_SERVICE.execute(thread);
+            if (!EXECUTOR_SERVICE.isTerminated())
+                EXECUTOR_SERVICE.execute(thread);
         }
         while (!runningThread.isEmpty())
             try {
