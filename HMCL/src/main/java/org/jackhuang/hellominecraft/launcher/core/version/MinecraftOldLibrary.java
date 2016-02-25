@@ -18,7 +18,6 @@
 package org.jackhuang.hellominecraft.launcher.core.version;
 
 import java.io.File;
-import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 
 /**
  *
@@ -52,7 +51,7 @@ public class MinecraftOldLibrary extends MinecraftLibrary {
 
     @Override
     public LibraryDownloadInfo getDownloadInfo() {
-        return null;
+        return new LibraryDownloadInfo();
     }
 
 }

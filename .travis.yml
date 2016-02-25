@@ -3,7 +3,6 @@ jdk:
     - oraclejdk8
 deploy:
     provider: releases
-    api_key:
-        secure: 1ab883a4d25412928662c5e7afe722585730eade
+    api_key: 1ab883a4d25412928662c5e7afe722585730eade
     file: build/libs/*
     skip_cleanup: true
