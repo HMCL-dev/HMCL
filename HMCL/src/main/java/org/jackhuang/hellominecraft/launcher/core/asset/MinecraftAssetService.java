@@ -20,15 +20,15 @@ package org.jackhuang.hellominecraft.launcher.core.asset;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftAssetService;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.AssetIndexDownloadInfo;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.MessageBox;
-import org.jackhuang.hellominecraft.util.code.DigestUtils;
 import org.jackhuang.hellominecraft.util.func.Function;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.tasks.Task;
@@ -36,6 +36,7 @@ import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
 
 /**
  *
@@ -49,18 +50,23 @@ public class MinecraftAssetService extends IMinecraftAssetService {
 
     @Override
     public Task downloadAssets(final String mcVersion) {
-        return new Task() {
+        return downloadAssets(service.version().getVersionById(mcVersion));
+    }
+
+    public Task downloadAssets(final MinecraftVersion mv) {
+        return new TaskInfo("Download Assets") {
+            Collection<Task> afters = new HashSet<>();
 
             @Override
             public void executeTask() throws Throwable {
                 IAssetsHandler type = IAssetsHandler.ASSETS_HANDLER;
-                type.getList(service.version().getVersionById(mcVersion), service.asset())
-                    .reg((t) -> TaskWindow.factory().append(type.getDownloadTask(service.getDownloadType().getProvider())).create()).execute();
+                type.getList(mv, service.asset()).justDo();
+                afters.add(type.getDownloadTask(service.getDownloadType().getProvider()));
             }
 
             @Override
-            public String getInfo() {
-                return "Download Assets";
+            public Collection<Task> getAfterTasks() {
+                return afters;
             }
         };
     }
@@ -75,10 +81,6 @@ public class MinecraftAssetService extends IMinecraftAssetService {
 
     @Override
     public boolean downloadMinecraftAssetsIndex(AssetIndexDownloadInfo assets) {
-        String aurl = service.getDownloadType().getProvider().getIndexesDownloadURL() + assets.getId() + ".json";
-        if (assets.url != null && service.getDownloadType().getProvider().isAllowedToUseSelfURL())
-            aurl = assets.url;
-
         File assetsLocation = getAssets();
         if (!assetsLocation.exists() && !assetsLocation.mkdirs())
             HMCLog.warn("Failed to make directories: " + assetsLocation);
@@ -90,7 +92,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
                 HMCLog.warn("Failed to rename " + assetsIndex + " to " + renamed);
         }
         if (TaskWindow.factory()
-            .append(new FileDownloadTask(aurl, IOUtils.tryGetCanonicalFile(assetsIndex), assets.sha1).setTag(assets.getId() + ".json"))
+            .append(new FileDownloadTask(assets.getUrl(service.getDownloadType()), IOUtils.tryGetCanonicalFile(assetsIndex), assets.sha1).setTag(assets.getId() + ".json"))
             .create()) {
             if (renamed != null && !renamed.delete())
                 HMCLog.warn("Failed to delete " + renamed + ", maybe you should do it.");
@@ -191,10 +193,8 @@ public class MinecraftAssetService extends IMinecraftAssetService {
 
     public final Function<MinecraftVersion, String> ASSET_PROVIDER_IMPL = t -> {
         if (!checkAssetsExistance(t.getAssetsIndex()))
-            if (MessageBox.Show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
-                IAssetsHandler.ASSETS_HANDLER.getList(t, MinecraftAssetService.this).run();
-                TaskWindow.factory().append(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(service.getDownloadType().getProvider())).create();
-            }
+            if (MessageBox.Show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+                TaskWindow.execute(downloadAssets(t));
         return reconstructAssets(t.getAssetsIndex()).getAbsolutePath();
     };
 }

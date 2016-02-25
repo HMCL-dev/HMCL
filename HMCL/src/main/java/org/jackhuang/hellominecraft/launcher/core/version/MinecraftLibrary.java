@@ -19,7 +19,7 @@ package org.jackhuang.hellominecraft.launcher.core.version;
 
 import java.io.File;
 import java.util.ArrayList;
-import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
+import java.util.HashMap;
 import org.jackhuang.hellominecraft.util.system.OS;
 import org.jackhuang.hellominecraft.util.system.Platform;
 import org.jackhuang.hellominecraft.util.StrUtils;
@@ -32,9 +32,9 @@ public class MinecraftLibrary extends IMinecraftLibrary {
 
     public ArrayList<Rules> rules;
     public String url;
-    public transient String formatted = null;
     public Natives natives;
     public Extract extract;
+    public LibrariesDownloadInfo downloads;
 
     public MinecraftLibrary(String name) {
         super(name);
@@ -87,31 +87,42 @@ public class MinecraftLibrary extends IMinecraftLibrary {
         return natives != null && allow();
     }
 
-    @Override
-    public void init() {
+    public String formatName() {
         String[] s = name.split(":");
         StringBuilder sb = new StringBuilder(s[0].replace('.', '/')).append('/').append(s[1]).append('/').append(s[2]).append('/').append(s[1]).append('-').append(s[2]);
         if (natives != null)
             sb.append('-').append(getNative());
-        formatted = sb.append(".jar").toString();
+        return sb.append(".jar").toString();
     }
 
     @Override
     public File getFilePath(File gameDir) {
-        return new File(gameDir, "libraries/" + formatted);
-    }
-
-    @Override
-    public String getDownloadURL(String urlBase, DownloadType downloadType) {
-        if (StrUtils.isNotBlank(url) && downloadType.getProvider().isAllowedToUseSelfURL())
-            urlBase = this.url;
-        if (urlBase.endsWith(".jar"))
-            return urlBase;
-        return urlBase + formatted.replace('\\', '/');
+        return new File(gameDir, "libraries/" + getDownloadInfo().path);
     }
 
     @Override
     public Extract getDecompressExtractRules() {
         return extract == null ? new Extract() : extract;
+    }
+
+    public LibraryDownloadInfo getDownloadInfo() {
+        if (downloads == null)
+            downloads = new LibrariesDownloadInfo();
+        LibraryDownloadInfo info;
+        if (natives != null) {
+            if (downloads.classifiers == null)
+                downloads.classifiers = new HashMap<>();
+            if (!downloads.classifiers.containsKey(getNative()))
+                downloads.classifiers.put(getNative(), info = new LibraryDownloadInfo());
+            else
+                info = downloads.classifiers.get(getNative());
+        } else if (downloads.artifact == null)
+            downloads.artifact = info = new LibraryDownloadInfo();
+        else
+            info = downloads.artifact;
+        if (StrUtils.isBlank(info.path))
+            info.path = formatName();
+        info.forgeURL = this.url;
+        return info;
     }
 }

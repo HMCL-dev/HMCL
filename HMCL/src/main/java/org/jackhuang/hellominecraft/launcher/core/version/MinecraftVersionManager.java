@@ -68,7 +68,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     }
 
     @Override
-    public void refreshVersions() {
+    public synchronized void refreshVersions() {
         onRefreshingVersions.execute(service);
 
         try {
@@ -138,9 +138,6 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                         FileUtils.writeQuietly(jsonFile, C.GSON.toJson(mcVersion));
                     }
 
-                    if (mcVersion.libraries != null)
-                        for (MinecraftLibrary ml : mcVersion.libraries)
-                            ml.init();
                     versions.put(id, mcVersion);
                     onLoadedVersion.execute(id);
                 } catch (Exception e) {
@@ -199,12 +196,14 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public boolean install(String id, Consumer<MinecraftVersion> callback) {
-        MinecraftVersion v = service.download().downloadMinecraft(id);
-        if (v == null)
+        if (!TaskWindow.factory().append(service.download().downloadMinecraft(id)).create())
             return false;
         if (callback != null) {
-            callback.accept(v);
             File mvt = new File(versionRoot(id), id + ".json");
+            MinecraftVersion v = C.GSON.fromJson(FileUtils.readFileToStringQuietly(mvt), MinecraftVersion.class);
+            if (v == null)
+                return false;
+            callback.accept(v);
             FileUtils.writeQuietly(mvt, C.GSON.toJson(v));
         }
         refreshVersions();
@@ -222,13 +221,11 @@ public class MinecraftVersionManager extends IMinecraftProvider {
             throw new GameException("Wrong format: minecraft.json");
         ArrayList<File> unzippings = new ArrayList<>();
         ArrayList<Extract> extractRules = new ArrayList<>();
-        for (IMinecraftLibrary l : v.libraries) {
-            l.init();
+        for (IMinecraftLibrary l : v.libraries)
             if (l.isRequiredToUnzip() && v.isAllowedToUnpackNatives()) {
                 unzippings.add(IOUtils.tryGetCanonicalFile(l.getFilePath(service.baseDirectory())));
                 extractRules.add(l.getDecompressExtractRules());
             }
-        }
         return new DecompressLibraryJob(unzippings.toArray(new File[unzippings.size()]), extractRules.toArray(new Extract[extractRules.size()]), getDecompressNativesToLocation(v));
     }
 
@@ -289,10 +286,5 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public void initializeMiencraft() {
 
-    }
-
-    public void downloadModpack(String url) throws IOException {
-        File tmp = File.createTempFile("hmcl", ".zip");
-        TaskWindow.factory().append(new FileDownloadTask(IOUtils.parseURL(url), tmp)).append(new DecompressTask(tmp, service.baseDirectory())).create();
     }
 }

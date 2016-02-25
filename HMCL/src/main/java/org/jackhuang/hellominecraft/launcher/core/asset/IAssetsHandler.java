@@ -34,6 +34,7 @@ import org.jackhuang.hellominecraft.util.code.DigestUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.NetUtils;
 import org.jackhuang.hellominecraft.util.OverridableSwingWorker;
+import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
 
 /**
  * Assets
@@ -86,12 +87,13 @@ public abstract class IAssetsHandler {
 
     public abstract boolean isVersionAllowed(String formattedVersion);
 
-    protected class AssetsTask extends Task {
+    protected class AssetsTask extends TaskInfo {
 
         ArrayList<Task> al;
         String u;
 
         public AssetsTask(String url) {
+            super(C.i18n("assets.download"));
             this.u = url;
         }
 
@@ -117,8 +119,8 @@ public abstract class IAssetsHandler {
                         String sha = DigestUtils.sha1Hex(NetUtils.getBytesFromStream(fis));
                         IOUtils.closeQuietly(fis);
                         if (contents.get(i).geteTag().equals(sha)) {
-                            hasDownloaded++;
-                            HMCLog.log("File " + assetsLocalNames.get(i) + " has been downloaded successfully, skipped download.");
+                            ++hasDownloaded;
+                            HMCLog.log("File " + assetsLocalNames.get(i) + " has been downloaded successfully, skipped downloading.");
                             if (ppl != null)
                                 ppl.setProgress(this, hasDownloaded, max);
                             continue;
@@ -136,11 +138,6 @@ public abstract class IAssetsHandler {
         @Override
         public Collection<Task> getAfterTasks() {
             return al;
-        }
-
-        @Override
-        public String getInfo() {
-            return C.i18n("assets.download");
         }
     }
 }

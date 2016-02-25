@@ -1,5 +1,5 @@
 /*
- * Hello Minecraft!.
+ * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,13 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.util.version;
+package org.jackhuang.hellominecraft.launcher.core.version;
+
+import java.util.Map;
 
 /**
  *
  * @author huangyuhui
  */
-public class MinecraftRemoteVersion {
+public class LibrariesDownloadInfo {
 
-    public String id, time, releaseTime, type;
+    Map<String, LibraryDownloadInfo> classifiers;
+    LibraryDownloadInfo artifact;
 }

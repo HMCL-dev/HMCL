@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.core.download;
 
 import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
 
 /**
  *
@@ -55,6 +56,7 @@ public enum DownloadType {
     public static void setSuggestedDownloadType(DownloadType suggestedDownloadType) {
         if (suggestedDownloadType == null)
             throw new IllegalArgumentException("download type should not be null.");
+        TaskWindow.downloadSource = suggestedDownloadType.getName();
         DownloadType.suggestedDownloadType = suggestedDownloadType;
     }
 

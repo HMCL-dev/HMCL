@@ -16,7 +16,7 @@
 launch.failed=啟動失敗
 launch.failed_creating_process=啟動失敗，在創建新進程時發生錯誤，可能是Java路徑錯誤。
 launch.failed_sh_permission=為啟動資料添加權限時發生錯誤
-launch.failed_pa​​cking_jar=在打包jar時發生錯誤
+launch.failed_packing_jar=在打包jar時發生錯誤
 launch.unsupported_launcher_version=對不起，本啟動器現在可能不能啟動這個版本的Minecraft，但啟動器還是會嘗試啟動，請盡快將此問題報告給作者。
 launch.too_big_memory_alloc_64bit=您设置的内存大小过大，由于可能超过了32位Java的内存分配限制，所以可能无法启动游戏，请将内存调至1024MB或更小，启动器仍会尝试启动。
 launch.too_big_memory_alloc_free_space_too_low=您设置的内存大小过大，由于超过了系统内存大小%dMB，所以可能影响游戏体验或无法启动游戏，启动器仍会尝试启动。
@@ -290,7 +290,7 @@ mainwindow.enter_script_name=輸入要生成腳本的資料名
 mainwindow.make_launch_succeed=啟動腳本已生成完畢:
 mainwindow.no_version=未找到任何版本，是否進入遊戲下載？
 
-launcher.about=<html>默認背景圖來自Liberty Dome伺服器。 <br/>關於作者：<br/>百度ID：huanghongxun20<br/>mcbbs：huanghongxun<br/>郵箱：huanghongxun2008@126.com<br/>Minecraft Forum ID: klkl6523<br />歡迎提交Bug哦<br/>Copyright (c) 2013-2016 huangyuhui.<br/>免責聲明：Minecraft軟體版權歸Mojang AB所有，遊戲由於誤操作本啟動器而丟失數據的概不負責。 <br/>本啟動器在GPLv3協議下開源:http://github.com/huanghongxun/HMCL/ ,感谢issues和pull requests贡献者<br/>本軟體使用了基於Apache License 2.0的Gson項目，感謝貢獻者。</html>
+launcher.about=<html>默認背景圖感謝gamerteam提供。 <br/>關於作者：<br/>百度ID：huanghongxun20<br/>mcbbs：huanghongxun<br/>郵箱：huanghongxun2008@126.com<br/>Minecraft Forum ID: klkl6523<br />歡迎提交Bug哦<br/>Copyright (c) 2013-2016 huangyuhui.<br/>免責聲明：Minecraft軟體版權歸Mojang AB所有，遊戲由於誤操作本啟動器而丟失數據的概不負責。 <br/>本啟動器在GPLv3協議下開源:http://github.com/huanghongxun/HMCL/ ,感谢issues和pull requests贡献者<br/>本軟體使用了基於Apache License 2.0的Gson項目，感謝貢獻者。</html>
 launcher.download_source=下載源
 launcher.background_location=背景地址
 launcher.exit_failed=強制退出失敗，可能是Forge 1.7.10及更高版本導致的，無法解決。

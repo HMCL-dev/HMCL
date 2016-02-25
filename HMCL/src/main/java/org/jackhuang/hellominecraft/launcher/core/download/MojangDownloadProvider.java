@@ -59,7 +59,7 @@ public class MojangDownloadProvider extends IDownloadProvider {
 
     @Override
     public String getVersionsListDownloadURL() {
-        return "http://s3.amazonaws.com/Minecraft.Download/versions/versions.json";
+        return "https://launchermeta.mojang.com/mc/game/version_manifest.json";
     }
 
     @Override

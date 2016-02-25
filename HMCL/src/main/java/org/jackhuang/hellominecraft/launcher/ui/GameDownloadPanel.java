@@ -18,10 +18,13 @@
 package org.jackhuang.hellominecraft.launcher.ui;
 
 import javax.swing.table.DefaultTableModel;
+import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
+import org.jackhuang.hellominecraft.launcher.core.download.MinecraftRemoteVersions;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 
 /**
@@ -105,7 +108,7 @@ public class GameDownloadPanel extends AnimatedPanel {
 
     public void refreshDownloads() {
         DefaultTableModel model = SwingUtils.clearDefaultTable(lstDownloads);
-        Settings.getLastProfile().service().download().getRemoteVersions()
+        MinecraftRemoteVersions.refreshRomoteVersions(Settings.getLastProfile().service().getDownloadType())
             .reg((ver) -> model.addRow(new Object[] { ver.id, ver.time,
                                                       StrUtils.equalsOne(ver.type, "old_beta", "old_alpha", "release", "snapshot") ? C.i18n("versions." + ver.type) : ver.type }))
             .regDone(lstDownloads::requestFocus).execute();
@@ -117,7 +120,7 @@ public class GameDownloadPanel extends AnimatedPanel {
             return;
         }
         String id = (String) lstDownloads.getModel().getValueAt(lstDownloads.getSelectedRow(), 0);
-        Settings.getLastProfile().service().download().downloadMinecraft(id);
+        TaskWindow.execute(Settings.getLastProfile().service().download().downloadMinecraft(id));
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

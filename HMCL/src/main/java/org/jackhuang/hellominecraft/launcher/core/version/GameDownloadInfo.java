@@ -17,14 +17,48 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.version;
 
+import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
+
 /**
  *
  * @author huangyuhui
  */
 public class GameDownloadInfo implements Cloneable {
 
-    public String sha1, url;
+    public String sha1;
     public int size;
+    protected String url;
+
+    /**
+     * Ready for AssetIndexDownloadInfo, and GameDownloadInfo also need this.
+     */
+    public String id = null;
+
+    /**
+     * Get the game download url.
+     *
+     * @param dt where to download?
+     *
+     * @return the download url
+     */
+    public String getUrl(DownloadType dt) {
+        return getUrl(dt, dt.getProvider().isAllowedToUseSelfURL());
+    }
+
+    /**
+     * Get the game download url.
+     *
+     * @param dt        where to download?
+     * @param allowSelf allow this game to be downloaded from its modified url?
+     *
+     * @return the download url
+     */
+    public String getUrl(DownloadType dt, boolean allowSelf) {
+        if (url != null && allowSelf)
+            return url;
+        else
+            return dt.getProvider().getVersionsDownloadURL() + id + "/" + id + ".jar";
+    }
 
     @Override
     public Object clone() {

@@ -24,7 +24,7 @@ import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.OverridableSwingWorker;
 import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.version.MinecraftRemoteVersion;
+import org.jackhuang.hellominecraft.launcher.core.download.MinecraftRemoteVersion;
 
 /**
  *
@@ -36,7 +36,7 @@ public abstract class IMinecraftDownloadService extends IMinecraftBasicService {
         super(service);
     }
 
-    public abstract MinecraftVersion downloadMinecraft(String id);
+    public abstract Task downloadMinecraft(String id);
 
     public abstract boolean downloadMinecraftJar(String id);
 
@@ -50,7 +50,5 @@ public abstract class IMinecraftDownloadService extends IMinecraftBasicService {
      * @return the library collection
      */
     public abstract List<DownloadLibraryJob> getDownloadLibraries(MinecraftVersion mv) throws GameException;
-
-    public abstract OverridableSwingWorker<MinecraftRemoteVersion> getRemoteVersions();
 
 }

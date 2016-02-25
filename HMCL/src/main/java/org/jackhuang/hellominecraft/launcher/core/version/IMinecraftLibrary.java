@@ -18,7 +18,6 @@
 package org.jackhuang.hellominecraft.launcher.core.version;
 
 import java.io.File;
-import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 
 /**
  *
@@ -36,13 +35,11 @@ public abstract class IMinecraftLibrary implements Cloneable {
 
     public abstract Extract getDecompressExtractRules();
 
-    public abstract void init();
+    public abstract LibraryDownloadInfo getDownloadInfo();
 
     public abstract boolean allow();
 
     public abstract File getFilePath(File gameDir);
-
-    public abstract String getDownloadURL(String urlBase, DownloadType downloadType);
 
     @Override
     public boolean equals(Object obj) {

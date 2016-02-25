@@ -1,5 +1,5 @@
 /*
- * Hello Minecraft! Launcher.
+ * Hello Minecraft!.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,27 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.launcher.core.version;
+package org.jackhuang.hellominecraft.svrmgr.util.version;
 
-import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
-import org.jackhuang.hellominecraft.util.StrUtils;
+import java.util.ArrayList;
 
 /**
  *
  * @author huangyuhui
  */
-public class LibraryDownloadInfo extends GameDownloadInfo {
+public class MinecraftRemoteVersions {
 
-    public String path;
-    public String forgeURL;
+    public ArrayList<MinecraftRemoteVersion> versions;
+    public MinecraftRemoteLatestVersion latest;
 
-    @Override
-    public String getUrl(DownloadType dt, boolean allowSelf) {
-        String myURL = (forgeURL == null ? dt.getProvider().getLibraryDownloadURL() : forgeURL) + "/";
-        if (StrUtils.isNotBlank(url) && allowSelf)
-            myURL = url;
-        if (!myURL.endsWith(".jar"))
-            myURL += path.replace('\\', '/');
-        return myURL;
-    }
 }

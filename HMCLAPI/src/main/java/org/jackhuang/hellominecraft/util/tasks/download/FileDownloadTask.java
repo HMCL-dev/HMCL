@@ -128,6 +128,8 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                     }
                 }
             }
+            if (!shouldContinue)
+                break;
             try {
 
                 // Open connection to URL.
@@ -195,8 +197,6 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                         lastTime = now;
                     }
                 }
-                if (downloaded != contentLength)
-                    throw new IllegalStateException("Unexptected file size: " + downloaded + ", expected: " + contentLength);
                 closeFiles();
                 if (aborted)
                     tempFile.delete();
@@ -205,6 +205,10 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                         filePath.delete();
                     tempFile.renameTo(filePath);
                 }
+                if (!shouldContinue)
+                    break;
+                if (downloaded != contentLength)
+                    throw new IllegalStateException("Unexptected file size: " + downloaded + ", expected: " + contentLength);
                 String hashCode = String.format("%1$040x", new Object[] { new BigInteger(1, digest.digest()) });
                 if (expectedHash != null && !expectedHash.equals(hashCode))
                     throw new IllegalStateException("Unexpected hash code: " + hashCode + ", expected: " + expectedHash);

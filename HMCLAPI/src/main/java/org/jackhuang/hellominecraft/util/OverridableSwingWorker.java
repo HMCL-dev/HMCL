@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.swing.SwingWorker;
 import org.jackhuang.hellominecraft.util.func.Consumer;
@@ -62,6 +63,18 @@ public abstract class OverridableSwingWorker<T> extends SwingWorker<Void, T> {
         for (T t : chunks)
             for (Consumer<T> c : processListeners)
                 c.accept(t);
+    }
+
+    final List<T> lastChunks = new ArrayList<>();
+
+    protected void send(T... t) {
+        lastChunks.addAll(Arrays.asList(t));
+        publish(t);
+    }
+
+    public List<T> justDo() throws Exception {
+        work();
+        return lastChunks;
     }
 
 }

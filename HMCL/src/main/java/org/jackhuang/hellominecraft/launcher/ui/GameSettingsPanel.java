@@ -56,7 +56,7 @@ import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.launcher.setting.VersionSetting;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.OverridableSwingWorker;
-import org.jackhuang.hellominecraft.util.version.MinecraftVersionRequest;
+import org.jackhuang.hellominecraft.util.MinecraftVersionRequest;
 import org.jackhuang.hellominecraft.util.system.OS;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.func.Consumer;

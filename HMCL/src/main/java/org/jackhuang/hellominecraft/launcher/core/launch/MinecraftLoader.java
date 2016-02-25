@@ -44,11 +44,9 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
     @Override
     protected void makeSelf(List<String> res) throws GameException {
         StringBuilder library = new StringBuilder(options.isCanceledWrapper() ? "" : "-cp=");
-        for (MinecraftLibrary l : version.libraries) {
-            l.init();
+        for (MinecraftLibrary l : version.libraries)
             if (l.allow() && !l.isRequiredToUnzip())
                 library.append(l.getFilePath(gameDir).getAbsolutePath()).append(File.pathSeparator);
-        }
         File f = version.getJar(service.baseDirectory());
         if (!f.exists())
             throw new GameException("Minecraft jar does not exists");

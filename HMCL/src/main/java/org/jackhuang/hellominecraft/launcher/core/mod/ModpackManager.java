@@ -45,7 +45,7 @@ import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.ZipEngine;
 import org.jackhuang.hellominecraft.util.tasks.Task;
 import org.jackhuang.hellominecraft.util.ui.WebPage;
-import org.jackhuang.hellominecraft.util.version.MinecraftVersionRequest;
+import org.jackhuang.hellominecraft.util.MinecraftVersionRequest;
 
 /**
  * A mod pack(*.zip) includes these things:

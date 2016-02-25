@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.util.version;
+package org.jackhuang.hellominecraft.util;
 
 import java.io.File;
 import java.io.IOException;
@@ -142,7 +142,7 @@ public class MinecraftVersionRequest implements Serializable {
             int k = i;
             if (tmp[i + 1] >= (int) 'a' && tmp[i + 1] <= (int) 'z')
                 i++;
-            while (tmp[k] >= 48 && tmp[k] <= 57 || tmp[k] == (int) '.' || tmp[k] == (int) 'w')
+            while (tmp[k] >= 48 && tmp[k] <= 57 || tmp[k] == (int) '-' || tmp[k] == (int) '.' || tmp[k] >= 97 && tmp[k] <= (int) 'z')
                 k--;
             k++;
             r.version = new String(tmp, k, i - k + 1);

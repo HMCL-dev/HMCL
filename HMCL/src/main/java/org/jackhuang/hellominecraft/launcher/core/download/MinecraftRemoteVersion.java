@@ -15,17 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.util.version;
-
-import java.util.ArrayList;
+package org.jackhuang.hellominecraft.launcher.core.download;
 
 /**
  *
  * @author huangyuhui
  */
-public class MinecraftRemoteVersions {
+public class MinecraftRemoteVersion {
 
-    public ArrayList<MinecraftRemoteVersion> versions;
-    public MinecraftRemoteLatestVersion latest;
+    public String id, time, releaseTime, type;
+    private String url;
 
+    public String getUrl(DownloadType type) {
+        if (url == null)
+            return type.getProvider().getVersionsDownloadURL() + id + "/" + id + ".json";
+        return url;
+    }
 }

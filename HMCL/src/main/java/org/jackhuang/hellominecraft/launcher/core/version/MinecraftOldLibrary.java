@@ -36,10 +36,6 @@ public class MinecraftOldLibrary extends MinecraftLibrary {
     }
 
     @Override
-    public void init() {
-    }
-
-    @Override
     public boolean allow() {
         return true;
     }
@@ -55,7 +51,7 @@ public class MinecraftOldLibrary extends MinecraftLibrary {
     }
 
     @Override
-    public String getDownloadURL(String urlBase, DownloadType downloadType) {
+    public LibraryDownloadInfo getDownloadInfo() {
         return null;
     }
 

@@ -76,8 +76,7 @@ public class ForgeInstaller extends Task {
             entry = zipFile.getEntry(profile.install.getFilePath());
             InputStream is = zipFile.getInputStream(entry);
             MinecraftLibrary forge = new MinecraftLibrary(profile.install.getPath());
-            forge.init();
-            File file = new File(gameDir, "libraries/" + forge.formatted);
+            File file = new File(gameDir, "libraries/" + forge.getDownloadInfo().path);
             if (file.getParentFile().mkdirs())
                 HMCLog.warn("Failed to make library directory " + file.getParent());
             try (FileOutputStream fos = new FileOutputStream(file); BufferedOutputStream bos = new BufferedOutputStream(fos)) {

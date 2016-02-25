@@ -43,7 +43,7 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
     public int minimumLauncherVersion;
     public boolean hidden;
     public AssetIndexDownloadInfo assetIndex;
-    public Map<String, GameDownloadInfo> downloads;
+    private Map<String, GameDownloadInfo> downloads;
 
     public ArrayList<MinecraftLibrary> libraries;
 
@@ -155,5 +155,16 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
         if (assetIndex == null)
             assetIndex = new AssetIndexDownloadInfo((String) Utils.firstNonNull(assets, AssetsIndex.DEFAULT_ASSET_NAME));
         return assetIndex;
+    }
+
+    public GameDownloadInfo getClientDownloadInfo() {
+        if (downloads == null)
+            downloads = new HashMap<>();
+        if (!downloads.containsKey("client"))
+            downloads.put("client", new GameDownloadInfo());
+        GameDownloadInfo i = downloads.get("client");
+        if (i.id == null)
+            i.id = id;
+        return i;
     }
 }

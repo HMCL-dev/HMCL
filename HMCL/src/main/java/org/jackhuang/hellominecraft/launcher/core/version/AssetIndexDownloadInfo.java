@@ -17,13 +17,14 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.version;
 
+import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
+
 /**
  *
  * @author huangyuhui
  */
 public class AssetIndexDownloadInfo extends GameDownloadInfo {
 
-    String id;
     int totalSize;
 
     public AssetIndexDownloadInfo() {
@@ -32,6 +33,14 @@ public class AssetIndexDownloadInfo extends GameDownloadInfo {
     public AssetIndexDownloadInfo(String id) {
         this.id = id;
         url = null;
+    }
+
+    @Override
+    public String getUrl(DownloadType dt, boolean allowSelf) {
+        if (url != null && dt.getProvider().isAllowedToUseSelfURL())
+            return url;
+        else
+            return dt.getProvider().getIndexesDownloadURL() + id + ".json";
     }
 
     public String getId() {

@@ -4,6 +4,6 @@ jdk:
 deploy:
     provider: releases
     api_key:
-        secure: 3409b87fc0bb8bb1ee9b5c7636dedd076aa75260
+        secure: 1ab883a4d25412928662c5e7afe722585730eade
     file: build/libs/*
     skip_cleanup: true

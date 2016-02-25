@@ -34,9 +34,11 @@ import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 public class TaskWindow extends javax.swing.JDialog
     implements ProgressProviderListener, Runnable, DoingDoneListener<Task> {
 
-    private static final TaskWindow INSTANCE = new TaskWindow();
+    private static volatile TaskWindow INSTANCE = null;
 
-    private static TaskWindow instance() {
+    private static synchronized TaskWindow instance() {
+        if (INSTANCE == null)
+            INSTANCE = new TaskWindow();
         INSTANCE.clean();
         return INSTANCE;
     }
@@ -82,6 +84,8 @@ public class TaskWindow extends javax.swing.JDialog
         taskList.addAllDoneListener(this);
     }
 
+    public static String downloadSource = "";
+
     public boolean start() {
         if (isVisible() || taskList == null || taskList.isAlive())
             return false;
@@ -101,7 +105,7 @@ public class TaskWindow extends javax.swing.JDialog
             MessageBox.Show(C.i18n("taskwindow.no_more_instance"));
             return false;
         }
-        setTitle(C.i18n("taskwindow.title") + ": " + C.i18n("download.source"));
+        setTitle(C.i18n("taskwindow.title") + " - " + C.i18n("download.source") + ": " + downloadSource);
         this.setVisible(true);
         return this.areTasksFinished();
     }
@@ -296,6 +300,13 @@ public class TaskWindow extends javax.swing.JDialog
         });
     }
 
+    public static boolean execute(Task... ts) {
+        TaskWindowFactory f = factory();
+        for (Task t : ts)
+            f.append(t);
+        return f.create();
+    }
+
     public static class TaskWindowFactory {
 
         LinkedList<Task> ll = new LinkedList<>();
@@ -309,10 +320,10 @@ public class TaskWindow extends javax.swing.JDialog
         public boolean create() {
             String stacktrace = StrUtils.getStackTrace(new Throwable());
             return SwingUtils.invokeAndWait(() -> {
-                synchronized (INSTANCE) {
-                    if (INSTANCE.isVisible())
+                final TaskWindow tw = instance();
+                synchronized (tw) {
+                    if (tw.isVisible())
                         return false;
-                    TaskWindow tw = instance();
                     for (Task t : ll)
                         tw.addTask(t);
                     tw.lastStackTrace = tw.stackTrace;

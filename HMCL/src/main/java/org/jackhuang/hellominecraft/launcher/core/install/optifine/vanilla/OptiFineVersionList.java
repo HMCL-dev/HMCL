@@ -66,7 +66,7 @@ public class OptiFineVersionList extends InstallerVersionList {
         versionMap = new HashMap<>();
         versions = new ArrayList<>();
 
-        content = content.replace("&nbsp;", " ").replace("&gt;", ">").replace("&lt;", "<");
+        content = content.replace("&nbsp;", " ").replace("&gt;", ">").replace("&lt;", "<").replace("<br>", "<br />");
 
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
