@@ -2,6 +2,8 @@
 Hello Minecraft! Launcher is a Minecraft launcher.
 License is GPL v3, see http://www.gnu.org/licenses/gpl.html
 
+!(TRAVIS CI)[https://travis-ci.org/huanghongxun/HMCL.svg?branch=master]
+
 ### Joining
 If you really want to join the development, here's some requests.
 * The Development Environment is Netbeans 8.0.2 with Gradle Support plugin.
