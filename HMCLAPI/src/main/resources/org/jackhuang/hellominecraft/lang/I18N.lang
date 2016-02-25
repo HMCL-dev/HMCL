@@ -180,6 +180,7 @@ download.rapid_data=RapidData (锐网云计算, https://www.rapiddata.org/)
 download.not_200=下载失败，回复码
 download.failed=下载失败
 download.successfully=下载完成
+download.source=下载源
 
 message.error=错误
 message.cannot_open_explorer=无法打开文件管理器: 

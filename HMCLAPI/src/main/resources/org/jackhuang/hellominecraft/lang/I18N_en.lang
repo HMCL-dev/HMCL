@@ -180,6 +180,7 @@ download.rapid_data=RapidData (https://www.rapiddata.org/)
 download.not_200=Failed to download, the response code
 download.failed=Failed to download
 download.successfully=Download Successfully
+download.source=Download Source
 
 message.error=Error
 message.cannot_open_explorer=Cannot open explorer: 

@@ -101,6 +101,7 @@ public class TaskWindow extends javax.swing.JDialog
             MessageBox.Show(C.i18n("taskwindow.no_more_instance"));
             return false;
         }
+        setTitle(C.i18n("taskwindow.title") + ": " + C.i18n("download.source"));
         this.setVisible(true);
         return this.areTasksFinished();
     }

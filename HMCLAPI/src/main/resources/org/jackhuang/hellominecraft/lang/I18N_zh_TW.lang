@@ -180,6 +180,7 @@ download.rapid_data=RapidData (銳網雲計算, https://www.rapiddata.org/)
 download.not_200=下載失敗，回复码
 download.failed=下載失敗
 download.successfully=下載完成
+download.source=下載源
 
 message.error=錯誤
 message.cannot_open_explorer=無法打開資料管理器:
