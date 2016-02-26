@@ -278,7 +278,7 @@ advancedsettings.launcher_visibility.hide=遊戲啟動後隱藏啟動器
 advancedsettings.launcher_visibility.keep=保持啟動器可見
 advancedsettings.game_dir.default=默認(.minecraft/)
 advancedsettings.game_dir.independent=各版本獨立(.minecraft/versions/<版本名>/,除assets,libraries)
-advancedsettings.no_jvm_args=不添加JVM參數(使用Java9時必勾)
+advancedsettings.no_jvm_args=不添加默認的JVM參數(使用Java9時必勾)
 advancedsettings.java_args_default=啟動器默認添加的參數（請不要重複添加）：-XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy -XX:MaxPermSize=???m -Xmx???m -Dfml. ignoreInvalidMinecraftCertificates=true -Dfml.ignorePatchDiscrepancies=true
 advancedsettings.wrapper_launcher=前置啟動指令(不必填寫，內容將加在啟動腳本最前，如optirun...)
 advancedsettings.server_ip=直入伺服器ip地址(不必填寫，啟動遊戲後直接進入對應伺服器)

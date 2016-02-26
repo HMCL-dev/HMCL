@@ -126,7 +126,7 @@ public class IOUtils {
 
     public static boolean isAbsolutePath(String path) {
         if (path == null)
-            return false;
+            return true;
         return path.startsWith("/") || path.indexOf(":") > 0;
     }
 

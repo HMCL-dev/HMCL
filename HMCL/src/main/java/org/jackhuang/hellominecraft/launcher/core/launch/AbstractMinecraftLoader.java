@@ -80,7 +80,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
             if (jv == null || !jv.isEarlyAccess()) {
                 if (OS.os() == OS.WINDOWS)
                     res.add("-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump");
-                if (jv != null && jv.getParsedVersion() > JdkVersion.JAVA_17)
+                if (jv != null && jv.getParsedVersion() >= JdkVersion.JAVA_17)
                     res.add("-XX:+UseG1GC");
                 else
                     res.add("-XX:+UseConcMarkSweepGC");

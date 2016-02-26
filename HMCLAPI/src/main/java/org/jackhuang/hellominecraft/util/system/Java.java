@@ -44,6 +44,13 @@ public class Java {
         JAVA = Collections.unmodifiableList(temp);
     }
 
+    public static Java suggestedJava() {
+        for (Java j : JAVA)
+            if (j.name.startsWith("1.8") || j.name.startsWith("9"))
+                return j;
+        return JAVA.get(0);
+    }
+
     String name, home;
 
     public Java(String name, String home) {

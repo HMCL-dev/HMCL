@@ -117,7 +117,7 @@ public class VersionSetting {
             java = "Custom";
         int idx = Java.JAVA.indexOf(new Java(java, null));
         if (idx == -1) {
-            java = "Default";
+            java = Java.suggestedJava().getName();
             idx = 0;
         }
         return idx;
