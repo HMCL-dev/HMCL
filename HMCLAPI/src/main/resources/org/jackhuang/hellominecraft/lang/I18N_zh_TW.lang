@@ -167,6 +167,7 @@ ui.message.enter_password=請在左邊輸入您的密碼
 ui.message.launching=啟動中
 ui.message.making=生成中
 ui.message.sure_remove=真的要删除配置%s吗？
+ui.message.update_java=请更新您的Java
 
 ui.label.settings=選項
 ui.label.crashing=<html>Hello Minecraft! Launcher遇到了無法處理的錯誤，請複制下列內容並通過mcbbs、貼吧或Minecraft Forum反饋bug。 </html>

@@ -167,6 +167,7 @@ ui.message.enter_password=Please enter your password.
 ui.message.launching=Launching...
 ui.message.making=Generating...
 ui.message.sure_remove=Sure to remove profile %s?
+ui.message.update_java=Please upgrade your Java.
 
 ui.label.settings=Settings
 ui.label.crashing=<html>Hello Minecraft! Launcher has crashed!</html>

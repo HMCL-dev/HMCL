@@ -58,6 +58,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             put("java.lang.IncompatibleClassChangeError", "crash.NoClassDefFound");
             put("java.lang.ClassFormatError", "crash.NoClassDefFound");
             put("java.lang.OutOfMemoryError", "FUCKING MEMORY LIMIT!");
+            put("Trampoline", "ui.message.update_java");
         }
     };
 

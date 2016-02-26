@@ -35,7 +35,10 @@ public class LibraryDownloadInfo extends GameDownloadInfo {
         if (StrUtils.isNotBlank(url) && allowSelf)
             myURL = url;
         if (!myURL.endsWith(".jar"))
-            myURL += path.replace('\\', '/');
+            if (path == null)
+                return null;
+            else
+                myURL += path.replace('\\', '/');
         return myURL;
     }
 }

@@ -73,8 +73,9 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
             this.libraries = new ArrayList<>();
         else {
             this.libraries = new ArrayList<>(libraries.size());
-            for (IMinecraftLibrary library : libraries)
-                this.libraries.add((MinecraftLibrary) library.clone());
+            for (MinecraftLibrary library : libraries)
+                if (library != null)
+                    this.libraries.add((MinecraftLibrary) library.clone());
         }
         if (downloads == null)
             this.downloads = null;
