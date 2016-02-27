@@ -1,15 +1,24 @@
 language: java
 jdk:
 - oraclejdk8
+branches:
+  only:
+    - master
+before_deploy:
+  - git config --global user.email ${GITHUB_EMAIL}
+  - git config --global user.name ${GITHUB_NAME}
+  - git tag ${VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}
+  - git push --tags
 deploy:
   provider: releases
   api_key:
     secure: lfFEwKtij/s9Ao/SKL7oVdsWcfASshZuwT27gllMrTx1ZQqLCG2I5mGJOp5ukx7lb3y4Tu316nFasLjy9NI3eLXSx9f0w4q+wMf0K5Yj9iOwu/TIn7JkLyHDMQ20qRwGxZplS2WUb669gIRg+l6jUHeTBW+dlTxr0mMa6WHIl8UDpHwfFrGC3i6dL4y6WlDwGl2rYktvOoA/iqvtglBcHuXaL2sDfhp5MXRcYULTIw+b9zmiQXP665DQN+Su5I3gwB4y5X8RH72GAacZn13fEIo5i8UUoHM7UQxM8y8DKSO3avyFCfpUle9+9sErQVW7b6JV1c+AoLWuAhNJLMlUTKarZE7UMqfjvoQHxX5hp2B2WHLEON/UJiGf25HJWx6VhJitE0/odujqnG/umesqki2jMTs6gPcxbc9iBjzUg+ZmFztdtC+Emnni7lpqVVl+Y5hsJRn3Z6rIiNgwmaE0r2OQgAm1vRYFc7jvOdRfyFG+uCRZF6nS56BzJ7dLc0WW8dTgSft6YFll4ZYL6hiI9qiIaBAK948y5HV+6VBWuO3xf/G2CUFbE1Y9qUCjToh3ahxNDzZvXB+rXqvlvNQOi5l8n594oQ61n45qIHSKlMBn9Bxhw29oWT5mo1aYIaNXbpzKam2w4mK0T3VrgTszu/3282wRbNr+VAwdGMfwW1s=
   file:
-  - HMCL/build/libs/HMCL-2.4.0.233.jar
-  - HMCL/build/libs/HMCL-2.4.0.233.exe
+  - HMCL/build/libs/HMCL-${VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}.jar
+  - HMCL/build/libs/HMCL-${VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}.exe
   on:
     repo: huanghongxun/HMCL
+    tags: false
   skip_cleanup: true
 install: echo "skip 'gradle assemble' step"
 script: gradle build --continue

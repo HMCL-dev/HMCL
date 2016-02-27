@@ -26,10 +26,18 @@ if (!hasProperty('mainClass')) {
     ext.mainClass = 'org.jackhuang.hellominecraft.launcher.Main'
 }
 
-def buildnumber = System.getenv("BUILD_NUMBER") == null ? ".233" : "."+System.getenv("BUILD_NUMBER")
+def buildnumber = System.getenv("TRAVIS_BUILD_NUMBER")
+if (buildnumber == null)
+    buildnumber = System.getenv("BUILD_NUMBER")
+if (buildnumber == null)
+    buildnumber = "233"
+    
+def versionroot = System.getenv("VERSION_ROOT")
+if (versionroot == null)
+    versionroot = "2.4.0"
 
 String mavenGroupId = 'HMCL'
-String mavenVersion = '2.4.0' + buildnumber
+String mavenVersion = versionroot + '.' + buildnumber
 String bundleName = "Hello Minecraft! Launcher"
 
 group = mavenGroupId
