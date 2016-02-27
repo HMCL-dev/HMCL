@@ -221,29 +221,34 @@ settings.test_game=Test game
 
 modpack=Mod pack
 modpack.choose=Choose a modpack zip file which you want to import. If you want to update the modpack, please enter the version you want to update.
-modpack.install.task=Import the modpack
-modpack.install_error=Failed to install the modpack, maybe the modpack file is incorrect or failed to manage files.
-modpack.install.will_install=Will install the modpack:
-modpack.save=Choose a location which you want to export the game files to.
-modpack.save.task=Export the modpack
 modpack.export_error=Failed to export the modpack, maybe the format of your game directory is incorrect or failed to manage files.
 modpack.export_finished=Exporting the modpack finished. See
 modpack.included_launcher=The modpack has already included the launcher, you can publish it directly.
 modpack.not_included_launcher=Use the modpack by "import modpack".
 modpack.enter_name=Give this game a name which is your favorite.
+
+modpack.task.save=Export the modpack
+modpack.task.install=Import the modpack
+modpack.task.install.error=Failed to install the modpack, maybe the modpack file is incorrect or failed to manage files.
+modpack.task.install.will=Will install the modpack:
+
 modpack.wizard=Exporting the modpack wizard
 modpack.wizard.step.1=Basic options
 modpack.wizard.step.1.title=Set the basic options to the modpack.
+modpack.wizard.step.initialization.include_launcher=Include the launcher
+modpack.wizard.step.initialization.exported_version=The exported game version
+modpack.wizard.step.initialization.save=Choose a location which you want to export the game files to
+modpack.wizard.step.initialization.warning=<html>Before making modpack, you should ensure that your game can launch successfully,<br/>and that your Minecraft is release, not snapshot.<br/>and that it is not allowed to add mods which is not allowed to distribute to the modpack.</html>
 modpack.wizard.step.2=Files selection
 modpack.wizard.step.2.title=Choose the files you do not want to put in the modpack.
 modpack.wizard.step.3=Description
 modpack.wizard.step.3.title=Describe your modpack.
+
 modpack.desc=Describe your modpack, including precautions, changlog, supporting Markdown(also supporting online pictures).
 modpack.incorrect_format.no_json=The format of the modpack is incorrect, pack.json is missing.
 modpack.incorrect_format.no_jar=The format of the modpack is incorrect, pack.json does not have attribute 'jar'
 modpack.cannot_read_version=Failed to gather the game version
 modpack.not_a_valid_location=Not a valid modpack location
-modpack.warning=<html>Before making modpack, you should ensure that your game can launch successfully,<br/>and that your Minecraft is release, not snapshot.<br/>and that it is not allowed to add mods which is not allowed to distribute to the modpack.</html>
 modpack.name=Modpack Name
 modpack.not_a_valid_name=Not a valid modpack name
 

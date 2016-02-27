@@ -86,7 +86,7 @@ public final class ModpackManager {
             @Override
             public void executeTask() throws Throwable {
                 String id = idFUCK;
-                String description = C.i18n("modpack.install.will_install");
+                String description = C.i18n("modpack.task.install.will");
 
                 // Read modpack name and description from `modpack.json`
                 try (ZipFile zip = new ZipFile(input)) {
@@ -106,7 +106,7 @@ public final class ModpackManager {
 
                 // Show a window to let the user know that what and how the modpack is.
                 Object msgs[] = new Object[2];
-                msgs[0] = C.i18n("modpack.install.task");
+                msgs[0] = C.i18n("modpack.task.install");
                 msgs[1] = new WebPage(description);
                 ((WebPage) msgs[1]).setPreferredSize(new Dimension(800, 350));
                 int result = JOptionPane.showOptionDialog(null, msgs, (String) msgs[0], JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
@@ -191,7 +191,7 @@ public final class ModpackManager {
 
             @Override
             public String getInfo() {
-                return C.i18n("modpack.install.task");
+                return C.i18n("modpack.task.install");
             }
 
             @Override

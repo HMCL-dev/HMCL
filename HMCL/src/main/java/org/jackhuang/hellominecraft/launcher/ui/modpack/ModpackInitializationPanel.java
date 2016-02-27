@@ -82,7 +82,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
         txtModpackName = new javax.swing.JTextField();
         chkIncludeLauncher = new javax.swing.JCheckBox();
 
-        lblModpackLocation.setText(C.i18n("modpack.save")); // NOI18N
+        lblModpackLocation.setText(C.i18n("modpack.wizard.step.initialization.save")); // NOI18N
 
         txtModpackLocation.addCaretListener(new javax.swing.event.CaretListener() {
             public void caretUpdate(javax.swing.event.CaretEvent evt) {
@@ -97,7 +97,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
             }
         });
 
-        lblGameVersion.setText("要导出的游戏版本");
+        lblGameVersion.setText(C.i18n("modpack.wizard.step.initialization.exported_version")); // NOI18N
 
         cboGameVersion.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -105,7 +105,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
             }
         });
 
-        jLabel1.setText(C.i18n("modpack.warning")); // NOI18N
+        jLabel1.setText(C.i18n("modpack.wizard.step.initialization.warning")); // NOI18N
 
         jLabel2.setText(C.i18n("modpack.name")); // NOI18N
 
@@ -116,7 +116,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
             }
         });
 
-        chkIncludeLauncher.setText("包含启动器");
+        chkIncludeLauncher.setText(C.i18n("modpack.wizard.step.initialization.include_launcher")); // NOI18N
         chkIncludeLauncher.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 chkIncludeLauncherItemStateChanged(evt);
@@ -140,7 +140,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblGameVersion)
-                            .addComponent(jLabel1)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel2)
                             .addComponent(chkIncludeLauncher))
                         .addGap(0, 0, Short.MAX_VALUE)))
@@ -150,8 +150,8 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 61, Short.MAX_VALUE)
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 19, Short.MAX_VALUE)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtModpackName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -174,7 +174,7 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
     private void cboModpackLocationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cboModpackLocationActionPerformed
         JFileChooser fc = new JFileChooser();
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setDialogTitle(C.i18n("modpack.save"));
+        fc.setDialogTitle(C.i18n("modpack.wizard.step.initialization.save"));
         fc.setMultiSelectionEnabled(false);
         fc.setFileFilter(new FileNameExtensionFilter(C.i18n("modpack") + "(*.zip)", "zip"));
         fc.showSaveDialog(this);

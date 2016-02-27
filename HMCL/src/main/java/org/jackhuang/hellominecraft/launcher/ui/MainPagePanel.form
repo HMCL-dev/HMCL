@@ -258,7 +258,7 @@
         <Component class="javax.swing.JButton" name="btnImportModpack">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="modpack.install.task" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+              <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="modpack.task.install" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>
@@ -268,7 +268,7 @@
         <Component class="javax.swing.JButton" name="btnExportModpack">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="modpack.save.task" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+              <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="modpack.task.save" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>

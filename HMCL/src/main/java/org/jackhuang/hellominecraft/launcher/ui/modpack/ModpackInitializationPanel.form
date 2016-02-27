@@ -46,7 +46,7 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="61" max="32767" attributes="0"/>
+              <EmptySpace pref="19" max="32767" attributes="0"/>
               <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="txtModpackName" min="-2" max="-2" attributes="0"/>
@@ -72,7 +72,7 @@
     <Component class="javax.swing.JLabel" name="lblModpackLocation">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="modpack.save" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+          <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="modpack.wizard.step.initialization.save" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
@@ -91,7 +91,9 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lblGameVersion">
       <Properties>
-        <Property name="text" type="java.lang.String" value="&#x8981;&#x5bfc;&#x51fa;&#x7684;&#x6e38;&#x620f;&#x7248;&#x672c;"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="modpack.wizard.step.initialization.exported_version" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+        </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JComboBox" name="cboGameVersion">
@@ -110,7 +112,7 @@
     <Component class="javax.swing.JLabel" name="jLabel1">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="modpack.warning" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+          <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="modpack.wizard.step.initialization.warning" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
@@ -131,7 +133,9 @@
     </Component>
     <Component class="javax.swing.JCheckBox" name="chkIncludeLauncher">
       <Properties>
-        <Property name="text" type="java.lang.String" value="&#x5305;&#x542b;&#x542f;&#x52a8;&#x5668;"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="modpack.wizard.step.initialization.include_launcher" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+        </Property>
       </Properties>
       <Events>
         <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="chkIncludeLauncherItemStateChanged"/>

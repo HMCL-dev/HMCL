@@ -233,14 +233,14 @@ public class MainPagePanel extends AnimatedPanel {
 
         pnlPassword.add(jPanel3, "card3");
 
-        btnImportModpack.setText(C.i18n("modpack.install.task")); // NOI18N
+        btnImportModpack.setText(C.i18n("modpack.task.install")); // NOI18N
         btnImportModpack.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnImportModpackActionPerformed(evt);
             }
         });
 
-        btnExportModpack.setText(C.i18n("modpack.save.task")); // NOI18N
+        btnExportModpack.setText(C.i18n("modpack.task.save")); // NOI18N
         btnExportModpack.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnExportModpackActionPerformed(evt);
