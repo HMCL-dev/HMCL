@@ -122,6 +122,8 @@ public final class Main implements Runnable {
             if (IUpgrader.NOW_UPGRADER.parseArguments(getVersionNumber(), args))
                 return;
 
+            System.setProperty("awt.useSystemAAFontSettings", "on");
+            System.setProperty("swing.aatext", "true");
             System.setProperty("sun.java2d.noddraw", "true");
             System.setProperty("sun.java2d.dpiaware", "false");
             Thread.setDefaultUncaughtExceptionHandler(new CrashReporter(true));

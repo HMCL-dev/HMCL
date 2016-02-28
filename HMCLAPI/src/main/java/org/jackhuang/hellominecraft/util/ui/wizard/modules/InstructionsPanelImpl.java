@@ -27,6 +27,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.IllegalComponentStateException;
 import java.awt.Insets;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Locale;
@@ -159,6 +160,8 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
 
     public final void paintComponent(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
         Font f = getFont() != null ? getFont() : UIManager.getFont("controlFont");
         FontMetrics fm = g.getFontMetrics(f);
         Insets ins = getInsets();
@@ -185,7 +188,6 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
         int h = fm.getMaxAscent() + fm.getMaxDescent() + 3;
 
         Font boldFont = f.deriveFont(Font.BOLD);
-
         g.setFont(boldFont);
         g.drawString(C.i18n("wizard.steps"), x, y);
 
