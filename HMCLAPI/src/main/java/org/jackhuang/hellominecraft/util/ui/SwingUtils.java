@@ -21,6 +21,7 @@ import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.FontMetrics;
 import java.awt.Frame;
+import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -279,13 +280,13 @@ public class SwingUtils {
         component.setEnabled(t);
     }
 
-    public static void exitIfNoWindow(Frame thisFrame) {
+    public static void exitIfNoWindow(Window thisFrame) {
         exitIfNoWindow(thisFrame, false);
     }
 
-    public static void exitIfNoWindow(Frame thisFrame, boolean neededDispose) {
+    public static void exitIfNoWindow(Window thisFrame, boolean neededDispose) {
         boolean flag = false;
-        for (Frame f : Frame.getFrames()) {
+        for (Window f : Window.getWindows()) {
             if (f == thisFrame)
                 continue;
             if (f.isVisible())

@@ -17,13 +17,9 @@
  */
 package org.jackhuang.hellominecraft.util.ui;
 
-import java.awt.Frame;
-import java.awt.HeadlessException;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.util.List;
-import javax.swing.JFrame;
+import javax.swing.JDialog;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.logging.Level;
 
@@ -31,14 +27,15 @@ import org.jackhuang.hellominecraft.util.logging.Level;
  *
  * @author huangyuhui
  */
-public class WebFrame extends JFrame {
+public class WebFrame extends JDialog {
 
     public WebFrame(String... strs) {
         this(("<html>" + StrUtils.parseParams(t -> ("<font color='#" + GraphicsUtils.getColor(Level.guessLevel((String) t, Level.INFO).COLOR) + "'>"), strs, t -> "</font><br />") + "</html>")
             .replace(" ", "&nbsp;").replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;"));
     }
 
-    public WebFrame(String content) throws HeadlessException {
+    public WebFrame(String content) {
+        super((JDialog) null, false);
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {

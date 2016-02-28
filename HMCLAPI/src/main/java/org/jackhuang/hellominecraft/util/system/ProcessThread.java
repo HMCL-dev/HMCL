@@ -66,6 +66,14 @@ public class ProcessThread extends Thread {
                         line = "";
                     } else
                         line += (char) ch;
+            while ((ch = br.read()) != -1)
+                if (ch == '\n') {
+                    printlnEvent.execute(line);
+                    System.out.println("Minecraft: " + line);
+                    p.getStdOutLines().add(line);
+                    line = "";
+                } else
+                    line += (char) ch;
             stopEvent.execute(p);
         } catch (Exception e) {
             HMCLog.err("An error occured when reading process stdout/stderr.", e);

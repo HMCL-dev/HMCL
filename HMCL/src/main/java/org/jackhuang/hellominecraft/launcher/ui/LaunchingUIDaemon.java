@@ -97,6 +97,7 @@ public class LaunchingUIDaemon {
                 HMCLog.err("The game exited abnormally, exit code: " + t);
                 MessageBox.Show(C.i18n("launch.exited_abnormally") + " exit code: " + t);
                 WebFrame f = new WebFrame(jpm.getJavaProcess().getStdOutLines().toArray(new String[0]));
+                f.setModal(true);
                 f.setTitle("Game output");
                 f.setVisible(true);
                 checkExit((LauncherVisibility) obj.getTag());
@@ -105,6 +106,7 @@ public class LaunchingUIDaemon {
                 HMCLog.err("Cannot create jvm, exit code: " + t);
                 MessageBox.Show(C.i18n("launch.cannot_create_jvm") + " exit code: " + t);
                 WebFrame f = new WebFrame(jpm.getJavaProcess().getStdOutLines().toArray(new String[0]));
+                f.setModal(true);
                 f.setTitle("Game output");
                 f.setVisible(true);
                 checkExit((LauncherVisibility) obj.getTag());
