@@ -178,8 +178,7 @@ public class ModpackWizard extends WizardBranchController {
                     throw new IllegalArgumentException(id);
                 }
             }
-        }
-        );
+        });
     }
 
     @Override

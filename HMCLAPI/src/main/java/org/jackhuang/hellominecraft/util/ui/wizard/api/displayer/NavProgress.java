@@ -64,16 +64,18 @@ public class NavProgress implements ResultProgressHandle {
 
     public void setProgress(final int currentStep, final int totalSteps) {
         invoke(() -> {
-            if (totalSteps == -1)
-                progressBar.setIndeterminate(true);
-            else {
+            if (totalSteps == -1) {
+                if (!progressBar.isIndeterminate())
+                    progressBar.setIndeterminate(true);
+            } else {
                 if (currentStep > totalSteps || currentStep < 0) {
                     if (currentStep == -1 && totalSteps == -1)
                         return;
                     throw new IllegalArgumentException("Bad step values: "
                                                        + currentStep + " out of " + totalSteps);
                 }
-                progressBar.setIndeterminate(false);
+                if (progressBar.isIndeterminate())
+                    progressBar.setIndeterminate(false);
                 progressBar.setMaximum(totalSteps);
                 progressBar.setValue(currentStep);
             }
@@ -83,8 +85,8 @@ public class NavProgress implements ResultProgressHandle {
     public void setBusy(final String description) {
         invoke(() -> {
             lbl.setText(description == null ? " " : description);
-
-            progressBar.setIndeterminate(true);
+            if (!progressBar.isIndeterminate())
+                progressBar.setIndeterminate(true);
         });
     }
 

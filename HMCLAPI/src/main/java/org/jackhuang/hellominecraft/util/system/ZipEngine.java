@@ -100,6 +100,8 @@ public class ZipEngine {
                 zos.putNextEntry(new ZipEntry(pathName));
                 putDirectoryImpl(file, basePath, pathNameCallback);
             } else {
+                if (".DS_Store".equals(file.getName())) // For mac computers.
+                    continue;
                 pathName = file.getPath().substring(basePath.length() + 1);
                 if (pathNameCallback != null)
                     pathName = pathNameCallback.apply(pathName, false);

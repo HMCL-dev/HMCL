@@ -36,7 +36,7 @@ import javax.swing.JTextArea;
  * SimpleWizard created for it, acting as the WizardController for
  * calls to WizardPanelProvider.createPanel().
  */
-final class SimpleWizardInfo implements WizardControllerImplementation {
+public final class SimpleWizardInfo implements WizardControllerImplementation {
 
     private WeakReference wizard = null;
     private final String[] descriptions;
@@ -317,5 +317,9 @@ final class SimpleWizardInfo implements WizardControllerImplementation {
 
     boolean cancel(Map settings) {
         return provider.cancel(settings);
+    }
+
+    public WizardPanelProvider getProvider() {
+        return provider;
     }
 }
