@@ -45,6 +45,8 @@ public abstract class IMinecraftAssetService extends IMinecraftBasicService {
      */
     public abstract boolean refreshAssetsIndex(String a);
 
+    public abstract boolean downloadMinecraftAssetsIndexAsync(AssetIndexDownloadInfo assetsId);
+
     public abstract boolean downloadMinecraftAssetsIndex(AssetIndexDownloadInfo assetsId);
 
     public abstract File getAssetObject(String assetVersion, String name) throws IOException;

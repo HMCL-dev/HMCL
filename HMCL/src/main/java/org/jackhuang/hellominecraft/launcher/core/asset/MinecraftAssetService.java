@@ -76,11 +76,33 @@ public class MinecraftAssetService extends IMinecraftAssetService {
         MinecraftVersion mv = service.version().getVersionById(id);
         if (mv == null)
             return false;
-        return downloadMinecraftAssetsIndex(mv.getAssetsIndex());
+        return downloadMinecraftAssetsIndexAsync(mv.getAssetsIndex());
     }
 
     @Override
     public boolean downloadMinecraftAssetsIndex(AssetIndexDownloadInfo assets) {
+        File assetsLocation = getAssets();
+        if (!assetsLocation.exists() && !assetsLocation.mkdirs())
+            HMCLog.warn("Failed to make directories: " + assetsLocation);
+        File assetsIndex = new File(assetsLocation, "indexes/" + assets.getId() + ".json");
+        File renamed = null;
+        if (assetsIndex.exists()) {
+            renamed = new File(assetsLocation, "indexes/" + assets.getId() + "-renamed.json");
+            if (assetsIndex.renameTo(renamed))
+                HMCLog.warn("Failed to rename " + assetsIndex + " to " + renamed);
+        }
+        if (new FileDownloadTask(assets.getUrl(service.getDownloadType()), IOUtils.tryGetCanonicalFile(assetsIndex), assets.sha1).setTag(assets.getId() + ".json").run()) {
+            if (renamed != null && !renamed.delete())
+                HMCLog.warn("Failed to delete " + renamed + ", maybe you should do it.");
+            return true;
+        }
+        if (renamed != null && !renamed.renameTo(assetsIndex))
+            HMCLog.warn("Failed to rename " + renamed + " to " + assetsIndex);
+        return false;
+    }
+
+    @Override
+    public boolean downloadMinecraftAssetsIndexAsync(AssetIndexDownloadInfo assets) {
         File assetsLocation = getAssets();
         if (!assetsLocation.exists() && !assetsLocation.mkdirs())
             HMCLog.warn("Failed to make directories: " + assetsLocation);

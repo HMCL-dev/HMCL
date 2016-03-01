@@ -176,7 +176,7 @@ public class TaskList extends Thread {
         while (!in.isEmpty())
             synchronized (in) {
                 Invoker it = in.iterator().next();
-                if (!it.task.abort())
+                if (!it.task.abort() && futures.get(it) != null)
                     futures.get(it).cancel(true);
                 in.remove(it);
             }
