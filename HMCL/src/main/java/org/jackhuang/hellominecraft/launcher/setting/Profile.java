@@ -23,6 +23,7 @@ import java.io.File;
 import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.launcher.core.MCUtils;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
+import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.EventHandler;
@@ -87,8 +88,9 @@ public final class Profile {
     public String getSelectedVersion() {
         String v = selectedMinecraftVersion;
         if (StrUtils.isBlank(v) || service().version().getVersionById(v) == null || service().version().getVersionById(v).hidden) {
-            if (service().version().getVersionCount() > 0)
-                v = service().version().getOneVersion(t -> !t.hidden).id;
+            MinecraftVersion mv = service().version().getOneVersion(t -> !t.hidden);
+            if (mv != null)
+                v = mv.id;
             if (StrUtils.isNotBlank(v))
                 setSelectedMinecraftVersion(v);
         }
