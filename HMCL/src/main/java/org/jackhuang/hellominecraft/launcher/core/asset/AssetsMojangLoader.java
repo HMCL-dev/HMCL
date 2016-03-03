@@ -19,6 +19,8 @@ package org.jackhuang.hellominecraft.launcher.core.asset;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import org.jackhuang.hellominecraft.util.C;
@@ -30,8 +32,8 @@ import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.launcher.core.download.IDownloadProvider;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.util.OverridableSwingWorker;
 import org.jackhuang.hellominecraft.util.VersionNumber;
+import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
 
 /**
  *
@@ -44,19 +46,26 @@ public class AssetsMojangLoader extends IAssetsHandler {
     }
 
     @Override
-    public OverridableSwingWorker<String[]> getList(final MinecraftVersion mv, final IMinecraftAssetService mp) {
-        return new OverridableSwingWorker<String[]>() {
+    public Task getList(final MinecraftVersion mv, final IMinecraftAssetService mp) {
+        if (mv == null)
+            throw new IllegalArgumentException("AssetsMojangLoader: null argument: MinecraftVersion");
+        String assetsId = mv.getAssetsIndex().getId();
+        File assets = mp.getAssets();
+        HMCLog.log("Gathering asset index: " + assetsId);
+        File f = IOUtils.tryGetCanonicalFile(new File(assets, "indexes/" + assetsId + ".json"));
+        return new TaskInfo("Gather asset index") {
             @Override
-            protected void work() throws Exception {
-                if (mv == null)
-                    throw new IllegalArgumentException("AssetsMojangLoader: null argument: MinecraftVersion");
-                String assetsId = mv.getAssetsIndex().getId();
-                File assets = mp.getAssets();
-                HMCLog.log("Gathering asset index: " + assetsId);
-                File f = IOUtils.tryGetCanonicalFile(new File(assets, "indexes/" + assetsId + ".json"));
-                if (!f.exists() && !mp.downloadMinecraftAssetsIndex(mv.getAssetsIndex()))
-                    throw new IllegalStateException("Failed to get index json");
+            public Collection<Task> getDependTasks() {
+                if (!f.exists())
+                    return Arrays.asList(mp.downloadMinecraftAssetsIndex(mv.getAssetsIndex()));
+                else
+                    return null;
+            }
 
+            @Override
+            public void executeTask() throws Throwable {
+                if (!areDependTasksSucceeded)
+                    throw new IllegalStateException("Failed to get asset index");
                 String result = FileUtils.readFileToString(f);
                 if (StrUtils.isBlank(result))
                     throw new IllegalStateException("Index json is empty, please redownload it!");
@@ -66,6 +75,7 @@ public class AssetsMojangLoader extends IAssetsHandler {
                 ArrayList<String> al = new ArrayList<>();
                 contents = new ArrayList<>();
                 HashSet<String> loadedHashes = new HashSet<>();
+                int pgs = 0;
                 if (o != null && o.getFileMap() != null)
                     for (Map.Entry<String, AssetsObject> e : o.getFileMap().entrySet()) {
                         if (loadedHashes.contains(e.getValue().getHash()))
@@ -79,9 +89,9 @@ public class AssetsMojangLoader extends IAssetsHandler {
                         assetsDownloadURLs.add(c.key);
                         assetsLocalNames.add(new File(assets, "objects" + File.separator + c.key.replace("/", File.separator)));
                         al.add(e.getKey());
+                        if (ppl != null)
+                            ppl.setProgress(this, ++pgs, o.getFileMap().size());
                     }
-
-                publish(al.toArray(new String[1]));
             }
         };
     }

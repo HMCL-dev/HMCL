@@ -74,7 +74,7 @@ public abstract class IAssetsHandler {
      * @param mp Asset Service
      * @param x  finished event
      */
-    public abstract OverridableSwingWorker<String[]> getList(MinecraftVersion mv, IMinecraftAssetService mp);
+    public abstract Task getList(MinecraftVersion mv, IMinecraftAssetService mp);
 
     /**
      * Will be invoked when the user invoked "Download all assets".

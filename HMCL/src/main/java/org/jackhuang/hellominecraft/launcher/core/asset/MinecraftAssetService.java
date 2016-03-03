@@ -20,6 +20,7 @@ package org.jackhuang.hellominecraft.launcher.core.asset;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -58,15 +59,17 @@ public class MinecraftAssetService extends IMinecraftAssetService {
             Collection<Task> afters = new HashSet<>();
 
             @Override
-            public void executeTask() throws Throwable {
-                IAssetsHandler type = IAssetsHandler.ASSETS_HANDLER;
-                type.getList(mv, service.asset()).justDo();
-                afters.add(type.getDownloadTask(service.getDownloadType().getProvider()));
+            public Collection<Task> getDependTasks() {
+                return Arrays.asList(IAssetsHandler.ASSETS_HANDLER.getList(mv, service.asset()));
+            }
+
+            @Override
+            public void executeTask() {
             }
 
             @Override
             public Collection<Task> getAfterTasks() {
-                return afters;
+                return Arrays.asList(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(service.getDownloadType().getProvider()));
             }
         };
     }
@@ -80,7 +83,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
     }
 
     @Override
-    public boolean downloadMinecraftAssetsIndex(AssetIndexDownloadInfo assets) {
+    public Task downloadMinecraftAssetsIndex(AssetIndexDownloadInfo assets) {
         File assetsLocation = getAssets();
         if (!assetsLocation.exists() && !assetsLocation.mkdirs())
             HMCLog.warn("Failed to make directories: " + assetsLocation);
@@ -91,14 +94,22 @@ public class MinecraftAssetService extends IMinecraftAssetService {
             if (assetsIndex.renameTo(renamed))
                 HMCLog.warn("Failed to rename " + assetsIndex + " to " + renamed);
         }
-        if (new FileDownloadTask(assets.getUrl(service.getDownloadType()), IOUtils.tryGetCanonicalFile(assetsIndex), assets.sha1).setTag(assets.getId() + ".json").run()) {
-            if (renamed != null && !renamed.delete())
-                HMCLog.warn("Failed to delete " + renamed + ", maybe you should do it.");
-            return true;
-        }
-        if (renamed != null && !renamed.renameTo(assetsIndex))
-            HMCLog.warn("Failed to rename " + renamed + " to " + assetsIndex);
-        return false;
+        File renamedFinal = renamed;
+        return new TaskInfo("Download Asset Index") {
+            @Override
+            public Collection<Task> getDependTasks() {
+                return Arrays.asList(new FileDownloadTask(assets.getUrl(service.getDownloadType()), IOUtils.tryGetCanonicalFile(assetsIndex), assets.sha1).setTag(assets.getId() + ".json"));
+            }
+
+            @Override
+            public void executeTask() throws Throwable {
+                if (areDependTasksSucceeded) {
+                    if (renamedFinal != null && !renamedFinal.delete())
+                        HMCLog.warn("Failed to delete " + renamedFinal + ", maybe you should do it.");
+                } else if (renamedFinal != null && !renamedFinal.renameTo(assetsIndex))
+                    HMCLog.warn("Failed to rename " + renamedFinal + " to " + assetsIndex);
+            }
+        };
     }
 
     @Override

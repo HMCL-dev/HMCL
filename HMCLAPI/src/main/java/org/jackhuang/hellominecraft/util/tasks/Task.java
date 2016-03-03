@@ -95,6 +95,8 @@ public abstract class Task {
         return null;
     }
 
+    public boolean areDependTasksSucceeded;
+
     protected ProgressProviderListener ppl;
 
     public Task setProgressProviderListener(ProgressProviderListener p) {
@@ -110,9 +112,21 @@ public abstract class Task {
         return new DoubleTask(t, this);
     }
 
+    public void runWithException() throws Throwable {
+        Collection<Task> c = getDependTasks();
+        if (c != null)
+            for (Task t : c)
+                t.runWithException();
+        executeTask();
+        c = getAfterTasks();
+        if (c != null)
+            for (Task t : c)
+                t.runWithException();
+    }
+
     public boolean run() {
         try {
-            executeTask();
+            runWithException();
             return true;
         } catch (Throwable t) {
             HMCLog.err("Failed to execute task", t);

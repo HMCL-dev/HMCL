@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 
 /**
@@ -72,15 +73,18 @@ public class TaskList extends Thread {
 
         Task task;
         Set<Invoker> s;
+        AtomicBoolean bool;
 
-        public Invoker(Task task, Set<Invoker> ss) {
+        public Invoker(Task task, Set<Invoker> ss, AtomicBoolean bool) {
             this.task = task;
             s = ss;
+            this.bool = bool;
         }
 
         @Override
         public void run() {
-            executeTask(task);
+            if (!executeTask(task))
+                bool.set(false);
             s.remove(this);
         }
 
@@ -90,32 +94,35 @@ public class TaskList extends Thread {
     HashMap<Invoker, Future<?>> futures = new HashMap<>();
     HashSet<Invoker> invokers = new HashSet<>();
 
-    private void processTasks(Collection<? extends Task> c) {
+    private boolean processTasks(Collection<? extends Task> c) {
         if (c == null || c.isEmpty())
-            return;
+            return true;
         this.totTask += c.size();
+        AtomicBoolean bool = new AtomicBoolean(true);
         Set<Invoker> runningThread = Collections.synchronizedSet(new HashSet<Invoker>());
         for (Task t2 : c) {
             t2.setParallelExecuting(true);
-            Invoker thread = new Invoker(t2, runningThread);
+            Invoker thread = new Invoker(t2, runningThread, bool);
             runningThread.add(thread);
             invokers.add(thread);
-            if (!EXECUTOR_SERVICE.isTerminated())
+            if (!EXECUTOR_SERVICE.isShutdown() && !EXECUTOR_SERVICE.isTerminated())
                 futures.put(thread, EXECUTOR_SERVICE.submit(thread));
         }
         while (!runningThread.isEmpty())
             try {
                 if (this.isInterrupted())
-                    return;
+                    return false;
                 Thread.sleep(1);
             } catch (InterruptedException ignore) {
             }
-
+        return bool.get();
     }
 
-    private void executeTask(Task t) {
-        if (!shouldContinue || t == null)
-            return;
+    private boolean executeTask(Task t) {
+        if (!shouldContinue)
+            return false;
+        if (t == null)
+            return true;
 
         Collection<Task> c = t.getDependTasks();
         if (c == null)
@@ -125,7 +132,7 @@ public class TaskList extends Thread {
             d.onDoing(t, c);
         for (DoingDoneListener<Task> d : taskListener)
             d.onDoing(t, c);
-        processTasks(c);
+        t.areDependTasksSucceeded = processTasks(c);
 
         boolean flag = true;
         try {
@@ -151,6 +158,7 @@ public class TaskList extends Thread {
             for (DoingDoneListener<Task> d : t.getTaskListeners())
                 d.onFailed(t);
         }
+        return flag;
     }
 
     @Override

@@ -54,7 +54,7 @@ public final class Profile {
         this();
         if (v == null)
             return;
-        name = v.name;
+        this.name = name;
         gameDir = v.gameDir;
     }
 

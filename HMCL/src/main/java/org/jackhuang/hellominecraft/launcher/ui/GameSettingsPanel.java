@@ -64,6 +64,7 @@ import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 import org.jackhuang.hellominecraft.util.system.Java;
+import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.util.ui.LogWindow;
 
 /**
@@ -975,7 +976,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
     private void btnDownloadAllAssetsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadAllAssetsActionPerformed
         if (mcVersion != null)
-            Settings.getLastProfile().service().asset().downloadAssets(mcVersion).run();
+            TaskWindow.execute(Settings.getLastProfile().service().asset().downloadAssets(mcVersion));
     }//GEN-LAST:event_btnDownloadAllAssetsActionPerformed
 
     private void txtGameDirFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtGameDirFocusLost
