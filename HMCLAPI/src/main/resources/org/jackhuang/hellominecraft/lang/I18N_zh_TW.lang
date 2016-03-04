@@ -285,7 +285,8 @@ advancedsettings.game_dir.default=默認(.minecraft/)
 advancedsettings.game_dir.independent=各版本獨立(.minecraft/versions/<版本名>/,除assets,libraries)
 advancedsettings.no_jvm_args=不添加默認的JVM參數(使用Java9時必勾)
 advancedsettings.java_args_default=啟動器默認添加的參數（請不要重複添加）：-XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy -XX:MaxPermSize=???m -Xmx???m -Dfml. ignoreInvalidMinecraftCertificates=true -Dfml.ignorePatchDiscrepancies=true
-advancedsettings.wrapper_launcher=前置啟動指令(不必填寫，內容將加在啟動腳本最前，如optirun...)
+advancedsettings.wrapper_launcher=前置指令(不必填寫,如optirun)
+advancedsettings.precall_command=啟動前執行命令(不必填寫,將在遊戲啟動前調用)
 advancedsettings.server_ip=直入伺服器ip地址(不必填寫，啟動遊戲後直接進入對應伺服器)
 advancedsettings.cancel_wrapper_launcher=取消包裹啟動器(出現奇怪問題時可嘗試使用,與調試模式衝突)
 

@@ -100,7 +100,10 @@ public class ModpackWizard extends WizardBranchController {
                             }
                         try {
                             String gameVersion = (String) settings.get(ModpackInitializationPanel.KEY_GAME_VERSION);
-                            File loc = new File((String) settings.get(ModpackInitializationPanel.KEY_MODPACK_LOCATION));
+                            String strLocation = (String) settings.get(ModpackInitializationPanel.KEY_MODPACK_LOCATION);
+                            if (!strLocation.endsWith(".zip"))
+                                strLocation += ".zip";
+                            File loc = new File(strLocation);
                             File modpack = loc;
                             if ((Boolean) settings.get(ModpackInitializationPanel.KEY_INCLUDING_LAUNCHER))
                                 modpack = new File(loc.getAbsolutePath() + ".temp");

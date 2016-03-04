@@ -40,7 +40,7 @@ public class VersionSetting {
     public transient String id;
 
     private String javaArgs, minecraftArgs, maxMemory, permSize, width, height;
-    private String javaDir, precalledCommand, serverIp, java;
+    private String javaDir, precalledCommand, serverIp, java, wrapper;
     private boolean fullscreen, debug, noJVMArgs, canceledWrapper;
 
     /**
@@ -62,7 +62,7 @@ public class VersionSetting {
         debug = fullscreen = canceledWrapper = false;
         launcherVisibility = 1;
         gameDirType = 0;
-        javaDir = java = minecraftArgs = serverIp = precalledCommand = "";
+        javaDir = java = minecraftArgs = serverIp = precalledCommand = wrapper = "";
     }
 
     public VersionSetting(VersionSetting v) {
@@ -84,6 +84,7 @@ public class VersionSetting {
         noJVMArgs = v.noJVMArgs;
         launcherVisibility = v.launcherVisibility;
         precalledCommand = v.precalledCommand;
+        wrapper = v.wrapper;
         serverIp = v.serverIp;
     }
 
@@ -266,6 +267,15 @@ public class VersionSetting {
         propertyChanged.execute("precalledCommand");
     }
 
+    public String getWrapper() {
+        return wrapper;
+    }
+
+    public void setWrapper(String wrapper) {
+        this.wrapper = wrapper;
+        propertyChanged.execute("wrapper");
+    }
+
     public String getServerIp() {
         return serverIp;
     }
@@ -280,6 +290,7 @@ public class VersionSetting {
         x.setCanceledWrapper(isCanceledWrapper());
         x.setDebug(isDebug());
         x.setFullscreen(isFullscreen());
+        x.setWrapper(getWrapper());
         x.setGameDir(gameDir);
         x.setGameDirType(getGameDirType());
         x.setHeight(getHeight());

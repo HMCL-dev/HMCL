@@ -290,6 +290,8 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         txtPrecalledCommand = new javax.swing.JTextField();
         lblServerIP = new javax.swing.JLabel();
         txtServerIP = new javax.swing.JTextField();
+        lblPrecalledCommand1 = new javax.swing.JLabel();
+        txtWrapperLauncher = new javax.swing.JTextField();
         pnlModManagement = new AnimatedPanel();
         pnlModManagementContent = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -506,7 +508,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                     .addComponent(lblDimensionX, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lblDimension)
                     .addComponent(txtWidth, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 54, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 228, Short.MAX_VALUE)
                 .addGroup(pnlSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnDownloadAllAssets)
                     .addComponent(btnCleanGame))
@@ -561,7 +563,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             }
         });
 
-        lblPrecalledCommand.setText(C.i18n("advancedsettings.wrapper_launcher")); // NOI18N
+        lblPrecalledCommand.setText(C.i18n("advancedsettings.precall_command")); // NOI18N
 
         txtPrecalledCommand.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
@@ -577,6 +579,14 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             }
         });
 
+        lblPrecalledCommand1.setText(C.i18n("advancedsettings.wrapper_launcher")); // NOI18N
+
+        txtWrapperLauncher.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                txtWrapperLauncherFocusLost(evt);
+            }
+        });
+
         javax.swing.GroupLayout pnlAdvancedSettingsLayout = new javax.swing.GroupLayout(pnlAdvancedSettings);
         pnlAdvancedSettings.setLayout(pnlAdvancedSettingsLayout);
         pnlAdvancedSettingsLayout.setHorizontalGroup(
@@ -584,30 +594,37 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             .addGroup(pnlAdvancedSettingsLayout.createSequentialGroup()
                 .addGap(0, 0, 0)
                 .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(txtPrecalledCommand)
-                    .addComponent(txtServerIP)
                     .addGroup(pnlAdvancedSettingsLayout.createSequentialGroup()
                         .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblPrecalledCommand)
+                            .addComponent(txtWrapperLauncher)
                             .addGroup(pnlAdvancedSettingsLayout.createSequentialGroup()
-                                .addComponent(chkDebug)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(chkCancelWrapper)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(chkNoJVMArgs))
-                            .addComponent(lblServerIP))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlAdvancedSettingsLayout.createSequentialGroup()
-                        .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblMinecraftArgs)
-                            .addComponent(lblPermSize)
-                            .addComponent(lblJavaArgs))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtJavaArgs)
-                            .addComponent(txtMinecraftArgs)
-                            .addComponent(txtPermSize, javax.swing.GroupLayout.Alignment.TRAILING))))
-                .addGap(0, 0, 0))
+                                .addComponent(lblPrecalledCommand1)
+                                .addGap(0, 0, Short.MAX_VALUE)))
+                        .addContainerGap())
+                    .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(txtPrecalledCommand)
+                        .addComponent(txtServerIP)
+                        .addGroup(pnlAdvancedSettingsLayout.createSequentialGroup()
+                            .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(lblPrecalledCommand)
+                                .addGroup(pnlAdvancedSettingsLayout.createSequentialGroup()
+                                    .addComponent(chkDebug)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(chkCancelWrapper)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(chkNoJVMArgs))
+                                .addComponent(lblServerIP))
+                            .addGap(0, 263, Short.MAX_VALUE))
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlAdvancedSettingsLayout.createSequentialGroup()
+                            .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(lblMinecraftArgs)
+                                .addComponent(lblPermSize)
+                                .addComponent(lblJavaArgs))
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(txtJavaArgs)
+                                .addComponent(txtMinecraftArgs)
+                                .addComponent(txtPermSize, javax.swing.GroupLayout.Alignment.TRAILING))))))
         );
         pnlAdvancedSettingsLayout.setVerticalGroup(
             pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -625,6 +642,10 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                     .addComponent(txtPermSize, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lblPermSize))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblPrecalledCommand1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(txtWrapperLauncher, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblPrecalledCommand)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtPrecalledCommand, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -632,7 +653,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                 .addComponent(lblServerIP)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtServerIP, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 46, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 168, Short.MAX_VALUE)
                 .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(chkDebug)
                     .addComponent(chkNoJVMArgs)
@@ -698,7 +719,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnRemoveMod)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 254, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 428, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblModInfo))
         );
@@ -931,7 +952,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                 .addContainerGap())
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                    .addContainerGap(402, Short.MAX_VALUE)
+                    .addContainerGap(576, Short.MAX_VALUE)
                     .addComponent(btnIncludeMinecraft)
                     .addContainerGap()))
         );
@@ -1168,6 +1189,10 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         Settings.getLastProfile().getSelectedVersionSetting().setServerIp(txtServerIP.getText());
     }//GEN-LAST:event_txtServerIPFocusLost
 
+    private void txtWrapperLauncherFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtWrapperLauncherFocusLost
+        Settings.getLastProfile().getSelectedVersionSetting().setWrapper(txtWrapperLauncher.getText());
+    }//GEN-LAST:event_txtWrapperLauncherFocusLost
+
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Load">
     void prepareVersionSetting(VersionSetting profile) {
@@ -1352,6 +1377,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private javax.swing.JLabel lblModInfo;
     private javax.swing.JLabel lblPermSize;
     private javax.swing.JLabel lblPrecalledCommand;
+    private javax.swing.JLabel lblPrecalledCommand1;
     private javax.swing.JLabel lblProfile;
     private javax.swing.JLabel lblRunDirectory;
     private javax.swing.JLabel lblServerIP;
@@ -1378,6 +1404,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private javax.swing.JTextField txtPrecalledCommand;
     private javax.swing.JTextField txtServerIP;
     private javax.swing.JTextField txtWidth;
+    private javax.swing.JTextField txtWrapperLauncher;
     // End of variables declaration//GEN-END:variables
 
     private javax.swing.JPanel pnlGameDownloads;

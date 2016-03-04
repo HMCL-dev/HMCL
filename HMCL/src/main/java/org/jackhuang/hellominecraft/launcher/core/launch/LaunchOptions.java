@@ -28,7 +28,7 @@ import org.jackhuang.hellominecraft.util.system.JdkVersion;
  */
 public class LaunchOptions {
 
-    private String name, versionName, javaArgs, minecraftArgs, maxMemory, permSize, width, height, serverIp;
+    private String name, versionName, javaArgs, minecraftArgs, maxMemory, permSize, width, height, serverIp, wrapper;
     private String proxyHost, proxyPort, proxyUser, proxyPass, javaDir, launchVersion, type, precalledCommand;
     private boolean fullscreen, debug, noJVMArgs, canceledWrapper;
     private JdkVersion java;
@@ -93,6 +93,14 @@ public class LaunchOptions {
 
     public void setMaxMemory(String maxMemory) {
         this.maxMemory = maxMemory;
+    }
+
+    public String getWrapper() {
+        return wrapper;
+    }
+
+    public void setWrapper(String wrapper) {
+        this.wrapper = wrapper;
     }
 
     public String getWidth() {
