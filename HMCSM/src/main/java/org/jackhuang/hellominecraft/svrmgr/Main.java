@@ -40,7 +40,7 @@ public class Main {
 
     public static String launcherName = "Hello Minecraft! Server Manager";
     public static final String PUBLISH_URL = "http://www.mcbbs.net/thread-171239-1-1.html";
-    public static final byte VERSION_FIRST = 0, VERSION_SECOND = 8, VERSION_THIRD = 6;
+    public static final byte VERSION_FIRST = 0, VERSION_SECOND = 8, VERSION_THIRD = 7;
     public static final UpdateChecker UPDATE_CHECKER = new UpdateChecker(new VersionNumber(VERSION_FIRST, VERSION_SECOND, VERSION_THIRD), "hmcsm");
 
     public static String makeTitle() {
