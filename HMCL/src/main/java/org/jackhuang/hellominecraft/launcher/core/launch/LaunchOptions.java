@@ -30,7 +30,7 @@ public class LaunchOptions {
 
     private String name, versionName, javaArgs, minecraftArgs, maxMemory, permSize, width, height, serverIp, wrapper;
     private String proxyHost, proxyPort, proxyUser, proxyPass, javaDir, launchVersion, type, precalledCommand;
-    private boolean fullscreen, debug, noJVMArgs, canceledWrapper;
+    private boolean fullscreen, noJVMArgs;
     private JdkVersion java;
     private File gameDir;
     private GameDirType gameDirType;
@@ -127,14 +127,6 @@ public class LaunchOptions {
         this.fullscreen = fullscreen;
     }
 
-    public boolean isDebug() {
-        return debug;
-    }
-
-    public void setDebug(boolean debug) {
-        this.debug = debug;
-    }
-
     public GameDirType getGameDirType() {
         return gameDirType;
     }
@@ -165,14 +157,6 @@ public class LaunchOptions {
 
     public void setMinecraftArgs(String minecraftArgs) {
         this.minecraftArgs = minecraftArgs;
-    }
-
-    public boolean isCanceledWrapper() {
-        return canceledWrapper;
-    }
-
-    public void setCanceledWrapper(boolean canceledWrapper) {
-        this.canceledWrapper = canceledWrapper;
     }
 
     public String getServerIp() {

@@ -43,7 +43,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
 
     @Override
     protected void makeSelf(List<String> res) throws GameException {
-        StringBuilder library = new StringBuilder(options.isCanceledWrapper() ? "" : "-cp=");
+        StringBuilder library = new StringBuilder("");
         for (MinecraftLibrary l : version.libraries)
             if (l.allow() && !l.isRequiredToUnzip())
                 library.append(l.getFilePath(gameDir).getAbsolutePath()).append(File.pathSeparator);
@@ -51,11 +51,9 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         if (!f.exists())
             throw new GameException("Minecraft jar does not exists");
         library.append(IOUtils.tryGetCanonicalFilePath(f)).append(File.pathSeparator);
-        if (options.isCanceledWrapper())
-            res.add("-cp");
+        res.add("-cp");
         res.add(library.toString().substring(0, library.length() - File.pathSeparator.length()));
-        String mainClass = version.mainClass;
-        res.add((options.isCanceledWrapper() ? "" : "-mainClass=") + mainClass);
+        res.add(version.mainClass);
 
         String[] splitted = StrUtils.tokenize(version.minecraftArguments);
 

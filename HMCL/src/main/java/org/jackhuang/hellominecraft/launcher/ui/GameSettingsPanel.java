@@ -277,7 +277,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         btnChoosingGameDir = new javax.swing.JButton();
         btnCleanGame = new javax.swing.JButton();
         pnlAdvancedSettings = new AnimatedPanel();
-        chkDebug = new javax.swing.JCheckBox();
         lblJavaArgs = new javax.swing.JLabel();
         txtJavaArgs = new javax.swing.JTextField();
         txtMinecraftArgs = new javax.swing.JTextField();
@@ -285,7 +284,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         lblPermSize = new javax.swing.JLabel();
         txtPermSize = new javax.swing.JTextField();
         chkNoJVMArgs = new javax.swing.JCheckBox();
-        chkCancelWrapper = new javax.swing.JCheckBox();
         lblPrecalledCommand = new javax.swing.JLabel();
         txtPrecalledCommand = new javax.swing.JTextField();
         lblServerIP = new javax.swing.JLabel();
@@ -517,13 +515,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
 
         tabVersionEdit.addTab(C.i18n("settings"), pnlSettings); // NOI18N
 
-        chkDebug.setText(C.i18n("advancedsettings.debug_mode")); // NOI18N
-        chkDebug.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                chkDebugItemStateChanged(evt);
-            }
-        });
-
         lblJavaArgs.setText(C.i18n("advancedsettings.jvm_args")); // NOI18N
 
         txtJavaArgs.setToolTipText(C.i18n("advancedsettings.java_args_default")); // NOI18N
@@ -556,13 +547,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             }
         });
 
-        chkCancelWrapper.setText(C.i18n("advancedsettings.cancel_wrapper_launcher")); // NOI18N
-        chkCancelWrapper.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                chkCancelWrapperItemStateChanged(evt);
-            }
-        });
-
         lblPrecalledCommand.setText(C.i18n("advancedsettings.precall_command")); // NOI18N
 
         txtPrecalledCommand.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -591,40 +575,35 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         pnlAdvancedSettings.setLayout(pnlAdvancedSettingsLayout);
         pnlAdvancedSettingsLayout.setHorizontalGroup(
             pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlAdvancedSettingsLayout.createSequentialGroup()
-                .addGap(0, 0, 0)
-                .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnlAdvancedSettingsLayout.createSequentialGroup()
-                        .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtWrapperLauncher)
-                            .addGroup(pnlAdvancedSettingsLayout.createSequentialGroup()
-                                .addComponent(lblPrecalledCommand1)
-                                .addGap(0, 0, Short.MAX_VALUE)))
-                        .addContainerGap())
+            .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(pnlAdvancedSettingsLayout.createSequentialGroup()
                     .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(txtPrecalledCommand)
-                        .addComponent(txtServerIP)
+                        .addComponent(txtWrapperLauncher)
                         .addGroup(pnlAdvancedSettingsLayout.createSequentialGroup()
-                            .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(lblPrecalledCommand)
-                                .addGroup(pnlAdvancedSettingsLayout.createSequentialGroup()
-                                    .addComponent(chkDebug)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(chkCancelWrapper)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(chkNoJVMArgs))
-                                .addComponent(lblServerIP))
-                            .addGap(0, 263, Short.MAX_VALUE))
-                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlAdvancedSettingsLayout.createSequentialGroup()
-                            .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(lblMinecraftArgs)
-                                .addComponent(lblPermSize)
-                                .addComponent(lblJavaArgs))
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(txtJavaArgs)
-                                .addComponent(txtMinecraftArgs)
-                                .addComponent(txtPermSize, javax.swing.GroupLayout.Alignment.TRAILING))))))
+                            .addComponent(lblPrecalledCommand1)
+                            .addGap(0, 0, Short.MAX_VALUE)))
+                    .addContainerGap())
+                .addComponent(txtPrecalledCommand)
+                .addComponent(txtServerIP)
+                .addGroup(pnlAdvancedSettingsLayout.createSequentialGroup()
+                    .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(lblPrecalledCommand)
+                        .addComponent(lblServerIP))
+                    .addGap(0, 716, Short.MAX_VALUE))
+                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlAdvancedSettingsLayout.createSequentialGroup()
+                    .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(lblMinecraftArgs)
+                        .addComponent(lblPermSize)
+                        .addComponent(lblJavaArgs))
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(txtJavaArgs)
+                        .addComponent(txtMinecraftArgs)
+                        .addComponent(txtPermSize, javax.swing.GroupLayout.Alignment.TRAILING))))
+            .addGroup(pnlAdvancedSettingsLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(chkNoJVMArgs)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         pnlAdvancedSettingsLayout.setVerticalGroup(
             pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -654,10 +633,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtServerIP, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 168, Short.MAX_VALUE)
-                .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(chkDebug)
-                    .addComponent(chkNoJVMArgs)
-                    .addComponent(chkCancelWrapper))
+                .addComponent(chkNoJVMArgs)
                 .addContainerGap())
         );
 
@@ -1138,16 +1114,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
             Settings.getLastProfile().getSelectedVersionSetting().setFullscreen(chkFullscreen.isSelected());
     }//GEN-LAST:event_chkFullscreenItemStateChanged
 
-    private void chkDebugItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkDebugItemStateChanged
-        if (!isLoading)
-            Settings.getLastProfile().getSelectedVersionSetting().setDebug(chkDebug.isSelected());
-    }//GEN-LAST:event_chkDebugItemStateChanged
-
-    private void chkCancelWrapperItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkCancelWrapperItemStateChanged
-        if (!isLoading)
-            Settings.getLastProfile().getSelectedVersionSetting().setCanceledWrapper(chkCancelWrapper.isSelected());
-    }//GEN-LAST:event_chkCancelWrapperItemStateChanged
-
     private void chkNoJVMArgsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkNoJVMArgsItemStateChanged
         if (!isLoading)
             Settings.getLastProfile().getSelectedVersionSetting().setNoJVMArgs(chkNoJVMArgs.isSelected());
@@ -1207,10 +1173,8 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         txtMinecraftArgs.setText(profile.getMinecraftArgs());
         txtPrecalledCommand.setText(profile.getPrecalledCommand());
         txtServerIP.setText(profile.getServerIp());
-        chkDebug.setSelected(profile.isDebug());
         chkNoJVMArgs.setSelected(profile.isNoJVMArgs());
         chkFullscreen.setSelected(profile.isFullscreen());
-        chkCancelWrapper.setSelected(profile.isCanceledWrapper());
         cboLauncherVisibility.setSelectedIndex(profile.getLauncherVisibility().ordinal());
         cboRunDirectory.setSelectedIndex(profile.getGameDirType().ordinal());
         cboJava.setSelectedIndex(profile.getJavaIndexInAllJavas());
@@ -1360,8 +1324,6 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private javax.swing.JComboBox cboProfiles;
     private javax.swing.JComboBox cboRunDirectory;
     private javax.swing.JComboBox cboVersions;
-    private javax.swing.JCheckBox chkCancelWrapper;
-    private javax.swing.JCheckBox chkDebug;
     private javax.swing.JCheckBox chkFullscreen;
     private javax.swing.JCheckBox chkNoJVMArgs;
     private javax.swing.JScrollPane jScrollPane1;

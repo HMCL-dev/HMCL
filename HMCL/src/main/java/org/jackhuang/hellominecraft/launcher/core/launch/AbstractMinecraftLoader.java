@@ -30,7 +30,6 @@ import org.jackhuang.hellominecraft.util.system.OS;
 import org.jackhuang.hellominecraft.util.system.Platform;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.Utils;
-import org.jackhuang.hellominecraft.launcher.Launcher;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
@@ -130,12 +129,6 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
 
         if (OS.os() != OS.WINDOWS)
             res.add("-Duser.home=" + gameDir.getParent());
-
-        if (!options.isCanceledWrapper()) {
-            res.add("-cp");
-            res.add(StrUtils.parseParams("", Utils.getURLString(), File.pathSeparator));
-            res.add(Launcher.class.getCanonicalName());
-        }
     }
 
     @Override
@@ -167,9 +160,6 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
 
         if (options.isFullscreen())
             res.add("--fullscreen");
-
-        if (options.isDebug() && !options.isCanceledWrapper())
-            res.add("-debug");
 
         if (StrUtils.isNotBlank(options.getProxyHost()) && StrUtils.isNotBlank(options.getProxyPort()) && MathUtils.canParseInt(options.getProxyPort())) {
             res.add("--proxyHost");

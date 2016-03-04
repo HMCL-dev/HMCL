@@ -41,7 +41,7 @@ public class VersionSetting {
 
     private String javaArgs, minecraftArgs, maxMemory, permSize, width, height;
     private String javaDir, precalledCommand, serverIp, java, wrapper;
-    private boolean fullscreen, debug, noJVMArgs, canceledWrapper;
+    private boolean fullscreen, noJVMArgs;
 
     /**
      * 0 - Close the launcher when the game starts.<br/>
@@ -59,7 +59,7 @@ public class VersionSetting {
     public transient final EventHandler<String> propertyChanged = new EventHandler<>(this);
 
     public VersionSetting() {
-        debug = fullscreen = canceledWrapper = false;
+        fullscreen = false;
         launcherVisibility = 1;
         gameDirType = 0;
         javaDir = java = minecraftArgs = serverIp = precalledCommand = wrapper = "";
@@ -76,11 +76,9 @@ public class VersionSetting {
         fullscreen = v.fullscreen;
         javaArgs = v.javaArgs;
         javaDir = v.javaDir;
-        debug = v.debug;
         minecraftArgs = v.minecraftArgs;
         permSize = v.permSize;
         gameDirType = v.gameDirType;
-        canceledWrapper = v.canceledWrapper;
         noJVMArgs = v.noJVMArgs;
         launcherVisibility = v.launcherVisibility;
         precalledCommand = v.precalledCommand;
@@ -193,15 +191,6 @@ public class VersionSetting {
         propertyChanged.execute("fullscreen");
     }
 
-    public boolean isDebug() {
-        return debug;
-    }
-
-    public void setDebug(boolean debug) {
-        this.debug = debug;
-        propertyChanged.execute("debug");
-    }
-
     public LauncherVisibility getLauncherVisibility() {
         return LauncherVisibility.values()[launcherVisibility];
     }
@@ -249,15 +238,6 @@ public class VersionSetting {
         propertyChanged.execute("minecraftArgs");
     }
 
-    public boolean isCanceledWrapper() {
-        return canceledWrapper;
-    }
-
-    public void setCanceledWrapper(boolean canceledWrapper) {
-        this.canceledWrapper = canceledWrapper;
-        propertyChanged.execute("canceledWrapper");
-    }
-
     public String getPrecalledCommand() {
         return precalledCommand;
     }
@@ -287,8 +267,6 @@ public class VersionSetting {
 
     public LaunchOptions createLaunchOptions(File gameDir) {
         LaunchOptions x = new LaunchOptions();
-        x.setCanceledWrapper(isCanceledWrapper());
-        x.setDebug(isDebug());
         x.setFullscreen(isFullscreen());
         x.setWrapper(getWrapper());
         x.setGameDir(gameDir);

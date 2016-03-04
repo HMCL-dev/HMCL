@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.ui;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -25,11 +26,13 @@ import org.jackhuang.hellominecraft.launcher.core.launch.GameLauncher;
 import org.jackhuang.hellominecraft.launcher.core.launch.LaunchingState;
 import org.jackhuang.hellominecraft.launcher.setting.Profile;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
+import org.jackhuang.hellominecraft.launcher.util.MinecraftCrashAdvicer;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.Event;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.JavaProcessMonitor;
 import org.jackhuang.hellominecraft.util.ui.LogWindow;
 import org.jackhuang.hellominecraft.util.ui.WebFrame;
@@ -95,8 +98,20 @@ public class LaunchingUIDaemon {
             JavaProcessMonitor jpm = new JavaProcessMonitor(p);
             jpm.applicationExitedAbnormallyEvent.register(t -> {
                 HMCLog.err("The game exited abnormally, exit code: " + t);
-                MessageBox.Show(C.i18n("launch.exited_abnormally") + " exit code: " + t);
-                WebFrame f = new WebFrame(jpm.getJavaProcess().getStdOutLines().toArray(new String[0]));
+                String[] logs = jpm.getJavaProcess().getStdOutLines().toArray(new String[0]);
+                String errorText = null;
+                for (String s : logs) {
+                    int pos = s.lastIndexOf("#@!@#");
+                    if (pos >= 0 && pos < s.length() - "#@!@#".length() - 1) {
+                        errorText = s.substring(pos + "#@!@#".length()).trim();
+                        break;
+                    }
+                }
+                String msg = C.i18n("launch.exited_abnormally") + " exit code: " + t;
+                if (errorText != null)
+                    msg += ", advice: " + MinecraftCrashAdvicer.getAdvice(FileUtils.readFileToStringQuietly(new File(errorText)));
+                MessageBox.Show(msg);
+                WebFrame f = new WebFrame(logs);
                 f.setModal(true);
                 f.setTitle("Game output");
                 f.setVisible(true);
@@ -122,6 +137,10 @@ public class LaunchingUIDaemon {
         }
         return true;
     };
+
+    private static void getCrashReport() {
+
+    }
 
     private static void checkExit(LauncherVisibility v) {
         if (v != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible()) {

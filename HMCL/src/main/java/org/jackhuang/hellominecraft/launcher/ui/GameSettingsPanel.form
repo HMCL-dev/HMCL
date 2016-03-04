@@ -388,51 +388,44 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="txtWrapperLauncher" alignment="0" max="32767" attributes="0"/>
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <Component id="lblPrecalledCommand1" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                                  </Group>
-                              </Group>
-                              <EmptySpace max="-2" attributes="0"/>
-                          </Group>
+                  <Group type="103" alignment="0" groupAlignment="0" attributes="0">
+                      <Group type="102" attributes="0">
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="txtPrecalledCommand" alignment="0" max="32767" attributes="0"/>
-                              <Component id="txtServerIP" alignment="0" max="32767" attributes="0"/>
-                              <Group type="102" attributes="0">
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="lblPrecalledCommand" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      <Group type="102" alignment="0" attributes="0">
-                                          <Component id="chkDebug" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="chkCancelWrapper" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="chkNoJVMArgs" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <Component id="lblServerIP" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <EmptySpace min="0" pref="263" max="32767" attributes="0"/>
+                              <Component id="txtWrapperLauncher" alignment="0" max="32767" attributes="0"/>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="lblPrecalledCommand1" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               </Group>
-                              <Group type="102" alignment="1" attributes="0">
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="lblMinecraftArgs" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      <Component id="lblPermSize" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      <Component id="lblJavaArgs" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <EmptySpace max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="txtJavaArgs" max="32767" attributes="0"/>
-                                      <Component id="txtMinecraftArgs" max="32767" attributes="0"/>
-                                      <Component id="txtPermSize" alignment="1" max="32767" attributes="0"/>
-                                  </Group>
-                              </Group>
+                          </Group>
+                          <EmptySpace max="-2" attributes="0"/>
+                      </Group>
+                      <Component id="txtPrecalledCommand" alignment="0" max="32767" attributes="0"/>
+                      <Component id="txtServerIP" alignment="0" max="32767" attributes="0"/>
+                      <Group type="102" attributes="0">
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="lblPrecalledCommand" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="lblServerIP" alignment="0" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace min="0" pref="716" max="32767" attributes="0"/>
+                      </Group>
+                      <Group type="102" alignment="1" attributes="0">
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="lblMinecraftArgs" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="lblPermSize" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="lblJavaArgs" alignment="0" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="txtJavaArgs" max="32767" attributes="0"/>
+                              <Component id="txtMinecraftArgs" max="32767" attributes="0"/>
+                              <Component id="txtPermSize" alignment="1" max="32767" attributes="0"/>
                           </Group>
                       </Group>
+                  </Group>
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="chkNoJVMArgs" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -467,27 +460,13 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="txtServerIP" min="-2" pref="26" max="-2" attributes="0"/>
                       <EmptySpace pref="168" max="32767" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="chkDebug" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="chkNoJVMArgs" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="chkCancelWrapper" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
+                      <Component id="chkNoJVMArgs" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
           </Layout>
           <SubComponents>
-            <Component class="javax.swing.JCheckBox" name="chkDebug">
-              <Properties>
-                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.debug_mode" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
-                </Property>
-              </Properties>
-              <Events>
-                <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="chkDebugItemStateChanged"/>
-              </Events>
-            </Component>
             <Component class="javax.swing.JLabel" name="lblJavaArgs">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -537,16 +516,6 @@
               </Properties>
               <Events>
                 <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="chkNoJVMArgsItemStateChanged"/>
-              </Events>
-            </Component>
-            <Component class="javax.swing.JCheckBox" name="chkCancelWrapper">
-              <Properties>
-                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/jackhuang/hellominecraft/launcher/I18N.properties" key="advancedsettings.cancel_wrapper_launcher" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
-                </Property>
-              </Properties>
-              <Events>
-                <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="chkCancelWrapperItemStateChanged"/>
               </Events>
             </Component>
             <Component class="javax.swing.JLabel" name="lblPrecalledCommand">
