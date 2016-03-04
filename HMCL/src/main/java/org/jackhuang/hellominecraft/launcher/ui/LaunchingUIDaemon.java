@@ -124,8 +124,10 @@ public class LaunchingUIDaemon {
     };
 
     private static void checkExit(LauncherVisibility v) {
-        if (v != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible())
+        if (v != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible()) {
+            HMCLog.log("Launcher will exit now.");
             System.exit(0);
+        }
     }
 
     private static final Event<List<String>> LAUNCH_SCRIPT_FINISHER = (sender, str) -> {

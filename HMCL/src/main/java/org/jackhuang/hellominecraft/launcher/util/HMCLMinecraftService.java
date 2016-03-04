@@ -67,6 +67,12 @@ public class HMCLMinecraftService extends IMinecraftService {
     }
 
     private void checkModpack() {
+        int show = 0;
+        for (StackTraceElement e : Thread.currentThread().getStackTrace())
+            if ("checkModpack".equals(e.getMethodName()))
+                ++show;
+        if (show > 2)
+            return;
         if (version().getVersionCount() == 0) {
             File modpack = new File("modpack.zip");
             if (modpack.exists()) {
