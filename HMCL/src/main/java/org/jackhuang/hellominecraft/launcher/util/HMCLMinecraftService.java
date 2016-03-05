@@ -21,6 +21,7 @@ import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.install.MinecraftInstallerService;
 import org.jackhuang.hellominecraft.launcher.core.asset.MinecraftAssetService;
@@ -39,6 +40,7 @@ import org.jackhuang.hellominecraft.launcher.core.mod.MinecraftModService;
 import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
 import org.jackhuang.hellominecraft.launcher.setting.Profile;
 import org.jackhuang.hellominecraft.launcher.setting.VersionSetting;
+import org.jackhuang.hellominecraft.launcher.ui.MainFrame;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
@@ -66,18 +68,20 @@ public class HMCLMinecraftService extends IMinecraftService {
         this.mis = new MinecraftInstallerService(this);
     }
 
+    public boolean checkedModpack = false, checkingModpack = false;
+
     private void checkModpack() {
-        int show = 0;
-        for (StackTraceElement e : Thread.currentThread().getStackTrace())
-            if ("checkModpack".equals(e.getMethodName()))
-                ++show;
-        if (show > 1)
-            return;
-        if (version().getVersionCount() == 0) {
-            File modpack = new File("modpack.zip");
-            if (modpack.exists())
-                if (TaskWindow.execute(ModpackManager.install(modpack, this, null)))
-                    version().refreshVersions();
+        if (!checkingModpack) {
+            checkingModpack = true;
+            if (version().getVersionCount() == 0) {
+                File modpack = new File("modpack.zip");
+                if (modpack.exists())
+                    SwingUtilities.invokeLater(() -> {
+                        if (TaskWindow.execute(ModpackManager.install(MainFrame.INSTANCE, modpack, this, null)))
+                            version().refreshVersions();
+                        checkedModpack = true;
+                    });
+            }
         }
     }
 

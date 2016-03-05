@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipFile;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
@@ -80,7 +81,7 @@ public final class ModpackManager {
      * @return The installing Task, may take long time, please consider
      *         TaskWindow.
      */
-    public static Task install(final File input, final IMinecraftService service, final String idFUCK) {
+    public static Task install(JFrame parFrame, final File input, final IMinecraftService service, final String idFUCK) {
         return new Task() {
             Collection<Task> c = new ArrayList<>();
 
@@ -110,7 +111,7 @@ public final class ModpackManager {
                 msgs[0] = C.i18n("modpack.task.install");
                 msgs[1] = new WebPage(description);
                 ((WebPage) msgs[1]).setPreferredSize(new Dimension(800, 350));
-                int result = JOptionPane.showOptionDialog(null, msgs, (String) msgs[0], JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
+                int result = JOptionPane.showOptionDialog(parFrame, msgs, (String) msgs[0], JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
                 if (result == JOptionPane.NO_OPTION)
                     throw new NoShownTaskException("Operation was canceled by user.");
 

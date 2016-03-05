@@ -37,6 +37,7 @@ import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.ui.modpack.ModpackWizard;
+import org.jackhuang.hellominecraft.launcher.util.HMCLMinecraftService;
 import org.jackhuang.hellominecraft.util.ui.GraphicsUtils;
 import org.jackhuang.hellominecraft.util.Event;
 import org.jackhuang.hellominecraft.lookandfeel.comp.ConstomButton;
@@ -382,7 +383,7 @@ public class MainPagePanel extends AnimatedPanel {
         if (fc.getSelectedFile() == null)
             return;
         String suggestedModpackId = JOptionPane.showInputDialog("Please enter your favourite game name", FileUtils.getBaseName(fc.getSelectedFile().getName()));
-        TaskWindow.factory().append(ModpackManager.install(fc.getSelectedFile(), Settings.getLastProfile().service(), suggestedModpackId)).create();
+        TaskWindow.factory().append(ModpackManager.install(MainFrame.INSTANCE, fc.getSelectedFile(), Settings.getLastProfile().service(), suggestedModpackId)).create();
         Settings.getLastProfile().service().version().refreshVersions();
     }//GEN-LAST:event_btnImportModpackActionPerformed
 
@@ -489,7 +490,7 @@ public class MainPagePanel extends AnimatedPanel {
         cboVersions.removeAllItems();
         String selVersion = Settings.getLastProfile().getSelectedVersion();
         if (Settings.getLastProfile().service().version().getVersions().isEmpty()) {
-            if (!showedNoVersion) {
+            if (!showedNoVersion && ((HMCLMinecraftService) Settings.getLastProfile().service()).checkedModpack) {
                 showedNoVersion = true;
                 SwingUtilities.invokeLater(() -> {
                     if (MessageBox.Show(C.i18n("mainwindow.no_version"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)

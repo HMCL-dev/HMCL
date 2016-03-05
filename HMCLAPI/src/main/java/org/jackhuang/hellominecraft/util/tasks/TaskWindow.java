@@ -225,9 +225,11 @@ public class TaskWindow extends javax.swing.JDialog
 
     @Override
     public void run() {
-        SwingUtilities.invokeLater(this::dispose);
-        suc = true;
-        HMCLog.log("Tasks are finished.");
+        SwingUtilities.invokeLater(() -> {
+            dispose();
+            suc = true;
+            HMCLog.log("Tasks are finished.");
+        });
     }
 
     @Override
