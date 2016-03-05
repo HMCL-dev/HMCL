@@ -46,6 +46,7 @@ import org.jackhuang.hellominecraft.util.system.ZipEngine;
 import org.jackhuang.hellominecraft.util.tasks.Task;
 import org.jackhuang.hellominecraft.util.ui.WebPage;
 import org.jackhuang.hellominecraft.util.MinecraftVersionRequest;
+import org.jackhuang.hellominecraft.util.tasks.NoShownTaskException;
 
 /**
  * A mod pack(*.zip) includes these things:
@@ -111,7 +112,7 @@ public final class ModpackManager {
                 ((WebPage) msgs[1]).setPreferredSize(new Dimension(800, 350));
                 int result = JOptionPane.showOptionDialog(null, msgs, (String) msgs[0], JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
                 if (result == JOptionPane.NO_OPTION)
-                    return;
+                    throw new NoShownTaskException("Operation was canceled by user.");
 
                 File versions = new File(service.baseDirectory(), "versions");
 

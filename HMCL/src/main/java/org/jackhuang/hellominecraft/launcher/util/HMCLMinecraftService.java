@@ -71,14 +71,13 @@ public class HMCLMinecraftService extends IMinecraftService {
         for (StackTraceElement e : Thread.currentThread().getStackTrace())
             if ("checkModpack".equals(e.getMethodName()))
                 ++show;
-        if (show > 2)
+        if (show > 1)
             return;
         if (version().getVersionCount() == 0) {
             File modpack = new File("modpack.zip");
-            if (modpack.exists()) {
-                TaskWindow.factory().append(ModpackManager.install(modpack, this, null)).create();
-                version().refreshVersions();
-            }
+            if (modpack.exists())
+                if (TaskWindow.execute(ModpackManager.install(modpack, this, null)))
+                    version().refreshVersions();
         }
     }
 

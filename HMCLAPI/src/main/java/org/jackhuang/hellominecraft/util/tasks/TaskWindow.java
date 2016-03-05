@@ -271,7 +271,14 @@ public class TaskWindow extends javax.swing.JDialog
         SwingUtilities.invokeLater(() -> {
             if (taskList == null || task == null)
                 return;
-            failReasons.add(task.getInfo() + ": " + (null == task.getFailReason() ? "No exception" : (StrUtils.isBlank(task.getFailReason().getLocalizedMessage()) ? task.getFailReason().getClass().getSimpleName() : task.getFailReason().getLocalizedMessage())));
+            String msg = null;
+            if (task.getFailReason() != null && !(task.getFailReason() instanceof NoShownTaskException))
+                if (StrUtils.isBlank(task.getFailReason().getLocalizedMessage()))
+                    msg = task.getFailReason().getClass().getSimpleName();
+                else
+                    msg = task.getFailReason().getLocalizedMessage();
+            if (msg != null)
+                failReasons.add(task.getInfo() + ": " + msg);
             pgsTotal.setMaximum(taskList.taskCount());
             pgsTotal.setValue(pgsTotal.getValue() + 1);
             int idx = tasks.indexOf(task);
