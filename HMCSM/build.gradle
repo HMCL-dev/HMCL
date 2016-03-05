@@ -30,7 +30,7 @@ if (buildnumber == null)
     
 def versionroot = System.getenv("VERSION_ROOT")
 if (versionroot == null)
-    versionroot = "0.8.6"
+    versionroot = "0.8.7"
 
 String mavenGroupId = 'HMCSM'
 String mavenVersion = versionroot + '.' + buildnumber

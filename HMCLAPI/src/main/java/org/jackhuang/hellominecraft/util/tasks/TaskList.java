@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -72,12 +72,12 @@ public class TaskList extends Thread {
     private class Invoker implements Runnable {
 
         Task task;
-        Set<Invoker> s;
+        CountDownLatch latch;
         AtomicBoolean bool;
 
-        public Invoker(Task task, Set<Invoker> ss, AtomicBoolean bool) {
+        public Invoker(Task task, CountDownLatch latch, AtomicBoolean bool) {
             this.task = task;
-            s = ss;
+            this.latch = latch;
             this.bool = bool;
         }
 
@@ -85,7 +85,7 @@ public class TaskList extends Thread {
         public void run() {
             if (!executeTask(task))
                 bool.set(false);
-            s.remove(this);
+            latch.countDown();
         }
 
     }
@@ -99,22 +99,18 @@ public class TaskList extends Thread {
             return true;
         this.totTask += c.size();
         AtomicBoolean bool = new AtomicBoolean(true);
-        Set<Invoker> runningThread = Collections.synchronizedSet(new HashSet<Invoker>());
+        CountDownLatch counter = new CountDownLatch(c.size());
         for (Task t2 : c) {
             t2.setParallelExecuting(true);
-            Invoker thread = new Invoker(t2, runningThread, bool);
-            runningThread.add(thread);
+            Invoker thread = new Invoker(t2, counter, bool);
             invokers.add(thread);
             if (!EXECUTOR_SERVICE.isShutdown() && !EXECUTOR_SERVICE.isTerminated())
                 futures.put(thread, EXECUTOR_SERVICE.submit(thread));
         }
-        while (!runningThread.isEmpty())
-            try {
-                if (this.isInterrupted())
-                    return false;
-                Thread.sleep(1);
-            } catch (InterruptedException ignore) {
-            }
+        try {
+            counter.await();
+        } catch (InterruptedException ignore) {
+        }
         return bool.get();
     }
 
