@@ -168,7 +168,7 @@ public final class ModpackManager {
                     if (mv.jar == null)
                         throw new FileNotFoundException(C.i18n("modpack.incorrect_format.no_jar"));
 
-                    c.add(service.download().downloadMinecraftJarTo(mv, new File(nowFile, id + ".jar")));
+                    c.add(service.download().downloadMinecraftJar(mv, new File(nowFile, id + ".jar")));
                     mv.jar = null;
                     FileUtils.writeStringToFile(json, C.GSON.toJson(mv));
                     if (!json.renameTo(new File(nowFile, id + ".json")))

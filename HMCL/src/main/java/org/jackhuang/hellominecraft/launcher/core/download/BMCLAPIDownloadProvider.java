@@ -57,7 +57,7 @@ public class BMCLAPIDownloadProvider extends IDownloadProvider {
 
     @Override
     public String getVersionsListDownloadURL() {
-        return "http://bmclapi2.bangbang93.com/versions/versions.json";
+        return "http://bmclapi2.bangbang93.com/mc/game/version_manifest.json";
     }
 
     @Override
@@ -66,13 +66,17 @@ public class BMCLAPIDownloadProvider extends IDownloadProvider {
     }
 
     @Override
-    public String getParsedLibraryDownloadURL(String str) {
-        return str == null ? null : str.replace("http://files.minecraftforge.net/maven", "http://bmclapi2.bangbang93.com/maven");
+    public String getParsedDownloadURL(String str) {
+        return str == null ? null
+               : str.replace("https://launchermeta.mojang.com", "http://bmclapi2.bangbang93.com")
+            .replace("https://launcher.mojang.com", "http://bmclapi2.bangbang93.com")
+            .replace("https://libraries.minecraft.net", "http://bmclapi2.bangbang93.com/libraries")
+            .replace("http://files.minecraftforge.net/maven", "http://bmclapi2.bangbang93.com/maven");
     }
 
     @Override
     public boolean isAllowedToUseSelfURL() {
-        return false;
+        return true;
     }
 
 }

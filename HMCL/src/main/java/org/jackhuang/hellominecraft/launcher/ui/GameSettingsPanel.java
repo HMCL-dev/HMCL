@@ -1376,10 +1376,12 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     final Runnable onLoadingProfiles = this::loadProfiles;
 
     private void loadProfiles() {
+        isLoading = true;
         DefaultComboBoxModel model = new DefaultComboBoxModel();
         for (Profile s : Settings.getProfilesFiltered())
             model.addElement(s.getName());
         cboProfiles.setModel(model);
+        isLoading = false;
     }
 
     final Consumer<IMinecraftService> onRefreshedVersions = t -> {
@@ -1425,12 +1427,15 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         t.selectedVersionChangedEvent.register(selectedVersionChangedEvent);
 
         txtGameDir.setText(t.getGameDir());
+
+        isLoading = true;
         DefaultComboBoxModel model = (DefaultComboBoxModel) cboProfiles.getModel();
         for (int i = 0; i < model.getSize(); ++i)
             if (model.getElementAt(i).equals(t.getName())) {
                 model.setSelectedItem(t.getName());
                 break;
             }
+        isLoading = false;
     };
     //</editor-fold>
 }

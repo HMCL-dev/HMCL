@@ -49,7 +49,7 @@ public class RapidDataDownloadProvider extends MojangDownloadProvider {
     }
 
     @Override
-    public String getParsedLibraryDownloadURL(String str) {
+    public String getParsedDownloadURL(String str) {
         return str == null ? null : str.replace("http://files.minecraftforge.net/maven", "http://mirrors.rapiddata.org/forge/maven");
     }
 

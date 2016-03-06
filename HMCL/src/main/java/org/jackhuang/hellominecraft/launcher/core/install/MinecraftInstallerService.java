@@ -64,7 +64,7 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
                 File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "forge-installer.jar");
                 if (v.installer != null)
                     TaskWindow.factory()
-                        .append(new FileDownloadTask(service.getDownloadType().getProvider().getParsedLibraryDownloadURL(v.installer), filepath).setTag("forge"))
+                        .append(new FileDownloadTask(service.getDownloadType().getProvider().getParsedDownloadURL(v.installer), filepath).setTag("forge"))
                         .append(new ForgeInstaller(service, filepath))
                         .create();
             }

@@ -36,11 +36,8 @@ public class AssetIndexDownloadInfo extends GameDownloadInfo {
     }
 
     @Override
-    public String getUrl(DownloadType dt, boolean allowSelf) {
-        if (url != null && dt.getProvider().isAllowedToUseSelfURL())
-            return url;
-        else
-            return dt.getProvider().getIndexesDownloadURL() + id + ".json";
+    public String getCustomizedURL(DownloadType dt) {
+        return dt.getProvider().getIndexesDownloadURL() + id + ".json";
     }
 
     public String getId() {

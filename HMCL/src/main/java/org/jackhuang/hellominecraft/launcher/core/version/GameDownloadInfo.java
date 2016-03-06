@@ -55,9 +55,13 @@ public class GameDownloadInfo implements Cloneable {
      */
     public String getUrl(DownloadType dt, boolean allowSelf) {
         if (url != null && allowSelf)
-            return url;
+            return dt.getProvider().getParsedDownloadURL(url);
         else
-            return dt.getProvider().getVersionsDownloadURL() + id + "/" + id + ".jar";
+            return getCustomizedURL(dt);
+    }
+
+    protected String getCustomizedURL(DownloadType dt) {
+        return dt.getProvider().getVersionsDownloadURL() + id + "/" + id + ".jar";
     }
 
     @Override

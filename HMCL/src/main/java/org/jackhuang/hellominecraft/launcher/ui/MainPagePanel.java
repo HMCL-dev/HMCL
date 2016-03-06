@@ -472,10 +472,12 @@ public class MainPagePanel extends AnimatedPanel {
     final Runnable onLoadingProfiles = this::loadProfiles;
 
     private void loadProfiles() {
+        isLoading = true;
         DefaultComboBoxModel model = new DefaultComboBoxModel();
         for (Profile s : Settings.getProfilesFiltered())
             model.addElement(s.getName());
         cboProfiles.setModel(model);
+        isLoading = false;
     }
 
     final Consumer<IMinecraftService> onRefreshedVersions = t -> {
@@ -529,11 +531,13 @@ public class MainPagePanel extends AnimatedPanel {
         t.selectedVersionChangedEvent.register(versionChanged);
         t.launcher().launchingStateChanged.register(launchingStateChanged);
 
+        isLoading = true;
         DefaultComboBoxModel model = (DefaultComboBoxModel) cboProfiles.getModel();
         for (int i = 0; i < model.getSize(); ++i)
             if (model.getElementAt(i).equals(t.getName())) {
                 model.setSelectedItem(t.getName());
                 break;
             }
+        isLoading = false;
     };
 }

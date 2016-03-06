@@ -15,17 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.launcher.core.download;
+package org.jackhuang.hellominecraft.util.tasks;
 
 /**
  *
  * @author huangyuhui
  */
-public class CurseDownloadProvider extends MojangDownloadProvider {
+public class NoShownTaskException extends RuntimeException {
 
-    @Override
-    public String getParsedDownloadURL(String str) {
-        return str == null ? null : str.replace("http://files.minecraftforge.net/maven", "http://ftb.cursecdn.com/FTB2/maven/");
+    public NoShownTaskException(String msg) {
+        super(msg);
     }
-
 }

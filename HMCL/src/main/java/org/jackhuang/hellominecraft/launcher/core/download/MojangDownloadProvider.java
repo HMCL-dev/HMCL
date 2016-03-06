@@ -73,7 +73,7 @@ public class MojangDownloadProvider extends IDownloadProvider {
     }
 
     @Override
-    public String getParsedLibraryDownloadURL(String str) {
+    public String getParsedDownloadURL(String str) {
         if (str == null)
             return null;
         else if (str.contains("scala-swing") || str.contains("scala-xml") || str.contains("scala-parser-combinators"))
@@ -86,5 +86,4 @@ public class MojangDownloadProvider extends IDownloadProvider {
         else
             return str;
     }
-
 }

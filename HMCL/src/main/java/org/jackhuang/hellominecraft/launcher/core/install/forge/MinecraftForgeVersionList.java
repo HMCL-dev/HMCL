@@ -51,7 +51,7 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
     public void refreshList(String[] needed) throws Exception {
         if (root != null)
             return;
-        String s = NetUtils.get(DownloadType.getSuggestedDownloadType().getProvider().getParsedLibraryDownloadURL(C.URL_FORGE_LIST));
+        String s = NetUtils.get(DownloadType.getSuggestedDownloadType().getProvider().getParsedDownloadURL(C.URL_FORGE_LIST));
 
         root = C.GSON.fromJson(s, MinecraftForgeVersionRoot.class);
 
@@ -70,7 +70,7 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
                     if (!StrUtils.isBlank(v.branch))
                         ver = ver + "-" + v.branch;
                     String filename = root.artifact + "-" + ver + "-" + f[1] + "." + f[0];
-                    String url = DownloadType.getSuggestedDownloadType().getProvider().getParsedLibraryDownloadURL(root.webpath + ver + "/" + filename);
+                    String url = DownloadType.getSuggestedDownloadType().getProvider().getParsedDownloadURL(root.webpath + ver + "/" + filename);
                     switch (f[1]) {
                     case "installer":
                         iv.installer = url;

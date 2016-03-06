@@ -55,7 +55,15 @@ public abstract class IDownloadProvider {
 
     public abstract String getAssetsDownloadURL();
 
-    public abstract String getParsedLibraryDownloadURL(String str);
+    /**
+     * For example, minecraft.json/assetIndex/url or
+     * minecraft.json/downloads/client/url
+     *
+     * @param str baseURL
+     *
+     * @return parsedURL
+     */
+    public abstract String getParsedDownloadURL(String str);
 
     public abstract boolean isAllowedToUseSelfURL();
 }
