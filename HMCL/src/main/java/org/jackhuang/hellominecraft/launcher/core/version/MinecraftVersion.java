@@ -168,4 +168,8 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
             i.id = id;
         return i;
     }
+
+    public Set<IMinecraftLibrary> getLibraries() {
+        return libraries == null ? new HashSet() : new HashSet(libraries);
+    }
 }

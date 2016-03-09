@@ -32,6 +32,7 @@ import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.launcher.core.download.IDownloadProvider;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.util.Utils;
 import org.jackhuang.hellominecraft.util.VersionNumber;
 import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
 
@@ -47,8 +48,7 @@ public class AssetsMojangLoader extends IAssetsHandler {
 
     @Override
     public Task getList(final MinecraftVersion mv, final IMinecraftAssetService mp) {
-        if (mv == null)
-            throw new IllegalArgumentException("AssetsMojangLoader: null argument: MinecraftVersion");
+        Utils.requireNonNull(mv);
         String assetsId = mv.getAssetsIndex().getId();
         File assets = mp.getAssets();
         HMCLog.log("Gathering asset index: " + assetsId);

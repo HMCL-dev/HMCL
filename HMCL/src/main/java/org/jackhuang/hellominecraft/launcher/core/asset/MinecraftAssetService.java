@@ -30,6 +30,7 @@ import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.AssetIndexDownloadInfo;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.MessageBox;
+import org.jackhuang.hellominecraft.util.Utils;
 import org.jackhuang.hellominecraft.util.func.Function;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.tasks.Task;
@@ -55,6 +56,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
     }
 
     public Task downloadAssets(final MinecraftVersion mv) {
+        Utils.requireNonNull(mv);
         return new TaskInfo("Download Assets") {
             Collection<Task> afters = new HashSet<>();
 
