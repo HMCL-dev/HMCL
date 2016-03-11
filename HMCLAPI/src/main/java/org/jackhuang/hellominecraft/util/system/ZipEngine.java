@@ -93,6 +93,7 @@ public class ZipEngine {
             if (file.isDirectory()) {
                 pathName = file.getPath().substring(basePath.length() + 1)
                            + "/";
+                pathName = pathName.replace('\\', '/');
                 if (pathNameCallback != null)
                     pathName = pathNameCallback.apply(pathName, true);
                 if (pathName == null)
@@ -100,9 +101,10 @@ public class ZipEngine {
                 zos.putNextEntry(new ZipEntry(pathName));
                 putDirectoryImpl(file, basePath, pathNameCallback);
             } else {
-                if (".DS_Store".equals(file.getName())) // For mac computers.
+                if (".DS_Store".equals(file.getName())) // For Mac computers.
                     continue;
                 pathName = file.getPath().substring(basePath.length() + 1);
+                pathName = pathName.replace('\\', '/');
                 if (pathNameCallback != null)
                     pathName = pathNameCallback.apply(pathName, false);
                 if (pathName == null)
