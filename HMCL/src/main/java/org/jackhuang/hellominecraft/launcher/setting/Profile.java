@@ -46,8 +46,12 @@ public final class Profile {
     }
 
     public Profile(String name) {
+        this(name, IOUtils.currentDir().getPath());
+    }
+
+    public Profile(String name, String gameDir) {
         this.name = name;
-        gameDir = MCUtils.getInitGameDir().getPath();
+        this.gameDir = gameDir;
     }
 
     public Profile(String name, Profile v) {

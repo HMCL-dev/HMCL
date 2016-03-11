@@ -25,6 +25,7 @@ import java.util.Map;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
+import org.jackhuang.hellominecraft.launcher.core.MCUtils;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.CollectionUtils;
 import org.jackhuang.hellominecraft.util.EventHandler;
@@ -40,6 +41,7 @@ import org.jackhuang.hellominecraft.util.UpdateChecker;
 public final class Settings {
 
     public static final String DEFAULT_PROFILE = "Default";
+    public static final String HOME_PROFILE = "Home";
 
     public static final File SETTINGS_FILE = new File(IOUtils.currentDir(), "hmcl.json");
 
@@ -55,7 +57,9 @@ public final class Settings {
         SETTINGS.downloadTypeChangedEvent.register(DownloadType::setSuggestedDownloadType);
         DownloadType.setSuggestedDownloadType(SETTINGS.getDownloadSource());
         if (!getProfiles().containsKey(DEFAULT_PROFILE))
-            getProfiles().put(DEFAULT_PROFILE, new Profile());
+            getProfiles().put(DEFAULT_PROFILE, new Profile(DEFAULT_PROFILE));
+        if (!getProfiles().containsKey(HOME_PROFILE))
+            getProfiles().put(HOME_PROFILE, new Profile(HOME_PROFILE, MCUtils.getLocation().getPath()));
 
         for (Map.Entry<String, Profile> entry : getProfiles().entrySet()) {
             Profile e = entry.getValue();
