@@ -46,7 +46,7 @@ public final class Profile {
     }
 
     public Profile(String name) {
-        this(name, IOUtils.currentDir().getPath());
+        this(name, new File(IOUtils.currentDir(), ".minecraft").getPath());
     }
 
     public Profile(String name, String gameDir) {

@@ -949,8 +949,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     private void btnRemoveProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveProfileActionPerformed
         if (MessageBox.Show(C.i18n("ui.message.sure_remove", Settings.getLastProfile().getName()), MessageBox.YES_NO_OPTION) == MessageBox.NO_OPTION)
             return;
-        if (Settings.delProfile(Settings.getLastProfile()))
-            loadProfiles();
+        Settings.delProfile(Settings.getLastProfile());
     }//GEN-LAST:event_btnRemoveProfileActionPerformed
 
     private void cboVersionsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboVersionsItemStateChanged

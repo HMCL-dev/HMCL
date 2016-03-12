@@ -58,8 +58,6 @@ public final class Settings {
         DownloadType.setSuggestedDownloadType(SETTINGS.getDownloadSource());
         if (!getProfiles().containsKey(DEFAULT_PROFILE))
             getProfiles().put(DEFAULT_PROFILE, new Profile(DEFAULT_PROFILE));
-        if (!getProfiles().containsKey(HOME_PROFILE))
-            getProfiles().put(HOME_PROFILE, new Profile(HOME_PROFILE, MCUtils.getLocation().getPath()));
 
         for (Map.Entry<String, Profile> entry : getProfiles().entrySet()) {
             Profile e = entry.getValue();
@@ -85,8 +83,11 @@ public final class Settings {
             } catch (IOException | JsonSyntaxException e) {
                 HMCLog.warn("Something happened wrongly when load settings.", e);
             }
-        else
+        else {
             HMCLog.log("No settings file here, may be first loading.");
+            if (!c.getConfigurations().containsKey(HOME_PROFILE))
+                c.getConfigurations().put(HOME_PROFILE, new Profile(HOME_PROFILE, MCUtils.getLocation().getPath()));
+        }
         return c;
     }
 
@@ -154,7 +155,13 @@ public final class Settings {
             MessageBox.Show(C.i18n("settings.cannot_remove_default_config"));
             return false;
         }
-        return getProfiles().remove(ver) != null;
+        boolean notify = false;
+        if (getLastProfile().getName().equals(ver))
+            notify = true;
+        boolean flag = getProfiles().remove(ver) != null;
+        if (notify && flag)
+            onProfileChanged();
+        return flag;
     }
 
     public static final EventHandler<Profile> profileChangedEvent = new EventHandler(null);
