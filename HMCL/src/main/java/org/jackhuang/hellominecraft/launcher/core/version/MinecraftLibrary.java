@@ -89,6 +89,8 @@ public class MinecraftLibrary extends IMinecraftLibrary {
 
     public String formatName() {
         String[] s = name.split(":");
+        if (s.length < 3)
+            return null;
         StringBuilder sb = new StringBuilder(s[0].replace('.', '/')).append('/').append(s[1]).append('/').append(s[2]).append('/').append(s[1]).append('-').append(s[2]);
         if (natives != null)
             sb.append('-').append(getNative());
@@ -120,8 +122,11 @@ public class MinecraftLibrary extends IMinecraftLibrary {
             downloads.artifact = info = new LibraryDownloadInfo();
         else
             info = downloads.artifact;
-        if (StrUtils.isBlank(info.path))
+        if (StrUtils.isBlank(info.path)) {
             info.path = formatName();
+            if (info.path == null)
+                return null;
+        }
         info.forgeURL = this.url;
         return info;
     }

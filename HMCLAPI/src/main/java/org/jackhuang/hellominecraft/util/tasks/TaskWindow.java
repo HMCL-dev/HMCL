@@ -322,7 +322,8 @@ public class TaskWindow extends javax.swing.JDialog
         boolean flag;
 
         public TaskWindowFactory append(Task t) {
-            ll.add(t);
+            if (t != null)
+                ll.add(t);
             return this;
         }
 

@@ -56,7 +56,8 @@ public class MinecraftAssetService extends IMinecraftAssetService {
     }
 
     public Task downloadAssets(final MinecraftVersion mv) {
-        Utils.requireNonNull(mv);
+        if (mv == null)
+            return null;
         return new TaskInfo("Download Assets") {
             Collection<Task> afters = new HashSet<>();
 
