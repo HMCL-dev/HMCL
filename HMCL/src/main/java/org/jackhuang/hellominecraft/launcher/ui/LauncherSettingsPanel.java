@@ -124,6 +124,12 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         });
 
         lblAbout.setText(C.i18n("launcher.about")); // NOI18N
+        lblAbout.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblAbout.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblAboutMouseClicked(evt);
+            }
+        });
 
         btnSelBackgroundPath.setText(C.i18n("ui.button.explore")); // NOI18N
         btnSelBackgroundPath.addActionListener(new java.awt.event.ActionListener() {
@@ -380,7 +386,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
     }//GEN-LAST:event_cboThemeItemStateChanged
 
     private void lblModpackMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblModpackMouseClicked
-        SwingUtils.openLink("http://blog.163.com/huanghongxun2008@126/blog/static/7738046920160323812771/");
+        SwingUtils.openLink("http://huangyuhui.duapp.com/link.php?type=modpack");
     }//GEN-LAST:event_lblModpackMouseClicked
 
     private void cboLangItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboLangItemStateChanged
@@ -414,6 +420,10 @@ public class LauncherSettingsPanel extends AnimatedPanel {
     private void txtProxyPasswordFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtProxyPasswordFocusLost
         Settings.getInstance().setProxyPassword(txtProxyPassword.getText());
     }//GEN-LAST:event_txtProxyPasswordFocusLost
+
+    private void lblAboutMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblAboutMouseClicked
+        SwingUtils.openLink("http://huangyuhui.duapp.com/link.php?type=sponsor");
+    }//GEN-LAST:event_lblAboutMouseClicked
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCheckUpdate;
