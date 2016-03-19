@@ -364,7 +364,7 @@ setupwindow.no_empty_name=名字不可為空
 setupwindow.clean=清理遊戲資料
 
 update.no_browser=無法打開瀏覽器，網址已經復製到剪貼板了，您可以手動粘貼網址打開頁面
-update.should_open_link=是否前往發布頁面更新？
+update.should_open_link=是否更新？
 update.newest_version=最新版本為：
 update.failed=檢查更新失敗
 update.found=(發現更新!)

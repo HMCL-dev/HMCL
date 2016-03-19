@@ -53,20 +53,16 @@ public class DefaultPlugin implements IPlugin {
         OFFLINE_LOGIN.onLoadSettings(Settings.getInstance().getAuthenticatorConfig(OFFLINE_LOGIN.id()));
         YGGDRASIL_LOGIN = new YggdrasilAuthenticator(clientToken);
         YGGDRASIL_LOGIN.onLoadSettings(Settings.getInstance().getAuthenticatorConfig(YGGDRASIL_LOGIN.id()));
-        SKINME_LOGIN = new SkinmeAuthenticator(clientToken);
-        SKINME_LOGIN.onLoadSettings(Settings.getInstance().getAuthenticatorConfig(SKINME_LOGIN.id()));
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
                 Settings.getInstance().setAuthenticatorConfig(OFFLINE_LOGIN.id(), OFFLINE_LOGIN.onSaveSettings());
                 Settings.getInstance().setAuthenticatorConfig(YGGDRASIL_LOGIN.id(), YGGDRASIL_LOGIN.onSaveSettings());
-                Settings.getInstance().setAuthenticatorConfig(SKINME_LOGIN.id(), SKINME_LOGIN.onSaveSettings());
             }
         });
         apply.accept(OFFLINE_LOGIN);
         apply.accept(YGGDRASIL_LOGIN);
-        apply.accept(SKINME_LOGIN);
     }
 
     @Override

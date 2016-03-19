@@ -103,8 +103,10 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
         initExternalModsTable();
         initTabs();
 
+        isLoading = true;
         for (Java j : Java.JAVA)
             cboJava.addItem(j.getLocalizedName());
+        isLoading = false;
 
         Settings.profileLoadingEvent.register(onLoadingProfiles);
         Settings.profileChangedEvent.register(onSelectedProfilesChanged);
