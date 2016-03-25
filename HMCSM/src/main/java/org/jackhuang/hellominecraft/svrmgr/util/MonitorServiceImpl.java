@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.lang.management.ManagementFactory;
 import java.util.StringTokenizer;
 import com.sun.management.OperatingSystemMXBean;
 import org.jackhuang.hellominecraft.util.StrUtils;
@@ -56,7 +57,7 @@ public class MonitorServiceImpl implements IMonitorService {
         long freeMemory = Runtime.getRuntime().freeMemory() / kb;
         // 最大可使用内存
         long maxMemory = Runtime.getRuntime().maxMemory() / kb;
-        OperatingSystemMXBean osmxb = (OperatingSystemMXBean) java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+        OperatingSystemMXBean osmxb = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         // 操作系统
         String osName = System.getProperty("os.name");
         // 总的物理内存
@@ -72,6 +73,8 @@ public class MonitorServiceImpl implements IMonitorService {
         double cpuRatio = 0;
         if (osName.toLowerCase().startsWith("windows"))
             cpuRatio = this.getCpuRatioForWindows();
+        else if (osName.toLowerCase().startsWith("mac"))
+            cpuRatio = this.getCpuRatioForMac();
         else
             cpuRatio = getCpuRateForLinux();
         // 构造返回对象
@@ -137,7 +140,39 @@ public class MonitorServiceImpl implements IMonitorService {
             }
         } catch (IOException ioe) {
             System.out.println(ioe.getMessage());
+            return 1;
+        } finally {
             freeResource(is, isr, brStat);
+        }
+    }
+
+    private double getCpuRatioForMac() {
+        InputStream is = null;
+        InputStreamReader isr = null;
+        BufferedReader brStat = null;
+        StringTokenizer tokenStat;
+        try {
+            Process process = Runtime.getRuntime().exec("top -l 1");
+            is = process.getInputStream();
+            isr = new InputStreamReader(is);
+            brStat = new BufferedReader(isr);
+            brStat.readLine();
+            brStat.readLine();
+            brStat.readLine();
+            tokenStat = new StringTokenizer(brStat.readLine());
+            tokenStat.nextToken();
+            tokenStat.nextToken();
+            String user = tokenStat.nextToken();
+            tokenStat.nextToken();
+            String system = tokenStat.nextToken();
+            tokenStat.nextToken();
+            user = user.substring(0, user.indexOf("%"));
+            system = system.substring(0, system.indexOf("%"));
+            float userUsage = new Float(user);
+            float systemUsage = new Float(system);
+            return (userUsage + systemUsage) / 100;
+        } catch (IOException ioe) {
+            System.out.println(ioe.getMessage());
             return 1;
         } finally {
             freeResource(is, isr, brStat);
