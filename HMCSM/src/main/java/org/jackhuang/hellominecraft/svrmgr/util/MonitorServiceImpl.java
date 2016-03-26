@@ -26,6 +26,7 @@ import java.lang.management.ManagementFactory;
 import java.util.StringTokenizer;
 import com.sun.management.OperatingSystemMXBean;
 import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.logging.HMCLog;
 
 /**
  *
@@ -76,7 +77,7 @@ public class MonitorServiceImpl implements IMonitorService {
         else if (osName.toLowerCase().startsWith("mac"))
             cpuRatio = this.getCpuRatioForMac();
         else
-            cpuRatio = getCpuRateForLinux();
+            cpuRatio = this.getCpuRatioForLinux();
         // 构造返回对象
         MonitorInfoBean infoBean = new MonitorInfoBean();
         infoBean.setFreeMemory(freeMemory);
@@ -91,59 +92,57 @@ public class MonitorServiceImpl implements IMonitorService {
         return infoBean;
     }
 
-    private static double getCpuRateForLinux() {
-        InputStream is = null;
-        InputStreamReader isr = null;
-        BufferedReader brStat = null;
-        StringTokenizer tokenStat;
+    private static double getCpuRatioForLinux() {
+        float cpuUsage = 0;
+        Process pro1, pro2;
+        Runtime r = Runtime.getRuntime();
         try {
-            Process process = Runtime.getRuntime().exec("top -b -n 1");
-            is = process.getInputStream();
-            isr = new InputStreamReader(is);
-            brStat = new BufferedReader(isr);
-            if (linuxVersion == null || linuxVersion.equals("2.4")) {
-                brStat.readLine();
-                brStat.readLine();
-                brStat.readLine();
-                brStat.readLine();
-                tokenStat = new StringTokenizer(brStat.readLine());
-                tokenStat.nextToken();
-                tokenStat.nextToken();
-                String user = tokenStat.nextToken();
-                tokenStat.nextToken();
-                String system = tokenStat.nextToken();
-                tokenStat.nextToken();
-                String nice = tokenStat.nextToken();
-                System.out.println(user + " , " + system + " , " + nice);
-                user = user.substring(0, user.indexOf("%"));
-                system = system.substring(0, system.indexOf("%"));
-                nice = nice.substring(0, nice.indexOf("%"));
-                float userUsage = new Float(user);
-                float systemUsage = new Float(system);
-                float niceUsage = new Float(nice);
-                return (userUsage + systemUsage + niceUsage) / 100;
-            } else {
-                brStat.readLine();
-                brStat.readLine();
-                tokenStat = new StringTokenizer(brStat.readLine());
-                tokenStat.nextToken();
-                tokenStat.nextToken();
-                tokenStat.nextToken();
-                tokenStat.nextToken();
-                tokenStat.nextToken();
-                tokenStat.nextToken();
-                tokenStat.nextToken();
-                String cpuUsage = tokenStat.nextToken();
-                System.out.println("CPU idle : " + cpuUsage);
-                Float usage = new Float(cpuUsage.substring(0, cpuUsage.indexOf("%")));
-                return (1 - usage / 100);
+            String command = "cat /proc/stat";
+            long startTime = System.currentTimeMillis();
+            pro1 = r.exec(command);
+            BufferedReader in1 = new BufferedReader(new InputStreamReader(pro1.getInputStream()));
+            String line = null;
+            long idleCpuTime1 = 0, totalCpuTime1 = 0;   //分别为系统启动后空闲的CPU时间和总的CPU时间
+            while ((line = in1.readLine()) != null)
+                if (line.startsWith("cpu")) {
+                    line = line.trim();
+                    String[] temp = line.split("\\s+");
+                    idleCpuTime1 = Long.parseLong(temp[4]);
+                    for (String s : temp)
+                        if (!s.equals("cpu"))
+                            totalCpuTime1 += Long.parseLong(s);
+                    break;
+                }
+            in1.close();
+            pro1.destroy();
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                HMCLog.err("Failed to catch sysout", e);
             }
-        } catch (IOException ioe) {
-            System.out.println(ioe.getMessage());
-            return 1;
-        } finally {
-            freeResource(is, isr, brStat);
+            //第二次采集CPU时间
+            long endTime = System.currentTimeMillis();
+            pro2 = r.exec(command);
+            BufferedReader in2 = new BufferedReader(new InputStreamReader(pro2.getInputStream()));
+            long idleCpuTime2 = 0, totalCpuTime2 = 0;   //分别为系统启动后空闲的CPU时间和总的CPU时间
+            while ((line = in2.readLine()) != null)
+                if (line.startsWith("cpu")) {
+                    line = line.trim();
+                    String[] temp = line.split("\\s+");
+                    idleCpuTime2 = Long.parseLong(temp[4]);
+                    for (String s : temp)
+                        if (!s.equals("cpu"))
+                            totalCpuTime2 += Long.parseLong(s);
+                    break;
+                }
+            if (idleCpuTime1 != 0 && totalCpuTime1 != 0 && idleCpuTime2 != 0 && totalCpuTime2 != 0)
+                cpuUsage = 1 - (float) (idleCpuTime2 - idleCpuTime1) / (float) (totalCpuTime2 - totalCpuTime1);
+            in2.close();
+            pro2.destroy();
+        } catch (IOException e) {
+            HMCLog.err("Failed to catch sysout", e);
         }
+        return cpuUsage * 100;
     }
 
     private double getCpuRatioForMac() {

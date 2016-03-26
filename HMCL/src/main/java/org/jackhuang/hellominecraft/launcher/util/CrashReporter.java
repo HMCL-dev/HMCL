@@ -47,8 +47,8 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         {
             put("MessageBox", "");
             put("AWTError", "");
-            put("JFileChooser", "Has your operating system been installed completely or is a ghost system? ");
-            put("Jce", "Has your operating system been installed completely or is a ghost system? ");
+            put("JFileChooser", "Has your operating system been installed completely or is a ghost system?");
+            put("Jce", "Has your operating system been installed completely or is a ghost system?");
             put("couldn't create component peer", "Fucking computer!");
             put("sun.awt.shell.Win32ShellFolder2", "crash.user_fault");
             put("UnsatisfiedLinkError", "crash.user_fault");
@@ -60,6 +60,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             put("java.lang.ClassFormatError", "crash.NoClassDefFound");
             put("java.lang.OutOfMemoryError", "FUCKING MEMORY LIMIT!");
             put("Trampoline", "ui.message.update_java");
+            put("NoSuchAlgorithmException", "Has your operating system been installed completely or is a ghost system?");
         }
     };
 
