@@ -216,8 +216,8 @@ public class TaskWindow extends javax.swing.JDialog
             if (idx == -1)
                 return;
             int pgs = progress * 100 / max;
-            if (progresses.contains(idx) && progresses.get(idx) != pgs && lstDownload.getRowCount() > idx) {
-                SwingUtils.setValueAt(lstDownload, pgs + "%", idx, 1);
+            if (progresses.size() > idx && progresses.get(idx) != pgs && lstDownload.getRowCount() > idx) {
+                SwingUtils.setValueAt(lstDownload, pgs < 0 ? "???" : pgs + "%", idx, 1);
                 progresses.set(idx, pgs);
             }
         });
@@ -242,7 +242,7 @@ public class TaskWindow extends javax.swing.JDialog
             if (taskList == null)
                 return;
             tasks.add(task);
-            progresses.add(0);
+            progresses.add(-1);
             SwingUtils.appendLast(lstDownload, task.getInfo(), "0%");
             SwingUtils.moveEnd(srlDownload);
         });

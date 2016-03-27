@@ -18,6 +18,8 @@
 package org.jackhuang.hellominecraft.launcher.core.install.forge;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +29,9 @@ import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionNewerComparator;
-import org.jackhuang.hellominecraft.util.NetUtils;
+import org.jackhuang.hellominecraft.util.tasks.Task;
+import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
+import org.jackhuang.hellominecraft.util.tasks.download.HTTPGetTask;
 
 /**
  *
@@ -48,54 +52,68 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
     public List<InstallerVersion> versions;
 
     @Override
-    public void refreshList(String[] needed) throws Exception {
+    public Task refresh(String[] needed) {
         if (root != null)
-            return;
-        String s = NetUtils.get(DownloadType.getSuggestedDownloadType().getProvider().getParsedDownloadURL(C.URL_FORGE_LIST));
+            return null;
+        return new TaskInfo(C.i18n("install.forge.get_list")) {
+            HTTPGetTask task = new HTTPGetTask(DownloadType.getSuggestedDownloadType().getProvider().getParsedDownloadURL(C.URL_FORGE_LIST));
 
-        root = C.GSON.fromJson(s, MinecraftForgeVersionRoot.class);
-
-        versionMap = new HashMap<>();
-        versions = new ArrayList<>();
-
-        for (Map.Entry<String, int[]> arr : root.mcversion.entrySet()) {
-            String mcver = StrUtils.formatVersion(arr.getKey());
-            ArrayList<InstallerVersion> al = new ArrayList<>();
-            for (int num : arr.getValue()) {
-                MinecraftForgeVersion v = root.number.get(num);
-                InstallerVersion iv = new InstallerVersion(v.version, StrUtils.formatVersion(v.mcversion));
-                for (String[] f : v.files) {
-
-                    String ver = v.mcversion + "-" + v.version;
-                    if (!StrUtils.isBlank(v.branch))
-                        ver = ver + "-" + v.branch;
-                    String filename = root.artifact + "-" + ver + "-" + f[1] + "." + f[0];
-                    String url = DownloadType.getSuggestedDownloadType().getProvider().getParsedDownloadURL(root.webpath + ver + "/" + filename);
-                    switch (f[1]) {
-                    case "installer":
-                        iv.installer = url;
-                        break;
-                    case "universal":
-                        iv.universal = url;
-                        break;
-                    case "changelog":
-                        iv.changelog = url;
-                        break;
-                    default:
-                        break;
-                    }
-                }
-                if (StrUtils.isBlank(iv.installer) || StrUtils.isBlank(iv.universal))
-                    continue;
-                Collections.sort(al, new InstallerVersionNewerComparator());
-                al.add(iv);
-                versions.add(iv);
+            @Override
+            public Collection<Task> getDependTasks() {
+                return Arrays.asList(task);
             }
 
-            versionMap.put(StrUtils.formatVersion(mcver), al);
-        }
+            @Override
+            public void executeTask() throws Throwable {
+                if (!areDependTasksSucceeded)
+                    return;
+                String s = task.getResult();
 
-        Collections.sort(versions, new InstallerVersionComparator());
+                root = C.GSON.fromJson(s, MinecraftForgeVersionRoot.class);
+
+                versionMap = new HashMap<>();
+                versions = new ArrayList<>();
+
+                for (Map.Entry<String, int[]> arr : root.mcversion.entrySet()) {
+                    String mcver = StrUtils.formatVersion(arr.getKey());
+                    ArrayList<InstallerVersion> al = new ArrayList<>();
+                    for (int num : arr.getValue()) {
+                        MinecraftForgeVersion v = root.number.get(num);
+                        InstallerVersion iv = new InstallerVersion(v.version, StrUtils.formatVersion(v.mcversion));
+                        for (String[] f : v.files) {
+
+                            String ver = v.mcversion + "-" + v.version;
+                            if (!StrUtils.isBlank(v.branch))
+                                ver = ver + "-" + v.branch;
+                            String filename = root.artifact + "-" + ver + "-" + f[1] + "." + f[0];
+                            String url = DownloadType.getSuggestedDownloadType().getProvider().getParsedDownloadURL(root.webpath + ver + "/" + filename);
+                            switch (f[1]) {
+                            case "installer":
+                                iv.installer = url;
+                                break;
+                            case "universal":
+                                iv.universal = url;
+                                break;
+                            case "changelog":
+                                iv.changelog = url;
+                                break;
+                            default:
+                                break;
+                            }
+                        }
+                        if (StrUtils.isBlank(iv.installer) || StrUtils.isBlank(iv.universal))
+                            continue;
+                        Collections.sort(al, new InstallerVersionNewerComparator());
+                        al.add(iv);
+                        versions.add(iv);
+                    }
+
+                    versionMap.put(StrUtils.formatVersion(mcver), al);
+                }
+
+                Collections.sort(versions, new InstallerVersionComparator());
+            }
+        };
     }
 
     @Override

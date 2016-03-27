@@ -57,15 +57,22 @@ public class HTTPGetTask extends TaskInfo implements PreviousResult<String> {
             if (repeat > 0)
                 HMCLog.warn("Failed to download, repeat: " + repeat);
             try {
+                if (ppl != null)
+                    ppl.setProgress(this, -1, 1);
                 URLConnection conn = new URL(url).openConnection();
                 InputStream is = conn.getInputStream();
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 int i;
                 int size = conn.getContentLength(), read = 0;
+                long lastTime = System.currentTimeMillis();
                 while ((i = is.read()) != -1) {
                     baos.write(i);
-                    if (ppl != null)
-                        ppl.setProgress(this, ++read, size);
+                    ++read;
+                    long now = System.currentTimeMillis();
+                    if (ppl != null && (now - lastTime) >= 1000) {
+                        ppl.setProgress(this, read, size);
+                        lastTime = now;
+                    }
                     if (!shouldContinue)
                         return;
                 }

@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftAssetService;
@@ -30,7 +29,6 @@ import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.AssetIndexDownloadInfo;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.MessageBox;
-import org.jackhuang.hellominecraft.util.Utils;
 import org.jackhuang.hellominecraft.util.func.Function;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.tasks.Task;
@@ -58,23 +56,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
     public Task downloadAssets(final MinecraftVersion mv) {
         if (mv == null)
             return null;
-        return new TaskInfo("Download Assets") {
-            Collection<Task> afters = new HashSet<>();
-
-            @Override
-            public Collection<Task> getDependTasks() {
-                return Arrays.asList(IAssetsHandler.ASSETS_HANDLER.getList(mv, service.asset()));
-            }
-
-            @Override
-            public void executeTask() {
-            }
-
-            @Override
-            public Collection<Task> getAfterTasks() {
-                return Arrays.asList(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(service.getDownloadType().getProvider()));
-            }
-        };
+        return IAssetsHandler.ASSETS_HANDLER.getList(mv, service.asset()).after(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(service.getDownloadType().getProvider()));
     }
 
     @Override

@@ -88,6 +88,8 @@ public class ZipEngine {
             files = new File[1];
             files[0] = source;
         }
+        if (files == null)
+            return;
         String pathName;//存相对路径(相对于待压缩的根目录)
         for (File file : files)
             if (file.isDirectory()) {

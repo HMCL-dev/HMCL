@@ -20,6 +20,8 @@ package org.jackhuang.hellominecraft.launcher.core.install.optifine.bmcl;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -30,8 +32,10 @@ import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.ArrayUtils;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
 import org.jackhuang.hellominecraft.launcher.core.install.optifine.OptiFineVersion;
-import org.jackhuang.hellominecraft.util.NetUtils;
 import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.tasks.Task;
+import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
+import org.jackhuang.hellominecraft.util.tasks.download.HTTPGetTask;
 
 /**
  *
@@ -55,34 +59,46 @@ public class OptiFineBMCLVersionList extends InstallerVersionList {
     }.getType();
 
     @Override
-    public void refreshList(String[] needed) throws Exception {
-        String s = NetUtils.get("http://bmclapi.bangbang93.com/optifine/versionlist");
+    public Task refresh(String[] needed) {
+        return new TaskInfo(C.i18n("install.optifine.get_list")) {
+            HTTPGetTask task = new HTTPGetTask("http://bmclapi.bangbang93.com/optifine/versionlist");
 
-        versionMap = new HashMap<>();
-        versions = new ArrayList<>();
-
-        if (s == null)
-            return;
-        root = C.GSON.fromJson(s, TYPE);
-        for (OptiFineVersion v : root) {
-            v.setMirror(v.getMirror().replace("http://optifine.net/http://optifine.net/", "http://optifine.net/"));
-
-            if (StrUtils.isBlank(v.getMCVersion())) {
-                Pattern p = Pattern.compile("OptiFine (.*) HD");
-                Matcher m = p.matcher(v.getVersion());
-                while (m.find())
-                    v.setMCVersion(m.group(1));
+            @Override
+            public Collection<Task> getDependTasks() {
+                return Arrays.asList(task);
             }
-            InstallerVersion iv = new InstallerVersion(v.getVersion(), StrUtils.formatVersion(v.getMCVersion()));
 
-            List<InstallerVersion> al = ArrayUtils.tryGetMapWithList(versionMap, StrUtils.formatVersion(v.getMCVersion()));
-            //String url = "http://bmclapi.bangbang93.com/optifine/" + iv.selfVersion.replace(" ", "%20");
-            iv.installer = iv.universal = v.getMirror();
-            al.add(iv);
-            versions.add(iv);
-        }
+            @Override
+            public void executeTask() throws Throwable {
+                String s = task.getResult();
 
-        Collections.sort(versions, InstallerVersionComparator.INSTANCE);
+                versionMap = new HashMap<>();
+                versions = new ArrayList<>();
+
+                if (s == null)
+                    return;
+                root = C.GSON.fromJson(s, TYPE);
+                for (OptiFineVersion v : root) {
+                    v.setMirror(v.getMirror().replace("http://optifine.net/http://optifine.net/", "http://optifine.net/"));
+
+                    if (StrUtils.isBlank(v.getMCVersion())) {
+                        Pattern p = Pattern.compile("OptiFine (.*) HD");
+                        Matcher m = p.matcher(v.getVersion());
+                        while (m.find())
+                            v.setMCVersion(m.group(1));
+                    }
+                    InstallerVersion iv = new InstallerVersion(v.getVersion(), StrUtils.formatVersion(v.getMCVersion()));
+
+                    List<InstallerVersion> al = ArrayUtils.tryGetMapWithList(versionMap, StrUtils.formatVersion(v.getMCVersion()));
+                    //String url = "http://bmclapi.bangbang93.com/optifine/" + iv.selfVersion.replace(" ", "%20");
+                    iv.installer = iv.universal = v.getMirror();
+                    al.add(iv);
+                    versions.add(iv);
+                }
+
+                Collections.sort(versions, InstallerVersionComparator.INSTANCE);
+            }
+        };
     }
 
     @Override

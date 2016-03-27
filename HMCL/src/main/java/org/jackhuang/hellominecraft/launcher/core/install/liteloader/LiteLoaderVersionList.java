@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.launcher.core.install.liteloader;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -28,8 +29,10 @@ import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList.InstallerVersion;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionNewerComparator;
-import org.jackhuang.hellominecraft.util.NetUtils;
 import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.tasks.Task;
+import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
+import org.jackhuang.hellominecraft.util.tasks.download.HTTPGetTask;
 
 /**
  *
@@ -50,38 +53,52 @@ public class LiteLoaderVersionList extends InstallerVersionList {
     public List<InstallerVersion> versions;
 
     @Override
-    public void refreshList(String[] needed) throws Exception {
-        String s = NetUtils.get(C.URL_LITELOADER_LIST);
+    public Task refresh(String[] needed) {
         if (root != null)
-            return;
+            return null;
+        return new TaskInfo(C.i18n("install.liteloader.get_list")) {
+            HTTPGetTask task = new HTTPGetTask(C.URL_LITELOADER_LIST);
 
-        root = C.GSON.fromJson(s, LiteLoaderVersionsRoot.class);
-
-        versionMap = new HashMap<>();
-        versions = new ArrayList<>();
-
-        for (Map.Entry<String, LiteLoaderMCVersions> arr : root.versions.entrySet()) {
-            ArrayList<InstallerVersion> al = new ArrayList<>();
-            LiteLoaderMCVersions mcv = arr.getValue();
-            if (mcv == null || mcv.artefacts == null || mcv.artefacts.get("com.mumfrey:liteloader") == null)
-                continue;
-            for (Map.Entry<String, LiteLoaderVersion> entry : mcv.artefacts.get("com.mumfrey:liteloader").entrySet()) {
-                if ("latest".equals(entry.getKey()))
-                    continue;
-                LiteLoaderVersion v = entry.getValue();
-                LiteLoaderInstallerVersion iv = new LiteLoaderInstallerVersion(v.version, StrUtils.formatVersion(arr.getKey()));
-                iv.universal = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + arr.getKey() + "/" + v.file;
-                iv.tweakClass = v.tweakClass;
-                iv.libraries = Arrays.copyOf(v.libraries, v.libraries.length);
-                iv.installer = "http://dl.liteloader.com/redist/" + iv.mcVersion + "/liteloader-installer-" + iv.selfVersion.replace("_", "-") + ".jar";
-                al.add(iv);
-                versions.add(iv);
+            @Override
+            public Collection<Task> getDependTasks() {
+                return Arrays.asList(task);
             }
-            Collections.sort(al, new InstallerVersionNewerComparator());
-            versionMap.put(StrUtils.formatVersion(arr.getKey()), al);
-        }
 
-        Collections.sort(versions, InstallerVersionComparator.INSTANCE);
+            @Override
+            public void executeTask() throws Throwable {
+                if (!areDependTasksSucceeded)
+                    return;
+                String s = task.getResult();
+
+                root = C.GSON.fromJson(s, LiteLoaderVersionsRoot.class);
+
+                versionMap = new HashMap<>();
+                versions = new ArrayList<>();
+
+                for (Map.Entry<String, LiteLoaderMCVersions> arr : root.versions.entrySet()) {
+                    ArrayList<InstallerVersion> al = new ArrayList<>();
+                    LiteLoaderMCVersions mcv = arr.getValue();
+                    if (mcv == null || mcv.artefacts == null || mcv.artefacts.get("com.mumfrey:liteloader") == null)
+                        continue;
+                    for (Map.Entry<String, LiteLoaderVersion> entry : mcv.artefacts.get("com.mumfrey:liteloader").entrySet()) {
+                        if ("latest".equals(entry.getKey()))
+                            continue;
+                        LiteLoaderVersion v = entry.getValue();
+                        LiteLoaderInstallerVersion iv = new LiteLoaderInstallerVersion(v.version, StrUtils.formatVersion(arr.getKey()));
+                        iv.universal = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + arr.getKey() + "/" + v.file;
+                        iv.tweakClass = v.tweakClass;
+                        iv.libraries = Arrays.copyOf(v.libraries, v.libraries.length);
+                        iv.installer = "http://dl.liteloader.com/redist/" + iv.mcVersion + "/liteloader-installer-" + iv.selfVersion.replace("_", "-") + ".jar";
+                        al.add(iv);
+                        versions.add(iv);
+                    }
+                    Collections.sort(al, new InstallerVersionNewerComparator());
+                    versionMap.put(StrUtils.formatVersion(arr.getKey()), al);
+                }
+
+                Collections.sort(versions, InstallerVersionComparator.INSTANCE);
+            }
+        };
     }
 
     @Override

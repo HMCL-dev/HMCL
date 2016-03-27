@@ -20,6 +20,8 @@ package org.jackhuang.hellominecraft.launcher.core.install.optifine.vanilla;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -32,8 +34,11 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
 import org.jackhuang.hellominecraft.launcher.core.install.optifine.OptiFineVersion;
 import org.jackhuang.hellominecraft.util.ArrayUtils;
-import org.jackhuang.hellominecraft.util.NetUtils;
+import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.tasks.Task;
+import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
+import org.jackhuang.hellominecraft.util.tasks.download.HTTPGetTask;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -59,60 +64,74 @@ public class OptiFineVersionList extends InstallerVersionList {
     public List<InstallerVersion> versions;
 
     @Override
-    public void refreshList(String[] sss) throws Exception {
-        String content = NetUtils.get("http://optifine.net/downloads");
+    public Task refresh(String[] sss) {
         if (versions != null)
-            return;
-        versionMap = new HashMap<>();
-        versions = new ArrayList<>();
+            return null;
+        return new TaskInfo(C.i18n("install.optifine.get_list")) {
+            HTTPGetTask task = new HTTPGetTask("http://optifine.net/downloads");
 
-        content = content.replace("&nbsp;", " ").replace("&gt;", ">").replace("&lt;", "<").replace("<br>", "<br />");
-
-        try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder db = factory.newDocumentBuilder();
-            Document doc = db.parse(new ByteArrayInputStream(content.getBytes("UTF-8")));
-            Element r = doc.getDocumentElement();
-            NodeList tables = r.getElementsByTagName("table");
-            for (int i = 0; i < tables.getLength(); i++) {
-                Element e = (Element) tables.item(i);
-                if ("downloadTable".equals(e.getAttribute("class"))) {
-                    NodeList tr = e.getElementsByTagName("tr");
-                    for (int k = 0; k < tr.getLength(); k++) {
-                        NodeList downloadLine = ((Element) tr.item(k)).getElementsByTagName("td");
-                        OptiFineVersion v = new OptiFineVersion();
-                        for (int j = 0; j < downloadLine.getLength(); j++) {
-                            Element td = (Element) downloadLine.item(j);
-                            if (StrUtils.startsWith(td.getAttribute("class"), "downloadLineMirror"))
-                                v.setMirror(((Element) td.getElementsByTagName("a").item(0)).getAttribute("href"));
-                            if (StrUtils.startsWith(td.getAttribute("class"), "downloadLineDownload"))
-                                v.setDownloadLink(((Element) td.getElementsByTagName("a").item(0)).getAttribute("href"));
-                            if (StrUtils.startsWith(td.getAttribute("class"), "downloadLineDate"))
-                                v.setDate(td.getTextContent());
-                            if (StrUtils.startsWith(td.getAttribute("class"), "downloadLineFile"))
-                                v.setVersion(td.getTextContent());
-                        }
-                        if (StrUtils.isBlank(v.getMCVersion())) {
-                            Pattern p = Pattern.compile("OptiFine (.*?) ");
-                            Matcher m = p.matcher(v.getVersion());
-                            while (m.find())
-                                v.setMCVersion(StrUtils.formatVersion(m.group(1)));
-                        }
-                        InstallerVersion iv = new InstallerVersion(v.getVersion(), StrUtils.formatVersion(v.getMCVersion()));
-                        iv.installer = iv.universal = v.getMirror();
-                        root.add(v);
-                        versions.add(iv);
-
-                        List<InstallerVersion> ivl = ArrayUtils.tryGetMapWithList(versionMap, StrUtils.formatVersion(v.getMCVersion()));
-                        ivl.add(iv);
-                    }
-                }
+            @Override
+            public Collection<Task> getDependTasks() {
+                return Arrays.asList(task);
             }
-        } catch (ParserConfigurationException | SAXException | IOException | DOMException ex) {
-            throw new RuntimeException(ex);
-        }
 
-        Collections.sort(versions, InstallerVersionComparator.INSTANCE);
+            @Override
+            public void executeTask() throws Throwable {
+                if (!areDependTasksSucceeded)
+                    return;
+                String content = task.getResult();
+                versionMap = new HashMap<>();
+                versions = new ArrayList<>();
+
+                content = content.replace("&nbsp;", " ").replace("&gt;", ">").replace("&lt;", "<").replace("<br>", "<br />");
+
+                try {
+                    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                    DocumentBuilder db = factory.newDocumentBuilder();
+                    Document doc = db.parse(new ByteArrayInputStream(content.getBytes("UTF-8")));
+                    Element r = doc.getDocumentElement();
+                    NodeList tables = r.getElementsByTagName("table");
+                    for (int i = 0; i < tables.getLength(); i++) {
+                        Element e = (Element) tables.item(i);
+                        if ("downloadTable".equals(e.getAttribute("class"))) {
+                            NodeList tr = e.getElementsByTagName("tr");
+                            for (int k = 0; k < tr.getLength(); k++) {
+                                NodeList downloadLine = ((Element) tr.item(k)).getElementsByTagName("td");
+                                OptiFineVersion v = new OptiFineVersion();
+                                for (int j = 0; j < downloadLine.getLength(); j++) {
+                                    Element td = (Element) downloadLine.item(j);
+                                    if (StrUtils.startsWith(td.getAttribute("class"), "downloadLineMirror"))
+                                        v.setMirror(((Element) td.getElementsByTagName("a").item(0)).getAttribute("href"));
+                                    if (StrUtils.startsWith(td.getAttribute("class"), "downloadLineDownload"))
+                                        v.setDownloadLink(((Element) td.getElementsByTagName("a").item(0)).getAttribute("href"));
+                                    if (StrUtils.startsWith(td.getAttribute("class"), "downloadLineDate"))
+                                        v.setDate(td.getTextContent());
+                                    if (StrUtils.startsWith(td.getAttribute("class"), "downloadLineFile"))
+                                        v.setVersion(td.getTextContent());
+                                }
+                                if (StrUtils.isBlank(v.getMCVersion())) {
+                                    Pattern p = Pattern.compile("OptiFine (.*?) ");
+                                    Matcher m = p.matcher(v.getVersion());
+                                    while (m.find())
+                                        v.setMCVersion(StrUtils.formatVersion(m.group(1)));
+                                }
+                                InstallerVersion iv = new InstallerVersion(v.getVersion(), StrUtils.formatVersion(v.getMCVersion()));
+                                iv.installer = iv.universal = v.getMirror();
+                                root.add(v);
+                                versions.add(iv);
+
+                                List<InstallerVersion> ivl = ArrayUtils.tryGetMapWithList(versionMap, StrUtils.formatVersion(v.getMCVersion()));
+                                ivl.add(iv);
+                            }
+                        }
+                    }
+                } catch (ParserConfigurationException | SAXException | IOException | DOMException ex) {
+                    throw new RuntimeException(ex);
+                }
+
+                Collections.sort(versions, InstallerVersionComparator.INSTANCE);
+            }
+        };
     }
 
     @Override

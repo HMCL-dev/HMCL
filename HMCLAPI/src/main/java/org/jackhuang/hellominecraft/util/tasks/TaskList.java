@@ -101,6 +101,8 @@ public class TaskList extends Thread {
         AtomicBoolean bool = new AtomicBoolean(true);
         CountDownLatch counter = new CountDownLatch(c.size());
         for (Task t2 : c) {
+            if (t2 == null)
+                continue;
             t2.setParallelExecuting(true);
             Invoker thread = new Invoker(t2, counter, bool);
             invokers.add(thread);

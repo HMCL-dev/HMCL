@@ -25,9 +25,7 @@ import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerType;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
 import org.jackhuang.hellominecraft.util.tasks.TaskRunnable;
-import org.jackhuang.hellominecraft.util.tasks.TaskRunnableArg1;
 import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.util.tasks.communication.DefaultPreviousResult;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
@@ -123,9 +121,7 @@ public class InstallerPanel extends AnimatedPanel {
     InstallerType id;
 
     void refreshVersions() {
-        if (TaskWindow.factory().append(new TaskRunnableArg1<>(C.i18n("install." + id.id + ".get_list"), list)
-            .registerPreviousResult(new DefaultPreviousResult<>(new String[] { gsp.getMinecraftVersionFormatted() })))
-            .create())
+        if (TaskWindow.execute(list.refresh(new String[] { gsp.getMinecraftVersionFormatted() })))
             loadVersions();
     }
 
@@ -139,7 +135,8 @@ public class InstallerPanel extends AnimatedPanel {
             MessageBox.Show(C.i18n("install.not_refreshed"));
             return;
         }
-        Settings.getLastProfile().service().install().download(Settings.getLastProfile().getSelectedVersion(), getVersion(idx), id).after(new TaskRunnable(this::refreshVersions)).run();
+        TaskWindow.execute(Settings.getLastProfile().service().install().download(Settings.getLastProfile().getSelectedVersion(), getVersion(idx), id),
+                           new TaskRunnable(this::refreshVersions));
     }
 
     public void loadVersions() {

@@ -25,7 +25,7 @@ public class CurseDownloadProvider extends MojangDownloadProvider {
 
     @Override
     public String getParsedDownloadURL(String str) {
-        return str == null ? null : str.replace("http://files.minecraftforge.net/maven", "http://ftb.cursecdn.com/FTB2/maven/");
+        return str == null ? null : str.replace("http://files.minecraftforge.net/maven", "http://ftb.cursecdn.com/FTB2/maven");
     }
 
 }

@@ -17,28 +17,39 @@
  */
 package org.jackhuang.hellominecraft.util.tasks;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 /**
  *
  * @author huangyuhui
  */
-public class DoubleTask extends Task {
+public class DoubleTask extends TaskInfo {
 
     Task a, b;
 
     public DoubleTask(Task a, Task b) {
+        this(a, b, "Double Task");
+    }
+
+    public DoubleTask(Task a, Task b, String info) {
+        super(info);
         this.a = a;
         this.b = b;
     }
 
     @Override
-    public void executeTask() throws Throwable {
-        a.executeTask();
-        b.executeTask();
+    public Collection<Task> getDependTasks() {
+        return Arrays.asList(a);
     }
 
     @Override
-    public String getInfo() {
-        return "Double Task";
+    public Collection<Task> getAfterTasks() {
+        return Arrays.asList(b);
+    }
+
+    @Override
+    public void executeTask() throws Throwable {
     }
 
 }

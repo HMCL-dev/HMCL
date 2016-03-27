@@ -27,8 +27,6 @@ import org.jackhuang.hellominecraft.launcher.core.install.liteloader.LiteLoaderV
 import org.jackhuang.hellominecraft.launcher.core.install.optifine.OptiFineInstaller;
 import org.jackhuang.hellominecraft.launcher.core.install.optifine.vanilla.OptiFineDownloadFormatter;
 import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
-import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 
@@ -58,47 +56,28 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
 
     @Override
     public Task downloadForge(String installId, InstallerVersion v) {
-        return new TaskInfo("Forge Downloader") {
-            @Override
-            public void executeTask() {
-                File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "forge-installer.jar");
-                if (v.installer != null)
-                    TaskWindow.factory()
-                        .append(new FileDownloadTask(service.getDownloadType().getProvider().getParsedDownloadURL(v.installer), filepath).setTag("forge"))
-                        .append(new ForgeInstaller(service, filepath))
-                        .create();
-            }
-        };
+        File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "forge-installer.jar");
+        if (v.installer == null)
+            return null;
+        else
+            return new FileDownloadTask(service.getDownloadType().getProvider().getParsedDownloadURL(v.installer), filepath).setTag("forge")
+                .after(new ForgeInstaller(service, filepath));
     }
 
     @Override
     public Task downloadOptiFine(String installId, InstallerVersion v) {
-        return new TaskInfo("OptiFine Downloader") {
-            @Override
-            public void executeTask() {
-                File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "optifine-installer.jar");
-                if (v.installer != null) {
-                    OptiFineDownloadFormatter task = new OptiFineDownloadFormatter(v.installer);
-                    TaskWindow.factory().append(task)
-                        .append(new FileDownloadTask(filepath).registerPreviousResult(task).setTag("optifine"))
-                        .append(new OptiFineInstaller(service, installId, v, filepath))
-                        .create();
-                }
-            }
-        };
+        File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "optifine-installer.jar");
+        if (v.installer == null)
+            return null;
+        OptiFineDownloadFormatter task = new OptiFineDownloadFormatter(v.installer);
+        return task.after(new FileDownloadTask(filepath).registerPreviousResult(task).setTag("optifine"))
+            .after(new OptiFineInstaller(service, installId, v, filepath));
     }
 
     @Override
     public Task downloadLiteLoader(String installId, InstallerVersion v) {
-        return new TaskInfo("LiteLoader Downloader") {
-            @Override
-            public void executeTask() {
-                File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "liteloader-universal.jar");
-                FileDownloadTask task = (FileDownloadTask) new FileDownloadTask(v.universal, filepath).setTag("LiteLoader");
-                TaskWindow.factory()
-                    .append(task).append(new LiteLoaderInstaller(service, installId, (LiteLoaderVersionList.LiteLoaderInstallerVersion) v).registerPreviousResult(task))
-                    .create();
-            }
-        };
+        File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "liteloader-universal.jar");
+        FileDownloadTask task = (FileDownloadTask) new FileDownloadTask(v.universal, filepath).setTag("LiteLoader");
+        return task.after(new LiteLoaderInstaller(service, installId, (LiteLoaderVersionList.LiteLoaderInstallerVersion) v).registerPreviousResult(task));
     }
 }

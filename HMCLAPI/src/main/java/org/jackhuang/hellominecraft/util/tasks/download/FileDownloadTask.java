@@ -130,6 +130,8 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
             if (!shouldContinue)
                 break;
             try {
+                if (ppl != null)
+                    ppl.setProgress(this, -1, 1);
 
                 // Open connection to URL.
                 HttpURLConnection connection

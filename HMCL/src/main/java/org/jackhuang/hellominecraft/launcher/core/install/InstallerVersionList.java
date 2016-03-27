@@ -22,13 +22,13 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import org.jackhuang.hellominecraft.util.func.Consumer;
+import org.jackhuang.hellominecraft.util.tasks.Task;
 
 /**
  *
  * @author huangyuhui
  */
-public abstract class InstallerVersionList implements Consumer<String[]> {
+public abstract class InstallerVersionList {
 
     /**
      * Refresh installer versions list from the downloaded content.
@@ -37,7 +37,7 @@ public abstract class InstallerVersionList implements Consumer<String[]> {
      *
      * @throws java.lang.Exception including network exceptions, IO exceptions.
      */
-    public abstract void refreshList(String[] versions) throws Exception;
+    public abstract Task refresh(String[] versions);
 
     /**
      * Installer name.
@@ -115,15 +115,6 @@ public abstract class InstallerVersionList implements Consumer<String[]> {
         @Override
         public int compare(InstallerVersion o1, InstallerVersion o2) {
             return o2.compareTo(o1);
-        }
-    }
-
-    @Override
-    public void accept(String[] v) {
-        try {
-            refreshList(v);
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
         }
     }
 }
