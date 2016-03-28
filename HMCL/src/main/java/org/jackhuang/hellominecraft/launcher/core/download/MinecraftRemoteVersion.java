@@ -29,6 +29,6 @@ public class MinecraftRemoteVersion {
     public String getUrl(DownloadType type) {
         if (url == null)
             return type.getProvider().getVersionsDownloadURL() + id + "/" + id + ".json";
-        return url;
+        return type.getProvider().getParsedDownloadURL(url);
     }
 }
