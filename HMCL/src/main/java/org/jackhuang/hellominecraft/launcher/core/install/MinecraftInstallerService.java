@@ -29,6 +29,7 @@ import org.jackhuang.hellominecraft.launcher.core.install.optifine.vanilla.OptiF
 import org.jackhuang.hellominecraft.util.tasks.Task;
 import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.tasks.DeleteFileTask;
 
 /**
  *
@@ -61,7 +62,8 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
             return null;
         else
             return new FileDownloadTask(service.getDownloadType().getProvider().getParsedDownloadURL(v.installer), filepath).setTag("forge")
-                .after(new ForgeInstaller(service, filepath));
+                .after(new ForgeInstaller(service, filepath))
+                .after(new DeleteFileTask(filepath));
     }
 
     @Override
@@ -71,13 +73,15 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
             return null;
         OptiFineDownloadFormatter task = new OptiFineDownloadFormatter(v.installer);
         return task.after(new FileDownloadTask(filepath).registerPreviousResult(task).setTag("optifine"))
-            .after(new OptiFineInstaller(service, installId, v, filepath));
+            .after(new OptiFineInstaller(service, installId, v, filepath))
+            .after(new DeleteFileTask(filepath));
     }
 
     @Override
     public Task downloadLiteLoader(String installId, InstallerVersion v) {
         File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "liteloader-universal.jar");
         FileDownloadTask task = (FileDownloadTask) new FileDownloadTask(v.universal, filepath).setTag("LiteLoader");
-        return task.after(new LiteLoaderInstaller(service, installId, (LiteLoaderVersionList.LiteLoaderInstallerVersion) v).registerPreviousResult(task));
+        return task.after(new LiteLoaderInstaller(service, installId, (LiteLoaderVersionList.LiteLoaderInstallerVersion) v).registerPreviousResult(task))
+            .after(new DeleteFileTask(filepath));
     }
 }
