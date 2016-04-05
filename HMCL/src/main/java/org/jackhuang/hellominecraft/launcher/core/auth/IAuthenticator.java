@@ -96,7 +96,8 @@ public abstract class IAuthenticator {
     public void onLoadSettings(Map m) {
         if (m == null)
             return;
-        username = (String) m.get("IAuthenticator_UserName");
+        Object o = m.get("IAuthenticator_UserName");
+        username = o instanceof String ? (String) o : "";
     }
 
     public String getUserName() {

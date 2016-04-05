@@ -52,10 +52,10 @@ import org.jackhuang.hellominecraft.util.ui.GraphicsUtils;
 import org.jackhuang.hellominecraft.lookandfeel.Theme;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.Utils;
 import org.jackhuang.hellominecraft.util.ui.DropShadowBorder;
 import org.jackhuang.hellominecraft.util.ui.TintablePanel;
 import org.jackhuang.hellominecraft.util.ui.BasicColors;
+import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 
 /**
  *
@@ -168,7 +168,7 @@ public final class MainFrame extends DraggableFrame {
 
         ImageIcon headerIcon = Main.getIcon("icon.png");
         this.setIconImage(headerIcon.getImage());
-        headerIcon = Utils.scaleImage(headerIcon, 16, 16);
+        headerIcon = SwingUtils.scaleImage(headerIcon, 16, 16);
         JLabel headerLabel = new JLabel(headerIcon);
         headerLabel.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
         header.add(headerLabel);
@@ -318,7 +318,7 @@ public final class MainFrame extends DraggableFrame {
     ImageIcon background;
 
     public void loadBackground() {
-        background = Utils.searchBackgroundImage(Main.getIcon(Settings.getInstance().getTheme().settings.get("Customized.MainFrame.background_image")), Settings.getInstance().getBgpath(), 800, 480);
+        background = SwingUtils.searchBackgroundImage(Main.getIcon(Settings.getInstance().getTheme().settings.get("Customized.MainFrame.background_image")), Settings.getInstance().getBgpath(), 800, 480);
         if (background != null)
             if (backgroundLabel == null) {
                 backgroundLabel = new JLabel(background);
