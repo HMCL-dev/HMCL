@@ -54,6 +54,15 @@ public class IOUtils {
             return path + File.separatorChar;
     }
 
+    public static String addURLSeparator(String path) {
+        if (path == null || path.trim().length() == 0)
+            return "";
+        if (path.charAt(path.length() - 1) == '/')
+            return path;
+        else
+            return path + '/';
+    }
+
     public static boolean isSeparator(char ch) {
         return ch == File.separatorChar || ch == '/' || ch == '\\';
     }

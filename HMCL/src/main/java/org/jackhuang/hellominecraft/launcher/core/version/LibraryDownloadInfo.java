@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.launcher.core.version;
 
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.system.IOUtils;
 
 /**
  *
@@ -38,7 +39,7 @@ public class LibraryDownloadInfo extends GameDownloadInfo {
             if (path == null)
                 return null;
             else
-                myURL += path.replace('\\', '/');
+                myURL = IOUtils.addURLSeparator(myURL) + path.replace('\\', '/');
         return myURL;
     }
 }
