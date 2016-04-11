@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hellominecraft.util.ui;
 
-import java.awt.Frame;
-import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
@@ -28,7 +26,6 @@ import org.jackhuang.hellominecraft.util.logging.Level;
 import org.jackhuang.hellominecraft.util.func.NonFunction;
 import org.jackhuang.hellominecraft.util.DoubleOutputStream;
 import org.jackhuang.hellominecraft.util.LauncherPrintStream;
-import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.Utils;
 
 /**
@@ -254,7 +251,7 @@ public class LogWindow extends javax.swing.JFrame {
         StyleConstants.setForeground(sas, c.COLOR);
         try {
             d.insertString(d.getLength(), status, sas);
-        } catch (BadLocationException ex) {
+        } catch (Exception ex) {
             HMCLog.err("Failed to insert \"" + status + "\" to " + d.getLength(), ex);
         }
 

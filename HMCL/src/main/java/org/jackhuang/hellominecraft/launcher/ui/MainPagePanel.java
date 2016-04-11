@@ -354,7 +354,7 @@ public class MainPagePanel extends AnimatedPanel {
         if (l.isLoggedIn())
             l.logOut();
         cl.first(pnlPassword);
-        pnlPassword.repaint();
+        SwingUtilities.invokeLater(this::repaint);
     }//GEN-LAST:event_btnLogoutActionPerformed
 
     private void txtPlayerNameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPlayerNameKeyPressed
