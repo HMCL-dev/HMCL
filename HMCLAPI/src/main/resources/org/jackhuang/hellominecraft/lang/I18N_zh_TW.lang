@@ -289,6 +289,7 @@ advancedsettings.wrapper_launcher=前置指令(不必填寫,如optirun)
 advancedsettings.precall_command=啟動前執行命令(不必填寫,將在遊戲啟動前調用)
 advancedsettings.server_ip=直入伺服器ip地址(不必填寫，啟動遊戲後直接進入對應伺服器)
 advancedsettings.cancel_wrapper_launcher=取消包裹啟動器(出現奇怪問題時可嘗試使用,與調試模式衝突)
+advancedsettings.dont_check_game_completeness=不檢查遊戲完整性
 
 mainwindow.show_log=查看日誌
 mainwindow.make_launch_script=生成啟動腳本

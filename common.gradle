@@ -20,13 +20,9 @@ import java.util.jar.Pack200
 import java.util.zip.GZIPOutputStream
 import java.security.MessageDigest
 
-
-
 apply plugin: 'java'
 apply plugin: 'maven'
-apply plugin: 'findbugs'
 
-//sourceCompatibility = '1.7'
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
 repositories {
@@ -40,8 +36,6 @@ buildscript {
 }
 
 dependencies {
-    // Adding dependencies here will add the dependencies to each subproject.
-    
     compile 'com.google.code.gson:gson:2.2.4' // Apache License 2.0
 }
 
