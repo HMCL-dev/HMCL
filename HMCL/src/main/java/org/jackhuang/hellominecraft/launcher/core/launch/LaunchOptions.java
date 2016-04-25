@@ -30,7 +30,7 @@ public class LaunchOptions {
 
     private String name, versionName, javaArgs, minecraftArgs, maxMemory, permSize, width, height, serverIp, wrapper;
     private String proxyHost, proxyPort, proxyUser, proxyPass, javaDir, launchVersion, type, precalledCommand;
-    private boolean fullscreen, noJVMArgs;
+    private boolean fullscreen, noJVMArgs, notCheckGame;
     private JdkVersion java;
     private File gameDir;
     private GameDirType gameDirType;
@@ -221,5 +221,13 @@ public class LaunchOptions {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public boolean isNotCheckGame() {
+        return notCheckGame;
+    }
+
+    public void setNotCheckGame(boolean notCheckGame) {
+        this.notCheckGame = notCheckGame;
     }
 }

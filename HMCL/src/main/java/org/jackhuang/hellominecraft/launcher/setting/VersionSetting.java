@@ -41,7 +41,7 @@ public class VersionSetting {
 
     private String javaArgs, minecraftArgs, maxMemory, permSize, width, height;
     private String javaDir, precalledCommand, serverIp, java, wrapper;
-    private boolean fullscreen, noJVMArgs;
+    private boolean fullscreen, noJVMArgs, notCheckGame;
 
     /**
      * 0 - Close the launcher when the game starts.<br/>
@@ -265,6 +265,15 @@ public class VersionSetting {
         propertyChanged.execute("serverIp");
     }
 
+    public boolean isNotCheckGame() {
+        return notCheckGame;
+    }
+
+    public void setNotCheckGame(boolean notCheckGame) {
+        this.notCheckGame = notCheckGame;
+        propertyChanged.execute("notCheckGame");
+    }
+
     public LaunchOptions createLaunchOptions(File gameDir) {
         LaunchOptions x = new LaunchOptions();
         x.setFullscreen(isFullscreen());
@@ -280,6 +289,7 @@ public class VersionSetting {
         x.setType(Main.shortTitle());
         x.setVersionName(Main.shortTitle());
         x.setNoJVMArgs(isNoJVMArgs());
+        x.setNotCheckGame(isNotCheckGame());
         x.setPermSize(getPermSize());
         x.setPrecalledCommand(getPrecalledCommand());
         x.setProxyHost(Settings.getInstance().getProxyHost());

@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.func.Function;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.system.OS;
@@ -30,6 +29,7 @@ import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
+import org.jackhuang.hellominecraft.util.func.BiFunction;
 
 /**
  *
@@ -57,7 +57,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
 
         String[] splitted = StrUtils.tokenize(version.minecraftArguments);
 
-        String game_assets = assetProvider.apply(version);
+        String game_assets = assetProvider.apply(version, !options.isNotCheckGame());
 
         for (String t : splitted) {
             t = t.replace("${auth_player_name}", lr.getUserName());
@@ -96,13 +96,13 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         }
     }
 
-    private final Function<MinecraftVersion, String> DEFAULT_ASSET_PROVIDER = t -> {
+    private final BiFunction<MinecraftVersion, Boolean, String> DEFAULT_ASSET_PROVIDER = (t, allow) -> {
         return new File(service.baseDirectory(), "assets").getAbsolutePath();
     };
 
-    private Function<MinecraftVersion, String> assetProvider = DEFAULT_ASSET_PROVIDER;
+    private BiFunction<MinecraftVersion, Boolean, String> assetProvider = DEFAULT_ASSET_PROVIDER;
 
-    public void setAssetProvider(Function<MinecraftVersion, String> assetProvider) {
+    public void setAssetProvider(BiFunction<MinecraftVersion, Boolean, String> assetProvider) {
         if (assetProvider == null)
             this.assetProvider = DEFAULT_ASSET_PROVIDER;
         else

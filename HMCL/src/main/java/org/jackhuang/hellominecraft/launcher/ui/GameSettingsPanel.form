@@ -42,7 +42,7 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="btnIncludeMinecraft" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace pref="916" max="32767" attributes="0"/>
+                  <EmptySpace pref="577" max="32767" attributes="0"/>
               </Group>
           </Group>
       </Group>
@@ -63,7 +63,7 @@
           </Group>
           <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
               <Group type="102" alignment="1" attributes="0">
-                  <EmptySpace pref="576" max="32767" attributes="0"/>
+                  <EmptySpace pref="447" max="32767" attributes="0"/>
                   <Component id="btnIncludeMinecraft" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
@@ -122,7 +122,7 @@
                                       <Component id="lblDimensionX" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="txtHeight" min="-2" pref="100" max="-2" attributes="0"/>
-                                      <EmptySpace pref="402" max="32767" attributes="0"/>
+                                      <EmptySpace pref="63" max="32767" attributes="0"/>
                                       <Component id="chkFullscreen" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <Group type="102" alignment="1" attributes="0">
@@ -195,7 +195,7 @@
                           <Component id="lblDimension" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="txtWidth" alignment="3" min="-2" pref="26" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="228" max="32767" attributes="0"/>
+                      <EmptySpace pref="99" max="32767" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="btnDownloadAllAssets" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="btnCleanGame" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -388,16 +388,6 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="txtWrapperLauncher" alignment="0" max="32767" attributes="0"/>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="lblPrecalledCommand1" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                          </Group>
-                      </Group>
-                      <EmptySpace max="-2" attributes="0"/>
-                  </Group>
                   <Component id="txtPrecalledCommand" alignment="0" max="32767" attributes="0"/>
                   <Component id="txtServerIP" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
@@ -408,21 +398,33 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="txtJavaArgs" pref="664" max="32767" attributes="0"/>
+                          <Component id="txtJavaArgs" pref="325" max="32767" attributes="0"/>
                           <Component id="txtMinecraftArgs" max="32767" attributes="0"/>
                           <Component id="txtPermSize" alignment="1" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="lblPrecalledCommand" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="lblServerIP" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="txtWrapperLauncher" alignment="0" max="32767" attributes="0"/>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="lblPrecalledCommand1" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="chkNoJVMArgs" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
+                              <Component id="chkDontCheckGame" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="lblPrecalledCommand" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblServerIP" alignment="0" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
                       </Group>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -456,8 +458,11 @@
                       <Component id="lblServerIP" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="txtServerIP" min="-2" pref="26" max="-2" attributes="0"/>
-                      <EmptySpace pref="168" max="32767" attributes="0"/>
-                      <Component id="chkNoJVMArgs" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace pref="39" max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="chkNoJVMArgs" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="chkDontCheckGame" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -551,6 +556,16 @@
                 <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="txtWrapperLauncherFocusLost"/>
               </Events>
             </Component>
+            <Component class="javax.swing.JCheckBox" name="chkDontCheckGame">
+              <Properties>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="advancedsettings.dont_check_game_completeness" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+                </Property>
+              </Properties>
+              <Events>
+                <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="chkDontCheckGameItemStateChanged"/>
+              </Events>
+            </Component>
           </SubComponents>
         </Container>
         <Container class="javax.swing.JPanel" name="pnlModManagement">
@@ -586,7 +601,7 @@
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
-                          <Component id="jScrollPane1" pref="889" max="32767" attributes="0"/>
+                          <Component id="jScrollPane1" pref="550" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" max="-2" attributes="0">
                               <Component id="btnRemoveMod" max="32767" attributes="0"/>
@@ -594,7 +609,7 @@
                           </Group>
                       </Group>
                       <Group type="102" alignment="1" attributes="0">
-                          <Component id="lblModInfo" pref="985" max="32767" attributes="0"/>
+                          <Component id="lblModInfo" pref="646" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -609,7 +624,7 @@
                                   <Component id="btnRemoveMod" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               </Group>
-                              <Component id="jScrollPane1" pref="428" max="32767" attributes="0"/>
+                              <Component id="jScrollPane1" pref="299" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace min="-2" max="-2" attributes="0"/>
                           <Component id="lblModInfo" min="-2" max="-2" attributes="0"/>

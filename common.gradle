@@ -24,6 +24,7 @@ import java.security.MessageDigest
 
 apply plugin: 'java'
 apply plugin: 'maven'
+apply plugin: 'findbugs'
 
 //sourceCompatibility = '1.7'
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'

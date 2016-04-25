@@ -75,6 +75,8 @@ public final class Config implements Cloneable {
     public transient final EventHandler<IAuthenticator> authChangedEvent = new EventHandler<>(this);
 
     public Theme getTheme() {
+        if (theme >= Theme.values().length)
+            theme = 0;
         return Theme.values()[theme];
     }
 

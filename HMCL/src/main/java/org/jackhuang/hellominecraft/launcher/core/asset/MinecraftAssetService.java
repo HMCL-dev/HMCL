@@ -29,7 +29,7 @@ import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.AssetIndexDownloadInfo;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.MessageBox;
-import org.jackhuang.hellominecraft.util.func.Function;
+import org.jackhuang.hellominecraft.util.func.BiFunction;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.tasks.Task;
 import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
@@ -209,8 +209,8 @@ public class MinecraftAssetService extends IMinecraftAssetService {
         return virtualRoot;
     }
 
-    public final Function<MinecraftVersion, String> ASSET_PROVIDER_IMPL = t -> {
-        if (!checkAssetsExistance(t.getAssetsIndex()))
+    public final BiFunction<MinecraftVersion, Boolean, String> ASSET_PROVIDER_IMPL = (t, allow) -> {
+        if (allow && !checkAssetsExistance(t.getAssetsIndex()))
             if (MessageBox.Show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                 TaskWindow.execute(downloadAssets(t));
         return reconstructAssets(t.getAssetsIndex()).getAbsolutePath();

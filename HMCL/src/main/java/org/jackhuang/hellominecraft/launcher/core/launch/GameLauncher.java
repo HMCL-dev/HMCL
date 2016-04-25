@@ -96,10 +96,12 @@ public class GameLauncher {
         if (file != null)
             FileUtils.cleanDirectoryQuietly(file);
 
-        HMCLog.log("Detecting libraries...");
-        launchingStateChangedEvent.execute(LaunchingState.DownloadingLibraries);
-        if (!downloadLibrariesEvent.execute(service.download().getDownloadLibraries(loader.getMinecraftVersion())))
-            throw new GameException("Failed to download libraries");
+        if (!options.isNotCheckGame()) {
+            HMCLog.log("Detecting libraries...");
+            launchingStateChangedEvent.execute(LaunchingState.DownloadingLibraries);
+            if (!downloadLibrariesEvent.execute(service.download().getDownloadLibraries(loader.getMinecraftVersion())))
+                throw new GameException("Failed to download libraries");
+        }
 
         HMCLog.log("Unpacking natives...");
         launchingStateChangedEvent.execute(LaunchingState.DecompressingNatives);
