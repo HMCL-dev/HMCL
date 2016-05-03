@@ -174,6 +174,8 @@ public class GameLauncher {
             if (appdata != null) {
                 writer.write("set appdata=" + appdata);
                 writer.newLine();
+                writer.write("cd %appdata%");
+                writer.newLine();
             }
         }
         if (StrUtils.isNotBlank(options.getPrecalledCommand())) {
