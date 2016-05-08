@@ -30,7 +30,6 @@ import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.CollectionUtils;
 import org.jackhuang.hellominecraft.util.EventHandler;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.UpdateChecker;
 
@@ -43,7 +42,7 @@ public final class Settings {
     public static final String DEFAULT_PROFILE = "Default";
     public static final String HOME_PROFILE = "Home";
 
-    public static final File SETTINGS_FILE = new File(IOUtils.currentDir(), "hmcl.json");
+    public static final File SETTINGS_FILE = new File("hmcl.json");
 
     private static final Config SETTINGS;
     public static final UpdateChecker UPDATE_CHECKER = new UpdateChecker(Main.getVersionNumber(), "hmcl");
@@ -71,7 +70,7 @@ public final class Settings {
         Config c = new Config();
         if (SETTINGS_FILE.exists())
             try {
-                String str = FileUtils.readFileToString(SETTINGS_FILE);
+                String str = FileUtils.read(SETTINGS_FILE);
                 if (str == null || str.trim().equals(""))
                     HMCLog.log("Settings file is empty, use the default settings.");
                 else {

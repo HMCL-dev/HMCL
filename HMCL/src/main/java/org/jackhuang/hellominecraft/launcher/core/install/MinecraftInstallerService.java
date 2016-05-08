@@ -57,7 +57,7 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
 
     @Override
     public Task downloadForge(String installId, InstallerVersion v) {
-        File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "forge-installer.jar");
+        File filepath = IOUtils.tryGetCanonicalFile("forge-installer.jar");
         if (v.installer == null)
             return null;
         else
@@ -68,7 +68,7 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
 
     @Override
     public Task downloadOptiFine(String installId, InstallerVersion v) {
-        File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "optifine-installer.jar");
+        File filepath = IOUtils.tryGetCanonicalFile("optifine-installer.jar");
         if (v.installer == null)
             return null;
         OptiFineDownloadFormatter task = new OptiFineDownloadFormatter(v.installer);
@@ -79,7 +79,7 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
 
     @Override
     public Task downloadLiteLoader(String installId, InstallerVersion v) {
-        File filepath = IOUtils.tryGetCanonicalFile(IOUtils.currentDirWithSeparator() + "liteloader-universal.jar");
+        File filepath = IOUtils.tryGetCanonicalFile("liteloader-universal.jar");
         FileDownloadTask task = (FileDownloadTask) new FileDownloadTask(v.universal, filepath).setTag("LiteLoader");
         return task.after(new LiteLoaderInstaller(service, installId, (LiteLoaderVersionList.LiteLoaderInstallerVersion) v).registerPreviousResult(task))
             .after(new DeleteFileTask(filepath));

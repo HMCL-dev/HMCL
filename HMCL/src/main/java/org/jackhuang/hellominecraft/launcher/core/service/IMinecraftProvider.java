@@ -73,13 +73,6 @@ public abstract class IMinecraftProvider {
     public abstract boolean install(String version, Consumer<MinecraftVersion> callback);
 
     /**
-     * Returns the thing like ".minecraft/resourcepacks".
-     *
-     * @return the thing
-     */
-    public abstract File getResourcePacks();
-
-    /**
      *
      * @param v should be resolved
      *
@@ -164,7 +157,7 @@ public abstract class IMinecraftProvider {
      *
      * @return if false, will break the launch process.
      */
-    public abstract boolean onLaunch();
+    public abstract boolean onLaunch(String id);
 
     public File baseDirectory() {
         return service.baseDirectory();

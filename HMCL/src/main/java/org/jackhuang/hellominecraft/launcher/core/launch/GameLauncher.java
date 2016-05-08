@@ -121,7 +121,7 @@ public class GameLauncher {
      * @throws IOException failed creating process
      */
     public void launch(List str) throws IOException {
-        if (!service.version().onLaunch())
+        if (!service.version().onLaunch(options.getLaunchVersion()))
             return;
         if (StrUtils.isNotBlank(options.getPrecalledCommand())) {
             Process p = Runtime.getRuntime().exec(options.getPrecalledCommand());
@@ -155,7 +155,7 @@ public class GameLauncher {
      */
     public File makeLauncher(String launcherName, List str) throws IOException {
         HMCLog.log("Making shell launcher...");
-        service.version().onLaunch();
+        service.version().onLaunch(options.getLaunchVersion());
         boolean isWin = OS.os() == OS.WINDOWS;
         File f = new File(launcherName + (isWin ? ".bat" : ".sh"));
         if (!f.exists() && !f.createNewFile())

@@ -109,7 +109,7 @@ public enum OS {
     }
 
     public static String getLinuxReleaseVersion() throws IOException {
-        return FileUtils.readFileToString(new File("/etc/issue"));
+        return FileUtils.read(new File("/etc/issue"));
     }
 
     public static String getSystemVersion() {

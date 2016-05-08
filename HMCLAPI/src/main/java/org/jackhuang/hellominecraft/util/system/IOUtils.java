@@ -27,8 +27,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.Reader;
-import java.io.Writer;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.NetworkInterface;
@@ -37,6 +35,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import org.jackhuang.hellominecraft.util.func.Consumer;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 
 /**
@@ -85,40 +84,24 @@ public class IOUtils {
         return t.substring(i + 1, (t.length() - i) + (i + 1) - 1);
     }
 
-    public static ArrayList<String> findAllFile(File f) {
-        ArrayList<String> arr = new ArrayList<>();
+    public static void findAllFile(File f, Consumer<String> callback) {
         if (f.isDirectory()) {
             File[] f1 = f.listFiles();
             int len = f1.length;
             for (int i = 0; i < len; i++)
                 if (f1[i].isFile())
-                    arr.add(f1[i].getName());
+                    callback.accept(f1[i].getName());
         }
-        return arr;
     }
 
-    public static ArrayList<String> findAllFileWithFullName(File f) {
-        ArrayList<String> arr = new ArrayList<>();
-        if (f.isDirectory()) {
-            File[] f1 = f.listFiles();
-            int len = f1.length;
-            for (int i = 0; i < len; i++)
-                if (f1[i].isFile())
-                    arr.add(addSeparator(f.getAbsolutePath()) + f1[i].getName());
-        }
-        return arr;
-    }
-
-    public static ArrayList<String> findAllDir(File f) {
-        ArrayList<String> arr = new ArrayList<>();
+    public static void findAllDir(File f, Consumer<String> callback) {
         if (f.isDirectory()) {
             File[] f1 = f.listFiles();
             int len = f1.length;
             for (int i = 0; i < len; i++)
                 if (f1[i].isDirectory())
-                    arr.add(f1[i].getName());
+                    callback.accept(f1[i].getName());
         }
-        return arr;
     }
 
     public static String getRealPath() {
@@ -137,14 +120,6 @@ public class IOUtils {
         if (path == null)
             return true;
         return path.startsWith("/") || path.indexOf(":") > 0;
-    }
-
-    public static File currentDir() {
-        return new File(".");
-    }
-
-    public static String currentDirWithSeparator() {
-        return addSeparator(currentDir().getAbsolutePath());
     }
 
     public static String getLocalMAC() {
@@ -219,22 +194,6 @@ public class IOUtils {
         } while (len != -1);
 
         return entryBuffer;
-    }
-
-    public static void closeQuietly(Reader input) {
-        closeQuietly((Closeable) input);
-    }
-
-    public static void closeQuietly(Writer output) {
-        closeQuietly((Closeable) output);
-    }
-
-    public static void closeQuietly(InputStream input) {
-        closeQuietly((Closeable) input);
-    }
-
-    public static void closeQuietly(OutputStream output) {
-        closeQuietly((Closeable) output);
     }
 
     public static void closeQuietly(Closeable closeable) {

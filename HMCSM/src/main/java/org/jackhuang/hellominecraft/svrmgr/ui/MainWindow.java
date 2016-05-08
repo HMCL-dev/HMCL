@@ -2781,13 +2781,12 @@ public final class MainWindow extends javax.swing.JFrame
         String path = Utilities.getPath("mods");
         if (path == null)
             return;
-        ArrayList<String> sl = IOUtils.findAllFile(new File(path));
         DefaultTableModel model = (DefaultTableModel) lstExternalMods.getModel();
         while (model.getRowCount() > 0)
             model.removeRow(0);
-        for (String s : sl)
-            model.addRow(new Object[] { !SettingsManager.settings.inactiveExtMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(IOUtils.addSeparator(path) + s)) });
-
+        IOUtils.findAllFile(new File(path), s
+                            -> model.addRow(new Object[] { !SettingsManager.settings.inactiveExtMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(IOUtils.addSeparator(path) + s)) })
+        );
         lstExternalMods.updateUI();
     }
 
@@ -2795,19 +2794,18 @@ public final class MainWindow extends javax.swing.JFrame
         String path = Utilities.getPath("plugins");
         if (path == null)
             return;
-        ArrayList<String> sl = IOUtils.findAllFile(new File(path));
         DefaultTableModel model = (DefaultTableModel) lstPlugins.getModel();
         while (model.getRowCount() > 0)
             model.removeRow(0);
-        for (String s : sl) {
-            PluginInformation p = PluginManager.getPluginYML(new File(Utilities.getGameDir() + "plugins" + File.separator + s));
-            if (p == null)
-                model.addRow(new Object[] { !SettingsManager.settings.inactivePlugins.contains(s), s,
-                                            "", "", "", "" });
-            else
-                model.addRow(new Object[] { !SettingsManager.settings.inactivePlugins.contains(s), s,
-                                            p.name, p.version, p.author, p.description });
-        }
+        IOUtils.findAllFile(new File(path), s -> {
+                            PluginInformation p = PluginManager.getPluginYML(new File(Utilities.getGameDir() + "plugins" + File.separator + s));
+                            if (p == null)
+                                model.addRow(new Object[] { !SettingsManager.settings.inactivePlugins.contains(s), s,
+                                                            "", "", "", "" });
+                            else
+                                model.addRow(new Object[] { !SettingsManager.settings.inactivePlugins.contains(s), s,
+                                                            p.name, p.version, p.author, p.description });
+                        });
 
         lstPlugins.updateUI();
     }
@@ -2816,37 +2814,35 @@ public final class MainWindow extends javax.swing.JFrame
         String path = Utilities.getPath("coremods");
         if (path == null)
             return;
-        ArrayList<String> sl = IOUtils.findAllFile(new File(path));
         DefaultTableModel model = (DefaultTableModel) lstCoreMods.getModel();
         while (model.getRowCount() > 0)
             model.removeRow(0);
-        for (String s : sl)
-            model.addRow(new Object[] { !SettingsManager.settings.inactiveCoreMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(IOUtils.addSeparator(path) + s)) });
+        IOUtils.findAllFile(new File(path), s
+                            -> model.addRow(new Object[] { !SettingsManager.settings.inactiveCoreMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(IOUtils.addSeparator(path) + s)) }));
 
         lstCoreMods.updateUI();
     }
 
     void loadWorlds() {
-        ArrayList<String> s = BackupManager.findAllWorlds();
         DefaultTableModel model = (DefaultTableModel) lstWorlds.getModel();
         if (SettingsManager.settings.inactiveWorlds == null)
             SettingsManager.settings.inactiveWorlds = new ArrayList<>();
-        for (String world : s)
+        BackupManager.findAllWorlds(world -> {
             model.addRow(new Object[] {
                 world, Utilities.getGameDir() + world, !SettingsManager.settings.inactiveWorlds.contains(world)
             });
+        });
         lstWorlds.updateUI();
     }
 
     void loadBackups() {
-        ArrayList<String> al = BackupManager.getBackupList();
         DefaultTableModel model = (DefaultTableModel) lstBackups.getModel();
-        for (String backup : al) {
+        BackupManager.getBackupList(backup -> {
             String[] names = FileUtils.getExtension(backup).split("\\+");
             model.addRow(new Object[] {
                 names[0], names[1], names[2]
             });
-        }
+        });
         lstBackups.updateUI();
     }
 
@@ -3007,17 +3003,16 @@ public final class MainWindow extends javax.swing.JFrame
     }
 
     void refreshInfos() {
-        ArrayList<String> al = IOUtils.findAllFile(new File(Utilities.getGameDir() + "infos-HMCSM"));
         DefaultTableModel model = (DefaultTableModel) lstInfos.getModel();
-        for (String s : al)
-            model.addRow(new Object[] { s, FileUtils.getExtension(s) });
+        while (model.getRowCount() > 0)
+            model.removeRow(0);
+        IOUtils.findAllFile(new File(Utilities.getGameDir() + "infos-HMCSM"), s -> model.addRow(new Object[] { s, FileUtils.getExtension(s) }));
         lstInfos.updateUI();
     }
 
     void refreshReports() {
-        ArrayList<String> al = IOUtils.findAllFile(new File(Utilities.getGameDir() + "crash-reports"));
-        for (String s : al)
-            lstCrashReportsModel.addElement(s);
+        lstCrashReportsModel.clear();
+        IOUtils.findAllFile(new File(Utilities.getGameDir() + "crash-reports"), s -> lstCrashReportsModel.addElement(s));
         lstReports.setModel(lstCrashReportsModel);
     }
 
@@ -3721,7 +3716,7 @@ public final class MainWindow extends javax.swing.JFrame
         String id = (String) lstDownloads.getModel().getValueAt(lstDownloads.getSelectedRow(), 0);
         final String MC_DOWNLOAD_URL = "https://s3.amazonaws.com/Minecraft.Download/versions/";
         String url = MC_DOWNLOAD_URL + id + "/";
-        File serverjar = new File(IOUtils.currentDir(), "minecraft_server." + id + ".jar");
+        File serverjar = new File("minecraft_server." + id + ".jar");
         serverjar.delete();
 
         String downloadURL = url + "minecraft_server." + id + ".jar";
@@ -3739,7 +3734,7 @@ public final class MainWindow extends javax.swing.JFrame
             if (index == -1)
                 return;
             String path = Utilities.getGameDir() + "infos-HMCSM" + File.separator + model.getValueAt(index, 0);
-            String content = FileUtils.readFileToString(new File(path));
+            String content = FileUtils.read(new File(path));
             txtInfo.setText(content);
         } catch (IOException ex) {
             HMCLog.warn("Failed to read info.", ex);
@@ -3747,14 +3742,14 @@ public final class MainWindow extends javax.swing.JFrame
     }//GEN-LAST:event_btnShowInfoActionPerformed
 
     private void btnAutoSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAutoSearchActionPerformed
-        ArrayList<String> al = IOUtils.findAllFile(IOUtils.currentDir());
-        for (String s : al)
-            if (ServerChecker.isServerJar(new File(s))) {
-                String path = IOUtils.tryGetCanonicalFilePath(new File(IOUtils.currentDir(), s));
-                txtMainJar.setText(path);
-                SettingsManager.settings.mainjar = path;
-                SettingsManager.save();
-            }
+        IOUtils.findAllFile(new File("."), s -> {
+                            if (ServerChecker.isServerJar(new File(s))) {
+                                String path = IOUtils.tryGetCanonicalFilePath(new File(s));
+                                txtMainJar.setText(path);
+                                SettingsManager.settings.mainjar = path;
+                                SettingsManager.save();
+                            }
+                        });
     }//GEN-LAST:event_btnAutoSearchActionPerformed
 
     private void cboCategoryItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboCategoryItemStateChanged
@@ -3784,7 +3779,7 @@ public final class MainWindow extends javax.swing.JFrame
             if (index == -1)
                 return;
             String path = Utilities.getGameDir() + "crash-reports" + File.separator + lstCrashReportsModel.get(index);
-            String content = FileUtils.readFileToString(new File(path));
+            String content = FileUtils.read(new File(path));
             txtCrashReport.setText(content);
         } catch (IOException ex) {
             HMCLog.warn("Failed to get crash-report.", ex);
@@ -3858,7 +3853,7 @@ public final class MainWindow extends javax.swing.JFrame
             return;
         }
         BukkitVersion v = cb.get(idx);
-        File file = new File(IOUtils.currentDir(), "craftbukkit-" + ext + "-" + v.version + ".jar");
+        File file = new File("craftbukkit-" + ext + "-" + v.version + ".jar");
         TaskWindow.factory().append(new FileDownloadTask(v.downloadLink, IOUtils.tryGetCanonicalFile(file)).setTag("bukkit-" + ext + "-" + v.version))
             .create();
     }//GEN-LAST:event_btnDownloadCraftbukkitActionPerformed
@@ -3869,7 +3864,7 @@ public final class MainWindow extends javax.swing.JFrame
             return;
         ForgeVersion v = mcpcPackages.get(cboCauldronMinecraft.getSelectedItem().toString()).get(idx);
         String url;
-        File filepath = new File(IOUtils.currentDir(), "forge-installer.jar");
+        File filepath = new File("forge-installer.jar");
         url = v.installer[1];
         if (!TaskWindow.factory().append(new FileDownloadTask(url, filepath).setTag("cauldron-" + v.ver)).create())
             MessageBox.Show(C.i18n("install.failed_download_forge"));
@@ -3879,7 +3874,7 @@ public final class MainWindow extends javax.swing.JFrame
 
     private void installMCPC(final File filepath) {
         try {
-            ForgeInstaller installer = new ForgeInstaller(IOUtils.currentDir(), filepath);
+            ForgeInstaller installer = new ForgeInstaller(new File("."), filepath);
             installer.install();
             MessageBox.Show(C.i18n("install.success"));
         } catch (Exception e) {
@@ -3910,7 +3905,7 @@ public final class MainWindow extends javax.swing.JFrame
     }//GEN-LAST:event_cboCauldronMinecraftItemStateChanged
 
     private void btnInstallMCPCActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInstallMCPCActionPerformed
-        File filepath = new File(IOUtils.currentDir(), "forge-installer.jar");
+        File filepath = new File("forge-installer.jar");
         if (!filepath.exists()) {
             MessageBox.Show("您还未下载Cauldron！请点击下载按钮下载并自动安装！");
             return;

@@ -133,7 +133,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
         File objectsDir = new File(assetsDir, "objects");
         File indexFile = new File(indexDir, assetVersion + ".json");
         try {
-            AssetsIndex index = (AssetsIndex) C.GSON.fromJson(FileUtils.readFileToString(indexFile, "UTF-8"), AssetsIndex.class);
+            AssetsIndex index = (AssetsIndex) C.GSON.fromJson(FileUtils.read(indexFile, "UTF-8"), AssetsIndex.class);
 
             String hash = ((AssetsObject) index.getFileMap().get(name)).getHash();
             return new File(objectsDir, hash.substring(0, 2) + "/" + hash);
@@ -152,7 +152,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
             return false;
 
         try {
-            String assetIndexContent = FileUtils.readFileToString(indexFile, "UTF-8");
+            String assetIndexContent = FileUtils.read(indexFile, "UTF-8");
             AssetsIndex index = (AssetsIndex) C.GSON.fromJson(assetIndexContent, AssetsIndex.class);
 
             if (index == null)
@@ -180,7 +180,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
         }
 
         try {
-            String assetIndexContent = FileUtils.readFileToString(indexFile, "UTF-8");
+            String assetIndexContent = FileUtils.read(indexFile, "UTF-8");
             AssetsIndex index = (AssetsIndex) C.GSON.fromJson(assetIndexContent, AssetsIndex.class);
 
             if (index == null)
@@ -195,7 +195,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
                     if (original.exists()) {
                         cnt++;
                         if (!target.isFile())
-                            FileUtils.copyFile(original, target, false);
+                            FileUtils.copyFile(original, target);
                     }
                 }
                 // If the scale new format existent file is lower then 0.1, use the old format.

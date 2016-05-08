@@ -111,7 +111,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                 }
                 MinecraftVersion mcVersion;
                 try {
-                    mcVersion = C.GSON.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
+                    mcVersion = C.GSON.fromJson(FileUtils.read(jsonFile), MinecraftVersion.class);
                     if (mcVersion == null)
                         throw new GameException("Wrong json format, got null.");
                 } catch (Exception e) {
@@ -119,7 +119,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                     if (MessageBox.Show(C.i18n("launcher.versions_json_not_formatted", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
                         service.download().downloadMinecraftVersionJson(id);
                         try {
-                            mcVersion = C.GSON.fromJson(FileUtils.readFileToString(jsonFile), MinecraftVersion.class);
+                            mcVersion = C.GSON.fromJson(FileUtils.read(jsonFile), MinecraftVersion.class);
                             if (mcVersion == null)
                                 throw new GameException("Wrong json format, got null.");
                         } catch (IOException | GameException | JsonSyntaxException ex) {
@@ -164,7 +164,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     public boolean renameVersion(String from, String to) {
         try {
             File fromJson = new File(versionRoot(from), from + ".json");
-            MinecraftVersion mcVersion = C.GSON.fromJson(FileUtils.readFileToString(fromJson), MinecraftVersion.class);
+            MinecraftVersion mcVersion = C.GSON.fromJson(FileUtils.read(fromJson), MinecraftVersion.class);
             mcVersion.id = to;
             FileUtils.writeQuietly(fromJson, C.GSON.toJson(mcVersion));
             File toDir = versionRoot(to);
@@ -198,7 +198,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
             return false;
         if (callback != null) {
             File mvt = new File(versionRoot(id), id + ".json");
-            MinecraftVersion v = C.GSON.fromJson(FileUtils.readFileToStringQuietly(mvt), MinecraftVersion.class);
+            MinecraftVersion v = C.GSON.fromJson(FileUtils.readQuietly(mvt), MinecraftVersion.class);
             if (v == null)
                 return false;
             callback.accept(v);
@@ -254,13 +254,8 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     }
 
     @Override
-    public File getResourcePacks() {
-        return new File(service.baseDirectory(), "resourcepacks");
-    }
-
-    @Override
-    public boolean onLaunch() {
-        File resourcePacks = getResourcePacks();
+    public boolean onLaunch(String id) {
+        File resourcePacks = new File(getRunDirectory(id), "resourcepacks");
         if (!resourcePacks.exists() && !resourcePacks.mkdirs())
             HMCLog.warn("Failed to make resourcePacks: " + resourcePacks);
         return true;

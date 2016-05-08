@@ -24,7 +24,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
@@ -134,20 +135,10 @@ public class FileUtils {
 
     public static void copyDirectory(File srcDir, File destDir)
         throws IOException {
-        copyDirectory(srcDir, destDir, true);
-    }
-
-    public static void copyDirectory(File srcDir, File destDir, boolean preserveFileDate)
-        throws IOException {
-        copyDirectory(srcDir, destDir, null, preserveFileDate);
+        copyDirectory(srcDir, destDir, null);
     }
 
     public static void copyDirectory(File srcDir, File destDir, FileFilter filter)
-        throws IOException {
-        copyDirectory(srcDir, destDir, filter, true);
-    }
-
-    public static void copyDirectory(File srcDir, File destDir, FileFilter filter, boolean preserveFileDate)
         throws IOException {
         if (srcDir == null)
             throw new NullPointerException("Source must not be null");
@@ -171,10 +162,10 @@ public class FileUtils {
                 }
             }
         }
-        doCopyDirectory(srcDir, destDir, filter, preserveFileDate, exclusionList);
+        doCopyDirectory(srcDir, destDir, filter, exclusionList);
     }
 
-    private static void doCopyDirectory(File srcDir, File destDir, FileFilter filter, boolean preserveFileDate, List<String> exclusionList)
+    private static void doCopyDirectory(File srcDir, File destDir, FileFilter filter, List<String> exclusionList)
         throws IOException {
         File[] srcFiles = filter == null ? srcDir.listFiles() : srcDir.listFiles(filter);
         if (srcFiles == null)
@@ -191,22 +182,19 @@ public class FileUtils {
             File dstFile = new File(destDir, srcFile.getName());
             if ((exclusionList == null) || (!exclusionList.contains(srcFile.getCanonicalPath())))
                 if (srcFile.isDirectory())
-                    doCopyDirectory(srcFile, dstFile, filter, preserveFileDate, exclusionList);
+                    doCopyDirectory(srcFile, dstFile, filter, exclusionList);
                 else
-                    doCopyFile(srcFile, dstFile, preserveFileDate);
-
+                    doCopyFile(srcFile, dstFile);
         }
-
-        if (preserveFileDate)
-            destDir.setLastModified(srcDir.lastModified());
+        destDir.setLastModified(srcDir.lastModified());
     }
 
-    public static String readFileToString(File file)
+    public static String read(File file)
         throws IOException {
         return NetUtils.getStreamContent(IOUtils.openInputStream(file));
     }
 
-    public static String readFileToStringQuietly(File file) {
+    public static String readQuietly(File file) {
         try {
             return NetUtils.getStreamContent(IOUtils.openInputStream(file));
         } catch (IOException ex) {
@@ -215,12 +203,12 @@ public class FileUtils {
         }
     }
 
-    public static String readFileToString(File file, String charset)
+    public static String read(File file, String charset)
         throws IOException {
         return NetUtils.getStreamContent(IOUtils.openInputStream(file), charset);
     }
 
-    public static String readFileToStringIgnoreFileNotFound(File file) throws IOException {
+    public static String readIgnoreFileNotFound(File file) throws IOException {
         try {
             return NetUtils.getStreamContent(IOUtils.openInputStream(file));
         } catch (FileNotFoundException ex) {
@@ -237,11 +225,6 @@ public class FileUtils {
     }
 
     public static void copyFile(File srcFile, File destFile)
-        throws IOException {
-        copyFile(srcFile, destFile, true);
-    }
-
-    public static void copyFile(File srcFile, File destFile, boolean preserveFileDate)
         throws IOException {
         if (srcFile == null)
             throw new NullPointerException("Source must not be null");
@@ -260,42 +243,12 @@ public class FileUtils {
 
         if ((destFile.exists()) && (!destFile.canWrite()))
             throw new IOException("Destination '" + destFile + "' exists but is read-only");
-        doCopyFile(srcFile, destFile, preserveFileDate);
+        doCopyFile(srcFile, destFile);
     }
 
-    private static void doCopyFile(File srcFile, File destFile, boolean preserveFileDate)
+    public static void doCopyFile(File srcFile, File destFile)
         throws IOException {
-        if ((destFile.exists()) && (destFile.isDirectory()))
-            throw new IOException("Destination '" + destFile + "' exists but is a directory");
-
-        FileInputStream fis = null;
-        FileOutputStream fos = null;
-        FileChannel input = null;
-        FileChannel output = null;
-        try {
-            fis = new FileInputStream(srcFile);
-            fos = new FileOutputStream(destFile);
-            input = fis.getChannel();
-            output = fos.getChannel();
-            long size = input.size();
-            long pos = 0L;
-            long count;
-            while (pos < size) {
-                count = size - pos > 31457280L ? 31457280L : size - pos;
-                pos += output.transferFrom(input, pos, count);
-            }
-        } finally {
-            IOUtils.closeQuietly(output);
-            IOUtils.closeQuietly(fos);
-            IOUtils.closeQuietly(input);
-            IOUtils.closeQuietly(fis);
-        }
-
-        if (srcFile.length() != destFile.length())
-            throw new IOException("Failed to copy full contents from '" + srcFile + "' to '" + destFile + "'");
-
-        if (preserveFileDate)
-            destFile.setLastModified(srcFile.lastModified());
+        Files.copy(srcFile.toPath(), destFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
     }
 
     public static int indexOfLastSeparator(String filename) {
@@ -350,9 +303,9 @@ public class FileUtils {
         return filename.substring(0, index);
     }
 
-    public static boolean writeQuietly(File file, CharSequence data) {
+    public static boolean writeQuietly(File file, String data) {
         try {
-            write(file, data);
+            FileUtils.write(file, data);
             return true;
         } catch (IOException e) {
             HMCLog.warn("Failed to write data to file: " + file, e);
@@ -360,38 +313,17 @@ public class FileUtils {
         }
     }
 
-    public static void write(File file, CharSequence data)
+    public static void write(File file, String data)
         throws IOException {
         write(file, data, "UTF-8", false);
     }
 
-    public static void write(File file, CharSequence data, boolean append)
-        throws IOException {
-        write(file, data, "UTF-8", append);
-    }
-
-    public static void write(File file, CharSequence data, String encoding)
+    public static void write(File file, String data, String encoding)
         throws IOException {
         write(file, data, encoding, false);
     }
 
-    public static void write(File file, CharSequence data, String encoding, boolean append)
-        throws IOException {
-        String str = data == null ? null : data.toString();
-        writeStringToFile(file, str, encoding, append);
-    }
-
-    public static void writeStringToFile(File file, String data)
-        throws IOException {
-        writeStringToFile(file, data, "UTF-8", false);
-    }
-
-    public static void writeStringToFile(File file, String data, String encoding)
-        throws IOException {
-        writeStringToFile(file, data, encoding, false);
-    }
-
-    public static void writeStringToFile(File file, String data, String encoding, boolean append)
+    public static void write(File file, String data, String encoding, boolean append)
         throws IOException {
         OutputStream out = null;
         try {

@@ -109,7 +109,7 @@ public class LaunchingUIDaemon {
                 }
                 String msg = C.i18n("launch.exited_abnormally") + " exit code: " + t;
                 if (errorText != null)
-                    msg += ", advice: " + MinecraftCrashAdvicer.getAdvice(FileUtils.readFileToStringQuietly(new File(errorText)));
+                    msg += ", advice: " + MinecraftCrashAdvicer.getAdvice(FileUtils.readQuietly(new File(errorText)));
                 MessageBox.Show(msg);
                 WebFrame f = new WebFrame(logs);
                 f.setModal(true);

@@ -61,7 +61,6 @@ import org.jackhuang.hellominecraft.util.system.OS;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 import org.jackhuang.hellominecraft.util.system.Java;
 import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
@@ -1095,7 +1094,7 @@ public final class GameSettingsPanel extends AnimatedPanel implements DropTarget
     }//GEN-LAST:event_btnMakeLaunchScriptActionPerformed
 
     private void btnIncludeMinecraftActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnIncludeMinecraftActionPerformed
-        JFileChooser fc = new JFileChooser(IOUtils.currentDir());
+        JFileChooser fc = new JFileChooser(new File("."));
         fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File newGameDir = fc.getSelectedFile();

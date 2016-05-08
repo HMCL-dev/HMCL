@@ -85,7 +85,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
                 if (mvj.exists() && !mvj.delete())
                     HMCLog.warn("Failed to delete " + mvj);
                 try {
-                    MinecraftVersion mv = C.GSON.fromJson(FileUtils.readFileToStringQuietly(new File(vpath, id + ".json")), MinecraftVersion.class);
+                    MinecraftVersion mv = C.GSON.fromJson(FileUtils.readQuietly(new File(vpath, id + ".json")), MinecraftVersion.class);
                     if (mv == null)
                         throw new JsonSyntaxException("incorrect version");
 

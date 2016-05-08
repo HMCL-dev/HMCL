@@ -407,10 +407,6 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="txtWrapperLauncher" alignment="0" max="32767" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="lblPrecalledCommand1" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="chkNoJVMArgs" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="32767" attributes="0"/>
@@ -418,6 +414,7 @@
                           </Group>
                           <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="lblPrecalledCommand1" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="lblPrecalledCommand" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="lblServerIP" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>

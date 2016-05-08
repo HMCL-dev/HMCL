@@ -66,7 +66,7 @@ public class AssetsMojangLoader extends IAssetsHandler {
             public void executeTask() throws Throwable {
                 if (!areDependTasksSucceeded)
                     throw new IllegalStateException("Failed to get asset index");
-                String result = FileUtils.readFileToString(f);
+                String result = FileUtils.read(f);
                 if (StrUtils.isBlank(result))
                     throw new IllegalStateException("Index json is empty, please redownload it!");
                 AssetsIndex o = C.GSON.fromJson(result, AssetsIndex.class);

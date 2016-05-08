@@ -91,7 +91,7 @@ public class HMCLMinecraftService extends IMinecraftService {
         VersionSetting vs = null;
         File f = new File(provider.versionRoot(id), "hmclversion.cfg");
         if (f.exists()) {
-            String s = FileUtils.readFileToStringQuietly(f);
+            String s = FileUtils.readQuietly(f);
             if (s != null)
                 try {
                     vs = C.GSON.fromJson(s, VersionSetting.class);

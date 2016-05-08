@@ -20,12 +20,12 @@ package org.jackhuang.hellominecraft.svrmgr.server;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.system.Compressor;
 import org.jackhuang.hellominecraft.svrmgr.setting.SettingsManager;
 import org.jackhuang.hellominecraft.svrmgr.util.Utilities;
+import org.jackhuang.hellominecraft.util.func.Consumer;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 
@@ -39,9 +39,8 @@ public class BackupManager {
         return Utilities.getGameDir() + "backups-HMCSM" + File.separator;
     }
 
-    public static ArrayList<String> getBackupList() {
-        String gameDir = backupDir();
-        return IOUtils.findAllFile(new File(gameDir));
+    public static void getBackupList(Consumer<String> c) {
+        IOUtils.findAllFile(new File(backupDir()), c);
     }
 
     public static void addWorldBackup(final String folder) {
@@ -61,17 +60,15 @@ public class BackupManager {
         t.start();
     }
 
-    public static ArrayList<String> findAllWorlds() {
+    public static void findAllWorlds(Consumer<String> callback) {
         String gameDir = Utilities.getGameDir();
-        ArrayList<String> folders = IOUtils.findAllDir(new File(gameDir));
-        ArrayList<String> result = new ArrayList<>();
-        for (String folder : folders) {
-            String worldPath = gameDir + folder + File.separator;
-            ArrayList<String> files = IOUtils.findAllFile(new File(worldPath));
-            if (files.contains("level.dat"))
-                result.add(folder);
-        }
-        return result;
+        IOUtils.findAllDir(new File(gameDir), folder -> {
+                           String worldPath = gameDir + folder + File.separator;
+                           IOUtils.findAllFile(new File(worldPath), f -> {
+                                               if ("level.dat".equals(f))
+                                                   callback.accept(folder);
+                                           });
+                       });
     }
 
     public static void restoreBackup(File backupFile) {
@@ -89,10 +86,10 @@ public class BackupManager {
     }
 
     public static void backupAllWorlds() {
-        ArrayList<String> al = findAllWorlds();
-        for (String world : al)
+        findAllWorlds(world -> {
             if (!SettingsManager.settings.inactiveWorlds.contains(world))
                 addWorldBackup(world);
+        });
     }
 
     public static void backupAllPlugins() {

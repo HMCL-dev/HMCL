@@ -164,13 +164,13 @@ public final class ModpackManager {
                         HMCLog.warn("Failed to rename incorrect json " + oldFile + " to " + nowFile);
 
                     File json = new File(nowFile, "pack.json");
-                    MinecraftVersion mv = C.GSON.fromJson(FileUtils.readFileToString(json), MinecraftVersion.class);
+                    MinecraftVersion mv = C.GSON.fromJson(FileUtils.read(json), MinecraftVersion.class);
                     if (mv.jar == null)
                         throw new FileNotFoundException(C.i18n("modpack.incorrect_format.no_jar"));
 
                     c.add(service.download().downloadMinecraftJar(mv, new File(nowFile, id + ".jar")));
                     mv.jar = null;
-                    FileUtils.writeStringToFile(json, C.GSON.toJson(mv));
+                    FileUtils.write(json, C.GSON.toJson(mv));
                     if (!json.renameTo(new File(nowFile, id + ".json")))
                         HMCLog.warn("Failed to rename pack.json to new id");
 

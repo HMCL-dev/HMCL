@@ -26,7 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
 
 /**
  *
@@ -37,13 +36,13 @@ public class SettingsManager {
     public static Settings settings;
     public static boolean isFirstLoad = false;
     static Gson gson;
+    private static final File file = new File("hmcsm.json");
 
     public static void load() {
         gson = new Gson();
-        File file = new File(IOUtils.currentDir(), "hmcsm.json");
         if (file.exists())
             try {
-                String str = FileUtils.readFileToString(file);
+                String str = FileUtils.read(file);
                 if (str == null || str.trim().equals(""))
                     init();
                 else
@@ -64,9 +63,8 @@ public class SettingsManager {
     }
 
     public static void save() {
-        File f = new File(IOUtils.currentDir(), "hmcsm.json");
         try {
-            FileUtils.write(f, gson.toJson(settings));
+            FileUtils.write(file, gson.toJson(settings));
         } catch (IOException ex) {
             HMCLog.err("Failed to save settings.", ex);
         }

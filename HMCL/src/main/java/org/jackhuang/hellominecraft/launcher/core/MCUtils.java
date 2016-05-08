@@ -20,7 +20,6 @@ package org.jackhuang.hellominecraft.launcher.core;
 import java.io.File;
 import java.io.IOException;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.system.OS;
 
 /**
@@ -63,14 +62,11 @@ public final class MCUtils {
     }
 
     public static File getInitGameDir() {
-        File gameDir = IOUtils.currentDir();
-        if (gameDir.exists()) {
-            gameDir = new File(gameDir, MCUtils.minecraft());
-            if (!gameDir.exists()) {
-                File newFile = MCUtils.getLocation();
-                if (newFile.exists())
-                    gameDir = newFile;
-            }
+        File gameDir = new File(MCUtils.minecraft());
+        if (!gameDir.exists()) {
+            File newFile = MCUtils.getLocation();
+            if (newFile.exists())
+                gameDir = newFile;
         }
         return gameDir;
     }
@@ -80,6 +76,6 @@ public final class MCUtils {
     public static void tryWriteProfile(File gameDir) throws IOException {
         File file = new File(gameDir, "launcher_profiles.json");
         if (!file.exists())
-            FileUtils.writeStringToFile(file, PROFILE);
+            FileUtils.write(file, PROFILE);
     }
 }

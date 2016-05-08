@@ -90,7 +90,7 @@ public abstract class PlayerList<T extends BasePlayer> {
         op = null;
         if (txt.exists())
             try {
-                initByText(FileUtils.readFileToStringIgnoreFileNotFound(txt));
+                initByText(FileUtils.readIgnoreFileNotFound(txt));
                 if (op != null)
                     player.addAll(op);
             } catch (IOException e) {
