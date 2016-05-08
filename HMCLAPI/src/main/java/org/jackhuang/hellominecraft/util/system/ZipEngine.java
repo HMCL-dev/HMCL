@@ -25,6 +25,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.jackhuang.hellominecraft.util.func.BiFunction;
@@ -100,7 +101,7 @@ public class ZipEngine {
                     pathName = pathNameCallback.apply(pathName, true);
                 if (pathName == null)
                     continue;
-                zos.putNextEntry(new ZipEntry(pathName));
+                put(new ZipEntry(pathName));
                 putDirectoryImpl(file, basePath, pathNameCallback);
             } else {
                 if (".DS_Store".equals(file.getName())) // For Mac computers.
@@ -122,7 +123,7 @@ public class ZipEngine {
     public void putStream(InputStream is, String pathName) throws IOException {
         int length;
         try (BufferedInputStream bis = new BufferedInputStream(is)) {
-            zos.putNextEntry(new ZipEntry(pathName));
+            put(new ZipEntry(pathName));
             while ((length = bis.read(buf)) > 0)
                 zos.write(buf, 0, length);
         }
@@ -134,6 +135,13 @@ public class ZipEngine {
 
     public void putTextFile(String text, String encoding, String pathName) throws IOException {
         putStream(new ByteArrayInputStream(text.getBytes(encoding)), pathName);
+    }
+
+    protected HashSet<String> names = new HashSet<>();
+
+    public void put(ZipEntry entry) throws IOException {
+        if (names.add(entry.getName()))
+            zos.putNextEntry(entry);
     }
 
 }
