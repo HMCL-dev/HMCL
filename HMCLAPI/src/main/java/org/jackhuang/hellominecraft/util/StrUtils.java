@@ -184,7 +184,7 @@ public final class StrUtils {
         return sb.toString();
     }
 
-    public static boolean isEquals(String base, String to) {
+    public static boolean equals(String base, String to) {
         if (base == null)
             return (to == null);
         else
@@ -239,5 +239,15 @@ public final class StrUtils {
         PrintWriter writer = new PrintWriter(trace);
         t.printStackTrace(writer);
         return trace.toString();
+    }
+
+    public static List<Integer> findAllPos(String t, String p) {
+        ArrayList<Integer> ret = new ArrayList<>();
+        int i = 0, index;
+        while ((index = t.indexOf(p, i)) != -1) {
+            ret.add(index);
+            i = index + p.length();
+        }
+        return ret;
     }
 }

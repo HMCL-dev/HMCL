@@ -120,7 +120,7 @@ public class GameLauncher {
      *
      * @throws IOException failed creating process
      */
-    public void launch(List str) throws IOException {
+    public void launch(List<String> str) throws IOException {
         if (!service.version().onLaunch(options.getLaunchVersion()))
             return;
         if (StrUtils.isNotBlank(options.getPrecalledCommand())) {
@@ -133,6 +133,7 @@ public class GameLauncher {
             }
         }
         HMCLog.log("Starting process");
+        HMCLog.log(str.toString());
         ProcessBuilder builder = new ProcessBuilder(str);
         if (options.getLaunchVersion() == null || service.baseDirectory() == null)
             throw new Error("Fucking bug!");

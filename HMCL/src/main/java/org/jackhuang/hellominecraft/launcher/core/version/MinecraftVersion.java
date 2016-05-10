@@ -121,7 +121,7 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
             this.assets != null ? this.assets : parent.assets,
             this.jar != null ? this.jar : parent.jar,
             null, this.runDir, parent.minimumLauncherVersion,
-            this.libraries != null ? ArrayUtils.merge(this.libraries, parent.libraries) : parent.libraries, this.hidden,
+            this.libraries != null ? ArrayUtils.merge(parent.libraries, this.libraries) : parent.libraries, this.hidden,
             this.downloads != null ? this.downloads : parent.downloads,
             this.assetIndex != null ? this.assetIndex : parent.assetIndex);
 

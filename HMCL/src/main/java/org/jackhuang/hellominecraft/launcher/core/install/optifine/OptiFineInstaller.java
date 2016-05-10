@@ -72,7 +72,8 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
                     mv.mainClass = "net.minecraft.launchwrapper.Launch";
                     mv.libraries.add(1, new MinecraftLibrary("net.minecraft:launchwrapper:1.7"));
                 }
-                mv.minecraftArguments += " --tweakClass optifine.OptiFineTweaker";
+                if (!mv.minecraftArguments.contains("FMLTweaker"))
+                    mv.minecraftArguments += " --tweakClass optifine.OptiFineTweaker";
             }
         }
         File loc = new File(service.baseDirectory(), "versions/" + mv.id);
