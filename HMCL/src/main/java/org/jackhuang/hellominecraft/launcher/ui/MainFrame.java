@@ -214,7 +214,6 @@ public final class MainFrame extends DraggableFrame {
 
         windowTitle = new JLabel(defaultTitle);
         windowTitle.setForeground(BasicColors.COLOR_WHITE_TEXT);
-        windowTitle.addMouseListener(MouseListenerImpl.INSTANCE);
         header.add(windowTitle);
         header.add(Box.createHorizontalGlue());
         header.add(rightHeaderPanel);
@@ -420,6 +419,7 @@ public final class MainFrame extends DraggableFrame {
 
     public void invokeUpdate() {
         defaultTitle = Main.makeTitle() + C.i18n("update.found");
+        windowTitle.addMouseListener(MouseListenerImpl.INSTANCE);
         if (!isShowedMessage) {
             windowTitle.setText(defaultTitle);
             windowTitle.setForeground(Color.red);
