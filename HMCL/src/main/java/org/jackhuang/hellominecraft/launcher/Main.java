@@ -46,6 +46,7 @@ import org.jackhuang.hellominecraft.util.ui.LogWindow;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.util.upgrade.IUpgrader;
 import org.jackhuang.hellominecraft.launcher.ui.MainFrame;
+import org.jackhuang.hellominecraft.launcher.util.DefaultPlugin;
 import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
 import org.jackhuang.hellominecraft.util.MathUtils;
 import org.jackhuang.hellominecraft.util.StrUtils;
@@ -118,7 +119,7 @@ public final class Main implements Runnable {
     @SuppressWarnings({ "CallToPrintStackTrace", "UseSpecificCatch" })
     public static void main(String[] args) throws IOException {
         {
-            //PluginManager.getServerPlugin();
+            PluginManager.getPlugin(DefaultPlugin.class);
             if (IUpgrader.NOW_UPGRADER.parseArguments(getVersionNumber(), args))
                 return;
 

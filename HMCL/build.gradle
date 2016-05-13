@@ -55,6 +55,35 @@ task generateSources(type: Copy) {
 compileJava.setSource "$buildDir/generated-src"
 compileJava.dependsOn generateSources
 
+sourceSets {
+    main {
+        java {
+            srcDirs = [
+                'src/core/java/',
+                'src/main/java/'
+            ]
+        }
+        resources {
+            srcDirs = ['src/main/resources/']
+        }
+    }
+    core {
+        java {
+            compileClasspath += main.compileClasspath
+            runtimeClasspath += main.runtimeClasspath
+            srcDirs 'src/core/java/'
+        }
+        resources {
+            srcDirs 'src/main/resources/'
+        }
+    }
+}
+
+configurations {
+    coreCompile.extendsFrom compile
+    coreRuntime.extendsFrom runtime
+}
+
 buildscript {
     repositories {
         mavenCentral();
@@ -80,8 +109,8 @@ configure(install.repositories.mavenInstaller) {
 }
 
 dependencies {
-    compile project(":MetroLookAndFeel")
-    compile project(":HMCLAPI")
+    compile project(":HMCLaF")
+    compile project(":HMCUtils")
     compile group: "org.commonjava.googlecode.markdown4j", name: "markdown4j", version: "2.2-cj-1.0"
 }
 

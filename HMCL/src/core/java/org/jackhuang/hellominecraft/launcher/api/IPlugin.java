@@ -19,7 +19,6 @@ package org.jackhuang.hellominecraft.launcher.api;
 
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
-import org.jackhuang.hellominecraft.launcher.setting.Profile;
 import org.jackhuang.hellominecraft.launcher.core.auth.AuthenticationException;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
@@ -35,12 +34,12 @@ public interface IPlugin {
     /**
      * You can modify the application actions by this method.
      *
-     * @param profile info to the Minecraft Loader
+     * @param obj minecraft service wanted
      *
      * @return For example, you can implement IMinecraftProvider to support
      *         MultiMC
      */
-    IMinecraftService provideMinecraftService(Profile profile);
+    IMinecraftService provideMinecraftService(Object obj);
 
     /**
      * Register authenticators by calling IAuthenticator.LOGINS.add.

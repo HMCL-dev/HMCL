@@ -42,8 +42,8 @@ public class DefaultPlugin implements IPlugin {
     SkinmeAuthenticator SKINME_LOGIN = null;
 
     @Override
-    public IMinecraftService provideMinecraftService(Profile profile) {
-        return new HMCLMinecraftService(profile);
+    public IMinecraftService provideMinecraftService(Object profile) {
+        return new HMCLMinecraftService((Profile) profile);
     }
 
     @Override
