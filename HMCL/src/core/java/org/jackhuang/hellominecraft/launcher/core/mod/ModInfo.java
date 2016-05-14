@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.core.mod;
 
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import java.io.File;
 import java.io.IOException;
@@ -37,8 +38,27 @@ import org.jackhuang.hellominecraft.util.system.FileUtils;
  */
 public class ModInfo implements Comparable<ModInfo> {
 
+    @SerializedName("location")
     public File location;
-    public String modid, name, description, author, version, mcversion, url, updateUrl, credits;
+    @SerializedName("modid")
+    public String modid;
+    @SerializedName("name")
+    public String name;
+    @SerializedName("description")
+    public String description;
+    @SerializedName("author")
+    public String author;
+    @SerializedName("version")
+    public String version;
+    @SerializedName("mcversion")
+    public String mcversion;
+    @SerializedName("url")
+    public String url;
+    @SerializedName("updateUrl")
+    public String updateUrl;
+    @SerializedName("credits")
+    public String credits;
+    @SerializedName("authorList")
     public String[] authorList;
 
     public boolean isActive() {

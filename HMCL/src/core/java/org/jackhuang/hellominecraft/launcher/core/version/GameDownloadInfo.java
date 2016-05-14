@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.version;
 
+import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 
 /**
@@ -25,8 +26,11 @@ import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
  */
 public class GameDownloadInfo implements Cloneable {
 
+    @SerializedName("sha1")
     public String sha1;
+    @SerializedName("size")
     public int size;
+    @SerializedName("url")
     protected String url;
 
     /**

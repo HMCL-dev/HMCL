@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.setting;
 
+import com.google.gson.annotations.SerializedName;
 import java.io.File;
 import java.io.IOException;
 import org.jackhuang.hellominecraft.launcher.Main;
@@ -39,21 +40,48 @@ public class VersionSetting {
 
     public transient String id;
 
-    private String javaArgs, minecraftArgs, maxMemory, permSize, width, height;
-    private String javaDir, precalledCommand, serverIp, java, wrapper;
-    private boolean fullscreen, noJVMArgs, notCheckGame;
+    @SerializedName("javaArgs")
+    private String javaArgs;
+    @SerializedName("minecraftArgs")
+    private String minecraftArgs;
+    @SerializedName("maxMemory")
+    private String maxMemory;
+    @SerializedName("permSize")
+    private String permSize;
+    @SerializedName("width")
+    private String width;
+    @SerializedName("height")
+    private String height;
+    @SerializedName("javaDir")
+    private String javaDir;
+    @SerializedName("precalledCommand")
+    private String precalledCommand;
+    @SerializedName("serverIp")
+    private String serverIp;
+    @SerializedName("java")
+    private String java;
+    @SerializedName("wrapper")
+    private String wrapper;
+    @SerializedName("fullscreen")
+    private boolean fullscreen;
+    @SerializedName("noJVMArgs")
+    private boolean noJVMArgs;
+    @SerializedName("notCheckGame")
+    private boolean notCheckGame;
 
     /**
      * 0 - Close the launcher when the game starts.<br/>
      * 1 - Hide the launcher when the game starts.<br/>
      * 2 - Keep the launcher open.<br/>
      */
+    @SerializedName("launcherVisibility")
     private int launcherVisibility;
 
     /**
      * 0 - .minecraft<br/>
      * 1 - .minecraft/versions/&lt;version&gt;/<br/>
      */
+    @SerializedName("gameDirType")
     private int gameDirType;
 
     public transient final EventHandler<String> propertyChanged = new EventHandler<>(this);

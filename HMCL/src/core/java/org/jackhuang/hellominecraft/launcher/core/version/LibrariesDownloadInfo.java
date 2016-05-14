@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.version;
 
+import com.google.gson.annotations.SerializedName;
 import java.util.Map;
 
 /**
@@ -25,6 +26,8 @@ import java.util.Map;
  */
 public class LibrariesDownloadInfo {
 
+    @SerializedName("classifiers")
     Map<String, LibraryDownloadInfo> classifiers;
+    @SerializedName("artifact")
     LibraryDownloadInfo artifact;
 }

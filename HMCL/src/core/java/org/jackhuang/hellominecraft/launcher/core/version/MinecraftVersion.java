@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.version;
 
+import com.google.gson.annotations.SerializedName;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,14 +38,37 @@ import org.jackhuang.hellominecraft.util.Utils;
  */
 public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion> {
 
-    public String minecraftArguments, mainClass, time, id, type, processArguments,
-        releaseTime, jar, inheritsFrom, runDir;
+    @SerializedName("minecraftArguments")
+    public String minecraftArguments;
+    @SerializedName("mainClass")
+    public String mainClass;
+    @SerializedName("time")
+    public String time;
+    @SerializedName("id")
+    public String id;
+    @SerializedName("type")
+    public String type;
+    @SerializedName("processArguments")
+    public String processArguments;
+    @SerializedName("releaseTime")
+    public String releaseTime;
+    @SerializedName("jar")
+    public String jar;
+    @SerializedName("inheritsFrom")
+    public String inheritsFrom;
+    @SerializedName("runDir")
+    public String runDir;
+    @SerializedName("assets")
     protected String assets;
+    @SerializedName("minimumLauncherVersion")
     public int minimumLauncherVersion;
+    @SerializedName("hidden")
     public boolean hidden;
+    @SerializedName("assetIndex")
     public AssetIndexDownloadInfo assetIndex;
+    @SerializedName("downloads")
     private Map<String, GameDownloadInfo> downloads;
-
+    @SerializedName("libraries")
     public ArrayList<MinecraftLibrary> libraries;
 
     public MinecraftVersion() {

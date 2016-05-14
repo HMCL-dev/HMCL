@@ -17,12 +17,21 @@
  */
 package org.jackhuang.hellominecraft.svrmgr.util.version;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  *
  * @author huangyuhui
  */
 public class MinecraftRemoteVersion {
 
-    public String id, time, releaseTime, type;
+    @SerializedName("id")
+    public String id;
+    @SerializedName("time")
+    public String time;
+    @SerializedName("releaseTime")
+    public String releaseTime;
+    @SerializedName("type")
+    public String type;
 
 }

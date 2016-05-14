@@ -17,13 +17,20 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.install.liteloader;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  *
  * @author huangyuhui
  */
 public class LiteLoaderVersionsMeta {
 
-    private String description, authors, url;
+    @SerializedName("versions")
+    private String description;
+    @SerializedName("authors")
+    private String authors;
+    @SerializedName("url")
+    private String url;
 
     public LiteLoaderVersionsMeta() {
     }

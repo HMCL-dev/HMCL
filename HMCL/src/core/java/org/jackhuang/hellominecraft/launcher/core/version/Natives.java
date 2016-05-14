@@ -17,13 +17,20 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.version;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  *
  * @author huangyuhui
  */
 public class Natives implements Cloneable {
 
-    public String windows, osx, linux;
+    @SerializedName("windows")
+    public String windows;
+    @SerializedName("osx")
+    public String osx;
+    @SerializedName("linux")
+    public String linux;
 
     @Override
     @SuppressWarnings("CloneDeclaresCloneNotSupported")

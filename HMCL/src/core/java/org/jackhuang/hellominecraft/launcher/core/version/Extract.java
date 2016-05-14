@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.version;
 
+import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import java.util.List;
 import org.jackhuang.hellominecraft.util.StrUtils;
@@ -27,6 +28,7 @@ import org.jackhuang.hellominecraft.util.StrUtils;
  */
 public class Extract implements Cloneable {
 
+    @SerializedName("exclude")
     public List<String> exclude = new ArrayList<>();
 
     public boolean allow(String path) {

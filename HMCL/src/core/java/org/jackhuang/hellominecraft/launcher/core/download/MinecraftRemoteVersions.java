@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.download;
 
+import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.NetUtils;
@@ -28,7 +29,9 @@ import org.jackhuang.hellominecraft.util.OverridableSwingWorker;
  */
 public class MinecraftRemoteVersions {
 
+    @SerializedName("versions")
     public ArrayList<MinecraftRemoteVersion> versions;
+    @SerializedName("latest")
     public MinecraftRemoteLatestVersion latest;
 
     private static volatile MinecraftRemoteVersions INSTANCE = null;

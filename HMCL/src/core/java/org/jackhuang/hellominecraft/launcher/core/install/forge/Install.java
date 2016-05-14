@@ -17,20 +17,31 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.install.forge;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  *
  * @author huangyuhui
  */
 public class Install {
 
+    @SerializedName("profileName")
     private String profileName;
+    @SerializedName("target")
     private String target;
+    @SerializedName("path")
     private String path;
+    @SerializedName("version")
     private String version;
+    @SerializedName("filePath")
     private String filePath;
+    @SerializedName("welcome")
     private String welcome;
+    @SerializedName("minecraft")
     private String minecraft;
+    @SerializedName("mirrorList")
     private String mirrorList;
+    @SerializedName("logo")
     private String logo;
 
     public Install() {

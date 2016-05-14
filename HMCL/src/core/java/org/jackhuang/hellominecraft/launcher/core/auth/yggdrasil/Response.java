@@ -17,14 +17,24 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.auth.yggdrasil;
 
+import com.google.gson.annotations.SerializedName;
+
 public class Response {
 
-    public String accessToken, clientToken;
+    @SerializedName("accessToken")
+    public String accessToken;
+    @SerializedName("clientToken")
+    public String clientToken;
+    @SerializedName("selectedProfile")
     public GameProfile selectedProfile;
+    @SerializedName("availableProfiles")
     public GameProfile[] availableProfiles;
+    @SerializedName("user")
     public User user;
-
+    @SerializedName("error")
     public String error;
+    @SerializedName("errorMessage")
     public String errorMessage;
+    @SerializedName("cause")
     public String cause;
 }

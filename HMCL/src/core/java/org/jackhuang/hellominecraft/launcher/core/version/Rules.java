@@ -17,13 +17,17 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.version;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  *
  * @author huangyuhui
  */
 public class Rules {
 
+    @SerializedName("action")
     private String action;
+    @SerializedName("os")
     private OSRestriction os;
 
     public Rules() {

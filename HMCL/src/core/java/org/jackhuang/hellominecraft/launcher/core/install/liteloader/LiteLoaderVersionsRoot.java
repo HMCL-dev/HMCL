@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.install.liteloader;
 
+import com.google.gson.annotations.SerializedName;
 import java.util.Map;
 
 /**
@@ -25,6 +26,8 @@ import java.util.Map;
  */
 public class LiteLoaderVersionsRoot {
 
+    @SerializedName("versions")
     public Map<String, LiteLoaderMCVersions> versions;
+    @SerializedName("meta")
     public LiteLoaderVersionsMeta meta;
 }

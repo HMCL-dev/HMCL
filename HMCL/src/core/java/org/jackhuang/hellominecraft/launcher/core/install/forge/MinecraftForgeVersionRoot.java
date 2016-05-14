@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.install.forge;
 
+import com.google.gson.annotations.SerializedName;
 import java.util.Map;
 
 /**
@@ -25,8 +26,22 @@ import java.util.Map;
  */
 public class MinecraftForgeVersionRoot {
 
-    public String artifact, webpath, adfly, homepage, name;
-    public Map<String, int[]> branches, mcversion;
+    @SerializedName("artifact")
+    public String artifact;
+    @SerializedName("webpath")
+    public String webpath;
+    @SerializedName("adfly")
+    public String adfly;
+    @SerializedName("homepage")
+    public String homepage;
+    @SerializedName("name")
+    public String name;
+    @SerializedName("branches")
+    public Map<String, int[]> branches;
+    @SerializedName("mcversion")
+    public Map<String, int[]> mcversion;
+    @SerializedName("promos")
     public Map<String, Integer> promos;
+    @SerializedName("number")
     public Map<Integer, MinecraftForgeVersion> number;
 }

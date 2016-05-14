@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.version;
 
+import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
@@ -27,7 +28,9 @@ import org.jackhuang.hellominecraft.util.system.IOUtils;
  */
 public class LibraryDownloadInfo extends GameDownloadInfo {
 
+    @SerializedName("path")
     public String path;
+    @SerializedName("forgeURL")
     public String forgeURL;
 
     @Override

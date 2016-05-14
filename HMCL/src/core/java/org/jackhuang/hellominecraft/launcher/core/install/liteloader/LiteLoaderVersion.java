@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.install.liteloader;
 
+import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
 
 /**
@@ -25,6 +26,16 @@ import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
  */
 public class LiteLoaderVersion {
 
-    public String tweakClass, file, version, md5, timestamp;
+    @SerializedName("tweakClass")
+    public String tweakClass;
+    @SerializedName("file")
+    public String file;
+    @SerializedName("version")
+    public String version;
+    @SerializedName("md5")
+    public String md5;
+    @SerializedName("timestamp")
+    public String timestamp;
+    @SerializedName("libraries")
     public MinecraftLibrary[] libraries;
 }

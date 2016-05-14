@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.version;
 
+import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.system.OS;
 
@@ -26,7 +27,10 @@ import org.jackhuang.hellominecraft.util.system.OS;
  */
 public class OSRestriction {
 
-    private String version, name;
+    @SerializedName("version")
+    private String version;
+    @SerializedName("name")
+    public String name;
 
     public String getVersion() {
         return version;

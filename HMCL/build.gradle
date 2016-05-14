@@ -47,6 +47,7 @@ String mavenArtifactId = name
 
 task generateSources(type: Copy) {
     from 'src/main/java'
+    from 'src/core/java'
     into "$buildDir/generated-src"
     filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [
             'HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING': mavenVersion

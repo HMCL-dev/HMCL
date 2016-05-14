@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.version;
 
+import com.google.gson.annotations.SerializedName;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,10 +31,15 @@ import org.jackhuang.hellominecraft.util.StrUtils;
  */
 public class MinecraftLibrary extends IMinecraftLibrary {
 
+    @SerializedName("rules")
     public ArrayList<Rules> rules;
+    @SerializedName("url")
     public String url;
+    @SerializedName("natives")
     public Natives natives;
+    @SerializedName("extract")
     public Extract extract;
+    @SerializedName("downloads")
     public LibrariesDownloadInfo downloads;
 
     public MinecraftLibrary(String name) {

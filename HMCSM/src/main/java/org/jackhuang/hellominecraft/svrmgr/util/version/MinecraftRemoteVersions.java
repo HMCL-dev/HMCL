@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.svrmgr.util.version;
 
+import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 
 /**
@@ -25,7 +26,9 @@ import java.util.ArrayList;
  */
 public class MinecraftRemoteVersions {
 
+    @SerializedName("versions")
     public ArrayList<MinecraftRemoteVersion> versions;
+    @SerializedName("latest")
     public MinecraftRemoteLatestVersion latest;
 
 }

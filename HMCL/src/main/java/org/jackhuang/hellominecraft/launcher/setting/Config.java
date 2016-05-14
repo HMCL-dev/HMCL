@@ -43,7 +43,14 @@ public final class Config implements Cloneable {
     private String bgpath;
     @SerializedName("clientToken")
     private final String clientToken;
-    private String proxyHost, proxyPort, proxyUserName, proxyPassword;
+    @SerializedName("proxyHost")
+    private String proxyHost;
+    @SerializedName("proxyPort")
+    private String proxyPort;
+    @SerializedName("proxyUserName")
+    private String proxyUserName;
+    @SerializedName("proxyPassword")
+    private String proxyPassword;
     @SerializedName("enableShadow")
     private boolean enableShadow;
     @SerializedName("decorated")

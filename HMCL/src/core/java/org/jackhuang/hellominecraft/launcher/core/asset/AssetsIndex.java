@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.asset;
 
+import com.google.gson.annotations.SerializedName;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -29,7 +30,11 @@ import java.util.Set;
 public class AssetsIndex {
 
     public static final String DEFAULT_ASSET_NAME = "legacy";
+
+    @SerializedName("objects")
     public Map<String, AssetsObject> objects;
+
+    @SerializedName("virtual")
     public boolean virtual;
 
     public AssetsIndex() {
