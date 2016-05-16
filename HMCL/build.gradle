@@ -83,6 +83,12 @@ task macAppCompressed(type: Zip, dependsOn: createApp) {
     from "$buildDir/macApp"
 }
 
+macAppBundle {
+    mainClassName = mainClass
+    icon = "src/main/icon.icns"
+    javaProperties.put("apple.laf.useScreenMenuBar", "true")
+}
+
 sourceSets {
     main {
         java {
