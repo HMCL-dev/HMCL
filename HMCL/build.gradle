@@ -15,6 +15,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
+buildscript {
+    repositories {
+        mavenCentral();
+        
+        maven {
+            url "https://libraries.minecraft.net"
+        }
+        
+        dependencies {
+            classpath 'net.sf.proguard:proguard-gradle:4.10'
+            classpath 'edu.sc.seis.gradle:launch4j:1.0.6'
+            classpath 'me.tatarka:gradle-retrolambda:3.1.0'
+        }
+    }
+}
+
+plugins {
+    id "edu.sc.seis.macAppBundle" version "2.1.6"
+}
+
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
@@ -56,6 +76,13 @@ task generateSources(type: Copy) {
 compileJava.setSource "$buildDir/generated-src"
 compileJava.dependsOn generateSources
 
+task macAppCompressed(type: Zip, dependsOn: createApp) {
+    archiveName "HMCL-$mavenVersion-MacOSApp.zip"
+    include '**'
+    destinationDir file("$buildDir/libs/")
+    from "$buildDir/macApp"
+}
+
 sourceSets {
     main {
         java {
@@ -83,22 +110,6 @@ sourceSets {
 configurations {
     coreCompile.extendsFrom compile
     coreRuntime.extendsFrom runtime
-}
-
-buildscript {
-    repositories {
-        mavenCentral();
-        
-        maven {
-            url "https://libraries.minecraft.net"
-        }
-        
-        dependencies {
-            classpath 'net.sf.proguard:proguard-gradle:4.10'
-            classpath 'edu.sc.seis.gradle:launch4j:1.0.6'
-            classpath 'me.tatarka:gradle-retrolambda:3.1.0'
-        }
-    }
 }
 
 configure(install.repositories.mavenInstaller) {
@@ -153,3 +164,4 @@ processResources {
 
 build.dependsOn makeExecutable
 build.dependsOn makePackGZ
+build.dependsOn macAppCompressed

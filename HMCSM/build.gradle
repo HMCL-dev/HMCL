@@ -15,6 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
+
+buildscript {
+    repositories {
+        mavenCentral();
+        dependencies {
+            classpath 'edu.sc.seis.gradle:launch4j:1.0.6'
+            classpath 'me.tatarka:gradle-retrolambda:3.1.0'
+        }
+    }
+}
+
+plugins {
+    id "edu.sc.seis.macAppBundle" version "2.1.6"
+}
+
 apply plugin: 'launch4j'
 apply plugin: 'me.tatarka.retrolambda'
 
@@ -41,14 +56,11 @@ version = mavenVersion
 
 String mavenArtifactId = name
 
-buildscript {
-    repositories {
-        mavenCentral();
-        dependencies {
-            classpath 'edu.sc.seis.gradle:launch4j:1.0.6'
-            classpath 'me.tatarka:gradle-retrolambda:3.1.0'
-        }
-    }
+task macAppCompressed(type: Zip, dependsOn: createApp) {
+    archiveName "HMCSM-$mavenVersion-MacOSApp.zip"
+    include '**'
+    destinationDir file("$buildDir/libs/")
+    from "$buildDir/macApp"
 }
 
 configure(install.repositories.mavenInstaller) {
@@ -87,3 +99,4 @@ processResources {
 }
 
 build.dependsOn makeExecutable
+build.dependsOn macAppCompressed
