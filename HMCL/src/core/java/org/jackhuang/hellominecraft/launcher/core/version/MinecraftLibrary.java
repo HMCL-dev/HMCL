@@ -105,7 +105,10 @@ public class MinecraftLibrary extends IMinecraftLibrary {
 
     @Override
     public File getFilePath(File gameDir) {
-        return new File(gameDir, "libraries/" + getDownloadInfo().path);
+        LibraryDownloadInfo info = getDownloadInfo();
+        if (info == null)
+            return null;
+        return new File(gameDir, "libraries/" + info.path);
     }
 
     @Override

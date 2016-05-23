@@ -121,11 +121,9 @@ public class ZipEngine {
     }
 
     public void putStream(InputStream is, String pathName) throws IOException {
-        int length;
         try (BufferedInputStream bis = new BufferedInputStream(is)) {
             put(new ZipEntry(pathName));
-            while ((length = bis.read(buf)) > 0)
-                zos.write(buf, 0, length);
+            IOUtils.copyStream(bis, zos, buf);
         }
     }
 

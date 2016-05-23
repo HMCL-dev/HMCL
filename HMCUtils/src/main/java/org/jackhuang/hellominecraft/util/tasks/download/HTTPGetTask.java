@@ -62,12 +62,12 @@ public class HTTPGetTask extends TaskInfo implements PreviousResult<String> {
                 URLConnection conn = new URL(url).openConnection();
                 InputStream is = conn.getInputStream();
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                int i;
-                int size = conn.getContentLength(), read = 0;
+                byte[] buf = new byte[1024];
+                int size = conn.getContentLength(), read = 0, len;
                 long lastTime = System.currentTimeMillis();
-                while ((i = is.read()) != -1) {
-                    baos.write(i);
-                    ++read;
+                while ((len = is.read(buf)) != -1) {
+                    baos.write(buf, 0, len);
+                    read += len;
                     long now = System.currentTimeMillis();
                     if (ppl != null && (now - lastTime) >= 1000) {
                         ppl.setProgress(this, read, size);

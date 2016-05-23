@@ -18,7 +18,6 @@
 package org.jackhuang.hellominecraft.launcher.core.install.forge;
 
 import org.jackhuang.hellominecraft.launcher.core.install.InstallProfile;
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -32,6 +31,7 @@ import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.NetUtils;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.util.MessageBox;
+import org.jackhuang.hellominecraft.util.system.IOUtils;
 
 /**
  *
@@ -79,10 +79,8 @@ public class ForgeInstaller extends Task {
             File file = new File(gameDir, "libraries/" + forge.getDownloadInfo().path);
             if (file.getParentFile().mkdirs())
                 HMCLog.warn("Failed to make library directory " + file.getParent());
-            try (FileOutputStream fos = new FileOutputStream(file); BufferedOutputStream bos = new BufferedOutputStream(fos)) {
-                int c;
-                while ((c = is.read()) != -1)
-                    bos.write((byte) c);
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                IOUtils.copyStream(is, fos);
             }
             mp.version().refreshVersions();
         }

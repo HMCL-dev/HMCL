@@ -288,4 +288,14 @@ public class IOUtils {
         }
         return lines;
     }
+
+    public static void copyStream(InputStream input, OutputStream output) throws IOException {
+        copyStream(input, output, new byte[1024]);
+    }
+
+    public static void copyStream(InputStream input, OutputStream output, byte[] buf) throws IOException {
+        int length;
+        while ((length = input.read(buf)) != -1)
+            output.write(buf, 0, length);
+    }
 }

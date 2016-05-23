@@ -109,7 +109,6 @@ public class Compressor {
         }
         String pathName;//存相对路径(相对于待压缩的根目录)
         byte[] buf = new byte[1024];
-        int length;
         for (File file : files)
             if (file.isDirectory()) {
                 pathName = file.getPath().substring(basePath.length() + 1)
@@ -129,8 +128,7 @@ public class Compressor {
                 try (InputStream is = new FileInputStream(file)) {
                     BufferedInputStream bis = new BufferedInputStream(is);
                     zos.putNextEntry(new ZipEntry(pathName));
-                    while ((length = bis.read(buf)) > 0)
-                        zos.write(buf, 0, length);
+                    IOUtils.copyStream(bis, zos, buf);
                 }
             }
     }
@@ -154,6 +152,7 @@ public class Compressor {
      * @throws java.io.IOException 解压失败或无法写入
      */
     public static void unzip(File zipFileName, File extPlace, Predicate<String> callback, boolean ignoreExistsFile) throws IOException {
+        byte[] buf = new byte[1024];
         extPlace.mkdirs();
         try (ZipInputStream zipFile = new ZipInputStream(new FileInputStream(zipFileName))) {
             if (zipFileName.exists()) {
@@ -184,10 +183,8 @@ public class Compressor {
                             }
                         if (ignoreExistsFile && new File(strtemp).exists())
                             continue;
-                        try (FileOutputStream fos = new FileOutputStream(strtemp); BufferedOutputStream bos = new BufferedOutputStream(fos)) {
-                            int c;
-                            while ((c = zipFile.read()) != -1)
-                                bos.write((byte) c);
+                        try (FileOutputStream fos = new FileOutputStream(strtemp)) {
+                            IOUtils.copyStream(zipFile, fos, buf);
                         }
                     }
                 }

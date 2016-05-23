@@ -51,21 +51,21 @@ public class DoubleOutputStream extends OutputStream {
     }
 
     @Override
-    public final void write(byte[] paramArrayOfByte) throws IOException {
+    public final void write(byte[] arr) throws IOException {
         if (this.a != null)
-            this.a.write(paramArrayOfByte);
+            this.a.write(arr);
         if (this.b != null)
-            this.b.write(paramArrayOfByte);
+            this.b.write(arr);
         if (this.c)
             flush();
     }
 
     @Override
-    public final void write(int paramInt) throws IOException {
+    public final void write(int i) throws IOException {
         if (this.a != null)
-            this.a.write(paramInt);
+            this.a.write(i);
         if (this.b != null)
-            this.b.write(paramInt);
+            this.b.write(i);
         if (this.c)
             flush();
     }

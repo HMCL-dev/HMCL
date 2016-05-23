@@ -45,8 +45,12 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
     protected void makeSelf(List<String> res) throws GameException {
         StringBuilder library = new StringBuilder("");
         for (MinecraftLibrary l : version.libraries)
-            if (l.allow() && !l.isRequiredToUnzip())
-                library.append(l.getFilePath(gameDir).getAbsolutePath()).append(File.pathSeparator);
+            if (l.allow() && !l.isRequiredToUnzip()) {
+                File f = l.getFilePath(gameDir);
+                if (f == null)
+                    continue;
+                library.append(f.getAbsolutePath()).append(File.pathSeparator);
+            }
         File f = version.getJar(service.baseDirectory());
         if (!f.exists())
             throw new GameException("Minecraft jar does not exists");
@@ -55,6 +59,8 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         res.add(library.toString().substring(0, library.length() - File.pathSeparator.length()));
         res.add(version.mainClass);
 
+        if (version.minecraftArguments == null)
+            throw new GameException(new NullPointerException("Minecraft Arguments can not be null."));
         String[] splitted = StrUtils.tokenize(version.minecraftArguments);
 
         String game_assets = assetProvider.apply(version, !options.isNotCheckGame());

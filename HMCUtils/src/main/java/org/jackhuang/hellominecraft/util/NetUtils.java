@@ -37,13 +37,10 @@ import org.jackhuang.hellominecraft.util.system.IOUtils;
 public final class NetUtils {
 
     public static byte[] getBytesFromStream(InputStream is) throws IOException {
-        ByteArrayOutputStream localByteArrayOutputStream = new ByteArrayOutputStream();
-        byte[] arrayOfByte1 = new byte[1024];
-        int i;
-        while ((i = is.read(arrayOfByte1)) >= 0)
-            localByteArrayOutputStream.write(arrayOfByte1, 0, i);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        IOUtils.copyStream(is, out);
         is.close();
-        return localByteArrayOutputStream.toByteArray();
+        return out.toByteArray();
     }
 
     public static String getStreamContent(InputStream is) throws IOException {
@@ -83,12 +80,8 @@ public final class NetUtils {
     public static String post(URL u, Map<String, String> params) throws IOException {
         StringBuilder sb = new StringBuilder();
         if (params != null) {
-            for (Map.Entry<String, String> e : params.entrySet()) {
-                sb.append(e.getKey());
-                sb.append("=");
-                sb.append(e.getValue());
-                sb.append("&");
-            }
+            for (Map.Entry<String, String> e : params.entrySet())
+                sb.append(e.getKey()).append("=").append(e.getValue()).append("&");
             sb.deleteCharAt(sb.length() - 1);
         }
         return post(u, sb.toString());
@@ -150,9 +143,9 @@ public final class NetUtils {
 
     public static URL concatenateURL(URL url, String query) {
         try {
-            if ((url.getQuery() != null) && (url.getQuery().length() > 0))
-                return new URL(url.getProtocol(), url.getHost(), url.getPort(), new StringBuilder().append(url.getFile()).append("&").append(query).toString());
-            return new URL(url.getProtocol(), url.getHost(), url.getPort(), new StringBuilder().append(url.getFile()).append("?").append(query).toString());
+            if (url.getQuery() != null && url.getQuery().length() > 0)
+                return new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile() + "&" + query);
+            return new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile() + "?" + query);
         } catch (MalformedURLException ex) {
             throw new IllegalArgumentException("Could not concatenate given URL with GET arguments!", ex);
         }

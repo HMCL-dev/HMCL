@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.util.ui;
 
 import java.io.OutputStream;
+import java.util.Objects;
 import java.util.Timer;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.util.logging.Level;
@@ -34,24 +35,26 @@ public class LogWindowOutputStream extends OutputStream {
     private final Level sas;
 
     public LogWindowOutputStream(LogWindow logWindow, Level l) {
+        Objects.nonNull(logWindow);
+        Objects.nonNull(l);
         txt = logWindow;
-        this.sas = l;
+        sas = l;
     }
 
     @Override
-    public final void write(byte[] paramArrayOfByte) {
-        write(paramArrayOfByte, 0, paramArrayOfByte.length);
+    public final void write(byte[] arr) {
+        write(arr, 0, arr.length);
     }
 
     @Override
-    public final void write(byte[] paramArrayOfByte, int off, int len) {
-        append(new String(paramArrayOfByte, off, len));
+    public final void write(byte[] arr, int off, int len) {
+        append(new String(arr, off, len));
     }
 
-    private void append(final String newString) {
+    private void append(final String str) {
         try {
             SwingUtilities.invokeLater(() -> {
-                txt.log(newString, Level.guessLevel(newString, sas));
+                txt.log(str, Level.guessLevel(str, sas));
             });
         } catch (Throwable e) {
             e.printStackTrace();
@@ -59,8 +62,8 @@ public class LogWindowOutputStream extends OutputStream {
     }
 
     @Override
-    public final void write(int paramInt) {
-        append(new String(new byte[] { (byte) paramInt }));
+    public final void write(int i) {
+        append(new String(new byte[] { (byte) i }));
     }
 
     public static void dispose() {
