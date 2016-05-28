@@ -26,6 +26,8 @@
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="btnCheckUpdate" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="btnMCBBS" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="chkDecorated" min="-2" max="-2" attributes="0"/>
                   </Group>
@@ -125,6 +127,7 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="btnCheckUpdate" alignment="3" min="-2" pref="26" max="-2" attributes="0"/>
                   <Component id="chkDecorated" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnMCBBS" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblRestart" min="-2" max="-2" attributes="0"/>
@@ -344,6 +347,15 @@
           <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="launcher.restart" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="btnMCBBS">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="MCBBS"/>
+        <Property name="toolTipText" type="java.lang.String" value=""/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnMCBBSActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

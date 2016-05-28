@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.launcher.core.launch;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
@@ -44,13 +45,24 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
     @Override
     protected void makeSelf(List<String> res) throws GameException {
         StringBuilder library = new StringBuilder("");
+        ArrayList<MinecraftLibrary> opt = new ArrayList<>();
         for (MinecraftLibrary l : version.libraries)
             if (l.allow() && !l.isRequiredToUnzip()) {
+                if (l.name.toLowerCase().contains("optifine")) {
+                    opt.add(l);
+                    continue;
+                }
                 File f = l.getFilePath(gameDir);
                 if (f == null)
                     continue;
                 library.append(f.getAbsolutePath()).append(File.pathSeparator);
             }
+        for (MinecraftLibrary l : opt) {
+            File f = l.getFilePath(gameDir);
+            if (f == null)
+                continue;
+            library.append(f.getAbsolutePath()).append(File.pathSeparator);
+        }
         File f = version.getJar(service.baseDirectory());
         if (!f.exists())
             throw new GameException("Minecraft jar does not exists");

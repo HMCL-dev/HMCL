@@ -148,7 +148,7 @@ public class YggdrasilAuthentication {
 
             if (StrUtils.isNotBlank(response.error)) {
                 HMCLog.err("Failed to log in, the auth server returned an error: " + response.error + ", message: " + response.errorMessage + ", cause: " + response.cause);
-                if (response.errorMessage.contains("Invalid token"))
+                if (response.errorMessage != null && response.errorMessage.contains("Invalid token"))
                     response.errorMessage = C.i18n("login.invalid_token");
                 throw new AuthenticationException("Request error: " + response.errorMessage);
             }

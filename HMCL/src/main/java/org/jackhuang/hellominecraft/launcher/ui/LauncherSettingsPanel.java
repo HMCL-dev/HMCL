@@ -116,6 +116,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         cboLang = new javax.swing.JComboBox();
         lblLang = new javax.swing.JLabel();
         lblRestart = new javax.swing.JLabel();
+        btnMCBBS = new javax.swing.JButton();
 
         cboDownloadSource.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -240,6 +241,14 @@ public class LauncherSettingsPanel extends AnimatedPanel {
 
         lblRestart.setText(C.i18n("launcher.restart")); // NOI18N
 
+        btnMCBBS.setText("MCBBS");
+        btnMCBBS.setToolTipText("");
+        btnMCBBS.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnMCBBSActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -253,6 +262,8 @@ public class LauncherSettingsPanel extends AnimatedPanel {
                         .addComponent(chkEnableAnimation))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(btnCheckUpdate)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnMCBBS)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(chkDecorated))
                     .addGroup(layout.createSequentialGroup()
@@ -334,7 +345,8 @@ public class LauncherSettingsPanel extends AnimatedPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnCheckUpdate, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(chkDecorated))
+                    .addComponent(chkDecorated)
+                    .addComponent(btnMCBBS))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblRestart)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 65, Short.MAX_VALUE)
@@ -425,8 +437,13 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         SwingUtils.openLink("http://huangyuhui.duapp.com/link.php?type=sponsor");
     }//GEN-LAST:event_lblAboutMouseClicked
 
+    private void btnMCBBSActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMCBBSActionPerformed
+        SwingUtils.openLink(C.URL_PUBLISH);
+    }//GEN-LAST:event_btnMCBBSActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCheckUpdate;
+    private javax.swing.JButton btnMCBBS;
     private javax.swing.JButton btnSelBackgroundPath;
     private javax.swing.JComboBox cboDownloadSource;
     private javax.swing.JComboBox cboLang;
