@@ -89,7 +89,7 @@ public final class MainFrame extends DraggableFrame {
             setContentSize(834, 542);
         else
             setContentSize(802, 511);
-        setDefaultCloseOperation(3);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
         setTitle(Main.makeTitle());
         initComponents();
         loadBackground();

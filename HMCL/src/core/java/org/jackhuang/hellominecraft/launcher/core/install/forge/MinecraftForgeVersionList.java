@@ -76,10 +76,13 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
 
                 for (Map.Entry<String, int[]> arr : root.mcversion.entrySet()) {
                     String mcver = StrUtils.formatVersion(arr.getKey());
+					if (mcver == null) {
+						mcver = arr.getKey();
+					}
                     ArrayList<InstallerVersion> al = new ArrayList<>();
                     for (int num : arr.getValue()) {
                         MinecraftForgeVersion v = root.number.get(num);
-                        InstallerVersion iv = new InstallerVersion(v.version, StrUtils.formatVersion(v.mcversion));
+                        InstallerVersion iv = new InstallerVersion(v.version, v.mcversion);
                         for (String[] f : v.files) {
 
                             String ver = v.mcversion + "-" + v.version;
@@ -108,7 +111,7 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
                         versions.add(iv);
                     }
 
-                    versionMap.put(StrUtils.formatVersion(mcver), al);
+                    versionMap.put(mcver, al);
                 }
 
                 Collections.sort(versions, new InstallerVersionComparator());
