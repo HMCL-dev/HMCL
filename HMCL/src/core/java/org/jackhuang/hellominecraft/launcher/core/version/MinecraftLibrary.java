@@ -48,29 +48,25 @@ public class MinecraftLibrary extends IMinecraftLibrary {
 
     public MinecraftLibrary(ArrayList<Rules> rules, String url, Natives natives, String name, Extract extract, LibraryDownloadInfo downloads) {
         super(name);
-        this.rules = rules == null ? null : (ArrayList<Rules>) rules.clone();
+        this.rules = (rules == null) ? null : (ArrayList<Rules>) rules.clone();
         this.url = url;
-        this.natives = natives == null ? null : (Natives) natives.clone();
-        this.extract = extract == null ? null : (Extract) extract.clone();
+        this.natives = (natives == null) ? null : (Natives) natives.clone();
+        this.extract = (extract == null) ? null : (Extract) extract.clone();
     }
 
-    /**
-     * is the library allowed to load.
-     *
-     * @return
-     */
     @Override
     public boolean allow() {
         if (rules != null) {
             boolean flag = false;
-            for (Rules r : rules)
+            for (Rules r : rules) {
                 if ("disallow".equals(r.action()))
                     return false;
                 else if ("allow".equals(r.action()))
                     flag = true;
+			}
             return flag;
-        } else
-            return true;
+        }
+        return true;
     }
 
     private String formatArch(String nati) {
@@ -95,19 +91,24 @@ public class MinecraftLibrary extends IMinecraftLibrary {
 
     public String formatName() {
         String[] s = name.split(":");
-        if (s.length < 3)
+        if (s.length < 3) {
             return null;
+		}
+		
         StringBuilder sb = new StringBuilder(s[0].replace('.', '/')).append('/').append(s[1]).append('/').append(s[2]).append('/').append(s[1]).append('-').append(s[2]);
-        if (natives != null)
+        if (natives != null) {
             sb.append('-').append(getNative());
+		}
+		
         return sb.append(".jar").toString();
     }
 
     @Override
     public File getFilePath(File gameDir) {
         LibraryDownloadInfo info = getDownloadInfo();
-        if (info == null)
+        if (info == null) {
             return null;
+		}
         return new File(gameDir, "libraries/" + info.path);
     }
 
@@ -117,25 +118,34 @@ public class MinecraftLibrary extends IMinecraftLibrary {
     }
 
     public LibraryDownloadInfo getDownloadInfo() {
-        if (downloads == null)
+        if (downloads == null) {
             downloads = new LibrariesDownloadInfo();
-        LibraryDownloadInfo info;
+		}
+		
+        LibraryDownloadInfo info = null;
         if (natives != null) {
-            if (downloads.classifiers == null)
+            if (downloads.classifiers == null) {
                 downloads.classifiers = new HashMap<>();
-            if (!downloads.classifiers.containsKey(getNative()))
-                downloads.classifiers.put(getNative(), info = new LibraryDownloadInfo());
-            else
-                info = downloads.classifiers.get(getNative());
-        } else if (downloads.artifact == null)
+			} else {
+				if (!downloads.classifiers.containsKey(getNative())) {
+					downloads.classifiers.put(getNative(), info = new LibraryDownloadInfo());
+				} else {
+					info = downloads.classifiers.get(getNative());
+				}
+			}
+        } else if (downloads.artifact == null) {
             downloads.artifact = info = new LibraryDownloadInfo();
-        else
+		} else {
             info = downloads.artifact;
+		}
+		
         if (StrUtils.isBlank(info.path)) {
             info.path = formatName();
-            if (info.path == null)
+            if (info.path == null) {
                 return null;
+			}
         }
+		
         info.forgeURL = this.url;
         return info;
     }

@@ -41,27 +41,32 @@ public class MojangDownloadProvider extends IDownloadProvider {
     public InstallerVersionList getOptiFineInstaller() {
         return org.jackhuang.hellominecraft.launcher.core.install.optifine.vanilla.OptiFineVersionList.getInstance();
     }
-
+	
+	// jars
     @Override
     public String getLibraryDownloadURL() {
         return "https://libraries.minecraft.net";
     }
 
+	// jars
     @Override
     public String getVersionsDownloadURL() {
         return "http://s3.amazonaws.com/Minecraft.Download/versions/";
     }
-
+	
+	// resource
     @Override
     public String getIndexesDownloadURL() {
         return "http://s3.amazonaws.com/Minecraft.Download/indexes/";
     }
-
+	
+	// game versions json
     @Override
     public String getVersionsListDownloadURL() {
         return "https://launchermeta.mojang.com/mc/game/version_manifest.json";
     }
-
+	
+	// resource
     @Override
     public String getAssetsDownloadURL() {
         return "https://resources.download.minecraft.net/";

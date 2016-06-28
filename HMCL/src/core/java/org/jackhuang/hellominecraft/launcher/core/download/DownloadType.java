@@ -29,7 +29,8 @@ public enum DownloadType {
     Mojang("download.mojang", new MojangDownloadProvider()),
     BMCL("download.BMCL", new BMCLAPIDownloadProvider()),
     //RapidData("download.rapid_data", new RapidDataDownloadProvider()),
-    Curse("Curse CDN", new CurseDownloadProvider());
+    Curse("Curse CDN", new CurseDownloadProvider()),
+	Dynamic(DynamicDownloadProvider.getInstance().getName(), DynamicDownloadProvider.getInstance());
 
     private final String name;
     private final IDownloadProvider provider;
@@ -47,7 +48,7 @@ public enum DownloadType {
         return C.i18n(name);
     }
 
-    private static DownloadType suggestedDownloadType = Mojang;
+    private static DownloadType suggestedDownloadType = Dynamic;
 
     public static DownloadType getSuggestedDownloadType() {
         return suggestedDownloadType;

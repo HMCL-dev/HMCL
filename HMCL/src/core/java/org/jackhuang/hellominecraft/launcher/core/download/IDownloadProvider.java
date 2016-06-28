@@ -38,7 +38,7 @@ public abstract class IDownloadProvider {
             return null;
         }
     }
-
+	
     public abstract InstallerVersionList getForgeInstaller();
 
     public abstract InstallerVersionList getLiteLoaderInstaller();
@@ -46,6 +46,10 @@ public abstract class IDownloadProvider {
     public abstract InstallerVersionList getOptiFineInstaller();
 
     public abstract String getLibraryDownloadURL();
+	
+	public String getRetryLibraryDownloadURL() {
+		return "";
+	}
 
     public abstract String getVersionsDownloadURL();
 
@@ -55,6 +59,10 @@ public abstract class IDownloadProvider {
 
     public abstract String getAssetsDownloadURL();
 
+	public String getRetryAssetsDownloadURL() {
+		return "";
+	}
+	
     /**
      * For example, minecraft.json/assetIndex/url or
      * minecraft.json/downloads/client/url

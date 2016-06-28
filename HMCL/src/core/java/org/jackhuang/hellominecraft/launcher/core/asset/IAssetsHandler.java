@@ -34,6 +34,8 @@ import org.jackhuang.hellominecraft.util.code.DigestUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.NetUtils;
 import org.jackhuang.hellominecraft.util.OverridableSwingWorker;
+import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.func.Function;
 import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
 
 /**
@@ -89,30 +91,37 @@ public abstract class IAssetsHandler {
 
     protected class AssetsTask extends TaskInfo {
 
-        ArrayList<Task> al;
-        String u;
+        ArrayList<Task> tasks;
+        String baseUrl;
+		String retryBaseUrl;
 
-        public AssetsTask(String url) {
+        public AssetsTask(String url, String retryUrl) {
             super(C.i18n("assets.download"));
-            this.u = url;
+            this.baseUrl = url;
+			this.retryBaseUrl = retryUrl;
         }
 
         @Override
         public void executeTask() {
             if (assetsDownloadURLs == null || assetsLocalNames == null || contents == null)
                 throw new IllegalStateException(C.i18n("assets.not_refreshed"));
+			
+			tasks = new ArrayList<>();
             int max = assetsDownloadURLs.size();
-            al = new ArrayList<>();
             int hasDownloaded = 0;
             for (int i = 0; i < max; i++) {
                 String mark = assetsDownloadURLs.get(i);
-                String url = u + mark;
+                String downloadUrl = baseUrl + mark;
+				String downloadRetryUrl = StrUtils.isNotBlank(retryBaseUrl) ? retryBaseUrl + mark : ""; 
                 File location = assetsLocalNames.get(i);
+				
                 if (!location.getParentFile().exists() && !location.getParentFile().mkdirs())
                     HMCLog.warn("Failed to make directories: " + location.getParent());
+				
                 if (location.isDirectory())
                     continue;
-                boolean need = true;
+				
+                boolean needDownload = true;
                 try {
                     if (location.exists()) {
                         FileInputStream fis = new FileInputStream(location);
@@ -121,23 +130,39 @@ public abstract class IAssetsHandler {
                         if (contents.get(i).geteTag().equals(sha)) {
                             ++hasDownloaded;
                             HMCLog.log("File " + assetsLocalNames.get(i) + " has been downloaded successfully, skipped downloading.");
-                            if (ppl != null)
+                            if (ppl != null) {
                                 ppl.setProgress(this, hasDownloaded, max);
+							}
                             continue;
                         }
                     }
                 } catch (IOException e) {
                     HMCLog.warn("Failed to get hash: " + location, e);
-                    need = !location.exists();
+                    needDownload = !location.exists();
                 }
-                if (need)
-                    al.add(new FileDownloadTask(url, location).setTag(mark));
+				
+                if (needDownload) {
+					FileDownloadTask fileDownloadTask = new FileDownloadTask(downloadUrl, location);
+					fileDownloadTask.setTag(mark);
+					
+					// retry
+					if (StrUtils.isNotBlank(downloadRetryUrl)) {
+						fileDownloadTask.setFailedCallbackReturnsNewURL(new Function<Integer, String>() {
+							@Override
+							public String apply(Integer t) {
+								return downloadRetryUrl;
+							}
+						});
+					}
+
+                    tasks.add(fileDownloadTask);
+				}
             }
         }
 
         @Override
         public Collection<Task> getAfterTasks() {
-            return al;
+            return tasks;
         }
     }
 }

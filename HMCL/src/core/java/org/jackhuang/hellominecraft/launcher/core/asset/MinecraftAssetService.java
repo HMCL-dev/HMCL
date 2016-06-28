@@ -56,7 +56,8 @@ public class MinecraftAssetService extends IMinecraftAssetService {
     public Task downloadAssets(final MinecraftVersion mv) {
         if (mv == null)
             return null;
-        return IAssetsHandler.ASSETS_HANDLER.getList(mv, service.asset()).after(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(service.getDownloadType().getProvider()));
+        return IAssetsHandler.ASSETS_HANDLER.getList(mv, service.asset())
+				.after(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(service.getDownloadType().getProvider()));
     }
 
     @Override

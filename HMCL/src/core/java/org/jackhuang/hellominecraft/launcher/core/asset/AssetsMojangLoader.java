@@ -98,7 +98,7 @@ public class AssetsMojangLoader extends IAssetsHandler {
 
     @Override
     public Task getDownloadTask(IDownloadProvider sourceType) {
-        return new AssetsTask(sourceType.getAssetsDownloadURL());
+        return new AssetsTask(sourceType.getAssetsDownloadURL(), sourceType.getRetryAssetsDownloadURL());
     }
 
     @Override

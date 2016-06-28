@@ -193,7 +193,8 @@ public final class Config implements Cloneable {
 
     public Config() {
         clientToken = UUID.randomUUID().toString();
-        logintype = downloadtype = 0;
+        logintype = 0;
+		downloadtype = DownloadType.Dynamic.ordinal();
         enableShadow = false;
         enableAnimation = true;
         theme = 4;
@@ -203,7 +204,7 @@ public final class Config implements Cloneable {
 
     public DownloadType getDownloadSource() {
         if (downloadtype >= DownloadType.values().length || downloadtype < 0) {
-            downloadtype = 0;
+            downloadtype = DownloadType.Dynamic.ordinal();
             Settings.save();
         }
         return DownloadType.values()[downloadtype];

@@ -48,6 +48,7 @@ import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
+import org.jackhuang.hellominecraft.launcher.core.download.DynamicDownloadProvider;
 import org.jackhuang.hellominecraft.util.ui.GraphicsUtils;
 import org.jackhuang.hellominecraft.lookandfeel.Theme;
 import org.jackhuang.hellominecraft.util.MessageBox;
@@ -85,23 +86,27 @@ public final class MainFrame extends DraggableFrame {
         setUndecorated(!Settings.getInstance().isDecorated());
         defaultTitle = isUndecorated() ? Main.makeTitle() : "";
         enableShadow = Settings.getInstance().isEnableShadow() && isUndecorated();
-        if (enableShadow)
-            setContentSize(834, 542);
-        else
+        if (enableShadow) {
+			setContentSize(834, 542);
+		} else {
             setContentSize(802, 511);
+		}
+		
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setTitle(Main.makeTitle());
         initComponents();
         loadBackground();
+		
+		DynamicDownloadProvider.getInstance().init();
 
         setLocationRelativeTo(null);
-        if (MainFrame.this.isUndecorated())
+        if (MainFrame.this.isUndecorated()) {
             setResizable(false);
+		}
 
         this.addWindowListener(new WindowListener() {
             @Override
-            public void windowOpened(WindowEvent e) {
-            }
+            public void windowOpened(WindowEvent e) { }
 
             @Override
             public void windowClosing(WindowEvent e) {
@@ -109,16 +114,13 @@ public final class MainFrame extends DraggableFrame {
             }
 
             @Override
-            public void windowClosed(WindowEvent e) {
-            }
+            public void windowClosed(WindowEvent e) { }
 
             @Override
-            public void windowIconified(WindowEvent e) {
-            }
+            public void windowIconified(WindowEvent e) { }
 
             @Override
-            public void windowDeiconified(WindowEvent e) {
-            }
+            public void windowDeiconified(WindowEvent e) { }
 
             @Override
             public void windowActivated(WindowEvent e) {
@@ -131,11 +133,10 @@ public final class MainFrame extends DraggableFrame {
             }
 
             @Override
-            public void windowDeactivated(WindowEvent e) {
-            }
+            public void windowDeactivated(WindowEvent e) { }
         });
 
-        if (enableShadow)
+        if (enableShadow) {
             try {
                 setBackground(new Color(0, 0, 0, 0));
                 getRootPane().setBorder(border = new DropShadowBorder(borderColor, 4));
@@ -144,6 +145,8 @@ public final class MainFrame extends DraggableFrame {
                 Settings.getInstance().setEnableShadow(false);
                 setSize(802, 511);
             }
+		}
+		
         ((JPanel) getContentPane()).setOpaque(true);
 
         Settings.getInstance().themeChangedEvent.register(this::reloadColor);

@@ -31,6 +31,7 @@ import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.GameDownloadInfo;
 import org.jackhuang.hellominecraft.launcher.core.version.IMinecraftLibrary;
+import org.jackhuang.hellominecraft.launcher.core.version.LibraryDownloadInfo;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.util.func.Function;
@@ -53,14 +54,17 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
         ArrayList<DownloadLibraryJob> downloadLibraries = new ArrayList<>();
         if (mv == null)
             return downloadLibraries;
+		
         MinecraftVersion v = mv.resolve(service.version());
-        for (IMinecraftLibrary l : v.getLibraries())
-            if (l != null && l.allow() && l.getDownloadInfo() != null) {
-                File ff = l.getFilePath(service.baseDirectory());
+        for (IMinecraftLibrary libraryInfo : v.getLibraries())
+            if (libraryInfo != null && libraryInfo.allow() && libraryInfo.getDownloadInfo() != null) {
+                File ff = libraryInfo.getFilePath(service.baseDirectory());
                 if (!ff.exists()) {
-                    String libURL = l.getDownloadInfo().getUrl(service.getDownloadType());
-                    if (libURL != null)
-                        downloadLibraries.add(new DownloadLibraryJob(l, libURL, ff));
+					LibraryDownloadInfo downloadInfo = libraryInfo.getDownloadInfo();
+                    String downloadUrl = downloadInfo.getUrl(service.getDownloadType());
+					String retryDownloadUrl = downloadInfo.getRetryUrl(service.getDownloadType());
+                    if (downloadUrl != null)
+                        downloadLibraries.add(new DownloadLibraryJob(libraryInfo, downloadUrl, retryDownloadUrl, ff));
                 }
             }
         return downloadLibraries;
@@ -114,10 +118,13 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
         }
 
         @Override
-        public String apply(Integer t) {
-            return DownloadType.values()[t / 2].getProvider().getVersionsDownloadURL() + suffix;
+        public String apply(Integer repeat) {
+			int index = repeat / 2;
+			if (index > DownloadType.values().length) {
+				index = 0;
+			}
+            return DownloadType.values()[index].getProvider().getVersionsDownloadURL() + suffix;
         }
-
     }
 
     @Override

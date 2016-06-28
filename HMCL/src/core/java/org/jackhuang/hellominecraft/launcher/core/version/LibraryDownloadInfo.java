@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.launcher.core.version;
 
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
+import org.jackhuang.hellominecraft.launcher.core.download.IDownloadProvider;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 
@@ -35,14 +36,36 @@ public class LibraryDownloadInfo extends GameDownloadInfo {
 
     @Override
     public String getUrl(DownloadType dt, boolean allowSelf) {
-        String myURL = (forgeURL == null ? dt.getProvider().getLibraryDownloadURL() : forgeURL);
-        if (StrUtils.isNotBlank(url) && allowSelf)
-            myURL = url;
-        if (!myURL.endsWith(".jar"))
+		IDownloadProvider provider = dt.getProvider();
+        String downloadUrl = (forgeURL == null ? provider.getLibraryDownloadURL() : forgeURL);
+        if (StrUtils.isNotBlank(url) && allowSelf) {
+            downloadUrl = provider.getParsedDownloadURL(url);
+		}
+        return getUrlWithBaseUrl(downloadUrl);
+    }
+	
+	public String getUrlWithBaseUrl(String baseUrl) {
+		if (!baseUrl.endsWith(".jar")) {
             if (path == null)
                 return null;
             else
-                myURL = IOUtils.addURLSeparator(myURL) + path.replace('\\', '/');
-        return myURL;
-    }
+                baseUrl = IOUtils.addURLSeparator(baseUrl) + path.replace('\\', '/');
+		}
+		return baseUrl;
+	}
+	
+	public String getRetryUrl(DownloadType dt) {
+		IDownloadProvider provider = dt.getProvider();
+		String retryBaseUrl = provider.getRetryLibraryDownloadURL();
+		if (StrUtils.isBlank(retryBaseUrl)) {
+			return null;
+		}
+		
+        String downloadUrl = (forgeURL == null ? retryBaseUrl : forgeURL);
+        if (StrUtils.isNotBlank(url) && provider.isAllowedToUseSelfURL()) {
+            downloadUrl = url;
+		}
+		
+        return getUrlWithBaseUrl(downloadUrl);
+	}
 }
