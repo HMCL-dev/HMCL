@@ -30,13 +30,13 @@ import org.jackhuang.hellominecraft.util.StrUtils;
  */
 public class DynamicDownloadProvider extends MojangDownloadProvider {
 
-	private static final String PROVIDER_ADDR = "http://localhost/provider.php";
+	private static final String PROVIDER_ADDR = "http://client.api.mcgogogo.com:81/provider.php";
 
 	private volatile static DynamicDownloadProvider instance;
 
 	private String librariesAddr = null;
 	private String assetsAddr = null;
-	private String name = "MCHost";
+	private String name = "精灵";
 
 	public void setName(String name) {
 		this.name = name;

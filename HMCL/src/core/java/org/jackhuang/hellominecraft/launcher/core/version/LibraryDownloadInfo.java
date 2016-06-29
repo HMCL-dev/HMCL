@@ -40,7 +40,7 @@ public class LibraryDownloadInfo extends GameDownloadInfo {
         String downloadUrl = (forgeURL == null ? provider.getLibraryDownloadURL() : forgeURL);
         if (StrUtils.isNotBlank(url) && allowSelf) {
             downloadUrl = url;
-		}
+		} // forced replace: Let different download sources into force
         return provider.getParsedDownloadURL(getUrlWithBaseUrl(downloadUrl));
     }
 	
@@ -57,7 +57,12 @@ public class LibraryDownloadInfo extends GameDownloadInfo {
 			return null;
 		}
 		
-		return provider.getParsedDownloadURL(getUrlWithBaseUrl(downloadUrl));
+		downloadUrl = getUrlWithBaseUrl(downloadUrl);
+		if (downloadUrl.contains("minecraftforge")) { // fix forge url
+			downloadUrl = provider.getParsedDownloadURL(downloadUrl);
+		}
+		
+		return downloadUrl;
 	}
 	
 	private String getUrlWithBaseUrl(String baseUrl) {
