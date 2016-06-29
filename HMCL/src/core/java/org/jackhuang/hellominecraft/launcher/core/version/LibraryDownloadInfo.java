@@ -39,33 +39,35 @@ public class LibraryDownloadInfo extends GameDownloadInfo {
 		IDownloadProvider provider = dt.getProvider();
         String downloadUrl = (forgeURL == null ? provider.getLibraryDownloadURL() : forgeURL);
         if (StrUtils.isNotBlank(url) && allowSelf) {
-            downloadUrl = provider.getParsedDownloadURL(url);
+            downloadUrl = url;
 		}
-        return getUrlWithBaseUrl(downloadUrl);
+        return provider.getParsedDownloadURL(getUrlWithBaseUrl(downloadUrl));
     }
-	
-	public String getUrlWithBaseUrl(String baseUrl) {
-		if (!baseUrl.endsWith(".jar")) {
-            if (path == null)
-                return null;
-            else
-                baseUrl = IOUtils.addURLSeparator(baseUrl) + path.replace('\\', '/');
-		}
-		return baseUrl;
-	}
 	
 	public String getRetryUrl(DownloadType dt) {
 		IDownloadProvider provider = dt.getProvider();
 		String retryBaseUrl = provider.getRetryLibraryDownloadURL();
-		if (StrUtils.isBlank(retryBaseUrl)) {
-			return null;
-		}
 		
         String downloadUrl = (forgeURL == null ? retryBaseUrl : forgeURL);
         if (StrUtils.isNotBlank(url) && provider.isAllowedToUseSelfURL()) {
             downloadUrl = url;
 		}
 		
-        return getUrlWithBaseUrl(downloadUrl);
+		if (StrUtils.isBlank(downloadUrl)) {
+			return null;
+		}
+		
+		return provider.getParsedDownloadURL(getUrlWithBaseUrl(downloadUrl));
+	}
+	
+	private String getUrlWithBaseUrl(String baseUrl) {
+		if (!baseUrl.endsWith(".jar")) {
+            if (path == null) {
+                return null;
+			} else {
+                baseUrl = IOUtils.addURLSeparator(baseUrl) + path.replace('\\', '/');
+			}
+		}
+		return baseUrl;
 	}
 }
