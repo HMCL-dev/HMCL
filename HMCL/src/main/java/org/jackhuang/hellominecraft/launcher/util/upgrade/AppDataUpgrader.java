@@ -39,6 +39,7 @@ import java.util.zip.GZIPInputStream;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.MCUtils;
+import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.util.tasks.Task;
 import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
@@ -47,9 +48,11 @@ import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.UpdateChecker;
 import org.jackhuang.hellominecraft.util.Utils;
 import org.jackhuang.hellominecraft.util.VersionNumber;
+import org.jackhuang.hellominecraft.util.func.Consumer;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.system.OS;
+import org.jackhuang.hellominecraft.util.tasks.TaskList;
 
 /**
  *
@@ -100,40 +103,54 @@ public class AppDataUpgrader extends IUpgrader {
 
     @Override
     public boolean call(Object sender, final VersionNumber number) {
-        ((UpdateChecker) sender).requestDownloadLink().reg(map -> {
-            if (MessageBox.Show(C.i18n("update.newest_version") + number.firstVer + "." + number.secondVer + "." + number.thirdVer + "\n"
-                                + C.i18n("update.should_open_link"),
-                                MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                if (map != null && map.containsKey("pack"))
-                    try {
-                        String hash = null;
-                        if (map.containsKey("packsha1"))
-                            hash = map.get("packsha1");
-                        if (TaskWindow.factory().append(new AppDataUpgraderTask(map.get("pack"), number.version, hash)).create()) {
-                            new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderTask.getSelf(number.version).getAbsolutePath() }).directory(new File(".")).start();
-                            System.exit(0);
-                        }
-                    } catch (IOException ex) {
-                        HMCLog.err("Failed to create upgrader", ex);
-                    }
-                else {
-                    String url = C.URL_PUBLISH;
-                    if (map != null)
-                        if (map.containsKey(OS.os().checked_name))
-                            url = map.get(OS.os().checked_name);
-                        else if (map.containsKey(OS.UNKOWN.checked_name))
-                            url = map.get(OS.UNKOWN.checked_name);
-                    if (url == null)
-                        url = C.URL_PUBLISH;
-                    try {
-                        java.awt.Desktop.getDesktop().browse(new URI(url));
-                    } catch (URISyntaxException | IOException e) {
-                        HMCLog.warn("Failed to browse uri: " + url, e);
-                        Utils.setClipborad(url);
-                        MessageBox.Show(C.i18n("update.no_browser"));
-                    }
-                }
-        }).execute();
+        ((UpdateChecker) sender).requestDownloadLink().reg(new Consumer<Map<String, String>>() {
+			@Override
+			public void accept(Map<String, String> map) {
+				boolean isForceUpdate = Settings.UPDATE_CHECKER.isForceUpdate();
+				if (isForceUpdate || MessageBox.Show(C.i18n("update.newest_version") +
+						number.firstVer + "." +
+						number.secondVer + "." +
+						number.thirdVer + "\n" +
+						C.i18n("update.should_open_link"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+					if (map != null && map.containsKey("pack"))
+						try {
+							String hash = null;
+							if (map.containsKey("packsha1")) {
+								hash = map.get("packsha1");
+							}
+							AppDataUpgraderTask upgraderTask = new AppDataUpgraderTask(map.get("pack"), number.version, hash);
+							if (isForceUpdate) {
+								TaskList tasks = new TaskList();
+								tasks.addTask(upgraderTask);
+								tasks.start();
+							} else {
+								if (TaskWindow.factory().append(upgraderTask).create()) {
+									new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderTask.getSelf(number.version).getAbsolutePath() }).directory(new File(".")).start();
+									System.exit(0);
+								}
+							}
+						} catch (IOException ex) {
+							HMCLog.err("Failed to create upgrader", ex);
+						}
+					else {
+						String url = C.URL_PUBLISH;
+						if (map != null)
+							if (map.containsKey(OS.os().checked_name))
+								url = map.get(OS.os().checked_name);
+							else if (map.containsKey(OS.UNKOWN.checked_name))
+								url = map.get(OS.UNKOWN.checked_name);
+						if (url == null)
+							url = C.URL_PUBLISH;
+						try {
+							java.awt.Desktop.getDesktop().browse(new URI(url));
+						} catch (URISyntaxException | IOException e) {
+							HMCLog.warn("Failed to browse uri: " + url, e);
+							Utils.setClipborad(url);
+							MessageBox.Show(C.i18n("update.no_browser"));
+						}
+					}
+			}
+		}).execute();
         return true;
     }
 

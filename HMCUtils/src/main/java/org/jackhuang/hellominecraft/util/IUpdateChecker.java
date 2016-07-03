@@ -29,6 +29,8 @@ public interface IUpdateChecker {
      *
      */
     void checkOutdate();
+	
+	boolean isForceUpdate();
 
     /**
      * Get the <b>cached</b> newest version number, use "process" method to

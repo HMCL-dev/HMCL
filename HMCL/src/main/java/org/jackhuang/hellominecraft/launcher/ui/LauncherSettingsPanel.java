@@ -389,8 +389,9 @@ public class LauncherSettingsPanel extends AnimatedPanel {
     }//GEN-LAST:event_txtBackgroundPathFocusLost
 
     private void btnCheckUpdateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCheckUpdateActionPerformed
-        Settings.UPDATE_CHECKER.process(true);
-        Settings.UPDATE_CHECKER.checkOutdate();
+        Settings.UPDATE_CHECKER.process(true)
+				.regDone(() -> { Settings.UPDATE_CHECKER.checkOutdate(); })
+				.execute();
     }//GEN-LAST:event_btnCheckUpdateActionPerformed
 
     private void cboThemeItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboThemeItemStateChanged

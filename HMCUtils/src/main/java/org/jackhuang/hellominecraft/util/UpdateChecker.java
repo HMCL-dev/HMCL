@@ -27,8 +27,12 @@ import java.util.Map;
 public final class UpdateChecker implements IUpdateChecker {
 
     public boolean OUT_DATED = false;
+	
+	public String versionString;
     public VersionNumber base;
-    public String versionString;
+    private VersionNumber value;
+	private boolean isforceUpdate = false;
+	
     public String type;
     private Map<String, String> download_link = null;
 
@@ -37,16 +41,18 @@ public final class UpdateChecker implements IUpdateChecker {
         this.type = type;
     }
 
-    VersionNumber value;
-
     @Override
     public OverridableSwingWorker<VersionNumber> process(final boolean showMessage) {
         return new OverridableSwingWorker() {
             @Override
             protected void work() throws Exception {
                 if (value == null) {
-                    versionString = NetUtils.get("http://huangyuhui.duapp.com/info.php?type=" + type);
-                    value = VersionNumber.check(versionString);
+                    versionString = NetUtils.get("http://localhost:8080/version.php?type=" + type);
+					Map<String, Object> versionInfo = C.GSON.fromJson(versionString, Map.class);
+					if (versionInfo.containsKey("version"))
+						value = VersionNumber.check((String)versionInfo.get("version"));
+					if (versionInfo.containsKey("force"))
+						isforceUpdate = (boolean)versionInfo.get("force");
                 }
 
                 if (value == null) {
@@ -65,6 +71,11 @@ public final class UpdateChecker implements IUpdateChecker {
     public VersionNumber getNewVersion() {
         return value;
     }
+
+	@Override
+	public boolean isForceUpdate() {
+		return isforceUpdate;
+	}
 
     @Override
     public synchronized OverridableSwingWorker<Map<String, String>> requestDownloadLink() {

@@ -161,7 +161,10 @@ public final class Main implements Runnable {
 		}
 
 		Settings.UPDATE_CHECKER.outdated.register(IUpgrader.NOW_UPGRADER);
-		Settings.UPDATE_CHECKER.process(false).reg(t -> Main.invokeUpdate()).execute();
+		Settings.UPDATE_CHECKER.process(false)
+				.reg(t -> Main.invokeUpdate())
+				.regDone(() -> { Settings.UPDATE_CHECKER.checkOutdate(); })
+				.execute();
 
 		if (StrUtils.isNotBlank(Settings.getInstance().getProxyHost()) && StrUtils.isNotBlank(Settings.getInstance().getProxyPort()) && MathUtils.canParseInt(Settings.getInstance().getProxyPort())) {
 			HMCLog.log("Initializing customized proxy");
