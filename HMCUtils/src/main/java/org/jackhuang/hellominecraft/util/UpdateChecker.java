@@ -25,7 +25,11 @@ import java.util.Map;
  * @author huangyuhui
  */
 public final class UpdateChecker implements IUpdateChecker {
-
+	
+	public static final String VERSION_URL = "http://client.api.mcgogogo.com:81/version.php?type=";
+	public static final String UPDATE_LINK_URL = "http://client.api.mcgogogo.com:81/update_link.php?type=";
+	
+	
     public boolean OUT_DATED = false;
 	
 	public String versionString;
@@ -47,7 +51,7 @@ public final class UpdateChecker implements IUpdateChecker {
             @Override
             protected void work() throws Exception {
                 if (value == null) {
-                    versionString = NetUtils.get("http://localhost:8080/version.php?type=" + type);
+                    versionString = NetUtils.get(VERSION_URL + type);
 					Map<String, Object> versionInfo = C.GSON.fromJson(versionString, Map.class);
 					if (versionInfo.containsKey("version"))
 						value = VersionNumber.check((String)versionInfo.get("version"));
@@ -84,7 +88,7 @@ public final class UpdateChecker implements IUpdateChecker {
             protected void work() throws Exception {
                 if (download_link == null)
                     try {
-                        download_link = C.GSON.fromJson(NetUtils.get("http://huangyuhui.duapp.com/update_link.php?type=" + type), Map.class);
+                        download_link = C.GSON.fromJson(NetUtils.get(UPDATE_LINK_URL + type), Map.class);
                     } catch (Exception e) {
                         HMCLog.warn("Failed to get update link.", e);
                     }
