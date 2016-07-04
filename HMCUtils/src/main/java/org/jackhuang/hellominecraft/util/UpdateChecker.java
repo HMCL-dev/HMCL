@@ -53,7 +53,7 @@ public final class UpdateChecker implements IUpdateChecker {
 				isManualUpdate = showMessage;
 		
                 if (value == null) {
-                    versionString = NetUtils.get(VERSION_URL + type);
+                    versionString = NetUtils.get(VERSION_URL + type + "&ver=" + base.toString());
 					Map<String, Object> versionInfo = C.GSON.fromJson(versionString, Map.class);
 					if (versionInfo.containsKey("version"))
 						value = VersionNumber.check((String)versionInfo.get("version"));
