@@ -36,6 +36,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.swing.SwingUtilities;
+import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.NetUtils;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 
@@ -55,7 +56,7 @@ public class RecommendPanel extends JPanel {
 	public RecommendPanel() {
 		recommends = new ArrayList<RecommendInfo>();
 		new LoadImages().execute();
-		
+
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -179,6 +180,7 @@ public class RecommendPanel extends JPanel {
 	public void setImage(String key, Image image) {
 		this.imageKey = key;
 		this.currImage = image;
+		setToolTipText(C.i18n("ui.message.recommend_tip"));
 		setSize(image.getWidth(this), image.getHeight(this));
 		SwingUtilities.updateComponentTreeUI(this.getRootPane());
 	}

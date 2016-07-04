@@ -32,6 +32,8 @@ public interface IUpdateChecker {
 	
 	boolean isForceUpdate();
 
+	boolean isManualUpdate();
+
     /**
      * Get the <b>cached</b> newest version number, use "process" method to
      * download!

@@ -28,6 +28,8 @@ import java.util.UUID;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.lookandfeel.Theme;
 import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.VersionNumber;
 import org.jackhuang.hellominecraft.util.system.JdkVersion;
 import org.jackhuang.hellominecraft.util.system.OS;
 
@@ -72,10 +74,35 @@ public final class Config implements Cloneable {
     @SerializedName("auth")
     @SuppressWarnings("FieldMayBeFinal")
     private Map<String, Map> auth;
-
+	@SerializedName("ignoreUpdateVersion")
+	private String ignoreUpdateVersion;
+	
     public List<JdkVersion> getJava() {
         return java == null ? java = new ArrayList<>() : java;
     }
+	
+	public boolean ignoreUpdate(VersionNumber versionNumber) {
+		boolean ignore = false;
+		do
+		{
+			if (StrUtils.isBlank(ignoreUpdateVersion))
+				continue;
+			
+			VersionNumber ignoreVersion = VersionNumber.check(ignoreUpdateVersion);
+			if (ignoreVersion == null)
+				continue;
+			
+			if (versionNumber.compareTo(ignoreVersion) == 0)
+				ignore = true;
+			
+		} while(false);
+		return ignore;
+	}
+	
+	public void setIgnoreUpdate(VersionNumber versionNumber) {
+		ignoreUpdateVersion = versionNumber.toString();
+		Settings.save();
+	}
 
     public transient final EventHandler<Theme> themeChangedEvent = new EventHandler<>(this);
     public transient final EventHandler<DownloadType> downloadTypeChangedEvent = new EventHandler<>(this);

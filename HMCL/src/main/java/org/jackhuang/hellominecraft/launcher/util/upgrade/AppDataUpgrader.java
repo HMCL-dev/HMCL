@@ -36,6 +36,7 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
 import java.util.zip.GZIPInputStream;
+import javax.swing.JCheckBox;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.MCUtils;
@@ -100,18 +101,32 @@ public class AppDataUpgrader extends IUpgrader {
             }
         return false;
     }
-
+	
+	public boolean askUpdateVersion(VersionNumber versionNumber) {
+		if (!Settings.UPDATE_CHECKER.isManualUpdate() &&
+				Settings.getInstance().ignoreUpdate(versionNumber))
+			return false;
+		
+		String content = C.i18n("update.newest_version") +
+						versionNumber.firstVer + "." + versionNumber.secondVer + "." +
+						versionNumber.thirdVer + "\n" + 
+						C.i18n("update.should_open_link");
+		JCheckBox  checkbox = new JCheckBox(C.i18n("update.ignore"));
+		int ret = MessageBox.Show(new Object[]{content, checkbox}, MessageBox.YES_NO_OPTION);
+		if (ret == MessageBox.NO_OPTION) {
+			Settings.getInstance().setIgnoreUpdate(versionNumber);
+			return false;
+		}
+		return true;
+	}
+	
     @Override
     public boolean call(Object sender, final VersionNumber number) {
         ((UpdateChecker) sender).requestDownloadLink().reg(new Consumer<Map<String, String>>() {
 			@Override
 			public void accept(Map<String, String> map) {
 				boolean isForceUpdate = Settings.UPDATE_CHECKER.isForceUpdate();
-				if (isForceUpdate || MessageBox.Show(C.i18n("update.newest_version") +
-						number.firstVer + "." +
-						number.secondVer + "." +
-						number.thirdVer + "\n" +
-						C.i18n("update.should_open_link"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+				if (isForceUpdate || askUpdateVersion(number))
 					if (map != null && map.containsKey("pack"))
 						try {
 							String hash = null;

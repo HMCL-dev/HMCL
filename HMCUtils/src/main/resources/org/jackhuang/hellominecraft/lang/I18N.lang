@@ -168,6 +168,7 @@ ui.message.launching=启动中
 ui.message.making=生成中
 ui.message.sure_remove=真的要删除配置%s吗？
 ui.message.update_java=请更新您的Java
+ui.message.recommend_tip=点击打开链接
 
 ui.label.settings=选项
 ui.label.crashing=<html>Hello Minecraft!遇到了无法处理的错误，请复制下列内容并通过mcbbs、贴吧、Github或Minecraft Forum反馈bug。</html>
@@ -369,6 +370,7 @@ update.should_open_link=是否更新？
 update.newest_version=最新版本为：
 update.failed=检查更新失败
 update.found=(发现更新!)
+update.ignore=不再提醒此版本更新
 
 logwindow.terminate_game=结束游戏进程
 logwindow.tieba=贴吧

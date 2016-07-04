@@ -29,13 +29,13 @@ public final class UpdateChecker implements IUpdateChecker {
 	public static final String VERSION_URL = "http://client.api.mcgogogo.com:81/version.php?type=";
 	public static final String UPDATE_LINK_URL = "http://client.api.mcgogogo.com:81/update_link.php?type=";
 	
-	
     public boolean OUT_DATED = false;
 	
 	public String versionString;
     public VersionNumber base;
     private VersionNumber value;
 	private boolean isforceUpdate = false;
+	private boolean isManualUpdate = false;
 	
     public String type;
     private Map<String, String> download_link = null;
@@ -50,6 +50,8 @@ public final class UpdateChecker implements IUpdateChecker {
         return new OverridableSwingWorker() {
             @Override
             protected void work() throws Exception {
+				isManualUpdate = showMessage;
+		
                 if (value == null) {
                     versionString = NetUtils.get(VERSION_URL + type);
 					Map<String, Object> versionInfo = C.GSON.fromJson(versionString, Map.class);
@@ -58,15 +60,19 @@ public final class UpdateChecker implements IUpdateChecker {
 					if (versionInfo.containsKey("force"))
 						isforceUpdate = (boolean)versionInfo.get("force");
                 }
-
+				
                 if (value == null) {
                     HMCLog.warn("Failed to check update...");
-                    if (showMessage)
+                    if (showMessage) {
                         MessageBox.Show(C.i18n("update.failed"));
-                } else if (VersionNumber.isOlder(base, value))
+					}
+                } else if (VersionNumber.isOlder(base, value)) {
                     OUT_DATED = true;
-                if (OUT_DATED)
+				}
+				
+                if (OUT_DATED) {
                     publish(value);
+				}
             }
         };
     }
@@ -79,6 +85,11 @@ public final class UpdateChecker implements IUpdateChecker {
 	@Override
 	public boolean isForceUpdate() {
 		return isforceUpdate;
+	}
+
+	@Override
+	public boolean isManualUpdate() {
+		return isManualUpdate;
 	}
 
     @Override

@@ -194,7 +194,10 @@ public final class Main implements Runnable {
 	}
 
 	public static void invokeUpdate() {
-		MainFrame.INSTANCE.invokeUpdate();
+		if (!Settings.getInstance().ignoreUpdate(
+				Settings.UPDATE_CHECKER.getNewVersion() )) {	
+			MainFrame.INSTANCE.invokeUpdate();
+		}
 	}
 
 	public static ImageIcon getIcon(String path) {
