@@ -46,11 +46,28 @@ if (!hasProperty('mainClass')) {
     ext.mainClass = 'org.jackhuang.hellominecraft.launcher.Main'
 }
 
+
+def readBuildNumber() {
+	def versionPropsFile = file('version.properties')
+
+    if (versionPropsFile.canRead()) {
+        def Properties versionProps = new Properties()
+        versionProps.load(new FileInputStream(versionPropsFile))
+
+        def code = versionProps['VERSION_CODE'].toInteger() + 1
+        versionProps['VERSION_CODE'] = code.toString()
+        versionProps.store(versionPropsFile.newWriter(), null)
+		
+		return code.toString()
+	}
+	return "233"
+}
+
 def buildnumber = System.getenv("TRAVIS_BUILD_NUMBER")
 if (buildnumber == null)
     buildnumber = System.getenv("BUILD_NUMBER")
 if (buildnumber == null)
-    buildnumber = "233"
+    buildnumber = readBuildNumber()
     
 def versionroot = System.getenv("VERSION_ROOT")
 if (versionroot == null)
