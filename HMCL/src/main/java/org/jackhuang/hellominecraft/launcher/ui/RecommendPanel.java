@@ -29,6 +29,7 @@ import javax.swing.SwingWorker;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -56,6 +57,7 @@ public class RecommendPanel extends JPanel {
 	public RecommendPanel() {
 		recommends = new ArrayList<RecommendInfo>();
 		new LoadImages().execute();
+		setCursor(new Cursor(Cursor.HAND_CURSOR));
 
 		addMouseListener(new MouseAdapter() {
 			@Override
@@ -180,7 +182,7 @@ public class RecommendPanel extends JPanel {
 	public void setImage(String key, Image image) {
 		this.imageKey = key;
 		this.currImage = image;
-		setToolTipText(C.i18n("ui.message.recommend_tip"));
+		//setToolTipText(C.i18n("ui.message.recommend_tip"));
 		setSize(image.getWidth(this), image.getHeight(this));
 		SwingUtilities.updateComponentTreeUI(this.getRootPane());
 	}
