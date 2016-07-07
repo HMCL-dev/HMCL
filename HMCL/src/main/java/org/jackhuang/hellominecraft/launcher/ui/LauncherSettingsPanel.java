@@ -125,12 +125,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         });
 
         lblAbout.setText(C.i18n("launcher.about")); // NOI18N
-        lblAbout.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        lblAbout.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                lblAboutMouseClicked(evt);
-            }
-        });
+        lblAbout.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
         btnSelBackgroundPath.setText(C.i18n("ui.button.explore")); // NOI18N
         btnSelBackgroundPath.addActionListener(new java.awt.event.ActionListener() {
@@ -349,7 +344,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
                     .addComponent(btnMCBBS))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblRestart)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 134, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 116, Short.MAX_VALUE)
                 .addComponent(lblModpack, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblAbout, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -399,7 +394,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
     }//GEN-LAST:event_cboThemeItemStateChanged
 
     private void lblModpackMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblModpackMouseClicked
-        SwingUtils.openLink("http://huangyuhui.duapp.com/link.php?type=modpack");
+        SwingUtils.openLink("http://client.api.mcgogogo.com:81/link.php?type=modpack");
     }//GEN-LAST:event_lblModpackMouseClicked
 
     private void cboLangItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboLangItemStateChanged
@@ -433,10 +428,6 @@ public class LauncherSettingsPanel extends AnimatedPanel {
     private void txtProxyPasswordFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtProxyPasswordFocusLost
         Settings.getInstance().setProxyPassword(txtProxyPassword.getText());
     }//GEN-LAST:event_txtProxyPasswordFocusLost
-
-    private void lblAboutMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblAboutMouseClicked
-        SwingUtils.openLink("http://huangyuhui.duapp.com/link.php?type=sponsor");
-    }//GEN-LAST:event_lblAboutMouseClicked
 
     private void btnMCBBSActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMCBBSActionPerformed
         SwingUtils.openLink(C.URL_PUBLISH);

@@ -176,7 +176,7 @@ ui.label.crashing_out_dated=<html>Hello Minecraft! Launcher遇到了无法处理
 ui.label.failed_set=设置失败：
 
 download=下载
-download.mojang=官方
+download.mojang=Mojang官方
 download.BMCL=BMCLAPI (bangbang93, http://bmclapi.bangbang93.com/)
 download.rapid_data=RapidData (锐网云计算, https://www.rapiddata.org/)
 download.not_200=下载失败，回复码
@@ -299,7 +299,7 @@ mainwindow.enter_script_name=输入要生成脚本的文件名
 mainwindow.make_launch_succeed=启动脚本已生成完毕:
 mainwindow.no_version=未找到任何版本，是否进入游戏下载？
 
-launcher.about=<html>默认背景图感谢gamerteam提供。<br/>关于作者：<br/>邮箱：contact@hmclsoft.com<br/>欢迎提交Bug哦<br/>Copyright (c) 2013-2016 HMCLSoft.<br/>免责声明：Minecraft软件版权归Mojang AB所有，使用本软件产生的版权问题本软件制作方概不负责。<br/>本启动器在GPLv3协议下开源：https://github.com/mclauncher/HMCL，感谢issues和pull requests贡献者<br/>本软件使用了基于Apache License 2.0的Gson项目，感谢贡献者。</html>
+launcher.about=<html>默认背景图感谢gamerteam提供。<br/>关于作者：<br/>主页：http://www.hmclsoft.com<br/>邮箱：contact@hmclsoft.com<br/>欢迎提交Bug哦<br/>Copyright (c) 2013-2016 HMCLSoft.<br/>免责声明：Minecraft软件版权归Mojang AB所有，使用本软件产生的版权问题本软件制作方概不负责。<br/>本启动器在GPLv3协议下开源：https://github.com/mclauncher/HMCL，感谢issues和pull requests贡献者<br/>本软件使用了基于Apache License 2.0的Gson项目，感谢贡献者。</html>
 launcher.download_source=下载源
 launcher.background_location=背景地址
 launcher.exit_failed=强制退出失败，可能是Forge 1.7.10及更高版本导致的，无法解决。
@@ -313,7 +313,7 @@ launcher.enable_shadow=启用窗口阴影
 launcher.theme=主题
 launcher.proxy=代理
 launcher.decorated=启用窗口边框(Linux下可解决程序界面全灰问题)
-launcher.modpack=<html><a href="http://huangyuhui.duapp.com/link.php?type=modpack">整合包作者帮助</a></html>
+launcher.modpack=<html><a href="http://client.api.mcgogogo.com:81/link.php?type=modpack">整合包作者帮助</a></html>
 launcher.enable_animation=启用动态效果
 launcher.lang=语言
 launcher.restart=本界面选项需要重启本启动器生效

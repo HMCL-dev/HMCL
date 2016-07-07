@@ -299,7 +299,7 @@ mainwindow.enter_script_name=Enter the script name.
 mainwindow.make_launch_succeed=Finished script creation.
 mainwindow.no_version=No version found. Switch to Game Downloads Tab?
 
-launcher.about=<html>About Author<br/>Email: contact@hmclsoft.com<br/>Copyright (c) 2013 HMCLSoft.<br/>Opened source under GPL v3 license: http://github.com/mclauncher/HMCL<br/>This software used project Gson which is under Apache License 2.0, thanks contributors.</html>
+launcher.about=<html>About Author<br/>Homepage: http://www.hmclsoft.com<br/>Email: contact@hmclsoft.com<br/>Copyright (c) 2013 HMCLSoft.<br/>Opened source under GPL v3 license: http://github.com/mclauncher/HMCL<br/>This software used project Gson which is under Apache License 2.0, thanks contributors.</html>
 launcher.download_source=Download Source
 launcher.background_location=Background Location
 launcher.exit_failed=Failed to shutdown.
@@ -313,7 +313,7 @@ launcher.enable_shadow=Enable Window Shadow
 launcher.theme=Theme
 launcher.proxy=Proxy
 launcher.decorated=Enable system window border(in order to fix the problem that the ui become all gray in Linux OS)
-launcher.modpack=<html><a href="http://blog.163.com/huanghongxun2008@126/blog/static/7738046920160323812771/">Documentations for modpacks.</a></html>
+launcher.modpack=<html><a href="http://client.api.mcgogogo.com:81/link.php?type=modpack">Documentations for modpacks.</a></html>
 launcher.enable_animation=Enable Animation
 launcher.lang=Language
 launcher.restart=Options will be in operations only if restart this app.
