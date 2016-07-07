@@ -30,7 +30,7 @@ public enum DownloadType {
     BMCL("download.BMCL", new BMCLAPIDownloadProvider()),
     //RapidData("download.rapid_data", new RapidDataDownloadProvider()),
     Curse("Curse CDN", new CurseDownloadProvider()),
-	Dynamic(DynamicDownloadProvider.getInstance().getName(), DynamicDownloadProvider.getInstance());
+	Dynamic("HMCLSoft", DynamicDownloadProvider.getInstance());
 
     private final String name;
     private final IDownloadProvider provider;

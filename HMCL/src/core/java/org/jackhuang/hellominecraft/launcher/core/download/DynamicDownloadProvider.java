@@ -31,37 +31,35 @@ import org.jackhuang.hellominecraft.util.StrUtils;
 public class DynamicDownloadProvider extends MojangDownloadProvider {
 
 	private static final String PROVIDER_ADDR = "http://client.api.mcgogogo.com:81/provider.php";
-
+	
 	private volatile static DynamicDownloadProvider instance;
 
+	private String versionManifestAddr = null;
+	private String launcherMetaAddr = null;
+	private String launcherAddr = null;
+	
 	private String librariesAddr = null;
 	private String assetsAddr = null;
-	private String name = "精灵";
-
-	public void setName(String name) {
-		this.name = name;
-	}
 	
-	public String getName() {
-		return name;
+	public void setVersionManifestAddr(String versionManifestAddr) {
+		this.versionManifestAddr = versionManifestAddr;
 	}
 
-	public String getLibrariesAddr() {
-		return librariesAddr;
+	public void setLauncherMetaAddr(String launcherMetaAddr) {
+		this.launcherMetaAddr = launcherMetaAddr;
+	}
+
+	public void setLauncherAddr(String launcherAddr) {
+		this.launcherAddr = launcherAddr;
 	}
 
 	public void setLibrariesAddr(String librariesAddr) {
 		this.librariesAddr = librariesAddr;
 	}
 
-	public String getAssetsAddr() {
-		return assetsAddr;
-	}
-
 	public void setAssetsAddr(String assetsAddr) {
 		this.assetsAddr = assetsAddr;
 	}
-	
 
 	private DynamicDownloadProvider() {
 
@@ -87,7 +85,7 @@ public class DynamicDownloadProvider extends MojangDownloadProvider {
 	public String getRetryLibraryDownloadURL() {
 		return super.getLibraryDownloadURL();
 	}
-	
+
 	@Override
 	public String getAssetsDownloadURL() {
 		if (StrUtils.isNotBlank(assetsAddr)) {
@@ -105,40 +103,53 @@ public class DynamicDownloadProvider extends MojangDownloadProvider {
 	}
 
 	@Override
+	public String getVersionsListDownloadURL() {
+		if (StrUtils.isNotBlank(versionManifestAddr)) {
+			return versionManifestAddr;
+		}
+		return super.getVersionsListDownloadURL();
+	}
+	
+	@Override
 	public String getParsedDownloadURL(String str) {
 		if (StrUtils.isNotBlank(librariesAddr)) {
 			str = str.replace("https://libraries.minecraft.net", librariesAddr);
+		}
+		if (StrUtils.isNotBlank(launcherMetaAddr)) {
+			str = str.replace("https://launchermeta.mojang.com", launcherMetaAddr);
+		}
+		if (StrUtils.isNotBlank(launcherMetaAddr)) {
+			str = str.replace("https://launcher.mojang.com", launcherAddr);
 		}
 		return super.getParsedDownloadURL(str);
 	}
 
 	public void init() {
 		new Thread() {
+			
+			private String getValue(Map<String, String> addrInfo, String key) {
+				String value = null;
+				do {
+					if (!addrInfo.containsKey(key))
+						continue;
+					value = addrInfo.get(key);
+				} while(false);
+				return value;
+			}
+			
 			@Override
 			public void run() {
 				try {
 					String providerInfo = NetUtils.get(PROVIDER_ADDR);
 					Map<String, String> addrInfo = null;
-					addrInfo = C.GSON.fromJson(providerInfo, new TypeToken<Map<String, String>>(){}.getType());
+					addrInfo = C.GSON.fromJson(providerInfo, new TypeToken<Map<String, String>>() {
+					}.getType());
 					if (addrInfo != null) {
-						if (addrInfo.containsKey("libraries")) {
-							String librariesAddr = addrInfo.get("libraries");
-							if (StrUtils.isNotBlank(librariesAddr)) {
-								DynamicDownloadProvider.this.setLibrariesAddr(librariesAddr);
-							}
-						}
-						if (addrInfo.containsKey("assets")) {
-							String assetsAddr = addrInfo.get("assets");
-							if (StrUtils.isNotBlank(assetsAddr)) {
-								DynamicDownloadProvider.this.setAssetsAddr(assetsAddr);
-							}
-						}
-						if (addrInfo.containsKey("name")) {
-							String name = addrInfo.get("name");
-							if (StrUtils.isNotBlank(name)) {
-								DynamicDownloadProvider.this.setName(name);
-							}
-						}
+						setLibrariesAddr(getValue(addrInfo, "libraries"));
+						setAssetsAddr(getValue(addrInfo, "assets"));
+						setLauncherMetaAddr(getValue(addrInfo, "launcherMeta"));
+						setLauncherAddr(getValue(addrInfo, "launcher"));
+						setVersionManifestAddr(getValue(addrInfo, "versionManifest"));
 					}
 				} catch (IOException ex) {
 
