@@ -20,7 +20,6 @@ deploy:
   - HMCSM/build/libs/HMCSM-${HMCSM_VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}.exe
   - HMCSM/build/libs/HMCSM-${HMCSM_VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}-MacOSApp.zip
   on:
-    repo: mclauncher/HMCL
     tags: false
   skip_cleanup: true
 install: echo "skip 'gradle assemble' step"
