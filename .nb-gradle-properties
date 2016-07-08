@@ -31,6 +31,6 @@
   <license-header>
     <name>GNU General Public License</name>
     <template>license-header.txt</template>
-    <property name="organization">huangyuhui</property>
+    <property name="organization">HMCLSoft</property>
   </license-header>
 </gradle-project-properties>

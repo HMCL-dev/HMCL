@@ -46,7 +46,6 @@ if (!hasProperty('mainClass')) {
     ext.mainClass = 'org.jackhuang.hellominecraft.launcher.Main'
 }
 
-
 def readBuildNumber() {
 	def versionPropsFile = file('version.properties')
 
@@ -68,7 +67,7 @@ if (buildnumber == null)
     buildnumber = System.getenv("BUILD_NUMBER")
 if (buildnumber == null)
     buildnumber = readBuildNumber()
-    
+
 def versionroot = System.getenv("VERSION_ROOT")
 if (versionroot == null)
     versionroot = "2.5.0"
@@ -157,22 +156,20 @@ jar {
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     
     manifest {
-        attributes 'Created-By'        : 'Copyright(c) 2013-2016 huangyuhui.',
+        attributes 'Created-By'        : 'Copyright(c) 2013-2016 HMCLSoft.',
                    'Main-Class'        : mainClass
     }
 }
 
 launch4j {
-    launch4jCmd = 'D:\\Develop\\Java\\Launch4j\\launch4j.exe'
-    //launch4jCmd = '/home/huangyuhui/softwares/launch4j/launch4j'
-    supportUrl = 'http://www.mcbbs.net/thread-142335-1-1.html'
+    supportUrl = 'http://www.hmclsoft.com'
     jreMinVersion = '1.6.0'
     
     mainClassName = mainClass
     icon = new File(project.buildDir,  '../icon.ico').absolutePath
     version = mavenVersion
     downloadUrl = 'http://java.com/download'
-    copyright = "Copyright(c) 2013-2015 huangyuhui."
+    copyright = "Copyright(c) 2013-2015 HMCLSoft."
     
     jar = new File(project.buildDir, 'libs/' + mavenGroupId + '-' + mavenVersion + '.jar').absolutePath
     outfile = mavenGroupId + '-' + mavenVersion + '.exe'
