@@ -26,12 +26,26 @@ import java.util.Map;
 public interface IUpdateChecker {
 
     /**
-     *
+     * Update response
      */
     void checkOutdate();
 	
+	/**
+	 * 
+	 * @return Update log
+	 */
+	String getUpdateLog();
+	
+	/**
+	 * 
+	 * @return Server to assign a mandatory update
+	 */
 	boolean isForceUpdate();
-
+	
+	/**
+	 * 
+	 * @return User manual update 
+	 */
 	boolean isManualUpdate();
 
     /**

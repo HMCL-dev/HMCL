@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.util.upgrade;
 
+import java.awt.Dimension;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -36,16 +37,21 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
 import java.util.zip.GZIPInputStream;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.MCUtils;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.util.ArrayUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
+import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.UpdateChecker;
 import org.jackhuang.hellominecraft.util.Utils;
 import org.jackhuang.hellominecraft.util.VersionNumber;
@@ -54,6 +60,7 @@ import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.system.OS;
 import org.jackhuang.hellominecraft.util.tasks.TaskList;
+import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
 
 /**
  *
@@ -111,12 +118,38 @@ public class AppDataUpgrader extends IUpgrader {
 						versionNumber.firstVer + "." + versionNumber.secondVer + "." +
 						versionNumber.thirdVer + "\n" + 
 						C.i18n("update.should_open_link");
+		
 		JCheckBox  checkbox = new JCheckBox(C.i18n("update.ignore"));
-		int ret = MessageBox.Show(new Object[]{content, checkbox}, MessageBox.YES_NO_OPTION);
-		if (ret == MessageBox.NO_OPTION) {
-			Settings.getInstance().setIgnoreUpdate(versionNumber);
+		
+		JPanel logPanel = new JPanel();
+		logPanel.setLayout(new BoxLayout(logPanel, BoxLayout.X_AXIS));
+		logPanel.setPreferredSize(new Dimension(300,150));
+		logPanel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 5));
+		
+		JScrollPane scrollPane = new JScrollPane();
+		JTextPane textPane = new JTextPane();
+		textPane.setContentType("text/plain");
+		textPane.setEditable(false);
+
+		scrollPane.setViewportView(textPane);
+		logPanel.add(scrollPane);
+		
+		int msgRet;
+		String updateLog = Settings.UPDATE_CHECKER.getUpdateLog();
+		if (StrUtils.isBlank(updateLog)) {
+			msgRet = MessageBox.Show(new Object[]{content, checkbox}, MessageBox.YES_NO_OPTION);
+		} else {
+			textPane.setText(updateLog);
+			msgRet = MessageBox.Show(new Object[]{content, logPanel, checkbox}, MessageBox.YES_NO_OPTION);
+		}
+		
+		if (msgRet == MessageBox.NO_OPTION) {
+			if (checkbox.isSelected()) {
+				Settings.getInstance().setIgnoreUpdate(versionNumber);
+			}
 			return false;
 		}
+
 		return true;
 	}
 	

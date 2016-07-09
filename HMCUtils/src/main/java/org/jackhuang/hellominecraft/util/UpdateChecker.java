@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.util;
 
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import java.util.Map;
+import org.jackhuang.hellominecraft.util.lang.SupportedLocales;
 
 /**
  *
@@ -34,8 +35,11 @@ public final class UpdateChecker implements IUpdateChecker {
 	public String versionString;
     public VersionNumber base;
     private VersionNumber value;
+	
 	private boolean isforceUpdate = false;
 	private boolean isManualUpdate = false;
+	
+	private String updateLog = null;
 	
     public String type;
     private Map<String, String> download_link = null;
@@ -53,12 +57,17 @@ public final class UpdateChecker implements IUpdateChecker {
 				isManualUpdate = showMessage;
 		
                 if (value == null) {
-                    versionString = NetUtils.get(VERSION_URL + type + "&ver=" + base.toString());
+                    versionString = NetUtils.get(VERSION_URL + type + 
+							"&ver=" + base.toString() + 
+							"&lang=" + SupportedLocales.NOW_LOCALE.self);
+					
 					Map<String, Object> versionInfo = C.GSON.fromJson(versionString, Map.class);
 					if (versionInfo.containsKey("version"))
-						value = VersionNumber.check((String)versionInfo.get("version"));
+						value = VersionNumber.check((String) versionInfo.get("version"));
 					if (versionInfo.containsKey("force"))
-						isforceUpdate = (boolean)versionInfo.get("force");
+						isforceUpdate = (boolean) versionInfo.get("force");
+					if (versionInfo.containsKey("log"))
+						updateLog = (String) versionInfo.get("log");
                 }
 				
                 if (value == null) {
@@ -90,6 +99,11 @@ public final class UpdateChecker implements IUpdateChecker {
 	@Override
 	public boolean isManualUpdate() {
 		return isManualUpdate;
+	}
+
+	@Override
+	public String getUpdateLog() {
+		return updateLog;
 	}
 
     @Override
