@@ -27,6 +27,7 @@ buildscript {
             classpath 'net.sf.proguard:proguard-gradle:4.10'
             classpath 'edu.sc.seis.gradle:launch4j:1.0.6'
             classpath 'me.tatarka:gradle-retrolambda:3.1.0'
+			classpath 'com.google.code.gson:gson:2.2.4'
         }
     }
 }
@@ -38,6 +39,7 @@ plugins {
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
+import com.google.gson.JsonParser
 
 apply plugin: 'launch4j'
 apply plugin: 'me.tatarka.retrolambda'
@@ -47,19 +49,35 @@ if (!hasProperty('mainClass')) {
 }
 
 def readBuildNumber() {
-	def versionPropsFile = file('version.properties')
+    def versionPropsFile = file('version.properties')
+    def Properties versionProps = new Properties()
 
     if (versionPropsFile.canRead()) {
-        def Properties versionProps = new Properties()
         versionProps.load(new FileInputStream(versionPropsFile))
-
         def code = versionProps['VERSION_CODE'].toInteger() + 1
-        versionProps['VERSION_CODE'] = code.toString()
-        versionProps.store(versionPropsFile.newWriter(), null)
-		
-		return code.toString()
-	}
-	return "233"
+
+        return code.toString()
+    } else {
+        versionPropsFile.createNewFile()
+
+        String url = 'https://api.travis-ci.org/repos/mclauncher/HMCL/branches'
+        def json = new JsonParser().parse(url.toURL().text);
+        if (json.has('branches') && json.get('branches').isJsonArray()) {
+            def branches = json.getAsJsonArray('branches')
+            if (branches != null && branches.size() > 0) {
+                def info = branches.get(0).getAsJsonObject()
+                def code = info.get('number').getAsInt() + 1
+                versionProps['VERSION_CODE'] = code.toString()
+                versionProps.store(versionPropsFile.newWriter(), null)
+                return code.toString()
+            }
+        }
+    }
+	return '233'
+}
+
+task cleanVersionFile << {
+    file("version.properties").delete()
 }
 
 def buildnumber = System.getenv("TRAVIS_BUILD_NUMBER")
@@ -182,6 +200,7 @@ processResources {
     }
 }
 
+build.dependsOn cleanVersionFile
 build.dependsOn makeExecutable
 build.dependsOn makePackGZ
 build.dependsOn macAppCompressed
