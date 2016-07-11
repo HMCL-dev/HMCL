@@ -30,5 +30,3 @@ cache:
   directories:
   - "$HOME/.gradle/caches/"
   - "$HOME/.gradle/wrapper/"
-git:
-  depth: 1
