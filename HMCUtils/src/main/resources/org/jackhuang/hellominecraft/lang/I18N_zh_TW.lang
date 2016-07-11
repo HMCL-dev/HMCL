@@ -301,6 +301,7 @@ mainwindow.no_version=未找到任何版本，是否進入遊戲下載？
 
 launcher.about=<html>默認背景圖感謝gamerteam提供。<br/>關於作者：<br/>主頁：http://www.hmclsoft.com<br/>郵箱：contact@hmclsoft.com<br/>歡迎提交Bug哦<br/>Copyright (c) 2013-2016 HMCLSoft.<br/>免責聲明：Minecraft軟體版權歸Mojang AB所有，遊戲由於誤操作本啟動器而丟失數據的概不負責。<br/>本啟動器在GPLv3協議下開源：http://github.com/mclauncher/HMCL，感谢issues和pull requests贡献者<br/>本軟體使用了基於Apache License 2.0的Gson項目，感謝貢獻者。</html>
 launcher.download_source=下載源
+launcher.homepage=官網
 launcher.background_location=背景地址
 launcher.exit_failed=強制退出失敗，可能是Forge 1.7.10及更高版本導致的，無法解決。
 launcher.versions_json_not_matched=版本%s格式不規範！該版本資料夾下有json:%s，是否更名這個資料來規範格式？
@@ -375,6 +376,7 @@ update.ignore=不再提醒此版本更新
 logwindow.terminate_game=結束遊戲進程
 logwindow.tieba=貼吧
 logwindow.title=日志
+logwindow.homepage=官網
 
 selector.choose=選擇
 
