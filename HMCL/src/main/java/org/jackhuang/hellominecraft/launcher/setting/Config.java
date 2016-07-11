@@ -67,7 +67,7 @@ public final class Config implements Cloneable {
     private String localization;
     @SerializedName("logintype")
     private int logintype;
-    @SerializedName("downloadtype")
+    @SerializedName("downloadSourcetype")
     private int downloadtype;
     @SerializedName("configurations")
     private TreeMap<String, Profile> configurations;
