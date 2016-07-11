@@ -66,10 +66,10 @@ def readBuildNumber() {
             def branches = json.getAsJsonArray('branches')
             if (branches != null && branches.size() > 0) {
                 def info = branches.get(0).getAsJsonObject()
-                def code = info.get('number').getAsInt() + 1
+                def code = info.get('number').getAsInt()
                 versionProps['VERSION_CODE'] = code.toString()
                 versionProps.store(versionPropsFile.newWriter(), null)
-                return code.toString()
+                return (code + 1).toString()
             }
         }
     }
