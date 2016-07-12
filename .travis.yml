@@ -1,14 +1,6 @@
 language: java
 jdk:
 - oraclejdk8
-branches:
-  only:
-    - master
-before_deploy:
-  - git config --global user.email ${GITHUB_EMAIL}
-  - git config --global user.name ${GITHUB_NAME}
-  - git tag ${HMCL_VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}
-  - git push -q ${REPO} --tags
 deploy:
   provider: releases
   api_key: ${DEPLOY_REPO}
@@ -19,9 +11,9 @@ deploy:
   - HMCSM/build/libs/HMCSM-${HMCSM_VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}.jar
   - HMCSM/build/libs/HMCSM-${HMCSM_VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}.exe
   - HMCSM/build/libs/HMCSM-${HMCSM_VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}-MacOSApp.zip
-  on:
-    tags: false
   skip_cleanup: true
+  on:
+    tags: true
 install: echo "skip 'gradle assemble' step"
 script: gradle build --continue
 before_cache:
