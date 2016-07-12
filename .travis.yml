@@ -1,9 +1,6 @@
 language: java
 jdk:
 - oraclejdk8
-branches:
-  only:
-    - master
 deploy:
   provider: releases
   api_key: ${DEPLOY_REPO}
