@@ -118,7 +118,7 @@ public class DynamicDownloadProvider extends MojangDownloadProvider {
 		if (StrUtils.isNotBlank(launcherMetaAddr)) {
 			str = str.replace("https://launchermeta.mojang.com", launcherMetaAddr);
 		}
-		if (StrUtils.isNotBlank(launcherMetaAddr)) {
+		if (StrUtils.isNotBlank(launcherAddr)) {
 			str = str.replace("https://launcher.mojang.com", launcherAddr);
 		}
 		return super.getParsedDownloadURL(str);
