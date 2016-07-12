@@ -1,4 +1,5 @@
 language: java
+sudo: false
 jdk:
 - oraclejdk8
 deploy:
@@ -14,6 +15,8 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
+    all_branches: true
+    repo: mclauncher/HMCL
 install: echo "skip 'gradle assemble' step"
 script: gradle build --continue
 before_cache:
