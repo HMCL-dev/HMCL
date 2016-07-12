@@ -7,7 +7,7 @@ branches:
 before_deploy:
   - git config --global user.email ${GITHUB_EMAIL}
   - git config --global user.name ${GITHUB_NAME}
-  - git tag ${TRAVIS_BUILD_NUMBER}
+  - git tag HMCL-${HMCL_VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}
   - git push -q ${REPO} --tags
 deploy:
   provider: releases
