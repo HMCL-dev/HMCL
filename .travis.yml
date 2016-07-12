@@ -4,11 +4,6 @@ jdk:
 branches:
   only:
     - master
-before_deploy:
-  - git config --global user.email ${GITHUB_EMAIL}
-  - git config --global user.name ${GITHUB_NAME}
-  - git tag HMCL-${HMCL_VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}
-  - git push -q ${REPO} --tags
 deploy:
   provider: releases
   api_key: ${DEPLOY_REPO}
@@ -20,7 +15,8 @@ deploy:
   - HMCSM/build/libs/HMCSM-${HMCSM_VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}.exe
   - HMCSM/build/libs/HMCSM-${HMCSM_VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}-MacOSApp.zip
   on:
-    tags: false
+    tags: true
+    all_branches: true
   skip_cleanup: true
 install: echo "skip 'gradle assemble' step"
 script: gradle build --continue
