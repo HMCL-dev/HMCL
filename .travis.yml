@@ -12,11 +12,11 @@ deploy:
   - HMCSM/build/libs/HMCSM-${HMCSM_VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}.jar
   - HMCSM/build/libs/HMCSM-${HMCSM_VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}.exe
   - HMCSM/build/libs/HMCSM-${HMCSM_VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}-MacOSApp.zip
-  skip_cleanup: true
   on:
     repo: mclauncher/HMCL
     branch: master
     tags: true
+  skip_cleanup: true
 install: echo "skip 'gradle assemble' step"
 script: gradle build --continue
 before_cache:

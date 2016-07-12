@@ -54,8 +54,7 @@ def readBuildNumber() {
 
     if (versionPropsFile.canRead()) {
         versionProps.load(new FileInputStream(versionPropsFile))
-        def code = versionProps['VERSION_CODE'].toInteger() + 1
-
+        def code = versionProps['VERSION_CODE'].toInteger()
         return code.toString()
     } else {
         versionPropsFile.createNewFile()
@@ -66,10 +65,10 @@ def readBuildNumber() {
             def branches = json.getAsJsonArray('branches')
             if (branches != null && branches.size() > 0) {
                 def info = branches.get(0).getAsJsonObject()
-                def code = info.get('number').getAsInt()
-                versionProps['VERSION_CODE'] = code.toString()
+                def code = info.get('number').getAsInt().toString()
+                versionProps['VERSION_CODE'] = code
                 versionProps.store(versionPropsFile.newWriter(), null)
-                return (code + 1).toString()
+                return code
             }
         }
     }
@@ -88,7 +87,7 @@ if (buildnumber == null)
 
 def versionroot = System.getenv("VERSION_ROOT")
 if (versionroot == null)
-    versionroot = "2.5.0"
+    versionroot = "2.5.1"
 
 String mavenGroupId = 'HMCL'
 String mavenVersion = versionroot + '.' + buildnumber
