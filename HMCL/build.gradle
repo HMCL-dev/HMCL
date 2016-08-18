@@ -186,7 +186,7 @@ launch4j {
     icon = new File(project.buildDir,  '../icon.ico').absolutePath
     version = mavenVersion
     downloadUrl = 'http://java.com/download'
-    copyright = "Copyright(c) 2013-2015 HMCLSoft."
+    copyright = "Copyright(c) 2013-2016 HMCLSoft."
     
     jar = new File(project.buildDir, 'libs/' + mavenGroupId + '-' + mavenVersion + '.jar').absolutePath
     outfile = mavenGroupId + '-' + mavenVersion + '.exe'
