@@ -112,14 +112,16 @@ public class DynamicDownloadProvider extends MojangDownloadProvider {
 	
 	@Override
 	public String getParsedDownloadURL(String str) {
-		if (StrUtils.isNotBlank(librariesAddr)) {
-			str = str.replace("https://libraries.minecraft.net", librariesAddr);
-		}
-		if (StrUtils.isNotBlank(launcherMetaAddr)) {
-			str = str.replace("https://launchermeta.mojang.com", launcherMetaAddr);
-		}
-		if (StrUtils.isNotBlank(launcherAddr)) {
-			str = str.replace("https://launcher.mojang.com", launcherAddr);
+		if (str != null) {	
+			if (StrUtils.isNotBlank(librariesAddr)) {
+				str = str.replace("https://libraries.minecraft.net", librariesAddr);
+			}
+			if (StrUtils.isNotBlank(launcherMetaAddr)) {
+				str = str.replace("https://launchermeta.mojang.com", launcherMetaAddr);
+			}
+			if (StrUtils.isNotBlank(launcherAddr)) {
+				str = str.replace("https://launcher.mojang.com", launcherAddr);
+			}
 		}
 		return super.getParsedDownloadURL(str);
 	}
