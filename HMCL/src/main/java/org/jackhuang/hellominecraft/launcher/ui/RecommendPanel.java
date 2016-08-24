@@ -36,9 +36,15 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.SwingUtilities;
+import org.jackhuang.hellominecraft.launcher.Main;
+import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.NetUtils;
+import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 
 /**
@@ -49,12 +55,21 @@ public class RecommendPanel extends JPanel {
 
 	private static final int SWITCH_INTERVAL = 10;
 	
+	private static final int SPACE = 10;
+	private static final int TOP_POSITION = 2;
+	
+	private JButton closeButton;
+	
 	private Image currImage;
 	private String imageKey = null;
+	private boolean ignoreSwitch = false;
 	private List<RecommendInfo> recommends;
+
 	public ScheduledExecutorService scheduledexec = Executors.newScheduledThreadPool(1);
 
 	public RecommendPanel() {
+		initComponents();
+		
 		recommends = new ArrayList<RecommendInfo>();
 		new LoadImages().execute();
 		setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -65,6 +80,31 @@ public class RecommendPanel extends JPanel {
 				MouseClicked(e);
 			}
 		});
+	}
+	
+	private void initComponents() {
+		this.setLayout(null);
+		
+		closeButton = new JButton(Main.getIcon("re_close.png"));
+		closeButton.setRolloverIcon(Main.getIcon("re_close_enter.png"));
+		closeButton.setBorder(BorderFactory.createEmptyBorder());
+		closeButton.setContentAreaFilled(false);
+		closeButton.addActionListener((e) -> {
+			synchronized(RecommendPanel.class) {
+				if (StrUtils.isNotBlank(imageKey)) {
+					Settings.getInstance().getIgnoreRecommend().add(imageKey);
+					Settings.save();
+					
+					ignoreSwitch = true;
+					showNext();
+				}
+			}
+		});
+		closeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		closeButton.setFocusable(false);
+		closeButton.setBounds(0, 0, 12, 12);
+		closeButton.setVisible(false);
+		this.add(closeButton);
 	}
 	
 	private void MouseClicked(MouseEvent evt) {                                     
@@ -86,13 +126,14 @@ public class RecommendPanel extends JPanel {
 			@Override
 			public void run() {
 				for (RecommendInfo info : recommends) {
-					try {
-						File tempFile = File.createTempFile("hmcl", "png");
-						String tempPath = tempFile.getCanonicalPath();
-						if (NetUtils.download(info.url, tempPath)) {
-							info.image = ImageIO.read(tempFile);
-						}
-					} catch (IOException ex) {
+					if (!ignoreShowUrl(info.url)) {
+						try {
+							File tempFile = File.createTempFile("hmcl", "png");
+							String tempPath = tempFile.getCanonicalPath();
+							if (NetUtils.download(info.url, tempPath)) {
+								info.image = ImageIO.read(tempFile);
+							}
+						} catch (Throwable t) { }
 					}
 				}
 
@@ -105,9 +146,13 @@ public class RecommendPanel extends JPanel {
 						SwingUtilities.invokeLater(new Runnable() {
 							@Override
 							public void run() {
-								int showIndex = getNextImageIndex();
-								RecommendInfo info = recommends.get(showIndex);
-								RecommendPanel.this.setImage(info.url, info.image);
+								synchronized(RecommendPanel.class) {
+									if (ignoreSwitch) {
+										ignoreSwitch = false;
+									} else {
+										showNext();
+									}
+								}
 							}
 						});
 					}
@@ -142,25 +187,45 @@ public class RecommendPanel extends JPanel {
 		}
 		return true;
 	}
+	
+	private void showNext() {
+		if (getCanShowImageCount() == 0) {
+			setVisible(false);
+		} else {
+			int showIndex = getNextImageIndex();
+			RecommendInfo info = recommends.get(showIndex);
+			setImage(info.url, info.image);	
+		}
+	}
+	
+	private boolean ignoreShowUrl(String url) {
+		return Settings.getInstance().getIgnoreRecommend().contains(url);
+	}
 
+	public int getCanShowImageCount() {
+		int imageCount = 0;
+		for (RecommendInfo recommend : recommends) {
+			if (recommend.image != null && !ignoreShowUrl(recommend.url)) {
+				imageCount++;
+			}
+		}
+		return imageCount;
+	}
+	
 	public int getNextImageIndex(int showIndex) {
 		if (showIndex >= recommends.size()) {
 			showIndex = 0;
 		}
 		RecommendInfo info = recommends.get(showIndex);
-		if (info.image == null) {
-			showIndex = getNextImageIndex(++showIndex);
+		if (info.image == null || ignoreShowUrl(info.url)) {
+			showIndex = getNextImageIndex(++showIndex);	
 		}
 		return showIndex;
 	}
 
 	public int getNextImageIndex() {
-		int showIndex = 0;
-		if (imageKey != null) {
-			showIndex = getCurrentImageIndex();
-			showIndex++;
-		}
-		if (showIndex >= recommends.size()) {
+		int showIndex = getCurrentImageIndex();
+		if (++showIndex >= recommends.size()) {
 			showIndex = 0;
 		}
 		showIndex = getNextImageIndex(showIndex);
@@ -178,21 +243,26 @@ public class RecommendPanel extends JPanel {
 		}
 		return currIndex;
 	}
-
+	
 	public void setImage(String key, Image image) {
 		this.imageKey = key;
 		this.currImage = image;
-		//setToolTipText(C.i18n("ui.message.recommend_tip"));
-		setSize(image.getWidth(this), image.getHeight(this));
+		
+		int btnWidth = closeButton.getWidth();
+		
+		setSize(image.getWidth(this) + SPACE + btnWidth, image.getHeight(this));
+		closeButton.setLocation(getWidth() - btnWidth, TOP_POSITION);
+		closeButton.setVisible(true);
+		
 		SwingUtilities.updateComponentTreeUI(this.getRootPane());
 	}
 
 	@Override
 	public void paintComponent(Graphics g) {
-		if (null == currImage) {
-			return;
+		if (currImage != null) {
+			g.drawImage(currImage, 0, 0, currImage.getWidth(this), currImage.getHeight(this), this);
 		}
-		g.drawImage(currImage, 0, 0, currImage.getWidth(this), currImage.getHeight(this), this);
+		super.paintComponent(g);
 	}
 
 	static class RecommendInfo {
@@ -215,8 +285,7 @@ public class RecommendPanel extends JPanel {
 				}
 
 				Map<String, Object> data = new Gson().fromJson(content,
-						new TypeToken<Map<String, Object>>() {
-				}.getType());
+						new TypeToken<Map<String, Object>>() {}.getType());
 				if (data == null) {
 					break;
 				}

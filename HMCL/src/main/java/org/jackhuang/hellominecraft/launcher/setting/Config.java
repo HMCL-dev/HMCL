@@ -21,8 +21,10 @@ import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
@@ -76,6 +78,16 @@ public final class Config implements Cloneable {
     private Map<String, Map> auth;
 	@SerializedName("ignoreUpdateVersion")
 	private String ignoreUpdateVersion;
+	@SerializedName("ignoreRecommend")
+	private Set<String> ignoreRecommend;
+
+	public Set<String> getIgnoreRecommend() {
+		if (ignoreRecommend == null) {
+			ignoreRecommend = new HashSet<>();
+			Settings.save();
+		}
+		return ignoreRecommend;
+	}
 	
     public List<JdkVersion> getJava() {
         return java == null ? java = new ArrayList<>() : java;

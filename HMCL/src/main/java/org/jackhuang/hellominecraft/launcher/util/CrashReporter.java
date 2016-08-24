@@ -139,8 +139,8 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             map.put("CrashReport", text);
             try {
                 NetUtils.post(NetUtils.constantURL("http://huangyuhui.duapp.com/crash.php"), map);
-            } catch (IOException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to post HMCL server.", ex);
+            } catch (Throwable error) {
+                LOGGER.log(Level.SEVERE, "Failed to post HMCL server.", error);
             }
         });
         t.setDaemon(true);

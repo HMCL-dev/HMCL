@@ -144,8 +144,7 @@ public class DynamicDownloadProvider extends MojangDownloadProvider {
 				try {
 					String providerInfo = NetUtils.get(PROVIDER_ADDR);
 					Map<String, String> addrInfo = null;
-					addrInfo = C.GSON.fromJson(providerInfo, new TypeToken<Map<String, String>>() {
-					}.getType());
+					addrInfo = C.GSON.fromJson(providerInfo, new TypeToken<Map<String, String>>() {}.getType());
 					if (addrInfo != null) {
 						setLibrariesAddr(getValue(addrInfo, "libraries"));
 						setAssetsAddr(getValue(addrInfo, "assets"));
@@ -153,7 +152,7 @@ public class DynamicDownloadProvider extends MojangDownloadProvider {
 						setLauncherAddr(getValue(addrInfo, "launcher"));
 						setVersionManifestAddr(getValue(addrInfo, "versionManifest"));
 					}
-				} catch (IOException ex) {
+				} catch (Throwable t) {
 
 				}
 			}
