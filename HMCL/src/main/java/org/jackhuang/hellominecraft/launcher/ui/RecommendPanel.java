@@ -19,7 +19,6 @@ package org.jackhuang.hellominecraft.launcher.ui;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -37,12 +36,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
-import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.NetUtils;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
@@ -65,7 +62,7 @@ public class RecommendPanel extends JPanel {
 	private boolean ignoreSwitch = false;
 	private List<RecommendInfo> recommends;
 
-	public ScheduledExecutorService scheduledexec = Executors.newScheduledThreadPool(1);
+	public final ScheduledExecutorService scheduledexec = Executors.newScheduledThreadPool(1);
 
 	public RecommendPanel() {
 		initComponents();
@@ -89,17 +86,7 @@ public class RecommendPanel extends JPanel {
 		closeButton.setRolloverIcon(Main.getIcon("re_close_enter.png"));
 		closeButton.setBorder(BorderFactory.createEmptyBorder());
 		closeButton.setContentAreaFilled(false);
-		closeButton.addActionListener((e) -> {
-			synchronized(RecommendPanel.class) {
-				if (StrUtils.isNotBlank(imageKey)) {
-					Settings.getInstance().getIgnoreRecommend().add(imageKey);
-					Settings.save();
-					
-					ignoreSwitch = true;
-					showNext();
-				}
-			}
-		});
+		closeButton.addActionListener((e) -> ignoreTheRecommend(imageKey));
 		closeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		closeButton.setFocusable(false);
 		closeButton.setBounds(0, 0, 12, 12);
@@ -107,12 +94,27 @@ public class RecommendPanel extends JPanel {
 		this.add(closeButton);
 	}
 	
+	private void ignoreTheRecommend(String url) {
+		synchronized(RecommendPanel.class) {
+			if (StrUtils.isNotBlank(url)) {
+				Settings.getInstance().getIgnoreRecommend().add(url);
+				Settings.save();
+
+				ignoreSwitch = true;
+				showNext();
+			}
+		}
+	}
+	
 	private void MouseClicked(MouseEvent evt) {                                     
 		if (imageKey == null) {
 			return;
 		}
 		RecommendInfo info = recommends.get(getCurrentImageIndex());
-		if (info.link != null && !info.link.equals("")) {
+		if (StrUtils.isNotBlank(info.link)) {
+			if (info.once) {
+				ignoreTheRecommend(info.url);
+			}
 			SwingUtils.openLink(info.link);
 		}
     }                                    
@@ -191,6 +193,7 @@ public class RecommendPanel extends JPanel {
 	private void showNext() {
 		if (getCanShowImageCount() == 0) {
 			setVisible(false);
+			scheduledexec.shutdown();
 		} else {
 			int showIndex = getNextImageIndex();
 			RecommendInfo info = recommends.get(showIndex);
@@ -199,6 +202,9 @@ public class RecommendPanel extends JPanel {
 	}
 	
 	private boolean ignoreShowUrl(String url) {
+		if (StrUtils.isBlank(url)) {
+			return true;
+		}
 		return Settings.getInstance().getIgnoreRecommend().contains(url);
 	}
 
@@ -236,7 +242,7 @@ public class RecommendPanel extends JPanel {
 		int currIndex = 0;
 		for (int i = 0; i < recommends.size(); i++) {
 			RecommendInfo info = recommends.get(i);
-			if (imageKey != null && info.url.equals(imageKey)) {
+			if (StrUtils.isNotBlank(imageKey) && info.url.equals(imageKey)) {
 				currIndex = i;
 				break;
 			}
@@ -268,16 +274,17 @@ public class RecommendPanel extends JPanel {
 	static class RecommendInfo {
 		String url;
 		String link;
+		boolean once;
 		Image image;
 	}
 
-	class LoadImages extends SwingWorker<List<Map<String, String>>, Void> {
+	class LoadImages extends SwingWorker<List<Map<String, Object>>, Void> {
 
 		private static final String RECOMMEND_URL = "http://client.api.mcgogogo.com:81/recommend.php";
-
+		
 		@Override
-		protected List<Map<String, String>> doInBackground() throws Exception {
-			List<Map<String, String>> infos = null;
+		protected List<Map<String, Object>> doInBackground() throws Exception {
+			List<Map<String, Object>> infos = null;
 			do {
 				String content = NetUtils.get(RECOMMEND_URL);
 				if (content == null || content.equals("")) {
@@ -290,7 +297,7 @@ public class RecommendPanel extends JPanel {
 					break;
 				}
 
-				infos = (List<Map<String, String>>) data.get("data");
+				infos = (List<Map<String, Object>>) data.get("data");
 			} while (false);
 			return infos;
 		}
@@ -298,14 +305,27 @@ public class RecommendPanel extends JPanel {
 		@Override
 		protected void done() {
 			try {
-				List<Map<String, String>> infos = this.get();
+				List<Map<String, Object>> infos = this.get();
 				if (infos == null) {
 					return;
 				}
-				for (Map<String, String> info : infos) {
+				for (Map<String, Object> info : infos) {
 					RecommendInfo recommend = new RecommendInfo();
-					recommend.url = info.get("url");
-					recommend.link = info.get("link");
+					if (info.get("url") != null) {
+						recommend.url = (String) info.get("url");
+					} else {
+						recommend.url = "";
+					}
+					if (info.get("link") != null) {
+						recommend.link = (String) info.get("link");
+					} else {
+						recommend.link = "";
+					}
+					if (info.get("once") != null) {
+						recommend.once = (boolean) info.get("once");
+					} else {
+						recommend.once = false;
+					}
 					recommend.image = null;
 					recommends.add(recommend);
 				}
