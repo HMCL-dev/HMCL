@@ -85,9 +85,9 @@ if (buildnumber == null)
 if (buildnumber == null)
     buildnumber = readBuildNumber()
 
-def versionroot = System.getenv("VERSION_ROOT")
+def versionroot = System.getenv("HMCL_VERSION_ROOT")
 if (versionroot == null)
-    versionroot = "2.5.2"
+    versionroot = "2.5.3"
 
 String mavenGroupId = 'HMCL'
 String mavenVersion = versionroot + '.' + buildnumber
