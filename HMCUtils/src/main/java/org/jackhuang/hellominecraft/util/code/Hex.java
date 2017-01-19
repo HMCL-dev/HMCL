@@ -19,7 +19,7 @@ package org.jackhuang.hellominecraft.util.code;
 
 import java.nio.charset.Charset;
 
-public class Hex {
+public final class Hex {
 
     public static final Charset DEFAULT_CHARSET = Charsets.UTF_8;
     public static final String DEFAULT_CHARSET_NAME = "UTF-8";

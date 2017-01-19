@@ -36,9 +36,8 @@ public enum SupportedLocales {
             bundle = Localization.get(self);
             showString = bundle.localize("lang");
             this.customized = customized;
-        } catch (Throwable t) {
+        } catch (Throwable ignore) {
             showString = name();
-            t.printStackTrace();
         }
     }
 
@@ -54,8 +53,7 @@ public enum SupportedLocales {
     public String translate(String key, Object... format) {
         try {
             return String.format(bundle.localize(key), format);
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (Exception ignore) {
             return key;
         }
     }

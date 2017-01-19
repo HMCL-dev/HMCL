@@ -15,43 +15,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.util.tasks;
+package org.jackhuang.hellominecraft.util.tasks.comm;
 
-import java.util.Arrays;
-import java.util.Collection;
+import org.jackhuang.hellominecraft.util.tasks.Task;
 
 /**
  *
  * @author huangyuhui
+ * @param <T> Previous task result type
  */
-public class DoubleTask extends TaskInfo {
+public interface PreviousResultRegistrar<T> {
 
-    Task a, b;
-
-    public DoubleTask(Task a, Task b) {
-        this(a, b, "Double Task");
-    }
-
-    public DoubleTask(Task a, Task b, String info) {
-        super(info);
-        this.a = a;
-        this.b = b;
-    }
-
-    @Override
-    public Collection<Task> getDependTasks() {
-        return Arrays.asList(a);
-    }
-
-    @Override
-    public Collection<Task> getAfterTasks() {
-        return Arrays.asList(b);
-    }
-
-    @Override
-    public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
-        if (!areDependTasksSucceeded)
-            throw new IllegalStateException("Depend tasks failed.");
-    }
-
+    /**
+     *
+     * @param pr previous task handler
+     *
+     * @return task self instance
+     */
+    Task registerPreviousResult(PreviousResult<T> pr);
 }

@@ -23,8 +23,11 @@ import java.awt.Color;
  *
  * @author huangyuhui
  */
-public class BasicColors {
+public final class BasicColors {
 
+    private BasicColors() {
+    }
+    
     private static Color getWebColor(String c) {
         return new Color(
             Integer.parseInt(c.substring(0, 2), 16),
@@ -41,7 +44,7 @@ public class BasicColors {
     public static final Color COLOR_WHITE_TEXT = new Color(254, 254, 254);
     public static final Color COLOR_CENTRAL_BACK = new Color(25, 30, 34, 160);
 
-    public static final Color bgcolors[] = new Color[] {
+    public static final Color[] BG_COLORS = new Color[] {
         COLOR_BLUE,
         getWebColor("1ABC9C"),
         getWebColor("9B59B6"),
@@ -49,7 +52,8 @@ public class BasicColors {
         getWebColor("E67E22"),
         getWebColor("E74C3C")
     };
-    public static final Color bgcolors_darker[] = new Color[] {
+    
+    public static final Color[] BG_COLORS_DARKER = new Color[] {
         COLOR_BLUE_DARKER,
         getWebColor("16A085"),
         getWebColor("8E44AD"),

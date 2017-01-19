@@ -21,7 +21,7 @@ public class ObjectMessage
     implements IMessage {
 
     private static final long serialVersionUID = -5903272448334166185L;
-    private final transient Object obj;
+    private final Object obj;
 
     public ObjectMessage(Object obj) {
         if (obj == null)

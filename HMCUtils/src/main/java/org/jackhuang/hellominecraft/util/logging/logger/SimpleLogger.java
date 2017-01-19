@@ -40,7 +40,7 @@ public class SimpleLogger extends AbstractLogger {
         super(name, messageFactory);
         this.level = defaultLevel;
         if (showShortLogName) {
-            int index = name.lastIndexOf(".");
+            int index = name.lastIndexOf('.');
             if ((index > 0) && (index < name.length()))
                 this.logName = name.substring(index + 1);
             else

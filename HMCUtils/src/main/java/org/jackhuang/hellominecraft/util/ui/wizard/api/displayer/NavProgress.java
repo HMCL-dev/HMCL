@@ -48,6 +48,7 @@ public class NavProgress implements ResultProgressHandle {
         this.parent = impl;
     }
 
+    @Override
     public void addProgressComponents(Container panel) {
         panel.add(lbl);
         panel.add(progressBar);
@@ -55,6 +56,7 @@ public class NavProgress implements ResultProgressHandle {
         ipanel = panel;
     }
 
+    @Override
     public void setProgress(final String description, final int currentStep, final int totalSteps) {
         invoke(() -> {
             lbl.setText(description == null ? " " : description);
@@ -62,6 +64,7 @@ public class NavProgress implements ResultProgressHandle {
         });
     }
 
+    @Override
     public void setProgress(final int currentStep, final int totalSteps) {
         invoke(() -> {
             if (totalSteps == -1) {
@@ -82,6 +85,7 @@ public class NavProgress implements ResultProgressHandle {
         });
     }
 
+    @Override
     public void setBusy(final String description) {
         invoke(() -> {
             lbl.setText(description == null ? " " : description);
@@ -101,6 +105,7 @@ public class NavProgress implements ResultProgressHandle {
             }
     }
 
+    @Override
     public void finished(final Object o) {
         isRunning = false;
         Runnable r = () -> {
@@ -118,6 +123,7 @@ public class NavProgress implements ResultProgressHandle {
         invoke(r);
     }
 
+    @Override
     public void failed(final String message, final boolean canGoBack) {
         failMessage = message;
         isRunning = false;
@@ -134,6 +140,7 @@ public class NavProgress implements ResultProgressHandle {
         invoke(r);
     }
 
+    @Override
     public boolean isRunning() {
         return isRunning;
     }

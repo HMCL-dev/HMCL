@@ -35,7 +35,10 @@ import org.jackhuang.hellominecraft.util.func.BiFunction;
  *
  * @author huangyuhui
  */
-public class Compressor {
+public final class CompressingUtils {
+    
+    private CompressingUtils() {
+    }
 
     public static void zip(String sourceDir, String zipFile) throws IOException {
         zip(new File(sourceDir), new File(zipFile), null);

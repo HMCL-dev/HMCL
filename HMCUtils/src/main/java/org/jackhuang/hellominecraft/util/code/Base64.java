@@ -17,13 +17,14 @@
  */
 package org.jackhuang.hellominecraft.util.code;
 
-import java.io.UnsupportedEncodingException;
-
 /**
  *
  * @author huangyuhui
  */
-public class Base64 {
+public final class Base64 {
+    
+    private Base64() {
+    }
 
     public static char[] encode(byte[] data) {
         char[] out = new char[((data.length + 2) / 3) * 4];
@@ -52,12 +53,8 @@ public class Base64 {
         return out;
     }
 
-    public static char[] encode(String s, String charset) throws UnsupportedEncodingException {
-        return encode(s.getBytes(charset));
-    }
-
     public static char[] encode(String s) {
-        return encode(s.getBytes());
+        return encode(s.getBytes(Charsets.UTF_8));
     }
 
     public static byte[] decode(char[] data) {

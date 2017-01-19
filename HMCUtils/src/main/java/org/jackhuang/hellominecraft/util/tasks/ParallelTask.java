@@ -29,7 +29,7 @@ public class ParallelTask extends Task {
     Collection<Task> dependsTask = new HashSet<>();
 
     @Override
-    public void executeTask() {
+    public void executeTask(boolean areDependTasksSucceeded) {
     }
 
     @Override

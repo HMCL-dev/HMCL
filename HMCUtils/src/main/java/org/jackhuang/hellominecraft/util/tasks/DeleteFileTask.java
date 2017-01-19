@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.util.tasks;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  *
@@ -32,8 +33,8 @@ public class DeleteFileTask extends Task {
     }
 
     @Override
-    public void executeTask() throws Throwable {
-        f.delete();
+    public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
+        if (!f.delete()) throw new IOException("Failed to delete" + f);
     }
 
     @Override

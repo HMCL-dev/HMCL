@@ -20,6 +20,7 @@ package org.jackhuang.hellominecraft.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.SwingWorker;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 
@@ -47,13 +48,13 @@ public abstract class OverridableSwingWorker<T> extends SwingWorker<Void, T> {
     }
 
     public OverridableSwingWorker reg(Consumer<T> c) {
-        Utils.requireNonNull(c);
+        Objects.requireNonNull(c);
         processListeners.add(c);
         return this;
     }
 
     public OverridableSwingWorker regDone(Runnable c) {
-        Utils.requireNonNull(c);
+        Objects.requireNonNull(c);
         doneListeners.add(c);
         return this;
     }

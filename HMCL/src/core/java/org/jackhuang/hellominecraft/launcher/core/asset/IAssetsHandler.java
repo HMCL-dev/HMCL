@@ -32,8 +32,6 @@ import org.jackhuang.hellominecraft.util.tasks.Task;
 import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.util.code.DigestUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
-import org.jackhuang.hellominecraft.util.NetUtils;
-import org.jackhuang.hellominecraft.util.OverridableSwingWorker;
 import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
 
 /**
@@ -72,7 +70,7 @@ public abstract class IAssetsHandler {
      *
      * @param mv The version that needs assets
      * @param mp Asset Service
-     * @param x  finished event
+     * @return just run it!
      */
     public abstract Task getList(MinecraftVersion mv, IMinecraftAssetService mp);
 
@@ -98,7 +96,7 @@ public abstract class IAssetsHandler {
         }
 
         @Override
-        public void executeTask() {
+        public void executeTask(boolean areDependTasksSucceeded) {
             if (assetsDownloadURLs == null || assetsLocalNames == null || contents == null)
                 throw new IllegalStateException(C.i18n("assets.not_refreshed"));
             int max = assetsDownloadURLs.size();
@@ -116,7 +114,7 @@ public abstract class IAssetsHandler {
                 try {
                     if (location.exists()) {
                         FileInputStream fis = new FileInputStream(location);
-                        String sha = DigestUtils.sha1Hex(NetUtils.getBytesFromStream(fis));
+                        String sha = DigestUtils.sha1Hex(IOUtils.getBytesFromStream(fis));
                         IOUtils.closeQuietly(fis);
                         if (contents.get(i).geteTag().equals(sha)) {
                             ++hasDownloaded;

@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftAssetService;
@@ -32,7 +33,6 @@ import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.launcher.core.download.IDownloadProvider;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.util.Utils;
 import org.jackhuang.hellominecraft.util.VersionNumber;
 import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
 
@@ -48,7 +48,7 @@ public class AssetsMojangLoader extends IAssetsHandler {
 
     @Override
     public Task getList(final MinecraftVersion mv, final IMinecraftAssetService mp) {
-        Utils.requireNonNull(mv);
+        Objects.requireNonNull(mv);
         String assetsId = mv.getAssetsIndex().getId();
         File assets = mp.getAssets();
         HMCLog.log("Gathering asset index: " + assetsId);
@@ -63,7 +63,7 @@ public class AssetsMojangLoader extends IAssetsHandler {
             }
 
             @Override
-            public void executeTask() throws Throwable {
+            public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
                 if (!areDependTasksSucceeded)
                     throw new IllegalStateException("Failed to get asset index");
                 String result = FileUtils.read(f);
@@ -72,7 +72,6 @@ public class AssetsMojangLoader extends IAssetsHandler {
                 AssetsIndex o = C.GSON.fromJson(result, AssetsIndex.class);
                 assetsDownloadURLs = new ArrayList<>();
                 assetsLocalNames = new ArrayList<>();
-                ArrayList<String> al = new ArrayList<>();
                 contents = new ArrayList<>();
                 HashSet<String> loadedHashes = new HashSet<>();
                 int pgs = 0;
@@ -88,7 +87,6 @@ public class AssetsMojangLoader extends IAssetsHandler {
                         contents.add(c);
                         assetsDownloadURLs.add(c.key);
                         assetsLocalNames.add(new File(assets, "objects" + File.separator + c.key.replace("/", File.separator)));
-                        al.add(e.getKey());
                         if (ppl != null)
                             ppl.setProgress(this, ++pgs, o.getFileMap().size());
                     }

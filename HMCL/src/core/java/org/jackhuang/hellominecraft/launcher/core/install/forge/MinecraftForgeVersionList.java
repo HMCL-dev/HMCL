@@ -64,7 +64,7 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
             }
 
             @Override
-            public void executeTask() throws Throwable {
+            public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
                 if (!areDependTasksSucceeded)
                     return;
                 String s = task.getResult();

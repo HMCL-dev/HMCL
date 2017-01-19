@@ -18,10 +18,7 @@
 package org.jackhuang.hellominecraft.util.ui.wizard.spi;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import javax.swing.JComponent;
 
@@ -33,10 +30,8 @@ import javax.swing.JComponent;
  * @see SimpleWizardInfo
  * @author Tim Boudreau
  */
-final class SimpleWizard implements WizardImplementation {
+final class SimpleWizard extends AbstractWizard {
 
-    private final List listenerList
-                       = Collections.synchronizedList(new LinkedList());
     private final Map ids2panels = new HashMap();
 
     final SimpleWizardInfo info;
@@ -65,14 +60,17 @@ final class SimpleWizard implements WizardImplementation {
         info.setWizard(this);
     }
 
+    @Override
     public void addWizardObserver(WizardObserver observer) {
         listenerList.add(observer);
     }
 
+    @Override
     public void removeWizardObserver(WizardObserver observer) {
         listenerList.remove(observer);
     }
 
+    @Override
     public int getForwardNavigationMode() {
         int result = info.getFwdNavMode();
         if (!subwizard && ((result & WizardController.MODE_CAN_CONTINUE) != 0) && isLastStep())
@@ -85,6 +83,7 @@ final class SimpleWizard implements WizardImplementation {
         return currID != null && steps.length > 0 && currID.equals(steps[steps.length - 1]);
     }
 
+    @Override
     public String[] getAllSteps() {
         String[] allSteps = info.getSteps();
         String[] result = new String[allSteps.length];
@@ -93,6 +92,7 @@ final class SimpleWizard implements WizardImplementation {
         return result;
     }
 
+    @Override
     public String getStepDescription(String id) {
         int idx = Arrays.asList(info.getSteps()).indexOf(id);
         if (idx == -1)
@@ -100,10 +100,12 @@ final class SimpleWizard implements WizardImplementation {
         return info.getDescriptions()[idx];
     }
 
+    @Override
     public String getLongDescription(String id) {
         return info.getLongDescription(id);
     }
 
+    @Override
     public JComponent navigatingTo(String id, Map settings) {
 //        assert SwingUtilities.isEventDispatchThread();
 
@@ -121,10 +123,12 @@ final class SimpleWizard implements WizardImplementation {
         return result;
     }
 
+    @Override
     public String getCurrentStep() {
         return currID;
     }
 
+    @Override
     public String getNextStep() {
         if (!info.isValid())
             return null;
@@ -138,6 +142,7 @@ final class SimpleWizard implements WizardImplementation {
             return null;
     }
 
+    @Override
     public String getPreviousStep() {
         int idx = currentStepIndex();
         if (idx < info.getSteps().length && idx > 0)
@@ -154,47 +159,44 @@ final class SimpleWizard implements WizardImplementation {
     }
 
     void fireNavigability() {
-        WizardObserver[] listeners = (WizardObserver[]) listenerList.toArray(new WizardObserver[0]);
-
-        for (int i = listeners.length - 1; i >= 0; i--) {
-            WizardObserver l = (WizardObserver) listeners[i];
-            l.navigabilityChanged(null);
-        }
+        fireChanged(l -> l.navigabilityChanged(null));
     }
 
     private void fireSelectionChanged() {
-        WizardObserver[] listeners = (WizardObserver[]) listenerList.toArray(new WizardObserver[0]);
-
-        for (int i = listeners.length - 1; i >= 0; i--) {
-            WizardObserver l = (WizardObserver) listeners[i];
-            l.selectionChanged(null);
-        }
+        fireChanged(l -> l.selectionChanged(null));
     }
 
+    @Override
     public Object finish(Map settings) throws WizardException {
         return info.finish(settings);
     }
 
+    @Override
     public boolean cancel(Map settings) {
         return info.cancel(settings);
     }
 
+    @Override
     public String getTitle() {
         return info.getTitle();
     }
 
+    @Override
     public String getProblem() {
         return info.getProblem();
     }
 
+    @Override
     public boolean isBusy() {
         return info.isBusy();
     }
 
+    @Override
     public int hashCode() {
         return info.hashCode() ^ 17;
     }
 
+    @Override
     public boolean equals(Object o) {
         if (o instanceof SimpleWizard)
             return ((SimpleWizard) o).info.equals(info);
@@ -202,6 +204,7 @@ final class SimpleWizard implements WizardImplementation {
             return false;
     }
 
+    @Override
     public String toString() {
         return "SimpleWizard for " + info;
     }

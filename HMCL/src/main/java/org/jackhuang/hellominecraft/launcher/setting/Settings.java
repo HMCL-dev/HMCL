@@ -151,7 +151,7 @@ public final class Settings {
 
     public static boolean delProfile(String ver) {
         if (DEFAULT_PROFILE.equals(ver)) {
-            MessageBox.Show(C.i18n("settings.cannot_remove_default_config"));
+            MessageBox.show(C.i18n("settings.cannot_remove_default_config"));
             return false;
         }
         boolean notify = false;

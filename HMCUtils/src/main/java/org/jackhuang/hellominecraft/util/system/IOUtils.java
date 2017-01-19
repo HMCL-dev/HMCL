@@ -27,22 +27,29 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import org.jackhuang.hellominecraft.util.func.Consumer;
+import org.jackhuang.hellominecraft.util.func.Function;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 
 /**
  *
  * @author huang
  */
-public class IOUtils {
+public final class IOUtils {
+
+    private IOUtils() {
+    }
 
     public static String addSeparator(String path) {
         if (path == null || path.trim().length() == 0)
@@ -109,7 +116,7 @@ public class IOUtils {
         java.io.File file = new java.io.File(realPath);
         realPath = file.getAbsolutePath();
         try {
-            realPath = java.net.URLDecoder.decode(realPath, "utf-8");
+            realPath = java.net.URLDecoder.decode(realPath, DEFAULT_CHARSET);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -119,7 +126,7 @@ public class IOUtils {
     public static boolean isAbsolutePath(String path) {
         if (path == null)
             return true;
-        return path.startsWith("/") || path.indexOf(":") > 0;
+        return path.startsWith("/") || path.indexOf(':') > 0;
     }
 
     public static String getLocalMAC() {
@@ -205,19 +212,19 @@ public class IOUtils {
     }
 
     public static void write(byte[] data, OutputStream output)
-        throws IOException {
+            throws IOException {
         if (data != null)
             output.write(data);
     }
 
     public static void write(String data, OutputStream output, String encoding)
-        throws IOException {
+            throws IOException {
         if (data != null)
             output.write(data.getBytes(encoding));
     }
 
     public static FileInputStream openInputStream(File file)
-        throws IOException {
+            throws IOException {
         if (file.exists()) {
             if (file.isDirectory())
                 throw new IOException("File '" + file + "' exists but is a directory");
@@ -266,21 +273,17 @@ public class IOUtils {
     }
 
     public static List<String> readProcessByInputStream(String[] cmd) throws IOException, InterruptedException {
-        JavaProcess jp = new JavaProcess(cmd, new ProcessBuilder(cmd).start(), null);
-        ArrayList<String> lines = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(jp.getRawProcess().getInputStream()))) {
-            jp.getRawProcess().waitFor();
-            String line;
-            while ((line = br.readLine()) != null)
-                lines.add(line);
-        }
-        return lines;
+        return readProcessImpl(cmd, p -> p.getInputStream());
     }
 
     public static List<String> readProcessByErrorStream(String[] cmd) throws IOException, InterruptedException {
+        return readProcessImpl(cmd, p -> p.getErrorStream());
+    }
+    
+    private static List<String> readProcessImpl(String[] cmd, Function<Process, InputStream> callback) throws IOException, InterruptedException {
         JavaProcess jp = new JavaProcess(cmd, new ProcessBuilder(cmd).start(), null);
         ArrayList<String> lines = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(jp.getRawProcess().getErrorStream()))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(callback.apply(jp.getRawProcess()), Charset.defaultCharset()))) {
             jp.getRawProcess().waitFor();
             String line;
             while ((line = br.readLine()) != null)
@@ -297,5 +300,40 @@ public class IOUtils {
         int length;
         while ((length = input.read(buf)) != -1)
             output.write(buf, 0, length);
+    }
+
+    public static byte[] getBytesFromStream(InputStream is) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        IOUtils.copyStream(is, out);
+        is.close();
+        return out.toByteArray();
+    }
+
+    public static String getStreamContent(InputStream is) throws IOException {
+        return getStreamContent(is, DEFAULT_CHARSET);
+    }
+
+    public static String getStreamContent(InputStream is, String encoding)
+            throws IOException {
+        if (is == null)
+            return null;
+        StringBuilder sb = new StringBuilder();
+        try (InputStreamReader br = new InputStreamReader(is, encoding)) {
+            int len;
+            char[] buf = new char[16384];
+            while ((len = br.read(buf)) != -1)
+                sb.append(buf, 0, len);
+        }
+        return sb.toString();
+    }
+
+    public static final String DEFAULT_CHARSET = "UTF-8";
+
+    public static PrintStream createPrintStream(OutputStream out, Charset charset) {
+        try {
+            return new PrintStream(out, false, charset.name());
+        } catch (UnsupportedEncodingException ignore) {
+            return null;
+        }
     }
 }

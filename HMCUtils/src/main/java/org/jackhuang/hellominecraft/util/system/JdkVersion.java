@@ -59,9 +59,12 @@ public final class JdkVersion implements Cloneable {
         if (!(obj instanceof JdkVersion))
             return false;
         JdkVersion b = (JdkVersion) obj;
-        if (b.location == null || location == null)
-            return b.location == location;
-        return new File(b.location).equals(new File(location));
+        if (b.location == null && location == null)
+            return true;
+        else if (b.location == null || location == null)
+            return false;
+        else
+            return new File(b.location).equals(new File(location));
     }
 
     @Override
@@ -175,7 +178,7 @@ public final class JdkVersion implements Cloneable {
     private static final Pattern p = Pattern.compile("java version \"[1-9]*\\.[1-9]*\\.[0-9]*(.*?)\"");
 
     public static JdkVersion getJavaVersionFromExecutable(String file) throws IOException {
-        String[] str = new String[] { file, "-version" };
+        String[] str = new String[]{file, "-version"};
         Platform platform = Platform.BIT_32;
         String ver = null;
         try {

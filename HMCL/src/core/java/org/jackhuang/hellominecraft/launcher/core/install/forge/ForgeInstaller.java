@@ -50,16 +50,16 @@ public class ForgeInstaller extends Task {
     }
 
     @Override
-    public void executeTask() throws Exception {
+    public void executeTask(boolean areDependTasksSucceeded) throws Exception {
         HMCLog.log("Extracting install profiles...");
 
         try (ZipFile zipFile = new ZipFile(forgeInstaller)) {
             ZipEntry entry = zipFile.getEntry("install_profile.json");
-            String content = NetUtils.getStreamContent(zipFile.getInputStream(entry));
+            String content = IOUtils.getStreamContent(zipFile.getInputStream(entry));
             InstallProfile profile = C.GSON.fromJson(content, InstallProfile.class);
             File from = new File(gameDir, "versions" + File.separator + profile.install.getMinecraft());
             if (!from.exists())
-                if (MessageBox.Show(C.i18n("install.no_version_if_intall")) == MessageBox.YES_OPTION) {
+                if (MessageBox.show(C.i18n("install.no_version_if_intall")) == MessageBox.YES_OPTION) {
                     if (!mp.version().install(profile.install.getMinecraft(), null))
                         throw new IllegalStateException(C.i18n("install.no_version"));
                 } else
@@ -67,11 +67,14 @@ public class ForgeInstaller extends Task {
             File to = new File(gameDir, "versions" + File.separator + profile.install.getTarget());
             if (!to.exists() && !to.mkdirs())
                 HMCLog.warn("Failed to make new version folder " + to);
+            
             HMCLog.log("Copying jar..." + profile.install.getMinecraft() + ".jar to " + profile.install.getTarget() + ".jar");
             FileUtils.copyFile(new File(from, profile.install.getMinecraft() + ".jar"),
                                new File(to, profile.install.getTarget() + ".jar"));
+            
             HMCLog.log("Creating new version profile..." + profile.install.getTarget() + ".json");
             FileUtils.write(new File(to, profile.install.getTarget() + ".json"), C.GSON.toJson(profile.versionInfo));
+            
             HMCLog.log("Extracting universal forge pack..." + profile.install.getFilePath());
             entry = zipFile.getEntry(profile.install.getFilePath());
             InputStream is = zipFile.getInputStream(entry);

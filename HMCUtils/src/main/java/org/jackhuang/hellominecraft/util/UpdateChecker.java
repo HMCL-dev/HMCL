@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hellominecraft.util;
 
+import com.google.gson.JsonSyntaxException;
+import java.io.IOException;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import java.util.Map;
 
@@ -52,7 +54,7 @@ public final class UpdateChecker implements IUpdateChecker {
                 if (value == null) {
                     HMCLog.warn("Failed to check update...");
                     if (showMessage)
-                        MessageBox.Show(C.i18n("update.failed"));
+                        MessageBox.show(C.i18n("update.failed"));
                 } else if (VersionNumber.isOlder(base, value))
                     OUT_DATED = true;
                 if (OUT_DATED)
@@ -74,7 +76,7 @@ public final class UpdateChecker implements IUpdateChecker {
                 if (download_link == null)
                     try {
                         download_link = C.GSON.fromJson(NetUtils.get("http://huangyuhui.duapp.com/update_link.php?type=" + type), Map.class);
-                    } catch (Exception e) {
+                    } catch (JsonSyntaxException | IOException e) {
                         HMCLog.warn("Failed to get update link.", e);
                     }
                 publish(download_link);

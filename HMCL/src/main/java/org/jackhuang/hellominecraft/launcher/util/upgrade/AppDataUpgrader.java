@@ -101,7 +101,7 @@ public class AppDataUpgrader extends IUpgrader {
     @Override
     public boolean call(Object sender, final VersionNumber number) {
         ((UpdateChecker) sender).requestDownloadLink().reg(map -> {
-            if (MessageBox.Show(C.i18n("update.newest_version") + number.firstVer + "." + number.secondVer + "." + number.thirdVer + "\n"
+            if (MessageBox.show(C.i18n("update.newest_version") + number.firstVer + "." + number.secondVer + "." + number.thirdVer + "\n"
                                 + C.i18n("update.should_open_link"),
                                 MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                 if (map != null && map.containsKey("pack"))
@@ -109,7 +109,7 @@ public class AppDataUpgrader extends IUpgrader {
                         String hash = null;
                         if (map.containsKey("packsha1"))
                             hash = map.get("packsha1");
-                        if (TaskWindow.factory().append(new AppDataUpgraderTask(map.get("pack"), number.version, hash)).create()) {
+                        if (TaskWindow.factory().append(new AppDataUpgraderTask(map.get("pack"), number.version, hash)).execute()) {
                             new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderTask.getSelf(number.version).getAbsolutePath() }).directory(new File(".")).start();
                             System.exit(0);
                         }
@@ -130,7 +130,7 @@ public class AppDataUpgrader extends IUpgrader {
                     } catch (URISyntaxException | IOException e) {
                         HMCLog.warn("Failed to browse uri: " + url, e);
                         Utils.setClipborad(url);
-                        MessageBox.Show(C.i18n("update.no_browser"));
+                        MessageBox.show(C.i18n("update.no_browser"));
                     }
                 }
         }).execute();
@@ -162,7 +162,7 @@ public class AppDataUpgrader extends IUpgrader {
         }
 
         @Override
-        public void executeTask() throws Exception {
+        public void executeTask(boolean areDependTasksSucceeded) throws Exception {
             HashMap<String, String> json = new HashMap<>();
             File f = getSelf(newestVersion);
             if (!f.getParentFile().exists() && !f.getParentFile().mkdirs())

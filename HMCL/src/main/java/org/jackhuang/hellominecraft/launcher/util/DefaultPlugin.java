@@ -17,11 +17,11 @@
  */
 package org.jackhuang.hellominecraft.launcher.util;
 
+import java.util.ArrayList;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.api.IPlugin;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.OfflineAuthenticator;
-import org.jackhuang.hellominecraft.launcher.core.auth.SkinmeAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.core.auth.YggdrasilAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.launch.LaunchOptions;
@@ -37,9 +37,7 @@ import org.jackhuang.hellominecraft.util.func.Consumer;
  */
 public class DefaultPlugin implements IPlugin {
 
-    YggdrasilAuthenticator YGGDRASIL_LOGIN = null;
-    OfflineAuthenticator OFFLINE_LOGIN = null;
-    SkinmeAuthenticator SKINME_LOGIN = null;
+    ArrayList<IAuthenticator> auths = new ArrayList<>();
 
     @Override
     public IMinecraftService provideMinecraftService(Object profile) {
@@ -49,20 +47,17 @@ public class DefaultPlugin implements IPlugin {
     @Override
     public void onRegisterAuthenticators(Consumer<IAuthenticator> apply) {
         String clientToken = Settings.getInstance().getClientToken();
-        OFFLINE_LOGIN = new OfflineAuthenticator(clientToken);
-        OFFLINE_LOGIN.onLoadSettings(Settings.getInstance().getAuthenticatorConfig(OFFLINE_LOGIN.id()));
-        YGGDRASIL_LOGIN = new YggdrasilAuthenticator(clientToken);
-        YGGDRASIL_LOGIN.onLoadSettings(Settings.getInstance().getAuthenticatorConfig(YGGDRASIL_LOGIN.id()));
+        auths.add(new OfflineAuthenticator(clientToken));
+        auths.add(new YggdrasilAuthenticator(clientToken));
 
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                Settings.getInstance().setAuthenticatorConfig(OFFLINE_LOGIN.id(), OFFLINE_LOGIN.onSaveSettings());
-                Settings.getInstance().setAuthenticatorConfig(YGGDRASIL_LOGIN.id(), YGGDRASIL_LOGIN.onSaveSettings());
-            }
-        });
-        apply.accept(OFFLINE_LOGIN);
-        apply.accept(YGGDRASIL_LOGIN);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            for (IAuthenticator i : auths)
+                Settings.getInstance().setAuthenticatorConfig(i.id(), i.onSaveSettings());
+        }));
+        for (IAuthenticator i : auths) {
+            i.onLoadSettings(Settings.getInstance().getAuthenticatorConfig(i.id()));
+            apply.accept(i);
+        }
     }
 
     @Override

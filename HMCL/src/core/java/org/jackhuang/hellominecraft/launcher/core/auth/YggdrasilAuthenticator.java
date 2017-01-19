@@ -45,10 +45,9 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
     @Override
     public UserProfileProvider login(LoginInfo info) throws AuthenticationException {
         UserProfileProvider result = new UserProfileProvider();
-        result.setUserType("mojang");
         if (ua.canPlayOnline()) {
-            result.setUserName(info.username);
-            result.setUserId(UUIDTypeAdapter.fromUUID(ua.getSelectedProfile().id));
+            result.setUserName(info.username)
+                    .setUserId(UUIDTypeAdapter.fromUUID(ua.getSelectedProfile().id));
         } else {
             String usr = info.username;
             if (info.username == null || !info.username.contains("@"))
@@ -80,14 +79,14 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
                 username = selectedProfile.name;
             if (username == null)
                 throw new AuthenticationException("No player");
-            result.setUserName(username);
-            result.setUserId(selectedProfile == null ? OfflineAuthenticator.getUUIDFromUserName(username) : UUIDTypeAdapter.fromUUID(selectedProfile.id));
+            result.setUserName(username)
+                    .setUserId(selectedProfile == null ? OfflineAuthenticator.getUUIDFromUserName(username) : UUIDTypeAdapter.fromUUID(selectedProfile.id));
         }
-        result.setUserProperties(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.LegacySerializer()).create().toJson(ua.getUserProperties()));
-        result.setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()));
-        result.setAccessToken(ua.getAuthenticatedToken());
-        result.setSession(ua.getAuthenticatedToken());
-        return result;
+        return result.setUserType("mojang")
+                .setUserProperties(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.LegacySerializer()).create().toJson(ua.getUserProperties()))
+                .setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()))
+                .setAccessToken(ua.getAuthenticatedToken())
+                .setSession(ua.getAuthenticatedToken());
     }
 
     @Override

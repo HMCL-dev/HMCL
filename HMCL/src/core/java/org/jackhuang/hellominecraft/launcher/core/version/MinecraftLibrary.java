@@ -79,12 +79,12 @@ public class MinecraftLibrary extends IMinecraftLibrary {
 
     private String getNative() {
         switch (OS.os()) {
-        case WINDOWS:
-            return formatArch(natives.windows);
-        case OSX:
-            return formatArch(natives.osx);
-        default:
-            return formatArch(natives.linux);
+            case WINDOWS:
+                return formatArch(natives.windows);
+            case OSX:
+                return formatArch(natives.osx);
+            default:
+                return formatArch(natives.linux);
         }
     }
 
@@ -116,6 +116,7 @@ public class MinecraftLibrary extends IMinecraftLibrary {
         return extract == null ? new Extract() : extract;
     }
 
+    @Override
     public LibraryDownloadInfo getDownloadInfo() {
         if (downloads == null)
             downloads = new LibrariesDownloadInfo();
@@ -125,12 +126,15 @@ public class MinecraftLibrary extends IMinecraftLibrary {
                 downloads.classifiers = new HashMap<>();
             if (!downloads.classifiers.containsKey(getNative()))
                 downloads.classifiers.put(getNative(), info = new LibraryDownloadInfo());
-            else
+            else {
                 info = downloads.classifiers.get(getNative());
-        } else if (downloads.artifact == null)
-            downloads.artifact = info = new LibraryDownloadInfo();
-        else
+                if (info == null) info = new LibraryDownloadInfo();
+            }
+        } else {
+            if (downloads.artifact == null)
+                downloads.artifact = new LibraryDownloadInfo();
             info = downloads.artifact;
+        }
         if (StrUtils.isBlank(info.path)) {
             info.path = formatName();
             if (info.path == null)

@@ -21,9 +21,9 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.regex.Pattern;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.ui.JSystemFileChooser;
 import org.jackhuang.hellominecraft.util.ui.wizard.spi.WizardController;
 
 /**
@@ -172,8 +172,8 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cboModpackLocationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cboModpackLocationActionPerformed
-        JFileChooser fc = new JFileChooser();
-        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        JSystemFileChooser fc = new JSystemFileChooser();
+        fc.setFileSelectionMode(JSystemFileChooser.FILES_ONLY);
         fc.setDialogTitle(C.i18n("modpack.wizard.step.initialization.save"));
         fc.setMultiSelectionEnabled(false);
         fc.setFileFilter(new FileNameExtensionFilter(C.i18n("modpack") + "(*.zip)", "zip"));

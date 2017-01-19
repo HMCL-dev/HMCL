@@ -35,7 +35,7 @@ import java.awt.Graphics;
  * @author Created by Jasper Potts (Jan 17, 2007)
  * @version 1.0
  */
-public class ScrollButton extends MetalScrollButton implements SwingConstants {
+public class ScrollButton extends MetalScrollButton {
 
     private final int btnWidth, btnHeight;
 

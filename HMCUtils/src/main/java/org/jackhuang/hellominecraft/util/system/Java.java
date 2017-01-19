@@ -21,7 +21,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 
@@ -38,8 +40,8 @@ public class Java {
         temp.add(new Java("Default", System.getProperty("java.home")));
         temp.add(new Java("Custom", null));
         if (OS.os() == OS.WINDOWS)
-            temp.addAll(Java.queryAllJavaHomeInWindowsByReg());
-        if (OS.os() == OS.OSX)
+            temp.addAll(Java.queryAllJavaHomeInWindowsByReg().values());
+        else if (OS.os() == OS.OSX)
             temp.addAll(Java.queryAllJDKInMac());
         JAVA = Collections.unmodifiableList(temp);
     }
@@ -114,18 +116,18 @@ public class Java {
      * WINDOWS
      * -----------------------------------
      */
-    public static List<Java> queryAllJavaHomeInWindowsByReg() {
-        List<Java> ans = new ArrayList<>();
+    public static Map<String, Java> queryAllJavaHomeInWindowsByReg() {
+        Map<String, Java> ans = new HashMap<>();
         try {
-            queryJava(ans, "HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment");
-            queryJava(ans, "HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit");
+            queryJava(ans, "HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\");
+            queryJava(ans, "HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\");
         } catch (IOException | InterruptedException ex) {
             HMCLog.err("Faield to query java", ex);
         }
         return ans;
     }
 
-    private static void queryJava(List<Java> ans, String location) throws IOException, InterruptedException {
+    private static void queryJava(Map<String, Java> ans, String location) throws IOException, InterruptedException {
         for (String java : queryRegSubFolders(location)) {
             int s = 0;
             for (char c : java.toCharArray())
@@ -133,9 +135,9 @@ public class Java {
                     ++s;
             if (s <= 1)
                 continue;
-            String javahome = queryRegValue(java, "JavaHome");
-            if (javahome != null)
-                ans.add(new Java(java.substring(location.length()), javahome));
+            String javahome = queryRegValue(java, "JavaHome"), ver = java.substring(location.length());
+            if (javahome != null && !ans.containsKey(ver))
+                ans.put(ver, new Java(ver, javahome));
         }
     }
 

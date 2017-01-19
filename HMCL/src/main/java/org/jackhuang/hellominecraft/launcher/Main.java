@@ -33,6 +33,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.X509TrustManager;
 import javax.swing.ImageIcon;
+import javax.swing.RepaintManager;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
@@ -46,6 +47,7 @@ import org.jackhuang.hellominecraft.util.ui.LogWindow;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.util.upgrade.IUpgrader;
 import org.jackhuang.hellominecraft.launcher.ui.MainFrame;
+import org.jackhuang.hellominecraft.launcher.ui.MyRepaintManager;
 import org.jackhuang.hellominecraft.launcher.util.DefaultPlugin;
 import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
 import org.jackhuang.hellominecraft.util.MathUtils;
@@ -153,6 +155,7 @@ public final class Main implements Runnable {
             try {
                 LOOK_AND_FEEL = new HelloMinecraftLookAndFeel(Settings.getInstance().getTheme().settings);
                 UIManager.setLookAndFeel(LOOK_AND_FEEL);
+                RepaintManager.setCurrentManager(new MyRepaintManager());
             } catch (ParseException | UnsupportedLookAndFeelException ex) {
                 HMCLog.warn("Failed to set look and feel...", ex);
             }

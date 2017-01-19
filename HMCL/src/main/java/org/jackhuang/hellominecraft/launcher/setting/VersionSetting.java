@@ -27,10 +27,10 @@ import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.EventHandler;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.Utils;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.system.Java;
 import org.jackhuang.hellominecraft.util.system.JdkVersion;
+import org.jackhuang.hellominecraft.util.system.OS;
 
 /**
  *
@@ -179,7 +179,7 @@ public class VersionSetting {
 
     public String getMaxMemory() {
         if (StrUtils.isBlank(maxMemory))
-            return String.valueOf(Utils.getSuggestedMemorySize());
+            return String.valueOf(OS.getSuggestedMemorySize());
         return maxMemory;
     }
 

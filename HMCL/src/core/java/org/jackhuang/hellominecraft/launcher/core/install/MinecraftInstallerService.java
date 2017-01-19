@@ -79,6 +79,8 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
 
     @Override
     public Task downloadLiteLoader(String installId, InstallerVersion v) {
+        if (!(v instanceof LiteLoaderVersionList.LiteLoaderInstallerVersion))
+            throw new Error("Download lite loader but the version is not ll's.");
         File filepath = IOUtils.tryGetCanonicalFile("liteloader-universal.jar");
         FileDownloadTask task = (FileDownloadTask) new FileDownloadTask(v.universal, filepath).setTag("LiteLoader");
         return task.after(new LiteLoaderInstaller(service, installId, (LiteLoaderVersionList.LiteLoaderInstallerVersion) v).registerPreviousResult(task))

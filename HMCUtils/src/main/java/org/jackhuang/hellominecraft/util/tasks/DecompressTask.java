@@ -18,7 +18,7 @@
 package org.jackhuang.hellominecraft.util.tasks;
 
 import java.io.File;
-import org.jackhuang.hellominecraft.util.system.Compressor;
+import org.jackhuang.hellominecraft.util.system.CompressingUtils;
 
 /**
  *
@@ -34,8 +34,8 @@ public class DecompressTask extends Task {
     }
 
     @Override
-    public void executeTask() throws Throwable {
-        Compressor.unzip(src, dest);
+    public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
+        CompressingUtils.unzip(src, dest);
     }
 
     @Override

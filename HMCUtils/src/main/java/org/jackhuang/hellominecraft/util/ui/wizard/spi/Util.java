@@ -7,6 +7,8 @@ package org.jackhuang.hellominecraft.util.ui.wizard.spi;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,7 +32,7 @@ final class Util {
             result[i] = pages[i].id();
             if (result[i] == null || uniqueNames.contains(result[i])) {
                 result[i] = uniquify(getIDFromStaticMethod(pages[i].getClass()),
-                                     uniqueNames);
+                        uniqueNames);
                 pages[i].id = result[i];
             }
             uniqueNames.add(result[i]);
@@ -67,12 +69,12 @@ final class Util {
         // System.err.println("GetID by method for " + clazz);
         String result = null;
         try {
-            Method m = clazz.getDeclaredMethod("getStep", new Class[] {});
+            Method m = clazz.getDeclaredMethod("getStep", new Class[]{});
             // assert m.getReturnType() == String.class;
             result = (String) m.invoke(clazz, (Object[]) null);
             if (result == null)
                 throw new NullPointerException("getStep may not return null");
-        } catch (Exception ex) {
+        } catch (IllegalAccessException | IllegalArgumentException | NoSuchMethodException | NullPointerException | SecurityException | InvocationTargetException ex) {
             //do nothing
         }
         return result == null ? clazz.getName() : result;
@@ -92,11 +94,11 @@ final class Util {
         for (int i = 0; i < pages.length; i++) {
             if (pages[i] == null)
                 throw new NullPointerException("Null at " + i + " in array "
-                                               + "of panel classes");
+                        + "of panel classes");
 
             if (!WizardPage.class.isAssignableFrom(pages[i]))
                 throw new IllegalArgumentException(pages[i]
-                                                   + " is not a subclass of WizardPage");
+                        + " is not a subclass of WizardPage");
             result[i] = uniquify(getIDFromStaticMethod(pages[i]), used);
             if (result[i] == null)
                 result[i] = pages[i].getName();
@@ -128,33 +130,33 @@ final class Util {
     }
 
     static String getDescriptionFromStaticMethod(Class clazz) {
-        String result = null;
         Method m;
         try {
             m = clazz.getDeclaredMethod("getDescription", (Class[]) null);
-        } catch (Exception e) {
+        } catch (NoSuchMethodException | SecurityException e) {
             throw new IllegalArgumentException("Could not find or access "
-                                               + "public static String " + clazz.getName()
-                                               + ".getDescription() - make sure it exists");
+                    + "public static String " + clazz.getName()
+                    + ".getDescription() - make sure it exists");
         }
 
         if (m.getReturnType() != String.class)
             throw new IllegalArgumentException("getStep has wrong "
-                                               + " return type: " + m.getReturnType() + " on "
-                                               + clazz);
+                    + " return type: " + m.getReturnType() + " on "
+                    + clazz);
 
         if (!Modifier.isStatic(m.getModifiers()))
             throw new IllegalArgumentException("getStep is not "
-                                               + "static on " + clazz);
+                    + "static on " + clazz);
 
-        try {
-            m.setAccessible(true);
-            result = (String) m.invoke(null, (Object[]) null);
-        } catch (InvocationTargetException | IllegalAccessException ite) {
-            throw new IllegalArgumentException("Could not invoke "
-                                               + "public static String " + clazz.getName()
-                                               + ".getDescription() - make sure it exists.", ite);
-        }
-        return result;
+        return AccessController.doPrivileged((PrivilegedAction<String>) () -> {
+            try {
+                m.setAccessible(true);
+                return (String) m.invoke(null, (Object[]) null);
+            } catch (InvocationTargetException | IllegalAccessException ite) {
+                throw new IllegalArgumentException("Could not invoke "
+                        + "public static String " + clazz.getName()
+                        + ".getDescription() - make sure it exists.", ite);
+            }
+        });
     }
 }

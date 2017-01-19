@@ -19,14 +19,10 @@ buildscript {
     repositories {
         mavenCentral();
         
-        maven {
-            url "https://libraries.minecraft.net"
-        }
-        
         dependencies {
             classpath 'net.sf.proguard:proguard-gradle:4.10'
             classpath 'edu.sc.seis.gradle:launch4j:1.0.6'
-            classpath 'me.tatarka:gradle-retrolambda:3.1.0'
+            classpath 'me.tatarka:gradle-retrolambda:3.4.0'
         }
     }
 }
@@ -50,11 +46,11 @@ def buildnumber = System.getenv("TRAVIS_BUILD_NUMBER")
 if (buildnumber == null)
     buildnumber = System.getenv("BUILD_NUMBER")
 if (buildnumber == null)
-    buildnumber = "233"
+    buildnumber = "0"
     
 def versionroot = System.getenv("VERSION_ROOT")
 if (versionroot == null)
-    versionroot = "2.4.1"
+    versionroot = "2.6.0"
 
 String mavenGroupId = 'HMCL'
 String mavenVersion = versionroot + '.' + buildnumber

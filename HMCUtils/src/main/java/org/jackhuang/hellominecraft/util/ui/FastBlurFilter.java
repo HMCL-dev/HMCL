@@ -42,20 +42,22 @@ public class FastBlurFilter extends AbstractFilter {
     public BufferedImage filter(BufferedImage src, BufferedImage dst) {
         int width = src.getWidth();
         int height = src.getHeight();
+        return filter(src, new int[width * height], dst, new int[width * height]);
+    }
+
+    public BufferedImage filter(BufferedImage src, int[] srcPixels, BufferedImage dst, int[] dstPixels) {
+        int width = src.getWidth();
+        int height = src.getHeight();
 
         if (dst == null)
             dst = createCompatibleDestImage(src, null);
 
-        int[] srcPixels = new int[width * height];
-        int[] dstPixels = new int[width * height];
-
-        getPixels(src, 0, 0, width, height, srcPixels);
+        GraphicsUtils.getPixels(src, 0, 0, width, height, srcPixels);
 
         blur(srcPixels, dstPixels, width, height, this.radius);
-
         blur(dstPixels, srcPixels, height, width, this.radius);
 
-        setPixels(dst, 0, 0, width, height, srcPixels);
+        GraphicsUtils.setPixels(dst, 0, 0, width, height, srcPixels);
 
         return dst;
     }

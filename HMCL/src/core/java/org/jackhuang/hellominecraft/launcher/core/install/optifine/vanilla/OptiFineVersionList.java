@@ -76,7 +76,7 @@ public class OptiFineVersionList extends InstallerVersionList {
             }
 
             @Override
-            public void executeTask() throws Throwable {
+            public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
                 if (!areDependTasksSucceeded)
                     return;
                 String content = task.getResult();

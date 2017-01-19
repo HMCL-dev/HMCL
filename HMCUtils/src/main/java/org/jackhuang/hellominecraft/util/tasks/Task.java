@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hellominecraft.util.tasks;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 
@@ -29,8 +28,11 @@ public abstract class Task {
 
     /**
      * Run in a new thread(packed in TaskList).
+     * 
+     * @param areDependTasksSucceeded Would be true if all of tasks which this task depends on have succeed.
+     * @throws java.lang.Throwable If a task throws an exception, this task will be marked as `failed`.
      */
-    public abstract void executeTask() throws Throwable;
+    public abstract void executeTask(boolean areDependTasksSucceeded) throws Throwable;
 
     /**
      * if this func returns false, TaskList will force abort the thread. run in
@@ -54,35 +56,23 @@ public abstract class Task {
     }
     protected Throwable failReason = null;
 
+    /**
+     * This method can be only invoked by TaskList.
+     * @param s what the `executeTask` throws.
+     */
     protected void setFailReason(Throwable s) {
         failReason = s;
     }
 
     protected String tag;
-    protected boolean parallelExecuting;
 
+    public String getTag() {
+        return tag;
+    }
+    
     public Task setTag(String tag) {
         this.tag = tag;
         return this;
-    }
-
-    public boolean isParallelExecuting() {
-        return parallelExecuting;
-    }
-
-    public void setParallelExecuting(boolean parallelExecuting) {
-        this.parallelExecuting = parallelExecuting;
-    }
-
-    ArrayList<DoingDoneListener<Task>> taskListener = new ArrayList();
-
-    public Task addTaskListener(DoingDoneListener<Task> l) {
-        taskListener.add(l);
-        return this;
-    }
-
-    public ArrayList<DoingDoneListener<Task>> getTaskListeners() {
-        return taskListener;
     }
 
     public abstract String getInfo();
@@ -94,8 +84,6 @@ public abstract class Task {
     public Collection<Task> getAfterTasks() {
         return null;
     }
-
-    public boolean areDependTasksSucceeded;
 
     protected ProgressProviderListener ppl;
 
@@ -117,7 +105,7 @@ public abstract class Task {
         if (c != null)
             for (Task t : c)
                 t.runWithException();
-        executeTask();
+        executeTask(true);
         c = getAfterTasks();
         if (c != null)
             for (Task t : c)

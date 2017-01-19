@@ -298,7 +298,7 @@ mainwindow.enter_script_name=輸入要生成腳本的資料名
 mainwindow.make_launch_succeed=啟動腳本已生成完畢:
 mainwindow.no_version=未找到任何版本，是否進入遊戲下載？
 
-launcher.about=<html>默認背景圖感謝gamerteam提供。<br><a href="http://huangyuhui.duapp.com/link.php?type=sponsor">如果您希望本軟件繼續發展，請贊助</a><br>關於作者：<br>百度ID：huanghongxun20<br>mcbbs：huanghongxun<br>郵箱：huanghongxun2008@126.com<br>Minecraft Forum ID: klkl6523<br>歡迎提交Bug哦<br/>Copyright (c) 2013-2016 huangyuhui.<br>免責聲明：Minecraft軟體版權歸Mojang AB所有，遊戲由於誤操作本啟動器而丟失數據的概不負責。<br>本啟動器在GPLv3協議下開源:http://github.com/huanghongxun/HMCL/ ,感谢issues和pull requests贡献者<br>本軟體使用了基於Apache License 2.0的Gson項目，感謝貢獻者。</html>
+launcher.about=<html>默認背景圖感謝gamerteam提供。<br>關於作者：<br>百度ID：huanghongxun20<br>mcbbs：huanghongxun<br>Minecraft Forum ID: klkl6523<br>歡迎提交Bug哦<br/>Copyright (c) 2013-2016 huangyuhui.<br>免責聲明：Minecraft軟體版權歸Mojang AB所有，遊戲由於誤操作本啟動器而丟失數據的概不負責。<br>本啟動器在GPLv3協議下開源:http://github.com/huanghongxun/HMCL/ ,感谢issues和pull requests贡献者<br>本軟體使用了基於Apache License 2.0的Gson項目，感謝貢獻者。</html>
 launcher.download_source=下載源
 launcher.background_location=背景地址
 launcher.exit_failed=強制退出失敗，可能是Forge 1.7.10及更高版本導致的，無法解決。

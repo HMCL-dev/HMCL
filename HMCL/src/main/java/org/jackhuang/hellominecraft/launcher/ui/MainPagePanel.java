@@ -23,7 +23,6 @@ import java.awt.Font;
 import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -38,12 +37,13 @@ import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.ui.modpack.ModpackWizard;
 import org.jackhuang.hellominecraft.launcher.util.HMCLMinecraftService;
-import org.jackhuang.hellominecraft.util.ui.GraphicsUtils;
 import org.jackhuang.hellominecraft.util.Event;
 import org.jackhuang.hellominecraft.lookandfeel.comp.ConstomButton;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
+import org.jackhuang.hellominecraft.util.ui.GraphicsUtils;
+import org.jackhuang.hellominecraft.util.ui.JSystemFileChooser;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 import org.jackhuang.hellominecraft.util.ui.wizard.api.WizardDisplayer;
 
@@ -51,11 +51,8 @@ import org.jackhuang.hellominecraft.util.ui.wizard.api.WizardDisplayer;
  *
  * @author huangyuhui
  */
-public class MainPagePanel extends AnimatedPanel {
+public class MainPagePanel extends GaussionPage {
 
-    /**
-     * Creates new form MainPagePanel
-     */
     public MainPagePanel() {
     }
 
@@ -76,7 +73,7 @@ public class MainPagePanel extends AnimatedPanel {
         btnRun.setFont(newFont);
         btnRun.addActionListener(e -> MainFrame.INSTANCE.daemon.runGame(Settings.getLastProfile()));
 
-        this.add(pnlButtons);
+        add(pnlButtons);
         pnlButtons.setBounds(0, 0, w, h);
 
         this.setSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
@@ -93,7 +90,10 @@ public class MainPagePanel extends AnimatedPanel {
 
         prepareAuths();
 
-        animationEnabled = false;
+        addAeroObject(pnlMore);
+        setBackgroundImage(MainFrame.INSTANCE.background.getImage());
+
+        ((RepaintPage) pnlMore).setRepainter(this);
     }
 
     /**
@@ -105,20 +105,20 @@ public class MainPagePanel extends AnimatedPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        pnlMore = new javax.swing.JPanel();
+        pnlMore = new RepaintPage();
         txtPlayerName = new javax.swing.JTextField();
-        jLabel7 = new javax.swing.JLabel();
+        lblLogin = new javax.swing.JLabel();
         cboLoginMode = new javax.swing.JComboBox();
         lblUserName = new javax.swing.JLabel();
-        jLabel10 = new javax.swing.JLabel();
+        lblProfile = new javax.swing.JLabel();
         cboProfiles = new javax.swing.JComboBox();
         lblVersion = new javax.swing.JLabel();
-        cboVersions = new javax.swing.JComboBox();
+        cboVersions = new WideComboBox();
         pnlPassword = new javax.swing.JPanel();
-        jPanel1 = new javax.swing.JPanel();
-        jLabel9 = new javax.swing.JLabel();
+        pnlLogIn = new javax.swing.JPanel();
+        lblPassword = new javax.swing.JLabel();
         txtPassword = new javax.swing.JPasswordField();
-        jPanel3 = new javax.swing.JPanel();
+        pnlLogOut = new javax.swing.JPanel();
         btnLogout = new javax.swing.JButton();
         btnImportModpack = new javax.swing.JButton();
         btnExportModpack = new javax.swing.JButton();
@@ -142,7 +142,7 @@ public class MainPagePanel extends AnimatedPanel {
             }
         });
 
-        jLabel7.setText(C.i18n("login.type")); // NOI18N
+        lblLogin.setText(C.i18n("login.type")); // NOI18N
 
         cboLoginMode.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -152,7 +152,7 @@ public class MainPagePanel extends AnimatedPanel {
 
         lblUserName.setText(C.i18n("login.username")); // NOI18N
 
-        jLabel10.setText(C.i18n("ui.label.profile")); // NOI18N
+        lblProfile.setText(C.i18n("ui.label.profile")); // NOI18N
 
         cboProfiles.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -171,7 +171,7 @@ public class MainPagePanel extends AnimatedPanel {
 
         pnlPassword.setLayout(new java.awt.CardLayout());
 
-        jLabel9.setText(C.i18n("ui.label.password")); // NOI18N
+        lblPassword.setText(C.i18n("ui.label.password")); // NOI18N
 
         txtPassword.addCaretListener(new javax.swing.event.CaretListener() {
             public void caretUpdate(javax.swing.event.CaretEvent evt) {
@@ -194,25 +194,25 @@ public class MainPagePanel extends AnimatedPanel {
             }
         });
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(jLabel9)
+        javax.swing.GroupLayout pnlLogInLayout = new javax.swing.GroupLayout(pnlLogIn);
+        pnlLogIn.setLayout(pnlLogInLayout);
+        pnlLogInLayout.setHorizontalGroup(
+            pnlLogInLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlLogInLayout.createSequentialGroup()
+                .addComponent(lblPassword)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtPassword))
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+        pnlLogInLayout.setVerticalGroup(
+            pnlLogInLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlLogInLayout.createSequentialGroup()
                 .addGap(0, 0, Short.MAX_VALUE)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(pnlLogInLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(txtPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
 
-        pnlPassword.add(jPanel1, "card2");
+        pnlPassword.add(pnlLogIn, "card2");
 
         btnLogout.setText(C.i18n("ui.button.logout")); // NOI18N
         btnLogout.addActionListener(new java.awt.event.ActionListener() {
@@ -221,18 +221,18 @@ public class MainPagePanel extends AnimatedPanel {
             }
         });
 
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        javax.swing.GroupLayout pnlLogOutLayout = new javax.swing.GroupLayout(pnlLogOut);
+        pnlLogOut.setLayout(pnlLogOutLayout);
+        pnlLogOutLayout.setHorizontalGroup(
+            pnlLogOutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(btnLogout, javax.swing.GroupLayout.DEFAULT_SIZE, 170, Short.MAX_VALUE)
         );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        pnlLogOutLayout.setVerticalGroup(
+            pnlLogOutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(btnLogout, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
-        pnlPassword.add(jPanel3, "card3");
+        pnlPassword.add(pnlLogOut, "card3");
 
         btnImportModpack.setText(C.i18n("modpack.task.install")); // NOI18N
         btnImportModpack.addActionListener(new java.awt.event.ActionListener() {
@@ -258,16 +258,16 @@ public class MainPagePanel extends AnimatedPanel {
                     .addComponent(pnlPassword, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(pnlMoreLayout.createSequentialGroup()
                         .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel10, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(lblProfile, javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(lblVersion, javax.swing.GroupLayout.Alignment.TRAILING))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cboProfiles, 0, 128, Short.MAX_VALUE)
+                            .addComponent(cboProfiles, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(cboVersions, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(pnlMoreLayout.createSequentialGroup()
                         .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblUserName)
-                            .addComponent(jLabel7))
+                            .addComponent(lblLogin))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(cboLoginMode, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -281,7 +281,7 @@ public class MainPagePanel extends AnimatedPanel {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlMoreLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel10)
+                    .addComponent(lblProfile)
                     .addComponent(cboProfiles, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -289,7 +289,7 @@ public class MainPagePanel extends AnimatedPanel {
                     .addComponent(lblVersion))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel7)
+                    .addComponent(lblLogin)
                     .addComponent(cboLoginMode, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -374,8 +374,8 @@ public class MainPagePanel extends AnimatedPanel {
     }//GEN-LAST:event_txtPasswordKeyPressed
 
     private void btnImportModpackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnImportModpackActionPerformed
-        JFileChooser fc = new JFileChooser();
-        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        JSystemFileChooser fc = new JSystemFileChooser();
+        fc.setFileSelectionMode(JSystemFileChooser.FILES_ONLY);
         fc.setDialogTitle(C.i18n("modpack.choose"));
         fc.setMultiSelectionEnabled(false);
         fc.setFileFilter(new FileNameExtensionFilter(C.i18n("modpack"), "zip"));
@@ -383,7 +383,7 @@ public class MainPagePanel extends AnimatedPanel {
         if (fc.getSelectedFile() == null)
             return;
         String suggestedModpackId = JOptionPane.showInputDialog("Please enter your favourite game name", FileUtils.getBaseName(fc.getSelectedFile().getName()));
-        TaskWindow.factory().append(ModpackManager.install(MainFrame.INSTANCE, fc.getSelectedFile(), Settings.getLastProfile().service(), suggestedModpackId)).create();
+        TaskWindow.factory().append(ModpackManager.install(MainFrame.INSTANCE, fc.getSelectedFile(), Settings.getLastProfile().service(), suggestedModpackId)).execute();
         Settings.getLastProfile().service().version().refreshVersions();
     }//GEN-LAST:event_btnImportModpackActionPerformed
 
@@ -434,13 +434,13 @@ public class MainPagePanel extends AnimatedPanel {
     private javax.swing.JComboBox cboLoginMode;
     private javax.swing.JComboBox cboProfiles;
     private javax.swing.JComboBox cboVersions;
-    private javax.swing.JLabel jLabel10;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JLabel jLabel9;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel3;
+    private javax.swing.JLabel lblLogin;
+    private javax.swing.JLabel lblPassword;
+    private javax.swing.JLabel lblProfile;
     private javax.swing.JLabel lblUserName;
     private javax.swing.JLabel lblVersion;
+    private javax.swing.JPanel pnlLogIn;
+    private javax.swing.JPanel pnlLogOut;
     private javax.swing.JPanel pnlMore;
     private javax.swing.JPanel pnlPassword;
     private javax.swing.JPasswordField txtPassword;
@@ -469,16 +469,14 @@ public class MainPagePanel extends AnimatedPanel {
         return true;
     };
 
-    final Runnable onLoadingProfiles = this::loadProfiles;
-
-    private void loadProfiles() {
+    final Runnable onLoadingProfiles = () -> {
         isLoading = true;
         DefaultComboBoxModel model = new DefaultComboBoxModel();
         for (Profile s : Settings.getProfilesFiltered())
             model.addElement(s.getName());
         cboProfiles.setModel(model);
         isLoading = false;
-    }
+    };
 
     final Consumer<IMinecraftService> onRefreshedVersions = t -> {
         if (Settings.getLastProfile().service() == t)
@@ -495,7 +493,7 @@ public class MainPagePanel extends AnimatedPanel {
             if (!showedNoVersion && ((HMCLMinecraftService) Settings.getLastProfile().service()).checkedModpack) {
                 showedNoVersion = true;
                 SwingUtilities.invokeLater(() -> {
-                    if (MessageBox.Show(C.i18n("mainwindow.no_version"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+                    if (MessageBox.show(C.i18n("mainwindow.no_version"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                         MainFrame.INSTANCE.invokeAction("showGameDownloads");
                 });
             }

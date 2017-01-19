@@ -19,7 +19,10 @@ package org.jackhuang.hellominecraft.util.code;
 
 import java.nio.charset.Charset;
 
-public class Charsets {
+public final class Charsets {
+    
+    private Charsets() {
+    }
 
     public static final Charset ISO_8859_1 = Charset.forName("ISO-8859-1");
 

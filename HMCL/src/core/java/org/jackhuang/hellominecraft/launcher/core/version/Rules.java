@@ -40,7 +40,7 @@ public class Rules {
     }
 
     public String action() {
-        return os == null || os != null && os.isCurrentOS() ? action : null;
+        return os == null || os.isCurrentOS() ? action : null;
     }
 
 }

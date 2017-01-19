@@ -29,7 +29,7 @@ import org.jackhuang.hellominecraft.util.system.IOUtils;
  *
  * @author huangyuhui
  */
-public class Localization {
+public final class Localization {
 
     private static final String ROOT_LOCATION = "/org/jackhuang/hellominecraft/lang/I18N%s.lang";
 
@@ -51,7 +51,7 @@ public class Localization {
             String[] strings = IOUtils.readFully(is).toString("UTF-8").split("\n");
             for (String s : strings)
                 if (!s.isEmpty() && s.charAt(0) != 35) {
-                    int i = s.indexOf("=");
+                    int i = s.indexOf('=');
                     if (i == -1)
                         continue;
                     lang.put(s.substring(0, i), s.substring(i + 1));

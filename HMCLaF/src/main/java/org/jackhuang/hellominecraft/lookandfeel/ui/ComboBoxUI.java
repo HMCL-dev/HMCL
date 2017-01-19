@@ -18,6 +18,8 @@ import java.awt.Container;
 import java.awt.image.BufferedImage;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
+import javax.swing.plaf.basic.BasicComboPopup;
+import javax.swing.plaf.basic.ComboPopup;
 
 /**
  * NimbusComboBoxUI
@@ -88,6 +90,13 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
     }
 
     @Override
+    protected ComboPopup createPopup() {
+        BasicComboPopup p = new BasicComboPopup(comboBox);
+        //p.setPopupSize(100, comboBox.getPreferredSize().height);
+        return p;
+    }
+
+    @Override
     protected JButton createArrowButton() {
         JButton button = new JButton() {
             @Override
@@ -101,8 +110,8 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
                     else if (mouseInside)
                         img = COMBO_OVER;
                     g.drawImage(img,
-                                0, 0, getWidth(), getHeight(),
-                                0, 0, img.getWidth(), img.getHeight(), comboBox);
+                            0, 0, getWidth(), getHeight(),
+                            0, 0, img.getWidth(), img.getHeight(), comboBox);
                 }
             }
         };
@@ -141,14 +150,14 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
             else if (mouseInside)
                 img = COMBO_OVER;
             g.drawImage(img,
-                        bounds.x, bounds.y, bounds.x + 4, bounds.y + bounds.height,
-                        0, 0, 1, 26, comboBox);
+                    bounds.x, bounds.y, bounds.x + 4, bounds.y + bounds.height,
+                    0, 0, 1, 26, comboBox);
             g.drawImage(img,
-                        bounds.x + 1, bounds.y, bounds.x + bounds.width - 25, bounds.y + bounds.height,
-                        1, 0, 3, 26, comboBox);
+                    bounds.x + 1, bounds.y, bounds.x + bounds.width - 25, bounds.y + bounds.height,
+                    1, 0, 3, 26, comboBox);
             g.drawImage(img,
-                        bounds.x + bounds.width - 25, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height,
-                        4, 0, 29, 26, comboBox);
+                    bounds.x + bounds.width - 25, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height,
+                    4, 0, 29, 26, comboBox);
         } else {
             /*g.setColor(Color.WHITE);
             g.fillRect(bounds.x, bounds.y, bounds.width - btnSize.width, bounds.height - 1);
@@ -257,23 +266,25 @@ public class ComboBoxUI extends BasicComboBoxUI implements MouseListener {
 
         @Override
         public void layoutContainer(Container parent) {
-            JComboBox cb = (JComboBox) parent;
-            int width = cb.getWidth();
+            if (parent instanceof JComboBox) {
+                JComboBox cb = (JComboBox) parent;
+                int width = cb.getWidth();
 
-            Insets insets = getInsets();
-            Rectangle cvb;
+                Insets insets = getInsets();
+                Rectangle cvb;
 
-            if (arrowButton != null)
-                if (cb.getComponentOrientation().isLeftToRight())
-                    arrowButton.setBounds(width - (insets.right + btnSize.width),
-                                          insets.top,
-                                          btnSize.width, btnSize.height);
-                else
-                    arrowButton.setBounds(insets.left, insets.top,
-                                          btnSize.width, btnSize.height);
-            if (editor != null) {
-                cvb = rectangleForCurrentValue();
-                editor.setBounds(cvb.x, cvb.y, cvb.width, cvb.height);
+                if (arrowButton != null)
+                    if (cb.getComponentOrientation().isLeftToRight())
+                        arrowButton.setBounds(width - (insets.right + btnSize.width),
+                                insets.top,
+                                btnSize.width, btnSize.height);
+                    else
+                        arrowButton.setBounds(insets.left, insets.top,
+                                btnSize.width, btnSize.height);
+                if (editor != null) {
+                    cvb = rectangleForCurrentValue();
+                    editor.setBounds(cvb.x, cvb.y, cvb.width, cvb.height);
+                }
             }
         }
     }

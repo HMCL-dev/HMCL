@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
@@ -65,7 +66,7 @@ public class LiteLoaderVersionList extends InstallerVersionList {
             }
 
             @Override
-            public void executeTask() throws Throwable {
+            public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
                 if (!areDependTasksSucceeded)
                     return;
                 String s = task.getResult();
@@ -127,6 +128,28 @@ public class LiteLoaderVersionList extends InstallerVersionList {
         public LiteLoaderInstallerVersion(String selfVersion, String mcVersion) {
             super(selfVersion, mcVersion);
         }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 13 * hash + Arrays.deepHashCode(this.libraries);
+            hash = 13 * hash + Objects.hashCode(this.tweakClass);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null || !(obj instanceof LiteLoaderVersionList)) 
+                return false;
+            if (this == obj)
+                return true;
+            final LiteLoaderInstallerVersion other = (LiteLoaderInstallerVersion) obj;
+            if (!Objects.equals(this.tweakClass, other.tweakClass))
+                return false;
+            return Arrays.deepEquals(this.libraries, other.libraries);
+        }
+
+        
 
     }
 

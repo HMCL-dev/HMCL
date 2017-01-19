@@ -29,6 +29,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.jackhuang.hellominecraft.util.EventHandler;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 
 /**
@@ -38,7 +39,7 @@ import org.jackhuang.hellominecraft.util.logging.HMCLog;
 public class TaskList extends Thread {
 
     List<Task> taskQueue = Collections.synchronizedList(new LinkedList<>());
-    ArrayList<Runnable> allDone = new ArrayList();
+    public final EventHandler<Object> doneEvent = new EventHandler<>(this);
     ArrayList<DoingDoneListener<Task>> taskListener = new ArrayList();
 
     int totTask;
@@ -51,10 +52,6 @@ public class TaskList extends Thread {
     public void clean() {
         shouldContinue = true;
         taskQueue.clear();
-    }
-
-    public void addAllDoneListener(Runnable l) {
-        allDone.add(l);
     }
 
     public void addTaskListener(DoingDoneListener<Task> l) {
@@ -83,9 +80,12 @@ public class TaskList extends Thread {
 
         @Override
         public void run() {
-            if (!executeTask(task))
-                bool.set(false);
-            latch.countDown();
+            try {
+                if (!executeTask(task))
+                    bool.set(false);
+            } finally {
+                latch.countDown();
+            }
         }
 
     }
@@ -101,9 +101,10 @@ public class TaskList extends Thread {
         AtomicBoolean bool = new AtomicBoolean(true);
         CountDownLatch counter = new CountDownLatch(c.size());
         for (Task t2 : c) {
-            if (t2 == null)
+            if (t2 == null) {
+                counter.countDown();
                 continue;
-            t2.setParallelExecuting(true);
+            }
             Invoker thread = new Invoker(t2, counter, bool);
             invokers.add(thread);
             if (!EXECUTOR_SERVICE.isShutdown() && !EXECUTOR_SERVICE.isTerminated())
@@ -126,15 +127,13 @@ public class TaskList extends Thread {
         if (c == null)
             c = new HashSet<>();
         HMCLog.log("Executing task: " + t.getInfo());
-        for (DoingDoneListener<Task> d : t.getTaskListeners())
-            d.onDoing(t, c);
         for (DoingDoneListener<Task> d : taskListener)
             d.onDoing(t, c);
-        t.areDependTasksSucceeded = processTasks(c);
+        boolean areDependTasksSucceeded = processTasks(c);
 
         boolean flag = true;
         try {
-            t.executeTask();
+            t.executeTask(areDependTasksSucceeded);
         } catch (Throwable e) {
             t.setFailReason(e);
             flag = false;
@@ -144,8 +143,6 @@ public class TaskList extends Thread {
             Collection<Task> at = t.getAfterTasks();
             if (at == null)
                 at = new HashSet<>();
-            for (DoingDoneListener<Task> d : t.getTaskListeners())
-                d.onDone(t, at);
             for (DoingDoneListener<Task> d : taskListener)
                 d.onDone(t, at);
             processTasks(at);
@@ -153,22 +150,21 @@ public class TaskList extends Thread {
             HMCLog.err("Task failed: " + t.getInfo(), t.getFailReason());
             for (DoingDoneListener<Task> d : taskListener)
                 d.onFailed(t);
-            for (DoingDoneListener<Task> d : t.getTaskListeners())
-                d.onFailed(t);
         }
         return flag;
     }
 
     @Override
     public void run() {
-        Thread.currentThread().setName("TaskList");
+        Thread.currentThread().setName("Task List");
 
         totTask = taskQueue.size();
         while (!taskQueue.isEmpty())
             executeTask(taskQueue.remove(0));
-        if (shouldContinue)
-            for (Runnable d : allDone)
-                d.run();
+        if (shouldContinue) {
+            HMCLog.log("Tasks are successfully finished.");
+            doneEvent.execute(null);
+        }
     }
 
     public boolean isEmpty() {

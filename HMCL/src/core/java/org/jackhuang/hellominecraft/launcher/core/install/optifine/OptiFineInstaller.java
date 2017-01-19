@@ -24,8 +24,8 @@ import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.tasks.communication.PreviousResult;
-import org.jackhuang.hellominecraft.util.tasks.communication.PreviousResultRegistrar;
+import org.jackhuang.hellominecraft.util.tasks.comm.PreviousResult;
+import org.jackhuang.hellominecraft.util.tasks.comm.PreviousResultRegistrar;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
@@ -54,7 +54,7 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
     }
 
     @Override
-    public void executeTask() throws Exception {
+    public void executeTask(boolean areDependTasksSucceeded) throws Exception {
         if (installId == null)
             throw new Exception(C.i18n("install.no_version"));
         String selfId = version.selfVersion;

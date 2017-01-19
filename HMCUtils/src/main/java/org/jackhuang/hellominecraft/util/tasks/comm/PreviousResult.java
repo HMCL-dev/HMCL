@@ -15,22 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.util.tasks.communication;
-
-import org.jackhuang.hellominecraft.util.tasks.Task;
+package org.jackhuang.hellominecraft.util.tasks.comm;
 
 /**
  *
  * @author huangyuhui
- * @param <T> Previous task result type
+ * @param <T> Task result type
  */
-public interface PreviousResultRegistrar<T> {
+public interface PreviousResult<T> {
 
-    /**
-     *
-     * @param pr previous task handler
-     *
-     * @return task self instance
-     */
-    Task registerPreviousResult(PreviousResult<T> pr);
+    T getResult();
+
 }

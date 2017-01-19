@@ -41,7 +41,7 @@ import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.func.BiFunction;
 import org.jackhuang.hellominecraft.util.func.CallbackIO;
-import org.jackhuang.hellominecraft.util.system.Compressor;
+import org.jackhuang.hellominecraft.util.system.CompressingUtils;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.ZipEngine;
 import org.jackhuang.hellominecraft.util.tasks.Task;
@@ -86,7 +86,7 @@ public final class ModpackManager {
             Collection<Task> c = new ArrayList<>();
 
             @Override
-            public void executeTask() throws Throwable {
+            public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
                 String id = idFUCK;
                 String description = C.i18n("modpack.task.install.will");
 
@@ -150,7 +150,7 @@ public final class ModpackManager {
                 try {
                     final AtomicInteger b = new AtomicInteger(0);
                     HMCLog.log("Decompressing modpack");
-                    Compressor.unzip(input, versions, t -> {
+                    CompressingUtils.unzip(input, versions, t -> {
                                      if (t.equals("minecraft/pack.json"))
                                          b.incrementAndGet();
                                      return true;
@@ -186,8 +186,8 @@ public final class ModpackManager {
                     }
                 } finally {
                     FileUtils.deleteDirectoryQuietly(oldFile);
-                    if (newFile != null)
-                        newFile.renameTo(oldFile);
+                    if (newFile != null && !newFile.renameTo(oldFile))
+                        HMCLog.warn("Failed to restore version minecraft");
                 }
             }
 

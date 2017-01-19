@@ -66,11 +66,10 @@ import org.jackhuang.hellominecraft.util.ui.wizard.spi.WizardPanel;
  * <b><i><font color="red">This class is NOT AN API CLASS. There is no
  * commitment that it will remain backward compatible or even exist in the
  * future. The API of this library is in the packages
- * <code>org.netbeans.api.wizard</code>
- * and <code>org.netbeans.spi.wizard</code></font></i></b>.
+ * <code>org.netbeans.api.wizard</code> and
+ * <code>org.netbeans.spi.wizard</code></font></i></b>.
  * <p>
- * Use
- * <code>WizardDisplayer.showWizard()</code> or its other static methods to
+ * Use <code>WizardDisplayer.showWizard()</code> or its other static methods to
  * display wizards in a way which will continue to work over time.
  *
  * @author stanley@StanleyKnutson.com
@@ -122,9 +121,10 @@ public class WizardDisplayerImpl extends WizardDisplayer {
     protected void buildStepTitle() {
         ttlLabel = new JLabel(wizard.getStepDescription(wizard.getAllSteps()[0]));
         ttlLabel.setBorder(BorderFactory.createCompoundBorder(BorderFactory
-            .createEmptyBorder(5, 5, 12, 5), BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager
-                                                                             .getColor("textText"))));
+                .createEmptyBorder(5, 5, 12, 5), BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager
+                .getColor("textText"))));
         ttlPanel = new JPanel() {
+            @Override
             public void doLayout() {
                 Dimension d = ttlLabel.getPreferredSize();
                 if (ttlLabel.getComponentOrientation() == ComponentOrientation.RIGHT_TO_LEFT)
@@ -133,6 +133,7 @@ public class WizardDisplayerImpl extends WizardDisplayer {
                     ttlLabel.setBounds(0, 0, getWidth(), d.height);
             }
 
+            @Override
             public Dimension getPreferredSize() {
                 return ttlLabel.getPreferredSize();
             }
@@ -151,9 +152,8 @@ public class WizardDisplayerImpl extends WizardDisplayer {
     /**
      * Show a wizard
      *
-     * @param awizard           is the wizard to be displayed
-     * @param bounds            for display, may be null for default of
-     *                          0,0,400,600.
+     * @param awizard is the wizard to be displayed
+     * @param bounds for display, may be null for default of 0,0,400,600.
      * @param helpAction
      * @param initialProperties - initial values for the map
      *
@@ -164,7 +164,7 @@ public class WizardDisplayerImpl extends WizardDisplayer {
      * java.awt.Rectangle, javax.swing.Action, java.util.Map)
      */
     private JPanel createOuterPanel(final Wizard awizard, Rectangle bounds, Action helpAction,
-                                    Map initialProperties) {
+            Map initialProperties) {
 
         this.wizard = awizard;
 
@@ -181,6 +181,7 @@ public class WizardDisplayerImpl extends WizardDisplayer {
         outerPanel.setLayout(new BorderLayout());
 
         Action kbdCancel = new AbstractAction() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 JButton b = buttonManager.getCancel();
                 if (b.isEnabled())
@@ -188,7 +189,7 @@ public class WizardDisplayerImpl extends WizardDisplayer {
             }
         };
         outerPanel.getInputMap(JPanel.WHEN_IN_FOCUSED_WINDOW).put(
-            KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "cancel");
+                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "cancel");
         outerPanel.getActionMap().put("cancel", kbdCancel);
 
         instructions = createInstructionsPanel();
@@ -232,8 +233,9 @@ public class WizardDisplayerImpl extends WizardDisplayer {
         return new InstructionsPanelImpl(wizard);
     }
 
+    @Override
     public void install(Container c, Object layoutConstraint, Wizard awizard,
-                        Action helpAction, Map initialProperties, WizardResultReceiver receiver) {
+            Action helpAction, Map initialProperties, WizardResultReceiver receiver) {
         JPanel pnl = createOuterPanel(awizard, new Rectangle(), helpAction, initialProperties);
         if (layoutConstraint != null)
             if (c instanceof RootPaneContainer)
@@ -249,12 +251,13 @@ public class WizardDisplayerImpl extends WizardDisplayer {
 
     private static boolean warned;
 
+    @Override
     public Object show(final Wizard awizard, Rectangle bounds, Action helpAction,
-                       Map initialProperties) {
+            Map initialProperties) {
         if (!EventQueue.isDispatchThread() && !warned) {
             HMCLog.warn("WizardDisplayerImpl: show() should be called from the AWT Event Thread. This "
-                        + "call may deadlock - c.f. "
-                        + "http://java.net/jira/browse/WIZARD-33", new Throwable());
+                    + "call may deadlock - c.f. "
+                    + "http://java.net/jira/browse/WIZARD-33", new Throwable());
             warned = true;
         }
         createOuterPanel(awizard, bounds, helpAction, initialProperties);
@@ -291,25 +294,26 @@ public class WizardDisplayerImpl extends WizardDisplayer {
             dlg.pack();
         dlg.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         dlg.addWindowListener(new WindowAdapter() {
+            @Override
             public void windowClosing(WindowEvent e) {
-                if (!(e.getWindow() instanceof JDialog))
-                    return;
-                JDialog dlg = (JDialog) e.getWindow();
-                boolean dontClose = false;
-                if (!wizard.isBusy()) {
-                    DeferredWizardResult defResult;
-                    synchronized (WizardDisplayerImpl.this) {
-                        defResult = deferredResult;
-                    }
-                    try {
-                        if (defResult != null && defResult.canAbort())
-                            defResult.abort();
-                        else if (defResult != null && !defResult.canAbort())
-                            dontClose = true;
-                    } finally {
-                        if (!dontClose && wizard.cancel(settings)) {
-                            dlg.setVisible(false);
-                            dlg.dispose();
+                if (e.getWindow() instanceof JDialog) {
+                    JDialog dlg = (JDialog) e.getWindow();
+                    boolean dontClose = false;
+                    if (!wizard.isBusy()) {
+                        DeferredWizardResult defResult;
+                        synchronized (WizardDisplayerImpl.this) {
+                            defResult = deferredResult;
+                        }
+                        try {
+                            if (defResult != null && defResult.canAbort())
+                                defResult.abort();
+                            else if (defResult != null && !defResult.canAbort())
+                                dontClose = true;
+                        } finally {
+                            if (!dontClose && wizard.cancel(settings)) {
+                                dlg.setVisible(false);
+                                dlg.dispose();
+                            }
                         }
                     }
                 }
@@ -355,13 +359,13 @@ public class WizardDisplayerImpl extends WizardDisplayer {
     // available in the package only
     static void checkLegalNavMode(int i) {
         switch (i) {
-        case Wizard.MODE_CAN_CONTINUE:
-        case Wizard.MODE_CAN_CONTINUE_OR_FINISH:
-        case Wizard.MODE_CAN_FINISH:
-            return;
-        default:
-            throw new IllegalArgumentException("Illegal forward "
-                                               + "navigation mode: " + i);
+            case Wizard.MODE_CAN_CONTINUE:
+            case Wizard.MODE_CAN_CONTINUE_OR_FINISH:
+            case Wizard.MODE_CAN_FINISH:
+                return;
+            default:
+                throw new IllegalArgumentException("Illegal forward "
+                        + "navigation mode: " + i);
         }
     }
 
@@ -399,7 +403,7 @@ public class WizardDisplayerImpl extends WizardDisplayer {
         JComponent summaryComp = (JComponent) summary.getSummaryComponent(); // XXX
         if (summaryComp.getBorder() != null) {
             CompoundBorder b = new CompoundBorder(new EmptyBorder(5, 5, 5, 5), summaryComp
-                                                  .getBorder());
+                    .getBorder());
             summaryComp.setBorder(b);
         }
         setCurrentWizardPanel((JComponent) summaryComp); // XXX
@@ -426,6 +430,7 @@ public class WizardDisplayerImpl extends WizardDisplayer {
             ((JComponent) inst).revalidate();
         inst.repaint();
         Runnable run = new Runnable() {
+            @Override
             public void run() {
                 if (!EventQueue.isDispatchThread())
                     try {
@@ -433,7 +438,7 @@ public class WizardDisplayerImpl extends WizardDisplayer {
                         r.start(settings, progress);
                         if (progress.isRunning())
                             progress.failed("Start method did not inidicate "
-                                            + "failure or finished in " + r, false);
+                                    + "failure or finished in " + r, false);
 
                     } finally {
                         try {
@@ -538,8 +543,8 @@ public class WizardDisplayerImpl extends WizardDisplayer {
 
     /**
      * Will only be called if there is a WizardResultReceiver - i.e. if the
-     * wizard is being displayed in some kind of custom container. Return
-     * true to indicate we should not try to close the parent window.
+     * wizard is being displayed in some kind of custom container. Return true
+     * to indicate we should not try to close the parent window.
      */
     boolean cancel() {
         boolean result = receiver != null;
@@ -556,10 +561,10 @@ public class WizardDisplayerImpl extends WizardDisplayer {
             // showing the error line
             prob = null;
         Border b = prob == null ? BorderFactory.createEmptyBorder(1, 0, 0, 0) : BorderFactory
-            .createMatteBorder(1, 0, 0, 0, problem.getForeground());
+                .createMatteBorder(1, 0, 0, 0, problem.getForeground());
 
         Border b1 = BorderFactory.createCompoundBorder(BorderFactory
-            .createEmptyBorder(0, 12, 0, 12), b);
+                .createEmptyBorder(0, 12, 0, 12), b);
 
         problem.setBorder(b1);
     }

@@ -21,7 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.system.Compressor;
+import org.jackhuang.hellominecraft.util.system.CompressingUtils;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 
 /**
@@ -43,8 +43,8 @@ public class PackMinecraftInstaller {
         if (!file.exists() && !file.mkdirs())
             HMCLog.warn("Failed to make directories: " + file);
         for (String src1 : src)
-            Compressor.unzip(new File(src1), file);
-        Compressor.zip(file.getAbsolutePath(), dest.getAbsolutePath());
+            CompressingUtils.unzip(new File(src1), file);
+        CompressingUtils.zip(file.getAbsolutePath(), dest.getAbsolutePath());
         FileUtils.deleteDirectory(file);
     }
 }

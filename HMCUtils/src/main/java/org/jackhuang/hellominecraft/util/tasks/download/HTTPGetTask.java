@@ -18,12 +18,13 @@
 package org.jackhuang.hellominecraft.util.tasks.download;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
-import org.jackhuang.hellominecraft.util.tasks.communication.PreviousResult;
+import org.jackhuang.hellominecraft.util.tasks.comm.PreviousResult;
 import org.jackhuang.hellominecraft.util.EventHandler;
 
 /**
@@ -51,11 +52,11 @@ public class HTTPGetTask extends TaskInfo implements PreviousResult<String> {
     }
 
     @Override
-    public void executeTask() throws Exception {
+    public void executeTask(boolean areDependTasksSucceeded) throws Exception {
         Exception t = null;
-        for (int repeat = 0; repeat < 6; repeat++) {
-            if (repeat > 0)
-                HMCLog.warn("Failed to download, repeat: " + repeat);
+        for (int time = 0; time < 6; time++) {
+            if (time > 0)
+                HMCLog.warn("Failed to download, repeat times: " + time);
             try {
                 if (ppl != null)
                     ppl.setProgress(this, -1, 1);
@@ -76,10 +77,10 @@ public class HTTPGetTask extends TaskInfo implements PreviousResult<String> {
                     if (!shouldContinue)
                         return;
                 }
-                result = baos.toString();
+                result = baos.toString(encoding);
                 tdtsl.execute(result);
                 return;
-            } catch (Exception ex) {
+            } catch (IOException ex) {
                 t = new NetException("Failed to get " + url, ex);
             }
         }

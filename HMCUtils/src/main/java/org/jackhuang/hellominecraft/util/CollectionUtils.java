@@ -28,6 +28,9 @@ import java.util.Iterator;
  */
 public final class CollectionUtils {
 
+    private CollectionUtils() {
+    }
+
     public static <T> ArrayList<T> map(Collection<T> coll, Predicate<T> p) {
         ArrayList<T> newColl = new ArrayList<>();
         for (T t : coll)

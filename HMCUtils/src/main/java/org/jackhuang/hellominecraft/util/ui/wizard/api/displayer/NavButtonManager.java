@@ -125,6 +125,7 @@ public class NavButtonManager implements ActionListener {
         final boolean aqua = "Aqua".equals(UIManager.getLookAndFeel().getID());
 
         buttons = new JPanel() {
+            @Override
             public void doLayout() {
                 Insets ins = getInsets();
                 JButton b = aqua ? finish : cancel;
@@ -221,6 +222,7 @@ public class NavButtonManager implements ActionListener {
 
     }
 
+    @Override
     public void actionPerformed(ActionEvent event) {
 
         JButton button = (JButton) event.getSource();
@@ -590,10 +592,12 @@ public class NavButtonManager implements ActionListener {
 
         boolean wasBusy = false;
 
+        @Override
         public void stepsChanged(Wizard wizard) {
             // do nothing
         }
 
+        @Override
         public void navigabilityChanged(final Wizard wizard) {
             final Runnable runnable = () -> {
                 if (wizard.isBusy()) {
@@ -618,6 +622,7 @@ public class NavButtonManager implements ActionListener {
                 EventQueue.invokeLater(runnable);
         }
 
+        @Override
         public void selectionChanged(Wizard wizard) {
             // do nothing
         }

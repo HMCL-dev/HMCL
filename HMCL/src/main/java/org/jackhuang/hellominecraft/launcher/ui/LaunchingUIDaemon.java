@@ -110,19 +110,17 @@ public class LaunchingUIDaemon {
                 String msg = C.i18n("launch.exited_abnormally") + " exit code: " + t;
                 if (errorText != null)
                     msg += ", advice: " + MinecraftCrashAdvicer.getAdvice(FileUtils.readQuietly(new File(errorText)));
-                MessageBox.Show(msg);
                 WebFrame f = new WebFrame(logs);
                 f.setModal(true);
-                f.setTitle("Game output");
+                f.setTitle(msg);
                 f.setVisible(true);
                 checkExit((LauncherVisibility) obj.getTag());
             });
             jpm.jvmLaunchFailedEvent.register(t -> {
                 HMCLog.err("Cannot create jvm, exit code: " + t);
-                MessageBox.Show(C.i18n("launch.cannot_create_jvm") + " exit code: " + t);
                 WebFrame f = new WebFrame(jpm.getJavaProcess().getStdOutLines().toArray(new String[0]));
                 f.setModal(true);
-                f.setTitle("Game output");
+                f.setTitle(C.i18n("launch.cannot_create_jvm") + " exit code: " + t);
                 f.setVisible(true);
                 checkExit((LauncherVisibility) obj.getTag());
             });
@@ -138,10 +136,6 @@ public class LaunchingUIDaemon {
         return true;
     };
 
-    private static void getCrashReport() {
-
-    }
-
     private static void checkExit(LauncherVisibility v) {
         if (v != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible()) {
             HMCLog.log("Launcher will exit now.");
@@ -154,10 +148,10 @@ public class LaunchingUIDaemon {
         try {
             String s = JOptionPane.showInputDialog(C.i18n("mainwindow.enter_script_name"));
             if (s != null)
-                MessageBox.Show(C.i18n("mainwindow.make_launch_succeed") + " " + ((GameLauncher) sender).makeLauncher(s, str).getAbsolutePath());
+                MessageBox.show(C.i18n("mainwindow.make_launch_succeed") + " " + ((GameLauncher) sender).makeLauncher(s, str).getAbsolutePath());
             flag = true;
         } catch (IOException ex) {
-            MessageBox.Show(C.i18n("mainwindow.make_launch_script_failed"));
+            MessageBox.show(C.i18n("mainwindow.make_launch_script_failed"));
             HMCLog.err("Failed to create script file.", ex);
         }
         MainFrame.INSTANCE.closeMessage();

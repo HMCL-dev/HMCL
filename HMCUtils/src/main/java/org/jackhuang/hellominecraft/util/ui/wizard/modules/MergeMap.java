@@ -124,7 +124,6 @@ public class MergeMap implements Map {
         //we're removing, and if any of them are in steps lower on the
         //stack, change those lower steps values to whatever was written
         //into the map we're calving off
-        Set keysForCurr = curr.keySet();
         for (Iterator i = orderIterator(); i.hasNext();) {
             Map other = (Map) id2map.get(i.next());
             for (Iterator j = curr.keySet().iterator(); j.hasNext();) {
@@ -136,10 +135,12 @@ public class MergeMap implements Map {
         return result;
     }
 
+    @Override
     public void clear() {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean containsKey(Object obj) {
         for (Iterator i = orderIterator(); i.hasNext();) {
             Map curr = (Map) id2map.get(i.next());
@@ -149,6 +150,7 @@ public class MergeMap implements Map {
         return false;
     }
 
+    @Override
     public boolean containsValue(Object obj) {
         for (Iterator i = orderIterator(); i.hasNext();) {
             Map curr = (Map) id2map.get(i.next());
@@ -158,6 +160,7 @@ public class MergeMap implements Map {
         return false;
     }
 
+    @Override
     public java.util.Set entrySet() {
         HashSet result = new HashSet();
         for (Iterator i = orderIterator(); i.hasNext();) {
@@ -167,6 +170,7 @@ public class MergeMap implements Map {
         return result;
     }
 
+    @Override
     public Object get(Object obj) {
         for (Iterator i = orderIterator(); i.hasNext();) {
             String id = (String) i.next();
@@ -178,10 +182,12 @@ public class MergeMap implements Map {
         return null;
     }
 
+    @Override
     public boolean isEmpty() {
         return size() == 0;
     }
 
+    @Override
     public Set keySet() {
         HashSet result = new HashSet();
         for (Iterator i = orderIterator(); i.hasNext();) {
@@ -191,11 +197,13 @@ public class MergeMap implements Map {
         return result;
     }
 
+    @Override
     public Object put(Object obj, Object obj1) {
         Map curr = (Map) id2map.get(order.peek());
         return curr.put(obj, obj1);
     }
 
+    @Override
     public void putAll(Map map) {
         Map curr = (Map) id2map.get(order.peek());
         curr.putAll(map);
@@ -214,6 +222,7 @@ public class MergeMap implements Map {
         return result;
     }
 
+    @Override
     public Object remove(Object obj) {
         //Ensure we remove any duplicates in upper arrays
         Object result = get(obj);
@@ -222,11 +231,13 @@ public class MergeMap implements Map {
         return result;
     }
 
+    @Override
     public int size() {
         //using keySet() prunes duplicates
         return keySet().size();
     }
 
+    @Override
     public Collection values() {
         HashSet result = new HashSet();
         Set keys = keySet();

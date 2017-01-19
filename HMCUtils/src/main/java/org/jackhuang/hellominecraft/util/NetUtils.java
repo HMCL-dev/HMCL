@@ -18,10 +18,8 @@
 package org.jackhuang.hellominecraft.util;
 
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -35,38 +33,16 @@ import org.jackhuang.hellominecraft.util.system.IOUtils;
  * @author huang
  */
 public final class NetUtils {
-
-    public static byte[] getBytesFromStream(InputStream is) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        IOUtils.copyStream(is, out);
-        is.close();
-        return out.toByteArray();
-    }
-
-    public static String getStreamContent(InputStream is) throws IOException {
-        return getStreamContent(is, DEFAULT_CHARSET);
-    }
-
-    public static String getStreamContent(InputStream is, String encoding)
-        throws IOException {
-        if (is == null)
-            return null;
-        StringBuilder sb = new StringBuilder();
-        try (InputStreamReader br = new InputStreamReader(is, encoding)) {
-            int len;
-            char[] buf = new char[16384];
-            while ((len = br.read(buf)) != -1)
-                sb.append(buf, 0, len);
-        }
-        return sb.toString();
+    
+    private NetUtils() {
     }
 
     public static String get(String url, String encoding) throws IOException {
-        return getStreamContent(new URL(url).openConnection().getInputStream());
+        return IOUtils.getStreamContent(new URL(url).openConnection().getInputStream());
     }
 
     public static String get(String url) throws IOException {
-        return get(url, DEFAULT_CHARSET);
+        return get(url, IOUtils.DEFAULT_CHARSET);
     }
 
     public static String get(URL url) throws IOException {
@@ -74,7 +50,7 @@ public final class NetUtils {
     }
 
     public static String get(URL url, Proxy proxy) throws IOException {
-        return getStreamContent(url.openConnection(proxy).getInputStream());
+        return IOUtils.getStreamContent(url.openConnection(proxy).getInputStream());
     }
 
     public static String post(URL u, Map<String, String> params) throws IOException {
@@ -104,7 +80,7 @@ public final class NetUtils {
         con.setConnectTimeout(30000);
         con.setReadTimeout(30000);
         con.setRequestProperty("Content-Type", contentType + "; charset=utf-8");
-        byte[] bytes = post.getBytes(DEFAULT_CHARSET);
+        byte[] bytes = post.getBytes(IOUtils.DEFAULT_CHARSET);
         con.setRequestProperty("Content-Length", "" + bytes.length);
         con.connect();
         OutputStream os = null;
@@ -119,18 +95,16 @@ public final class NetUtils {
         InputStream is = null;
         try {
             is = con.getInputStream();
-            result = getStreamContent(is);
+            result = IOUtils.getStreamContent(is);
         } catch (IOException ex) {
             IOUtils.closeQuietly(is);
             is = con.getErrorStream();
-            result = getStreamContent(is);
+            result = IOUtils.getStreamContent(is);
         }
 
         con.disconnect();
         return result;
     }
-
-    private static final String DEFAULT_CHARSET = "UTF-8";
 
     public static URL constantURL(String url) {
         try {

@@ -35,7 +35,7 @@ public class TaskRunnable extends TaskInfo {
     }
 
     @Override
-    public void executeTask() {
+    public void executeTask(boolean areDependTasksSucceeded) {
         r.run();
     }
 

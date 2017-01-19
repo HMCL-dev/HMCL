@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.launcher.ui.modpack;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -95,7 +96,7 @@ public class ModpackWizard extends WizardBranchController {
                         if (settings.containsKey(ModpackDescriptionPanel.KEY_MODPACK_DESCRITION))
                             try {
                                 map.put("description", new org.markdown4j.Markdown4jProcessor().process((String) settings.get(ModpackDescriptionPanel.KEY_MODPACK_DESCRITION)));
-                            } catch (Exception ex) {
+                            } catch (IOException ex) {
                                 progress.failed(C.i18n("modpack.export_error") + ": " + StrUtils.getStackTrace(ex), true);
                             }
                         try {
@@ -134,7 +135,7 @@ public class ModpackWizard extends WizardBranchController {
                                         File f = new File(u.toURI());
                                         if (f.getName().endsWith(".exe") || f.getName().endsWith(".jar"))
                                             engine.putFile(f, f.getName());
-                                    } catch (Exception e) {
+                                    } catch (IOException | URISyntaxException e) {
                                         HMCLog.err("Failed to add launcher files.", e);
                                         flag = false;
                                         break;

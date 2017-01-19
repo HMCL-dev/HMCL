@@ -31,8 +31,8 @@ import org.jackhuang.hellominecraft.util.code.DigestUtils;
 import org.jackhuang.hellominecraft.util.func.Function;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.tasks.communication.PreviousResult;
-import org.jackhuang.hellominecraft.util.tasks.communication.PreviousResultRegistrar;
+import org.jackhuang.hellominecraft.util.tasks.comm.PreviousResult;
+import org.jackhuang.hellominecraft.util.tasks.comm.PreviousResultRegistrar;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 
 /**
@@ -113,7 +113,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
 
     // Download file.
     @Override
-    public void executeTask() throws Throwable {
+    public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
         for (PreviousResult<String> p : al)
             this.url = IOUtils.parseURL(p.getResult());
 
@@ -158,7 +158,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                 if (!tempFile.exists())
                     tempFile.createNewFile();
                 else if (!tempFile.renameTo(tempFile)) // check file lock
-                    throw new RuntimeException("The temp file is locked, maybe there is an application using the file?");
+                    throw new IllegalStateException("The temp file is locked, maybe there is an application using the file?");
 
                 // Open file and seek to the end of it.
                 file = new RandomAccessFile(tempFile, "rw");
@@ -217,7 +217,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                 if (ppl != null)
                     ppl.onProgressProviderDone(this);
                 return;
-            } catch (Exception e) {
+            } catch (IOException | IllegalStateException | NetException e) {
                 setFailReason(new NetException(C.i18n("download.failed") + " " + url, e));
             } finally {
                 closeFiles();
@@ -232,7 +232,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
     }
 
     public static void download(String url, File file, DownloadListener dl) throws Throwable {
-        ((Task) new FileDownloadTask(url, file).setProgressProviderListener(dl)).executeTask();
+        ((Task) new FileDownloadTask(url, file).setProgressProviderListener(dl)).executeTask(true);
     }
 
     @Override

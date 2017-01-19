@@ -1,5 +1,5 @@
 /*
- * Hello Minecraft!.
+ * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,24 +15,42 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.util.tasks.communication;
+package org.jackhuang.hellominecraft.launcher.ui;
+
+import javax.swing.JPanel;
 
 /**
  *
  * @author huangyuhui
- * @param <T> the type of result.
  */
-public class DefaultPreviousResult<T> implements PreviousResult<T> {
+public class Page extends JPanel implements Selectable {
 
-    T a;
+    boolean selected = false;
 
-    public DefaultPreviousResult(T a) {
-        this.a = a;
+    @Override
+    public boolean isSelected() {
+        return selected;
     }
 
     @Override
-    public T getResult() {
-        return a;
+    public void onSelect() {
+        selected = true;
     }
 
+    @Override
+    public void onLeave() {
+        selected = false;
+    }
+
+    boolean created = false;
+
+    @Override
+    public void onCreate() {
+        created = true;
+    }
+
+    @Override
+    public boolean isCreated() {
+        return created;
+    }
 }

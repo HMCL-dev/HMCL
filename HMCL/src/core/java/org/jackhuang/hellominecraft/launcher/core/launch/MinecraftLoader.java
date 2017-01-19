@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
@@ -48,7 +49,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         ArrayList<MinecraftLibrary> opt = new ArrayList<>();
         for (MinecraftLibrary l : version.libraries)
             if (l.allow() && !l.isRequiredToUnzip()) {
-                if (l.name.toLowerCase().contains("optifine")) {
+                if (l.name.toLowerCase(Locale.US).contains("optifine")) {
                     opt.add(l);
                     continue;
                 }

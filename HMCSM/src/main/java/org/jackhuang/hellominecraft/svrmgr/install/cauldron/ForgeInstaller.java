@@ -41,7 +41,6 @@ import org.jackhuang.hellominecraft.util.code.DigestUtils;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
-import org.jackhuang.hellominecraft.util.NetUtils;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
 import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
@@ -67,7 +66,7 @@ public class ForgeInstaller {
 
         ZipFile zipFile = new ZipFile(forgeInstaller);
         ZipEntry entry = zipFile.getEntry("install_profile.json");
-        String content = NetUtils.getStreamContent(zipFile.getInputStream(entry));
+        String content = IOUtils.getStreamContent(zipFile.getInputStream(entry));
         InstallProfile profile = gson.fromJson(content, InstallProfile.class);
 
         HMCLog.log("Extracting cauldron server pack..." + profile.install.filePath);
@@ -88,8 +87,8 @@ public class ForgeInstaller {
         File minecraftserver = new File(gameDir, "minecraft_server." + profile.install.minecraft + ".jar");
         if (minecraftserver.exists() && JOptionPane.showConfirmDialog(null, "已发现官方服务端文件，是否要重新下载？") == JOptionPane.YES_OPTION)
             if (!TaskWindow.factory().append(new FileDownloadTask("https://s3.amazonaws.com/Minecraft.Download/versions/{MCVER}/minecraft_server.{MCVER}.jar".replace("{MCVER}", profile.install.minecraft),
-                                                                       minecraftserver).setTag("minecraft_server")).create())
-                MessageBox.Show("Minecraft官方服务端下载失败！");
+                                                                       minecraftserver).setTag("minecraft_server")).execute())
+                MessageBox.show("Minecraft官方服务端下载失败！");
         TaskWindow.TaskWindowFactory tw = TaskWindow.factory();
         for (MinecraftLibrary library : profile.versionInfo.libraries) {
             library.init();
@@ -99,8 +98,8 @@ public class ForgeInstaller {
                 libURL = library.url;
             tw.append(new FileDownloadTask(libURL + library.formatted.replace("\\", "/"), lib).setTag(library.name));
         }
-        if (!tw.create())
-            MessageBox.Show("压缩库下载失败！");
+        if (!tw.execute())
+            MessageBox.show("压缩库下载失败！");
 
         tw = TaskWindow.factory();
         for (MinecraftLibrary library : profile.versionInfo.libraries) {
@@ -114,8 +113,8 @@ public class ForgeInstaller {
                 libURL = library.url;
             tw.append(new FileDownloadTask(libURL + library.formatted.replace("\\", "/"), lib).setTag(library.name));
         }
-        if (!tw.create())
-            MessageBox.Show("库下载失败！");
+        if (!tw.execute())
+            MessageBox.show("库下载失败！");
 
         ArrayList<String> badLibs = new ArrayList<>();
         for (MinecraftLibrary library : profile.versionInfo.libraries) {
@@ -123,7 +122,7 @@ public class ForgeInstaller {
             File packFile = new File(gameDir, "libraries" + File.separator + library.formatted + ".pack.xz");
             if (packFile.exists() && packFile.isFile())
                 try {
-                    unpackLibrary(lib.getParentFile(), NetUtils.getBytesFromStream(FileUtils.openInputStream(packFile)));
+                    unpackLibrary(lib.getParentFile(), IOUtils.getBytesFromStream(FileUtils.openInputStream(packFile)));
                     if (!checksumValid(lib, Arrays.asList(library.checksums)))
                         badLibs.add(library.name);
                 } catch (IOException e) {
@@ -132,7 +131,7 @@ public class ForgeInstaller {
                 }
         }
         if (badLibs.size() > 0)
-            MessageBox.Show("这些库在解压的时候出现了问题" + badLibs.toString());
+            MessageBox.show("这些库在解压的时候出现了问题" + badLibs.toString());
     }
 
     public static void unpackLibrary(File output, byte[] data)
@@ -166,7 +165,7 @@ public class ForgeInstaller {
 
     private static boolean checksumValid(File libPath, List<String> checksums) {
         try {
-            byte[] fileData = NetUtils.getBytesFromStream(FileUtils.openInputStream(libPath));
+            byte[] fileData = IOUtils.getBytesFromStream(FileUtils.openInputStream(libPath));
             boolean valid = (checksums == null) || (checksums.isEmpty()) || (checksums.contains(DigestUtils.sha1Hex(fileData)));
             if ((!valid) && (libPath.getName().endsWith(".jar")))
                 valid = validateJar(libPath, fileData, checksums);

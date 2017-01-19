@@ -29,13 +29,7 @@ import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.core.download.MinecraftDownloadService;
 import org.jackhuang.hellominecraft.launcher.core.launch.LaunchOptions;
 import org.jackhuang.hellominecraft.launcher.core.launch.MinecraftLoader;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftAssetService;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftDownloadService;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftInstallerService;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftLoader;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftModService;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
+import org.jackhuang.hellominecraft.launcher.core.service.*;
 import org.jackhuang.hellominecraft.launcher.core.mod.MinecraftModService;
 import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
 import org.jackhuang.hellominecraft.launcher.setting.Profile;
@@ -60,7 +54,20 @@ public class HMCLMinecraftService extends IMinecraftService {
         this.provider = new HMCLGameProvider(this);
         provider.initializeMiencraft();
         provider.onRefreshingVersions.register(versionSettings::clear);
-        provider.onRefreshedVersions.register(this::checkModpack);
+        provider.onRefreshedVersions.register(() -> {
+            if (!checkingModpack) {
+                checkingModpack = true;
+                if (version().getVersionCount() == 0) {
+                    File modpack = new File("modpack.zip");
+                    if (modpack.exists())
+                        SwingUtilities.invokeLater(() -> {
+                            if (TaskWindow.factory().execute(ModpackManager.install(MainFrame.INSTANCE, modpack, this, null)))
+                                version().refreshVersions();
+                            checkedModpack = true;
+                        });
+                }
+            }
+        });
         provider.onLoadedVersion.register(this::loadVersionSetting);
         this.mms = new MinecraftModService(this);
         this.mds = new MinecraftDownloadService(this);
@@ -69,21 +76,6 @@ public class HMCLMinecraftService extends IMinecraftService {
     }
 
     public boolean checkedModpack = false, checkingModpack = false;
-
-    private void checkModpack() {
-        if (!checkingModpack) {
-            checkingModpack = true;
-            if (version().getVersionCount() == 0) {
-                File modpack = new File("modpack.zip");
-                if (modpack.exists())
-                    SwingUtilities.invokeLater(() -> {
-                        if (TaskWindow.execute(ModpackManager.install(MainFrame.INSTANCE, modpack, this, null)))
-                            version().refreshVersions();
-                        checkedModpack = true;
-                    });
-            }
-        }
-    }
 
     private void loadVersionSetting(String id) {
         if (provider.getVersionById(id) == null)

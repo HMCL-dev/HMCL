@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.util.ui;
 
+import javax.swing.SwingUtilities;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
@@ -33,7 +34,7 @@ import org.jackhuang.hellominecraft.util.Utils;
  * @author huangyuhui
  */
 public class LogWindow extends javax.swing.JFrame {
-
+    
     boolean movingEnd;
     NonFunction<Boolean> listener;
     Runnable terminateGameListener;
@@ -43,17 +44,20 @@ public class LogWindow extends javax.swing.JFrame {
      */
     public LogWindow() {
         initComponents();
-
+        
         movingEnd = true;
-
-        setLocationRelativeTo(null);
-        txtLog.setEditable(false);
+        
         DoubleOutputStream out = new DoubleOutputStream(new LogWindowOutputStream(this, Level.INFO), System.out);
         System.setOut(new LauncherPrintStream(out));
         DoubleOutputStream err = new DoubleOutputStream(new LogWindowOutputStream(this, Level.ERROR), System.err);
         System.setErr(new LauncherPrintStream(err));
+        
+        SwingUtilities.invokeLater(() -> {
+            setLocationRelativeTo(null);
+            txtLog.setEditable(false);
+        });
     }
-
+    
     public static final LogWindow INSTANCE = new LogWindow();
 
     /**
@@ -235,15 +239,15 @@ public class LogWindow extends javax.swing.JFrame {
             terminateGameListener.run();
         SwingUtils.exitIfNoWindow(this);
     }//GEN-LAST:event_formWindowClosing
-
+    
     public void log(String status) {
         log(status, Level.INFO);
     }
-
+    
     public void warning(String status) {
         log(status, Level.WARN);
     }
-
+    
     public synchronized void log(String status, Level c) {
         status = status.replace("\t", "    ");
         Document d = txtLog.getStyledDocument();
@@ -254,33 +258,33 @@ public class LogWindow extends javax.swing.JFrame {
         } catch (Exception ex) {
             HMCLog.err("Failed to insert \"" + status + "\" to " + d.getLength(), ex);
         }
-
+        
         if (movingEnd) {
             int position = d.getLength();
             txtLog.setCaretPosition(position);
         }
     }
-
+    
     public void setExit(NonFunction<Boolean> exit) {
         this.listener = exit;
     }
-
+    
     public void setTerminateGame(Runnable l) {
         this.terminateGameListener = l;
     }
-
+    
     public void clean() {
         txtLog.setText("");
     }
-
+    
     public boolean getMovingEnd() {
         return movingEnd;
     }
-
+    
     public void setMovingEnd(boolean b) {
         movingEnd = b;
     }
-
+    
     @Override
     public void setVisible(boolean b) {
         lblCrash.setVisible(false);
@@ -289,7 +293,7 @@ public class LogWindow extends javax.swing.JFrame {
         btnMCF.setVisible(false);
         super.setVisible(b);
     }
-
+    
     public void showAsCrashWindow(boolean out_date) {
         if (out_date) {
             lblCrash.setVisible(false);
@@ -304,7 +308,7 @@ public class LogWindow extends javax.swing.JFrame {
             btnMCF.setVisible(true);
             lblCrash.setText(C.i18n("ui.label.crashing"));
         }
-
+        
         super.setVisible(true);
     }
 

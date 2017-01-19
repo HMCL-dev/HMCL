@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import javax.swing.SwingUtilities;
+import javax.swing.table.TableColumn;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.MessageBox;
@@ -32,16 +33,9 @@ import org.jackhuang.hellominecraft.util.ui.SwingUtils;
  * @author huangyuhui
  */
 public class TaskWindow extends javax.swing.JDialog
-    implements ProgressProviderListener, Runnable, DoingDoneListener<Task> {
+        implements ProgressProviderListener, DoingDoneListener<Task> {
 
-    private static volatile TaskWindow INSTANCE = null;
-
-    private static synchronized TaskWindow instance() {
-        if (INSTANCE == null)
-            INSTANCE = new TaskWindow();
-        INSTANCE.clean();
-        return INSTANCE;
-    }
+    private static volatile TaskWindow INST = null;
 
     public static TaskWindowFactory factory() {
         return new TaskWindowFactory();
@@ -49,7 +43,7 @@ public class TaskWindow extends javax.swing.JDialog
 
     boolean suc = false;
 
-    private TaskList taskList;
+    private transient TaskList taskList;
     private final ArrayList<String> failReasons = new ArrayList();
     private String stackTrace = null, lastStackTrace = null;
 
@@ -59,34 +53,34 @@ public class TaskWindow extends javax.swing.JDialog
     private TaskWindow() {
         initComponents();
 
-        setLocationRelativeTo(null);
-
         if (lstDownload.getColumnModel().getColumnCount() > 1) {
             int i = 35;
-            lstDownload.getColumnModel().getColumn(1).setMinWidth(i);
-            lstDownload.getColumnModel().getColumn(1).setMaxWidth(i);
-            lstDownload.getColumnModel().getColumn(1).setPreferredWidth(i);
+            TableColumn c = lstDownload.getColumnModel().getColumn(1);
+            c.setMinWidth(i);
+            c.setMaxWidth(i);
+            c.setPreferredWidth(i);
         }
 
         setModal(true);
+        setLocationRelativeTo(null);
     }
 
-    public TaskWindow addTask(Task task) {
-        taskList.addTask(task);
-        return this;
-    }
-
-    public synchronized void clean() {
+    private synchronized void clean() {
         if (isVisible())
             return;
         taskList = new TaskList();
         taskList.addTaskListener(this);
-        taskList.addAllDoneListener(this);
+        taskList.doneEvent.register(() -> {
+            SwingUtilities.invokeLater(() -> {
+                dispose();
+                suc = true;
+            });
+        });
     }
 
     public static String downloadSource = "";
 
-    public boolean start() {
+    private boolean start() {
         if (isVisible() || taskList == null || taskList.isAlive())
             return false;
         pgsTotal.setValue(0);
@@ -102,7 +96,7 @@ public class TaskWindow extends javax.swing.JDialog
             HMCLog.err(stackTrace);
             HMCLog.err("There's the stacktrace of the last invoking.");
             HMCLog.err(lastStackTrace);
-            MessageBox.Show(C.i18n("taskwindow.no_more_instance"));
+            MessageBox.show(C.i18n("taskwindow.no_more_instance"));
             return false;
         }
         setTitle(C.i18n("taskwindow.title") + " - " + C.i18n("download.source") + ": " + downloadSource);
@@ -174,7 +168,7 @@ public class TaskWindow extends javax.swing.JDialog
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelActionPerformed
-        if (MessageBox.Show(C.i18n("operation.confirm_stop"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+        if (MessageBox.show(C.i18n("operation.confirm_stop"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
             this.dispose();
     }//GEN-LAST:event_btnCancelActionPerformed
 
@@ -185,13 +179,12 @@ public class TaskWindow extends javax.swing.JDialog
 
         if (!this.failReasons.isEmpty()) {
             String str = StrUtils.parseParams("", failReasons.toArray(), "\n");
-            SwingUtilities.invokeLater(() -> MessageBox.Show(str, C.i18n("message.error"), MessageBox.ERROR_MESSAGE));
+            SwingUtilities.invokeLater(() -> MessageBox.show(str, C.i18n("message.error"), MessageBox.ERROR_MESSAGE));
             failReasons.clear();
         }
 
         if (!suc) {
-            if (taskList != null)
-                SwingUtilities.invokeLater(taskList::abort);
+            SwingUtilities.invokeLater(taskList::abort);
             HMCLog.log("Tasks have been canceled by user.");
         }
         taskList = null;
@@ -220,15 +213,6 @@ public class TaskWindow extends javax.swing.JDialog
                 SwingUtils.setValueAt(lstDownload, pgs < 0 ? "???" : pgs + "%", idx, 1);
                 progresses.set(idx, pgs);
             }
-        });
-    }
-
-    @Override
-    public void run() {
-        SwingUtilities.invokeLater(() -> {
-            dispose();
-            suc = true;
-            HMCLog.log("Tasks are finished.");
         });
     }
 
@@ -309,36 +293,33 @@ public class TaskWindow extends javax.swing.JDialog
         });
     }
 
-    public static boolean execute(Task... ts) {
-        TaskWindowFactory f = factory();
-        for (Task t : ts)
-            f.append(t);
-        return f.create();
-    }
-
     public static class TaskWindowFactory {
 
         LinkedList<Task> ll = new LinkedList<>();
         boolean flag;
 
-        public TaskWindowFactory append(Task t) {
-            if (t != null)
-                ll.add(t);
+        public TaskWindowFactory append(Task ts) {
+            if (ts != null)
+                ll.add(ts);
             return this;
         }
 
-        public boolean create() {
+        public boolean execute(Task... ts) {
+            for (Task t : ts)
+                append(t);
             String stacktrace = StrUtils.getStackTrace(new Throwable());
             return SwingUtils.invokeAndWait(() -> {
-                final TaskWindow tw = instance();
-                synchronized (tw) {
-                    if (tw.isVisible())
+                if (INST == null)
+                    INST = new TaskWindow();
+                INST.clean();
+                synchronized (INST) {
+                    if (INST.isVisible())
                         return false;
                     for (Task t : ll)
-                        tw.addTask(t);
-                    tw.lastStackTrace = tw.stackTrace;
-                    tw.stackTrace = stacktrace;
-                    return tw.start();
+                        INST.taskList.addTask(t);
+                    INST.lastStackTrace = INST.stackTrace;
+                    INST.stackTrace = stacktrace;
+                    return INST.start();
                 }
             });
         }

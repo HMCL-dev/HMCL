@@ -68,8 +68,9 @@ public class DropShadowBorder extends AbstractBorder {
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
         Pair<Integer, Integer> pair = new Pair<>(width, height);
-        if (CACHE.containsKey(pair))
-            g.drawImage(CACHE.get(pair), x, y, width, height, null);
+        BufferedImage list;
+        int border = this.thickness * 4;
+        if (CACHE.containsKey(pair)) list = CACHE.get(pair);
         else {
             BufferedImage shadow = new BufferedImage(width, height, 2);
 
@@ -82,7 +83,6 @@ public class DropShadowBorder extends AbstractBorder {
             g2.fillRect(0, 0, width, height);
             g2.setComposite(oldComposite);
             g2.setColor(this.color);
-            int border = (int) (this.thickness * 4);
             g2.fillRect(border, border + border / 6, width - border * 2, height - border * 2);
             g2.dispose();
 
@@ -91,9 +91,14 @@ public class DropShadowBorder extends AbstractBorder {
             shadow = blur.filter(shadow, null);
             shadow = blur.filter(shadow, null);
             shadow = blur.filter(shadow, null);
-
-            CACHE.put(pair, shadow);
-            g.drawImage(shadow, x, y, width, height, null);
+            CACHE.put(pair, list = shadow);
         }
+        g.drawImage(list, 0, 0, width, height, null);
+    }
+    
+    void copyFromArray(int[] from, int W, int H, int[] to, int x, int y, int w, int h) {
+        for (int i = 0; i < h; ++i)
+            for (int j = 0; j < w; ++j)
+                to[i * w + j] = from[(i + y) * W + j + x];
     }
 }

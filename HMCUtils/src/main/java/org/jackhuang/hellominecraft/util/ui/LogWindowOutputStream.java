@@ -21,6 +21,7 @@ import java.io.OutputStream;
 import java.util.Objects;
 import java.util.Timer;
 import javax.swing.SwingUtilities;
+import org.jackhuang.hellominecraft.util.code.Charsets;
 import org.jackhuang.hellominecraft.util.logging.Level;
 
 /**
@@ -35,8 +36,8 @@ public class LogWindowOutputStream extends OutputStream {
     private final Level sas;
 
     public LogWindowOutputStream(LogWindow logWindow, Level l) {
-        Objects.nonNull(logWindow);
-        Objects.nonNull(l);
+        Objects.requireNonNull(logWindow);
+        Objects.requireNonNull(l);
         txt = logWindow;
         sas = l;
     }
@@ -48,7 +49,7 @@ public class LogWindowOutputStream extends OutputStream {
 
     @Override
     public final void write(byte[] arr, int off, int len) {
-        append(new String(arr, off, len));
+        append(new String(arr, off, len, Charsets.UTF_8));
     }
 
     private void append(final String str) {
@@ -56,14 +57,13 @@ public class LogWindowOutputStream extends OutputStream {
             SwingUtilities.invokeLater(() -> {
                 txt.log(str, Level.guessLevel(str, sas));
             });
-        } catch (Throwable e) {
-            e.printStackTrace();
+        } catch (Throwable ignore) {
         }
     }
 
     @Override
     public final void write(int i) {
-        append(new String(new byte[] { (byte) i }));
+        append(new String(new byte[] { (byte) i }, Charsets.UTF_8));
     }
 
     public static void dispose() {

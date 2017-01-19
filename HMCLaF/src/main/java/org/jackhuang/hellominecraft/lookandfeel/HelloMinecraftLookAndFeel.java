@@ -18,12 +18,13 @@ package org.jackhuang.hellominecraft.lookandfeel;
 
 import java.awt.Color;
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.text.ParseException;
 import java.util.Map;
 import javax.swing.UIDefaults;
 import javax.swing.plaf.synth.SynthLookAndFeel;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.NetUtils;
+import org.jackhuang.hellominecraft.util.system.IOUtils;
 
 /**
  *
@@ -37,7 +38,7 @@ public class HelloMinecraftLookAndFeel extends SynthLookAndFeel {
      * Creates a new instance of NimbusLookAndFeel
      *
      * @throws java.text.ParseException error parsing the xml, it must not
-     *                                  happen.
+     * happen.
      */
     public HelloMinecraftLookAndFeel() throws ParseException {
         this(DEFAULT_SETTINGS);
@@ -45,14 +46,18 @@ public class HelloMinecraftLookAndFeel extends SynthLookAndFeel {
 
     public HelloMinecraftLookAndFeel(Map<String, String> settings) throws ParseException {
         try {
-            String s = NetUtils.getStreamContent(HelloMinecraftLookAndFeel.class.getResourceAsStream("/org/jackhuang/hellominecraft/lookandfeel/synth.xml"), "UTF-8");
-            for (String ss : settings.keySet())
-                s = s.replace("${" + ss + "}", settings.get(ss));
-            load(new ByteArrayInputStream(s.getBytes("UTF-8")), HelloMinecraftLookAndFeel.class);
+            try (InputStream is = HelloMinecraftLookAndFeel.class.getResourceAsStream("/org/jackhuang/hellominecraft/lookandfeel/synth.xml")) {
+                String s = IOUtils.getStreamContent(is, "UTF-8");
+                for (Map.Entry<String, String> ss : settings.entrySet())
+                    s = s.replace("${" + ss.getKey() + "}", ss.getValue());
+                load(new ByteArrayInputStream(s.getBytes("UTF-8")), HelloMinecraftLookAndFeel.class);
+            }
         } catch (Throwable ex) {
             HMCLog.err("This fucking exception should not happen. Retry backup solution.", ex);
             try {
-                load(HelloMinecraftLookAndFeel.class.getResourceAsStream("/org/jackhuang/hellominecraft/lookandfeel/synth_backup.xml"), HelloMinecraftLookAndFeel.class);
+                try (InputStream is = HelloMinecraftLookAndFeel.class.getResourceAsStream("/org/jackhuang/hellominecraft/lookandfeel/synth_backup.xml")) {
+                    load(is, HelloMinecraftLookAndFeel.class);
+                }
             } catch (Throwable e) {
                 HMCLog.err("User fault", e);
             }

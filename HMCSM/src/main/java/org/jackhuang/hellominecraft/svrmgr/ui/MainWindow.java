@@ -2975,7 +2975,7 @@ public final class MainWindow extends javax.swing.JFrame
         }
 
         @Override
-        public void executeTask() {
+        public void executeTask(boolean areDependTasksSucceeded) {
             javax.swing.JTable table = MainWindow.this.lstDownloads;
             DefaultTableModel model = (DefaultTableModel) table.getModel();
 
@@ -2999,7 +2999,7 @@ public final class MainWindow extends javax.swing.JFrame
 
     void refreshDownloads() {
         clearListDownloads();
-        TaskWindow.factory().append(new RefreshDownloadsDone()).create();
+        TaskWindow.factory().append(new RefreshDownloadsDone()).execute();
     }
 
     void refreshInfos() {
@@ -3092,7 +3092,7 @@ public final class MainWindow extends javax.swing.JFrame
                 lstPlayers.setModel(lstPlayersModel);
             });
         else
-            MessageBox.Show("服务器未开启！");
+            MessageBox.show("服务器未开启！");
     }
 
     class ServerBeginListener implements Event<Void> {
@@ -3137,7 +3137,7 @@ public final class MainWindow extends javax.swing.JFrame
                 else if (option == JOptionPane.NO_OPTION)
                     FileUtils.write(eula, "eula=false");
             } catch (IOException e) {
-                MessageBox.Show("确认rula失败");
+                MessageBox.show("确认rula失败");
             }
         }
         File serverproperties = new File(new File(SettingsManager.settings.mainjar).getParentFile(), "server.properties");
@@ -3164,7 +3164,7 @@ public final class MainWindow extends javax.swing.JFrame
         try {
             Server.getInstance().run();
         } catch (IOException ex) {
-            MessageBox.Show("启动服务端失败！");
+            MessageBox.show("启动服务端失败！");
             HMCLog.err("Failed to launch!", ex);
         }
     }//GEN-LAST:event_btnLaunchActionPerformed
@@ -3335,7 +3335,7 @@ public final class MainWindow extends javax.swing.JFrame
                 op.saveAsBoth(new File(dir, "ops.txt"), new File(dir, "ops.json"));
             } catch (IOException ex) {
                 HMCLog.warn("Failed to save ops", ex);
-                MessageBox.Show("添加失败。。。");
+                MessageBox.show("添加失败。。。");
             }
         }
     }//GEN-LAST:event_btnAddOPActionPerformed
@@ -3355,7 +3355,7 @@ public final class MainWindow extends javax.swing.JFrame
                 op.saveAsBoth(new File(dir, "ops.txt"), new File(dir, "ops.json"));
             } catch (IOException ex) {
                 HMCLog.warn("Failed to save ops", ex);
-                MessageBox.Show("删除失败。。。");
+                MessageBox.show("删除失败。。。");
             }
         }
     }//GEN-LAST:event_btnDeleteOPActionPerformed
@@ -3374,7 +3374,7 @@ public final class MainWindow extends javax.swing.JFrame
                 whitelist.saveAsBoth(new File(dir, "white-list.txt"), new File(dir, "white-list.json"));
             } catch (IOException ex) {
                 HMCLog.warn("Failed to save white-list", ex);
-                MessageBox.Show("添加失败。。。");
+                MessageBox.show("添加失败。。。");
             }
         }
     }//GEN-LAST:event_btnAddWhiteActionPerformed
@@ -3394,7 +3394,7 @@ public final class MainWindow extends javax.swing.JFrame
                 whitelist.saveAsBoth(new File(dir, "white-list.txt"), new File(dir, "white-list.json"));
             } catch (IOException ex) {
                 HMCLog.warn("Failed to save white-list", ex);
-                MessageBox.Show("删除失败。。。");
+                MessageBox.show("删除失败。。。");
             }
         }
     }//GEN-LAST:event_btnDeleteWhiteActionPerformed
@@ -3421,7 +3421,7 @@ public final class MainWindow extends javax.swing.JFrame
             model.addRow(new Object[] { fc.getSelectedFile().getName(), ModType.getModTypeShowName(ModType.getModType(newf)) });
             lstExternalMods.updateUI();
         } catch (IOException e) {
-            MessageBox.Show(C.i18n("mods.failed"));
+            MessageBox.show(C.i18n("mods.failed"));
             HMCLog.warn("Failed to add ext mods", e);
         }
     }//GEN-LAST:event_btnAddExternelModActionPerformed
@@ -3460,7 +3460,7 @@ public final class MainWindow extends javax.swing.JFrame
             model.addRow(new Object[] { fc.getSelectedFile().getName(), ModType.getModTypeShowName(ModType.getModType(newf)) });
             FileUtils.copyFile(new File(path), newf);
         } catch (IOException e) {
-            MessageBox.Show(C.i18n("mods.failed"));
+            MessageBox.show(C.i18n("mods.failed"));
             HMCLog.warn("Failed to add ext core mod.", e);
         }
     }//GEN-LAST:event_btnAddExternelCoreModActionPerformed
@@ -3500,7 +3500,7 @@ public final class MainWindow extends javax.swing.JFrame
             model.addRow(new Object[] { fc.getSelectedFile().getName(), ModType.getModTypeShowName(ModType.getModType(newf)) });
             FileUtils.copyFile(new File(path), newf);
         } catch (IOException e) {
-            MessageBox.Show(C.i18n("mods.failed"));
+            MessageBox.show(C.i18n("mods.failed"));
             HMCLog.warn("Failed to add plugin", e);
         }
     }//GEN-LAST:event_btnAddPluginsActionPerformed
@@ -3566,7 +3566,7 @@ public final class MainWindow extends javax.swing.JFrame
                 whitelist.saveAsBoth(new File(dir, "banned-players.txt"), new File(dir, "banned-players.json"));
             } catch (IOException ex) {
                 HMCLog.warn("Failed to save banned-players", ex);
-                MessageBox.Show(C.i18n("mods.failed"));
+                MessageBox.show(C.i18n("mods.failed"));
             }
         }
     }//GEN-LAST:event_btnAddBanActionPerformed
@@ -3606,7 +3606,7 @@ public final class MainWindow extends javax.swing.JFrame
             resizeBackgroundLabel();
         } catch (IOException e) {
             HMCLog.warn("Failed to set background path", e);
-            MessageBox.Show(C.i18n("ui.label.failed_set") + e.getMessage());
+            MessageBox.show(C.i18n("ui.label.failed_set") + e.getMessage());
         }
     }//GEN-LAST:event_btnSetBackgroundPathActionPerformed
 
@@ -3628,7 +3628,7 @@ public final class MainWindow extends javax.swing.JFrame
             s.per = Double.parseDouble(txtTimerTaskPeriod.getText());
         } catch (NumberFormatException e) {
             HMCLog.warn("Failed to parse double: " + txtTimerTaskPeriod.getText(), e);
-            MessageBox.Show("错误的间隔时间");
+            MessageBox.show("错误的间隔时间");
             return;
         }
         SettingsManager.settings.schedules.add(s);
@@ -3720,7 +3720,7 @@ public final class MainWindow extends javax.swing.JFrame
         serverjar.delete();
 
         String downloadURL = url + "minecraft_server." + id + ".jar";
-        TaskWindow.factory().append(new FileDownloadTask(downloadURL, serverjar).setTag(id)).create();
+        TaskWindow.factory().append(new FileDownloadTask(downloadURL, serverjar).setTag(id)).execute();
     }//GEN-LAST:event_btnMinecraftServerDownloadActionPerformed
 
     private void btnRefreshInfosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshInfosActionPerformed
@@ -3783,7 +3783,7 @@ public final class MainWindow extends javax.swing.JFrame
             txtCrashReport.setText(content);
         } catch (IOException ex) {
             HMCLog.warn("Failed to get crash-report.", ex);
-            MessageBox.Show("无法获取崩溃报告");
+            MessageBox.show("无法获取崩溃报告");
         }
     }//GEN-LAST:event_btnShowReportActionPerformed
 
@@ -3855,7 +3855,7 @@ public final class MainWindow extends javax.swing.JFrame
         BukkitVersion v = cb.get(idx);
         File file = new File("craftbukkit-" + ext + "-" + v.version + ".jar");
         TaskWindow.factory().append(new FileDownloadTask(v.downloadLink, IOUtils.tryGetCanonicalFile(file)).setTag("bukkit-" + ext + "-" + v.version))
-            .create();
+            .execute();
     }//GEN-LAST:event_btnDownloadCraftbukkitActionPerformed
 
     private void btnDownloadMCPCActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadMCPCActionPerformed
@@ -3866,8 +3866,8 @@ public final class MainWindow extends javax.swing.JFrame
         String url;
         File filepath = new File("forge-installer.jar");
         url = v.installer[1];
-        if (!TaskWindow.factory().append(new FileDownloadTask(url, filepath).setTag("cauldron-" + v.ver)).create())
-            MessageBox.Show(C.i18n("install.failed_download_forge"));
+        if (!TaskWindow.factory().append(new FileDownloadTask(url, filepath).setTag("cauldron-" + v.ver)).execute())
+            MessageBox.show(C.i18n("install.failed_download_forge"));
         else
             installMCPC(filepath);
     }//GEN-LAST:event_btnDownloadMCPCActionPerformed
@@ -3876,10 +3876,10 @@ public final class MainWindow extends javax.swing.JFrame
         try {
             ForgeInstaller installer = new ForgeInstaller(new File("."), filepath);
             installer.install();
-            MessageBox.Show(C.i18n("install.success"));
+            MessageBox.show(C.i18n("install.success"));
         } catch (Exception e) {
             HMCLog.warn("Failed to install liteloader", e);
-            MessageBox.Show(C.i18n("install.failed_forge"));
+            MessageBox.show(C.i18n("install.failed_forge"));
         }
     }
 
@@ -3907,7 +3907,7 @@ public final class MainWindow extends javax.swing.JFrame
     private void btnInstallMCPCActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInstallMCPCActionPerformed
         File filepath = new File("forge-installer.jar");
         if (!filepath.exists()) {
-            MessageBox.Show("您还未下载Cauldron！请点击下载按钮下载并自动安装！");
+            MessageBox.show("您还未下载Cauldron！请点击下载按钮下载并自动安装！");
             return;
         }
         installMCPC(filepath);

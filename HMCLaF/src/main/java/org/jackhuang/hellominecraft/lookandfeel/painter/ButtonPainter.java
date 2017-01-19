@@ -42,22 +42,22 @@ import org.jackhuang.hellominecraft.lookandfeel.comp.ConstomButton;
 public class ButtonPainter extends SynthPainter {
 
     private static final String DEFAULT_NORMAL = "D5D5D5";
-    private static final Color[] DEFAULT_NORMAL_FG = new Color[] {
+    private static final Color[] DEFAULT_NORMAL_FG = new Color[]{
         GraphicsUtils.getWebColor(DEFAULT_NORMAL),
         GraphicsUtils.getWebColor(DEFAULT_NORMAL)
     };
     private static final String DEFAULT_PRELIGHT = "A9A9A9";
-    private static final Color[] DEFAULT_PRELIGHT_FG = new Color[] {
+    private static final Color[] DEFAULT_PRELIGHT_FG = new Color[]{
         GraphicsUtils.getWebColor(DEFAULT_PRELIGHT),
         GraphicsUtils.getWebColor(DEFAULT_PRELIGHT)
     };
     private static final String DEFAULT_ACTIVE = "222222";
-    private static final Color[] DEFAULT_ACTIVE_FG = new Color[] {
+    private static final Color[] DEFAULT_ACTIVE_FG = new Color[]{
         GraphicsUtils.getWebColor(DEFAULT_ACTIVE),
         GraphicsUtils.getWebColor(DEFAULT_ACTIVE)
     };
 
-    private static final Color[] DISABLED_BG = new Color[] {
+    private static final Color[] DISABLED_BG = new Color[]{
         GraphicsUtils.getWebColor("E3EFE9"),
         GraphicsUtils.getMidWebColor("E3EFE9", "DFE2E6"),
         GraphicsUtils.getWebColor("DFE2E6"),
@@ -68,7 +68,7 @@ public class ButtonPainter extends SynthPainter {
         GraphicsUtils.getWebColor("D8DBE1"),
         GraphicsUtils.getWebColor("DADDE3")
     };
-    private static final Color[] DISABLED_FG = new Color[] {
+    private static final Color[] DISABLED_FG = new Color[]{
         GraphicsUtils.getWebColor("C9CCD2"),
         GraphicsUtils.getWebColor("C9CCD2"),
         GraphicsUtils.getWebColor("BCBFC5"),
@@ -106,8 +106,8 @@ public class ButtonPainter extends SynthPainter {
             if ((context.getComponentState() & SynthConstants.PRESSED) != 0)
                 if (context.getComponent() instanceof ConstomButton) {
                     ConstomButton c = (ConstomButton) context.getComponent();
-                    fg = new Color[] { c.activeFg, c.activeFg };
-                    bg = new Color[] { c.activeFg, c.activeFg };
+                    fg = new Color[]{c.activeFg, c.activeFg};
+                    bg = new Color[]{c.activeFg, c.activeFg};
                 } else {
                     fg = DEFAULT_ACTIVE_FG;
                     bg = DEFAULT_ACTIVE_FG;
@@ -122,8 +122,8 @@ public class ButtonPainter extends SynthPainter {
                         return;
                     Color fgs = GraphicsUtils.getMidWebColor(c.normalFg, c.prelightFg, c.drawPercent);
                     Color bgs = GraphicsUtils.getMidWebColor(c.normalBg, c.prelightBg, c.drawPercent);
-                    fg = new Color[] { fgs, fgs };
-                    bg = new Color[] { bgs, bgs };
+                    fg = new Color[]{fgs, fgs};
+                    bg = new Color[]{bgs, bgs};
                 } else {
                     fg = DEFAULT_PRELIGHT_FG;
                     bg = DEFAULT_PRELIGHT_FG;
@@ -134,8 +134,8 @@ public class ButtonPainter extends SynthPainter {
                     return;
                 Color fgs = GraphicsUtils.getMidWebColor(c.normalFg, c.prelightFg, c.drawPercent);
                 Color bgs = GraphicsUtils.getMidWebColor(c.normalBg, c.prelightBg, c.drawPercent);
-                fg = new Color[] { fgs, fgs };
-                bg = new Color[] { bgs, bgs };
+                fg = new Color[]{fgs, fgs};
+                bg = new Color[]{bgs, bgs};
             } else {
                 fg = DEFAULT_NORMAL_FG;
                 bg = DEFAULT_NORMAL_FG;
@@ -143,8 +143,8 @@ public class ButtonPainter extends SynthPainter {
         else if ((context.getComponentState() & SynthConstants.PRESSED) != 0)
             if (context.getComponent() instanceof ConstomButton) {
                 ConstomButton c = (ConstomButton) context.getComponent();
-                fg = new Color[] { c.activeFg, c.activeFg };
-                bg = new Color[] { c.activeFg, c.activeFg };
+                fg = new Color[]{c.activeFg, c.activeFg};
+                bg = new Color[]{c.activeFg, c.activeFg};
             } else {
                 fg = DEFAULT_ACTIVE_FG;
                 bg = DEFAULT_ACTIVE_FG;
@@ -159,12 +159,12 @@ public class ButtonPainter extends SynthPainter {
                     return;
                 Color fgs = GraphicsUtils.getMidWebColor(c.normalFg, c.prelightFg, c.drawPercent);
                 Color bgs = GraphicsUtils.getMidWebColor(c.normalBg, c.prelightBg, c.drawPercent);
-                fg = new Color[] { fgs, fgs };
-                bg = new Color[] { bgs, bgs };
+                fg = new Color[]{fgs, fgs};
+                bg = new Color[]{bgs, bgs};
             } else if (context.getComponent() instanceof ConstomButton) {
                 ConstomButton c = (ConstomButton) context.getComponent();
-                fg = new Color[] { c.prelightFg, c.prelightFg };
-                bg = new Color[] { c.prelightBg, c.prelightBg };
+                fg = new Color[]{c.prelightFg, c.prelightFg};
+                bg = new Color[]{c.prelightBg, c.prelightBg};
             } else {
                 fg = DEFAULT_PRELIGHT_FG;
                 bg = DEFAULT_PRELIGHT_FG;
@@ -175,8 +175,8 @@ public class ButtonPainter extends SynthPainter {
                 return;
             Color fgs = GraphicsUtils.getMidWebColor(c.normalFg, c.prelightFg, c.drawPercent);
             Color bgs = GraphicsUtils.getMidWebColor(c.normalBg, c.prelightBg, c.drawPercent);
-            fg = new Color[] { fgs, fgs };
-            bg = new Color[] { bgs, bgs };
+            fg = new Color[]{fgs, fgs};
+            bg = new Color[]{bgs, bgs};
         } else {
             fg = DEFAULT_NORMAL_FG;
             bg = DEFAULT_NORMAL_FG;
@@ -207,21 +207,8 @@ public class ButtonPainter extends SynthPainter {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         Color[] fg, bg;
-        if ((context.getComponentState() & SynthConstants.DEFAULT) != 0)
-            if ((context.getComponentState() & SynthConstants.PRESSED) != 0 || (context.getComponentState() & SynthConstants.SELECTED) != 0) {
-                fg = DEFAULT_ACTIVE_FG;
-                bg = DEFAULT_ACTIVE_FG;
-            } else if ((context.getComponentState() & SynthConstants.DISABLED) != 0) {
-                fg = DISABLED_FG;
-                bg = DISABLED_BG;
-            } else if ((context.getComponentState() & SynthConstants.MOUSE_OVER) != 0) {
-                fg = DEFAULT_PRELIGHT_FG;
-                bg = DEFAULT_PRELIGHT_FG;
-            } else {
-                fg = DEFAULT_NORMAL_FG;
-                bg = DEFAULT_NORMAL_FG;
-            }
-        else if ((context.getComponentState() & SynthConstants.PRESSED) != 0 || (context.getComponentState() & SynthConstants.SELECTED) != 0) {
+        //if ((context.getComponentState() & SynthConstants.DEFAULT) != 0)
+        if ((context.getComponentState() & SynthConstants.PRESSED) != 0 || (context.getComponentState() & SynthConstants.SELECTED) != 0) {
             fg = DEFAULT_ACTIVE_FG;
             bg = DEFAULT_ACTIVE_FG;
         } else if ((context.getComponentState() & SynthConstants.DISABLED) != 0) {
@@ -234,6 +221,19 @@ public class ButtonPainter extends SynthPainter {
             fg = DEFAULT_NORMAL_FG;
             bg = DEFAULT_NORMAL_FG;
         }
+        /*else if ((context.getComponentState() & SynthConstants.PRESSED) != 0 || (context.getComponentState() & SynthConstants.SELECTED) != 0) {
+            fg = DEFAULT_ACTIVE_FG;
+            bg = DEFAULT_ACTIVE_FG;
+        } else if ((context.getComponentState() & SynthConstants.DISABLED) != 0) {
+            fg = DISABLED_FG;
+            bg = DISABLED_BG;
+        } else if ((context.getComponentState() & SynthConstants.MOUSE_OVER) != 0) {
+            fg = DEFAULT_PRELIGHT_FG;
+            bg = DEFAULT_PRELIGHT_FG;
+        } else {
+            fg = DEFAULT_NORMAL_FG;
+            bg = DEFAULT_NORMAL_FG;
+        }*/
         g2.setColor(fg[0]);
         Rectangle2D fgshape = new Rectangle2D.Float(x, y, w, h);
         g2.draw(fgshape);

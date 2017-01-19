@@ -37,8 +37,8 @@ public class AppenderControl {
     }
 
     public void callAppender(LogEvent event) {
-        if ((this.level != null)
-            && (this.intLevel < event.level.level))
+        if (this.level != null
+            && this.intLevel < event.level.level)
             return;
 
         if (this.recursive.get() != null) {

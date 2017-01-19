@@ -29,13 +29,15 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.NetUtils;
 
 /**
  *
  * @author huangyuhui
  */
-public class FileUtils {
+public final class FileUtils {
+    
+    private FileUtils() {
+    }
 
     public static void deleteDirectory(File directory)
         throws IOException {
@@ -75,7 +77,8 @@ public class FileUtils {
     public static void cleanDirectory(File directory)
         throws IOException {
         if (!directory.exists()) {
-            directory.mkdirs();
+            if (!directory.mkdirs() && !directory.isDirectory())
+                throw new IOException("Failed to create directory: " + directory);
             return;
         }
 
@@ -186,17 +189,18 @@ public class FileUtils {
                 else
                     doCopyFile(srcFile, dstFile);
         }
-        destDir.setLastModified(srcDir.lastModified());
+        if (!destDir.setLastModified(srcDir.lastModified()))
+            HMCLog.warn("Failed to set last modified date of dir: " + destDir);
     }
 
     public static String read(File file)
         throws IOException {
-        return NetUtils.getStreamContent(IOUtils.openInputStream(file));
+        return IOUtils.getStreamContent(IOUtils.openInputStream(file));
     }
 
     public static String readQuietly(File file) {
         try {
-            return NetUtils.getStreamContent(IOUtils.openInputStream(file));
+            return IOUtils.getStreamContent(IOUtils.openInputStream(file));
         } catch (IOException ex) {
             HMCLog.err("Failed to read file: " + file, ex);
             return null;
@@ -205,12 +209,12 @@ public class FileUtils {
 
     public static String read(File file, String charset)
         throws IOException {
-        return NetUtils.getStreamContent(IOUtils.openInputStream(file), charset);
+        return IOUtils.getStreamContent(IOUtils.openInputStream(file), charset);
     }
 
     public static String readIgnoreFileNotFound(File file) throws IOException {
         try {
-            return NetUtils.getStreamContent(IOUtils.openInputStream(file));
+            return IOUtils.getStreamContent(IOUtils.openInputStream(file));
         } catch (FileNotFoundException ex) {
             return "";
         }
@@ -364,7 +368,8 @@ public class FileUtils {
             if ((parent != null)
                 && (!parent.mkdirs()) && (!parent.isDirectory()))
                 throw new IOException("Directory '" + parent + "' could not be created");
-            file.createNewFile();
+            if (!file.createNewFile())
+                throw new IOException("File `" + file + "` cannot be created.");
         }
 
         return new FileOutputStream(file, append);
@@ -378,6 +383,6 @@ public class FileUtils {
         for (File f : files)
             if (f.getName().endsWith(suffix))
                 al.add(f);
-        return al.toArray(new File[0]);
+        return al.toArray(new File[al.size()]);
     }
 }

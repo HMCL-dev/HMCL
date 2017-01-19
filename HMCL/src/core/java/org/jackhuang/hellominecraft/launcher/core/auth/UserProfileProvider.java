@@ -27,74 +27,83 @@ public final class UserProfileProvider {
         return username;
     }
 
-    public void setUserName(String username) {
+    public UserProfileProvider setUserName(String username) {
         this.username = username;
+        return this;
     }
 
     public String getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public UserProfileProvider setUserId(String userId) {
         this.userId = userId;
+        return this;
     }
 
     public String getSession() {
         return session;
     }
 
-    public void setSession(String session) {
+    public UserProfileProvider setSession(String session) {
         this.session = session;
+        return this;
     }
 
     public String getAccessToken() {
         return accessToken;
     }
 
-    public void setAccessToken(String accessToken) {
+    public UserProfileProvider setAccessToken(String accessToken) {
         if (accessToken == null)
             accessToken = "0";
         this.accessToken = accessToken;
+        return this;
     }
 
     public String getUserProperties() {
         return userProperties;
     }
 
-    public void setUserProperties(String userProperties) {
+    public UserProfileProvider setUserProperties(String userProperties) {
         this.userProperties = userProperties;
+        return this;
     }
 
     public String getUserPropertyMap() {
         return userPropertyMap;
     }
 
-    public void setUserPropertyMap(String userPropertyMap) {
+    public UserProfileProvider setUserPropertyMap(String userPropertyMap) {
         this.userPropertyMap = userPropertyMap;
+        return this;
     }
 
     public String getOtherInfo() {
         return otherInfo;
     }
 
-    public void setOtherInfo(String otherInfo) {
+    public UserProfileProvider setOtherInfo(String otherInfo) {
         this.otherInfo = otherInfo;
+        return this;
     }
 
     public String getClientIdentifier() {
         return clientIdentifier;
     }
 
-    public void setClientIdentifier(String clientIdentifier) {
+    public UserProfileProvider setClientIdentifier(String clientIdentifier) {
         this.clientIdentifier = clientIdentifier;
+        return this;
     }
 
     public String getUserType() {
         return userType;
     }
 
-    public void setUserType(String userType) {
+    public UserProfileProvider setUserType(String userType) {
         this.userType = userType;
+        return this;
     }
 
     private String username = "";

@@ -28,7 +28,6 @@ public enum DownloadType {
 
     Mojang("download.mojang", new MojangDownloadProvider()),
     BMCL("download.BMCL", new BMCLAPIDownloadProvider()),
-    //RapidData("download.rapid_data", new RapidDataDownloadProvider()),
     Curse("Curse CDN", new CurseDownloadProvider());
 
     private final String name;

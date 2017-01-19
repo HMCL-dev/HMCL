@@ -92,7 +92,7 @@ public class MessageBox {
      *
      * @return user operation.
      */
-    public static int Show(String Msg, String Title, int Option) {
+    public static int show(String Msg, String Title, int Option) {
         switch (Option) {
         case YES_NO_OPTION:
         case YES_NO_CANCEL_OPTION:
@@ -112,8 +112,8 @@ public class MessageBox {
      *
      * @return User Operation
      */
-    public static int Show(String Msg, int Option) {
-        return Show(Msg, TITLE, Option);
+    public static int show(String Msg, int Option) {
+        return show(Msg, TITLE, Option);
     }
 
     /**
@@ -123,11 +123,11 @@ public class MessageBox {
      *
      * @return User Operation
      */
-    public static int Show(String Msg) {
-        return Show(Msg, TITLE, INFORMATION_MESSAGE);
+    public static int show(String Msg) {
+        return show(Msg, TITLE, INFORMATION_MESSAGE);
     }
 
-    public static int ShowLocalized(String msg) {
-        return Show(C.i18n(msg));
+    public static int showLocalized(String msg) {
+        return show(C.i18n(msg));
     }
 }

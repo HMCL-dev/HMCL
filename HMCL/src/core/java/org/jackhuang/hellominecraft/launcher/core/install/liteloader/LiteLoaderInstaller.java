@@ -24,8 +24,8 @@ import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.tasks.communication.PreviousResult;
-import org.jackhuang.hellominecraft.util.tasks.communication.PreviousResultRegistrar;
+import org.jackhuang.hellominecraft.util.tasks.comm.PreviousResult;
+import org.jackhuang.hellominecraft.util.tasks.comm.PreviousResultRegistrar;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
@@ -53,7 +53,7 @@ public class LiteLoaderInstaller extends Task implements PreviousResultRegistrar
     }
 
     @Override
-    public void executeTask() throws Exception {
+    public void executeTask(boolean areDependTasksSucceeded) throws Exception {
         if (installId == null)
             throw new IllegalStateException(C.i18n("install.no_version"));
         if (pre.size() != 1 && installer == null)

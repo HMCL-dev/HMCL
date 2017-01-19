@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.util.system;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
@@ -75,7 +76,7 @@ public class ProcessThread extends Thread {
                 } else
                     line += (char) ch;
             stopEvent.execute(p);
-        } catch (Exception e) {
+        } catch (IOException e) {
             HMCLog.err("An error occured when reading process stdout/stderr.", e);
         } finally {
             IOUtils.closeQuietly(br);

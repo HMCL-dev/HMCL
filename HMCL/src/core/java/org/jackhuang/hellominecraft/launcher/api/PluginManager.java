@@ -38,7 +38,7 @@ public class PluginManager {
         try {
             IPlugin p = (IPlugin) cls.newInstance();
             NOW_PLUGIN = p;
-        } catch (Exception e) {
+        } catch (IllegalAccessException | InstantiationException e) {
             HMCLog.err("Failed to new instance");
         }
     }

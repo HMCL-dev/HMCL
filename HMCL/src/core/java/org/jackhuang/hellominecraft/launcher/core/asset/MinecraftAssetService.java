@@ -68,14 +68,14 @@ public class MinecraftAssetService extends IMinecraftAssetService {
     }
 
     @Override
-    public Task downloadMinecraftAssetsIndex(AssetIndexDownloadInfo assets) {
+    public Task downloadMinecraftAssetsIndex(AssetIndexDownloadInfo assetIndex) {
         File assetsLocation = getAssets();
         if (!assetsLocation.exists() && !assetsLocation.mkdirs())
             HMCLog.warn("Failed to make directories: " + assetsLocation);
-        File assetsIndex = new File(assetsLocation, "indexes/" + assets.getId() + ".json");
+        File assetsIndex = getIndexFile(assetIndex.getId());
         File renamed = null;
         if (assetsIndex.exists()) {
-            renamed = new File(assetsLocation, "indexes/" + assets.getId() + "-renamed.json");
+            renamed = new File(assetsLocation, "indexes/" + assetIndex.getId() + "-renamed.json");
             if (assetsIndex.renameTo(renamed))
                 HMCLog.warn("Failed to rename " + assetsIndex + " to " + renamed);
         }
@@ -83,11 +83,11 @@ public class MinecraftAssetService extends IMinecraftAssetService {
         return new TaskInfo("Download Asset Index") {
             @Override
             public Collection<Task> getDependTasks() {
-                return Arrays.asList(new FileDownloadTask(assets.getUrl(service.getDownloadType()), IOUtils.tryGetCanonicalFile(assetsIndex), assets.sha1).setTag(assets.getId() + ".json"));
+                return Arrays.asList(new FileDownloadTask(assetIndex.getUrl(service.getDownloadType()), IOUtils.tryGetCanonicalFile(assetsIndex), assetIndex.sha1).setTag(assetIndex.getId() + ".json"));
             }
 
             @Override
-            public void executeTask() throws Throwable {
+            public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
                 if (areDependTasksSucceeded) {
                     if (renamedFinal != null && !renamedFinal.delete())
                         HMCLog.warn("Failed to delete " + renamedFinal + ", maybe you should do it.");
@@ -98,20 +98,20 @@ public class MinecraftAssetService extends IMinecraftAssetService {
     }
 
     @Override
-    public boolean downloadMinecraftAssetsIndexAsync(AssetIndexDownloadInfo assets) {
-        File assetsLocation = getAssets();
-        if (!assetsLocation.exists() && !assetsLocation.mkdirs())
-            HMCLog.warn("Failed to make directories: " + assetsLocation);
-        File assetsIndex = new File(assetsLocation, "indexes/" + assets.getId() + ".json");
+    public boolean downloadMinecraftAssetsIndexAsync(AssetIndexDownloadInfo assetIndex) {
+        File assetsDir = getAssets();
+        if (!assetsDir.mkdirs() && !assetsDir.isDirectory())
+            HMCLog.warn("Failed to make directories: " + assetsDir);
+        File assetsIndex = getIndexFile(assetIndex.getId());
         File renamed = null;
         if (assetsIndex.exists()) {
-            renamed = new File(assetsLocation, "indexes/" + assets.getId() + "-renamed.json");
+            renamed = new File(assetsDir, "indexes/" + assetIndex.getId() + "-renamed.json");
             if (assetsIndex.renameTo(renamed))
                 HMCLog.warn("Failed to rename " + assetsIndex + " to " + renamed);
         }
         if (TaskWindow.factory()
-            .append(new FileDownloadTask(assets.getUrl(service.getDownloadType()), IOUtils.tryGetCanonicalFile(assetsIndex), assets.sha1).setTag(assets.getId() + ".json"))
-            .create()) {
+            .append(new FileDownloadTask(assetIndex.getUrl(service.getDownloadType()), IOUtils.tryGetCanonicalFile(assetsIndex), assetIndex.sha1).setTag(assetIndex.getId() + ".json"))
+            .execute()) {
             if (renamed != null && !renamed.delete())
                 HMCLog.warn("Failed to delete " + renamed + ", maybe you should do it.");
             return true;
@@ -125,30 +125,27 @@ public class MinecraftAssetService extends IMinecraftAssetService {
     public File getAssets() {
         return new File(service.baseDirectory(), "assets");
     }
+    
+    private File getIndexFile(String assetVersion) {
+        return new File(getAssets(), "indexes/" + assetVersion + ".json");
+    }
 
     @Override
     public File getAssetObject(String assetVersion, String name) throws IOException {
-        File assetsDir = getAssets();
-        File indexDir = new File(assetsDir, "indexes");
-        File objectsDir = new File(assetsDir, "objects");
-        File indexFile = new File(indexDir, assetVersion + ".json");
         try {
-            AssetsIndex index = (AssetsIndex) C.GSON.fromJson(FileUtils.read(indexFile, "UTF-8"), AssetsIndex.class);
+            AssetsIndex index = (AssetsIndex) C.GSON.fromJson(FileUtils.read(getIndexFile(assetVersion), "UTF-8"), AssetsIndex.class);
 
             String hash = ((AssetsObject) index.getFileMap().get(name)).getHash();
-            return new File(objectsDir, hash.substring(0, 2) + "/" + hash);
+            return new File(getAssets(), "objects/" + hash.substring(0, 2) + "/" + hash);
         } catch (JsonSyntaxException e) {
             throw new IOException("Assets file format malformed.", e);
         }
     }
 
     private boolean checkAssetsExistance(AssetIndexDownloadInfo assetIndex) {
-        File assetsDir = getAssets();
-        File indexDir = new File(assetsDir, "indexes");
-        File objectDir = new File(assetsDir, "objects");
-        File indexFile = new File(indexDir, assetIndex.getId() + ".json");
+        File indexFile = getIndexFile(assetIndex.getId());
 
-        if (!assetsDir.exists() || !indexFile.isFile())
+        if (!getAssets().exists() || !indexFile.isFile())
             return false;
 
         try {
@@ -158,7 +155,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
             if (index == null)
                 return false;
             for (Map.Entry entry : index.getFileMap().entrySet())
-                if (!new File(new File(objectDir, ((AssetsObject) entry.getValue()).getHash().substring(0, 2)), ((AssetsObject) entry.getValue()).getHash()).exists())
+                if (!new File(getAssets(), "objects/" + ((AssetsObject) entry.getValue()).getHash().substring(0, 2) + "/" + ((AssetsObject) entry.getValue()).getHash()).exists())
                     return false;
             return true;
         } catch (IOException | JsonSyntaxException e) {
@@ -168,10 +165,8 @@ public class MinecraftAssetService extends IMinecraftAssetService {
 
     private File reconstructAssets(AssetIndexDownloadInfo assetIndex) {
         File assetsDir = getAssets();
-        File indexDir = new File(assetsDir, "indexes");
-        File objectDir = new File(assetsDir, "objects");
         String assetVersion = assetIndex.getId();
-        File indexFile = new File(indexDir, assetVersion + ".json");
+        File indexFile = getIndexFile(assetVersion);
         File virtualRoot = new File(new File(assetsDir, "virtual"), assetVersion);
 
         if (!indexFile.isFile()) {
@@ -191,7 +186,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
                 int tot = index.getFileMap().entrySet().size();
                 for (Map.Entry entry : index.getFileMap().entrySet()) {
                     File target = new File(virtualRoot, (String) entry.getKey());
-                    File original = new File(new File(objectDir, ((AssetsObject) entry.getValue()).getHash().substring(0, 2)), ((AssetsObject) entry.getValue()).getHash());
+                    File original = new File(assetsDir, "objects/" + ((AssetsObject) entry.getValue()).getHash().substring(0, 2) + "/" + ((AssetsObject) entry.getValue()).getHash());
                     if (original.exists()) {
                         cnt++;
                         if (!target.isFile())
@@ -211,8 +206,8 @@ public class MinecraftAssetService extends IMinecraftAssetService {
 
     public final BiFunction<MinecraftVersion, Boolean, String> ASSET_PROVIDER_IMPL = (t, allow) -> {
         if (allow && !checkAssetsExistance(t.getAssetsIndex()))
-            if (MessageBox.Show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                TaskWindow.execute(downloadAssets(t));
+            if (MessageBox.show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+                TaskWindow.factory().execute(downloadAssets(t));
         return reconstructAssets(t.getAssetsIndex()).getAbsolutePath();
     };
 }

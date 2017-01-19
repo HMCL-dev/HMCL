@@ -56,8 +56,6 @@ public final class OfflineAuthenticator extends IAuthenticator {
     public UserProfileProvider login(LoginInfo info) throws AuthenticationException {
         if (StrUtils.isBlank(info.username))
             throw new AuthenticationException(C.i18n("login.no_Player007"));
-        UserProfileProvider result = new UserProfileProvider();
-        result.setUserName(info.username);
         String uuid = getUUIDFromUserName(info.username);
         if (uuidMap != null && uuidMap.containsKey(uuid))
             uuid = uuidMap.get(info.username);
@@ -66,11 +64,12 @@ public final class OfflineAuthenticator extends IAuthenticator {
                 uuidMap = new HashMap<>();
             uuidMap.put(info.username, uuid);
         }
-        result.setSession(uuid);
-        result.setUserId(uuid);
-        result.setAccessToken(uuid);
-        result.setUserType("Legacy");
-        return result;
+        return new UserProfileProvider()
+                .setUserName(info.username)
+                .setSession(uuid)
+                .setUserId(uuid)
+                .setAccessToken(uuid)
+                .setUserType("Legacy");
     }
 
     public static String getUUIDFromUserName(String str) {

@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hellominecraft.util.system;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -61,10 +60,9 @@ public class ZipEngine {
     /**
      * 功能：把 sourceDir 目录下的所有文件进行 zip 格式的压缩，保存为指定 zip 文件
      *
-     * @param sourceDir        源文件夹
-     * @param zipFile          压缩生成的zip文件路径。
+     * @param sourceDir 源文件夹
      * @param pathNameCallback callback(pathName, isDirectory) returns your
-     *                         modified pathName
+     * modified pathName
      *
      * @throws java.io.IOException 压缩失败或无法读取
      */
@@ -75,11 +73,11 @@ public class ZipEngine {
     /**
      * 将文件压缩成zip文件
      *
-     * @param source           zip文件路径
-     * @param basePath         待压缩文件根目录
-     * @param zos              zip文件的os
+     * @param source zip文件路径
+     * @param basePath 待压缩文件根目录
+     * @param zos zip文件的os
      * @param pathNameCallback callback(pathName, isDirectory) returns your
-     *                         modified pathName, null if you dont want this file zipped
+     * modified pathName, null if you dont want this file zipped
      */
     private void putDirectoryImpl(File source, String basePath, BiFunction<String, Boolean, String> pathNameCallback) throws IOException {
         File[] files;
@@ -95,7 +93,7 @@ public class ZipEngine {
         for (File file : files)
             if (file.isDirectory()) {
                 pathName = file.getPath().substring(basePath.length() + 1)
-                           + "/";
+                        + "/";
                 pathName = pathName.replace('\\', '/');
                 if (pathNameCallback != null)
                     pathName = pathNameCallback.apply(pathName, true);
@@ -117,14 +115,14 @@ public class ZipEngine {
     }
 
     public void putFile(File file, String pathName) throws IOException {
-        putStream(new FileInputStream(file), pathName);
+        try (FileInputStream fis = new FileInputStream(file)) {
+            putStream(fis, pathName);
+        }
     }
 
     public void putStream(InputStream is, String pathName) throws IOException {
-        try (BufferedInputStream bis = new BufferedInputStream(is)) {
-            put(new ZipEntry(pathName));
-            IOUtils.copyStream(bis, zos, buf);
-        }
+        put(new ZipEntry(pathName));
+        IOUtils.copyStream(is, zos, buf);
     }
 
     public void putTextFile(String text, String pathName) throws IOException {

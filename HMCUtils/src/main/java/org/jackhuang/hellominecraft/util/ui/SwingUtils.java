@@ -54,8 +54,11 @@ import org.jackhuang.hellominecraft.util.system.OS;
  *
  * @author huang
  */
-public class SwingUtils {
+public final class SwingUtils {
 
+    private SwingUtils() {
+    }
+    
     /**
      * Make DefaultTableModel by overriding getColumnClass and isCellEditable of
      * DefaultTableModel.
@@ -100,7 +103,7 @@ public class SwingUtils {
             try {
                 java.awt.Desktop.getDesktop().open(f);
             } catch (Throwable ex) {
-                MessageBox.Show(C.i18n("message.cannot_open_explorer") + ex.getMessage());
+                MessageBox.show(C.i18n("message.cannot_open_explorer") + ex.getMessage());
                 HMCLog.warn("Failed to open " + path + " through java.awt.Desktop.getDesktop().open()", ex);
             }
             break;
@@ -299,7 +302,7 @@ public class SwingUtils {
             try {
                 Utils.shutdownForcely(0);
             } catch (Exception e) {
-                MessageBox.Show(C.i18n("launcher.exit_failed"));
+                MessageBox.show(C.i18n("launcher.exit_failed"));
                 HMCLog.err("Failed to shutdown forcely", e);
             }
         else

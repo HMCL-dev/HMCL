@@ -56,7 +56,7 @@ public class Main {
             } catch (ParseException | UnsupportedLookAndFeelException ex) {
                 HMCLog.warn("Failed to set look and feel", ex);
             }
-            UPDATE_CHECKER.process(false).reg(t -> MessageBox.Show("发现更新！" + t.version)).execute();
+            UPDATE_CHECKER.process(false).reg(t -> MessageBox.show("发现更新！" + t.version)).execute();
             new MainWindow().setVisible(true);
         } catch (Throwable t) {
             HMCLog.err("There's something wrong when running server holder.", t);

@@ -27,21 +27,8 @@ import org.jackhuang.hellominecraft.util.ui.LogWindow;
 public class ContentGetAndShowTask extends HTTPGetTask implements Event<String> {
 
     public ContentGetAndShowTask(String info, String changeLogUrl) {
-        super(changeLogUrl);
-        this.info = info;
-    }
-
-    @Override
-    public void executeTask() throws Exception {
+        super(info, changeLogUrl);
         tdtsl.register(this);
-        super.executeTask();
-    }
-
-    String info;
-
-    @Override
-    public String getInfo() {
-        return info;
     }
 
     @Override

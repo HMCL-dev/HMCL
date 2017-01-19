@@ -18,6 +18,8 @@
 package org.jackhuang.hellominecraft.launcher.ui.modpack;
 
 import java.awt.Dimension;
+import java.awt.HeadlessException;
+import java.io.IOException;
 import java.util.Map;
 import javax.swing.JOptionPane;
 import org.jackhuang.hellominecraft.util.C;
@@ -113,8 +115,8 @@ public class ModpackDescriptionPanel extends javax.swing.JPanel {
             msgs[1] = new WebPage(new Markdown4jProcessor().process(txtDescription.getText()));
             ((WebPage) msgs[1]).setPreferredSize(new Dimension(800, 350));
             JOptionPane.showOptionDialog(null, msgs, (String) msgs[0], JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
-        } catch (Exception e) {
-            MessageBox.Show(StrUtils.getStackTrace(e), C.i18n("message.error"), MessageBox.WARNING_MESSAGE);
+        } catch (HeadlessException | IOException e) {
+            MessageBox.show(StrUtils.getStackTrace(e), C.i18n("message.error"), MessageBox.WARNING_MESSAGE);
         }
     }//GEN-LAST:event_jButton1ActionPerformed
 

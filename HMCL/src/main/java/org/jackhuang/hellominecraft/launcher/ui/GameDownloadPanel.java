@@ -18,7 +18,6 @@
 package org.jackhuang.hellominecraft.launcher.ui;
 
 import javax.swing.table.DefaultTableModel;
-import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.launcher.core.download.MinecraftRemoteVersions;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.util.C;
@@ -31,7 +30,7 @@ import org.jackhuang.hellominecraft.util.ui.SwingUtils;
  *
  * @author huangyuhui
  */
-public class GameDownloadPanel extends AnimatedPanel {
+public class GameDownloadPanel extends Page {
 
     GameSettingsPanel gsp;
 
@@ -116,11 +115,11 @@ public class GameDownloadPanel extends AnimatedPanel {
 
     void downloadMinecraft() {
         if (lstDownloads.getSelectedRow() < 0) {
-            MessageBox.Show(C.i18n("gamedownload.not_refreshed"));
+            MessageBox.show(C.i18n("gamedownload.not_refreshed"));
             return;
         }
         String id = (String) lstDownloads.getModel().getValueAt(lstDownloads.getSelectedRow(), 0);
-        TaskWindow.execute(Settings.getLastProfile().service().download().downloadMinecraft(id));
+        TaskWindow.factory().execute(Settings.getLastProfile().service().download().downloadMinecraft(id));
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

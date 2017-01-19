@@ -15,15 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.util.tasks.communication;
+package org.jackhuang.hellominecraft.util.tasks.comm;
 
 /**
  *
  * @author huangyuhui
- * @param <T> Task result type
+ * @param <T> the type of result.
  */
-public interface PreviousResult<T> {
+public class DefaultPreviousResult<T> implements PreviousResult<T> {
 
-    T getResult();
+    T a;
+
+    public DefaultPreviousResult(T a) {
+        this.a = a;
+    }
+
+    @Override
+    public T getResult() {
+        return a;
+    }
 
 }

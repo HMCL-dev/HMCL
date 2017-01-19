@@ -48,7 +48,7 @@ public class NewFileUpgrader extends IUpgrader {
     public boolean call(Object sender, VersionNumber number) {
         String str = requestDownloadLink();
         File newf = new File(FileUtils.getName(str));
-        if (TaskWindow.factory().append(new FileDownloadTask(str, newf)).create()) {
+        if (TaskWindow.factory().append(new FileDownloadTask(str, newf)).execute()) {
             try {
                 new ProcessBuilder(new String[] { IOUtils.tryGetCanonicalFilePath(newf), "--removeOldLauncher", IOUtils.getRealPath() }).directory(new File(".")).start();
             } catch (IOException ex) {

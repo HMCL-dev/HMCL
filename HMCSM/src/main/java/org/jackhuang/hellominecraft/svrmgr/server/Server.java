@@ -235,7 +235,7 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
             try {
                 run();
             } catch (IOException ex) {
-                MessageBox.Show("重启失败！");
+                MessageBox.show("重启失败！");
                 HMCLog.warn("Failed to launch!", ex);
             }
             isRestart = false;

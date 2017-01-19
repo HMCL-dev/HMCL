@@ -33,6 +33,9 @@ import org.jackhuang.hellominecraft.util.func.Predicate;
  * @author huang
  */
 public final class StrUtils {
+    
+    private StrUtils() {
+    }
 
     public static String substring(String src, int start_idx, int end_idx) {
         byte[] b = src.getBytes();

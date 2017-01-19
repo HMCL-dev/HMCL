@@ -234,7 +234,7 @@ public class PluginInfoDialog extends javax.swing.JDialog {
         TaskWindow.factory()
             .append(new FileDownloadTask(url, new File(Utilities.getGameDir() + "plugins"
                                                         + File.separator + pi.versions.get(index).filename)))
-            .create();
+            .execute();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

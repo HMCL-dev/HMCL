@@ -104,17 +104,17 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
         HMCLog.log("System Platform: " + Platform.getPlatform().getBit());
 
         if (jv != null && jv.getPlatform() == Platform.BIT_32 && Platform.getPlatform() == Platform.BIT_64)
-            MessageBox.Show(C.i18n("advice.os64butjdk32"));
+            MessageBox.show(C.i18n("advice.os64butjdk32"));
 
         if (!StrUtils.isBlank(options.getMaxMemory())) {
             int mem = MathUtils.parseMemory(options.getMaxMemory(), 2147483647);
             if (jv != null && jv.getPlatform() == Platform.BIT_32 && mem > 1024)
-                MessageBox.Show(C.i18n("launch.too_big_memory_alloc_64bit"));
+                MessageBox.show(C.i18n("launch.too_big_memory_alloc_64bit"));
             else {
                 long a = OS.getTotalPhysicalMemory() / 1024 / 1024;
                 HMCLog.log("System Physical Memory: " + a);
                 if (a > 0 && a < mem)
-                    MessageBox.Show(C.i18n("launch.too_big_memory_alloc_free_space_too_low", a));
+                    MessageBox.show(C.i18n("launch.too_big_memory_alloc_free_space_too_low", a));
             }
             String a = "-Xmx" + options.getMaxMemory();
             if (MathUtils.canParseInt(options.getMaxMemory()))

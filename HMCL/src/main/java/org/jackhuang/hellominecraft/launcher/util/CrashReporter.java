@@ -48,6 +48,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             put("MessageBox", "");
             put("AWTError", "");
             put("JFileChooser", "Has your operating system been installed completely or is a ghost system?");
+            put("JSystemFileChooser", "Has your operating system been installed completely or is a ghost system?");
             put("Jce", "Has your operating system been installed completely or is a ghost system?");
             put("couldn't create component peer", "Fucking computer!");
             put("sun.awt.shell.Win32ShellFolder2", "crash.user_fault");
@@ -122,7 +123,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
     void showMessage(String s) {
         try {
-            MessageBox.Show(s, "ERROR", MessageBox.ERROR_MESSAGE);
+            MessageBox.show(s, "ERROR", MessageBox.ERROR_MESSAGE);
         } catch (Throwable e) {
             LOGGER.log(Level.SEVERE, "ERROR", e);
         }
@@ -131,7 +132,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
     private static final HashSet<String> THROWABLE_SET = new HashSet<>();
 
     void reportToServer(final String text, String stacktrace) {
-        if (THROWABLE_SET.contains(stacktrace))
+        if (THROWABLE_SET.contains(stacktrace) || stacktrace.contains("Font"))
             return;
         THROWABLE_SET.add(stacktrace);
         Thread t = new Thread(() -> {

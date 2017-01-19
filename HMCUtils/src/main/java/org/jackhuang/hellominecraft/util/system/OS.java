@@ -24,7 +24,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
+import java.util.Locale;
 import java.util.StringTokenizer;
+import org.jackhuang.hellominecraft.util.code.Charsets;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 
 /**
@@ -46,7 +48,7 @@ public enum OS {
     }
 
     public static OS os() {
-        String str = System.getProperty("os.name").toLowerCase();
+        String str = System.getProperty("os.name").toLowerCase(Locale.US);
         if (str.contains("win"))
             return OS.WINDOWS;
         if (str.contains("mac"))
@@ -79,33 +81,42 @@ public enum OS {
         }
     }
 
+    public static int getSuggestedMemorySize() {
+        long total = getTotalPhysicalMemory();
+        if (total == -1)
+            return 1024;
+        int memory = (int) (total / 1024 / 1024) / 4;
+        memory = Math.round((float) memory / 128.0f) * 128;
+        return memory;
+    }
+
     public static long[] memoryInfoForLinux() throws IOException {
         File file = new File("/proc/meminfo");
-        BufferedReader br = new BufferedReader(new InputStreamReader(
-            new FileInputStream(file)));
-        long[] result = new long[4];
-        String str;
-        StringTokenizer token;
-        while ((str = br.readLine()) != null) {
-            token = new StringTokenizer(str);
-            if (!token.hasMoreTokens())
-                continue;
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), Charsets.UTF_8))) {
+            long[] result = new long[4];
+            String str;
+            StringTokenizer token;
+            while ((str = br.readLine()) != null) {
+                token = new StringTokenizer(str);
+                if (!token.hasMoreTokens())
+                    continue;
 
-            str = token.nextToken();
-            if (!token.hasMoreTokens())
-                continue;
+                str = token.nextToken();
+                if (!token.hasMoreTokens())
+                    continue;
 
-            if (str.equalsIgnoreCase("MemTotal:"))
-                result[0] = Long.parseLong(token.nextToken());
-            else if (str.equalsIgnoreCase("MemFree:"))
-                result[1] = Long.parseLong(token.nextToken());
-            else if (str.equalsIgnoreCase("SwapTotal:"))
-                result[2] = Long.parseLong(token.nextToken());
-            else if (str.equalsIgnoreCase("SwapFree:"))
-                result[3] = Long.parseLong(token.nextToken());
+                if (str.equalsIgnoreCase("MemTotal:"))
+                    result[0] = Long.parseLong(token.nextToken());
+                else if (str.equalsIgnoreCase("MemFree:"))
+                    result[1] = Long.parseLong(token.nextToken());
+                else if (str.equalsIgnoreCase("SwapTotal:"))
+                    result[2] = Long.parseLong(token.nextToken());
+                else if (str.equalsIgnoreCase("SwapFree:"))
+                    result[3] = Long.parseLong(token.nextToken());
+            }
+
+            return result;
         }
-
-        return result;
     }
 
     public static String getLinuxReleaseVersion() throws IOException {
