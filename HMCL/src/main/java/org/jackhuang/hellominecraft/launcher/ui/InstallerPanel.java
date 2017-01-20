@@ -42,7 +42,7 @@ public class InstallerPanel extends Page {
     /**
      * Creates new form InstallerPanel
      *
-     * @param gsp           To get the minecraft version
+     * @param gsp To get the minecraft version
      * @param installerType load which installer
      */
     public InstallerPanel(GameSettingsPanel gsp, InstallerType installerType) {
@@ -122,7 +122,11 @@ public class InstallerPanel extends Page {
     InstallerType id;
 
     Task refreshVersionsTask() {
-        return list.refresh(new String[] { gsp.getMinecraftVersionFormatted() }).after(new TaskRunnable(this::loadVersions));
+        Task t = list.refresh(new String[] { gsp.getMinecraftVersionFormatted() });
+        if (t != null)
+            return t.after(new TaskRunnable(this::loadVersions));
+        else
+            return null;
     }
 
     public synchronized InstallerVersionList.InstallerVersion getVersion(int idx) {

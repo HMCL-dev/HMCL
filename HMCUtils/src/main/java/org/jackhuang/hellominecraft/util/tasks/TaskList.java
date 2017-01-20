@@ -112,9 +112,10 @@ public class TaskList extends Thread {
         }
         try {
             counter.await();
-        } catch (InterruptedException ignore) {
+            return bool.get();
+        } catch (InterruptedException ignore) { // this task is canceled, so failed.
+            return false;
         }
-        return bool.get();
     }
 
     private boolean executeTask(Task t) {
