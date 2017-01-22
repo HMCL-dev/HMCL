@@ -47,7 +47,7 @@ public class HelloMinecraftLookAndFeel extends SynthLookAndFeel {
     public HelloMinecraftLookAndFeel(Map<String, String> settings) throws ParseException {
         try {
             try (InputStream is = HelloMinecraftLookAndFeel.class.getResourceAsStream("/org/jackhuang/hellominecraft/lookandfeel/synth.xml")) {
-                String s = IOUtils.getStreamContent(is, "UTF-8");
+                String s = IOUtils.toString(is, "UTF-8");
                 for (Map.Entry<String, String> ss : settings.entrySet())
                     s = s.replace("${" + ss.getKey() + "}", ss.getValue());
                 load(new ByteArrayInputStream(s.getBytes("UTF-8")), HelloMinecraftLookAndFeel.class);

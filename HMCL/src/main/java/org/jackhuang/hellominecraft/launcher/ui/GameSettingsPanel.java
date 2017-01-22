@@ -54,7 +54,7 @@ import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.launcher.setting.VersionSetting;
 import org.jackhuang.hellominecraft.util.MessageBox;
-import org.jackhuang.hellominecraft.util.OverridableSwingWorker;
+import org.jackhuang.hellominecraft.util.AbstractSwingWorker;
 import org.jackhuang.hellominecraft.util.MinecraftVersionRequest;
 import org.jackhuang.hellominecraft.util.system.OS;
 import org.jackhuang.hellominecraft.util.StrUtils;
@@ -1276,7 +1276,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         }
     }
 
-    private static class OverridableSwingWorkerImpl extends OverridableSwingWorker<List<ModInfo>> {
+    private static class OverridableSwingWorkerImpl extends AbstractSwingWorker<List<ModInfo>> {
 
         @Override
         protected void work() throws Exception {

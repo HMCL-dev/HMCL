@@ -28,7 +28,7 @@ import org.jackhuang.hellominecraft.util.func.Consumer;
  *
  * @author huangyuhui
  */
-public abstract class OverridableSwingWorker<T> extends SwingWorker<Void, T> {
+public abstract class AbstractSwingWorker<T> extends SwingWorker<Void, T> {
 
     List<Consumer<T>> processListeners = new ArrayList<>();
     List<Runnable> doneListeners = new ArrayList<>();
@@ -47,13 +47,13 @@ public abstract class OverridableSwingWorker<T> extends SwingWorker<Void, T> {
         return null;
     }
 
-    public OverridableSwingWorker reg(Consumer<T> c) {
+    public AbstractSwingWorker reg(Consumer<T> c) {
         Objects.requireNonNull(c);
         processListeners.add(c);
         return this;
     }
 
-    public OverridableSwingWorker regDone(Runnable c) {
+    public AbstractSwingWorker regDone(Runnable c) {
         Objects.requireNonNull(c);
         doneListeners.add(c);
         return this;

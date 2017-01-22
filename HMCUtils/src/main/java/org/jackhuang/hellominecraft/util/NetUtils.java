@@ -26,6 +26,7 @@ import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
 import java.util.Map;
+import org.jackhuang.hellominecraft.util.code.Charsets;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 
 /**
@@ -33,12 +34,22 @@ import org.jackhuang.hellominecraft.util.system.IOUtils;
  * @author huang
  */
 public final class NetUtils {
-    
+
     private NetUtils() {
     }
 
+    private static HttpURLConnection createConnection(URL url, Proxy proxy) throws IOException {
+        HttpURLConnection con = (HttpURLConnection) url.openConnection(proxy);
+        con.setDoOutput(true);
+        con.setDoInput(true);
+        con.setUseCaches(false);
+        con.setConnectTimeout(15000);
+        con.setReadTimeout(15000);
+        return con;
+    }
+
     public static String get(String url, String encoding) throws IOException {
-        return IOUtils.getStreamContent(new URL(url).openConnection().getInputStream());
+        return IOUtils.toString(new URL(url).openConnection().getInputStream());
     }
 
     public static String get(String url) throws IOException {
@@ -50,7 +61,7 @@ public final class NetUtils {
     }
 
     public static String get(URL url, Proxy proxy) throws IOException {
-        return IOUtils.getStreamContent(url.openConnection(proxy).getInputStream());
+        return readData(createConnection(url, proxy));
     }
 
     public static String post(URL u, Map<String, String> params) throws IOException {
@@ -72,17 +83,13 @@ public final class NetUtils {
     }
 
     public static String post(URL u, String post, String contentType, Proxy proxy) throws IOException {
-        HttpURLConnection con = (HttpURLConnection) u.openConnection(proxy);
+        byte[] bytes = post.getBytes(Charsets.UTF_8);
+
+        HttpURLConnection con = createConnection(u, proxy);
         con.setRequestMethod("POST");
         con.setDoOutput(true);
-        con.setDoInput(true);
-        con.setUseCaches(false);
-        con.setConnectTimeout(30000);
-        con.setReadTimeout(30000);
         con.setRequestProperty("Content-Type", contentType + "; charset=utf-8");
-        byte[] bytes = post.getBytes(IOUtils.DEFAULT_CHARSET);
         con.setRequestProperty("Content-Length", "" + bytes.length);
-        con.connect();
         OutputStream os = null;
         try {
             os = con.getOutputStream();
@@ -90,20 +97,23 @@ public final class NetUtils {
         } finally {
             IOUtils.closeQuietly(os);
         }
+        return readData(con);
+    }
 
-        String result;
+    private static String readData(HttpURLConnection con) throws IOException {
         InputStream is = null;
         try {
             is = con.getInputStream();
-            result = IOUtils.getStreamContent(is);
-        } catch (IOException ex) {
+            return IOUtils.toString(is, Charsets.UTF_8);
+        } catch (IOException e) {
             IOUtils.closeQuietly(is);
             is = con.getErrorStream();
-            result = IOUtils.getStreamContent(is);
+            if (is != null)
+                return IOUtils.toString(is, Charsets.UTF_8);
+            throw e;
+        } finally {
+            IOUtils.closeQuietly(is);
         }
-
-        con.disconnect();
-        return result;
     }
 
     public static URL constantURL(String url) {
@@ -117,9 +127,7 @@ public final class NetUtils {
 
     public static URL concatenateURL(URL url, String query) {
         try {
-            if (url.getQuery() != null && url.getQuery().length() > 0)
-                return new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile() + "&" + query);
-            return new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile() + "?" + query);
+            return new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile() + (url.getQuery() != null && url.getQuery().length() > 0 ? '&' : '?') + query);
         } catch (MalformedURLException ex) {
             throw new IllegalArgumentException("Could not concatenate given URL with GET arguments!", ex);
         }

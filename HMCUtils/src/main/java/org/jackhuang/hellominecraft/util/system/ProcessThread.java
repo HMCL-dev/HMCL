@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.util.system;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -46,35 +47,29 @@ public class ProcessThread extends Thread {
     @Override
     public void run() {
         setName("ProcessMonitor");
-        InputStreamReader br = null;
+        BufferedReader br = null;
         try {
             InputStream in = p.getRawProcess().getInputStream();
             try {
-                br = new InputStreamReader(in, System.getProperty("sun.jnu.encoding", "UTF-8"));
+                br = new BufferedReader(new InputStreamReader(in, System.getProperty("sun.jnu.encoding", "UTF-8")));
             } catch (UnsupportedEncodingException ex) {
                 HMCLog.warn("Unsupported encoding: " + System.getProperty("sun.jnu.encoding", "UTF-8"), ex);
-                br = new InputStreamReader(in);
+                br = new BufferedReader(new InputStreamReader(in));
             }
 
             int ch;
             String line = "";
             while (p.isRunning())
-                while ((ch = br.read()) != -1)
-                    if (ch == '\n') {
-                        printlnEvent.execute(line);
-                        System.out.println("Minecraft: " + line);
-                        p.getStdOutLines().add(line);
-                        line = "";
-                    } else
-                        line += (char) ch;
-            while ((ch = br.read()) != -1)
-                if (ch == '\n') {
+                while ((line = br.readLine()) != null) {
                     printlnEvent.execute(line);
                     System.out.println("Minecraft: " + line);
                     p.getStdOutLines().add(line);
-                    line = "";
-                } else
-                    line += (char) ch;
+                }
+            while ((line = br.readLine()) != null) {
+                printlnEvent.execute(line);
+                System.out.println("Minecraft: " + line);
+                p.getStdOutLines().add(line);
+            }
             stopEvent.execute(p);
         } catch (IOException e) {
             HMCLog.err("An error occured when reading process stdout/stderr.", e);

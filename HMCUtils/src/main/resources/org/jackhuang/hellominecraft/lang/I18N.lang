@@ -187,6 +187,7 @@ message.error=错误
 message.cannot_open_explorer=无法打开文件管理器: 
 message.cancelled=已取消
 message.info=提示
+message.loading=加载中...
 
 folder.game=游戏文件夹
 folder.mod=MOD文件夹

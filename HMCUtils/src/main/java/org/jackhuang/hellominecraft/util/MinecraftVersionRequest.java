@@ -68,7 +68,7 @@ public class MinecraftVersionRequest implements Serializable {
 
     private static MinecraftVersionRequest getVersionOfOldMinecraft(ZipFile file, ZipEntry entry) throws IOException {
         MinecraftVersionRequest r = new MinecraftVersionRequest();
-        byte[] tmp = IOUtils.getBytesFromStream(file.getInputStream(entry));
+        byte[] tmp = IOUtils.readFully(file.getInputStream(entry)).toByteArray();
 
         byte[] bytes = "Minecraft Minecraft ".getBytes("ASCII");
         int j = ArrayUtils.matchArray(tmp, bytes);
@@ -92,7 +92,7 @@ public class MinecraftVersionRequest implements Serializable {
 
     private static MinecraftVersionRequest getVersionOfNewMinecraft(ZipFile file, ZipEntry entry) throws IOException {
         MinecraftVersionRequest r = new MinecraftVersionRequest();
-        byte[] tmp = IOUtils.getBytesFromStream(file.getInputStream(entry));
+        byte[] tmp = IOUtils.readFully(file.getInputStream(entry)).toByteArray();
 
         byte[] str = "-server.txt".getBytes("ASCII");
         int j = ArrayUtils.matchArray(tmp, str);
@@ -175,12 +175,7 @@ public class MinecraftVersionRequest implements Serializable {
             r.type = MinecraftVersionRequest.INVALID_JAR;
             return r;
         } finally {
-            if (f != null)
-                try {
-                    f.close();
-                } catch (IOException ex) {
-                    HMCLog.warn("Failed to close zip file", ex);
-                }
+            IOUtils.closeQuietly(f);
         }
     }
 }

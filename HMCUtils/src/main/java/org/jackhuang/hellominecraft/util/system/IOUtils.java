@@ -202,6 +202,22 @@ public final class IOUtils {
 
         return entryBuffer;
     }
+    
+    public static byte[] toByteArray(InputStream stream) throws IOException {
+        return readFully(stream).toByteArray();
+    }
+    
+    public static String toString(InputStream is) throws IOException {
+        return readFully(is).toString();
+    }
+    
+    public static String toString(InputStream is, String charset) throws IOException {
+        return readFully(is).toString(charset);
+    }
+    
+    public static String toString(InputStream is, Charset charset) throws IOException {
+        return readFully(is).toString(charset.name());
+    }
 
     public static void closeQuietly(Closeable closeable) {
         try {
@@ -300,31 +316,6 @@ public final class IOUtils {
         int length;
         while ((length = input.read(buf)) != -1)
             output.write(buf, 0, length);
-    }
-
-    public static byte[] getBytesFromStream(InputStream is) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        IOUtils.copyStream(is, out);
-        is.close();
-        return out.toByteArray();
-    }
-
-    public static String getStreamContent(InputStream is) throws IOException {
-        return getStreamContent(is, DEFAULT_CHARSET);
-    }
-
-    public static String getStreamContent(InputStream is, String encoding)
-            throws IOException {
-        if (is == null)
-            return null;
-        StringBuilder sb = new StringBuilder();
-        try (InputStreamReader br = new InputStreamReader(is, encoding)) {
-            int len;
-            char[] buf = new char[16384];
-            while ((len = br.read(buf)) != -1)
-                sb.append(buf, 0, len);
-        }
-        return sb.toString();
     }
 
     public static final String DEFAULT_CHARSET = "UTF-8";

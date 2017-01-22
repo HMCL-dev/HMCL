@@ -131,7 +131,7 @@ public final class Settings {
     }
 
     public static Collection<Profile> getProfilesFiltered() {
-        return CollectionUtils.map(getProfiles().values(), t -> t != null && t.getName() != null);
+        return CollectionUtils.filter(getProfiles().values(), t -> t != null && t.getName() != null);
     }
 
     public static Profile getOneProfile() {

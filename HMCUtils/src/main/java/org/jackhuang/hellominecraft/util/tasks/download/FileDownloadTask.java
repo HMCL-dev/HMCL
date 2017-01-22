@@ -92,23 +92,10 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
     boolean shouldContinue = true;
 
     private void closeFiles() {
-        // Close file.
-        if (file != null)
-            try {
-                file.close();
-                file = null;
-            } catch (IOException e) {
-                HMCLog.warn("Failed to close file", e);
-            }
-
-        // Close connection to server.
-        if (stream != null)
-            try {
-                stream.close();
-                stream = null;
-            } catch (IOException e) {
-                HMCLog.warn("Failed to close stream", e);
-            }
+        IOUtils.closeQuietly(file);
+        file = null;
+        IOUtils.closeQuietly(stream);
+        stream = null;
     }
 
     // Download file.

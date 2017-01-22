@@ -140,7 +140,7 @@ public class YggdrasilAuthentication {
 
     private void loggedIn(URL url, Object input) throws AuthenticationException {
         try {
-            String jsonResult = input == null ? NetUtils.get(url) : NetUtils.post(url, GSON.toJson(input), "application/json", proxy);
+            String jsonResult = input == null ? NetUtils.get(url, proxy) : NetUtils.post(url, GSON.toJson(input), "application/json", proxy);
             Response response = (Response) GSON.fromJson(jsonResult, Response.class);
 
             if (response == null)

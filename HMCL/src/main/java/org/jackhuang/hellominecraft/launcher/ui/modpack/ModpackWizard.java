@@ -114,33 +114,33 @@ public class ModpackWizard extends WizardBranchController {
                             boolean including = false;
                             if ((Boolean) settings.get(ModpackInitializationPanel.KEY_INCLUDING_LAUNCHER)) {
                                 boolean flag = true;
-                                ZipEngine engine = new ZipEngine(loc);
-                                Config s = new Config();
-                                if (!IOUtils.isAbsolutePath(Settings.getInstance().getBgpath()))
-                                    s.setBgpath(Settings.getInstance().getBgpath());
-                                s.setDownloadType(Settings.getInstance().getDownloadType());
-                                engine.putTextFile(C.GSON.toJson(s), "hmcl.json");
-                                engine.putFile(modpack, "modpack.zip");
-                                File bg = new File("bg");
-                                if (bg.isDirectory())
-                                    engine.putDirectory(bg);
-                                bg = new File("background.png");
-                                if (bg.isFile())
-                                    engine.putFile(bg, "background.png");
-                                bg = new File("background.jpg");
-                                if (bg.isFile())
-                                    engine.putFile(bg, "background.jpg");
-                                for (URL u : Utils.getURL())
-                                    try {
-                                        File f = new File(u.toURI());
-                                        if (f.getName().endsWith(".exe") || f.getName().endsWith(".jar"))
-                                            engine.putFile(f, f.getName());
-                                    } catch (IOException | URISyntaxException e) {
-                                        HMCLog.err("Failed to add launcher files.", e);
-                                        flag = false;
-                                        break;
-                                    }
-                                engine.closeFile();
+                                try (ZipEngine engine = new ZipEngine(loc)) {
+                                    Config s = new Config();
+                                    if (!IOUtils.isAbsolutePath(Settings.getInstance().getBgpath()))
+                                        s.setBgpath(Settings.getInstance().getBgpath());
+                                    s.setDownloadType(Settings.getInstance().getDownloadType());
+                                    engine.putTextFile(C.GSON.toJson(s), "hmcl.json");
+                                    engine.putFile(modpack, "modpack.zip");
+                                    File bg = new File("bg");
+                                    if (bg.isDirectory())
+                                        engine.putDirectory(bg);
+                                    bg = new File("background.png");
+                                    if (bg.isFile())
+                                        engine.putFile(bg, "background.png");
+                                    bg = new File("background.jpg");
+                                    if (bg.isFile())
+                                        engine.putFile(bg, "background.jpg");
+                                    for (URL u : Utils.getURL())
+                                        try {
+                                            File f = new File(u.toURI());
+                                            if (f.getName().endsWith(".exe") || f.getName().endsWith(".jar"))
+                                                engine.putFile(f, f.getName());
+                                        } catch (IOException | URISyntaxException e) {
+                                            HMCLog.err("Failed to add launcher files.", e);
+                                            flag = false;
+                                            break;
+                                        }
+                                }
                                 if (flag) {
                                     including = true;
                                     if (!modpack.delete())

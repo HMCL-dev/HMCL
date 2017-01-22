@@ -26,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.system.IOUtils;
 
 /**
  *
@@ -65,12 +66,7 @@ public class ServerProperties {
             HMCLog.warn("Failed to get property in server.properties", ex);
             return "";
         } finally {
-            try {
-                if (is != null)
-                    is.close();
-            } catch (IOException ex) {
-                HMCLog.warn("Failed to close InputStream for server.properties", ex);
-            }
+            IOUtils.closeQuietly(is);
         }
     }
 
@@ -98,12 +94,7 @@ public class ServerProperties {
         } catch (IOException ex) {
             HMCLog.warn("Failed to set property in server.properties", ex);
         } finally {
-            try {
-                if (is != null)
-                    is.close();
-            } catch (IOException ex) {
-                HMCLog.warn("Failed to close OutputStream for server.properties", ex);
-            }
+            IOUtils.closeQuietly(is);
         }
     }
 

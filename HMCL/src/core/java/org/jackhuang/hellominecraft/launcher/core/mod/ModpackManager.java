@@ -47,6 +47,7 @@ import org.jackhuang.hellominecraft.util.system.ZipEngine;
 import org.jackhuang.hellominecraft.util.tasks.Task;
 import org.jackhuang.hellominecraft.util.ui.WebPage;
 import org.jackhuang.hellominecraft.util.MinecraftVersionRequest;
+import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.tasks.NoShownTaskException;
 
 /**
@@ -275,8 +276,7 @@ public final class ModpackManager {
             if (callback != null)
                 callback.call(zip);
         } finally {
-            if (zip != null)
-                zip.closeFile();
+            IOUtils.closeQuietly(zip);
         }
     }
 

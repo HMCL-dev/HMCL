@@ -160,7 +160,7 @@ public final class Main implements Runnable {
                 HMCLog.warn("Failed to set look and feel...", ex);
             }
 
-            Settings.UPDATE_CHECKER.outdated.register(IUpgrader.NOW_UPGRADER);
+            Settings.UPDATE_CHECKER.outOfDateEvent.register(IUpgrader.NOW_UPGRADER);
             Settings.UPDATE_CHECKER.process(false).reg(t -> Main.invokeUpdate()).execute();
 
             if (StrUtils.isNotBlank(Settings.getInstance().getProxyHost()) && StrUtils.isNotBlank(Settings.getInstance().getProxyPort()) && MathUtils.canParseInt(Settings.getInstance().getProxyPort())) {

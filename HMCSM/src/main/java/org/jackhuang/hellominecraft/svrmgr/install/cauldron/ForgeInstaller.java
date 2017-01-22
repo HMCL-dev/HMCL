@@ -66,7 +66,7 @@ public class ForgeInstaller {
 
         ZipFile zipFile = new ZipFile(forgeInstaller);
         ZipEntry entry = zipFile.getEntry("install_profile.json");
-        String content = IOUtils.getStreamContent(zipFile.getInputStream(entry));
+        String content = IOUtils.toString(zipFile.getInputStream(entry));
         InstallProfile profile = gson.fromJson(content, InstallProfile.class);
 
         HMCLog.log("Extracting cauldron server pack..." + profile.install.filePath);
@@ -122,7 +122,7 @@ public class ForgeInstaller {
             File packFile = new File(gameDir, "libraries" + File.separator + library.formatted + ".pack.xz");
             if (packFile.exists() && packFile.isFile())
                 try {
-                    unpackLibrary(lib.getParentFile(), IOUtils.getBytesFromStream(FileUtils.openInputStream(packFile)));
+                    unpackLibrary(lib.getParentFile(), IOUtils.readFully(FileUtils.openInputStream(packFile)).toByteArray());
                     if (!checksumValid(lib, Arrays.asList(library.checksums)))
                         badLibs.add(library.name);
                 } catch (IOException e) {
@@ -165,7 +165,7 @@ public class ForgeInstaller {
 
     private static boolean checksumValid(File libPath, List<String> checksums) {
         try {
-            byte[] fileData = IOUtils.getBytesFromStream(FileUtils.openInputStream(libPath));
+            byte[] fileData = IOUtils.readFully(FileUtils.openInputStream(libPath)).toByteArray();
             boolean valid = (checksums == null) || (checksums.isEmpty()) || (checksums.contains(DigestUtils.sha1Hex(fileData)));
             if ((!valid) && (libPath.getName().endsWith(".jar")))
                 valid = validateJar(libPath, fileData, checksums);

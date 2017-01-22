@@ -78,9 +78,8 @@ public class JavaProcessMonitor {
         al.add(a);
     }
 
-    void processThreadStopped(ProcessThread t, boolean forceTermintate) {
-        al.remove(t);
-        al.removeAll(CollectionUtils.map(al, t1 -> !t1.isAlive()));
+    void processThreadStopped(ProcessThread t1, boolean forceTermintate) {
+        CollectionUtils.removeIf(al, t -> t == t1 || !t.isAlive());
         if (al.isEmpty() || forceTermintate) {
             for (Thread a : al)
                 a.interrupt();

@@ -37,14 +37,6 @@ public final class StrUtils {
     private StrUtils() {
     }
 
-    public static String substring(String src, int start_idx, int end_idx) {
-        byte[] b = src.getBytes();
-        String tgt = "";
-        for (int i = start_idx; i <= end_idx; i++)
-            tgt += (char) b[i];
-        return tgt;
-    }
-
     public static String makeCommand(List<String> cmd) {
         StringBuilder cmdbuf = new StringBuilder(120);
         for (int i = 0; i < cmd.size(); i++) {
@@ -189,7 +181,7 @@ public final class StrUtils {
 
     public static boolean equals(String base, String to) {
         if (base == null)
-            return (to == null);
+            return to == null;
         else
             return base.equals(to);
     }
@@ -218,15 +210,6 @@ public final class StrUtils {
         }
 
         return (String[]) localArrayList.toArray(new String[localArrayList.size()]);
-    }
-
-    public static String trimExtension(String filename) {
-        if ((filename != null) && (filename.length() > 0)) {
-            int i = filename.lastIndexOf('.');
-            if ((i > -1) && (i < (filename.length())))
-                return filename.substring(0, i);
-        }
-        return filename;
     }
 
     public static boolean isBlank(String s) {

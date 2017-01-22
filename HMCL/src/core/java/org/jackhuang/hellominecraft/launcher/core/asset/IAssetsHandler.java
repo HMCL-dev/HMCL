@@ -114,7 +114,7 @@ public abstract class IAssetsHandler {
                 try {
                     if (location.exists()) {
                         FileInputStream fis = new FileInputStream(location);
-                        String sha = DigestUtils.sha1Hex(IOUtils.getBytesFromStream(fis));
+                        String sha = DigestUtils.sha1Hex(IOUtils.readFully(fis).toByteArray());
                         IOUtils.closeQuietly(fis);
                         if (contents.get(i).geteTag().equals(sha)) {
                             ++hasDownloaded;

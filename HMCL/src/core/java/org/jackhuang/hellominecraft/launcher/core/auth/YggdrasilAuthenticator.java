@@ -24,9 +24,9 @@ import javax.swing.JOptionPane;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.ArrayUtils;
 import org.jackhuang.hellominecraft.launcher.core.auth.yggdrasil.GameProfile;
+import org.jackhuang.hellominecraft.launcher.core.auth.yggdrasil.UUIDTypeAdapter;
 import org.jackhuang.hellominecraft.launcher.core.auth.yggdrasil.PropertyMap;
 import org.jackhuang.hellominecraft.launcher.core.auth.yggdrasil.YggdrasilAuthentication;
-import org.jackhuang.hellominecraft.launcher.core.auth.yggdrasil.UUIDTypeAdapter;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 
 /**

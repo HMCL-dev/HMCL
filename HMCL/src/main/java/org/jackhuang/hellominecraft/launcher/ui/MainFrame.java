@@ -348,7 +348,7 @@ public final class MainFrame extends DraggableFrame implements IRepaint {
             isShowedMessage = false;
             reloadColor(Settings.getInstance().getTheme());
             windowTitle.setText(defaultTitle);
-            windowTitle.setForeground(Settings.UPDATE_CHECKER.OUT_DATED ? Color.red : Color.white);
+            windowTitle.setForeground(Settings.UPDATE_CHECKER.isOutOfDate() ? Color.red : Color.white);
         }
     }
 

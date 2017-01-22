@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.util.system;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -34,7 +35,7 @@ import org.jackhuang.hellominecraft.util.func.BiFunction;
  *
  * @author huangyuhui
  */
-public class ZipEngine {
+public class ZipEngine implements Closeable {
 
     byte[] buf = new byte[1024];
     ZipOutputStream zos;
@@ -44,7 +45,8 @@ public class ZipEngine {
         zos = new ZipOutputStream(new BufferedOutputStream(os));
     }
 
-    public void closeFile() throws IOException {
+    @Override
+    public void close() throws IOException {
         zos.closeEntry();
         zos.close();
     }

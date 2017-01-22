@@ -28,7 +28,6 @@ import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.util.tasks.Task;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.NetUtils;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
@@ -55,7 +54,7 @@ public class ForgeInstaller extends Task {
 
         try (ZipFile zipFile = new ZipFile(forgeInstaller)) {
             ZipEntry entry = zipFile.getEntry("install_profile.json");
-            String content = IOUtils.getStreamContent(zipFile.getInputStream(entry));
+            String content = IOUtils.toString(zipFile.getInputStream(entry));
             InstallProfile profile = C.GSON.fromJson(content, InstallProfile.class);
             File from = new File(gameDir, "versions" + File.separator + profile.install.getMinecraft());
             if (!from.exists())

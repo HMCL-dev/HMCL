@@ -218,7 +218,7 @@ public class TaskWindow extends javax.swing.JDialog
 
     @Override
     public void onDoing(Task task, Collection<Task> taskCollection) {
-        if (task == null)
+        if (task == null || task.isHidden())
             return;
         task.setProgressProviderListener(this);
 
@@ -238,8 +238,10 @@ public class TaskWindow extends javax.swing.JDialog
 
     @Override
     public void onDone(Task task, Collection<Task> taskCollection) {
+        if (task == null || task.isHidden())
+            return;
         SwingUtilities.invokeLater(() -> {
-            if (taskList == null || task == null)
+            if (taskList == null)
                 return;
             pgsTotal.setMaximum(taskList.taskCount());
             pgsTotal.setValue(pgsTotal.getValue() + 1);
@@ -254,8 +256,10 @@ public class TaskWindow extends javax.swing.JDialog
 
     @Override
     public void onFailed(Task task) {
+        if (task == null || task.isHidden())
+            return;
         SwingUtilities.invokeLater(() -> {
-            if (taskList == null || task == null)
+            if (taskList == null)
                 return;
             String msg = null;
             if (task.getFailReason() != null && !(task.getFailReason() instanceof NoShownTaskException))
@@ -283,13 +287,14 @@ public class TaskWindow extends javax.swing.JDialog
 
     @Override
     public void setStatus(Task task, String sta) {
+        if (task == null || task.isHidden())
+            return;
         SwingUtilities.invokeLater(() -> {
-            if (taskList == null || task == null)
+            if (taskList == null)
                 return;
             int idx = tasks.indexOf(task);
-            if (idx == -1)
-                return;
-            SwingUtils.setValueAt(lstDownload, task.getInfo() + ": " + sta, idx, 0);
+            if (idx != -1)
+                SwingUtils.setValueAt(lstDownload, task.getInfo() + ": " + sta, idx, 0);
         });
     }
 

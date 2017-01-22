@@ -36,6 +36,7 @@ public class DoubleTask extends TaskInfo {
         super(info);
         this.a = a;
         this.b = b;
+        hidden = true;
     }
 
     @Override

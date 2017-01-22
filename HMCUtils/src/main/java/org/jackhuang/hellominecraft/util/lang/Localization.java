@@ -36,13 +36,17 @@ public final class Localization {
     private static final Map<Locale, Localization> INSTANCE = new HashMap<>();
 
     private final Map<String, String> lang;
+    
+    private static InputStream getStream(String id) {
+        return Localization.class.getResourceAsStream(String.format(ROOT_LOCATION, id));
+    }
 
     private Localization(Locale locale) {
-        InputStream is = Localization.class.getResourceAsStream(String.format(ROOT_LOCATION, "_" + locale.getLanguage() + "_" + locale.getCountry()));
+        InputStream is = getStream("_" + locale.getLanguage() + "_" + locale.getCountry());
         if (is == null)
-            is = Localization.class.getResourceAsStream(String.format(ROOT_LOCATION, "_" + locale.getLanguage()));
+            is = getStream("_" + locale.getLanguage());
         if (is == null)
-            is = Localization.class.getResourceAsStream(String.format(ROOT_LOCATION, ""));
+            is = getStream("");
         if (is == null)
             throw new RuntimeException("LANG FILE MISSING");
 

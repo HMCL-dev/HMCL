@@ -195,12 +195,12 @@ public final class FileUtils {
 
     public static String read(File file)
         throws IOException {
-        return IOUtils.getStreamContent(IOUtils.openInputStream(file));
+        return IOUtils.toString(IOUtils.openInputStream(file));
     }
 
     public static String readQuietly(File file) {
         try {
-            return IOUtils.getStreamContent(IOUtils.openInputStream(file));
+            return IOUtils.toString(IOUtils.openInputStream(file));
         } catch (IOException ex) {
             HMCLog.err("Failed to read file: " + file, ex);
             return null;
@@ -209,12 +209,12 @@ public final class FileUtils {
 
     public static String read(File file, String charset)
         throws IOException {
-        return IOUtils.getStreamContent(IOUtils.openInputStream(file), charset);
+        return IOUtils.toString(IOUtils.openInputStream(file), charset);
     }
 
     public static String readIgnoreFileNotFound(File file) throws IOException {
         try {
-            return IOUtils.getStreamContent(IOUtils.openInputStream(file));
+            return IOUtils.toString(IOUtils.openInputStream(file));
         } catch (FileNotFoundException ex) {
             return "";
         }
@@ -263,14 +263,6 @@ public final class FileUtils {
         return Math.max(lastUnixPos, lastWindowsPos);
     }
 
-    public static int indexOfExtension(String filename) {
-        if (filename == null)
-            return -1;
-        int extensionPos = filename.lastIndexOf(46);
-        int lastSeparator = indexOfLastSeparator(filename);
-        return lastSeparator > extensionPos ? -1 : extensionPos;
-    }
-
     public static String getName(String filename) {
         if (filename == null)
             return null;
@@ -287,6 +279,14 @@ public final class FileUtils {
      */
     public static String getBaseName(String filename) {
         return removeExtension(getName(filename));
+    }
+
+    public static int indexOfExtension(String filename) {
+        if (filename == null)
+            return -1;
+        int extensionPos = filename.lastIndexOf(46);
+        int lastSeparator = indexOfLastSeparator(filename);
+        return lastSeparator > extensionPos ? -1 : extensionPos;
     }
 
     public static String getExtension(String filename) {
@@ -333,7 +333,6 @@ public final class FileUtils {
         try {
             out = openOutputStream(file, append);
             IOUtils.write(data, out, encoding);
-            out.close();
         } finally {
             IOUtils.closeQuietly(out);
         }

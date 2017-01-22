@@ -50,6 +50,12 @@ public abstract class Task {
     public boolean isAborted() {
         return aborted;
     }
+    
+    protected boolean hidden = false;
+    
+    public boolean isHidden() {
+        return hidden;
+    }
 
     public Throwable getFailReason() {
         return failReason;
