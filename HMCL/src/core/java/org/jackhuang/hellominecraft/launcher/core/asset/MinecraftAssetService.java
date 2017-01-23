@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftAssetService;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
@@ -49,8 +50,8 @@ public class MinecraftAssetService extends IMinecraftAssetService {
     }
 
     @Override
-    public Task downloadAssets(final String mcVersion) {
-        return downloadAssets(service.version().getVersionById(mcVersion));
+    public Task downloadAssets(final String mcVersion) throws GameException {
+        return downloadAssets(service.version().getVersionById(mcVersion).resolve(service.version()));
     }
 
     public Task downloadAssets(final MinecraftVersion mv) {
@@ -60,8 +61,8 @@ public class MinecraftAssetService extends IMinecraftAssetService {
     }
 
     @Override
-    public boolean refreshAssetsIndex(String id) {
-        MinecraftVersion mv = service.version().getVersionById(id);
+    public boolean refreshAssetsIndex(String id) throws GameException {
+        MinecraftVersion mv = service.version().getVersionById(id).resolve(service.version());
         if (mv == null)
             return false;
         return downloadMinecraftAssetsIndexAsync(mv.getAssetsIndex());

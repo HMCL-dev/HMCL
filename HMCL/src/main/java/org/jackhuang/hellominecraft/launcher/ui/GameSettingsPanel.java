@@ -41,6 +41,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
+import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.util.LauncherVisibility;
@@ -184,7 +185,12 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         itm = new JMenuItem(C.i18n("versions.manage.redownload_assets_index"));
         itm.addActionListener((e) -> {
             if (mcVersion != null)
-                Settings.getLastProfile().service().asset().refreshAssetsIndex(mcVersion);
+                try {
+                    Settings.getLastProfile().service().asset().refreshAssetsIndex(mcVersion);
+                } catch (GameException ex) {
+                    HMCLog.err("Failed to download assets", ex);
+                    MessageBox.showLocalized("assets.failed_download");
+                }
         });
         ppmManage.add(itm);
         itm = new JMenuItem(C.i18n("versions.mamage.remove_libraries"));
@@ -1151,7 +1157,12 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
 
     private void btnDownloadAllAssetsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadAllAssetsActionPerformed
         if (mcVersion != null)
-            TaskWindow.factory().execute(Settings.getLastProfile().service().asset().downloadAssets(mcVersion));
+            try {
+                TaskWindow.factory().execute(Settings.getLastProfile().service().asset().downloadAssets(mcVersion));
+            } catch (GameException ex) {
+                HMCLog.err("Failed to download assets", ex);
+                MessageBox.showLocalized("assets.failed_download");
+            }
     }//GEN-LAST:event_btnDownloadAllAssetsActionPerformed
 
     private void txtMaxMemoryFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtMaxMemoryFocusLost
@@ -1269,7 +1280,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
             new OverridableSwingWorkerImpl().reg(t -> {
                 synchronized (modLock) {
                     for (ModInfo x : t)
-                        model.addRow(new Object[]{x.isActive(), x, x.version});
+                        model.addRow(new Object[] { x.isActive(), x, x.version });
                     reloadingMods = false;
                 }
             }).execute();
