@@ -53,6 +53,8 @@ public final class Config implements Cloneable {
     private String proxyPassword;
     @SerializedName("enableShadow")
     private boolean enableShadow;
+    @SerializedName("enableBlur")
+    private boolean enableBlur;
     @SerializedName("decorated")
     private boolean decorated;
     @SerializedName("theme")
@@ -105,6 +107,15 @@ public final class Config implements Cloneable {
 
     public void setEnableShadow(boolean enableShadow) {
         this.enableShadow = enableShadow;
+        Settings.save();
+    }
+
+    public boolean isEnableBlur() {
+        return enableBlur;
+    }
+
+    public void setEnableBlur(boolean enableBlur) {
+        this.enableBlur = enableBlur;
         Settings.save();
     }
 
@@ -183,7 +194,7 @@ public final class Config implements Cloneable {
     public Config() {
         clientToken = UUID.randomUUID().toString();
         logintype = downloadtype = 0;
-        enableShadow = false;
+        enableBlur = enableShadow = true;
         theme = 4;
         decorated = OS.os() == OS.LINUX;
         auth = new HashMap<>();

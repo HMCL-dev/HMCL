@@ -309,12 +309,13 @@ launcher.versions_json_not_formatted=版本%s信息資料格式错误，是否�
 launcher.choose_bgpath=選擇背景路徑
 launcher.background_tooltip=<html><body>啟動器默認使用自帶的背景<br />如果當前目錄有background.png，則會使用該資料作為背景<br />如果當前目錄有bg子目錄，則會隨機使用裡面的一張圖作為背景<br />如果該背景地址被修改，則會使用背景地址裡的一張圖作為背景<br />背景地址允許有多個地址，使用半角分號";"(不包含雙引號)分隔</body></html>
 launcher.update_launcher=检查更新
-launcher.enable_shadow=启用窗口阴影
+launcher.enable_shadow=啟用窗口陰影
+launcher.enable_animation=啟用動態效果
+launcher.enable_blur=啟用主界面模糊
 launcher.theme=主题
 launcher.proxy=代理
 launcher.decorated=啟用窗口邊框(Linux下可解決程序界面全灰問題)
 launcher.modpack=<html><a href="http://huangyuhui.duapp.com/link.php?type=modpack">整合包作者帮助</a></html>
-launcher.enable_animation=啟用動態效果
 launcher.lang=語言
 launcher.restart=本界面選項需要重啟本啟動器生效
 

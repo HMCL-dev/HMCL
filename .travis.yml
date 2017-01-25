@@ -17,9 +17,6 @@ deploy:
   - HMCL/build/libs/HMCL-${HMCL_VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}.jar
   - HMCL/build/libs/HMCL-${HMCL_VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}.exe
   - HMCL/build/libs/HMCL-${HMCL_VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}-MacOSApp.zip
-  - HMCSM/build/libs/HMCSM-${HMCSM_VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}.jar
-  - HMCSM/build/libs/HMCSM-${HMCSM_VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}.exe
-  - HMCSM/build/libs/HMCSM-${HMCSM_VERSION_ROOT}.${TRAVIS_BUILD_NUMBER}-MacOSApp.zip
   on:
     repo: huanghongxun/HMCL
     tags: false

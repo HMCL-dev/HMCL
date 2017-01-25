@@ -77,21 +77,6 @@ public final class Main implements Runnable {
     };
     private static final HostnameVerifier HNV = (hostname, session) -> true;
 
-    static {
-        SSLContext sslContext = null;
-
-        try {
-            sslContext = SSLContext.getInstance("TLS");
-            X509TrustManager[] xtmArray = new X509TrustManager[] { XTM };
-            sslContext.init(null, xtmArray, new java.security.SecureRandom());
-        } catch (GeneralSecurityException gse) {
-        }
-        if (sslContext != null)
-            HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
-
-        HttpsURLConnection.setDefaultHostnameVerifier(HNV);
-    }
-
     public static final String LAUNCHER_NAME = "Hello Minecraft! Launcher";
     public static final String LAUNCHER_VERSION = "@HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING@";
     public static final int MINIMUM_LAUNCHER_VERSION = 16;
@@ -129,6 +114,16 @@ public final class Main implements Runnable {
             System.setProperty("swing.aatext", "true");
             System.setProperty("sun.java2d.noddraw", "true");
             System.setProperty("sun.java2d.dpiaware", "false");
+            System.setProperty("https.protocols", "SSLv3,TLSv1");
+
+            try {
+                SSLContext c = SSLContext.getInstance("SSL");
+                c.init(null, new X509TrustManager[] { XTM }, new java.security.SecureRandom());
+                HttpsURLConnection.setDefaultSSLSocketFactory(c.getSocketFactory());
+            } catch (GeneralSecurityException ignore) {
+            }
+            HttpsURLConnection.setDefaultHostnameVerifier(HNV);
+
             Thread.setDefaultUncaughtExceptionHandler(new CrashReporter(true));
 
             try {

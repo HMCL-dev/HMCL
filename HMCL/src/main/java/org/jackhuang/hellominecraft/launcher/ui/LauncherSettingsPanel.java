@@ -72,6 +72,7 @@ public class LauncherSettingsPanel extends RepaintPage {
         cboDownloadSource.setSelectedIndex(Settings.getInstance().getDownloadType());
         cboTheme.setSelectedIndex(Settings.getInstance().getTheme().ordinal());
         chkEnableShadow.setSelected(Settings.getInstance().isEnableShadow());
+        chkEnableBlur.setSelected(Settings.getInstance().isEnableBlur());
         chkDecorated.setSelected(Settings.getInstance().isDecorated());
     }
 
@@ -115,6 +116,7 @@ public class LauncherSettingsPanel extends RepaintPage {
         lblLang = new javax.swing.JLabel();
         lblRestart = new javax.swing.JLabel();
         btnMCBBS = new javax.swing.JButton();
+        chkEnableBlur = new javax.swing.JCheckBox();
 
         cboDownloadSource.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -235,6 +237,14 @@ public class LauncherSettingsPanel extends RepaintPage {
             }
         });
 
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraft/lang/I18N"); // NOI18N
+        chkEnableBlur.setText(bundle.getString("launcher.enable_blur")); // NOI18N
+        chkEnableBlur.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                chkEnableBlurItemStateChanged(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -287,6 +297,8 @@ public class LauncherSettingsPanel extends RepaintPage {
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(chkEnableShadow)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(chkEnableBlur)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(chkDecorated)))
                 .addContainerGap())
@@ -325,7 +337,8 @@ public class LauncherSettingsPanel extends RepaintPage {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(chkEnableShadow)
-                    .addComponent(chkDecorated))
+                    .addComponent(chkDecorated)
+                    .addComponent(chkEnableBlur))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnCheckUpdate, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -416,6 +429,10 @@ public class LauncherSettingsPanel extends RepaintPage {
         SwingUtils.openLink(C.URL_PUBLISH);
     }//GEN-LAST:event_btnMCBBSActionPerformed
 
+    private void chkEnableBlurItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkEnableBlurItemStateChanged
+        Settings.getInstance().setEnableBlur(chkEnableBlur.isSelected());
+    }//GEN-LAST:event_chkEnableBlurItemStateChanged
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCheckUpdate;
     private javax.swing.JButton btnMCBBS;
@@ -424,6 +441,7 @@ public class LauncherSettingsPanel extends RepaintPage {
     private javax.swing.JComboBox cboLang;
     private javax.swing.JComboBox cboTheme;
     private javax.swing.JCheckBox chkDecorated;
+    private javax.swing.JCheckBox chkEnableBlur;
     private javax.swing.JCheckBox chkEnableShadow;
     private javax.swing.JLabel lblAbout;
     private javax.swing.JLabel lblBackground;

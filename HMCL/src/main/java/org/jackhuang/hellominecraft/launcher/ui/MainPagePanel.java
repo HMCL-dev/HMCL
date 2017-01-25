@@ -90,7 +90,8 @@ public class MainPagePanel extends GaussionPage {
 
         prepareAuths();
 
-        addAeroObject(pnlMore);
+        if (Settings.getInstance().isEnableBlur())
+            addAeroObject(pnlMore);
         setBackgroundImage(MainFrame.INSTANCE.background.getImage());
 
         ((RepaintPage) pnlMore).setRepainter(this);

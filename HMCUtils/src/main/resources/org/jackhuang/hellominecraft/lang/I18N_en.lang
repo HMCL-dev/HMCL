@@ -310,11 +310,12 @@ launcher.choose_bgpath=Choose background path.
 launcher.background_tooltip=<html><body>This app uses the default background at first.<br />If there is background.png in the directory, it will be used.<br />If there is "bg" subdirectory, this app will chooses one picture in "bgskin" randomly.<br />If you set the background setting, this app will use it.</body></html>
 launcher.update_launcher=Check for update
 launcher.enable_shadow=Enable Window Shadow
+launcher.enable_animation=Enable Animation
+launcher.enable_blur=Enable Blur
 launcher.theme=Theme
 launcher.proxy=Proxy
 launcher.decorated=Enable system window border(in order to fix the problem that the ui become all gray in Linux OS)
 launcher.modpack=<html><a href="http://blog.163.com/huanghongxun2008@126/blog/static/7738046920160323812771/">Documentations for modpacks.</a></html>
-launcher.enable_animation=Enable Animation
 launcher.lang=Language
 launcher.restart=Options will be in operations only if restart this app.
 

@@ -72,6 +72,8 @@
                   </Group>
                   <Group type="102" attributes="0">
                       <Component id="chkEnableShadow" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="chkEnableBlur" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="chkDecorated" min="-2" max="-2" attributes="0"/>
                   </Group>
@@ -120,6 +122,7 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="chkEnableShadow" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="chkDecorated" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="chkEnableBlur" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace type="unrelated" max="32767" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
@@ -339,6 +342,16 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnMCBBSActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="chkEnableBlur">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="launcher.enable_blur" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="chkEnableBlurItemStateChanged"/>
       </Events>
     </Component>
   </SubComponents>
