@@ -29,9 +29,7 @@ import org.jackhuang.hellominecraft.util.system.OS;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
-import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
-import org.jackhuang.hellominecraft.util.func.BiFunction;
 
 /**
  *
@@ -76,7 +74,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
             throw new GameException(new NullPointerException("Minecraft Arguments can not be null."));
         String[] splitted = StrUtils.tokenize(version.minecraftArguments);
 
-        String game_assets = assetProvider.apply(version, !options.isNotCheckGame());
+        String game_assets = assetProvider.provide(version, !options.isNotCheckGame());
 
         for (String t : splitted) {
             t = t.replace("${auth_player_name}", lr.getUserName());
@@ -115,13 +113,13 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         }
     }
 
-    private final BiFunction<MinecraftVersion, Boolean, String> DEFAULT_ASSET_PROVIDER = (t, allow) -> {
+    private final IAssetProvider DEFAULT_ASSET_PROVIDER = (t, allow) -> {
         return new File(service.baseDirectory(), "assets").getAbsolutePath();
     };
 
-    private BiFunction<MinecraftVersion, Boolean, String> assetProvider = DEFAULT_ASSET_PROVIDER;
+    private IAssetProvider assetProvider = DEFAULT_ASSET_PROVIDER;
 
-    public void setAssetProvider(BiFunction<MinecraftVersion, Boolean, String> assetProvider) {
+    public void setAssetProvider(IAssetProvider assetProvider) {
         if (assetProvider == null)
             this.assetProvider = DEFAULT_ASSET_PROVIDER;
         else

@@ -24,13 +24,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
+import org.jackhuang.hellominecraft.launcher.core.launch.IAssetProvider;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftAssetService;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.AssetIndexDownloadInfo;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.MessageBox;
-import org.jackhuang.hellominecraft.util.func.BiFunction;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.tasks.Task;
 import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
@@ -51,21 +51,21 @@ public class MinecraftAssetService extends IMinecraftAssetService {
 
     @Override
     public Task downloadAssets(final String mcVersion) throws GameException {
-        return downloadAssets(service.version().getVersionById(mcVersion).resolve(service.version()));
+        return downloadAssets(service.version().getVersionById(mcVersion));
     }
 
-    public Task downloadAssets(final MinecraftVersion mv) {
+    public Task downloadAssets(final MinecraftVersion mv) throws GameException {
         if (mv == null)
             return null;
-        return IAssetsHandler.ASSETS_HANDLER.getList(mv, service.asset()).after(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(service.getDownloadType().getProvider()));
+        return IAssetsHandler.ASSETS_HANDLER.getList(mv.resolve(service.version()), service.asset()).after(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(service.getDownloadType().getProvider()));
     }
 
     @Override
     public boolean refreshAssetsIndex(String id) throws GameException {
-        MinecraftVersion mv = service.version().getVersionById(id).resolve(service.version());
+        MinecraftVersion mv = service.version().getVersionById(id);
         if (mv == null)
             return false;
-        return downloadMinecraftAssetsIndexAsync(mv.getAssetsIndex());
+        return downloadMinecraftAssetsIndexAsync(mv.resolve(service.version()).getAssetsIndex());
     }
 
     @Override
@@ -205,7 +205,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
         return virtualRoot;
     }
 
-    public final BiFunction<MinecraftVersion, Boolean, String> ASSET_PROVIDER_IMPL = (t, allow) -> {
+    public final IAssetProvider ASSET_PROVIDER_IMPL = (t, allow) -> {
         if (allow && !checkAssetsExistance(t.getAssetsIndex()))
             if (MessageBox.show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                 TaskWindow.factory().execute(downloadAssets(t));
