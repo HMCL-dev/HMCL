@@ -37,5 +37,5 @@ public abstract class IMinecraftModService extends IMinecraftBasicService {
 
     public abstract boolean addMod(String id, File f);
 
-    public abstract void removeMod(String id, Object[] mods);
+    public abstract boolean removeMod(String id, Object[] mods);
 }

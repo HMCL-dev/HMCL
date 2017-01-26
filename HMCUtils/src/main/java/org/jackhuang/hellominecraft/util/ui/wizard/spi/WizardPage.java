@@ -165,10 +165,6 @@ public class WizardPage extends JPanel implements WizardPanel {
             throw new IllegalStateException("CustomComponentListener "
                     + "will never be called if the autoListen parameter is "
                     + "false");
-//        if (getClass() == WizardPage.class && stepId == null ||
-//                description == null) {
-//            throw new NullPointerException ("Step or ID is null");
-//        }
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); //XXX
     }
 
@@ -339,6 +335,7 @@ public class WizardPage extends JPanel implements WizardPanel {
             this.page = page; //Slightly smaller footprint a nested, not inner class
         }
 
+        @Override
         public void userInputReceived(Component c, Object event) {
             if (!page.ccl.accept(c))
                 return;
@@ -362,6 +359,7 @@ public class WizardPage extends JPanel implements WizardPanel {
         return description;
     }
 
+    @Override
     public void addNotify() {
         super.addNotify();
         if (!listening)
@@ -376,14 +374,17 @@ public class WizardPage extends JPanel implements WizardPanel {
         }
     }
 
+    @Override
     public WizardPanelNavResult allowBack(String stepName, Map settings, Wizard wizard) {
         return WizardPanelNavResult.PROCEED;
     }
 
+    @Override
     public WizardPanelNavResult allowFinish(String stepName, Map settings, Wizard wizard) {
         return WizardPanelNavResult.PROCEED;
     }
 
+    @Override
     public WizardPanelNavResult allowNext(String stepName, Map settings, Wizard wizard) {
         return WizardPanelNavResult.PROCEED;
     }
@@ -830,7 +831,7 @@ public class WizardPage extends JPanel implements WizardPanel {
     }
 
     static WizardPanelProvider createWizardPanelProvider(WizardPage page) {
-        return new WPP(new WizardPage[]{page}, WizardResultProducer.NO_OP);
+        return new WPP(new WizardPage[] { page }, WizardResultProducer.NO_OP);
     }
 
     static WizardPanelProvider createWizardPanelProvider(WizardPage[] page) {
@@ -879,6 +880,7 @@ public class WizardPage extends JPanel implements WizardPanel {
             this.finish = finish;
         }
 
+        @Override
         protected JComponent createPanel(WizardController controller, String id,
                 Map wizardData) {
             int idx = indexOfStep(id);
@@ -907,14 +909,17 @@ public class WizardPage extends JPanel implements WizardPanel {
             return null;
         }
 
+        @Override
         protected Object finish(Map settings) throws WizardException {
             return finish.finish(settings);
         }
 
+        @Override
         public boolean cancel(Map settings) {
             return finish.cancel(settings);
         }
 
+        @Override
         public String getLongDescription(String stepId) {
             for (WizardPage wizardPage : pages)
                 if (stepId.equals(wizardPage.getID()))
@@ -974,6 +979,7 @@ public class WizardPage extends JPanel implements WizardPanel {
             this.finish = finish;
         }
 
+        @Override
         protected JComponent createPanel(WizardController controller, String id, Map wizardData) {
             int idx = indexOfStep(id);
 
@@ -995,18 +1001,22 @@ public class WizardPage extends JPanel implements WizardPanel {
             }
         }
 
+        @Override
         protected Object finish(Map settings) throws WizardException {
             return finish.finish(settings);
         }
 
+        @Override
         public boolean cancel(Map settings) {
             return finish.cancel(settings);
         }
 
+        @Override
         public String toString() {
             return super.toString() + " for " + finish;
         }
 
+        @Override
         public String getLongDescription(String stepId) {
             int idx = indexOfStep(stepId);
             if (idx != -1)
@@ -1027,10 +1037,12 @@ public class WizardPage extends JPanel implements WizardPanel {
         private int canFinish = -1;
         private Boolean busy = null;
 
+        @Override
         public void setProblem(String value) {
             this.problem = value;
         }
 
+        @Override
         public void setForwardNavigationMode(int value) {
             switch (value) {
                 case WizardController.MODE_CAN_CONTINUE:
@@ -1044,6 +1056,7 @@ public class WizardPage extends JPanel implements WizardPanel {
             canFinish = value;
         }
 
+        @Override
         public void setBusy(boolean busy) {
             this.busy = busy ? Boolean.TRUE : Boolean.FALSE;
         }
@@ -1106,14 +1119,17 @@ public class WizardPage extends JPanel implements WizardPanel {
          * A no-op WizardResultProducer that returns null.
          */
         WizardResultProducer NO_OP = new WizardResultProducer() {
+            @Override
             public Object finish(Map wizardData) {
                 return wizardData;
             }
 
+            @Override
             public boolean cancel(Map settings) {
                 return true;
             }
 
+            @Override
             public String toString() {
                 return "NO_OP WizardResultProducer";
             }

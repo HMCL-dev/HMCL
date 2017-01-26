@@ -48,14 +48,12 @@ public abstract class AbstractSwingWorker<T> extends SwingWorker<Void, T> {
     }
 
     public AbstractSwingWorker reg(Consumer<T> c) {
-        Objects.requireNonNull(c);
-        processListeners.add(c);
+        processListeners.add(Objects.requireNonNull(c));
         return this;
     }
 
     public AbstractSwingWorker regDone(Runnable c) {
-        Objects.requireNonNull(c);
-        doneListeners.add(c);
+        doneListeners.add(Objects.requireNonNull(c));
         return this;
     }
 

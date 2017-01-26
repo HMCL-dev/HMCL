@@ -25,6 +25,7 @@ import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
@@ -59,12 +60,8 @@ public final class SimpleWizardInfo implements WizardControllerImplementation {
      * and descriptions.
      */
     protected SimpleWizardInfo(String title, String[] steps, String[] descriptions, WizardPanelProvider provider) {
-        if (steps == null)
-            throw new NullPointerException("Null steps");
-        if (descriptions == null)
-            throw new NullPointerException("Null descriptions");
-        this.steps = steps;
-        this.descriptions = descriptions;
+        this.steps = Objects.requireNonNull(steps, "Null steps");
+        this.descriptions = Objects.requireNonNull(descriptions, "Null descriptions");
         if (new HashSet(Arrays.asList(steps)).size() < steps.length)
             throw new IllegalArgumentException("Duplicate ID: " + Arrays.asList(steps));
         if (descriptions.length != steps.length)
@@ -132,16 +129,6 @@ public final class SimpleWizardInfo implements WizardControllerImplementation {
      * gathered data.
      */
     protected Object finish(Map settings) throws WizardException {
-        //XXX fixme
-//        assert canFinish();
-
-        // SKNUTSON: the "canFinish" behavior is not working
-        // instead, panels must implement the WizardPanel interface
-        // and have allowFinish return false
-//        if ( ! canFinish())
-//        {
-//            throw new RuntimeException ("Can't finish right now");
-//        }
         return provider.finish(settings);
     }
 

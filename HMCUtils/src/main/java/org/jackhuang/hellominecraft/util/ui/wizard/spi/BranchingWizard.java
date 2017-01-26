@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.util.ui.wizard.spi;
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A Wizard with indeterminate branches. The actual branch decision-making is
@@ -105,8 +106,7 @@ final class BranchingWizard extends AbstractWizard {
         if (activeWizard == wizard)
             return;
 
-        if (wizard == null)
-            throw new NullPointerException("Can't set current wizard to null");
+        Objects.requireNonNull(wizard, "Can't set current wizard to null");
 
         if ((activeWizard != null) && (wl != null))
             activeWizard.removeWizardObserver(wl);
@@ -260,15 +260,10 @@ final class BranchingWizard extends AbstractWizard {
 
     @Override
     public final JComponent navigatingTo(String id, Map settings) {
-        if (id == null)
-            throw new NullPointerException();
-        currStep = id;
+        currStep = Objects.requireNonNull(id);
         wizardData = settings;
 
-        WizardImplementation impl = ownerOf(id);
-        if (impl == null)
-            throw new NullPointerException("No owning WizardImplementation for"
-                    + " id " + id);
+        WizardImplementation impl = Objects.requireNonNull(ownerOf(id), "No owning WizardImplementation for id " + id);
         setCurrent(impl);
 
         return activeWizard.navigatingTo(id, settings);

@@ -113,16 +113,16 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                 try {
                     mcVersion = C.GSON.fromJson(FileUtils.read(jsonFile), MinecraftVersion.class);
                     if (mcVersion == null)
-                        throw new GameException("Wrong json format, got null.");
-                } catch (JsonSyntaxException | IOException | GameException e) {
+                        throw new JsonSyntaxException("Wrong json format, got null.");
+                } catch (JsonSyntaxException | IOException e) {
                     HMCLog.warn("Found wrong format json, try to fix it.", e);
                     if (MessageBox.show(C.i18n("launcher.versions_json_not_formatted", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
                         service.download().downloadMinecraftVersionJson(id);
                         try {
                             mcVersion = C.GSON.fromJson(FileUtils.read(jsonFile), MinecraftVersion.class);
                             if (mcVersion == null)
-                                throw new GameException("Wrong json format, got null.");
-                        } catch (IOException | GameException | JsonSyntaxException ex) {
+                                throw new JsonSyntaxException("Wrong json format, got null.");
+                        } catch (IOException | JsonSyntaxException ex) {
                             HMCLog.warn("Ignoring: " + dir + ", the json of this Minecraft is malformed.", ex);
                             continue;
                         }

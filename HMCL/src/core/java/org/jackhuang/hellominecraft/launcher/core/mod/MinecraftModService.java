@@ -94,17 +94,23 @@ public class MinecraftModService extends IMinecraftModService {
     }
 
     @Override
-    public void removeMod(String id, Object[] rows) {
+    public boolean removeMod(String id, Object[] rows) {
         if (rows.length == 0)
-            return;
+            return true;
+        boolean flag = true;
         for (Object r : rows)
             if (r instanceof ModInfo) {
-                if (!((ModInfo) r).location.delete())
+                if (!((ModInfo) r).location.delete()) {
                     HMCLog.warn("Failed to delete mod" + r);
+                    flag = false;
+                }
             } else if (r instanceof Number)
-                if (!getMods(id).get(((Number) r).intValue()).location.delete())
+                if (!getMods(id).get(((Number) r).intValue()).location.delete()) {
                     HMCLog.warn("Failed to delete mod " + r + ", maybe not a file?");
+                    flag = false;
+                }
         recacheMods(id);
+        return flag;
     }
 
     public String[] checkMd5s(String id) throws IOException {

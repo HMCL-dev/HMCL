@@ -129,7 +129,7 @@ public final class Main implements Runnable {
             try {
                 File file = new File("hmcl.log");
                 if (!file.exists() && !file.createNewFile())
-                    HMCLog.warn("Failed to create log file " + file);
+                    LOGGER.log(Level.WARNING, "Failed to create log file {0}", file);
                 Configuration.DEFAULT.appenders.add(new ConsoleAppender("File", new DefaultLayout(), true, new FileOutputStream(file), true));
             } catch (IOException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to add log appender File because an error occurred while creating or opening hmcl.log", ex);
@@ -144,9 +144,6 @@ public final class Main implements Runnable {
                     Locale.setDefault(sl.self);
                 }
 
-            LogWindow.INSTANCE.clean();
-            LogWindow.INSTANCE.setTerminateGame(GameLauncher.PROCESS_MANAGER::stopAllProcesses);
-
             try {
                 LOOK_AND_FEEL = new HelloMinecraftLookAndFeel(Settings.getInstance().getTheme().settings);
                 UIManager.setLookAndFeel(LOOK_AND_FEEL);
@@ -154,6 +151,9 @@ public final class Main implements Runnable {
             } catch (ParseException | UnsupportedLookAndFeelException ex) {
                 HMCLog.warn("Failed to set look and feel...", ex);
             }
+            
+            LogWindow.INSTANCE.clean();
+            LogWindow.INSTANCE.setTerminateGame(GameLauncher.PROCESS_MANAGER::stopAllProcesses);
 
             Settings.UPDATE_CHECKER.outOfDateEvent.register(IUpgrader.NOW_UPGRADER);
             Settings.UPDATE_CHECKER.process(false).reg(t -> Main.invokeUpdate()).execute();

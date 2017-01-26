@@ -10,6 +10,7 @@ import java.lang.reflect.Modifier;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -71,10 +72,8 @@ final class Util {
         try {
             Method m = clazz.getDeclaredMethod("getStep", new Class[]{});
             // assert m.getReturnType() == String.class;
-            result = (String) m.invoke(clazz, (Object[]) null);
-            if (result == null)
-                throw new NullPointerException("getStep may not return null");
-        } catch (IllegalAccessException | IllegalArgumentException | NoSuchMethodException | NullPointerException | SecurityException | InvocationTargetException ex) {
+            result = Objects.requireNonNull((String) m.invoke(clazz, (Object[]) null), "getStep may not return null");
+        } catch (Exception ex) {
             //do nothing
         }
         return result == null ? clazz.getName() : result;
@@ -85,16 +84,13 @@ final class Util {
      * class object passed
      */
     static String[] getSteps(Class[] pages) {
-        if (pages == null)
-            throw new NullPointerException("Null array of classes");
+        Objects.requireNonNull(pages, "Null array of classes");
 
         String[] result = new String[pages.length];
 
         Set used = new HashSet(pages.length);
         for (int i = 0; i < pages.length; i++) {
-            if (pages[i] == null)
-                throw new NullPointerException("Null at " + i + " in array "
-                        + "of panel classes");
+            Objects.requireNonNull(pages[i], "Null at " + i + " in array of panel classes");
 
             if (!WizardPage.class.isAssignableFrom(pages[i]))
                 throw new IllegalArgumentException(pages[i]

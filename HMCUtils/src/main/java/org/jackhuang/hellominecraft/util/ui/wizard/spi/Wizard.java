@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.swing.Action;
 import javax.swing.JComponent;
 import org.jackhuang.hellominecraft.util.ui.wizard.api.WizardDisplayer;
@@ -121,9 +122,7 @@ public final class Wizard {
      * Creates a new instance of Wizard
      */
     Wizard(WizardImplementation impl) {
-        this.impl = impl;
-        if (impl == null)
-            throw new NullPointerException();
+        this.impl = Objects.requireNonNull(impl);
     }
 
     /**
@@ -321,6 +320,7 @@ public final class Wizard {
 
     private class ImplL implements WizardObserver {
 
+        @Override
         public void stepsChanged(Wizard wizard) {
             WizardObserver[] l = (WizardObserver[]) listeners.toArray(
                 new WizardObserver[listeners.size()]);
@@ -328,6 +328,7 @@ public final class Wizard {
                 l1.stepsChanged(Wizard.this);
         }
 
+        @Override
         public void navigabilityChanged(Wizard wizard) {
             WizardObserver[] l = (WizardObserver[]) listeners.toArray(
                 new WizardObserver[listeners.size()]);
@@ -335,6 +336,7 @@ public final class Wizard {
                 l1.navigabilityChanged(Wizard.this);
         }
 
+        @Override
         public void selectionChanged(Wizard wizard) {
             WizardObserver[] l = (WizardObserver[]) listeners.toArray(
                 new WizardObserver[listeners.size()]);
@@ -343,10 +345,12 @@ public final class Wizard {
         }
     }
 
+    @Override
     public int hashCode() {
         return impl.hashCode() * 17;
     }
 
+    @Override
     public boolean equals(Object o) {
         if (o == this)
             return true;

@@ -36,10 +36,8 @@ public class LogWindowOutputStream extends OutputStream {
     private final Level sas;
 
     public LogWindowOutputStream(LogWindow logWindow, Level l) {
-        Objects.requireNonNull(logWindow);
-        Objects.requireNonNull(l);
-        txt = logWindow;
-        sas = l;
+        txt = Objects.requireNonNull(logWindow);
+        sas = Objects.requireNonNull(l);
     }
 
     @Override

@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 
 /**
@@ -121,8 +122,7 @@ public final class FileUtils {
 
     public static boolean isSymlink(File file)
         throws IOException {
-        if (file == null)
-            throw new NullPointerException("File must not be null");
+        Objects.requireNonNull(file, "File must not be null");
         if (File.separatorChar == '\\')
             return false;
         File fileInCanonicalDir;
@@ -143,10 +143,8 @@ public final class FileUtils {
 
     public static void copyDirectory(File srcDir, File destDir, FileFilter filter)
         throws IOException {
-        if (srcDir == null)
-            throw new NullPointerException("Source must not be null");
-        if (destDir == null)
-            throw new NullPointerException("Destination must not be null");
+        Objects.requireNonNull(srcDir, "Source must not be null");
+        Objects.requireNonNull(destDir, "Destination must not be null");
         if (!srcDir.exists())
             throw new FileNotFoundException("Source '" + srcDir + "' does not exist");
         if (!srcDir.isDirectory())
@@ -230,10 +228,8 @@ public final class FileUtils {
 
     public static void copyFile(File srcFile, File destFile)
         throws IOException {
-        if (srcFile == null)
-            throw new NullPointerException("Source must not be null");
-        if (destFile == null)
-            throw new NullPointerException("Destination must not be null");
+        Objects.requireNonNull(srcFile, "Source must not be null");
+        Objects.requireNonNull(destFile, "Destination must not be null");
         if (!srcFile.exists())
             throw new FileNotFoundException("Source '" + srcFile + "' does not exist");
         if (srcFile.isDirectory())

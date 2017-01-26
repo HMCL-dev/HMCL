@@ -132,7 +132,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
     private static final HashSet<String> THROWABLE_SET = new HashSet<>();
 
     void reportToServer(final String text, String stacktrace) {
-        if (THROWABLE_SET.contains(stacktrace) || stacktrace.contains("Font"))
+        if (THROWABLE_SET.contains(stacktrace) || stacktrace.contains("Font") || stacktrace.contains("InternalError"))
             return;
         THROWABLE_SET.add(stacktrace);
         Thread t = new Thread(() -> {
