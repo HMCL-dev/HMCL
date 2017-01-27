@@ -13,18 +13,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see {http://www.gnu.org/licenses/}.
-launch.failed=Failed to launch
+launch.failed=Failed to launch.
 launch.failed_creating_process=Failed to create process, maybe your java path is wrong, please modify your java path.
-launch.failed_sh_permission=Failed to add permission to the launch script
-launch.failed_packing_jar=Failed to pack jar
-launch.unsupported_launcher_version=Sorry, this launcher cannot launch this minecraft, but the launcher will try to launch it.
+launch.failed_sh_permission=Failed to add permission to the launch script.
+launch.failed_packing_jar=Failed to pack the jar.
+launch.unsupported_launcher_version=Sorry, the launcher cannot launch minecraft, but will retry launching it.
 launch.too_big_memory_alloc_64bit=You have allocated too much memory, because of your 32-Bit Java Runtime Environment, your game probably crash. The maximum memory is 1024MB. The launcher will try to launch it.
 launch.too_big_memory_alloc_free_space_too_low=You have allocated too much memory, because the physical memory size is %dMB, your game probably crash. The launcher will try to launch it.
 launch.cannot_create_jvm=We find that it cannot create java virutal machine. The Java argements may have problems. You can enable the no args mode in the settings.
 launch.circular_dependency_versions=Found circular dependency versions, please check if your client has been modified.
 launch.not_finished_downloading_libraries=Did not finish downloading libraries, continue launching game?
 launch.not_finished_decompressing_natives=Did not finish decompressing native libraries, continue launching game?
-launch.wrong_javadir=Wrong Java Dir, will reset to default Java dir.
+launch.wrong_javadir=Incorrect Java directory, will reset to default Java directory.
 launch.exited_abnormally=Game exited abnormally, please visit the log, or ask someone for help.
 
 launch.state.logging_in=Logging In
@@ -33,7 +33,7 @@ launch.state.downloading_libraries=Downloading dependencies
 launch.state.decompressing_natives=Decompressing natives
 
 install.no_version=The version is not found.
-install.no_version_if_intall=The needed version is not found, should install the version automatically?
+install.no_version_if_intall=The required version is not found, do you wish to install the version automatically?
 install.not_refreshed=The installer list is not refreshed.
 install.download_list=Download List
 
@@ -48,11 +48,11 @@ install.optifine.install=Install OptiFine
 install.optifine.get_list=Get OptiFine Download List
 install.optifine.get_download_link=Get the Download Link of OptiFine
 
-install.failed_forge=Failed to Install Forge
-install.failed_optifine=Failed to Install OptiFine
-install.failed_liteloader=Failed to Install LiteLoader
-install.failed_download_forge=Failed to Download Forge
-install.failed_download_optifine=Failed to Download OptiFine
+install.failed_forge=Failed to install 'Forge'.
+install.failed_optifine=Failed to install 'OptiFine'.
+install.failed_liteloader=Failed to install 'LiteLoader'.
+install.failed_download_forge=Failed to download 'Forge'.
+install.failed_download_optifine=Failed to download 'OptiFine'.
 install.failed=Failed to install
 install.success=Install successfully
 install.no_forge=No Forge
@@ -62,17 +62,17 @@ install.mcversion=Game Version
 install.time=Time
 install.release_time=Release Time
 install.type=Type
-install.please_refresh=If you want to install something, please click "Refresh" button.
+install.please_refresh=If you want to install something please click "Refresh" button.
 
 crash.launcher=Launcher has crashed!
 crash.minecraft=Minecraft has crashed!
 
-login.choose_charactor=Please choose the charactor you want
-login.no_charactor=No charactor in this account.
+login.choose_charactor=Please choose the character you want
+login.no_charactor=No character in this account.
 login.your_password=Your password
 login.failed=Failed to login
-login.no_Player007=You have not set username!
-login.wrong_password=Wrong password or username
+login.no_Player007=You have not set a username!
+login.wrong_password=Incorrect password or username
 login.invalid_username=Invalid username
 login.invalid_uuid_and_username=Invalid UUID and username
 login.invalid_password=Invalid password
@@ -82,8 +82,8 @@ login.not_email=The username must be a e-mail.
 login.type=Login
 login.username=Name
 login.account=Email
-login.invalid_token=Please log out and reinput your password to log in.
-login.no_valid_character=No Valid Character, please visit skinme.cc and create your own character.
+login.invalid_token=Please log out and re-input your password to log in.
+login.no_valid_character=No valid character, please visit skinme.cc and create your own character.
 
 proxy.username=Account
 proxy.password=Password
@@ -92,8 +92,8 @@ proxy.port=Port
 
 login.failed.connect_authentication_server=Cannot connect the authentication server. Check your network.
 
-login.profile.not_logged_in=Not Logged In and Cannot modify the profile.
-login.profile.selected=Cannot modify the profile, you must logout and go back.
+login.profile.not_logged_in=You are not logged in, you can't modify the profile!
+login.profile.selected=Can't modify the profile, logout and go retry.
 
 login.methods.yggdrasil=Mojang
 login.methods.offline=Offline
@@ -171,7 +171,7 @@ ui.message.update_java=Please upgrade your Java.
 
 ui.label.settings=Settings
 ui.label.crashing=<html>Hello Minecraft! Launcher has crashed!</html>
-ui.label.crashing_out_dated=<html>Hello Minecraft! Launcher has crashed! And your launcher is not the latest version. Update it!</html>
+ui.label.crashing_out_dated=<html>Hello Minecraft! Launcher has crashed! Your launcher is outdated. Update it!</html>
 ui.label.failed_set=Failed to set: 
 
 download=Download
@@ -180,7 +180,7 @@ download.BMCL=BMCLAPI (bangbang93, http://bmclapi.bangbang93.com/)
 download.rapid_data=RapidData (https://www.rapiddata.org/)
 download.not_200=Failed to download, the response code
 download.failed=Failed to download
-download.successfully=Download Successfully
+download.successfully=Downloaded successfully
 download.source=Download Source
 
 message.error=Error
@@ -224,21 +224,21 @@ modpack=Mod pack
 modpack.choose=Choose a modpack zip file which you want to import. If you want to update the modpack, please enter the version you want to update.
 modpack.export_error=Failed to export the modpack, maybe the format of your game directory is incorrect or failed to manage files.
 modpack.export_finished=Exporting the modpack finished. See
-modpack.included_launcher=The modpack has already included the launcher, you can publish it directly.
-modpack.not_included_launcher=Use the modpack by "import modpack".
-modpack.enter_name=Give this game a name which is your favorite.
+modpack.included_launcher=The modpack is included the launcher, you can publish it directly.
+modpack.not_included_launcher=You can use the modpack by clicking the "Import Modpack" button.
+modpack.enter_name=Enter your desired name for this game.
 
-modpack.task.save=Export the modpack
-modpack.task.install=Import the modpack
-modpack.task.install.error=Failed to install the modpack, maybe the modpack file is incorrect or failed to manage files.
-modpack.task.install.will=Will install the modpack:
+modpack.task.save=Export Modpack
+modpack.task.install=Import Modpack
+modpack.task.install.error=Failed to install the modpack. Maybe the files is incorrect, or a management issue occurred.
+modpack.task.install.will=Install the modpack:
 
 modpack.wizard=Exporting the modpack wizard
 modpack.wizard.step.1=Basic options
 modpack.wizard.step.1.title=Set the basic options to the modpack.
 modpack.wizard.step.initialization.include_launcher=Include the launcher
 modpack.wizard.step.initialization.exported_version=The exported game version
-modpack.wizard.step.initialization.save=Choose a location which you want to export the game files to
+modpack.wizard.step.initialization.save=Choose a location to export the game files to
 modpack.wizard.step.initialization.warning=<html>Before making modpack, you should ensure that your game can launch successfully,<br/>and that your Minecraft is release, not snapshot.<br/>and that it is not allowed to add mods which is not allowed to distribute to the modpack.</html>
 modpack.wizard.step.2=Files selection
 modpack.wizard.step.2.title=Choose the files you do not want to put in the modpack.
@@ -258,12 +258,12 @@ modpack.files.saves=Saved games
 modpack.files.mods=Mods
 modpack.files.config=Mod configs
 modpack.files.liteconfig=Mod configurations
-modpack.files.resourcepacks=Resource(Texutre) packs
+modpack.files.resourcepacks=Resource(Texture) packs
 modpack.files.options_txt=Game options
 modpack.files.optionsshaders_txt=Shaders options
-modpack.files.mods.voxelmods=VoxelMods(including VoxelMap) options
+modpack.files.mods.voxelmods=VoxelMods (including VoxelMap) options
 modpack.files.dumps=NEI debug output
-modpack.files.scripts=MineTweaker configs
+modpack.files.scripts=MineTweaker configuration
 modpack.files.blueprints=BuildCraft blueprints
 
 mods=Mods
@@ -290,7 +290,7 @@ advancedsettings.wrapper_launcher=Wrapper Launcher(like optirun...)
 advancedsettings.precall_command=Precalling command(will be executed before game launching)
 advancedsettings.server_ip=Server Host
 advancedsettings.cancel_wrapper_launcher=Cancel Wrapper Launcher
-advancedsettings.dont_check_game_completeness=Dont check game completeness
+advancedsettings.dont_check_game_completeness=Don't check game completeness
 
 mainwindow.show_log=Show Logs
 mainwindow.make_launch_script=Make Launching Script.
@@ -307,7 +307,7 @@ launcher.versions_json_not_matched=The version %s is malformed! There are a json
 launcher.versions_json_not_matched_cannot_auto_completion=The version %s lost version information file, delete it?
 launcher.versions_json_not_formatted=The version information of %s is malformed! Redownload it?
 launcher.choose_bgpath=Choose background path.
-launcher.background_tooltip=<html><body>This app uses the default background at first.<br />If there is background.png in the directory, it will be used.<br />If there is "bg" subdirectory, this app will chooses one picture in "bgskin" randomly.<br />If you set the background setting, this app will use it.</body></html>
+launcher.background_tooltip=<html><body>The laucher uses a default background.<br/>If you use custom background.png, link it and it will be used.<br />If there is "bg" subdirectory, this app will chooses one picture in "bgskin" randomly.<br />If you set the background setting, this app will use it.</body></html>
 launcher.update_launcher=Check for update
 launcher.enable_shadow=Enable Window Shadow
 launcher.enable_animation=Enable Animation
@@ -341,7 +341,7 @@ advice.os64butjdk32=Your OS is 64-Bit but your Java is 32-Bit. The 64-Bit Java i
 assets.download_all=Download Assets Files
 assets.not_refreshed=The assets list is not refreshed, please refresh it once.
 assets.failed=Failed to get the list, try again.
-assets.list.1_7_3_after=1.7.3 And Higher
+assets.list.1_7_3_after=1.7.3 And higher
 assets.list.1_6=1.6(BMCLAPI)
 assets.unkown_type_select_one=Unknown game version: %s, please choose an asset type.
 assets.type=Asset Type
@@ -355,7 +355,7 @@ taskwindow.title=Tasks
 taskwindow.single_progress=Single progress
 taskwindow.total_progress=Total progress
 taskwindow.cancel=Cancel
-taskwindow.no_more_instance=Maybe you opened more than one task window, dont open it again!
+taskwindow.no_more_instance=Maybe you opened more than one task window, don't open it again!
 taskwindow.file_name=Task
 taskwindow.download_progress=Pgs.
 
@@ -366,8 +366,8 @@ setupwindow.new=New
 setupwindow.no_empty_name=Version name cannot be empty.
 setupwindow.clean=Clean game files
 
-update.no_browser=Cannot open any browser. The link has been copied to the clipboard. You can paste it to the address bar.
-update.should_open_link=Are you willing to upgrade this app?
+update.no_browser=Cannot open any browser. The link has been copied to the clipboard. Paste it to a browser address bar to update.
+update.should_open_link=Are you willing to update the launcher?
 update.newest_version=Newest version:
 update.failed=Failed to check for updates.
 update.found=(Found Update!)
