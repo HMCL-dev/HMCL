@@ -130,12 +130,12 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
 
                 // Make sure response code is in the 200 range.
                 if (con.getResponseCode() / 100 != 2)
-                    throw new NetException(C.i18n("download.not_200") + " " + con.getResponseCode());
+                    throw new IOException(C.i18n("download.not_200") + " " + con.getResponseCode());
 
                 // Check for valid content length.
                 int contentLength = con.getContentLength();
                 if (contentLength < 1)
-                    throw new NetException("The content length is invalid.");
+                    throw new IOException("The content length is invalid.");
 
                 if (!filePath.getParentFile().mkdirs() && !filePath.getParentFile().isDirectory())
                     throw new IOException("Could not make directory");
@@ -210,8 +210,8 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                 if (ppl != null)
                     ppl.onProgressProviderDone(this);
                 return;
-            } catch (IOException | IllegalStateException | NetException e) {
-                setFailReason(new NetException(C.i18n("download.failed") + " " + url, e));
+            } catch (IOException | IllegalStateException e) {
+                setFailReason(new IOException(C.i18n("download.failed") + " " + url, e));
             } finally {
                 closeFiles();
             }

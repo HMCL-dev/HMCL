@@ -85,7 +85,7 @@ public class HTTPGetTask extends Task implements PreviousResult<String> {
                 doneEvent.execute(result);
                 return;
             } catch (IOException ex) {
-                t = new NetException("Failed to get " + url, ex);
+                t = new IOException("Failed to get " + url, ex);
             }
         }
         if (t != null)

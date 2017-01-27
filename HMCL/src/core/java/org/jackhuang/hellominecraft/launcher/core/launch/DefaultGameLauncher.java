@@ -46,7 +46,7 @@ public class DefaultGameLauncher extends GameLauncher {
                 if (names.contains(s.lib.name))
                     continue;
                 names.add(s.lib.name);
-                parallelTask.addDependsTask(new LibraryDownloadTask(s));
+                parallelTask.addTask(new LibraryDownloadTask(s));
             }
             dw.append(parallelTask);
             boolean flag = true;

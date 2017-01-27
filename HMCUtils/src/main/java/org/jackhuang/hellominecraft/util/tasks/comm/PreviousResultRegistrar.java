@@ -30,7 +30,7 @@ public interface PreviousResultRegistrar<T> {
      *
      * @param pr previous task handler
      *
-     * @return task self instance
+     * @return task self instance(factory mode!)
      */
     Task registerPreviousResult(PreviousResult<T> pr);
 }

@@ -112,13 +112,6 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         Settings.profileChangedEvent.register(onSelectedProfilesChanged);
 
         dropTarget = new DropTarget(lstExternalMods, DnDConstants.ACTION_COPY_OR_MOVE, this);
-
-        /*AeroPage pnlAero = new AeroPage();
-        pnlAero.setBounds(0, 0, 800, 480);
-        pnlAero.setLayout(null);
-        pnlAero.addAeroObject(jPanel1);
-        pnlAero.setBackgroundImage(MainFrame.INSTANCE.background.getImage());
-        add(jPanel1);*/
     }
 
     void initExplorationMenu() {
@@ -248,9 +241,11 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
                 }
             }
         });
+        
         ((NewTabPane) tabVersionEdit).initializing = true;
-        tabVersionEdit.addTab(C.i18n("settings.tabs.game_download"), pnlGameDownloads); // NOI18N
+        tabVersionEdit.addTab(C.i18n("settings.tabs.game_download"), pnlGameDownloads);
         ((NewTabPane) tabVersionEdit).initializing = false;
+        
         ((NewTabPane) tabInstallers).initializing = true;
         for (int i = 0; i < InstallerType.values().length; i++)
             tabInstallers.addTab(InstallerType.values()[i].getLocalizedName(), installerPanels[i]);

@@ -31,7 +31,7 @@ import org.jackhuang.hellominecraft.util.system.IOUtils;
 
 /**
  *
- * @author huang
+ * @author huangyuhui
  */
 public final class NetUtils {
 

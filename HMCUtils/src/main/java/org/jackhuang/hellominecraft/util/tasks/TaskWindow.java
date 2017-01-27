@@ -70,12 +70,10 @@ public class TaskWindow extends javax.swing.JDialog
             return;
         taskList = new TaskList();
         taskList.addTaskListener(this);
-        taskList.doneEvent.register(() -> {
-            SwingUtilities.invokeLater(() -> {
-                dispose();
-                suc = true;
-            });
-        });
+        taskList.doneEvent.register(SwingUtils.invokeLater(() -> {
+            dispose();
+            suc = true;
+        }));
     }
 
     public static String downloadSource = "";

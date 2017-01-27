@@ -26,7 +26,7 @@ import java.util.HashSet;
  */
 public class ParallelTask extends Task {
 
-    Collection<Task> dependsTask = new HashSet<>();
+    Collection<Task> tasks = new HashSet<>();
 
     public ParallelTask() {
         hidden = true;
@@ -43,11 +43,11 @@ public class ParallelTask extends Task {
 
     @Override
     public Collection<Task> getDependTasks() {
-        return dependsTask;
+        return tasks;
     }
 
-    public void addDependsTask(Task t) {
-        dependsTask.add(t);
+    public void addTask(Task t) {
+        tasks.add(t);
     }
 
 }

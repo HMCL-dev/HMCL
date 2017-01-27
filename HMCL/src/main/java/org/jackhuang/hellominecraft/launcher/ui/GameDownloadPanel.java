@@ -111,10 +111,10 @@ public class GameDownloadPanel extends Page {
         MinecraftRemoteVersions.refreshRomoteVersions(Settings.getLastProfile().service().getDownloadType())
                 .reg((ver) -> model.addRow(new Object[] { ver.id, ver.time,
             StrUtils.equalsOne(ver.type, "old_beta", "old_alpha", "release", "snapshot") ? C.i18n("versions." + ver.type) : ver.type }))
-                .regDone(() -> {
+                .regDone(SwingUtils.invokeLater(() -> {
                     lstDownloads.requestFocus();
                     model.removeRow(0);
-                }).execute();
+                })).execute();
     }
 
     void downloadMinecraft() {

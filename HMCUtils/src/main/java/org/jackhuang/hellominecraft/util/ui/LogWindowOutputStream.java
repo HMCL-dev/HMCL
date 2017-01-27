@@ -51,12 +51,9 @@ public class LogWindowOutputStream extends OutputStream {
     }
 
     private void append(final String str) {
-        try {
-            SwingUtilities.invokeLater(() -> {
-                txt.log(str, Level.guessLevel(str, sas));
-            });
-        } catch (Throwable ignore) {
-        }
+        SwingUtilities.invokeLater(() -> {
+            txt.log(str, Level.guessLevel(str, sas));
+        });
     }
 
     @Override
