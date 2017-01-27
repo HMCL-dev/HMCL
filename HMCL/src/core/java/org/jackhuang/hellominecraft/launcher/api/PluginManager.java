@@ -27,13 +27,6 @@ public class PluginManager {
 
     private static IPlugin NOW_PLUGIN;
 
-    public static void getServerPlugin() {
-        try {
-            getPlugin(Thread.currentThread().getContextClassLoader().loadClass("org.jackhuang.hellominecraft.launcher.server.ServerPlugin"));
-        } catch (ClassNotFoundException ignore) {
-        }
-    }
-
     public static void getPlugin(Class<?> cls) {
         try {
             IPlugin p = (IPlugin) cls.newInstance();

@@ -50,10 +50,10 @@ import java.util.Stack;
  *
  * @author Tim Boudreau
  */
-public class MergeMap implements Map {
+public class MergeMap<K, V> implements Map<K, V> {
 
-    private final Stack order = new Stack();
-    private final Map id2map = new HashMap();
+    private final Stack<String> order = new Stack<>();
+    private final Map<String, Map<K, V>> id2map = new HashMap<>();
 
     /**
      * Creates a new instance of MergeMap
@@ -71,7 +71,7 @@ public class MergeMap implements Map {
      * have a first panel that gathered some settings using the old APIs
      * framework, and we need to inject them here.
      */
-    public MergeMap(String currId, Map everpresent) {
+    public MergeMap(String currId, Map<K, V> everpresent) {
         order.push(BASE);
         id2map.put(BASE, everpresent);
         push(currId);
@@ -81,16 +81,16 @@ public class MergeMap implements Map {
      * Move to a different ID (meaning add a new named map to proxy which can be
      * calved off if necessary).
      */
-    public Map push(String id) {
+    public Map<K, V> push(String id) {
         // assert !order.contains(id) : id + " already present";
         if (order.contains(id))
             throw new RuntimeException(id + " already present");
 //        assert !order.contains(id) : id + " already present";
         if (!order.isEmpty() && id.equals(order.peek()))
-            return (Map) id2map.get(id);
-        Map result = (Map) id2map.get(id);
+            return (Map<K, V>) id2map.get(id);
+        Map<K, V> result = (Map<K, V>) id2map.get(id);
         if (result == null) {
-            result = new HashMap();
+            result = new HashMap<>();
             id2map.put(id, result);
         }
         order.push(id);
@@ -115,7 +115,7 @@ public class MergeMap implements Map {
                                              + "entry");
         //Get the current map
         String result = (String) order.peek();
-        Map curr = (Map) id2map.get(result);
+        Map<K, V> curr = (Map<K, V>) id2map.get(result);
         order.pop();
 
         //Though unlikely, it is possible that a later step in a wizard
@@ -124,13 +124,11 @@ public class MergeMap implements Map {
         //we're removing, and if any of them are in steps lower on the
         //stack, change those lower steps values to whatever was written
         //into the map we're calving off
-        for (Iterator i = orderIterator(); i.hasNext();) {
-            Map other = (Map) id2map.get(i.next());
-            for (Iterator j = curr.keySet().iterator(); j.hasNext();) {
-                Object key = j.next();
+        for (Iterator<String> i = orderIterator(); i.hasNext();) {
+            Map<K, V> other = (Map<K, V>) id2map.get(i.next());
+            for (K key : curr.keySet())
                 if (other.containsKey(key))
                     other.put(key, curr.get(key));
-            }
         }
         return result;
     }
@@ -142,8 +140,8 @@ public class MergeMap implements Map {
 
     @Override
     public boolean containsKey(Object obj) {
-        for (Iterator i = orderIterator(); i.hasNext();) {
-            Map curr = (Map) id2map.get(i.next());
+        for (Iterator<String> i = orderIterator(); i.hasNext();) {
+            Map<K, V> curr = (Map<K, V>) id2map.get(i.next());
             if (curr.containsKey(obj))
                 return true;
         }
@@ -152,8 +150,8 @@ public class MergeMap implements Map {
 
     @Override
     public boolean containsValue(Object obj) {
-        for (Iterator i = orderIterator(); i.hasNext();) {
-            Map curr = (Map) id2map.get(i.next());
+        for (Iterator<String> i = orderIterator(); i.hasNext();) {
+            Map<K, V> curr = (Map<K, V>) id2map.get(i.next());
             if (curr.containsValue(obj))
                 return true;
         }
@@ -161,21 +159,21 @@ public class MergeMap implements Map {
     }
 
     @Override
-    public java.util.Set entrySet() {
-        HashSet result = new HashSet();
-        for (Iterator i = orderIterator(); i.hasNext();) {
-            Map curr = (Map) id2map.get(i.next());
+    public java.util.Set<Entry<K, V>> entrySet() {
+        HashSet<Entry<K, V>> result = new HashSet<>();
+        for (Iterator<String> i = orderIterator(); i.hasNext();) {
+            Map<K, V> curr = (Map<K, V>) id2map.get(i.next());
             result.addAll(curr.entrySet());
         }
         return result;
     }
 
     @Override
-    public Object get(Object obj) {
-        for (Iterator i = orderIterator(); i.hasNext();) {
+    public V get(Object obj) {
+        for (Iterator<String> i = orderIterator(); i.hasNext();) {
             String id = (String) i.next();
-            Map curr = (Map) id2map.get(id);
-            Object result = curr.get(obj);
+            Map<K, V> curr = (Map<K, V>) id2map.get(id);
+            V result = curr.get(obj);
             if (result != null)
                 return result;
         }
@@ -188,33 +186,33 @@ public class MergeMap implements Map {
     }
 
     @Override
-    public Set keySet() {
-        HashSet result = new HashSet();
-        for (Iterator i = orderIterator(); i.hasNext();) {
-            Map curr = (Map) id2map.get(i.next());
+    public Set<K> keySet() {
+        HashSet<K> result = new HashSet<>();
+        for (Iterator<String> i = orderIterator(); i.hasNext();) {
+            Map<K, V> curr = (Map<K, V>) id2map.get(i.next());
             result.addAll(curr.keySet());
         }
         return result;
     }
 
     @Override
-    public Object put(Object obj, Object obj1) {
-        Map curr = (Map) id2map.get(order.peek());
+    public V put(K obj, V obj1) {
+        Map<K, V> curr = (Map<K, V>) id2map.get(order.peek());
         return curr.put(obj, obj1);
     }
 
     @Override
-    public void putAll(Map map) {
-        Map curr = (Map) id2map.get(order.peek());
+    public void putAll(Map<? extends K, ? extends V> map) {
+        Map<K, V> curr = (Map<K, V>) id2map.get(order.peek());
         curr.putAll(map);
     }
 
-    private Object doRemove(Object obj) {
-        Map curr = (Map) id2map.get(order.peek());
-        Object result = curr.remove(obj);
+    private V doRemove(Object obj) {
+        Map<K, V> curr = (Map<K, V>) id2map.get(order.peek());
+        V result = curr.remove(obj);
         if (result == null)
-            for (Iterator i = orderIterator(); i.hasNext();) {
-                curr = (Map) id2map.get(i.next());
+            for (Iterator<String> i = orderIterator(); i.hasNext();) {
+                curr = (Map<K, V>) id2map.get(i.next());
                 result = curr.remove(obj);
                 if (result != null)
                     break;
@@ -223,9 +221,9 @@ public class MergeMap implements Map {
     }
 
     @Override
-    public Object remove(Object obj) {
+    public V remove(Object obj) {
         //Ensure we remove any duplicates in upper arrays
-        Object result = get(obj);
+        V result = get(obj);
         while (get(obj) != null)
             doRemove(obj);
         return result;
@@ -238,40 +236,43 @@ public class MergeMap implements Map {
     }
 
     @Override
-    public Collection values() {
-        HashSet result = new HashSet();
-        Set keys = keySet();
-        for (Iterator i = keys.iterator(); i.hasNext();)
+    public Collection<V> values() {
+        HashSet<V> result = new HashSet<>();
+        Set<K> keys = keySet();
+        for (Iterator<K> i = keys.iterator(); i.hasNext();)
             result.add(get(i.next()));
         return result;
     }
 
-    private Iterator orderIterator() {
+    private Iterator<String> orderIterator() {
         return new ReverseIterator(order);
     }
 
-    private static final class ReverseIterator implements Iterator {
+    private static final class ReverseIterator implements Iterator<String> {
 
         private int pos;
-        private final List l;
+        private final List<String> l;
 
-        public ReverseIterator(Stack s) {
+        public ReverseIterator(Stack<String> s) {
             pos = s.size() - 1;
-            l = new ArrayList(s);
+            l = new ArrayList<>(s);
         }
 
+        @Override
         public boolean hasNext() {
             return pos != -1;
         }
 
-        public Object next() {
+        @Override
+        public String next() {
             if (pos < 0)
                 throw new NoSuchElementException();
-            Object result = l.get(pos);
+            String result = l.get(pos);
             pos--;
             return result;
         }
 
+        @Override
         public void remove() {
             throw new UnsupportedOperationException();
         }

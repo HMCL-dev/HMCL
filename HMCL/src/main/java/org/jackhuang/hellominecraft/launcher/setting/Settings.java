@@ -126,16 +126,8 @@ public final class Settings {
         return SETTINGS.getConfigurations();
     }
 
-    public static void setProfile(Profile ver) {
-        getProfiles().put(ver.getName(), ver);
-    }
-
     public static Collection<Profile> getProfilesFiltered() {
         return CollectionUtils.filter(getProfiles().values(), t -> t != null && t.getName() != null);
-    }
-
-    public static Profile getOneProfile() {
-        return SETTINGS.getConfigurations().firstEntry().getValue();
     }
 
     public static boolean putProfile(Profile ver) {
@@ -163,8 +155,8 @@ public final class Settings {
         return flag;
     }
 
-    public static final EventHandler<Profile> profileChangedEvent = new EventHandler(null);
-    public static final EventHandler<Void> profileLoadingEvent = new EventHandler(null);
+    public static final EventHandler<Profile> profileChangedEvent = new EventHandler<>(null);
+    public static final EventHandler<Void> profileLoadingEvent = new EventHandler<>(null);
 
     static void onProfileChanged() {
         Profile p = getLastProfile();

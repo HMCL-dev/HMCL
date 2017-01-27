@@ -152,11 +152,11 @@ public final class FileUtils {
         if (srcDir.getCanonicalPath().equals(destDir.getCanonicalPath()))
             throw new IOException("Source '" + srcDir + "' and destination '" + destDir + "' are the same");
 
-        List exclusionList = null;
+        List<String> exclusionList = null;
         if (destDir.getCanonicalPath().startsWith(srcDir.getCanonicalPath())) {
             File[] srcFiles = filter == null ? srcDir.listFiles() : srcDir.listFiles(filter);
             if ((srcFiles != null) && (srcFiles.length > 0)) {
-                exclusionList = new ArrayList(srcFiles.length);
+                exclusionList = new ArrayList<>(srcFiles.length);
                 for (File srcFile : srcFiles) {
                     File copiedFile = new File(destDir, srcFile.getName());
                     exclusionList.add(copiedFile.getCanonicalPath());
@@ -193,12 +193,12 @@ public final class FileUtils {
 
     public static String read(File file)
         throws IOException {
-        return IOUtils.toString(IOUtils.openInputStream(file));
+        return IOUtils.toString(openInputStream(file));
     }
 
     public static String readQuietly(File file) {
         try {
-            return IOUtils.toString(IOUtils.openInputStream(file));
+            return IOUtils.toString(openInputStream(file));
         } catch (IOException ex) {
             HMCLog.err("Failed to read file: " + file, ex);
             return null;
@@ -207,15 +207,7 @@ public final class FileUtils {
 
     public static String read(File file, String charset)
         throws IOException {
-        return IOUtils.toString(IOUtils.openInputStream(file), charset);
-    }
-
-    public static String readIgnoreFileNotFound(File file) throws IOException {
-        try {
-            return IOUtils.toString(IOUtils.openInputStream(file));
-        } catch (FileNotFoundException ex) {
-            return "";
-        }
+        return IOUtils.toString(openInputStream(file), charset);
     }
 
     public static void copyFileQuietly(File srcFile, File destFile) {
@@ -371,7 +363,7 @@ public final class FileUtils {
     }
 
     public static File[] searchSuffix(File dir, String suffix) {
-        ArrayList<File> al = new ArrayList();
+        ArrayList<File> al = new ArrayList<>();
         File[] files = dir.listFiles();
         if (files == null)
             return new File[0];

@@ -89,7 +89,7 @@ public class Summary {
         if (ArrayUtils.isEmpty(items))
             throw new IllegalArgumentException("Items array empty");
         this.result = result;
-        JList list = new JList(items);
+        JList<String> list = new JList<>(items);
         comp = new JScrollPane(list);
     }
 

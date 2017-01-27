@@ -28,15 +28,6 @@ public class Contents {
     public Contents() {
     }
 
-    public Contents(String key, String eTag, String lastModified, String storageClass, long size) {
-        this();
-        this.key = key;
-        this.eTag = eTag;
-        this.lastModified = lastModified;
-        this.storageClass = storageClass;
-        this.size = size;
-    }
-
     public String getKey() {
         return key;
     }

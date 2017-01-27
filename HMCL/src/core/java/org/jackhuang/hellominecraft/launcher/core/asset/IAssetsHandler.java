@@ -31,6 +31,7 @@ import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.tasks.Task;
 import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
 import org.jackhuang.hellominecraft.util.code.DigestUtils;
+import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
 
@@ -113,8 +114,8 @@ public abstract class IAssetsHandler {
                 boolean need = true;
                 try {
                     if (location.exists()) {
-                        FileInputStream fis = new FileInputStream(location);
-                        String sha = DigestUtils.sha1Hex(IOUtils.readFully(fis).toByteArray());
+                        FileInputStream fis = FileUtils.openInputStream(location);
+                        String sha = DigestUtils.sha1Hex(IOUtils.toByteArray(fis));
                         IOUtils.closeQuietly(fis);
                         if (contents.get(i).geteTag().equals(sha)) {
                             ++hasDownloaded;

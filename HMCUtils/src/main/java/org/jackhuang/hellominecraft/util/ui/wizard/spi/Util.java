@@ -28,7 +28,7 @@ final class Util {
     static String[] getSteps(WizardPage[] pages) {
         String[] result = new String[pages.length];
 
-        Set uniqueNames = new HashSet(pages.length);
+        Set<String> uniqueNames = new HashSet<>(pages.length);
         for (int i = 0; i < pages.length; i++) {
             result[i] = pages[i].id();
             if (result[i] == null || uniqueNames.contains(result[i])) {
@@ -41,7 +41,7 @@ final class Util {
         return result;
     }
 
-    static String uniquify(String s, Set /* <String> */ used) {
+    static String uniquify(String s, Set<String> used) {
         String test = s;
         if (test != null) {
             int ix = 0;
@@ -66,11 +66,11 @@ final class Util {
         return result;
     }
 
-    static String getIDFromStaticMethod(Class clazz) {
+    static String getIDFromStaticMethod(Class<?> clazz) {
         // System.err.println("GetID by method for " + clazz);
         String result = null;
         try {
-            Method m = clazz.getDeclaredMethod("getStep", new Class[]{});
+            Method m = clazz.getDeclaredMethod("getStep", new Class<?>[]{});
             // assert m.getReturnType() == String.class;
             result = Objects.requireNonNull((String) m.invoke(clazz, (Object[]) null), "getStep may not return null");
         } catch (Exception ex) {
@@ -83,12 +83,12 @@ final class Util {
      * Get an array of steps by looking for a static method getID() on each
      * class object passed
      */
-    static String[] getSteps(Class[] pages) {
+    static String[] getSteps(Class<?>[] pages) {
         Objects.requireNonNull(pages, "Null array of classes");
 
         String[] result = new String[pages.length];
 
-        Set used = new HashSet(pages.length);
+        Set<String> used = new HashSet<>(pages.length);
         for (int i = 0; i < pages.length; i++) {
             Objects.requireNonNull(pages[i], "Null at " + i + " in array of panel classes");
 
@@ -116,7 +116,7 @@ final class Util {
      * Get an array of descriptions by looking for the static method
      * getDescription() on each passed class object
      */
-    static String[] getDescriptions(Class[] pages) {
+    static String[] getDescriptions(Class<?>[] pages) {
         String[] result = new String[pages.length];
 
         for (int i = 0; i < pages.length; i++)
@@ -125,7 +125,7 @@ final class Util {
         return result;
     }
 
-    static String getDescriptionFromStaticMethod(Class clazz) {
+    static String getDescriptionFromStaticMethod(Class<?> clazz) {
         Method m;
         try {
             m = clazz.getDeclaredMethod("getDescription", (Class[]) null);

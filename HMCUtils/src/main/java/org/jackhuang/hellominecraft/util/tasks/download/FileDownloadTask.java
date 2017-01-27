@@ -237,7 +237,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
         return filePath;
     }
 
-    ArrayList<PreviousResult<String>> al = new ArrayList();
+    ArrayList<PreviousResult<String>> al = new ArrayList<>();
 
     @Override
     public Task registerPreviousResult(PreviousResult<String> pr) {

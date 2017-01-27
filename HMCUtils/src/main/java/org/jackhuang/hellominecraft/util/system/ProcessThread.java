@@ -21,9 +21,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.util.code.Charsets;
 
 /**
  *
@@ -50,15 +50,9 @@ public class ProcessThread extends Thread {
         BufferedReader br = null;
         try {
             InputStream in = p.getRawProcess().getInputStream();
-            try {
-                br = new BufferedReader(new InputStreamReader(in, System.getProperty("sun.jnu.encoding", "UTF-8")));
-            } catch (UnsupportedEncodingException ex) {
-                HMCLog.warn("Unsupported encoding: " + System.getProperty("sun.jnu.encoding", "UTF-8"), ex);
-                br = new BufferedReader(new InputStreamReader(in));
-            }
+            br = new BufferedReader(new InputStreamReader(in, Charsets.toCharset()));
 
-            int ch;
-            String line = "";
+            String line;
             while (p.isRunning())
                 while ((line = br.readLine()) != null) {
                     printlnEvent.execute(line);
@@ -70,6 +64,8 @@ public class ProcessThread extends Thread {
                 System.out.println("Minecraft: " + line);
                 p.getStdOutLines().add(line);
             }
+            if (p.getProcessManager() != null)
+                p.getProcessManager().onProcessStopped(p);
             stopEvent.execute(p);
         } catch (IOException e) {
             HMCLog.err("An error occured when reading process stdout/stderr.", e);

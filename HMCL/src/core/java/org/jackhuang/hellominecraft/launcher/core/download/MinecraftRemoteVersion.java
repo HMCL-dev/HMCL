@@ -17,13 +17,23 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.download;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  *
  * @author huangyuhui
  */
 public class MinecraftRemoteVersion {
 
-    public String id, time, releaseTime, type;
+    @SerializedName("id")
+    public String id;
+    @SerializedName("time")
+    public String time;
+    @SerializedName("releaseTime")
+    public String releaseTime;
+    @SerializedName("type")
+    public String type;
+    @SerializedName("url")
     private String url;
 
     public String getUrl(DownloadType type) {

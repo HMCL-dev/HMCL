@@ -26,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 
 /**
@@ -58,7 +59,7 @@ public class ServerProperties {
 
     public String getProperty(String key, String defaultValue) {
         try {
-            is = new FileInputStream(new File(path, "server.properties"));
+            is = FileUtils.openInputStream(new File(path, "server.properties"));
             p = new Properties();
             p.load(is);
             return p.getProperty(key, defaultValue);
@@ -84,12 +85,12 @@ public class ServerProperties {
 
     public void setProperty(String key, String value) {
         try {
-            is = new FileInputStream(new File(path, "server.properties"));
+            is = FileUtils.openInputStream(new File(path, "server.properties"));
             p = new Properties();
             p.load(is);
             p.setProperty(key, value);
             SimpleDateFormat f = new SimpleDateFormat("E M d HH:mm:ss z y");
-            p.store(new FileOutputStream(new File(path, "server.properties")),
+            p.store(FileUtils.openOutputStream(new File(path, "server.properties")),
                     "Minecraft server properties\n" + f.format(new Date()));
         } catch (IOException ex) {
             HMCLog.warn("Failed to set property in server.properties", ex);

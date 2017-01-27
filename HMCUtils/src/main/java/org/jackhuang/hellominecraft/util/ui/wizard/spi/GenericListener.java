@@ -27,7 +27,6 @@ import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.EventObject;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import javax.swing.*;
 import javax.swing.table.*;
@@ -71,7 +70,7 @@ final class GenericListener
      * Set of components that we're listening to models of, so we can look
      * up the component from the model as needed
      */
-    private final Set listenedTo = new HashSet();
+    private final Set<Component> listenedTo = new HashSet<>();
 
     private final WizardPage.CustomComponentListener extListener;
     private final WizardPage.CustomComponentNotifier extNotifier;
@@ -150,9 +149,9 @@ final class GenericListener
             attachToHierarchyOf((Container) jc);
         else if (jc instanceof JList) {
             listenedTo.add(jc);
-            ((JList) jc).addListSelectionListener(this);
+            ((JList<?>) jc).addListSelectionListener(this);
         } else if (jc instanceof JComboBox)
-            ((JComboBox) jc).addActionListener(this);
+            ((JComboBox<?>) jc).addActionListener(this);
         else if (jc instanceof JTree) {
             listenedTo.add(jc);
             ((JTree) jc).getSelectionModel().addTreeSelectionListener(this);
@@ -189,9 +188,9 @@ final class GenericListener
         if (isProbablyAContainer(jc))
             detachFromHierarchyOf((Container) jc);
         else if (jc instanceof JList)
-            ((JList) jc).removeListSelectionListener(this);
+            ((JList<?>) jc).removeListSelectionListener(this);
         else if (jc instanceof JComboBox)
-            ((JComboBox) jc).removeActionListener(this);
+            ((JComboBox<?>) jc).removeActionListener(this);
         else if (jc instanceof JTree)
             ((JTree) jc).getSelectionModel().removeTreeSelectionListener(this);
         else if (jc instanceof JToggleButton)
@@ -271,34 +270,28 @@ final class GenericListener
                     wizardPage.userInputReceived((Component) ((EventObject) e).getSource(), e);
                 else if (e instanceof TreeSelectionEvent) {
                     TreeSelectionModel mdl = (TreeSelectionModel) ((TreeSelectionEvent) e).getSource();
-                    for (Iterator i = listenedTo.iterator(); i.hasNext();) {
-                        Object o = i.next();
+                    for (Object o : listenedTo)
                         if (o instanceof JTree && ((JTree) o).getSelectionModel() == mdl) {
                             wizardPage.userInputReceived((Component) o, e);
                             break;
                         }
-                    }
                 } else if (e instanceof DocumentEvent) {
                     Document document = ((DocumentEvent) e).getDocument();
-                    for (Iterator i = listenedTo.iterator(); i.hasNext();) {
-                        Object o = i.next();
+                    for (Component o : listenedTo)
                         if (o instanceof JTextComponent && ((JTextComponent) o).getDocument() == document) {
                             wizardPage.userInputReceived((Component) o, e);
                             break;
                         }
-                    }
                 } else if (e instanceof ListSelectionEvent) {
                     ListSelectionModel model = (ListSelectionModel) ((ListSelectionEvent) e).getSource();
-                    for (Iterator i = listenedTo.iterator(); i.hasNext();) {
-                        Object o = i.next();
-                        if (o instanceof JList && ((JList) o).getSelectionModel() == model) {
+                    for (Object o : listenedTo)
+                        if (o instanceof JList && ((JList<?>) o).getSelectionModel() == model) {
                             wizardPage.userInputReceived((Component) o, e);
                             break;
                         } else if (o instanceof JTable && ((JTable) o).getSelectionModel() == model) {
                             wizardPage.userInputReceived((Component) o, e);
                             break;
                         }
-                    }
                 } else
                     wizardPage.userInputReceived(null, e);
             } finally {
@@ -307,10 +300,12 @@ final class GenericListener
         }
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         fire(e);
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent e) {
         if (e.getSource() instanceof JComponent && "name".equals(e.getPropertyName())) {
             // Note - most components do NOT fire a property change on
@@ -324,10 +319,12 @@ final class GenericListener
         }
     }
 
+    @Override
     public void itemStateChanged(ItemEvent e) {
         fire(e);
     }
 
+    @Override
     public void componentAdded(ContainerEvent e) {
 //        if (extListener != null && extListener.accept(e.getChild())) {
 //            extListener.startListeningTo(e.getChild(), extNotifier);
@@ -337,6 +334,7 @@ final class GenericListener
             attachTo(e.getChild());
     }
 
+    @Override
     public void componentRemoved(ContainerEvent e) {
         if (extListener != null && extListener.accept(e.getChild())) {
             extListener.stopListeningTo(e.getChild());
@@ -345,30 +343,37 @@ final class GenericListener
             detachFrom(e.getChild());
     }
 
+    @Override
     public void insertUpdate(DocumentEvent e) {
         fire(e);
     }
 
+    @Override
     public void changedUpdate(DocumentEvent e) {
         fire(e);
     }
 
+    @Override
     public void removeUpdate(DocumentEvent e) {
         fire(e);
     }
 
+    @Override
     public void stateChanged(ChangeEvent e) {
         fire(e);
     }
 
+    @Override
     public void valueChanged(ListSelectionEvent e) {
         fire(e);
     }
 
+    @Override
     public void valueChanged(TreeSelectionEvent e) {
         fire(e);
     }
 
+    @Override
     public void tableChanged(TableModelEvent e) {
         fire(e);
     }

@@ -25,11 +25,6 @@ public class User {
     public User() {
     }
 
-    public User(String id, PropertyMap properties) {
-        this.id = id;
-        this.properties = properties;
-    }
-
     public String getId() {
         return id;
     }

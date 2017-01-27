@@ -90,7 +90,7 @@ public abstract class PlayerList<T extends BasePlayer> {
         op = null;
         if (txt.exists())
             try {
-                initByText(FileUtils.readIgnoreFileNotFound(txt));
+                initByText(FileUtils.read(txt));
                 if (op != null)
                     player.addAll(op);
             } catch (IOException e) {
@@ -100,7 +100,7 @@ public abstract class PlayerList<T extends BasePlayer> {
     }
 
     public void saveAsText(File file) throws IOException {
-        FileUtils.write(file, StrUtils.parseParams("", op, System.getProperty("line.separator")));
+        FileUtils.write(file, StrUtils.parseParams("", op.toArray(), System.getProperty("line.separator")));
     }
 
     public void saveAsJson(File file) throws IOException {

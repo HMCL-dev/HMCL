@@ -27,7 +27,6 @@ import java.util.regex.Pattern;
  */
 public enum Level {
 
-    OFF(0, Color.gray),
     FATAL(1, Color.red),
     ERROR(2, Color.red),
     WARN(3, Color.orange),
@@ -46,10 +45,6 @@ public enum Level {
 
     public boolean lessOrEqual(Level level) {
         return this.level <= level.level;
-    }
-
-    public boolean lessOrEqual(int level) {
-        return this.level <= level;
     }
 
     public static final Pattern MINECRAFT_LOGGER = Pattern.compile("\\[(?<timestamp>[0-9:]+)\\] \\[[^/]+/(?<level>[^\\]]+)\\]");

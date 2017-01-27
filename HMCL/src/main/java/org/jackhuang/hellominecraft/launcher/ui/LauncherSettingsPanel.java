@@ -49,12 +49,12 @@ public class LauncherSettingsPanel extends RepaintPage {
         setBackground(GraphicsUtils.getWebColorWithAlpha("FFFFFF7F"));
         setOpaque(true);
 
-        DefaultComboBoxModel d = new DefaultComboBoxModel();
+        DefaultComboBoxModel<String> d = new DefaultComboBoxModel<>();
         for (DownloadType type : DownloadType.values())
             d.addElement(type.getName());
         cboDownloadSource.setModel(d);
 
-        d = new DefaultComboBoxModel();
+        d = new DefaultComboBoxModel<>();
         int id = 0;
         for (SupportedLocales type : SupportedLocales.values()) {
             d.addElement(type.showString());

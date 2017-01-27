@@ -25,7 +25,7 @@ import java.util.HashSet;
  */
 public class ProcessManager {
 
-    private static final HashSet<JavaProcess> GAME_PROCESSES = new HashSet();
+    private static final HashSet<JavaProcess> GAME_PROCESSES = new HashSet<>();
 
     public void registerProcess(JavaProcess jp) {
         GAME_PROCESSES.add(jp);

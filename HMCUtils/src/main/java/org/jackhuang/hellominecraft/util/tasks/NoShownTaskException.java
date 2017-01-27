@@ -22,6 +22,7 @@ package org.jackhuang.hellominecraft.util.tasks;
  * @author huangyuhui
  */
 public class NoShownTaskException extends RuntimeException {
+    private static final long serialVersionUID = 4893571368018439312L;
 
     public NoShownTaskException(String msg) {
         super(msg);

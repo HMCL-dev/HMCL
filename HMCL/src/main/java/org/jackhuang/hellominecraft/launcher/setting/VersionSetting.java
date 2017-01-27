@@ -93,27 +93,6 @@ public class VersionSetting {
         javaDir = java = minecraftArgs = serverIp = precalledCommand = wrapper = "";
     }
 
-    public VersionSetting(VersionSetting v) {
-        this();
-        if (v == null)
-            return;
-        maxMemory = v.maxMemory;
-        width = v.width;
-        height = v.height;
-        java = v.java;
-        fullscreen = v.fullscreen;
-        javaArgs = v.javaArgs;
-        javaDir = v.javaDir;
-        minecraftArgs = v.minecraftArgs;
-        permSize = v.permSize;
-        gameDirType = v.gameDirType;
-        noJVMArgs = v.noJVMArgs;
-        launcherVisibility = v.launcherVisibility;
-        precalledCommand = v.precalledCommand;
-        wrapper = v.wrapper;
-        serverIp = v.serverIp;
-    }
-
     public String getJavaDir() {
         Java j = getJava();
         if (j.getHome() == null)
@@ -171,10 +150,6 @@ public class VersionSetting {
     public void setJavaArgs(String javaArgs) {
         this.javaArgs = javaArgs;
         propertyChanged.execute("javaArgs");
-    }
-
-    public boolean hasJavaArgs() {
-        return StrUtils.isNotBlank(getJavaArgs().trim());
     }
 
     public String getMaxMemory() {

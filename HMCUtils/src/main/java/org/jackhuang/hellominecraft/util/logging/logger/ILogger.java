@@ -30,20 +30,6 @@ public interface ILogger {
 
     void catching(Throwable paramThrowable);
 
-    void debug(IMessage paramIMessage);
-
-    void debug(IMessage paramIMessage, Throwable paramThrowable);
-
-    void debug(Object paramObject);
-
-    void debug(Object paramObject, Throwable paramThrowable);
-
-    void debug(String paramString);
-
-    void debug(String paramString, Object[] paramArrayOfObject);
-
-    void debug(String paramString, Throwable paramThrowable);
-
     void entry();
 
     void entry(Object[] paramArrayOfObject);
@@ -125,20 +111,6 @@ public interface ILogger {
     <T extends Throwable> T throwing(Level paramLevel, T paramT);
 
     <T extends Throwable> T throwing(T paramT);
-
-    void trace(IMessage paramIMessage);
-
-    void trace(IMessage paramIMessage, Throwable paramThrowable);
-
-    void trace(Object paramObject);
-
-    void trace(Object paramObject, Throwable paramThrowable);
-
-    void trace(String paramString);
-
-    void trace(String paramString, Object[] paramArrayOfObject);
-
-    void trace(String paramString, Throwable paramThrowable);
 
     void warn(IMessage paramIMessage);
 

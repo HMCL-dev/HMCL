@@ -25,7 +25,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
@@ -59,9 +58,7 @@ public class OptiFineVersionList extends InstallerVersionList {
         return instance;
     }
 
-    public ArrayList<OptiFineVersion> root = new ArrayList();
-    public Map<String, List<InstallerVersion>> versionMap;
-    public List<InstallerVersion> versions;
+    public ArrayList<OptiFineVersion> root = new ArrayList<>();
 
     @Override
     public Task refresh(String[] sss) {
@@ -138,18 +135,4 @@ public class OptiFineVersionList extends InstallerVersionList {
     public String getName() {
         return "OptiFine - OptiFine Official Site";
     }
-
-    @Override
-    public List<InstallerVersion> getVersionsImpl(String mcVersion) {
-        if (versions == null || versionMap == null)
-            return null;
-        if (StrUtils.isBlank(mcVersion))
-            return versions;
-        List c = versionMap.get(mcVersion);
-        if (c == null)
-            return versions;
-        Collections.sort(c, InstallerVersionComparator.INSTANCE);
-        return c;
-    }
-
 }

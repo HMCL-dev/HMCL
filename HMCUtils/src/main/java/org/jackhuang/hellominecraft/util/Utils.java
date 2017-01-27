@@ -52,7 +52,7 @@ public final class Utils {
      */
     public static void shutdownForcely(int status) throws Exception {
         AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
-            Class z = Class.forName("java.lang.Shutdown");
+            Class<?> z = Class.forName("java.lang.Shutdown");
             Method exit = z.getDeclaredMethod("exit", int.class);
             exit.setAccessible(true);
             exit.invoke(z, status);

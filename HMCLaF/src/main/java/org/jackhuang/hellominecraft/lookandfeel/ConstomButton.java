@@ -14,13 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.
  */
-package org.jackhuang.hellominecraft.lookandfeel.comp;
+package org.jackhuang.hellominecraft.lookandfeel;
+
+import java.awt.Color;
+import org.jackhuang.hellominecraft.util.ui.GraphicsUtils;
 
 /**
  *
  * @author huangyuhui
  */
-public interface IConstomable {
-    boolean constomBackground();
-    boolean constomForeground();
+public class ConstomButton extends javax.swing.JButton {
+    public Color normalFg = GraphicsUtils.getWebColorWithAlpha("DDDDDD6F"), normalBg = GraphicsUtils.getWebColorWithAlpha("DDDDDD6F"),
+	    prelightFg = GraphicsUtils.getWebColorWithAlpha("FFFFFF7F"), prelightBg = GraphicsUtils.getWebColorWithAlpha("FFFFFF7F"),
+	    activeFg = GraphicsUtils.getWebColorWithAlpha("EAEDF83F"), activeBg = GraphicsUtils.getWebColorWithAlpha("EAEDF83F");
+    public int drawPercent = 0;
+    public int radix = 0;
 }

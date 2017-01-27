@@ -38,7 +38,7 @@ import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.ui.modpack.ModpackWizard;
 import org.jackhuang.hellominecraft.launcher.util.HMCLMinecraftService;
 import org.jackhuang.hellominecraft.util.Event;
-import org.jackhuang.hellominecraft.lookandfeel.comp.ConstomButton;
+import org.jackhuang.hellominecraft.lookandfeel.ConstomButton;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
@@ -473,7 +473,7 @@ public class MainPagePanel extends GaussionPage {
 
     final Runnable onLoadingProfiles = () -> {
         isLoading = true;
-        DefaultComboBoxModel model = new DefaultComboBoxModel();
+        DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
         for (Profile s : Settings.getProfilesFiltered())
             model.addElement(s.getName());
         cboProfiles.setModel(model);
@@ -516,7 +516,7 @@ public class MainPagePanel extends GaussionPage {
 
     void versionChanged(String selectedVersion) {
         isLoading = true;
-        DefaultComboBoxModel model = (DefaultComboBoxModel) cboVersions.getModel();
+        DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) cboVersions.getModel();
         for (int i = 0; i < model.getSize(); ++i)
             if (model.getElementAt(i).equals(selectedVersion)) {
                 model.setSelectedItem(selectedVersion);
@@ -532,7 +532,7 @@ public class MainPagePanel extends GaussionPage {
         t.launcher().launchingStateChanged.register(launchingStateChanged);
 
         isLoading = true;
-        DefaultComboBoxModel model = (DefaultComboBoxModel) cboProfiles.getModel();
+        DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) cboProfiles.getModel();
         for (int i = 0; i < model.getSize(); ++i)
             if (model.getElementAt(i).equals(t.getName())) {
                 model.setSelectedItem(t.getName());

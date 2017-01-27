@@ -57,7 +57,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
     public Task downloadAssets(final MinecraftVersion mv) throws GameException {
         if (mv == null)
             return null;
-        return IAssetsHandler.ASSETS_HANDLER.getList(mv.resolve(service.version()), service.asset()).after(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(service.getDownloadType().getProvider()));
+        return IAssetsHandler.ASSETS_HANDLER.getList(mv.resolve(service.version()), service.asset()).with(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(service.getDownloadType().getProvider()));
     }
 
     @Override
@@ -155,7 +155,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
 
             if (index == null)
                 return false;
-            for (Map.Entry entry : index.getFileMap().entrySet())
+            for (Map.Entry<String, AssetsObject> entry : index.getFileMap().entrySet())
                 if (!new File(getAssets(), "objects/" + ((AssetsObject) entry.getValue()).getHash().substring(0, 2) + "/" + ((AssetsObject) entry.getValue()).getHash()).exists())
                     return false;
             return true;
@@ -185,7 +185,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
                 int cnt = 0;
                 HMCLog.log("Reconstructing virtual assets folder at " + virtualRoot);
                 int tot = index.getFileMap().entrySet().size();
-                for (Map.Entry entry : index.getFileMap().entrySet()) {
+                for (Map.Entry<String, AssetsObject> entry : index.getFileMap().entrySet()) {
                     File target = new File(virtualRoot, (String) entry.getKey());
                     File original = new File(assetsDir, "objects/" + ((AssetsObject) entry.getValue()).getHash().substring(0, 2) + "/" + ((AssetsObject) entry.getValue()).getHash());
                     if (original.exists()) {

@@ -115,15 +115,6 @@ public final class JdkVersion implements Cloneable {
      */
     public static final int JAVA_19 = 6;
 
-    private static final String JAVA_VER;
-    private static final int MAJOR_JAVA_VER;
-
-    static {
-        JAVA_VER = System.getProperty("java.version");
-        // version String should look like "1.4.2_10"
-        MAJOR_JAVA_VER = parseVersion(JAVA_VER);
-    }
-
     private static int parseVersion(String javaVersion) {
         if (StrUtils.isBlank(javaVersion))
             return UNKOWN;
@@ -137,42 +128,6 @@ public final class JdkVersion implements Cloneable {
         else if (javaVersion.contains("1.6."))
             a = JAVA_16;
         return a;
-    }
-
-    /**
-     * Return the full Java version string, as returned by
-     * <code>System.getProperty("java.version")</code>.
-     *
-     * @return the full Java version string
-     *
-     * @see System#getProperty(String)
-     */
-    public static String getJavaVersion() {
-        return JAVA_VER;
-    }
-
-    /**
-     * Get the major version code. This means we can do things like
-     * <code>if (getMajorJavaVersion() < JAVA_14)</code>. @retu
-     *
-     *
-     * rn a code comparable to the JAVA_XX codes in this class
-     *
-     * @return
-     *
-     * @see #JAVA_13
-     * @see #JAVA_14
-     * @see #JAVA_15
-     * @see #JAVA_16
-     * @see #JAVA_17
-     */
-    public static int getMajorJavaVersion() {
-        return MAJOR_JAVA_VER;
-    }
-
-    public static boolean isJava64Bit() {
-        String jdkBit = System.getProperty("sun.arch.data.model");
-        return jdkBit.contains("64");
     }
 
     private static final Pattern p = Pattern.compile("java version \"[1-9]*\\.[1-9]*\\.[0-9]*(.*?)\"");
@@ -195,11 +150,6 @@ public final class JdkVersion implements Cloneable {
             HMCLog.warn("Failed to get java version", e);
         }
         return new JdkVersion(file, ver, platform);
-    }
-
-    public void write(File f) throws IOException {
-        if (ver != null && getPlatform() != Platform.UNKNOWN)
-            FileUtils.write(f, ver + "\n" + platform);
     }
 
     public boolean isEarlyAccess() {

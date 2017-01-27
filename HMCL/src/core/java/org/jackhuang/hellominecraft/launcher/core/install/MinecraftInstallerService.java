@@ -62,8 +62,8 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
             return null;
         else
             return new FileDownloadTask(service.getDownloadType().getProvider().getParsedDownloadURL(v.installer), filepath).setTag("forge")
-                .after(new ForgeInstaller(service, filepath))
-                .after(new DeleteFileTask(filepath));
+                .with(new ForgeInstaller(service, filepath))
+                .with(new DeleteFileTask(filepath));
     }
 
     @Override
@@ -72,9 +72,9 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
         if (v.installer == null)
             return null;
         OptiFineDownloadFormatter task = new OptiFineDownloadFormatter(v.installer);
-        return task.after(new FileDownloadTask(filepath).registerPreviousResult(task).setTag("optifine"))
-            .after(new OptiFineInstaller(service, installId, v, filepath))
-            .after(new DeleteFileTask(filepath));
+        return task.with(new FileDownloadTask(filepath).registerPreviousResult(task).setTag("optifine"))
+            .with(new OptiFineInstaller(service, installId, v, filepath))
+            .with(new DeleteFileTask(filepath));
     }
 
     @Override
@@ -83,7 +83,7 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
             throw new Error("Download lite loader but the version is not ll's.");
         File filepath = IOUtils.tryGetCanonicalFile("liteloader-universal.jar");
         FileDownloadTask task = (FileDownloadTask) new FileDownloadTask(v.universal, filepath).setTag("LiteLoader");
-        return task.after(new LiteLoaderInstaller(service, installId, (LiteLoaderVersionList.LiteLoaderInstallerVersion) v).registerPreviousResult(task))
-            .after(new DeleteFileTask(filepath));
+        return task.with(new LiteLoaderInstaller(service, installId, (LiteLoaderVersionList.LiteLoaderInstallerVersion) v).registerPreviousResult(task))
+            .with(new DeleteFileTask(filepath));
     }
 }

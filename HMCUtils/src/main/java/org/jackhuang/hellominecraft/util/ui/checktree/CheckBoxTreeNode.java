@@ -44,7 +44,7 @@ public class CheckBoxTreeNode extends DefaultMutableTreeNode {
     @Override
     public String toString() {
         if (userObject instanceof Pair)
-            return "<html>" + ((Pair) userObject).key + "<font color=gray>&nbsp;-&nbsp;" + ((Pair) userObject).value + "</font></html>";
+            return "<html>" + ((Pair<?, ?>) userObject).key + "<font color=gray>&nbsp;-&nbsp;" + ((Pair<?, ?>) userObject).value + "</font></html>";
         else
             return userObject.toString();
     }

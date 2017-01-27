@@ -22,13 +22,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
-import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList.InstallerVersion;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionNewerComparator;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.tasks.Task;
@@ -50,8 +48,6 @@ public class LiteLoaderVersionList extends InstallerVersionList {
     }
 
     public LiteLoaderVersionsRoot root;
-    public Map<String, List<InstallerVersion>> versionMap;
-    public List<InstallerVersion> versions;
 
     @Override
     public Task refresh(String[] needed) {
@@ -100,19 +96,6 @@ public class LiteLoaderVersionList extends InstallerVersionList {
                 Collections.sort(versions, InstallerVersionComparator.INSTANCE);
             }
         };
-    }
-
-    @Override
-    public List<InstallerVersion> getVersionsImpl(String mcVersion) {
-        if (versions == null || versionMap == null)
-            return null;
-        if (StrUtils.isBlank(mcVersion))
-            return versions;
-        List c = versionMap.get(mcVersion);
-        if (c == null)
-            return versions;
-        Collections.sort(c, InstallerVersionComparator.INSTANCE);
-        return c;
     }
 
     @Override

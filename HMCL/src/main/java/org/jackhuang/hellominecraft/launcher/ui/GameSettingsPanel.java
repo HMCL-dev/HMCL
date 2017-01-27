@@ -1410,7 +1410,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
 
     private void loadProfiles() {
         isLoading = true;
-        DefaultComboBoxModel model = new DefaultComboBoxModel();
+        DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
         for (Profile s : Settings.getProfilesFiltered())
             model.addElement(s.getName());
         cboProfiles.setModel(model);
@@ -1423,7 +1423,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
     };
 
     void loadVersions() {
-        DefaultComboBoxModel model = new DefaultComboBoxModel();
+        DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
         for (MinecraftVersion each : Settings.getLastProfile().service().version().getVersions()) {
             if (each.hidden)
                 continue;
@@ -1438,7 +1438,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
 
     public void versionChanged(String version) {
         isLoading = true;
-        DefaultComboBoxModel model = (DefaultComboBoxModel) cboVersions.getModel();
+        DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) cboVersions.getModel();
         for (int i = 0; i < model.getSize(); ++i)
             if (model.getElementAt(i).equals(version)) {
                 model.setSelectedItem(version);
@@ -1462,7 +1462,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         txtGameDir.setText(t.getGameDir());
 
         isLoading = true;
-        DefaultComboBoxModel model = (DefaultComboBoxModel) cboProfiles.getModel();
+        DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) cboProfiles.getModel();
         for (int i = 0; i < model.getSize(); ++i)
             if (model.getElementAt(i).equals(t.getName())) {
                 model.setSelectedItem(t.getName());

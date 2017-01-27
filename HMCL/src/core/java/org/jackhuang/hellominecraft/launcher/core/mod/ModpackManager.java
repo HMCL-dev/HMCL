@@ -93,15 +93,15 @@ public final class ModpackManager {
 
                 // Read modpack name and description from `modpack.json`
                 try (ZipFile zip = new ZipFile(input)) {
-                    HashMap map = C.GSON.fromJson(new InputStreamReader(zip.getInputStream(zip.getEntry("modpack.json")), "UTF-8"), HashMap.class);
+                    HashMap<String, String> map = C.GSON.fromJson(new InputStreamReader(zip.getInputStream(zip.getEntry("modpack.json")), "UTF-8"), HashMap.class);
                     if (map != null) {
                         if (id == null)
                             if (map.containsKey("name") && map.get("name") instanceof String)
-                                id = (String) map.get("name");
+                                id = map.get("name");
                         if (id != null)
                             description += id;
                         if (map.containsKey("description") && map.get("description") instanceof String)
-                            description += "\n" + (String) map.get("description");
+                            description += "\n" + map.get("description");
                     }
                     if (id == null)
                         throw new IllegalStateException("Illegal modpack id!");
@@ -245,7 +245,7 @@ public final class ModpackManager {
      *
      * @throws IOException if create tmp directory failed
      */
-    public static void export(File output, IMinecraftProvider provider, String version, List<String> blacklist, Map modpackJson, CallbackIO<ZipEngine> callback) throws IOException, GameException {
+    public static void export(File output, IMinecraftProvider provider, String version, List<String> blacklist, Map<String, String> modpackPreferences, CallbackIO<ZipEngine> callback) throws IOException, GameException {
         final ArrayList<String> b = new ArrayList<>(MODPACK_BLACK_LIST);
         if (blacklist != null)
             b.addAll(blacklist);
@@ -272,7 +272,7 @@ public final class ModpackManager {
             mv.jar = r.version;
             mv.runDir = "version";
             zip.putTextFile(C.GSON.toJson(mv), "minecraft/pack.json");
-            zip.putTextFile(C.GSON.toJson(modpackJson), "modpack.json");
+            zip.putTextFile(C.GSON.toJson(modpackPreferences), "modpack.json");
             if (callback != null)
                 callback.call(zip);
         } finally {

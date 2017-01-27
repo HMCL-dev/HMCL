@@ -44,7 +44,7 @@ public class TaskWindow extends javax.swing.JDialog
     boolean suc = false;
 
     private transient TaskList taskList;
-    private final ArrayList<String> failReasons = new ArrayList();
+    private final ArrayList<String> failReasons = new ArrayList<>();
     private String stackTrace = null, lastStackTrace = null;
 
     /**
@@ -299,7 +299,6 @@ public class TaskWindow extends javax.swing.JDialog
     public static class TaskWindowFactory {
 
         LinkedList<Task> ll = new LinkedList<>();
-        boolean flag;
 
         public TaskWindowFactory append(Task ts) {
             if (ts != null)

@@ -47,7 +47,7 @@ public final class UpdateChecker implements IUpdateChecker {
 
     @Override
     public AbstractSwingWorker<VersionNumber> process(final boolean showMessage) {
-        return new AbstractSwingWorker() {
+        return new AbstractSwingWorker<VersionNumber>() {
             @Override
             protected void work() throws Exception {
                 if (value == null) {
@@ -74,12 +74,12 @@ public final class UpdateChecker implements IUpdateChecker {
 
     @Override
     public synchronized AbstractSwingWorker<Map<String, String>> requestDownloadLink() {
-        return new AbstractSwingWorker() {
+        return new AbstractSwingWorker<Map<String, String>>() {
             @Override
             protected void work() throws Exception {
                 if (download_link == null)
                     try {
-                        download_link = C.GSON.fromJson(NetUtils.get("http://huangyuhui.duapp.com/update_link.php?type=" + type), Map.class);
+                        download_link = C.GSON.<Map<String, String>>fromJson(NetUtils.get("http://huangyuhui.duapp.com/update_link.php?type=" + type), Map.class);
                     } catch (JsonSyntaxException | IOException e) {
                         HMCLog.warn("Failed to get update link.", e);
                     }

@@ -18,7 +18,6 @@
 package org.jackhuang.hellominecraft.util.tasks;
 
 import java.util.Collection;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
 
 /**
  *
@@ -102,12 +101,8 @@ public abstract class Task {
         return this;
     }
 
-    public Task after(Task t) {
+    public Task with(Task t) {
         return new DoubleTask(this, t);
-    }
-
-    public Task before(Task t) {
-        return new DoubleTask(t, this);
     }
 
     public void runWithException() throws Throwable {
@@ -120,15 +115,5 @@ public abstract class Task {
         if (c != null)
             for (Task t : c)
                 t.runWithException();
-    }
-
-    public boolean run() {
-        try {
-            runWithException();
-            return true;
-        } catch (Throwable t) {
-            HMCLog.err("Failed to execute task", t);
-            return false;
-        }
     }
 }

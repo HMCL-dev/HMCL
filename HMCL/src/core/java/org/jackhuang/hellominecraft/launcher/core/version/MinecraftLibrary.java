@@ -46,14 +46,6 @@ public class MinecraftLibrary extends IMinecraftLibrary {
         super(name);
     }
 
-    public MinecraftLibrary(ArrayList<Rules> rules, String url, Natives natives, String name, Extract extract, LibraryDownloadInfo downloads) {
-        super(name);
-        this.rules = rules == null ? null : (ArrayList<Rules>) rules.clone();
-        this.url = url;
-        this.natives = natives == null ? null : (Natives) natives.clone();
-        this.extract = extract == null ? null : (Extract) extract.clone();
-    }
-
     /**
      * is the library allowed to load.
      *

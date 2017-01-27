@@ -37,10 +37,6 @@ public class DropShadowBorder extends AbstractBorder {
     private Insets insets = null;
     RenderingHints hints;
 
-    public DropShadowBorder(Color color) {
-        this(color, 3);
-    }
-
     public DropShadowBorder(Color color, int thickness) {
         this.thickness = thickness;
         this.color = color;
@@ -94,11 +90,5 @@ public class DropShadowBorder extends AbstractBorder {
             CACHE.put(pair, list = shadow);
         }
         g.drawImage(list, 0, 0, width, height, null);
-    }
-    
-    void copyFromArray(int[] from, int W, int H, int[] to, int x, int y, int w, int h) {
-        for (int i = 0; i < h; ++i)
-            for (int j = 0; j < w; ++j)
-                to[i * w + j] = from[(i + y) * W + j + x];
     }
 }

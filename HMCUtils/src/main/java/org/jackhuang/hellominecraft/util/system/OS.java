@@ -20,7 +20,6 @@ package org.jackhuang.hellominecraft.util.system;
 import com.sun.management.OperatingSystemMXBean;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
@@ -92,7 +91,7 @@ public enum OS {
 
     public static long[] memoryInfoForLinux() throws IOException {
         File file = new File("/proc/meminfo");
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), Charsets.UTF_8))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(FileUtils.openInputStream(file), Charsets.UTF_8))) {
             long[] result = new long[4];
             String str;
             StringTokenizer token;

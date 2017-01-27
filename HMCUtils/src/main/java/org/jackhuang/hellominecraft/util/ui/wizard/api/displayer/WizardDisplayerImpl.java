@@ -164,7 +164,7 @@ public class WizardDisplayerImpl extends WizardDisplayer {
      * java.awt.Rectangle, javax.swing.Action, java.util.Map)
      */
     private JPanel createOuterPanel(final Wizard awizard, Rectangle bounds, Action helpAction,
-            Map initialProperties) {
+            Map<?, ?> initialProperties) {
 
         this.wizard = awizard;
 

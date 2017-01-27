@@ -22,7 +22,6 @@ import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
@@ -41,18 +40,13 @@ public class ZipEngine implements Closeable {
     ZipOutputStream zos;
 
     public ZipEngine(File f) throws IOException {
-        FileOutputStream os = new FileOutputStream(f);
-        zos = new ZipOutputStream(new BufferedOutputStream(os));
+        zos = new ZipOutputStream(new BufferedOutputStream(FileUtils.openOutputStream(f)));
     }
 
     @Override
     public void close() throws IOException {
         zos.closeEntry();
         zos.close();
-    }
-
-    public void putDirectory(String sourceDir) throws IOException {
-        putDirectory(new File(sourceDir), null);
     }
 
     public void putDirectory(File sourceDir) throws IOException {
@@ -117,7 +111,7 @@ public class ZipEngine implements Closeable {
     }
 
     public void putFile(File file, String pathName) throws IOException {
-        try (FileInputStream fis = new FileInputStream(file)) {
+        try (FileInputStream fis = FileUtils.openInputStream(file)) {
             putStream(fis, pathName);
         }
     }

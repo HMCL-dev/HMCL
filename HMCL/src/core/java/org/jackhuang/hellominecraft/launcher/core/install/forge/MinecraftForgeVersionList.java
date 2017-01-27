@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
@@ -48,8 +47,6 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
     }
 
     public MinecraftForgeVersionRoot root;
-    public Map<String, List<InstallerVersion>> versionMap;
-    public List<InstallerVersion> versions;
 
     @Override
     public Task refresh(String[] needed) {
@@ -114,19 +111,6 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
                 Collections.sort(versions, new InstallerVersionComparator());
             }
         };
-    }
-
-    @Override
-    public List<InstallerVersion> getVersionsImpl(String mcVersion) {
-        if (versions == null || versionMap == null)
-            return null;
-        if (StrUtils.isBlank(mcVersion))
-            return versions;
-        List c = versionMap.get(mcVersion);
-        if (c == null)
-            return versions;
-        Collections.sort(c, InstallerVersionComparator.INSTANCE);
-        return c;
     }
 
     @Override

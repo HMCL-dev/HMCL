@@ -45,7 +45,7 @@ import org.jackhuang.hellominecraft.util.ui.SwingUtils;
  */
 public class MinecraftVersionManager extends IMinecraftProvider {
 
-    final Map<String, MinecraftVersion> versions = new TreeMap();
+    final Map<String, MinecraftVersion> versions = new TreeMap<>();
 
     /**
      *

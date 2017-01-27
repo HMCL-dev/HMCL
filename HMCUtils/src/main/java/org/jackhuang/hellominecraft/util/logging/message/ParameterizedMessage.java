@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -230,7 +229,7 @@ public class ParameterizedMessage
         if (o instanceof String)
             return (String) o;
         StringBuilder str = new StringBuilder();
-        Set dejaVu = new HashSet();
+        Set<String> dejaVu = new HashSet<>();
         recursiveDeepToString(o, str, dejaVu);
         return str.toString();
     }
@@ -244,7 +243,7 @@ public class ParameterizedMessage
             str.append(o);
             return;
         }
-        Class oClass = o.getClass();
+        Class<?> oClass = o.getClass();
         if (oClass.isArray())
             if (oClass == byte[].class)
                 str.append(Arrays.toString((byte[]) (byte[]) o));
@@ -265,7 +264,7 @@ public class ParameterizedMessage
             else {
                 String id = identityToString(o);
                 if (dejaVu.contains(id))
-                    str.append("[...").append(id).append("...]");
+                    str.append(RECURSION_PREFIX).append(id).append(RECURSION_SUFFIX);
                 else {
                     dejaVu.add(id);
                     Object[] oArray = (Object[]) (Object[]) o;
@@ -276,7 +275,7 @@ public class ParameterizedMessage
                             first = false;
                         else
                             str.append(", ");
-                        recursiveDeepToString(current, str, new HashSet(dejaVu));
+                        recursiveDeepToString(current, str, new HashSet<>(dejaVu));
                     }
                     str.append("]");
                 }
@@ -284,42 +283,40 @@ public class ParameterizedMessage
         else if ((o instanceof Map)) {
             String id = identityToString(o);
             if (dejaVu.contains(id))
-                str.append("[...").append(id).append("...]");
+                str.append(RECURSION_PREFIX).append(id).append(RECURSION_SUFFIX);
             else {
                 dejaVu.add(id);
-                Map oMap = (Map) o;
+                Map<?, ?> oMap = (Map<?, ?>) o;
                 str.append("{");
                 boolean isFirst = true;
-                for (Object o1 : oMap.entrySet()) {
-                    Map.Entry current = (Map.Entry) o1;
+                for (Map.Entry<?, ?> current : oMap.entrySet()) {
                     if (isFirst)
                         isFirst = false;
                     else
                         str.append(", ");
                     Object key = current.getKey();
                     Object value = current.getValue();
-                    recursiveDeepToString(key, str, new HashSet(dejaVu));
+                    recursiveDeepToString(key, str, new HashSet<>(dejaVu));
                     str.append("=");
-                    recursiveDeepToString(value, str, new HashSet(dejaVu));
+                    recursiveDeepToString(value, str, new HashSet<>(dejaVu));
                 }
                 str.append("}");
             }
         } else if ((o instanceof Collection)) {
             String id = identityToString(o);
             if (dejaVu.contains(id))
-                str.append("[...").append(id).append("...]");
+                str.append(RECURSION_PREFIX).append(id).append(RECURSION_SUFFIX);
             else {
                 dejaVu.add(id);
-                Collection oCol = (Collection) o;
+                Collection<?> oCol = (Collection<?>) o;
                 str.append("[");
                 boolean isFirst = true;
-                for (Iterator i$ = oCol.iterator(); i$.hasNext();) {
-                    Object anOCol = i$.next();
+                for (Object anOCol : oCol) {
                     if (isFirst)
                         isFirst = false;
                     else
                         str.append(", ");
-                    recursiveDeepToString(anOCol, str, new HashSet(dejaVu));
+                    recursiveDeepToString(anOCol, str, new HashSet<>(dejaVu));
                 }
                 str.append("]");
             }
@@ -332,17 +329,17 @@ public class ParameterizedMessage
             try {
                 str.append(o.toString());
             } catch (Throwable t) {
-                str.append("[!!!");
+                str.append(ERROR_PREFIX);
                 str.append(identityToString(o));
-                str.append("=>");
+                str.append(ERROR_SEPARATOR);
                 String msg = t.getMessage();
                 String className = t.getClass().getName();
                 str.append(className);
                 if (!className.equals(msg)) {
-                    str.append(":");
+                    str.append(ERROR_MSG_SEPARATOR);
                     str.append(msg);
                 }
-                str.append("!!!]");
+                str.append(ERROR_SUFFIX);
             }
     }
 

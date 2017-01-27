@@ -98,7 +98,6 @@ public final class Main implements Runnable {
         return "HMCL" + ' ' + LAUNCHER_VERSION;
     }
 
-    public static final Main INSTANCE = new Main();
     private static HelloMinecraftLookAndFeel LOOK_AND_FEEL;
 
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());

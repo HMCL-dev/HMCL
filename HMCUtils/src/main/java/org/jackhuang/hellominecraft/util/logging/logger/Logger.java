@@ -31,7 +31,7 @@ import org.jackhuang.hellominecraft.util.logging.message.IMessageFactory;
 public class Logger extends AbstractLogger {
 
     protected volatile PrivateConfig config;
-    private final Map<String, AppenderControl> appenders = new ConcurrentHashMap();
+    private final Map<String, AppenderControl> appenders = new ConcurrentHashMap<>();
 
     public Logger(String name) {
         this(name, null, Level.INFO);
@@ -109,8 +109,8 @@ public class Logger extends AbstractLogger {
     }
 
     public Map<String, IAppender> getAppenders() {
-        Map map = new HashMap();
-        for (Map.Entry entry : this.appenders.entrySet())
+        Map<String, IAppender> map = new HashMap<>();
+        for (Map.Entry<String, AppenderControl> entry : this.appenders.entrySet())
             map.put(entry.getKey(), ((AppenderControl) entry.getValue()).getAppender());
         return map;
     }

@@ -23,13 +23,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import org.jackhuang.hellominecraft.util.ArrayUtils;
 import org.jackhuang.hellominecraft.util.code.Charsets;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
 
@@ -62,7 +62,7 @@ public final class SimpleWizardInfo implements WizardControllerImplementation {
     protected SimpleWizardInfo(String title, String[] steps, String[] descriptions, WizardPanelProvider provider) {
         this.steps = Objects.requireNonNull(steps, "Null steps");
         this.descriptions = Objects.requireNonNull(descriptions, "Null descriptions");
-        if (new HashSet(Arrays.asList(steps)).size() < steps.length)
+        if (ArrayUtils.hasDuplicateElements(steps))
             throw new IllegalArgumentException("Duplicate ID: " + Arrays.asList(steps));
         if (descriptions.length != steps.length)
             if (steps.length != descriptions.length + 1 && !WizardImplementation.UNDETERMINED_STEP.equals(steps[steps.length - 1]))
@@ -76,15 +76,11 @@ public final class SimpleWizardInfo implements WizardControllerImplementation {
     }
 
     final void setWizard(SimpleWizard wizard) {
-        this.wizard = new WeakReference(wizard);
+        this.wizard = new WeakReference<>(wizard);
     }
 
     final SimpleWizard getWizard() {
         return wizard != null ? (SimpleWizard) wizard.get() : null;
-    }
-
-    final SimpleWizard createWizard() {
-        return new SimpleWizard(this);
     }
 
     //pkg private for unit tests

@@ -20,10 +20,6 @@
  */
 package org.jackhuang.hellominecraft.lookandfeel.ui;
 
-import static javax.swing.SwingConstants.NORTH;
-import static javax.swing.SwingConstants.SOUTH;
-
-import javax.swing.SwingConstants;
 import javax.swing.plaf.metal.MetalScrollButton;
 import java.awt.Dimension;
 import java.awt.Graphics;

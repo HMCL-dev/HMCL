@@ -18,8 +18,6 @@
 package org.jackhuang.hellominecraft.svrmgr;
 
 import java.awt.Font;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.text.ParseException;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -60,13 +58,7 @@ public class Main {
             new MainWindow().setVisible(true);
         } catch (Throwable t) {
             HMCLog.err("There's something wrong when running server holder.", t);
-
-            LogWindow.INSTANCE.clean();
-            LogWindow.INSTANCE.warning("开服器崩溃了QAQ");
-            StringWriter trace = new StringWriter();
-            t.printStackTrace(new PrintWriter(trace));
-            LogWindow.INSTANCE.warning(trace.toString());
-            LogWindow.INSTANCE.setVisible(true);
+            LogWindow.INSTANCE.showAsCrashWindow(false);
 
             System.exit(-1);
         }

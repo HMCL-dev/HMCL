@@ -40,7 +40,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import org.jackhuang.hellominecraft.util.C;
@@ -70,15 +69,13 @@ public final class SwingUtils {
      *
      * @return
      */
-    public static DefaultTableModel makeDefaultTableModel(String[] titleA, final Class[] typesA, final boolean[] canEditA) {
-        return new DefaultTableModel(
-                new Object[][] {},
-                titleA) {
-            Class[] types = typesA;
+    public static DefaultTableModel makeDefaultTableModel(String[] titleA, final Class<?>[] typesA, final boolean[] canEditA) {
+        return new DefaultTableModel(new Object[][] {}, titleA) {
+            Class<?>[] types = typesA;
             boolean[] canEdit = canEditA;
             
             @Override
-            public Class getColumnClass(int columnIndex) {
+            public Class<?> getColumnClass(int columnIndex) {
                 return types[columnIndex];
             }
             
@@ -133,16 +130,6 @@ public final class SwingUtils {
     }
 
     /**
-     * Move the cursor to the end of TextArea.
-     *
-     * @param tf the TextArea
-     */
-    public static void moveEnd(JTextArea tf) {
-        int position = tf.getText().length();
-        tf.setCaretPosition(position);
-    }
-
-    /**
      * Move the cursor to the end of ScrollPane.
      *
      * @param pane the ScrollPane
@@ -159,27 +146,8 @@ public final class SwingUtils {
      *
      * @return Forcely Type casted to DefaultListModel
      */
-    public static DefaultListModel getDefaultListModel(JList list) {
-        return (DefaultListModel) list.getModel();
-    }
-
-    /**
-     * Append new element to JList
-     *
-     * @param list the JList
-     * @param element the Element
-     */
-    public static void appendLast(JList list, Object element) {
-        getDefaultListModel(list).addElement(element);
-    }
-    
-    public static void replaceLast(JList list, Object element) {
-        DefaultListModel model = getDefaultListModel(list);
-        model.set(model.getSize() - 1, element);
-    }
-    
-    public static void clear(JList list) {
-        list.setModel(new DefaultListModel());
+    public static <T> DefaultListModel<T> getDefaultListModel(JList<T> list) {
+        return (DefaultListModel<T>) list.getModel();
     }
 
     /**
@@ -269,13 +237,14 @@ public final class SwingUtils {
     }
     
     public static int select(String[] selList, String msg) {
+        JComboBox<String> box = new JComboBox<>(selList);
         Object msgs[] = new Object[2];
         msgs[0] = msg;
-        msgs[1] = new JComboBox(selList);
+        msgs[1] = box;
         int result = JOptionPane.showOptionDialog(null, msgs, msg, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
         if (result == JOptionPane.CANCEL_OPTION)
             return -1;
-        return ((JComboBox) msgs[1]).getSelectedIndex();
+        return box.getSelectedIndex();
     }
     
     public static void setEnabled(JComponent component, boolean t) {

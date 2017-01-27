@@ -38,12 +38,12 @@ public class ModpackInitializationPanel extends javax.swing.JPanel {
     public static final String KEY_INCLUDING_LAUNCHER = "launcher";
 
     private final transient WizardController controller;
-    private final Map wizardData;
+    private final Map<String, Object> wizardData;
 
     /**
      * Creates new form ModpackInitializationPanel
      */
-    public ModpackInitializationPanel(WizardController controller, Map wizardData, Vector<String> versions, String selVersion) {
+    public ModpackInitializationPanel(WizardController controller, Map<String, Object> wizardData, Vector<String> versions, String selVersion) {
         initComponents();
 
         this.controller = controller;

@@ -22,8 +22,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.util.List;
 import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
@@ -38,6 +36,7 @@ import org.jackhuang.hellominecraft.launcher.core.version.DecompressLibraryJob;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.EventHandler;
 import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.code.Charsets;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.system.IOUtils;
@@ -153,7 +152,7 @@ public class GameLauncher {
      *
      * @throws java.io.IOException write contents failed.
      */
-    public File makeLauncher(String launcherName, List str) throws IOException {
+    public File makeLauncher(String launcherName, List<String> str) throws IOException {
         HMCLog.log("Making shell launcher...");
         service.version().onLaunch(options.getLaunchVersion());
         boolean isWin = OS.os() == OS.WINDOWS;
@@ -161,13 +160,8 @@ public class GameLauncher {
         if (!f.exists() && !f.createNewFile())
             HMCLog.warn("Failed to create " + f);
         BufferedWriter writer;
-        try (FileOutputStream fos = new FileOutputStream(f)) {
-            try {
-                writer = new BufferedWriter(new OutputStreamWriter(fos, System.getProperty("sun.jnu.encoding", "UTF-8")));
-            } catch (UnsupportedEncodingException ex) {
-                HMCLog.warn("Failed to create writer, will try again.", ex);
-                writer = new BufferedWriter(new OutputStreamWriter(fos, Charset.defaultCharset()));
-            }
+        try (FileOutputStream fos = FileUtils.openOutputStream(f)) {
+            writer = new BufferedWriter(new OutputStreamWriter(fos, Charsets.toCharset()));
             if (isWin) {
                 writer.write("@echo off");
                 writer.newLine();

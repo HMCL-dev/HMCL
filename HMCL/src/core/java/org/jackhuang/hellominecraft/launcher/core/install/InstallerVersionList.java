@@ -19,9 +19,12 @@ package org.jackhuang.hellominecraft.launcher.core.install;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.tasks.Task;
 
 /**
@@ -29,6 +32,9 @@ import org.jackhuang.hellominecraft.util.tasks.Task;
  * @author huangyuhui
  */
 public abstract class InstallerVersionList {
+    
+    public Map<String, List<InstallerVersion>> versionMap;
+    public List<InstallerVersion> versions;
 
     /**
      * Refresh installer versions list from the downloaded content.
@@ -53,7 +59,17 @@ public abstract class InstallerVersionList {
      *
      * @return cached result.
      */
-    protected abstract List<InstallerVersion> getVersionsImpl(String mcVersion);
+    public List<InstallerVersion> getVersionsImpl(String mcVersion) {
+        if (versions == null || versionMap == null)
+            return null;
+        if (StrUtils.isBlank(mcVersion))
+            return versions;
+        List<InstallerVersion> c = versionMap.get(mcVersion);
+        if (c == null)
+            return versions;
+        Collections.sort(c, InstallerVersionComparator.INSTANCE);
+        return c;
+    }
 
     /**
      * Get installers you want, please cache this method's result to save time.

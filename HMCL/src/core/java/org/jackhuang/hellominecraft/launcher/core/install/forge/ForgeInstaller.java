@@ -81,7 +81,7 @@ public class ForgeInstaller extends Task {
             File file = new File(gameDir, "libraries/" + forge.getDownloadInfo().path);
             if (file.getParentFile().mkdirs())
                 HMCLog.warn("Failed to make library directory " + file.getParent());
-            try (FileOutputStream fos = new FileOutputStream(file)) {
+            try (FileOutputStream fos = FileUtils.openOutputStream(file)) {
                 IOUtils.copyStream(is, fos);
             }
             mp.version().refreshVersions();

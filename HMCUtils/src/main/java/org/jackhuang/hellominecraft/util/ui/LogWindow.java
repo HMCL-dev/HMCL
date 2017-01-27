@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.util.ui;
 
+import java.io.PrintStream;
 import javax.swing.SwingUtilities;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
@@ -26,7 +27,6 @@ import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.util.logging.Level;
 import org.jackhuang.hellominecraft.util.func.NonFunction;
 import org.jackhuang.hellominecraft.util.DoubleOutputStream;
-import org.jackhuang.hellominecraft.util.LauncherPrintStream;
 import org.jackhuang.hellominecraft.util.Utils;
 
 /**
@@ -48,9 +48,9 @@ public class LogWindow extends javax.swing.JFrame {
         movingEnd = true;
         
         DoubleOutputStream out = new DoubleOutputStream(new LogWindowOutputStream(this, Level.INFO), System.out);
-        System.setOut(new LauncherPrintStream(out));
+        System.setOut(new PrintStream(out));
         DoubleOutputStream err = new DoubleOutputStream(new LogWindowOutputStream(this, Level.ERROR), System.err);
-        System.setErr(new LauncherPrintStream(err));
+        System.setErr(new PrintStream(err));
         
         SwingUtilities.invokeLater(() -> {
             setLocationRelativeTo(null);
@@ -206,7 +206,7 @@ public class LogWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_btnCloseActionPerformed
 
     private void btnClearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearActionPerformed
-        this.txtLog.setText("");
+        clean();
     }//GEN-LAST:event_btnClearActionPerformed
 
     private void btnCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCopyActionPerformed
@@ -239,14 +239,6 @@ public class LogWindow extends javax.swing.JFrame {
             terminateGameListener.run();
         SwingUtils.exitIfNoWindow(this);
     }//GEN-LAST:event_formWindowClosing
-    
-    public void log(String status) {
-        log(status, Level.INFO);
-    }
-    
-    public void warning(String status) {
-        log(status, Level.WARN);
-    }
     
     public synchronized void log(String status, Level c) {
         status = status.replace("\t", "    ");

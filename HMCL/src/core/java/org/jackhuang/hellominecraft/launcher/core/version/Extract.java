@@ -36,7 +36,6 @@ public class Extract implements Cloneable {
     }
 
     @Override
-    @SuppressWarnings("CloneDeclaresCloneNotSupported")
     public Object clone() {
         try {
             return super.clone();

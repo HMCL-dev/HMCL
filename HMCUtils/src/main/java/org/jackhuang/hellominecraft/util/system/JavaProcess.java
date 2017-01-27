@@ -30,10 +30,12 @@ public class JavaProcess {
     private final List<String> commands;
     private final Process process;
     private final ArrayList<String> stdOutLines = new ArrayList<>();
+    private final ProcessManager pm;
 
     public JavaProcess(List<String> commands, Process process, ProcessManager pm) {
         this.commands = commands;
         this.process = process;
+        this.pm = pm;
         if (pm != null)
             pm.registerProcess(this);
     }
@@ -52,6 +54,10 @@ public class JavaProcess {
 
     public String getStartupCommand() {
         return this.process.toString();
+    }
+    
+    public ProcessManager getProcessManager() {
+        return pm;
     }
 
     public ArrayList<String> getStdOutLines() {

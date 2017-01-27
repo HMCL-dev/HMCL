@@ -32,7 +32,7 @@ import javax.swing.JComponent;
  */
 final class SimpleWizard extends AbstractWizard {
 
-    private final Map ids2panels = new HashMap();
+    private final Map ids2panels = new HashMap<>();
 
     final SimpleWizardInfo info;
 

@@ -55,10 +55,6 @@ public final class NetUtils {
         return get(url, IOUtils.DEFAULT_CHARSET);
     }
 
-    public static String get(URL url) throws IOException {
-        return get(url, Proxy.NO_PROXY);
-    }
-
     public static String get(URL url, Proxy proxy) throws IOException {
         return readData(createConnection(url, proxy));
     }
@@ -121,14 +117,6 @@ public final class NetUtils {
         } catch (MalformedURLException ex) {
             HMCLog.err("Failed to get url instance: " + url, ex);
             return null;
-        }
-    }
-
-    public static URL concatenateURL(URL url, String query) {
-        try {
-            return new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile() + (url.getQuery() != null && url.getQuery().length() > 0 ? '&' : '?') + query);
-        } catch (MalformedURLException ex) {
-            throw new IllegalArgumentException("Could not concatenate given URL with GET arguments!", ex);
         }
     }
 }

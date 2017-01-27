@@ -28,7 +28,6 @@ public abstract class AbstractLogger
 
     public static final Class<? extends IMessageFactory> DEFAULT_MESSAGE_FACTORY_CLASS = ParameterizedMessageFactory.class;
 
-    private static final String FQCN = AbstractLogger.class.getName();
     private static final String THROWING = "throwing";
     private static final String CATCHING = "catching";
     private final String name;
@@ -66,50 +65,6 @@ public abstract class AbstractLogger
     @Override
     public void catching(Throwable t) {
         catching(Level.ERROR, t);
-    }
-
-    @Override
-    public void debug(IMessage msg) {
-        if (isEnabled(Level.DEBUG, msg, null))
-            log(Level.DEBUG, msg, null);
-    }
-
-    @Override
-    public void debug(IMessage msg, Throwable t) {
-        if (isEnabled(Level.DEBUG, msg, t))
-            log(Level.DEBUG, msg, t);
-    }
-
-    @Override
-    public void debug(Object message) {
-        if (isEnabled(Level.DEBUG, message, null))
-            log(Level.DEBUG, this.messageFactory.newMessage(message), null);
-    }
-
-    @Override
-    public void debug(Object message, Throwable t) {
-        if (isEnabled(Level.DEBUG, message, t))
-            log(Level.DEBUG, this.messageFactory.newMessage(message), t);
-    }
-
-    @Override
-    public void debug(String message) {
-        if (isEnabled(Level.DEBUG, message))
-            log(Level.DEBUG, this.messageFactory.newMessage(message), null);
-    }
-
-    @Override
-    public void debug(String message, Object[] params) {
-        if (isEnabled(Level.DEBUG, message, params)) {
-            IMessage msg = this.messageFactory.newMessage(message, params);
-            log(Level.DEBUG, msg, msg.getThrowable());
-        }
-    }
-
-    @Override
-    public void debug(String message, Throwable t) {
-        if (isEnabled(Level.DEBUG, message, t))
-            log(Level.DEBUG, this.messageFactory.newMessage(message), t);
     }
 
     @Override
@@ -393,50 +348,6 @@ public abstract class AbstractLogger
     @Override
     public String toString() {
         return this.name;
-    }
-
-    @Override
-    public void trace(IMessage msg) {
-        if (isEnabled(Level.TRACE, msg, null))
-            log(Level.TRACE, msg, null);
-    }
-
-    @Override
-    public void trace(IMessage msg, Throwable t) {
-        if (isEnabled(Level.TRACE, msg, t))
-            log(Level.TRACE, msg, t);
-    }
-
-    @Override
-    public void trace(Object message) {
-        if (isEnabled(Level.TRACE, message, null))
-            log(Level.TRACE, this.messageFactory.newMessage(message), null);
-    }
-
-    @Override
-    public void trace(Object message, Throwable t) {
-        if (isEnabled(Level.TRACE, message, t))
-            log(Level.TRACE, this.messageFactory.newMessage(message), t);
-    }
-
-    @Override
-    public void trace(String message) {
-        if (isEnabled(Level.TRACE, message))
-            log(Level.TRACE, this.messageFactory.newMessage(message), null);
-    }
-
-    @Override
-    public void trace(String message, Object[] params) {
-        if (isEnabled(Level.TRACE, message, params)) {
-            IMessage msg = this.messageFactory.newMessage(message, params);
-            log(Level.TRACE, msg, msg.getThrowable());
-        }
-    }
-
-    @Override
-    public void trace(String message, Throwable t) {
-        if (isEnabled(Level.TRACE, message, t))
-            log(Level.TRACE, this.messageFactory.newMessage(message), t);
     }
 
     @Override

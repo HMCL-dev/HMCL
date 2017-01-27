@@ -31,7 +31,6 @@ import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.asset.AssetsIndex;
 import org.jackhuang.hellominecraft.util.ArrayUtils;
-import org.jackhuang.hellominecraft.util.Utils;
 
 /**
  *
@@ -213,6 +212,6 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
     }
 
     public Set<IMinecraftLibrary> getLibraries() {
-        return libraries == null ? new HashSet() : new HashSet(libraries);
+        return libraries == null ? new HashSet<>() : new HashSet<>(libraries);
     }
 }

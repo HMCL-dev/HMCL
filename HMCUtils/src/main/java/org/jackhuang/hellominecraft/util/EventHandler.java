@@ -49,26 +49,14 @@ public class EventHandler<T> {
             events.add(t);
     }
 
-    public void unregister(Event<T> t) {
-        events.remove(t);
-    }
-
-    public void unregister(Consumer<T> t) {
-        events.remove(t);
-    }
-
-    public void unregister(Runnable t) {
-        events.remove(t);
-    }
-
     public boolean execute(T x) {
         boolean flag = true;
         for (Object t : events)
             if (t instanceof Event) {
-                if (!((Event) t).call(sender, x))
+                if (!((Event<T>) t).call(sender, x))
                     flag = false;
             } else if (t instanceof Consumer)
-                ((Consumer) t).accept(x);
+                ((Consumer<T>) t).accept(x);
             else if (t instanceof Runnable)
                 ((Runnable) t).run();
         return flag;

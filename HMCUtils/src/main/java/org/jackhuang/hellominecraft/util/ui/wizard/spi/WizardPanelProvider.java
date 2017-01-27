@@ -16,10 +16,10 @@ enclosed by brackets [] replaced by your own identifying information:
 package org.jackhuang.hellominecraft.util.ui.wizard.spi;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import javax.swing.JComponent;
+import org.jackhuang.hellominecraft.util.ArrayUtils;
 
 /**
  * (Note:  <code>WizardPage</code> offers somewhat simpler functionality for
@@ -142,7 +142,7 @@ public abstract class WizardPanelProvider {
             Objects.requireNonNull(steps[i], "Step id " + i + " is null");
             Objects.requireNonNull(descriptions[i], "Description " + i + " is null");
         }
-        if (new HashSet(Arrays.asList(steps)).size() != steps.length)
+        if (ArrayUtils.hasDuplicateElements(steps))
             return "Duplicate step ids: " + Arrays.asList(steps);
         return null;
     }

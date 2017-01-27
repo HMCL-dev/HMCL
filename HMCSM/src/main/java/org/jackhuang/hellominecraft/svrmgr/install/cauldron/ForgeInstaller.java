@@ -122,7 +122,7 @@ public class ForgeInstaller {
             File packFile = new File(gameDir, "libraries" + File.separator + library.formatted + ".pack.xz");
             if (packFile.exists() && packFile.isFile())
                 try {
-                    unpackLibrary(lib.getParentFile(), IOUtils.readFully(FileUtils.openInputStream(packFile)).toByteArray());
+                    unpackLibrary(lib.getParentFile(), IOUtils.toByteArray(FileUtils.openInputStream(packFile)));
                     if (!checksumValid(lib, Arrays.asList(library.checksums)))
                         badLibs.add(library.name);
                 } catch (IOException e) {
@@ -139,7 +139,7 @@ public class ForgeInstaller {
         if (output.exists())
             output.delete();
 
-        byte[] decompressed = IOUtils.readFully(new XZInputStream(new ByteArrayInputStream(data))).toByteArray();
+        byte[] decompressed = IOUtils.toByteArray(new XZInputStream(new ByteArrayInputStream(data)));
 
         String end = new String(decompressed, decompressed.length - 4, 4);
         if (!end.equals("SIGN")) {
@@ -165,7 +165,7 @@ public class ForgeInstaller {
 
     private static boolean checksumValid(File libPath, List<String> checksums) {
         try {
-            byte[] fileData = IOUtils.readFully(FileUtils.openInputStream(libPath)).toByteArray();
+            byte[] fileData = IOUtils.toByteArray(FileUtils.openInputStream(libPath));
             boolean valid = (checksums == null) || (checksums.isEmpty()) || (checksums.contains(DigestUtils.sha1Hex(fileData)));
             if ((!valid) && (libPath.getName().endsWith(".jar")))
                 valid = validateJar(libPath, fileData, checksums);
@@ -184,7 +184,7 @@ public class ForgeInstaller {
         try (JarInputStream jar = new JarInputStream(new ByteArrayInputStream(data))) {
             JarEntry entry = jar.getNextJarEntry();
             while (entry != null) {
-                byte[] eData = IOUtils.readFully(jar).toByteArray();
+                byte[] eData = IOUtils.toByteArray(jar);
 
                 if (entry.getName().equals("checksums.sha1"))
                     hashes = new String(eData, Charset.forName("UTF-8")).split("\n");

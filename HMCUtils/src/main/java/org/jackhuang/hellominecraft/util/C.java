@@ -35,10 +35,6 @@ public final class C {
     public static final String URL_GITHUB = "https://github.com/huanghongxun/HMCL/issues";
     public static final String URL_MINECRAFTFORUM = "http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-tools/1265720-hello-minecraft-launcher-1-9-3-mc-1-7-4-auto";
 
-    public static final String FILE_MINECRAFT_VERSIONS = "versions";
-
-    public static final String LINE_SEPARATOR = System.getProperty("line.separator");
-
     public static final String URL_FORGE_LIST = "http://files.minecraftforge.net/maven/net/minecraftforge/forge/json";
     public static final String URL_LITELOADER_LIST = "http://dl.liteloader.com/versions/versions.json";
 

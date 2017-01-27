@@ -10,15 +10,12 @@ enclosed by brackets [] replaced by your own identifying information:
 "Portions Copyrighted [year] [name of copyright owner]" */
 package org.jackhuang.hellominecraft.util.ui.wizard.spi;
 
-import java.awt.Rectangle;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import javax.swing.Action;
 import javax.swing.JComponent;
-import org.jackhuang.hellominecraft.util.ui.wizard.api.WizardDisplayer;
 
 /**
  * Encapsulates the logic and state of a Wizard. A Wizard gathers information
@@ -284,8 +281,8 @@ public final class Wizard {
     }
 
     private volatile boolean listeningToImpl = false;
-    private final List listeners = Collections.synchronizedList(
-        new LinkedList());
+    private final List<WizardObserver> listeners = Collections.synchronizedList(
+        new LinkedList<>());
 
     private WizardObserver l = null;
 
@@ -360,31 +357,4 @@ public final class Wizard {
             return false;
     }
 
-    /**
-     * Delegates to WizardDisplayer.showWizard()
-     */
-    public void show() {
-        WizardDisplayer.showWizard(this);
-    }
-
-    /**
-     * Delegates to WizardDisplayer.showWizard()
-     */
-    public Object show(Wizard wizard, Action help) {
-        return WizardDisplayer.showWizard(wizard, help);
-    }
-
-    /**
-     * Delegates to WizardDisplayer.showWizard()
-     */
-    public Object show(Wizard wizard, Rectangle r) {
-        return WizardDisplayer.showWizard(wizard, r);
-    }
-
-    /**
-     * Delegates to WizardDisplayer.showWizard()
-     */
-    public Object show(Wizard wizard, Rectangle r, Action help) {
-        return WizardDisplayer.showWizard(wizard, r, help, null);
-    }
 }

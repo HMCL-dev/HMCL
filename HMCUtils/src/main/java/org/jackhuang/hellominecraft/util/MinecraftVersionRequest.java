@@ -68,7 +68,7 @@ public class MinecraftVersionRequest implements Serializable {
 
     private static MinecraftVersionRequest getVersionOfOldMinecraft(ZipFile file, ZipEntry entry) throws IOException {
         MinecraftVersionRequest r = new MinecraftVersionRequest();
-        byte[] tmp = IOUtils.readFully(file.getInputStream(entry)).toByteArray();
+        byte[] tmp = IOUtils.toByteArray(file.getInputStream(entry));
 
         byte[] bytes = "Minecraft Minecraft ".getBytes("ASCII");
         int j = ArrayUtils.matchArray(tmp, bytes);
@@ -92,7 +92,7 @@ public class MinecraftVersionRequest implements Serializable {
 
     private static MinecraftVersionRequest getVersionOfNewMinecraft(ZipFile file, ZipEntry entry) throws IOException {
         MinecraftVersionRequest r = new MinecraftVersionRequest();
-        byte[] tmp = IOUtils.readFully(file.getInputStream(entry)).toByteArray();
+        byte[] tmp = IOUtils.toByteArray(file.getInputStream(entry));
 
         byte[] str = "-server.txt".getBytes("ASCII");
         int j = ArrayUtils.matchArray(tmp, str);

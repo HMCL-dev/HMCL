@@ -28,10 +28,10 @@ import org.jackhuang.hellominecraft.util.func.Consumer;
  */
 public abstract class AbstractWizard implements WizardImplementation {
 
-    protected final List listenerList = Collections.synchronizedList(new LinkedList());
+    protected final List<WizardObserver> listenerList = Collections.synchronizedList(new LinkedList<>());
     
     protected void fireChanged(Consumer<WizardObserver> r) {
-        WizardObserver[] listeners = (WizardObserver[]) listenerList.toArray(new WizardObserver[listenerList.size()]);
+        WizardObserver[] listeners = listenerList.toArray(new WizardObserver[listenerList.size()]);
 
         for (int i = listeners.length - 1; i >= 0; i--) {
             WizardObserver l = (WizardObserver) listeners[i];

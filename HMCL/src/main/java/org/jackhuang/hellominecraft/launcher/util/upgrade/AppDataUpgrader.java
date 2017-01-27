@@ -18,8 +18,6 @@
 package org.jackhuang.hellominecraft.launcher.util.upgrade;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -173,8 +171,8 @@ public class AppDataUpgrader extends IUpgrader {
             if (!f.createNewFile())
                 HMCLog.warn("Failed to create new file: " + f);
 
-            try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(f))) {
-                Pack200.newUnpacker().unpack(new GZIPInputStream(new FileInputStream(tempFile)), jos);
+            try (JarOutputStream jos = new JarOutputStream(FileUtils.openOutputStream(f))) {
+                Pack200.newUnpacker().unpack(new GZIPInputStream(FileUtils.openInputStream(tempFile)), jos);
             }
             json.put("ver", newestVersion);
             json.put("loc", f.getAbsolutePath());

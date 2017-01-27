@@ -86,7 +86,8 @@ public final class YggdrasilAuthenticator extends IAuthenticator {
                 .setUserProperties(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.LegacySerializer()).create().toJson(ua.getUserProperties()))
                 .setUserPropertyMap(new GsonBuilder().registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer()).create().toJson(ua.getUserProperties()))
                 .setAccessToken(ua.getAuthenticatedToken())
-                .setSession(ua.getAuthenticatedToken());
+                .setSession(ua.getAuthenticatedToken())
+                .setClientIdentifier(clientToken);
     }
 
     @Override

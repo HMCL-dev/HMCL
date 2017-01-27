@@ -42,10 +42,6 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
     public InstallerVersionList.InstallerVersion version;
     public String installId;
 
-    public OptiFineInstaller(IMinecraftService service, String installId, InstallerVersionList.InstallerVersion version) {
-        this(service, installId, version, null);
-    }
-
     public OptiFineInstaller(IMinecraftService service, String installId, InstallerVersionList.InstallerVersion version, File installer) {
         this.service = service;
         this.installId = installId;
@@ -90,10 +86,10 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
         return "OptiFine Installer";
     }
 
-    ArrayList<PreviousResult<File>> pre = new ArrayList();
+    ArrayList<PreviousResult<File>> pre = new ArrayList<>();
 
     @Override
-    public Task registerPreviousResult(PreviousResult pr) {
+    public Task registerPreviousResult(PreviousResult<File> pr) {
         pre.add(pr);
         return this;
     }

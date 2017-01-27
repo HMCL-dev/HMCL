@@ -15,9 +15,9 @@ package org.jackhuang.hellominecraft.util.ui.wizard.api;
 import java.awt.Container;
 import java.awt.Rectangle;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Map;
 import javax.swing.Action;
+import org.jackhuang.hellominecraft.util.ArrayUtils;
 import org.jackhuang.hellominecraft.util.ui.wizard.api.displayer.WizardDisplayerImpl;
 import org.jackhuang.hellominecraft.util.ui.wizard.spi.Wizard;
 
@@ -88,7 +88,6 @@ public abstract class WizardDisplayer {
 
     protected WizardDisplayer() {
     }
-    private static final String SYSPROP_KEY = "WizardDisplayer.default";
 
     /**
      * Display a wizard in a dialog, using the default implementation of
@@ -103,7 +102,7 @@ public abstract class WizardDisplayer {
      *                          shown
      *                          and entered in the wizard. May be null.
      */
-    public static Object showWizard(Wizard wizard, Rectangle rect, Action help, Map initialProperties) {
+    public static Object showWizard(Wizard wizard, Rectangle rect, Action help, Map<?, ?> initialProperties) {
         // assert nonBuggyWizard (wizard);
         // validate it
         nonBuggyWizard(wizard);
@@ -125,31 +124,6 @@ public abstract class WizardDisplayer {
     }
 
     /**
-     * Show a wizard with default window placement, showing the help button,
-     * which will invoke the passed action.
-     *
-     * @param wizard The wizard to show
-     * @param help   An action to invoke if the user presses the help button
-     *
-     * @return The result of Wizard.finish()
-     */
-    public static Object showWizard(Wizard wizard, Action help) {
-        return showWizard(wizard, null, help, null);
-    }
-
-    /**
-     * Show a wizard in the passed location on screen with no help button
-     *
-     * @param wizard The wizard to show
-     * @param r      The rectangle on screen for the wizard
-     *
-     * @return The result of Wizard.finish()
-     */
-    public static Object showWizard(Wizard wizard, Rectangle r) {
-        return showWizard(wizard, r, null, null);
-    }
-
-    /**
      * Show a wizard.
      *
      * @param wizard            the Wizard to show
@@ -165,46 +139,19 @@ public abstract class WizardDisplayer {
      * @return Whatever object the wizard returns from its <code>finish()</code>
      *         method, if the Wizard was completed by the user.
      */
-    protected abstract Object show(Wizard wizard, Rectangle r, Action help, Map initialProperties);
-
-    /**
-     * Install a panel representing a Wizard in a user-supplied container
-     * with a user-supplied layout constraint.
-     *
-     * @param c                 The container the wizard panel should be added
-     *                          to. May not
-     *                          be null.
-     * @param layoutConstraint  The argument to use when adding the wizard's
-     *                          ui component to the container. May be null.
-     * @param helpAction        An action that should be invoked when the help
-     *                          button
-     *                          is clicked (if null, no help button will be displayed)
-     * @param initialProperties A set of properties that should be pre-set upon
-     *                          entering the wizard. May be null.
-     * @param receiver          An object which will be called when the Finish
-     *                          or
-     *                          Cancel buttons are pressed. May not be null.
-     */
-    public static void installInContainer(Container c, Object layoutConstraint,
-                                          Wizard awizard,
-                                          Action helpAction, Map initialProperties,
-                                          WizardResultReceiver receiver) {
-        getDefault().install(c, layoutConstraint, awizard, helpAction,
-                             initialProperties, receiver);
-    }
+    protected abstract Object show(Wizard wizard, Rectangle r, Action help, Map<?, ?> initialProperties);
 
     /**
      * Instance implementation of installInContainer().
      */
     protected abstract void install(Container c, Object layoutConstraint,
-                                    Wizard awizard, Action helpAction, Map initialProperties,
+                                    Wizard awizard, Action helpAction, Map<?, ?> initialProperties,
                                     WizardResultReceiver receiver);
 
     private static boolean nonBuggyWizard(Wizard wizard) {
         String[] s = wizard.getAllSteps();
-        // assert new HashSet(Arrays.asList(s)).size() == s.length;
         // for JDK 1.4.2: replace assert with runtime exception
-        if (new HashSet(Arrays.asList(s)).size() != s.length)
+        if (ArrayUtils.hasDuplicateElements(s))
             throw new RuntimeException("steps are duplicated: " + Arrays.asList(s));
         if (s.length == 1 && Wizard.UNDETERMINED_STEP.equals(s[0]))
             // assert false : "Only ID may not be UNDETERMINED_ID";

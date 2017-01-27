@@ -21,7 +21,7 @@ import org.jackhuang.hellominecraft.util.logging.appender.IAppender;
 
 public class AppenderControl {
 
-    private final ThreadLocal<AppenderControl> recursive = new ThreadLocal();
+    private final ThreadLocal<AppenderControl> recursive = new ThreadLocal<>();
     private final IAppender appender;
     private final Level level;
     private final int intLevel;

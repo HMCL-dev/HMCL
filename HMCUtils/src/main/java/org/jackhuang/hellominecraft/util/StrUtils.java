@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hellominecraft.util;
 
-import java.awt.Dimension;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Array;
@@ -72,15 +71,6 @@ public final class StrUtils {
         return base != null && base.startsWith(match);
     }
 
-    public static boolean startsWithOne(String[] a, String match) {
-        if (a == null)
-            return false;
-        for (String b : a)
-            if (startsWith(match, b))
-                return true;
-        return false;
-    }
-
     public static boolean startsWithOne(Collection<String> a, String match) {
         if (a == null)
             return false;
@@ -94,21 +84,6 @@ public final class StrUtils {
         for (String s : a)
             if (base.equals(s))
                 return true;
-        return false;
-    }
-
-    public static boolean containsOne(String base, String... match) {
-        for (String s : match)
-            if (base.contains(s))
-                return true;
-        return false;
-    }
-
-    public static boolean containsOne(List<String> base, List<String> match) {
-        for (String a : base)
-            for (String b : match)
-                if (a.toLowerCase().contains(b.toLowerCase()))
-                    return true;
         return false;
     }
 
@@ -142,12 +117,12 @@ public final class StrUtils {
             return ver;
     }
 
-    public static String parseParams(String addBefore, Collection paramArrayOfObject, String paramString) {
-        return parseParams(addBefore, paramArrayOfObject.toArray(), paramString);
+    public static String parseParams(String addBefore, Collection<?> objects, String addAfter) {
+        return parseParams(addBefore, objects.toArray(), addAfter);
     }
 
-    public static String parseParams(String addBefore, Object[] params, String addAfter) {
-        return parseParams(t -> addBefore, params, t -> addAfter);
+    public static String parseParams(String addBefore, Object[] objects, String addAfter) {
+        return parseParams(t -> addBefore, objects, t -> addAfter);
     }
 
     public static String parseParams(Function<Object, String> beforeFunc, Object[] params, Function<Object, String> afterFunc) {
@@ -179,37 +154,19 @@ public final class StrUtils {
         return sb.toString();
     }
 
-    public static boolean equals(String base, String to) {
-        if (base == null)
-            return to == null;
-        else
-            return base.equals(to);
-    }
-
-    public static Dimension parseDimension(String str) {
-        String[] tokenized = tokenize(str, "x,");
-        if (tokenized.length != 2)
-            return null;
-        int i = MathUtils.parseInt(tokenized[0], -1);
-        int j = MathUtils.parseInt(tokenized[1], -1);
-        if ((i < 0) || (j < 0))
-            return null;
-        return new Dimension(i, j);
-    }
-
     public static String[] tokenize(String paramString1) {
         return tokenize(paramString1, " \t\n\r\f");
     }
 
-    public static String[] tokenize(String paramString1, String paramString2) {
-        ArrayList localArrayList = new ArrayList();
-        StringTokenizer tokenizer = new StringTokenizer(paramString1, paramString2);
+    public static String[] tokenize(String str, String delim) {
+        ArrayList<String> al = new ArrayList<>();
+        StringTokenizer tokenizer = new StringTokenizer(str, delim);
         while (tokenizer.hasMoreTokens()) {
-            paramString2 = tokenizer.nextToken();
-            localArrayList.add(paramString2);
+            delim = tokenizer.nextToken();
+            al.add(delim);
         }
 
-        return (String[]) localArrayList.toArray(new String[localArrayList.size()]);
+        return al.toArray(new String[al.size()]);
     }
 
     public static boolean isBlank(String s) {
@@ -225,15 +182,5 @@ public final class StrUtils {
         PrintWriter writer = new PrintWriter(trace);
         t.printStackTrace(writer);
         return trace.toString();
-    }
-
-    public static List<Integer> findAllPos(String t, String p) {
-        ArrayList<Integer> ret = new ArrayList<>();
-        int i = 0, index;
-        while ((index = t.indexOf(p, i)) != -1) {
-            ret.add(index);
-            i = index + p.length();
-        }
-        return ret;
     }
 }

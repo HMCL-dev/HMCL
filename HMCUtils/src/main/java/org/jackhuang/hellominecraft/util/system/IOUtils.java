@@ -21,8 +21,6 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -81,16 +79,6 @@ public final class IOUtils {
         return t;
     }
 
-    public static String extractLastDirectory(String dir) {
-        String t = removeLastSeparator(dir);
-        int i = t.length() - 1;
-        while (i >= 0 && !isSeparator(dir.charAt(i)))
-            i--;
-        if (i < 0)
-            return t;
-        return t.substring(i + 1, (t.length() - i) + (i + 1) - 1);
-    }
-
     public static void findAllFile(File f, Consumer<String> callback) {
         if (f.isDirectory()) {
             File[] f1 = f.listFiles();
@@ -110,7 +98,7 @@ public final class IOUtils {
                     callback.accept(f1[i].getName());
         }
     }
-
+    
     public static String getRealPath() {
         String realPath = IOUtils.class.getClassLoader().getResource("").getFile();
         java.io.File file = new java.io.File(realPath);
@@ -169,11 +157,6 @@ public final class IOUtils {
         mac = mac.substring(0, mac.length() - 1);
 
         return mac;
-    }
-
-    public static String extractFileName(String fileName) {
-        File file = new File(fileName);
-        return file.getName();
     }
 
     public static String getJavaDir() {
@@ -244,18 +227,6 @@ public final class IOUtils {
             throws IOException {
         if (data != null)
             output.write(data.getBytes(encoding));
-    }
-
-    public static FileInputStream openInputStream(File file)
-            throws IOException {
-        if (file.exists()) {
-            if (file.isDirectory())
-                throw new IOException("File '" + file + "' exists but is a directory");
-            if (!file.canRead())
-                throw new IOException("File '" + file + "' cannot be read");
-        } else
-            throw new FileNotFoundException("File '" + file + "' does not exist");
-        return new FileInputStream(file);
     }
 
     public static String tryGetCanonicalFolderPath(File file) {

@@ -35,13 +35,6 @@ public class LiteLoaderVersionsMeta {
     public LiteLoaderVersionsMeta() {
     }
 
-    public LiteLoaderVersionsMeta(String description, String authors, String url) {
-        this();
-        this.description = description;
-        this.authors = authors;
-        this.url = url;
-    }
-
     public String getDescription() {
         return description;
     }

@@ -23,8 +23,6 @@ package org.jackhuang.hellominecraft.util.logging.message;
  */
 public final class ParameterizedMessageFactory extends AbstractMessageFactory {
 
-    public static final ParameterizedMessageFactory INSTANCE = new ParameterizedMessageFactory();
-
     @Override
     public IMessage newMessage(String message, Object[] params) {
         return new ParameterizedMessage(message, params);

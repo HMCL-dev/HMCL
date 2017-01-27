@@ -25,7 +25,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jackhuang.hellominecraft.util.C;
@@ -52,8 +51,6 @@ public class OptiFineBMCLVersionList extends InstallerVersionList {
     }
 
     public ArrayList<OptiFineVersion> root;
-    public Map<String, List<InstallerVersion>> versionMap;
-    public List<InstallerVersion> versions;
 
     private static final Type TYPE = new TypeToken<ArrayList<OptiFineVersion>>() {
     }.getType();
@@ -99,19 +96,6 @@ public class OptiFineBMCLVersionList extends InstallerVersionList {
                 Collections.sort(versions, InstallerVersionComparator.INSTANCE);
             }
         };
-    }
-
-    @Override
-    public List<InstallerVersion> getVersionsImpl(String mcVersion) {
-        if (versions == null || versionMap == null)
-            return null;
-        if (StrUtils.isBlank(mcVersion))
-            return versions;
-        List c = versionMap.get(mcVersion);
-        if (c == null)
-            return versions;
-        Collections.sort(c, InstallerVersionComparator.INSTANCE);
-        return c;
     }
 
     @Override

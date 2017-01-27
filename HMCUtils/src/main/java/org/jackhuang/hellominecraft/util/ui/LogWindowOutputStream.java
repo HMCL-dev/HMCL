@@ -19,7 +19,6 @@ package org.jackhuang.hellominecraft.util.ui;
 
 import java.io.OutputStream;
 import java.util.Objects;
-import java.util.Timer;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.util.code.Charsets;
 import org.jackhuang.hellominecraft.util.logging.Level;
@@ -29,8 +28,6 @@ import org.jackhuang.hellominecraft.util.logging.Level;
  * @author huangyuhui
  */
 public class LogWindowOutputStream extends OutputStream {
-
-    private static final Timer TIMER = new Timer();
 
     private final LogWindow txt;
     private final Level sas;
@@ -59,9 +56,5 @@ public class LogWindowOutputStream extends OutputStream {
     @Override
     public final void write(int i) {
         append(new String(new byte[] { (byte) i }, Charsets.UTF_8));
-    }
-
-    public static void dispose() {
-        TIMER.cancel();
     }
 }

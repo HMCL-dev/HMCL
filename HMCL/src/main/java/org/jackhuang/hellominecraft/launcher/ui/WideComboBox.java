@@ -24,7 +24,7 @@ import javax.swing.JComboBox;
  * Make the popup menu of combo boxes wider.
  * @author huangyuhui
  */
-public class WideComboBox extends JComboBox {
+public class WideComboBox<E> extends JComboBox<E> {
 
     public WideComboBox() {
     }

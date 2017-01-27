@@ -40,18 +40,13 @@ public class TaskList extends Thread {
 
     List<Task> taskQueue = Collections.synchronizedList(new LinkedList<>());
     public final EventHandler<Object> doneEvent = new EventHandler<>(this);
-    ArrayList<DoingDoneListener<Task>> taskListener = new ArrayList();
+    ArrayList<DoingDoneListener<Task>> taskListener = new ArrayList<>();
 
     int totTask;
     boolean shouldContinue = true;
 
     public TaskList() {
         setDaemon(true);
-    }
-
-    public void clean() {
-        shouldContinue = true;
-        taskQueue.clear();
     }
 
     public void addTaskListener(DoingDoneListener<Task> l) {

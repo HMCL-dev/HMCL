@@ -124,7 +124,7 @@ public class InstallerPanel extends Page {
     Task refreshVersionsTask() {
         Task t = list.refresh(new String[] { gsp.getMinecraftVersionFormatted() });
         if (t != null)
-            return t.after(new TaskRunnable(this::loadVersions));
+            return t.with(new TaskRunnable(this::loadVersions));
         else
             return null;
     }

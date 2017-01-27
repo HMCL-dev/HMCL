@@ -63,7 +63,7 @@ public class LiteLoaderInstaller extends Task implements PreviousResultRegistrar
         MinecraftVersion mv = (MinecraftVersion) service.version().getVersionById(installId).clone();
         mv.inheritsFrom = mv.id;
         mv.jar = mv.jar == null ? mv.id : mv.jar;
-        mv.libraries = new ArrayList(Arrays.asList(version.libraries));
+        mv.libraries = new ArrayList<>(Arrays.asList(version.libraries));
 
         MinecraftLibrary ml = new MinecraftLibrary("com.mumfrey:liteloader:" + version.selfVersion);
         //ml.url = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + version.mcVersion + "/liteloader-" + version.selfVersion + ".jar";
@@ -92,7 +92,7 @@ public class LiteLoaderInstaller extends Task implements PreviousResultRegistrar
     ArrayList<PreviousResult<File>> pre = new ArrayList<>();
 
     @Override
-    public Task registerPreviousResult(PreviousResult pr) {
+    public Task registerPreviousResult(PreviousResult<File> pr) {
         pre.add(pr);
         return this;
     }

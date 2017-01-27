@@ -18,13 +18,15 @@
 package org.jackhuang.hellominecraft.util.code;
 
 import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
+import org.jackhuang.hellominecraft.util.system.IOUtils;
 
 public final class Charsets {
     
     private Charsets() {
     }
 
-    public static final Charset ISO_8859_1 = Charset.forName("ISO-8859-1");
+    /*public static final Charset ISO_8859_1 = Charset.forName("ISO-8859-1");
 
     public static final Charset US_ASCII = Charset.forName("US-ASCII");
 
@@ -32,15 +34,22 @@ public final class Charsets {
 
     public static final Charset UTF_16BE = Charset.forName("UTF-16BE");
 
-    public static final Charset UTF_16LE = Charset.forName("UTF-16LE");
+    public static final Charset UTF_16LE = Charset.forName("UTF-16LE");*/
 
     public static final Charset UTF_8 = Charset.forName("UTF-8");
-
-    public static Charset toCharset(Charset charset) {
-        return charset == null ? Charset.defaultCharset() : charset;
-    }
+    
+    public static final Charset DEFAULT_CHARSET = UTF_8;
 
     public static Charset toCharset(String charset) {
-        return charset == null ? Charset.defaultCharset() : Charset.forName(charset);
+        if (charset == null) return Charset.defaultCharset();
+        try {
+            return Charset.forName(charset);
+        } catch(UnsupportedCharsetException ignored) {
+            return Charset.defaultCharset();
+        }
+    }
+    
+    public static Charset toCharset() {
+        return toCharset(System.getProperty("sun.jnu.encoding", IOUtils.DEFAULT_CHARSET));
     }
 }

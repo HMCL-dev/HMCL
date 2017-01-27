@@ -68,10 +68,6 @@ public class HeaderTab extends JLabel
         return this.model.getActionListeners();
     }
 
-    public void removeActionListener(ActionListener listener) {
-        this.model.removeActionListener(listener);
-    }
-
     public void setActionCommand(String command) {
         this.model.setActionCommand(command);
     }

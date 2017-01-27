@@ -23,9 +23,10 @@ import java.awt.Color;
 import java.awt.Component;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import org.jackhuang.hellominecraft.util.ArrayUtils;
 
 /**
  * A convenience JPanel subclass that makes it easy to create wizard panels.
@@ -191,7 +192,7 @@ public class WizardPage extends JPanel implements WizardPanel {
 
     /**
      * Use this constructor or the default constructor if you intend to pass an
-     * array of Class objects to lazily create WizardPanels.
+     * array of Class<?> objects to lazily create WizardPanels.
      */
     protected WizardPage(boolean autoListen) {
         this(null, null, autoListen);
@@ -428,7 +429,7 @@ public class WizardPage extends JPanel implements WizardPanel {
      * Create simple Wizard from an array of classes, each of which is a unique
      * subclass of WizardPage.
      */
-    public static Wizard createWizard(Class[] wizardPageClasses, WizardResultProducer finisher) {
+    public static Wizard createWizard(Class<?>[] wizardPageClasses, WizardResultProducer finisher) {
         return new CWPP(wizardPageClasses, finisher).createWizard();
     }
 
@@ -436,7 +437,7 @@ public class WizardPage extends JPanel implements WizardPanel {
      * Create simple Wizard from an array of classes, each of which is a unique
      * subclass of WizardPage.
      */
-    public static Wizard createWizard(String title, Class[] wizardPageClasses, WizardResultProducer finisher) {
+    public static Wizard createWizard(String title, Class<?>[] wizardPageClasses, WizardResultProducer finisher) {
         return new CWPP(title, wizardPageClasses, finisher).createWizard();
     }
 
@@ -444,7 +445,7 @@ public class WizardPage extends JPanel implements WizardPanel {
      * Create simple Wizard from an array of classes, each of which is a unique
      * subclass of WizardPage.
      */
-    public static Wizard createWizard(String title, Class[] wizardPageClasses) {
+    public static Wizard createWizard(String title, Class<?>[] wizardPageClasses) {
         return new CWPP(title, wizardPageClasses,
                 WizardResultProducer.NO_OP).createWizard();
     }
@@ -453,7 +454,7 @@ public class WizardPage extends JPanel implements WizardPanel {
      * Create a simple Wizard from an array of classes, each of which is a
      * unique subclass of WizardPage, with a no-op WizardResultProducer.
      */
-    public static Wizard createWizard(Class[] wizardPageClasses) {
+    public static Wizard createWizard(Class<?>[] wizardPageClasses) {
         return createWizard(wizardPageClasses, WizardResultProducer.NO_OP);
     }
 
@@ -469,14 +470,13 @@ public class WizardPage extends JPanel implements WizardPanel {
      */
     void setWizardDataMap(Map m) {
         if (m == null)
-            wizardData = new HashMap();
+            wizardData = new HashMap<>();
         else {
             if (wizardData instanceof HashMap)
                 // our initial map has keys for all of our components
                 // but with dummy empty values
                 // So make sure we don't override data that was put in as part of the initialProperties
-                for (Iterator iter = wizardData.entrySet().iterator(); iter.hasNext();) {
-                    Map.Entry entry = (Map.Entry) iter.next();
+                for (Map.Entry entry : (Set<Map.Entry>) wizardData.entrySet()) {
                     Object key = entry.getKey();
                     if (!m.containsKey(key))
                         m.put(key, entry.getValue());
@@ -660,7 +660,7 @@ public class WizardPage extends JPanel implements WizardPanel {
         } else if (comp instanceof JFormattedTextField)
             return ((JFormattedTextField) comp).getValue();
         else if (comp instanceof JList) {
-            Object[] o = ((JList) comp).getSelectedValues();
+            Object[] o = ((JList<?>) comp).getSelectedValues();
             if (o.length > 1)
                 return o;
             else if (o.length == 1)
@@ -668,7 +668,7 @@ public class WizardPage extends JPanel implements WizardPanel {
         } else if (comp instanceof JTextComponent)
             return ((JTextComponent) comp).getText();
         else if (comp instanceof JComboBox)
-            return ((JComboBox) comp).getSelectedItem();
+            return ((JComboBox<?>) comp).getSelectedItem();
         else if (comp instanceof JColorChooser)
             return ((JColorChooser) comp).getSelectionModel().getSelectedColor();
         else if (comp instanceof JSpinner)
@@ -702,7 +702,7 @@ public class WizardPage extends JPanel implements WizardPanel {
         else if (comp instanceof JList) {
             if (value instanceof Object[])
                 throw new IllegalArgumentException("can't handle multi-select lists");
-            ((JList) comp).setSelectedValue(value, true);
+            ((JList<?>) comp).setSelectedValue(value, true);
         } else if (comp instanceof JTextComponent)
             ((JTextComponent) comp).setText((String) value);
         else if (comp instanceof JComboBox)
@@ -898,7 +898,7 @@ public class WizardPage extends JPanel implements WizardPanel {
          * Make sure we haven't been passed bogus data
          */
         private String valid(WizardPage[] pages) {
-            if (new HashSet(Arrays.asList(pages)).size() != pages.length)
+            if (ArrayUtils.hasDuplicateElements(pages))
                 return "Duplicate entry in array: "
                         + Arrays.asList(pages);
 
@@ -934,44 +934,27 @@ public class WizardPage extends JPanel implements WizardPanel {
      */
     private static final class CWPP extends WizardPanelProvider {
 
-        private final Class[] classes;
+        private final Class<?>[] classes;
         private final WizardResultProducer finish;
         private final String[] longDescriptions;
 
-        CWPP(String title, Class[] classes, WizardResultProducer finish) {
+        CWPP(String title, Class<?>[] classes, WizardResultProducer finish) {
             super(title, Util.getSteps(classes), Util.getDescriptions(classes));
-//            assert classes != null : "Class array may not be null";
-//            assert new HashSet(Arrays.asList(classes)).size() == classes.length :
-//                    "Duplicate entries in class array";
-//            assert finish != null : "WizardResultProducer may not be null";
-
             _validateArgs(classes, finish);
             this.finish = finish;
             this.classes = classes;
             longDescriptions = new String[classes.length];
         }
 
-        private void _validateArgs(Class[] classes, WizardResultProducer finish) {
-//            assert classes != null : "Class array may not be null";
-//            assert new HashSet(Arrays.asList(classes)).size() == classes.length :
-//                    "Duplicate entries in class array";
-//            assert finish != null : "WizardResultProducer may not be null";
-
-            if (classes == null)
-                throw new RuntimeException("Class array may not be null");
-            if (new HashSet(Arrays.asList(classes)).size() != classes.length)
+        private void _validateArgs(Class<?>[] classes, WizardResultProducer finish) {
+            Objects.requireNonNull(classes, "Class<?> array may not be null");
+            Objects.requireNonNull(finish, "WizardResultProducer may not be null");
+            if (ArrayUtils.hasDuplicateElements(classes))
                 throw new RuntimeException("Duplicate entries in class array");
-            if (finish == null)
-                throw new RuntimeException("WizardResultProducer may not be null");
         }
 
-        CWPP(Class[] classes, WizardResultProducer finish) {
+        CWPP(Class<?>[] classes, WizardResultProducer finish) {
             super(Util.getSteps(classes), Util.getDescriptions(classes));
-
-//            assert classes != null : "Class array may not be null";
-//            assert new HashSet(Arrays.asList(classes)).size() == classes.length :
-//                    "Duplicate entries in class array";
-//            assert finish != null : "WizardResultProducer may not be null";
             longDescriptions = new String[classes.length];
             _validateArgs(classes, finish);
 

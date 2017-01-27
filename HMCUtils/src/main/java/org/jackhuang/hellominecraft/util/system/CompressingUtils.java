@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hellominecraft.util.system;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,9 +52,7 @@ public final class CompressingUtils {
      * @throws java.io.IOException 压缩失败或无法读取
      */
     public static void zip(File sourceDir, File zipFile, BiFunction<String, Boolean, String> pathNameCallback) throws IOException {
-        FileOutputStream os = new FileOutputStream(zipFile);
-        BufferedOutputStream bos = new BufferedOutputStream(os);
-        try (ZipOutputStream zos = new ZipOutputStream(bos)) {
+        try (ZipOutputStream zos = new ZipOutputStream(FileUtils.openOutputStream(zipFile))) {
             String basePath;
             if (sourceDir.isDirectory())
                 basePath = sourceDir.getPath();
@@ -65,30 +60,6 @@ public final class CompressingUtils {
                 basePath = sourceDir.getParent();
             zipFile(sourceDir, basePath, zos, pathNameCallback);
             zos.closeEntry();
-        }
-    }
-
-    /**
-     * 功能：把 sourceDir 目录下的所有文件进行 zip 格式的压缩，保存为指定 zip 文件
-     *
-     * @param sourceDir        源文件夹
-     * @param zipFile          压缩生成的zip文件路径。
-     * @param pathNameCallback callback(pathName, isDirectory) returns your
-     *                         modified pathName
-     *
-     * @throws java.io.IOException 压缩失败或无法读取
-     */
-    public static ZipOutputStream zipContinuing(File sourceDir, File zipFile, BiFunction<String, Boolean, String> pathNameCallback) throws IOException {
-        FileOutputStream os = new FileOutputStream(zipFile);
-        BufferedOutputStream bos = new BufferedOutputStream(os);
-        try (ZipOutputStream zos = new ZipOutputStream(bos)) {
-            String basePath;
-            if (sourceDir.isDirectory())
-                basePath = sourceDir.getPath();
-            else//直接压缩单个文件时，取父目录
-                basePath = sourceDir.getParent();
-            zipFile(sourceDir, basePath, zos, pathNameCallback);
-            return zos;
         }
     }
 
@@ -128,16 +99,11 @@ public final class CompressingUtils {
                     pathName = pathNameCallback.apply(pathName, true);
                 if (pathName == null)
                     continue;
-                try (InputStream is = new FileInputStream(file)) {
-                    BufferedInputStream bis = new BufferedInputStream(is);
+                try (InputStream is = FileUtils.openInputStream(file)) {
                     zos.putNextEntry(new ZipEntry(pathName));
-                    IOUtils.copyStream(bis, zos, buf);
+                    IOUtils.copyStream(is, zos, buf);
                 }
             }
-    }
-
-    public static void unzip(String zipFileName, String extPlace) throws IOException {
-        unzip(new File(zipFileName), new File(extPlace));
     }
 
     public static void unzip(File zipFileName, File extPlace) throws IOException {
@@ -157,7 +123,7 @@ public final class CompressingUtils {
     public static void unzip(File zipFileName, File extPlace, Predicate<String> callback, boolean ignoreExistsFile) throws IOException {
         byte[] buf = new byte[1024];
         extPlace.mkdirs();
-        try (ZipInputStream zipFile = new ZipInputStream(new FileInputStream(zipFileName))) {
+        try (ZipInputStream zipFile = new ZipInputStream(FileUtils.openInputStream(zipFileName))) {
             if (zipFileName.exists()) {
                 String strPath, gbkPath, strtemp;
                 strPath = extPlace.getAbsolutePath();
@@ -186,7 +152,7 @@ public final class CompressingUtils {
                             }
                         if (ignoreExistsFile && new File(strtemp).exists())
                             continue;
-                        try (FileOutputStream fos = new FileOutputStream(strtemp)) {
+                        try (FileOutputStream fos = FileUtils.openOutputStream(new File(strtemp))) {
                             IOUtils.copyStream(zipFile, fos, buf);
                         }
                     }

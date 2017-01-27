@@ -18,6 +18,8 @@
 package org.jackhuang.hellominecraft.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -57,10 +59,6 @@ public final class ArrayUtils {
         return -1;
     }
 
-    public static <T> int lastIndexOf(T[] array, T valueToFind) {
-        return lastIndexOf(array, valueToFind, 2147483647);
-    }
-
     public static <T> int lastIndexOf(T[] array, T valueToFind, int startIndex) {
         if (array == null)
             return -1;
@@ -75,16 +73,16 @@ public final class ArrayUtils {
     }
 
     public static <T> ArrayList<T> merge(List<T> a, List<T> b) {
-        ArrayList al = new ArrayList(a.size() + b.size());
+        ArrayList<T> al = new ArrayList<>(a.size() + b.size());
         al.addAll(a);
         al.addAll(b);
         return al;
     }
 
-    public static List tryGetMapWithList(Map map, String key) {
-        List l = (List) map.get(key);
+    public static <T> List<T> tryGetMapWithList(Map<String, List<T>> map, String key) {
+        List<T> l = (List<T>) map.get(key);
         if (l == null)
-            map.put(key, l = new ArrayList());
+            map.put(key, l = new ArrayList<>());
         return l;
     }
     
@@ -101,5 +99,9 @@ public final class ArrayUtils {
                 return i;
         }
         return -1;
+    }
+    
+    public static <T> boolean hasDuplicateElements(T[] t) {
+        return new HashSet<>(Arrays.asList(t)).size() < t.length;
     }
 }
