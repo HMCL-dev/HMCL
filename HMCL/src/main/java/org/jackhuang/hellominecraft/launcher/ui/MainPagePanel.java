@@ -399,6 +399,7 @@ public class MainPagePanel extends GaussionPage {
     }//GEN-LAST:event_txtPasswordCaretUpdate
 
     // <editor-fold defaultstate="collapsed" desc="Loads">
+    
     private void prepareAuths() {
         preparingAuth = true;
         cboLoginMode.removeAllItems();

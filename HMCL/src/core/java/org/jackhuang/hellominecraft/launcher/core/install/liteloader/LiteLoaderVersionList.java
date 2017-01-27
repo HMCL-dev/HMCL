@@ -62,7 +62,7 @@ public class LiteLoaderVersionList extends InstallerVersionList {
 
             @Override
             public Collection<Task> getDependTasks() {
-                return Arrays.asList(task);
+                return Arrays.asList(task.setTag("Official Liteloader Download Site"));
             }
 
             @Override

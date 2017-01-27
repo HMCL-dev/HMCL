@@ -27,8 +27,22 @@ import javax.swing.JComponent;
  * @author huang
  */
 public interface IRepaint {
+    
+    /**
+     * addDirtyRegion to?
+     * @return the component which needs repainting.
+     */
     JComponent getRepaintComponent();
+    
+    /**
+     * addDirtyRegion to?
+     * @return the window which needs repainting.
+     */
     Window getRepaintWindow();
     
+    /**
+     * Repaint the component/window you want.
+     * @return the region where you want to repaint.
+     */
     Collection<Rectangle> getRepaintRects();
 }

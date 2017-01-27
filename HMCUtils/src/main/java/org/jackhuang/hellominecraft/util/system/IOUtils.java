@@ -188,9 +188,16 @@ public final class IOUtils {
         else
             return path + "java";
     }
+    
+    public static List<String> readLines(InputStream stream, String charset) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(stream, charset));
+        ArrayList<String> ret = new ArrayList<>();
+        for (String line; (line = br.readLine()) != null; ret.add(line));
+        return ret;
+    }
 
     public static ByteArrayOutputStream readFully(InputStream stream) throws IOException {
-        byte[] data = new byte[4096];
+        byte[] data = new byte[MAX_BUFFER_SIZE];
         ByteArrayOutputStream entryBuffer = new ByteArrayOutputStream();
         int len;
         do {
@@ -309,7 +316,7 @@ public final class IOUtils {
     }
 
     public static void copyStream(InputStream input, OutputStream output) throws IOException {
-        copyStream(input, output, new byte[1024]);
+        copyStream(input, output, new byte[MAX_BUFFER_SIZE]);
     }
 
     public static void copyStream(InputStream input, OutputStream output, byte[] buf) throws IOException {
@@ -318,6 +325,11 @@ public final class IOUtils {
             output.write(buf, 0, length);
     }
 
+    /**
+     * Max buffer size downloading.
+     */
+    public static final int MAX_BUFFER_SIZE = 4096;
+    
     public static final String DEFAULT_CHARSET = "UTF-8";
 
     public static PrintStream createPrintStream(OutputStream out, Charset charset) {

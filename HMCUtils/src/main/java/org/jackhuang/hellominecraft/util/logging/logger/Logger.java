@@ -143,27 +143,22 @@ public class Logger extends AbstractLogger {
         }
 
         boolean filter(Level level, String msg) {
-
             return this.intLevel >= level.level;
         }
 
         boolean filter(Level level, String msg, Throwable t) {
-
             return this.intLevel >= level.level;
         }
 
         boolean filter(Level level, String msg, Object[] p1) {
-
             return this.intLevel >= level.level;
         }
 
         boolean filter(Level level, Object msg, Throwable t) {
-
             return this.intLevel >= level.level;
         }
 
         boolean filter(Level level, IMessage msg, Throwable t) {
-
             return this.intLevel >= level.level;
         }
     }

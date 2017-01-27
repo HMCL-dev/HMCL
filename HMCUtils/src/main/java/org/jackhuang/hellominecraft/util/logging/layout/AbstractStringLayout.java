@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hellominecraft.util.logging.layout;
 
-import org.jackhuang.hellominecraft.util.code.Charsets;
 import org.jackhuang.hellominecraft.util.logging.LogEvent;
 
 /**
@@ -28,7 +27,7 @@ public abstract class AbstractStringLayout implements ILayout<String> {
 
     @Override
     public byte[] toByteArray(LogEvent event) {
-        return toSerializable(event).getBytes(Charsets.UTF_8);
+        return toSerializable(event).getBytes();
     }
 
 }

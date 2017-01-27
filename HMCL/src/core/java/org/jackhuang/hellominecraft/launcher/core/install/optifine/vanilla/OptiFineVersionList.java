@@ -72,7 +72,7 @@ public class OptiFineVersionList extends InstallerVersionList {
 
             @Override
             public Collection<Task> getDependTasks() {
-                return Arrays.asList(task);
+                return Arrays.asList(task.setTag("Optifine Download Site"));
             }
 
             @Override

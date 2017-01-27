@@ -35,7 +35,7 @@ public final class Localization {
 
     private static final Map<Locale, Localization> INSTANCE = new HashMap<>();
 
-    private final Map<String, String> lang;
+    private final Map<String, String> lang = new HashMap<>();
     
     private static InputStream getStream(String id) {
         return Localization.class.getResourceAsStream(String.format(ROOT_LOCATION, id));
@@ -48,12 +48,10 @@ public final class Localization {
         if (is == null)
             is = getStream("");
         if (is == null)
-            throw new RuntimeException("LANG FILE MISSING");
+            throw new IllegalStateException("Language file missing");
 
-        this.lang = new HashMap<>();
         try {
-            String[] strings = IOUtils.readFully(is).toString("UTF-8").split("\n");
-            for (String s : strings)
+            for (String s : IOUtils.readLines(is, IOUtils.DEFAULT_CHARSET))
                 if (!s.isEmpty() && s.charAt(0) != 35) {
                     int i = s.indexOf('=');
                     if (i == -1)

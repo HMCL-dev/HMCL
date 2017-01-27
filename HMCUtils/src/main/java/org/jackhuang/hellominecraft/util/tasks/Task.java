@@ -72,6 +72,10 @@ public abstract class Task {
 
     protected String tag;
 
+    /**
+     * For FileDownloadTask: info replacement.
+     * @return 
+     */
     public String getTag() {
         return tag;
     }

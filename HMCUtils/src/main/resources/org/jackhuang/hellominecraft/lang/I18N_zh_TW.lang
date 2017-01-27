@@ -13,6 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see {http://www.gnu.org/licenses/}.
+#
+#author: huangyuhui
 launch.failed=啟動失敗
 launch.failed_creating_process=啟動失敗，在創建新進程時發生錯誤，可能是Java路徑錯誤。
 launch.failed_sh_permission=為啟動資料添加權限時發生錯誤

@@ -60,7 +60,7 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
 
             @Override
             public Collection<Task> getDependTasks() {
-                return Arrays.asList(task);
+                return Arrays.asList(task.setTag("Official Forge Download Site"));
             }
 
             @Override

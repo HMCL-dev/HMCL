@@ -42,9 +42,6 @@ import org.jackhuang.hellominecraft.util.system.IOUtils;
 // This class downloads a file from a URL.
 public class FileDownloadTask extends Task implements PreviousResult<File>, PreviousResultRegistrar<String> {
 
-    // Max size of download buffer.
-    protected static final int MAX_BUFFER_SIZE = 2048;
-
     protected URL url; // download URL
     protected int downloaded = 0; // number of bytes downloaded
     protected File filePath;
@@ -113,7 +110,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                         HMCLog.warn("Switch to: " + url);
                     }
                 }
-            HMCLog.log("Downloading: " + url + ", to: " + filePath);
+            HMCLog.log("Downloading: " + url + " to: " + filePath);
             if (!shouldContinue)
                 break;
             try {
@@ -121,26 +118,29 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                     ppl.setProgress(this, -1, 1);
 
                 // Open connection to URL.
-                HttpURLConnection connection
-                                  = (HttpURLConnection) url.openConnection();
+                HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
-                connection.setConnectTimeout(5000);
-                connection.setRequestProperty("User-Agent", "Hello Minecraft!");
+                con.setDoInput(true);
+                con.setConnectTimeout(15000);
+                con.setReadTimeout(15000);
+                con.setRequestProperty("User-Agent", "Hello Minecraft!");
 
                 // Connect to server.
-                connection.connect();
+                con.connect();
 
                 // Make sure response code is in the 200 range.
-                if (connection.getResponseCode() / 100 != 2)
-                    throw new NetException(C.i18n("download.not_200") + " " + connection.getResponseCode());
+                if (con.getResponseCode() / 100 != 2)
+                    throw new NetException(C.i18n("download.not_200") + " " + con.getResponseCode());
 
                 // Check for valid content length.
-                int contentLength = connection.getContentLength();
+                int contentLength = con.getContentLength();
                 if (contentLength < 1)
                     throw new NetException("The content length is invalid.");
 
-                filePath.getParentFile().mkdirs();
+                if (!filePath.getParentFile().mkdirs() && !filePath.getParentFile().isDirectory())
+                    throw new IOException("Could not make directory");
 
+                // We use temp file to prevent files from aborting downloading and broken.
                 File tempFile = new File(filePath.getAbsolutePath() + ".hmd");
                 if (!tempFile.exists())
                     tempFile.createNewFile();
@@ -152,7 +152,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
 
                 MessageDigest digest = DigestUtils.getSha1Digest();
 
-                stream = connection.getInputStream();
+                stream = con.getInputStream();
                 int lastDownloaded = 0;
                 downloaded = 0;
                 long lastTime = System.currentTimeMillis();
@@ -164,19 +164,21 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                         break;
                     }
 
-                    byte buffer[] = new byte[MAX_BUFFER_SIZE];
+                    byte buffer[] = new byte[IOUtils.MAX_BUFFER_SIZE];
 
                     // Read from server into buffer.
                     int read = stream.read(buffer);
                     if (read == -1)
                         break;
 
-                    digest.update(buffer, 0, read);
+                    if (expectedHash != null)
+                        digest.update(buffer, 0, read);
 
                     // Write buffer to file.
                     file.write(buffer, 0, read);
                     downloaded += read;
 
+                    // Update progress information per second
                     long now = System.currentTimeMillis();
                     if (ppl != null && (now - lastTime) >= 1000) {
                         ppl.setProgress(this, downloaded, contentLength);
@@ -186,6 +188,8 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                     }
                 }
                 closeFiles();
+                
+                // Restore temp file to original name.
                 if (aborted)
                     tempFile.delete();
                 else {
@@ -197,7 +201,9 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                     break;
                 if (downloaded != contentLength)
                     throw new IllegalStateException("Unexptected file size: " + downloaded + ", expected: " + contentLength);
-                String hashCode = String.format("%1$040x", new Object[] { new BigInteger(1, digest.digest()) });
+
+                // Check hash code
+                String hashCode = String.format("%1$040x", new BigInteger(1, digest.digest()));
                 if (expectedHash != null && !expectedHash.equals(hashCode))
                     throw new IllegalStateException("Unexpected hash code: " + hashCode + ", expected: " + expectedHash);
 
@@ -214,17 +220,8 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
             throw failReason;
     }
 
-    public static void download(String url, String file, DownloadListener dl) throws Throwable {
-        download(url, new File(file), dl);
-    }
-
-    public static void download(String url, File file, DownloadListener dl) throws Throwable {
-        ((Task) new FileDownloadTask(url, file).setProgressProviderListener(dl)).executeTask(true);
-    }
-
     @Override
     public boolean abort() {
-        //for (Downloader d : downloaders) d.abort();
         shouldContinue = false;
         aborted = true;
         return true;
@@ -232,7 +229,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
 
     @Override
     public String getInfo() {
-        return C.i18n("download") + ": " + url;
+        return C.i18n("download") + ": " + (tag == null ? url : tag);
     }
 
     @Override

@@ -20,33 +20,34 @@ package org.jackhuang.hellominecraft.util.tasks.download;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.Proxy;
 import java.net.URL;
-import java.net.URLConnection;
+import java.nio.charset.Charset;
+import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
 import org.jackhuang.hellominecraft.util.tasks.comm.PreviousResult;
 import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.util.NetUtils;
+import org.jackhuang.hellominecraft.util.code.Charsets;
+import org.jackhuang.hellominecraft.util.tasks.Task;
 
 /**
  *
  * @author huangyuhui
  */
-public class HTTPGetTask extends TaskInfo implements PreviousResult<String> {
+public class HTTPGetTask extends Task implements PreviousResult<String> {
 
-    String url, encoding, result;
-    EventHandler<String> tdtsl = new EventHandler<>(this);
+    String url, result;
+    Charset encoding;
+    EventHandler<String> doneEvent = new EventHandler<>(this);
     boolean shouldContinue = true;
 
     public HTTPGetTask(String url) {
-        this(null, url);
+        this(url, Charsets.UTF_8);
     }
 
-    public HTTPGetTask(String info, String url) {
-        this(info, url, "UTF-8");
-    }
-
-    public HTTPGetTask(String info, String url, String encoding) {
-        super(info);
+    public HTTPGetTask(String url, Charset encoding) {
         this.url = url;
         this.encoding = encoding;
     }
@@ -60,15 +61,18 @@ public class HTTPGetTask extends TaskInfo implements PreviousResult<String> {
             try {
                 if (ppl != null)
                     ppl.setProgress(this, -1, 1);
-                URLConnection conn = new URL(url).openConnection();
-                InputStream is = conn.getInputStream();
+                HttpURLConnection con = NetUtils.createConnection(new URL(url), Proxy.NO_PROXY);
+                
+                InputStream is = con.getInputStream();
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                byte[] buf = new byte[1024];
-                int size = conn.getContentLength(), read = 0, len;
+                byte[] buf = new byte[4096];
+                int size = con.getContentLength(), read = 0, len;
                 long lastTime = System.currentTimeMillis();
                 while ((len = is.read(buf)) != -1) {
                     baos.write(buf, 0, len);
                     read += len;
+                    
+                    // Update progress information per second
                     long now = System.currentTimeMillis();
                     if (ppl != null && (now - lastTime) >= 1000) {
                         ppl.setProgress(this, read, size);
@@ -77,8 +81,8 @@ public class HTTPGetTask extends TaskInfo implements PreviousResult<String> {
                     if (!shouldContinue)
                         return;
                 }
-                result = baos.toString(encoding);
-                tdtsl.execute(result);
+                result = baos.toString(encoding.name());
+                doneEvent.execute(result);
                 return;
             } catch (IOException ex) {
                 t = new NetException("Failed to get " + url, ex);
@@ -91,13 +95,12 @@ public class HTTPGetTask extends TaskInfo implements PreviousResult<String> {
     @Override
     public boolean abort() {
         shouldContinue = false;
-        aborted = true;
-        return true;
+        return aborted = true;
     }
 
     @Override
     public String getInfo() {
-        return super.getInfo() != null ? super.getInfo() : "Get: " + url;
+        return C.i18n("download") + ": " + (tag == null ? url : tag);
     }
 
     @Override

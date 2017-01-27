@@ -29,16 +29,16 @@ import javax.swing.JPanel;
 import org.jackhuang.hellominecraft.util.ui.StackBlurFilter;
 
 /**
- *
+ * This component will allow some area blured to provide better UI.
  * @author huangyuhui
  */
 public class GaussionPage extends Page {
 
-    private transient BufferedImage aeroBuffer; // 模糊缓存
+    private transient BufferedImage aeroBuffer;
     private transient Image backgroundImage;
     private final List<JPanel> aeroObject = new ArrayList<>();
-    private transient Graphics2D aeroGraphics; // 模糊对象
-    private static final int RADIUS = 10; // 模糊半径
+    private transient Graphics2D aeroGraphics;
+    private static final int RADIUS = 10;
     private transient final StackBlurFilter stackBlurFilter = new StackBlurFilter(RADIUS);
     private transient BufferedImage cache = null;
 
@@ -46,6 +46,10 @@ public class GaussionPage extends Page {
         this.backgroundImage = backgroundImage;
     }
 
+    /**
+     * The background will be blured under the aero object.
+     * @param aeroObject just need its bounds, keep it not opaque.
+     */
     public void addAeroObject(JPanel aeroObject) {
         this.aeroObject.add(aeroObject);
         cache = null;
@@ -58,6 +62,7 @@ public class GaussionPage extends Page {
         if (backgroundImage == null)
             return;
         
+        // If we cache the processed background image, the CPU ratio will reduce 5%.
         if (cache == null || getWidth() != cache.getWidth() || getHeight() != cache.getHeight()) {
             cache = new BufferedImage(getWidth(), getHeight(), 2);
             Graphics2D g2 = cache.createGraphics();

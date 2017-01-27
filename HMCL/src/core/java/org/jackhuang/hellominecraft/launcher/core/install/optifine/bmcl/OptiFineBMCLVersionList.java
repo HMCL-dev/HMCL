@@ -65,7 +65,7 @@ public class OptiFineBMCLVersionList extends InstallerVersionList {
 
             @Override
             public Collection<Task> getDependTasks() {
-                return Arrays.asList(task);
+                return Arrays.asList(task.setTag("BMCL Optifine Download Site"));
             }
 
             @Override

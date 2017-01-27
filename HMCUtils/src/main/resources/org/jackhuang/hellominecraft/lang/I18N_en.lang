@@ -13,6 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see {http://www.gnu.org/licenses/}.
+#
+#author: huangyuhui, dxNeil
 launch.failed=Failed to launch.
 launch.failed_creating_process=Failed to create process, maybe your java path is wrong, please modify your java path.
 launch.failed_sh_permission=Failed to add permission to the launch script.

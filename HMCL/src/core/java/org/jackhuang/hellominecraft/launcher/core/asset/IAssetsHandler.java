@@ -129,7 +129,7 @@ public abstract class IAssetsHandler {
                     need = !location.exists();
                 }
                 if (need)
-                    al.add(new FileDownloadTask(url, location).setTag(mark));
+                    al.add(new FileDownloadTask(url, location).setTag(contents.get(i).geteTag()));
             }
         }
 
