@@ -85,7 +85,7 @@ public class TaskList extends Thread {
 
     }
 
-    ExecutorService EXECUTOR_SERVICE = Executors.newFixedThreadPool(64);
+    ExecutorService EXECUTOR_SERVICE = Executors.newFixedThreadPool(8);
     HashMap<Invoker, Future<?>> futures = new HashMap<>();
     HashSet<Invoker> invokers = new HashSet<>();
 
