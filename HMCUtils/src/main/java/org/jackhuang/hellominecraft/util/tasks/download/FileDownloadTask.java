@@ -30,6 +30,7 @@ import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.code.DigestUtils;
 import org.jackhuang.hellominecraft.util.func.Function;
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.system.FileUtils;
 import org.jackhuang.hellominecraft.util.tasks.Task;
 import org.jackhuang.hellominecraft.util.tasks.comm.PreviousResult;
 import org.jackhuang.hellominecraft.util.tasks.comm.PreviousResultRegistrar;
@@ -137,7 +138,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                 if (contentLength < 1)
                     throw new IOException("The content length is invalid.");
 
-                if (!filePath.getParentFile().mkdirs() && !filePath.getParentFile().isDirectory())
+                if (!FileUtils.makeDirectory(filePath.getParentFile()))
                     throw new IOException("Could not make directory");
 
                 // We use temp file to prevent files from aborting downloading and broken.

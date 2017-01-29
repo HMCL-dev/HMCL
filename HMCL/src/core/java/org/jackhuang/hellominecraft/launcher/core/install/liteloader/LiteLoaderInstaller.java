@@ -36,16 +36,16 @@ import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
  */
 public class LiteLoaderInstaller extends Task implements PreviousResultRegistrar<File> {
 
-    public LiteLoaderVersionList.LiteLoaderInstallerVersion version;
+    public LiteLoaderInstallerVersion version;
     public File installer;
     public String installId;
     public IMinecraftService service;
 
-    public LiteLoaderInstaller(IMinecraftService service, String installId, LiteLoaderVersionList.LiteLoaderInstallerVersion v) {
+    public LiteLoaderInstaller(IMinecraftService service, String installId, LiteLoaderInstallerVersion v) {
         this(service, installId, v, null);
     }
 
-    public LiteLoaderInstaller(IMinecraftService service, String installId, LiteLoaderVersionList.LiteLoaderInstallerVersion v, File installer) {
+    public LiteLoaderInstaller(IMinecraftService service, String installId, LiteLoaderInstallerVersion v, File installer) {
         this.service = service;
         this.installId = installId;
         this.version = v;
@@ -75,7 +75,7 @@ public class LiteLoaderInstaller extends Task implements PreviousResultRegistrar
         mv.mainClass = "net.minecraft.launchwrapper.Launch";
         mv.minecraftArguments += " --tweakClass " + version.tweakClass;
         File folder = new File(service.baseDirectory(), "versions/" + mv.id);
-        if (!folder.exists() && folder.mkdirs())
+        if (!FileUtils.makeDirectory(folder))
             HMCLog.warn("Failed to create new liteloader version " + folder);
         File json = new File(folder, mv.id + ".json");
         HMCLog.log("Creating new version profile..." + mv.id + ".json");

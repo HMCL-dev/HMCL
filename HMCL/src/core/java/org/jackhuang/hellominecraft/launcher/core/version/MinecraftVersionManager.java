@@ -256,7 +256,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public boolean onLaunch(String id) {
         File resourcePacks = new File(getRunDirectory(id), "resourcepacks");
-        if (!resourcePacks.exists() && !resourcePacks.mkdirs())
+        if (!FileUtils.makeDirectory(resourcePacks))
             HMCLog.warn("Failed to make resourcePacks: " + resourcePacks);
         return true;
     }

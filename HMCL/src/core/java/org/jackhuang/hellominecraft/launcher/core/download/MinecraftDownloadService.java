@@ -144,7 +144,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
                 String jsonURL = currentVersion.getUrl(service.getDownloadType());
                 File vpath = new File(service.baseDirectory(), "versions/" + id);
                 File mvt = new File(vpath, id + ".json");
-                if (!vpath.exists() && !vpath.mkdirs())
+                if (!FileUtils.makeDirectory(vpath))
                     HMCLog.warn("Failed to make directories: " + vpath);
                 if (mvt.exists() && !mvt.delete())
                     HMCLog.warn("Failed to delete " + mvt);

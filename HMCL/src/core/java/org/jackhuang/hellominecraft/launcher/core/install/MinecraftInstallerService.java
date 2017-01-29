@@ -23,7 +23,7 @@ import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList.InstallerVersion;
 import org.jackhuang.hellominecraft.launcher.core.install.forge.ForgeInstaller;
 import org.jackhuang.hellominecraft.launcher.core.install.liteloader.LiteLoaderInstaller;
-import org.jackhuang.hellominecraft.launcher.core.install.liteloader.LiteLoaderVersionList;
+import org.jackhuang.hellominecraft.launcher.core.install.liteloader.LiteLoaderInstallerVersion;
 import org.jackhuang.hellominecraft.launcher.core.install.optifine.OptiFineInstaller;
 import org.jackhuang.hellominecraft.launcher.core.install.optifine.vanilla.OptiFineDownloadFormatter;
 import org.jackhuang.hellominecraft.util.tasks.Task;
@@ -79,11 +79,11 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
 
     @Override
     public Task downloadLiteLoader(String installId, InstallerVersion v) {
-        if (!(v instanceof LiteLoaderVersionList.LiteLoaderInstallerVersion))
+        if (!(v instanceof LiteLoaderInstallerVersion))
             throw new Error("Download lite loader but the version is not ll's.");
         File filepath = IOUtils.tryGetCanonicalFile("liteloader-universal.jar");
         FileDownloadTask task = (FileDownloadTask) new FileDownloadTask(v.universal, filepath).setTag("LiteLoader");
-        return task.with(new LiteLoaderInstaller(service, installId, (LiteLoaderVersionList.LiteLoaderInstallerVersion) v).registerPreviousResult(task))
+        return task.with(new LiteLoaderInstaller(service, installId, (LiteLoaderInstallerVersion) v).registerPreviousResult(task))
             .with(new DeleteFileTask(filepath));
     }
 }

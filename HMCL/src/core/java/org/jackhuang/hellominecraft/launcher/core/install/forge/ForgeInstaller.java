@@ -64,7 +64,7 @@ public class ForgeInstaller extends Task {
                 } else
                     throw new IllegalStateException(C.i18n("install.no_version"));
             File to = new File(gameDir, "versions" + File.separator + profile.install.getTarget());
-            if (!to.exists() && !to.mkdirs())
+            if (!FileUtils.makeDirectory(to))
                 HMCLog.warn("Failed to make new version folder " + to);
             
             HMCLog.log("Copying jar..." + profile.install.getMinecraft() + ".jar to " + profile.install.getTarget() + ".jar");
@@ -79,7 +79,7 @@ public class ForgeInstaller extends Task {
             InputStream is = zipFile.getInputStream(entry);
             MinecraftLibrary forge = new MinecraftLibrary(profile.install.getPath());
             File file = new File(gameDir, "libraries/" + forge.getDownloadInfo().path);
-            if (file.getParentFile().mkdirs())
+            if (!FileUtils.makeDirectory(file))
                 HMCLog.warn("Failed to make library directory " + file.getParent());
             try (FileOutputStream fos = FileUtils.openOutputStream(file)) {
                 IOUtils.copyStream(is, fos);

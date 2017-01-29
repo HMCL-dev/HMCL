@@ -107,7 +107,7 @@ public abstract class IAssetsHandler {
                 String mark = assetsDownloadURLs.get(i);
                 String url = u + mark;
                 File location = assetsLocalNames.get(i);
-                if (!location.getParentFile().exists() && !location.getParentFile().mkdirs())
+                if (!FileUtils.makeDirectory(location.getParentFile()))
                     HMCLog.warn("Failed to make directories: " + location.getParent());
                 if (location.isDirectory())
                     continue;

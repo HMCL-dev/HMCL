@@ -163,7 +163,7 @@ public class AppDataUpgrader extends IUpgrader {
         public void executeTask(boolean areDependTasksSucceeded) throws Exception {
             HashMap<String, String> json = new HashMap<>();
             File f = getSelf(newestVersion);
-            if (!f.getParentFile().exists() && !f.getParentFile().mkdirs())
+            if (!FileUtils.makeDirectory(f.getParentFile()))
                 HMCLog.warn("Failed to make directories: " + f.getParent());
 
             for (int i = 0; f.exists(); i++)

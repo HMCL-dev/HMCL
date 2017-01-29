@@ -39,6 +39,10 @@ public final class FileUtils {
     
     private FileUtils() {
     }
+    
+    public static boolean makeDirectory(File directory) {
+        return directory.isDirectory() || directory.mkdirs();
+    }
 
     public static void deleteDirectory(File directory)
         throws IOException {
@@ -78,7 +82,7 @@ public final class FileUtils {
     public static void cleanDirectory(File directory)
         throws IOException {
         if (!directory.exists()) {
-            if (!directory.mkdirs() && !directory.isDirectory())
+            if (!FileUtils.makeDirectory(directory))
                 throw new IOException("Failed to create directory: " + directory);
             return;
         }
@@ -174,7 +178,7 @@ public final class FileUtils {
         if (destDir.exists()) {
             if (!destDir.isDirectory())
                 throw new IOException("Destination '" + destDir + "' exists but is not a directory");
-        } else if ((!destDir.mkdirs()) && (!destDir.isDirectory()))
+        } else if (!FileUtils.makeDirectory(destDir))
             throw new IOException("Destination '" + destDir + "' directory cannot be created");
 
         if (!destDir.canWrite())
@@ -229,11 +233,9 @@ public final class FileUtils {
         if (srcFile.getCanonicalPath().equals(destFile.getCanonicalPath()))
             throw new IOException("Source '" + srcFile + "' and destination '" + destFile + "' are the same");
         File parentFile = destFile.getParentFile();
-        if ((parentFile != null)
-            && (!parentFile.mkdirs()) && (!parentFile.isDirectory()))
+        if (parentFile != null && !FileUtils.makeDirectory(parentFile))
             throw new IOException("Destination '" + parentFile + "' directory cannot be created");
-
-        if ((destFile.exists()) && (!destFile.canWrite()))
+        if (destFile.exists() && !destFile.canWrite())
             throw new IOException("Destination '" + destFile + "' exists but is read-only");
         doCopyFile(srcFile, destFile);
     }
@@ -352,8 +354,7 @@ public final class FileUtils {
                 throw new IOException("File '" + file + "' cannot be written to");
         } else {
             File parent = file.getParentFile();
-            if ((parent != null)
-                && (!parent.mkdirs()) && (!parent.isDirectory()))
+            if (parent != null && !FileUtils.makeDirectory(parent))
                 throw new IOException("Directory '" + parent + "' could not be created");
             if (!file.createNewFile())
                 throw new IOException("File `" + file + "` cannot be created.");

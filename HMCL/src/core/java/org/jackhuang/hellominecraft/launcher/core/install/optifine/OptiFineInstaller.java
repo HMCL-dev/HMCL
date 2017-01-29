@@ -73,7 +73,7 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
             }
         }
         File loc = new File(service.baseDirectory(), "versions/" + mv.id);
-        if (!loc.exists() && loc.mkdirs())
+        if (!FileUtils.makeDirectory(loc))
             HMCLog.warn("Failed to make directories: " + loc);
         File json = new File(loc, mv.id + ".json");
         FileUtils.write(json, C.GSON.toJson(mv, MinecraftVersion.class));

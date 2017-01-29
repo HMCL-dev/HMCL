@@ -24,9 +24,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.ArrayUtils;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
@@ -71,23 +70,22 @@ public class OptiFineBMCLVersionList extends InstallerVersionList {
 
                 versionMap = new HashMap<>();
                 versions = new ArrayList<>();
+                
+                HashSet<String> duplicates = new HashSet<>();
 
                 if (s == null)
                     return;
                 root = C.GSON.fromJson(s, TYPE);
                 for (OptiFineVersion v : root) {
-                    v.setMirror(v.getMirror().replace("http://optifine.net/http://optifine.net/", "http://optifine.net/"));
-
-                    if (StrUtils.isBlank(v.getMCVersion())) {
-                        Pattern p = Pattern.compile("OptiFine (.*) HD");
-                        Matcher m = p.matcher(v.getVersion());
-                        while (m.find())
-                            v.setMCVersion(m.group(1));
-                    }
+                    v.setVersion(v.type + '_' + v.patch);
+                    v.setMirror(String.format("http://bmclapi2.bangbang93.com/optifine/%s/%s/%s", v.getMCVersion(), v.type, v.patch));
+                    if (duplicates.contains(v.getMirror()))
+                        continue;
+                    else
+                        duplicates.add(v.getMirror());
                     InstallerVersion iv = new InstallerVersion(v.getVersion(), StrUtils.formatVersion(v.getMCVersion()));
 
                     List<InstallerVersion> al = ArrayUtils.tryGetMapWithList(versionMap, StrUtils.formatVersion(v.getMCVersion()));
-                    //String url = "http://bmclapi.bangbang93.com/optifine/" + iv.selfVersion.replace(" ", "%20");
                     iv.installer = iv.universal = v.getMirror();
                     al.add(iv);
                     versions.add(iv);

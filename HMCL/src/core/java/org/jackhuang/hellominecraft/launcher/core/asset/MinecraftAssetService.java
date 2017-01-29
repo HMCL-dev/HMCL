@@ -71,7 +71,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
     @Override
     public Task downloadMinecraftAssetsIndex(AssetIndexDownloadInfo assetIndex) {
         File assetsLocation = getAssets();
-        if (!assetsLocation.exists() && !assetsLocation.mkdirs())
+        if (!FileUtils.makeDirectory(assetsLocation))
             HMCLog.warn("Failed to make directories: " + assetsLocation);
         File assetsIndex = getIndexFile(assetIndex.getId());
         File renamed = null;
@@ -101,7 +101,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
     @Override
     public boolean downloadMinecraftAssetsIndexAsync(AssetIndexDownloadInfo assetIndex) {
         File assetsDir = getAssets();
-        if (!assetsDir.mkdirs() && !assetsDir.isDirectory())
+        if (!FileUtils.makeDirectory(assetsDir))
             HMCLog.warn("Failed to make directories: " + assetsDir);
         File assetsIndex = getIndexFile(assetIndex.getId());
         File renamed = null;

@@ -23,9 +23,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
+import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionNewerComparator;
 import org.jackhuang.hellominecraft.util.StrUtils;
@@ -54,7 +53,7 @@ public class LiteLoaderVersionList extends InstallerVersionList {
         if (root != null)
             return null;
         return new TaskInfo(C.i18n("install.liteloader.get_list")) {
-            HTTPGetTask task = new HTTPGetTask(C.URL_LITELOADER_LIST);
+            HTTPGetTask task = new HTTPGetTask(DownloadType.getSuggestedDownloadType().getProvider().getParsedDownloadURL(C.URL_LITELOADER_LIST));
 
             @Override
             public Collection<Task> getDependTasks() {
@@ -82,7 +81,7 @@ public class LiteLoaderVersionList extends InstallerVersionList {
                             continue;
                         LiteLoaderVersion v = entry.getValue();
                         LiteLoaderInstallerVersion iv = new LiteLoaderInstallerVersion(v.version, StrUtils.formatVersion(arr.getKey()));
-                        iv.universal = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + arr.getKey() + "/" + v.file;
+                        iv.universal = DownloadType.getSuggestedDownloadType().getProvider().getParsedDownloadURL("http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + arr.getKey() + "/" + v.file);
                         iv.tweakClass = v.tweakClass;
                         iv.libraries = Arrays.copyOf(v.libraries, v.libraries.length);
                         iv.installer = "http://dl.liteloader.com/redist/" + iv.mcVersion + "/liteloader-installer-" + iv.selfVersion.replace("_", "-") + ".jar";
@@ -101,39 +100,6 @@ public class LiteLoaderVersionList extends InstallerVersionList {
     @Override
     public String getName() {
         return "LiteLoader - LiteLoader Official Site(By: Mumfrey)";
-    }
-
-    public static class LiteLoaderInstallerVersion extends InstallerVersion {
-
-        public MinecraftLibrary[] libraries;
-        public String tweakClass;
-
-        public LiteLoaderInstallerVersion(String selfVersion, String mcVersion) {
-            super(selfVersion, mcVersion);
-        }
-
-        @Override
-        public int hashCode() {
-            int hash = 7;
-            hash = 13 * hash + Arrays.deepHashCode(this.libraries);
-            hash = 13 * hash + Objects.hashCode(this.tweakClass);
-            return hash;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == null || !(obj instanceof LiteLoaderVersionList)) 
-                return false;
-            if (this == obj)
-                return true;
-            final LiteLoaderInstallerVersion other = (LiteLoaderInstallerVersion) obj;
-            if (!Objects.equals(this.tweakClass, other.tweakClass))
-                return false;
-            return Arrays.deepEquals(this.libraries, other.libraries);
-        }
-
-        
-
     }
 
 }
