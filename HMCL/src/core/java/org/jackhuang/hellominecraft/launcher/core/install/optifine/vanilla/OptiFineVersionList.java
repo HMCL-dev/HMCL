@@ -35,9 +35,9 @@ import org.jackhuang.hellominecraft.launcher.core.install.optifine.OptiFineVersi
 import org.jackhuang.hellominecraft.util.ArrayUtils;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
-import org.jackhuang.hellominecraft.util.tasks.download.HTTPGetTask;
+import org.jackhuang.hellominecraft.util.task.Task;
+import org.jackhuang.hellominecraft.util.task.TaskInfo;
+import org.jackhuang.hellominecraft.util.net.HTTPGetTask;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;

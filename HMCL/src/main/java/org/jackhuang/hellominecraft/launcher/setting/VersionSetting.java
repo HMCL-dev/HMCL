@@ -27,10 +27,10 @@ import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.EventHandler;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.system.Java;
-import org.jackhuang.hellominecraft.util.system.JdkVersion;
-import org.jackhuang.hellominecraft.util.system.OS;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.sys.Java;
+import org.jackhuang.hellominecraft.util.sys.JdkVersion;
+import org.jackhuang.hellominecraft.util.sys.OS;
 
 /**
  *

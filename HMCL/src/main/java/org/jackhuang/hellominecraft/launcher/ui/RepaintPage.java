@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.ui;
 
+import org.jackhuang.hellominecraft.util.ui.IRepaint;
 import java.awt.Rectangle;
 import java.awt.Window;
 import java.util.Arrays;

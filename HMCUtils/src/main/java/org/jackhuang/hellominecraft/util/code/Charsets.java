@@ -19,7 +19,7 @@ package org.jackhuang.hellominecraft.util.code;
 
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 
 public final class Charsets {
     

@@ -26,17 +26,17 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.GameDownloadInfo;
 import org.jackhuang.hellominecraft.launcher.core.version.IMinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
+import org.jackhuang.hellominecraft.util.net.FileDownloadTask;
 import org.jackhuang.hellominecraft.util.func.Function;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
+import org.jackhuang.hellominecraft.util.task.Task;
+import org.jackhuang.hellominecraft.util.task.TaskInfo;
 
 /**
  *

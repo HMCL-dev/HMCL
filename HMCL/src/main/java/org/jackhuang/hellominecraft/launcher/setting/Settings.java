@@ -23,13 +23,13 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.core.MCUtils;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.CollectionUtils;
 import org.jackhuang.hellominecraft.util.EventHandler;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.UpdateChecker;
 

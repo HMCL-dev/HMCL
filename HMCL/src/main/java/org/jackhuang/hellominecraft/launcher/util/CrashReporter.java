@@ -26,13 +26,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import static org.jackhuang.hellominecraft.launcher.Main.LAUNCHER_VERSION;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
-import org.jackhuang.hellominecraft.util.NetUtils;
+import org.jackhuang.hellominecraft.util.net.NetUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.system.OS;
+import org.jackhuang.hellominecraft.util.sys.OS;
 import org.jackhuang.hellominecraft.util.ui.LogWindow;
 
 /**

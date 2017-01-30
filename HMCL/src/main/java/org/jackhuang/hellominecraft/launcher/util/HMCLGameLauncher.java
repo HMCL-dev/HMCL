@@ -31,7 +31,7 @@ import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.EventHandler;
 import org.jackhuang.hellominecraft.util.func.Consumer;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 
 /**
  *

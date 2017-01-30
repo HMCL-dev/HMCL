@@ -25,7 +25,7 @@ import javax.swing.JOptionPane;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.ui.WebPage;
+import org.jackhuang.hellominecraft.util.net.WebPage;
 import org.jackhuang.hellominecraft.util.ui.wizard.spi.WizardController;
 import org.markdown4j.Markdown4jProcessor;
 

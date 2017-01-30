@@ -44,7 +44,7 @@ import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.UIManager;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.util.ui.wizard.api.displayer.InstructionsPanel;
 import org.jackhuang.hellominecraft.util.ui.wizard.spi.Wizard;
 import org.jackhuang.hellominecraft.util.ui.wizard.spi.WizardObserver;

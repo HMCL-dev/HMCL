@@ -26,8 +26,8 @@ import java.lang.management.ManagementFactory;
 import java.util.StringTokenizer;
 import com.sun.management.OperatingSystemMXBean;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 
 /**
  *

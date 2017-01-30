@@ -19,8 +19,8 @@ package org.jackhuang.hellominecraft.svrmgr.ui;
 
 import java.io.File;
 import javax.swing.table.DefaultTableModel;
-import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
+import org.jackhuang.hellominecraft.util.task.TaskWindow;
+import org.jackhuang.hellominecraft.util.net.FileDownloadTask;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.svrmgr.plugin.PluginInfo;
 import org.jackhuang.hellominecraft.svrmgr.plugin.PluginVersion;

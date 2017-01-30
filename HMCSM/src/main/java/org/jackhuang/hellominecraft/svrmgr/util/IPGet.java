@@ -19,8 +19,8 @@ package org.jackhuang.hellominecraft.svrmgr.util;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.NetUtils;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.net.NetUtils;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

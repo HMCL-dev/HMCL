@@ -23,8 +23,8 @@ import java.text.ParseException;
 import java.util.Map;
 import javax.swing.UIDefaults;
 import javax.swing.plaf.synth.SynthLookAndFeel;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 
 /**
  *

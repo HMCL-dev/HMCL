@@ -8,7 +8,7 @@ import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import javax.swing.border.EmptyBorder;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.util.ui.wizard.spi.ResultProgressHandle;
 import org.jackhuang.hellominecraft.util.ui.wizard.spi.Summary;
 

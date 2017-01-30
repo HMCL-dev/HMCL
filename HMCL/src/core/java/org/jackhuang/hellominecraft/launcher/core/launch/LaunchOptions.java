@@ -20,7 +20,7 @@ package org.jackhuang.hellominecraft.launcher.core.launch;
 import java.io.File;
 import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.system.JdkVersion;
+import org.jackhuang.hellominecraft.util.sys.JdkVersion;
 
 /**
  *

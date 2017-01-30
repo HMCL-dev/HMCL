@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hellominecraft.launcher.ui;
 
+import org.jackhuang.hellominecraft.util.ui.WideComboBox;
+import org.jackhuang.hellominecraft.util.ui.GaussionPanel;
 import java.awt.CardLayout;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -40,8 +42,8 @@ import org.jackhuang.hellominecraft.launcher.util.HMCLMinecraftService;
 import org.jackhuang.hellominecraft.util.Event;
 import org.jackhuang.hellominecraft.lookandfeel.ConstomButton;
 import org.jackhuang.hellominecraft.util.func.Consumer;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
+import org.jackhuang.hellominecraft.util.task.TaskWindow;
 import org.jackhuang.hellominecraft.util.ui.GraphicsUtils;
 import org.jackhuang.hellominecraft.util.ui.JSystemFileChooser;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
@@ -51,7 +53,7 @@ import org.jackhuang.hellominecraft.util.ui.wizard.api.WizardDisplayer;
  *
  * @author huangyuhui
  */
-public class MainPagePanel extends GaussionPage {
+public class MainPagePanel extends Page {
 
     public MainPagePanel() {
     }
@@ -73,7 +75,7 @@ public class MainPagePanel extends GaussionPage {
         btnRun.setFont(newFont);
         btnRun.addActionListener(e -> MainFrame.INSTANCE.daemon.runGame(Settings.getLastProfile()));
 
-        add(pnlButtons);
+        pnlRoot.add(pnlButtons);
         pnlButtons.setBounds(0, 0, w, h);
 
         this.setSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
@@ -91,10 +93,10 @@ public class MainPagePanel extends GaussionPage {
         prepareAuths();
 
         if (Settings.getInstance().isEnableBlur())
-            addAeroObject(pnlMore);
-        setBackgroundImage(MainFrame.INSTANCE.background.getImage());
+            ((GaussionPanel) pnlRoot).addAeroObject(pnlMore);
+        ((GaussionPanel) pnlRoot).setBackgroundImage(MainFrame.INSTANCE.background.getImage());
 
-        ((RepaintPage) pnlMore).setRepainter(this);
+        ((RepaintPage) pnlMore).setRepainter(pnlRoot);
     }
 
     /**
@@ -106,7 +108,8 @@ public class MainPagePanel extends GaussionPage {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        pnlMore = new RepaintPage();
+        pnlRoot = new GaussionPanel();
+        pnlMore = new org.jackhuang.hellominecraft.launcher.ui.RepaintPage();
         txtPlayerName = new javax.swing.JTextField();
         lblLogin = new javax.swing.JLabel();
         cboLoginMode = new javax.swing.JComboBox();
@@ -125,6 +128,8 @@ public class MainPagePanel extends GaussionPage {
         btnExportModpack = new javax.swing.JButton();
 
         setLayout(null);
+
+        pnlRoot.setLayout(null);
 
         pnlMore.setBackground(new java.awt.Color(204, 204, 204));
         pnlMore.setOpaque(false);
@@ -298,15 +303,18 @@ public class MainPagePanel extends GaussionPage {
                     .addComponent(txtPlayerName, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnlPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 248, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 254, Short.MAX_VALUE)
                 .addComponent(btnImportModpack)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnExportModpack)
                 .addContainerGap())
         );
 
-        add(pnlMore);
+        pnlRoot.add(pnlMore);
         pnlMore.setBounds(0, 0, 190, 480);
+
+        add(pnlRoot);
+        pnlRoot.setBounds(0, 0, 800, 480);
     }// </editor-fold>//GEN-END:initComponents
 
     private void txtPlayerNameFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtPlayerNameFocusGained
@@ -445,6 +453,7 @@ public class MainPagePanel extends GaussionPage {
     private javax.swing.JPanel pnlLogOut;
     private javax.swing.JPanel pnlMore;
     private javax.swing.JPanel pnlPassword;
+    private javax.swing.JPanel pnlRoot;
     private javax.swing.JPasswordField txtPassword;
     private javax.swing.JTextField txtPlayerName;
     // End of variables declaration//GEN-END:variables

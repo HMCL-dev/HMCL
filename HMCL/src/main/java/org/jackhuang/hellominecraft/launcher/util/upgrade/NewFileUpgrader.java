@@ -19,13 +19,13 @@ package org.jackhuang.hellominecraft.launcher.util.upgrade;
 
 import java.io.File;
 import java.io.IOException;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.task.TaskWindow;
+import org.jackhuang.hellominecraft.util.net.FileDownloadTask;
 import org.jackhuang.hellominecraft.util.ArrayUtils;
 import org.jackhuang.hellominecraft.util.VersionNumber;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 
 /**
  *

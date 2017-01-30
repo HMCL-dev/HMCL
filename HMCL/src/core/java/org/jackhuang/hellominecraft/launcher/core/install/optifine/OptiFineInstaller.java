@@ -23,13 +23,13 @@ import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
-import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.tasks.comm.PreviousResult;
-import org.jackhuang.hellominecraft.util.tasks.comm.PreviousResultRegistrar;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
+import org.jackhuang.hellominecraft.util.task.Task;
+import org.jackhuang.hellominecraft.util.task.comm.PreviousResult;
+import org.jackhuang.hellominecraft.util.task.comm.PreviousResultRegistrar;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 
 /**
  *

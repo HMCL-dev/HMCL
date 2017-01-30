@@ -22,7 +22,7 @@ import java.util.List;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.util.tasks.Task;
+import org.jackhuang.hellominecraft.util.task.Task;
 
 /**
  *

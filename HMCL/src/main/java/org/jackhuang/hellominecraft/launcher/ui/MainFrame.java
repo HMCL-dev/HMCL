@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hellominecraft.launcher.ui;
 
+import org.jackhuang.hellominecraft.util.ui.GaussionPanel;
+import org.jackhuang.hellominecraft.util.ui.IRepaint;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -55,7 +57,7 @@ import org.jackhuang.hellominecraft.lookandfeel.Theme;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.util.ui.BasicColors;
 import org.jackhuang.hellominecraft.util.ui.DropShadowBorder;
 import org.jackhuang.hellominecraft.util.ui.GraphicsUtils;
@@ -75,7 +77,7 @@ public final class MainFrame extends DraggableFrame implements IRepaint {
     JPanel header, infoSwap, realPanel;
     CardLayout infoLayout;
     JLabel windowTitle;
-    GaussionPage backgroundLabel;
+    GaussionPanel backgroundLabel;
     DropShadowBorder border;
     boolean enableShadow;
     String defaultTitle;
@@ -327,7 +329,7 @@ public final class MainFrame extends DraggableFrame implements IRepaint {
         background = SwingUtils.searchBackgroundImage(Main.getIcon(Settings.getInstance().getTheme().settings.get("Customized.MainFrame.background_image")), Settings.getInstance().getBgpath(), 800, 480);
         if (background != null) {
             if (backgroundLabel == null) {
-                backgroundLabel = new GaussionPage();
+                backgroundLabel = new GaussionPanel();
                 backgroundLabel.addAeroObject(backgroundLabel);
                 backgroundLabel.setBounds(0, 0, 800, 480);
                 centralPanel.add(backgroundLabel, -1);

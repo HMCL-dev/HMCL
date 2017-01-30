@@ -21,7 +21,7 @@ import java.io.OutputStream;
 import java.util.Objects;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.util.code.Charsets;
-import org.jackhuang.hellominecraft.util.logging.Level;
+import org.jackhuang.hellominecraft.util.log.Level;
 
 /**
  *

@@ -21,8 +21,8 @@ import com.google.gson.annotations.SerializedName;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import org.jackhuang.hellominecraft.util.system.OS;
-import org.jackhuang.hellominecraft.util.system.Platform;
+import org.jackhuang.hellominecraft.util.sys.OS;
+import org.jackhuang.hellominecraft.util.sys.Platform;
 import org.jackhuang.hellominecraft.util.StrUtils;
 
 /**

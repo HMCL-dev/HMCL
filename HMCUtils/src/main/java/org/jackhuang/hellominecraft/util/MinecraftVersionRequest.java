@@ -22,8 +22,8 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 
 /**
  * @author huangyuhui

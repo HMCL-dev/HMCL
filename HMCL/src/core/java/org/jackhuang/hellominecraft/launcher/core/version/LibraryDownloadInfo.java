@@ -20,7 +20,7 @@ package org.jackhuang.hellominecraft.launcher.core.version;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 
 /**
  *

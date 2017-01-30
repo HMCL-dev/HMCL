@@ -28,9 +28,9 @@ import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionNewerComparator;
-import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
-import org.jackhuang.hellominecraft.util.tasks.download.HTTPGetTask;
+import org.jackhuang.hellominecraft.util.task.Task;
+import org.jackhuang.hellominecraft.util.task.TaskInfo;
+import org.jackhuang.hellominecraft.util.net.HTTPGetTask;
 
 /**
  *

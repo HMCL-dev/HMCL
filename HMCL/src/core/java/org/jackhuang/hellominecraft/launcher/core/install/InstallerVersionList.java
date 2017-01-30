@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.tasks.Task;
+import org.jackhuang.hellominecraft.util.task.Task;
 
 /**
  *

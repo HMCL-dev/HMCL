@@ -28,8 +28,8 @@ import java.util.UUID;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.lookandfeel.Theme;
 import org.jackhuang.hellominecraft.util.EventHandler;
-import org.jackhuang.hellominecraft.util.system.JdkVersion;
-import org.jackhuang.hellominecraft.util.system.OS;
+import org.jackhuang.hellominecraft.util.sys.JdkVersion;
+import org.jackhuang.hellominecraft.util.sys.OS;
 
 /**
  *

@@ -21,7 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.version.AssetIndexDownloadInfo;
-import org.jackhuang.hellominecraft.util.tasks.Task;
+import org.jackhuang.hellominecraft.util.task.Task;
 
 /**
  *

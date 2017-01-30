@@ -20,14 +20,14 @@ package org.jackhuang.hellominecraft.launcher.core.launch;
 import java.io.IOException;
 import java.util.HashSet;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.LoginInfo;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
-import org.jackhuang.hellominecraft.util.tasks.ParallelTask;
-import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.util.system.CompressingUtils;
+import org.jackhuang.hellominecraft.util.task.ParallelTask;
+import org.jackhuang.hellominecraft.util.task.TaskWindow;
+import org.jackhuang.hellominecraft.util.sys.CompressingUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 
 public class DefaultGameLauncher extends GameLauncher {

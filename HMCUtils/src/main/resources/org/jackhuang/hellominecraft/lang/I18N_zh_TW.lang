@@ -233,7 +233,7 @@ modpack.enter_name=給遊戲起個你喜歡的名字
 modpack.task.save=導出懶人包
 modpack.task.install=導入懶人包
 modpack.task.install.error=安裝失敗，可能是懶人包格式不正確或操作資料失敗
-modpack.task.install.will_install=將會安裝懶人包：
+modpack.task.install.will=將會安裝懶人包：
 
 modpack.wizard=導出懶人包嚮導
 modpack.wizard.step.1=基本設定

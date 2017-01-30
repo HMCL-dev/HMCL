@@ -29,8 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.NetUtils;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.net.NetUtils;
 import org.jackhuang.hellominecraft.util.StrUtils;
 
 public class YggdrasilAuthentication {
@@ -188,24 +188,30 @@ public class YggdrasilAuthentication {
     public void loadFromStorage(Map<String, Object> credentials) {
         logOut();
 
-        setUserName((String) credentials.get(STORAGE_KEY_USER_NAME));
+        try {
+            setUserName((String) credentials.get(STORAGE_KEY_USER_NAME));
 
-        if (credentials.containsKey(STORAGE_KEY_USER_ID))
-            userid = (String) credentials.get(STORAGE_KEY_USER_ID);
-        else
-            userid = username;
+            if (credentials.containsKey(STORAGE_KEY_USER_ID))
+                userid = (String) credentials.get(STORAGE_KEY_USER_ID);
+            else
+                userid = username;
 
-        if (credentials.containsKey(STORAGE_KEY_USER_PROPERTIES))
-            userProperties.fromList((List<Map<String, String>>) credentials.get(STORAGE_KEY_USER_PROPERTIES));
+            if (credentials.containsKey(STORAGE_KEY_USER_PROPERTIES))
+                userProperties.fromList((List<Map<String, String>>) credentials.get(STORAGE_KEY_USER_PROPERTIES));
 
-        if ((credentials.containsKey(STORAGE_KEY_PROFILE_NAME)) && (credentials.containsKey(STORAGE_KEY_PROFILE_ID))) {
-            GameProfile profile = new GameProfile(UUIDTypeAdapter.fromString((String) credentials.get(STORAGE_KEY_PROFILE_ID)), (String) credentials.get(STORAGE_KEY_PROFILE_NAME));
-            if (credentials.containsKey(STORAGE_KEY_PROFILE_PROPERTIES))
-                profile.properties.fromList((List<Map<String, String>>) credentials.get(STORAGE_KEY_PROFILE_PROPERTIES));
-            selectedProfile = profile;
+            if ((credentials.containsKey(STORAGE_KEY_PROFILE_NAME)) && (credentials.containsKey(STORAGE_KEY_PROFILE_ID))) {
+                GameProfile profile = new GameProfile(UUIDTypeAdapter.fromString((String) credentials.get(STORAGE_KEY_PROFILE_ID)), (String) credentials.get(STORAGE_KEY_PROFILE_NAME));
+                if (credentials.containsKey(STORAGE_KEY_PROFILE_PROPERTIES))
+                    profile.properties.fromList((List<Map<String, String>>) credentials.get(STORAGE_KEY_PROFILE_PROPERTIES));
+                selectedProfile = profile;
+            }
+
+            this.accessToken = (String) credentials.get(STORAGE_KEY_ACCESS_TOKEN);
+        } catch(Exception e) {
+            HMCLog.err("Failed to load yggdrasil authenticator settings, maybe its format is malformed.", e);
+            
+            logOut();
         }
-
-        this.accessToken = (String) credentials.get(STORAGE_KEY_ACCESS_TOKEN);
     }
 
     public Map<String, Object> saveForStorage() {

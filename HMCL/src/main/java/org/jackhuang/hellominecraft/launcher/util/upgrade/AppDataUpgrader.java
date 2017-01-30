@@ -35,19 +35,19 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
 import java.util.zip.GZIPInputStream;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.MCUtils;
-import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
+import org.jackhuang.hellominecraft.util.task.Task;
+import org.jackhuang.hellominecraft.util.task.TaskWindow;
+import org.jackhuang.hellominecraft.util.net.FileDownloadTask;
 import org.jackhuang.hellominecraft.util.ArrayUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.UpdateChecker;
 import org.jackhuang.hellominecraft.util.Utils;
 import org.jackhuang.hellominecraft.util.VersionNumber;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
-import org.jackhuang.hellominecraft.util.system.OS;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
+import org.jackhuang.hellominecraft.util.sys.OS;
 
 /**
  *

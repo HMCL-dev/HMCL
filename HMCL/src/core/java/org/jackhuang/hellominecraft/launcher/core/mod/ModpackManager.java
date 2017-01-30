@@ -34,21 +34,21 @@ import java.util.zip.ZipFile;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.func.BiFunction;
 import org.jackhuang.hellominecraft.util.func.CallbackIO;
-import org.jackhuang.hellominecraft.util.system.CompressingUtils;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.system.ZipEngine;
-import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.ui.WebPage;
+import org.jackhuang.hellominecraft.util.sys.CompressingUtils;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
+import org.jackhuang.hellominecraft.util.sys.ZipEngine;
+import org.jackhuang.hellominecraft.util.task.Task;
+import org.jackhuang.hellominecraft.util.net.WebPage;
 import org.jackhuang.hellominecraft.util.MinecraftVersionRequest;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
-import org.jackhuang.hellominecraft.util.tasks.NoShownTaskException;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
+import org.jackhuang.hellominecraft.util.task.NoShownTaskException;
 
 /**
  * A mod pack(*.zip) includes these things:

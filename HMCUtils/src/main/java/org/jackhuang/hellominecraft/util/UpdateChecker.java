@@ -17,9 +17,10 @@
  */
 package org.jackhuang.hellominecraft.util;
 
+import org.jackhuang.hellominecraft.util.net.NetUtils;
 import com.google.gson.JsonSyntaxException;
 import java.io.IOException;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import java.util.Map;
 
 /**

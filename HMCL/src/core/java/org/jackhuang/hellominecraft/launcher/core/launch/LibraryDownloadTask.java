@@ -19,7 +19,7 @@ package org.jackhuang.hellominecraft.launcher.core.launch;
 
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
-import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
+import org.jackhuang.hellominecraft.util.net.FileDownloadTask;
 
 /**
  *

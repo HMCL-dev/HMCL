@@ -36,9 +36,9 @@ import org.jackhuang.hellominecraft.launcher.setting.Profile;
 import org.jackhuang.hellominecraft.launcher.setting.VersionSetting;
 import org.jackhuang.hellominecraft.launcher.ui.MainFrame;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
+import org.jackhuang.hellominecraft.util.task.TaskWindow;
 
 /**
  *

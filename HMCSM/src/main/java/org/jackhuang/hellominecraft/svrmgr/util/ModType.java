@@ -24,7 +24,7 @@ import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 
 /**
  * 判断mod类型

@@ -23,7 +23,7 @@ import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
+import org.jackhuang.hellominecraft.util.task.TaskWindow;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 
 /**

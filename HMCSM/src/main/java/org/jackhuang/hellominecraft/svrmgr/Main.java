@@ -21,7 +21,7 @@ import java.awt.Font;
 import java.text.ParseException;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.util.ui.LogWindow;
 import org.jackhuang.hellominecraft.svrmgr.setting.SettingsManager;
 import org.jackhuang.hellominecraft.util.UpdateChecker;

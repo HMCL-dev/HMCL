@@ -19,7 +19,7 @@ package org.jackhuang.hellominecraft.svrmgr.server.schedule;
 
 import java.io.IOException;
 import java.util.TimerTask;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.svrmgr.server.Server;
 import org.jackhuang.hellominecraft.svrmgr.setting.Schedule;
 

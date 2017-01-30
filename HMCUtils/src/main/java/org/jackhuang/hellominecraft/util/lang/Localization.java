@@ -22,8 +22,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 
 /**
  *
@@ -46,9 +45,9 @@ public final class Localization {
         if (is == null)
             is = getStream("_" + locale.getLanguage());
         if (is == null)
-            is = getStream("");
+            is = getStream("_en");
         if (is == null)
-            throw new IllegalStateException("Language file missing");
+            throw new InternalError("Language file missing");
 
         try {
             for (String s : IOUtils.readLines(is, IOUtils.DEFAULT_CHARSET))
@@ -59,7 +58,7 @@ public final class Localization {
                     lang.put(s.substring(0, i), s.substring(i + 1));
                 }
         } catch (IOException ex) {
-            HMCLog.err("LANG FILE MISSING", ex);
+           throw new InternalError("Language file missing", ex);
         }
     }
 

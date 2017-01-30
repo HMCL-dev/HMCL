@@ -19,7 +19,7 @@ package org.jackhuang.hellominecraft.launcher.util;
 
 import java.io.File;
 import javax.swing.filechooser.FileFilter;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
 
 /**
  *

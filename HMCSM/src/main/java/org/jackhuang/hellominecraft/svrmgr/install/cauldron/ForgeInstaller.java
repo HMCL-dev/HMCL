@@ -36,14 +36,14 @@ import java.util.jar.Pack200;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import javax.swing.JOptionPane;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.util.code.DigestUtils;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
+import org.jackhuang.hellominecraft.util.task.TaskWindow;
+import org.jackhuang.hellominecraft.util.net.FileDownloadTask;
 import org.tukaani.xz.XZInputStream;
 
 /**

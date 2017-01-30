@@ -31,11 +31,11 @@ import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.Event;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.func.Consumer;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.system.JavaProcessMonitor;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
+import org.jackhuang.hellominecraft.util.sys.JavaProcessMonitor;
 import org.jackhuang.hellominecraft.util.ui.LogWindow;
-import org.jackhuang.hellominecraft.util.ui.WebFrame;
+import org.jackhuang.hellominecraft.util.net.WebFrame;
 
 /**
  *

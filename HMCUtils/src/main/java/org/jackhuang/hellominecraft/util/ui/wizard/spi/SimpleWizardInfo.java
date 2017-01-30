@@ -31,7 +31,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import org.jackhuang.hellominecraft.util.ArrayUtils;
 import org.jackhuang.hellominecraft.util.code.Charsets;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 
 /**
  * Provides information about a simple wizard. Wraps a

@@ -24,8 +24,8 @@ package org.jackhuang.hellominecraft.svrmgr.setting;
 import com.google.gson.Gson;
 import java.io.File;
 import java.io.IOException;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
 
 /**
  *

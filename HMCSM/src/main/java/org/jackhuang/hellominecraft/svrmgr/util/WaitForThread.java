@@ -18,7 +18,7 @@
 package org.jackhuang.hellominecraft.svrmgr.util;
 
 import org.jackhuang.hellominecraft.util.EventHandler;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 
 /**
  *

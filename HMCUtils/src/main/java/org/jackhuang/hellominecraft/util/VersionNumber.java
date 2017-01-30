@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hellominecraft.util;
 
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 
 /**
  *
