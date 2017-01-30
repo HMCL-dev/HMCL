@@ -45,7 +45,7 @@ public final class Localization {
         if (is == null)
             is = getStream("_" + locale.getLanguage());
         if (is == null)
-            is = getStream("_en");
+            is = getStream("");
         if (is == null)
             throw new InternalError("Language file missing");
 

@@ -237,8 +237,7 @@ public class LauncherSettingsPanel extends RepaintPage {
             }
         });
 
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/jackhuang/hellominecraft/lang/I18N"); // NOI18N
-        chkEnableBlur.setText(bundle.getString("launcher.enable_blur")); // NOI18N
+        chkEnableBlur.setText(C.i18n("launcher.enable_blur")); // NOI18N
         chkEnableBlur.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 chkEnableBlurItemStateChanged(evt);
@@ -291,8 +290,8 @@ public class LauncherSettingsPanel extends RepaintPage {
                                 .addComponent(btnCheckUpdate)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(btnMCBBS))
-                            .addComponent(lblAbout, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(lblModpack, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lblAbout)
+                            .addComponent(lblModpack)
                             .addComponent(lblRestart)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(chkEnableShadow)
@@ -346,9 +345,9 @@ public class LauncherSettingsPanel extends RepaintPage {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblRestart)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblModpack, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(lblModpack)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblAbout, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(lblAbout)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
