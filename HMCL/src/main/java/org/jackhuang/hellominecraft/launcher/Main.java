@@ -33,19 +33,21 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.X509TrustManager;
 import javax.swing.ImageIcon;
+import javax.swing.RepaintManager;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.launcher.core.launch.GameLauncher;
 import org.jackhuang.hellominecraft.launcher.util.CrashReporter;
-import org.jackhuang.hellominecraft.util.logging.Configuration;
-import org.jackhuang.hellominecraft.util.logging.appender.ConsoleAppender;
-import org.jackhuang.hellominecraft.util.logging.layout.DefaultLayout;
+import org.jackhuang.hellominecraft.util.log.Configuration;
+import org.jackhuang.hellominecraft.util.log.appender.ConsoleAppender;
+import org.jackhuang.hellominecraft.util.log.layout.DefaultLayout;
 import org.jackhuang.hellominecraft.util.ui.LogWindow;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.util.upgrade.IUpgrader;
 import org.jackhuang.hellominecraft.launcher.ui.MainFrame;
+import org.jackhuang.hellominecraft.util.ui.MyRepaintManager;
 import org.jackhuang.hellominecraft.launcher.util.DefaultPlugin;
 import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
 import org.jackhuang.hellominecraft.util.MathUtils;
@@ -75,21 +77,6 @@ public final class Main implements Runnable {
     };
     private static final HostnameVerifier HNV = (hostname, session) -> true;
 
-    static {
-        SSLContext sslContext = null;
-
-        try {
-            sslContext = SSLContext.getInstance("TLS");
-            X509TrustManager[] xtmArray = new X509TrustManager[] { XTM };
-            sslContext.init(null, xtmArray, new java.security.SecureRandom());
-        } catch (GeneralSecurityException gse) {
-        }
-        if (sslContext != null)
-            HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
-
-        HttpsURLConnection.setDefaultHostnameVerifier(HNV);
-    }
-
     public static final String LAUNCHER_NAME = "Hello Minecraft! Launcher";
     public static final String LAUNCHER_VERSION = "@HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING@";
     public static final int MINIMUM_LAUNCHER_VERSION = 16;
@@ -111,7 +98,6 @@ public final class Main implements Runnable {
         return "HMCL" + ' ' + LAUNCHER_VERSION;
     }
 
-    public static final Main INSTANCE = new Main();
     private static HelloMinecraftLookAndFeel LOOK_AND_FEEL;
 
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
@@ -127,12 +113,22 @@ public final class Main implements Runnable {
             System.setProperty("swing.aatext", "true");
             System.setProperty("sun.java2d.noddraw", "true");
             System.setProperty("sun.java2d.dpiaware", "false");
+            System.setProperty("https.protocols", "SSLv3,TLSv1");
+
+            try {
+                SSLContext c = SSLContext.getInstance("SSL");
+                c.init(null, new X509TrustManager[] { XTM }, new java.security.SecureRandom());
+                HttpsURLConnection.setDefaultSSLSocketFactory(c.getSocketFactory());
+            } catch (GeneralSecurityException ignore) {
+            }
+            HttpsURLConnection.setDefaultHostnameVerifier(HNV);
+
             Thread.setDefaultUncaughtExceptionHandler(new CrashReporter(true));
 
             try {
                 File file = new File("hmcl.log");
                 if (!file.exists() && !file.createNewFile())
-                    HMCLog.warn("Failed to create log file " + file);
+                    LOGGER.log(Level.WARNING, "Failed to create log file {0}", file);
                 Configuration.DEFAULT.appenders.add(new ConsoleAppender("File", new DefaultLayout(), true, new FileOutputStream(file), true));
             } catch (IOException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to add log appender File because an error occurred while creating or opening hmcl.log", ex);
@@ -147,17 +143,18 @@ public final class Main implements Runnable {
                     Locale.setDefault(sl.self);
                 }
 
-            LogWindow.INSTANCE.clean();
-            LogWindow.INSTANCE.setTerminateGame(GameLauncher.PROCESS_MANAGER::stopAllProcesses);
-
             try {
                 LOOK_AND_FEEL = new HelloMinecraftLookAndFeel(Settings.getInstance().getTheme().settings);
                 UIManager.setLookAndFeel(LOOK_AND_FEEL);
+                RepaintManager.setCurrentManager(new MyRepaintManager());
             } catch (ParseException | UnsupportedLookAndFeelException ex) {
                 HMCLog.warn("Failed to set look and feel...", ex);
             }
+            
+            LogWindow.INSTANCE.clean();
+            LogWindow.INSTANCE.setTerminateGame(GameLauncher.PROCESS_MANAGER::stopAllProcesses);
 
-            Settings.UPDATE_CHECKER.outdated.register(IUpgrader.NOW_UPGRADER);
+            Settings.UPDATE_CHECKER.outOfDateEvent.register(IUpgrader.NOW_UPGRADER);
             Settings.UPDATE_CHECKER.process(false).reg(t -> Main.invokeUpdate()).execute();
 
             if (StrUtils.isNotBlank(Settings.getInstance().getProxyHost()) && StrUtils.isNotBlank(Settings.getInstance().getProxyPort()) && MathUtils.canParseInt(Settings.getInstance().getProxyPort())) {

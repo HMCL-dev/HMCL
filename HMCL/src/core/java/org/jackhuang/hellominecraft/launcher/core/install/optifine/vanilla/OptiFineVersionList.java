@@ -25,7 +25,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
@@ -36,9 +35,9 @@ import org.jackhuang.hellominecraft.launcher.core.install.optifine.OptiFineVersi
 import org.jackhuang.hellominecraft.util.ArrayUtils;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
-import org.jackhuang.hellominecraft.util.tasks.download.HTTPGetTask;
+import org.jackhuang.hellominecraft.util.task.Task;
+import org.jackhuang.hellominecraft.util.task.TaskInfo;
+import org.jackhuang.hellominecraft.util.net.HTTPGetTask;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -59,9 +58,7 @@ public class OptiFineVersionList extends InstallerVersionList {
         return instance;
     }
 
-    public ArrayList<OptiFineVersion> root = new ArrayList();
-    public Map<String, List<InstallerVersion>> versionMap;
-    public List<InstallerVersion> versions;
+    public ArrayList<OptiFineVersion> root = new ArrayList<>();
 
     @Override
     public Task refresh(String[] sss) {
@@ -72,11 +69,11 @@ public class OptiFineVersionList extends InstallerVersionList {
 
             @Override
             public Collection<Task> getDependTasks() {
-                return Arrays.asList(task);
+                return Arrays.asList(task.setTag("Optifine Download Site"));
             }
 
             @Override
-            public void executeTask() throws Throwable {
+            public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
                 if (!areDependTasksSucceeded)
                     return;
                 String content = task.getResult();
@@ -138,18 +135,4 @@ public class OptiFineVersionList extends InstallerVersionList {
     public String getName() {
         return "OptiFine - OptiFine Official Site";
     }
-
-    @Override
-    public List<InstallerVersion> getVersionsImpl(String mcVersion) {
-        if (versions == null || versionMap == null)
-            return null;
-        if (StrUtils.isBlank(mcVersion))
-            return versions;
-        List c = versionMap.get(mcVersion);
-        if (c == null)
-            return versions;
-        Collections.sort(c, InstallerVersionComparator.INSTANCE);
-        return c;
-    }
-
 }

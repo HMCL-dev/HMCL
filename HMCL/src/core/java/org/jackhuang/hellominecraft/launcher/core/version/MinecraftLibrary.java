@@ -21,8 +21,8 @@ import com.google.gson.annotations.SerializedName;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import org.jackhuang.hellominecraft.util.system.OS;
-import org.jackhuang.hellominecraft.util.system.Platform;
+import org.jackhuang.hellominecraft.util.sys.OS;
+import org.jackhuang.hellominecraft.util.sys.Platform;
 import org.jackhuang.hellominecraft.util.StrUtils;
 
 /**
@@ -44,14 +44,6 @@ public class MinecraftLibrary extends IMinecraftLibrary {
 
     public MinecraftLibrary(String name) {
         super(name);
-    }
-
-    public MinecraftLibrary(ArrayList<Rules> rules, String url, Natives natives, String name, Extract extract, LibraryDownloadInfo downloads) {
-        super(name);
-        this.rules = rules == null ? null : (ArrayList<Rules>) rules.clone();
-        this.url = url;
-        this.natives = natives == null ? null : (Natives) natives.clone();
-        this.extract = extract == null ? null : (Extract) extract.clone();
     }
 
     /**
@@ -79,12 +71,12 @@ public class MinecraftLibrary extends IMinecraftLibrary {
 
     private String getNative() {
         switch (OS.os()) {
-        case WINDOWS:
-            return formatArch(natives.windows);
-        case OSX:
-            return formatArch(natives.osx);
-        default:
-            return formatArch(natives.linux);
+            case WINDOWS:
+                return formatArch(natives.windows);
+            case OSX:
+                return formatArch(natives.osx);
+            default:
+                return formatArch(natives.linux);
         }
     }
 
@@ -116,6 +108,7 @@ public class MinecraftLibrary extends IMinecraftLibrary {
         return extract == null ? new Extract() : extract;
     }
 
+    @Override
     public LibraryDownloadInfo getDownloadInfo() {
         if (downloads == null)
             downloads = new LibrariesDownloadInfo();
@@ -125,12 +118,15 @@ public class MinecraftLibrary extends IMinecraftLibrary {
                 downloads.classifiers = new HashMap<>();
             if (!downloads.classifiers.containsKey(getNative()))
                 downloads.classifiers.put(getNative(), info = new LibraryDownloadInfo());
-            else
+            else {
                 info = downloads.classifiers.get(getNative());
-        } else if (downloads.artifact == null)
-            downloads.artifact = info = new LibraryDownloadInfo();
-        else
+                if (info == null) info = new LibraryDownloadInfo();
+            }
+        } else {
+            if (downloads.artifact == null)
+                downloads.artifact = new LibraryDownloadInfo();
             info = downloads.artifact;
+        }
         if (StrUtils.isBlank(info.path)) {
             info.path = formatName();
             if (info.path == null)

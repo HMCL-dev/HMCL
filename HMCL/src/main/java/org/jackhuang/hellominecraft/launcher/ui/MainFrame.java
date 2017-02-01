@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hellominecraft.launcher.ui;
 
+import org.jackhuang.hellominecraft.util.ui.GaussionPanel;
+import org.jackhuang.hellominecraft.util.ui.IRepaint;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -25,7 +27,9 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.Rectangle;
 import java.awt.Transparency;
+import java.awt.Window;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -33,6 +37,8 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.BorderFactory;
@@ -40,35 +46,38 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
-import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
-import org.jackhuang.hellominecraft.util.ui.GraphicsUtils;
+import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.lookandfeel.Theme;
+import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.ui.DropShadowBorder;
-import org.jackhuang.hellominecraft.util.ui.TintablePanel;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.util.ui.BasicColors;
+import org.jackhuang.hellominecraft.util.ui.DropShadowBorder;
+import org.jackhuang.hellominecraft.util.ui.GraphicsUtils;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
+import org.jackhuang.hellominecraft.util.ui.TintablePanel;
+
 
 /**
  *
  * @author huangyuhui
  */
-public final class MainFrame extends DraggableFrame {
+public final class MainFrame extends DraggableFrame implements IRepaint {
 
     public static final MainFrame INSTANCE = new MainFrame();
 
     TintablePanel centralPanel;
     JPanel header, infoSwap, realPanel;
     CardLayout infoLayout;
-    JLabel backgroundLabel, windowTitle;
+    JLabel windowTitle;
+    GaussionPanel backgroundLabel;
     DropShadowBorder border;
     boolean enableShadow;
     String defaultTitle;
@@ -89,7 +98,7 @@ public final class MainFrame extends DraggableFrame {
             setContentSize(834, 542);
         else
             setContentSize(802, 511);
-        setDefaultCloseOperation(3);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
         setTitle(Main.makeTitle());
         initComponents();
         loadBackground();
@@ -152,6 +161,7 @@ public final class MainFrame extends DraggableFrame {
     }
 
     private void initComponents() {
+        setLayout(null);
         initBorderColor(Settings.getInstance().getTheme());
 
         realPanel = new JPanel();
@@ -242,14 +252,13 @@ public final class MainFrame extends DraggableFrame {
         truePanel.setBounds(0, 0, 800, 480);
         centralPanel.setBounds(0, 30, 800, 480);
 
-        setLayout(null);
         realPanel.setBounds(1, 0, 800, 511);
         add(realPanel);
     }
 
-    private final ActionListener tabListener = e -> MainFrame.this.selectTab(e.getActionCommand());
+    private transient final ActionListener tabListener = e -> MainFrame.this.selectTab(e.getActionCommand());
 
-    private void initializeTab(AnimatedPanel inst, String cmd) {
+    private void initializeTab(Page inst, String cmd) {
         HeaderTab tab = new HeaderTab(C.i18n("launcher.title." + cmd));
         tab.setActionCommand(cmd);
         tab.setForeground(BasicColors.COLOR_WHITE_TEXT);
@@ -263,11 +272,11 @@ public final class MainFrame extends DraggableFrame {
 
     private final List<HeaderTab> tabHeader = new ArrayList<>();
     private JPanel tabWrapper[];
-    private final List<AnimatedPanel> tabContent = new ArrayList<>();
+    private final List<Page> tabContent = new ArrayList<>();
 
     public void selectTab(String tabName) {
         int chosen = -1;
-        AnimatedPanel onCreate = null, onSelect = null;
+        Page onCreate = null, onSelect = null;
         for (int i = 0; i < tabHeader.size(); i++)
             if (tabName.equalsIgnoreCase(tabHeader.get(i).getActionCommand())) {
                 if (!tabContent.get(i).isCreated()) {
@@ -318,14 +327,15 @@ public final class MainFrame extends DraggableFrame {
 
     public void loadBackground() {
         background = SwingUtils.searchBackgroundImage(Main.getIcon(Settings.getInstance().getTheme().settings.get("Customized.MainFrame.background_image")), Settings.getInstance().getBgpath(), 800, 480);
-        if (background != null)
+        if (background != null) {
             if (backgroundLabel == null) {
-                backgroundLabel = new JLabel(background);
+                backgroundLabel = new GaussionPanel();
+                backgroundLabel.addAeroObject(backgroundLabel);
                 backgroundLabel.setBounds(0, 0, 800, 480);
                 centralPanel.add(backgroundLabel, -1);
-            } else
-                backgroundLabel.setIcon(background);
-        else
+            }
+            backgroundLabel.setBackgroundImage(background.getImage());
+        } else
             HMCLog.warn("No background image here! The background will be empty!");
     }
 
@@ -340,7 +350,7 @@ public final class MainFrame extends DraggableFrame {
             isShowedMessage = false;
             reloadColor(Settings.getInstance().getTheme());
             windowTitle.setText(defaultTitle);
-            windowTitle.setForeground(Settings.UPDATE_CHECKER.OUT_DATED ? Color.red : Color.white);
+            windowTitle.setForeground(Settings.UPDATE_CHECKER.isOutOfDate() ? Color.red : Color.white);
         }
     }
 
@@ -407,7 +417,7 @@ public final class MainFrame extends DraggableFrame {
             int contentWidth = width - off - off;
             int contentHeight = height - off - off;
             BufferedImage contentImage = new BufferedImage(contentWidth,
-                                                           contentHeight, Transparency.OPAQUE);
+                    contentHeight, Transparency.OPAQUE);
             Graphics2D contentG2d = contentImage.createGraphics();
             contentG2d.translate(-off, -off);
             paintImpl(g);
@@ -424,6 +434,25 @@ public final class MainFrame extends DraggableFrame {
             windowTitle.setText(defaultTitle);
             windowTitle.setForeground(Color.red);
         }
+    }
+
+    @Override
+    public JComponent getRepaintComponent() {
+        return null;
+    }
+
+    @Override
+    public Window getRepaintWindow() {
+        return this;
+    }
+
+    @Override
+    public Collection<Rectangle> getRepaintRects() {
+        int off = MainFrame.INSTANCE.enableShadow ? 16 : 0, yoff = MainFrame.INSTANCE.getInsets().top + off, xoff = MainFrame.INSTANCE.getInsets().left + off;
+        int width = 800, height = MainFrame.INSTANCE.header.getHeight() + 480 - 1;
+        return Arrays.asList(new Rectangle(xoff, yoff, xoff, height + yoff + 1),
+                new Rectangle(xoff + width + 1, yoff, xoff + width + 1, height + yoff + 1),
+                new Rectangle(xoff, height + yoff + 1, xoff + width + 1, height + yoff + 1));
     }
 
     private static class MouseListenerImpl implements MouseListener {
@@ -454,14 +483,12 @@ public final class MainFrame extends DraggableFrame {
 
     public void failed(String s) {
         if (s != null)
-            MessageBox.Show(s);
+            MessageBox.show(s);
         closeMessage();
     }
 
-    LaunchingUIDaemon daemon = new LaunchingUIDaemon();
-
-    final HashMap<String, Runnable> actions = new HashMap<>();
-
+    transient LaunchingUIDaemon daemon = new LaunchingUIDaemon();
+    transient final HashMap<String, Runnable> actions = new HashMap<>();
     void invokeAction(String name) {
         if (actions.containsKey(name))
             actions.get(name).run();

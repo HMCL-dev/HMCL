@@ -33,7 +33,6 @@ public class Natives implements Cloneable {
     public String linux;
 
     @Override
-    @SuppressWarnings("CloneDeclaresCloneNotSupported")
     protected Object clone() {
         try {
             return super.clone();

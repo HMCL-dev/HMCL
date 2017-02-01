@@ -18,20 +18,19 @@
 package org.jackhuang.hellominecraft.launcher.ui;
 
 import javax.swing.table.DefaultTableModel;
-import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.launcher.core.download.MinecraftRemoteVersions;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
+import org.jackhuang.hellominecraft.util.task.TaskWindow;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 
 /**
  *
  * @author huangyuhui
  */
-public class GameDownloadPanel extends AnimatedPanel {
+public class GameDownloadPanel extends Page {
 
     GameSettingsPanel gsp;
 
@@ -108,19 +107,23 @@ public class GameDownloadPanel extends AnimatedPanel {
 
     public void refreshDownloads() {
         DefaultTableModel model = SwingUtils.clearDefaultTable(lstDownloads);
+        model.addRow(new Object[] { C.i18n("message.loading"), "", "" });
         MinecraftRemoteVersions.refreshRomoteVersions(Settings.getLastProfile().service().getDownloadType())
-            .reg((ver) -> model.addRow(new Object[] { ver.id, ver.time,
-                                                      StrUtils.equalsOne(ver.type, "old_beta", "old_alpha", "release", "snapshot") ? C.i18n("versions." + ver.type) : ver.type }))
-            .regDone(lstDownloads::requestFocus).execute();
+                .reg((ver) -> model.addRow(new Object[] { ver.id, ver.time,
+            StrUtils.equalsOne(ver.type, "old_beta", "old_alpha", "release", "snapshot") ? C.i18n("versions." + ver.type) : ver.type }))
+                .regDone(SwingUtils.invokeLater(() -> {
+                    lstDownloads.requestFocus();
+                    model.removeRow(0);
+                })).execute();
     }
 
     void downloadMinecraft() {
         if (lstDownloads.getSelectedRow() < 0) {
-            MessageBox.Show(C.i18n("gamedownload.not_refreshed"));
+            MessageBox.show(C.i18n("gamedownload.not_refreshed"));
             return;
         }
         String id = (String) lstDownloads.getModel().getValueAt(lstDownloads.getSelectedRow(), 0);
-        TaskWindow.execute(Settings.getLastProfile().service().download().downloadMinecraft(id));
+        TaskWindow.factory().execute(Settings.getLastProfile().service().download().downloadMinecraft(id));
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

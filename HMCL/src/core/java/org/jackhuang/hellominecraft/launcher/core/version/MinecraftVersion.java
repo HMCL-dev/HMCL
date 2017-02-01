@@ -24,13 +24,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.asset.AssetsIndex;
 import org.jackhuang.hellominecraft.util.ArrayUtils;
-import org.jackhuang.hellominecraft.util.Utils;
 
 /**
  *
@@ -176,9 +176,27 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
         return id.compareTo(o.id);
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 53 * hash + Objects.hashCode(this.id);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
+        return Objects.equals(this.id, ((MinecraftVersion) obj).id);
+    }
+    
+    
+
     public AssetIndexDownloadInfo getAssetsIndex() {
         if (assetIndex == null)
-            assetIndex = new AssetIndexDownloadInfo((String) Utils.firstNonNull(assets, AssetsIndex.DEFAULT_ASSET_NAME));
+            assetIndex = new AssetIndexDownloadInfo(assets == null ? AssetsIndex.DEFAULT_ASSET_NAME : assets);
         return assetIndex;
     }
 
@@ -194,6 +212,6 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
     }
 
     public Set<IMinecraftLibrary> getLibraries() {
-        return libraries == null ? new HashSet() : new HashSet(libraries);
+        return libraries == null ? new HashSet<>() : new HashSet<>(libraries);
     }
 }

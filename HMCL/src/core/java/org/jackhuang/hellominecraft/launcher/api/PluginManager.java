@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.api;
 
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 
 /**
  *
@@ -27,18 +27,11 @@ public class PluginManager {
 
     private static IPlugin NOW_PLUGIN;
 
-    public static void getServerPlugin() {
-        try {
-            getPlugin(Thread.currentThread().getContextClassLoader().loadClass("org.jackhuang.hellominecraft.launcher.server.ServerPlugin"));
-        } catch (ClassNotFoundException ignore) {
-        }
-    }
-
     public static void getPlugin(Class<?> cls) {
         try {
             IPlugin p = (IPlugin) cls.newInstance();
             NOW_PLUGIN = p;
-        } catch (Exception e) {
+        } catch (IllegalAccessException | InstantiationException e) {
             HMCLog.err("Failed to new instance");
         }
     }

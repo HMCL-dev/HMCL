@@ -28,7 +28,10 @@ import java.util.Iterator;
  */
 public final class CollectionUtils {
 
-    public static <T> ArrayList<T> map(Collection<T> coll, Predicate<T> p) {
+    private CollectionUtils() {
+    }
+
+    public static <T> ArrayList<T> filter(Collection<T> coll, Predicate<T> p) {
         ArrayList<T> newColl = new ArrayList<>();
         for (T t : coll)
             if (p.apply(t))

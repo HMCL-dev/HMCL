@@ -19,8 +19,8 @@ package org.jackhuang.hellominecraft.launcher.core;
 
 import java.io.File;
 import java.io.IOException;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.system.OS;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
+import org.jackhuang.hellominecraft.util.sys.OS;
 
 /**
  *

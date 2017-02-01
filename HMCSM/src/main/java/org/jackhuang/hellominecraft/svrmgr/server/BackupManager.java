@@ -21,13 +21,13 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.system.Compressor;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.sys.CompressingUtils;
 import org.jackhuang.hellominecraft.svrmgr.setting.SettingsManager;
 import org.jackhuang.hellominecraft.svrmgr.util.Utilities;
 import org.jackhuang.hellominecraft.util.func.Consumer;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 
 /**
  *
@@ -50,7 +50,7 @@ public class BackupManager {
             public void run() {
                 try {
                     SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
-                    Compressor.zip(Utilities.getGameDir() + folder + File.separator,
+                    CompressingUtils.zip(Utilities.getGameDir() + folder + File.separator,
                                    backupDir() + "world+" + f.format(new Date()) + "+" + folder + ".zip");
                 } catch (IOException ex) {
                     HMCLog.warn("Failed to compress world pack.", ex);
@@ -79,7 +79,7 @@ public class BackupManager {
             File world = new File(Utilities.getGameDir() + folder + File.separator);
             FileUtils.deleteDirectoryQuietly(world);
             world.mkdirs();
-            Compressor.unzip(backupFile, world);
+            CompressingUtils.unzip(backupFile, world);
         } catch (IOException ex) {
             HMCLog.warn("Failed to decompress world pack.", ex);
         }
@@ -99,7 +99,7 @@ public class BackupManager {
             public void run() {
                 try {
                     SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
-                    Compressor.zip(Utilities.getGameDir() + "plugins" + File.separator,
+                    CompressingUtils.zip(Utilities.getGameDir() + "plugins" + File.separator,
                                    backupDir() + "plugin+" + f.format(new Date()) + "+plugins.zip");
                 } catch (IOException ex) {
                     HMCLog.warn("Failed to compress world pack with plugins.", ex);

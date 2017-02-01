@@ -24,24 +24,25 @@ import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerType;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
-import org.jackhuang.hellominecraft.util.tasks.TaskRunnable;
-import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
+import org.jackhuang.hellominecraft.util.task.TaskRunnable;
+import org.jackhuang.hellominecraft.util.task.TaskWindow;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.task.Task;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 
 /**
  *
  * @author huangyuhui
  */
-public class InstallerPanel extends AnimatedPanel {
+public class InstallerPanel extends Page {
 
     GameSettingsPanel gsp;
 
     /**
      * Creates new form InstallerPanel
      *
-     * @param gsp           To get the minecraft version
+     * @param gsp To get the minecraft version
      * @param installerType load which installer
      */
     public InstallerPanel(GameSettingsPanel gsp, InstallerType installerType) {
@@ -113,16 +114,19 @@ public class InstallerPanel extends AnimatedPanel {
     }//GEN-LAST:event_btnInstallActionPerformed
 
     private void btnRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshActionPerformed
-        refreshVersions();
+        TaskWindow.factory().execute(refreshVersionsTask());
     }//GEN-LAST:event_btnRefreshActionPerformed
 
     transient List<InstallerVersionList.InstallerVersion> versions;
-    transient InstallerVersionList list;
+    InstallerVersionList list;
     InstallerType id;
 
-    void refreshVersions() {
-        if (TaskWindow.execute(list.refresh(new String[] { gsp.getMinecraftVersionFormatted() })))
-            loadVersions();
+    Task refreshVersionsTask() {
+        Task t = list.refresh(new String[] { gsp.getMinecraftVersionFormatted() });
+        if (t != null)
+            return t.with(new TaskRunnable(this::loadVersions));
+        else
+            return null;
     }
 
     public synchronized InstallerVersionList.InstallerVersion getVersion(int idx) {
@@ -132,11 +136,13 @@ public class InstallerPanel extends AnimatedPanel {
     synchronized void downloadSelectedRow() {
         int idx = lstInstallers.getSelectedRow();
         if (versions == null || idx < 0 || idx >= versions.size()) {
-            MessageBox.Show(C.i18n("install.not_refreshed"));
+            MessageBox.show(C.i18n("install.not_refreshed"));
             return;
         }
-        TaskWindow.execute(Settings.getLastProfile().service().install().download(Settings.getLastProfile().getSelectedVersion(), getVersion(idx), id),
-                           new TaskRunnable(this::refreshVersions));
+        TaskWindow.factory()
+                .append(Settings.getLastProfile().service().install().download(Settings.getLastProfile().getSelectedVersion(), getVersion(idx), id))
+                .append(refreshVersionsTask())
+                .execute();
     }
 
     public void loadVersions() {
@@ -159,7 +165,7 @@ public class InstallerPanel extends AnimatedPanel {
     @Override
     public void onSelect() {
         if (!refreshed) {
-            refreshVersions();
+            TaskWindow.factory().execute(refreshVersionsTask());
             refreshed = true;
         }
     }

@@ -19,13 +19,13 @@ package org.jackhuang.hellominecraft.launcher.util.upgrade;
 
 import java.io.File;
 import java.io.IOException;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.task.TaskWindow;
+import org.jackhuang.hellominecraft.util.net.FileDownloadTask;
 import org.jackhuang.hellominecraft.util.ArrayUtils;
 import org.jackhuang.hellominecraft.util.VersionNumber;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 
 /**
  *
@@ -48,7 +48,7 @@ public class NewFileUpgrader extends IUpgrader {
     public boolean call(Object sender, VersionNumber number) {
         String str = requestDownloadLink();
         File newf = new File(FileUtils.getName(str));
-        if (TaskWindow.factory().append(new FileDownloadTask(str, newf)).create()) {
+        if (TaskWindow.factory().append(new FileDownloadTask(str, newf)).execute()) {
             try {
                 new ProcessBuilder(new String[] { IOUtils.tryGetCanonicalFilePath(newf), "--removeOldLauncher", IOUtils.getRealPath() }).directory(new File(".")).start();
             } catch (IOException ex) {

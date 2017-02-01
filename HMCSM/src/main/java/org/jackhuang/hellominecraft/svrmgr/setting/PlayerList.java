@@ -22,8 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.UUID;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.svrmgr.setting.PlayerList.BasePlayer;
 
@@ -90,7 +90,7 @@ public abstract class PlayerList<T extends BasePlayer> {
         op = null;
         if (txt.exists())
             try {
-                initByText(FileUtils.readIgnoreFileNotFound(txt));
+                initByText(FileUtils.read(txt));
                 if (op != null)
                     player.addAll(op);
             } catch (IOException e) {
@@ -100,7 +100,7 @@ public abstract class PlayerList<T extends BasePlayer> {
     }
 
     public void saveAsText(File file) throws IOException {
-        FileUtils.write(file, StrUtils.parseParams("", op, System.getProperty("line.separator")));
+        FileUtils.write(file, StrUtils.parseParams("", op.toArray(), System.getProperty("line.separator")));
     }
 
     public void saveAsJson(File file) throws IOException {

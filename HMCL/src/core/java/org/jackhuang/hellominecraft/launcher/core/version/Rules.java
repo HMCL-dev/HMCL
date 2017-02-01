@@ -33,14 +33,8 @@ public class Rules {
     public Rules() {
     }
 
-    public Rules(String action, OSRestriction os) {
-        this();
-        this.action = action;
-        this.os = os;
-    }
-
     public String action() {
-        return os == null || os != null && os.isCurrentOS() ? action : null;
+        return os == null || os.isCurrentOS() ? action : null;
     }
 
 }

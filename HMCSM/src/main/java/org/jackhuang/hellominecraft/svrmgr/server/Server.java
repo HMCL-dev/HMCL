@@ -24,7 +24,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -35,8 +34,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.Pair;
 import org.jackhuang.hellominecraft.util.StrUtils;
@@ -47,6 +46,7 @@ import org.jackhuang.hellominecraft.svrmgr.util.WaitForThread;
 import org.jackhuang.hellominecraft.svrmgr.util.Utilities;
 import org.jackhuang.hellominecraft.util.Event;
 import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.util.code.Charsets;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 
 /**
@@ -54,7 +54,7 @@ import org.jackhuang.hellominecraft.util.func.Consumer;
  * @author huangyuhui
  */
 public class Server implements Event<Integer>, MonitorThread.MonitorThreadListener,
-                               ActionListener {
+        ActionListener {
 
     private static Server instance;
     private static boolean disactived = false;
@@ -125,17 +125,13 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
         pb.directory(new File(SettingsManager.settings.mainjar).getParentFile());
         try {
             disactiveMods(SettingsManager.settings.inactiveExtMods,
-                          SettingsManager.settings.inactiveCoreMods,
-                          SettingsManager.settings.inactivePlugins);
+                    SettingsManager.settings.inactiveCoreMods,
+                    SettingsManager.settings.inactivePlugins);
             server = pb.start();
             registerThread(threadA, server.getInputStream());
             registerThread(threadB, server.getErrorStream());
             registerThreadC(server);
-            try {
-                bw = new BufferedWriter(new OutputStreamWriter(server.getOutputStream(), System.getProperty("sun.jnu.encoding", "utf-8")));
-            } catch (UnsupportedEncodingException ex) {
-                bw = new BufferedWriter(new OutputStreamWriter(server.getOutputStream()));
-            }
+            bw = new BufferedWriter(new OutputStreamWriter(server.getOutputStream(), Charsets.toCharset()));
             isRunning = true;
             startedEvent.execute(null);
             sendStatus("*** 启动服务端中 ***");
@@ -235,7 +231,7 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
             try {
                 run();
             } catch (IOException ex) {
-                MessageBox.Show("重启失败！");
+                MessageBox.show("重启失败！");
                 HMCLog.warn("Failed to launch!", ex);
             }
             isRestart = false;
@@ -244,7 +240,7 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
     }
 
     private static void disactiveMods(ArrayList<String> inactiveExtMods,
-                                      ArrayList<String> inactiveCoreMods, ArrayList<String> inactivePlugins) {
+            ArrayList<String> inactiveCoreMods, ArrayList<String> inactivePlugins) {
         disactiveModsByType(inactiveExtMods, "mods");
         disactiveModsByType(inactiveCoreMods, "coremods");
         disactiveModsByType(inactivePlugins, "plugins");
@@ -267,7 +263,7 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
                 String name = file.getName();
 
                 if ((!paramArrayOfString.contains(name))
-                    || ((!name.toLowerCase().endsWith(".zip")) && (!name.toLowerCase().endsWith(".jar"))))
+                        || ((!name.toLowerCase().endsWith(".zip")) && (!name.toLowerCase().endsWith(".jar"))))
                     continue;
 
                 String newName = name + "X";

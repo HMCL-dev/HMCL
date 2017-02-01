@@ -76,16 +76,4 @@ public class MinecraftForgeVersion {
         this.modified = modified;
     }
 
-    public MinecraftForgeVersion() {
-    }
-
-    public MinecraftForgeVersion(String branch, String mcversion, String jobver, String version, int build, double modified) {
-        this.branch = branch;
-        this.mcversion = mcversion;
-        this.jobver = jobver;
-        this.version = version;
-        this.build = build;
-        this.modified = modified;
-    }
-
 }

@@ -20,14 +20,14 @@ package org.jackhuang.hellominecraft.launcher.core.launch;
 import java.io.IOException;
 import java.util.HashSet;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.LoginInfo;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
-import org.jackhuang.hellominecraft.util.tasks.ParallelTask;
-import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.util.system.Compressor;
+import org.jackhuang.hellominecraft.util.task.ParallelTask;
+import org.jackhuang.hellominecraft.util.task.TaskWindow;
+import org.jackhuang.hellominecraft.util.sys.CompressingUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 
 public class DefaultGameLauncher extends GameLauncher {
@@ -46,13 +46,13 @@ public class DefaultGameLauncher extends GameLauncher {
                 if (names.contains(s.lib.name))
                     continue;
                 names.add(s.lib.name);
-                parallelTask.addDependsTask(new LibraryDownloadTask(s));
+                parallelTask.addTask(new LibraryDownloadTask(s));
             }
             dw.append(parallelTask);
             boolean flag = true;
             if (t.size() > 0)
-                flag = dw.create();
-            if (!flag && MessageBox.Show(C.i18n("launch.not_finished_downloading_libraries"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+                flag = dw.execute();
+            if (!flag && MessageBox.show(C.i18n("launch.not_finished_downloading_libraries"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                 flag = true;
             return flag;
         });
@@ -61,7 +61,7 @@ public class DefaultGameLauncher extends GameLauncher {
                 return false;
             for (int i = 0; i < value.decompressFiles.length; i++)
                 try {
-                    Compressor.unzip(value.decompressFiles[i], value.getDecompressTo(), value.extractRules[i]::allow, false);
+                    CompressingUtils.unzip(value.decompressFiles[i], value.getDecompressTo(), value.extractRules[i]::allow, false);
                 } catch (IOException ex) {
                     HMCLog.err("Unable to decompress library: " + value.decompressFiles[i] + " to " + value.getDecompressTo(), ex);
                 }

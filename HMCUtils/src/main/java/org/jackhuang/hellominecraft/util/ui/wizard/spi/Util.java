@@ -7,7 +7,10 @@ package org.jackhuang.hellominecraft.util.ui.wizard.spi;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -25,12 +28,12 @@ final class Util {
     static String[] getSteps(WizardPage[] pages) {
         String[] result = new String[pages.length];
 
-        Set uniqueNames = new HashSet(pages.length);
+        Set<String> uniqueNames = new HashSet<>(pages.length);
         for (int i = 0; i < pages.length; i++) {
             result[i] = pages[i].id();
             if (result[i] == null || uniqueNames.contains(result[i])) {
                 result[i] = uniquify(getIDFromStaticMethod(pages[i].getClass()),
-                                     uniqueNames);
+                        uniqueNames);
                 pages[i].id = result[i];
             }
             uniqueNames.add(result[i]);
@@ -38,7 +41,7 @@ final class Util {
         return result;
     }
 
-    static String uniquify(String s, Set /* <String> */ used) {
+    static String uniquify(String s, Set<String> used) {
         String test = s;
         if (test != null) {
             int ix = 0;
@@ -63,15 +66,13 @@ final class Util {
         return result;
     }
 
-    static String getIDFromStaticMethod(Class clazz) {
+    static String getIDFromStaticMethod(Class<?> clazz) {
         // System.err.println("GetID by method for " + clazz);
         String result = null;
         try {
-            Method m = clazz.getDeclaredMethod("getStep", new Class[] {});
+            Method m = clazz.getDeclaredMethod("getStep", new Class<?>[]{});
             // assert m.getReturnType() == String.class;
-            result = (String) m.invoke(clazz, (Object[]) null);
-            if (result == null)
-                throw new NullPointerException("getStep may not return null");
+            result = Objects.requireNonNull((String) m.invoke(clazz, (Object[]) null), "getStep may not return null");
         } catch (Exception ex) {
             //do nothing
         }
@@ -82,21 +83,18 @@ final class Util {
      * Get an array of steps by looking for a static method getID() on each
      * class object passed
      */
-    static String[] getSteps(Class[] pages) {
-        if (pages == null)
-            throw new NullPointerException("Null array of classes");
+    static String[] getSteps(Class<?>[] pages) {
+        Objects.requireNonNull(pages, "Null array of classes");
 
         String[] result = new String[pages.length];
 
-        Set used = new HashSet(pages.length);
+        Set<String> used = new HashSet<>(pages.length);
         for (int i = 0; i < pages.length; i++) {
-            if (pages[i] == null)
-                throw new NullPointerException("Null at " + i + " in array "
-                                               + "of panel classes");
+            Objects.requireNonNull(pages[i], "Null at " + i + " in array of panel classes");
 
             if (!WizardPage.class.isAssignableFrom(pages[i]))
                 throw new IllegalArgumentException(pages[i]
-                                                   + " is not a subclass of WizardPage");
+                        + " is not a subclass of WizardPage");
             result[i] = uniquify(getIDFromStaticMethod(pages[i]), used);
             if (result[i] == null)
                 result[i] = pages[i].getName();
@@ -118,7 +116,7 @@ final class Util {
      * Get an array of descriptions by looking for the static method
      * getDescription() on each passed class object
      */
-    static String[] getDescriptions(Class[] pages) {
+    static String[] getDescriptions(Class<?>[] pages) {
         String[] result = new String[pages.length];
 
         for (int i = 0; i < pages.length; i++)
@@ -127,34 +125,34 @@ final class Util {
         return result;
     }
 
-    static String getDescriptionFromStaticMethod(Class clazz) {
-        String result = null;
+    static String getDescriptionFromStaticMethod(Class<?> clazz) {
         Method m;
         try {
             m = clazz.getDeclaredMethod("getDescription", (Class[]) null);
-        } catch (Exception e) {
+        } catch (NoSuchMethodException | SecurityException e) {
             throw new IllegalArgumentException("Could not find or access "
-                                               + "public static String " + clazz.getName()
-                                               + ".getDescription() - make sure it exists");
+                    + "public static String " + clazz.getName()
+                    + ".getDescription() - make sure it exists");
         }
 
         if (m.getReturnType() != String.class)
             throw new IllegalArgumentException("getStep has wrong "
-                                               + " return type: " + m.getReturnType() + " on "
-                                               + clazz);
+                    + " return type: " + m.getReturnType() + " on "
+                    + clazz);
 
         if (!Modifier.isStatic(m.getModifiers()))
             throw new IllegalArgumentException("getStep is not "
-                                               + "static on " + clazz);
+                    + "static on " + clazz);
 
-        try {
-            m.setAccessible(true);
-            result = (String) m.invoke(null, (Object[]) null);
-        } catch (InvocationTargetException | IllegalAccessException ite) {
-            throw new IllegalArgumentException("Could not invoke "
-                                               + "public static String " + clazz.getName()
-                                               + ".getDescription() - make sure it exists.", ite);
-        }
-        return result;
+        return AccessController.doPrivileged((PrivilegedAction<String>) () -> {
+            try {
+                m.setAccessible(true);
+                return (String) m.invoke(null, (Object[]) null);
+            } catch (InvocationTargetException | IllegalAccessException ite) {
+                throw new IllegalArgumentException("Could not invoke "
+                        + "public static String " + clazz.getName()
+                        + ".getDescription() - make sure it exists.", ite);
+            }
+        });
     }
 }

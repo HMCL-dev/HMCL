@@ -20,8 +20,8 @@ package org.jackhuang.hellominecraft.launcher.core.download;
 import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.NetUtils;
-import org.jackhuang.hellominecraft.util.OverridableSwingWorker;
+import org.jackhuang.hellominecraft.util.net.NetUtils;
+import org.jackhuang.hellominecraft.util.AbstractSwingWorker;
 
 /**
  *
@@ -55,7 +55,7 @@ public class MinecraftRemoteVersions {
         return new RemoteVersionsTask(type);
     }
 
-    public static class RemoteVersionsTask extends OverridableSwingWorker<MinecraftRemoteVersion> {
+    public static class RemoteVersionsTask extends AbstractSwingWorker<MinecraftRemoteVersion> {
 
         DownloadType type;
 

@@ -24,8 +24,6 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ColorModel;
-import java.awt.image.Raster;
-import java.awt.image.WritableRaster;
 
 public abstract class AbstractFilter
     implements BufferedImageOp {
@@ -54,37 +52,5 @@ public abstract class AbstractFilter
     @Override
     public RenderingHints getRenderingHints() {
         return null;
-    }
-
-    protected int[] getPixels(BufferedImage img, int x, int y, int w, int h, int[] pixels) {
-        if ((w == 0) || (h == 0))
-            return new int[0];
-
-        if (pixels == null)
-            pixels = new int[w * h];
-        else if (pixels.length < w * h)
-            throw new IllegalArgumentException("pixels array must have a length >= w*h");
-
-        int imageType = img.getType();
-        if ((imageType == 2) || (imageType == 1)) {
-            Raster raster = img.getRaster();
-            return (int[]) (int[]) raster.getDataElements(x, y, w, h, pixels);
-        }
-
-        return img.getRGB(x, y, w, h, pixels, 0, w);
-    }
-
-    protected void setPixels(BufferedImage img, int x, int y, int w, int h, int[] pixels) {
-        if ((pixels == null) || (w == 0) || (h == 0))
-            return;
-        if (pixels.length < w * h)
-            throw new IllegalArgumentException("pixels array must have a length >= w*h");
-
-        int imageType = img.getType();
-        if ((imageType == 2) || (imageType == 1)) {
-            WritableRaster raster = img.getRaster();
-            raster.setDataElements(x, y, w, h, pixels);
-        } else
-            img.setRGB(x, y, w, h, pixels, 0, w);
     }
 }

@@ -40,70 +40,71 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.Utils;
 import org.jackhuang.hellominecraft.util.func.NonFunction;
-import org.jackhuang.hellominecraft.util.system.OS;
+import org.jackhuang.hellominecraft.util.sys.OS;
 
 /**
  *
  * @author huang
  */
-public class SwingUtils {
+public final class SwingUtils {
+    
+    private SwingUtils() {
+    }
 
     /**
      * Make DefaultTableModel by overriding getColumnClass and isCellEditable of
      * DefaultTableModel.
      *
-     * @param titleA   The title of each column.
-     * @param typesA   The type of each column value.
+     * @param titleA The title of each column.
+     * @param typesA The type of each column value.
      * @param canEditA Is column editable?
      *
      * @return
      */
-    public static DefaultTableModel makeDefaultTableModel(String[] titleA, final Class[] typesA, final boolean[] canEditA) {
-        return new DefaultTableModel(
-            new Object[][] {},
-            titleA) {
-            Class[] types = typesA;
+    public static DefaultTableModel makeDefaultTableModel(String[] titleA, final Class<?>[] typesA, final boolean[] canEditA) {
+        return new DefaultTableModel(new Object[][] {}, titleA) {
+            Class<?>[] types = typesA;
             boolean[] canEdit = canEditA;
-
+            
             @Override
-            public Class getColumnClass(int columnIndex) {
+            public Class<?> getColumnClass(int columnIndex) {
                 return types[columnIndex];
             }
-
+            
             @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 return canEdit[columnIndex];
             }
         };
     }
-
+    
     public static void openFolder(File f) {
         f.mkdirs();
         String path = f.getAbsolutePath();
         switch (OS.os()) {
-        case OSX:
-            try {
-                Runtime.getRuntime().exec(new String[] { "/usr/bin/open", path });
-            } catch (IOException ex) {
-                HMCLog.err("Failed to open " + path + " through /usr/bin/open", ex);
-            }
-            break;
-        default:
-            try {
-                java.awt.Desktop.getDesktop().open(f);
-            } catch (Throwable ex) {
-                MessageBox.Show(C.i18n("message.cannot_open_explorer") + ex.getMessage());
-                HMCLog.warn("Failed to open " + path + " through java.awt.Desktop.getDesktop().open()", ex);
-            }
-            break;
+            case OSX:
+                try {
+                    Runtime.getRuntime().exec(new String[] { "/usr/bin/open", path });
+                } catch (IOException ex) {
+                    HMCLog.err("Failed to open " + path + " through /usr/bin/open", ex);
+                }
+                break;
+            default:
+                try {
+                    java.awt.Desktop.getDesktop().open(f);
+                } catch (Throwable ex) {
+                    MessageBox.show(C.i18n("message.cannot_open_explorer") + ex.getMessage());
+                    HMCLog.warn("Failed to open " + path + " through java.awt.Desktop.getDesktop().open()", ex);
+                }
+                break;
         }
     }
 
@@ -129,16 +130,6 @@ public class SwingUtils {
     }
 
     /**
-     * Move the cursor to the end of TextArea.
-     *
-     * @param tf the TextArea
-     */
-    public static void moveEnd(JTextArea tf) {
-        int position = tf.getText().length();
-        tf.setCaretPosition(position);
-    }
-
-    /**
      * Move the cursor to the end of ScrollPane.
      *
      * @param pane the ScrollPane
@@ -155,27 +146,8 @@ public class SwingUtils {
      *
      * @return Forcely Type casted to DefaultListModel
      */
-    public static DefaultListModel getDefaultListModel(JList list) {
-        return (DefaultListModel) list.getModel();
-    }
-
-    /**
-     * Append new element to JList
-     *
-     * @param list    the JList
-     * @param element the Element
-     */
-    public static void appendLast(JList list, Object element) {
-        getDefaultListModel(list).addElement(element);
-    }
-
-    public static void replaceLast(JList list, Object element) {
-        DefaultListModel model = getDefaultListModel(list);
-        model.set(model.getSize() - 1, element);
-    }
-
-    public static void clear(JList list) {
-        list.setModel(new DefaultListModel());
+    public static <T> DefaultListModel<T> getDefaultListModel(JList<T> list) {
+        return (DefaultListModel<T>) list.getModel();
     }
 
     /**
@@ -191,17 +163,17 @@ public class SwingUtils {
             model.removeRow(0);
         return model;
     }
-
+    
     public static void appendLast(JTable table, Object... elements) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.addRow(elements);
     }
-
+    
     public static void setValueAt(JTable table, Object element, int row, int col) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.setValueAt(element, row, col);
     }
-
+    
     public static Object[] getValueBySelectedRow(JTable table, int rows[], int col) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         Object[] ret = new Object[rows.length];
@@ -209,12 +181,12 @@ public class SwingUtils {
             ret[i] = model.getValueAt(rows[i], col);
         return ret;
     }
-
+    
     public static void removeRow(JTable table, int row) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.removeRow(row);
     }
-
+    
     public static String getParsedJPanelText(JLabel jLabel1, String longString) {
         if (StrUtils.isBlank(longString))
             return longString;
@@ -236,11 +208,11 @@ public class SwingUtils {
         }
         return builder.toString();
     }
-
+    
     private static final Map<Integer, Object> INVOKE_AND_WAIT_MAP = Collections.synchronizedMap(new HashMap<>());
     private static int INVOKE_AND_WAIT_ID = 0;
     private static final Object INVOKE_AND_WAIT_LOCK = new Object();
-
+    
     public static <T> T invokeAndWait(NonFunction<T> x) {
         int id;
         synchronized (INVOKE_AND_WAIT_LOCK) {
@@ -251,7 +223,7 @@ public class SwingUtils {
         invokeAndWait(r);
         return (T) INVOKE_AND_WAIT_MAP.remove(id);
     }
-
+    
     public static void invokeAndWait(Runnable r) {
         if (EventQueue.isDispatchThread())
             r.run();
@@ -263,17 +235,18 @@ public class SwingUtils {
                 r.run();
             }
     }
-
+    
     public static int select(String[] selList, String msg) {
+        JComboBox<String> box = new JComboBox<>(selList);
         Object msgs[] = new Object[2];
         msgs[0] = msg;
-        msgs[1] = new JComboBox(selList);
+        msgs[1] = box;
         int result = JOptionPane.showOptionDialog(null, msgs, msg, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
         if (result == JOptionPane.CANCEL_OPTION)
             return -1;
-        return ((JComboBox) msgs[1]).getSelectedIndex();
+        return box.getSelectedIndex();
     }
-
+    
     public static void setEnabled(JComponent component, boolean t) {
         synchronized (component.getTreeLock()) {
             for (Component c : component.getComponents())
@@ -282,11 +255,11 @@ public class SwingUtils {
         }
         component.setEnabled(t);
     }
-
+    
     public static void exitIfNoWindow(Window thisFrame) {
         exitIfNoWindow(thisFrame, false);
     }
-
+    
     public static void exitIfNoWindow(Window thisFrame, boolean neededDispose) {
         boolean flag = false;
         for (Window f : Window.getWindows()) {
@@ -299,17 +272,17 @@ public class SwingUtils {
             try {
                 Utils.shutdownForcely(0);
             } catch (Exception e) {
-                MessageBox.Show(C.i18n("launcher.exit_failed"));
+                MessageBox.show(C.i18n("launcher.exit_failed"));
                 HMCLog.err("Failed to shutdown forcely", e);
             }
         else
             thisFrame.dispose();
     }
-
+    
     public static ImageIcon scaleImage(ImageIcon i, int x, int y) {
         return new ImageIcon(i.getImage().getScaledInstance(x, y, Image.SCALE_SMOOTH));
     }
-
+    
     public static ImageIcon searchBackgroundImage(ImageIcon init, String bgpath, int width, int height) {
         Random r = new Random();
         boolean loaded = false;
@@ -359,9 +332,15 @@ public class SwingUtils {
                 HMCLog.log("Prepared background image in background.jpg.");
             }
         }
-
+        
         if (background == null)
             return init;
         return background;
+    }
+    
+    public static Runnable invokeLater(Runnable r) {
+        return () -> {
+            SwingUtilities.invokeLater(r);
+        };
     }
 }

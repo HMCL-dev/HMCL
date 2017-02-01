@@ -23,13 +23,13 @@ import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
-import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.tasks.communication.PreviousResult;
-import org.jackhuang.hellominecraft.util.tasks.communication.PreviousResultRegistrar;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
+import org.jackhuang.hellominecraft.util.task.Task;
+import org.jackhuang.hellominecraft.util.task.comm.PreviousResult;
+import org.jackhuang.hellominecraft.util.task.comm.PreviousResultRegistrar;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 
 /**
  *
@@ -42,10 +42,6 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
     public InstallerVersionList.InstallerVersion version;
     public String installId;
 
-    public OptiFineInstaller(IMinecraftService service, String installId, InstallerVersionList.InstallerVersion version) {
-        this(service, installId, version, null);
-    }
-
     public OptiFineInstaller(IMinecraftService service, String installId, InstallerVersionList.InstallerVersion version, File installer) {
         this.service = service;
         this.installId = installId;
@@ -54,7 +50,7 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
     }
 
     @Override
-    public void executeTask() throws Exception {
+    public void executeTask(boolean areDependTasksSucceeded) throws Exception {
         if (installId == null)
             throw new Exception(C.i18n("install.no_version"));
         String selfId = version.selfVersion;
@@ -77,7 +73,7 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
             }
         }
         File loc = new File(service.baseDirectory(), "versions/" + mv.id);
-        if (!loc.exists() && loc.mkdirs())
+        if (!FileUtils.makeDirectory(loc))
             HMCLog.warn("Failed to make directories: " + loc);
         File json = new File(loc, mv.id + ".json");
         FileUtils.write(json, C.GSON.toJson(mv, MinecraftVersion.class));
@@ -90,10 +86,10 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
         return "OptiFine Installer";
     }
 
-    ArrayList<PreviousResult<File>> pre = new ArrayList();
+    ArrayList<PreviousResult<File>> pre = new ArrayList<>();
 
     @Override
-    public Task registerPreviousResult(PreviousResult pr) {
+    public Task registerPreviousResult(PreviousResult<File> pr) {
         pre.add(pr);
         return this;
     }

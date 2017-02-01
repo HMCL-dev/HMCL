@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.lookandfeel;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import org.jackhuang.hellominecraft.util.C;
 
 /**
@@ -85,9 +86,7 @@ public enum Theme {
     public final Map<String, String> settings;
 
     private Theme(String localizedName, Map<String, String> settings) {
-        if (settings == null)
-            throw new NullPointerException("Theme settings map should not be null.");
         this.localizedName = localizedName;
-        this.settings = settings;
+        this.settings = Objects.requireNonNull(settings, "Theme settings map may not be null.");
     }
 }

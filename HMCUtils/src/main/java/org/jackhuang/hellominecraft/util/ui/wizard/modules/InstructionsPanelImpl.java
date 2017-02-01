@@ -44,21 +44,21 @@ import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.UIManager;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.util.ui.wizard.api.displayer.InstructionsPanel;
 import org.jackhuang.hellominecraft.util.ui.wizard.spi.Wizard;
 import org.jackhuang.hellominecraft.util.ui.wizard.spi.WizardObserver;
 
 /**
- * A panel that displays a background image and optionally instructions
- * from a wizard, tracking the selected panel and showing that in bold.
- * <p/>
+ * A panel that displays a background image and optionally instructions from a
+ * wizard, tracking the selected panel and showing that in bold.
+ * <br>
  * <b><i><font color="red">This class is NOT AN API CLASS. There is no
  * commitment that it will remain backward compatible or even exist in the
  * future. The API of this library is in the packages
- * <code>org.netbeans.api.wizard</code>
- * and <code>org.netbeans.spi.wizard</code></font></i></b>.
- * <p/>
+ * <code>org.netbeans.api.wizard</code> and
+ * <code>org.netbeans.spi.wizard</code></font></i></b>.
+ * <br>
  * There is currently a single use-case for subclassing this - a navigation
  * panel that wants to display a different image for each step.
  *
@@ -66,8 +66,8 @@ import org.jackhuang.hellominecraft.util.ui.wizard.spi.WizardObserver;
  */
 public class InstructionsPanelImpl extends JComponent implements WizardObserver, Accessible, InstructionsPanel {
 
-    private final BufferedImage img;
-    private final Wizard wizard;
+    private transient final BufferedImage img;
+    private transient final Wizard wizard;
     private static final int MARGIN = 5;
 
     public InstructionsPanelImpl(Wizard wiz) {
@@ -86,6 +86,7 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
         return wizard;
     }
 
+    @Override
     public final Container getComponent() {
         return this;
     }
@@ -93,6 +94,7 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
     /**
      * Overridden to start listening to the wizard when added to a container
      */
+    @Override
     public void addNotify() {
         super.addNotify();
         wizard.addWizardObserver(this);
@@ -101,16 +103,16 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
     /**
      * Overridden to stop listening to the wizard when removed from a container
      */
+    @Override
     public void removeNotify() {
         wizard.removeWizardObserver(this);
         super.removeNotify();
     }
 
     /**
-     * Get the image to be displayed. Note that unpredictable behavior
-     * may result if all images returned from this method are not the
-     * same size. Override to display a different wizard depending on the
-     * step.
+     * Get the image to be displayed. Note that unpredictable behavior may
+     * result if all images returned from this method are not the same size.
+     * Override to display a different wizard depending on the step.
      *
      * @return
      */
@@ -122,7 +124,7 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
         if (img == null)
             try {
                 img = ImageIO.read(InstructionsPanelImpl.class.getResourceAsStream(
-                    "/org/jackhuang/hellominecraft/wizard.jpg"));
+                        "/org/jackhuang/hellominecraft/wizard.jpg"));
             } catch (IOException ioe) {
                 HMCLog.err("Failed to load wizard.jpg, maybe you fucking modified the launcher", ioe);
             }
@@ -130,13 +132,14 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
         this.wizard = wizard;
     }
 
+    @Override
     public boolean isOpaque() {
         return img != null;
     }
 
     /**
-     * Paints the background image for this component, or fills the
-     * background with a color if no image present.
+     * Paints the background image for this component, or fills the background
+     * with a color if no image present.
      *
      * @param g A Graphic2D to paint into
      * @param x The x coordinate of the area that should contain the image
@@ -158,6 +161,7 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
 
     String[] steps = new String[0];
 
+    @Override
     public final void paintComponent(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -193,10 +197,10 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
 
         int underlineY = ins.top + MARGIN + fm.getAscent() + 3;
         g.drawLine(x, underlineY, x + (getWidth() - (x + ins.left + MARGIN)),
-                   underlineY);
+                underlineY);
 
         int bottom = getComponentCount() == 0 ? getHeight() - getInsets().bottom
-                     : getHeight() - getInsets().bottom - getComponents()[0].getPreferredSize().height;
+                : getHeight() - getInsets().bottom - getComponents()[0].getPreferredSize().height;
 
         y += h + 10;
         int first = 0;
@@ -231,7 +235,7 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
         for (int i = first; i < stop; i++) {
             boolean isUndetermined = Wizard.UNDETERMINED_STEP.equals(steps2[i]);
             boolean canOnlyFinish = wizard.getForwardNavigationMode()
-                                    == Wizard.MODE_CAN_FINISH;
+                    == Wizard.MODE_CAN_FINISH;
             if (isUndetermined && canOnlyFinish)
                 break;
             String curr;
@@ -240,36 +244,35 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
                     curr = (i + 1) + ". " + steps2[i];
                 else
                     curr = (i + 1) + ". " + (isUndetermined
-                                             ? elipsis
-                                             : steps2[i].equals(elipsis) ? elipsis
-                                               : wizard.getStepDescription(steps2[i]));
+                            ? elipsis
+                            : steps2[i].equals(elipsis) ? elipsis
+                            : wizard.getStepDescription(steps2[i]));
             else
                 curr = elipsis;
-            if (curr != null) {
-                boolean selected = (steps2[i].equals(currentStep) && !inSummaryPage)
-                                   || (inSummaryPage && i == steps2.length - 1);
-                if (selected)
-                    g.setFont(boldFont);
+            boolean selected = (steps2[i].equals(currentStep) && !inSummaryPage)
+                    || (inSummaryPage && i == steps2.length - 1);
+            if (selected)
+                g.setFont(boldFont);
 
-                int width = fm.stringWidth(curr);
-                while (width > getWidth() - (ins.left + ins.right) && curr.length() > 5)
-                    curr = curr.substring(0, curr.length() - 5) + elipsis;
+            int width = fm.stringWidth(curr);
+            while (width > getWidth() - (ins.left + ins.right) && curr.length() > 5)
+                curr = curr.substring(0, curr.length() - 5) + elipsis;
 
-                g.drawString(curr, x, y);
-                if (selected)
-                    g.setFont(f);
-                y += h;
-            }
+            g.drawString(curr, x, y);
+            if (selected)
+                g.setFont(f);
+            y += h;
         }
     }
 
     private int historicWidth = Integer.MIN_VALUE;
 
-    String elipsis = "...";
+    private static final String elipsis = "...";
 
+    @Override
     public final Dimension getPreferredSize() {
         Font f = getFont() != null ? getFont()
-                 : UIManager.getFont("controlFont");
+                : UIManager.getFont("controlFont");
 
         Graphics g = getGraphics();
         if (g == null)
@@ -283,10 +286,9 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
         int w = Integer.MIN_VALUE;
         for (int i = 0; i < steps2.length; i++) {
             String desc = i + ". " + (Wizard.UNDETERMINED_STEP.equals(steps2[i])
-                                      ? elipsis
-                                      : wizard.getStepDescription(steps2[i]));
-            if (desc != null)
-                w = Math.max(w, fm.stringWidth(desc) + MARGIN);
+                    ? elipsis
+                    : wizard.getStepDescription(steps2[i]));
+            w = Math.max(w, fm.stringWidth(desc) + MARGIN);
         }
         if (Integer.MIN_VALUE == w)
             w = 250;
@@ -301,27 +303,33 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
 
     private boolean inSummaryPage;
 
+    @Override
     public void setInSummaryPage(boolean val) {
         this.inSummaryPage = val;
         repaint();
     }
 
+    @Override
     public final Dimension getMinimumSize() {
         return getPreferredSize();
     }
 
+    @Override
     public void stepsChanged(Wizard wizard) {
         repaint();
     }
 
+    @Override
     public void navigabilityChanged(Wizard wizard) {
         //do nothing
     }
 
+    @Override
     public void selectionChanged(Wizard wizard) {
         repaint();
     }
 
+    @Override
     public final void doLayout() {
         Component[] c = getComponents();
         Insets ins = getInsets();
@@ -337,6 +345,7 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
         }
     }
 
+    @Override
     public final AccessibleContext getAccessibleContext() {
         return new ACI(this);
     }
@@ -355,6 +364,7 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
 
         JEditorPane pane;
 
+        @Override
         public AccessibleText getAccessibleText() {
             if (pane == null) {
                 //Cheat just a bit here - will do for now - the text is
@@ -382,31 +392,37 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
             return sb.toString();
         }
 
+        @Override
         public AccessibleRole getAccessibleRole() {
             return AccessibleRole.LIST;
         }
 
+        @Override
         public AccessibleStateSet getAccessibleStateSet() {
-            AccessibleState[] states = new AccessibleState[] {
+            AccessibleState[] states = new AccessibleState[]{
                 AccessibleState.VISIBLE,
                 AccessibleState.OPAQUE,
                 AccessibleState.SHOWING,
-                AccessibleState.MULTI_LINE, };
+                AccessibleState.MULTI_LINE,};
             return new AccessibleStateSet(states);
         }
 
+        @Override
         public int getAccessibleIndexInParent() {
             return -1;
         }
 
+        @Override
         public int getAccessibleChildrenCount() {
             return 0;
         }
 
+        @Override
         public Accessible getAccessibleChild(int i) {
             throw new IndexOutOfBoundsException("" + i);
         }
 
+        @Override
         public Locale getLocale() throws IllegalComponentStateException {
             return Locale.getDefault();
         }

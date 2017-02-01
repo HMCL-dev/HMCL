@@ -17,9 +17,8 @@
  */
 package org.jackhuang.hellominecraft.svrmgr.util;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 
 /**
  *
@@ -40,7 +39,7 @@ public class WaitForThread extends Thread {
             int exitCode = p.waitFor();
             event.execute(exitCode);
         } catch (InterruptedException ex) {
-            Logger.getLogger(WaitForThread.class.getName()).log(Level.SEVERE, null, ex);
+            HMCLog.err("Game has been interrupted.", ex);
             event.execute(-1);
         }
     }

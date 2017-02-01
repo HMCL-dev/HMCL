@@ -24,7 +24,7 @@ import java.util.Locale;
  * @author huangyuhui
  */
 public enum SupportedLocales {
-    def(Locale.getDefault(), "lang.default"), en(Locale.ENGLISH, null), zh_TW(Locale.TRADITIONAL_CHINESE, null), zh_CN(Locale.SIMPLIFIED_CHINESE, null);
+    def(Locale.getDefault(), "lang.default"), en(Locale.ENGLISH, null), zh(Locale.TRADITIONAL_CHINESE, null), zh_CN(Locale.SIMPLIFIED_CHINESE, null), vi(new Locale("vi"), null);
 
     public Locale self;
     private String showString, customized;
@@ -36,9 +36,8 @@ public enum SupportedLocales {
             bundle = Localization.get(self);
             showString = bundle.localize("lang");
             this.customized = customized;
-        } catch (Throwable t) {
+        } catch (Throwable ignore) {
             showString = name();
-            t.printStackTrace();
         }
     }
 
@@ -54,8 +53,7 @@ public enum SupportedLocales {
     public String translate(String key, Object... format) {
         try {
             return String.format(bundle.localize(key), format);
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (Exception ignore) {
             return key;
         }
     }

@@ -26,13 +26,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import static org.jackhuang.hellominecraft.launcher.Main.LAUNCHER_VERSION;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
-import org.jackhuang.hellominecraft.util.NetUtils;
+import org.jackhuang.hellominecraft.util.net.NetUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.system.OS;
+import org.jackhuang.hellominecraft.util.sys.OS;
 import org.jackhuang.hellominecraft.util.ui.LogWindow;
 
 /**
@@ -48,6 +48,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             put("MessageBox", "");
             put("AWTError", "");
             put("JFileChooser", "Has your operating system been installed completely or is a ghost system?");
+            put("JSystemFileChooser", "Has your operating system been installed completely or is a ghost system?");
             put("Jce", "Has your operating system been installed completely or is a ghost system?");
             put("couldn't create component peer", "Fucking computer!");
             put("sun.awt.shell.Win32ShellFolder2", "crash.user_fault");
@@ -110,8 +111,8 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                 System.out.println(text);
 
             if (checkThrowable(e) && !System.getProperty("java.vm.name").contains("OpenJDK")) {
-                SwingUtilities.invokeLater(() -> LogWindow.INSTANCE.showAsCrashWindow(Settings.UPDATE_CHECKER.OUT_DATED));
-                if (!Settings.UPDATE_CHECKER.OUT_DATED)
+                SwingUtilities.invokeLater(() -> LogWindow.INSTANCE.showAsCrashWindow(Settings.UPDATE_CHECKER.isOutOfDate()));
+                if (!Settings.UPDATE_CHECKER.isOutOfDate())
                     reportToServer(text, s);
             }
         } catch (Throwable ex) {
@@ -122,7 +123,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
     void showMessage(String s) {
         try {
-            MessageBox.Show(s, "ERROR", MessageBox.ERROR_MESSAGE);
+            MessageBox.show(s, "ERROR", MessageBox.ERROR_MESSAGE);
         } catch (Throwable e) {
             LOGGER.log(Level.SEVERE, "ERROR", e);
         }
@@ -131,7 +132,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
     private static final HashSet<String> THROWABLE_SET = new HashSet<>();
 
     void reportToServer(final String text, String stacktrace) {
-        if (THROWABLE_SET.contains(stacktrace))
+        if (THROWABLE_SET.contains(stacktrace) || stacktrace.contains("Font") || stacktrace.contains("InternalError"))
             return;
         THROWABLE_SET.add(stacktrace);
         Thread t = new Thread(() -> {

@@ -47,19 +47,6 @@ public class Install {
     public Install() {
     }
 
-    public Install(String profileName, String target, String path, String version, String filePath, String welcome, String minecraft, String mirrorList, String logo) {
-        this();
-        this.profileName = profileName;
-        this.target = target;
-        this.path = path;
-        this.version = version;
-        this.filePath = filePath;
-        this.welcome = welcome;
-        this.minecraft = minecraft;
-        this.mirrorList = mirrorList;
-        this.logo = logo;
-    }
-
     public String getProfileName() {
         return profileName;
     }

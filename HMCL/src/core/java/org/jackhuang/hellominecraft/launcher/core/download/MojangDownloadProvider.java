@@ -64,7 +64,7 @@ public class MojangDownloadProvider extends IDownloadProvider {
 
     @Override
     public String getAssetsDownloadURL() {
-        return "https://resources.download.minecraft.net/";
+        return "http://resources.download.minecraft.net/";
     }
 
     @Override

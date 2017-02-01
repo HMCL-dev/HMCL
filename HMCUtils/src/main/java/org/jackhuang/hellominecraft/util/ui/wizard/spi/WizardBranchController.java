@@ -16,6 +16,7 @@ enclosed by brackets [] replaced by your own identifying information:
 package org.jackhuang.hellominecraft.util.ui.wizard.spi;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Extend this class to create wizards which have branch points in them -
@@ -93,9 +94,7 @@ public abstract class WizardBranchController {
      * for the initial panes of the wizard.
      */
     WizardBranchController(SimpleWizardInfo base) {
-        if (base == null)
-            throw new NullPointerException("No base");
-        this.base = base;
+        this.base = Objects.requireNonNull(base, "No base");
     }
 
     /**

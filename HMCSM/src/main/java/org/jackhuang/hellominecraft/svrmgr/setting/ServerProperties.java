@@ -25,7 +25,9 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 
 /**
  *
@@ -57,7 +59,7 @@ public class ServerProperties {
 
     public String getProperty(String key, String defaultValue) {
         try {
-            is = new FileInputStream(new File(path, "server.properties"));
+            is = FileUtils.openInputStream(new File(path, "server.properties"));
             p = new Properties();
             p.load(is);
             return p.getProperty(key, defaultValue);
@@ -65,12 +67,7 @@ public class ServerProperties {
             HMCLog.warn("Failed to get property in server.properties", ex);
             return "";
         } finally {
-            try {
-                if (is != null)
-                    is.close();
-            } catch (IOException ex) {
-                HMCLog.warn("Failed to close InputStream for server.properties", ex);
-            }
+            IOUtils.closeQuietly(is);
         }
     }
 
@@ -88,22 +85,17 @@ public class ServerProperties {
 
     public void setProperty(String key, String value) {
         try {
-            is = new FileInputStream(new File(path, "server.properties"));
+            is = FileUtils.openInputStream(new File(path, "server.properties"));
             p = new Properties();
             p.load(is);
             p.setProperty(key, value);
             SimpleDateFormat f = new SimpleDateFormat("E M d HH:mm:ss z y");
-            p.store(new FileOutputStream(new File(path, "server.properties")),
+            p.store(FileUtils.openOutputStream(new File(path, "server.properties")),
                     "Minecraft server properties\n" + f.format(new Date()));
         } catch (IOException ex) {
             HMCLog.warn("Failed to set property in server.properties", ex);
         } finally {
-            try {
-                if (is != null)
-                    is.close();
-            } catch (IOException ex) {
-                HMCLog.warn("Failed to close OutputStream for server.properties", ex);
-            }
+            IOUtils.closeQuietly(is);
         }
     }
 

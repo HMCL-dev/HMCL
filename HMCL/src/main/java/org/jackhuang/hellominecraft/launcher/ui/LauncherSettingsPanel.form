@@ -20,18 +20,6 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="chkEnableShadow" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
-                      <Component id="chkEnableAnimation" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <Component id="btnCheckUpdate" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="btnMCBBS" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
-                      <Component id="chkDecorated" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <Group type="102" alignment="0" attributes="0">
                       <Component id="lblProxy" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="lblProxyHost" min="-2" max="-2" attributes="0"/>
@@ -71,9 +59,20 @@
                   </Group>
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="btnCheckUpdate" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="btnMCBBS" min="-2" max="-2" attributes="0"/>
+                          </Group>
                           <Component id="lblAbout" min="-2" max="-2" attributes="0"/>
                           <Component id="lblModpack" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="lblRestart" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <Component id="chkEnableShadow" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="chkEnableBlur" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Component id="chkDecorated" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
@@ -121,17 +120,18 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="chkEnableShadow" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="chkEnableAnimation" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="chkEnableBlur" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
+              <Component id="chkDecorated" min="-2" max="-2" attributes="0"/>
+              <EmptySpace pref="6" max="32767" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="btnCheckUpdate" alignment="3" min="-2" pref="26" max="-2" attributes="0"/>
-                  <Component id="chkDecorated" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="btnMCBBS" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnMCBBS" alignment="3" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblRestart" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="65" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="lblModpack" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblAbout" min="-2" max="-2" attributes="0"/>
@@ -157,12 +157,9 @@
           <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="launcher.about" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
         <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
-          <Color id="&#x624b;&#x578b;&#x5149;&#x6807;"/>
+          <Color id="&#x9ed8;&#x8ba4;&#x5149;&#x6807;"/>
         </Property>
       </Properties>
-      <Events>
-        <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblAboutMouseClicked"/>
-      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="btnSelBackgroundPath">
       <Properties>
@@ -291,16 +288,6 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JCheckBox" name="chkEnableAnimation">
-      <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="launcher.enable_animation" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
-      <Events>
-        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="chkEnableAnimationItemStateChanged"/>
-      </Events>
-    </Component>
     <Component class="javax.swing.JCheckBox" name="chkDecorated">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -355,6 +342,16 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnMCBBSActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="chkEnableBlur">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="launcher.enable_blur" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="chkEnableBlurItemStateChanged"/>
       </Events>
     </Component>
   </SubComponents>

@@ -17,11 +17,9 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.launch;
 
-import java.io.File;
-import java.net.URL;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
-import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
+import org.jackhuang.hellominecraft.util.net.FileDownloadTask;
 
 /**
  *
@@ -32,30 +30,8 @@ public class LibraryDownloadTask extends FileDownloadTask {
     DownloadLibraryJob job;
 
     public LibraryDownloadTask(DownloadLibraryJob job) {
-        super();
+        super(job.parse().url, job.path);
         this.job = job;
-    }
-
-    @Override
-    public void executeTask() throws Throwable {
-        String name = job.lib.name;
-        if (name.startsWith("net.minecraftforge:forge:")) {
-            String[] s = name.split(":");
-            if (s.length == 3)
-                job.url = "http://files.minecraftforge.net/maven/net/minecraftforge/forge/" + s[2] + "/forge-" + s[2] + "-universal.jar";
-        }
-        if (name.startsWith("com.mumfrey:liteloader:")) {
-            String[] s = name.split(":");
-            if (s.length == 3 && s[2].length() > 3)
-                job.url = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + s[2].substring(0, s[2].length() - 3) + "/liteloader-" + s[2] + ".jar";
-        }
-        download(new URL(job.url), job.path);
-    }
-
-    void download(URL url, File filePath) throws Throwable {
-        this.url = url;
-        this.filePath = filePath;
-        super.executeTask();
     }
 
     @Override

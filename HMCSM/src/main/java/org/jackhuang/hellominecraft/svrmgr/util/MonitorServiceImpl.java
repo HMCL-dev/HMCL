@@ -26,7 +26,8 @@ import java.lang.management.ManagementFactory;
 import java.util.StringTokenizer;
 import com.sun.management.OperatingSystemMXBean;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 
 /**
  *
@@ -39,7 +40,7 @@ public class MonitorServiceImpl implements IMonitorService {
     private static final int CPUTIME = 30;
     private static final int PERCENT = 100;
     private static final int FAULTLENGTH = 10;
-    private static final String linuxVersion = null;
+    private static final String LINUX_VERSION = null;
 
     /**
      * 获得当前的监控对象.
@@ -77,7 +78,7 @@ public class MonitorServiceImpl implements IMonitorService {
         else if (osName.toLowerCase().startsWith("mac"))
             cpuRatio = this.getCpuRatioForMac();
         else
-            cpuRatio = this.getCpuRatioForLinux();
+            cpuRatio = getCpuRatioForLinux();
         // 构造返回对象
         MonitorInfoBean infoBean = new MonitorInfoBean();
         infoBean.setFreeMemory(freeMemory);
@@ -100,20 +101,22 @@ public class MonitorServiceImpl implements IMonitorService {
             String command = "cat /proc/stat";
             long startTime = System.currentTimeMillis();
             pro1 = r.exec(command);
-            BufferedReader in1 = new BufferedReader(new InputStreamReader(pro1.getInputStream()));
-            String line = null;
-            long idleCpuTime1 = 0, totalCpuTime1 = 0;   //分别为系统启动后空闲的CPU时间和总的CPU时间
-            while ((line = in1.readLine()) != null)
-                if (line.startsWith("cpu")) {
-                    line = line.trim();
-                    String[] temp = line.split("\\s+");
-                    idleCpuTime1 = Long.parseLong(temp[4]);
-                    for (String s : temp)
-                        if (!s.equals("cpu"))
-                            totalCpuTime1 += Long.parseLong(s);
-                    break;
-                }
-            in1.close();
+            String line;
+            long idleCpuTime1, totalCpuTime1;   //分别为系统启动后空闲的CPU时间和总的CPU时间
+            try (BufferedReader in1 = new BufferedReader(new InputStreamReader(pro1.getInputStream()))) {
+                idleCpuTime1 = 0;
+                totalCpuTime1 = 0; //分别为系统启动后空闲的CPU时间和总的CPU时间
+                while ((line = in1.readLine()) != null)
+                    if (line.startsWith("cpu")) {
+                        line = line.trim();
+                        String[] temp = line.split("\\s+");
+                        idleCpuTime1 = Long.parseLong(temp[4]);
+                        for (String s : temp)
+                            if (!s.equals("cpu"))
+                                totalCpuTime1 += Long.parseLong(s);
+                        break;
+                    }
+            }
             pro1.destroy();
             try {
                 Thread.sleep(100);
@@ -123,21 +126,21 @@ public class MonitorServiceImpl implements IMonitorService {
             //第二次采集CPU时间
             long endTime = System.currentTimeMillis();
             pro2 = r.exec(command);
-            BufferedReader in2 = new BufferedReader(new InputStreamReader(pro2.getInputStream()));
-            long idleCpuTime2 = 0, totalCpuTime2 = 0;   //分别为系统启动后空闲的CPU时间和总的CPU时间
-            while ((line = in2.readLine()) != null)
-                if (line.startsWith("cpu")) {
-                    line = line.trim();
-                    String[] temp = line.split("\\s+");
-                    idleCpuTime2 = Long.parseLong(temp[4]);
-                    for (String s : temp)
-                        if (!s.equals("cpu"))
-                            totalCpuTime2 += Long.parseLong(s);
-                    break;
-                }
-            if (idleCpuTime1 != 0 && totalCpuTime1 != 0 && idleCpuTime2 != 0 && totalCpuTime2 != 0)
-                cpuUsage = 1 - (float) (idleCpuTime2 - idleCpuTime1) / (float) (totalCpuTime2 - totalCpuTime1);
-            in2.close();
+            try (BufferedReader in2 = new BufferedReader(new InputStreamReader(pro2.getInputStream()))) {
+                long idleCpuTime2 = 0, totalCpuTime2 = 0;   //分别为系统启动后空闲的CPU时间和总的CPU时间
+                while ((line = in2.readLine()) != null)
+                    if (line.startsWith("cpu")) {
+                        line = line.trim();
+                        String[] temp = line.split("\\s+");
+                        idleCpuTime2 = Long.parseLong(temp[4]);
+                        for (String s : temp)
+                            if (!s.equals("cpu"))
+                                totalCpuTime2 += Long.parseLong(s);
+                        break;
+                    }
+                if (idleCpuTime1 != 0 && totalCpuTime1 != 0 && idleCpuTime2 != 0 && totalCpuTime2 != 0)
+                    cpuUsage = 1 - (float) (idleCpuTime2 - idleCpuTime1) / (float) (totalCpuTime2 - totalCpuTime1);
+            }
             pro2.destroy();
         } catch (IOException e) {
             HMCLog.err("Failed to catch sysout", e);
@@ -174,21 +177,9 @@ public class MonitorServiceImpl implements IMonitorService {
             System.out.println(ioe.getMessage());
             return 1;
         } finally {
-            freeResource(is, isr, brStat);
-        }
-    }
-
-    private static void freeResource(InputStream is, InputStreamReader isr,
-                                     BufferedReader br) {
-        try {
-            if (is != null)
-                is.close();
-            if (isr != null)
-                isr.close();
-            if (br != null)
-                br.close();
-        } catch (IOException ioe) {
-            System.out.println(ioe.getMessage());
+            IOUtils.closeQuietly(is);
+            IOUtils.closeQuietly(isr);
+            IOUtils.closeQuietly(brStat);
         }
     }
 
@@ -216,6 +207,14 @@ public class MonitorServiceImpl implements IMonitorService {
             ex.printStackTrace();
             return 0.0;
         }
+    }
+    
+    public static String substring(String src, int start_idx, int end_idx) {
+        byte[] b = src.getBytes();
+        String tgt = "";
+        for (int i = start_idx; i <= end_idx; i++)
+            tgt += (char) b[i];
+        return tgt;
     }
 
     /**
@@ -250,12 +249,12 @@ public class MonitorServiceImpl implements IMonitorService {
                     continue;
                 // 字段出现顺序：Caption,CommandLine,KernelModeTime,ReadOperationCount,
                 // ThreadCount,UserModeTime,WriteOperation
-                String caption = StrUtils.substring(line, capidx, cmdidx - 1).trim();
-                String cmd = StrUtils.substring(line, cmdidx, kmtidx - 1).trim();
+                String caption = substring(line, capidx, cmdidx - 1).trim();
+                String cmd = substring(line, cmdidx, kmtidx - 1).trim();
                 if (cmd.contains("wmic.exe"))
                     continue;
-                String s1 = StrUtils.substring(line, kmtidx, rocidx - 1).trim();
-                String s2 = StrUtils.substring(line, umtidx, wocidx - 1).trim();
+                String s1 = substring(line, kmtidx, rocidx - 1).trim();
+                String s2 = substring(line, umtidx, wocidx - 1).trim();
                 if (caption.equals("System Idle Process") || caption.equals("System")) {
                     if (s1.length() > 0)
                         idletime += Long.parseLong(s1);
@@ -274,11 +273,7 @@ public class MonitorServiceImpl implements IMonitorService {
         } catch (IOException | NumberFormatException ex) {
             ex.printStackTrace();
         } finally {
-            try {
-                proc.getInputStream().close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            IOUtils.closeQuietly(proc.getInputStream());
         }
         return null;
     }

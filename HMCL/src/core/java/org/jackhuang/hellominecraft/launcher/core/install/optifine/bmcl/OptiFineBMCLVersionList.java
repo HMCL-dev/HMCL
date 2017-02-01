@@ -24,18 +24,16 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.ArrayUtils;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
 import org.jackhuang.hellominecraft.launcher.core.install.optifine.OptiFineVersion;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
-import org.jackhuang.hellominecraft.util.tasks.download.HTTPGetTask;
+import org.jackhuang.hellominecraft.util.task.Task;
+import org.jackhuang.hellominecraft.util.task.TaskInfo;
+import org.jackhuang.hellominecraft.util.net.HTTPGetTask;
 
 /**
  *
@@ -52,8 +50,6 @@ public class OptiFineBMCLVersionList extends InstallerVersionList {
     }
 
     public ArrayList<OptiFineVersion> root;
-    public Map<String, List<InstallerVersion>> versionMap;
-    public List<InstallerVersion> versions;
 
     private static final Type TYPE = new TypeToken<ArrayList<OptiFineVersion>>() {
     }.getType();
@@ -65,32 +61,31 @@ public class OptiFineBMCLVersionList extends InstallerVersionList {
 
             @Override
             public Collection<Task> getDependTasks() {
-                return Arrays.asList(task);
+                return Arrays.asList(task.setTag("BMCL Optifine Download Site"));
             }
 
             @Override
-            public void executeTask() throws Throwable {
+            public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
                 String s = task.getResult();
 
                 versionMap = new HashMap<>();
                 versions = new ArrayList<>();
+                
+                HashSet<String> duplicates = new HashSet<>();
 
                 if (s == null)
                     return;
                 root = C.GSON.fromJson(s, TYPE);
                 for (OptiFineVersion v : root) {
-                    v.setMirror(v.getMirror().replace("http://optifine.net/http://optifine.net/", "http://optifine.net/"));
-
-                    if (StrUtils.isBlank(v.getMCVersion())) {
-                        Pattern p = Pattern.compile("OptiFine (.*) HD");
-                        Matcher m = p.matcher(v.getVersion());
-                        while (m.find())
-                            v.setMCVersion(m.group(1));
-                    }
+                    v.setVersion(v.type + '_' + v.patch);
+                    v.setMirror(String.format("http://bmclapi2.bangbang93.com/optifine/%s/%s/%s", v.getMCVersion(), v.type, v.patch));
+                    if (duplicates.contains(v.getMirror()))
+                        continue;
+                    else
+                        duplicates.add(v.getMirror());
                     InstallerVersion iv = new InstallerVersion(v.getVersion(), StrUtils.formatVersion(v.getMCVersion()));
 
                     List<InstallerVersion> al = ArrayUtils.tryGetMapWithList(versionMap, StrUtils.formatVersion(v.getMCVersion()));
-                    //String url = "http://bmclapi.bangbang93.com/optifine/" + iv.selfVersion.replace(" ", "%20");
                     iv.installer = iv.universal = v.getMirror();
                     al.add(iv);
                     versions.add(iv);
@@ -99,19 +94,6 @@ public class OptiFineBMCLVersionList extends InstallerVersionList {
                 Collections.sort(versions, InstallerVersionComparator.INSTANCE);
             }
         };
-    }
-
-    @Override
-    public List<InstallerVersion> getVersionsImpl(String mcVersion) {
-        if (versions == null || versionMap == null)
-            return null;
-        if (StrUtils.isBlank(mcVersion))
-            return versions;
-        List c = versionMap.get(mcVersion);
-        if (c == null)
-            return versions;
-        Collections.sort(c, InstallerVersionComparator.INSTANCE);
-        return c;
     }
 
     @Override

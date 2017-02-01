@@ -26,17 +26,17 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.GameDownloadInfo;
 import org.jackhuang.hellominecraft.launcher.core.version.IMinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
+import org.jackhuang.hellominecraft.util.net.FileDownloadTask;
 import org.jackhuang.hellominecraft.util.func.Function;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
+import org.jackhuang.hellominecraft.util.task.Task;
+import org.jackhuang.hellominecraft.util.task.TaskInfo;
 
 /**
  *
@@ -75,7 +75,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
             }
 
             @Override
-            public void executeTask() throws Throwable {
+            public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
                 File vpath = new File(service.baseDirectory(), "versions/" + id);
                 if (!areDependTasksSucceeded) {
                     FileUtils.deleteDirectory(vpath);
@@ -131,7 +131,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
     public Task downloadMinecraftVersionJson(String id) {
         return new TaskInfo("Download Minecraft Json") {
             @Override
-            public void executeTask() throws Throwable {
+            public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
                 List<MinecraftRemoteVersion> versions = MinecraftRemoteVersions.getRemoteVersions(service.getDownloadType()).justDo();
                 MinecraftRemoteVersion currentVersion = null;
                 for (MinecraftRemoteVersion v : versions)
@@ -144,7 +144,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
                 String jsonURL = currentVersion.getUrl(service.getDownloadType());
                 File vpath = new File(service.baseDirectory(), "versions/" + id);
                 File mvt = new File(vpath, id + ".json");
-                if (!vpath.exists() && !vpath.mkdirs())
+                if (!FileUtils.makeDirectory(vpath))
                     HMCLog.warn("Failed to make directories: " + vpath);
                 if (mvt.exists() && !mvt.delete())
                     HMCLog.warn("Failed to delete " + mvt);

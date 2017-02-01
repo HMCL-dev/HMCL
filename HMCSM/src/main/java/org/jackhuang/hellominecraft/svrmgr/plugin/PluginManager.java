@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.ho.yaml.Yaml;
-import org.jackhuang.hellominecraft.util.NetUtils;
+import org.jackhuang.hellominecraft.util.net.NetUtils;
 import org.jackhuang.hellominecraft.util.StrUtils;
 
 /**

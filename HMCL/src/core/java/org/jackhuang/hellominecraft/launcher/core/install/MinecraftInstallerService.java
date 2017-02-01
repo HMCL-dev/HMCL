@@ -23,13 +23,13 @@ import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList.InstallerVersion;
 import org.jackhuang.hellominecraft.launcher.core.install.forge.ForgeInstaller;
 import org.jackhuang.hellominecraft.launcher.core.install.liteloader.LiteLoaderInstaller;
-import org.jackhuang.hellominecraft.launcher.core.install.liteloader.LiteLoaderVersionList;
+import org.jackhuang.hellominecraft.launcher.core.install.liteloader.LiteLoaderInstallerVersion;
 import org.jackhuang.hellominecraft.launcher.core.install.optifine.OptiFineInstaller;
 import org.jackhuang.hellominecraft.launcher.core.install.optifine.vanilla.OptiFineDownloadFormatter;
-import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
-import org.jackhuang.hellominecraft.util.tasks.DeleteFileTask;
+import org.jackhuang.hellominecraft.util.task.Task;
+import org.jackhuang.hellominecraft.util.net.FileDownloadTask;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
+import org.jackhuang.hellominecraft.util.task.DeleteFileTask;
 
 /**
  *
@@ -62,8 +62,8 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
             return null;
         else
             return new FileDownloadTask(service.getDownloadType().getProvider().getParsedDownloadURL(v.installer), filepath).setTag("forge")
-                .after(new ForgeInstaller(service, filepath))
-                .after(new DeleteFileTask(filepath));
+                .with(new ForgeInstaller(service, filepath))
+                .with(new DeleteFileTask(filepath));
     }
 
     @Override
@@ -72,16 +72,18 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
         if (v.installer == null)
             return null;
         OptiFineDownloadFormatter task = new OptiFineDownloadFormatter(v.installer);
-        return task.after(new FileDownloadTask(filepath).registerPreviousResult(task).setTag("optifine"))
-            .after(new OptiFineInstaller(service, installId, v, filepath))
-            .after(new DeleteFileTask(filepath));
+        return task.with(new FileDownloadTask(filepath).registerPreviousResult(task).setTag("optifine"))
+            .with(new OptiFineInstaller(service, installId, v, filepath))
+            .with(new DeleteFileTask(filepath));
     }
 
     @Override
     public Task downloadLiteLoader(String installId, InstallerVersion v) {
+        if (!(v instanceof LiteLoaderInstallerVersion))
+            throw new Error("Download lite loader but the version is not ll's.");
         File filepath = IOUtils.tryGetCanonicalFile("liteloader-universal.jar");
         FileDownloadTask task = (FileDownloadTask) new FileDownloadTask(v.universal, filepath).setTag("LiteLoader");
-        return task.after(new LiteLoaderInstaller(service, installId, (LiteLoaderVersionList.LiteLoaderInstallerVersion) v).registerPreviousResult(task))
-            .after(new DeleteFileTask(filepath));
+        return task.with(new LiteLoaderInstaller(service, installId, (LiteLoaderInstallerVersion) v).registerPreviousResult(task))
+            .with(new DeleteFileTask(filepath));
     }
 }

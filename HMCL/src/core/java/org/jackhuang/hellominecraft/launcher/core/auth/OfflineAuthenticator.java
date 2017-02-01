@@ -29,7 +29,7 @@ import org.jackhuang.hellominecraft.util.code.DigestUtils;
  */
 public final class OfflineAuthenticator extends IAuthenticator {
 
-    Map<String, String> uuidMap = new HashMap<>();
+    Map uuidMap = new HashMap<>();
 
     public OfflineAuthenticator(String clientToken) {
         super(clientToken);
@@ -42,7 +42,7 @@ public final class OfflineAuthenticator extends IAuthenticator {
             return;
         Object o = m.get("uuidMap");
         if (o != null && o instanceof Map)
-            uuidMap = (Map<String, String>) o;
+            uuidMap = (Map<?, ?>) o;
     }
 
     @Override
@@ -56,21 +56,21 @@ public final class OfflineAuthenticator extends IAuthenticator {
     public UserProfileProvider login(LoginInfo info) throws AuthenticationException {
         if (StrUtils.isBlank(info.username))
             throw new AuthenticationException(C.i18n("login.no_Player007"));
-        UserProfileProvider result = new UserProfileProvider();
-        result.setUserName(info.username);
         String uuid = getUUIDFromUserName(info.username);
-        if (uuidMap != null && uuidMap.containsKey(uuid))
-            uuid = uuidMap.get(info.username);
+        if (uuidMap != null && uuidMap.containsKey(info.username) && uuidMap.get(info.username) instanceof String)
+            uuid = (String) uuidMap.get(info.username);
         else {
             if (uuidMap == null)
                 uuidMap = new HashMap<>();
             uuidMap.put(info.username, uuid);
         }
-        result.setSession(uuid);
-        result.setUserId(uuid);
-        result.setAccessToken(uuid);
-        result.setUserType("Legacy");
-        return result;
+        return new UserProfileProvider()
+                .setUserName(info.username)
+                .setSession(uuid)
+                .setUserId(uuid)
+                .setAccessToken(uuid)
+                .setUserType("Legacy")
+                .setClientIdentifier(clientToken);
     }
 
     public static String getUUIDFromUserName(String str) {

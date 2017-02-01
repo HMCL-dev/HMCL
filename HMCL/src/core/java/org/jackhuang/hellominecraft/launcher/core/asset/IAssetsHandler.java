@@ -24,17 +24,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftAssetService;
 import org.jackhuang.hellominecraft.launcher.core.download.IDownloadProvider;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
+import org.jackhuang.hellominecraft.util.task.Task;
+import org.jackhuang.hellominecraft.util.net.FileDownloadTask;
 import org.jackhuang.hellominecraft.util.code.DigestUtils;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
-import org.jackhuang.hellominecraft.util.NetUtils;
-import org.jackhuang.hellominecraft.util.OverridableSwingWorker;
-import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
+import org.jackhuang.hellominecraft.util.task.TaskInfo;
 
 /**
  * Assets
@@ -72,7 +71,7 @@ public abstract class IAssetsHandler {
      *
      * @param mv The version that needs assets
      * @param mp Asset Service
-     * @param x  finished event
+     * @return just run it!
      */
     public abstract Task getList(MinecraftVersion mv, IMinecraftAssetService mp);
 
@@ -98,7 +97,7 @@ public abstract class IAssetsHandler {
         }
 
         @Override
-        public void executeTask() {
+        public void executeTask(boolean areDependTasksSucceeded) {
             if (assetsDownloadURLs == null || assetsLocalNames == null || contents == null)
                 throw new IllegalStateException(C.i18n("assets.not_refreshed"));
             int max = assetsDownloadURLs.size();
@@ -108,15 +107,15 @@ public abstract class IAssetsHandler {
                 String mark = assetsDownloadURLs.get(i);
                 String url = u + mark;
                 File location = assetsLocalNames.get(i);
-                if (!location.getParentFile().exists() && !location.getParentFile().mkdirs())
+                if (!FileUtils.makeDirectory(location.getParentFile()))
                     HMCLog.warn("Failed to make directories: " + location.getParent());
                 if (location.isDirectory())
                     continue;
                 boolean need = true;
                 try {
                     if (location.exists()) {
-                        FileInputStream fis = new FileInputStream(location);
-                        String sha = DigestUtils.sha1Hex(NetUtils.getBytesFromStream(fis));
+                        FileInputStream fis = FileUtils.openInputStream(location);
+                        String sha = DigestUtils.sha1Hex(IOUtils.toByteArray(fis));
                         IOUtils.closeQuietly(fis);
                         if (contents.get(i).geteTag().equals(sha)) {
                             ++hasDownloaded;
@@ -131,7 +130,7 @@ public abstract class IAssetsHandler {
                     need = !location.exists();
                 }
                 if (need)
-                    al.add(new FileDownloadTask(url, location).setTag(mark));
+                    al.add(new FileDownloadTask(url, location).setTag(contents.get(i).geteTag()));
             }
         }
 

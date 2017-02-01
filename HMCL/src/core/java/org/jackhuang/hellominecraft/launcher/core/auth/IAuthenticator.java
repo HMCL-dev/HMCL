@@ -87,13 +87,13 @@ public abstract class IAuthenticator {
 
     public abstract void logOut();
 
-    public Map onSaveSettings() {
+    public Map<?, ?> onSaveSettings() {
         HashMap<String, String> m = new HashMap<>();
         m.put("IAuthenticator_UserName", username);
         return m;
     }
 
-    public void onLoadSettings(Map m) {
+    public void onLoadSettings(Map<?, ?> m) {
         if (m == null)
             return;
         Object o = m.get("IAuthenticator_UserName");

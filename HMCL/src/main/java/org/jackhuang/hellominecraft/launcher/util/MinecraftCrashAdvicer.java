@@ -43,7 +43,7 @@ public final class MinecraftCrashAdvicer {
             return C.i18n("crash.advice.ConcurrentModificationException");
         else if (trace.contains("securityexception"))
             return C.i18n("crash.advice.SecurityException");
-        else if (trace.contains("nosuchfieldexception") || trace.contains("nosuchfielderror"))
+        else if (trace.contains("nosuchfieldexception") || trace.contains("nosuchmethodexception") || trace.contains("nosuchfielderror") || trace.contains("nosuchmethoderror"))
             return C.i18n("crash.advice.NoSuchFieldError");
         else if (trace.contains("outofmemory") || trace.contains("out of memory"))
             return C.i18n("crash.advice.OutOfMemoryError");

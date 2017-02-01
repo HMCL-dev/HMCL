@@ -28,8 +28,8 @@ import java.util.UUID;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.lookandfeel.Theme;
 import org.jackhuang.hellominecraft.util.EventHandler;
-import org.jackhuang.hellominecraft.util.system.JdkVersion;
-import org.jackhuang.hellominecraft.util.system.OS;
+import org.jackhuang.hellominecraft.util.sys.JdkVersion;
+import org.jackhuang.hellominecraft.util.sys.OS;
 
 /**
  *
@@ -53,10 +53,10 @@ public final class Config implements Cloneable {
     private String proxyPassword;
     @SerializedName("enableShadow")
     private boolean enableShadow;
+    @SerializedName("enableBlur")
+    private boolean enableBlur;
     @SerializedName("decorated")
     private boolean decorated;
-    @SerializedName("enableAnimation")
-    private boolean enableAnimation;
     @SerializedName("theme")
     private int theme;
     @SerializedName("java")
@@ -110,6 +110,15 @@ public final class Config implements Cloneable {
         Settings.save();
     }
 
+    public boolean isEnableBlur() {
+        return enableBlur;
+    }
+
+    public void setEnableBlur(boolean enableBlur) {
+        this.enableBlur = enableBlur;
+        Settings.save();
+    }
+
     public String getLast() {
         if (last == null)
             last = Settings.DEFAULT_PROFILE;
@@ -128,15 +137,6 @@ public final class Config implements Cloneable {
 
     public void setBgpath(String bgpath) {
         this.bgpath = bgpath;
-        Settings.save();
-    }
-
-    public boolean isEnableAnimation() {
-        return enableAnimation;
-    }
-
-    public void setEnableAnimation(boolean enableAnimation) {
-        this.enableAnimation = enableAnimation;
         Settings.save();
     }
 
@@ -194,8 +194,7 @@ public final class Config implements Cloneable {
     public Config() {
         clientToken = UUID.randomUUID().toString();
         logintype = downloadtype = 0;
-        enableShadow = false;
-        enableAnimation = true;
+        enableBlur = enableShadow = true;
         theme = 4;
         decorated = OS.os() == OS.LINUX;
         auth = new HashMap<>();

@@ -20,10 +20,6 @@
  */
 package org.jackhuang.hellominecraft.lookandfeel.ui;
 
-import static javax.swing.SwingConstants.NORTH;
-import static javax.swing.SwingConstants.SOUTH;
-
-import javax.swing.SwingConstants;
 import javax.swing.plaf.metal.MetalScrollButton;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -35,7 +31,7 @@ import java.awt.Graphics;
  * @author Created by Jasper Potts (Jan 17, 2007)
  * @version 1.0
  */
-public class ScrollButton extends MetalScrollButton implements SwingConstants {
+public class ScrollButton extends MetalScrollButton {
 
     private final int btnWidth, btnHeight;
 

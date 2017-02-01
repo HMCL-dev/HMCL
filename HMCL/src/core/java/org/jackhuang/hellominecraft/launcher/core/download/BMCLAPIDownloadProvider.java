@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.core.download;
 
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
+import org.jackhuang.hellominecraft.util.C;
 
 /**
  *
@@ -71,7 +72,9 @@ public class BMCLAPIDownloadProvider extends IDownloadProvider {
                : str.replace("https://launchermeta.mojang.com", "http://bmclapi2.bangbang93.com")
             .replace("https://launcher.mojang.com", "http://bmclapi2.bangbang93.com")
             .replace("https://libraries.minecraft.net", "http://bmclapi2.bangbang93.com/libraries")
-            .replace("http://files.minecraftforge.net/maven", "http://bmclapi2.bangbang93.com/maven");
+            .replace("http://files.minecraftforge.net/maven", "http://bmclapi2.bangbang93.com/maven")
+            .replace(C.URL_LITELOADER_LIST, "http://bmclapi2.bangbang93.com/maven/com/mumfrey/liteloader/versions.json")
+            .replace("http://dl.liteloader.com/versions", "http://bmclapi2.bangbang93.com/maven");
     }
 
     @Override

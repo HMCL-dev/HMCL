@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.launcher.ui.modpack;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -38,10 +39,10 @@ import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.Pair;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.Utils;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
-import org.jackhuang.hellominecraft.util.system.ZipEngine;
-import org.jackhuang.hellominecraft.util.ui.WebPage;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
+import org.jackhuang.hellominecraft.util.sys.ZipEngine;
+import org.jackhuang.hellominecraft.util.net.WebPage;
 import org.jackhuang.hellominecraft.util.ui.checktree.CheckBoxTreeNode;
 import org.jackhuang.hellominecraft.util.ui.wizard.spi.DeferredWizardResult;
 import org.jackhuang.hellominecraft.util.ui.wizard.spi.ResultProgressHandle;
@@ -95,7 +96,7 @@ public class ModpackWizard extends WizardBranchController {
                         if (settings.containsKey(ModpackDescriptionPanel.KEY_MODPACK_DESCRITION))
                             try {
                                 map.put("description", new org.markdown4j.Markdown4jProcessor().process((String) settings.get(ModpackDescriptionPanel.KEY_MODPACK_DESCRITION)));
-                            } catch (Exception ex) {
+                            } catch (IOException ex) {
                                 progress.failed(C.i18n("modpack.export_error") + ": " + StrUtils.getStackTrace(ex), true);
                             }
                         try {
@@ -113,33 +114,33 @@ public class ModpackWizard extends WizardBranchController {
                             boolean including = false;
                             if ((Boolean) settings.get(ModpackInitializationPanel.KEY_INCLUDING_LAUNCHER)) {
                                 boolean flag = true;
-                                ZipEngine engine = new ZipEngine(loc);
-                                Config s = new Config();
-                                if (!IOUtils.isAbsolutePath(Settings.getInstance().getBgpath()))
-                                    s.setBgpath(Settings.getInstance().getBgpath());
-                                s.setDownloadType(Settings.getInstance().getDownloadType());
-                                engine.putTextFile(C.GSON.toJson(s), "hmcl.json");
-                                engine.putFile(modpack, "modpack.zip");
-                                File bg = new File("bg");
-                                if (bg.isDirectory())
-                                    engine.putDirectory(bg);
-                                bg = new File("background.png");
-                                if (bg.isFile())
-                                    engine.putFile(bg, "background.png");
-                                bg = new File("background.jpg");
-                                if (bg.isFile())
-                                    engine.putFile(bg, "background.jpg");
-                                for (URL u : Utils.getURL())
-                                    try {
-                                        File f = new File(u.toURI());
-                                        if (f.getName().endsWith(".exe") || f.getName().endsWith(".jar"))
-                                            engine.putFile(f, f.getName());
-                                    } catch (Exception e) {
-                                        HMCLog.err("Failed to add launcher files.", e);
-                                        flag = false;
-                                        break;
-                                    }
-                                engine.closeFile();
+                                try (ZipEngine engine = new ZipEngine(loc)) {
+                                    Config s = new Config();
+                                    if (!IOUtils.isAbsolutePath(Settings.getInstance().getBgpath()))
+                                        s.setBgpath(Settings.getInstance().getBgpath());
+                                    s.setDownloadType(Settings.getInstance().getDownloadType());
+                                    engine.putTextFile(C.GSON.toJson(s), "hmcl.json");
+                                    engine.putFile(modpack, "modpack.zip");
+                                    File bg = new File("bg");
+                                    if (bg.isDirectory())
+                                        engine.putDirectory(bg);
+                                    bg = new File("background.png");
+                                    if (bg.isFile())
+                                        engine.putFile(bg, "background.png");
+                                    bg = new File("background.jpg");
+                                    if (bg.isFile())
+                                        engine.putFile(bg, "background.jpg");
+                                    for (URL u : Utils.getURL())
+                                        try {
+                                            File f = new File(u.toURI());
+                                            if (f.getName().endsWith(".exe") || f.getName().endsWith(".jar"))
+                                                engine.putFile(f, f.getName());
+                                        } catch (IOException | URISyntaxException e) {
+                                            HMCLog.err("Failed to add launcher files.", e);
+                                            flag = false;
+                                            break;
+                                        }
+                                }
                                 if (flag) {
                                     including = true;
                                     if (!modpack.delete())

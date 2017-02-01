@@ -15,32 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-buildscript {
-    repositories {
-        mavenCentral();
-        
-        maven {
-            url "https://libraries.minecraft.net"
-        }
-        
-        dependencies {
-            classpath 'net.sf.proguard:proguard-gradle:4.10'
-            classpath 'edu.sc.seis.gradle:launch4j:1.0.6'
-            classpath 'me.tatarka:gradle-retrolambda:3.1.0'
-        }
-    }
-}
-
 plugins {
     id "edu.sc.seis.macAppBundle" version "2.1.6"
+    id "me.tatarka.retrolambda" version "3.5.0"
+    id 'edu.sc.seis.launch4j' version '2.3.0'
 }
 
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
-
-apply plugin: 'launch4j'
-apply plugin: 'me.tatarka.retrolambda'
 
 if (!hasProperty('mainClass')) {
     ext.mainClass = 'org.jackhuang.hellominecraft.launcher.Main'
@@ -50,11 +33,11 @@ def buildnumber = System.getenv("TRAVIS_BUILD_NUMBER")
 if (buildnumber == null)
     buildnumber = System.getenv("BUILD_NUMBER")
 if (buildnumber == null)
-    buildnumber = "233"
+    buildnumber = "4"
     
 def versionroot = System.getenv("VERSION_ROOT")
 if (versionroot == null)
-    versionroot = "2.4.1"
+    versionroot = "2.6.0"
 
 String mavenGroupId = 'HMCL'
 String mavenVersion = versionroot + '.' + buildnumber
@@ -146,8 +129,6 @@ jar {
 }
 
 launch4j {
-    launch4jCmd = 'D:\\Develop\\Java\\Launch4j\\launch4j.exe'
-    //launch4jCmd = '/home/huangyuhui/softwares/launch4j/launch4j'
     supportUrl = 'http://www.mcbbs.net/thread-142335-1-1.html'
     jreMinVersion = '1.6.0'
     

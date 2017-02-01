@@ -23,7 +23,8 @@ package org.jackhuang.hellominecraft.launcher.core.install.optifine;
  */
 public class OptiFineVersion {
 
-    private String dl, ver, date, mirror, mcver;
+    private String dl, ver, date, mirror, mcversion;
+    public String patch, type; // For BMCLAPI2.
 
     public String getDownloadLink() {
         return dl;
@@ -58,10 +59,10 @@ public class OptiFineVersion {
     }
 
     public String getMCVersion() {
-        return mcver;
+        return mcversion;
     }
 
     public void setMCVersion(String mcver) {
-        this.mcver = mcver;
+        this.mcversion = mcver;
     }
 }

@@ -20,9 +20,9 @@ package org.jackhuang.hellominecraft.launcher.core.install.optifine.vanilla;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.tasks.communication.PreviousResult;
-import org.jackhuang.hellominecraft.util.NetUtils;
+import org.jackhuang.hellominecraft.util.task.Task;
+import org.jackhuang.hellominecraft.util.task.comm.PreviousResult;
+import org.jackhuang.hellominecraft.util.net.NetUtils;
 
 /**
  *
@@ -37,7 +37,7 @@ public class OptiFineDownloadFormatter extends Task implements PreviousResult<St
     }
 
     @Override
-    public void executeTask() throws Exception {
+    public void executeTask(boolean areDependTasksSucceeded) throws Exception {
         String content = NetUtils.get(url);
         Pattern p = Pattern.compile("\"downloadx\\?f=OptiFine(.*)\"");
         Matcher m = p.matcher(content);

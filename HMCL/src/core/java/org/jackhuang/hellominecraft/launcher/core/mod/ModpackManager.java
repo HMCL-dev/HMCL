@@ -34,20 +34,21 @@ import java.util.zip.ZipFile;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.func.BiFunction;
 import org.jackhuang.hellominecraft.util.func.CallbackIO;
-import org.jackhuang.hellominecraft.util.system.Compressor;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.system.ZipEngine;
-import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.ui.WebPage;
+import org.jackhuang.hellominecraft.util.sys.CompressingUtils;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
+import org.jackhuang.hellominecraft.util.sys.ZipEngine;
+import org.jackhuang.hellominecraft.util.task.Task;
+import org.jackhuang.hellominecraft.util.net.WebPage;
 import org.jackhuang.hellominecraft.util.MinecraftVersionRequest;
-import org.jackhuang.hellominecraft.util.tasks.NoShownTaskException;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
+import org.jackhuang.hellominecraft.util.task.NoShownTaskException;
 
 /**
  * A mod pack(*.zip) includes these things:
@@ -86,21 +87,21 @@ public final class ModpackManager {
             Collection<Task> c = new ArrayList<>();
 
             @Override
-            public void executeTask() throws Throwable {
+            public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
                 String id = idFUCK;
                 String description = C.i18n("modpack.task.install.will");
 
                 // Read modpack name and description from `modpack.json`
                 try (ZipFile zip = new ZipFile(input)) {
-                    HashMap map = C.GSON.fromJson(new InputStreamReader(zip.getInputStream(zip.getEntry("modpack.json")), "UTF-8"), HashMap.class);
+                    HashMap<String, String> map = C.GSON.fromJson(new InputStreamReader(zip.getInputStream(zip.getEntry("modpack.json")), "UTF-8"), HashMap.class);
                     if (map != null) {
                         if (id == null)
                             if (map.containsKey("name") && map.get("name") instanceof String)
-                                id = (String) map.get("name");
+                                id = map.get("name");
                         if (id != null)
                             description += id;
                         if (map.containsKey("description") && map.get("description") instanceof String)
-                            description += "\n" + (String) map.get("description");
+                            description += "\n" + map.get("description");
                     }
                     if (id == null)
                         throw new IllegalStateException("Illegal modpack id!");
@@ -150,7 +151,7 @@ public final class ModpackManager {
                 try {
                     final AtomicInteger b = new AtomicInteger(0);
                     HMCLog.log("Decompressing modpack");
-                    Compressor.unzip(input, versions, t -> {
+                    CompressingUtils.unzip(input, versions, t -> {
                                      if (t.equals("minecraft/pack.json"))
                                          b.incrementAndGet();
                                      return true;
@@ -186,8 +187,8 @@ public final class ModpackManager {
                     }
                 } finally {
                     FileUtils.deleteDirectoryQuietly(oldFile);
-                    if (newFile != null)
-                        newFile.renameTo(oldFile);
+                    if (newFile != null && !newFile.renameTo(oldFile))
+                        HMCLog.warn("Failed to restore version minecraft");
                 }
             }
 
@@ -244,7 +245,7 @@ public final class ModpackManager {
      *
      * @throws IOException if create tmp directory failed
      */
-    public static void export(File output, IMinecraftProvider provider, String version, List<String> blacklist, Map modpackJson, CallbackIO<ZipEngine> callback) throws IOException, GameException {
+    public static void export(File output, IMinecraftProvider provider, String version, List<String> blacklist, Map<String, String> modpackPreferences, CallbackIO<ZipEngine> callback) throws IOException, GameException {
         final ArrayList<String> b = new ArrayList<>(MODPACK_BLACK_LIST);
         if (blacklist != null)
             b.addAll(blacklist);
@@ -271,12 +272,11 @@ public final class ModpackManager {
             mv.jar = r.version;
             mv.runDir = "version";
             zip.putTextFile(C.GSON.toJson(mv), "minecraft/pack.json");
-            zip.putTextFile(C.GSON.toJson(modpackJson), "modpack.json");
+            zip.putTextFile(C.GSON.toJson(modpackPreferences), "modpack.json");
             if (callback != null)
                 callback.call(zip);
         } finally {
-            if (zip != null)
-                zip.closeFile();
+            IOUtils.closeQuietly(zip);
         }
     }
 

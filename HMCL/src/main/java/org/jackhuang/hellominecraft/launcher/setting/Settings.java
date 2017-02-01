@@ -23,13 +23,13 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.core.MCUtils;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.CollectionUtils;
 import org.jackhuang.hellominecraft.util.EventHandler;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.UpdateChecker;
 
@@ -126,16 +126,8 @@ public final class Settings {
         return SETTINGS.getConfigurations();
     }
 
-    public static void setProfile(Profile ver) {
-        getProfiles().put(ver.getName(), ver);
-    }
-
     public static Collection<Profile> getProfilesFiltered() {
-        return CollectionUtils.map(getProfiles().values(), t -> t != null && t.getName() != null);
-    }
-
-    public static Profile getOneProfile() {
-        return SETTINGS.getConfigurations().firstEntry().getValue();
+        return CollectionUtils.filter(getProfiles().values(), t -> t != null && t.getName() != null);
     }
 
     public static boolean putProfile(Profile ver) {
@@ -151,7 +143,7 @@ public final class Settings {
 
     public static boolean delProfile(String ver) {
         if (DEFAULT_PROFILE.equals(ver)) {
-            MessageBox.Show(C.i18n("settings.cannot_remove_default_config"));
+            MessageBox.show(C.i18n("settings.cannot_remove_default_config"));
             return false;
         }
         boolean notify = false;
@@ -163,8 +155,8 @@ public final class Settings {
         return flag;
     }
 
-    public static final EventHandler<Profile> profileChangedEvent = new EventHandler(null);
-    public static final EventHandler<Void> profileLoadingEvent = new EventHandler(null);
+    public static final EventHandler<Profile> profileChangedEvent = new EventHandler<>(null);
+    public static final EventHandler<Void> profileLoadingEvent = new EventHandler<>(null);
 
     static void onProfileChanged() {
         Profile p = getLastProfile();

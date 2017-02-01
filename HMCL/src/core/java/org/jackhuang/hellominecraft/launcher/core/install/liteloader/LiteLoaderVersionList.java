@@ -22,17 +22,15 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
-import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList.InstallerVersion;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionNewerComparator;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.tasks.TaskInfo;
-import org.jackhuang.hellominecraft.util.tasks.download.HTTPGetTask;
+import org.jackhuang.hellominecraft.util.task.Task;
+import org.jackhuang.hellominecraft.util.task.TaskInfo;
+import org.jackhuang.hellominecraft.util.net.HTTPGetTask;
 
 /**
  *
@@ -49,23 +47,21 @@ public class LiteLoaderVersionList extends InstallerVersionList {
     }
 
     public LiteLoaderVersionsRoot root;
-    public Map<String, List<InstallerVersion>> versionMap;
-    public List<InstallerVersion> versions;
 
     @Override
     public Task refresh(String[] needed) {
         if (root != null)
             return null;
         return new TaskInfo(C.i18n("install.liteloader.get_list")) {
-            HTTPGetTask task = new HTTPGetTask(C.URL_LITELOADER_LIST);
+            HTTPGetTask task = new HTTPGetTask(DownloadType.getSuggestedDownloadType().getProvider().getParsedDownloadURL(C.URL_LITELOADER_LIST));
 
             @Override
             public Collection<Task> getDependTasks() {
-                return Arrays.asList(task);
+                return Arrays.asList(task.setTag("Official Liteloader Download Site"));
             }
 
             @Override
-            public void executeTask() throws Throwable {
+            public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
                 if (!areDependTasksSucceeded)
                     return;
                 String s = task.getResult();
@@ -85,7 +81,7 @@ public class LiteLoaderVersionList extends InstallerVersionList {
                             continue;
                         LiteLoaderVersion v = entry.getValue();
                         LiteLoaderInstallerVersion iv = new LiteLoaderInstallerVersion(v.version, StrUtils.formatVersion(arr.getKey()));
-                        iv.universal = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + arr.getKey() + "/" + v.file;
+                        iv.universal = DownloadType.getSuggestedDownloadType().getProvider().getParsedDownloadURL("http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + arr.getKey() + "/" + v.file);
                         iv.tweakClass = v.tweakClass;
                         iv.libraries = Arrays.copyOf(v.libraries, v.libraries.length);
                         iv.installer = "http://dl.liteloader.com/redist/" + iv.mcVersion + "/liteloader-installer-" + iv.selfVersion.replace("_", "-") + ".jar";
@@ -102,32 +98,8 @@ public class LiteLoaderVersionList extends InstallerVersionList {
     }
 
     @Override
-    public List<InstallerVersion> getVersionsImpl(String mcVersion) {
-        if (versions == null || versionMap == null)
-            return null;
-        if (StrUtils.isBlank(mcVersion))
-            return versions;
-        List c = versionMap.get(mcVersion);
-        if (c == null)
-            return versions;
-        Collections.sort(c, InstallerVersionComparator.INSTANCE);
-        return c;
-    }
-
-    @Override
     public String getName() {
         return "LiteLoader - LiteLoader Official Site(By: Mumfrey)";
-    }
-
-    public static class LiteLoaderInstallerVersion extends InstallerVersion {
-
-        public MinecraftLibrary[] libraries;
-        public String tweakClass;
-
-        public LiteLoaderInstallerVersion(String selfVersion, String mcVersion) {
-            super(selfVersion, mcVersion);
-        }
-
     }
 
 }

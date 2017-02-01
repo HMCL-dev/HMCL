@@ -27,10 +27,10 @@ import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.EventHandler;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.Utils;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.system.Java;
-import org.jackhuang.hellominecraft.util.system.JdkVersion;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.sys.Java;
+import org.jackhuang.hellominecraft.util.sys.JdkVersion;
+import org.jackhuang.hellominecraft.util.sys.OS;
 
 /**
  *
@@ -93,27 +93,6 @@ public class VersionSetting {
         javaDir = java = minecraftArgs = serverIp = precalledCommand = wrapper = "";
     }
 
-    public VersionSetting(VersionSetting v) {
-        this();
-        if (v == null)
-            return;
-        maxMemory = v.maxMemory;
-        width = v.width;
-        height = v.height;
-        java = v.java;
-        fullscreen = v.fullscreen;
-        javaArgs = v.javaArgs;
-        javaDir = v.javaDir;
-        minecraftArgs = v.minecraftArgs;
-        permSize = v.permSize;
-        gameDirType = v.gameDirType;
-        noJVMArgs = v.noJVMArgs;
-        launcherVisibility = v.launcherVisibility;
-        precalledCommand = v.precalledCommand;
-        wrapper = v.wrapper;
-        serverIp = v.serverIp;
-    }
-
     public String getJavaDir() {
         Java j = getJava();
         if (j.getHome() == null)
@@ -173,13 +152,9 @@ public class VersionSetting {
         propertyChanged.execute("javaArgs");
     }
 
-    public boolean hasJavaArgs() {
-        return StrUtils.isNotBlank(getJavaArgs().trim());
-    }
-
     public String getMaxMemory() {
         if (StrUtils.isBlank(maxMemory))
-            return String.valueOf(Utils.getSuggestedMemorySize());
+            return String.valueOf(OS.getSuggestedMemorySize());
         return maxMemory;
     }
 

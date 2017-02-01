@@ -17,41 +17,44 @@
  */
 package org.jackhuang.hellominecraft.launcher.ui;
 
-import java.awt.Color;
 import java.io.IOException;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.lang.SupportedLocales;
+import org.jackhuang.hellominecraft.util.ui.GraphicsUtils;
+import org.jackhuang.hellominecraft.util.ui.JSystemFileChooser;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 
 /**
  *
  * @author huangyuhui
  */
-public class LauncherSettingsPanel extends AnimatedPanel {
+public class LauncherSettingsPanel extends RepaintPage {
 
     /**
      * Creates new form LancherSettingsPanel
      */
     public LauncherSettingsPanel() {
+        setRepainter(this);
     }
 
     void initGui() {
         initComponents();
+        setBackground(GraphicsUtils.getWebColorWithAlpha("FFFFFF7F"));
+        setOpaque(true);
 
-        DefaultComboBoxModel d = new DefaultComboBoxModel();
+        DefaultComboBoxModel<String> d = new DefaultComboBoxModel<>();
         for (DownloadType type : DownloadType.values())
             d.addElement(type.getName());
         cboDownloadSource.setModel(d);
 
-        d = new DefaultComboBoxModel();
+        d = new DefaultComboBoxModel<>();
         int id = 0;
         for (SupportedLocales type : SupportedLocales.values()) {
             d.addElement(type.showString());
@@ -69,11 +72,8 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         cboDownloadSource.setSelectedIndex(Settings.getInstance().getDownloadType());
         cboTheme.setSelectedIndex(Settings.getInstance().getTheme().ordinal());
         chkEnableShadow.setSelected(Settings.getInstance().isEnableShadow());
-        chkEnableAnimation.setSelected(Settings.getInstance().isEnableAnimation());
+        chkEnableBlur.setSelected(Settings.getInstance().isEnableBlur());
         chkDecorated.setSelected(Settings.getInstance().isDecorated());
-
-        setBackground(Color.white);
-        setOpaque(true);
     }
 
     @Override
@@ -110,13 +110,13 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         txtProxyUsername = new javax.swing.JTextField();
         txtProxyPassword = new javax.swing.JTextField();
         lblProxyPassword = new javax.swing.JLabel();
-        chkEnableAnimation = new javax.swing.JCheckBox();
         chkDecorated = new javax.swing.JCheckBox();
         lblModpack = new javax.swing.JLabel();
         cboLang = new javax.swing.JComboBox();
         lblLang = new javax.swing.JLabel();
         lblRestart = new javax.swing.JLabel();
         btnMCBBS = new javax.swing.JButton();
+        chkEnableBlur = new javax.swing.JCheckBox();
 
         cboDownloadSource.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -125,12 +125,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         });
 
         lblAbout.setText(C.i18n("launcher.about")); // NOI18N
-        lblAbout.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        lblAbout.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                lblAboutMouseClicked(evt);
-            }
-        });
+        lblAbout.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
         btnSelBackgroundPath.setText(C.i18n("ui.button.explore")); // NOI18N
         btnSelBackgroundPath.addActionListener(new java.awt.event.ActionListener() {
@@ -208,13 +203,6 @@ public class LauncherSettingsPanel extends AnimatedPanel {
 
         lblProxyPassword.setText(C.i18n("proxy.password")); // NOI18N
 
-        chkEnableAnimation.setText(C.i18n("launcher.enable_animation")); // NOI18N
-        chkEnableAnimation.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                chkEnableAnimationItemStateChanged(evt);
-            }
-        });
-
         chkDecorated.setText(C.i18n("launcher.decorated")); // NOI18N
         chkDecorated.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -249,6 +237,13 @@ public class LauncherSettingsPanel extends AnimatedPanel {
             }
         });
 
+        chkEnableBlur.setText(C.i18n("launcher.enable_blur")); // NOI18N
+        chkEnableBlur.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                chkEnableBlurItemStateChanged(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -256,16 +251,6 @@ public class LauncherSettingsPanel extends AnimatedPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(chkEnableShadow)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(chkEnableAnimation))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(btnCheckUpdate)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnMCBBS)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(chkDecorated))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblProxy)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -301,9 +286,18 @@ public class LauncherSettingsPanel extends AnimatedPanel {
                             .addComponent(cboTheme, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblAbout, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(lblModpack, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(lblRestart))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(btnCheckUpdate)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnMCBBS))
+                            .addComponent(lblAbout)
+                            .addComponent(lblModpack)
+                            .addComponent(lblRestart)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(chkEnableShadow)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(chkEnableBlur))
+                            .addComponent(chkDecorated))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -341,18 +335,19 @@ public class LauncherSettingsPanel extends AnimatedPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(chkEnableShadow)
-                    .addComponent(chkEnableAnimation))
+                    .addComponent(chkEnableBlur))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkDecorated)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 6, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnCheckUpdate, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(chkDecorated)
-                    .addComponent(btnMCBBS))
+                    .addComponent(btnMCBBS, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblRestart)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 65, Short.MAX_VALUE)
-                .addComponent(lblModpack, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblAbout, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(lblModpack)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblAbout)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -362,8 +357,8 @@ public class LauncherSettingsPanel extends AnimatedPanel {
     }//GEN-LAST:event_cboDownloadSourceItemStateChanged
 
     private void btnSelBackgroundPathActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSelBackgroundPathActionPerformed
-        JFileChooser fc = new JFileChooser();
-        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        JSystemFileChooser fc = new JSystemFileChooser();
+        fc.setFileSelectionMode(JSystemFileChooser.FILES_ONLY);
         fc.setDialogTitle(C.i18n("launcher.choose_bgpath"));
         fc.setMultiSelectionEnabled(false);
         fc.setFileFilter(new FileNameExtensionFilter("*.png", "png"));
@@ -379,7 +374,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
             MainFrame.INSTANCE.loadBackground();
         } catch (IOException e) {
             HMCLog.warn("Failed to set background path.", e);
-            MessageBox.Show(C.i18n("ui.label.failed_set") + e.getMessage());
+            MessageBox.show(C.i18n("ui.label.failed_set") + e.getMessage());
         }
     }//GEN-LAST:event_btnSelBackgroundPathActionPerformed
 
@@ -413,10 +408,6 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         Settings.getInstance().setDecorated(chkDecorated.isSelected());
     }//GEN-LAST:event_chkDecoratedItemStateChanged
 
-    private void chkEnableAnimationItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkEnableAnimationItemStateChanged
-        Settings.getInstance().setEnableAnimation(chkEnableAnimation.isSelected());
-    }//GEN-LAST:event_chkEnableAnimationItemStateChanged
-
     private void txtProxyHostFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtProxyHostFocusLost
         Settings.getInstance().setProxyHost(txtProxyHost.getText());
     }//GEN-LAST:event_txtProxyHostFocusLost
@@ -433,13 +424,13 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         Settings.getInstance().setProxyPassword(txtProxyPassword.getText());
     }//GEN-LAST:event_txtProxyPasswordFocusLost
 
-    private void lblAboutMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblAboutMouseClicked
-        SwingUtils.openLink("http://huangyuhui.duapp.com/link.php?type=sponsor");
-    }//GEN-LAST:event_lblAboutMouseClicked
-
     private void btnMCBBSActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMCBBSActionPerformed
         SwingUtils.openLink(C.URL_PUBLISH);
     }//GEN-LAST:event_btnMCBBSActionPerformed
+
+    private void chkEnableBlurItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkEnableBlurItemStateChanged
+        Settings.getInstance().setEnableBlur(chkEnableBlur.isSelected());
+    }//GEN-LAST:event_chkEnableBlurItemStateChanged
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCheckUpdate;
@@ -449,7 +440,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
     private javax.swing.JComboBox cboLang;
     private javax.swing.JComboBox cboTheme;
     private javax.swing.JCheckBox chkDecorated;
-    private javax.swing.JCheckBox chkEnableAnimation;
+    private javax.swing.JCheckBox chkEnableBlur;
     private javax.swing.JCheckBox chkEnableShadow;
     private javax.swing.JLabel lblAbout;
     private javax.swing.JLabel lblBackground;

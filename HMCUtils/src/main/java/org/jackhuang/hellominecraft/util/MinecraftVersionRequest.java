@@ -22,15 +22,15 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.ArrayUtils;
-import org.jackhuang.hellominecraft.util.NetUtils;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 
 /**
  * @author huangyuhui
  */
 public class MinecraftVersionRequest implements Serializable {
+    
+    private static final long serialVersionUID = 1L;
 
     public static final int UNKOWN = 0, INVALID = 1, INVALID_JAR = 2,
         MODIFIED = 3, OK = 4, NOT_FOUND = 5, UNREADABLE = 6, NOT_FILE = 7;
@@ -38,34 +38,25 @@ public class MinecraftVersionRequest implements Serializable {
     public String version;
 
     public static String getResponse(MinecraftVersionRequest minecraftVersion) {
-        String text = "";
         switch (minecraftVersion.type) {
         case MinecraftVersionRequest.INVALID:
-            text = C.i18n("minecraft.invalid");
-            break;
+            return C.i18n("minecraft.invalid");
         case MinecraftVersionRequest.INVALID_JAR:
-            text = C.i18n("minecraft.invalid_jar");
-            break;
+            return C.i18n("minecraft.invalid_jar");
         case MinecraftVersionRequest.NOT_FILE:
-            text = C.i18n("minecraft.not_a_file");
-            break;
+            return C.i18n("minecraft.not_a_file");
         case MinecraftVersionRequest.NOT_FOUND:
-            text = C.i18n("minecraft.not_found");
-            break;
+            return C.i18n("minecraft.not_found");
         case MinecraftVersionRequest.UNREADABLE:
-            text = C.i18n("minecraft.not_readable");
-            break;
+            return C.i18n("minecraft.not_readable");
         case MinecraftVersionRequest.MODIFIED:
-            text = C.i18n("minecraft.modified") + " ";
+            return C.i18n("minecraft.modified") + ' ' + minecraftVersion.version;
         case MinecraftVersionRequest.OK:
-            text += minecraftVersion.version;
-            break;
+            return minecraftVersion.version;
         case MinecraftVersionRequest.UNKOWN:
         default:
-            text = "???";
-            break;
+            return "???";
         }
-        return text;
     }
 
     private static int lessThan32(byte[] b, int x) {
@@ -77,11 +68,11 @@ public class MinecraftVersionRequest implements Serializable {
 
     private static MinecraftVersionRequest getVersionOfOldMinecraft(ZipFile file, ZipEntry entry) throws IOException {
         MinecraftVersionRequest r = new MinecraftVersionRequest();
-        byte[] tmp = NetUtils.getBytesFromStream(file.getInputStream(entry));
+        byte[] tmp = IOUtils.toByteArray(file.getInputStream(entry));
 
         byte[] bytes = "Minecraft Minecraft ".getBytes("ASCII");
-        int j;
-        if ((j = ArrayUtils.matchArray(tmp, bytes)) < 0) {
+        int j = ArrayUtils.matchArray(tmp, bytes);
+        if (j < 0) {
             r.type = MinecraftVersionRequest.UNKOWN;
             return r;
         }
@@ -101,7 +92,7 @@ public class MinecraftVersionRequest implements Serializable {
 
     private static MinecraftVersionRequest getVersionOfNewMinecraft(ZipFile file, ZipEntry entry) throws IOException {
         MinecraftVersionRequest r = new MinecraftVersionRequest();
-        byte[] tmp = NetUtils.getBytesFromStream(file.getInputStream(entry));
+        byte[] tmp = IOUtils.toByteArray(file.getInputStream(entry));
 
         byte[] str = "-server.txt".getBytes("ASCII");
         int j = ArrayUtils.matchArray(tmp, str);
@@ -145,7 +136,7 @@ public class MinecraftVersionRequest implements Serializable {
             while (tmp[k] >= 48 && tmp[k] <= 57 || tmp[k] == (int) '-' || tmp[k] == (int) '.' || tmp[k] >= 97 && tmp[k] <= (int) 'z')
                 k--;
             k++;
-            r.version = new String(tmp, k, i - k + 1);
+            r.version = new String(tmp, k, i - k + 1, "ASCII");
         }
         r.type = file.getEntry("META-INF/MANIFEST.MF") == null
                  ? MinecraftVersionRequest.MODIFIED : MinecraftVersionRequest.OK;
@@ -166,30 +157,25 @@ public class MinecraftVersionRequest implements Serializable {
             r.type = MinecraftVersionRequest.UNREADABLE;
             return r;
         }
-        ZipFile localZipFile = null;
+        ZipFile f = null;
         try {
-            localZipFile = new ZipFile(file);
-            ZipEntry minecraft = localZipFile
+            f = new ZipFile(file);
+            ZipEntry minecraft = f
                 .getEntry("net/minecraft/client/Minecraft.class");
             if (minecraft != null)
-                return getVersionOfOldMinecraft(localZipFile, minecraft);
-            ZipEntry main = localZipFile.getEntry("net/minecraft/client/main/Main.class");
-            ZipEntry minecraftserver = localZipFile.getEntry("net/minecraft/server/MinecraftServer.class");
+                return getVersionOfOldMinecraft(f, minecraft);
+            ZipEntry main = f.getEntry("net/minecraft/client/main/Main.class");
+            ZipEntry minecraftserver = f.getEntry("net/minecraft/server/MinecraftServer.class");
             if ((main != null) && (minecraftserver != null))
-                return getVersionOfNewMinecraft(localZipFile, minecraftserver);
+                return getVersionOfNewMinecraft(f, minecraftserver);
             r.type = MinecraftVersionRequest.INVALID;
             return r;
-        } catch (IOException localException) {
-            HMCLog.warn("Zip file is invalid", localException);
+        } catch (IOException e) {
+            HMCLog.warn("Zip file is invalid", e);
             r.type = MinecraftVersionRequest.INVALID_JAR;
             return r;
         } finally {
-            if (localZipFile != null)
-                try {
-                    localZipFile.close();
-                } catch (IOException ex) {
-                    HMCLog.warn("Failed to close zip file", ex);
-                }
+            IOUtils.closeQuietly(f);
         }
     }
 }

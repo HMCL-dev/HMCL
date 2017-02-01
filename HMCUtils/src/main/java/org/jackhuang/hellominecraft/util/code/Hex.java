@@ -19,10 +19,8 @@ package org.jackhuang.hellominecraft.util.code;
 
 import java.nio.charset.Charset;
 
-public class Hex {
+public final class Hex {
 
-    public static final Charset DEFAULT_CHARSET = Charsets.UTF_8;
-    public static final String DEFAULT_CHARSET_NAME = "UTF-8";
     private static final char[] DIGITS_LOWER = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
     private static final char[] DIGITS_UPPER = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
@@ -80,15 +78,11 @@ public class Hex {
     }
 
     public Hex() {
-        this.charset = DEFAULT_CHARSET;
+        this(Charsets.DEFAULT_CHARSET);
     }
 
     public Hex(Charset charset) {
         this.charset = charset;
-    }
-
-    public Hex(String charsetName) {
-        this(Charset.forName(charsetName));
     }
 
     public byte[] decode(byte[] array) throws Exception {

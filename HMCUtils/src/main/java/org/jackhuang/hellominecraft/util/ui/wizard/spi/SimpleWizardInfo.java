@@ -23,12 +23,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import org.jackhuang.hellominecraft.util.ArrayUtils;
+import org.jackhuang.hellominecraft.util.code.Charsets;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 
 /**
  * Provides information about a simple wizard. Wraps a
@@ -57,13 +60,9 @@ public final class SimpleWizardInfo implements WizardControllerImplementation {
      * and descriptions.
      */
     protected SimpleWizardInfo(String title, String[] steps, String[] descriptions, WizardPanelProvider provider) {
-        if (steps == null)
-            throw new NullPointerException("Null steps");
-        if (descriptions == null)
-            throw new NullPointerException("Null descriptions");
-        this.steps = steps;
-        this.descriptions = descriptions;
-        if (new HashSet(Arrays.asList(steps)).size() < steps.length)
+        this.steps = Objects.requireNonNull(steps, "Null steps");
+        this.descriptions = Objects.requireNonNull(descriptions, "Null descriptions");
+        if (ArrayUtils.hasDuplicateElements(steps))
             throw new IllegalArgumentException("Duplicate ID: " + Arrays.asList(steps));
         if (descriptions.length != steps.length)
             if (steps.length != descriptions.length + 1 && !WizardImplementation.UNDETERMINED_STEP.equals(steps[steps.length - 1]))
@@ -77,15 +76,11 @@ public final class SimpleWizardInfo implements WizardControllerImplementation {
     }
 
     final void setWizard(SimpleWizard wizard) {
-        this.wizard = new WeakReference(wizard);
+        this.wizard = new WeakReference<>(wizard);
     }
 
     final SimpleWizard getWizard() {
         return wizard != null ? (SimpleWizard) wizard.get() : null;
-    }
-
-    final SimpleWizard createWizard() {
-        return new SimpleWizard(this);
     }
 
     //pkg private for unit tests
@@ -117,9 +112,9 @@ public final class SimpleWizardInfo implements WizardControllerImplementation {
             JTextArea jta = new JTextArea();
             jta.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.RED));
             ByteArrayOutputStream buf = new ByteArrayOutputStream();
-            PrintStream str = new PrintStream(buf);
+            PrintStream str = IOUtils.createPrintStream(buf, Charsets.UTF_8);
             re.printStackTrace(str);
-            jta.setText(new String(buf.toByteArray()));
+            jta.setText(new String(buf.toByteArray(), Charsets.UTF_8));
             setProblem(re.getLocalizedMessage());
             return new JScrollPane(jta);
         }
@@ -130,16 +125,6 @@ public final class SimpleWizardInfo implements WizardControllerImplementation {
      * gathered data.
      */
     protected Object finish(Map settings) throws WizardException {
-        //XXX fixme
-//        assert canFinish();
-
-        // SKNUTSON: the "canFinish" behavior is not working
-        // instead, panels must implement the WizardPanel interface
-        // and have allowFinish return false
-//        if ( ! canFinish())
-//        {
-//            throw new RuntimeException ("Can't finish right now");
-//        }
         return provider.finish(settings);
     }
 
@@ -176,6 +161,7 @@ public final class SimpleWizardInfo implements WizardControllerImplementation {
         return a == null ? 0 : a.currentStepIndex();
     }
 
+    @Override
     public final void setBusy(boolean value) {
         if (value != busy) {
             busy = value;
@@ -188,6 +174,7 @@ public final class SimpleWizardInfo implements WizardControllerImplementation {
      * user-entered information in a panel changes, call this method as
      * appropriate.
      */
+    @Override
     public final void setProblem(String value) {
         this.problem = value;
         int idx = index();
@@ -215,6 +202,7 @@ public final class SimpleWizardInfo implements WizardControllerImplementation {
      *
      * @see setProblem
      */
+    @Override
     public final void setForwardNavigationMode(int value) {
         switch (value) {
         case WizardController.MODE_CAN_CONTINUE:
@@ -292,6 +280,7 @@ public final class SimpleWizardInfo implements WizardControllerImplementation {
         return busy;
     }
 
+    @Override
     public boolean equals(Object o) {
         if (o != null && o.getClass() == getClass()) {
             SimpleWizardInfo info = (SimpleWizardInfo) o;
@@ -308,6 +297,7 @@ public final class SimpleWizardInfo implements WizardControllerImplementation {
             return false;
     }
 
+    @Override
     public int hashCode() {
         int result = 0;
         for (int i = 0; i < steps.length; i++)

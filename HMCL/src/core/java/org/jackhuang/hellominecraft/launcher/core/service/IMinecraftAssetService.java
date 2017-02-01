@@ -19,8 +19,9 @@ package org.jackhuang.hellominecraft.launcher.core.service;
 
 import java.io.File;
 import java.io.IOException;
+import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.version.AssetIndexDownloadInfo;
-import org.jackhuang.hellominecraft.util.tasks.Task;
+import org.jackhuang.hellominecraft.util.task.Task;
 
 /**
  *
@@ -32,7 +33,7 @@ public abstract class IMinecraftAssetService extends IMinecraftBasicService {
         super(service);
     }
 
-    public abstract Task downloadAssets(String mcVersion);
+    public abstract Task downloadAssets(String mcVersion) throws GameException;
 
     public abstract File getAssets();
 
@@ -43,7 +44,7 @@ public abstract class IMinecraftAssetService extends IMinecraftBasicService {
      *
      * @return Is the action successful?
      */
-    public abstract boolean refreshAssetsIndex(String a);
+    public abstract boolean refreshAssetsIndex(String a) throws GameException;
 
     public abstract boolean downloadMinecraftAssetsIndexAsync(AssetIndexDownloadInfo assetsId);
 

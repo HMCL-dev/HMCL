@@ -21,7 +21,10 @@ package org.jackhuang.hellominecraft.util;
  *
  * @author huang
  */
-public class MathUtils {
+public final class MathUtils {
+    
+    private MathUtils() {
+    }
 
     public static int parseInt(String s, int def) {
         try {

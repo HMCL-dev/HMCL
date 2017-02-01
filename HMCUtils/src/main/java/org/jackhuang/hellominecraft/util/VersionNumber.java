@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hellominecraft.util;
 
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 
 /**
  *
@@ -78,6 +78,33 @@ public final class VersionNumber implements Comparable<VersionNumber> {
         return false;
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 83 * hash + this.firstVer;
+        hash = 83 * hash + this.secondVer;
+        hash = 83 * hash + this.thirdVer;
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        final VersionNumber other = (VersionNumber) obj;
+        if (this.firstVer != other.firstVer)
+            return false;
+        if (this.secondVer != other.secondVer)
+            return false;
+        if (this.thirdVer != other.thirdVer)
+            return false;
+        return true;
+    }
+    
     @Override
     public int compareTo(VersionNumber o) {
         if (isOlder(this, o))

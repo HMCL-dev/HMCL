@@ -22,42 +22,43 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 
 /**
  *
  * @author huangyuhui
  */
-public class Localization {
+public final class Localization {
 
     private static final String ROOT_LOCATION = "/org/jackhuang/hellominecraft/lang/I18N%s.lang";
 
     private static final Map<Locale, Localization> INSTANCE = new HashMap<>();
 
-    private final Map<String, String> lang;
+    private final Map<String, String> lang = new HashMap<>();
+    
+    private static InputStream getStream(String id) {
+        return Localization.class.getResourceAsStream(String.format(ROOT_LOCATION, id));
+    }
 
     private Localization(Locale locale) {
-        InputStream is = Localization.class.getResourceAsStream(String.format(ROOT_LOCATION, "_" + locale.getLanguage() + "_" + locale.getCountry()));
+        InputStream is = getStream("_" + locale.getLanguage() + "_" + locale.getCountry());
         if (is == null)
-            is = Localization.class.getResourceAsStream(String.format(ROOT_LOCATION, "_" + locale.getLanguage()));
+            is = getStream("_" + locale.getLanguage());
         if (is == null)
-            is = Localization.class.getResourceAsStream(String.format(ROOT_LOCATION, ""));
+            is = getStream("");
         if (is == null)
-            throw new RuntimeException("LANG FILE MISSING");
+            throw new InternalError("Language file missing");
 
-        this.lang = new HashMap<>();
         try {
-            String[] strings = IOUtils.readFully(is).toString("UTF-8").split("\n");
-            for (String s : strings)
+            for (String s : IOUtils.readLines(is, IOUtils.DEFAULT_CHARSET))
                 if (!s.isEmpty() && s.charAt(0) != 35) {
-                    int i = s.indexOf("=");
+                    int i = s.indexOf('=');
                     if (i == -1)
                         continue;
                     lang.put(s.substring(0, i), s.substring(i + 1));
                 }
         } catch (IOException ex) {
-            HMCLog.err("LANG FILE MISSING", ex);
+           throw new InternalError("Language file missing", ex);
         }
     }
 

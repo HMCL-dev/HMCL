@@ -20,10 +20,13 @@ package org.jackhuang.hellominecraft.util.ui.wizard.spi;
 
 import java.awt.Component;
 import java.awt.Font;
+import java.util.Objects;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.UIManager;
+import org.jackhuang.hellominecraft.util.ArrayUtils;
+import org.jackhuang.hellominecraft.util.StrUtils;
 
 /**
  * Object which may be returned from
@@ -56,9 +59,7 @@ public class Summary {
     public Summary(String text, Object result) {
         //XXX this is creating components off the AWT thread - needs to change
         //to use invokeAndWait where appropriate
-        if (text == null)
-            throw new NullPointerException("Text is null");
-        if (text.trim().length() == 0)
+        if (StrUtils.isBlank(text))
             throw new IllegalArgumentException("Text is empty or all whitespace");
         this.result = result;
         JTextArea jta = new JTextArea();
@@ -85,12 +86,10 @@ public class Summary {
      * @return the requested <code>Summary</code> object
      */
     public Summary(String[] items, Object result) {
-        if (items == null)
-            throw new NullPointerException("Items array null");
-        if (items.length == 0)
+        if (ArrayUtils.isEmpty(items))
             throw new IllegalArgumentException("Items array empty");
         this.result = result;
-        JList list = new JList(items);
+        JList<String> list = new JList<>(items);
         comp = new JScrollPane(list);
     }
 
@@ -108,9 +107,7 @@ public class Summary {
      */
     public Summary(Component comp, Object result) {
         this.result = result;
-        this.comp = comp;
-        if (comp == null)
-            throw new NullPointerException("Null component");
+        this.comp = Objects.requireNonNull(comp, "Null component");
     }
 
     /**

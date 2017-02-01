@@ -17,33 +17,32 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.launch;
 
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftLoader;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.util.List;
-import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
+import org.jackhuang.hellominecraft.launcher.core.auth.AuthenticationException;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.LoginInfo;
 import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
-import org.jackhuang.hellominecraft.launcher.core.auth.AuthenticationException;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
+import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftLoader;
+import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.DecompressLibraryJob;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
-import org.jackhuang.hellominecraft.util.system.JavaProcess;
-import org.jackhuang.hellominecraft.util.MessageBox;
-import org.jackhuang.hellominecraft.util.system.OS;
-import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.EventHandler;
-import org.jackhuang.hellominecraft.util.system.ProcessManager;
+import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.code.Charsets;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
+import org.jackhuang.hellominecraft.util.sys.JavaProcess;
+import org.jackhuang.hellominecraft.util.sys.OS;
+import org.jackhuang.hellominecraft.util.sys.ProcessManager;
 
 public class GameLauncher {
 
@@ -117,7 +116,6 @@ public class GameLauncher {
      * Launch the game "as soon as possible".
      *
      * @param str launch command
-     *
      * @throws IOException failed creating process
      */
     public void launch(List<String> str) throws IOException {
@@ -138,7 +136,7 @@ public class GameLauncher {
         if (options.getLaunchVersion() == null || service.baseDirectory() == null)
             throw new Error("Fucking bug!");
         builder.redirectErrorStream(true).directory(service.version().getRunDirectory(options.getLaunchVersion()))
-            .environment().put("APPDATA", service.baseDirectory().getAbsolutePath());
+                .environment().put("APPDATA", service.baseDirectory().getAbsolutePath());
         JavaProcess jp = new JavaProcess(str, builder.start(), PROCESS_MANAGER);
         HMCLog.log("Have started the process");
         launchEvent.execute(jp);
@@ -148,13 +146,13 @@ public class GameLauncher {
      * According to the name...
      *
      * @param launcherName the name of launch bat/sh
-     * @param str          launch command
+     * @param str launch command
      *
      * @return launcher location
      *
      * @throws java.io.IOException write contents failed.
      */
-    public File makeLauncher(String launcherName, List str) throws IOException {
+    public File makeLauncher(String launcherName, List<String> str) throws IOException {
         HMCLog.log("Making shell launcher...");
         service.version().onLaunch(options.getLaunchVersion());
         boolean isWin = OS.os() == OS.WINDOWS;
@@ -162,33 +160,28 @@ public class GameLauncher {
         if (!f.exists() && !f.createNewFile())
             HMCLog.warn("Failed to create " + f);
         BufferedWriter writer;
-        try {
-            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f), System.getProperty("sun.jnu.encoding", "UTF-8")));
-        } catch (UnsupportedEncodingException ex) {
-            HMCLog.warn("Failed to create writer, will try again.", ex);
-            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f)));
-        }
-        if (isWin) {
-            writer.write("@echo off");
-            writer.newLine();
-            String appdata = IOUtils.tryGetCanonicalFilePath(service.baseDirectory());
-            if (appdata != null) {
-                writer.write("set appdata=" + appdata);
+        try (FileOutputStream fos = FileUtils.openOutputStream(f)) {
+            writer = new BufferedWriter(new OutputStreamWriter(fos, Charsets.toCharset()));
+            if (isWin) {
+                writer.write("@echo off");
                 writer.newLine();
-                writer.write("cd /D %appdata%");
+                String appdata = IOUtils.tryGetCanonicalFilePath(service.baseDirectory());
+                if (appdata != null) {
+                    writer.write("set appdata=" + appdata);
+                    writer.newLine();
+                    writer.write("cd /D %appdata%");
+                    writer.newLine();
+                }
+            }
+            if (StrUtils.isNotBlank(options.getPrecalledCommand())) {
+                writer.write(options.getPrecalledCommand());
                 writer.newLine();
             }
+            writer.write(StrUtils.makeCommand(str));
+            writer.close();
         }
-        if (StrUtils.isNotBlank(options.getPrecalledCommand())) {
-            writer.write(options.getPrecalledCommand());
-            writer.newLine();
-        }
-        writer.write(StrUtils.makeCommand(str));
-        writer.close();
-        if (!f.setExecutable(true)) {
-            HMCLog.warn("Failed to give launcher permission.");
-            MessageBox.Show(C.i18n("launch.failed_sh_permission"));
-        }
+        if (!f.setExecutable(true))
+            throw new IOException(C.i18n("launch.failed_sh_permission"));
 
         HMCLog.log("Command: " + StrUtils.parseParams("", str, " "));
         return f;

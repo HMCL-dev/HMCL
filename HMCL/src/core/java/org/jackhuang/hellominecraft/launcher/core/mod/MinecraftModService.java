@@ -18,18 +18,16 @@
 package org.jackhuang.hellominecraft.launcher.core.mod;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftModService;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
-import org.jackhuang.hellominecraft.util.code.DigestUtils;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
 
 /**
  *
@@ -80,7 +78,7 @@ public class MinecraftModService extends IMinecraftModService {
             if (!modCache.containsKey(id))
                 recacheMods(id);
             File modsFolder = service.version().getRunDirectory(id, "mods");
-            if (!modsFolder.exists() && !modsFolder.mkdirs())
+            if (!FileUtils.makeDirectory(modsFolder))
                 HMCLog.warn("Failed to make directories: " + modsFolder);
             File newf = new File(modsFolder, f.getName());
             FileUtils.copyFile(f, newf);
@@ -94,24 +92,23 @@ public class MinecraftModService extends IMinecraftModService {
     }
 
     @Override
-    public void removeMod(String id, Object[] rows) {
+    public boolean removeMod(String id, Object[] rows) {
         if (rows.length == 0)
-            return;
+            return true;
+        boolean flag = true;
         for (Object r : rows)
             if (r instanceof ModInfo) {
-                if (!((ModInfo) r).location.delete())
+                if (!((ModInfo) r).location.delete()) {
                     HMCLog.warn("Failed to delete mod" + r);
+                    flag = false;
+                }
             } else if (r instanceof Number)
-                if (!getMods(id).get(((Number) r).intValue()).location.delete())
+                if (!getMods(id).get(((Number) r).intValue()).location.delete()) {
                     HMCLog.warn("Failed to delete mod " + r + ", maybe not a file?");
+                    flag = false;
+                }
         recacheMods(id);
-    }
-
-    public String[] checkMd5s(String id) throws IOException {
-        String[] res = new String[getMods(id).size()];
-        for (int i = 0; i < res.length; i++)
-            res[i] = DigestUtils.md5Hex(new FileInputStream(getMods(id).get(i).location));
-        return res;
+        return flag;
     }
 
 }

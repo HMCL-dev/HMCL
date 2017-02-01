@@ -21,9 +21,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.code.Charsets;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 
 /**
  *
@@ -42,11 +42,7 @@ public class MonitorThread extends Thread {
 
     public MonitorThread(InputStream is) {
         this.listeners = new ArrayList<>(5);
-        try {
-            br = new BufferedReader(new InputStreamReader(is, System.getProperty("sun.jnu.encoding", "gbk")));
-        } catch (UnsupportedEncodingException ex) {
-            br = new BufferedReader(new InputStreamReader(is));
-        }
+        br = new BufferedReader(new InputStreamReader(is, Charsets.toCharset(System.getProperty("sun.jnu.encoding", "gbk"))));
     }
 
     public void addListener(MonitorThreadListener l) {

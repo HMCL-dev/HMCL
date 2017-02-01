@@ -26,47 +26,47 @@ import java.io.OutputStream;
  */
 public class DoubleOutputStream extends OutputStream {
 
-    private OutputStream a = null;
-    private OutputStream b = null;
-    private boolean c = true;
+    private OutputStream os1 = null;
+    private OutputStream os2 = null;
+    private boolean autoFlush = true;
 
-    public DoubleOutputStream(OutputStream paramOutputStream1, OutputStream paramOutputStream2) {
-        this(paramOutputStream1, paramOutputStream2, true);
+    public DoubleOutputStream(OutputStream os1, OutputStream os2) {
+        this(os1, os2, true);
     }
 
-    private DoubleOutputStream(OutputStream paramOutputStream1, OutputStream paramOutputStream2, boolean paramBoolean) {
-        this.a = paramOutputStream1;
-        this.b = paramOutputStream2;
-        this.c = true;
+    private DoubleOutputStream(OutputStream os1, OutputStream os2, boolean autoFlush) {
+        this.os1 = os1;
+        this.os2 = os2;
+        this.autoFlush = autoFlush;
     }
 
     @Override
     public final void write(byte[] arr, int off, int len) throws IOException {
-        if (this.a != null)
-            this.a.write(arr, off, len);
-        if (this.b != null)
-            this.b.write(arr, off, len);
-        if (this.c)
+        if (this.os1 != null)
+            this.os1.write(arr, off, len);
+        if (this.os2 != null)
+            this.os2.write(arr, off, len);
+        if (this.autoFlush)
             flush();
     }
 
     @Override
     public final void write(byte[] arr) throws IOException {
-        if (this.a != null)
-            this.a.write(arr);
-        if (this.b != null)
-            this.b.write(arr);
-        if (this.c)
+        if (this.os1 != null)
+            this.os1.write(arr);
+        if (this.os2 != null)
+            this.os2.write(arr);
+        if (this.autoFlush)
             flush();
     }
 
     @Override
     public final void write(int i) throws IOException {
-        if (this.a != null)
-            this.a.write(i);
-        if (this.b != null)
-            this.b.write(i);
-        if (this.c)
+        if (this.os1 != null)
+            this.os1.write(i);
+        if (this.os2 != null)
+            this.os2.write(i);
+        if (this.autoFlush)
             flush();
     }
 
@@ -74,17 +74,17 @@ public class DoubleOutputStream extends OutputStream {
     public final void close() throws IOException {
         flush();
 
-        if (this.a != null)
-            this.a.close();
-        if (this.b != null)
-            this.b.close();
+        if (this.os1 != null)
+            this.os1.close();
+        if (this.os2 != null)
+            this.os2.close();
     }
 
     @Override
     public final void flush() throws IOException {
-        if (this.a != null)
-            this.a.flush();
-        if (this.b != null)
-            this.b.flush();
+        if (this.os1 != null)
+            this.os1.flush();
+        if (this.os2 != null)
+            this.os2.flush();
     }
 }

@@ -24,6 +24,7 @@ import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 
 /**
  * 判断mod类型
@@ -68,14 +69,7 @@ public class ModType {
         } catch (Exception e) {
 
         } finally {
-            try {
-                if (zipFile != null)
-                    zipFile.close();
-            } catch (IOException ex) {
-                Logger.getLogger(ModType.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (Throwable t) {
-
-            }
+            IOUtils.closeQuietly(zipFile);
         }
         if (isModLoader)
             return MODLOADER_MOD;

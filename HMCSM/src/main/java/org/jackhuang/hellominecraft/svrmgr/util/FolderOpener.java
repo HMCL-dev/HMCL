@@ -32,7 +32,7 @@ public class FolderOpener {
             f.mkdirs();
             java.awt.Desktop.getDesktop().open(f);
         } catch (Exception ex) {
-            MessageBox.Show("无法打开资源管理器: " + ex.getMessage());
+            MessageBox.show("无法打开资源管理器: " + ex.getMessage());
         }
     }
 

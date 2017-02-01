@@ -19,9 +19,9 @@ package org.jackhuang.hellominecraft.util.ui;
 
 import java.io.OutputStream;
 import java.util.Objects;
-import java.util.Timer;
 import javax.swing.SwingUtilities;
-import org.jackhuang.hellominecraft.util.logging.Level;
+import org.jackhuang.hellominecraft.util.code.Charsets;
+import org.jackhuang.hellominecraft.util.log.Level;
 
 /**
  *
@@ -29,16 +29,12 @@ import org.jackhuang.hellominecraft.util.logging.Level;
  */
 public class LogWindowOutputStream extends OutputStream {
 
-    private static final Timer TIMER = new Timer();
-
     private final LogWindow txt;
     private final Level sas;
 
     public LogWindowOutputStream(LogWindow logWindow, Level l) {
-        Objects.nonNull(logWindow);
-        Objects.nonNull(l);
-        txt = logWindow;
-        sas = l;
+        txt = Objects.requireNonNull(logWindow);
+        sas = Objects.requireNonNull(l);
     }
 
     @Override
@@ -48,25 +44,17 @@ public class LogWindowOutputStream extends OutputStream {
 
     @Override
     public final void write(byte[] arr, int off, int len) {
-        append(new String(arr, off, len));
+        append(new String(arr, off, len, Charsets.UTF_8));
     }
 
     private void append(final String str) {
-        try {
-            SwingUtilities.invokeLater(() -> {
-                txt.log(str, Level.guessLevel(str, sas));
-            });
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
+        SwingUtilities.invokeLater(() -> {
+            txt.log(str, Level.guessLevel(str, sas));
+        });
     }
 
     @Override
     public final void write(int i) {
-        append(new String(new byte[] { (byte) i }));
-    }
-
-    public static void dispose() {
-        TIMER.cancel();
+        append(new String(new byte[] { (byte) i }, Charsets.UTF_8));
     }
 }

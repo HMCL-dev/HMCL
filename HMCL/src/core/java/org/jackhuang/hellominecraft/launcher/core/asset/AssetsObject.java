@@ -26,11 +26,6 @@ public class AssetsObject {
     private String hash;
     private long size;
 
-    public AssetsObject(String hash, long size) {
-        this.hash = hash;
-        this.size = size;
-    }
-
     public void setHash(String hash) {
         this.hash = hash;
     }

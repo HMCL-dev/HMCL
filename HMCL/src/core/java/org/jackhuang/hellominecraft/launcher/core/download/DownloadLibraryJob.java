@@ -19,7 +19,6 @@ package org.jackhuang.hellominecraft.launcher.core.download;
 
 import java.io.File;
 import org.jackhuang.hellominecraft.launcher.core.version.IMinecraftLibrary;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
 
 /**
  *
@@ -34,6 +33,21 @@ public class DownloadLibraryJob {
     public DownloadLibraryJob(IMinecraftLibrary n, String u, File p) {
         url = u;
         lib = n;
-        path = IOUtils.tryGetCanonicalFile(p);
+        path = p;
+    }
+    
+    public DownloadLibraryJob parse() {
+        String name = lib.name;
+        if (name.startsWith("net.minecraftforge:forge:")) {
+            String[] s = name.split(":");
+            if (s.length == 3)
+                url = "http://files.minecraftforge.net/maven/net/minecraftforge/forge/" + s[2] + "/forge-" + s[2] + "-universal.jar";
+        }
+        if (name.startsWith("com.mumfrey:liteloader:")) {
+            String[] s = name.split(":");
+            if (s.length == 3 && s[2].length() > 3)
+                url = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + s[2].substring(0, s[2].length() - 3) + "/liteloader-" + s[2] + ".jar";
+        }
+        return this;
     }
 }

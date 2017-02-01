@@ -26,7 +26,10 @@ import java.security.NoSuchAlgorithmException;
  *
  * @author huangyuhui
  */
-public class DigestUtils {
+public final class DigestUtils {
+    
+    private DigestUtils() {
+    }
 
     private static final int STREAM_BUFFER_LENGTH = 1024;
 
@@ -65,11 +68,6 @@ public class DigestUtils {
 
     public static MessageDigest getSha512Digest() {
         return getDigest("SHA-512");
-    }
-
-    @Deprecated
-    public static MessageDigest getShaDigest() {
-        return getSha1Digest();
     }
 
     public static byte[] md2(byte[] data) {
@@ -122,22 +120,6 @@ public class DigestUtils {
 
     public static String md5Hex(String data) {
         return Hex.encodeHexString(md5(data));
-    }
-
-    @Deprecated
-    public static byte[] sha(byte[] data) {
-        return sha1(data);
-    }
-
-    @Deprecated
-    public static byte[] sha(InputStream data)
-        throws IOException {
-        return sha1(data);
-    }
-
-    @Deprecated
-    public static byte[] sha(String data) {
-        return sha1(data);
     }
 
     public static byte[] sha1(byte[] data) {
@@ -242,22 +224,6 @@ public class DigestUtils {
 
     public static String sha512Hex(String data) {
         return Hex.encodeHexString(sha512(data));
-    }
-
-    @Deprecated
-    public static String shaHex(byte[] data) {
-        return sha1Hex(data);
-    }
-
-    @Deprecated
-    public static String shaHex(InputStream data)
-        throws IOException {
-        return sha1Hex(data);
-    }
-
-    @Deprecated
-    public static String shaHex(String data) {
-        return sha1Hex(data);
     }
 
     public static MessageDigest updateDigest(MessageDigest messageDigest, byte[] valueToDigest) {

@@ -19,8 +19,8 @@ package org.jackhuang.hellominecraft.svrmgr.ui;
 
 import java.io.File;
 import javax.swing.table.DefaultTableModel;
-import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
+import org.jackhuang.hellominecraft.util.task.TaskWindow;
+import org.jackhuang.hellominecraft.util.net.FileDownloadTask;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.svrmgr.plugin.PluginInfo;
 import org.jackhuang.hellominecraft.svrmgr.plugin.PluginVersion;
@@ -234,7 +234,7 @@ public class PluginInfoDialog extends javax.swing.JDialog {
         TaskWindow.factory()
             .append(new FileDownloadTask(url, new File(Utilities.getGameDir() + "plugins"
                                                         + File.separator + pi.versions.get(index).filename)))
-            .create();
+            .execute();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

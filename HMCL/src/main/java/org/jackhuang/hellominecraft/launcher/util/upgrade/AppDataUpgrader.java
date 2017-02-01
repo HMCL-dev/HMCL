@@ -18,8 +18,6 @@
 package org.jackhuang.hellominecraft.launcher.util.upgrade;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -37,19 +35,19 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
 import java.util.zip.GZIPInputStream;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.MCUtils;
-import org.jackhuang.hellominecraft.util.tasks.Task;
-import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
+import org.jackhuang.hellominecraft.util.task.Task;
+import org.jackhuang.hellominecraft.util.task.TaskWindow;
+import org.jackhuang.hellominecraft.util.net.FileDownloadTask;
 import org.jackhuang.hellominecraft.util.ArrayUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.UpdateChecker;
 import org.jackhuang.hellominecraft.util.Utils;
 import org.jackhuang.hellominecraft.util.VersionNumber;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
-import org.jackhuang.hellominecraft.util.system.OS;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
+import org.jackhuang.hellominecraft.util.sys.OS;
 
 /**
  *
@@ -101,7 +99,7 @@ public class AppDataUpgrader extends IUpgrader {
     @Override
     public boolean call(Object sender, final VersionNumber number) {
         ((UpdateChecker) sender).requestDownloadLink().reg(map -> {
-            if (MessageBox.Show(C.i18n("update.newest_version") + number.firstVer + "." + number.secondVer + "." + number.thirdVer + "\n"
+            if (MessageBox.show(C.i18n("update.newest_version") + number.firstVer + "." + number.secondVer + "." + number.thirdVer + "\n"
                                 + C.i18n("update.should_open_link"),
                                 MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                 if (map != null && map.containsKey("pack"))
@@ -109,7 +107,7 @@ public class AppDataUpgrader extends IUpgrader {
                         String hash = null;
                         if (map.containsKey("packsha1"))
                             hash = map.get("packsha1");
-                        if (TaskWindow.factory().append(new AppDataUpgraderTask(map.get("pack"), number.version, hash)).create()) {
+                        if (TaskWindow.factory().append(new AppDataUpgraderTask(map.get("pack"), number.version, hash)).execute()) {
                             new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderTask.getSelf(number.version).getAbsolutePath() }).directory(new File(".")).start();
                             System.exit(0);
                         }
@@ -130,7 +128,7 @@ public class AppDataUpgrader extends IUpgrader {
                     } catch (URISyntaxException | IOException e) {
                         HMCLog.warn("Failed to browse uri: " + url, e);
                         Utils.setClipborad(url);
-                        MessageBox.Show(C.i18n("update.no_browser"));
+                        MessageBox.show(C.i18n("update.no_browser"));
                     }
                 }
         }).execute();
@@ -162,10 +160,10 @@ public class AppDataUpgrader extends IUpgrader {
         }
 
         @Override
-        public void executeTask() throws Exception {
+        public void executeTask(boolean areDependTasksSucceeded) throws Exception {
             HashMap<String, String> json = new HashMap<>();
             File f = getSelf(newestVersion);
-            if (!f.getParentFile().exists() && !f.getParentFile().mkdirs())
+            if (!FileUtils.makeDirectory(f.getParentFile()))
                 HMCLog.warn("Failed to make directories: " + f.getParent());
 
             for (int i = 0; f.exists(); i++)
@@ -173,8 +171,8 @@ public class AppDataUpgrader extends IUpgrader {
             if (!f.createNewFile())
                 HMCLog.warn("Failed to create new file: " + f);
 
-            try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(f))) {
-                Pack200.newUnpacker().unpack(new GZIPInputStream(new FileInputStream(tempFile)), jos);
+            try (JarOutputStream jos = new JarOutputStream(FileUtils.openOutputStream(f))) {
+                Pack200.newUnpacker().unpack(new GZIPInputStream(FileUtils.openInputStream(tempFile)), jos);
             }
             json.put("ver", newestVersion);
             json.put("loc", f.getAbsolutePath());

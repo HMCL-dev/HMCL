@@ -18,12 +18,10 @@
 package org.jackhuang.hellominecraft.svrmgr;
 
 import java.awt.Font;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.text.ParseException;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.util.ui.LogWindow;
 import org.jackhuang.hellominecraft.svrmgr.setting.SettingsManager;
 import org.jackhuang.hellominecraft.util.UpdateChecker;
@@ -56,17 +54,11 @@ public class Main {
             } catch (ParseException | UnsupportedLookAndFeelException ex) {
                 HMCLog.warn("Failed to set look and feel", ex);
             }
-            UPDATE_CHECKER.process(false).reg(t -> MessageBox.Show("发现更新！" + t.version)).execute();
+            UPDATE_CHECKER.process(false).reg(t -> MessageBox.show("发现更新！" + t.version)).execute();
             new MainWindow().setVisible(true);
         } catch (Throwable t) {
             HMCLog.err("There's something wrong when running server holder.", t);
-
-            LogWindow.INSTANCE.clean();
-            LogWindow.INSTANCE.warning("开服器崩溃了QAQ");
-            StringWriter trace = new StringWriter();
-            t.printStackTrace(new PrintWriter(trace));
-            LogWindow.INSTANCE.warning(trace.toString());
-            LogWindow.INSTANCE.setVisible(true);
+            LogWindow.INSTANCE.showAsCrashWindow(false);
 
             System.exit(-1);
         }

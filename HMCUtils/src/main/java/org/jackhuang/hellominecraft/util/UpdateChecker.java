@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hellominecraft.util;
 
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.net.NetUtils;
+import com.google.gson.JsonSyntaxException;
+import java.io.IOException;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import java.util.Map;
 
 /**
@@ -26,7 +29,7 @@ import java.util.Map;
  */
 public final class UpdateChecker implements IUpdateChecker {
 
-    public boolean OUT_DATED = false;
+    private volatile boolean outOfDate = false;
     public VersionNumber base;
     public String versionString;
     public String type;
@@ -39,9 +42,13 @@ public final class UpdateChecker implements IUpdateChecker {
 
     VersionNumber value;
 
+    public boolean isOutOfDate() {
+        return outOfDate;
+    }
+
     @Override
-    public OverridableSwingWorker<VersionNumber> process(final boolean showMessage) {
-        return new OverridableSwingWorker() {
+    public AbstractSwingWorker<VersionNumber> process(final boolean showMessage) {
+        return new AbstractSwingWorker<VersionNumber>() {
             @Override
             protected void work() throws Exception {
                 if (value == null) {
@@ -52,10 +59,10 @@ public final class UpdateChecker implements IUpdateChecker {
                 if (value == null) {
                     HMCLog.warn("Failed to check update...");
                     if (showMessage)
-                        MessageBox.Show(C.i18n("update.failed"));
+                        MessageBox.show(C.i18n("update.failed"));
                 } else if (VersionNumber.isOlder(base, value))
-                    OUT_DATED = true;
-                if (OUT_DATED)
+                    outOfDate = true;
+                if (outOfDate)
                     publish(value);
             }
         };
@@ -67,14 +74,14 @@ public final class UpdateChecker implements IUpdateChecker {
     }
 
     @Override
-    public synchronized OverridableSwingWorker<Map<String, String>> requestDownloadLink() {
-        return new OverridableSwingWorker() {
+    public synchronized AbstractSwingWorker<Map<String, String>> requestDownloadLink() {
+        return new AbstractSwingWorker<Map<String, String>>() {
             @Override
             protected void work() throws Exception {
                 if (download_link == null)
                     try {
-                        download_link = C.GSON.fromJson(NetUtils.get("http://huangyuhui.duapp.com/update_link.php?type=" + type), Map.class);
-                    } catch (Exception e) {
+                        download_link = C.GSON.<Map<String, String>>fromJson(NetUtils.get("http://huangyuhui.duapp.com/update_link.php?type=" + type), Map.class);
+                    } catch (JsonSyntaxException | IOException e) {
                         HMCLog.warn("Failed to get update link.", e);
                     }
                 publish(download_link);
@@ -82,11 +89,11 @@ public final class UpdateChecker implements IUpdateChecker {
         };
     }
 
-    public final EventHandler<VersionNumber> outdated = new EventHandler<>(this);
+    public final EventHandler<VersionNumber> outOfDateEvent = new EventHandler<>(this);
 
     @Override
     public void checkOutdate() {
-        if (OUT_DATED)
-            outdated.execute(getNewVersion());
+        if (outOfDate)
+            outOfDateEvent.execute(getNewVersion());
     }
 }

@@ -18,28 +18,23 @@ package org.jackhuang.hellominecraft.util.ui.wizard.spi;
 
 import javax.swing.*;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
- * A Wizard with indeterminate branches. The actual branch decision-making
- * is done by the WizardBranchController passed to the constructor.
+ * A Wizard with indeterminate branches. The actual branch decision-making is
+ * done by the WizardBranchController passed to the constructor.
  * <p/>
  * Wizards with arbitrary numbers of branches can be handled by a
- * WizardBranchController by returning wizards created by
- * another WizardBranchController's <code>createWizard()</code> method.
+ * WizardBranchController by returning wizards created by another
+ * WizardBranchController's <code>createWizard()</code> method.
  * <p/>
- * One important point: There should be no duplicate IDs between steps of
- * this wizard.
+ * One important point: There should be no duplicate IDs between steps of this
+ * wizard.
  *
  * @author Tim Boudreau
  */
-final class BranchingWizard implements WizardImplementation {
-
-    private final List listenerList = Collections.synchronizedList(
-        new LinkedList());
+final class BranchingWizard extends AbstractWizard {
 
     private final WizardBranchController brancher;
     final WizardImplementation initialSteps;
@@ -89,8 +84,8 @@ final class BranchingWizard implements WizardImplementation {
     private void setSecondary(WizardImplementation newSecondary) {
         /* johnflournoy added additional condition: secondary != this */
         if ((((subsequentSteps == null) != (newSecondary == null))
-             || (subsequentSteps != null && !subsequentSteps.equals(newSecondary)))
-            && !this.equals(newSecondary))
+                || (subsequentSteps != null && !subsequentSteps.equals(newSecondary)))
+                && !this.equals(newSecondary))
 
             /*
               * johnflournoy: only set the subsequent steps if it
@@ -102,6 +97,7 @@ final class BranchingWizard implements WizardImplementation {
             }
     }
 
+    @Override
     public int getForwardNavigationMode() {
         return activeWizard.getForwardNavigationMode();
     }
@@ -110,8 +106,7 @@ final class BranchingWizard implements WizardImplementation {
         if (activeWizard == wizard)
             return;
 
-        if (wizard == null)
-            throw new NullPointerException("Can't set current wizard to null");
+        Objects.requireNonNull(wizard, "Can't set current wizard to null");
 
         if ((activeWizard != null) && (wl != null))
             activeWizard.removeWizardObserver(wl);
@@ -124,10 +119,12 @@ final class BranchingWizard implements WizardImplementation {
         activeWizard.addWizardObserver(wl);
     }
 
+    @Override
     public final boolean isBusy() {
         return activeWizard.isBusy();
     }
 
+    @Override
     public final Object finish(Map settings) throws WizardException {
         try {
             Object result = activeWizard.finish(settings);
@@ -147,6 +144,7 @@ final class BranchingWizard implements WizardImplementation {
         }
     }
 
+    @Override
     public final String[] getAllSteps() {
         String[] result;
         if (subsequentSteps == null) {
@@ -164,10 +162,12 @@ final class BranchingWizard implements WizardImplementation {
         return result;
     }
 
+    @Override
     public String getCurrentStep() {
         return currStep;
     }
 
+    @Override
     public final String getNextStep() {
         String result;
         if (currStep == null)
@@ -177,8 +177,8 @@ final class BranchingWizard implements WizardImplementation {
             int idx = Arrays.asList(steps).indexOf(currStep);
             if (idx == -1)
                 throw new IllegalStateException("Current step not in"
-                                                + " available steps:  " + currStep + " not in "
-                                                + Arrays.asList(steps));
+                        + " available steps:  " + currStep + " not in "
+                        + Arrays.asList(steps));
             else if (idx == steps.length - 1)
                 if (subsequentSteps == null)
                     result = UNDETERMINED_STEP;
@@ -199,6 +199,7 @@ final class BranchingWizard implements WizardImplementation {
         return getProblem() == null ? result : UNDETERMINED_STEP.equals(result) ? result : null;
     }
 
+    @Override
     public final String getPreviousStep() {
         if (activeWizard == subsequentSteps && subsequentSteps.getAllSteps()[0].equals(currStep))
             return initialSteps.getAllSteps()[initialSteps.getAllSteps().length - 1];
@@ -206,10 +207,12 @@ final class BranchingWizard implements WizardImplementation {
             return activeWizard.getPreviousStep();
     }
 
+    @Override
     public final String getProblem() {
         return activeWizard.getProblem();
     }
 
+    @Override
     public final String getStepDescription(String id) {
         WizardImplementation w = ownerOf(id);
         if (w == null)
@@ -217,6 +220,7 @@ final class BranchingWizard implements WizardImplementation {
         return w.getStepDescription(id);
     }
 
+    @Override
     public final String getLongDescription(String id) {
         WizardImplementation w = ownerOf(id);
         if (w == null)
@@ -249,76 +253,63 @@ final class BranchingWizard implements WizardImplementation {
         }
     }
 
+    @Override
     public final String getTitle() {
         return activeWizard.getTitle();
     }
 
+    @Override
     public final JComponent navigatingTo(String id, Map settings) {
-        if (id == null)
-            throw new NullPointerException();
-        currStep = id;
+        currStep = Objects.requireNonNull(id);
         wizardData = settings;
 
-        WizardImplementation impl = ownerOf(id);
-        if (impl == null)
-            throw new NullPointerException("No owning WizardImplementation for"
-                                           + " id " + id);
+        WizardImplementation impl = Objects.requireNonNull(ownerOf(id), "No owning WizardImplementation for id " + id);
         setCurrent(impl);
 
         return activeWizard.navigatingTo(id, settings);
     }
 
+    @Override
     public final void removeWizardObserver(WizardObserver observer) {
         listenerList.remove(observer);
     }
 
+    @Override
     public final void addWizardObserver(WizardObserver observer) {
         listenerList.add(observer);
     }
 
     private void fireStepsChanged() {
-        WizardObserver[] listeners = (WizardObserver[]) listenerList.toArray(new WizardObserver[0]);
-
-        for (int i = listeners.length - 1; i >= 0; i--) {
-            WizardObserver l = (WizardObserver) listeners[i];
-            l.stepsChanged(null);
-        }
+        fireChanged(l -> l.stepsChanged(null));
     }
 
     private void fireNavigabilityChanged() {
         checkForSecondary();
-
-        WizardObserver[] listeners = (WizardObserver[]) listenerList.toArray(new WizardObserver[0]);
-
-        for (int i = listeners.length - 1; i >= 0; i--) {
-            WizardObserver l = (WizardObserver) listeners[i];
-            l.navigabilityChanged(null);
-        }
+        fireChanged(l -> l.navigabilityChanged(null));
     }
 
     private void fireSelectionChanged() {
-        WizardObserver[] listeners = (WizardObserver[]) listenerList.toArray(new WizardObserver[0]);
-
-        for (int i = listeners.length - 1; i >= 0; i--) {
-            WizardObserver l = (WizardObserver) listeners[i];
-            l.selectionChanged(null);
-        }
+        fireChanged(l -> l.selectionChanged(null));
     }
 
+    @Override
     public boolean cancel(Map settings) {
         return activeWizard == null ? true : activeWizard.cancel(settings);
     }
 
     private class WL implements WizardObserver {
 
+        @Override
         public void stepsChanged(Wizard wizard) {
             fireStepsChanged();
         }
 
+        @Override
         public void navigabilityChanged(Wizard wizard) {
             fireNavigabilityChanged();
         }
 
+        @Override
         public void selectionChanged(Wizard wizard) {
             fireSelectionChanged();
         }

@@ -10,14 +10,12 @@ enclosed by brackets [] replaced by your own identifying information:
 "Portions Copyrighted [year] [name of copyright owner]" */
 package org.jackhuang.hellominecraft.util.ui.wizard.spi;
 
-import java.awt.Rectangle;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import javax.swing.Action;
+import java.util.Objects;
 import javax.swing.JComponent;
-import org.jackhuang.hellominecraft.util.ui.wizard.api.WizardDisplayer;
 
 /**
  * Encapsulates the logic and state of a Wizard. A Wizard gathers information
@@ -121,9 +119,7 @@ public final class Wizard {
      * Creates a new instance of Wizard
      */
     Wizard(WizardImplementation impl) {
-        this.impl = impl;
-        if (impl == null)
-            throw new NullPointerException();
+        this.impl = Objects.requireNonNull(impl);
     }
 
     /**
@@ -285,8 +281,8 @@ public final class Wizard {
     }
 
     private volatile boolean listeningToImpl = false;
-    private final List listeners = Collections.synchronizedList(
-        new LinkedList());
+    private final List<WizardObserver> listeners = Collections.synchronizedList(
+        new LinkedList<>());
 
     private WizardObserver l = null;
 
@@ -321,6 +317,7 @@ public final class Wizard {
 
     private class ImplL implements WizardObserver {
 
+        @Override
         public void stepsChanged(Wizard wizard) {
             WizardObserver[] l = (WizardObserver[]) listeners.toArray(
                 new WizardObserver[listeners.size()]);
@@ -328,6 +325,7 @@ public final class Wizard {
                 l1.stepsChanged(Wizard.this);
         }
 
+        @Override
         public void navigabilityChanged(Wizard wizard) {
             WizardObserver[] l = (WizardObserver[]) listeners.toArray(
                 new WizardObserver[listeners.size()]);
@@ -335,6 +333,7 @@ public final class Wizard {
                 l1.navigabilityChanged(Wizard.this);
         }
 
+        @Override
         public void selectionChanged(Wizard wizard) {
             WizardObserver[] l = (WizardObserver[]) listeners.toArray(
                 new WizardObserver[listeners.size()]);
@@ -343,10 +342,12 @@ public final class Wizard {
         }
     }
 
+    @Override
     public int hashCode() {
         return impl.hashCode() * 17;
     }
 
+    @Override
     public boolean equals(Object o) {
         if (o == this)
             return true;
@@ -356,31 +357,4 @@ public final class Wizard {
             return false;
     }
 
-    /**
-     * Delegates to WizardDisplayer.showWizard()
-     */
-    public void show() {
-        WizardDisplayer.showWizard(this);
-    }
-
-    /**
-     * Delegates to WizardDisplayer.showWizard()
-     */
-    public Object show(Wizard wizard, Action help) {
-        return WizardDisplayer.showWizard(wizard, help);
-    }
-
-    /**
-     * Delegates to WizardDisplayer.showWizard()
-     */
-    public Object show(Wizard wizard, Rectangle r) {
-        return WizardDisplayer.showWizard(wizard, r);
-    }
-
-    /**
-     * Delegates to WizardDisplayer.showWizard()
-     */
-    public Object show(Wizard wizard, Rectangle r, Action help) {
-        return WizardDisplayer.showWizard(wizard, r, help, null);
-    }
 }

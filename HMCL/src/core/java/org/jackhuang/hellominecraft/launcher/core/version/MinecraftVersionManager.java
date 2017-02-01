@@ -25,14 +25,14 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
-import org.jackhuang.hellominecraft.util.system.FileUtils;
+import org.jackhuang.hellominecraft.util.sys.FileUtils;
 import org.jackhuang.hellominecraft.launcher.core.MCUtils;
-import org.jackhuang.hellominecraft.util.tasks.TaskWindow;
-import org.jackhuang.hellominecraft.util.system.IOUtils;
+import org.jackhuang.hellominecraft.util.task.TaskWindow;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.func.Consumer;
@@ -45,7 +45,7 @@ import org.jackhuang.hellominecraft.util.ui.SwingUtils;
  */
 public class MinecraftVersionManager extends IMinecraftProvider {
 
-    final Map<String, MinecraftVersion> versions = new TreeMap();
+    final Map<String, MinecraftVersion> versions = new TreeMap<>();
 
     /**
      *
@@ -100,12 +100,12 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                 }
                 if (ask) {
                     HMCLog.warn("Found not matched filenames version: " + id + ", json: " + jsons[0].getName());
-                    if (MessageBox.Show(String.format(C.i18n("launcher.versions_json_not_matched"), id, jsons[0].getName()), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+                    if (MessageBox.show(String.format(C.i18n("launcher.versions_json_not_matched"), id, jsons[0].getName()), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                         if (!jsons[0].renameTo(new File(jsons[0].getParent(), id + ".json")))
                             HMCLog.warn("Failed to rename version json " + jsons[0]);
                 }
                 if (!jsonFile.exists()) {
-                    if (MessageBox.Show(C.i18n("launcher.versions_json_not_matched_cannot_auto_completion", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+                    if (MessageBox.show(C.i18n("launcher.versions_json_not_matched_cannot_auto_completion", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                         FileUtils.deleteDirectoryQuietly(dir);
                     continue;
                 }
@@ -113,16 +113,16 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                 try {
                     mcVersion = C.GSON.fromJson(FileUtils.read(jsonFile), MinecraftVersion.class);
                     if (mcVersion == null)
-                        throw new GameException("Wrong json format, got null.");
-                } catch (Exception e) {
+                        throw new JsonSyntaxException("Wrong json format, got null.");
+                } catch (JsonSyntaxException | IOException e) {
                     HMCLog.warn("Found wrong format json, try to fix it.", e);
-                    if (MessageBox.Show(C.i18n("launcher.versions_json_not_formatted", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
+                    if (MessageBox.show(C.i18n("launcher.versions_json_not_formatted", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
                         service.download().downloadMinecraftVersionJson(id);
                         try {
                             mcVersion = C.GSON.fromJson(FileUtils.read(jsonFile), MinecraftVersion.class);
                             if (mcVersion == null)
-                                throw new GameException("Wrong json format, got null.");
-                        } catch (IOException | GameException | JsonSyntaxException ex) {
+                                throw new JsonSyntaxException("Wrong json format, got null.");
+                        } catch (IOException | JsonSyntaxException ex) {
                             HMCLog.warn("Ignoring: " + dir + ", the json of this Minecraft is malformed.", ex);
                             continue;
                         }
@@ -194,7 +194,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public boolean install(String id, Consumer<MinecraftVersion> callback) {
-        if (!TaskWindow.factory().append(service.download().downloadMinecraft(id)).create())
+        if (!TaskWindow.factory().append(service.download().downloadMinecraft(id)).execute())
             return false;
         if (callback != null) {
             File mvt = new File(versionRoot(id), id + ".json");
@@ -256,7 +256,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public boolean onLaunch(String id) {
         File resourcePacks = new File(getRunDirectory(id), "resourcepacks");
-        if (!resourcePacks.exists() && !resourcePacks.mkdirs())
+        if (!FileUtils.makeDirectory(resourcePacks))
             HMCLog.warn("Failed to make resourcePacks: " + resourcePacks);
         return true;
     }
@@ -278,6 +278,5 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public void initializeMiencraft() {
-
     }
 }

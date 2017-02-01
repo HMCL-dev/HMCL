@@ -17,49 +17,32 @@
  */
 package org.jackhuang.hellominecraft.util;
 
-import org.jackhuang.hellominecraft.util.logging.HMCLog;
-import com.sun.management.OperatingSystemMXBean;
+import java.awt.HeadlessException;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
-import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.AccessController;
+import java.security.PrivilegedExceptionAction;
 
 /**
  * @author huangyuhui
  */
 public final class Utils {
 
-    @SuppressWarnings("ResultOfObjectAllocationIgnored")
-    public static boolean isURL(String s) {
-        try {
-            new URL(s);
-            return true;
-        } catch (MalformedURLException ex) {
-            return false;
-        }
+    private Utils() {
     }
 
     public static URL[] getURL() {
         return ((URLClassLoader) Utils.class.getClassLoader()).getURLs();
     }
 
-    public static int getSuggestedMemorySize() {
-        try {
-            OperatingSystemMXBean osmb = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-            int memory = (int) (osmb.getTotalPhysicalMemorySize() / 1024 / 1024) / 4;
-            memory = Math.round((float) memory / 128.0f) * 128;
-            return memory;
-        } catch (Throwable t) {
-            HMCLog.warn("Failed to get total memory size, use 1024MB.", t);
-            return 1024;
-        }
-    }
-
     public static void setClipborad(String text) {
-        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text), null);
+        try {
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text), null);
+        } catch(HeadlessException ignored) {
+        }
     }
 
     /**
@@ -68,21 +51,12 @@ public final class Utils {
      * @param status exit code
      */
     public static void shutdownForcely(int status) throws Exception {
-        Class z = Class.forName("java.lang.Shutdown");
-        Method exit = z.getDeclaredMethod("exit", int.class);
-        exit.setAccessible(true);
-        exit.invoke(z, status);
-    }
-
-    public static void requireNonNull(Object o) {
-        if (o == null)
-            throw new NullPointerException("Oh dear, there is a problem...");
-    }
-
-    public static Object firstNonNull(Object... o) {
-        for (Object s : o)
-            if (s != null)
-                return s;
-        return null;
+        AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
+            Class<?> z = Class.forName("java.lang.Shutdown");
+            Method exit = z.getDeclaredMethod("exit", int.class);
+            exit.setAccessible(true);
+            exit.invoke(z, status);
+            return null;
+        });
     }
 }

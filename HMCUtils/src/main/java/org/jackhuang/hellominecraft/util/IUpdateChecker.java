@@ -49,13 +49,13 @@ public interface IUpdateChecker {
      *
      * @return the process observable.
      */
-    OverridableSwingWorker<VersionNumber> process(boolean showMessage);
+    AbstractSwingWorker<VersionNumber> process(boolean showMessage);
 
     /**
      * Get the download links.
      *
      * @return a JSON, which contains the server response.
      */
-    OverridableSwingWorker<Map<String, String>> requestDownloadLink();
+    AbstractSwingWorker<Map<String, String>> requestDownloadLink();
 
 }

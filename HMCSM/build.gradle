@@ -21,7 +21,7 @@ buildscript {
         mavenCentral();
         dependencies {
             classpath 'edu.sc.seis.gradle:launch4j:1.0.6'
-            classpath 'me.tatarka:gradle-retrolambda:3.1.0'
+            classpath 'me.tatarka:gradle-retrolambda:3.4.0'
         }
     }
 }
