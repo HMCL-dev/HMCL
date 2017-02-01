@@ -69,7 +69,7 @@ public class LogWindow extends javax.swing.JFrame {
         btnClose = new javax.swing.JButton();
         btnCopy = new javax.swing.JButton();
         lblCrash = new javax.swing.JLabel();
-        btnHomepage = new javax.swing.JButton();
+        btnMCBBS = new javax.swing.JButton();
         btnTieBa = new javax.swing.JButton();
         btnMCF = new javax.swing.JButton();
         btnTerminateGame = new javax.swing.JButton();
@@ -108,10 +108,10 @@ public class LogWindow extends javax.swing.JFrame {
 
         lblCrash.setText(C.i18n("ui.label.crashing")); // NOI18N
 
-        btnHomepage.setText(C.i18n("logwindow.homepage")); // NOI18N
-        btnHomepage.addActionListener(new java.awt.event.ActionListener() {
+        btnMCBBS.setText("MCBBS");
+        btnMCBBS.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnHomepageActionPerformed(evt);
+                btnMCBBSActionPerformed(evt);
             }
         });
 
@@ -156,7 +156,7 @@ public class LogWindow extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(btnTieBa)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnHomepage)
+                        .addComponent(btnMCBBS)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnMCF)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -184,7 +184,7 @@ public class LogWindow extends javax.swing.JFrame {
                     .addComponent(btnClear)
                     .addComponent(btnClose)
                     .addComponent(btnCopy)
-                    .addComponent(btnHomepage)
+                    .addComponent(btnMCBBS)
                     .addComponent(btnTieBa)
                     .addComponent(btnMCF)
                     .addComponent(btnTerminateGame)
@@ -209,9 +209,9 @@ public class LogWindow extends javax.swing.JFrame {
         Utils.setClipborad(this.txtLog.getText());
     }//GEN-LAST:event_btnCopyActionPerformed
 
-    private void btnHomepageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHomepageActionPerformed
+    private void btnMCBBSActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMCBBSActionPerformed
         SwingUtils.openLink(C.URL_PUBLISH);
-    }//GEN-LAST:event_btnHomepageActionPerformed
+    }//GEN-LAST:event_btnMCBBSActionPerformed
 
     private void btnTieBaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTieBaActionPerformed
         SwingUtils.openLink(C.URL_TIEBA);
@@ -284,7 +284,7 @@ public class LogWindow extends javax.swing.JFrame {
     @Override
     public void setVisible(boolean b) {
         lblCrash.setVisible(false);
-        btnHomepage.setVisible(false);
+        btnMCBBS.setVisible(false);
         btnTieBa.setVisible(false);
         btnMCF.setVisible(false);
         super.setVisible(b);
@@ -293,13 +293,13 @@ public class LogWindow extends javax.swing.JFrame {
     public void showAsCrashWindow(boolean out_date) {
         if (out_date) {
             lblCrash.setVisible(false);
-            btnHomepage.setVisible(false);
+            btnMCBBS.setVisible(false);
             btnTieBa.setVisible(false);
             btnMCF.setVisible(false);
             lblCrash.setText(C.i18n("ui.label.crashing_out_dated"));
         } else {
             lblCrash.setVisible(true);
-            btnHomepage.setVisible(true);
+            btnMCBBS.setVisible(true);
             btnTieBa.setVisible(true);
             btnMCF.setVisible(true);
             lblCrash.setText(C.i18n("ui.label.crashing"));
@@ -313,7 +313,7 @@ public class LogWindow extends javax.swing.JFrame {
     private javax.swing.JButton btnClose;
     private javax.swing.JButton btnCopy;
     private javax.swing.JButton btnGitHub;
-    private javax.swing.JButton btnHomepage;
+    private javax.swing.JButton btnMCBBS;
     private javax.swing.JButton btnMCF;
     private javax.swing.JButton btnTerminateGame;
     private javax.swing.JButton btnTieBa;

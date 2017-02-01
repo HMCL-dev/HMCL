@@ -19,8 +19,6 @@ package org.jackhuang.hellominecraft.util;
 
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -131,23 +129,6 @@ public final class NetUtils {
         con.disconnect();
         return result;
     }
-	
-	public static boolean download(String url, String saveFile) {
-		try {
-			int readCount = 0;
-			byte[] buffer = new byte[1204];
-			InputStream inputStream = new URL(url).openConnection().getInputStream();
-			FileOutputStream fs = new FileOutputStream(saveFile);
-			while ((readCount = inputStream.read(buffer)) != -1) {
-				fs.write(buffer, 0, readCount);
-			}
-			return true;
-		} catch (FileNotFoundException e) {
-			return false;
-		} catch (IOException e) {
-			return false;
-		}
-	}
 
     private static final String DEFAULT_CHARSET = "UTF-8";
 

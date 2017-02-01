@@ -19,28 +19,16 @@ package org.jackhuang.hellominecraft.util;
 
 import org.jackhuang.hellominecraft.util.logging.HMCLog;
 import java.util.Map;
-import org.jackhuang.hellominecraft.util.lang.SupportedLocales;
 
 /**
  *
  * @author huangyuhui
  */
 public final class UpdateChecker implements IUpdateChecker {
-	
-	public static final String VERSION_URL = "http://client.api.mcgogogo.com:81/version.php?type=";
-	public static final String UPDATE_LINK_URL = "http://client.api.mcgogogo.com:81/update_link.php?type=";
-	
+
     public boolean OUT_DATED = false;
-	
-	public String versionString;
     public VersionNumber base;
-    private VersionNumber value;
-	
-	private boolean isforceUpdate = false;
-	private boolean isManualUpdate = false;
-	
-	private String updateLog = null;
-	
+    public String versionString;
     public String type;
     private Map<String, String> download_link = null;
 
@@ -49,39 +37,26 @@ public final class UpdateChecker implements IUpdateChecker {
         this.type = type;
     }
 
+    VersionNumber value;
+
     @Override
     public OverridableSwingWorker<VersionNumber> process(final boolean showMessage) {
         return new OverridableSwingWorker() {
             @Override
             protected void work() throws Exception {
-				isManualUpdate = showMessage;
-		
                 if (value == null) {
-                    versionString = NetUtils.get(VERSION_URL + type + 
-							"&ver=" + base.toString() + 
-							"&lang=" + SupportedLocales.NOW_LOCALE.self);
-					
-					Map<String, Object> versionInfo = C.GSON.fromJson(versionString, Map.class);
-					if (versionInfo.containsKey("version"))
-						value = VersionNumber.check((String) versionInfo.get("version"));
-					if (versionInfo.containsKey("force"))
-						isforceUpdate = (boolean) versionInfo.get("force");
-					if (versionInfo.containsKey("log"))
-						updateLog = (String) versionInfo.get("log");
+                    versionString = NetUtils.get("http://huangyuhui.duapp.com/info.php?type=" + type);
+                    value = VersionNumber.check(versionString);
                 }
-				
+
                 if (value == null) {
                     HMCLog.warn("Failed to check update...");
-                    if (showMessage) {
+                    if (showMessage)
                         MessageBox.Show(C.i18n("update.failed"));
-					}
-                } else if (VersionNumber.isOlder(base, value)) {
+                } else if (VersionNumber.isOlder(base, value))
                     OUT_DATED = true;
-				}
-				
-                if (OUT_DATED) {
+                if (OUT_DATED)
                     publish(value);
-				}
             }
         };
     }
@@ -91,21 +66,6 @@ public final class UpdateChecker implements IUpdateChecker {
         return value;
     }
 
-	@Override
-	public boolean isForceUpdate() {
-		return isforceUpdate;
-	}
-
-	@Override
-	public boolean isManualUpdate() {
-		return isManualUpdate;
-	}
-
-	@Override
-	public String getUpdateLog() {
-		return updateLog;
-	}
-
     @Override
     public synchronized OverridableSwingWorker<Map<String, String>> requestDownloadLink() {
         return new OverridableSwingWorker() {
@@ -113,7 +73,7 @@ public final class UpdateChecker implements IUpdateChecker {
             protected void work() throws Exception {
                 if (download_link == null)
                     try {
-                        download_link = C.GSON.fromJson(NetUtils.get(UPDATE_LINK_URL + type), Map.class);
+                        download_link = C.GSON.fromJson(NetUtils.get("http://huangyuhui.duapp.com/update_link.php?type=" + type), Map.class);
                     } catch (Exception e) {
                         HMCLog.warn("Failed to get update link.", e);
                     }

@@ -27,7 +27,6 @@ buildscript {
             classpath 'net.sf.proguard:proguard-gradle:4.10'
             classpath 'edu.sc.seis.gradle:launch4j:1.0.6'
             classpath 'me.tatarka:gradle-retrolambda:3.1.0'
-			classpath 'com.google.code.gson:gson:2.2.4'
         }
     }
 }
@@ -39,7 +38,6 @@ plugins {
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
-import com.google.gson.JsonParser
 
 apply plugin: 'launch4j'
 apply plugin: 'me.tatarka.retrolambda'
@@ -48,46 +46,15 @@ if (!hasProperty('mainClass')) {
     ext.mainClass = 'org.jackhuang.hellominecraft.launcher.Main'
 }
 
-def readBuildNumber() {
-    def versionPropsFile = file('version.properties')
-    def Properties versionProps = new Properties()
-
-    if (versionPropsFile.canRead()) {
-        versionProps.load(new FileInputStream(versionPropsFile))
-        def code = versionProps['VERSION_CODE'].toInteger()
-        return code.toString()
-    } else {
-        versionPropsFile.createNewFile()
-
-        String url = 'https://api.travis-ci.org/repos/mclauncher/HMCL/branches'
-        def json = new JsonParser().parse(url.toURL().text);
-        if (json.has('branches') && json.get('branches').isJsonArray()) {
-            def branches = json.getAsJsonArray('branches')
-            if (branches != null && branches.size() > 0) {
-                def info = branches.get(0).getAsJsonObject()
-                def code = info.get('number').getAsInt().toString()
-                versionProps['VERSION_CODE'] = code
-                versionProps.store(versionPropsFile.newWriter(), null)
-                return code
-            }
-        }
-    }
-	return '233'
-}
-
-task cleanVersionFile << {
-    file("version.properties").delete()
-}
-
 def buildnumber = System.getenv("TRAVIS_BUILD_NUMBER")
 if (buildnumber == null)
     buildnumber = System.getenv("BUILD_NUMBER")
 if (buildnumber == null)
-    buildnumber = readBuildNumber()
-
-def versionroot = System.getenv("HMCL_VERSION_ROOT")
+    buildnumber = "233"
+    
+def versionroot = System.getenv("VERSION_ROOT")
 if (versionroot == null)
-    versionroot = "2.5.3"
+    versionroot = "2.4.1"
 
 String mavenGroupId = 'HMCL'
 String mavenVersion = versionroot + '.' + buildnumber
@@ -173,20 +140,22 @@ jar {
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     
     manifest {
-        attributes 'Created-By'        : 'Copyright(c) 2013-2016 HMCLSoft.',
+        attributes 'Created-By'        : 'Copyright(c) 2013-2016 huangyuhui.',
                    'Main-Class'        : mainClass
     }
 }
 
 launch4j {
-    supportUrl = 'http://www.hmclsoft.com'
+    launch4jCmd = 'D:\\Develop\\Java\\Launch4j\\launch4j.exe'
+    //launch4jCmd = '/home/huangyuhui/softwares/launch4j/launch4j'
+    supportUrl = 'http://www.mcbbs.net/thread-142335-1-1.html'
     jreMinVersion = '1.6.0'
     
     mainClassName = mainClass
     icon = new File(project.buildDir,  '../icon.ico').absolutePath
     version = mavenVersion
     downloadUrl = 'http://java.com/download'
-    copyright = "Copyright(c) 2013-2016 HMCLSoft."
+    copyright = "Copyright(c) 2013-2015 huangyuhui."
     
     jar = new File(project.buildDir, 'libs/' + mavenGroupId + '-' + mavenVersion + '.jar').absolutePath
     outfile = mavenGroupId + '-' + mavenVersion + '.exe'
@@ -199,7 +168,6 @@ processResources {
     }
 }
 
-build.dependsOn cleanVersionFile
 build.dependsOn makeExecutable
 build.dependsOn makePackGZ
 build.dependsOn macAppCompressed

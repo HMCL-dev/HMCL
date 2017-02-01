@@ -21,17 +21,13 @@ import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.lookandfeel.Theme;
 import org.jackhuang.hellominecraft.util.EventHandler;
-import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.VersionNumber;
 import org.jackhuang.hellominecraft.util.system.JdkVersion;
 import org.jackhuang.hellominecraft.util.system.OS;
 
@@ -69,52 +65,17 @@ public final class Config implements Cloneable {
     private String localization;
     @SerializedName("logintype")
     private int logintype;
-    @SerializedName("downloadSourcetype")
+    @SerializedName("downloadtype")
     private int downloadtype;
     @SerializedName("configurations")
     private TreeMap<String, Profile> configurations;
     @SerializedName("auth")
     @SuppressWarnings("FieldMayBeFinal")
     private Map<String, Map> auth;
-	@SerializedName("ignoreUpdateVersion")
-	private String ignoreUpdateVersion;
-	@SerializedName("ignoreRecommend")
-	private Set<String> ignoreRecommend;
 
-	public Set<String> getIgnoreRecommend() {
-		if (ignoreRecommend == null) {
-			ignoreRecommend = new HashSet<>();
-			Settings.save();
-		}
-		return ignoreRecommend;
-	}
-	
     public List<JdkVersion> getJava() {
         return java == null ? java = new ArrayList<>() : java;
     }
-	
-	public boolean ignoreUpdate(VersionNumber versionNumber) {
-		boolean ignore = false;
-		do
-		{
-			if (StrUtils.isBlank(ignoreUpdateVersion))
-				continue;
-			
-			VersionNumber ignoreVersion = VersionNumber.check(ignoreUpdateVersion);
-			if (ignoreVersion == null)
-				continue;
-			
-			if (versionNumber.compareTo(ignoreVersion) == 0)
-				ignore = true;
-			
-		} while(false);
-		return ignore;
-	}
-	
-	public void setIgnoreUpdate(VersionNumber versionNumber) {
-		ignoreUpdateVersion = versionNumber.toString();
-		Settings.save();
-	}
 
     public transient final EventHandler<Theme> themeChangedEvent = new EventHandler<>(this);
     public transient final EventHandler<DownloadType> downloadTypeChangedEvent = new EventHandler<>(this);
@@ -232,8 +193,7 @@ public final class Config implements Cloneable {
 
     public Config() {
         clientToken = UUID.randomUUID().toString();
-        logintype = 0;
-		downloadtype = DownloadType.Dynamic.ordinal();
+        logintype = downloadtype = 0;
         enableShadow = false;
         enableAnimation = true;
         theme = 4;
@@ -243,7 +203,7 @@ public final class Config implements Cloneable {
 
     public DownloadType getDownloadSource() {
         if (downloadtype >= DownloadType.values().length || downloadtype < 0) {
-            downloadtype = DownloadType.Dynamic.ordinal();
+            downloadtype = 0;
             Settings.save();
         }
         return DownloadType.values()[downloadtype];

@@ -31,122 +31,112 @@ import org.jackhuang.hellominecraft.util.StrUtils;
  */
 public class MinecraftLibrary extends IMinecraftLibrary {
 
-	@SerializedName("rules")
-	public ArrayList<Rules> rules;
-	@SerializedName("url")
-	public String url;
-	@SerializedName("natives")
-	public Natives natives;
-	@SerializedName("extract")
-	public Extract extract;
-	@SerializedName("downloads")
-	public LibrariesDownloadInfo downloads;
+    @SerializedName("rules")
+    public ArrayList<Rules> rules;
+    @SerializedName("url")
+    public String url;
+    @SerializedName("natives")
+    public Natives natives;
+    @SerializedName("extract")
+    public Extract extract;
+    @SerializedName("downloads")
+    public LibrariesDownloadInfo downloads;
 
-	public MinecraftLibrary(String name) {
-		super(name);
-	}
+    public MinecraftLibrary(String name) {
+        super(name);
+    }
 
-	public MinecraftLibrary(ArrayList<Rules> rules, String url, Natives natives, String name, Extract extract, LibraryDownloadInfo downloads) {
-		super(name);
-		this.rules = (rules == null) ? null : (ArrayList<Rules>) rules.clone();
-		this.url = url;
-		this.natives = (natives == null) ? null : (Natives) natives.clone();
-		this.extract = (extract == null) ? null : (Extract) extract.clone();
-	}
+    public MinecraftLibrary(ArrayList<Rules> rules, String url, Natives natives, String name, Extract extract, LibraryDownloadInfo downloads) {
+        super(name);
+        this.rules = rules == null ? null : (ArrayList<Rules>) rules.clone();
+        this.url = url;
+        this.natives = natives == null ? null : (Natives) natives.clone();
+        this.extract = extract == null ? null : (Extract) extract.clone();
+    }
 
-	@Override
-	public boolean allow() {
-		if (rules != null) {
-			boolean flag = false;
-			for (Rules r : rules) {
-				if ("disallow".equals(r.action())) {
-					return false;
-				} else if ("allow".equals(r.action())) {
-					flag = true;
-				}
-			}
-			return flag;
-		}
-		return true;
-	}
+    /**
+     * is the library allowed to load.
+     *
+     * @return
+     */
+    @Override
+    public boolean allow() {
+        if (rules != null) {
+            boolean flag = false;
+            for (Rules r : rules)
+                if ("disallow".equals(r.action()))
+                    return false;
+                else if ("allow".equals(r.action()))
+                    flag = true;
+            return flag;
+        } else
+            return true;
+    }
 
-	private String formatArch(String nati) {
-		return nati == null ? "" : nati.replace("${arch}", Platform.getPlatform().getBit());
-	}
+    private String formatArch(String nati) {
+        return nati == null ? "" : nati.replace("${arch}", Platform.getPlatform().getBit());
+    }
 
-	private String getNative() {
-		switch (OS.os()) {
-			case WINDOWS:
-				return formatArch(natives.windows);
-			case OSX:
-				return formatArch(natives.osx);
-			default:
-				return formatArch(natives.linux);
-		}
-	}
+    private String getNative() {
+        switch (OS.os()) {
+        case WINDOWS:
+            return formatArch(natives.windows);
+        case OSX:
+            return formatArch(natives.osx);
+        default:
+            return formatArch(natives.linux);
+        }
+    }
 
-	@Override
-	public boolean isRequiredToUnzip() {
-		return natives != null && allow();
-	}
+    @Override
+    public boolean isRequiredToUnzip() {
+        return natives != null && allow();
+    }
 
-	public String formatName() {
-		String[] s = name.split(":");
-		if (s.length < 3) {
-			return null;
-		}
+    public String formatName() {
+        String[] s = name.split(":");
+        if (s.length < 3)
+            return null;
+        StringBuilder sb = new StringBuilder(s[0].replace('.', '/')).append('/').append(s[1]).append('/').append(s[2]).append('/').append(s[1]).append('-').append(s[2]);
+        if (natives != null)
+            sb.append('-').append(getNative());
+        return sb.append(".jar").toString();
+    }
 
-		StringBuilder sb = new StringBuilder(s[0].replace('.', '/')).append('/').append(s[1]).append('/').append(s[2]).append('/').append(s[1]).append('-').append(s[2]);
-		if (natives != null) {
-			sb.append('-').append(getNative());
-		}
+    @Override
+    public File getFilePath(File gameDir) {
+        LibraryDownloadInfo info = getDownloadInfo();
+        if (info == null)
+            return null;
+        return new File(gameDir, "libraries/" + info.path);
+    }
 
-		return sb.append(".jar").toString();
-	}
+    @Override
+    public Extract getDecompressExtractRules() {
+        return extract == null ? new Extract() : extract;
+    }
 
-	@Override
-	public File getFilePath(File gameDir) {
-		LibraryDownloadInfo info = getDownloadInfo();
-		if (info == null) {
-			return null;
-		}
-		return new File(gameDir, "libraries/" + info.path);
-	}
-
-	@Override
-	public Extract getDecompressExtractRules() {
-		return extract == null ? new Extract() : extract;
-	}
-
-	public LibraryDownloadInfo getDownloadInfo() {
-		if (downloads == null) {
-			downloads = new LibrariesDownloadInfo();
-		}
-
-		LibraryDownloadInfo info = null;
-		if (natives != null) {
-			if (downloads.classifiers == null) {
-				downloads.classifiers = new HashMap<>();
-			}
-			if (!downloads.classifiers.containsKey(getNative())) {
-				downloads.classifiers.put(getNative(), info = new LibraryDownloadInfo());
-			} else {
-				info = downloads.classifiers.get(getNative());
-			}
-		} else if (downloads.artifact == null) {
-			downloads.artifact = info = new LibraryDownloadInfo();
-		} else {
-			info = downloads.artifact;
-		}
-
-		if (StrUtils.isBlank(info.path)) {
-			info.path = formatName();
-			if (info.path == null) {
-				return null;
-			}
-		}
-
-		info.forgeURL = this.url;
-		return info;
-	}
+    public LibraryDownloadInfo getDownloadInfo() {
+        if (downloads == null)
+            downloads = new LibrariesDownloadInfo();
+        LibraryDownloadInfo info;
+        if (natives != null) {
+            if (downloads.classifiers == null)
+                downloads.classifiers = new HashMap<>();
+            if (!downloads.classifiers.containsKey(getNative()))
+                downloads.classifiers.put(getNative(), info = new LibraryDownloadInfo());
+            else
+                info = downloads.classifiers.get(getNative());
+        } else if (downloads.artifact == null)
+            downloads.artifact = info = new LibraryDownloadInfo();
+        else
+            info = downloads.artifact;
+        if (StrUtils.isBlank(info.path)) {
+            info.path = formatName();
+            if (info.path == null)
+                return null;
+        }
+        info.forgeURL = this.url;
+        return info;
+    }
 }

@@ -27,7 +27,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="btnCheckUpdate" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="btnHomepage" min="-2" max="-2" attributes="0"/>
+                      <Component id="btnMCBBS" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="chkDecorated" min="-2" max="-2" attributes="0"/>
                   </Group>
@@ -127,11 +127,11 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="btnCheckUpdate" alignment="3" min="-2" pref="26" max="-2" attributes="0"/>
                   <Component id="chkDecorated" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="btnHomepage" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnMCBBS" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblRestart" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="116" max="32767" attributes="0"/>
+              <EmptySpace pref="65" max="32767" attributes="0"/>
               <Component id="lblModpack" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblAbout" min="-2" max="-2" attributes="0"/>
@@ -157,9 +157,12 @@
           <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="launcher.about" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
         <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
-          <Color id="&#x9ed8;&#x8ba4;&#x5149;&#x6807;"/>
+          <Color id="&#x624b;&#x578b;&#x5149;&#x6807;"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblAboutMouseClicked"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="btnSelBackgroundPath">
       <Properties>
@@ -345,15 +348,13 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JButton" name="btnHomepage">
+    <Component class="javax.swing.JButton" name="btnMCBBS">
       <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="launcher.homepage" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
-        </Property>
+        <Property name="text" type="java.lang.String" value="MCBBS"/>
         <Property name="toolTipText" type="java.lang.String" value=""/>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnHomepageActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnMCBBSActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>

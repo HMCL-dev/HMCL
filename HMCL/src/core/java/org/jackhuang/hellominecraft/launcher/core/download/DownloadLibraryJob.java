@@ -29,12 +29,10 @@ public class DownloadLibraryJob {
 
     public IMinecraftLibrary lib;
     public String url;
-	public String retryUrl;
     public File path;
 
-    public DownloadLibraryJob(IMinecraftLibrary n, String u, String retry, File p) {
+    public DownloadLibraryJob(IMinecraftLibrary n, String u, File p) {
         url = u;
-		retryUrl = retry;
         lib = n;
         path = IOUtils.tryGetCanonicalFile(p);
     }

@@ -86,23 +86,23 @@ public class MessageBox {
     /**
      * Show MsgBox with title and options
      *
-     * @param msg    The Message
-     * @param title  The title of MsgBox.
-     * @param optionType The type of MsgBox.
+     * @param Msg    The Message
+     * @param Title  The title of MsgBox.
+     * @param Option The type of MsgBox.
      *
      * @return user operation.
      */
-	public static int Show(Object msg, String title, int optionType) {
-		switch (optionType) {
+    public static int Show(String Msg, String Title, int Option) {
+        switch (Option) {
         case YES_NO_OPTION:
         case YES_NO_CANCEL_OPTION:
         case OK_CANCEL_OPTION:
-            return SwingUtils.invokeAndWait(() -> JOptionPane.showConfirmDialog(null, msg, title, optionType - 10));
+            return SwingUtils.invokeAndWait(() -> JOptionPane.showConfirmDialog(null, Msg, Title, Option - 10));
         default:
-            SwingUtils.invokeAndWait(() -> JOptionPane.showMessageDialog(null, msg, title, optionType));
+            SwingUtils.invokeAndWait(() -> JOptionPane.showMessageDialog(null, Msg, Title, Option));
         }
         return 0;
-	}
+    }
 
     /**
      * Show MsgBox with options
@@ -112,8 +112,8 @@ public class MessageBox {
      *
      * @return User Operation
      */
-    public static int Show(Object msg, int optionType) {
-        return Show(msg, TITLE, optionType);
+    public static int Show(String Msg, int Option) {
+        return Show(Msg, TITLE, Option);
     }
 
     /**
@@ -123,8 +123,8 @@ public class MessageBox {
      *
      * @return User Operation
      */
-    public static int Show(Object msg) {
-        return Show(msg, TITLE, INFORMATION_MESSAGE);
+    public static int Show(String Msg) {
+        return Show(Msg, TITLE, INFORMATION_MESSAGE);
     }
 
     public static int ShowLocalized(String msg) {

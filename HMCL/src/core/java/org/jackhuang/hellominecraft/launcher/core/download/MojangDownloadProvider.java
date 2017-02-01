@@ -41,32 +41,27 @@ public class MojangDownloadProvider extends IDownloadProvider {
     public InstallerVersionList getOptiFineInstaller() {
         return org.jackhuang.hellominecraft.launcher.core.install.optifine.vanilla.OptiFineVersionList.getInstance();
     }
-	
-	// jars
+
     @Override
     public String getLibraryDownloadURL() {
         return "https://libraries.minecraft.net";
     }
 
-	// jars
     @Override
     public String getVersionsDownloadURL() {
         return "http://s3.amazonaws.com/Minecraft.Download/versions/";
     }
-	
-	// resource
+
     @Override
     public String getIndexesDownloadURL() {
         return "http://s3.amazonaws.com/Minecraft.Download/indexes/";
     }
-	
-	// game versions json
+
     @Override
     public String getVersionsListDownloadURL() {
         return "https://launchermeta.mojang.com/mc/game/version_manifest.json";
     }
-	
-	// resource
+
     @Override
     public String getAssetsDownloadURL() {
         return "https://resources.download.minecraft.net/";
@@ -85,7 +80,7 @@ public class MojangDownloadProvider extends IDownloadProvider {
             return str.replace("http://files.minecraftforge.net/maven", "http://ftb.cursecdn.com/FTB2/maven/");
         else if (str.contains("typesafe") || str.contains("scala"))
             if (SupportedLocales.NOW_LOCALE.self == Locale.CHINA)
-                return str.replace("http://files.minecraftforge.net/maven", "http://maven.aliyun.com/nexus/content/groups/public");
+                return str.replace("http://files.minecraftforge.net/maven", "http://maven.oschina.net/content/groups/public");
             else
                 return str.replace("http://files.minecraftforge.net/maven", "http://repo1.maven.org/maven2");
         else

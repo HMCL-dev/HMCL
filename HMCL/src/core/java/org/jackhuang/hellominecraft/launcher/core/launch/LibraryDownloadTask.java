@@ -21,8 +21,6 @@ import java.io.File;
 import java.net.URL;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
-import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.func.Function;
 import org.jackhuang.hellominecraft.util.tasks.download.FileDownloadTask;
 
 /**
@@ -51,20 +49,12 @@ public class LibraryDownloadTask extends FileDownloadTask {
             if (s.length == 3 && s[2].length() > 3)
                 job.url = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + s[2].substring(0, s[2].length() - 3) + "/liteloader-" + s[2] + ".jar";
         }
-        download(new URL(job.url), job.retryUrl, job.path);
+        download(new URL(job.url), job.path);
     }
 
-    void download(URL url, String retryUrl, File filePath) throws Throwable {
+    void download(URL url, File filePath) throws Throwable {
         this.url = url;
         this.filePath = filePath;
-		if (StrUtils.isNotBlank(retryUrl)) {
-			this.failedCallbackReturnsNewURL = new Function<Integer, String>() {
-				@Override
-				public String apply(Integer t) {
-					return retryUrl;
-				}
-			};
-		}
         super.executeTask();
     }
 

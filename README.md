@@ -1,9 +1,10 @@
-# Hello Minecraft! Launcher [![Build Status](https://travis-ci.org/mclauncher/HMCL.svg?branch=master)](https://travis-ci.org/mclauncher/HMCL)
+# Hello Minecraft! Launcher [![Build Status](https://travis-ci.org/huanghongxun/HMCL.svg?branch=master)](https://travis-ci.org/huanghongxun/HMCL)
 开源协议为GPL v3, 详情参见http://www.gnu.org/licenses/gpl.html
 
 ## 介绍
 
 HMCL是一个Minecraft启动器，支持Mod管理，游戏定制，自动安装，整合包制作，界面主题定制等功能。
+并且一天的使用次数在工作日时有40万左右、节假日有150万左右的使用次数，也就是说日活跃用户在10万以上。
 但是本项目的代码不够完善，希望有更多的人能加入HMCL的开发。
 
 ## 贡献

@@ -118,7 +118,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
             this.url = IOUtils.parseURL(p.getResult());
 
         for (int repeat = 0; repeat < 6; repeat++) {
-            if (repeat > 0) {
+            if (repeat > 0)
                 if (failedCallbackReturnsNewURL != null) {
                     URL tmp = IOUtils.parseURL(failedCallbackReturnsNewURL.apply(repeat));
                     if (tmp != null) {
@@ -126,8 +126,6 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                         HMCLog.warn("Switch to: " + url);
                     }
                 }
-			}
-			
             HMCLog.log("Downloading: " + url + ", to: " + filePath);
             if (!shouldContinue)
                 break;
@@ -262,8 +260,4 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
         al.add(pr);
         return this;
     }
-
-	public void setFailedCallbackReturnsNewURL() {
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
 }

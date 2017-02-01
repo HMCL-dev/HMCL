@@ -17,15 +17,13 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.mod;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -62,8 +60,6 @@ public class ModInfo implements Comparable<ModInfo> {
     public String credits;
     @SerializedName("authorList")
     public String[] authorList;
-	@SerializedName("authors")
-	public String[] authors;
 
     public boolean isActive() {
         return !location.getName().endsWith(".disabled");
@@ -91,8 +87,6 @@ public class ModInfo implements Comparable<ModInfo> {
     public String getAuthor() {
         if (authorList != null && authorList.length > 0)
             return StrUtils.parseParams("", authorList, ", ");
-		else if (authors != null && authors.length > 0)
-			return StrUtils.parseParams("", authors, ", ");
         else if (StrUtils.isNotBlank(author))
             return author;
         else
@@ -129,30 +123,18 @@ public class ModInfo implements Comparable<ModInfo> {
         return name.endsWith(".zip") || name.endsWith(".jar") || name.endsWith("litemod");
     }
 
-    private static ModInfo getForgeModInfo(File f, ZipFile jar, ZipEntry entry) throws IOException {
-		ModInfo i = new ModInfo();
-		i.location = f;
+    private static final Type TYPE = new TypeToken<List<ModInfo>>() {
+    }.getType();
 
-		InputStreamReader streamReader = new InputStreamReader(jar.getInputStream(entry), "UTF-8");
-		
-		JsonParser parser = new JsonParser();
-		JsonElement element = parser.parse(streamReader);
-		List<ModInfo> m = null;
-		if (element.isJsonArray()) {
-			m = C.GSON.fromJson(element, new TypeToken<List<ModInfo>>(){}.getType());
-		} else if (element.isJsonObject()) {
-			JsonObject modInfo = element.getAsJsonObject();
-			if (modInfo.has("modList") && modInfo.get("modList").isJsonArray()) {
-				m = C.GSON.fromJson(modInfo.get("modList"), new TypeToken<List<ModInfo>>(){}.getType());
-			}
-		}
-		
-		if (m != null && m.size() > 0) {
-			i = m.get(0);
-			i.location = f;
-		}
-		
-		return i;
+    private static ModInfo getForgeModInfo(File f, ZipFile jar, ZipEntry entry) throws IOException {
+        ModInfo i = new ModInfo();
+        i.location = f;
+        List<ModInfo> m = C.GSON.fromJson(new InputStreamReader(jar.getInputStream(entry), "UTF-8"), TYPE);
+        if (m != null && m.size() > 0) {
+            i = m.get(0);
+            i.location = f;
+        }
+        return i;
     }
 
     private static ModInfo getLiteLoaderModInfo(File f, ZipFile jar, ZipEntry entry) throws IOException {

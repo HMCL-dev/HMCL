@@ -116,7 +116,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         cboLang = new javax.swing.JComboBox();
         lblLang = new javax.swing.JLabel();
         lblRestart = new javax.swing.JLabel();
-        btnHomepage = new javax.swing.JButton();
+        btnMCBBS = new javax.swing.JButton();
 
         cboDownloadSource.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -125,7 +125,12 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         });
 
         lblAbout.setText(C.i18n("launcher.about")); // NOI18N
-        lblAbout.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        lblAbout.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblAbout.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblAboutMouseClicked(evt);
+            }
+        });
 
         btnSelBackgroundPath.setText(C.i18n("ui.button.explore")); // NOI18N
         btnSelBackgroundPath.addActionListener(new java.awt.event.ActionListener() {
@@ -236,11 +241,11 @@ public class LauncherSettingsPanel extends AnimatedPanel {
 
         lblRestart.setText(C.i18n("launcher.restart")); // NOI18N
 
-        btnHomepage.setText(C.i18n("launcher.homepage")); // NOI18N
-        btnHomepage.setToolTipText("");
-        btnHomepage.addActionListener(new java.awt.event.ActionListener() {
+        btnMCBBS.setText("MCBBS");
+        btnMCBBS.setToolTipText("");
+        btnMCBBS.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnHomepageActionPerformed(evt);
+                btnMCBBSActionPerformed(evt);
             }
         });
 
@@ -258,7 +263,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(btnCheckUpdate)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnHomepage)
+                        .addComponent(btnMCBBS)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(chkDecorated))
                     .addGroup(layout.createSequentialGroup()
@@ -341,10 +346,10 @@ public class LauncherSettingsPanel extends AnimatedPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnCheckUpdate, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(chkDecorated)
-                    .addComponent(btnHomepage))
+                    .addComponent(btnMCBBS))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblRestart)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 116, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 65, Short.MAX_VALUE)
                 .addComponent(lblModpack, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblAbout, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -384,9 +389,8 @@ public class LauncherSettingsPanel extends AnimatedPanel {
     }//GEN-LAST:event_txtBackgroundPathFocusLost
 
     private void btnCheckUpdateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCheckUpdateActionPerformed
-        Settings.UPDATE_CHECKER.process(true)
-				.regDone(() -> { Settings.UPDATE_CHECKER.checkOutdate(); })
-				.execute();
+        Settings.UPDATE_CHECKER.process(true);
+        Settings.UPDATE_CHECKER.checkOutdate();
     }//GEN-LAST:event_btnCheckUpdateActionPerformed
 
     private void cboThemeItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboThemeItemStateChanged
@@ -394,7 +398,7 @@ public class LauncherSettingsPanel extends AnimatedPanel {
     }//GEN-LAST:event_cboThemeItemStateChanged
 
     private void lblModpackMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblModpackMouseClicked
-        SwingUtils.openLink("http://client.api.mcgogogo.com:81/link.php?type=modpack");
+        SwingUtils.openLink("http://huangyuhui.duapp.com/link.php?type=modpack");
     }//GEN-LAST:event_lblModpackMouseClicked
 
     private void cboLangItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboLangItemStateChanged
@@ -429,13 +433,17 @@ public class LauncherSettingsPanel extends AnimatedPanel {
         Settings.getInstance().setProxyPassword(txtProxyPassword.getText());
     }//GEN-LAST:event_txtProxyPasswordFocusLost
 
-    private void btnHomepageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHomepageActionPerformed
+    private void lblAboutMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblAboutMouseClicked
+        SwingUtils.openLink("http://huangyuhui.duapp.com/link.php?type=sponsor");
+    }//GEN-LAST:event_lblAboutMouseClicked
+
+    private void btnMCBBSActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMCBBSActionPerformed
         SwingUtils.openLink(C.URL_PUBLISH);
-    }//GEN-LAST:event_btnHomepageActionPerformed
+    }//GEN-LAST:event_btnMCBBSActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCheckUpdate;
-    private javax.swing.JButton btnHomepage;
+    private javax.swing.JButton btnMCBBS;
     private javax.swing.JButton btnSelBackgroundPath;
     private javax.swing.JComboBox cboDownloadSource;
     private javax.swing.JComboBox cboLang;

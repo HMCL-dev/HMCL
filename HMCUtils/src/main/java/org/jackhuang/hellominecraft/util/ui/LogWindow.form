@@ -36,7 +36,7 @@
                   <Group type="102" alignment="1" attributes="0">
                       <Component id="btnTieBa" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="btnHomepage" min="-2" max="-2" attributes="0"/>
+                      <Component id="btnMCBBS" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="btnMCF" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
@@ -68,7 +68,7 @@
                   <Component id="btnClear" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnClose" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnCopy" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="btnHomepage" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnMCBBS" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnTieBa" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnMCF" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnTerminateGame" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -117,14 +117,12 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JButton" name="btnHomepage">
+    <Component class="javax.swing.JButton" name="btnMCBBS">
       <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="logwindow.homepage" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
-        </Property>
+        <Property name="text" type="java.lang.String" value="MCBBS"/>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnHomepageActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnMCBBSActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JButton" name="btnTieBa">

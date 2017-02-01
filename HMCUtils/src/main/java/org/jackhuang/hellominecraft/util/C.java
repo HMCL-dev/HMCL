@@ -29,10 +29,10 @@ public final class C {
 
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    public static final String URL_PUBLISH = "http://www.hmclsoft.com";
-    public static final String URL_GITHUB = "https://github.com/mclauncher/HMCL/issues";
-	
+    //http://repo1.maven.org/maven2
+    public static final String URL_PUBLISH = "http://www.mcbbs.net/thread-142335-1-1.html";
     public static final String URL_TIEBA = "http://tieba.baidu.com/f?kw=hellominecraftlauncher";
+    public static final String URL_GITHUB = "https://github.com/huanghongxun/HMCL/issues";
     public static final String URL_MINECRAFTFORUM = "http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-tools/1265720-hello-minecraft-launcher-1-9-3-mc-1-7-4-auto";
 
     public static final String FILE_MINECRAFT_VERSIONS = "versions";

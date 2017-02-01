@@ -61,7 +61,7 @@ public class MainPagePanel extends AnimatedPanel {
 
     void initGui() {
         initComponents();
-		
+
         pnlButtons = new javax.swing.JPanel();
         pnlButtons.setLayout(null);
 
@@ -84,9 +84,6 @@ public class MainPagePanel extends AnimatedPanel {
         pnlMore.setBounds(0, 0, pnlMore.getWidth(), DEFAULT_HEIGHT);
         pnlMore.setBackground(GraphicsUtils.getWebColorWithAlpha("FFFFFF7F"));
         pnlMore.setOpaque(true);
-		
-		recommendPanel = new RecommendPanel();
-		contentPanel.add(recommendPanel);
 
         Settings.getInstance().authChangedEvent.register(onAuthChanged);
         Settings.profileLoadingEvent.register(onLoadingProfiles);
@@ -125,7 +122,6 @@ public class MainPagePanel extends AnimatedPanel {
         btnLogout = new javax.swing.JButton();
         btnImportModpack = new javax.swing.JButton();
         btnExportModpack = new javax.swing.JButton();
-        contentPanel = new javax.swing.JPanel();
 
         setLayout(null);
 
@@ -266,7 +262,7 @@ public class MainPagePanel extends AnimatedPanel {
                             .addComponent(lblVersion, javax.swing.GroupLayout.Alignment.TRAILING))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cboProfiles, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(cboProfiles, 0, 128, Short.MAX_VALUE)
                             .addComponent(cboVersions, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(pnlMoreLayout.createSequentialGroup()
                         .addGroup(pnlMoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -310,10 +306,6 @@ public class MainPagePanel extends AnimatedPanel {
 
         add(pnlMore);
         pnlMore.setBounds(0, 0, 190, 480);
-
-        contentPanel.setLayout(null);
-        add(contentPanel);
-        contentPanel.setBounds(220, 40, 540, 320);
     }// </editor-fold>//GEN-END:initComponents
 
     private void txtPlayerNameFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtPlayerNameFocusGained
@@ -434,8 +426,6 @@ public class MainPagePanel extends AnimatedPanel {
         super.onCreate();
         Settings.onProfileLoading();
     }
-	
-	private RecommendPanel recommendPanel;
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnExportModpack;
@@ -444,7 +434,6 @@ public class MainPagePanel extends AnimatedPanel {
     private javax.swing.JComboBox cboLoginMode;
     private javax.swing.JComboBox cboProfiles;
     private javax.swing.JComboBox cboVersions;
-    private javax.swing.JPanel contentPanel;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel9;
