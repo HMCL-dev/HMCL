@@ -113,7 +113,8 @@ public class GameDownloadPanel extends Page {
             StrUtils.equalsOne(ver.type, "old_beta", "old_alpha", "release", "snapshot") ? C.i18n("versions." + ver.type) : ver.type }))
                 .regDone(SwingUtils.invokeLater(() -> {
                     lstDownloads.requestFocus();
-                    model.removeRow(0);
+                    if (model.getRowCount() > 0)
+                        model.removeRow(0);
                 })).execute();
     }
 
