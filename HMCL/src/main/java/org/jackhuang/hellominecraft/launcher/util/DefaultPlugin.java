@@ -50,10 +50,13 @@ public class DefaultPlugin implements IPlugin {
         auths.add(new OfflineAuthenticator(clientToken));
         auths.add(new YggdrasilAuthenticator(clientToken));
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            for (IAuthenticator i : auths)
-                Settings.getInstance().setAuthenticatorConfig(i.id(), i.onSaveSettings());
-        }));
+        try {
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                for (IAuthenticator i : auths)
+                    Settings.getInstance().setAuthenticatorConfig(i.id(), i.onSaveSettings());
+            }));
+        } catch(IllegalStateException ignore) { // Shutdown in progress
+        }
         for (IAuthenticator i : auths) {
             i.onLoadSettings(Settings.getInstance().getAuthenticatorConfig(i.id()));
             apply.accept(i);
