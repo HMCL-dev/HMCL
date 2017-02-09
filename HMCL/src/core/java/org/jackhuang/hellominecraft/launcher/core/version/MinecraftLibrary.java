@@ -70,6 +70,8 @@ public class MinecraftLibrary extends IMinecraftLibrary {
     }
 
     private String getNative() {
+        if (natives == null)
+            return "";
         switch (OS.os()) {
             case WINDOWS:
                 return formatArch(natives.windows);
@@ -86,6 +88,8 @@ public class MinecraftLibrary extends IMinecraftLibrary {
     }
 
     public String formatName() {
+        if (name == null)
+            return null;
         String[] s = name.split(":");
         if (s.length < 3)
             return null;
@@ -110,6 +114,8 @@ public class MinecraftLibrary extends IMinecraftLibrary {
 
     @Override
     public LibraryDownloadInfo getDownloadInfo() {
+        if (name == null)
+            return null;
         if (downloads == null)
             downloads = new LibrariesDownloadInfo();
         LibraryDownloadInfo info;
@@ -120,7 +126,8 @@ public class MinecraftLibrary extends IMinecraftLibrary {
                 downloads.classifiers.put(getNative(), info = new LibraryDownloadInfo());
             else {
                 info = downloads.classifiers.get(getNative());
-                if (info == null) info = new LibraryDownloadInfo();
+                if (info == null)
+                    info = new LibraryDownloadInfo();
             }
         } else {
             if (downloads.artifact == null)

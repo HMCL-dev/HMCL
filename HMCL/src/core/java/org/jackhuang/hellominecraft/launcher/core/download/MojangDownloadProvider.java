@@ -80,7 +80,7 @@ public class MojangDownloadProvider extends IDownloadProvider {
             return str.replace("http://files.minecraftforge.net/maven", "http://ftb.cursecdn.com/FTB2/maven/");
         else if (str.contains("typesafe") || str.contains("scala"))
             if (SupportedLocales.NOW_LOCALE.self == Locale.CHINA)
-                return str.replace("http://files.minecraftforge.net/maven", "http://maven.oschina.net/content/groups/public");
+                return str.replace("http://files.minecraftforge.net/maven", "http://ftb.cursecdn.com/FTB2/maven/");
             else
                 return str.replace("http://files.minecraftforge.net/maven", "http://repo1.maven.org/maven2");
         else
