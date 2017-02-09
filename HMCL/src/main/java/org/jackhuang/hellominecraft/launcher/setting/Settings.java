@@ -32,6 +32,7 @@ import org.jackhuang.hellominecraft.util.EventHandler;
 import org.jackhuang.hellominecraft.util.sys.FileUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.UpdateChecker;
+import org.jackhuang.hellominecraft.util.sys.IOUtils;
 
 /**
  *
@@ -70,7 +71,7 @@ public final class Settings {
         Config c = new Config();
         if (SETTINGS_FILE.exists())
             try {
-                String str = FileUtils.read(SETTINGS_FILE);
+                String str = FileUtils.read(SETTINGS_FILE, IOUtils.DEFAULT_CHARSET);
                 if (str == null || str.trim().equals(""))
                     HMCLog.log("Settings file is empty, use the default settings.");
                 else {
@@ -92,7 +93,7 @@ public final class Settings {
 
     public static void save() {
         try {
-            FileUtils.write(SETTINGS_FILE, C.GSON.toJson(SETTINGS));
+            FileUtils.write(SETTINGS_FILE, C.GSON.toJson(SETTINGS), IOUtils.DEFAULT_CHARSET);
         } catch (IOException ex) {
             HMCLog.err("Failed to save config", ex);
         }
