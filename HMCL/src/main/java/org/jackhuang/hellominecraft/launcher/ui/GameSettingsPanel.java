@@ -91,6 +91,8 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
 
     void initGui() {
         initComponents();
+
+        dropTarget = new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
         setBackground(GraphicsUtils.getWebColorWithAlpha("FFFFFF7F"));
         setOpaque(true);
 
@@ -110,8 +112,6 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
 
         Settings.profileLoadingEvent.register(onLoadingProfiles);
         Settings.profileChangedEvent.register(onSelectedProfilesChanged);
-
-        dropTarget = new DropTarget(lstExternalMods, DnDConstants.ACTION_COPY_OR_MOVE, this);
     }
 
     void initExplorationMenu() {
@@ -241,11 +241,11 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
                 }
             }
         });
-        
+
         ((NewTabPane) tabVersionEdit).initializing = true;
         tabVersionEdit.addTab(C.i18n("settings.tabs.game_download"), pnlGameDownloads);
         ((NewTabPane) tabVersionEdit).initializing = false;
-        
+
         ((NewTabPane) tabInstallers).initializing = true;
         for (int i = 0; i < InstallerType.values().length; i++)
             tabInstallers.addTab(InstallerType.values()[i].getLocalizedName(), installerPanels[i]);
@@ -1222,23 +1222,13 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
     }
 
     //</editor-fold>
-    // <editor-fold defaultstate="collapsed" desc="Installer">
+    // <editor-fold defaultstate="collapsed" desc="Mod">
     String getMinecraftVersionFormatted() {
         return minecraftVersion == null ? "" : (StrUtils.formatVersion(minecraftVersion.version) == null) ? mcVersion : minecraftVersion.version;
     }
 
     @Override
     public void dragEnter(DropTargetDragEvent dtde) {
-        DataFlavor[] f = dtde.getCurrentDataFlavors();
-        if (f[0].match(DataFlavor.javaFileListFlavor))
-            try {
-                Transferable tr = dtde.getTransferable();
-                List<File> files = (List<File>) tr.getTransferData(DataFlavor.javaFileListFlavor);
-                for (File file : files)
-                    Settings.getLastProfile().service().mod().addMod(Settings.getLastProfile().getSelectedVersion(), file);
-            } catch (UnsupportedFlavorException | IOException ex) {
-                HMCLog.warn("Failed to drop file.", ex);
-            }
     }
 
     @Override
@@ -1255,6 +1245,18 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
 
     @Override
     public void drop(DropTargetDropEvent dtde) {
+        DataFlavor[] f = dtde.getCurrentDataFlavors();
+        if (f[0].match(DataFlavor.javaFileListFlavor))
+            try {
+                dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
+                Transferable tr = dtde.getTransferable();
+                List<File> files = (List<File>) tr.getTransferData(DataFlavor.javaFileListFlavor);
+                for (File file : files)
+                    Settings.getLastProfile().service().mod().addMod(Settings.getLastProfile().getSelectedVersion(), file);
+                reloadMods();
+            } catch (UnsupportedFlavorException | IOException ex) {
+                HMCLog.warn("Failed to drop file.", ex);
+            }
     }
 
     void refreshVersions() {
