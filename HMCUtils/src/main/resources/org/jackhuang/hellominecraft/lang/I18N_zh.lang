@@ -14,14 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see {http://www.gnu.org/licenses/}.
 #
-#author: huangyuhui
+#author: byStarTW
 launch.failed=啟動失敗
-launch.failed_creating_process=啟動失敗，在創建新進程時發生錯誤，可能是Java路徑錯誤。
+launch.failed_creating_process=啟動失敗，在新建新任務時發生錯誤，可能是 Java 路徑錯誤。
 launch.failed_sh_permission=為啟動資料添加權限時發生錯誤
 launch.failed_packing_jar=在打包jar時發生錯誤
 launch.unsupported_launcher_version=對不起，本啟動器現在可能不能啟動這個版本的Minecraft，但啟動器還是會嘗試啟動，請盡快將此問題報告給作者。
-launch.too_big_memory_alloc_64bit=您设置的内存大小过大，由于可能超过了32位Java的内存分配限制，所以可能无法启动游戏，请将内存调至1024MB或更小，启动器仍会尝试启动。
-launch.too_big_memory_alloc_free_space_too_low=您设置的内存大小过大，由于超过了系统内存大小%dMB，所以可能影响游戏体验或无法启动游戏，启动器仍会尝试启动。
+launch.too_big_memory_alloc_64bit=您設置的記憶體大小過大，由於可能超過了32位元Java的記憶體分配限制，所以可能無法啟動遊戲，請將記憶體調至1024MB或更小，啟動器仍會嘗試啟動。
+launch.too_big_memory_alloc_free_space_too_low=您設置的記憶體大小過大，由於超過了系統記憶體大小%dMB，所以可能影響遊戲體驗或無法啟動遊戲，啟動器仍會嘗試啟動。
 launch.cannot_create_jvm=截獲到無法創建Java虛擬機，可能是Java參數有問題，可以在設定中開啟無參數模式啟動。
 launch.circular_dependency_versions=發現遊戲版本循環引用，請確認您的客戶端未被修改或修改導致出現此問題。
 launch.not_finished_downloading_libraries=未完成遊戲依賴庫的下載，還要繼續啟動遊戲嗎？
@@ -32,10 +32,10 @@ launch.exited_abnormally=遊戲非正常退出，請查看日誌資料，或聯�
 launch.state.logging_in=登錄中
 launch.state.generating_launching_codes=正在生成啟動代碼
 launch.state.downloading_libraries=正在下載必要文件
-launch.state.decompressing_natives=正在釋放本地文件
+launch.state.decompressing_natives=正在釋放本地檔
 
 install.no_version=未找到要安裝的對應MC版本
-install.no_version_if_intall=未找到要安裝的對應MC版本，是否自动安装需要的MC版本？
+install.no_version_if_intall=未找到要安裝的對應MC版本，是否自動安裝需要的MC版本？
 install.not_refreshed=未刷新列表
 install.download_list=下載列表
 
@@ -48,7 +48,7 @@ install.forge.get_changelogs=獲取Forge更新記錄
 
 install.optifine.install=安裝OptiFine
 install.optifine.get_list=獲取OptiFine列表
-install.optifine.get_download_link=獲取OptiFine下载地址
+install.optifine.get_download_link=獲取OptiFine下載地址
 
 install.failed_forge=安裝Forge失敗
 install.failed_optifine=安裝OptiFine失敗
@@ -64,7 +64,7 @@ install.mcversion=遊戲版本
 install.time=時間
 install.release_time=釋放時間
 install.type=類型
-install.please_refresh=如需使用自动安装请点击右侧刷新按钮
+install.please_refresh=如需使用自動安裝請點擊右側刷新按鈕
 
 crash.launcher=啟動器崩潰了！
 crash.minecraft=Minecraft崩潰了！
@@ -78,19 +78,19 @@ login.wrong_password=可能是您的用戶名或密碼錯誤
 login.invalid_username=無效的用戶名
 login.invalid_uuid_and_username=無效的UUID和用戶名
 login.invalid_password=無效的密碼
-login.invalid_access_token=無效的訪問令牌
-login.changed_client_token=伺服器回應已經修改客戶端令牌
+login.invalid_access_token=無效的訪問權杖
+login.changed_client_token=伺服器回應已經修改客戶端權杖
 login.not_email=用戶名必須是郵箱
 login.type=登錄
 login.username=名字
-login.account=邮箱
+login.account=郵箱
 login.invalid_token=請嘗試登出並重新輸入密碼登錄
 login.no_valid_character=無有效的角色，自行到skinme.cc登陸並創建角色
 
-proxy.username=账戶
+proxy.username=賬戶
 proxy.password=密碼
-proxy.host=主机
-proxy.port=端口
+proxy.host=主機
+proxy.port=埠
 
 login.failed.connect_authentication_server=無法連接認證伺服器,可能是網絡問題
 
@@ -114,11 +114,11 @@ ui.more=更多
 
 crash.advice.UnsupportedClassVersionError=這可能是因為您的Java版本過於老舊，可以嘗試更換最新Java並在版本設定的Java路徑中設定.
 crash.advice.ConcurrentModificationException=這可能是因為您的Java版本高於Java 1.8.0_11導致的,可以嘗試卸載Java8安裝Java7。
-crash.advice.ClassNotFoundException=Minecraft不完整或Mod衝突，如果有未能下载的資料请下载成功后重试或是客户端损坏请重试请重新制作客户端或下載整合包解決問題，另可尝试游戏设定->（版本）管理->删除库资料解决问题
-crash.advice.NoSuchFieldError=Minecraft不完整或Mod衝突，如果有未能下载的資料请下载成功后重试或是客户端损坏请重试请重新制作客户端或下載整合包解決問題。
-crash.advice.LWJGLException=您的电脑不正常，可能需要使用驱动精灵或其他安装器更新显卡驱动。
+crash.advice.ClassNotFoundException=Minecraft不完整或Mod衝突，如果有未能下載的資料請下載成功後重試或是用戶端損壞請重試請重新製作用戶端或下載整合包解決問題，另可嘗試遊戲設定->（版本）管理->刪除庫資料解決問題
+crash.advice.NoSuchFieldError=Minecraft不完整或Mod衝突，如果有未能下載的資料請下載成功後重試或是用戶端損壞請重試請重新製作用戶端或下載整合包解決問題。
+crash.advice.LWJGLException=您的電腦不正常，可能需要使用驅動精靈或其他安裝器更新顯卡驅動。
 crash.advice.SecurityException=可能是您修改了minecraft.jar但未刪除META-INF資料夾的原因。請通過壓縮軟體刪除jar中的META-INF資料夾。
-crash.advice.OutOfMemoryError=内存溢出，您设置的Minecraft最大内存过小，请调大！
+crash.advice.OutOfMemoryError=記憶體溢出，您設置的Minecraft最大記憶體過小，請調大！
 crash.advice.otherwise=可能是Mod或其他問題。
 
 crash.advice.OpenGL=可能是顯卡/聲卡驅動問題，也可能是Mod導致的問題。
@@ -168,8 +168,8 @@ ui.message.first_load=請在左邊輸入您的賬號
 ui.message.enter_password=請在左邊輸入您的密碼
 ui.message.launching=啟動中
 ui.message.making=生成中
-ui.message.sure_remove=真的要删除配置%s吗？
-ui.message.update_java=请更新您的Java
+ui.message.sure_remove=真的要刪除配置%s嗎？
+ui.message.update_java=請更新您的Java
 
 ui.label.settings=選項
 ui.label.crashing=<html>Hello Minecraft! Launcher遇到了無法處理的錯誤，請複制下列內容並通過mcbbs、貼吧或Minecraft Forum反饋bug。 </html>
@@ -180,7 +180,7 @@ download=下載
 download.mojang=官方
 download.BMCL=BMCLAPI (bangbang93, http://bmclapi.bangbang93.com/)
 download.rapid_data=RapidData (銳網雲計算, https://www.rapiddata.org/)
-download.not_200=下載失敗，回复码
+download.not_200=下載失敗，回復碼
 download.failed=下載失敗
 download.successfully=下載完成
 download.source=下載源
@@ -210,22 +210,22 @@ settings.cannot_remove_default_config=不能刪除默認配置
 settings.max_memory=最大內存（MB）
 settings.java_dir=Java路徑
 settings.game_directory=遊戲路徑
-settings.dimension=游戏窗口分辨率
+settings.dimension=遊戲窗口解析度
 settings.fullscreen=全屏
 settings.update_version=更新版本資料
 settings.run_directory=運行路徑(版本隔離)
-settings.physical_memory=物理内存大小
-settings.choose_javapath=选择Java路径
+settings.physical_memory=實體記憶體大小
+settings.choose_javapath=選擇Java路徑
 settings.default=默認
 settings.custom=自定義
-settings.choose_gamedir=选择游戏路径
+settings.choose_gamedir=選擇遊戲路徑
 settings.failed_load=設定資料加載失敗，可能是升級了啟動器或被人工修改造成錯誤，是否清除？
 settings.test_game=測試遊戲
 
 modpack=懶人包
-modpack.choose=選擇要導入的遊戲懶人包資料，如果您希望更新懶人包，请输入要更新的版本名
+modpack.choose=選擇要導入的遊戲懶人包資料，如果您希望更新懶人包，請輸入要更新的版本名
 modpack.export_error=導出失敗，可能是您的遊戲資料夾格式不正確或操作資料失敗
-modpack.export_finished=懶人包導出完成，参见
+modpack.export_finished=懶人包導出完成，參見
 modpack.included_launcher=懶人包已包含啟動器，可直接發布
 modpack.not_included_launcher=懶人包未包含啟動器，可使用本軟件的導入懶人包功能導入懶人包
 modpack.enter_name=給遊戲起個你喜歡的名字
@@ -237,7 +237,7 @@ modpack.task.install.will=將會安裝懶人包：
 
 modpack.wizard=導出懶人包嚮導
 modpack.wizard.step.1=基本設定
-modpack.wizard.step.1.title=設置懶人包的主要信息
+modpack.wizard.step.1.title=設置懶人包的主要資訊
 modpack.wizard.step.initialization.include_launcher=包含啟動器
 modpack.wizard.step.initialization.exported_version=要導出的遊戲版本
 modpack.wizard.step.initialization.save=選擇要導出到的遊戲懶人包位置
@@ -249,17 +249,17 @@ modpack.wizard.step.3.title=描述你要製作的懶人包。
 
 modpack.desc=描述你要製作的懶人包，比如懶人包注意事項和更新記錄，支持Markdown(圖片請用網路圖片)。
 modpack.incorrect_format.no_json=懶人包格式錯誤，pack.json丟失
-modpack.incorrect_format.no_jar=懶人包格式錯誤，pack.json丟失jar字段
+modpack.incorrect_format.no_jar=懶人包格式錯誤，pack.json丟失jar欄位
 modpack.cannot_read_version=讀取遊戲版本失敗
-modpack.not_a_valid_location=不是一个有效懒人包位置
+modpack.not_a_valid_location=不是一個有效懶人包位置
 modpack.name=懶人包名稱
-modpack.not_a_valid_name=不是一个有效的懶人包名稱
+modpack.not_a_valid_name=不是一個有效的懶人包名稱
 
 modpack.files.servers_dat=多人遊戲伺服器列表
 modpack.files.saves=遊戲存檔
 modpack.files.mods=Mod
-modpack.files.config=Mod配置文件
-modpack.files.liteconfig=Mod配置文件
+modpack.files.config=Mod設定檔
+modpack.files.liteconfig=Mod設定檔
 modpack.files.resourcepacks=資源包(材質包)
 modpack.files.options_txt=遊戲設定
 modpack.files.optionsshaders_txt=光影設定
@@ -269,11 +269,11 @@ modpack.files.scripts=MineTweaker配置
 modpack.files.blueprints=BuildCraft藍圖
 
 mods=Mod管理
-mods.choose_mod=选择模组
-mods.failed=添加失败
+mods.choose_mod=選擇模組
+mods.failed=添加失敗
 mods.add=添加
 mods.remove=刪除
-mods.default_information=<html>您可以拖动mod到列表中来添加mod，同时使用删除键可快速删除选中mod<br>选择mod可以获取mod信息</html>
+mods.default_information=<html>您可以拖動mod到列表中來添加mod，同時使用刪除鍵可快速刪除選中mod<br>選擇mod可以獲取mod資訊</html>
 
 advancedsettings=高級設定
 advancedsettings.launcher_visible=啟動器可見性
@@ -301,25 +301,25 @@ mainwindow.enter_script_name=輸入要生成腳本的資料名
 mainwindow.make_launch_succeed=啟動腳本已生成完畢:
 mainwindow.no_version=未找到任何版本，是否進入遊戲下載？
 
-launcher.about=<html>默認背景圖感謝gamerteam提供。<br>關於作者：<br>百度ID：huanghongxun20<br>mcbbs：huanghongxun<br>Minecraft Forum ID: klkl6523<br>歡迎提交Bug哦<br/>Copyright (c) 2013-2016 huangyuhui.<br>免責聲明：Minecraft軟體版權歸Mojang AB所有，遊戲由於誤操作本啟動器而丟失數據的概不負責。<br>本啟動器在GPLv3協議下開源:http://github.com/huanghongxun/HMCL/ ,感谢issues和pull requests贡献者<br>本軟體使用了基於Apache License 2.0的Gson項目，感謝貢獻者。</html>
+launcher.about=<html>默認背景圖感謝gamerteam提供。<br>關於作者：<br>百度ID：huanghongxun20<br>mcbbs：huanghongxun<br>Minecraft Forum ID: klkl6523<br>歡迎提交Bug哦<br/>Copyright (c) 2013-2016 huangyuhui.<br>免責聲明：Minecraft軟體版權歸Mojang AB所有，遊戲由於誤操作本啟動器而丟失數據的概不負責。<br>本啟動器在GPLv3協議下開源:http://github.com/huanghongxun/HMCL/ ,感謝issues和pull requests貢獻者<br>本軟體使用了基於Apache License 2.0的Gson項目，感謝貢獻者。</html>
 launcher.download_source=下載源
 launcher.background_location=背景地址
 launcher.exit_failed=強制退出失敗，可能是Forge 1.7.10及更高版本導致的，無法解決。
 launcher.versions_json_not_matched=版本%s格式不規範！該版本資料夾下有json:%s，是否更名這個資料來規範格式？
-launcher.versions_json_not_matched_cannot_auto_completion=版本%s缺失必要的版本信息資料，是否删除该版本？
-launcher.versions_json_not_formatted=版本%s信息資料格式错误，是否重新下载？
+launcher.versions_json_not_matched_cannot_auto_completion=版本%s缺失必要的版本資訊資料，是否刪除該版本？
+launcher.versions_json_not_formatted=版本%s資訊資料格式錯誤，是否重新下載？
 launcher.choose_bgpath=選擇背景路徑
-launcher.background_tooltip=<html><body>啟動器默認使用自帶的背景<br />如果當前目錄有background.png，則會使用該資料作為背景<br />如果當前目錄有bg子目錄，則會隨機使用裡面的一張圖作為背景<br />如果該背景地址被修改，則會使用背景地址裡的一張圖作為背景<br />背景地址允許有多個地址，使用半角分號";"(不包含雙引號)分隔</body></html>
-launcher.update_launcher=检查更新
+launcher.background_tooltip=<html><body>啟動器默認使用自帶的背景<br />如果當前目錄有background.png，則會使用該資料作為背景<br />如果當前目錄有bg子目錄，則會隨機使用裡面的一張圖作為背景<br />如果該背景位址被修改，則會使用背景位址裡的一張圖作為背景<br />背景位址允許有多個位址，使用半形分號";"(不包含雙引號)分隔</body></html>
+launcher.update_launcher=檢查更新
 launcher.enable_shadow=啟用窗口陰影
 launcher.enable_animation=啟用動態效果
-launcher.enable_blur=啟用主界面模糊
-launcher.theme=主题
+launcher.enable_blur=啟用主介面模糊
+launcher.theme=主題
 launcher.proxy=代理
-launcher.decorated=啟用窗口邊框(Linux下可解決程序界面全灰問題)
-launcher.modpack=<html><a href="http://huangyuhui.duapp.com/link.php?type=modpack">整合包作者帮助</a></html>
+launcher.decorated=啟用視窗邊框(Linux下可解決程式介面全灰問題)
+launcher.modpack=<html><a href="http://huangyuhui.duapp.com/link.php?type=modpack">整合包作者幫助</a></html>
 launcher.lang=語言
-launcher.restart=本界面選項需要重啟本啟動器生效
+launcher.restart=本介面選項需要重啟本啟動器生效
 
 launcher.title.game=遊戲設定
 launcher.title.main=主頁
@@ -336,11 +336,11 @@ versions.manage.remove=刪除該版本
 versions.manage.remove.confirm=真的要刪除版本
 versions.manage.redownload_json=重新下載版本配置(minecraft.json)
 versions.manage.redownload_assets_index=重新下載資源配置(assets_index.json)
-versions.mamage.remove_libraries=刪除所有庫文件
+versions.mamage.remove_libraries=刪除所有庫檔
 
 advice.os64butjdk32=您的系統是64位的但是Java是32位的，推薦您安裝64位Java.
 
-assets.download_all=下载资源資料
+assets.download_all=下載資源資料
 assets.not_refreshed=資源列表未刷新，請刷新一次。
 assets.failed=獲取列表失敗，請刷新重試。
 assets.list.1_7_3_after=1.7.3及以後
@@ -362,7 +362,7 @@ taskwindow.file_name=任務
 taskwindow.download_progress=進度
 
 setupwindow.include_minecraft=導入遊戲資料夾
-setupwindow.find_in_configurations=導入完成，快到配置下拉框中找新遊戲路徑吧！
+setupwindow.find_in_configurations=導入完成，快到配置下拉清單中找新遊戲路徑吧！
 setupwindow.give_a_name=給新遊戲路徑起個名字吧
 setupwindow.new=新建
 setupwindow.no_empty_name=名字不可為空
@@ -376,13 +376,13 @@ update.found=(發現更新!)
 
 logwindow.terminate_game=結束遊戲進程
 logwindow.tieba=貼吧
-logwindow.title=日志
+logwindow.title=日誌
 
 selector.choose=選擇
 
 serverlistview.title=選擇伺服器
-serverlistview.name=名称
-serverlistview.type=类型
+serverlistview.name=名稱
+serverlistview.type=類型
 serverlistview.version=版本
 serverlistview.info=信息
 
@@ -413,7 +413,7 @@ wizard.help_mnemonic=幫
 wizard.close=關閉
 wizard.close_mnemonic=關
 wizard.summary=概要
-wizard.failed=失败
+wizard.failed=失敗
 wizard.steps=步驟
 
 lang=正體中文
