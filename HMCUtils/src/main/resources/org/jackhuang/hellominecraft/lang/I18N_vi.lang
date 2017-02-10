@@ -173,6 +173,7 @@ ui.label.settings=Cài đặt
 ui.label.crashing=<html>HMCL Minecraft Launcher đã bị crash!</html>
 ui.label.crashing_out_dated=<html>HL Minecraft Launcher đã bị crash! Và launcher của bạn không phải là phiên bản mới nhất. cập nhật nó đi!</html>
 ui.label.failed_set=Failed to set: 
+ui.message.open_jdk=We have found that you started this application using OpenJDK, which will cause so many troubles drawing the UI. We suggest you using Oracle JDK instead.
 
 download=Download
 download.mojang=Mojang

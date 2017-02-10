@@ -175,6 +175,7 @@ ui.label.settings=选项
 ui.label.crashing=<html>Hello Minecraft!遇到了无法处理的错误，请复制下列内容并通过mcbbs、贴吧、Github或Minecraft Forum反馈bug。</html>
 ui.label.crashing_out_dated=<html>Hello Minecraft! Launcher遇到了无法处理的错误，已检测到您的启动器不是最新版本，请更新后再试！</html>
 ui.label.failed_set=设置失败：
+ui.message.open_jdk=我们发现您正在使用OpenJDK，这会导致很多界面问题，我们建议您更换Oracle JDK。
 
 download=下载
 download.mojang=官方

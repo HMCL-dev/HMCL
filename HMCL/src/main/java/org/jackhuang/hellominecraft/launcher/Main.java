@@ -51,6 +51,7 @@ import org.jackhuang.hellominecraft.util.ui.MyRepaintManager;
 import org.jackhuang.hellominecraft.launcher.util.DefaultPlugin;
 import org.jackhuang.hellominecraft.lookandfeel.HelloMinecraftLookAndFeel;
 import org.jackhuang.hellominecraft.util.MathUtils;
+import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.lang.SupportedLocales;
 import org.jackhuang.hellominecraft.util.VersionNumber;
@@ -142,6 +143,10 @@ public final class Main implements Runnable {
                     SupportedLocales.NOW_LOCALE = sl;
                     Locale.setDefault(sl.self);
                 }
+            
+            if (System.getProperty("java.vm.name").contains("Open")) { // OpenJDK
+                MessageBox.showLocalized("ui.message.open_jdk");
+            }
 
             try {
                 LOOK_AND_FEEL = new HelloMinecraftLookAndFeel(Settings.getInstance().getTheme().settings);

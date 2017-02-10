@@ -170,6 +170,7 @@ ui.message.launching=Launching...
 ui.message.making=Generating...
 ui.message.sure_remove=Sure to remove profile %s?
 ui.message.update_java=Please upgrade your Java.
+ui.message.open_jdk=We have found that you started this application using OpenJDK, which will cause so many troubles drawing the UI. We suggest you using Oracle JDK instead.
 
 ui.label.settings=Settings
 ui.label.crashing=<html>Hello Minecraft! Launcher has crashed!</html>
