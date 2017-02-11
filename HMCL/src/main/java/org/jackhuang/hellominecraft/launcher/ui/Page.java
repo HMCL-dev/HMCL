@@ -20,6 +20,7 @@ package org.jackhuang.hellominecraft.launcher.ui;
 import java.awt.AlphaComposite;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
@@ -80,6 +81,8 @@ public class Page extends JPanel implements Selectable {
         });
     }
 
+    BufferedImage cache = null;
+
     @Override
     public void paint(Graphics g) {
         if (!(g instanceof Graphics2D)) {
@@ -91,18 +94,24 @@ public class Page extends JPanel implements Selectable {
             super.paint(g);
             return;
         }
+
+        if (offsetX == 0) {
+            cache = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2d = cache.createGraphics();
+            if (isOpaque()) {
+                g2d.setColor(getBackground());
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+            super.paint(g2d);
+            g2d.dispose();
+        }
         if (pgs > 1)
             pgs = 1;
         if (pgs < 0)
             pgs = 0;
-        Graphics2D g2 = (Graphics2D) g;
-        if (isOpaque()) {
-            g.setColor(getBackground());
-            g.fillRect(0, 0, getWidth(), getHeight());
-        } else
-            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, (float) (1 - pgs)));
-        g.translate((int) (pgs * 50), 0);
-        super.paint(g);
+        Graphics2D gg = (Graphics2D) g;
+        gg.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, (float) (1 - pgs)));
+        g.drawImage(cache, (int) (pgs * 50), 0, this);
     }
 
     double offsetX = ANIMATION_LENGTH;
