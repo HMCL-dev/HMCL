@@ -81,19 +81,15 @@ public final class Profile {
         return launcher;
     }
 
-    private transient final VersionSetting defaultVersionSetting = new VersionSetting();
-
     public VersionSetting getSelectedVersionSetting() {
-        VersionSetting vs = getVersionSetting(getSelectedVersion());
-        if (vs == null)
-            vs = defaultVersionSetting;
-        return vs;
+        return getVersionSetting(getSelectedVersion());
     }
 
     public VersionSetting getVersionSetting(String id) {
         VersionSetting vs = ((HMCLMinecraftService) service()).getVersionSetting(id);
         if (vs == null || vs.isUsesGlobal()) {
             global.isGlobal = true;
+            global.id = id;
             return global;
         } else
             return vs;

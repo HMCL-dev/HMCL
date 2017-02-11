@@ -90,8 +90,7 @@ public class VersionSetting {
     public transient final EventHandler<String> propertyChanged = new EventHandler<>(this);
 
     public VersionSetting() {
-        fullscreen = false;
-        usesGlobal = true;
+        fullscreen = usesGlobal = false;
         launcherVisibility = 1;
         gameDirType = 0;
         javaDir = java = minecraftArgs = serverIp = precalledCommand = wrapper = "";

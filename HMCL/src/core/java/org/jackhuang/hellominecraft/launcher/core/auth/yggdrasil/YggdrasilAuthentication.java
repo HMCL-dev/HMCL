@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.jackhuang.hellominecraft.util.ArrayUtils;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.util.net.NetUtils;
@@ -36,13 +37,14 @@ import org.jackhuang.hellominecraft.util.StrUtils;
 public class YggdrasilAuthentication {
 
     public static final Gson GSON = new GsonBuilder()
-        .registerTypeAdapter(GameProfile.class, new GameProfile.GameProfileSerializer())
-        .registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer())
-        .registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
+            .registerTypeAdapter(GameProfile.class, new GameProfile.GameProfileSerializer())
+            .registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer())
+            .registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
 
     protected static final String BASE_URL = "https://authserver.mojang.com/";
     protected static final URL ROUTE_AUTHENTICATE = NetUtils.constantURL(BASE_URL + "authenticate");
     protected static final URL ROUTE_REFRESH = NetUtils.constantURL(BASE_URL + "refresh");
+    protected static final URL ROUTE_VALIDATE = NetUtils.constantURL(BASE_URL + "validate");
 
     protected static final String STORAGE_KEY_ACCESS_TOKEN = "accessToken";
     protected static final String STORAGE_KEY_PROFILE_NAME = "displayName";
@@ -57,6 +59,7 @@ public class YggdrasilAuthentication {
     private final PropertyMap userProperties = new PropertyMap();
 
     private String userid, username, password, accessToken;
+    private UserType userType;
     private GameProfile selectedProfile;
     private GameProfile[] profiles;
     private boolean isOnline;
@@ -106,6 +109,10 @@ public class YggdrasilAuthentication {
         return this.accessToken;
     }
 
+    public String getClientToken() {
+        return clientToken;
+    }
+
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Log In/Out">
     public boolean canPlayOnline() {
@@ -130,21 +137,48 @@ public class YggdrasilAuthentication {
                     userid = username;
                 else
                     throw new AuthenticationException(C.i18n("login.invalid_uuid_and_username"));
-
-            loggedIn(ROUTE_REFRESH, new RefreshRequest(getAuthenticatedToken(), clientToken));
+            if (checkTokenValidity()) {
+                isOnline = true;
+                return;
+            }
+            logInImpl(ROUTE_REFRESH, new RefreshRequest(getAuthenticatedToken(), clientToken));
         } else if (StrUtils.isNotBlank(password))
-            loggedIn(ROUTE_AUTHENTICATE, new AuthenticationRequest(username, password, clientToken));
+            logInImpl(ROUTE_AUTHENTICATE, new AuthenticationRequest(username, password, clientToken));
         else
             throw new AuthenticationException(C.i18n("login.invalid_password"));
     }
 
-    private void loggedIn(URL url, Object input) throws AuthenticationException {
+    private void logInImpl(URL url, Object input) throws AuthenticationException {
+        Response response = makeRequest(url, input, Response.class);
+
+        if (!clientToken.equals(response.clientToken))
+            throw new AuthenticationException(C.i18n("login.changed_client_token"));
+
+        if (response.selectedProfile != null)
+            userType = UserType.byLegacy(response.selectedProfile.isLegacy());
+        else if (ArrayUtils.isNotEmpty(response.availableProfiles))
+            userType = UserType.byLegacy(response.availableProfiles[0].isLegacy());
+
+        User user = response.user;
+        userid = user != null && user.getId() != null ? user.getId() : username;
+
+        isOnline = true;
+        profiles = response.availableProfiles;
+        selectedProfile = response.selectedProfile;
+        userProperties.clear();
+        this.accessToken = response.accessToken;
+
+        if (user != null && user.getProperties() != null)
+            userProperties.putAll(user.getProperties());
+    }
+
+    protected <T extends Response> T makeRequest(URL url, Object input, Class<T> clazz)
+            throws AuthenticationException {
         try {
             String jsonResult = input == null ? NetUtils.get(url, proxy) : NetUtils.post(url, GSON.toJson(input), "application/json", proxy);
-            Response response = (Response) GSON.fromJson(jsonResult, Response.class);
-
+            T response = (T) GSON.fromJson(jsonResult, clazz);
             if (response == null)
-                throw new AuthenticationException("No valid response here");
+                return null;
 
             if (StrUtils.isNotBlank(response.error)) {
                 HMCLog.err("Failed to log in, the auth server returned an error: " + response.error + ", message: " + response.errorMessage + ", cause: " + response.cause);
@@ -153,22 +187,19 @@ public class YggdrasilAuthentication {
                 throw new AuthenticationException("Request error: " + response.errorMessage);
             }
 
-            if (!clientToken.equals(response.clientToken))
-                throw new AuthenticationException(C.i18n("login.changed_client_token"));
-
-            User user = response.user;
-            userid = user != null && user.getId() != null ? user.getId() : username;
-
-            isOnline = true;
-            profiles = response.availableProfiles;
-            selectedProfile = response.selectedProfile;
-            userProperties.clear();
-            this.accessToken = response.accessToken;
-
-            if (user != null && user.getProperties() != null)
-                userProperties.putAll(user.getProperties());
+            return response;
         } catch (IOException | IllegalStateException | JsonParseException e) {
             throw new AuthenticationException(C.i18n("login.failed.connect_authentication_server"), e);
+        }
+    }
+
+    protected boolean checkTokenValidity() {
+        ValidateRequest request = new ValidateRequest(this);
+        try {
+            makeRequest(ROUTE_VALIDATE, request, Response.class);
+            return true;
+        } catch (AuthenticationException ex) {
+            return false;
         }
     }
 
@@ -207,9 +238,9 @@ public class YggdrasilAuthentication {
             }
 
             this.accessToken = (String) credentials.get(STORAGE_KEY_ACCESS_TOKEN);
-        } catch(Exception e) {
+        } catch (Exception e) {
             HMCLog.err("Failed to load yggdrasil authenticator settings, maybe its format is malformed.", e);
-            
+
             logOut();
         }
     }

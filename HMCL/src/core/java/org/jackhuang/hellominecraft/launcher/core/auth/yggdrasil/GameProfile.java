@@ -34,6 +34,7 @@ public class GameProfile {
     public final UUID id;
     public final String name;
     public final PropertyMap properties = new PropertyMap();
+    private boolean legacy;
 
     public GameProfile(UUID id, String name) {
         if (id == null && StrUtils.isBlank(name))
@@ -45,6 +46,10 @@ public class GameProfile {
 
     public boolean isComplete() {
         return id != null && StrUtils.isNotBlank(name);
+    }
+
+    public boolean isLegacy() {
+        return legacy;
     }
 
     @Override

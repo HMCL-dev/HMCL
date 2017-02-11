@@ -37,7 +37,7 @@ public class LibraryDownloadInfo extends GameDownloadInfo {
     public String getUrl(DownloadType dt, boolean allowSelf) {
         String myURL = (forgeURL == null ? dt.getProvider().getLibraryDownloadURL() : forgeURL);
         if (StrUtils.isNotBlank(url) && allowSelf)
-            myURL = url;
+            myURL = dt.getProvider().getParsedDownloadURL(url);
         if (!myURL.endsWith(".jar"))
             if (path == null)
                 return null;
