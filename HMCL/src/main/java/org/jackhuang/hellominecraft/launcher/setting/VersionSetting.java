@@ -39,7 +39,10 @@ import org.jackhuang.hellominecraft.util.sys.OS;
 public class VersionSetting {
 
     public transient String id;
+    public transient boolean isGlobal = false;
 
+    @SerializedName("usesGlobal")
+    private boolean usesGlobal;
     @SerializedName("javaArgs")
     private String javaArgs;
     @SerializedName("minecraftArgs")
@@ -88,6 +91,7 @@ public class VersionSetting {
 
     public VersionSetting() {
         fullscreen = false;
+        usesGlobal = true;
         launcherVisibility = 1;
         gameDirType = 0;
         javaDir = java = minecraftArgs = serverIp = precalledCommand = wrapper = "";
@@ -275,6 +279,15 @@ public class VersionSetting {
     public void setNotCheckGame(boolean notCheckGame) {
         this.notCheckGame = notCheckGame;
         propertyChanged.execute("notCheckGame");
+    }
+
+    public boolean isUsesGlobal() {
+        return usesGlobal;
+    }
+
+    public void setUsesGlobal(boolean usesGlobal) {
+        this.usesGlobal = usesGlobal;
+        propertyChanged.execute("usesGlobal");
     }
 
     public LaunchOptions createLaunchOptions(File gameDir) {

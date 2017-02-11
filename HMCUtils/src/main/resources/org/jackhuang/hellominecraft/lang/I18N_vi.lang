@@ -221,6 +221,9 @@ settings.choose_gamedir=Chọn thư mục game
 settings.failed_load=Đọc file cấu hình thất bại. Xóa nó không?
 settings.test_game=Chạy thử game
 
+settings.type.global=<html><a href="">Click here to switch to version specialized setting. Now it is global setting.</a></html>
+settings.type.special=<html><a href="">Click here to switch to global setting. Not it is version specialized setting.</a></html>
+
 modpack=Mod pack
 modpack.choose=Chọn modpack zip file mà bạn muốn nhập vào. Nếu bạn muốn cập nhật phiên bản của modpack, Hãy nhập vào phiên bản bạn muốn cập nhật.
 modpack.export_error=Xuất modpack ra thất bại, có thể định dạng của thư mục chứa dữ liệu bị sai hoặc không thể quản lý file.

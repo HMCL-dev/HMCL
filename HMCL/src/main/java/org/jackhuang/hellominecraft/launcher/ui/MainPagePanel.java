@@ -533,7 +533,6 @@ public class MainPagePanel extends Page {
                 model.setSelectedItem(selectedVersion);
                 break;
             }
-        cboVersions.setToolTipText(selectedVersion);
         isLoading = false;
     }
 

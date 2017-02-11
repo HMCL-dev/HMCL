@@ -56,6 +56,7 @@ import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.launcher.setting.VersionSetting;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.AbstractSwingWorker;
+import org.jackhuang.hellominecraft.util.Event;
 import org.jackhuang.hellominecraft.util.MinecraftVersionRequest;
 import org.jackhuang.hellominecraft.util.sys.OS;
 import org.jackhuang.hellominecraft.util.StrUtils;
@@ -323,6 +324,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         btnShowLog = new javax.swing.JButton();
         btnMakeLaunchScript = new javax.swing.JButton();
         btnIncludeMinecraft = new javax.swing.JButton();
+        lblUsesGlobal = new javax.swing.JLabel();
 
         setBackground(new java.awt.Color(255, 255, 255));
         setOpaque(false);
@@ -513,7 +515,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
                     .addComponent(lblDimensionX, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lblDimension)
                     .addComponent(txtWidth, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 99, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 60, Short.MAX_VALUE)
                 .addGroup(pnlSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnDownloadAllAssets)
                     .addComponent(btnCleanGame))
@@ -644,7 +646,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
                 .addComponent(lblServerIP)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtServerIP, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 39, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(chkNoJVMArgs)
                     .addComponent(chkDontCheckGame))
@@ -709,7 +711,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnRemoveMod)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 299, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 259, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblModInfo))
         );
@@ -905,22 +907,33 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
             }
         });
 
+        lblUsesGlobal.setText("jLabel1");
+        lblUsesGlobal.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblUsesGlobal.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblUsesGlobalMouseClicked(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(pnlTop, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(tabVersionEdit)
-                    .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(tabVersionEdit, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(btnMakeLaunchScript)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnShowLog)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnTestGame)))
+                        .addComponent(btnTestGame))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblUsesGlobal)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
@@ -933,6 +946,8 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
             .addGroup(layout.createSequentialGroup()
                 .addComponent(pnlTop, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblUsesGlobal)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tabVersionEdit)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -942,7 +957,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
                 .addContainerGap())
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                    .addContainerGap(447, Short.MAX_VALUE)
+                    .addContainerGap(421, Short.MAX_VALUE)
                     .addComponent(btnIncludeMinecraft)
                     .addContainerGap()))
         );
@@ -1183,6 +1198,16 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         loadVersions();
     }//GEN-LAST:event_txtGameDirFocusLost
 
+    private void lblUsesGlobalMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblUsesGlobalMouseClicked
+        if (mcVersion == null)
+            return;
+        Profile profile = Settings.getLastProfile();
+        if (profile.isVersionSettingGlobe(mcVersion))
+            profile.makeVersionSettingSpecial(mcVersion);
+        else
+            profile.makeVersionSettingGlobal(mcVersion);
+    }//GEN-LAST:event_lblUsesGlobalMouseClicked
+
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Load">
     void prepareVersionSetting(VersionSetting profile) {
@@ -1375,6 +1400,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
     private javax.swing.JLabel lblProfile;
     private javax.swing.JLabel lblRunDirectory;
     private javax.swing.JLabel lblServerIP;
+    private javax.swing.JLabel lblUsesGlobal;
     private javax.swing.JLabel lblVersions;
     private javax.swing.JTable lstExternalMods;
     private javax.swing.JPanel pnlAdvancedSettings;
@@ -1449,6 +1475,8 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         reloadMods();
         prepareVersionSetting(Settings.getLastProfile().getVersionSetting(version));
         loadMinecraftVersion(version);
+
+        lblUsesGlobal.setText(C.i18n(Settings.getLastProfile().isVersionSettingGlobe(version) ? "settings.type.global" : "settings.type.special"));
         for (InstallerPanel p : installerPanels)
             p.loadVersions();
         isLoading = false;

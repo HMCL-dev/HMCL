@@ -72,7 +72,6 @@ public final class Config implements Cloneable {
     @SerializedName("configurations")
     private TreeMap<String, Profile> configurations;
     @SerializedName("auth")
-    @SuppressWarnings("FieldMayBeFinal")
     private Map<String, Map> auth;
 
     public List<JdkVersion> getJava() {
@@ -130,7 +129,6 @@ public final class Config implements Cloneable {
         Settings.save();
     }
 
-    
     /**
      * Last selected profile name.
      */

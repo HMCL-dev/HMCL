@@ -93,7 +93,17 @@ public class HMCLMinecraftService extends IMinecraftService {
                 }
         }
         if (vs == null)
-            vs = new VersionSetting();
+            return;
+        initVersionSetting(id, vs);
+    }
+
+    public void createVersionSetting(String id) {
+        if (provider.getVersionById(id) == null || versionSettings.containsKey(id))
+            return;
+        initVersionSetting(id, new VersionSetting());
+    }
+
+    private void initVersionSetting(String id, VersionSetting vs) {
         vs.id = id;
         vs.propertyChanged.register((sender, t) -> {
             saveVersionSetting(((VersionSetting) sender).id);

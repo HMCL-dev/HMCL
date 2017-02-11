@@ -223,6 +223,9 @@ settings.choose_gamedir=选择游戏路径
 settings.failed_load=设置文件加载失败，可能是升级了启动器或被人工修改造成错误，是否清除？
 settings.test_game=测试游戏
 
+settings.type.global=<html><a href="">点击此处切换为版本特定设置。该版本正在使用全局设置，修改以下设置会影响到其他使用全局设置的版本</a></html>
+settings.type.special=<html><a href="">点击此处切换为全局设置。该版本正在使用版本特定设置，修改以下设置不会影响到其他版本设置</a></html>
+
 modpack=整合包
 modpack.choose=选择要导入的游戏整合包文件，如果您希望更新整合包，请输入要更新的版本名
 modpack.export_error=导出失败，可能是您的游戏文件夹格式不正确或操作文件失败

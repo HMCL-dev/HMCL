@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.setting;
 
+import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hellominecraft.launcher.util.HMCLGameLauncher;
 import org.jackhuang.hellominecraft.launcher.util.HMCLMinecraftService;
 import java.io.File;
@@ -35,7 +36,14 @@ import org.jackhuang.hellominecraft.util.sys.OS;
  */
 public final class Profile {
 
-    private String name, selectedMinecraftVersion = "", gameDir;
+    @SerializedName("name")
+    private String name;
+    @SerializedName("selectedMinecraftVersion")
+    private String selectedMinecraftVersion = "";
+    @SerializedName("gameDir")
+    private String gameDir;
+    @SerializedName("global")
+    private VersionSetting global;
 
     private transient IMinecraftService service;
     private transient HMCLGameLauncher launcher = new HMCLGameLauncher(this);
@@ -52,6 +60,7 @@ public final class Profile {
     public Profile(String name, String gameDir) {
         this.name = name;
         this.gameDir = gameDir;
+        this.global = new VersionSetting();
     }
 
     public Profile(String name, Profile v) {
@@ -82,7 +91,42 @@ public final class Profile {
     }
 
     public VersionSetting getVersionSetting(String id) {
-        return ((HMCLMinecraftService) service()).getVersionSetting(id);
+        VersionSetting vs = ((HMCLMinecraftService) service()).getVersionSetting(id);
+        if (vs == null || vs.isUsesGlobal()) {
+            global.isGlobal = true;
+            return global;
+        } else
+            return vs;
+    }
+    
+    public boolean isVersionSettingGlobe(String id) {
+        VersionSetting vs = ((HMCLMinecraftService) service()).getVersionSetting(id);
+        return vs == null || vs.isUsesGlobal();
+    }
+
+    public void makeVersionSettingSpecial(String id) {
+        HMCLMinecraftService s = (HMCLMinecraftService) service();
+        VersionSetting vs = s.getVersionSetting(id);
+        if (vs == null) {
+            s.createVersionSetting(id);
+            vs = s.getVersionSetting(id);
+            if (vs == null)
+                return;
+            vs.setUsesGlobal(false);
+        } else
+            vs.setUsesGlobal(false);
+        propertyChanged.execute("selectedMinecraftVersion");
+        selectedVersionChangedEvent.execute(selectedMinecraftVersion);
+    }
+
+    public void makeVersionSettingGlobal(String id) {
+        HMCLMinecraftService s = (HMCLMinecraftService) service();
+        VersionSetting vs = s.getVersionSetting(id);
+        if (vs == null)
+            return;
+        vs.setUsesGlobal(true);
+        propertyChanged.execute("selectedMinecraftVersion");
+        selectedVersionChangedEvent.execute(selectedMinecraftVersion);
     }
 
     public String getSettingsSelectedMinecraftVersion() {
