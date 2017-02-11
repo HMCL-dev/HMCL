@@ -373,6 +373,8 @@
         <property key="OptionPane.questionIcon" value="questionIcon"/>
         <property key="OptionPane.buttonOrientation" type="integer" value="4"/>
         <property key="OptionPane.isYesLast" type="boolean" value="false"/>
+        
+        <insets top="10" left="10" bottom="12" right="10" />
     </style>
     <bind style="OptionPane" type="region" key="OptionPane"/>
     
