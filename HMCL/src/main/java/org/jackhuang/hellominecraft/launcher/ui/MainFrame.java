@@ -330,6 +330,7 @@ public final class MainFrame extends DraggableFrame implements IRepaint {
         if (background != null) {
             if (backgroundLabel == null) {
                 backgroundLabel = new GaussionPanel();
+                backgroundLabel.setDrawBackgroundLayer(true);
                 backgroundLabel.addAeroObject(backgroundLabel);
                 backgroundLabel.setBounds(0, 0, 800, 480);
                 centralPanel.add(backgroundLabel, -1);

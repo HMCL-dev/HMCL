@@ -18,6 +18,7 @@
 package org.jackhuang.hellominecraft.util.ui;
 
 import java.awt.AlphaComposite;
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -40,6 +41,15 @@ public class GaussionPanel extends JPanel {
     private static final int RADIUS = 10;
     private transient final StackBlurFilter stackBlurFilter = new StackBlurFilter(RADIUS);
     private transient BufferedImage cache = null;
+    private boolean drawBackgroundLayer = false;
+
+    public boolean isDrawBackgroundLayer() {
+        return drawBackgroundLayer;
+    }
+
+    public void setDrawBackgroundLayer(boolean drawBackgroundLayer) {
+        this.drawBackgroundLayer = drawBackgroundLayer;
+    }
 
     public void setBackgroundImage(Image backgroundImage) {
         this.backgroundImage = backgroundImage;
@@ -81,6 +91,12 @@ public class GaussionPanel extends JPanel {
                 aeroGraphics.drawImage(backgroundImage, 0, 0, aeroBuffer.getWidth(), aeroBuffer.getHeight(), aeroRect.x, aeroRect.y, aeroRect.x + aeroRect.width, aeroRect.y + aeroRect.height, null);
                 aeroBuffer = stackBlurFilter.filter(aeroBuffer, null);
                 g2.drawImage(aeroBuffer, aeroRect.x, aeroRect.y, aeroRect.x + aeroRect.width, aeroRect.y + aeroRect.height, RADIUS / 2, RADIUS / 2, RADIUS / 2 + aeroRect.width, RADIUS / 2 + aeroRect.height, null);
+
+                if (drawBackgroundLayer) {
+                    g2.setColor(Color.white);
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.5f));
+                    g2.fillRect(0, 0, getWidth(), getHeight());
+                }
             }
             g2.dispose();
         }

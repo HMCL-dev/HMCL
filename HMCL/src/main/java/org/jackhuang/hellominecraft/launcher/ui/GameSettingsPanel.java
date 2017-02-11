@@ -93,8 +93,6 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         initComponents();
 
         dropTarget = new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
-        setBackground(GraphicsUtils.getWebColorWithAlpha("FFFFFF7F"));
-        setOpaque(true);
 
         for (int i = 0; i < InstallerType.values().length; i++)
             installerPanels[i] = new InstallerPanel(this, InstallerType.values()[i]);

@@ -27,7 +27,6 @@ import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.sys.IOUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.lang.SupportedLocales;
-import org.jackhuang.hellominecraft.util.ui.GraphicsUtils;
 import org.jackhuang.hellominecraft.util.ui.JSystemFileChooser;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 
@@ -46,8 +45,6 @@ public class LauncherSettingsPanel extends RepaintPage {
 
     void initGui() {
         initComponents();
-        setBackground(GraphicsUtils.getWebColorWithAlpha("FFFFFF7F"));
-        setOpaque(true);
 
         DefaultComboBoxModel<String> d = new DefaultComboBoxModel<>();
         for (DownloadType type : DownloadType.values())
@@ -73,6 +70,7 @@ public class LauncherSettingsPanel extends RepaintPage {
         cboTheme.setSelectedIndex(Settings.getInstance().getTheme().ordinal());
         chkEnableShadow.setSelected(Settings.getInstance().isEnableShadow());
         chkEnableBlur.setSelected(Settings.getInstance().isEnableBlur());
+        chkEnableAnimation.setSelected(Settings.getInstance().isEnableAnimation());
         chkDecorated.setSelected(Settings.getInstance().isDecorated());
     }
 
@@ -117,6 +115,7 @@ public class LauncherSettingsPanel extends RepaintPage {
         lblRestart = new javax.swing.JLabel();
         btnMCBBS = new javax.swing.JButton();
         chkEnableBlur = new javax.swing.JCheckBox();
+        chkEnableAnimation = new javax.swing.JCheckBox();
 
         cboDownloadSource.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -244,6 +243,13 @@ public class LauncherSettingsPanel extends RepaintPage {
             }
         });
 
+        chkEnableAnimation.setText(C.i18n("launcher.enable_animation")); // NOI18N
+        chkEnableAnimation.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                chkEnableAnimationItemStateChanged(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -290,13 +296,15 @@ public class LauncherSettingsPanel extends RepaintPage {
                                 .addComponent(btnCheckUpdate)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(btnMCBBS))
-                            .addComponent(lblAbout)
-                            .addComponent(lblModpack)
+                            .addComponent(lblAbout, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lblModpack, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(lblRestart)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(chkEnableShadow)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(chkEnableBlur))
+                                .addComponent(chkEnableBlur)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(chkEnableAnimation))
                             .addComponent(chkDecorated))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
@@ -335,7 +343,8 @@ public class LauncherSettingsPanel extends RepaintPage {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(chkEnableShadow)
-                    .addComponent(chkEnableBlur))
+                    .addComponent(chkEnableBlur)
+                    .addComponent(chkEnableAnimation))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkDecorated)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 6, Short.MAX_VALUE)
@@ -345,9 +354,9 @@ public class LauncherSettingsPanel extends RepaintPage {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblRestart)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblModpack)
+                .addComponent(lblModpack, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblAbout)
+                .addComponent(lblAbout, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -432,6 +441,10 @@ public class LauncherSettingsPanel extends RepaintPage {
         Settings.getInstance().setEnableBlur(chkEnableBlur.isSelected());
     }//GEN-LAST:event_chkEnableBlurItemStateChanged
 
+    private void chkEnableAnimationItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkEnableAnimationItemStateChanged
+        Settings.getInstance().setEnableAnimation(chkEnableAnimation.isSelected());
+    }//GEN-LAST:event_chkEnableAnimationItemStateChanged
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCheckUpdate;
     private javax.swing.JButton btnMCBBS;
@@ -440,6 +453,7 @@ public class LauncherSettingsPanel extends RepaintPage {
     private javax.swing.JComboBox cboLang;
     private javax.swing.JComboBox cboTheme;
     private javax.swing.JCheckBox chkDecorated;
+    private javax.swing.JCheckBox chkEnableAnimation;
     private javax.swing.JCheckBox chkEnableBlur;
     private javax.swing.JCheckBox chkEnableShadow;
     private javax.swing.JLabel lblAbout;

@@ -71,6 +71,8 @@
                               <Component id="chkEnableShadow" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="chkEnableBlur" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="chkEnableAnimation" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Component id="chkDecorated" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
@@ -121,6 +123,7 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="chkEnableShadow" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="chkEnableBlur" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="chkEnableAnimation" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="chkDecorated" min="-2" max="-2" attributes="0"/>
@@ -352,6 +355,16 @@
       </Properties>
       <Events>
         <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="chkEnableBlurItemStateChanged"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="chkEnableAnimation">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="launcher.enable_animation" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="chkEnableAnimationItemStateChanged"/>
       </Events>
     </Component>
   </SubComponents>

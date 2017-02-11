@@ -60,6 +60,8 @@ public class MainPagePanel extends Page {
 
     void initGui() {
         initComponents();
+        
+        animationEnabled = false;
 
         pnlButtons = new javax.swing.JPanel();
         pnlButtons.setLayout(null);

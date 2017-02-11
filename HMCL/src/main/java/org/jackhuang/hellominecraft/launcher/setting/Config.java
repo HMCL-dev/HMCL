@@ -55,6 +55,8 @@ public final class Config implements Cloneable {
     private boolean enableShadow;
     @SerializedName("enableBlur")
     private boolean enableBlur;
+    @SerializedName("enableAnimation")
+    private boolean enableAnimation;
     @SerializedName("decorated")
     private boolean decorated;
     @SerializedName("theme")
@@ -107,6 +109,15 @@ public final class Config implements Cloneable {
 
     public void setEnableShadow(boolean enableShadow) {
         this.enableShadow = enableShadow;
+        Settings.save();
+    }
+
+    public boolean isEnableAnimation() {
+        return enableAnimation;
+    }
+
+    public void setEnableAnimation(boolean enableAnimation) {
+        this.enableAnimation = enableAnimation;
         Settings.save();
     }
 
@@ -194,7 +205,7 @@ public final class Config implements Cloneable {
     public Config() {
         clientToken = UUID.randomUUID().toString();
         logintype = downloadtype = 0;
-        enableBlur = enableShadow = true;
+        enableAnimation = enableBlur = enableShadow = true;
         theme = 4;
         decorated = OS.os() == OS.LINUX;
         auth = new HashMap<>();
