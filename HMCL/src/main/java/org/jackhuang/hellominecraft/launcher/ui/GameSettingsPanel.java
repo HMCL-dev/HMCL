@@ -64,7 +64,6 @@ import org.jackhuang.hellominecraft.util.sys.FileUtils;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 import org.jackhuang.hellominecraft.util.sys.Java;
 import org.jackhuang.hellominecraft.util.task.TaskWindow;
-import org.jackhuang.hellominecraft.util.ui.GraphicsUtils;
 import org.jackhuang.hellominecraft.util.ui.JSystemFileChooser;
 import org.jackhuang.hellominecraft.util.ui.LogWindow;
 

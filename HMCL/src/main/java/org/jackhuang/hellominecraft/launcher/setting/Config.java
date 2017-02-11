@@ -130,6 +130,10 @@ public final class Config implements Cloneable {
         Settings.save();
     }
 
+    
+    /**
+     * Last selected profile name.
+     */
     public String getLast() {
         if (last == null)
             last = Settings.DEFAULT_PROFILE;

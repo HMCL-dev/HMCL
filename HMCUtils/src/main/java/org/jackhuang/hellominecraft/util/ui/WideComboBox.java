@@ -18,19 +18,23 @@
 package org.jackhuang.hellominecraft.util.ui;
 
 import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
 import javax.swing.JComboBox;
 
 /**
  * Make the popup menu of combo boxes wider.
+ *
  * @author huangyuhui
  */
-public class WideComboBox<E> extends JComboBox<E> {
+public class WideComboBox extends JComboBox<String> {
 
     public WideComboBox() {
     }
 
     private boolean layingOut = false;
     public int customzedMinimumWidth = 300;
+    private FontMetrics fontMetrics = null;
 
     @Override
     public void doLayout() {
@@ -43,10 +47,19 @@ public class WideComboBox<E> extends JComboBox<E> {
     }
 
     @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+
+        fontMetrics = SwingUtils.getFontMetrics(this, g);
+    }
+
+    @Override
     public Dimension getSize() {
         Dimension dim = super.getSize();
-        if (!layingOut)
-            dim.width = Math.max(dim.width, customzedMinimumWidth);
+        if (!layingOut && fontMetrics != null)
+            for (int i = 0; i < getItemCount(); ++i)
+                dim.width = Math.max(dim.width, SwingUtils.stringWidth(this, fontMetrics, getItemAt(i)) + 5);
+
         return dim;
     }
 }

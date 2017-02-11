@@ -20,23 +20,23 @@ launch.failed_creating_process=啟動失敗，在新建新任務時發生錯誤�
 launch.failed_sh_permission=為啟動資料添加權限時發生錯誤
 launch.failed_packing_jar=在打包jar時發生錯誤
 launch.unsupported_launcher_version=對不起，本啟動器現在可能不能啟動這個版本的Minecraft，但啟動器還是會嘗試啟動，請盡快將此問題報告給作者。
-launch.too_big_memory_alloc_64bit=您設置的記憶體大小過大，由於可能超過了32位元Java的記憶體分配限制，所以可能無法啟動遊戲，請將記憶體調至1024MB或更小，啟動器仍會嘗試啟動。
-launch.too_big_memory_alloc_free_space_too_low=您設置的記憶體大小過大，由於超過了系統記憶體大小%dMB，所以可能影響遊戲體驗或無法啟動遊戲，啟動器仍會嘗試啟動。
-launch.cannot_create_jvm=截獲到無法創建Java虛擬機，可能是Java參數有問題，可以在設定中開啟無參數模式啟動。
-launch.circular_dependency_versions=發現遊戲版本循環引用，請確認您的客戶端未被修改或修改導致出現此問題。
-launch.not_finished_downloading_libraries=未完成遊戲依賴庫的下載，還要繼續啟動遊戲嗎？
-launch.not_finished_decompressing_natives=未能解壓遊戲本地庫，還要繼續啟動遊戲嗎？
-launch.wrong_javadir=錯誤的Java路徑，將自動重置為默認Java路徑。
+launch.too_big_memory_alloc_64bit=您設定的記憶體大小過大，由於可能超過了32位元Java的記憶體分配限制，所以可能無法啟動遊戲，請將記憶體調至1024MB或更小，啟動器仍會嘗試啟動。
+launch.too_big_memory_alloc_free_space_too_low=您設定的記憶體大小過大，由於超過了系統記憶體大小%dMB，所以可能影響遊戲體驗或無法啟動遊戲，啟動器仍會嘗試啟動。
+launch.cannot_create_jvm=擷取到無法創建Java虛擬機，可能是Java參數有問題，可以在設定中開啟無參數模式啟動。
+launch.circular_dependency_versions=發現遊戲版本多次利用，請確認您的客戶端未被修改或修改導致出現此問題。
+launch.not_finished_downloading_libraries=未完成遊戲資料庫的下載，還要繼續啟動遊戲嗎？
+launch.not_finished_decompressing_natives=未能解壓遊戲執行庫，還要繼續啟動遊戲嗎？
+launch.wrong_javadir=錯誤的Java路徑，將自動重置為預設Java路徑。
 launch.exited_abnormally=遊戲非正常退出，請查看日誌資料，或聯繫他人尋求幫助。
 
 launch.state.logging_in=登錄中
 launch.state.generating_launching_codes=正在生成啟動代碼
 launch.state.downloading_libraries=正在下載必要文件
-launch.state.decompressing_natives=正在釋放本地檔
+launch.state.decompressing_natives=正在釋放執行庫
 
 install.no_version=未找到要安裝的對應MC版本
 install.no_version_if_intall=未找到要安裝的對應MC版本，是否自動安裝需要的MC版本？
-install.not_refreshed=未刷新列表
+install.not_refreshed=未重整列表
 install.download_list=下載列表
 
 install.liteloader.get_list=獲取LiteLoader列表
@@ -64,7 +64,7 @@ install.mcversion=遊戲版本
 install.time=時間
 install.release_time=釋放時間
 install.type=類型
-install.please_refresh=如需使用自動安裝請點擊右側刷新按鈕
+install.please_refresh=如需使用自動安裝請點擊右側重整按鈕
 
 crash.launcher=啟動器崩潰了！
 crash.minecraft=Minecraft崩潰了！
@@ -87,10 +87,10 @@ login.account=郵箱
 login.invalid_token=請嘗試登出並重新輸入密碼登錄
 login.no_valid_character=無有效的角色，自行到skinme.cc登陸並創建角色
 
-proxy.username=賬戶
+proxy.username=帳戶
 proxy.password=密碼
 proxy.host=主機
-proxy.port=埠
+proxy.port=Port
 
 login.failed.connect_authentication_server=無法連接認證伺服器,可能是網絡問題
 
@@ -118,7 +118,7 @@ crash.advice.ClassNotFoundException=Minecraft不完整或Mod衝突，如果有�
 crash.advice.NoSuchFieldError=Minecraft不完整或Mod衝突，如果有未能下載的資料請下載成功後重試或是用戶端損壞請重試請重新製作用戶端或下載整合包解決問題。
 crash.advice.LWJGLException=您的電腦不正常，可能需要使用驅動精靈或其他安裝器更新顯卡驅動。
 crash.advice.SecurityException=可能是您修改了minecraft.jar但未刪除META-INF資料夾的原因。請通過壓縮軟體刪除jar中的META-INF資料夾。
-crash.advice.OutOfMemoryError=記憶體溢出，您設置的Minecraft最大記憶體過小，請調大！
+crash.advice.OutOfMemoryError=記憶體溢出，您設定的Minecraft最大記憶體過小，請調大！
 crash.advice.otherwise=可能是Mod或其他問題。
 
 crash.advice.OpenGL=可能是顯卡/聲卡驅動問題，也可能是Mod導致的問題。
@@ -139,7 +139,7 @@ ui.label.newProfileWindow.copy_from=複製配置:
 ui.newProfileWindow.title=新建配置
 
 ui.button.ok=確認
-ui.button.refresh=刷新
+ui.button.refresh=重整
 ui.button.run=啟動Minecraft
 ui.button.settings=
 ui.button.about=關於
@@ -164,18 +164,18 @@ ui.label.version=版本
 ui.label.password=密碼
 ui.label.profile=配置
 
-ui.message.first_load=請在左邊輸入您的賬號
+ui.message.first_load=請在左邊輸入您的帳號
 ui.message.enter_password=請在左邊輸入您的密碼
 ui.message.launching=啟動中
 ui.message.making=生成中
 ui.message.sure_remove=真的要刪除配置%s嗎？
 ui.message.update_java=請更新您的Java
+ui.message.open_jdk=我們發現到您正在使用OpenJDK，這可能會導致很多介面問題，我們建議您更換Oracle JDK。
 
 ui.label.settings=選項
 ui.label.crashing=<html>Hello Minecraft! Launcher遇到了無法處理的錯誤，請複制下列內容並通過mcbbs、貼吧或Minecraft Forum反饋bug。 </html>
 ui.label.crashing_out_dated=<html>Hello Minecraft! Launcher遇到了無法處理的錯誤，已檢測到您的啟動器不是最新版本，請更新後再試！ </html>
 ui.label.failed_set=設定失敗：
-ui.message.open_jdk=我們發現您正在使用OpenJDK，這會導致很多介面問題，我們建議您更換Oracle JDK。
 
 download=下載
 download.mojang=官方
@@ -207,17 +207,17 @@ settings.tabs.assets_downloads=資源下載
 settings=普通設定
 settings.explore=瀏覽
 settings.manage=管理
-settings.cannot_remove_default_config=不能刪除默認配置
-settings.max_memory=最大內存（MB）
+settings.cannot_remove_default_config=不能刪除預設配置
+settings.max_memory=最大記憶體（MB）
 settings.java_dir=Java路徑
 settings.game_directory=遊戲路徑
 settings.dimension=遊戲窗口解析度
-settings.fullscreen=全屏
+settings.fullscreen=全螢幕
 settings.update_version=更新版本資料
-settings.run_directory=運行路徑(版本隔離)
+settings.run_directory=執行路徑(版本隔離)
 settings.physical_memory=實體記憶體大小
 settings.choose_javapath=選擇Java路徑
-settings.default=默認
+settings.default=預設
 settings.custom=自定義
 settings.choose_gamedir=選擇遊戲路徑
 settings.failed_load=設定資料加載失敗，可能是升級了啟動器或被人工修改造成錯誤，是否清除？
@@ -238,7 +238,7 @@ modpack.task.install.will=將會安裝懶人包：
 
 modpack.wizard=導出懶人包嚮導
 modpack.wizard.step.1=基本設定
-modpack.wizard.step.1.title=設置懶人包的主要資訊
+modpack.wizard.step.1.title=設定懶人包的主要資訊
 modpack.wizard.step.initialization.include_launcher=包含啟動器
 modpack.wizard.step.initialization.exported_version=要導出的遊戲版本
 modpack.wizard.step.initialization.save=選擇要導出到的遊戲懶人包位置
@@ -276,22 +276,22 @@ mods.add=添加
 mods.remove=刪除
 mods.default_information=<html>您可以拖動mod到列表中來添加mod，同時使用刪除鍵可快速刪除選中mod<br>選擇mod可以獲取mod資訊</html>
 
-advancedsettings=高級設定
+advancedsettings=進階設定
 advancedsettings.launcher_visible=啟動器可見性
-advancedsettings.debug_mode=調試模式
-advancedsettings.java_permanent_generation_space=內存永久保存區域/MB
+advancedsettings.debug_mode=偵錯模式
+advancedsettings.java_permanent_generation_space=記憶體永久保存區域/MB
 advancedsettings.jvm_args=Java虛擬機參數(不必填寫)
 advancedsettings.Minecraft_arguments=Minecraft額外參數(不必填寫)
 advancedsettings.launcher_visibility.close=遊戲啟動後結束啟動器
 advancedsettings.launcher_visibility.hide=遊戲啟動後隱藏啟動器
 advancedsettings.launcher_visibility.keep=保持啟動器可見
-advancedsettings.game_dir.default=默認(.minecraft/)
+advancedsettings.game_dir.default=預設(.minecraft/)
 advancedsettings.game_dir.independent=各版本獨立(.minecraft/versions/<版本名>/,除assets,libraries)
-advancedsettings.no_jvm_args=不添加默認的JVM參數(使用Java9時必勾)
-advancedsettings.java_args_default=啟動器默認添加的參數（請不要重複添加）：-XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy -XX:MaxPermSize=???m -Xmx???m -Dfml. ignoreInvalidMinecraftCertificates=true -Dfml.ignorePatchDiscrepancies=true
+advancedsettings.no_jvm_args=不添加預設的JVM參數(使用Java9時必勾)
+advancedsettings.java_args_default=啟動器預設添加的參數（請不要重複添加）：-XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy -XX:MaxPermSize=???m -Xmx???m -Dfml. ignoreInvalidMinecraftCertificates=true -Dfml.ignorePatchDiscrepancies=true
 advancedsettings.wrapper_launcher=前置指令(不必填寫,如optirun)
 advancedsettings.precall_command=啟動前執行命令(不必填寫,將在遊戲啟動前調用)
-advancedsettings.server_ip=直入伺服器ip地址(不必填寫，啟動遊戲後直接進入對應伺服器)
+advancedsettings.server_ip=直接進入伺服器IP (不必填寫，啟動遊戲後直接進入對應伺服器)
 advancedsettings.cancel_wrapper_launcher=取消包裹啟動器(出現奇怪問題時可嘗試使用,與調試模式衝突)
 advancedsettings.dont_check_game_completeness=不檢查遊戲完整性
 
@@ -302,7 +302,7 @@ mainwindow.enter_script_name=輸入要生成腳本的資料名
 mainwindow.make_launch_succeed=啟動腳本已生成完畢:
 mainwindow.no_version=未找到任何版本，是否進入遊戲下載？
 
-launcher.about=<html>默認背景圖感謝gamerteam提供。<br>關於作者：<br>百度ID：huanghongxun20<br>mcbbs：huanghongxun<br>Minecraft Forum ID: klkl6523<br>歡迎提交Bug哦<br/>Copyright (c) 2013-2016 huangyuhui.<br>免責聲明：Minecraft軟體版權歸Mojang AB所有，遊戲由於誤操作本啟動器而丟失數據的概不負責。<br>本啟動器在GPLv3協議下開源:http://github.com/huanghongxun/HMCL/ ,感謝issues和pull requests貢獻者<br>本軟體使用了基於Apache License 2.0的Gson項目，感謝貢獻者。</html>
+launcher.about=<html>預設背景圖感謝gamerteam提供。<br>關於作者：<br>百度ID：huanghongxun20<br>mcbbs：huanghongxun<br>Minecraft Forum ID: klkl6523<br>歡迎提交Bug哦<br/>Copyright (c) 2013-2016 huangyuhui.<br>免責聲明：Minecraft軟體版權歸Mojang AB所有，遊戲由於誤操作本啟動器而丟失數據的概不負責。<br>本啟動器在GPLv3協議下開源:http://github.com/huanghongxun/HMCL/ ,感謝issues和pull requests貢獻者<br>本軟體使用了基於Apache License 2.0的Gson項目，感謝貢獻者。</html>
 launcher.download_source=下載源
 launcher.background_location=背景地址
 launcher.exit_failed=強制退出失敗，可能是Forge 1.7.10及更高版本導致的，無法解決。
@@ -310,7 +310,7 @@ launcher.versions_json_not_matched=版本%s格式不規範！該版本資料夾�
 launcher.versions_json_not_matched_cannot_auto_completion=版本%s缺失必要的版本資訊資料，是否刪除該版本？
 launcher.versions_json_not_formatted=版本%s資訊資料格式錯誤，是否重新下載？
 launcher.choose_bgpath=選擇背景路徑
-launcher.background_tooltip=<html><body>啟動器默認使用自帶的背景<br />如果當前目錄有background.png，則會使用該資料作為背景<br />如果當前目錄有bg子目錄，則會隨機使用裡面的一張圖作為背景<br />如果該背景位址被修改，則會使用背景位址裡的一張圖作為背景<br />背景位址允許有多個位址，使用半形分號";"(不包含雙引號)分隔</body></html>
+launcher.background_tooltip=<html><body>啟動器預設使用自帶的背景<br />如果當前目錄有background.png，則會使用該資料作為背景<br />如果當前目錄有bg子目錄，則會隨機使用裡面的一張圖作為背景<br />如果該背景位址被修改，則會使用背景位址裡的一張圖作為背景<br />背景位址允許有多個位址，使用半形分號";"(不包含雙引號)分隔</body></html>
 launcher.update_launcher=檢查更新
 launcher.enable_shadow=啟用窗口陰影
 launcher.enable_animation=啟用動態效果
@@ -331,7 +331,7 @@ versions.snapshot=快照版
 versions.old_beta=測試版
 versions.old_alpha=遠古版
 
-versions.manage.rename=重命名該版本
+versions.manage.rename=重新命名該版本
 versions.manage.rename.message=請輸入要改成的名字
 versions.manage.remove=刪除該版本
 versions.manage.remove.confirm=真的要刪除版本
@@ -339,20 +339,20 @@ versions.manage.redownload_json=重新下載版本配置(minecraft.json)
 versions.manage.redownload_assets_index=重新下載資源配置(assets_index.json)
 versions.mamage.remove_libraries=刪除所有庫檔
 
-advice.os64butjdk32=您的系統是64位的但是Java是32位的，推薦您安裝64位Java.
+advice.os64butjdk32=您的系統是64-bit，但是Java是32位的，推薦您安裝64位Java.
 
 assets.download_all=下載資源資料
-assets.not_refreshed=資源列表未刷新，請刷新一次。
-assets.failed=獲取列表失敗，請刷新重試。
+assets.not_refreshed=資源列表未重整，請重整一次。
+assets.failed=獲取列表失敗，請重整重試。
 assets.list.1_7_3_after=1.7.3及以後
 assets.list.1_6=1.6(BMCLAPI)
 assets.unkown_type_select_one=無法解析遊戲版本：%s，請選擇一種資源類型下載。
 assets.type=資源類型
 assets.download=下載資源
 assets.no_assets=資源資料不完整，是否補全？
-assets.failed_download=下載資源資料失敗，可能導致沒有中文和聲音。
+assets.failed_download=下載資源資料失敗，可能導致沒有中文語系或音樂。
 
-gamedownload.not_refreshed=遊戲下載列表未刷新，請再刷新一次。
+gamedownload.not_refreshed=遊戲下載列表未重整，請再重整一次。
 
 taskwindow.title=任務
 taskwindow.single_progress=單項進度
@@ -369,7 +369,7 @@ setupwindow.new=新建
 setupwindow.no_empty_name=名字不可為空
 setupwindow.clean=清理遊戲資料
 
-update.no_browser=無法打開瀏覽器，網址已經復製到剪貼板了，您可以手動粘貼網址打開頁面
+update.no_browser=無法打開瀏覽器，網址已經複製到剪貼版了，您可以手動Copy網址打開頁面
 update.should_open_link=是否更新？
 update.newest_version=最新版本為：
 update.failed=檢查更新失敗
@@ -409,7 +409,7 @@ wizard.finish=完成
 wizard.finish_mnemonic=完
 wizard.cancel=取消
 wizard.cancel_mnemonic=取
-wizard.help=幫助
+wizard.help=說明
 wizard.help_mnemonic=幫
 wizard.close=關閉
 wizard.close_mnemonic=關
@@ -417,5 +417,5 @@ wizard.summary=概要
 wizard.failed=失敗
 wizard.steps=步驟
 
-lang=正體中文
+lang=繁體中文
 lang.default=跟隨系統語言

@@ -19,7 +19,9 @@ package org.jackhuang.hellominecraft.util.ui;
 
 import java.awt.Component;
 import java.awt.EventQueue;
+import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.Window;
@@ -342,5 +344,61 @@ public final class SwingUtils {
         return () -> {
             SwingUtilities.invokeLater(r);
         };
+    }
+    
+    /**
+     * Returns the FontMetrics for the current Font of the passed in Graphics.
+     * This method is used when a Graphics is available, typically when
+     * painting. If a Graphics is not available the JComponent method of the
+     * same name should be used.
+     * <p>
+     * Callers should pass in a non-null JComponent, the exception to this is if
+     * a JComponent is not readily available at the time of painting.
+     * <p>
+     * This does not necessarily return the FontMetrics from the Graphics.
+     *
+     * @param c JComponent requesting FontMetrics, may be null
+     * @param g Graphics Graphics
+     * @return the font metrics
+     */
+    public static FontMetrics getFontMetrics(JComponent c, Graphics g) {
+        return getFontMetrics(c, g, g.getFont());
+    }
+
+    /**
+     * Returns the FontMetrics for the specified Font. This method is used when
+     * a Graphics is available, typically when painting. If a Graphics is not
+     * available the JComponent method of the same name should be used.
+     * <p>
+     * Callers should pass in a non-null JComonent, the exception to this is if
+     * a JComponent is not readily available at the time of painting.
+     * <p>
+     * This does not necessarily return the FontMetrics from the Graphics.
+     *
+     * @param c Graphics Graphics
+     * @param g the g
+     * @param font Font to get FontMetrics for
+     * @return the font metrics
+     */
+    public static FontMetrics getFontMetrics(JComponent c, Graphics g,
+            Font font) {
+        if (c != null)
+            // Note: We assume that we're using the FontMetrics
+            // from the widget to layout out text, otherwise we can get
+            // mismatches when printing.
+            return c.getFontMetrics(font);
+        return Toolkit.getDefaultToolkit().getFontMetrics(font);
+    }
+
+    /**
+     * Returns the width of the passed in String.
+     *
+     * @param c JComponent that will display the string, may be null
+     * @param fm FontMetrics used to measure the String width
+     * @param string String to get the width of
+     * @return the int
+     */
+    public static int stringWidth(JComponent c, FontMetrics fm, String string) {
+        return fm.stringWidth(string);
     }
 }

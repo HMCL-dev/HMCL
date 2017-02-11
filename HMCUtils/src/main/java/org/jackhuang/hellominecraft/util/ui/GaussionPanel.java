@@ -92,6 +92,7 @@ public class GaussionPanel extends JPanel {
                 aeroBuffer = stackBlurFilter.filter(aeroBuffer, null);
                 g2.drawImage(aeroBuffer, aeroRect.x, aeroRect.y, aeroRect.x + aeroRect.width, aeroRect.y + aeroRect.height, RADIUS / 2, RADIUS / 2, RADIUS / 2 + aeroRect.width, RADIUS / 2 + aeroRect.height, null);
 
+                // Moved from GameSettingsPanel and LauncherSettingsPanel
                 if (drawBackgroundLayer) {
                     g2.setColor(Color.white);
                     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.5f));
