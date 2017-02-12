@@ -18,7 +18,6 @@
 package org.jackhuang.hellominecraft.launcher.util;
 
 import java.io.File;
-import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.auth.AuthenticationException;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
@@ -29,9 +28,15 @@ import org.jackhuang.hellominecraft.launcher.core.launch.LaunchOptions;
 import org.jackhuang.hellominecraft.launcher.setting.Profile;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.LaunchSucceededEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.LaunchingState;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.LaunchingStateChangedEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.ProcessingLaunchOptionsEvent;
+import org.jackhuang.hellominecraft.launcher.core.RuntimeGameException;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.sys.JavaProcess;
 
 /**
  *
@@ -42,15 +47,15 @@ public class HMCLGameLauncher {
     Profile profile;
     boolean isLaunching = false;
 
-    public final EventHandler<Boolean> launchingStateChanged = new EventHandler<>(this);
-
     public HMCLGameLauncher(Profile p) {
         this.profile = p;
+        
+        HMCLAPI.EVENT_BUS.channel(LaunchSucceededEvent.class).register(() -> setLaunching(false));
     }
 
     void setLaunching(boolean isLaunching) {
         if (isLaunching != this.isLaunching)
-            launchingStateChanged.execute(isLaunching);
+            HMCLAPI.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(this, isLaunching ? LaunchingState.Starting : LaunchingState.Done));
         this.isLaunching = isLaunching;
     }
 
@@ -80,13 +85,14 @@ public class HMCLGameLauncher {
                 Thread.currentThread().setName("Game Launcher");
                 try {
                     LaunchOptions options = profile.getSelectedVersionSetting().createLaunchOptions(profile.getCanonicalGameDirFile());
-                    PluginManager.plugin().onProcessingLaunchOptions(options);
+                    HMCLAPI.EVENT_BUS.fireChannel(new ProcessingLaunchOptionsEvent(this, options));
                     DefaultGameLauncher gl = new DefaultGameLauncher(options, profile.service(), li, l);
-                    gl.setTag(profile.getSelectedVersionSetting().getLauncherVisibility());
-                    gl.successEvent.register(() -> setLaunching(false));
+                    GameLauncherTag tag = new GameLauncherTag();
+                    tag.launcherVisibility = profile.getSelectedVersionSetting().getLauncherVisibility();
+                    gl.setTag(tag);
                     listener.accept(gl);
                     gl.makeLaunchCommand();
-                } catch (GameException e) {
+                } catch (GameException | RuntimeGameException e) {
                     failed.accept(C.i18n("launch.failed") + ", " + e.getMessage());
                     setLaunching(false);
                 } catch (AuthenticationException e) {
@@ -99,4 +105,9 @@ public class HMCLGameLauncher {
         t.start();
     }
 
+    public static class GameLauncherTag {
+        public LauncherVisibility launcherVisibility;
+        public JavaProcess process;
+        public int state; // 0 - unknown; 1 - launch; 2 - make launch script.
+    }
 }

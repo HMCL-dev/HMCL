@@ -34,6 +34,7 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
 import java.util.zip.GZIPInputStream;
+import org.jackhuang.hellominecraft.api.SimpleEvent;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.MCUtils;
@@ -97,9 +98,10 @@ public class AppDataUpgrader extends IUpgrader {
     }
 
     @Override
-    public boolean call(Object sender, final VersionNumber number) {
-        ((UpdateChecker) sender).requestDownloadLink().reg(map -> {
-            if (MessageBox.show(C.i18n("update.newest_version") + number.firstVer + "." + number.secondVer + "." + number.thirdVer + "\n"
+    public void accept(SimpleEvent<VersionNumber> event) {
+        final VersionNumber version = event.getValue();
+        ((UpdateChecker) event.getSource()).requestDownloadLink().reg(map -> {
+            if (MessageBox.show(C.i18n("update.newest_version") + version.firstVer + "." + version.secondVer + "." + version.thirdVer + "\n"
                                 + C.i18n("update.should_open_link"),
                                 MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                 if (map != null && map.containsKey("pack"))
@@ -107,8 +109,8 @@ public class AppDataUpgrader extends IUpgrader {
                         String hash = null;
                         if (map.containsKey("packsha1"))
                             hash = map.get("packsha1");
-                        if (TaskWindow.factory().append(new AppDataUpgraderTask(map.get("pack"), number.version, hash)).execute()) {
-                            new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderTask.getSelf(number.version).getAbsolutePath() }).directory(new File(".")).start();
+                        if (TaskWindow.factory().append(new AppDataUpgraderTask(map.get("pack"), version.version, hash)).execute()) {
+                            new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderTask.getSelf(version.version).getAbsolutePath() }).directory(new File(".")).start();
                             System.exit(0);
                         }
                     } catch (IOException ex) {
@@ -132,7 +134,6 @@ public class AppDataUpgrader extends IUpgrader {
                     }
                 }
         }).execute();
-        return true;
     }
 
     public static class AppDataUpgraderTask extends Task {

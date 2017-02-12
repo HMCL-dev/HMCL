@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.download;
 
+import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.launcher.api.event.config.DownloadTypeChangedEvent;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.task.TaskWindow;
 
@@ -59,4 +61,7 @@ public enum DownloadType {
         DownloadType.suggestedDownloadType = suggestedDownloadType;
     }
 
+    static {
+        HMCLAPI.EVENT_BUS.channel(DownloadTypeChangedEvent.class).register(t -> setSuggestedDownloadType(t.getValue()));
+    }
 }

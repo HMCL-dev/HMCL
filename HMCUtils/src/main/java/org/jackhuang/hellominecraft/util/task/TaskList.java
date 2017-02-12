@@ -20,6 +20,7 @@ package org.jackhuang.hellominecraft.util.task;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EventObject;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -29,7 +30,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.api.EventHandler;
 import org.jackhuang.hellominecraft.util.log.HMCLog;
 
 /**
@@ -39,7 +40,7 @@ import org.jackhuang.hellominecraft.util.log.HMCLog;
 public class TaskList extends Thread {
 
     List<Task> taskQueue = Collections.synchronizedList(new LinkedList<>());
-    public final EventHandler<Object> doneEvent = new EventHandler<>(this);
+    public final EventHandler<EventObject> doneEvent = new EventHandler<>();
     ArrayList<DoingDoneListener<Task>> taskListener = new ArrayList<>();
 
     int totTask;
@@ -159,7 +160,7 @@ public class TaskList extends Thread {
             executeTask(taskQueue.remove(0));
         if (shouldContinue) {
             HMCLog.log("Tasks are successfully finished.");
-            doneEvent.execute(null);
+            doneEvent.fire(new EventObject(this));
         }
     }
 

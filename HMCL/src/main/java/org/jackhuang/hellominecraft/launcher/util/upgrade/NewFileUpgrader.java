@@ -19,6 +19,7 @@ package org.jackhuang.hellominecraft.launcher.util.upgrade;
 
 import java.io.File;
 import java.io.IOException;
+import org.jackhuang.hellominecraft.api.SimpleEvent;
 import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.util.task.TaskWindow;
 import org.jackhuang.hellominecraft.util.net.FileDownloadTask;
@@ -45,7 +46,7 @@ public class NewFileUpgrader extends IUpgrader {
     }
 
     @Override
-    public boolean call(Object sender, VersionNumber number) {
+    public void accept(SimpleEvent<VersionNumber> event) {
         String str = requestDownloadLink();
         File newf = new File(FileUtils.getName(str));
         if (TaskWindow.factory().append(new FileDownloadTask(str, newf)).execute()) {
@@ -56,7 +57,6 @@ public class NewFileUpgrader extends IUpgrader {
             }
             System.exit(0);
         }
-        return true;
     }
 
     private String requestDownloadLink() {

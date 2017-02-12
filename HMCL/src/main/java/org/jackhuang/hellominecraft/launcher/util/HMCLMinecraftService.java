@@ -22,6 +22,10 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.SwingUtilities;
+import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.launcher.api.event.version.LoadedOneVersionEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.version.RefreshedVersionsEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.version.RefreshingVersionsEvent;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.install.MinecraftInstallerService;
 import org.jackhuang.hellominecraft.launcher.core.asset.MinecraftAssetService;
@@ -53,8 +57,8 @@ public class HMCLMinecraftService extends IMinecraftService {
         this.p = p;
         this.provider = new HMCLGameProvider(this);
         provider.initializeMiencraft();
-        provider.onRefreshingVersions.register(versionSettings::clear);
-        provider.onRefreshedVersions.register(() -> {
+        HMCLAPI.EVENT_BUS.channel(RefreshingVersionsEvent.class).register(versionSettings::clear);
+        HMCLAPI.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerFirst(() -> {
             if (!checkingModpack) {
                 checkingModpack = true;
                 if (version().getVersionCount() == 0) {
@@ -68,7 +72,7 @@ public class HMCLMinecraftService extends IMinecraftService {
                 }
             }
         });
-        provider.onLoadedVersion.register(this::loadVersionSetting);
+        HMCLAPI.EVENT_BUS.channel(LoadedOneVersionEvent.class).register(e -> loadVersionSetting(e.getValue()));
         this.mms = new MinecraftModService(this);
         this.mds = new MinecraftDownloadService(this);
         this.mas = new MinecraftAssetService(this);
@@ -105,10 +109,7 @@ public class HMCLMinecraftService extends IMinecraftService {
 
     private void initVersionSetting(String id, VersionSetting vs) {
         vs.id = id;
-        vs.propertyChanged.register((sender, t) -> {
-            saveVersionSetting(((VersionSetting) sender).id);
-            return true;
-        });
+        vs.propertyChanged.register(event -> saveVersionSetting(((VersionSetting) event.getSource()).id));
         versionSettings.put(id, vs);
     }
 

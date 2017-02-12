@@ -17,14 +17,15 @@
  */
 package org.jackhuang.hellominecraft.launcher.util.upgrade;
 
-import org.jackhuang.hellominecraft.util.Event;
+import org.jackhuang.hellominecraft.api.SimpleEvent;
 import org.jackhuang.hellominecraft.util.VersionNumber;
+import org.jackhuang.hellominecraft.util.func.Consumer;
 
 /**
  *
  * @author huangyuhui
  */
-public abstract class IUpgrader implements Event<VersionNumber> {
+public abstract class IUpgrader implements Consumer<SimpleEvent<VersionNumber>> {
 
     public static final IUpgrader NOW_UPGRADER = new AppDataUpgrader();
 
@@ -48,5 +49,5 @@ public abstract class IUpgrader implements Event<VersionNumber> {
      * @return should return true
      */
     @Override
-    public abstract boolean call(Object sender, VersionNumber number);
+    public abstract void accept(SimpleEvent<VersionNumber> event);
 }

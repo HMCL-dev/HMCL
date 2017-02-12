@@ -33,7 +33,7 @@ public abstract class IAuthenticator {
     public static final List<IAuthenticator> LOGINS = new ArrayList<>();
 
     static {
-        PluginManager.plugin().onRegisterAuthenticators(LOGINS::add);
+        PluginManager.fireRegisterAuthenticators(LOGINS::add);
     }
 
     protected String clientToken, username, password;

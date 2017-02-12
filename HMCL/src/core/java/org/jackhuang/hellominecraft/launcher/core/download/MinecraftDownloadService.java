@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.download;
 
+import org.jackhuang.hellominecraft.launcher.api.event.launch.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftDownloadService;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;

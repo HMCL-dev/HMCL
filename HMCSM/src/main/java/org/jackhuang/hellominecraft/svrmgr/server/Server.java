@@ -44,8 +44,8 @@ import org.jackhuang.hellominecraft.svrmgr.setting.SettingsManager;
 import org.jackhuang.hellominecraft.svrmgr.util.MonitorThread;
 import org.jackhuang.hellominecraft.svrmgr.util.WaitForThread;
 import org.jackhuang.hellominecraft.svrmgr.util.Utilities;
-import org.jackhuang.hellominecraft.util.Event;
-import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.api.Event;
+import org.jackhuang.hellominecraft.api.EventHandler;
 import org.jackhuang.hellominecraft.util.code.Charsets;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 
@@ -133,7 +133,7 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
             registerThreadC(server);
             bw = new BufferedWriter(new OutputStreamWriter(server.getOutputStream(), Charsets.toCharset()));
             isRunning = true;
-            startedEvent.execute(null);
+            startedEvent.fire(null);
             sendStatus("*** 启动服务端中 ***");
         } catch (IOException ex) {
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
@@ -342,7 +342,7 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
             Pattern p = Pattern.compile("\\[INFO\\] Done \\([0-9]*\\.[0-9]*s\\)! For help, type \"help\" or \"\\?\"");
             Matcher m = p.matcher(status);
             if (m.find()) {
-                stoppedEvent.execute(null);
+                stoppedEvent.fire(null);
                 timer = new Timer();
                 timerTasks.clear();
                 for (int i = 0; i < schedules.size(); i++) {

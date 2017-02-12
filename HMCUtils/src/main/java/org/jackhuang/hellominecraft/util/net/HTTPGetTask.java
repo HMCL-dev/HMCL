@@ -27,7 +27,8 @@ import java.nio.charset.Charset;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.util.task.comm.PreviousResult;
-import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.api.EventHandler;
+import org.jackhuang.hellominecraft.api.SimpleEvent;
 import org.jackhuang.hellominecraft.util.code.Charsets;
 import org.jackhuang.hellominecraft.util.task.Task;
 
@@ -39,7 +40,7 @@ public class HTTPGetTask extends Task implements PreviousResult<String> {
 
     String url, result;
     Charset encoding;
-    EventHandler<String> doneEvent = new EventHandler<>(this);
+    EventHandler<SimpleEvent<String>> doneEvent = new EventHandler<>();
     boolean shouldContinue = true;
 
     public HTTPGetTask(String url) {
@@ -81,7 +82,7 @@ public class HTTPGetTask extends Task implements PreviousResult<String> {
                         return;
                 }
                 result = baos.toString(encoding.name());
-                doneEvent.execute(result);
+                doneEvent.fire(new SimpleEvent<>(this, result));
                 return;
             } catch (IOException ex) {
                 t = new IOException("Failed to get " + url, ex);

@@ -18,17 +18,19 @@
 package org.jackhuang.hellominecraft.launcher.util;
 
 import java.util.ArrayList;
+import javax.swing.JFrame;
+import org.jackhuang.hellominecraft.launcher.api.AddTabCallback;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.api.IPlugin;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.OfflineAuthenticator;
-import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
 import org.jackhuang.hellominecraft.launcher.core.auth.YggdrasilAuthenticator;
-import org.jackhuang.hellominecraft.launcher.core.launch.LaunchOptions;
 import org.jackhuang.hellominecraft.launcher.setting.Profile;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
-import org.jackhuang.hellominecraft.launcher.ui.MainFrame;
-import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.launcher.ui.GameSettingsPanel;
+import org.jackhuang.hellominecraft.launcher.ui.LauncherSettingsPanel;
+import org.jackhuang.hellominecraft.launcher.ui.MainPagePanel;
+import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 
 /**
@@ -38,11 +40,6 @@ import org.jackhuang.hellominecraft.util.func.Consumer;
 public class DefaultPlugin implements IPlugin {
 
     ArrayList<IAuthenticator> auths = new ArrayList<>();
-
-    @Override
-    public IMinecraftService provideMinecraftService(Object profile) {
-        return new HMCLMinecraftService((Profile) profile);
-    }
 
     @Override
     public void onRegisterAuthenticators(Consumer<IAuthenticator> apply) {
@@ -64,19 +61,10 @@ public class DefaultPlugin implements IPlugin {
     }
 
     @Override
-    public void showUI() {
-        MainFrame.showMainFrame();
-    }
-
-    @Override
-    public void onProcessingLoginResult(UserProfileProvider result) {
-    }
-
-    public transient final EventHandler<LaunchOptions> onProcessingLaunchOptionsEvent = new EventHandler<>(this);
-
-    @Override
-    public void onProcessingLaunchOptions(LaunchOptions p) {
-        onProcessingLaunchOptionsEvent.execute(p);
+    public void onAddTab(JFrame frame, AddTabCallback callback) {
+        callback.addTab(new MainPagePanel(), "main", C.i18n("launcher.title.main"));
+        callback.addTab(new GameSettingsPanel(), "game", C.i18n("launcher.title.game"));
+        callback.addTab(new LauncherSettingsPanel(), "launcher", C.i18n("launcher.title.launcher"));
     }
 
 }

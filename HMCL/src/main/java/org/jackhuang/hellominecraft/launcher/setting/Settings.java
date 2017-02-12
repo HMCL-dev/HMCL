@@ -28,7 +28,9 @@ import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.core.MCUtils;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.CollectionUtils;
-import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.launcher.api.event.config.ProfileChangedEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.config.ProfileLoadingEvent;
 import org.jackhuang.hellominecraft.util.sys.FileUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.UpdateChecker;
@@ -54,7 +56,6 @@ public final class Settings {
 
     static {
         SETTINGS = initSettings();
-        SETTINGS.downloadTypeChangedEvent.register(DownloadType::setSuggestedDownloadType);
         DownloadType.setSuggestedDownloadType(SETTINGS.getDownloadSource());
         if (!getProfiles().containsKey(DEFAULT_PROFILE))
             getProfiles().put(DEFAULT_PROFILE, new Profile(DEFAULT_PROFILE));
@@ -156,19 +157,16 @@ public final class Settings {
         return flag;
     }
 
-    public static final EventHandler<Profile> profileChangedEvent = new EventHandler<>(null);
-    public static final EventHandler<Void> profileLoadingEvent = new EventHandler<>(null);
-
     static void onProfileChanged() {
         Profile p = getLastProfile();
         if (p == null)
             throw new Error("No profiles here, it should not happen");
-        profileChangedEvent.execute(p);
+        HMCLAPI.EVENT_BUS.fireChannel(new ProfileChangedEvent(SETTINGS, p.getName()));
         p.onSelected();
     }
 
     public static void onProfileLoading() {
-        profileLoadingEvent.execute(null);
+        HMCLAPI.EVENT_BUS.fireChannel(new ProfileLoadingEvent(SETTINGS));
         onProfileChanged();
     }
 }

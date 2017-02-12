@@ -143,10 +143,9 @@ public final class Main implements Runnable {
                     SupportedLocales.NOW_LOCALE = sl;
                     Locale.setDefault(sl.self);
                 }
-            
-            if (System.getProperty("java.vm.name").contains("Open")) { // OpenJDK
+
+            if (System.getProperty("java.vm.name").contains("Open")) // OpenJDK
                 MessageBox.showLocalized("ui.message.open_jdk");
-            }
 
             try {
                 LOOK_AND_FEEL = new HelloMinecraftLookAndFeel(Settings.getInstance().getTheme().settings);
@@ -155,11 +154,11 @@ public final class Main implements Runnable {
             } catch (ParseException | UnsupportedLookAndFeelException ex) {
                 HMCLog.warn("Failed to set look and feel...", ex);
             }
-            
+
             LogWindow.INSTANCE.clean();
             LogWindow.INSTANCE.setTerminateGame(GameLauncher.PROCESS_MANAGER::stopAllProcesses);
 
-            Settings.UPDATE_CHECKER.outOfDateEvent.register(IUpgrader.NOW_UPGRADER);
+            Settings.UPDATE_CHECKER.upgrade.register(IUpgrader.NOW_UPGRADER);
             Settings.UPDATE_CHECKER.process(false).reg(t -> Main.invokeUpdate()).execute();
 
             if (StrUtils.isNotBlank(Settings.getInstance().getProxyHost()) && StrUtils.isNotBlank(Settings.getInstance().getProxyPort()) && MathUtils.canParseInt(Settings.getInstance().getProxyPort())) {
@@ -175,12 +174,7 @@ public final class Main implements Runnable {
                     });
             }
 
-            try {
-                PluginManager.plugin().showUI();
-            } catch (Throwable t) {
-                new CrashReporter(false).uncaughtException(Thread.currentThread(), t);
-                System.exit(1);
-            }
+            MainFrame.showMainFrame();
         }
     }
 

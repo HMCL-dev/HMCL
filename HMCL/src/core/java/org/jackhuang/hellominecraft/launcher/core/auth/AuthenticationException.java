@@ -17,6 +17,11 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.auth;
 
+/**
+ * Thrown if we are trying to log in but there's some problems like password wrong.
+ *
+ * @author huangyuhui
+ */
 public class AuthenticationException extends Exception {
 
     public AuthenticationException() {

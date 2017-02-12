@@ -15,9 +15,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.util;
+package org.jackhuang.hellominecraft.api;
 
 import java.util.ArrayList;
+import java.util.EventObject;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 
 /**
@@ -25,18 +26,11 @@ import org.jackhuang.hellominecraft.util.func.Consumer;
  * @author huangyuhui
  * @param <T> EventArgs
  */
-public class EventHandler<T> {
+public class EventHandler<T extends EventObject> {
 
     ArrayList<Object> events = new ArrayList<>();
-    Object sender;
 
-    public EventHandler(Object sender) {
-        this.sender = sender;
-    }
-
-    public void register(Event<T> t) {
-        if (!events.contains(t))
-            events.add(t);
+    public EventHandler() {
     }
 
     public void register(Consumer<T> t) {
@@ -44,20 +38,40 @@ public class EventHandler<T> {
             events.add(t);
     }
 
+    public void registerFirst(Consumer<T> t) {
+        if (!events.contains(t))
+            events.add(0, t);
+    }
+
     public void register(Runnable t) {
         if (!events.contains(t))
             events.add(t);
     }
+    
+    public void registerFirst(Runnable t) {
+        if (!events.contains(t))
+            events.add(0, t);
+    }
 
-    public boolean execute(T x) {
+    public void fire(T x) {
+        for (Object t : events)
+            if (t instanceof Consumer) {
+                ((Consumer) t).accept(x);
+            } else if (t instanceof Runnable)
+                ((Runnable) t).run();
+    }
+
+    public boolean fireResulted(T x) {
+        if (!(x instanceof ResultedEvent))
+            throw new IllegalArgumentException("x should be ResultedEvent");
+        ResultedEvent event = (ResultedEvent) x;
         boolean flag = true;
         for (Object t : events)
-            if (t instanceof Event) {
-                if (!((Event<T>) t).call(sender, x))
+            if (t instanceof Consumer) {
+                ((Consumer) t).accept(x);
+                if (!event.result())
                     flag = false;
-            } else if (t instanceof Consumer)
-                ((Consumer<T>) t).accept(x);
-            else if (t instanceof Runnable)
+            } else if (t instanceof Runnable)
                 ((Runnable) t).run();
         return flag;
     }

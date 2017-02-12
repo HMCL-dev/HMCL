@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hellominecraft.svrmgr.util;
 
-import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.api.EventHandler;
 import org.jackhuang.hellominecraft.util.log.HMCLog;
 
 /**
@@ -37,10 +37,10 @@ public class WaitForThread extends Thread {
     public void run() {
         try {
             int exitCode = p.waitFor();
-            event.execute(exitCode);
+            event.fire(exitCode);
         } catch (InterruptedException ex) {
             HMCLog.err("Game has been interrupted.", ex);
-            event.execute(-1);
+            event.fire(-1);
         }
     }
 

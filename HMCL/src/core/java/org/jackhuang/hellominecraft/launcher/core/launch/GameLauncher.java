@@ -23,18 +23,24 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.List;
-import org.jackhuang.hellominecraft.launcher.api.PluginManager;
+import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.DecompressLibrariesEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.DecompressLibraryJob;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.DownloadLibrariesEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.LaunchEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.LaunchSucceededEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.LaunchingState;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.LaunchingStateChangedEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.ProcessingLoginResultEvent;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
+import org.jackhuang.hellominecraft.launcher.core.RuntimeGameException;
 import org.jackhuang.hellominecraft.launcher.core.auth.AuthenticationException;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.LoginInfo;
 import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
-import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftLoader;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
-import org.jackhuang.hellominecraft.launcher.core.version.DecompressLibraryJob;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.EventHandler;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.code.Charsets;
 import org.jackhuang.hellominecraft.util.log.HMCLog;
@@ -52,11 +58,6 @@ public class GameLauncher {
     LoginInfo info;
     UserProfileProvider result;
     IAuthenticator login;
-    public final EventHandler<List<DownloadLibraryJob>> downloadLibrariesEvent = new EventHandler<>(this);
-    public final EventHandler<List<String>> successEvent = new EventHandler<>(this);
-    public final EventHandler<JavaProcess> launchEvent = new EventHandler<>(this);
-    public final EventHandler<LaunchingState> launchingStateChangedEvent = new EventHandler<>(this);
-    public final EventHandler<DecompressLibraryJob> decompressNativesEvent = new EventHandler<>(this);
 
     public GameLauncher(LaunchOptions options, IMinecraftService version, LoginInfo info, IAuthenticator lg) {
         this.options = options;
@@ -75,10 +76,21 @@ public class GameLauncher {
         this.tag = tag;
     }
 
-    public IMinecraftLoader makeLaunchCommand() throws AuthenticationException, GameException {
+    /**
+     * Generates the launch command.
+     * @throws AuthenticationException having trouble logging in.
+     * @throws GameException having trouble completing the game or making lanch command.
+     * @throws RuntimeGameException will be thrown when someone processing login result.
+     * @see LaunchingStateChangedEvent
+     * @see DecompressLibrariesEvent
+     * @see LaunchSucceededEvent
+     * @see DownloadLibrariesEvent
+     * @see ProcessingLoginResultEvent
+     */
+    public void makeLaunchCommand() throws AuthenticationException, GameException, RuntimeGameException {
         HMCLog.log("Building process");
         HMCLog.log("Logging in...");
-        launchingStateChangedEvent.execute(LaunchingState.LoggingIn);
+        HMCLAPI.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(this, LaunchingState.LoggingIn));
         IMinecraftLoader loader;
         if (info != null)
             result = login.login(info);
@@ -86,9 +98,9 @@ public class GameLauncher {
             result = login.loginBySettings();
         if (result == null)
             throw new AuthenticationException("Result can not be null.");
-        PluginManager.plugin().onProcessingLoginResult(result);
+        HMCLAPI.EVENT_BUS.fireChannel(new ProcessingLoginResultEvent(this, result));
 
-        launchingStateChangedEvent.execute(LaunchingState.GeneratingLaunchingCodes);
+        HMCLAPI.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(this, LaunchingState.GeneratingLaunchingCodes));
         loader = service.launch(options, result);
 
         File file = service.version().getDecompressNativesToLocation(loader.getMinecraftVersion());
@@ -97,19 +109,18 @@ public class GameLauncher {
 
         if (!options.isNotCheckGame()) {
             HMCLog.log("Detecting libraries...");
-            launchingStateChangedEvent.execute(LaunchingState.DownloadingLibraries);
-            if (!downloadLibrariesEvent.execute(service.download().getDownloadLibraries(loader.getMinecraftVersion())))
+            HMCLAPI.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(this, LaunchingState.DownloadingLibraries));
+            if (!HMCLAPI.EVENT_BUS.fireChannelResulted(new DownloadLibrariesEvent(this, service.download().getDownloadLibraries(loader.getMinecraftVersion()))))
                 throw new GameException("Failed to download libraries");
         }
 
         HMCLog.log("Unpacking natives...");
-        launchingStateChangedEvent.execute(LaunchingState.DecompressingNatives);
+        HMCLAPI.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(this, LaunchingState.DecompressingNatives));
         DecompressLibraryJob job = service.version().getDecompressLibraries(loader.getMinecraftVersion());
-        if (!decompressNativesEvent.execute(job))
+        if (!HMCLAPI.EVENT_BUS.fireChannelResulted(new DecompressLibrariesEvent(this, job)))
             throw new GameException("Failed to decompress natives");
 
-        successEvent.execute(loader.makeLaunchingCommand());
-        return loader;
+        HMCLAPI.EVENT_BUS.fireChannel(new LaunchSucceededEvent(this, loader.makeLaunchingCommand()));
     }
 
     /**
@@ -139,7 +150,7 @@ public class GameLauncher {
                 .environment().put("APPDATA", service.baseDirectory().getAbsolutePath());
         JavaProcess jp = new JavaProcess(str, builder.start(), PROCESS_MANAGER);
         HMCLog.log("Have started the process");
-        launchEvent.execute(jp);
+        HMCLAPI.EVENT_BUS.fireChannel(new LaunchEvent(this, jp));
     }
 
     /**

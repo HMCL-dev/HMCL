@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.core.version;
 
+import org.jackhuang.hellominecraft.launcher.api.event.launch.DecompressLibraryJob;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +25,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
+import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.launcher.api.event.version.LoadedOneVersionEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.version.RefreshedVersionsEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.version.RefreshingVersionsEvent;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
@@ -67,7 +72,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public synchronized void refreshVersions() {
-        onRefreshingVersions.execute(service);
+        HMCLAPI.EVENT_BUS.fireChannel(new RefreshingVersionsEvent(this, service));
 
         try {
             MCUtils.tryWriteProfile(service.baseDirectory());
@@ -137,12 +142,12 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                     }
 
                     versions.put(id, mcVersion);
-                    onLoadedVersion.execute(id);
+                    HMCLAPI.EVENT_BUS.fireChannel(new LoadedOneVersionEvent(this, id));
                 } catch (Exception e) {
                     HMCLog.warn("Ignoring: " + dir + ", the json of this Minecraft is malformed.", e);
                 }
             }
-        onRefreshedVersions.execute(service);
+        HMCLAPI.EVENT_BUS.fireChannel(new RefreshedVersionsEvent(this, service));
     }
 
     @Override

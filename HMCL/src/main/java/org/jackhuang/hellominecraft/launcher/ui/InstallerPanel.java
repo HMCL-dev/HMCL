@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.ui;
 
+import org.jackhuang.hellominecraft.util.ui.Page;
 import java.util.List;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;

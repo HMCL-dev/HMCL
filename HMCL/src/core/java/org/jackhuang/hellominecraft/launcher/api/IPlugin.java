@@ -17,12 +17,8 @@
  */
 package org.jackhuang.hellominecraft.launcher.api;
 
-import org.jackhuang.hellominecraft.launcher.core.GameException;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
-import org.jackhuang.hellominecraft.launcher.core.auth.AuthenticationException;
+import javax.swing.JFrame;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
-import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
-import org.jackhuang.hellominecraft.launcher.core.launch.LaunchOptions;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 
 /**
@@ -32,33 +28,11 @@ import org.jackhuang.hellominecraft.util.func.Consumer;
 public interface IPlugin {
 
     /**
-     * You can modify the application actions by this method.
-     *
-     * @param obj minecraft service wanted
-     *
-     * @return For example, you can implement IMinecraftProvider to support
-     *         MultiMC
-     */
-    IMinecraftService provideMinecraftService(Object obj);
-
-    /**
      * Register authenticators by calling IAuthenticator.LOGINS.add.
      *
      * @param apply call apply.accept(your authenticator)
      */
     void onRegisterAuthenticators(Consumer<IAuthenticator> apply);
-
-    /**
-     * Open your customized UI.
-     */
-    void showUI();
-
-    /**
-     * Add your server ip or modify the access token.
-     *
-     * @param result What you want.
-     */
-    void onProcessingLoginResult(UserProfileProvider result) throws AuthenticationException;
-
-    void onProcessingLaunchOptions(LaunchOptions p) throws GameException;
+    
+    void onAddTab(JFrame frame, AddTabCallback callback);
 }

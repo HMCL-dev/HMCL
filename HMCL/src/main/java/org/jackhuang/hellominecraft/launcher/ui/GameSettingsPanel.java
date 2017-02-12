@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.ui;
 
+import org.jackhuang.hellominecraft.util.ui.Page;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -37,10 +38,15 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
+import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.launcher.api.event.config.ProfileChangedEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.config.ProfileLoadingEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.version.RefreshedVersionsEvent;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.log.HMCLog;
@@ -50,13 +56,11 @@ import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.util.FileNameFilter;
 import org.jackhuang.hellominecraft.launcher.core.mod.ModInfo;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerType;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.launcher.setting.VersionSetting;
 import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.AbstractSwingWorker;
-import org.jackhuang.hellominecraft.util.Event;
 import org.jackhuang.hellominecraft.util.MinecraftVersionRequest;
 import org.jackhuang.hellominecraft.util.sys.OS;
 import org.jackhuang.hellominecraft.util.StrUtils;
@@ -75,15 +79,24 @@ import org.jackhuang.hellominecraft.util.ui.LogWindow;
 public final class GameSettingsPanel extends RepaintPage implements DropTargetListener {
 
     boolean isLoading = false;
+    boolean showedNoVersion = false;
     public MinecraftVersionRequest minecraftVersion;
     String mcVersion;
 
     final InstallerPanel installerPanels[] = new InstallerPanel[InstallerType.values().length];
 
-    public GameSettingsPanel(MainFrame mf) {
-        mf.actions.put("showGameDownloads", () -> {
-            MainFrame.INSTANCE.selectTab("game");
-            showGameDownloads();
+    public GameSettingsPanel() {
+        HMCLAPI.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(t -> {
+            if (Settings.getLastProfile().service() == t.getValue())
+                if (!showedNoVersion && Settings.getLastProfile().service().checkingModpack) {
+                    showedNoVersion = true;
+                    SwingUtilities.invokeLater(() -> {
+                        if (MessageBox.show(C.i18n("mainwindow.no_version"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
+                            MainFrame.INSTANCE.selectTab("game");
+                            showGameDownloads();
+                        }
+                    });
+                }
         });
 
         setRepainter(this);
@@ -91,6 +104,8 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
 
     void initGui() {
         initComponents();
+
+        animationEnabled = Settings.getInstance().isEnableAnimation();
 
         dropTarget = new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
 
@@ -108,8 +123,9 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
             cboJava.addItem(j.getLocalizedName());
         isLoading = false;
 
-        Settings.profileLoadingEvent.register(onLoadingProfiles);
-        Settings.profileChangedEvent.register(onSelectedProfilesChanged);
+        HMCLAPI.EVENT_BUS.channel(ProfileLoadingEvent.class).register(onLoadingProfiles);
+        HMCLAPI.EVENT_BUS.channel(ProfileChangedEvent.class).register(onSelectedProfilesChanged);
+        HMCLAPI.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(onRefreshedVersions);
     }
 
     void initExplorationMenu() {
@@ -1437,8 +1453,8 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         isLoading = false;
     }
 
-    final Consumer<IMinecraftService> onRefreshedVersions = t -> {
-        if (Settings.getLastProfile().service() == t)
+    final Consumer<RefreshedVersionsEvent> onRefreshedVersions = t -> {
+        if (Settings.getLastProfile().service() == t.getValue())
             loadVersions();
     };
 
@@ -1451,10 +1467,8 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         }
         cboVersions.setModel(model);
         if (Settings.getLastProfile().getSelectedVersion() != null)
-            selectedVersionChangedEvent.accept(Settings.getLastProfile().getSelectedVersion());
+            versionChanged(Settings.getLastProfile().getSelectedVersion());
     }
-
-    final Consumer<String> selectedVersionChangedEvent = this::versionChanged;
 
     public void versionChanged(String version) {
         isLoading = true;
@@ -1477,9 +1491,12 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         isLoading = false;
     }
 
-    final Consumer<Profile> onSelectedProfilesChanged = t -> {
-        t.service().version().onRefreshedVersions.register(onRefreshedVersions);
-        t.selectedVersionChangedEvent.register(selectedVersionChangedEvent);
+    final Consumer<ProfileChangedEvent> onSelectedProfilesChanged = event -> {
+        Profile t = Settings.getProfile(event.getValue());
+        t.propertyChanged.register(e -> {
+            if ("selectedMinecraftVersion".equals(e.getPropertyName()))
+                versionChanged(e.getNewValue());
+        });
 
         txtGameDir.setText(t.getGameDir());
 

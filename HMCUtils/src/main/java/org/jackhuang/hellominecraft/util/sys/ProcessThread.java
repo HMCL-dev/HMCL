@@ -22,7 +22,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import org.jackhuang.hellominecraft.util.log.HMCLog;
-import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.api.EventHandler;
+import org.jackhuang.hellominecraft.api.SimpleEvent;
 import org.jackhuang.hellominecraft.util.code.Charsets;
 
 /**
@@ -33,8 +34,8 @@ public class ProcessThread extends Thread {
 
     JavaProcess p;
 
-    public final EventHandler<String> printlnEvent = new EventHandler<>(this);
-    public final EventHandler<JavaProcess> stopEvent = new EventHandler<>(this);
+    public final EventHandler<SimpleEvent<String>> printlnEvent = new EventHandler<>();
+    public final EventHandler<SimpleEvent<JavaProcess>> stopEvent = new EventHandler<>();
 
     public ProcessThread(JavaProcess process) {
         p = process;
@@ -55,18 +56,18 @@ public class ProcessThread extends Thread {
             String line;
             while (p.isRunning())
                 while ((line = br.readLine()) != null) {
-                    printlnEvent.execute(line);
-                    System.out.println("Minecraft: " + line);
+                    printlnEvent.fire(new SimpleEvent<>(this, line));
+                    System.out.println("MC: " + line);
                     p.getStdOutLines().add(line);
                 }
             while ((line = br.readLine()) != null) {
-                printlnEvent.execute(line);
-                System.out.println("Minecraft: " + line);
+                printlnEvent.fire(new SimpleEvent<>(this, line));
+                System.out.println("MC: " + line);
                 p.getStdOutLines().add(line);
             }
             if (p.getProcessManager() != null)
                 p.getProcessManager().onProcessStopped(p);
-            stopEvent.execute(p);
+            stopEvent.fire(new SimpleEvent<>(this, p));
         } catch (IOException e) {
             HMCLog.err("An error occured when reading process stdout/stderr.", e);
         } finally {

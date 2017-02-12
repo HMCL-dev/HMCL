@@ -20,9 +20,9 @@ package org.jackhuang.hellominecraft.launcher.core.service;
 import java.io.File;
 import java.util.Collection;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
-import org.jackhuang.hellominecraft.launcher.core.version.DecompressLibraryJob;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.DecompressLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.api.EventHandler;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 import org.jackhuang.hellominecraft.util.func.Predicate;
 
@@ -142,10 +142,6 @@ public abstract class IMinecraftProvider {
      * Events.
      */
     public abstract void refreshVersions();
-
-    public final EventHandler<IMinecraftService> onRefreshingVersions = new EventHandler<>(this),
-        onRefreshedVersions = new EventHandler<>(this);
-    public final EventHandler<String> onLoadedVersion = new EventHandler<>(this);
 
     /**
      * Clean redundant files.

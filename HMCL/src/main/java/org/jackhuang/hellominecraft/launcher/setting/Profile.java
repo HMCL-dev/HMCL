@@ -21,13 +21,12 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hellominecraft.launcher.util.HMCLGameLauncher;
 import org.jackhuang.hellominecraft.launcher.util.HMCLMinecraftService;
 import java.io.File;
-import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.launcher.core.MCUtils;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.sys.IOUtils;
 import org.jackhuang.hellominecraft.util.StrUtils;
-import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.api.EventHandler;
+import org.jackhuang.hellominecraft.api.PropertyChangedEvent;
 import org.jackhuang.hellominecraft.util.sys.OS;
 
 /**
@@ -45,9 +44,9 @@ public final class Profile {
     @SerializedName("global")
     private VersionSetting global;
 
-    private transient IMinecraftService service;
+    private transient HMCLMinecraftService service;
     private transient HMCLGameLauncher launcher = new HMCLGameLauncher(this);
-    public transient final EventHandler<String> propertyChanged = new EventHandler<>(this);
+    public transient final EventHandler<PropertyChangedEvent<String>> propertyChanged = new EventHandler<>();
 
     public Profile() {
         this("Default");
@@ -71,9 +70,9 @@ public final class Profile {
         gameDir = v.gameDir;
     }
 
-    public IMinecraftService service() {
+    public HMCLMinecraftService service() {
         if (service == null)
-            service = PluginManager.plugin().provideMinecraftService(this);
+            service = new HMCLMinecraftService(this);
         return service;
     }
 
@@ -86,7 +85,7 @@ public final class Profile {
     }
 
     public VersionSetting getVersionSetting(String id) {
-        VersionSetting vs = ((HMCLMinecraftService) service()).getVersionSetting(id);
+        VersionSetting vs = service().getVersionSetting(id);
         if (vs == null || vs.isUsesGlobal()) {
             global.isGlobal = true;
             global.id = id;
@@ -96,23 +95,21 @@ public final class Profile {
     }
     
     public boolean isVersionSettingGlobe(String id) {
-        VersionSetting vs = ((HMCLMinecraftService) service()).getVersionSetting(id);
+        VersionSetting vs = service().getVersionSetting(id);
         return vs == null || vs.isUsesGlobal();
     }
 
     public void makeVersionSettingSpecial(String id) {
-        HMCLMinecraftService s = (HMCLMinecraftService) service();
-        VersionSetting vs = s.getVersionSetting(id);
+        VersionSetting vs = service().getVersionSetting(id);
         if (vs == null) {
-            s.createVersionSetting(id);
-            vs = s.getVersionSetting(id);
+            service().createVersionSetting(id);
+            vs = service().getVersionSetting(id);
             if (vs == null)
                 return;
             vs.setUsesGlobal(false);
         } else
             vs.setUsesGlobal(false);
-        propertyChanged.execute("selectedMinecraftVersion");
-        selectedVersionChangedEvent.execute(selectedMinecraftVersion);
+        propertyChanged.fire(new PropertyChangedEvent<>(this, "selectedMinecraftVersion", selectedMinecraftVersion, selectedMinecraftVersion));
     }
 
     public void makeVersionSettingGlobal(String id) {
@@ -121,8 +118,7 @@ public final class Profile {
         if (vs == null)
             return;
         vs.setUsesGlobal(true);
-        propertyChanged.execute("selectedMinecraftVersion");
-        selectedVersionChangedEvent.execute(selectedMinecraftVersion);
+        propertyChanged.fire(new PropertyChangedEvent<>(this, "selectedMinecraftVersion", selectedMinecraftVersion, selectedMinecraftVersion));
     }
 
     public String getSettingsSelectedMinecraftVersion() {
@@ -141,12 +137,10 @@ public final class Profile {
         return StrUtils.isBlank(v) ? null : v;
     }
 
-    public transient final EventHandler<String> selectedVersionChangedEvent = new EventHandler<>(this);
-
     public void setSelectedMinecraftVersion(String selectedMinecraftVersion) {
+        PropertyChangedEvent event = new PropertyChangedEvent<>(this, "selectedMinecraftVersion", this.selectedMinecraftVersion, selectedMinecraftVersion);
         this.selectedMinecraftVersion = selectedMinecraftVersion;
-        propertyChanged.execute("selectedMinecraftVersion");
-        selectedVersionChangedEvent.execute(selectedMinecraftVersion);
+        propertyChanged.fire(event);
     }
 
     public String getGameDir() {
@@ -168,9 +162,10 @@ public final class Profile {
     }
 
     public Profile setGameDir(String gameDir) {
+        PropertyChangedEvent event = new PropertyChangedEvent<>(this, "gameDir", this.gameDir, gameDir);
         this.gameDir = gameDir;
         service().version().refreshVersions();
-        propertyChanged.execute("gameDir");
+        propertyChanged.fire(event);
         return this;
     }
 
@@ -179,8 +174,9 @@ public final class Profile {
     }
 
     void setName(String name) {
+        PropertyChangedEvent event = new PropertyChangedEvent<>(this, "name", this.name, name);
         this.name = name;
-        propertyChanged.execute("name");
+        propertyChanged.fire(event);
     }
 
     public void checkFormat() {

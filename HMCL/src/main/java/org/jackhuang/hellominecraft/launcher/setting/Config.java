@@ -27,7 +27,10 @@ import java.util.TreeMap;
 import java.util.UUID;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.lookandfeel.Theme;
-import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.launcher.api.event.config.AuthenticatorChangedEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.config.DownloadTypeChangedEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.config.ThemeChangedEvent;
 import org.jackhuang.hellominecraft.util.sys.JdkVersion;
 import org.jackhuang.hellominecraft.util.sys.OS;
 
@@ -78,10 +81,6 @@ public final class Config implements Cloneable {
         return java == null ? java = new ArrayList<>() : java;
     }
 
-    public transient final EventHandler<Theme> themeChangedEvent = new EventHandler<>(this);
-    public transient final EventHandler<DownloadType> downloadTypeChangedEvent = new EventHandler<>(this);
-    public transient final EventHandler<IAuthenticator> authChangedEvent = new EventHandler<>(this);
-
     public Theme getTheme() {
         if (theme >= Theme.values().length)
             theme = 0;
@@ -90,7 +89,7 @@ public final class Config implements Cloneable {
 
     public void setTheme(int theme) {
         this.theme = theme;
-        themeChangedEvent.execute(getTheme());
+        HMCLAPI.EVENT_BUS.fireChannel(new ThemeChangedEvent(this, getTheme()));
         Settings.save();
     }
 
@@ -171,7 +170,7 @@ public final class Config implements Cloneable {
         if (logintype < 0 || logintype >= IAuthenticator.LOGINS.size())
             return;
         this.logintype = logintype;
-        authChangedEvent.execute(IAuthenticator.LOGINS.get(logintype));
+        HMCLAPI.EVENT_BUS.fireChannel(new AuthenticatorChangedEvent(this, IAuthenticator.LOGINS.get(logintype)));
         Settings.save();
     }
 
@@ -181,7 +180,7 @@ public final class Config implements Cloneable {
 
     public void setDownloadType(int downloadtype) {
         this.downloadtype = downloadtype;
-        downloadTypeChangedEvent.execute(getDownloadSource());
+        HMCLAPI.EVENT_BUS.fireChannel(new DownloadTypeChangedEvent(this, getDownloadSource()));
         Settings.save();
     }
 

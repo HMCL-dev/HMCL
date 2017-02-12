@@ -87,7 +87,7 @@ import org.jackhuang.hellominecraft.svrmgr.util.Utilities;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 import org.jackhuang.hellominecraft.svrmgr.util.version.MinecraftRemoteVersion;
 import org.jackhuang.hellominecraft.lookandfeel.ConstomButton;
-import org.jackhuang.hellominecraft.util.Event;
+import org.jackhuang.hellominecraft.api.Event;
 import org.jackhuang.hellominecraft.util.StrUtils;
 
 /**

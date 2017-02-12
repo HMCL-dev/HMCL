@@ -25,7 +25,8 @@ import org.jackhuang.hellominecraft.launcher.util.LauncherVisibility;
 import org.jackhuang.hellominecraft.launcher.core.launch.LaunchOptions;
 import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.api.EventHandler;
+import org.jackhuang.hellominecraft.api.PropertyChangedEvent;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.util.sys.Java;
@@ -87,7 +88,7 @@ public class VersionSetting {
     @SerializedName("gameDirType")
     private int gameDirType;
 
-    public transient final EventHandler<String> propertyChanged = new EventHandler<>(this);
+    public transient final EventHandler<PropertyChangedEvent> propertyChanged = new EventHandler<>();
 
     public VersionSetting() {
         fullscreen = usesGlobal = false;
@@ -113,8 +114,9 @@ public class VersionSetting {
     }
 
     public void setJavaDir(String javaDir) {
+        PropertyChangedEvent event = new PropertyChangedEvent(this, "javaDir", this.javaDir, javaDir);
         this.javaDir = javaDir;
-        propertyChanged.execute("javaDir");
+        propertyChanged.fire(event);
     }
 
     public Java getJava() {
@@ -133,6 +135,7 @@ public class VersionSetting {
     }
 
     public void setJava(Java java) {
+        PropertyChangedEvent event = new PropertyChangedEvent(this, "java", this.java, java);
         if (java == null)
             this.java = Java.JAVA.get(0).getName();
         else {
@@ -141,7 +144,7 @@ public class VersionSetting {
                 return;
             this.java = java.getName();
         }
-        propertyChanged.execute("java");
+        propertyChanged.fire(event);
     }
 
     public String getJavaArgs() {
@@ -151,8 +154,9 @@ public class VersionSetting {
     }
 
     public void setJavaArgs(String javaArgs) {
+        PropertyChangedEvent event = new PropertyChangedEvent(this, "javaArgs", this.javaArgs, javaArgs);
         this.javaArgs = javaArgs;
-        propertyChanged.execute("javaArgs");
+        propertyChanged.fire(event);
     }
 
     public String getMaxMemory() {
@@ -162,8 +166,9 @@ public class VersionSetting {
     }
 
     public void setMaxMemory(String maxMemory) {
+        PropertyChangedEvent event = new PropertyChangedEvent(this, "maxMemory", this.maxMemory, maxMemory);
         this.maxMemory = maxMemory;
-        propertyChanged.execute("maxMemory");
+        propertyChanged.fire(event);
     }
 
     public String getWidth() {
@@ -173,8 +178,9 @@ public class VersionSetting {
     }
 
     public void setWidth(String width) {
+        PropertyChangedEvent event = new PropertyChangedEvent(this, "width", this.width, width);
         this.width = width;
-        propertyChanged.execute("width");
+        propertyChanged.fire(event);
     }
 
     public String getHeight() {
@@ -184,8 +190,9 @@ public class VersionSetting {
     }
 
     public void setHeight(String height) {
+        PropertyChangedEvent event = new PropertyChangedEvent(this, "height", this.height, height);
         this.height = height;
-        propertyChanged.execute("height");
+        propertyChanged.fire(event);
     }
 
     public boolean isFullscreen() {
@@ -193,8 +200,9 @@ public class VersionSetting {
     }
 
     public void setFullscreen(boolean fullscreen) {
+        PropertyChangedEvent event = new PropertyChangedEvent(this, "fullscreen", this.fullscreen, fullscreen);
         this.fullscreen = fullscreen;
-        propertyChanged.execute("fullscreen");
+        propertyChanged.fire(event);
     }
 
     public LauncherVisibility getLauncherVisibility() {
@@ -202,8 +210,9 @@ public class VersionSetting {
     }
 
     public void setLauncherVisibility(LauncherVisibility launcherVisibility) {
+        PropertyChangedEvent event = new PropertyChangedEvent(this, "launcherVisibility", this.launcherVisibility, launcherVisibility);
         this.launcherVisibility = launcherVisibility.ordinal();
-        propertyChanged.execute("launcherVisibility");
+        propertyChanged.fire(event);
     }
 
     public GameDirType getGameDirType() {
@@ -213,8 +222,9 @@ public class VersionSetting {
     }
 
     public void setGameDirType(GameDirType gameDirType) {
+        PropertyChangedEvent event = new PropertyChangedEvent(this, "gameDirType", this.gameDirType, gameDirType);
         this.gameDirType = gameDirType.ordinal();
-        propertyChanged.execute("gameDirType");
+        propertyChanged.fire(event);
     }
 
     public String getPermSize() {
@@ -222,8 +232,9 @@ public class VersionSetting {
     }
 
     public void setPermSize(String permSize) {
+        PropertyChangedEvent event = new PropertyChangedEvent(this, "permSize", this.permSize, permSize);
         this.permSize = permSize;
-        propertyChanged.execute("permSize");
+        propertyChanged.fire(event);
     }
 
     public boolean isNoJVMArgs() {
@@ -231,8 +242,9 @@ public class VersionSetting {
     }
 
     public void setNoJVMArgs(boolean noJVMArgs) {
+        PropertyChangedEvent event = new PropertyChangedEvent(this, "noJVMArgs", this.noJVMArgs, noJVMArgs);
         this.noJVMArgs = noJVMArgs;
-        propertyChanged.execute("noJVMArgs");
+        propertyChanged.fire(event);
     }
 
     public String getMinecraftArgs() {
@@ -240,8 +252,9 @@ public class VersionSetting {
     }
 
     public void setMinecraftArgs(String minecraftArgs) {
+        PropertyChangedEvent event = new PropertyChangedEvent(this, "minecraftArgs", this.minecraftArgs, minecraftArgs);
         this.minecraftArgs = minecraftArgs;
-        propertyChanged.execute("minecraftArgs");
+        propertyChanged.fire(event);
     }
 
     public String getPrecalledCommand() {
@@ -249,8 +262,9 @@ public class VersionSetting {
     }
 
     public void setPrecalledCommand(String precalledCommand) {
+        PropertyChangedEvent event = new PropertyChangedEvent(this, "precalledCommand", this.precalledCommand, precalledCommand);
         this.precalledCommand = precalledCommand;
-        propertyChanged.execute("precalledCommand");
+        propertyChanged.fire(event);
     }
 
     public String getWrapper() {
@@ -258,8 +272,9 @@ public class VersionSetting {
     }
 
     public void setWrapper(String wrapper) {
+        PropertyChangedEvent event = new PropertyChangedEvent(this, "wrapper", this.wrapper, wrapper);
         this.wrapper = wrapper;
-        propertyChanged.execute("wrapper");
+        propertyChanged.fire(event);
     }
 
     public String getServerIp() {
@@ -267,8 +282,9 @@ public class VersionSetting {
     }
 
     public void setServerIp(String serverIp) {
+        PropertyChangedEvent event = new PropertyChangedEvent(this, "serverIp", this.serverIp, serverIp);
         this.serverIp = serverIp;
-        propertyChanged.execute("serverIp");
+        propertyChanged.fire(event);
     }
 
     public boolean isNotCheckGame() {
@@ -276,8 +292,9 @@ public class VersionSetting {
     }
 
     public void setNotCheckGame(boolean notCheckGame) {
+        PropertyChangedEvent event = new PropertyChangedEvent(this, "notCheckGame", this.notCheckGame, notCheckGame);
         this.notCheckGame = notCheckGame;
-        propertyChanged.execute("notCheckGame");
+        propertyChanged.fire(event);
     }
 
     public boolean isUsesGlobal() {
@@ -285,8 +302,9 @@ public class VersionSetting {
     }
 
     public void setUsesGlobal(boolean usesGlobal) {
+        PropertyChangedEvent event = new PropertyChangedEvent(this, "usesGlobal", this.usesGlobal, usesGlobal);
         this.usesGlobal = usesGlobal;
-        propertyChanged.execute("usesGlobal");
+        propertyChanged.fire(event);
     }
 
     public LaunchOptions createLaunchOptions(File gameDir) {

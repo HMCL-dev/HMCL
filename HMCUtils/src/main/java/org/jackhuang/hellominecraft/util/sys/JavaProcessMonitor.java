@@ -20,7 +20,12 @@ package org.jackhuang.hellominecraft.util.sys;
 import java.util.Arrays;
 import java.util.HashSet;
 import org.jackhuang.hellominecraft.util.CollectionUtils;
-import org.jackhuang.hellominecraft.util.EventHandler;
+import org.jackhuang.hellominecraft.api.EventHandler;
+import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.api.event.process.JVMLaunchFailedEvent;
+import org.jackhuang.hellominecraft.api.event.process.JavaProcessExitedAbnormallyEvent;
+import org.jackhuang.hellominecraft.api.event.process.JavaProcessStartingEvent;
+import org.jackhuang.hellominecraft.api.event.process.JavaProcessStoppedEvent;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.util.log.Level;
@@ -32,20 +37,6 @@ import org.jackhuang.hellominecraft.util.log.Level;
 public class JavaProcessMonitor {
 
     private final HashSet<Thread> al = new HashSet<>();
-    /**
-     * this event will be executed only if the application returned 0.
-     */
-    public final EventHandler<JavaProcess> stoppedEvent = new EventHandler<>(this);
-    /**
-     * When the monitored application exited with exit code not zero, this event
-     * will be executed. Event args is the exit code.
-     */
-    public final EventHandler<Integer> applicationExitedAbnormallyEvent = new EventHandler<>(this);
-    /**
-     * When jvm crashed, this event will be executed. Event args is the exit
-     * code.
-     */
-    public final EventHandler<Integer> jvmLaunchFailedEvent = new EventHandler<>(this);
     private final JavaProcess p;
 
     public JavaProcessMonitor(JavaProcess p) {
@@ -55,24 +46,35 @@ public class JavaProcessMonitor {
     public JavaProcess getJavaProcess() {
         return p;
     }
+    
+    private Object tag;
+
+    public Object getTag() {
+        return tag;
+    }
+
+    public void setTag(Object tag) {
+        this.tag = tag;
+    }
+    
 
     public void start() {
+        HMCLAPI.EVENT_BUS.fireChannel(new JavaProcessStartingEvent(this, p));
         ProcessThread a = new ProcessThread(p);
-        a.stopEvent.register((sender, t) -> {
-            HMCLog.log("Process exit code: " + t.getExitCode());
-            if (t.getExitCode() != 0 || StrUtils.containsOne(t.getStdOutLines(),
+        a.stopEvent.register(event -> {
+            HMCLog.log("Process exit code: " + p.getExitCode());
+            if (p.getExitCode() != 0 || StrUtils.containsOne(p.getStdOutLines(),
                                                              Arrays.asList("Unable to launch"),
                                                              x -> Level.guessLevel(x, Level.INFO).lessOrEqual(Level.ERROR)))
-                applicationExitedAbnormallyEvent.execute(t.getExitCode());
-            if (t.getExitCode() != 0 && StrUtils.containsOne(t.getStdOutLines(),
+                HMCLAPI.EVENT_BUS.fireChannel(new JavaProcessExitedAbnormallyEvent(JavaProcessMonitor.this, p));
+            if (p.getExitCode() != 0 && StrUtils.containsOne(p.getStdOutLines(),
                                                              Arrays.asList("Could not create the Java Virtual Machine.",
                                                                            "Error occurred during initialization of VM",
                                                                            "A fatal exception has occurred. Program will exit.",
                                                                            "Unable to launch"),
                                                              x -> Level.guessLevel(x, Level.INFO).lessOrEqual(Level.ERROR)))
-                jvmLaunchFailedEvent.execute(t.getExitCode());
-            processThreadStopped((ProcessThread) sender, false);
-            return true;
+                HMCLAPI.EVENT_BUS.fireChannel(new JVMLaunchFailedEvent(JavaProcessMonitor.this, p));
+            processThreadStopped((ProcessThread) event.getSource(), false);
         });
         a.start();
         al.add(a);
@@ -84,7 +86,7 @@ public class JavaProcessMonitor {
             for (Thread a : al)
                 a.interrupt();
             al.clear();
-            stoppedEvent.execute(p);
+            HMCLAPI.EVENT_BUS.fireChannel(new JavaProcessStoppedEvent(this, p));
         }
     }
 }

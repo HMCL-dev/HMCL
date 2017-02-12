@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.ui;
 
+import org.jackhuang.hellominecraft.util.ui.Page;
 import org.jackhuang.hellominecraft.util.ui.WideComboBox;
 import org.jackhuang.hellominecraft.util.ui.GaussionPanel;
 import java.awt.CardLayout;
@@ -28,18 +29,22 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.launcher.api.event.config.AuthenticatorChangedEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.config.ProfileChangedEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.config.ProfileLoadingEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.LaunchSucceededEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.LaunchingState;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.LaunchingStateChangedEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.version.RefreshedVersionsEvent;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.setting.Profile;
-import org.jackhuang.hellominecraft.util.MessageBox;
 import org.jackhuang.hellominecraft.util.StrUtils;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.launcher.core.mod.ModpackManager;
-import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.ui.modpack.ModpackWizard;
-import org.jackhuang.hellominecraft.launcher.util.HMCLMinecraftService;
-import org.jackhuang.hellominecraft.util.Event;
 import org.jackhuang.hellominecraft.lookandfeel.ConstomButton;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 import org.jackhuang.hellominecraft.util.sys.FileUtils;
@@ -60,7 +65,7 @@ public class MainPagePanel extends Page {
 
     void initGui() {
         initComponents();
-        
+
         animationEnabled = false;
 
         pnlButtons = new javax.swing.JPanel();
@@ -86,19 +91,20 @@ public class MainPagePanel extends Page {
         pnlMore.setBackground(GraphicsUtils.getWebColorWithAlpha("FFFFFF7F"));
         pnlMore.setOpaque(true);
 
-        Settings.getInstance().authChangedEvent.register(onAuthChanged);
-        Settings.profileLoadingEvent.register(onLoadingProfiles);
-        Settings.profileChangedEvent.register(onSelectedProfilesChanged);
-
-        MainFrame.INSTANCE.daemon.customizedSuccessEvent = this::prepareAuths;
-
-        prepareAuths();
-
         if (Settings.getInstance().isEnableBlur())
             ((GaussionPanel) pnlRoot).addAeroObject(pnlMore);
         ((GaussionPanel) pnlRoot).setBackgroundImage(MainFrame.INSTANCE.background.getImage());
 
         ((RepaintPage) pnlMore).setRepainter(pnlRoot);
+
+        HMCLAPI.EVENT_BUS.channel(AuthenticatorChangedEvent.class).register(onAuthChanged);
+        HMCLAPI.EVENT_BUS.channel(ProfileLoadingEvent.class).register(onLoadingProfiles);
+        HMCLAPI.EVENT_BUS.channel(ProfileChangedEvent.class).register(onSelectedProfilesChanged);
+        HMCLAPI.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(onRefreshedVersions);
+        HMCLAPI.EVENT_BUS.channel(LaunchingStateChangedEvent.class).register(launchingStateChanged);
+        HMCLAPI.EVENT_BUS.channel(LaunchSucceededEvent.class).register(this::prepareAuths);
+
+        prepareAuths();
     }
 
     /**
@@ -409,7 +415,6 @@ public class MainPagePanel extends Page {
     }//GEN-LAST:event_txtPasswordCaretUpdate
 
     // <editor-fold defaultstate="collapsed" desc="Loads">
-    
     private void prepareAuths() {
         preparingAuth = true;
         cboLoginMode.removeAllItems();
@@ -460,8 +465,8 @@ public class MainPagePanel extends Page {
     private javax.swing.JTextField txtPlayerName;
     // End of variables declaration//GEN-END:variables
 
-    final Event<IAuthenticator> onAuthChanged = (sender, l) -> {
-        if (l.hasPassword()) {
+    final Consumer<AuthenticatorChangedEvent> onAuthChanged = (x) -> {
+        if (x.getValue().hasPassword()) {
             pnlPassword.setVisible(true);
             lblUserName.setText(C.i18n("login.account"));
         } else {
@@ -470,16 +475,14 @@ public class MainPagePanel extends Page {
         }
 
         CardLayout cl = (CardLayout) pnlPassword.getLayout();
-        if (l.isLoggedIn())
+        if (x.getValue().isLoggedIn())
             cl.last(pnlPassword);
         else
             cl.first(pnlPassword);
-        String username = l.getUserName();
+        String username = x.getValue().getUserName();
         if (username == null)
             username = "";
         txtPlayerName.setText(username);
-
-        return true;
     };
 
     final Runnable onLoadingProfiles = () -> {
@@ -491,8 +494,8 @@ public class MainPagePanel extends Page {
         isLoading = false;
     };
 
-    final Consumer<IMinecraftService> onRefreshedVersions = t -> {
-        if (Settings.getLastProfile().service() == t)
+    final Consumer<RefreshedVersionsEvent> onRefreshedVersions = t -> {
+        if (Settings.getLastProfile().service() == t.getValue())
             loadVersions();
     };
 
@@ -502,28 +505,18 @@ public class MainPagePanel extends Page {
         isLoading = true;
         cboVersions.removeAllItems();
         String selVersion = Settings.getLastProfile().getSelectedVersion();
-        if (Settings.getLastProfile().service().version().getVersions().isEmpty()) {
-            if (!showedNoVersion && ((HMCLMinecraftService) Settings.getLastProfile().service()).checkedModpack) {
-                showedNoVersion = true;
-                SwingUtilities.invokeLater(() -> {
-                    if (MessageBox.show(C.i18n("mainwindow.no_version"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                        MainFrame.INSTANCE.invokeAction("showGameDownloads");
-                });
-            }
-        } else {
+        if (!Settings.getLastProfile().service().version().getVersions().isEmpty()) {
             for (MinecraftVersion mcVersion : Settings.getLastProfile().service().version().getVersions()) {
                 if (mcVersion.hidden)
                     continue;
                 cboVersions.addItem(mcVersion.id);
             }
-            versionChanged.accept(selVersion);
+            versionChanged(selVersion);
         }
         isLoading = false;
     }
 
-    final Consumer<Boolean> launchingStateChanged = t -> SwingUtils.setEnabled(MainFrame.INSTANCE.getRootPane(), !t);
-
-    final Consumer<String> versionChanged = this::versionChanged;
+    final Consumer<LaunchingStateChangedEvent> launchingStateChanged = t -> SwingUtils.setEnabled(MainFrame.INSTANCE.getRootPane(), t.getValue() == LaunchingState.Done);
 
     void versionChanged(String selectedVersion) {
         isLoading = true;
@@ -536,10 +529,12 @@ public class MainPagePanel extends Page {
         isLoading = false;
     }
 
-    final Consumer<Profile> onSelectedProfilesChanged = t -> {
-        t.service().version().onRefreshedVersions.register(onRefreshedVersions);
-        t.selectedVersionChangedEvent.register(versionChanged);
-        t.launcher().launchingStateChanged.register(launchingStateChanged);
+    final Consumer<ProfileChangedEvent> onSelectedProfilesChanged = event -> {
+        Profile t = Settings.getProfile(event.getValue());
+        t.propertyChanged.register(e -> {
+            if ("selectedMinecraftVersion".equals(e.getPropertyName()))
+                versionChanged(e.getNewValue());
+        });
 
         isLoading = true;
         DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) cboProfiles.getModel();

@@ -19,16 +19,22 @@ package org.jackhuang.hellominecraft.launcher.core.launch;
 
 import java.io.IOException;
 import java.util.HashSet;
-import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.util.log.HMCLog;
+import java.util.List;
+import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.api.ResultedSimpleEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.DecompressLibrariesEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.DownloadLibrariesEvent;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.core.auth.LoginInfo;
-import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
+import org.jackhuang.hellominecraft.util.C;
+import org.jackhuang.hellominecraft.util.MessageBox;
+import org.jackhuang.hellominecraft.util.log.HMCLog;
+import org.jackhuang.hellominecraft.util.sys.CompressingUtils;
 import org.jackhuang.hellominecraft.util.task.ParallelTask;
 import org.jackhuang.hellominecraft.util.task.TaskWindow;
-import org.jackhuang.hellominecraft.util.sys.CompressingUtils;
-import org.jackhuang.hellominecraft.util.MessageBox;
+
 
 public class DefaultGameLauncher extends GameLauncher {
 
@@ -38,11 +44,12 @@ public class DefaultGameLauncher extends GameLauncher {
     }
 
     private void register() {
-        downloadLibrariesEvent.register((sender, t) -> {
+        HMCLAPI.EVENT_BUS.channel(DownloadLibrariesEvent.class).register(t -> {
+            ResultedSimpleEvent<List<DownloadLibraryJob>> event = (ResultedSimpleEvent) t;
             final TaskWindow.TaskWindowFactory dw = TaskWindow.factory();
             ParallelTask parallelTask = new ParallelTask();
             HashSet<String> names = new HashSet<>();
-            for (DownloadLibraryJob s : t) {
+            for (DownloadLibraryJob s : t.getValue()) {
                 if (names.contains(s.lib.name))
                     continue;
                 names.add(s.lib.name);
@@ -50,22 +57,23 @@ public class DefaultGameLauncher extends GameLauncher {
             }
             dw.append(parallelTask);
             boolean flag = true;
-            if (t.size() > 0)
+            if (t.getValue().size() > 0)
                 flag = dw.execute();
             if (!flag && MessageBox.show(C.i18n("launch.not_finished_downloading_libraries"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                 flag = true;
-            return flag;
+            t.setResult(flag);
         });
-        decompressNativesEvent.register((sender, value) -> {
-            if (value == null)
-                return false;
-            for (int i = 0; i < value.decompressFiles.length; i++)
+        HMCLAPI.EVENT_BUS.channel(DecompressLibrariesEvent.class).register(t -> {
+            if (t.getValue() == null) {
+                t.setResult(false);
+                return;
+            }
+            for (int i = 0; i < t.getValue().decompressFiles.length; i++)
                 try {
-                    CompressingUtils.unzip(value.decompressFiles[i], value.getDecompressTo(), value.extractRules[i]::allow, false);
+                    CompressingUtils.unzip(t.getValue().decompressFiles[i], t.getValue().getDecompressTo(), t.getValue().extractRules[i]::allow, false);
                 } catch (IOException ex) {
-                    HMCLog.err("Unable to decompress library: " + value.decompressFiles[i] + " to " + value.getDecompressTo(), ex);
+                    HMCLog.err("Unable to decompress library: " + t.getValue().decompressFiles[i] + " to " + t.getValue().getDecompressTo(), ex);
                 }
-            return true;
         });
     }
 

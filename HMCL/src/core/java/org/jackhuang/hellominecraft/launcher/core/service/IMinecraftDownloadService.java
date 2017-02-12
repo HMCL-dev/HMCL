@@ -20,7 +20,7 @@ package org.jackhuang.hellominecraft.launcher.core.service;
 import java.io.File;
 import java.util.List;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
-import org.jackhuang.hellominecraft.launcher.core.download.DownloadLibraryJob;
+import org.jackhuang.hellominecraft.launcher.api.event.launch.DownloadLibraryJob;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
 import org.jackhuang.hellominecraft.util.task.Task;
 

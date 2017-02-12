@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.launcher.core.download;
+package org.jackhuang.hellominecraft.launcher.api.event.launch;
 
 import java.io.File;
 import org.jackhuang.hellominecraft.launcher.core.version.IMinecraftLibrary;

@@ -17,11 +17,13 @@
  */
 package org.jackhuang.hellominecraft.util.func;
 
+import java.util.EventListener;
+
 /**
  *
  * @author huangyuhui
  */
-public interface Consumer<T> {
+public interface Consumer<T> extends EventListener {
 
     void accept(T t);
 }

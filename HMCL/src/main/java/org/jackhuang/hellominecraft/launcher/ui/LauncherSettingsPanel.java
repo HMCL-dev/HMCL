@@ -45,6 +45,8 @@ public class LauncherSettingsPanel extends RepaintPage {
 
     void initGui() {
         initComponents();
+        
+        animationEnabled = Settings.getInstance().isEnableAnimation();
 
         DefaultComboBoxModel<String> d = new DefaultComboBoxModel<>();
         for (DownloadType type : DownloadType.values())

@@ -33,11 +33,11 @@ def buildnumber = System.getenv("TRAVIS_BUILD_NUMBER")
 if (buildnumber == null)
     buildnumber = System.getenv("BUILD_NUMBER")
 if (buildnumber == null)
-    buildnumber = "5"
+    buildnumber = "0"
     
 def versionroot = System.getenv("VERSION_ROOT")
 if (versionroot == null)
-    versionroot = "2.6.0"
+    versionroot = "2.6.1"
 
 String mavenGroupId = 'HMCL'
 String mavenVersion = versionroot + '.' + buildnumber

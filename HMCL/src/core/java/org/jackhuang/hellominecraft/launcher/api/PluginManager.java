@@ -17,6 +17,10 @@
  */
 package org.jackhuang.hellominecraft.launcher.api;
 
+import java.util.ArrayList;
+import javax.swing.JFrame;
+import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
+import org.jackhuang.hellominecraft.util.func.Consumer;
 import org.jackhuang.hellominecraft.util.log.HMCLog;
 
 /**
@@ -25,19 +29,25 @@ import org.jackhuang.hellominecraft.util.log.HMCLog;
  */
 public class PluginManager {
 
-    private static IPlugin NOW_PLUGIN;
+    private static final ArrayList<IPlugin> PLUGINS = new ArrayList<>();
 
     public static void getPlugin(Class<?> cls) {
         try {
             IPlugin p = (IPlugin) cls.newInstance();
-            NOW_PLUGIN = p;
+            PLUGINS.add(p);
         } catch (IllegalAccessException | InstantiationException e) {
             HMCLog.err("Failed to new instance");
         }
     }
-
-    public static IPlugin plugin() {
-        return NOW_PLUGIN;
+    
+    public static void fireRegisterAuthenticators(Consumer<IAuthenticator> callback) {
+        for (IPlugin p : PLUGINS)
+            p.onRegisterAuthenticators(callback);
+    }
+    
+    public static void fireAddTab(JFrame frame, AddTabCallback callback) {
+        for (IPlugin p : PLUGINS)
+            p.onAddTab(frame, callback);
     }
 
 }

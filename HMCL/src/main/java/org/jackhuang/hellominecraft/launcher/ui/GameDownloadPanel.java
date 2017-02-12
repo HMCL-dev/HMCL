@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.ui;
 
+import org.jackhuang.hellominecraft.util.ui.Page;
 import javax.swing.table.DefaultTableModel;
 import org.jackhuang.hellominecraft.launcher.core.download.MinecraftRemoteVersions;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;

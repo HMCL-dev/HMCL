@@ -18,7 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.core;
 
 /**
- *
+ * Thrown if we have some problem generating launch command.
  * @author huangyuhui
  */
 public class GameException extends Exception {

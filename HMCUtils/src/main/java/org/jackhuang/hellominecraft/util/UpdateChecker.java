@@ -17,11 +17,15 @@
  */
 package org.jackhuang.hellominecraft.util;
 
+import org.jackhuang.hellominecraft.api.EventHandler;
 import org.jackhuang.hellominecraft.util.net.NetUtils;
 import com.google.gson.JsonSyntaxException;
 import java.io.IOException;
 import org.jackhuang.hellominecraft.util.log.HMCLog;
 import java.util.Map;
+import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.api.SimpleEvent;
+import org.jackhuang.hellominecraft.api.event.OutOfDateEvent;
 
 /**
  *
@@ -89,11 +93,12 @@ public final class UpdateChecker implements IUpdateChecker {
         };
     }
 
-    public final EventHandler<VersionNumber> outOfDateEvent = new EventHandler<>(this);
+    public final EventHandler<SimpleEvent<VersionNumber>> upgrade = new EventHandler<>();
 
     @Override
     public void checkOutdate() {
         if (outOfDate)
-            outOfDateEvent.execute(getNewVersion());
+            if (HMCLAPI.EVENT_BUS.fireChannelResulted(new OutOfDateEvent(this, getNewVersion())))
+                upgrade.fire(new SimpleEvent<>(this, getNewVersion()));
     }
 }

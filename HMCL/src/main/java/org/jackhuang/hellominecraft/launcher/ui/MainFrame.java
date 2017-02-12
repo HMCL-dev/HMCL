@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hellominecraft.launcher.ui;
 
+import org.jackhuang.hellominecraft.util.ui.Page;
 import org.jackhuang.hellominecraft.util.ui.GaussionPanel;
 import org.jackhuang.hellominecraft.util.ui.IRepaint;
 import java.awt.BorderLayout;
@@ -50,7 +51,10 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import org.jackhuang.hellominecraft.api.HMCLAPI;
 import org.jackhuang.hellominecraft.launcher.Main;
+import org.jackhuang.hellominecraft.launcher.api.PluginManager;
+import org.jackhuang.hellominecraft.launcher.api.event.config.ThemeChangedEvent;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.lookandfeel.Theme;
@@ -155,7 +159,7 @@ public final class MainFrame extends DraggableFrame implements IRepaint {
             }
         ((JPanel) getContentPane()).setOpaque(true);
 
-        Settings.getInstance().themeChangedEvent.register(this::reloadColor);
+        HMCLAPI.EVENT_BUS.channel(ThemeChangedEvent.class).register(x -> reloadColor(x.getValue()));
 
         SwingUtilities.invokeLater(() -> selectTab("main"));
     }
@@ -185,9 +189,7 @@ public final class MainFrame extends DraggableFrame implements IRepaint {
 
         header.add(Box.createRigidArea(new Dimension(8, 0)));
 
-        initializeTab(new MainPagePanel(), "main");
-        initializeTab(new GameSettingsPanel(this), "game");
-        initializeTab(new LauncherSettingsPanel(), "launcher");
+        PluginManager.fireAddTab(this, this::initializeTab);
 
         header.add(Box.createHorizontalGlue());
 
@@ -258,8 +260,8 @@ public final class MainFrame extends DraggableFrame implements IRepaint {
 
     private transient final ActionListener tabListener = e -> MainFrame.this.selectTab(e.getActionCommand());
 
-    private void initializeTab(Page inst, String cmd) {
-        HeaderTab tab = new HeaderTab(C.i18n("launcher.title." + cmd));
+    private void initializeTab(Page inst, String cmd, String title) {
+        HeaderTab tab = new HeaderTab(title);
         tab.setActionCommand(cmd);
         tab.setForeground(BasicColors.COLOR_WHITE_TEXT);
         tab.setBackground(borderColorDarker);
@@ -489,9 +491,4 @@ public final class MainFrame extends DraggableFrame implements IRepaint {
     }
 
     transient LaunchingUIDaemon daemon = new LaunchingUIDaemon();
-    transient final HashMap<String, Runnable> actions = new HashMap<>();
-    void invokeAction(String name) {
-        if (actions.containsKey(name))
-            actions.get(name).run();
-    }
 }

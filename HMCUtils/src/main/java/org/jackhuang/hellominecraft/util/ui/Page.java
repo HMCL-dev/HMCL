@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.launcher.ui;
+package org.jackhuang.hellominecraft.util.ui;
 
 import java.awt.AlphaComposite;
 import java.awt.Graphics;
@@ -24,7 +24,6 @@ import java.awt.image.BufferedImage;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
-import org.jackhuang.hellominecraft.launcher.setting.Settings;
 
 /**
  *
@@ -118,10 +117,10 @@ public class Page extends JPanel implements Selectable {
 
     Timer timer;
 
-    boolean animationEnabled = true;
+    protected boolean animationEnabled = true;
 
     public void animate() {
-        if (Settings.getInstance().isEnableAnimation() && animationEnabled) {
+        if (animationEnabled) {
             offsetX = 0;
             timer.start();
         }
