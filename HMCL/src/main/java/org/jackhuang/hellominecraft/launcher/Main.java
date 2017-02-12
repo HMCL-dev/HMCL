@@ -107,8 +107,22 @@ public final class Main implements Runnable {
     public static void main(String[] args) throws IOException {
         {
             PluginManager.getPlugin(DefaultPlugin.class);
-            if (IUpgrader.NOW_UPGRADER.parseArguments(getVersionNumber(), args))
-                return;
+            for (String s : args)
+                if (s.startsWith("--plugin=")) {
+                    String c = s.substring("--plugin=".length());
+                    try {
+                        PluginManager.getPlugin(Class.forName(c));
+                    } catch (ClassNotFoundException ex) {
+                        System.out.println("Class: " + c + " not found, please add your plugin jar to class path.");
+                    }
+                } else if (s.startsWith("--help")) {
+                    System.out.println("HMCL command line help");
+                    System.out.println("--noupdate: this arg will prevent HMCL from initializing the newest app version in %appdata%/.hmcl");
+                    System.out.println("--plugin=<your plugin class>: this arg will allow a new plugin to be loaded, please keep your jar in system class path and this class extends IPlugin.");
+                    return;
+                }
+
+            IUpgrader.NOW_UPGRADER.parseArguments(getVersionNumber(), args);
 
             System.setProperty("awt.useSystemAAFontSettings", "on");
             System.setProperty("swing.aatext", "true");

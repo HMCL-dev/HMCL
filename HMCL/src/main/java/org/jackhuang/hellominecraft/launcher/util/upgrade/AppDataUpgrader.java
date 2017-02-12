@@ -61,7 +61,7 @@ public class AppDataUpgrader extends IUpgrader {
             String mainClass = jarFile.getManifest().getMainAttributes().getValue("Main-Class");
             if (mainClass != null) {
                 ArrayList<String> al = new ArrayList<>(Arrays.asList(args));
-                al.add("nofound");
+                al.add("--noupdate");
                 AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
                     new URLClassLoader(new URL[] { jar.toURI().toURL() },
                                        URLClassLoader.getSystemClassLoader().getParent()).loadClass(mainClass)
@@ -75,8 +75,8 @@ public class AppDataUpgrader extends IUpgrader {
     }
 
     @Override
-    public boolean parseArguments(VersionNumber nowVersion, String[] args) {
-        if (!ArrayUtils.contains(args, "nofound"))
+    public void parseArguments(VersionNumber nowVersion, String[] args) {
+        if (!ArrayUtils.contains(args, "--noupdate"))
             try {
                 File f = AppDataUpgraderTask.HMCL_VER_FILE;
                 if (f.exists()) {
@@ -86,15 +86,14 @@ public class AppDataUpgrader extends IUpgrader {
                         String j = m.get("loc");
                         if (j != null) {
                             File jar = new File(j);
-                            if (jar.exists())
-                                return launchNewerVersion(args, jar);
+                            if (jar.exists() && launchNewerVersion(args, jar))
+                                System.exit(0);
                         }
                     }
                 }
             } catch (Throwable t) {
                 HMCLog.err("Failed to execute newer version application", t);
             }
-        return false;
     }
 
     @Override

@@ -34,11 +34,8 @@ public abstract class IUpgrader implements Consumer<SimpleEvent<VersionNumber>> 
      *
      * @param nowVersion now launcher version
      * @param args       Application CommandLine Arguments
-     *
-     * @return true if it is needed to break the main thread to shutdown this
-     *         application.
      */
-    public abstract boolean parseArguments(VersionNumber nowVersion, String[] args);
+    public abstract void parseArguments(VersionNumber nowVersion, String[] args);
 
     /**
      * Just download the new app.

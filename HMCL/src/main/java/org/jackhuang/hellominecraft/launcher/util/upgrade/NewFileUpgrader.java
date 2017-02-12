@@ -35,14 +35,13 @@ import org.jackhuang.hellominecraft.util.sys.IOUtils;
 public class NewFileUpgrader extends IUpgrader {
 
     @Override
-    public boolean parseArguments(VersionNumber nowVersion, String[] args) {
+    public void parseArguments(VersionNumber nowVersion, String[] args) {
         int i = ArrayUtils.indexOf(args, "--removeOldLauncher");
         if (i != -1 && i < args.length - 1) {
             File f = new File(args[i + 1]);
             if (f.exists())
                 f.deleteOnExit();
         }
-        return false;
     }
 
     @Override
