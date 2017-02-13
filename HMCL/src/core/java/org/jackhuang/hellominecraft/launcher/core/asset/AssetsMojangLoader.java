@@ -50,9 +50,9 @@ public class AssetsMojangLoader extends IAssetsHandler {
     public Task getList(final MinecraftVersion mv, final IMinecraftAssetService mp) {
         Objects.requireNonNull(mv);
         String assetsId = mv.getAssetsIndex().getId();
-        File assets = mp.getAssets();
+        File assets = mp.getAssets(assetsId);
         HMCLog.log("Gathering asset index: " + assetsId);
-        File f = IOUtils.tryGetCanonicalFile(new File(assets, "indexes/" + assetsId + ".json"));
+        File f = mp.getIndexFile(assetsId);
         return new TaskInfo("Gather asset index") {
             @Override
             public Collection<Task> getDependTasks() {
@@ -72,7 +72,7 @@ public class AssetsMojangLoader extends IAssetsHandler {
                 AssetsIndex o = C.GSON.fromJson(result, AssetsIndex.class);
                 assetsDownloadURLs = new ArrayList<>();
                 assetsLocalNames = new ArrayList<>();
-                contents = new ArrayList<>();
+                assetsObjects = new ArrayList<>();
                 HashSet<String> loadedHashes = new HashSet<>();
                 int pgs = 0;
                 if (o != null && o.getFileMap() != null)
@@ -80,13 +80,9 @@ public class AssetsMojangLoader extends IAssetsHandler {
                         if (loadedHashes.contains(e.getValue().getHash()))
                             continue;
                         loadedHashes.add(e.getValue().getHash());
-                        Contents c = new Contents();
-                        c.eTag = e.getValue().getHash();
-                        c.key = c.eTag.substring(0, 2) + "/" + e.getValue().getHash();
-                        c.size = e.getValue().getSize();
-                        contents.add(c);
-                        assetsDownloadURLs.add(c.key);
-                        assetsLocalNames.add(new File(assets, "objects" + File.separator + c.key.replace("/", File.separator)));
+                        assetsObjects.add(e.getValue());
+                        assetsDownloadURLs.add(e.getValue().getLocation());
+                        assetsLocalNames.add(mp.getAssetObject(assetsId, e.getValue()));
                         if (ppl != null)
                             ppl.setProgress(this, ++pgs, o.getFileMap().size());
                     }

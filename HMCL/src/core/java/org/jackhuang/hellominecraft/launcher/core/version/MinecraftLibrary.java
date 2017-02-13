@@ -21,9 +21,12 @@ import com.google.gson.annotations.SerializedName;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.launcher.api.event.version.MinecraftLibraryPathEvent;
 import org.jackhuang.hellominecraft.util.sys.OS;
 import org.jackhuang.hellominecraft.util.sys.Platform;
 import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.Wrapper;
 
 /**
  *
@@ -104,7 +107,9 @@ public class MinecraftLibrary extends IMinecraftLibrary {
         LibraryDownloadInfo info = getDownloadInfo();
         if (info == null)
             return null;
-        return new File(gameDir, "libraries/" + info.path);
+        MinecraftLibraryPathEvent event = new MinecraftLibraryPathEvent(this, "libraries/" + info.path, new Wrapper<>(new File(gameDir, "libraries/" + info.path)));
+        HMCLAPI.EVENT_BUS.fireChannel(event);
+        return event.getFile().getValue();
     }
 
     @Override

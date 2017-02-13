@@ -70,7 +70,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
 
     @Override
     public Task downloadMinecraftAssetsIndex(AssetIndexDownloadInfo assetIndex) {
-        File assetsLocation = getAssets();
+        File assetsLocation = getAssets(assetIndex.getId());
         if (!FileUtils.makeDirectory(assetsLocation))
             HMCLog.warn("Failed to make directories: " + assetsLocation);
         File assetsIndex = getIndexFile(assetIndex.getId());
@@ -100,7 +100,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
 
     @Override
     public boolean downloadMinecraftAssetsIndexAsync(AssetIndexDownloadInfo assetIndex) {
-        File assetsDir = getAssets();
+        File assetsDir = getAssets(assetIndex.getId());
         if (!FileUtils.makeDirectory(assetsDir))
             HMCLog.warn("Failed to make directories: " + assetsDir);
         File assetsIndex = getIndexFile(assetIndex.getId());
@@ -111,8 +111,8 @@ public class MinecraftAssetService extends IMinecraftAssetService {
                 HMCLog.warn("Failed to rename " + assetsIndex + " to " + renamed);
         }
         if (TaskWindow.factory()
-            .append(new FileDownloadTask(assetIndex.getUrl(service.getDownloadType()), IOUtils.tryGetCanonicalFile(assetsIndex), assetIndex.sha1).setTag(assetIndex.getId() + ".json"))
-            .execute()) {
+                .append(new FileDownloadTask(assetIndex.getUrl(service.getDownloadType()), IOUtils.tryGetCanonicalFile(assetsIndex), assetIndex.sha1).setTag(assetIndex.getId() + ".json"))
+                .execute()) {
             if (renamed != null && !renamed.delete())
                 HMCLog.warn("Failed to delete " + renamed + ", maybe you should do it.");
             return true;
@@ -123,30 +123,31 @@ public class MinecraftAssetService extends IMinecraftAssetService {
     }
 
     @Override
-    public File getAssets() {
+    public File getAssets(String assetId) {
         return new File(service.baseDirectory(), "assets");
-    }
-    
-    private File getIndexFile(String assetVersion) {
-        return new File(getAssets(), "indexes/" + assetVersion + ".json");
     }
 
     @Override
-    public File getAssetObject(String assetVersion, String name) throws IOException {
-        try {
-            AssetsIndex index = (AssetsIndex) C.GSON.fromJson(FileUtils.read(getIndexFile(assetVersion), "UTF-8"), AssetsIndex.class);
+    public File getIndexFile(String assetId) {
+        return new File(getAssets(assetId), "indexes/" + assetId + ".json");
+    }
 
-            String hash = ((AssetsObject) index.getFileMap().get(name)).getHash();
-            return new File(getAssets(), "objects/" + hash.substring(0, 2) + "/" + hash);
+    @Override
+    public File getAssetObject(String assetId, String name) throws IOException {
+        try {
+            AssetsIndex index = (AssetsIndex) C.GSON.fromJson(FileUtils.read(getIndexFile(assetId), "UTF-8"), AssetsIndex.class);
+            return getAssetObject(assetId, (AssetsObject) index.getFileMap().get(name));
         } catch (JsonSyntaxException e) {
             throw new IOException("Assets file format malformed.", e);
         }
     }
 
-    private boolean checkAssetsExistance(AssetIndexDownloadInfo assetIndex) {
-        File indexFile = getIndexFile(assetIndex.getId());
+    protected boolean checkAssetsExistance(AssetIndexDownloadInfo assetIndex) {
+        String assetId = assetIndex.getId();
+        File indexFile = getIndexFile(assetId);
+        File assetDir = getAssets(assetId);
 
-        if (!getAssets().exists() || !indexFile.isFile())
+        if (!getAssets(assetId).exists() || !indexFile.isFile())
             return false;
 
         try {
@@ -156,7 +157,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
             if (index == null)
                 return false;
             for (Map.Entry<String, AssetsObject> entry : index.getFileMap().entrySet())
-                if (!new File(getAssets(), "objects/" + ((AssetsObject) entry.getValue()).getHash().substring(0, 2) + "/" + ((AssetsObject) entry.getValue()).getHash()).exists())
+                if (!assetObjectPath(assetDir, (AssetsObject) entry.getValue()).exists())
                     return false;
             return true;
         } catch (IOException | JsonSyntaxException e) {
@@ -164,8 +165,8 @@ public class MinecraftAssetService extends IMinecraftAssetService {
         }
     }
 
-    private File reconstructAssets(AssetIndexDownloadInfo assetIndex) {
-        File assetsDir = getAssets();
+    protected File reconstructAssets(AssetIndexDownloadInfo assetIndex) {
+        File assetsDir = getAssets(assetIndex.getId());
         String assetVersion = assetIndex.getId();
         File indexFile = getIndexFile(assetVersion);
         File virtualRoot = new File(new File(assetsDir, "virtual"), assetVersion);
@@ -187,7 +188,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
                 int tot = index.getFileMap().entrySet().size();
                 for (Map.Entry<String, AssetsObject> entry : index.getFileMap().entrySet()) {
                     File target = new File(virtualRoot, (String) entry.getKey());
-                    File original = new File(assetsDir, "objects/" + ((AssetsObject) entry.getValue()).getHash().substring(0, 2) + "/" + ((AssetsObject) entry.getValue()).getHash());
+                    File original = assetObjectPath(assetsDir, (AssetsObject) entry.getValue());
                     if (original.exists()) {
                         cnt++;
                         if (!target.isFile())
@@ -203,6 +204,15 @@ public class MinecraftAssetService extends IMinecraftAssetService {
         }
 
         return virtualRoot;
+    }
+
+    @Override
+    public File getAssetObject(String assetId, AssetsObject object) {
+        return assetObjectPath(getAssets(assetId), object);
+    }
+    
+    public File assetObjectPath(File assetDir, AssetsObject object) {
+        return new File(assetDir, "objects/" + object.getLocation());
     }
 
     public final IAssetProvider ASSET_PROVIDER_IMPL = (t, allow) -> {

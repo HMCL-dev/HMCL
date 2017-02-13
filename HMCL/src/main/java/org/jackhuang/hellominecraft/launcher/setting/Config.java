@@ -31,6 +31,7 @@ import org.jackhuang.hellominecraft.api.HMCLAPI;
 import org.jackhuang.hellominecraft.launcher.api.event.config.AuthenticatorChangedEvent;
 import org.jackhuang.hellominecraft.launcher.api.event.config.DownloadTypeChangedEvent;
 import org.jackhuang.hellominecraft.launcher.api.event.config.ThemeChangedEvent;
+import org.jackhuang.hellominecraft.launcher.core.MCUtils;
 import org.jackhuang.hellominecraft.util.sys.JdkVersion;
 import org.jackhuang.hellominecraft.util.sys.OS;
 
@@ -44,6 +45,8 @@ public final class Config implements Cloneable {
     private String last;
     @SerializedName("bgpath")
     private String bgpath;
+    @SerializedName("commonpath")
+    private String commonpath;
     @SerializedName("clientToken")
     private final String clientToken;
     @SerializedName("proxyHost")
@@ -152,6 +155,15 @@ public final class Config implements Cloneable {
         Settings.save();
     }
 
+    public String getCommonpath() {
+        return commonpath;
+    }
+
+    public void setCommonpath(String commonpath) {
+        this.commonpath = commonpath;
+        Settings.save();
+    }
+
     public String getClientToken() {
         return clientToken;
     }
@@ -210,6 +222,7 @@ public final class Config implements Cloneable {
         theme = 4;
         decorated = OS.os() == OS.LINUX;
         auth = new HashMap<>();
+        commonpath = MCUtils.getWorkingDirectory("hmcl").getAbsolutePath();
     }
 
     public DownloadType getDownloadSource() {

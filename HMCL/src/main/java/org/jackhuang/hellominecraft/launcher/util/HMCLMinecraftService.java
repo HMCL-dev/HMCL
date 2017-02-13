@@ -75,7 +75,7 @@ public class HMCLMinecraftService extends IMinecraftService {
         HMCLAPI.EVENT_BUS.channel(LoadedOneVersionEvent.class).register(e -> loadVersionSetting(e.getValue()));
         this.mms = new MinecraftModService(this);
         this.mds = new MinecraftDownloadService(this);
-        this.mas = new MinecraftAssetService(this);
+        this.mas = new HMCLAssetService(this);
         this.mis = new MinecraftInstallerService(this);
     }
 

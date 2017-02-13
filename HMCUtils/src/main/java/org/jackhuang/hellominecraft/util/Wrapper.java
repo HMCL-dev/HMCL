@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- *
+ * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -15,32 +15,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.launcher.core.version;
-
-import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
+package org.jackhuang.hellominecraft.util;
 
 /**
  *
- * @author huangyuhui
+ * @author huang
  */
-public class AssetIndexDownloadInfo extends GameDownloadInfo {
+public class Wrapper<T> {
+    T value;
 
-    int totalSize;
-
-    public AssetIndexDownloadInfo() {
+    public Wrapper(T value) {
+        this.value = value;
     }
 
-    public AssetIndexDownloadInfo(String id) {
-        this.id = id;
-        url = null;
+    public T getValue() {
+        return value;
     }
 
-    @Override
-    public String getCustomizedURL(DownloadType dt) {
-        return dt.getProvider().getIndexesDownloadURL() + id + ".json";
+    public void setValue(T value) {
+        this.value = value;
     }
-
-    public int getTotalSize() {
-        return totalSize;
-    }
+    
 }

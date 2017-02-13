@@ -34,7 +34,9 @@ public class AssetsObject {
         this.size = size;
     }
 
-    public AssetsObject() {
+    public AssetsObject(String hash, long size) {
+        this.hash = hash;
+        this.size = size;
     }
 
     public String getHash() {
@@ -43,6 +45,10 @@ public class AssetsObject {
 
     public long getSize() {
         return this.size;
+    }
+    
+    public String getLocation() {
+        return hash.substring(0, 2) + "/" + hash;
     }
 
     @Override

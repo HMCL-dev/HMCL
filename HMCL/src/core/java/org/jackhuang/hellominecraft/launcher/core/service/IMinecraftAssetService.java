@@ -20,6 +20,7 @@ package org.jackhuang.hellominecraft.launcher.core.service;
 import java.io.File;
 import java.io.IOException;
 import org.jackhuang.hellominecraft.launcher.core.GameException;
+import org.jackhuang.hellominecraft.launcher.core.asset.AssetsObject;
 import org.jackhuang.hellominecraft.launcher.core.version.AssetIndexDownloadInfo;
 import org.jackhuang.hellominecraft.util.task.Task;
 
@@ -35,20 +36,24 @@ public abstract class IMinecraftAssetService extends IMinecraftBasicService {
 
     public abstract Task downloadAssets(String mcVersion) throws GameException;
 
-    public abstract File getAssets();
+    public abstract File getAssets(String assetId);
+    
+    public abstract File getIndexFile(String assetId);
 
     /**
      * Redownload the Asset index json of the given version.
      *
-     * @param a the given version name
+     * @param mcVersion the given version name
      *
      * @return Is the action successful?
      */
-    public abstract boolean refreshAssetsIndex(String a) throws GameException;
+    public abstract boolean refreshAssetsIndex(String mcVersion) throws GameException;
 
-    public abstract boolean downloadMinecraftAssetsIndexAsync(AssetIndexDownloadInfo assetsId);
+    public abstract boolean downloadMinecraftAssetsIndexAsync(AssetIndexDownloadInfo assetId);
 
-    public abstract Task downloadMinecraftAssetsIndex(AssetIndexDownloadInfo assetsId);
+    public abstract Task downloadMinecraftAssetsIndex(AssetIndexDownloadInfo assetId);
 
     public abstract File getAssetObject(String assetVersion, String name) throws IOException;
+    
+    public abstract File getAssetObject(String assetId, AssetsObject assetsObject);
 }

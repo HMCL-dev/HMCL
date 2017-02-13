@@ -36,7 +36,7 @@ public class GameDownloadInfo implements Cloneable {
     /**
      * Ready for AssetIndexDownloadInfo, and GameDownloadInfo also need this.
      */
-    public String id = null;
+    protected String id;
 
     /**
      * Get the game download url.
@@ -66,6 +66,10 @@ public class GameDownloadInfo implements Cloneable {
 
     protected String getCustomizedURL(DownloadType dt) {
         return dt.getProvider().getVersionsDownloadURL() + id + "/" + id + ".jar";
+    }
+
+    public String getId() {
+        return id;
     }
 
     @Override

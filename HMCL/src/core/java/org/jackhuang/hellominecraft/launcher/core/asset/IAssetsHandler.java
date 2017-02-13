@@ -45,7 +45,7 @@ public abstract class IAssetsHandler {
     protected ArrayList<String> assetsDownloadURLs;
     protected ArrayList<File> assetsLocalNames;
     protected final String name;
-    protected List<Contents> contents;
+    protected List<AssetsObject> assetsObjects;
 
     public IAssetsHandler(String name) {
         this.name = name;
@@ -98,7 +98,7 @@ public abstract class IAssetsHandler {
 
         @Override
         public void executeTask(boolean areDependTasksSucceeded) {
-            if (assetsDownloadURLs == null || assetsLocalNames == null || contents == null)
+            if (assetsDownloadURLs == null || assetsLocalNames == null || assetsObjects == null)
                 throw new IllegalStateException(C.i18n("assets.not_refreshed"));
             int max = assetsDownloadURLs.size();
             al = new ArrayList<>();
@@ -117,7 +117,7 @@ public abstract class IAssetsHandler {
                         FileInputStream fis = FileUtils.openInputStream(location);
                         String sha = DigestUtils.sha1Hex(IOUtils.toByteArray(fis));
                         IOUtils.closeQuietly(fis);
-                        if (contents.get(i).geteTag().equals(sha)) {
+                        if (assetsObjects.get(i).getHash().equals(sha)) {
                             ++hasDownloaded;
                             HMCLog.log("File " + assetsLocalNames.get(i) + " has been downloaded successfully, skipped downloading.");
                             if (ppl != null)
@@ -130,7 +130,7 @@ public abstract class IAssetsHandler {
                     need = !location.exists();
                 }
                 if (need)
-                    al.add(new FileDownloadTask(url, location).setTag(contents.get(i).geteTag()));
+                    al.add(new FileDownloadTask(url, location).setTag(assetsObjects.get(i).getHash()));
             }
         }
 

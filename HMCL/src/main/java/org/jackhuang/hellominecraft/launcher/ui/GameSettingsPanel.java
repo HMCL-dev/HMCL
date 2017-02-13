@@ -87,7 +87,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
 
     public GameSettingsPanel() {
         HMCLAPI.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(t -> {
-            if (Settings.getLastProfile().service() == t.getValue())
+            if (Settings.getLastProfile().service() == t.getValue() && t.getValue().version().getVersions().isEmpty())
                 if (!showedNoVersion && Settings.getLastProfile().service().checkingModpack) {
                     showedNoVersion = true;
                     SwingUtilities.invokeLater(() -> {

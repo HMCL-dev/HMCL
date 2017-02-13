@@ -85,7 +85,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
             t = t.replace("${version_type}", options.getType());
             t = t.replace("${game_directory}", service.version().getRunDirectory(version.id).getAbsolutePath());
             t = t.replace("${game_assets}", game_assets);
-            t = t.replace("${assets_root}", service.asset().getAssets().getAbsolutePath());
+            t = t.replace("${assets_root}", service.asset().getAssets(version.getAssetsIndex().getId()).getAbsolutePath());
             t = t.replace("${auth_access_token}", lr.getAccessToken());
             t = t.replace("${user_type}", lr.getUserType());
             t = t.replace("${assets_index_name}", version.getAssetsIndex().getId());
