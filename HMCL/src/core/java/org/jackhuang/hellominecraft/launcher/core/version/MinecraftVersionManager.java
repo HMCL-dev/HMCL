@@ -122,7 +122,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                 } catch (JsonSyntaxException | IOException e) {
                     HMCLog.warn("Found wrong format json, try to fix it.", e);
                     if (MessageBox.show(C.i18n("launcher.versions_json_not_formatted", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
-                        service.download().downloadMinecraftVersionJson(id);
+                        TaskWindow.factory().execute(service.download().downloadMinecraftVersionJson(id));
                         try {
                             mcVersion = C.GSON.fromJson(FileUtils.read(jsonFile), MinecraftVersion.class);
                             if (mcVersion == null)
