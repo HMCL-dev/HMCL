@@ -20,6 +20,8 @@ package org.jackhuang.hellominecraft.launcher.core.install.liteloader;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import org.jackhuang.hellominecraft.api.HMCAPI;
+import org.jackhuang.hellominecraft.launcher.api.event.version.MinecraftLibraryPathEvent;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
@@ -29,6 +31,7 @@ import org.jackhuang.hellominecraft.util.task.comm.PreviousResultRegistrar;
 import org.jackhuang.hellominecraft.util.sys.FileUtils;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.util.Wrapper;
 
 /**
  *
@@ -68,7 +71,11 @@ public class LiteLoaderInstaller extends Task implements PreviousResultRegistrar
         MinecraftLibrary ml = new MinecraftLibrary("com.mumfrey:liteloader:" + version.selfVersion);
         //ml.url = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + version.mcVersion + "/liteloader-" + version.selfVersion + ".jar";
         mv.libraries.add(0, ml);
-        FileUtils.copyFile(installer, new File(service.baseDirectory(), "libraries/com/mumfrey/liteloader/" + version.selfVersion + "/liteloader-" + version.selfVersion + ".jar"));
+        
+        String path = "libraries/com/mumfrey/liteloader/" + version.selfVersion + "/liteloader-" + version.selfVersion + ".jar";
+        MinecraftLibraryPathEvent event = new MinecraftLibraryPathEvent(this, path, new Wrapper<>(new File(service.baseDirectory(), path)));
+        HMCAPI.EVENT_BUS.fireChannel(event);
+        FileUtils.copyFile(installer, event.getFile().getValue());
 
         mv.id += "-LiteLoader" + version.selfVersion;
 

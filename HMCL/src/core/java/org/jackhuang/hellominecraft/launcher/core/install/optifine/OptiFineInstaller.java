@@ -20,15 +20,20 @@ package org.jackhuang.hellominecraft.launcher.core.install.optifine;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.zip.ZipFile;
+import org.jackhuang.hellominecraft.api.HMCAPI;
+import org.jackhuang.hellominecraft.launcher.api.event.version.MinecraftLibraryPathEvent;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.launcher.core.install.InstallerVersionList;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
+import org.jackhuang.hellominecraft.launcher.core.version.LibrariesDownloadInfo;
+import org.jackhuang.hellominecraft.launcher.core.version.LibraryDownloadInfo;
 import org.jackhuang.hellominecraft.util.task.Task;
 import org.jackhuang.hellominecraft.util.task.comm.PreviousResult;
 import org.jackhuang.hellominecraft.util.task.comm.PreviousResultRegistrar;
 import org.jackhuang.hellominecraft.util.sys.FileUtils;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
+import org.jackhuang.hellominecraft.util.Wrapper;
 import org.jackhuang.hellominecraft.util.log.HMCLog;
 
 /**
@@ -58,8 +63,18 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
         mv.inheritsFrom = mv.id;
         mv.jar = mv.jar == null ? mv.id : mv.jar;
         mv.libraries.clear();
-        mv.libraries.add(0, new MinecraftLibrary("optifine:OptiFine:" + selfId));
-        FileUtils.copyFile(installer, new File(service.baseDirectory(), "libraries/optifine/OptiFine/" + selfId + "/OptiFine-" + selfId + ".jar"));
+        MinecraftLibrary library = new MinecraftLibrary("optifine:OptiFine:" + selfId);
+        library.downloads = new LibrariesDownloadInfo();
+        library.downloads.artifact = new LibraryDownloadInfo();
+        library.downloads.artifact.path = "optifine/OptiFine/" + selfId + "/OptiFine-" + selfId + ".jar";
+        library.downloads.artifact.url = version.universal;
+        library.downloads.artifact.sha1 = null;
+        library.downloads.artifact.size = 0;
+        mv.libraries.add(0, library);
+        
+        MinecraftLibraryPathEvent event = new MinecraftLibraryPathEvent(this, "libraries/" + library.downloads.artifact.path, new Wrapper<>(new File(service.baseDirectory(), "libraries/" + library.downloads.artifact.path)));
+        HMCAPI.EVENT_BUS.fireChannel(event);
+        FileUtils.copyFile(installer, event.getFile().getValue());
 
         mv.id += "-" + selfId;
         try (ZipFile zipFile = new ZipFile(installer)) {

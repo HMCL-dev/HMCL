@@ -27,7 +27,7 @@ import java.util.Map;
 public class LibrariesDownloadInfo {
 
     @SerializedName("classifiers")
-    Map<String, LibraryDownloadInfo> classifiers;
+    public Map<String, LibraryDownloadInfo> classifiers;
     @SerializedName("artifact")
-    LibraryDownloadInfo artifact;
+    public LibraryDownloadInfo artifact;
 }

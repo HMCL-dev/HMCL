@@ -31,7 +31,7 @@ public class GameDownloadInfo implements Cloneable {
     @SerializedName("size")
     public int size;
     @SerializedName("url")
-    protected String url;
+    public String url;
 
     /**
      * Ready for AssetIndexDownloadInfo, and GameDownloadInfo also need this.
