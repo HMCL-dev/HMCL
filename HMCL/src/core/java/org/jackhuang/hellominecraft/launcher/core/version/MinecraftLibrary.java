@@ -21,7 +21,7 @@ import com.google.gson.annotations.SerializedName;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.api.HMCAPI;
 import org.jackhuang.hellominecraft.launcher.api.event.version.MinecraftLibraryPathEvent;
 import org.jackhuang.hellominecraft.util.sys.OS;
 import org.jackhuang.hellominecraft.util.sys.Platform;
@@ -108,7 +108,7 @@ public class MinecraftLibrary extends IMinecraftLibrary {
         if (info == null)
             return null;
         MinecraftLibraryPathEvent event = new MinecraftLibraryPathEvent(this, "libraries/" + info.path, new Wrapper<>(new File(gameDir, "libraries/" + info.path)));
-        HMCLAPI.EVENT_BUS.fireChannel(event);
+        HMCAPI.EVENT_BUS.fireChannel(event);
         return event.getFile().getValue();
     }
 

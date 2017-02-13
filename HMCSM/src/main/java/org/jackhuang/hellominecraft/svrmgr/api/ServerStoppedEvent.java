@@ -15,16 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.api;
+package org.jackhuang.hellominecraft.svrmgr.api;
+
+import java.util.EventObject;
 
 /**
  *
  * @author huang
  */
-public class HMCLAPI {
-
-    /**
-     * Events.
-     */
-    public static final EventBus EVENT_BUS = new EventBus();
+public class ServerStoppedEvent extends EventObject {
+    
+    public ServerStoppedEvent(Object source) {
+        super(source);
+    }
+    
 }

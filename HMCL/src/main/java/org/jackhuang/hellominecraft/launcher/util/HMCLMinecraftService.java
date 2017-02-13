@@ -22,7 +22,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.SwingUtilities;
-import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.api.HMCAPI;
 import org.jackhuang.hellominecraft.launcher.api.event.version.LoadedOneVersionEvent;
 import org.jackhuang.hellominecraft.launcher.api.event.version.RefreshedVersionsEvent;
 import org.jackhuang.hellominecraft.launcher.api.event.version.RefreshingVersionsEvent;
@@ -57,8 +57,8 @@ public class HMCLMinecraftService extends IMinecraftService {
         this.p = p;
         this.provider = new HMCLGameProvider(this);
         provider.initializeMiencraft();
-        HMCLAPI.EVENT_BUS.channel(RefreshingVersionsEvent.class).register(versionSettings::clear);
-        HMCLAPI.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerFirst(() -> {
+        HMCAPI.EVENT_BUS.channel(RefreshingVersionsEvent.class).register(versionSettings::clear);
+        HMCAPI.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerFirst(() -> {
             if (!checkingModpack) {
                 checkingModpack = true;
                 if (version().getVersionCount() == 0) {
@@ -72,7 +72,7 @@ public class HMCLMinecraftService extends IMinecraftService {
                 }
             }
         });
-        HMCLAPI.EVENT_BUS.channel(LoadedOneVersionEvent.class).register(e -> loadVersionSetting(e.getValue()));
+        HMCAPI.EVENT_BUS.channel(LoadedOneVersionEvent.class).register(e -> loadVersionSetting(e.getValue()));
         this.mms = new MinecraftModService(this);
         this.mds = new MinecraftDownloadService(this);
         this.mas = new HMCLAssetService(this);

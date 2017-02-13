@@ -18,7 +18,7 @@
 package org.jackhuang.hellominecraft.launcher.util;
 
 import java.io.File;
-import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.api.HMCAPI;
 import org.jackhuang.hellominecraft.launcher.api.event.version.MinecraftLibraryPathEvent;
 import org.jackhuang.hellominecraft.launcher.core.version.GameDirType;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersionManager;
@@ -34,7 +34,7 @@ public class HMCLGameProvider extends MinecraftVersionManager {
     public HMCLGameProvider(HMCLMinecraftService p) {
         super(p);
         
-        HMCLAPI.EVENT_BUS.channel(MinecraftLibraryPathEvent.class).register(t -> {
+        HMCAPI.EVENT_BUS.channel(MinecraftLibraryPathEvent.class).register(t -> {
             if (!t.getFile().getValue().exists())
                 t.getFile().setValue(new File(Settings.getInstance().getCommonpath(), t.getLocation()));
         });

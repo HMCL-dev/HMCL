@@ -29,7 +29,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.api.HMCAPI;
 import org.jackhuang.hellominecraft.launcher.api.event.config.AuthenticatorChangedEvent;
 import org.jackhuang.hellominecraft.launcher.api.event.config.ProfileChangedEvent;
 import org.jackhuang.hellominecraft.launcher.api.event.config.ProfileLoadingEvent;
@@ -97,12 +97,12 @@ public class MainPagePanel extends Page {
 
         ((RepaintPage) pnlMore).setRepainter(pnlRoot);
 
-        HMCLAPI.EVENT_BUS.channel(AuthenticatorChangedEvent.class).register(onAuthChanged);
-        HMCLAPI.EVENT_BUS.channel(ProfileLoadingEvent.class).register(onLoadingProfiles);
-        HMCLAPI.EVENT_BUS.channel(ProfileChangedEvent.class).register(onSelectedProfilesChanged);
-        HMCLAPI.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(onRefreshedVersions);
-        HMCLAPI.EVENT_BUS.channel(LaunchingStateChangedEvent.class).register(launchingStateChanged);
-        HMCLAPI.EVENT_BUS.channel(LaunchSucceededEvent.class).register(this::prepareAuths);
+        HMCAPI.EVENT_BUS.channel(AuthenticatorChangedEvent.class).register(onAuthChanged);
+        HMCAPI.EVENT_BUS.channel(ProfileLoadingEvent.class).register(onLoadingProfiles);
+        HMCAPI.EVENT_BUS.channel(ProfileChangedEvent.class).register(onSelectedProfilesChanged);
+        HMCAPI.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(onRefreshedVersions);
+        HMCAPI.EVENT_BUS.channel(LaunchingStateChangedEvent.class).register(launchingStateChanged);
+        HMCAPI.EVENT_BUS.channel(LaunchSucceededEvent.class).register(this::prepareAuths);
 
         prepareAuths();
     }

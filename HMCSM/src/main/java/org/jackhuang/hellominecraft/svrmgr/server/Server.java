@@ -34,6 +34,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jackhuang.hellominecraft.api.HMCAPI;
+import org.jackhuang.hellominecraft.api.SimpleEvent;
 import org.jackhuang.hellominecraft.util.log.HMCLog;
 import org.jackhuang.hellominecraft.util.sys.IOUtils;
 import org.jackhuang.hellominecraft.util.MessageBox;
@@ -44,8 +46,8 @@ import org.jackhuang.hellominecraft.svrmgr.setting.SettingsManager;
 import org.jackhuang.hellominecraft.svrmgr.util.MonitorThread;
 import org.jackhuang.hellominecraft.svrmgr.util.WaitForThread;
 import org.jackhuang.hellominecraft.svrmgr.util.Utilities;
-import org.jackhuang.hellominecraft.api.Event;
-import org.jackhuang.hellominecraft.api.EventHandler;
+import org.jackhuang.hellominecraft.svrmgr.api.ServerStartedEvent;
+import org.jackhuang.hellominecraft.svrmgr.api.ServerStoppedEvent;
 import org.jackhuang.hellominecraft.util.code.Charsets;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 
@@ -53,7 +55,7 @@ import org.jackhuang.hellominecraft.util.func.Consumer;
  *
  * @author huangyuhui
  */
-public class Server implements Event<Integer>, MonitorThread.MonitorThreadListener,
+public class Server implements Consumer<SimpleEvent<Integer>>, MonitorThread.MonitorThreadListener,
         ActionListener {
 
     private static Server instance;
@@ -77,9 +79,7 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
     WaitForThread threadC;
     Consumer<Pair<String, String[]>> gettingPlayerNumber;
     ArrayList<MonitorThread.MonitorThreadListener> listeners;
-    ArrayList<Event<Integer>> listenersC;
-    //ArrayList<DoneListener0> listenersBegin, listenersDone;
-    public final EventHandler<Void> startedEvent = new EventHandler<>(this), stoppedEvent = new EventHandler<>(this);
+    ArrayList<Consumer<SimpleEvent<Integer>>> listenersC;
     ArrayList<TimerTask> timerTasks;
     ArrayList<Schedule> schedules;
     BufferedWriter bw;
@@ -103,7 +103,7 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
         listeners.add(l);
     }
 
-    public void addListener(Event<Integer> l) {
+    public void addListener(Consumer<SimpleEvent<Integer>> l) {
         listenersC.add(l);
     }
 
@@ -133,7 +133,7 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
             registerThreadC(server);
             bw = new BufferedWriter(new OutputStreamWriter(server.getOutputStream(), Charsets.toCharset()));
             isRunning = true;
-            startedEvent.fire(null);
+            HMCAPI.EVENT_BUS.fireChannel(new ServerStartedEvent(this));
             sendStatus("*** 启动服务端中 ***");
         } catch (IOException ex) {
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
@@ -203,14 +203,15 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
 
     private void registerThreadC(Process p) {
         threadC = new WaitForThread(p);
-        for (Event<Integer> l : listenersC)
+        for (Consumer<SimpleEvent<Integer>> l : listenersC)
             threadC.event.register(l);
         threadC.event.register(this);
         threadC.start();
     }
 
     @Override
-    public boolean call(Object sender, Integer t) {
+    public void accept(SimpleEvent<Integer> event) {
+        int t = event.getValue();
         if (t == 0) {
             sendStatus("*** 服务端已停止 ***");
             System.out.println("Server stopped successfully");
@@ -236,7 +237,6 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
             }
             isRestart = false;
         }
-        return true;
     }
 
     private static void disactiveMods(ArrayList<String> inactiveExtMods,
@@ -342,7 +342,7 @@ public class Server implements Event<Integer>, MonitorThread.MonitorThreadListen
             Pattern p = Pattern.compile("\\[INFO\\] Done \\([0-9]*\\.[0-9]*s\\)! For help, type \"help\" or \"\\?\"");
             Matcher m = p.matcher(status);
             if (m.find()) {
-                stoppedEvent.fire(null);
+                HMCAPI.EVENT_BUS.fireChannel(new ServerStoppedEvent(this));
                 timer = new Timer();
                 timerTasks.clear();
                 for (int i = 0; i < schedules.size(); i++) {

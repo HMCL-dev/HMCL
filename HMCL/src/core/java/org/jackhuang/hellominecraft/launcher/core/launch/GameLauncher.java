@@ -23,7 +23,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.List;
-import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.api.HMCAPI;
 import org.jackhuang.hellominecraft.launcher.api.event.launch.DecompressLibrariesEvent;
 import org.jackhuang.hellominecraft.launcher.api.event.launch.DecompressLibraryJob;
 import org.jackhuang.hellominecraft.launcher.api.event.launch.DownloadLibrariesEvent;
@@ -90,7 +90,7 @@ public class GameLauncher {
     public void makeLaunchCommand() throws AuthenticationException, GameException, RuntimeGameException {
         HMCLog.log("Building process");
         HMCLog.log("Logging in...");
-        HMCLAPI.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(this, LaunchingState.LoggingIn));
+        HMCAPI.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(this, LaunchingState.LoggingIn));
         IMinecraftLoader loader;
         if (info != null)
             result = login.login(info);
@@ -98,9 +98,9 @@ public class GameLauncher {
             result = login.loginBySettings();
         if (result == null)
             throw new AuthenticationException("Result can not be null.");
-        HMCLAPI.EVENT_BUS.fireChannel(new ProcessingLoginResultEvent(this, result));
+        HMCAPI.EVENT_BUS.fireChannel(new ProcessingLoginResultEvent(this, result));
 
-        HMCLAPI.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(this, LaunchingState.GeneratingLaunchingCodes));
+        HMCAPI.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(this, LaunchingState.GeneratingLaunchingCodes));
         loader = service.launch(options, result);
 
         File file = service.version().getDecompressNativesToLocation(loader.getMinecraftVersion());
@@ -109,18 +109,18 @@ public class GameLauncher {
 
         if (!options.isNotCheckGame()) {
             HMCLog.log("Detecting libraries...");
-            HMCLAPI.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(this, LaunchingState.DownloadingLibraries));
-            if (!HMCLAPI.EVENT_BUS.fireChannelResulted(new DownloadLibrariesEvent(this, service.download().getDownloadLibraries(loader.getMinecraftVersion()))))
+            HMCAPI.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(this, LaunchingState.DownloadingLibraries));
+            if (!HMCAPI.EVENT_BUS.fireChannelResulted(new DownloadLibrariesEvent(this, service.download().getDownloadLibraries(loader.getMinecraftVersion()))))
                 throw new GameException("Failed to download libraries");
         }
 
         HMCLog.log("Unpacking natives...");
-        HMCLAPI.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(this, LaunchingState.DecompressingNatives));
+        HMCAPI.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(this, LaunchingState.DecompressingNatives));
         DecompressLibraryJob job = service.version().getDecompressLibraries(loader.getMinecraftVersion());
-        if (!HMCLAPI.EVENT_BUS.fireChannelResulted(new DecompressLibrariesEvent(this, job)))
+        if (!HMCAPI.EVENT_BUS.fireChannelResulted(new DecompressLibrariesEvent(this, job)))
             throw new GameException("Failed to decompress natives");
 
-        HMCLAPI.EVENT_BUS.fireChannel(new LaunchSucceededEvent(this, loader.makeLaunchingCommand()));
+        HMCAPI.EVENT_BUS.fireChannel(new LaunchSucceededEvent(this, loader.makeLaunchingCommand()));
     }
 
     /**
@@ -150,7 +150,7 @@ public class GameLauncher {
                 .environment().put("APPDATA", service.baseDirectory().getAbsolutePath());
         JavaProcess jp = new JavaProcess(str, builder.start(), PROCESS_MANAGER);
         HMCLog.log("Have started the process");
-        HMCLAPI.EVENT_BUS.fireChannel(new LaunchEvent(this, jp));
+        HMCAPI.EVENT_BUS.fireChannel(new LaunchEvent(this, jp));
     }
 
     /**

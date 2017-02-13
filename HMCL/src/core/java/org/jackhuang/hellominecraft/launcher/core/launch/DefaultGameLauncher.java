@@ -20,7 +20,7 @@ package org.jackhuang.hellominecraft.launcher.core.launch;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
-import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.api.HMCAPI;
 import org.jackhuang.hellominecraft.api.ResultedSimpleEvent;
 import org.jackhuang.hellominecraft.launcher.api.event.launch.DecompressLibrariesEvent;
 import org.jackhuang.hellominecraft.launcher.api.event.launch.DownloadLibrariesEvent;
@@ -44,7 +44,7 @@ public class DefaultGameLauncher extends GameLauncher {
     }
 
     private void register() {
-        HMCLAPI.EVENT_BUS.channel(DownloadLibrariesEvent.class).register(t -> {
+        HMCAPI.EVENT_BUS.channel(DownloadLibrariesEvent.class).register(t -> {
             ResultedSimpleEvent<List<DownloadLibraryJob>> event = (ResultedSimpleEvent) t;
             final TaskWindow.TaskWindowFactory dw = TaskWindow.factory();
             ParallelTask parallelTask = new ParallelTask();
@@ -63,7 +63,7 @@ public class DefaultGameLauncher extends GameLauncher {
                 flag = true;
             t.setResult(flag);
         });
-        HMCLAPI.EVENT_BUS.channel(DecompressLibrariesEvent.class).register(t -> {
+        HMCAPI.EVENT_BUS.channel(DecompressLibrariesEvent.class).register(t -> {
             if (t.getValue() == null) {
                 t.setResult(false);
                 return;

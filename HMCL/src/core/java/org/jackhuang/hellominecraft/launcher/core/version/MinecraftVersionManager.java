@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
-import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.api.HMCAPI;
 import org.jackhuang.hellominecraft.launcher.api.event.version.LoadedOneVersionEvent;
 import org.jackhuang.hellominecraft.launcher.api.event.version.RefreshedVersionsEvent;
 import org.jackhuang.hellominecraft.launcher.api.event.version.RefreshingVersionsEvent;
@@ -72,7 +72,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public synchronized void refreshVersions() {
-        HMCLAPI.EVENT_BUS.fireChannel(new RefreshingVersionsEvent(this, service));
+        HMCAPI.EVENT_BUS.fireChannel(new RefreshingVersionsEvent(this, service));
 
         try {
             MCUtils.tryWriteProfile(service.baseDirectory());
@@ -142,12 +142,12 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                     }
 
                     versions.put(id, mcVersion);
-                    HMCLAPI.EVENT_BUS.fireChannel(new LoadedOneVersionEvent(this, id));
+                    HMCAPI.EVENT_BUS.fireChannel(new LoadedOneVersionEvent(this, id));
                 } catch (Exception e) {
                     HMCLog.warn("Ignoring: " + dir + ", the json of this Minecraft is malformed.", e);
                 }
             }
-        HMCLAPI.EVENT_BUS.fireChannel(new RefreshedVersionsEvent(this, service));
+        HMCAPI.EVENT_BUS.fireChannel(new RefreshedVersionsEvent(this, service));
     }
 
     @Override

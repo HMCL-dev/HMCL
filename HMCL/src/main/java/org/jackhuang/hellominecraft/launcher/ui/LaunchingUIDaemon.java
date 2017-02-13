@@ -20,7 +20,7 @@ package org.jackhuang.hellominecraft.launcher.ui;
 import java.io.File;
 import java.io.IOException;
 import javax.swing.JOptionPane;
-import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.api.HMCAPI;
 import org.jackhuang.hellominecraft.api.event.process.JVMLaunchFailedEvent;
 import org.jackhuang.hellominecraft.api.event.process.JavaProcessExitedAbnormallyEvent;
 import org.jackhuang.hellominecraft.api.event.process.JavaProcessStoppedEvent;
@@ -49,8 +49,8 @@ import org.jackhuang.hellominecraft.util.net.WebFrame;
 public class LaunchingUIDaemon {
 
     public LaunchingUIDaemon() {
-        HMCLAPI.EVENT_BUS.channel(LaunchingStateChangedEvent.class).register(LAUNCHING_STATE_CHANGED);
-        HMCLAPI.EVENT_BUS.channel(LaunchEvent.class).register(p -> {
+        HMCAPI.EVENT_BUS.channel(LaunchingStateChangedEvent.class).register(LAUNCHING_STATE_CHANGED);
+        HMCAPI.EVENT_BUS.channel(LaunchEvent.class).register(p -> {
             GameLauncher obj = (GameLauncher) p.getSource();
             HMCLGameLauncher.GameLauncherTag tag = (HMCLGameLauncher.GameLauncherTag) obj.getTag();
             if (tag.launcherVisibility == LauncherVisibility.CLOSE && !LogWindow.INSTANCE.isVisible()) {
@@ -69,15 +69,15 @@ public class LaunchingUIDaemon {
             monitor.setTag(tag.launcherVisibility);
             monitor.start();
         });
-        HMCLAPI.EVENT_BUS.channel(LaunchSucceededEvent.class).register(p -> {
+        HMCAPI.EVENT_BUS.channel(LaunchSucceededEvent.class).register(p -> {
             int state = ((HMCLGameLauncher.GameLauncherTag) ((GameLauncher) p.getSource()).getTag()).state;
             if (state == 1)
                 LAUNCH_FINISHER.accept(p);
             else if (state == 2)
                 LAUNCH_SCRIPT_FINISHER.accept(p);
         });
-        HMCLAPI.EVENT_BUS.channel(JavaProcessStoppedEvent.class).register(event -> checkExit((LauncherVisibility) ((JavaProcessMonitor) event.getSource()).getTag()));
-        HMCLAPI.EVENT_BUS.channel(JavaProcessExitedAbnormallyEvent.class).register(event -> {
+        HMCAPI.EVENT_BUS.channel(JavaProcessStoppedEvent.class).register(event -> checkExit((LauncherVisibility) ((JavaProcessMonitor) event.getSource()).getTag()));
+        HMCAPI.EVENT_BUS.channel(JavaProcessExitedAbnormallyEvent.class).register(event -> {
             int exitCode = event.getValue().getExitCode();
             HMCLog.err("The game exited abnormally, exit code: " + exitCode);
             String[] logs = event.getValue().getStdOutLines().toArray(new String[0]);
@@ -98,7 +98,7 @@ public class LaunchingUIDaemon {
             f.setVisible(true);
             checkExit((LauncherVisibility) ((JavaProcessMonitor) event.getSource()).getTag());
         });
-        HMCLAPI.EVENT_BUS.channel(JVMLaunchFailedEvent.class).register(event -> {
+        HMCAPI.EVENT_BUS.channel(JVMLaunchFailedEvent.class).register(event -> {
             int exitCode = event.getValue().getExitCode();
             HMCLog.err("Cannot create jvm, exit code: " + exitCode);
             WebFrame f = new WebFrame(event.getValue().getStdOutLines().toArray(new String[0]));

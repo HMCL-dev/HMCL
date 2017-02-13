@@ -51,7 +51,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.api.HMCAPI;
 import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.api.PluginManager;
 import org.jackhuang.hellominecraft.launcher.api.event.config.ThemeChangedEvent;
@@ -159,7 +159,7 @@ public final class MainFrame extends DraggableFrame implements IRepaint {
             }
         ((JPanel) getContentPane()).setOpaque(true);
 
-        HMCLAPI.EVENT_BUS.channel(ThemeChangedEvent.class).register(x -> reloadColor(x.getValue()));
+        HMCAPI.EVENT_BUS.channel(ThemeChangedEvent.class).register(x -> reloadColor(x.getValue()));
 
         SwingUtilities.invokeLater(() -> selectTab("main"));
     }

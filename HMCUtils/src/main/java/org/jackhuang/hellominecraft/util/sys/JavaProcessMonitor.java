@@ -21,7 +21,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import org.jackhuang.hellominecraft.util.CollectionUtils;
 import org.jackhuang.hellominecraft.api.EventHandler;
-import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.api.HMCAPI;
 import org.jackhuang.hellominecraft.api.event.process.JVMLaunchFailedEvent;
 import org.jackhuang.hellominecraft.api.event.process.JavaProcessExitedAbnormallyEvent;
 import org.jackhuang.hellominecraft.api.event.process.JavaProcessStartingEvent;
@@ -59,21 +59,21 @@ public class JavaProcessMonitor {
     
 
     public void start() {
-        HMCLAPI.EVENT_BUS.fireChannel(new JavaProcessStartingEvent(this, p));
+        HMCAPI.EVENT_BUS.fireChannel(new JavaProcessStartingEvent(this, p));
         ProcessThread a = new ProcessThread(p);
         a.stopEvent.register(event -> {
             HMCLog.log("Process exit code: " + p.getExitCode());
             if (p.getExitCode() != 0 || StrUtils.containsOne(p.getStdOutLines(),
                                                              Arrays.asList("Unable to launch"),
                                                              x -> Level.guessLevel(x, Level.INFO).lessOrEqual(Level.ERROR)))
-                HMCLAPI.EVENT_BUS.fireChannel(new JavaProcessExitedAbnormallyEvent(JavaProcessMonitor.this, p));
+                HMCAPI.EVENT_BUS.fireChannel(new JavaProcessExitedAbnormallyEvent(JavaProcessMonitor.this, p));
             if (p.getExitCode() != 0 && StrUtils.containsOne(p.getStdOutLines(),
                                                              Arrays.asList("Could not create the Java Virtual Machine.",
                                                                            "Error occurred during initialization of VM",
                                                                            "A fatal exception has occurred. Program will exit.",
                                                                            "Unable to launch"),
                                                              x -> Level.guessLevel(x, Level.INFO).lessOrEqual(Level.ERROR)))
-                HMCLAPI.EVENT_BUS.fireChannel(new JVMLaunchFailedEvent(JavaProcessMonitor.this, p));
+                HMCAPI.EVENT_BUS.fireChannel(new JVMLaunchFailedEvent(JavaProcessMonitor.this, p));
             processThreadStopped((ProcessThread) event.getSource(), false);
         });
         a.start();
@@ -86,7 +86,7 @@ public class JavaProcessMonitor {
             for (Thread a : al)
                 a.interrupt();
             al.clear();
-            HMCLAPI.EVENT_BUS.fireChannel(new JavaProcessStoppedEvent(this, p));
+            HMCAPI.EVENT_BUS.fireChannel(new JavaProcessStoppedEvent(this, p));
         }
     }
 }

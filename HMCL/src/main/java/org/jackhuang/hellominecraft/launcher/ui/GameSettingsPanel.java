@@ -43,7 +43,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
-import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.api.HMCAPI;
 import org.jackhuang.hellominecraft.launcher.api.event.config.ProfileChangedEvent;
 import org.jackhuang.hellominecraft.launcher.api.event.config.ProfileLoadingEvent;
 import org.jackhuang.hellominecraft.launcher.api.event.version.RefreshedVersionsEvent;
@@ -86,7 +86,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
     final InstallerPanel installerPanels[] = new InstallerPanel[InstallerType.values().length];
 
     public GameSettingsPanel() {
-        HMCLAPI.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(t -> {
+        HMCAPI.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(t -> {
             if (Settings.getLastProfile().service() == t.getValue() && t.getValue().version().getVersions().isEmpty())
                 if (!showedNoVersion && Settings.getLastProfile().service().checkingModpack) {
                     showedNoVersion = true;
@@ -123,9 +123,9 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
             cboJava.addItem(j.getLocalizedName());
         isLoading = false;
 
-        HMCLAPI.EVENT_BUS.channel(ProfileLoadingEvent.class).register(onLoadingProfiles);
-        HMCLAPI.EVENT_BUS.channel(ProfileChangedEvent.class).register(onSelectedProfilesChanged);
-        HMCLAPI.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(onRefreshedVersions);
+        HMCAPI.EVENT_BUS.channel(ProfileLoadingEvent.class).register(onLoadingProfiles);
+        HMCAPI.EVENT_BUS.channel(ProfileChangedEvent.class).register(onSelectedProfilesChanged);
+        HMCAPI.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(onRefreshedVersions);
     }
 
     void initExplorationMenu() {

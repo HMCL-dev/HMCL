@@ -23,7 +23,7 @@ import com.google.gson.JsonSyntaxException;
 import java.io.IOException;
 import org.jackhuang.hellominecraft.util.log.HMCLog;
 import java.util.Map;
-import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.api.HMCAPI;
 import org.jackhuang.hellominecraft.api.SimpleEvent;
 import org.jackhuang.hellominecraft.api.event.OutOfDateEvent;
 
@@ -98,7 +98,7 @@ public final class UpdateChecker implements IUpdateChecker {
     @Override
     public void checkOutdate() {
         if (outOfDate)
-            if (HMCLAPI.EVENT_BUS.fireChannelResulted(new OutOfDateEvent(this, getNewVersion())))
+            if (HMCAPI.EVENT_BUS.fireChannelResulted(new OutOfDateEvent(this, getNewVersion())))
                 upgrade.fire(new SimpleEvent<>(this, getNewVersion()));
     }
 }

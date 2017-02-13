@@ -28,7 +28,7 @@ import org.jackhuang.hellominecraft.launcher.core.launch.LaunchOptions;
 import org.jackhuang.hellominecraft.launcher.setting.Profile;
 import org.jackhuang.hellominecraft.launcher.setting.Settings;
 import org.jackhuang.hellominecraft.util.C;
-import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.api.HMCAPI;
 import org.jackhuang.hellominecraft.launcher.api.event.launch.LaunchSucceededEvent;
 import org.jackhuang.hellominecraft.launcher.api.event.launch.LaunchingState;
 import org.jackhuang.hellominecraft.launcher.api.event.launch.LaunchingStateChangedEvent;
@@ -50,12 +50,12 @@ public class HMCLGameLauncher {
     public HMCLGameLauncher(Profile p) {
         this.profile = p;
         
-        HMCLAPI.EVENT_BUS.channel(LaunchSucceededEvent.class).register(() -> setLaunching(false));
+        HMCAPI.EVENT_BUS.channel(LaunchSucceededEvent.class).register(() -> setLaunching(false));
     }
 
     void setLaunching(boolean isLaunching) {
         if (isLaunching != this.isLaunching)
-            HMCLAPI.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(this, isLaunching ? LaunchingState.Starting : LaunchingState.Done));
+            HMCAPI.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(this, isLaunching ? LaunchingState.Starting : LaunchingState.Done));
         this.isLaunching = isLaunching;
     }
 
@@ -85,7 +85,7 @@ public class HMCLGameLauncher {
                 Thread.currentThread().setName("Game Launcher");
                 try {
                     LaunchOptions options = profile.getSelectedVersionSetting().createLaunchOptions(profile.getCanonicalGameDirFile());
-                    HMCLAPI.EVENT_BUS.fireChannel(new ProcessingLaunchOptionsEvent(this, options));
+                    HMCAPI.EVENT_BUS.fireChannel(new ProcessingLaunchOptionsEvent(this, options));
                     DefaultGameLauncher gl = new DefaultGameLauncher(options, profile.service(), li, l);
                     GameLauncherTag tag = new GameLauncherTag();
                     tag.launcherVisibility = profile.getSelectedVersionSetting().getLauncherVisibility();

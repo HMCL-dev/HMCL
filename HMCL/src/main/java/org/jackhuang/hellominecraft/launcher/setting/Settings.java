@@ -28,7 +28,7 @@ import org.jackhuang.hellominecraft.launcher.Main;
 import org.jackhuang.hellominecraft.launcher.core.MCUtils;
 import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 import org.jackhuang.hellominecraft.util.CollectionUtils;
-import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.api.HMCAPI;
 import org.jackhuang.hellominecraft.launcher.api.event.config.ProfileChangedEvent;
 import org.jackhuang.hellominecraft.launcher.api.event.config.ProfileLoadingEvent;
 import org.jackhuang.hellominecraft.util.sys.FileUtils;
@@ -161,12 +161,12 @@ public final class Settings {
         Profile p = getLastProfile();
         if (p == null)
             throw new Error("No profiles here, it should not happen");
-        HMCLAPI.EVENT_BUS.fireChannel(new ProfileChangedEvent(SETTINGS, p.getName()));
+        HMCAPI.EVENT_BUS.fireChannel(new ProfileChangedEvent(SETTINGS, p.getName()));
         p.onSelected();
     }
 
     public static void onProfileLoading() {
-        HMCLAPI.EVENT_BUS.fireChannel(new ProfileLoadingEvent(SETTINGS));
+        HMCAPI.EVENT_BUS.fireChannel(new ProfileLoadingEvent(SETTINGS));
         onProfileChanged();
     }
 }

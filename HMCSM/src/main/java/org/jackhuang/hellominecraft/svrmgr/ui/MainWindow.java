@@ -87,15 +87,19 @@ import org.jackhuang.hellominecraft.svrmgr.util.Utilities;
 import org.jackhuang.hellominecraft.util.ui.SwingUtils;
 import org.jackhuang.hellominecraft.svrmgr.util.version.MinecraftRemoteVersion;
 import org.jackhuang.hellominecraft.lookandfeel.ConstomButton;
-import org.jackhuang.hellominecraft.api.Event;
+import org.jackhuang.hellominecraft.api.HMCAPI;
+import org.jackhuang.hellominecraft.api.SimpleEvent;
+import org.jackhuang.hellominecraft.svrmgr.api.ServerStartedEvent;
+import org.jackhuang.hellominecraft.svrmgr.api.ServerStoppedEvent;
 import org.jackhuang.hellominecraft.util.StrUtils;
+import org.jackhuang.hellominecraft.util.func.Consumer;
 
 /**
  *
  * @author huangyuhui
  */
 public final class MainWindow extends javax.swing.JFrame
-    implements MonitorThread.MonitorThreadListener, Event<Integer> {
+        implements MonitorThread.MonitorThreadListener, Consumer<SimpleEvent<Integer>> {
 
     ImageIcon background = new ImageIcon(getClass().getResource("/background.jpg"));
     JLabel backgroundLabel;
@@ -134,7 +138,7 @@ public final class MainWindow extends javax.swing.JFrame
 
         Dimension scrSize = Toolkit.getDefaultToolkit().getScreenSize();
         setLocation((scrSize.width - this.getWidth()) / 2,
-                    (scrSize.height - this.getHeight()) / 2);
+                (scrSize.height - this.getHeight()) / 2);
 
         this.setIconImage(new ImageIcon(getClass().getResource("/icon.png")).getImage());
 
@@ -2711,18 +2715,18 @@ public final class MainWindow extends javax.swing.JFrame
         cboDifficulty.setSelectedIndex(sp.getPropertyInt("difficulty", 1));
         String wt = sp.getProperty("level-type");
         switch (wt) {
-        case "LARGEBIOMES":
-            cboWorldType.setSelectedIndex(2);
-            break;
-        case "FLAT":
-            cboWorldType.setSelectedIndex(1);
-            break;
-        case "DEFAULT":
-            cboWorldType.setSelectedIndex(0);
-            break;
-        default:
-            cboWorldType.setSelectedIndex(0);
-            break;
+            case "LARGEBIOMES":
+                cboWorldType.setSelectedIndex(2);
+                break;
+            case "FLAT":
+                cboWorldType.setSelectedIndex(1);
+                break;
+            case "DEFAULT":
+                cboWorldType.setSelectedIndex(0);
+                break;
+            default:
+                cboWorldType.setSelectedIndex(0);
+                break;
         }
         txtMaxPlayer.setValue(sp.getPropertyInt("max-players", 20));
         chkAllowFlight.setSelected(sp.getPropertyBoolean("allow-flight", false));
@@ -2785,7 +2789,7 @@ public final class MainWindow extends javax.swing.JFrame
         while (model.getRowCount() > 0)
             model.removeRow(0);
         IOUtils.findAllFile(new File(path), s
-                            -> model.addRow(new Object[] { !SettingsManager.settings.inactiveExtMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(IOUtils.addSeparator(path) + s)) })
+                -> model.addRow(new Object[] { !SettingsManager.settings.inactiveExtMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(IOUtils.addSeparator(path) + s)) })
         );
         lstExternalMods.updateUI();
     }
@@ -2798,14 +2802,14 @@ public final class MainWindow extends javax.swing.JFrame
         while (model.getRowCount() > 0)
             model.removeRow(0);
         IOUtils.findAllFile(new File(path), s -> {
-                            PluginInformation p = PluginManager.getPluginYML(new File(Utilities.getGameDir() + "plugins" + File.separator + s));
-                            if (p == null)
-                                model.addRow(new Object[] { !SettingsManager.settings.inactivePlugins.contains(s), s,
-                                                            "", "", "", "" });
-                            else
-                                model.addRow(new Object[] { !SettingsManager.settings.inactivePlugins.contains(s), s,
-                                                            p.name, p.version, p.author, p.description });
-                        });
+            PluginInformation p = PluginManager.getPluginYML(new File(Utilities.getGameDir() + "plugins" + File.separator + s));
+            if (p == null)
+                model.addRow(new Object[] { !SettingsManager.settings.inactivePlugins.contains(s), s,
+                    "", "", "", "" });
+            else
+                model.addRow(new Object[] { !SettingsManager.settings.inactivePlugins.contains(s), s,
+                    p.name, p.version, p.author, p.description });
+        });
 
         lstPlugins.updateUI();
     }
@@ -2818,7 +2822,7 @@ public final class MainWindow extends javax.swing.JFrame
         while (model.getRowCount() > 0)
             model.removeRow(0);
         IOUtils.findAllFile(new File(path), s
-                            -> model.addRow(new Object[] { !SettingsManager.settings.inactiveCoreMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(IOUtils.addSeparator(path) + s)) }));
+                -> model.addRow(new Object[] { !SettingsManager.settings.inactiveCoreMods.contains(s), s, ModType.getModTypeShowName(ModType.getModType(IOUtils.addSeparator(path) + s)) }));
 
         lstCoreMods.updateUI();
     }
@@ -2865,32 +2869,32 @@ public final class MainWindow extends javax.swing.JFrame
             return;
         BukkitFormatThread thread;
         switch (idx) {
-        case 1:
-            thread = new BukkitFormatThread(
-                "http://dl.bukkit.org/downloads/craftbukkit/list/beta/", value -> {
-                    craftBukkitBeta = value;
-                    reloadBukkitList();
-                });
-            thread.start();
-            break;
-        case 0:
-            thread = new BukkitFormatThread(
-                "http://dl.bukkit.org/downloads/craftbukkit/list/rb/", value -> {
-                    craftBukkitRecommended = value;
-                    reloadBukkitList();
-                });
-            thread.start();
-            break;
-        case 2:
-            thread = new BukkitFormatThread(
-                "http://dl.bukkit.org/downloads/craftbukkit/list/dev/", value -> {
-                    craftBukkitDev = value;
-                    reloadBukkitList();
-                });
-            thread.start();
-            break;
-        default:
-            break;
+            case 1:
+                thread = new BukkitFormatThread(
+                        "http://dl.bukkit.org/downloads/craftbukkit/list/beta/", value -> {
+                            craftBukkitBeta = value;
+                            reloadBukkitList();
+                        });
+                thread.start();
+                break;
+            case 0:
+                thread = new BukkitFormatThread(
+                        "http://dl.bukkit.org/downloads/craftbukkit/list/rb/", value -> {
+                            craftBukkitRecommended = value;
+                            reloadBukkitList();
+                        });
+                thread.start();
+                break;
+            case 2:
+                thread = new BukkitFormatThread(
+                        "http://dl.bukkit.org/downloads/craftbukkit/list/dev/", value -> {
+                            craftBukkitDev = value;
+                            reloadBukkitList();
+                        });
+                thread.start();
+                break;
+            default:
+                break;
         }
     }
 
@@ -2932,17 +2936,17 @@ public final class MainWindow extends javax.swing.JFrame
         if (idx == -1)
             return;
         switch (idx) {
-        case 1:
-            useBukkitVersions(craftBukkitBeta);
-            break;
-        case 0:
-            useBukkitVersions(craftBukkitRecommended);
-            break;
-        case 2:
-            useBukkitVersions(craftBukkitDev);
-            break;
-        default:
-            break;
+            case 1:
+                useBukkitVersions(craftBukkitBeta);
+                break;
+            case 0:
+                useBukkitVersions(craftBukkitRecommended);
+                break;
+            case 2:
+                useBukkitVersions(craftBukkitDev);
+                break;
+            default:
+                break;
         }
     }
 
@@ -3095,25 +3099,24 @@ public final class MainWindow extends javax.swing.JFrame
             MessageBox.show("服务器未开启！");
     }
 
-    class ServerBeginListener implements Event<Void> {
+    class ServerBeginListener implements Runnable {
 
         @Override
-        public boolean call(Object sender, Void v) {
+        public void run() {
             commandSet = new ArrayList<>();
             txtMain.setText("");
             btnLaunch.setEnabled(false);
             btnStop.setEnabled(true);
             btnShutdown.setEnabled(true);
             btnCommand.setEnabled(true);
-            return true;
         }
 
     }
 
-    class ServerDoneListener implements Event<Void> {
+    class ServerDoneListener implements Runnable {
 
         @Override
-        public boolean call(Object sender, Void v) {
+        public void run() {
             getPlayerNumberTimer = new Timer();
             getPlayerNumberTimer.schedule(new TimerTask() {
 
@@ -3122,7 +3125,6 @@ public final class MainWindow extends javax.swing.JFrame
                     loadPlayers();
                 }
             }, 1000 * 60 * 10, 1000 * 60 * 10);
-            return true;
         }
 
     }
@@ -3151,16 +3153,16 @@ public final class MainWindow extends javax.swing.JFrame
 
         Server.init(SettingsManager.settings.mainjar, String.valueOf(SettingsManager.settings.maxMemory));
         Server.getInstance()
-            .addListener((MonitorThread.MonitorThreadListener) this);
+                .addListener((MonitorThread.MonitorThreadListener) this);
         Server.getInstance()
-            .addListener((Event<Integer>) this);
+                .addListener((Consumer<SimpleEvent<Integer>>) this);
         Server.getInstance()
-            .clearSchedule();
+                .clearSchedule();
         for (Schedule s : SettingsManager.settings.schedules)
             Server.getInstance().addSchedule(s);
 
-        Server.getInstance().startedEvent.register(new ServerBeginListener());
-        Server.getInstance().startedEvent.register(new ServerDoneListener());
+        HMCAPI.EVENT_BUS.channel(ServerStartedEvent.class).register(new ServerBeginListener());
+        HMCAPI.EVENT_BUS.channel(ServerStoppedEvent.class).register(new ServerDoneListener());
         try {
             Server.getInstance().run();
         } catch (IOException ex) {
@@ -3184,19 +3186,19 @@ public final class MainWindow extends javax.swing.JFrame
         int newCommandIndex = commandIndex;
         int type = 0;
         switch (evt.getKeyCode()) {
-        case KeyEvent.VK_UP:
-            newCommandIndex--;
-            type = 1;
-            break;
-        case KeyEvent.VK_DOWN:
-            newCommandIndex++;
-            type = 1;
-            break;
-        case KeyEvent.VK_ENTER:
-            type = 2;
-            break;
-        default:
-            break;
+            case KeyEvent.VK_UP:
+                newCommandIndex--;
+                type = 1;
+                break;
+            case KeyEvent.VK_DOWN:
+                newCommandIndex++;
+                type = 1;
+                break;
+            case KeyEvent.VK_ENTER:
+                type = 2;
+                break;
+            default:
+                break;
         }
         if (type == 1) {
             if (outOfCommandSet(newCommandIndex))
@@ -3290,17 +3292,17 @@ public final class MainWindow extends javax.swing.JFrame
         int OAO = cboWorldType.getSelectedIndex();
         String type = "DEFAULT";
         switch (OAO) {
-        case 0:
-            type = "DEFAULT";
-            break;
-        case 1:
-            type = "FLAT";
-            break;
-        case 2:
-            type = "LARGEBIMOES";
-            break;
-        default:
-            break;
+            case 0:
+                type = "DEFAULT";
+                break;
+            case 1:
+                type = "FLAT";
+                break;
+            case 2:
+                type = "LARGEBIMOES";
+                break;
+            default:
+                break;
         }
         ServerProperties.getInstance().setLevelType(type);
     }//GEN-LAST:event_cboWorldTypeItemStateChanged
@@ -3671,12 +3673,12 @@ public final class MainWindow extends javax.swing.JFrame
 
     private void btnBackupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBackupActionPerformed
         switch (cboBackupTypes.getSelectedIndex()) {
-        case 0:
-            BackupManager.backupAllWorlds();
-            break;
-        case 1:
-            BackupManager.backupAllPlugins();
-            break;
+            case 0:
+                BackupManager.backupAllWorlds();
+                break;
+            case 1:
+                BackupManager.backupAllPlugins();
+                break;
         }
     }//GEN-LAST:event_btnBackupActionPerformed
 
@@ -3687,9 +3689,9 @@ public final class MainWindow extends javax.swing.JFrame
     File getBackupFile(int index) {
         DefaultTableModel model = (DefaultTableModel) lstBackups.getModel();
         return new File(BackupManager.backupDir()
-                        + model.getValueAt(index, 0) + "+"
-                        + model.getValueAt(index, 1) + "+"
-                        + model.getValueAt(index, 2) + ".zip");
+                + model.getValueAt(index, 0) + "+"
+                + model.getValueAt(index, 1) + "+"
+                + model.getValueAt(index, 2) + ".zip");
     }
 
     private void btnDeleteBackupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteBackupActionPerformed
@@ -3743,13 +3745,13 @@ public final class MainWindow extends javax.swing.JFrame
 
     private void btnAutoSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAutoSearchActionPerformed
         IOUtils.findAllFile(new File("."), s -> {
-                            if (ServerChecker.isServerJar(new File(s))) {
-                                String path = IOUtils.tryGetCanonicalFilePath(new File(s));
-                                txtMainJar.setText(path);
-                                SettingsManager.settings.mainjar = path;
-                                SettingsManager.save();
-                            }
-                        });
+            if (ServerChecker.isServerJar(new File(s))) {
+                String path = IOUtils.tryGetCanonicalFilePath(new File(s));
+                txtMainJar.setText(path);
+                SettingsManager.settings.mainjar = path;
+                SettingsManager.save();
+            }
+        });
     }//GEN-LAST:event_btnAutoSearchActionPerformed
 
     private void cboCategoryItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboCategoryItemStateChanged
@@ -3841,21 +3843,21 @@ public final class MainWindow extends javax.swing.JFrame
         if (idx2 == -1)
             return;
         switch (idx2) {
-        case 0:
-            ext = "rb";
-            cb = craftBukkitRecommended;
-            break;
-        case 1:
-            ext = "beta";
-            cb = craftBukkitBeta;
-            break;
-        default:
-            return;
+            case 0:
+                ext = "rb";
+                cb = craftBukkitRecommended;
+                break;
+            case 1:
+                ext = "beta";
+                cb = craftBukkitBeta;
+                break;
+            default:
+                return;
         }
         BukkitVersion v = cb.get(idx);
         File file = new File("craftbukkit-" + ext + "-" + v.version + ".jar");
         TaskWindow.factory().append(new FileDownloadTask(v.downloadLink, IOUtils.tryGetCanonicalFile(file)).setTag("bukkit-" + ext + "-" + v.version))
-            .execute();
+                .execute();
     }//GEN-LAST:event_btnDownloadCraftbukkitActionPerformed
 
     private void btnDownloadMCPCActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDownloadMCPCActionPerformed
@@ -3956,7 +3958,7 @@ public final class MainWindow extends javax.swing.JFrame
     }
 
     @Override
-    public boolean call(Object sender, Integer t) {
+    public void accept(SimpleEvent<Integer> event) {
         btnLaunch.setEnabled(true);
         btnStop.setEnabled(false);
         btnShutdown.setEnabled(false);
@@ -3964,8 +3966,8 @@ public final class MainWindow extends javax.swing.JFrame
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
         try {
             FileUtils.write(new File(Utilities.getGameDir() + "infos-HMCSM"
-                                     + File.separator + format.format(new Date()) + ".txt"),
-                            txtMain.getText());
+                    + File.separator + format.format(new Date()) + ".txt"),
+                    txtMain.getText());
         } catch (IOException ex) {
             HMCLog.warn("Failed to save info", ex);
         }
@@ -3973,7 +3975,6 @@ public final class MainWindow extends javax.swing.JFrame
             getPlayerNumberTimer.cancel();
             getPlayerNumberTimer = null;
         }
-        return true;
     }
 
     private void sendCommand() {
@@ -3999,10 +4000,10 @@ public final class MainWindow extends javax.swing.JFrame
 
     MonitorThread mainThread;
     DefaultListModel lstOPModel = new DefaultListModel(),
-        lstWhiteListModel = new DefaultListModel(),
-        lstBannedModel = new DefaultListModel(),
-        lstCrashReportsModel = new DefaultListModel(),
-        lstPlayersModel = new DefaultListModel();
+            lstWhiteListModel = new DefaultListModel(),
+            lstBannedModel = new DefaultListModel(),
+            lstCrashReportsModel = new DefaultListModel(),
+            lstPlayersModel = new DefaultListModel();
     List<BukkitPlugin> plugins;
     Map<String, List<ForgeVersion>> mcpcPackages;
     List<BukkitVersion> craftBukkitRecommended, craftBukkitBeta, craftBukkitDev;

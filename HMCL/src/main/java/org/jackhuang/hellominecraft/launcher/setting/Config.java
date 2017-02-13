@@ -27,7 +27,7 @@ import java.util.TreeMap;
 import java.util.UUID;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.lookandfeel.Theme;
-import org.jackhuang.hellominecraft.api.HMCLAPI;
+import org.jackhuang.hellominecraft.api.HMCAPI;
 import org.jackhuang.hellominecraft.launcher.api.event.config.AuthenticatorChangedEvent;
 import org.jackhuang.hellominecraft.launcher.api.event.config.DownloadTypeChangedEvent;
 import org.jackhuang.hellominecraft.launcher.api.event.config.ThemeChangedEvent;
@@ -92,7 +92,7 @@ public final class Config implements Cloneable {
 
     public void setTheme(int theme) {
         this.theme = theme;
-        HMCLAPI.EVENT_BUS.fireChannel(new ThemeChangedEvent(this, getTheme()));
+        HMCAPI.EVENT_BUS.fireChannel(new ThemeChangedEvent(this, getTheme()));
         Settings.save();
     }
 
@@ -182,7 +182,7 @@ public final class Config implements Cloneable {
         if (logintype < 0 || logintype >= IAuthenticator.LOGINS.size())
             return;
         this.logintype = logintype;
-        HMCLAPI.EVENT_BUS.fireChannel(new AuthenticatorChangedEvent(this, IAuthenticator.LOGINS.get(logintype)));
+        HMCAPI.EVENT_BUS.fireChannel(new AuthenticatorChangedEvent(this, IAuthenticator.LOGINS.get(logintype)));
         Settings.save();
     }
 
@@ -192,7 +192,7 @@ public final class Config implements Cloneable {
 
     public void setDownloadType(int downloadtype) {
         this.downloadtype = downloadtype;
-        HMCLAPI.EVENT_BUS.fireChannel(new DownloadTypeChangedEvent(this, getDownloadSource()));
+        HMCAPI.EVENT_BUS.fireChannel(new DownloadTypeChangedEvent(this, getDownloadSource()));
         Settings.save();
     }
 
