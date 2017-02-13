@@ -3528,7 +3528,6 @@ public final class MainWindow extends javax.swing.JFrame
         Server.getInstance().sendCommand("save-all");
     }//GEN-LAST:event_btnSaveActionPerformed
 
-    @SuppressWarnings("UseOfObsoleteCollectionType")
     private void btnSaveExtModActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveExtModActionPerformed
         ArrayList<String> arrayList = new ArrayList<>();
         Vector strings = ((DefaultTableModel) lstExternalMods.getModel()).getDataVector();
@@ -3541,7 +3540,6 @@ public final class MainWindow extends javax.swing.JFrame
         SettingsManager.save();
     }//GEN-LAST:event_btnSaveExtModActionPerformed
 
-    @SuppressWarnings("UseOfObsoleteCollectionType")
     private void btnSavePluginsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSavePluginsActionPerformed
         ArrayList<String> arrayList = new ArrayList<>();
         Vector strings = ((DefaultTableModel) lstCoreMods.getModel()).getDataVector();

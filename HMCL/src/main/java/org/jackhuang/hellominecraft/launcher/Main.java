@@ -103,7 +103,6 @@ public final class Main implements Runnable {
 
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
 
-    @SuppressWarnings({ "CallToPrintStackTrace", "UseSpecificCatch" })
     public static void main(String[] args) throws IOException {
         {
             PluginManager.getPlugin(DefaultPlugin.class);

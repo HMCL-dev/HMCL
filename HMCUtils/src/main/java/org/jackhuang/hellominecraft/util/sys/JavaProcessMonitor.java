@@ -20,7 +20,6 @@ package org.jackhuang.hellominecraft.util.sys;
 import java.util.Arrays;
 import java.util.HashSet;
 import org.jackhuang.hellominecraft.util.CollectionUtils;
-import org.jackhuang.hellominecraft.api.EventHandler;
 import org.jackhuang.hellominecraft.api.HMCAPI;
 import org.jackhuang.hellominecraft.api.event.process.JVMLaunchFailedEvent;
 import org.jackhuang.hellominecraft.api.event.process.JavaProcessExitedAbnormallyEvent;
@@ -57,7 +56,6 @@ public class JavaProcessMonitor {
         this.tag = tag;
     }
     
-
     public void start() {
         HMCAPI.EVENT_BUS.fireChannel(new JavaProcessStartingEvent(this, p));
         ProcessThread a = new ProcessThread(p);

@@ -1,5 +1,5 @@
 /*
- * Hello Minecraft!.
+ * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -15,13 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hellominecraft.util.func;
+package org.jackhuang.hellominecraft.launcher.core.mod;
 
 /**
  *
- * @author huangyuhui
+ * @author huang
  */
-public interface BiFunction<A, B, C> {
+public interface ModAdviser {
     
-    C apply(A a, B b);
+    ModSuggestion advise(String fileName, boolean isDirectory);
+    
+    public static enum ModSuggestion {
+        SUGGESTED,
+        NORMAL,
+        HIDDEN
+    }
+    
 }

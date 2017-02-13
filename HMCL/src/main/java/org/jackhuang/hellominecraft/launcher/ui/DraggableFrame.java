@@ -32,7 +32,6 @@ public class DraggableFrame extends JFrame
     private int dragGripX;
     private int dragGripY;
 
-    @SuppressWarnings("LeakingThisInConstructor")
     public DraggableFrame() {
         addMouseListener(this);
         addMouseMotionListener(this);

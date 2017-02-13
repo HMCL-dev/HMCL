@@ -39,7 +39,6 @@ import org.jackhuang.hellominecraft.launcher.core.GameException;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftProvider;
 import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 import org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersion;
-import org.jackhuang.hellominecraft.util.func.BiFunction;
 import org.jackhuang.hellominecraft.util.func.CallbackIO;
 import org.jackhuang.hellominecraft.util.sys.CompressingUtils;
 import org.jackhuang.hellominecraft.util.sys.FileUtils;
@@ -73,14 +72,14 @@ public final class ModpackManager {
     /**
      * Install the compressed modpack.
      *
-     * @param input   modpack.zip
+     * @param input modpack.zip
      * @param service MinecraftService, whose version service only supports
-     *                MinecraftVersionManager.
-     * @param id      new version id, if null, will use suggested name from
-     *                modpack
+     * MinecraftVersionManager.
+     * @param id new version id, if null, will use suggested name from
+     * modpack
      *
      * @return The installing Task, may take long time, please consider
-     *         TaskWindow.
+     * TaskWindow.
      */
     public static Task install(JFrame parFrame, final File input, final IMinecraftService service, final String idFUCK) {
         return new Task() {
@@ -152,10 +151,10 @@ public final class ModpackManager {
                     final AtomicInteger b = new AtomicInteger(0);
                     HMCLog.log("Decompressing modpack");
                     CompressingUtils.unzip(input, versions, t -> {
-                                     if (t.equals("minecraft/pack.json"))
-                                         b.incrementAndGet();
-                                     return true;
-                                 }, true);
+                        if (t.equals("minecraft/pack.json"))
+                            b.incrementAndGet();
+                        return true;
+                    }, true);
 
                     // No pack.json here, illegal modpack.
                     if (b.get() < 1)
@@ -208,40 +207,31 @@ public final class ModpackManager {
     public static final List<String> MODPACK_BLACK_LIST = Arrays.asList(new String[] { "usernamecache.json", "asm", "logs", "backups", "versions", "assets", "usercache.json", "libraries", "crash-reports", "launcher_profiles.json", "NVIDIA", "AMD", "TCNodeTracker", "screenshots", "natives", "native", "$native", "pack.json", "launcher.jar", "minetweaker.log", "launcher.pack.lzma", "hmclmc.log" });
     public static final List<String> MODPACK_SUGGESTED_BLACK_LIST = Arrays.asList(new String[] { "fonts", "saves", "servers.dat", "options.txt", "optionsof.txt", "journeymap", "optionsshaders.txt", "mods/VoxelMods" });
 
-    /**
-     * &lt; String, Boolean, Boolean &gt;: Folder/File name, Is Directory,
-     * Return 0: non blocked, 1: non shown, 2: suggested, checked.
-     */
-    public static final BiFunction<String, Boolean, Integer> MODPACK_PREDICATE = (String x, Boolean y) -> {
-        if (ModpackManager.MODPACK_BLACK_LIST_PREDICATE.apply(x, y))
-            return 1;
-        if (ModpackManager.MODPACK_SUGGESTED_BLACK_LIST_PREDICATE.apply(x, y))
-            return 2;
-        return 0;
+    public static ModAdviser MODPACK_PREDICATE = (String fileName, boolean isDirectory) -> {
+        if (match(MODPACK_BLACK_LIST, fileName, isDirectory))
+            return ModAdviser.ModSuggestion.HIDDEN;
+        if (match(MODPACK_SUGGESTED_BLACK_LIST, fileName, isDirectory))
+            return ModAdviser.ModSuggestion.NORMAL;
+        return ModAdviser.ModSuggestion.SUGGESTED;
     };
 
-    public static final BiFunction<String, Boolean, Boolean> MODPACK_BLACK_LIST_PREDICATE = modpackPredicateMaker(MODPACK_BLACK_LIST);
-    public static final BiFunction<String, Boolean, Boolean> MODPACK_SUGGESTED_BLACK_LIST_PREDICATE = modpackPredicateMaker(MODPACK_SUGGESTED_BLACK_LIST);
-
-    private static BiFunction<String, Boolean, Boolean> modpackPredicateMaker(final List<String> l) {
-        return (String x, Boolean y) -> {
-            for (String s : l)
-                if (y) {
-                    if (x.startsWith(s + "/"))
-                        return true;
-                } else if (x.equals(s))
+    private static boolean match(final List<String> l, String fileName, boolean isDirectory) {
+        for (String s : l)
+            if (isDirectory) {
+                if (fileName.startsWith(s + "/"))
                     return true;
-            return false;
-        };
+            } else if (fileName.equals(s))
+                return true;
+        return false;
     }
 
     /**
      * Export the game to a mod pack file.
      *
-     * @param output     mod pack file.
+     * @param output mod pack file.
      * @param baseFolder if the game dir type is ROOT_FOLDER, use ".minecraft",
-     *                   or use ".minecraft/versions/{MCVER}/"
-     * @param version    to locate version.json
+     * or use ".minecraft/versions/{MCVER}/"
+     * @param version to locate version.json
      *
      * @throws IOException if create tmp directory failed
      */
@@ -256,14 +246,14 @@ public final class ModpackManager {
         try {
             zip = new ZipEngine(output);
             zip.putDirectory(provider.getRunDirectory(version), (String x, Boolean y) -> {
-                             for (String s : b)
-                                 if (y) {
-                                     if (x.startsWith(s + "/"))
-                                         return null;
-                                 } else if (x.equals(s))
-                                     return null;
-                             return "minecraft/" + x;
-                         });
+                for (String s : b)
+                    if (y) {
+                        if (x.startsWith(s + "/"))
+                            return null;
+                    } else if (x.equals(s))
+                        return null;
+                return "minecraft/" + x;
+            });
 
             MinecraftVersion mv = provider.getVersionById(version).resolve(provider);
             MinecraftVersionRequest r = MinecraftVersionRequest.minecraftVersion(provider.getMinecraftJar(version));

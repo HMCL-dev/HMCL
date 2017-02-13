@@ -23,9 +23,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import javax.swing.tree.DefaultTreeModel;
+import org.jackhuang.hellominecraft.launcher.core.mod.ModAdviser;
 import org.jackhuang.hellominecraft.util.C;
 import org.jackhuang.hellominecraft.util.Pair;
-import org.jackhuang.hellominecraft.util.func.BiFunction;
 import org.jackhuang.hellominecraft.util.sys.FileUtils;
 import org.jackhuang.hellominecraft.util.ui.checktree.CheckBoxTreeCellRenderer;
 import org.jackhuang.hellominecraft.util.ui.checktree.CheckBoxTreeNode;
@@ -40,7 +40,7 @@ public class ModpackFileSelectionPanel extends javax.swing.JPanel {
 
     private transient final WizardController controller;
     private final Map wizardData;
-    private transient final BiFunction<String, Boolean, Integer> blackList;
+    private transient final ModAdviser blackList;
     private final Set<String> bannedFiles = new HashSet<>();
 
     /**
@@ -49,7 +49,7 @@ public class ModpackFileSelectionPanel extends javax.swing.JPanel {
      * @param blackList Return 0: non blocked, 1: non shown, 2: suggested,
      *                  checked
      */
-    public ModpackFileSelectionPanel(WizardController controller, Map wizardData, File gameDir, BiFunction<String, Boolean, Integer> blackList) {
+    public ModpackFileSelectionPanel(WizardController controller, Map wizardData, File gameDir, ModAdviser blackList) {
         initComponents();
 
         this.controller = controller;
@@ -83,12 +83,12 @@ public class ModpackFileSelectionPanel extends javax.swing.JPanel {
     };
 
     CheckBoxTreeNode create(File file, String basePath) {
-        int state = 0;
+        ModAdviser.ModSuggestion state = ModAdviser.ModSuggestion.NORMAL;
         if (basePath.length() > "minecraft/".length())
-            if ((state = blackList.apply(basePath.substring("minecraft/".length()) + (file.isDirectory() ? "/" : ""), file.isDirectory())) == 1)
+            if ((state = blackList.advise(basePath.substring("minecraft/".length()) + (file.isDirectory() ? "/" : ""), file.isDirectory())) == ModAdviser.ModSuggestion.HIDDEN)
                 return null;
         CheckBoxTreeNode node = new CheckBoxTreeNode(TRANSLATION.containsKey(basePath) ? new Pair<>(FileUtils.getName(basePath), TRANSLATION.get(basePath)) : FileUtils.getName(basePath));
-        if (state == 2)
+        if (state == ModAdviser.ModSuggestion.SUGGESTED)
             node.setSelected(true);
 
         if (file.isDirectory()) {
