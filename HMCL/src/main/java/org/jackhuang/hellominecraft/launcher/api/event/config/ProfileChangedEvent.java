@@ -18,15 +18,16 @@
 package org.jackhuang.hellominecraft.launcher.api.event.config;
 
 import org.jackhuang.hellominecraft.api.SimpleEvent;
+import org.jackhuang.hellominecraft.launcher.setting.Profile;
 
 /**
  * This event gets fired when the selected profile changed.
- * @param String the new profile id.
+ * @param Profile the new profile.
  * @author huangyuhui
  */
-public class ProfileChangedEvent extends SimpleEvent<String> {
+public class ProfileChangedEvent extends SimpleEvent<Profile> {
     
-    public ProfileChangedEvent(Object source, String value) {
+    public ProfileChangedEvent(Object source, Profile value) {
         super(source, value);
     }
     

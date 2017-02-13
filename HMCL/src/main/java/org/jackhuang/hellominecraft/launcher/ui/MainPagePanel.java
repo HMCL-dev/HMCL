@@ -530,7 +530,7 @@ public class MainPagePanel extends Page {
     }
 
     final Consumer<ProfileChangedEvent> onSelectedProfilesChanged = event -> {
-        Profile t = Settings.getProfile(event.getValue());
+        Profile t = event.getValue();
         t.propertyChanged.register(e -> {
             if ("selectedMinecraftVersion".equals(e.getPropertyName()))
                 versionChanged(e.getNewValue());

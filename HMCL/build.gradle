@@ -17,9 +17,21 @@
  */
 plugins {
     id "edu.sc.seis.macAppBundle" version "2.1.6"
-    id "me.tatarka.retrolambda" version "3.5.0"
+    //id "me.tatarka.retrolambda" version "3.5.0"
     id 'edu.sc.seis.launch4j' version '2.3.0'
 }
+
+buildscript {
+    repositories {
+        mavenCentral();
+        
+        dependencies {
+            classpath 'me.tatarka:gradle-retrolambda:3.1.0'
+        }
+    }
+}
+
+apply plugin: 'me.tatarka.retrolambda'
 
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry

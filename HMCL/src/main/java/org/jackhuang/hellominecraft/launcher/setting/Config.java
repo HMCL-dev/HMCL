@@ -222,7 +222,7 @@ public final class Config implements Cloneable {
         theme = 4;
         decorated = OS.os() == OS.LINUX;
         auth = new HashMap<>();
-        commonpath = MCUtils.getWorkingDirectory("hmcl").getAbsolutePath();
+        commonpath = MCUtils.getLocation().getAbsolutePath();
     }
 
     public DownloadType getDownloadSource() {

@@ -392,6 +392,9 @@
           <ResourceString bundle="org/jackhuang/hellominecraft/lang/I18N.properties" key="launcher.commpath_tooltip" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="txtCommonPathFocusLost"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="btnSetCommonPath">
       <Properties>

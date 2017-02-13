@@ -161,7 +161,7 @@ public final class Settings {
         Profile p = getLastProfile();
         if (p == null)
             throw new Error("No profiles here, it should not happen");
-        HMCAPI.EVENT_BUS.fireChannel(new ProfileChangedEvent(SETTINGS, p.getName()));
+        HMCAPI.EVENT_BUS.fireChannel(new ProfileChangedEvent(SETTINGS, p));
         p.onSelected();
     }
 

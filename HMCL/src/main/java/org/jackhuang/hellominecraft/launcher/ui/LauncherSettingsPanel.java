@@ -259,6 +259,11 @@ public class LauncherSettingsPanel extends RepaintPage {
         lblCommonPath.setText(C.i18n("launcher.common_location")); // NOI18N
 
         txtCommonPath.setToolTipText(C.i18n("launcher.commpath_tooltip")); // NOI18N
+        txtCommonPath.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                txtCommonPathFocusLost(evt);
+            }
+        });
 
         btnSetCommonPath.setText(C.i18n("ui.button.explore")); // NOI18N
         btnSetCommonPath.addActionListener(new java.awt.event.ActionListener() {
@@ -489,6 +494,10 @@ public class LauncherSettingsPanel extends RepaintPage {
             MessageBox.show(C.i18n("ui.label.failed_set") + e.getMessage());
         }
     }//GEN-LAST:event_btnSetCommonPathActionPerformed
+
+    private void txtCommonPathFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtCommonPathFocusLost
+        Settings.getInstance().setCommonpath(txtCommonPath.getText());
+    }//GEN-LAST:event_txtCommonPathFocusLost
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCheckUpdate;
