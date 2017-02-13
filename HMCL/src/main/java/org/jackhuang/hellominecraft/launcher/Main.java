@@ -112,7 +112,7 @@ public final class Main implements Runnable {
                     try {
                         PluginManager.getPlugin(Class.forName(c));
                     } catch (ClassNotFoundException ex) {
-                        System.out.println("Class: " + c + " not found, please add your plugin jar to class path.");
+                        LOGGER.log(Level.WARNING, "Class: " + c + " not found, please add your plugin jar to class path.", ex);
                     }
                 } else if (s.startsWith("--help")) {
                     System.out.println("HMCL command line help");

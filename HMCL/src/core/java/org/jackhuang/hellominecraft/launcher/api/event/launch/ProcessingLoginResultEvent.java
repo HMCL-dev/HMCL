@@ -26,7 +26,7 @@ import org.jackhuang.hellominecraft.launcher.core.auth.UserProfileProvider;
  * Pay attension: If you need to terminate the launching process, you must throw
  * {@link org.jackhuang.hellominecraft.launcher.core.RuntimeGameException anyway.
  * <br>
- * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCLAPI#EVENT_BUS}
+ * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCAPI#EVENT_BUS}
  * @param source {@link org.jackhuang.hellominecraft.launcher.core.launch.GameLauncher}
  * @param UserProfileProvider you can modify the value of this event to control the user profile.
  * @author huangyuhui

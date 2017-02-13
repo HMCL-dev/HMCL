@@ -22,6 +22,7 @@ import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.util.func.Consumer;
 
 /**
+ * Each plugin must implement this interface.
  *
  * @author huangyuhui
  */
@@ -33,6 +34,12 @@ public interface IPlugin {
      * @param apply call apply.accept(your authenticator)
      */
     void onRegisterAuthenticators(Consumer<IAuthenticator> apply);
-    
+
+    /**
+     * Call callback.addTab to add your customized panel to MainFrame RootPane.
+     *
+     * @param frame MainFrame
+     * @param callback call this if you want.
+     */
     void onAddTab(JFrame frame, AddTabCallback callback);
 }

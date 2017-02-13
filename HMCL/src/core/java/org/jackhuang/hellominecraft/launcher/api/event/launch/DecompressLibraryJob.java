@@ -31,6 +31,7 @@ public class DecompressLibraryJob {
 
     /**
      * The length of these 2 arrays must be the same.
+     *
      * @param decompressFiles
      * @param extractRules
      * @param decompressTo folder

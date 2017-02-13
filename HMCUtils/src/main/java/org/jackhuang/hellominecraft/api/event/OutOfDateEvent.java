@@ -26,7 +26,7 @@ import org.jackhuang.hellominecraft.util.VersionNumber;
  * This event is {@link org.jackhuang.hellominecraft.api.ResultedEvent}
  * If this event is failed, HMCL will not ask user to upgrade the application.
  * <br>
- * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCLAPI#EVENT_BUS}
+ * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCAPI#EVENT_BUS}
  * @param source {@link org.jackhuang.hellominecraft.util.UpdateChecker}
  * @param VersionNumber newest version
  * @author huang

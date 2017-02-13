@@ -22,7 +22,9 @@ import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 
 /**
  * This event gets fired when the authenticator changed.
- * 
+ * <br>
+ * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCAPI#EVENT_BUS}
+ * @param source {@link org.jackhuang.hellominecraft.launcher.setting.Config}
  * @param IAuthenticator the new authenticator.
  * @author huangyuhui
  */

@@ -28,50 +28,50 @@ import org.jackhuang.hellominecraft.util.C;
  */
 public enum Theme {
     BLUE(C.i18n("color.blue"), new HashMap<String, String>() {
-         {
-             put("Customized.TabbedPaneTab.selected_foreground", "#106CA3");
-             put("Customized.ComboBox.selected_background", "#A0D8F0");
-             put("Customized.MainFrame.background", "#106CA3");
-             put("Customized.MainFrame.selected_background", "#0C5E91");
-             put("Customized.MainFrame.background_image", "background.jpg");
-         }
-     }),
+        {
+            put("Customized.TabbedPaneTab.selected_foreground", "#106CA3");
+            put("Customized.ComboBox.selected_background", "#A0D8F0");
+            put("Customized.MainFrame.background", "#106CA3");
+            put("Customized.MainFrame.selected_background", "#0C5E91");
+            put("Customized.MainFrame.background_image", "background.jpg");
+        }
+    }),
     GREEN(C.i18n("color.green"), new HashMap<String, String>() {
-          {
-              put("Customized.TabbedPaneTab.selected_foreground", "#1ABC9C");
-              put("Customized.ComboBox.selected_background", "#1ABC9C");
-              put("Customized.MainFrame.background", "#1ABC9C");
-              put("Customized.MainFrame.selected_background", "#16A085");
-              put("Customized.MainFrame.background_image", "background.jpg");
-          }
-      }),
+        {
+            put("Customized.TabbedPaneTab.selected_foreground", "#1ABC9C");
+            put("Customized.ComboBox.selected_background", "#1ABC9C");
+            put("Customized.MainFrame.background", "#1ABC9C");
+            put("Customized.MainFrame.selected_background", "#16A085");
+            put("Customized.MainFrame.background_image", "background.jpg");
+        }
+    }),
     PURPLE(C.i18n("color.purple"), new HashMap<String, String>() {
-           {
-               put("Customized.TabbedPaneTab.selected_foreground", "#9B59B6");
-               put("Customized.ComboBox.selected_background", "#9B59B6");
-               put("Customized.MainFrame.background", "#9B59B6");
-               put("Customized.MainFrame.selected_background", "#8E44AD");
-               put("Customized.MainFrame.background_image", "background.jpg");
-           }
-       }),
+        {
+            put("Customized.TabbedPaneTab.selected_foreground", "#9B59B6");
+            put("Customized.ComboBox.selected_background", "#9B59B6");
+            put("Customized.MainFrame.background", "#9B59B6");
+            put("Customized.MainFrame.selected_background", "#8E44AD");
+            put("Customized.MainFrame.background_image", "background.jpg");
+        }
+    }),
     DARKER_BLUE(C.i18n("color.dark_blue"), new HashMap<String, String>() {
-                {
-                    put("Customized.TabbedPaneTab.selected_foreground", "#34495E");
-                    put("Customized.ComboBox.selected_background", "#34495E");
-                    put("Customized.MainFrame.background", "#34495E");
-                    put("Customized.MainFrame.selected_background", "#2C3E50");
-                    put("Customized.MainFrame.background_image", "background.jpg");
-                }
-            }),
+        {
+            put("Customized.TabbedPaneTab.selected_foreground", "#34495E");
+            put("Customized.ComboBox.selected_background", "#34495E");
+            put("Customized.MainFrame.background", "#34495E");
+            put("Customized.MainFrame.selected_background", "#2C3E50");
+            put("Customized.MainFrame.background_image", "background.jpg");
+        }
+    }),
     ORANGE(C.i18n("color.orange"), new HashMap<String, String>() {
-           {
-               put("Customized.TabbedPaneTab.selected_foreground", "#E67E22");
-               put("Customized.ComboBox.selected_background", "#F39C12");
-               put("Customized.MainFrame.background", "#E67E22");
-               put("Customized.MainFrame.selected_background", "#D35400");
-               put("Customized.MainFrame.background_image", "background.jpg");
-           }
-       }),
+        {
+            put("Customized.TabbedPaneTab.selected_foreground", "#E67E22");
+            put("Customized.ComboBox.selected_background", "#F39C12");
+            put("Customized.MainFrame.background", "#E67E22");
+            put("Customized.MainFrame.selected_background", "#D35400");
+            put("Customized.MainFrame.background_image", "background.jpg");
+        }
+    }),
     RED(C.i18n("color.red"), new HashMap<String, String>() {
         {
             put("Customized.TabbedPaneTab.selected_foreground", "#E74C3C");

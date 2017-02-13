@@ -23,7 +23,7 @@ import org.jackhuang.hellominecraft.api.SimpleEvent;
 /**
  * This event gets fired when we make the launching command successfully(not launched the game process).
  * <br>
- * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCLAPI#EVENT_BUS}
+ * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCAPI#EVENT_BUS}
  * @param source {@link org.jackhuang.hellominecraft.launcher.core.launch.GameLauncher}
  * @param List&lt;String&gt; Our launching command.
  * @author huangyuhui

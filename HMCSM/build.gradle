@@ -20,17 +20,17 @@ buildscript {
     repositories {
         mavenCentral();
         dependencies {
-            classpath 'edu.sc.seis.gradle:launch4j:1.0.6'
-            classpath 'me.tatarka:gradle-retrolambda:3.4.0'
+            classpath 'me.tatarka:gradle-retrolambda:3.1.0'
         }
     }
 }
 
 plugins {
     id "edu.sc.seis.macAppBundle" version "2.1.6"
+    //id "me.tatarka.retrolambda" version "3.5.0"
+    id 'edu.sc.seis.launch4j' version '2.3.0'
 }
 
-apply plugin: 'launch4j'
 apply plugin: 'me.tatarka.retrolambda'
 
 if (!hasProperty('mainClass')) {

@@ -21,9 +21,9 @@ import java.util.ArrayList;
 import javax.swing.JFrame;
 import org.jackhuang.hellominecraft.launcher.core.auth.IAuthenticator;
 import org.jackhuang.hellominecraft.util.func.Consumer;
-import org.jackhuang.hellominecraft.util.log.HMCLog;
 
 /**
+ * Can be only called by HMCL.
  *
  * @author huangyuhui
  */
@@ -35,16 +35,17 @@ public class PluginManager {
         try {
             IPlugin p = (IPlugin) cls.newInstance();
             PLUGINS.add(p);
-        } catch (IllegalAccessException | InstantiationException e) {
-            HMCLog.err("Failed to new instance");
+        } catch (Throwable e) {
+            System.err.println("Failed to new instance");
+            e.printStackTrace();
         }
     }
-    
+
     public static void fireRegisterAuthenticators(Consumer<IAuthenticator> callback) {
         for (IPlugin p : PLUGINS)
             p.onRegisterAuthenticators(callback);
     }
-    
+
     public static void fireAddTab(JFrame frame, AddTabCallback callback) {
         for (IPlugin p : PLUGINS)
             p.onAddTab(frame, callback);

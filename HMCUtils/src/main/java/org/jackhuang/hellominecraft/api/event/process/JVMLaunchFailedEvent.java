@@ -23,7 +23,7 @@ import org.jackhuang.hellominecraft.util.sys.JavaProcess;
 /**
  * This event gets fired when we launch the JVM and it got crashed.
  * <br>
- * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCLAPI#EVENT_BUS}
+ * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCAPI#EVENT_BUS}
  * @param source {@link org.jackhuang.hellominecraft.util.sys.JavaProcessMonitor}
  * @param JavaProcess the crashed process.
  * @author huangyuhui

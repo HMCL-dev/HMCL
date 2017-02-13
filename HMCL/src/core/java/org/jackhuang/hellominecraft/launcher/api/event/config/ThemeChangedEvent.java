@@ -22,7 +22,9 @@ import org.jackhuang.hellominecraft.lookandfeel.Theme;
 
 /**
  * This event gets fired when the application theme changed.
- * 
+ * <br>
+ * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCAPI#EVENT_BUS}
+ * @param source {@link org.jackhuang.hellominecraft.launcher.setting.Config}
  * @param Theme the changed theme
  * @author huangyuhui
  */

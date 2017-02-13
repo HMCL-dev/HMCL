@@ -23,7 +23,7 @@ import org.jackhuang.hellominecraft.launcher.core.service.IMinecraftService;
 /**
  * This event gets fired when loading versions in a .minecraft folder.
  * <br>
- * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCLAPI#EVENT_BUS}
+ * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCAPI#EVENT_BUS}
  * @param source {@link org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersionManager}
  * @param IMinecraftService .minecraft folder.
  * @author huang

@@ -22,7 +22,7 @@ import org.jackhuang.hellominecraft.api.SimpleEvent;
 /**
  * This event gets fired when a minecraft version has been loaded.
  * <br>
- * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCLAPI#EVENT_BUS}
+ * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCAPI#EVENT_BUS}
  * @param source {@link org.jackhuang.hellominecraft.launcher.core.version.MinecraftVersionManager}
  * @param String the version id.
  * @author huang

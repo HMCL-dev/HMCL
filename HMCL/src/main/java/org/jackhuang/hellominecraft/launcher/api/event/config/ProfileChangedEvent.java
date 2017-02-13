@@ -22,6 +22,9 @@ import org.jackhuang.hellominecraft.launcher.setting.Profile;
 
 /**
  * This event gets fired when the selected profile changed.
+ * <br>
+ * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCAPI#EVENT_BUS}
+ * @param source {@link org.jackhuang.hellominecraft.launcher.setting.Settings}
  * @param Profile the new profile.
  * @author huangyuhui
  */

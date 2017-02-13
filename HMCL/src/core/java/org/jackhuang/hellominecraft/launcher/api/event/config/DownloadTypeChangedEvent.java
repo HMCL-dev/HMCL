@@ -22,8 +22,10 @@ import org.jackhuang.hellominecraft.launcher.core.download.DownloadType;
 
 /**
  * This event gets fired when the download type changed.
- * 
- * @param DownloadType the new downlaod type;
+ * <br>
+ * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCAPI#EVENT_BUS}
+ * @param source {@link org.jackhuang.hellominecraft.launcher.setting.Config}
+ * @param DownloadType the new downlaod type
  * @author huangyuhui
  */
 public class DownloadTypeChangedEvent extends SimpleEvent<DownloadType> {

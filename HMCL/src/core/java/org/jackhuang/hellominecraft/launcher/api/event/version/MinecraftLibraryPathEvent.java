@@ -24,7 +24,7 @@ import org.jackhuang.hellominecraft.util.Wrapper;
 /**
  * This event gets fired when we getting minecraft library path.
  * <br>
- * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCLAPI#EVENT_BUS}
+ * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCAPI#EVENT_BUS}
  * @param source {@link org.jackhuang.hellominecraft.launcher.core.version.MinecraftLibrary}
  * @param {@code Wrapper<File>} modify this thing to change to your wanted mc lib.
  * @author huangyuhui

@@ -21,7 +21,10 @@ import java.util.EventObject;
 
 /**
  * This event gets fired when loading profiles.
- * @author huang
+ * <br>
+ * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCAPI#EVENT_BUS}
+ * @param source {@link org.jackhuang.hellominecraft.launcher.setting.Settings}
+ * @author huangyuhui
  */
 public class ProfileLoadingEvent extends EventObject {
     

@@ -35,7 +35,7 @@ public class DownloadLibraryJob {
         lib = n;
         path = p;
     }
-    
+
     public DownloadLibraryJob parse() {
         String name = lib.name;
         if (name.startsWith("net.minecraftforge:forge:")) {

@@ -25,7 +25,7 @@ import org.jackhuang.hellominecraft.api.ResultedSimpleEvent;
  * This event is {@link org.jackhuang.hellominecraft.api.ResultedEvent}
  * If this event is failed, the launching process will be terminated.
  * <br>
- * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCLAPI#EVENT_BUS}
+ * This event is fired on the {@link org.jackhuang.hellominecraft.api.HMCAPI#EVENT_BUS}
  * @param source {@link org.jackhuang.hellominecraft.launcher.core.launch.GameLauncher}
  * @param DecompressLibraryJob libraries to be decompressed
  * @author huangyuhui
