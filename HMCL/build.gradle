@@ -39,7 +39,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
 if (!hasProperty('mainClass')) {
-    ext.mainClass = 'org.jackhuang.hellominecraft.launcher.Main'
+    ext.mainClass = 'org.jackhuang.hmcl.Main'
 }
 
 def buildnumber = System.getenv("TRAVIS_BUILD_NUMBER")
@@ -63,7 +63,6 @@ String mavenArtifactId = name
 
 task generateSources(type: Copy) {
     from 'src/main/java'
-    from 'src/core/java'
     into "$buildDir/generated-src"
     filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [
             'HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING': mavenVersion
@@ -85,30 +84,6 @@ macAppBundle {
     javaProperties.put("apple.laf.useScreenMenuBar", "true")
 }
 
-sourceSets {
-    main {
-        java {
-            srcDirs = [
-                'src/core/java/',
-                'src/main/java/'
-            ]
-        }
-        resources {
-            srcDirs = ['src/main/resources/']
-        }
-    }
-    core {
-        java {
-            compileClasspath += main.compileClasspath
-            runtimeClasspath += main.runtimeClasspath
-            srcDirs 'src/core/java/'
-        }
-        resources {
-            srcDirs 'src/main/resources/'
-        }
-    }
-}
-
 configurations {
     coreCompile.extendsFrom compile
     coreRuntime.extendsFrom runtime
@@ -124,26 +99,26 @@ configure(install.repositories.mavenInstaller) {
 
 dependencies {
     compile project(":HMCLaF")
-    compile project(":HMCUtils")
-    compile group: "org.commonjava.googlecode.markdown4j", name: "markdown4j", version: "2.2-cj-1.0"
+    compile project(":HMCLAPI")
+    compile project(":HMCLCore")
 }
 
 retrolambda {
-    javaVersion = JavaVersion.VERSION_1_6
+    javaVersion = JavaVersion.VERSION_1_7
 }
 
 jar {
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     
     manifest {
-        attributes 'Created-By'        : 'Copyright(c) 2013-2016 huangyuhui.',
+        attributes 'Created-By'        : 'Copyright(c) 2013-2017 huangyuhui.',
                    'Main-Class'        : mainClass
     }
 }
 
 launch4j {
     supportUrl = 'http://www.mcbbs.net/thread-142335-1-1.html'
-    jreMinVersion = '1.6.0'
+    jreMinVersion = '1.7.0'
     
     mainClassName = mainClass
     icon = new File(project.buildDir,  '../icon.ico').absolutePath
