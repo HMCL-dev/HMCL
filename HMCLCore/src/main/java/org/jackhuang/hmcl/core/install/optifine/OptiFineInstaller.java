@@ -20,8 +20,6 @@ package org.jackhuang.hmcl.core.install.optifine;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.zip.ZipFile;
-import org.jackhuang.hmcl.api.HMCLApi;
-import org.jackhuang.hmcl.api.event.version.MinecraftLibraryPathEvent;
 import org.jackhuang.hmcl.util.C;
 import org.jackhuang.hmcl.core.install.InstallerVersionList;
 import org.jackhuang.hmcl.core.service.IMinecraftService;
@@ -33,7 +31,6 @@ import org.jackhuang.hmcl.util.task.comm.PreviousResultRegistrar;
 import org.jackhuang.hmcl.util.sys.FileUtils;
 import org.jackhuang.hmcl.core.version.MinecraftLibrary;
 import org.jackhuang.hmcl.core.version.MinecraftVersion;
-import org.jackhuang.hmcl.api.Wrapper;
 import org.jackhuang.hmcl.api.HMCLog;
 
 /**
@@ -72,9 +69,8 @@ public class OptiFineInstaller extends Task implements PreviousResultRegistrar<F
         library.downloads.artifact.size = 0;
         mv.libraries.add(0, library);
         
-        MinecraftLibraryPathEvent event = new MinecraftLibraryPathEvent(this, "libraries/" + library.downloads.artifact.path, new Wrapper<>(new File(service.baseDirectory(), "libraries/" + library.downloads.artifact.path)));
-        HMCLApi.EVENT_BUS.fireChannel(event);
-        FileUtils.copyFile(installer, event.getFile().getValue());
+        // We use options from the old vanilla version.
+        FileUtils.copyFile(installer, service.version().getLibraryFile(service.version().getVersionById(installId), library));
 
         mv.id += "-" + selfId;
         try (ZipFile zipFile = new ZipFile(installer)) {

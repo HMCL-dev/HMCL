@@ -41,6 +41,8 @@ public final class Profile {
     private String selectedMinecraftVersion = "";
     @SerializedName("gameDir")
     private String gameDir;
+    @SerializedName("noCommon")
+    private boolean noCommon;
     @SerializedName("global")
     private VersionSetting global;
 
@@ -167,6 +169,16 @@ public final class Profile {
         service().version().refreshVersions();
         propertyChanged.fire(event);
         return this;
+    }
+
+    public boolean isNoCommon() {
+        return noCommon;
+    }
+
+    public void setNoCommon(boolean noCommon) {
+        PropertyChangedEvent event = new PropertyChangedEvent(this, "noCommon", this.noCommon, noCommon);
+        this.noCommon = noCommon;
+        propertyChanged.fire(event);
     }
 
     public String getName() {

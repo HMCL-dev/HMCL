@@ -314,6 +314,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         lblPrecalledCommand1 = new javax.swing.JLabel();
         txtWrapperLauncher = new javax.swing.JTextField();
         chkDontCheckGame = new javax.swing.JCheckBox();
+        chkNoCommon = new javax.swing.JCheckBox();
         pnlModManagement = new Page();
         pnlModManagementContent = new Page();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -610,6 +611,14 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
             }
         });
 
+        chkNoCommon.setText(C.i18n("advancedsettings.no_common")); // NOI18N
+        chkNoCommon.setToolTipText(C.i18n("launcher.commpath_tooltip")); // NOI18N
+        chkNoCommon.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                chkNoCommonItemStateChanged(evt);
+            }
+        });
+
         javax.swing.GroupLayout pnlAdvancedSettingsLayout = new javax.swing.GroupLayout(pnlAdvancedSettings);
         pnlAdvancedSettings.setLayout(pnlAdvancedSettingsLayout);
         pnlAdvancedSettingsLayout.setHorizontalGroup(
@@ -632,7 +641,9 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
                     .addGroup(pnlAdvancedSettingsLayout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(chkNoJVMArgs)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(chkNoCommon)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 96, Short.MAX_VALUE)
                         .addComponent(chkDontCheckGame))
                     .addGroup(pnlAdvancedSettingsLayout.createSequentialGroup()
                         .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -672,7 +683,8 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(chkNoJVMArgs)
-                    .addComponent(chkDontCheckGame))
+                    .addComponent(chkDontCheckGame)
+                    .addComponent(chkNoCommon))
                 .addContainerGap())
         );
 
@@ -958,7 +970,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
             .addGroup(layout.createSequentialGroup()
                 .addComponent(pnlTop, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tabVersionEdit, javax.swing.GroupLayout.DEFAULT_SIZE, 309, Short.MAX_VALUE)
+                .addComponent(tabVersionEdit)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnTestGame)
@@ -1218,26 +1230,32 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
             profile.makeVersionSettingGlobal(mcVersion);
     }//GEN-LAST:event_lblUsesGlobalMouseClicked
 
+    private void chkNoCommonItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkNoCommonItemStateChanged
+        if (!isLoading)
+            Settings.getLastProfile().setNoCommon(chkNoCommon.isSelected());
+    }//GEN-LAST:event_chkNoCommonItemStateChanged
+
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="Load">
-    void prepareVersionSetting(VersionSetting profile) {
-        if (profile == null)
+    void prepareVersionSetting(Profile profile, VersionSetting vs) {
+        if (vs == null)
             return;
         isLoading = true;
-        txtWidth.setText(profile.getWidth());
-        txtHeight.setText(profile.getHeight());
-        txtMaxMemory.setText(profile.getMaxMemory());
-        txtPermSize.setText(profile.getPermSize());
-        txtJavaArgs.setText(profile.getJavaArgs());
-        txtMinecraftArgs.setText(profile.getMinecraftArgs());
-        txtPrecalledCommand.setText(profile.getPrecalledCommand());
-        txtServerIP.setText(profile.getServerIp());
-        chkNoJVMArgs.setSelected(profile.isNoJVMArgs());
-        chkDontCheckGame.setSelected(profile.isNotCheckGame());
-        chkFullscreen.setSelected(profile.isFullscreen());
-        cboLauncherVisibility.setSelectedIndex(profile.getLauncherVisibility().ordinal());
-        cboRunDirectory.setSelectedIndex(profile.getGameDirType().ordinal());
-        cboJava.setSelectedIndex(profile.getJavaIndexInAllJavas());
+        txtWidth.setText(vs.getWidth());
+        txtHeight.setText(vs.getHeight());
+        txtMaxMemory.setText(vs.getMaxMemory());
+        txtPermSize.setText(vs.getPermSize());
+        txtJavaArgs.setText(vs.getJavaArgs());
+        txtMinecraftArgs.setText(vs.getMinecraftArgs());
+        txtPrecalledCommand.setText(vs.getPrecalledCommand());
+        txtServerIP.setText(vs.getServerIp());
+        chkNoJVMArgs.setSelected(vs.isNoJVMArgs());
+        chkDontCheckGame.setSelected(vs.isNotCheckGame());
+        chkNoCommon.setSelected(profile.isNoCommon());
+        chkFullscreen.setSelected(vs.isFullscreen());
+        cboLauncherVisibility.setSelectedIndex(vs.getLauncherVisibility().ordinal());
+        cboRunDirectory.setSelectedIndex(vs.getGameDirType().ordinal());
+        cboJava.setSelectedIndex(vs.getJavaIndexInAllJavas());
         isLoading = false;
     }
 
@@ -1392,6 +1410,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
     private javax.swing.JComboBox cboVersions;
     private javax.swing.JCheckBox chkDontCheckGame;
     private javax.swing.JCheckBox chkFullscreen;
+    private javax.swing.JCheckBox chkNoCommon;
     private javax.swing.JCheckBox chkNoJVMArgs;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblDimension;
@@ -1481,7 +1500,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
 
         this.mcVersion = version;
         reloadMods();
-        prepareVersionSetting(Settings.getLastProfile().getVersionSetting(version));
+        prepareVersionSetting(Settings.getLastProfile(), Settings.getLastProfile().getVersionSetting(version));
         loadMinecraftVersion(version);
 
         lblUsesGlobal.setText(C.i18n(Settings.getLastProfile().isVersionSettingGlobe(version) ? "settings.type.global" : "settings.type.special"));

@@ -291,6 +291,7 @@ advancedsettings.launcher_visibility.keep=Keep the launcher visible.
 advancedsettings.game_dir.default=Default (.minecraft/)
 advancedsettings.game_dir.independent=Independent (.minecraft/versions/<version name>/, except assets,libraries)
 advancedsettings.no_jvm_args=No Default JVM Args
+advancedsettings.no_common=Not using common path
 advancedsettings.java_args_default=Default java args: -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy -XX:MaxPermSize=???m -Xmx???m -Dfml.ignoreInvalidMinecraftCertificates=true -Dfml.ignorePatchDiscrepancies=true
 advancedsettings.wrapper_launcher=Wrapper Launcher(like optirun...)
 advancedsettings.precall_command=Precalling command(will be executed before game launching)

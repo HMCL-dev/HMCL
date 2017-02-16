@@ -22,9 +22,9 @@ import java.util.Collection;
 import org.jackhuang.hmcl.core.GameException;
 import org.jackhuang.hmcl.api.game.DecompressLibraryJob;
 import org.jackhuang.hmcl.core.version.MinecraftVersion;
-import org.jackhuang.hmcl.api.event.EventHandler;
 import org.jackhuang.hmcl.api.func.Consumer;
 import org.jackhuang.hmcl.api.func.Predicate;
+import org.jackhuang.hmcl.api.game.IMinecraftLibrary;
 
 /**
  * Provide everything of the Minecraft of a Profile.
@@ -158,5 +158,7 @@ public abstract class IMinecraftProvider {
     public File baseDirectory() {
         return service.baseDirectory();
     }
+    
+    public abstract File getLibraryFile(MinecraftVersion version, IMinecraftLibrary library);
 
 }

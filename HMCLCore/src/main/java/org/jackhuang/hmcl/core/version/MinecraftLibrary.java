@@ -23,7 +23,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import org.jackhuang.hmcl.api.HMCLApi;
-import org.jackhuang.hmcl.api.event.version.MinecraftLibraryPathEvent;
 import org.jackhuang.hmcl.util.sys.OS;
 import org.jackhuang.hmcl.util.sys.Platform;
 import org.jackhuang.hmcl.util.StrUtils;
@@ -108,9 +107,7 @@ public class MinecraftLibrary extends AbstractMinecraftLibrary {
         LibraryDownloadInfo info = getDownloadInfo();
         if (info == null)
             return null;
-        MinecraftLibraryPathEvent event = new MinecraftLibraryPathEvent(this, "libraries/" + info.path, new Wrapper<>(new File(gameDir, "libraries/" + info.path)));
-        HMCLApi.EVENT_BUS.fireChannel(event);
-        return event.getFile().getValue();
+        return new File(gameDir, "libraries/" + info.path);
     }
 
     @Override

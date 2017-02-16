@@ -18,9 +18,9 @@
 package org.jackhuang.hmcl.util;
 
 import java.io.File;
-import org.jackhuang.hmcl.api.HMCLApi;
-import org.jackhuang.hmcl.api.event.version.MinecraftLibraryPathEvent;
 import org.jackhuang.hmcl.api.game.GameDirType;
+import org.jackhuang.hmcl.api.game.IMinecraftLibrary;
+import org.jackhuang.hmcl.core.version.MinecraftVersion;
 import org.jackhuang.hmcl.core.version.MinecraftVersionManager;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.setting.VersionSetting;
@@ -33,11 +33,16 @@ public class HMCLGameProvider extends MinecraftVersionManager {
 
     public HMCLGameProvider(HMCLMinecraftService p) {
         super(p);
-        
-        HMCLApi.EVENT_BUS.channel(MinecraftLibraryPathEvent.class).register(t -> {
-            if (!t.getFile().getValue().exists())
-                t.getFile().setValue(new File(Settings.getInstance().getCommonpath(), t.getLocation()));
-        });
+    }
+
+    @Override
+    public File getLibraryFile(MinecraftVersion version, IMinecraftLibrary lib) {
+        VersionSetting vs = ((HMCLMinecraftService) service).getVersionSetting(version.id);
+        File self = super.getLibraryFile(version, lib);
+        if (self.exists() || (vs != null && ((HMCLMinecraftService) service).p.isNoCommon()))
+            return self;
+        else
+            return lib.getFilePath(new File(Settings.getInstance().getCommonpath()));
     }
 
     @Override
@@ -46,8 +51,8 @@ public class HMCLGameProvider extends MinecraftVersionManager {
         if (vs == null)
             return super.getRunDirectory(id);
         else
-            return ((HMCLMinecraftService) service).getVersionSetting(id).getGameDirType() == GameDirType.VERSION_FOLDER
-                   ? service.version().versionRoot(id)
-                   : super.getRunDirectory(id);
+            return vs.getGameDirType() == GameDirType.VERSION_FOLDER
+                    ? service.version().versionRoot(id)
+                    : super.getRunDirectory(id);
     }
 }

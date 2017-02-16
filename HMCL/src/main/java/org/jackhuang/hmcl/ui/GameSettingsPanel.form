@@ -419,7 +419,9 @@
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="chkNoJVMArgs" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="32767" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="chkNoCommon" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace pref="96" max="32767" attributes="0"/>
                               <Component id="chkDontCheckGame" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" attributes="0">
@@ -469,6 +471,7 @@
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="chkNoJVMArgs" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="chkDontCheckGame" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="chkNoCommon" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -571,6 +574,19 @@
               </Properties>
               <Events>
                 <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="chkDontCheckGameItemStateChanged"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="chkNoCommon">
+              <Properties>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/jackhuang/hmcl/lang/I18N.properties" key="advancedsettings.no_common" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+                </Property>
+                <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/jackhuang/hmcl/lang/I18N.properties" key="launcher.commpath_tooltip" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+                </Property>
+              </Properties>
+              <Events>
+                <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="chkNoCommonItemStateChanged"/>
               </Events>
             </Component>
           </SubComponents>

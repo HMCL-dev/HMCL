@@ -289,6 +289,7 @@ advancedsettings.launcher_visibility.keep=Để cho launcher hiển thị.
 advancedsettings.game_dir.default=Mặc định (.minecraft/)
 advancedsettings.game_dir.independent=Independent (.minecraft/versions/<version name>/, trừ thư mục assets,libraries)
 advancedsettings.no_jvm_args=Không có arguments mặc định cho máy ảo java
+advancedsettings.no_common=Not using common path
 advancedsettings.java_args_default=Java arguments mặc định: -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy -XX:MaxPermSize=???m -Xmx???m -Dfml.ignoreInvalidMinecraftCertificates=true -Dfml.ignorePatchDiscrepancies=true
 advancedsettings.wrapper_launcher=Wrapper Launcher(dạng như optirun...)
 advancedsettings.precall_command=Câu lệnh được chạy trước khi game mở

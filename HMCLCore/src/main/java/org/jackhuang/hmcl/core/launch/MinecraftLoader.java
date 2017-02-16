@@ -52,13 +52,13 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
                     opt.add(l);
                     continue;
                 }
-                File f = l.getFilePath(gameDir);
+                File f = service.version().getLibraryFile(version, l);
                 if (f == null)
                     continue;
                 library.append(f.getAbsolutePath()).append(File.pathSeparator);
             }
         for (MinecraftLibrary l : opt) {
-            File f = l.getFilePath(gameDir);
+            File f = service.version().getLibraryFile(version, l);
             if (f == null)
                 continue;
             library.append(f.getAbsolutePath()).append(File.pathSeparator);

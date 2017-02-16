@@ -29,6 +29,11 @@ public interface IMinecraftLibrary extends Cloneable {
 
     Extract getDecompressExtractRules();
 
+    /**
+     * Only used for IMinecraftProvider
+     * @param gameDir
+     * @return 
+     */
     File getFilePath(File gameDir);
 
     String getName();

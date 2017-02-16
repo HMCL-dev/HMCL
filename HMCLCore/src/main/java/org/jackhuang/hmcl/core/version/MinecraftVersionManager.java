@@ -77,19 +77,19 @@ public class MinecraftVersionManager extends IMinecraftProvider {
         HMCLApi.EVENT_BUS.fireChannel(new RefreshingVersionsEvent(this));
 
         try {
-            MCUtils.tryWriteProfile(service.baseDirectory());
+            MCUtils.tryWriteProfile(baseDirectory());
         } catch (IOException ex) {
             HMCLog.warn("Failed to create launcher_profiles.json, Forge/LiteLoader installer will not work.", ex);
         }
 
         versions.clear();
-        File oldDir = new File(service.baseDirectory(), "bin");
+        File oldDir = new File(baseDirectory(), "bin");
         if (oldDir.exists()) {
             MinecraftClassicVersion v = new MinecraftClassicVersion();
             versions.put(v.id, v);
         }
 
-        File version = new File(service.baseDirectory(), "versions");
+        File version = new File(baseDirectory(), "versions");
         File[] files = version.listFiles();
         if (files != null && files.length > 0)
             for (File dir : files) {
@@ -154,7 +154,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public File versionRoot(String id) {
-        return new File(service.baseDirectory(), "versions/" + id);
+        return new File(baseDirectory(), "versions/" + id);
     }
 
     @Override
@@ -221,6 +221,11 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     }
 
     @Override
+    public File getLibraryFile(MinecraftVersion version, IMinecraftLibrary lib) {
+        return lib.getFilePath(baseDirectory());
+    }
+
+    @Override
     public DecompressLibraryJob getDecompressLibraries(MinecraftVersion v) throws GameException {
         if (v.libraries == null)
             throw new GameException("Wrong format: minecraft.json");
@@ -228,7 +233,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
         ArrayList<Extract> extractRules = new ArrayList<>();
         for (IMinecraftLibrary l : v.libraries)
             if (l.isRequiredToUnzip() && v.isAllowedToUnpackNatives()) {
-                unzippings.add(IOUtils.tryGetCanonicalFile(l.getFilePath(service.baseDirectory())));
+                unzippings.add(IOUtils.tryGetCanonicalFile(getLibraryFile(v, l)));
                 extractRules.add(l.getDecompressExtractRules());
             }
         return new DecompressLibraryJob(unzippings.toArray(new File[unzippings.size()]), extractRules.toArray(new Extract[extractRules.size()]), getDecompressNativesToLocation(v));
@@ -236,13 +241,13 @@ public class MinecraftVersionManager extends IMinecraftProvider {
 
     @Override
     public File getDecompressNativesToLocation(MinecraftVersion v) {
-        return v == null ? null : v.getNatives(service.baseDirectory());
+        return v == null ? null : v.getNatives(baseDirectory());
     }
 
     @Override
     public File getMinecraftJar(String id) {
         if (versions.containsKey(id))
-            return versions.get(id).getJar(service.baseDirectory());
+            return versions.get(id).getJar(baseDirectory());
         else
             return null;
     }

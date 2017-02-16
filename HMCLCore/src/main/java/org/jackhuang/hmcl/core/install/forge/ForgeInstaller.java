@@ -23,8 +23,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import org.jackhuang.hmcl.api.HMCLApi;
-import org.jackhuang.hmcl.api.event.version.MinecraftLibraryPathEvent;
 import org.jackhuang.hmcl.util.C;
 import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.core.service.IMinecraftService;
@@ -32,7 +30,6 @@ import org.jackhuang.hmcl.util.task.Task;
 import org.jackhuang.hmcl.util.sys.FileUtils;
 import org.jackhuang.hmcl.core.version.MinecraftLibrary;
 import org.jackhuang.hmcl.util.MessageBox;
-import org.jackhuang.hmcl.api.Wrapper;
 import org.jackhuang.hmcl.util.sys.IOUtils;
 
 /**
@@ -81,11 +78,9 @@ public class ForgeInstaller extends Task {
             entry = zipFile.getEntry(profile.install.getFilePath());
             InputStream is = zipFile.getInputStream(entry);
             MinecraftLibrary forge = new MinecraftLibrary(profile.install.getPath());
-
-            String path = "libraries/" + forge.getDownloadInfo().path;
-            MinecraftLibraryPathEvent event = new MinecraftLibraryPathEvent(this, path, new Wrapper<>(new File(gameDir, path)));
-            HMCLApi.EVENT_BUS.fireChannel(event);
-            File file = event.getFile().getValue();
+            
+            // We use options from the old vanilla version.
+            File file = mp.version().getLibraryFile(mp.version().getVersionById(profile.install.getMinecraft()), forge);
 
             if (!FileUtils.makeDirectory(file.getParentFile()))
                 HMCLog.warn("Failed to make library directory " + file.getParent());
