@@ -291,6 +291,7 @@ advancedsettings.launcher_visibility.keep=保持啟動器可見
 advancedsettings.game_dir.default=預設(.minecraft/)
 advancedsettings.game_dir.independent=各版本獨立(.minecraft/versions/<版本名>/,除assets,libraries)
 advancedsettings.no_jvm_args=不添加預設的JVM參數(使用Java9時必勾)
+advancedsettings.no_common=不使用公共路徑
 advancedsettings.java_args_default=啟動器預設添加的參數（請不要重複添加）：-XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy -XX:MaxPermSize=???m -Xmx???m -Dfml. ignoreInvalidMinecraftCertificates=true -Dfml.ignorePatchDiscrepancies=true
 advancedsettings.wrapper_launcher=前置指令(不必填寫,如optirun)
 advancedsettings.precall_command=啟動前執行命令(不必填寫,將在遊戲啟動前調用)
