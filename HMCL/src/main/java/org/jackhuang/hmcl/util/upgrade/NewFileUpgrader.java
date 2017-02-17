@@ -50,7 +50,7 @@ public class NewFileUpgrader extends IUpgrader {
         File newf = new File(FileUtils.getName(str));
         if (TaskWindow.factory().append(new FileDownloadTask(str, newf)).execute()) {
             try {
-                new ProcessBuilder(new String[] { IOUtils.tryGetCanonicalFilePath(newf), "--removeOldLauncher", IOUtils.getRealPath() }).directory(new File(".")).start();
+                new ProcessBuilder(new String[] { newf.getCanonicalPath(), "--removeOldLauncher", IOUtils.getRealPath() }).directory(new File(".")).start();
             } catch (IOException ex) {
                 HMCLog.err("Failed to start new app", ex);
             }

@@ -997,7 +997,9 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
                 MessageBox.show(C.i18n("setupwindow.no_empty_name"));
                 return;
             }
-            Settings.putProfile(new Profile(name).setGameDir(newGameDir.getAbsolutePath()));
+            Profile newProfile = new Profile(name);
+            newProfile.setGameDir(newGameDir);
+            Settings.putProfile(newProfile);
             MessageBox.show(C.i18n("setupwindow.find_in_configurations"));
             loadProfiles();
         }
@@ -1042,7 +1044,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
     private void cboVersionsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboVersionsItemStateChanged
         if (isLoading || evt.getStateChange() != ItemEvent.SELECTED || cboVersions.getSelectedIndex() < 0 || StrUtils.isBlank((String) cboVersions.getSelectedItem()))
             return;
-        Settings.getLastProfile().setSelectedMinecraftVersion((String) cboVersions.getSelectedItem());
+        Settings.getLastProfile().setSelectedVersion((String) cboVersions.getSelectedItem());
     }//GEN-LAST:event_cboVersionsItemStateChanged
 
     // <editor-fold defaultstate="collapsed" desc="UI Events">
@@ -1131,7 +1133,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         try {
             String path = fc.getSelectedFile().getCanonicalPath();
             txtGameDir.setText(path);
-            Settings.getLastProfile().setGameDir(path);
+            Settings.getLastProfile().setGameDir(fc.getSelectedFile());
         } catch (IOException e) {
             HMCLog.warn("Failed to set game dir.", e);
             MessageBox.show(C.i18n("ui.label.failed_set") + e.getMessage());
@@ -1216,7 +1218,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
     }//GEN-LAST:event_txtWidthFocusLost
 
     private void txtGameDirFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtGameDirFocusLost
-        Settings.getLastProfile().setGameDir(txtGameDir.getText());
+        Settings.getLastProfile().setGameDir(new File(txtGameDir.getText()));
         loadVersions();
     }//GEN-LAST:event_txtGameDirFocusLost
 
@@ -1512,11 +1514,11 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
     final Consumer<ProfileChangedEvent> onSelectedProfilesChanged = event -> {
         Profile t = event.getValue();
         t.propertyChanged.register(e -> {
-            if ("selectedMinecraftVersion".equals(e.getPropertyName()))
+            if ("selectedVersion".equals(e.getPropertyName()))
                 versionChanged(e.getNewValue());
         });
 
-        txtGameDir.setText(t.getGameDir());
+        txtGameDir.setText(t.getGameDir().getPath());
 
         isLoading = true;
         DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) cboProfiles.getModel();

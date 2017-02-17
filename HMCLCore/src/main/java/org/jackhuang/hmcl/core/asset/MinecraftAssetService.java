@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.util.task.Task;
 import org.jackhuang.hmcl.util.task.TaskWindow;
 import org.jackhuang.hmcl.util.net.FileDownloadTask;
 import org.jackhuang.hmcl.util.sys.FileUtils;
-import org.jackhuang.hmcl.util.sys.IOUtils;
 import org.jackhuang.hmcl.util.task.TaskInfo;
 
 /**
@@ -84,7 +83,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
         return new TaskInfo("Download Asset Index") {
             @Override
             public Collection<Task> getDependTasks() {
-                return Arrays.asList(new FileDownloadTask(assetIndex.getUrl(service.getDownloadType()), IOUtils.tryGetCanonicalFile(assetsIndex), assetIndex.sha1).setTag(assetIndex.getId() + ".json"));
+                return Arrays.asList(new FileDownloadTask(assetIndex.getUrl(service.getDownloadType()), assetsIndex, assetIndex.sha1).setTag(assetIndex.getId() + ".json"));
             }
 
             @Override
@@ -111,7 +110,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
                 HMCLog.warn("Failed to rename " + assetsIndex + " to " + renamed);
         }
         if (TaskWindow.factory()
-                .append(new FileDownloadTask(assetIndex.getUrl(service.getDownloadType()), IOUtils.tryGetCanonicalFile(assetsIndex), assetIndex.sha1).setTag(assetIndex.getId() + ".json"))
+                .append(new FileDownloadTask(assetIndex.getUrl(service.getDownloadType()), assetsIndex, assetIndex.sha1).setTag(assetIndex.getId() + ".json"))
                 .execute()) {
             if (renamed != null && !renamed.delete())
                 HMCLog.warn("Failed to delete " + renamed + ", maybe you should do it.");

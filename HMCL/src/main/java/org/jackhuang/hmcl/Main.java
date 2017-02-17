@@ -120,6 +120,7 @@ public final class Main implements Runnable {
                     System.out.println("--plugin=<your plugin class>: this arg will allow a new plugin to be loaded, please keep your jar in system class path and this class extends IPlugin.");
                     return;
                 }
+            PluginManager.loadPlugins();
 
             IUpgrader.NOW_UPGRADER.parseArguments(HMCLApi.HMCL_VERSION, args);
 

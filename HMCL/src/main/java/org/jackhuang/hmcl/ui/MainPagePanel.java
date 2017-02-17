@@ -352,7 +352,7 @@ public class MainPagePanel extends Page {
         if (isLoading || evt.getStateChange() != ItemEvent.SELECTED || cboVersions.getSelectedIndex() < 0 || StrUtils.isBlank((String) cboVersions.getSelectedItem()))
             return;
         String mcv = (String) cboVersions.getSelectedItem();
-        Settings.getLastProfile().setSelectedMinecraftVersion(mcv);
+        Settings.getLastProfile().setSelectedVersion(mcv);
     }//GEN-LAST:event_cboVersionsItemStateChanged
 
     private void txtPasswordFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtPasswordFocusGained
@@ -533,7 +533,7 @@ public class MainPagePanel extends Page {
     final Consumer<ProfileChangedEvent> onSelectedProfilesChanged = event -> {
         Profile t = event.getValue();
         t.propertyChanged.register(e -> {
-            if ("selectedMinecraftVersion".equals(e.getPropertyName()))
+            if ("selectedVersion".equals(e.getPropertyName()))
                 versionChanged(e.getNewValue());
         });
 

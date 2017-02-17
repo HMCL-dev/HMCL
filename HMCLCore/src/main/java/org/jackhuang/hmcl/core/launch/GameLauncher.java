@@ -45,13 +45,12 @@ import org.jackhuang.hmcl.util.StrUtils;
 import org.jackhuang.hmcl.util.code.Charsets;
 import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.util.sys.FileUtils;
-import org.jackhuang.hmcl.util.sys.IOUtils;
 import org.jackhuang.hmcl.util.sys.JavaProcess;
 import org.jackhuang.hmcl.util.sys.OS;
 import org.jackhuang.hmcl.api.auth.IAuthenticator;
 
 public class GameLauncher {
-    
+
     LaunchOptions options;
     IMinecraftService service;
     LoginInfo info;
@@ -80,7 +79,7 @@ public class GameLauncher {
     public UserProfileProvider getLoginResult() {
         return result;
     }
-    
+
     private Object tag;
 
     public Object getTag() {
@@ -93,6 +92,7 @@ public class GameLauncher {
 
     /**
      * Generates the launch command.
+     *
      * @throws AuthenticationException having trouble logging in.
      * @throws GameException having trouble completing the game or making lanch command.
      * @throws RuntimeGameException will be thrown when someone processing login result.
@@ -191,13 +191,10 @@ public class GameLauncher {
             if (isWin) {
                 writer.write("@echo off");
                 writer.newLine();
-                String appdata = IOUtils.tryGetCanonicalFilePath(service.baseDirectory());
-                if (appdata != null) {
-                    writer.write("set appdata=" + appdata);
-                    writer.newLine();
-                    writer.write("cd /D %appdata%");
-                    writer.newLine();
-                }
+                writer.write("set appdata=" + service.baseDirectory().getAbsolutePath());
+                writer.newLine();
+                writer.write("cd /D %appdata%");
+                writer.newLine();
             }
             if (StrUtils.isNotBlank(options.getPrecalledCommand())) {
                 writer.write(options.getPrecalledCommand());

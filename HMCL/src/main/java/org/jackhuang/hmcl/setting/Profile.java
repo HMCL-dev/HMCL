@@ -17,28 +17,25 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import org.jackhuang.hmcl.core.service.IProfile;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.HMCLGameLauncher;
 import org.jackhuang.hmcl.util.HMCLMinecraftService;
 import java.io.File;
 import org.jackhuang.hmcl.core.MCUtils;
 import org.jackhuang.hmcl.core.version.MinecraftVersion;
-import org.jackhuang.hmcl.util.sys.IOUtils;
 import org.jackhuang.hmcl.util.StrUtils;
 import org.jackhuang.hmcl.api.event.EventHandler;
 import org.jackhuang.hmcl.api.event.PropertyChangedEvent;
-import org.jackhuang.hmcl.util.sys.OS;
 
 /**
  *
  * @author huangyuhui
  */
-public final class Profile {
+public final class Profile implements IProfile {
 
-    @SerializedName("name")
-    private String name;
     @SerializedName("selectedMinecraftVersion")
-    private String selectedMinecraftVersion = "";
+    private String selectedVersion = "";
     @SerializedName("gameDir")
     private String gameDir;
     @SerializedName("noCommon")
@@ -46,7 +43,8 @@ public final class Profile {
     @SerializedName("global")
     private VersionSetting global;
 
-    private transient HMCLMinecraftService service;
+    private transient String name;
+    private transient HMCLMinecraftService service = new HMCLMinecraftService(this);
     private transient HMCLGameLauncher launcher = new HMCLGameLauncher(this);
     public transient final EventHandler<PropertyChangedEvent<String>> propertyChanged = new EventHandler<>();
 
@@ -55,7 +53,7 @@ public final class Profile {
     }
 
     public Profile(String name) {
-        this(name, new File(".minecraft").getPath());
+        this(name, ".minecraft");
     }
 
     public Profile(String name, String gameDir) {
@@ -72,9 +70,8 @@ public final class Profile {
         gameDir = v.gameDir;
     }
 
+    @Override
     public HMCLMinecraftService service() {
-        if (service == null)
-            service = new HMCLMinecraftService(this);
         return service;
     }
 
@@ -111,7 +108,7 @@ public final class Profile {
             vs.setUsesGlobal(false);
         } else
             vs.setUsesGlobal(false);
-        propertyChanged.fire(new PropertyChangedEvent<>(this, "selectedMinecraftVersion", selectedMinecraftVersion, selectedMinecraftVersion));
+        propertyChanged.fire(new PropertyChangedEvent<>(this, "selectedVersion", selectedVersion, selectedVersion));
     }
 
     public void makeVersionSettingGlobal(String id) {
@@ -120,55 +117,42 @@ public final class Profile {
         if (vs == null)
             return;
         vs.setUsesGlobal(true);
-        propertyChanged.fire(new PropertyChangedEvent<>(this, "selectedMinecraftVersion", selectedMinecraftVersion, selectedMinecraftVersion));
+        propertyChanged.fire(new PropertyChangedEvent<>(this, "selectedVersion", selectedVersion, selectedVersion));
     }
 
-    public String getSettingsSelectedMinecraftVersion() {
-        return selectedMinecraftVersion;
-    }
-
+    @Override
     public String getSelectedVersion() {
-        String v = selectedMinecraftVersion;
+        String v = selectedVersion;
         if (StrUtils.isBlank(v) || service().version().getVersionById(v) == null || service().version().getVersionById(v).hidden) {
             MinecraftVersion mv = service().version().getOneVersion(t -> !t.hidden);
             if (mv != null)
                 v = mv.id;
             if (StrUtils.isNotBlank(v))
-                setSelectedMinecraftVersion(v);
+                setSelectedVersion(v);
         }
         return StrUtils.isBlank(v) ? null : v;
     }
 
-    public void setSelectedMinecraftVersion(String selectedMinecraftVersion) {
-        PropertyChangedEvent event = new PropertyChangedEvent<>(this, "selectedMinecraftVersion", this.selectedMinecraftVersion, selectedMinecraftVersion);
-        this.selectedMinecraftVersion = selectedMinecraftVersion;
+    @Override
+    public void setSelectedVersion(String newVersion) {
+        PropertyChangedEvent event = new PropertyChangedEvent<>(this, "selectedVersion", this.selectedVersion, newVersion);
+        this.selectedVersion = newVersion;
         propertyChanged.fire(event);
     }
 
-    public String getGameDir() {
+    @Override
+    public File getGameDir() {
         if (StrUtils.isBlank(gameDir))
             gameDir = MCUtils.getInitGameDir().getPath();
-        return IOUtils.addSeparator(gameDir);
+        return new File(gameDir.replace('\\', '/'));
     }
 
-    public String getCanonicalGameDir() {
-        return IOUtils.tryGetCanonicalFolderPath(getGameDirFile());
-    }
-
-    public File getCanonicalGameDirFile() {
-        return IOUtils.tryGetCanonicalFile(getGameDirFile());
-    }
-
-    public File getGameDirFile() {
-        return new File(getGameDir());
-    }
-
-    public Profile setGameDir(String gameDir) {
+    @Override
+    public void setGameDir(File gameDir) {
         PropertyChangedEvent event = new PropertyChangedEvent<>(this, "gameDir", this.gameDir, gameDir);
-        this.gameDir = gameDir;
+        this.gameDir = gameDir.getPath();
         service().version().refreshVersions();
         propertyChanged.fire(event);
-        return this;
     }
 
     public boolean isNoCommon() {
@@ -181,6 +165,7 @@ public final class Profile {
         propertyChanged.fire(event);
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -191,10 +176,7 @@ public final class Profile {
         propertyChanged.fire(event);
     }
 
-    public void checkFormat() {
-        gameDir = gameDir.replace('/', OS.os().fileSeparator).replace('\\', OS.os().fileSeparator);
-    }
-
+    @Override
     public void onSelected() {
         service().version().refreshVersions();
     }

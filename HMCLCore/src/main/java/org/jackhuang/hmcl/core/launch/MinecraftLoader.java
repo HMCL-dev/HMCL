@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Locale;
 import org.jackhuang.hmcl.util.StrUtils;
 import org.jackhuang.hmcl.api.HMCLog;
-import org.jackhuang.hmcl.util.sys.IOUtils;
 import org.jackhuang.hmcl.util.sys.OS;
 import org.jackhuang.hmcl.core.GameException;
 import org.jackhuang.hmcl.api.auth.UserProfileProvider;
@@ -66,7 +65,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         File f = version.getJar(service.baseDirectory());
         if (!f.exists())
             throw new GameException("Minecraft jar does not exists");
-        library.append(IOUtils.tryGetCanonicalFilePath(f)).append(File.pathSeparator);
+        library.append(f.getAbsolutePath()).append(File.pathSeparator);
         res.add("-cp");
         res.add(library.toString().substring(0, library.length() - File.pathSeparator.length()));
         res.add(version.mainClass);

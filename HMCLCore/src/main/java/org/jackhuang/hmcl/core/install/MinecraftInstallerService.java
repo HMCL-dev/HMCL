@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.core.install.optifine.OptiFineInstaller;
 import org.jackhuang.hmcl.core.install.optifine.vanilla.OptiFineDownloadFormatter;
 import org.jackhuang.hmcl.util.task.Task;
 import org.jackhuang.hmcl.util.net.FileDownloadTask;
-import org.jackhuang.hmcl.util.sys.IOUtils;
 import org.jackhuang.hmcl.util.task.DeleteFileTask;
 
 /**
@@ -57,7 +56,7 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
 
     @Override
     public Task downloadForge(String installId, InstallerVersion v) {
-        File filepath = IOUtils.tryGetCanonicalFile("forge-installer.jar");
+        File filepath = new File("forge-installer.jar");
         if (v.installer == null)
             return null;
         else
@@ -68,7 +67,7 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
 
     @Override
     public Task downloadOptiFine(String installId, InstallerVersion v) {
-        File filepath = IOUtils.tryGetCanonicalFile("optifine-installer.jar");
+        File filepath = new File("optifine-installer.jar");
         if (v.installer == null)
             return null;
         OptiFineDownloadFormatter task = new OptiFineDownloadFormatter(v.installer);
@@ -81,7 +80,7 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
     public Task downloadLiteLoader(String installId, InstallerVersion v) {
         if (!(v instanceof LiteLoaderInstallerVersion))
             throw new Error("Download lite loader but the version is not ll's.");
-        File filepath = IOUtils.tryGetCanonicalFile("liteloader-universal.jar");
+        File filepath = new File("liteloader-universal.jar");
         FileDownloadTask task = (FileDownloadTask) new FileDownloadTask(v.universal, filepath).setTag("LiteLoader");
         return task.with(new LiteLoaderInstaller(service, installId, (LiteLoaderInstallerVersion) v).registerPreviousResult(task))
             .with(new DeleteFileTask(filepath));

@@ -39,7 +39,6 @@ import org.jackhuang.hmcl.core.service.IMinecraftService;
 import org.jackhuang.hmcl.util.sys.FileUtils;
 import org.jackhuang.hmcl.core.MCUtils;
 import org.jackhuang.hmcl.util.task.TaskWindow;
-import org.jackhuang.hmcl.util.sys.IOUtils;
 import org.jackhuang.hmcl.util.MessageBox;
 import org.jackhuang.hmcl.util.StrUtils;
 import org.jackhuang.hmcl.api.func.Consumer;
@@ -233,7 +232,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
         ArrayList<Extract> extractRules = new ArrayList<>();
         for (IMinecraftLibrary l : v.libraries)
             if (l.isRequiredToUnzip() && v.isAllowedToUnpackNatives()) {
-                unzippings.add(IOUtils.tryGetCanonicalFile(getLibraryFile(v, l)));
+                unzippings.add(getLibraryFile(v, l));
                 extractRules.add(l.getDecompressExtractRules());
             }
         return new DecompressLibraryJob(unzippings.toArray(new File[unzippings.size()]), extractRules.toArray(new Extract[extractRules.size()]), getDecompressNativesToLocation(v));

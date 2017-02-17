@@ -101,7 +101,7 @@ public final class IOUtils {
     
     public static String getRealPath() {
         String realPath = IOUtils.class.getClassLoader().getResource("").getFile();
-        java.io.File file = new java.io.File(realPath);
+        File file = new File(realPath);
         realPath = file.getAbsolutePath();
         try {
             realPath = java.net.URLDecoder.decode(realPath, DEFAULT_CHARSET);
@@ -227,34 +227,6 @@ public final class IOUtils {
             throws IOException {
         if (data != null)
             output.write(data.getBytes(encoding));
-    }
-
-    public static String tryGetCanonicalFolderPath(File file) {
-        try {
-            return IOUtils.addSeparator(file.getCanonicalPath());
-        } catch (IOException ignored) {
-            return IOUtils.addSeparator(file.getAbsolutePath());
-        }
-    }
-
-    public static File tryGetCanonicalFile(File file) {
-        try {
-            return file.getCanonicalFile();
-        } catch (IOException ignored) {
-            return file.getAbsoluteFile();
-        }
-    }
-
-    public static File tryGetCanonicalFile(String file) {
-        return tryGetCanonicalFile(new File(file));
-    }
-
-    public static String tryGetCanonicalFilePath(File file) {
-        try {
-            return file.getCanonicalPath();
-        } catch (IOException ignored) {
-            return file.getAbsolutePath();
-        }
     }
 
     public static URL parseURL(String str) {

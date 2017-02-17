@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.core.service.IMinecraftAssetService;
 import org.jackhuang.hmcl.core.service.IMinecraftLoader;
 import org.jackhuang.hmcl.core.service.IMinecraftDownloadService;
 import org.jackhuang.hmcl.core.service.IMinecraftProvider;
-import org.jackhuang.hmcl.util.C;
 import org.jackhuang.hmcl.core.service.IMinecraftModService;
 import org.jackhuang.hmcl.core.service.IMinecraftInstallerService;
 import com.google.gson.JsonSyntaxException;
@@ -141,7 +140,7 @@ public class HMCLMinecraftService extends IMinecraftService {
 
     @Override
     public File baseDirectory() {
-        return p.getCanonicalGameDirFile();
+        return p.getGameDir();
     }
 
     protected IMinecraftProvider provider;

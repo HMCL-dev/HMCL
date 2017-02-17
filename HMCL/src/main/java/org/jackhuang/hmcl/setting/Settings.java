@@ -62,7 +62,6 @@ public final class Settings {
         for (Map.Entry<String, Profile> entry : getProfiles().entrySet()) {
             Profile e = entry.getValue();
             e.setName(entry.getKey());
-            e.checkFormat();
             e.propertyChanged.register(Settings::save);
         }
     }

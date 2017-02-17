@@ -64,8 +64,7 @@ public class HMCLGameLauncher {
             return;
         setLaunching(true);
         HMCLog.log("Start generating launching command...");
-        File file = profile.getCanonicalGameDirFile();
-        if (!file.exists()) {
+        if (!profile.getGameDir().exists()) {
             failed.accept(C.i18n("minecraft.wrong_path"));
             setLaunching(false);
             return;
@@ -84,7 +83,7 @@ public class HMCLGameLauncher {
             public void run() {
                 Thread.currentThread().setName("Game Launcher");
                 try {
-                    LaunchOptions options = profile.getSelectedVersionSetting().createLaunchOptions(profile.getCanonicalGameDirFile());
+                    LaunchOptions options = profile.getSelectedVersionSetting().createLaunchOptions(profile.getGameDir());
                     HMCLApi.EVENT_BUS.fireChannel(new ProcessingLaunchOptionsEvent(this, options));
                     DefaultGameLauncher gl = new DefaultGameLauncher(options, profile.service(), li, l);
                     GameLauncherTag tag = new GameLauncherTag();

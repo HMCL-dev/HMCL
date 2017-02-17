@@ -224,7 +224,7 @@ public final class Config implements Cloneable {
         theme = LAFTheme.BLUE.id;
         decorated = OS.os() == OS.LINUX;
         auth = new HashMap<>();
-        commonpath = MCUtils.getLocation().getAbsolutePath();
+        commonpath = MCUtils.getLocation().getPath();
     }
 
     public DownloadType getDownloadSource() {
