@@ -1,31 +1,17 @@
 *.class
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
-*.jar
-*.war
-*.ear
-
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
 .gradle
 .nb-gradle
 
-*.bat
 *.log
 .mine*
 *.json
 *.hmd
 
-HMCLAPI/build/
-HMCL/build/
-HMCLServer/
-HMCSM/build/
-MetroLookAndFeel/build/
-/HMCUtils/build/
+/HMCL/build/
 /HMCLaF/build/
-/HMCLUtils/build/
+/HMCLAPI/build/
 /HMCLCore/build/
