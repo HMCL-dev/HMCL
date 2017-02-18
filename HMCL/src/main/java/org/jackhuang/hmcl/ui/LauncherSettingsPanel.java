@@ -36,10 +36,7 @@ import org.jackhuang.hmcl.util.ui.SwingUtils;
  * @author huangyuhui
  */
 public class LauncherSettingsPanel extends RepaintPage {
-
-    /**
-     * Creates new form LancherSettingsPanel
-     */
+    
     public LauncherSettingsPanel() {
         setRepainter(this);
     }
@@ -66,7 +63,8 @@ public class LauncherSettingsPanel extends RepaintPage {
         
         DefaultComboBoxModel<Theme> g = new DefaultComboBoxModel<>();
         for (Theme t : Theme.THEMES.values())
-            cboTheme.addItem(t);
+            g.addElement(t);
+        cboTheme.setModel(g);
 
         txtBackgroundPath.setText(Settings.getInstance().getBgpath());
         txtCommonPath.setText(Settings.getInstance().getCommonpath());
