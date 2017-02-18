@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.api.event.launch;
 
+import org.jackhuang.hmcl.api.Wrapper;
 import org.jackhuang.hmcl.api.event.SimpleEvent;
 import org.jackhuang.hmcl.api.game.LaunchOptions;
 
@@ -31,9 +32,9 @@ import org.jackhuang.hmcl.api.game.LaunchOptions;
  * @param LaunchOptions you can modify the value of this event to control the launching process.
  * @author huang
  */
-public class ProcessingLaunchOptionsEvent extends SimpleEvent<LaunchOptions> {
+public class ProcessingLaunchOptionsEvent extends SimpleEvent<Wrapper<LaunchOptions>> {
     
-    public ProcessingLaunchOptionsEvent(Object source, LaunchOptions value) {
+    public ProcessingLaunchOptionsEvent(Object source, Wrapper<LaunchOptions> value) {
         super(source, value);
     }
     

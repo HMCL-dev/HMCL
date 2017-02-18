@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.api.event.launch;
 
+import org.jackhuang.hmcl.api.Wrapper;
 import org.jackhuang.hmcl.api.auth.UserProfileProvider;
 import org.jackhuang.hmcl.api.event.SimpleEvent;
 
@@ -31,9 +32,9 @@ import org.jackhuang.hmcl.api.event.SimpleEvent;
  * @param UserProfileProvider you can modify the value of this event to control the user profile.
  * @author huangyuhui
  */
-public class ProcessingLoginResultEvent extends SimpleEvent<UserProfileProvider> {
+public class ProcessingLoginResultEvent extends SimpleEvent<Wrapper<UserProfileProvider>> {
     
-    public ProcessingLoginResultEvent(Object source, UserProfileProvider value) {
+    public ProcessingLoginResultEvent(Object source, Wrapper<UserProfileProvider> value) {
         super(source, value);
     }
     

@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.util.C;
 import org.jackhuang.hmcl.util.StrUtils;
 import org.jackhuang.hmcl.util.code.Charsets;
 import org.jackhuang.hmcl.api.HMCLog;
+import org.jackhuang.hmcl.api.Wrapper;
 import org.jackhuang.hmcl.util.sys.FileUtils;
 import org.jackhuang.hmcl.util.sys.JavaProcess;
 import org.jackhuang.hmcl.util.sys.OS;
@@ -113,7 +114,9 @@ public class GameLauncher {
             result = login.loginBySettings();
         if (result == null)
             throw new AuthenticationException("Result can not be null.");
-        HMCLApi.EVENT_BUS.fireChannel(new ProcessingLoginResultEvent(this, result));
+        Wrapper<UserProfileProvider> loginInfo = new Wrapper<>(result);
+        HMCLApi.EVENT_BUS.fireChannel(new ProcessingLoginResultEvent(this, loginInfo));
+        result = loginInfo.getValue();
 
         HMCLApi.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(this, LaunchingState.GeneratingLaunchingCodes));
         loader = service.launch(options, result);

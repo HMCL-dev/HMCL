@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.io.File;
 import org.jackhuang.hmcl.core.GameException;
 import org.jackhuang.hmcl.api.auth.AuthenticationException;
 import org.jackhuang.hmcl.core.auth.AbstractAuthenticator;
@@ -35,6 +34,7 @@ import org.jackhuang.hmcl.api.event.launch.ProcessingLaunchOptionsEvent;
 import org.jackhuang.hmcl.core.RuntimeGameException;
 import org.jackhuang.hmcl.api.func.Consumer;
 import org.jackhuang.hmcl.api.HMCLog;
+import org.jackhuang.hmcl.api.Wrapper;
 import org.jackhuang.hmcl.util.sys.JavaProcess;
 import org.jackhuang.hmcl.api.auth.IAuthenticator;
 
@@ -83,9 +83,9 @@ public class HMCLGameLauncher {
             public void run() {
                 Thread.currentThread().setName("Game Launcher");
                 try {
-                    LaunchOptions options = profile.getSelectedVersionSetting().createLaunchOptions(profile.getGameDir());
+                    Wrapper<LaunchOptions> options = new Wrapper<>(profile.getSelectedVersionSetting().createLaunchOptions(profile.getGameDir()));
                     HMCLApi.EVENT_BUS.fireChannel(new ProcessingLaunchOptionsEvent(this, options));
-                    DefaultGameLauncher gl = new DefaultGameLauncher(options, profile.service(), li, l);
+                    DefaultGameLauncher gl = new DefaultGameLauncher(options.getValue(), profile.service(), li, l);
                     GameLauncherTag tag = new GameLauncherTag();
                     tag.launcherVisibility = profile.getSelectedVersionSetting().getLauncherVisibility();
                     gl.setTag(tag);
