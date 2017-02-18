@@ -35,7 +35,7 @@ import org.jackhuang.hmcl.util.ui.SwingUtils;
  * @author huangyuhui
  */
 public class LogWindow extends javax.swing.JFrame {
-    
+
     boolean movingEnd;
     NonFunction<Boolean> listener;
     Runnable terminateGameListener;
@@ -45,20 +45,20 @@ public class LogWindow extends javax.swing.JFrame {
      */
     public LogWindow() {
         initComponents();
-        
+
         movingEnd = true;
-        
+
         DoubleOutputStream out = new DoubleOutputStream(new LogWindowOutputStream(this, Level.INFO), System.out);
         System.setOut(new PrintStream(out));
         DoubleOutputStream err = new DoubleOutputStream(new LogWindowOutputStream(this, Level.ERROR), System.err);
         System.setErr(new PrintStream(err));
-        
+
         SwingUtilities.invokeLater(() -> {
             setLocationRelativeTo(null);
             txtLog.setEditable(false);
         });
     }
-    
+
     public static final LogWindow INSTANCE = new LogWindow();
 
     /**
@@ -240,44 +240,46 @@ public class LogWindow extends javax.swing.JFrame {
             terminateGameListener.run();
         SwingUtils.exitIfNoWindow(this);
     }//GEN-LAST:event_formWindowClosing
-    
-    public synchronized void log(String status, Level c) {
-        status = status.replace("\t", "    ");
-        Document d = txtLog.getStyledDocument();
-        SimpleAttributeSet sas = new SimpleAttributeSet();
-        StyleConstants.setForeground(sas, c.COLOR);
-        try {
-            d.insertString(d.getLength(), status, sas);
-        } catch (Exception ex) {
-            HMCLog.err("Failed to insert \"" + status + "\" to " + d.getLength(), ex);
-        }
-        
-        if (movingEnd) {
-            int position = d.getLength();
-            txtLog.setCaretPosition(position);
-        }
+
+    public void log(final String status, final Level c) {
+        SwingUtilities.invokeLater(() -> {
+            String newStatus = status.replace("\t", "    ");
+            Document d = txtLog.getStyledDocument();
+            SimpleAttributeSet sas = new SimpleAttributeSet();
+            StyleConstants.setForeground(sas, c.COLOR);
+            try {
+                d.insertString(d.getLength(), newStatus, sas);
+            } catch (Exception ex) {
+                HMCLog.err("Failed to insert \"" + newStatus + "\" to " + d.getLength(), ex);
+            }
+
+            if (movingEnd) {
+                int position = d.getLength();
+                txtLog.setCaretPosition(position);
+            }
+        });
     }
-    
+
     public void setExit(NonFunction<Boolean> exit) {
         this.listener = exit;
     }
-    
+
     public void setTerminateGame(Runnable l) {
         this.terminateGameListener = l;
     }
-    
+
     public void clean() {
         txtLog.setText("");
     }
-    
+
     public boolean getMovingEnd() {
         return movingEnd;
     }
-    
+
     public void setMovingEnd(boolean b) {
         movingEnd = b;
     }
-    
+
     @Override
     public void setVisible(boolean b) {
         lblCrash.setVisible(false);
@@ -286,7 +288,7 @@ public class LogWindow extends javax.swing.JFrame {
         btnMCF.setVisible(false);
         super.setVisible(b);
     }
-    
+
     public void showAsCrashWindow(boolean out_date) {
         if (out_date) {
             lblCrash.setVisible(false);
@@ -301,7 +303,7 @@ public class LogWindow extends javax.swing.JFrame {
             btnMCF.setVisible(true);
             lblCrash.setText(C.i18n("ui.label.crashing"));
         }
-        
+
         super.setVisible(true);
     }
 
