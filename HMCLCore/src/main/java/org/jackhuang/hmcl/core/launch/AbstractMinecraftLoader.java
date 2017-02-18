@@ -129,7 +129,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
             res.add(a);
         }
 
-        res.add("-Djava.library.path=" + service.version().getDecompressNativesToLocation(version).getPath());
+        res.add("-Djava.library.path=" + service.version().getDecompressNativesToLocation(version).getAbsolutePath());
         res.add("-Dfml.ignoreInvalidMinecraftCertificates=true");
         res.add("-Dfml.ignorePatchDiscrepancies=true");
 

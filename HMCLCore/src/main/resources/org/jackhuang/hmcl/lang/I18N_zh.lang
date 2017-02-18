@@ -223,8 +223,8 @@ settings.choose_gamedir=選擇遊戲路徑
 settings.failed_load=設定資料加載失敗，可能是升級了啟動器或被人工修改造成錯誤，是否清除？
 settings.test_game=測試遊戲
 
-settings.type.global=<html><a href="">點擊此處切換為版本特定設定。該版本正在使用全局設定，修改以下設定會影響到其他使用全局設置的版本</a></html>
-settings.type.special=<html><a href="">點擊此處切換為全局設定。該版本正在使用版本特定設定，修改以下設定不會影響到其他版本設置</a></html>
+settings.type.global=<html><a href="">點擊此處切換為版本特定設定。該版本正在使用全局設定，修改以下設定會影響到其他使用全局設定的版本</a></html>
+settings.type.special=<html><a href="">點擊此處切換為全局設定。該版本正在使用版本特定設定，修改以下設定不會影響到其他版本設定</a></html>
 
 modpack=懶人包
 modpack.choose=選擇要導入的遊戲懶人包資料，如果您希望更新懶人包，請輸入要更新的版本名
