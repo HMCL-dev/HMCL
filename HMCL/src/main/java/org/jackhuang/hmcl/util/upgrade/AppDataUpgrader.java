@@ -109,7 +109,7 @@ public class AppDataUpgrader extends IUpgrader {
                         if (map.containsKey("packsha1"))
                             hash = map.get("packsha1");
                         if (TaskWindow.factory().append(new AppDataUpgraderTask(map.get("pack"), version.version, hash)).execute()) {
-                            new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderTask.getSelf(version.version).getAbsolutePath() }).directory(new File(".")).start();
+                            new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderTask.getSelf(version.version).getAbsolutePath() }).directory(new File("").getAbsoluteFile()).start();
                             System.exit(0);
                         }
                     } catch (IOException ex) {

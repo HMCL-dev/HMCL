@@ -15,23 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-import java.util.jar.JarFile
-import java.util.jar.Pack200
-import java.util.zip.GZIPOutputStream
-import java.security.MessageDigest
 
 repositories {
     mavenCentral();
-}
-
-buildscript {
-    repositories {
-        mavenCentral();
-        
-        dependencies {
-            classpath 'me.tatarka:gradle-retrolambda:3.1.0'
-        }
-    }
 }
 
 apply plugin: 'java'
@@ -60,50 +46,4 @@ task createFolders(description: 'Creates the source folders if they do not exist
             srcDir.mkdirs()
         }
     }
-}
-
-task makeExecutable(dependsOn: jar) << {
-    ext {
-        jar.classifier = ''
-        makeExecutableinjar = jar.archivePath
-        jar.classifier = ''
-        makeExecutableoutjar = jar.archivePath
-        jar.classifier = ''
-    }
-    def loc = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".exe")
-    def fos = new FileOutputStream(loc)
-    def is = new FileInputStream(new File(project.buildDir, '../HMCLauncher.exe'))
-    int read
-    def bytes = new byte[8192]
-    while((read = is.read(bytes)) != -1)
-        fos.write(bytes, 0, read);
-    is.close()
-    is = new FileInputStream(makeExecutableinjar)
-    while((read = is.read(bytes)) != -1)
-        fos.write(bytes, 0, read);
-    is.close()
-    fos.close()
-}
-
-task makePackGZ(dependsOn: jar) << {
-    ext {
-        jar.classifier = ''
-        makeExecutableinjar = jar.archivePath
-        jar.classifier = ''
-        makeExecutableoutjar = jar.archivePath
-        jar.classifier = ''
-    }
-    def loc = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".pack.gz")
-    def os = new GZIPOutputStream(new FileOutputStream(loc))
-    Pack200.newPacker().pack new JarFile(makeExecutableinjar), os
-    os.close()
-    
-    def messageDigest = MessageDigest.getInstance("SHA1")
-    loc.eachByte 1024 * 1024, { byte[] buf, int bytesRead ->
-        messageDigest.update(buf, 0, bytesRead);
-    }
-    def sha1Hex = new BigInteger(1, messageDigest.digest()).toString(16).padLeft(40, '0')
-    def fileEx = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".pack.gz.sha1")
-    if (!fileEx.exists()) fileEx.createNewFile()
-    fileEx.append sha1Hex
 }

@@ -141,7 +141,7 @@ public final class Main implements Runnable {
             Thread.setDefaultUncaughtExceptionHandler(new CrashReporter(true));
 
             try {
-                File file = new File("hmcl.log");
+                File file = new File("hmcl.log").getAbsoluteFile();
                 if (!file.exists() && !file.createNewFile())
                     LOGGER.log(Level.WARNING, "Failed to create log file {0}", file);
                 Configuration.DEFAULT.appenders.add(new ConsoleAppender("File", new DefaultLayout(), true, new FileOutputStream(file), true));

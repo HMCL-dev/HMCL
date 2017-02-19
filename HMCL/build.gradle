@@ -15,24 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-
-buildscript {
-    repositories {
-        mavenCentral();
-        
-        dependencies {
-            classpath 'me.tatarka:gradle-retrolambda:3.1.0'
-        }
-    }
-}
+import java.util.jar.JarFile
+import java.util.jar.Pack200
+import java.util.zip.GZIPOutputStream
+import java.security.MessageDigest
 
 plugins {
-    //id "edu.sc.seis.macAppBundle" version "2.1.6"
-    //id "me.tatarka.retrolambda" version "3.5.0"
+    id "me.tatarka.retrolambda" version "3.5.0"
     id 'edu.sc.seis.launch4j' version '2.3.0'
 }
-
-apply plugin: 'me.tatarka.retrolambda'
 
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
@@ -61,7 +52,7 @@ version = mavenVersion
 
 String mavenArtifactId = name
 
-task generateSources(type: Copy) {
+task generateSources(type: Sync) {
     from 'src/main/java'
     into "$buildDir/generated-src"
     filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [
@@ -70,19 +61,6 @@ task generateSources(type: Copy) {
 }
 compileJava.setSource "$buildDir/generated-src"
 compileJava.dependsOn generateSources
-
-/*task macAppCompressed(type: Zip, dependsOn: createApp) {
-    archiveName "HMCL-$mavenVersion-MacOSApp.zip"
-    include '**'
-    destinationDir file("$buildDir/libs/")
-    from "$buildDir/macApp"
-}
-
-macAppBundle {
-    mainClassName = mainClass
-    icon = "src/main/icon.icns"
-    javaProperties.put("apple.laf.useScreenMenuBar", "true")
-}*/
 
 configurations {
     coreCompile.extendsFrom compile
@@ -124,7 +102,7 @@ launch4j {
     icon = new File(project.buildDir,  '../icon.ico').absolutePath
     version = mavenVersion
     downloadUrl = 'http://java.com/download'
-    copyright = "Copyright(c) 2013-2015 huangyuhui."
+    copyright = "Copyright(c) 2013-2017 huangyuhui."
     
     jar = new File(project.buildDir, 'libs/' + mavenGroupId + '-' + mavenVersion + '.jar').absolutePath
     outfile = mavenGroupId + '-' + mavenVersion + '.exe'
@@ -137,6 +115,51 @@ processResources {
     }
 }
 
+task makeExecutable(dependsOn: jar) << {
+    ext {
+        jar.classifier = ''
+        makeExecutableinjar = jar.archivePath
+        jar.classifier = ''
+        makeExecutableoutjar = jar.archivePath
+        jar.classifier = ''
+    }
+    def loc = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".exe")
+    def fos = new FileOutputStream(loc)
+    def is = new FileInputStream(new File(project.buildDir, '../HMCLauncher.exe'))
+    int read
+    def bytes = new byte[8192]
+    while((read = is.read(bytes)) != -1)
+        fos.write(bytes, 0, read);
+    is.close()
+    is = new FileInputStream(makeExecutableinjar)
+    while((read = is.read(bytes)) != -1)
+        fos.write(bytes, 0, read);
+    is.close()
+    fos.close()
+}
+
+task makePackGZ(dependsOn: jar) << {
+    ext {
+        jar.classifier = ''
+        makeExecutableinjar = jar.archivePath
+        jar.classifier = ''
+        makeExecutableoutjar = jar.archivePath
+        jar.classifier = ''
+    }
+    def loc = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".pack.gz")
+    def os = new GZIPOutputStream(new FileOutputStream(loc))
+    Pack200.newPacker().pack new JarFile(makeExecutableinjar), os
+    os.close()
+    
+    def messageDigest = MessageDigest.getInstance("SHA1")
+    loc.eachByte 1024 * 1024, { byte[] buf, int bytesRead ->
+        messageDigest.update(buf, 0, bytesRead);
+    }
+    def sha1Hex = new BigInteger(1, messageDigest.digest()).toString(16).padLeft(40, '0')
+    def fileEx = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".pack.gz.sha1")
+    if (!fileEx.exists()) fileEx.createNewFile()
+    fileEx.append sha1Hex
+}
+
 build.dependsOn makeExecutable
 build.dependsOn makePackGZ
-//build.dependsOn macAppCompressed

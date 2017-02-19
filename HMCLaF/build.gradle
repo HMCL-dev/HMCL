@@ -16,17 +16,9 @@
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
 
-buildscript {
-    repositories {
-        mavenCentral();
-        
-        dependencies {
-            classpath 'me.tatarka:gradle-retrolambda:3.1.0'
-        }
-    }
+plugins {
+    id "me.tatarka.retrolambda" version "3.5.0"
 }
-
-apply plugin: 'me.tatarka.retrolambda'
 
 if (System.getenv("BUILD_NUMBER") != null)
     version = System.getenv("BUILD_NUMBER")

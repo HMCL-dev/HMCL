@@ -121,13 +121,13 @@ public class ModpackWizard extends WizardBranchController {
                                     s.setDownloadType(Settings.getInstance().getDownloadType());
                                     engine.putTextFile(C.GSON.toJson(s), "hmcl.json");
                                     engine.putFile(modpack, "modpack.zip");
-                                    File bg = new File("bg");
+                                    File bg = new File("bg").getAbsoluteFile();
                                     if (bg.isDirectory())
                                         engine.putDirectory(bg);
-                                    bg = new File("background.png");
+                                    bg = new File("background.png").getAbsoluteFile();
                                     if (bg.isFile())
                                         engine.putFile(bg, "background.png");
-                                    bg = new File("background.jpg");
+                                    bg = new File("background.jpg").getAbsoluteFile();
                                     if (bg.isFile())
                                         engine.putFile(bg, "background.jpg");
                                     for (URL u : Utils.getURL())

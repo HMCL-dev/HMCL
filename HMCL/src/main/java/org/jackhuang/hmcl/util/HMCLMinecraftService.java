@@ -67,7 +67,7 @@ public class HMCLMinecraftService extends IMinecraftService {
             if (!checkingModpack) {
                 checkingModpack = true;
                 if (version().getVersionCount() == 0) {
-                    File modpack = new File("modpack.zip");
+                    File modpack = new File("modpack.zip").getAbsoluteFile();
                     if (modpack.exists())
                         SwingUtilities.invokeLater(() -> {
                             if (TaskWindow.factory().execute(ModpackManager.install(MainFrame.INSTANCE, modpack, this, null)))

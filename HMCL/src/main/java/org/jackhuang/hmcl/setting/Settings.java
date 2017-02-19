@@ -44,7 +44,7 @@ public final class Settings {
     public static final String DEFAULT_PROFILE = "Default";
     public static final String HOME_PROFILE = "Home";
 
-    public static final File SETTINGS_FILE = new File("hmcl.json");
+    public static final File SETTINGS_FILE = new File("hmcl.json").getAbsoluteFile();
 
     private static final Config SETTINGS;
     public static final UpdateChecker UPDATE_CHECKER = new UpdateChecker(HMCLApi.HMCL_VERSION, "hmcl");

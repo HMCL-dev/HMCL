@@ -988,7 +988,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnIncludeMinecraftActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnIncludeMinecraftActionPerformed
-        JSystemFileChooser fc = new JSystemFileChooser(new File("."));
+        JSystemFileChooser fc = new JSystemFileChooser(new File("").getAbsoluteFile());
         fc.setFileSelectionMode(JSystemFileChooser.DIRECTORIES_ONLY);
         if (fc.showOpenDialog(this) == JSystemFileChooser.APPROVE_OPTION) {
             File newGameDir = fc.getSelectedFile();

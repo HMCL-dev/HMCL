@@ -56,7 +56,7 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
 
     @Override
     public Task downloadForge(String installId, InstallerVersion v) {
-        File filepath = new File("forge-installer.jar");
+        File filepath = new File("forge-installer.jar").getAbsoluteFile();
         if (v.installer == null)
             return null;
         else
@@ -67,7 +67,7 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
 
     @Override
     public Task downloadOptiFine(String installId, InstallerVersion v) {
-        File filepath = new File("optifine-installer.jar");
+        File filepath = new File("optifine-installer.jar").getAbsoluteFile();
         if (v.installer == null)
             return null;
         OptiFineDownloadFormatter task = new OptiFineDownloadFormatter(v.installer);
@@ -80,7 +80,7 @@ public final class MinecraftInstallerService extends IMinecraftInstallerService 
     public Task downloadLiteLoader(String installId, InstallerVersion v) {
         if (!(v instanceof LiteLoaderInstallerVersion))
             throw new Error("Download lite loader but the version is not ll's.");
-        File filepath = new File("liteloader-universal.jar");
+        File filepath = new File("liteloader-universal.jar").getAbsoluteFile();
         FileDownloadTask task = (FileDownloadTask) new FileDownloadTask(v.universal, filepath).setTag("LiteLoader");
         return task.with(new LiteLoaderInstaller(service, installId, (LiteLoaderInstallerVersion) v).registerPreviousResult(task))
             .with(new DeleteFileTask(filepath));

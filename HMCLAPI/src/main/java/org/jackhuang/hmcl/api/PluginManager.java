@@ -37,7 +37,7 @@ import org.jackhuang.hmcl.api.func.Consumer;
  */
 public class PluginManager {
 
-    private static final File PLUGINS_FILE = new File("plugins/");
+    private static final File PLUGINS_FILE = new File("plugins").getAbsoluteFile();
     private static final ArrayList<IPlugin> PLUGINS = new ArrayList<>();
 
     public static void getPlugin(Class<?> cls) {
