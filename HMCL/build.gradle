@@ -115,7 +115,7 @@ processResources {
     }
 }
 
-task makeExecutable(dependsOn: jar) << {
+task makeExecutable(dependsOn: jar) doLast {
     ext {
         jar.classifier = ''
         makeExecutableinjar = jar.archivePath
@@ -138,7 +138,7 @@ task makeExecutable(dependsOn: jar) << {
     fos.close()
 }
 
-task makePackGZ(dependsOn: jar) << {
+task makePackGZ(dependsOn: jar) doLast {
     ext {
         jar.classifier = ''
         makeExecutableinjar = jar.archivePath
