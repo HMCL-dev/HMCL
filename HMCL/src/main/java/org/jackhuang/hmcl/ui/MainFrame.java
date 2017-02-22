@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -49,6 +50,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import org.jackhuang.hmcl.api.HMCLApi;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.api.PluginManager;
@@ -165,7 +167,6 @@ public final class MainFrame extends DraggableFrame implements IRepaint {
 
     private void initComponents() {
         setLayout(null);
-        initBorderColor(Settings.getInstance().getTheme());
 
         realPanel = new JPanel();
         realPanel.setLayout(null);
@@ -255,6 +256,8 @@ public final class MainFrame extends DraggableFrame implements IRepaint {
 
         realPanel.setBounds(1, 0, 800, 511);
         add(realPanel);
+        
+        reloadColor(Settings.getInstance().getTheme());
     }
 
     private transient final ActionListener tabListener = e -> MainFrame.this.selectTab(e.getActionCommand());
@@ -277,11 +280,12 @@ public final class MainFrame extends DraggableFrame implements IRepaint {
 
     public void selectTab(String tabName) {
         int chosen = -1;
-        TopTabPage onCreate = null, onSelect = null;
+        TopTabPage onCreate = null, onSelect = null, lastPage = null;
         for (int i = 0; i < tabHeader.size(); i++)
             if (tabName.equalsIgnoreCase(tabHeader.get(i).getActionCommand())) {
                 if (!tabContent.get(i).isCreated()) {
                     onCreate = tabContent.get(i);
+                    onCreate.setId(i);
                     tabWrapper[i].add(tabContent.get(i));
                 } else if (tabContent.get(i).isSelected())
                     continue;
@@ -290,8 +294,10 @@ public final class MainFrame extends DraggableFrame implements IRepaint {
             }
         if (chosen != -1) {
             for (int i = 0; i < tabHeader.size(); i++)
-                if (i != chosen && tabContent.get(i) != null && tabContent.get(i).isSelected())
-                    tabContent.get(i).onLeave();
+                if (i != chosen && tabContent.get(i) != null && tabContent.get(i).isSelected()) {
+                    lastPage = tabContent.get(i);
+                    lastPage.onLeave();
+                }
             for (int i = 0; i < tabHeader.size(); i++)
                 if (i == chosen) {
                     for (int j = 0; j < tabHeader.size(); j++)
@@ -305,7 +311,7 @@ public final class MainFrame extends DraggableFrame implements IRepaint {
             if (onCreate != null)
                 onCreate.onCreate();
             if (onSelect != null)
-                onSelect.onSelect();
+                onSelect.onSelect(lastPage);
         }
     }
 
@@ -382,13 +388,18 @@ public final class MainFrame extends DraggableFrame implements IRepaint {
     Color borderColor;
     Color borderColorDarker;
 
-    private void initBorderColor(Theme t) {
-        borderColor = GraphicsUtils.getWebColor(t.settings.get("Customized.MainFrame.background"));
-        borderColorDarker = GraphicsUtils.getWebColor(t.settings.get("Customized.MainFrame.selected_background"));
+    private void initBorderColor() {
+        borderColor = UIManager.getColor("Customized.MainFrame.background");
+        borderColorDarker = UIManager.getColor("Customized.MainFrame.selected_background");
     }
 
     public void reloadColor(Theme t) {
-        initBorderColor(t);
+        for (Map.Entry<String, String> entry : t.settings.entrySet()) {
+            if (entry.getValue().startsWith("#"))
+                UIManager.put(entry.getKey(), GraphicsUtils.getWebColor(entry.getValue()));
+        }
+        
+        initBorderColor();
         if (border != null)
             border.setColor(borderColor);
         header.setBackground(borderColor);

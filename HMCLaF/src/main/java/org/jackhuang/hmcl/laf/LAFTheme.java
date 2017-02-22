@@ -31,6 +31,9 @@ public final class LAFTheme {
             put("Customized.TabbedPaneTab.selected_foreground", "#106CA3");
             put("Customized.ComboBox.selected_background", "#A0D8F0");
             put("Customized.MainFrame.background", "#106CA3");
+            put("TabbedPane.selectedForeground", "#106CA3");
+            put("TextField.focused", "#106CA3");
+            put("MenuItem.selectionBackground", "#106CA3");
             put("Customized.MainFrame.selected_background", "#0C5E91");
             put("Customized.MainFrame.background_image", "background.jpg");
         }
@@ -40,6 +43,9 @@ public final class LAFTheme {
             put("Customized.TabbedPaneTab.selected_foreground", "#1ABC9C");
             put("Customized.ComboBox.selected_background", "#1ABC9C");
             put("Customized.MainFrame.background", "#1ABC9C");
+            put("TabbedPane.selectedForeground", "#1ABC9C");
+            put("TextField.focused", "#1ABC9C");
+            put("MenuItem.selectionBackground", "#1ABC9C");
             put("Customized.MainFrame.selected_background", "#16A085");
             put("Customized.MainFrame.background_image", "background.jpg");
         }
@@ -49,6 +55,9 @@ public final class LAFTheme {
             put("Customized.TabbedPaneTab.selected_foreground", "#9B59B6");
             put("Customized.ComboBox.selected_background", "#9B59B6");
             put("Customized.MainFrame.background", "#9B59B6");
+            put("TabbedPane.selectedForeground", "#9B59B6");
+            put("TextField.focused", "#9B59B6");
+            put("MenuItem.selectionBackground", "#9B59B6");
             put("Customized.MainFrame.selected_background", "#8E44AD");
             put("Customized.MainFrame.background_image", "background.jpg");
         }
@@ -58,6 +67,9 @@ public final class LAFTheme {
             put("Customized.TabbedPaneTab.selected_foreground", "#34495E");
             put("Customized.ComboBox.selected_background", "#34495E");
             put("Customized.MainFrame.background", "#34495E");
+            put("TabbedPane.selectedForeground", "#34495E");
+            put("TextField.focused", "#34495E");
+            put("MenuItem.selectionBackground", "#34495E");
             put("Customized.MainFrame.selected_background", "#2C3E50");
             put("Customized.MainFrame.background_image", "background.jpg");
         }
@@ -67,6 +79,9 @@ public final class LAFTheme {
             put("Customized.TabbedPaneTab.selected_foreground", "#E67E22");
             put("Customized.ComboBox.selected_background", "#F39C12");
             put("Customized.MainFrame.background", "#E67E22");
+            put("TabbedPane.selectedForeground", "#E67E22");
+            put("TextField.focused", "#E67E22");
+            put("MenuItem.selectionBackground", "#E67E22");
             put("Customized.MainFrame.selected_background", "#D35400");
             put("Customized.MainFrame.background_image", "background.jpg");
         }
@@ -76,6 +91,9 @@ public final class LAFTheme {
             put("Customized.TabbedPaneTab.selected_foreground", "#E74C3C");
             put("Customized.ComboBox.selected_background", "#E74C3C");
             put("Customized.MainFrame.background", "#E74C3C");
+            put("TabbedPane.selectedForeground", "#E74C3C");
+            put("TextField.focused", "#E74C3C");
+            put("MenuItem.selectionBackground", "#E74C3C");
             put("Customized.MainFrame.selected_background", "#C0392B");
             put("Customized.MainFrame.background_image", "background.jpg");
         }

@@ -40,10 +40,20 @@ public class NewTabPane extends JTabbedPane implements ChangeListener {
         if (initializing)
             return;
         for (int i = 0; i < getComponentCount(); ++i)
-            if (getSelectedIndex() != i && getComponent(i) instanceof TopTabPage)
-                ((TopTabPage) getComponent(i)).onLeave();
-        if (getSelectedComponent() instanceof TopTabPage)
-            ((TopTabPage) getSelectedComponent()).onSelect();
+            if (getComponent(i) instanceof TopTabPage) {
+                TopTabPage comp = (TopTabPage) getComponent(i);
+                comp.setId(i);
+                if (getSelectedIndex() != i)
+                    ((TopTabPage) getComponent(i)).onLeave();
+            }
+        if (getSelectedComponent() instanceof TopTabPage) {
+            if (page == null && getComponentCount() > 0 && getComponent(0) instanceof TopTabPage)
+                page = (TopTabPage) getComponent(0);
+            ((TopTabPage) getSelectedComponent()).onSelect(page);
+            page = (TopTabPage) getSelectedComponent();
+        }
     }
+
+    TopTabPage page = null;
 
 }

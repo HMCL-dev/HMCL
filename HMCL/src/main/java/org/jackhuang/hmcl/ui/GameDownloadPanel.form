@@ -58,7 +58,7 @@
         <Component class="javax.swing.JTable" name="lstDownloads">
           <Properties>
             <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-              <Connection code="SwingUtils.makeDefaultTableModel(new String[]{C.i18n(&quot;install.version&quot;), C.i18n(&quot;install.time&quot;), C.i18n(&quot;install.type&quot;)},new Class[]{String.class, String.class, String.class}, new boolean[]{false, false, false})" type="code"/>
+              <Connection code="SwingUtils.makeDefaultTableModel(new String[]{C.i18n(&quot;install.version&quot;), C.i18n(&quot;install.release_time&quot;), C.i18n(&quot;install.time&quot;), C.i18n(&quot;install.type&quot;)},new Class[]{String.class, String.class, String.class, String.class}, new boolean[]{false, false, false, false})" type="code"/>
             </Property>
             <Property name="toolTipText" type="java.lang.String" value=""/>
             <Property name="selectionModel" type="javax.swing.ListSelectionModel" editor="org.netbeans.modules.form.editors2.JTableSelectionModelEditor">

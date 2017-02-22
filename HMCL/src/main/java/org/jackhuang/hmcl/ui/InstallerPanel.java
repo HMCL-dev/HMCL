@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.util.ui.Page;
 import java.util.List;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
+import org.jackhuang.hmcl.api.ui.TopTabPage;
 import org.jackhuang.hmcl.util.C;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.core.install.InstallerType;
@@ -164,7 +165,8 @@ public class InstallerPanel extends Page {
     boolean refreshed = false;
 
     @Override
-    public void onSelect() {
+    public void onSelect(TopTabPage page) {
+        super.onSelect(page);
         if (!refreshed) {
             TaskWindow.factory().execute(refreshVersionsTask());
             refreshed = true;

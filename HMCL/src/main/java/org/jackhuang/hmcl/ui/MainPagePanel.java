@@ -45,7 +45,7 @@ import org.jackhuang.hmcl.core.version.MinecraftVersion;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.core.mod.ModpackManager;
 import org.jackhuang.hmcl.ui.modpack.ModpackWizard;
-import org.jackhuang.hmcl.laf.ConstomButton;
+import org.jackhuang.hmcl.laf.button.CustomButton;
 import org.jackhuang.hmcl.api.func.Consumer;
 import org.jackhuang.hmcl.util.sys.FileUtils;
 import org.jackhuang.hmcl.util.task.TaskWindow;
@@ -54,6 +54,7 @@ import org.jackhuang.hmcl.util.ui.JSystemFileChooser;
 import org.jackhuang.hmcl.util.ui.SwingUtils;
 import org.jackhuang.hmcl.util.ui.wizard.api.WizardDisplayer;
 import org.jackhuang.hmcl.api.auth.IAuthenticator;
+import org.jackhuang.hmcl.laf.button.CustomButtonUI;
 
 /**
  *
@@ -67,13 +68,11 @@ public class MainPagePanel extends Page {
     void initGui() {
         initComponents();
 
-        animationEnabled = false;
-
         pnlButtons = new javax.swing.JPanel();
         pnlButtons.setLayout(null);
 
         int w = 150, h = 50;
-        btnRun = new ConstomButton();
+        btnRun = new CustomButton();
         btnRun.setBounds(0, 0, w, h);
         Font font = btnRun.getFont();
         Font newFont = new Font(font.getName(), font.getStyle(), 15);
@@ -82,6 +81,7 @@ public class MainPagePanel extends Page {
         btnRun.setText(C.i18n("ui.button.run"));
         btnRun.setFont(newFont);
         btnRun.addActionListener(e -> MainFrame.INSTANCE.daemon.runGame(Settings.getLastProfile()));
+        btnRun.setUI(new CustomButtonUI());
 
         pnlRoot.add(pnlButtons);
         pnlButtons.setBounds(0, 0, w, h);
@@ -434,7 +434,7 @@ public class MainPagePanel extends Page {
     boolean preparingAuth = true;
     private boolean isLoading = false;
     private javax.swing.JPanel pnlButtons;
-    private ConstomButton btnRun;
+    private CustomButton btnRun;
     private static final int DEFAULT_WIDTH = 800, DEFAULT_HEIGHT = 480;
     //</editor-fold>
 

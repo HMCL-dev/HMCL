@@ -322,7 +322,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         btnAddMod = new javax.swing.JButton();
         btnRemoveMod = new javax.swing.JButton();
         lblModInfo = new javax.swing.JLabel();
-        pnlAutoInstall = new javax.swing.JPanel();
+        pnlAutoInstall = new Page();
         tabInstallers = new NewTabPane();
         pnlTop = new javax.swing.JPanel();
         pnlSelection = new javax.swing.JPanel();
@@ -479,7 +479,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
                         .addComponent(lblDimensionX)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(txtHeight, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 88, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 182, Short.MAX_VALUE)
                         .addComponent(chkFullscreen))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlSettingsLayout.createSequentialGroup()
                         .addComponent(txtMaxMemory)
@@ -539,7 +539,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
                     .addComponent(lblDimensionX, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lblDimension)
                     .addComponent(txtWidth, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 39, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 51, Short.MAX_VALUE)
                 .addGroup(pnlSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnDownloadAllAssets)
                     .addComponent(btnCleanGame))
@@ -632,7 +632,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
                     .addComponent(lblJavaArgs))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(txtJavaArgs, javax.swing.GroupLayout.DEFAULT_SIZE, 325, Short.MAX_VALUE)
+                    .addComponent(txtJavaArgs, javax.swing.GroupLayout.DEFAULT_SIZE, 457, Short.MAX_VALUE)
                     .addComponent(txtMinecraftArgs)
                     .addComponent(txtPermSize, javax.swing.GroupLayout.Alignment.TRAILING)))
             .addGroup(pnlAdvancedSettingsLayout.createSequentialGroup()
@@ -643,7 +643,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
                         .addComponent(chkNoJVMArgs)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(chkNoCommon)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 96, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 190, Short.MAX_VALUE)
                         .addComponent(chkDontCheckGame))
                     .addGroup(pnlAdvancedSettingsLayout.createSequentialGroup()
                         .addGroup(pnlAdvancedSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -728,13 +728,13 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         pnlModManagementContentLayout.setHorizontalGroup(
             pnlModManagementContentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlModManagementContentLayout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 550, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 644, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlModManagementContentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(btnRemoveMod, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnAddMod, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlModManagementContentLayout.createSequentialGroup()
-                .addComponent(lblModInfo, javax.swing.GroupLayout.DEFAULT_SIZE, 646, Short.MAX_VALUE)
+                .addComponent(lblModInfo, javax.swing.GroupLayout.DEFAULT_SIZE, 751, Short.MAX_VALUE)
                 .addContainerGap())
         );
         pnlModManagementContentLayout.setVerticalGroup(
@@ -746,7 +746,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnRemoveMod)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 259, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 271, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblModInfo))
         );
@@ -950,7 +950,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(tabVersionEdit, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(tabVersionEdit, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 766, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(btnMakeLaunchScript)
@@ -963,12 +963,12 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
                 .addGroup(layout.createSequentialGroup()
                     .addContainerGap()
                     .addComponent(btnIncludeMinecraft)
-                    .addContainerGap(577, Short.MAX_VALUE)))
+                    .addContainerGap(677, Short.MAX_VALUE)))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(pnlTop, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(pnlTop, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tabVersionEdit)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -979,7 +979,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
                 .addContainerGap())
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                    .addContainerGap(400, Short.MAX_VALUE)
+                    .addContainerGap(403, Short.MAX_VALUE)
                     .addComponent(btnIncludeMinecraft)
                     .addContainerGap()))
         );

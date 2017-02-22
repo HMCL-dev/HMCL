@@ -26,7 +26,7 @@
           <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="tabVersionEdit" alignment="1" max="32767" attributes="0"/>
+                  <Component id="tabVersionEdit" alignment="1" pref="766" max="32767" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                       <Component id="btnMakeLaunchScript" min="-2" max="-2" attributes="0"/>
@@ -42,7 +42,7 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="btnIncludeMinecraft" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace pref="577" max="32767" attributes="0"/>
+                  <EmptySpace pref="677" max="32767" attributes="0"/>
               </Group>
           </Group>
       </Group>
@@ -50,7 +50,7 @@
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
-              <Component id="pnlTop" min="-2" max="-2" attributes="0"/>
+              <Component id="pnlTop" min="-2" pref="70" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="tabVersionEdit" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
@@ -63,7 +63,7 @@
           </Group>
           <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
               <Group type="102" alignment="1" attributes="0">
-                  <EmptySpace pref="400" max="32767" attributes="0"/>
+                  <EmptySpace pref="403" max="32767" attributes="0"/>
                   <Component id="btnIncludeMinecraft" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
@@ -119,7 +119,7 @@
                               <Component id="lblDimensionX" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="txtHeight" min="-2" pref="100" max="-2" attributes="0"/>
-                              <EmptySpace pref="88" max="32767" attributes="0"/>
+                              <EmptySpace pref="182" max="32767" attributes="0"/>
                               <Component id="chkFullscreen" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="1" attributes="0">
@@ -194,7 +194,7 @@
                           <Component id="lblDimension" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="txtWidth" alignment="3" min="-2" pref="26" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="39" max="32767" attributes="0"/>
+                      <EmptySpace pref="51" max="32767" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="btnDownloadAllAssets" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="btnCleanGame" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -408,7 +408,7 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="txtJavaArgs" pref="325" max="32767" attributes="0"/>
+                          <Component id="txtJavaArgs" pref="457" max="32767" attributes="0"/>
                           <Component id="txtMinecraftArgs" max="32767" attributes="0"/>
                           <Component id="txtPermSize" alignment="1" max="32767" attributes="0"/>
                       </Group>
@@ -421,7 +421,7 @@
                               <Component id="chkNoJVMArgs" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="chkNoCommon" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="96" max="32767" attributes="0"/>
+                              <EmptySpace pref="190" max="32767" attributes="0"/>
                               <Component id="chkDontCheckGame" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" attributes="0">
@@ -627,7 +627,7 @@
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
-                          <Component id="jScrollPane1" pref="550" max="32767" attributes="0"/>
+                          <Component id="jScrollPane1" pref="644" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" max="-2" attributes="0">
                               <Component id="btnRemoveMod" max="32767" attributes="0"/>
@@ -635,7 +635,7 @@
                           </Group>
                       </Group>
                       <Group type="102" alignment="1" attributes="0">
-                          <Component id="lblModInfo" pref="646" max="32767" attributes="0"/>
+                          <Component id="lblModInfo" pref="751" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -650,7 +650,7 @@
                                   <Component id="btnRemoveMod" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               </Group>
-                              <Component id="jScrollPane1" pref="259" max="32767" attributes="0"/>
+                              <Component id="jScrollPane1" pref="271" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace min="-2" max="-2" attributes="0"/>
                           <Component id="lblModInfo" min="-2" max="-2" attributes="0"/>
@@ -723,6 +723,9 @@
           </SubComponents>
         </Container>
         <Container class="javax.swing.JPanel" name="pnlAutoInstall">
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new Page()"/>
+          </AuxValues>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
               <JTabbedPaneConstraints tabName="&lt;settings.tabs.installers&gt;">

@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.util.C;
 import org.jackhuang.hmcl.util.MessageBox;
 import org.jackhuang.hmcl.api.func.Consumer;
 import org.jackhuang.hmcl.api.HMCLog;
+import org.jackhuang.hmcl.util.DefaultPlugin;
 import org.jackhuang.hmcl.util.sys.FileUtils;
 import org.jackhuang.hmcl.util.sys.ProcessMonitor;
 import org.jackhuang.hmcl.util.net.WebFrame;
@@ -111,6 +112,7 @@ public class LaunchingUIDaemon {
     void runGame(Profile profile) {
         MainFrame.INSTANCE.showMessage(C.i18n("ui.message.launching"));
         profile.launcher().genLaunchCode(value -> {
+            DefaultPlugin.INSTANCE.saveAuthenticatorConfig();
             ((HMCLGameLauncher.GameLauncherTag) value.getTag()).state = 1;
         }, MainFrame.INSTANCE::failed, Settings.getInstance().getAuthenticator().getPassword());
     }
@@ -118,6 +120,7 @@ public class LaunchingUIDaemon {
     void makeLaunchScript(Profile profile) {
         MainFrame.INSTANCE.showMessage(C.i18n("ui.message.launching"));
         profile.launcher().genLaunchCode(value -> {
+            DefaultPlugin.INSTANCE.saveAuthenticatorConfig();
             ((HMCLGameLauncher.GameLauncherTag) value.getTag()).state = 2;
         }, MainFrame.INSTANCE::failed, Settings.getInstance().getAuthenticator().getPassword());
     }
@@ -154,9 +157,8 @@ public class LaunchingUIDaemon {
         if (v != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible()) {
             HMCLog.log("Launcher will exit now.");
             System.exit(0);
-        } else {
+        } else
             HMCLog.log("Launcher will not exit now.");
-        }
     }
 
     private static final Consumer<LaunchSucceededEvent> LAUNCH_SCRIPT_FINISHER = event -> {

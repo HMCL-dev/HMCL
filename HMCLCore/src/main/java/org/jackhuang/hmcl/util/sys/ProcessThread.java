@@ -34,7 +34,7 @@ import org.jackhuang.hmcl.api.IProcess;
 public class ProcessThread extends Thread {
 
     IProcess p;
-
+    
     public final EventHandler<SimpleEvent<String>> printlnEvent = new EventHandler<>();
     public final EventHandler<SimpleEvent<IProcess>> stopEvent = new EventHandler<>();
 

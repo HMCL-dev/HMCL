@@ -29,9 +29,13 @@ public abstract class TopTabPage extends JPanel {
 
     public abstract boolean isCreated();
 
-    public abstract void onSelect();
+    public abstract void onSelect(TopTabPage lastSelectedPage);
 
     public abstract boolean isSelected();
 
     public abstract void onLeave();
+    
+    public abstract int getId();
+    
+    public abstract void setId(int id);
 }

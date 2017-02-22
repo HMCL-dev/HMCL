@@ -37,8 +37,10 @@ import org.jackhuang.hmcl.laf.LAFTheme;
  * @author huangyuhui
  */
 public class DefaultPlugin implements IPlugin {
+    public static DefaultPlugin INSTANCE;
 
     public DefaultPlugin() {
+        INSTANCE = this;
         for (Theme t : LAFTheme.THEMES)
             Theme.THEMES.put(t.getId(), t);
     }
@@ -52,16 +54,18 @@ public class DefaultPlugin implements IPlugin {
         auths.add(new YggdrasilAuthenticator(clientToken));
 
         try {
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                for (IAuthenticator i : auths)
-                    Settings.getInstance().setAuthenticatorConfig(i.id(), i.onSaveSettings());
-            }));
-        } catch(IllegalStateException ignore) { // Shutdown in progress
+            Runtime.getRuntime().addShutdownHook(new Thread(this::saveAuthenticatorConfig));
+        } catch (IllegalStateException ignore) { // Shutdown in progress
         }
         for (IAuthenticator i : auths) {
             i.onLoadSettings(Settings.getInstance().getAuthenticatorConfig(i.id()));
             apply.accept(i);
         }
+    }
+
+    public void saveAuthenticatorConfig() {
+        for (IAuthenticator i : auths)
+            Settings.getInstance().setAuthenticatorConfig(i.id(), i.onSaveSettings());
     }
 
     @Override

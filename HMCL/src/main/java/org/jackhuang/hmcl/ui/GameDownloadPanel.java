@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui;
 
 import org.jackhuang.hmcl.util.ui.Page;
 import javax.swing.table.DefaultTableModel;
+import org.jackhuang.hmcl.api.ui.TopTabPage;
 import org.jackhuang.hmcl.core.download.MinecraftRemoteVersions;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.util.C;
@@ -64,7 +65,7 @@ public class GameDownloadPanel extends Page {
             }
         });
 
-        lstDownloads.setModel(SwingUtils.makeDefaultTableModel(new String[]{C.i18n("install.version"), C.i18n("install.time"), C.i18n("install.type")},new Class[]{String.class, String.class, String.class}, new boolean[]{false, false, false}));
+        lstDownloads.setModel(SwingUtils.makeDefaultTableModel(new String[]{C.i18n("install.version"), C.i18n("install.release_time"), C.i18n("install.time"), C.i18n("install.type")},new Class[]{String.class, String.class, String.class, String.class}, new boolean[]{false, false, false, false}));
         lstDownloads.setToolTipText("");
         lstDownloads.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane2.setViewportView(lstDownloads);
@@ -110,7 +111,7 @@ public class GameDownloadPanel extends Page {
         DefaultTableModel model = SwingUtils.clearDefaultTable(lstDownloads);
         model.addRow(new Object[] { C.i18n("message.loading"), "", "" });
         MinecraftRemoteVersions.refreshRomoteVersions(Settings.getLastProfile().service().getDownloadType())
-                .reg((ver) -> model.addRow(new Object[] { ver.id, ver.time,
+                .reg((ver) -> model.addRow(new Object[] { ver.id, ver.releaseTime, ver.time,
             StrUtils.equalsOne(ver.type, "old_beta", "old_alpha", "release", "snapshot") ? C.i18n("versions." + ver.type) : ver.type }))
                 .regDone(SwingUtils.invokeLater(() -> {
                     lstDownloads.requestFocus();
@@ -138,8 +139,8 @@ public class GameDownloadPanel extends Page {
     boolean refreshedDownloads = false;
 
     @Override
-    public void onSelect() {
-        super.onSelect();
+    public void onSelect(TopTabPage page) {
+        super.onSelect(page);
         if (!refreshedDownloads) {
             refreshedDownloads = true;
             refreshDownloads();

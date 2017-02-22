@@ -24,7 +24,6 @@ import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.security.GeneralSecurityException;
 import java.security.cert.X509Certificate;
-import java.text.ParseException;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,14 +33,11 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.X509TrustManager;
 import javax.swing.ImageIcon;
 import javax.swing.RepaintManager;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import org.jackhuang.hmcl.api.HMCLApi;
 import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.api.ILogger;
 import org.jackhuang.hmcl.api.PluginManager;
 import org.jackhuang.hmcl.api.VersionNumber;
-import org.jackhuang.hmcl.laf.HelloMinecraftLookAndFeel;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.LogWindow;
 import org.jackhuang.hmcl.ui.MainFrame;
@@ -57,6 +53,7 @@ import org.jackhuang.hmcl.util.log.layout.DefaultLayout;
 import org.jackhuang.hmcl.util.sys.ProcessManager;
 import org.jackhuang.hmcl.util.ui.MyRepaintManager;
 import org.jackhuang.hmcl.util.upgrade.IUpgrader;
+import org.jackhuang.hmcl.laf.BeautyEyeLNFHelper;
 
 /**
  *
@@ -97,7 +94,7 @@ public final class Main implements Runnable {
         return "HMCL" + ' ' + LAUNCHER_VERSION;
     }
 
-    private static HelloMinecraftLookAndFeel LOOK_AND_FEEL;
+    //private static HelloMinecraftLookAndFeel LOOK_AND_FEEL;
 
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
 
@@ -190,10 +187,9 @@ public final class Main implements Runnable {
                 MessageBox.showLocalized("ui.message.open_jdk");
 
             try {
-                LOOK_AND_FEEL = new HelloMinecraftLookAndFeel(Settings.getInstance().getTheme().settings);
-                UIManager.setLookAndFeel(LOOK_AND_FEEL);
+                BeautyEyeLNFHelper.launchBeautyEyeLNF();
                 RepaintManager.setCurrentManager(new MyRepaintManager());
-            } catch (ParseException | UnsupportedLookAndFeelException ex) {
+            } catch (Exception ex) {
                 HMCLog.warn("Failed to set look and feel...", ex);
             }
 

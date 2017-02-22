@@ -17,15 +17,10 @@
  */
 package org.jackhuang.hmcl.util.sys;
 
-import com.sun.management.OperatingSystemMXBean;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.util.Locale;
-import java.util.StringTokenizer;
-import org.jackhuang.hmcl.util.code.Charsets;
 import org.jackhuang.hmcl.api.HMCLog;
 
 /**
@@ -68,54 +63,18 @@ public enum OS {
      */
     public static long getTotalPhysicalMemory() {
         try {
-            if (os() == LINUX)
-                return memoryInfoForLinux()[0] * 1024;
-            else {
-                OperatingSystemMXBean o = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-                return o.getTotalPhysicalMemorySize();
-            }
+            return ReflectionHelper.get(ManagementFactory.getOperatingSystemMXBean(), "getTotalPhysicalMemorySize");
         } catch (Throwable t) {
             HMCLog.warn("Failed to get total physical memory size", t);
-            return -1;
+            return 1024;
         }
     }
 
     public static int getSuggestedMemorySize() {
         long total = getTotalPhysicalMemory();
-        if (total == -1)
-            return 1024;
         int memory = (int) (total / 1024 / 1024) / 4;
         memory = Math.round((float) memory / 128.0f) * 128;
         return memory;
-    }
-
-    public static long[] memoryInfoForLinux() throws IOException {
-        File file = new File("/proc/meminfo");
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(FileUtils.openInputStream(file), Charsets.UTF_8))) {
-            long[] result = new long[4];
-            String str;
-            StringTokenizer token;
-            while ((str = br.readLine()) != null) {
-                token = new StringTokenizer(str);
-                if (!token.hasMoreTokens())
-                    continue;
-
-                str = token.nextToken();
-                if (!token.hasMoreTokens())
-                    continue;
-
-                if (str.equalsIgnoreCase("MemTotal:"))
-                    result[0] = Long.parseLong(token.nextToken());
-                else if (str.equalsIgnoreCase("MemFree:"))
-                    result[1] = Long.parseLong(token.nextToken());
-                else if (str.equalsIgnoreCase("SwapTotal:"))
-                    result[2] = Long.parseLong(token.nextToken());
-                else if (str.equalsIgnoreCase("SwapFree:"))
-                    result[3] = Long.parseLong(token.nextToken());
-            }
-
-            return result;
-        }
     }
 
     public static String getLinuxReleaseVersion() throws IOException {

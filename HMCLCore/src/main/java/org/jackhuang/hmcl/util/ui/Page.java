@@ -32,6 +32,17 @@ import javax.swing.Timer;
 public class Page extends TopTabPage {
 
     boolean selected = false;
+    public int id;
+
+    @Override
+    public int getId() {
+        return id;
+    }
+
+    @Override
+    public void setId(int id) {
+        this.id = id;
+    }
 
     @Override
     public boolean isSelected() {
@@ -39,9 +50,11 @@ public class Page extends TopTabPage {
     }
 
     @Override
-    public void onSelect() {
-        if (!selected)
+    public void onSelect(TopTabPage lastSelectedPage) {
+        if (!selected) {
+            lastPage = (Page) lastSelectedPage;
             animate();
+        }
         selected = true;
     }
 
@@ -65,13 +78,13 @@ public class Page extends TopTabPage {
     // -------------------
     //    Animation
     // -------------------
-    private static final int ANIMATION_LENGTH = 10;
+    private static final int ANIMATION_LENGTH = 5;
 
     public Page() {
         timer = new Timer(1, (e) -> {
             SwingUtilities.invokeLater(() -> {
                 Page.this.repaint();
-                offsetX += 0.15;
+                offsetX += 0.14;
                 if (offsetX >= ANIMATION_LENGTH) {
                     timer.stop();
                     Page.this.repaint();
@@ -80,7 +93,7 @@ public class Page extends TopTabPage {
         });
     }
 
-    BufferedImage cache = null;
+    BufferedImage cache = null, lastCache = null;
 
     @Override
     public void paint(Graphics g) {
@@ -88,33 +101,50 @@ public class Page extends TopTabPage {
             super.paint(g);
             return;
         }
-        double pgs = 1 - Math.sin(Math.PI / 2 / ANIMATION_LENGTH * offsetX);
+        Graphics2D gg = (Graphics2D) g;
+        double pgs = Math.sin(Math.PI / 2 / ANIMATION_LENGTH * offsetX);
         if (Math.abs(ANIMATION_LENGTH - offsetX) < 0.1) {
             super.paint(g);
             return;
         }
 
         if (offsetX == 0) {
-            cache = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g2d = cache.createGraphics();
-            if (isOpaque()) {
-                g2d.setColor(getBackground());
-                g2d.fillRect(0, 0, getWidth(), getHeight());
-            }
-            super.paint(g2d);
-            g2d.dispose();
+            cache = cacheImpl(this);
+            if (lastPage != null)
+                lastCache = cacheImpl(lastPage);
         }
-        if (pgs > 1)
-            pgs = 1;
-        if (pgs < 0)
-            pgs = 0;
-        Graphics2D gg = (Graphics2D) g;
-        gg.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, (float) (1 - pgs)));
-        g.drawImage(cache, (int) (pgs * 50), 0, this);
+        int ori = lastPage != null ? (lastPage.getId() < getId() ? 1 : -1) : 1;
+        if (pgs >= 0.5)
+            animateImpl(gg, cache, (int) (((1 - (pgs - 0.5) * 2)) * totalOffset * ori), (float) ((pgs - 0.5) * 2));
+        else
+            animateImpl(gg, lastCache, (int) (((- pgs * 2)) * totalOffset * ori), (float) (1 - pgs * 2));
     }
 
-    double offsetX = ANIMATION_LENGTH;
+    BufferedImage cacheImpl(Page page) {
+        BufferedImage image = new BufferedImage(page.getWidth(), page.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = image.createGraphics();
+        if (isOpaque()) {
+            g2d.setColor(page.getBackground());
+            g2d.fillRect(0, 0, page.getWidth(), page.getHeight());
+        }
+        page.superPaint(g2d);
+        g2d.dispose();
+        return image;
+    }
 
+    void animateImpl(Graphics2D g, BufferedImage image, int left, float alpha) {
+        if (image == null)
+            return;
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, alpha));
+        g.drawImage(image, left, 0, this);
+    }
+
+    protected void superPaint(Graphics2D g) {
+        super.paint(g);
+    }
+
+    double offsetX = ANIMATION_LENGTH, totalOffset = 20;
+    Page lastPage;
     Timer timer;
 
     protected boolean animationEnabled = true;
