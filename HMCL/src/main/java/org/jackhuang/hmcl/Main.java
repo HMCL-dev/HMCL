@@ -50,10 +50,10 @@ import org.jackhuang.hmcl.util.lang.SupportedLocales;
 import org.jackhuang.hmcl.util.log.Configuration;
 import org.jackhuang.hmcl.util.log.appender.ConsoleAppender;
 import org.jackhuang.hmcl.util.log.layout.DefaultLayout;
-import org.jackhuang.hmcl.util.sys.ProcessManager;
 import org.jackhuang.hmcl.util.ui.MyRepaintManager;
 import org.jackhuang.hmcl.util.upgrade.IUpgrader;
 import org.jackhuang.hmcl.laf.BeautyEyeLNFHelper;
+import org.jackhuang.hmcl.util.sys.JavaProcess;
 
 /**
  *
@@ -194,7 +194,7 @@ public final class Main implements Runnable {
             }
 
             LogWindow.INSTANCE.clean();
-            LogWindow.INSTANCE.setTerminateGame(ProcessManager::stopAllProcesses);
+            LogWindow.INSTANCE.setTerminateGame(new Main()::run);
 
             Settings.UPDATE_CHECKER.upgrade.register(IUpgrader.NOW_UPGRADER);
             Settings.UPDATE_CHECKER.process(false).reg(t -> Main.invokeUpdate()).execute();
@@ -218,7 +218,8 @@ public final class Main implements Runnable {
 
     @Override
     public void run() {
-        ProcessManager.stopAllProcesses();
+        for (Process p : JavaProcess.processes)
+            p.destroy();
     }
 
     public static void invokeUpdate() {

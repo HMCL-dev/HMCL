@@ -66,7 +66,7 @@ public class ProcessThread extends Thread {
                 System.out.println("MC: " + line);
                 p.getStdOutLines().add(line);
             }
-            ProcessManager.onProcessStopped(p);
+            JavaProcess.processes.remove(p.getRawProcess());
             stopEvent.fire(new SimpleEvent<>(this, p));
         } catch (IOException e) {
             HMCLog.err("An error occured when reading process stdout/stderr.", e);
