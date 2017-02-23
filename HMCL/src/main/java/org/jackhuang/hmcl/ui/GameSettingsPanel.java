@@ -1147,7 +1147,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         if (idx != -1) {
             Java j = Java.JAVA.get(idx);
             txtJavaDir.setText(j.getHome() == null ? Settings.getLastProfile().getSelectedVersionSetting().getSettingsJavaDir() : j.getJava());
-            txtJavaDir.setEnabled(idx == 1);
+            txtJavaDir.setEditable(idx == 1);
             if (!isLoading)
                 Settings.getLastProfile().getSelectedVersionSetting().setJava(j);
         }

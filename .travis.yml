@@ -6,19 +6,6 @@ branches:
   - master
 before_install:
 - chmod +x gradlew
-before_deploy:
-- git config --global user.email ${GITHUB_EMAIL}
-- git config --global user.name ${GITHUB_NAME}
-- git tag ${TRAVIS_BUILD_NUMBER}
-- git push -q ${REPO} --tags
-deploy:
-  skip_cleanup: true
-  provider: releases
-  api_key:
-    secure: KxGIpE83MsgSdWNwCyqgIKJevZgLAef3hpBEVZjqZ09mA3JjQzWCbVFEfWpv8yRqe8ue7YF0aH7YoWuqOiE9q93Qsvv3GRtVcnZqZiGZbCZer1ShtqcjSseMvsw66dtHNcdK6onHna+OrCh2TQjxE2tKMf3CPCP9K2RI6dYOTyYUWmiOmiYQfcd2MEGSRXdnCGi8nf5oBZOYfHforRH3QYJXA7AxI+I9xaEWimFKs1c73sE1pypIGw5rlc+tiKuG8f5QoMeEOy+D30Qe3Vlre13RTi73r6GVt1ZoRpAwlNLEgjD393V1mxGd9wYNBMRKIZ/dfvIAN4m/jltVpgSyuCiUj3sjNs39HV8Jk0ki6RoSoAsjIyWHWfag946sk5wuBjnIZajlQhpGoc94ml8ujxOqP0npQT8azm3CwkAmBx0cxQ09Td9WPREk9BL4bWZrp5t50PsB9SZHPV2ET98QQH6+ArldONYWDTNZMJ2Lc0s6rFZoInq2px1srbR7Cxq2rNsVRp15UFvQp5xueONXz68/wFet6Gbm2ob8TGKm1bQOh5MRO/fq+fkrIIjoD6ztlRaO3xtePXlyEbnJmyxXOdA+Rd9WFXsT9gzjKtlxQjdHZNnI0YiEjR2qvHIWguAQtuV4pydWi8VtlBQ2gT37CpF4ApfC6jTfMsEwqZZ29YM=
-  file: HMCL/build/libs
-  on:
-    repo: huanghongxun/HMCL
 script: "bash ./gradlew clean build --stacktrace"
 before_cache:
 - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
