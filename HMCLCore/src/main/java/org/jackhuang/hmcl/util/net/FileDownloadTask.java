@@ -205,7 +205,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
 
                 // Check hash code
                 String hashCode = String.format("%1$040x", new BigInteger(1, digest.digest()));
-                if (expectedHash != null && !expectedHash.equals(hashCode))
+                if (expectedHash != null && !expectedHash.equalsIgnoreCase(hashCode))
                     throw new IllegalStateException("Unexpected hash code: " + hashCode + ", expected: " + expectedHash);
 
                 if (ppl != null)

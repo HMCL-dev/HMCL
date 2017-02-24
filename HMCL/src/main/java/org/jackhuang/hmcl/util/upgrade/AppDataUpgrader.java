@@ -46,6 +46,7 @@ import org.jackhuang.hmcl.util.MessageBox;
 import org.jackhuang.hmcl.util.UpdateChecker;
 import org.jackhuang.hmcl.util.Utils;
 import org.jackhuang.hmcl.api.VersionNumber;
+import org.jackhuang.hmcl.util.StrUtils;
 import org.jackhuang.hmcl.util.sys.FileUtils;
 import org.jackhuang.hmcl.util.sys.IOUtils;
 import org.jackhuang.hmcl.util.sys.OS;
@@ -64,8 +65,8 @@ public class AppDataUpgrader extends IUpgrader {
                 al.add("--noupdate");
                 AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
                     new URLClassLoader(new URL[] { jar.toURI().toURL() },
-                                       URLClassLoader.getSystemClassLoader().getParent()).loadClass(mainClass)
-                        .getMethod("main", String[].class).invoke(null, new Object[] { al.toArray(new String[0]) });
+                            URLClassLoader.getSystemClassLoader().getParent()).loadClass(mainClass)
+                            .getMethod("main", String[].class).invoke(null, new Object[] { al.toArray(new String[0]) });
                     return null;
                 });
                 return true;
@@ -78,7 +79,7 @@ public class AppDataUpgrader extends IUpgrader {
     public void parseArguments(VersionNumber nowVersion, String[] args) {
         if (!ArrayUtils.contains(args, "--noupdate"))
             try {
-                File f = AppDataUpgraderTask.HMCL_VER_FILE;
+                File f = AppDataUpgraderPackGzTask.HMCL_VER_FILE;
                 if (f.exists()) {
                     Map<String, String> m = C.GSON.fromJson(FileUtils.read(f), Map.class);
                     String s = m.get("ver");
@@ -101,15 +102,27 @@ public class AppDataUpgrader extends IUpgrader {
         final VersionNumber version = event.getValue();
         ((UpdateChecker) event.getSource()).requestDownloadLink().reg(map -> {
             if (MessageBox.show(C.i18n("update.newest_version") + version.firstVer + "." + version.secondVer + "." + version.thirdVer + "\n"
-                                + C.i18n("update.should_open_link"),
-                                MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                if (map != null && map.containsKey("pack"))
+                    + C.i18n("update.should_open_link"),
+                    MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+                if (map != null && map.containsKey("jar") && !StrUtils.isBlank(map.get("jar")))
+                    try {
+                        String hash = null;
+                        if (map.containsKey("jarsha1"))
+                            hash = map.get("jarsha1");
+                        if (TaskWindow.factory().append(new AppDataUpgraderJarTask(map.get("jar"), version.version, hash)).execute()) {
+                            new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderJarTask.getSelf(version.version).getAbsolutePath() }).directory(new File("").getAbsoluteFile()).start();
+                            System.exit(0);
+                        }
+                    } catch (IOException ex) {
+                        HMCLog.err("Failed to create upgrader", ex);
+                    }
+                else if (map != null && map.containsKey("pack") && !StrUtils.isBlank(map.get("pack")))
                     try {
                         String hash = null;
                         if (map.containsKey("packsha1"))
                             hash = map.get("packsha1");
-                        if (TaskWindow.factory().append(new AppDataUpgraderTask(map.get("pack"), version.version, hash)).execute()) {
-                            new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderTask.getSelf(version.version).getAbsolutePath() }).directory(new File("").getAbsoluteFile()).start();
+                        if (TaskWindow.factory().append(new AppDataUpgraderPackGzTask(map.get("pack"), version.version, hash)).execute()) {
+                            new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderPackGzTask.getSelf(version.version).getAbsolutePath() }).directory(new File("").getAbsoluteFile()).start();
                             System.exit(0);
                         }
                     } catch (IOException ex) {
@@ -135,7 +148,7 @@ public class AppDataUpgrader extends IUpgrader {
         }).execute();
     }
 
-    public static class AppDataUpgraderTask extends Task {
+    public static class AppDataUpgraderPackGzTask extends Task {
 
         public static final File BASE_FOLDER = MCUtils.getWorkingDirectory("hmcl");
         public static final File HMCL_VER_FILE = new File(BASE_FOLDER, "hmclver.json");
@@ -147,7 +160,7 @@ public class AppDataUpgrader extends IUpgrader {
         private final String downloadLink, newestVersion, expectedHash;
         File tempFile;
 
-        public AppDataUpgraderTask(String downloadLink, String newestVersion, String hash) throws IOException {
+        public AppDataUpgraderPackGzTask(String downloadLink, String newestVersion, String hash) throws IOException {
             this.downloadLink = downloadLink;
             this.newestVersion = newestVersion;
             this.expectedHash = hash;
@@ -178,6 +191,52 @@ public class AppDataUpgrader extends IUpgrader {
             try (JarOutputStream jos = new JarOutputStream(FileUtils.openOutputStream(f))) {
                 Pack200.newUnpacker().unpack(new GZIPInputStream(FileUtils.openInputStream(tempFile)), jos);
             }
+            json.put("ver", newestVersion);
+            json.put("loc", f.getAbsolutePath());
+            String result = C.GSON.toJson(json);
+            FileUtils.write(HMCL_VER_FILE, result);
+        }
+
+        @Override
+        public String getInfo() {
+            return "Upgrade";
+        }
+
+    }
+
+    public static class AppDataUpgraderJarTask extends Task {
+
+        public static final File BASE_FOLDER = MCUtils.getWorkingDirectory("hmcl");
+        public static final File HMCL_VER_FILE = new File(BASE_FOLDER, "hmclver.json");
+
+        public static File getSelf(String ver) {
+            return new File(BASE_FOLDER, "HMCL-" + ver + ".jar");
+        }
+
+        private final String downloadLink, newestVersion, expectedHash;
+        File tempFile;
+
+        public AppDataUpgraderJarTask(String downloadLink, String newestVersion, String hash) throws IOException {
+            this.downloadLink = downloadLink;
+            this.newestVersion = newestVersion;
+            this.expectedHash = hash;
+            tempFile = File.createTempFile("hmcl", ".jar");
+        }
+
+        @Override
+        public Collection<Task> getDependTasks() {
+            return Arrays.asList(new FileDownloadTask(downloadLink, tempFile, expectedHash));
+        }
+
+        @Override
+        public void executeTask(boolean areDependTasksSucceeded) throws Exception {
+            if (!areDependTasksSucceeded) {
+                tempFile.delete();
+                return;
+            }
+            HashMap<String, String> json = new HashMap<>();
+            File f = getSelf(newestVersion);
+            FileUtils.copyFile(tempFile, f);
             json.put("ver", newestVersion);
             json.put("loc", f.getAbsolutePath());
             String result = C.GSON.toJson(json);
