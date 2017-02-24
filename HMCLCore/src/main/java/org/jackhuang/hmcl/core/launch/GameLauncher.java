@@ -25,9 +25,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.List;
 import org.jackhuang.hmcl.api.HMCLApi;
-import org.jackhuang.hmcl.api.event.launch.DecompressLibrariesEvent;
 import org.jackhuang.hmcl.api.game.DecompressLibraryJob;
-import org.jackhuang.hmcl.api.event.launch.DownloadLibrariesEvent;
 import org.jackhuang.hmcl.api.event.launch.LaunchEvent;
 import org.jackhuang.hmcl.api.event.launch.LaunchSucceededEvent;
 import org.jackhuang.hmcl.api.event.launch.LaunchingState;
@@ -49,8 +47,9 @@ import org.jackhuang.hmcl.util.sys.FileUtils;
 import org.jackhuang.hmcl.util.sys.JavaProcess;
 import org.jackhuang.hmcl.util.sys.OS;
 import org.jackhuang.hmcl.api.auth.IAuthenticator;
+import org.jackhuang.hmcl.core.download.DownloadLibraryJob;
 
-public class GameLauncher {
+public abstract class GameLauncher {
 
     LaunchOptions options;
     IMinecraftService service;
@@ -128,18 +127,22 @@ public class GameLauncher {
         if (!options.isNotCheckGame()) {
             HMCLog.log("Detecting libraries...");
             HMCLApi.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(this, LaunchingState.DownloadingLibraries));
-            if (!HMCLApi.EVENT_BUS.fireChannelResulted(new DownloadLibrariesEvent(this, service.download().getDownloadLibraries(loader.getMinecraftVersion()))))
+            if (!downloadLibraries(service.download().getDownloadLibraries(loader.getMinecraftVersion())))
                 throw new GameException("Failed to download libraries");
         }
 
         HMCLog.log("Unpacking natives...");
         HMCLApi.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(this, LaunchingState.DecompressingNatives));
         DecompressLibraryJob job = service.version().getDecompressLibraries(loader.getMinecraftVersion());
-        if (!HMCLApi.EVENT_BUS.fireChannelResulted(new DecompressLibrariesEvent(this, job)))
+        if (!decompressLibraries(job))
             throw new GameException("Failed to decompress natives");
 
         HMCLApi.EVENT_BUS.fireChannel(new LaunchSucceededEvent(this, loader.makeLaunchingCommand()));
     }
+    
+    public abstract boolean downloadLibraries(List<DownloadLibraryJob> jobs);
+    
+    public abstract boolean decompressLibraries(DecompressLibraryJob job);
 
     /**
      * Launch the game "as soon as possible".

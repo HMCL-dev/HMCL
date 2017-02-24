@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.api.event.launch;
+package org.jackhuang.hmcl.core.download;
 
 import java.io.File;
 import org.jackhuang.hmcl.api.game.IMinecraftLibrary;
@@ -36,17 +36,17 @@ public class DownloadLibraryJob {
         path = p;
     }
 
-    public DownloadLibraryJob parse() {
+    public DownloadLibraryJob parse(DownloadType type) {
         String name = lib.getName();
-        if (name.startsWith("net.minecraftforge:forge:")) {
+        if (name.startsWith("net.minecraftforge:forge:") && url == null) {
             String[] s = name.split(":");
             if (s.length == 3)
-                url = "http://files.minecraftforge.net/maven/net/minecraftforge/forge/" + s[2] + "/forge-" + s[2] + "-universal.jar";
+                url = type.getProvider().getParsedDownloadURL("http://files.minecraftforge.net/maven/net/minecraftforge/forge/" + s[2] + "/forge-" + s[2] + "-universal.jar");
         }
-        if (name.startsWith("com.mumfrey:liteloader:")) {
+        if (name.startsWith("com.mumfrey:liteloader:") && url == null) {
             String[] s = name.split(":");
             if (s.length == 3 && s[2].length() > 3)
-                url = "http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + s[2].substring(0, s[2].length() - 3) + "/liteloader-" + s[2] + ".jar";
+                url = type.getProvider().getParsedDownloadURL("http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + s[2].substring(0, s[2].length() - 3) + "/liteloader-" + s[2] + ".jar");
         }
         return this;
     }

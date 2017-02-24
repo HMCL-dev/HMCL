@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.core.download;
 
-import org.jackhuang.hmcl.api.event.launch.DownloadLibraryJob;
 import org.jackhuang.hmcl.core.service.IMinecraftDownloadService;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;

@@ -18,7 +18,8 @@
 package org.jackhuang.hmcl.core.launch;
 
 import org.jackhuang.hmcl.util.C;
-import org.jackhuang.hmcl.api.event.launch.DownloadLibraryJob;
+import org.jackhuang.hmcl.core.download.DownloadLibraryJob;
+import org.jackhuang.hmcl.core.download.DownloadType;
 import org.jackhuang.hmcl.util.net.FileDownloadTask;
 
 /**
@@ -29,8 +30,8 @@ public class LibraryDownloadTask extends FileDownloadTask {
 
     DownloadLibraryJob job;
 
-    public LibraryDownloadTask(DownloadLibraryJob job) {
-        super(job.parse().url, job.path);
+    public LibraryDownloadTask(DownloadLibraryJob job, DownloadType downloadType) {
+        super(job.parse(downloadType).url, job.path);
         this.job = job;
     }
 

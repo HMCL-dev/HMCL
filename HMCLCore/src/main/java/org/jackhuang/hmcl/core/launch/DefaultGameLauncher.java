@@ -21,11 +21,7 @@ import org.jackhuang.hmcl.api.game.LaunchOptions;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
-import org.jackhuang.hmcl.api.HMCLApi;
-import org.jackhuang.hmcl.api.event.ResultedSimpleEvent;
-import org.jackhuang.hmcl.api.event.launch.DecompressLibrariesEvent;
-import org.jackhuang.hmcl.api.event.launch.DownloadLibrariesEvent;
-import org.jackhuang.hmcl.api.event.launch.DownloadLibraryJob;
+import org.jackhuang.hmcl.core.download.DownloadLibraryJob;
 import org.jackhuang.hmcl.api.auth.LoginInfo;
 import org.jackhuang.hmcl.core.service.IMinecraftService;
 import org.jackhuang.hmcl.util.C;
@@ -35,47 +31,45 @@ import org.jackhuang.hmcl.util.sys.CompressingUtils;
 import org.jackhuang.hmcl.util.task.ParallelTask;
 import org.jackhuang.hmcl.util.task.TaskWindow;
 import org.jackhuang.hmcl.api.auth.IAuthenticator;
-
+import org.jackhuang.hmcl.api.game.DecompressLibraryJob;
 
 public class DefaultGameLauncher extends GameLauncher {
 
     public DefaultGameLauncher(LaunchOptions options, IMinecraftService service, LoginInfo info, IAuthenticator lg) {
         super(options, service, info, lg);
-        register();
     }
 
-    private void register() {
-        HMCLApi.EVENT_BUS.channel(DownloadLibrariesEvent.class).register(t -> {
-            ResultedSimpleEvent<List<DownloadLibraryJob>> event = (ResultedSimpleEvent) t;
-            final TaskWindow.TaskWindowFactory dw = TaskWindow.factory();
-            ParallelTask parallelTask = new ParallelTask();
-            HashSet<String> names = new HashSet<>();
-            for (DownloadLibraryJob s : t.getValue()) {
-                if (names.contains(s.lib.getName()))
-                    continue;
-                names.add(s.lib.getName());
-                parallelTask.addTask(new LibraryDownloadTask(s));
+    @Override
+    public boolean downloadLibraries(List<DownloadLibraryJob> jobs) {
+        final TaskWindow.TaskWindowFactory dw = TaskWindow.factory();
+        ParallelTask parallelTask = new ParallelTask();
+        HashSet<String> names = new HashSet<>();
+        for (DownloadLibraryJob s : jobs) {
+            if (names.contains(s.lib.getName()))
+                continue;
+            names.add(s.lib.getName());
+            parallelTask.addTask(new LibraryDownloadTask(s, service.getDownloadType()));
+        }
+        dw.append(parallelTask);
+        boolean flag = true;
+        if (jobs.size() > 0)
+            flag = dw.execute();
+        if (!flag && MessageBox.show(C.i18n("launch.not_finished_downloading_libraries"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
+            flag = true;
+        return flag;
+    }
+
+    @Override
+    public boolean decompressLibraries(DecompressLibraryJob job) {
+        if (job == null)
+            return false;
+        for (int i = 0; i < job.decompressFiles.length; i++)
+            try {
+                CompressingUtils.unzip(job.decompressFiles[i], job.getDecompressTo(), job.extractRules[i]::allow, false);
+            } catch (IOException ex) {
+                HMCLog.err("Unable to decompress library: " + job.decompressFiles[i] + " to " + job.getDecompressTo(), ex);
             }
-            dw.append(parallelTask);
-            boolean flag = true;
-            if (t.getValue().size() > 0)
-                flag = dw.execute();
-            if (!flag && MessageBox.show(C.i18n("launch.not_finished_downloading_libraries"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                flag = true;
-            t.setResult(flag);
-        });
-        HMCLApi.EVENT_BUS.channel(DecompressLibrariesEvent.class).register(t -> {
-            if (t.getValue() == null) {
-                t.setResult(false);
-                return;
-            }
-            for (int i = 0; i < t.getValue().decompressFiles.length; i++)
-                try {
-                    CompressingUtils.unzip(t.getValue().decompressFiles[i], t.getValue().getDecompressTo(), t.getValue().extractRules[i]::allow, false);
-                } catch (IOException ex) {
-                    HMCLog.err("Unable to decompress library: " + t.getValue().decompressFiles[i] + " to " + t.getValue().getDecompressTo(), ex);
-                }
-        });
+        return true;
     }
 
 }

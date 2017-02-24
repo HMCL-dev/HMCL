@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.core.service;
 import java.io.File;
 import java.util.List;
 import org.jackhuang.hmcl.core.GameException;
-import org.jackhuang.hmcl.api.event.launch.DownloadLibraryJob;
+import org.jackhuang.hmcl.core.download.DownloadLibraryJob;
 import org.jackhuang.hmcl.core.version.MinecraftVersion;
 import org.jackhuang.hmcl.util.task.Task;
 

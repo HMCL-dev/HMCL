@@ -153,6 +153,8 @@ public class LaunchingUIDaemon {
             case DecompressingNatives:
                 message = "launch.state.decompressing_natives";
                 break;
+            case Done:
+                return;
         }
         MainFrame.INSTANCE.showMessage(C.i18n(message));
     };
