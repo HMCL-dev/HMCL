@@ -21,6 +21,7 @@ import java.util.zip.GZIPOutputStream
 import java.security.MessageDigest
 
 plugins {
+    id "edu.sc.seis.macAppBundle" version "2.1.6"
     id "me.tatarka.retrolambda" version "3.5.0"
     id 'edu.sc.seis.launch4j' version '2.3.0'
 }
@@ -161,5 +162,19 @@ task makePackGZ(dependsOn: jar) doLast {
     fileEx.append sha1Hex
 }
 
+task macAppCompressed(type: Zip, dependsOn: createApp) doLast {
+    archiveName "HMCL-$mavenVersion-MacOSApp.zip"
+    include '**'
+    destinationDir file("$buildDir/libs/")
+    from "$buildDir/macApp"
+}
+
+macAppBundle {
+    mainClassName = mainClass
+    icon = "src/main/icon.icns"
+    javaProperties.put("apple.laf.useScreenMenuBar", "true")
+}
+
 build.dependsOn makeExecutable
 build.dependsOn makePackGZ
+build.dependsOn macAppCompressed
