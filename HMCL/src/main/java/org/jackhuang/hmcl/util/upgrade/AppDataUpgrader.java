@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.upgrade;
 
+import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -24,6 +25,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.AccessController;
+import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,10 +35,11 @@ import java.util.Map;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
+import java.util.logging.Level;
 import java.util.zip.GZIPInputStream;
+import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.api.event.SimpleEvent;
 import org.jackhuang.hmcl.util.C;
-import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.core.MCUtils;
 import org.jackhuang.hmcl.util.task.Task;
 import org.jackhuang.hmcl.util.task.TaskWindow;
@@ -57,7 +60,7 @@ import org.jackhuang.hmcl.util.sys.OS;
  */
 public class AppDataUpgrader extends IUpgrader {
 
-    private boolean launchNewerVersion(String[] args, File jar) throws Exception {
+    private boolean launchNewerVersion(String[] args, File jar) throws IOException, PrivilegedActionException {
         try (JarFile jarFile = new JarFile(jar)) {
             String mainClass = jarFile.getManifest().getMainAttributes().getValue("Main-Class");
             if (mainClass != null) {
@@ -77,9 +80,9 @@ public class AppDataUpgrader extends IUpgrader {
 
     @Override
     public void parseArguments(VersionNumber nowVersion, String[] args) {
+        File f = AppDataUpgraderPackGzTask.HMCL_VER_FILE;
         if (!ArrayUtils.contains(args, "--noupdate"))
             try {
-                File f = AppDataUpgraderPackGzTask.HMCL_VER_FILE;
                 if (f.exists()) {
                     Map<String, String> m = C.GSON.fromJson(FileUtils.read(f), Map.class);
                     String s = m.get("ver");
@@ -92,8 +95,10 @@ public class AppDataUpgrader extends IUpgrader {
                         }
                     }
                 }
-            } catch (Throwable t) {
-                HMCLog.err("Failed to execute newer version application", t);
+            } catch (JsonSyntaxException ex) {
+                f.delete();
+            } catch (IOException | PrivilegedActionException t) {
+                Main.LOGGER.log(Level.SEVERE, "Failed to execute newer version application", t);
             }
     }
 
@@ -114,7 +119,7 @@ public class AppDataUpgrader extends IUpgrader {
                             System.exit(0);
                         }
                     } catch (IOException ex) {
-                        HMCLog.err("Failed to create upgrader", ex);
+                        Main.LOGGER.log(Level.SEVERE, "Failed to create upgrader", ex);
                     }
                 else if (map != null && map.containsKey("pack") && !StrUtils.isBlank(map.get("pack")))
                     try {
@@ -126,7 +131,7 @@ public class AppDataUpgrader extends IUpgrader {
                             System.exit(0);
                         }
                     } catch (IOException ex) {
-                        HMCLog.err("Failed to create upgrader", ex);
+                        Main.LOGGER.log(Level.SEVERE, "Failed to create upgrader", ex);
                     }
                 else {
                     String url = C.URL_PUBLISH;
@@ -140,7 +145,7 @@ public class AppDataUpgrader extends IUpgrader {
                     try {
                         java.awt.Desktop.getDesktop().browse(new URI(url));
                     } catch (URISyntaxException | IOException e) {
-                        HMCLog.warn("Failed to browse uri: " + url, e);
+                        Main.LOGGER.log(Level.WARNING, "Failed to browse uri: " + url, e);
                         Utils.setClipborad(url);
                         MessageBox.show(C.i18n("update.no_browser"));
                     }
