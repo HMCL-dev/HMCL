@@ -13,7 +13,6 @@ package org.jackhuang.hmcl.laf.textcoms;
 
 import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 
 import javax.swing.JComponent;
 import javax.swing.plaf.UIResource;
@@ -21,7 +20,6 @@ import javax.swing.plaf.basic.BasicTextFieldUI;
 import javax.swing.text.JTextComponent;
 
 import org.jackhuang.hmcl.laf.textcoms.__UI__.BgSwitchable;
-import org.jb2011.ninepatch4j.NinePatch;
 
 /**
  * 文本组件JTextField的UI实现类.
@@ -30,8 +28,6 @@ import org.jb2011.ninepatch4j.NinePatch;
  */
 public class BETextFieldUI extends BasicTextFieldUI implements BgSwitchable,
         org.jackhuang.hmcl.laf.BeautyEyeLNFHelper.__UseParentPaintSurported {
-
-    private NinePatch bg = __UI__.ICON_9.get("normal");
 
     public static BETextFieldUI createUI(JComponent c) {
         addOtherListener(c);
@@ -165,7 +161,7 @@ public class BETextFieldUI extends BasicTextFieldUI implements BgSwitchable,
     public void switchBgToOver() {
         border = __UI__.BORDER_OVER;
     }
-    
+
     Color border = __UI__.BORDER_NORMAL;
 
     /**
@@ -181,15 +177,10 @@ public class BETextFieldUI extends BasicTextFieldUI implements BgSwitchable,
      */
     public static void paintBg(Graphics g, int x, int y, int w, int h,
             boolean enabled, Color border) {
-        if (enabled) {
-            g.setColor(border);
-            g.fillRect(x, y, w, h);
-            g.setColor(Color.white);
-            g.fillRect(x + 2, y + 2, w - 4, h - 4);
-        }
-        else
-            __UI__.ICON_9.get("disabled")
-                    .draw((Graphics2D) g, x, y, w, h);
+        g.setColor(enabled ? border : __UI__.BORDER_DISABLED);
+        g.fillRect(x, y, w, h);
+        g.setColor(Color.white);
+        g.fillRect(x + 2, y + 2, w - 4, h - 4);
     }
 
     /**
@@ -199,7 +190,7 @@ public class BETextFieldUI extends BasicTextFieldUI implements BgSwitchable,
      */
     public static void addOtherListener(JComponent c) {
         c.addFocusListener(FocusListenerImpl.getInstance());
-    	c.addMouseListener(FocusListenerImpl.getInstance());
+        c.addMouseListener(FocusListenerImpl.getInstance());
     }
 
 }

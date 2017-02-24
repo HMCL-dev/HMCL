@@ -126,21 +126,10 @@ public class Icon9Factory extends RawCache<NinePatch> {
         
         put("toggle_button", "selected", "toggle_button_selected");
         put("toggle_button", "rollover", "toggle_button_rover");
-        
-        put("scroll_bar", "vertical", "scroll_bar_v");
-        put("scroll_bar", "vertical_rollover", "scroll_bar_rover_v");
-        put("scroll_bar", "vertical_pressed", "scroll_bar_pressed_v");
-        put("scroll_bar", "horizontal", "scroll_bar_h");
-        put("scroll_bar", "horizontal_rollover", "scroll_bar_rover_h");
-        put("scroll_bar", "horizontal_pressed", "scroll_bar_rover_h");
-        put("scroll_bar", "arrow_bottom", "arrow_toBottom");
-        put("scroll_bar", "arrow_top", "arrow_toTop");
-        put("scroll_bar", "arrow_left", "arrow_toLeft");
-        put("scroll_bar", "arrow_right", "arrow_toRight");
-        put("scroll_bar", "arrow_bottom_rollover", "arrow_toBottom_rover");
-        put("scroll_bar", "arrow_top_rollover", "arrow_toTop_rover");
-        put("scroll_bar", "arrow_left_rollover", "arrow_toLeft_rover");
-        put("scroll_bar", "arrow_right_rollover", "arrow_toRight_rover");
+
+        put("scroll_bar", "arrow", "arrow");
+        put("scroll_bar", "arrow_rollover", "arrow_rover");
+        put("scroll_bar", "arrow_pressed", "arrow_pressed");
         put("scroll_bar", "scroll_pane_border", "scroll_pane_bg1");
         
         put("popup", "popup", "shadow_bg_popup");
@@ -149,11 +138,6 @@ public class Icon9Factory extends RawCache<NinePatch> {
         put("table", "scroll_border", "table_scrollborder1");
         put("table", "header_cell", "table_header_bg1");
         put("table", "header_cell_separator", "table_header_separator1");
-        
-        put("text", "normal", "bg_login_text_normal");
-        put("text", "pressed", "bg_login_text_pressed");
-        put("text", "disabled", "bg_login_text_disable");
-        put("text", "white", "null_white_bg");
         
         put("toolbar", "north", "toolbar_bg1");
         put("toolbar", "south", "toolbar_bg1_SOUTH");

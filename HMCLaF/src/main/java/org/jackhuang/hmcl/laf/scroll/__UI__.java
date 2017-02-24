@@ -36,6 +36,7 @@ public class __UI__ extends UI {
         putColor("ScrollBar.background", 250, 250, 250);
         putColor("ScrollBar.trackForeground", 250, 250, 250);
         putColor("scrollbar", 250, 250, 250);
+        put("ScrollBar.width", 12);
         put("ScrollBarUI", BEScrollBarUI.class);
 
 //	/* ~~注：这个属性是jb2011自已加的，目的是控制滚动面板及其Viewport的透明性 */

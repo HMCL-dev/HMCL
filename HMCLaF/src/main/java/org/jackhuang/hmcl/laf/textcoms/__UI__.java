@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.laf.widget.border.BERoundBorder;
 
 public class __UI__ extends UI {
     static final Color BORDER_NORMAL = GraphicsUtils.getWebColor("#999999");
+    static final Color BORDER_DISABLED = GraphicsUtils.getWebColor("#E3E3E3");
     static final Color BORDER_OVER = GraphicsUtils.getWebColor("#666666");
     
     static Color border_focused() {

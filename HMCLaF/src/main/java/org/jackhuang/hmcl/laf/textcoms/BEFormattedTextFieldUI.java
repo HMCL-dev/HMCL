@@ -21,7 +21,6 @@ import javax.swing.plaf.basic.BasicFormattedTextFieldUI;
 import javax.swing.text.JTextComponent;
 
 import org.jackhuang.hmcl.laf.textcoms.__UI__.BgSwitchable;
-import org.jb2011.ninepatch4j.NinePatch;
 
 /**
  * 文本组件JFormattedTextField的UI实现类.
@@ -31,8 +30,6 @@ import org.jb2011.ninepatch4j.NinePatch;
  */
 public class BEFormattedTextFieldUI extends BasicFormattedTextFieldUI implements BgSwitchable,
         org.jackhuang.hmcl.laf.BeautyEyeLNFHelper.__UseParentPaintSurported {
-
-    private NinePatch bg = __UI__.ICON_9.get("normal");
 
     public static ComponentUI createUI(JComponent c) {
         c.addFocusListener(FocusListenerImpl.getInstance());
