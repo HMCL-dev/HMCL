@@ -212,6 +212,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
                     ppl.onProgressProviderDone(this);
                 return;
             } catch (IOException | IllegalStateException e) {
+                filePath.delete();
                 setFailReason(new IOException(C.i18n("download.failed") + " " + url, e));
             } finally {
                 closeFiles();

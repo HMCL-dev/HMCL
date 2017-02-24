@@ -161,15 +161,19 @@ public class AppDataUpgrader extends IUpgrader {
 
         @Override
         public void executeTask(boolean areDependTasksSucceeded) throws Exception {
+            if (!areDependTasksSucceeded) {
+                tempFile.delete();
+                return;
+            }
             HashMap<String, String> json = new HashMap<>();
             File f = getSelf(newestVersion);
             if (!FileUtils.makeDirectory(f.getParentFile()))
-                HMCLog.warn("Failed to make directories: " + f.getParent());
+                throw new IOException("Failed to make directories: " + f.getParent());
 
             for (int i = 0; f.exists(); i++)
                 f = new File(BASE_FOLDER, "HMCL-" + newestVersion + (i > 0 ? "-" + i : "") + ".jar");
             if (!f.createNewFile())
-                HMCLog.warn("Failed to create new file: " + f);
+                throw new IOException("Failed to create new file: " + f);
 
             try (JarOutputStream jos = new JarOutputStream(FileUtils.openOutputStream(f))) {
                 Pack200.newUnpacker().unpack(new GZIPInputStream(FileUtils.openInputStream(tempFile)), jos);
