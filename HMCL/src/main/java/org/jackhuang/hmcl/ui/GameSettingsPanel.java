@@ -1015,7 +1015,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
 
     private void btnTestGameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTestGameActionPerformed
         LogWindow.INSTANCE.setVisible(true);
-        MainFrame.INSTANCE.daemon.runGame(Settings.getLastProfile());
+        MainFrame.INSTANCE.daemon.testGame(Settings.getLastProfile());
     }//GEN-LAST:event_btnTestGameActionPerformed
 
     private void btnExploreMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnExploreMouseClicked

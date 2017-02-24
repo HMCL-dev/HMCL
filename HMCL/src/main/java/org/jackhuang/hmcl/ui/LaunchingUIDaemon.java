@@ -89,22 +89,26 @@ public class LaunchingUIDaemon {
                     break;
                 }
             }
-            String msg = C.i18n("launch.exited_abnormally") + " exit code: " + exitCode;
-            if (errorText != null)
-                msg += ", advice: " + MinecraftCrashAdvicer.getAdvice(FileUtils.readQuietly(new File(errorText)));
-            WebFrame f = new WebFrame(logs);
-            f.setModal(true);
-            f.setTitle(msg);
-            f.setVisible(true);
+            if (!LogWindow.INSTANCE.isVisible()) {
+                String msg = C.i18n("launch.exited_abnormally") + " exit code: " + exitCode;
+                if (errorText != null)
+                    msg += ", advice: " + MinecraftCrashAdvicer.getAdvice(FileUtils.readQuietly(new File(errorText)));
+                WebFrame f = new WebFrame(logs);
+                f.setModal(true);
+                f.setTitle(msg);
+                f.setVisible(true);
+            }
             checkExit((LauncherVisibility) ((ProcessMonitor) event.getSource()).getTag());
         });
         HMCLApi.EVENT_BUS.channel(JVMLaunchFailedEvent.class).register(event -> {
             int exitCode = event.getValue().getExitCode();
             HMCLog.err("Cannot create jvm, exit code: " + exitCode);
-            WebFrame f = new WebFrame(event.getValue().getStdOutLines().toArray(new String[0]));
-            f.setModal(true);
-            f.setTitle(C.i18n("launch.cannot_create_jvm") + " exit code: " + exitCode);
-            f.setVisible(true);
+            if (!LogWindow.INSTANCE.isVisible()) {
+                WebFrame f = new WebFrame(event.getValue().getStdOutLines().toArray(new String[0]));
+                f.setModal(true);
+                f.setTitle(C.i18n("launch.cannot_create_jvm") + " exit code: " + exitCode);
+                f.setVisible(true);
+            }
             checkExit((LauncherVisibility) ((ProcessMonitor) event.getSource()).getTag());
         });
     }
@@ -114,6 +118,15 @@ public class LaunchingUIDaemon {
         profile.launcher().genLaunchCode(value -> {
             DefaultPlugin.INSTANCE.saveAuthenticatorConfig();
             ((HMCLGameLauncher.GameLauncherTag) value.getTag()).state = 1;
+        }, MainFrame.INSTANCE::failed, Settings.getInstance().getAuthenticator().getPassword());
+    }
+
+    void testGame(Profile profile) {
+        MainFrame.INSTANCE.showMessage(C.i18n("ui.message.launching"));
+        profile.launcher().genLaunchCode(value -> {
+            DefaultPlugin.INSTANCE.saveAuthenticatorConfig();
+            ((HMCLGameLauncher.GameLauncherTag) value.getTag()).state = 1;
+            ((HMCLGameLauncher.GameLauncherTag) value.getTag()).launcherVisibility = LauncherVisibility.KEEP;
         }, MainFrame.INSTANCE::failed, Settings.getInstance().getAuthenticator().getPassword());
     }
 

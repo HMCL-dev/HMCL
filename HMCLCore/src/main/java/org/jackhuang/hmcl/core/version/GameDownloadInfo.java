@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.core.version;
 
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.core.download.DownloadType;
+import org.jackhuang.hmcl.util.StrUtils;
 
 /**
  *
@@ -58,7 +59,7 @@ public class GameDownloadInfo implements Cloneable {
      * @return the download url
      */
     public String getUrl(DownloadType dt, boolean allowSelf) {
-        if (url != null && allowSelf)
+        if (StrUtils.isNotBlank(url) && allowSelf)
             return dt.getProvider().getParsedDownloadURL(url);
         else
             return getCustomizedURL(dt);

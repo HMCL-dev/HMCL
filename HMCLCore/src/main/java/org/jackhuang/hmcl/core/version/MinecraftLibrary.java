@@ -22,11 +22,9 @@ import com.google.gson.annotations.SerializedName;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import org.jackhuang.hmcl.api.HMCLApi;
 import org.jackhuang.hmcl.util.sys.OS;
 import org.jackhuang.hmcl.util.sys.Platform;
 import org.jackhuang.hmcl.util.StrUtils;
-import org.jackhuang.hmcl.api.Wrapper;
 
 /**
  *

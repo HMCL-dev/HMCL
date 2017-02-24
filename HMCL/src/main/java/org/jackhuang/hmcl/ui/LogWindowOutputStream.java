@@ -44,7 +44,7 @@ public class LogWindowOutputStream extends OutputStream {
 
     @Override
     public final void write(byte[] arr, int off, int len) {
-        append(new String(arr, off, len, Charsets.UTF_8));
+        append(new String(arr, off, len));
     }
 
     private void append(final String str) {
@@ -55,6 +55,6 @@ public class LogWindowOutputStream extends OutputStream {
 
     @Override
     public final void write(int i) {
-        append(new String(new byte[] { (byte) i }, Charsets.UTF_8));
+        append(new String(new byte[] { (byte) i }));
     }
 }
