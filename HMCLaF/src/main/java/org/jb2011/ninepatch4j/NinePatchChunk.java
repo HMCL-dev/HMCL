@@ -14,8 +14,8 @@ import java.util.List;
 /*
  * This class specifies class file version 49.0 but uses Java 6 signatures.  Assumed Java 6.
  */
-public class NinePatchChunk
-implements Serializable {
+public class NinePatchChunk implements Serializable {
+
     private static final long serialVersionUID = -7353439224505296217L;
     private static final int[] sPaddingRect = new int[4];
     private boolean mVerticalStartWithPatch;
@@ -36,31 +36,28 @@ implements Serializable {
     public void draw(BufferedImage image, Graphics2D graphics2D, int x, int y, int scaledWidth, int scaledHeight, int destDensity, int srcDensity) {
         boolean scaling;
         boolean bl = scaling = destDensity != srcDensity && destDensity != 0 && srcDensity != 0;
-        if (scaling) {
+        if (scaling)
             try {
-                graphics2D = (Graphics2D)graphics2D.create();
-                float densityScale = (float)destDensity / (float)srcDensity;
+                graphics2D = (Graphics2D) graphics2D.create();
+                float densityScale = (float) destDensity / (float) srcDensity;
                 graphics2D.translate(x, y);
                 graphics2D.scale(densityScale, densityScale);
-                scaledWidth = (int)((float)scaledWidth / densityScale);
-                scaledHeight = (int)((float)scaledHeight / densityScale);
+                scaledWidth = (int) ((float) scaledWidth / densityScale);
+                scaledHeight = (int) ((float) scaledHeight / densityScale);
                 y = 0;
                 x = 0;
                 this.draw(image, graphics2D, x, y, scaledWidth, scaledHeight);
-            }
-            finally {
+            } finally {
                 graphics2D.dispose();
             }
-        } else {
+        else
             this.draw(image, graphics2D, x, y, scaledWidth, scaledHeight);
-        }
     }
 
     private void draw(BufferedImage image, Graphics2D graphics2D, int x, int y, int scaledWidth, int scaledHeight) {
-        if (scaledWidth <= 1 || scaledHeight <= 1) {
+        if (scaledWidth <= 1 || scaledHeight <= 1)
             return;
-        }
-        Graphics2D g = (Graphics2D)graphics2D.create();
+        Graphics2D g = (Graphics2D) graphics2D.create();
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         try {
             if (this.mPatches.isEmpty()) {
@@ -91,10 +88,10 @@ implements Serializable {
                     if (!vStretch) {
                         if (hStretch) {
                             r = this.mHorizontalPatches.get(horizontalIndex++);
-                            extra = (float)r.width / data.mHorizontalPatchesSum;
-                            width = (int)(extra * hRemainder / hWeightSum);
+                            extra = (float) r.width / data.mHorizontalPatchesSum;
+                            width = (int) (extra * hRemainder / hWeightSum);
                             hWeightSum -= extra;
-                            hRemainder -= (float)width;
+                            hRemainder -= (float) width;
                             g.drawImage(image, x, y, x + width, y + r.height, r.x, r.y, r.x + r.width, r.y + r.height, null);
                             x += width;
                         } else {
@@ -105,18 +102,18 @@ implements Serializable {
                         height = r.height;
                     } else if (hStretch) {
                         r = this.mPatches.get(patchIndex++);
-                        vExtra = (float)r.height / data.mVerticalPatchesSum;
-                        height = (int)(vExtra * vRemainder / vWeightSum);
-                        extra = (float)r.width / data.mHorizontalPatchesSum;
-                        width = (int)(extra * hRemainder / hWeightSum);
+                        vExtra = (float) r.height / data.mVerticalPatchesSum;
+                        height = (int) (vExtra * vRemainder / vWeightSum);
+                        extra = (float) r.width / data.mHorizontalPatchesSum;
+                        width = (int) (extra * hRemainder / hWeightSum);
                         hWeightSum -= extra;
-                        hRemainder -= (float)width;
+                        hRemainder -= (float) width;
                         g.drawImage(image, x, y, x + width, y + height, r.x, r.y, r.x + r.width, r.y + r.height, null);
                         x += width;
                     } else {
                         r = this.mVerticalPatches.get(verticalIndex++);
-                        vExtra = (float)r.height / data.mVerticalPatchesSum;
-                        height = (int)(vExtra * vRemainder / vWeightSum);
+                        vExtra = (float) r.height / data.mVerticalPatchesSum;
+                        height = (int) (vExtra * vRemainder / vWeightSum);
                         g.drawImage(image, x, y, x + r.width, y + height, r.x, r.y, r.x + r.width, r.y + r.height, null);
                         x += r.width;
                     }
@@ -126,12 +123,11 @@ implements Serializable {
                 y += height;
                 if (vStretch) {
                     vWeightSum -= vExtra;
-                    vRemainder -= (float)height;
+                    vRemainder -= (float) height;
                 }
                 boolean bl = vStretch = !vStretch;
             }
-        }
-        finally {
+        } finally {
             g.dispose();
         }
     }
@@ -156,56 +152,60 @@ implements Serializable {
         int remainderHorizontal = 0;
         int remainderVertical = 0;
         if (this.mFixed.size() > 0) {
-            start = this.mFixed.get((int)0).y;
+            start = this.mFixed.get((int) 0).y;
             for (Rectangle rect : this.mFixed) {
                 if (rect.y > start) {
                     endRow = true;
                     measuredWidth = true;
                 }
-                if (!measuredWidth) {
+                if (!measuredWidth)
                     remainderHorizontal += rect.width;
-                }
-                if (!endRow) continue;
+                if (!endRow)
+                    continue;
                 remainderVertical += rect.height;
                 endRow = false;
                 start = rect.y;
             }
         }
-        DrawingData.access$4(data, scaledWidth - remainderHorizontal);
-        DrawingData.access$5(data, scaledHeight - remainderVertical);
-        DrawingData.access$6(data, 0.0f);
+        data.mRemainderHorizontal = scaledWidth - remainderHorizontal;
+        data.mRemainderVertical = scaledHeight - remainderVertical;
+        data.mHorizontalPatchesSum = 0.0f;
         if (this.mHorizontalPatches.size() > 0) {
             start = -1;
             for (Rectangle rect : this.mHorizontalPatches) {
-                if (rect.x <= start) continue;
+                if (rect.x <= start)
+                    continue;
                 DrawingData drawingData = data;
-                DrawingData.access$6(drawingData, drawingData.mHorizontalPatchesSum + (float)rect.width);
+                drawingData.mHorizontalPatchesSum = drawingData.mHorizontalPatchesSum + (float) rect.width;
                 start = rect.x;
             }
         } else {
             start = -1;
             for (Rectangle rect : this.mPatches) {
-                if (rect.x <= start) continue;
+                if (rect.x <= start)
+                    continue;
                 DrawingData drawingData = data;
-                DrawingData.access$6(drawingData, drawingData.mHorizontalPatchesSum + (float)rect.width);
+                drawingData.mHorizontalPatchesSum = drawingData.mHorizontalPatchesSum + (float) rect.width;
                 start = rect.x;
             }
         }
-        DrawingData.access$7(data, 0.0f);
+        data.mVerticalPatchesSum = 0.0f;
         if (this.mVerticalPatches.size() > 0) {
             start = -1;
             for (Rectangle rect : this.mVerticalPatches) {
-                if (rect.y <= start) continue;
+                if (rect.y <= start)
+                    continue;
                 DrawingData drawingData = data;
-                DrawingData.access$7(drawingData, drawingData.mVerticalPatchesSum + (float)rect.height);
+                drawingData.mVerticalPatchesSum = drawingData.mVerticalPatchesSum + (float) rect.height;
                 start = rect.y;
             }
         } else {
             start = -1;
             for (Rectangle rect : this.mPatches) {
-                if (rect.y <= start) continue;
+                if (rect.y <= start)
+                    continue;
                 DrawingData drawingData = data;
-                DrawingData.access$7(drawingData, drawingData.mVerticalPatchesSum + (float)rect.height);
+                drawingData.mVerticalPatchesSum = drawingData.mVerticalPatchesSum + (float) rect.height;
                 start = rect.y;
             }
         }
@@ -225,16 +225,16 @@ implements Serializable {
         result = new boolean[1];
         Pair<List<Pair<Integer>>> top = this.getPatches(row, result);
         this.mHorizontalStartWithPatch = result[0];
-        this.mFixed = this.getRectangles((List)left.mFirst, (List)top.mFirst);
-        this.mPatches = this.getRectangles((List)left.mSecond, (List)top.mSecond);
+        this.mFixed = this.getRectangles((List) left.mFirst, (List) top.mFirst);
+        this.mPatches = this.getRectangles((List) left.mSecond, (List) top.mSecond);
         if (this.mFixed.size() > 0) {
-            this.mHorizontalPatches = this.getRectangles((List)left.mFirst, (List)top.mSecond);
-            this.mVerticalPatches = this.getRectangles((List)left.mSecond, (List)top.mFirst);
-        } else if (((List)top.mFirst).size() > 0) {
+            this.mHorizontalPatches = this.getRectangles((List) left.mFirst, (List) top.mSecond);
+            this.mVerticalPatches = this.getRectangles((List) left.mSecond, (List) top.mFirst);
+        } else if (((List) top.mFirst).size() > 0) {
             this.mHorizontalPatches = new ArrayList<>(0);
-            this.mVerticalPatches = this.getVerticalRectangles(height, (List)top.mFirst);
-        } else if (((List)left.mFirst).size() > 0) {
-            this.mHorizontalPatches = this.getHorizontalRectangles(width, (List)left.mFirst);
+            this.mVerticalPatches = this.getVerticalRectangles(height, (List) top.mFirst);
+        } else if (((List) left.mFirst).size() > 0) {
+            this.mHorizontalPatches = this.getHorizontalRectangles(width, (List) left.mFirst);
             this.mVerticalPatches = new ArrayList<>(0);
         } else {
             this.mVerticalPatches = new ArrayList<>(0);
@@ -243,9 +243,9 @@ implements Serializable {
         row = GraphicsUtilities.getPixels(image, 1, height + 1, width, 1, row);
         column = GraphicsUtilities.getPixels(image, width + 1, 1, 1, height, column);
         top = this.getPatches(row, result);
-        this.mHorizontalPadding = this.getPadding((List)top.mFirst);
+        this.mHorizontalPadding = this.getPadding((List) top.mFirst);
         left = this.getPatches(column, result);
-        this.mVerticalPadding = this.getPadding((List)left.mFirst);
+        this.mVerticalPadding = this.getPadding((List) left.mFirst);
     }
 
     private List<Rectangle> getVerticalRectangles(int imageHeight, List<Pair<Integer>> topPairs) {
@@ -269,17 +269,15 @@ implements Serializable {
     }
 
     private Pair<Integer> getPadding(List<Pair<Integer>> pairs) {
-        if (pairs.isEmpty()) {
+        if (pairs.isEmpty())
             return new Pair<>(0, 0);
-        }
         if (pairs.size() == 1) {
-            if (pairs.get((int)0).mFirst == 0) {
-                return new Pair<>(pairs.get((int)0).mSecond - pairs.get((int)0).mFirst, 0);
-            }
-            return new Pair<>(0, pairs.get((int)0).mSecond - pairs.get((int)0).mFirst);
+            if (pairs.get((int) 0).mFirst == 0)
+                return new Pair<>(pairs.get((int) 0).mSecond - pairs.get((int) 0).mFirst, 0);
+            return new Pair<>(0, pairs.get((int) 0).mSecond - pairs.get((int) 0).mFirst);
         }
         int index = pairs.size() - 1;
-        return new Pair<>(pairs.get((int)0).mSecond - pairs.get((int)0).mFirst, pairs.get((int)index).mSecond - pairs.get((int)index).mFirst);
+        return new Pair<>(pairs.get((int) 0).mSecond - pairs.get((int) 0).mFirst, pairs.get((int) index).mSecond - pairs.get((int) index).mFirst);
     }
 
     private List<Rectangle> getRectangles(List<Pair<Integer>> leftPairs, List<Pair<Integer>> topPairs) {
@@ -307,13 +305,11 @@ implements Serializable {
             int pixel = pixels[i];
             if (pixel != lastPixel) {
                 if (lastPixel == -16777216) {
-                    if (first) {
+                    if (first)
                         startWithPatch[0] = true;
-                    }
                     patches.add(new Pair<>(lastIndex, i));
-                } else {
+                } else
                     fixed.add(new Pair<>(lastIndex, i));
-                }
                 first = false;
                 lastIndex = i;
                 lastPixel = pixel;
@@ -321,13 +317,11 @@ implements Serializable {
             ++i;
         }
         if (lastPixel == -16777216) {
-            if (first) {
+            if (first)
                 startWithPatch[0] = true;
-            }
             patches.add(new Pair<>(lastIndex, pixels.length));
-        } else {
+        } else
             fixed.add(new Pair<>(lastIndex, pixels.length));
-        }
         if (patches.isEmpty()) {
             patches.add(new Pair<>(1, pixels.length));
             startWithPatch[0] = true;
@@ -337,36 +331,15 @@ implements Serializable {
     }
 
     static final class DrawingData {
-        private int mRemainderHorizontal;
-        private int mRemainderVertical;
-        private float mHorizontalPatchesSum;
-        private float mVerticalPatchesSum;
 
-        DrawingData() {
-        }
-
-        static /* synthetic */ void access$4(DrawingData drawingData, int n) {
-            drawingData.mRemainderHorizontal = n;
-        }
-
-        static /* synthetic */ void access$5(DrawingData drawingData, int n) {
-            drawingData.mRemainderVertical = n;
-        }
-
-        static /* synthetic */ void access$6(DrawingData drawingData, float f) {
-            drawingData.mHorizontalPatchesSum = f;
-        }
-
-        static /* synthetic */ void access$7(DrawingData drawingData, float f) {
-            drawingData.mVerticalPatchesSum = f;
-        }
+        int mRemainderHorizontal;
+        int mRemainderVertical;
+        float mHorizontalPatchesSum;
+        float mVerticalPatchesSum;
     }
 
-    /*
-     * This class specifies class file version 49.0 but uses Java 6 signatures.  Assumed Java 6.
-     */
-    static class Pair<E>
-    implements Serializable {
+    static class Pair<E> implements Serializable {
+
         private static final long serialVersionUID = -2204108979541762418L;
         E mFirst;
         E mSecond;
@@ -383,4 +356,3 @@ implements Serializable {
     }
 
 }
-

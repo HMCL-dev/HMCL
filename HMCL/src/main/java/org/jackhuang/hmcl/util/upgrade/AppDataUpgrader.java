@@ -38,6 +38,7 @@ import java.util.jar.Pack200;
 import java.util.logging.Level;
 import java.util.zip.GZIPInputStream;
 import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.api.event.SimpleEvent;
 import org.jackhuang.hmcl.util.C;
 import org.jackhuang.hmcl.core.MCUtils;
@@ -98,7 +99,7 @@ public class AppDataUpgrader extends IUpgrader {
             } catch (JsonSyntaxException ex) {
                 f.delete();
             } catch (IOException | PrivilegedActionException t) {
-                Main.LOGGER.log(Level.SEVERE, "Failed to execute newer version application", t);
+                HMCLog.err("Failed to execute newer version application", t);
             }
     }
 
@@ -131,7 +132,7 @@ public class AppDataUpgrader extends IUpgrader {
                             System.exit(0);
                         }
                     } catch (IOException ex) {
-                        Main.LOGGER.log(Level.SEVERE, "Failed to create upgrader", ex);
+                        HMCLog.err("Failed to create upgrader", ex);
                     }
                 else {
                     String url = C.URL_PUBLISH;
@@ -145,7 +146,7 @@ public class AppDataUpgrader extends IUpgrader {
                     try {
                         java.awt.Desktop.getDesktop().browse(new URI(url));
                     } catch (URISyntaxException | IOException e) {
-                        Main.LOGGER.log(Level.WARNING, "Failed to browse uri: " + url, e);
+                        HMCLog.err("Failed to browse uri: " + url, e);
                         Utils.setClipborad(url);
                         MessageBox.show(C.i18n("update.no_browser"));
                     }

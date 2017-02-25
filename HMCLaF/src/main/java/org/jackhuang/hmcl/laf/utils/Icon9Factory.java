@@ -5,6 +5,7 @@
  */
 package org.jackhuang.hmcl.laf.utils;
 
+import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import org.jb2011.ninepatch4j.NinePatch;
 
@@ -13,6 +14,8 @@ import org.jb2011.ninepatch4j.NinePatch;
  * @author huang
  */
 public class Icon9Factory extends RawCache<NinePatch> {
+    
+    private static final NinePatch EMPTY = NinePatch.load(new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB), false, true);
 
     /**
      * 相对路径根（默认是相对于本类的相对物理路径）.
@@ -50,7 +53,13 @@ public class Icon9Factory extends RawCache<NinePatch> {
     }
 
     public NinePatch get(String key) {
-        return icons.get(ns + ":" + key);
+        NinePatch p = icons.get(ns + ":" + key);
+        if (p == null) {
+            System.err.println("Could not find 9patch: " + key);
+            icons.put(ns + ":" + key, EMPTY);
+            return EMPTY;
+        }
+        return p;
     }
     
     public NinePatch get(String key, String state) {
