@@ -33,8 +33,6 @@ HMCLAPI is based on Event bus. There are all events below.
  - DownloadTypeChangedEvent
  - ThemeChangedEvent
 * org.jackhuang.hmcl.api.event.launch
- - DecompressLibrariesEvent
- - DownloadLibrariesEvent
  - LaunchEvent
  - LaunchSucceededEvent
  - LaunchingStateChangedEvent

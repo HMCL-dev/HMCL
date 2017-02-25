@@ -98,43 +98,6 @@ public final class Main implements Runnable {
 
     public static void main(String[] args) throws IOException {
         {
-            HMCLApi.HMCL_VERSION = VersionNumber.check(LAUNCHER_VERSION);
-            
-            PluginManager.getPlugin(DefaultPlugin.class);
-            for (String s : args)
-                if (s.startsWith("--plugin=")) {
-                    String c = s.substring("--plugin=".length());
-                    try {
-                        PluginManager.getPlugin(Class.forName(c));
-                    } catch (ClassNotFoundException ex) {
-                        LOGGER.log(Level.WARNING, "Class: " + c + " not found, please add your plugin jar to class path.", ex);
-                    }
-                } else if (s.startsWith("--help")) {
-                    System.out.println("HMCL command line help");
-                    System.out.println("--noupdate: this arg will prevent HMCL from initializing the newest app version in %appdata%/.hmcl");
-                    System.out.println("--plugin=<your plugin class>: this arg will allow a new plugin to be loaded, please keep your jar in system class path and this class extends IPlugin.");
-                    return;
-                }
-            PluginManager.loadPlugins();
-
-            IUpgrader.NOW_UPGRADER.parseArguments(HMCLApi.HMCL_VERSION, args);
-
-            System.setProperty("awt.useSystemAAFontSettings", "on");
-            System.setProperty("swing.aatext", "true");
-            System.setProperty("sun.java2d.noddraw", "true");
-            System.setProperty("sun.java2d.dpiaware", "false");
-            System.setProperty("https.protocols", "SSLv3,TLSv1");
-
-            try {
-                SSLContext c = SSLContext.getInstance("SSL");
-                c.init(null, new X509TrustManager[] { XTM }, new java.security.SecureRandom());
-                HttpsURLConnection.setDefaultSSLSocketFactory(c.getSocketFactory());
-            } catch (GeneralSecurityException ignore) {
-            }
-            HttpsURLConnection.setDefaultHostnameVerifier(HNV);
-
-            Thread.setDefaultUncaughtExceptionHandler(new CrashReporter(true));
-
             try {
                 File file = new File("hmcl.log").getAbsoluteFile();
                 if (!file.exists() && !file.createNewFile())
@@ -171,6 +134,43 @@ public final class Main implements Runnable {
                     logger.error(msg, t);
                 }
             };
+
+            HMCLApi.HMCL_VERSION = VersionNumber.check(LAUNCHER_VERSION);
+
+            PluginManager.getPlugin(DefaultPlugin.class);
+            for (String s : args)
+                if (s.startsWith("--plugin=")) {
+                    String c = s.substring("--plugin=".length());
+                    try {
+                        PluginManager.getPlugin(Class.forName(c));
+                    } catch (ClassNotFoundException ex) {
+                        LOGGER.log(Level.WARNING, "Class: " + c + " not found, please add your plugin jar to class path.", ex);
+                    }
+                } else if (s.startsWith("--help")) {
+                    System.out.println("HMCL command line help");
+                    System.out.println("--noupdate: this arg will prevent HMCL from initializing the newest app version in %appdata%/.hmcl");
+                    System.out.println("--plugin=<your plugin class>: this arg will allow a new plugin to be loaded, please keep your jar in system class path and this class extends IPlugin.");
+                    return;
+                }
+            PluginManager.loadPlugins();
+
+            IUpgrader.NOW_UPGRADER.parseArguments(HMCLApi.HMCL_VERSION, args);
+
+            System.setProperty("awt.useSystemAAFontSettings", "on");
+            System.setProperty("swing.aatext", "true");
+            System.setProperty("sun.java2d.noddraw", "true");
+            System.setProperty("sun.java2d.dpiaware", "false");
+            System.setProperty("https.protocols", "SSLv3,TLSv1");
+
+            try {
+                SSLContext c = SSLContext.getInstance("SSL");
+                c.init(null, new X509TrustManager[] { XTM }, new java.security.SecureRandom());
+                HttpsURLConnection.setDefaultSSLSocketFactory(c.getSocketFactory());
+            } catch (GeneralSecurityException ignore) {
+            }
+            HttpsURLConnection.setDefaultHostnameVerifier(HNV);
+
+            Thread.setDefaultUncaughtExceptionHandler(new CrashReporter(true));
 
             HMCLog.log("*** " + Main.makeTitle() + " ***");
 
@@ -209,7 +209,7 @@ public final class Main implements Runnable {
                         }
                     });
             }
-            
+
             MainFrame.showMainFrame();
         }
     }
