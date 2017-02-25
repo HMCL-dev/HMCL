@@ -33,7 +33,7 @@ public class HMCLAssetService extends MinecraftAssetService {
     }
     
     private boolean useSelf(String assetId) {
-        return new File(service.baseDirectory(), "assets/indexes/" + assetId + ",json").exists() || ((HMCLMinecraftService) service).p.isNoCommon();
+        return new File(service.baseDirectory(), "assets/indexes/" + assetId + ".json").exists() || ((HMCLMinecraftService) service).p.isNoCommon();
     }
 
     @Override
