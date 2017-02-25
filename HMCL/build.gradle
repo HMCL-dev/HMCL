@@ -36,13 +36,13 @@ if (!hasProperty('mainClass')) {
 
 def buildnumber = System.getenv("TRAVIS_BUILD_NUMBER")
 if (buildnumber == null)
-    buildnumber = System.getenv("BUILD_NUMBER")
+buildnumber = System.getenv("BUILD_NUMBER")
 if (buildnumber == null)
-    buildnumber = "0"
+buildnumber = "0"
     
 def versionroot = System.getenv("VERSION_ROOT")
 if (versionroot == null)
-    versionroot = "2.7.4"
+versionroot = "2.7.5"
 
 String mavenGroupId = 'HMCL'
 String mavenVersion = versionroot + '.' + buildnumber
@@ -58,7 +58,7 @@ task generateSources(type: Sync) {
     into "$buildDir/generated-src"
     filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [
             'HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING': mavenVersion
-    ])
+        ])
 }
 compileJava.setSource "$buildDir/generated-src"
 compileJava.dependsOn generateSources
@@ -92,6 +92,22 @@ jar {
     manifest {
         attributes 'Created-By'        : 'Copyright(c) 2013-2017 huangyuhui.',
                    'Main-Class'        : mainClass
+    }
+    
+    doLast {
+        new File("build/signed").mkdirs()
+        ant.signjar(signedjar: archivePath, jar: archivePath,
+            keystore: "HMCL.keystore", storepass: "123456",
+            alias: "HMCL")
+        
+        def messageDigest = MessageDigest.getInstance("SHA1")
+        archivePath.eachByte 1024 * 1024, { byte[] buf, int bytesRead ->
+            messageDigest.update(buf, 0, bytesRead);
+        }
+        def sha1Hex = new BigInteger(1, messageDigest.digest()).toString(16).padLeft(40, '0')
+        def fileEx = new File(project.buildDir, "libs/" + archivePath.getName() + ".sha1")
+        if (!fileEx.exists()) fileEx.createNewFile()
+        fileEx.append sha1Hex
     }
 }
 
@@ -130,22 +146,14 @@ task makeExecutable(dependsOn: jar) doLast {
     int read
     def bytes = new byte[8192]
     while((read = is.read(bytes)) != -1)
-        fos.write(bytes, 0, read);
+    fos.write(bytes, 0, read);
     is.close()
     is = new FileInputStream(makeExecutableinjar)
     while((read = is.read(bytes)) != -1)
-        fos.write(bytes, 0, read);
+    fos.write(bytes, 0, read);
     is.close()
     fos.close()
     
-    def messageDigest = MessageDigest.getInstance("SHA1")
-    makeExecutableoutjar.eachByte 1024 * 1024, { byte[] buf, int bytesRead ->
-        messageDigest.update(buf, 0, bytesRead);
-    }
-    def sha1Hex = new BigInteger(1, messageDigest.digest()).toString(16).padLeft(40, '0')
-    def fileEx = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".jar.sha1")
-    if (!fileEx.exists()) fileEx.createNewFile()
-    fileEx.append sha1Hex
 }
 
 task makePackGZ(dependsOn: jar) doLast {
