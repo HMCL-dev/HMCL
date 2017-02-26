@@ -408,8 +408,7 @@ public class LauncherSettingsPanel extends RepaintPage {
         fc.setMultiSelectionEnabled(false);
         fc.setFileFilter(new FileNameExtensionFilter("*.png", "png"));
         fc.addChoosableFileFilter(new FileNameExtensionFilter("*.jpg", "jpg"));
-        fc.showOpenDialog(this);
-        if (fc.getSelectedFile() == null)
+        if (fc.showOpenDialog(this) != JSystemFileChooser.APPROVE_OPTION || fc.getSelectedFile() == null)
             return;
         try {
             String path = fc.getSelectedFile().getCanonicalPath();
@@ -486,8 +485,7 @@ public class LauncherSettingsPanel extends RepaintPage {
         fc.setFileSelectionMode(JSystemFileChooser.DIRECTORIES_ONLY);
         fc.setDialogTitle(C.i18n("launcher.choose_commonpath"));
         fc.setMultiSelectionEnabled(false);
-        fc.showOpenDialog(this);
-        if (fc.getSelectedFile() == null)
+        if (fc.showOpenDialog(this) != JSystemFileChooser.APPROVE_OPTION || fc.getSelectedFile() == null)
             return;
         try {
             String path = fc.getSelectedFile().getCanonicalPath();

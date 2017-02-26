@@ -33,7 +33,7 @@ public class JSystemFileChooser extends JFileChooser {
     public JSystemFileChooser() {
         super();
     }
-    
+
     public JSystemFileChooser(File f) {
         super(f);
     }
@@ -49,15 +49,10 @@ public class JSystemFileChooser extends JFileChooser {
 
         super.updateUI();
 
-        if (old != null) {
-            Color background = UIManager.getColor("Label.background");
-            setBackground(background);
-            setOpaque(true);
-
+        if (old != null)
             try {
                 UIManager.setLookAndFeel(old);
             } catch (UnsupportedLookAndFeelException ignored) {
             }
-        }
     }
 }

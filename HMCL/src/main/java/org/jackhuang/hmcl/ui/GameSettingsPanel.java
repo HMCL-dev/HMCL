@@ -1127,8 +1127,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         fc.setFileSelectionMode(JSystemFileChooser.DIRECTORIES_ONLY);
         fc.setDialogTitle(C.i18n("settings.choose_gamedir"));
         fc.setMultiSelectionEnabled(false);
-        fc.showOpenDialog(this);
-        if (fc.getSelectedFile() == null)
+        if (fc.showOpenDialog(this) != JSystemFileChooser.APPROVE_OPTION || fc.getSelectedFile() == null)
             return;
         try {
             String path = fc.getSelectedFile().getCanonicalPath();
@@ -1163,8 +1162,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         fc.setFileFilter(new FileNameFilter("javaw.exe"));
         fc.addChoosableFileFilter(new FileNameFilter("java.exe"));
         fc.addChoosableFileFilter(new FileNameFilter("java"));
-        fc.showOpenDialog(this);
-        if (fc.getSelectedFile() == null)
+        if (fc.showOpenDialog(this) != JSystemFileChooser.APPROVE_OPTION || fc.getSelectedFile() == null)
             return;
         try {
             String path = fc.getSelectedFile().getCanonicalPath();
