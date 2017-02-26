@@ -405,7 +405,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
             }
         });
 
-        cboLauncherVisibility.setModel(new javax.swing.DefaultComboBoxModel(new String[] { C.i18n("advancedsettings.launcher_visibility.close"), C.i18n("advancedsettings.launcher_visibility.hide"), C.i18n("advancedsettings.launcher_visibility.keep") }));
+        cboLauncherVisibility.setModel(new javax.swing.DefaultComboBoxModel(new String[] { C.i18n("advancedsettings.launcher_visibility.close"), C.i18n("advancedsettings.launcher_visibility.hide"), C.i18n("advancedsettings.launcher_visibility.keep"),C.i18n("advancedsettings.launcher_visibility.hide_reopen") }));
         cboLauncherVisibility.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 cboLauncherVisibilityItemStateChanged(evt);
@@ -950,7 +950,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(tabVersionEdit, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 766, Short.MAX_VALUE)
+                    .addComponent(tabVersionEdit, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(btnMakeLaunchScript)

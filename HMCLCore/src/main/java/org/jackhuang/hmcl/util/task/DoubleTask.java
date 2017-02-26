@@ -50,7 +50,7 @@ public class DoubleTask extends TaskInfo {
     }
 
     @Override
-    public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
+    public void executeTask(boolean areDependTasksSucceeded) throws IllegalStateException {
         if (!areDependTasksSucceeded)
             throw new IllegalStateException("Depend tasks failed.");
     }

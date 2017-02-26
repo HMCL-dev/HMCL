@@ -33,25 +33,26 @@ import org.jackhuang.hmcl.api.IProcess;
  */
 public class ProcessThread extends Thread {
 
-    IProcess p;
+    ProcessMonitor monitor;
     boolean readError;
     public final EventHandler<SimpleEvent<String>> printlnEvent = new EventHandler<>();
     public final EventHandler<SimpleEvent<IProcess>> stopEvent = new EventHandler<>();
 
-    public ProcessThread(IProcess process, boolean readError) {
-        p = process;
+    public ProcessThread(ProcessMonitor monitor, boolean readError) {
+        this.monitor = monitor;
         this.readError = readError;
         setDaemon(readError);
     }
 
     public IProcess getProcess() {
-        return p;
+        return monitor.getProcess();
     }
 
     @Override
     public void run() {
         setName("ProcessMonitor");
         BufferedReader br = null;
+        IProcess p = monitor.getProcess();
         try {
             InputStream in = readError ? p.getRawProcess().getErrorStream() : p.getRawProcess().getInputStream();
             br = new BufferedReader(new InputStreamReader(in, Charsets.toCharset()));
@@ -59,12 +60,12 @@ public class ProcessThread extends Thread {
             String line;
             while (p.isRunning())
                 while ((line = br.readLine()) != null) {
-                    printlnEvent.fire(new SimpleEvent<>(this, line));
+                    printlnEvent.fire(new SimpleEvent<>(monitor, line));
                     System.out.println("MC: " + line);
                     p.getStdOutLines().add(line);
                 }
             while ((line = br.readLine()) != null) {
-                printlnEvent.fire(new SimpleEvent<>(this, line));
+                printlnEvent.fire(new SimpleEvent<>(monitor, line));
                 System.out.println("MC: " + line);
                 p.getStdOutLines().add(line);
             }

@@ -33,7 +33,7 @@ public class DeleteFileTask extends Task {
     }
 
     @Override
-    public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
+    public void executeTask(boolean areDependTasksSucceeded) throws IOException {
         if (!f.delete()) throw new IOException("Failed to delete" + f);
     }
 

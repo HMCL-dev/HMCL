@@ -21,7 +21,7 @@ import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import org.jackhuang.hmcl.util.C;
 import org.jackhuang.hmcl.util.net.NetUtils;
-import org.jackhuang.hmcl.util.AbstractSwingWorker;
+import org.jackhuang.hmcl.util.task.TaskWorker;
 
 /**
  *
@@ -40,12 +40,12 @@ public class MinecraftRemoteVersions {
     public static RemoteVersionsTask getRemoteVersions(DownloadType type) {
         return new RemoteVersionsTask(type) {
             @Override
-            public void work() throws Exception {
+            public void executeTask(boolean b) throws Exception {
                 synchronized (INSTANCE_LOCK) {
                     if (INSTANCE != null)
                         send(INSTANCE.versions.toArray(new MinecraftRemoteVersion[INSTANCE.versions.size()]));
                     else
-                        super.work();
+                        super.executeTask(b);
                 }
             }
         };
@@ -55,7 +55,7 @@ public class MinecraftRemoteVersions {
         return new RemoteVersionsTask(type);
     }
 
-    public static class RemoteVersionsTask extends AbstractSwingWorker<MinecraftRemoteVersion> {
+    public static class RemoteVersionsTask extends TaskWorker<MinecraftRemoteVersion> {
 
         DownloadType type;
 
@@ -64,7 +64,7 @@ public class MinecraftRemoteVersions {
         }
 
         @Override
-        public void work() throws Exception {
+        public void executeTask(boolean b) throws Exception {
             MinecraftRemoteVersions r = C.GSON.fromJson(NetUtils.get(type.getProvider().getVersionsListDownloadURL()), MinecraftRemoteVersions.class);
             if (r != null && r.versions != null) {
                 INSTANCE = r;

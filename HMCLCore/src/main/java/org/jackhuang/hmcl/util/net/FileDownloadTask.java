@@ -98,7 +98,7 @@ public class FileDownloadTask extends Task implements PreviousResult<File>, Prev
 
     // Download file.
     @Override
-    public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
+    public void executeTask(boolean areDependTasksSucceeded) throws Exception {
         for (PreviousResult<String> p : al)
             this.url = IOUtils.parseURL(p.getResult());
 

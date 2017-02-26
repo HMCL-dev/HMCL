@@ -27,5 +27,6 @@ public enum LaunchingState {
     GeneratingLaunchingCodes,
     DownloadingLibraries,
     DecompressingNatives,
+    WaitingForGameLaunching,
     Done
 }

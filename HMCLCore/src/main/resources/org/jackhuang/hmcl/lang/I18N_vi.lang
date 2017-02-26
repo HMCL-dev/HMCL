@@ -33,6 +33,7 @@ launch.state.logging_in=Đang đăng nhập...
 launch.state.generating_launching_codes=Đang tạo code chạy minecraft
 launch.state.downloading_libraries=Downloading...
 launch.state.decompressing_natives=Giải nén...
+launch.state.waiting_launching=Waiting for game launching
 
 install.no_version=Không tìm thấy phiên bản minecraft.
 install.no_version_if_intall=Phiên bản cần thiết không thấy, có nên cài đặt phiên bản tự động không?
@@ -286,6 +287,7 @@ advancedsettings.Minecraft_arguments=Arguments của minecraft
 advancedsettings.launcher_visibility.close=Đóng launcher sau khi minecraft được mở.
 advancedsettings.launcher_visibility.hide=Ẩn launcher sau khi minecraft được mở.
 advancedsettings.launcher_visibility.keep=Để cho launcher hiển thị.
+advancedsettings.launcher_visibility.hide_reopen=Hide the launcher and re-open when game closes.
 advancedsettings.game_dir.default=Mặc định (.minecraft/)
 advancedsettings.game_dir.independent=Independent (.minecraft/versions/<version name>/, trừ thư mục assets,libraries)
 advancedsettings.no_jvm_args=Không có arguments mặc định cho máy ảo java

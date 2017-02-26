@@ -33,6 +33,7 @@ launch.state.logging_in=登录中
 launch.state.generating_launching_codes=正在生成启动代码
 launch.state.downloading_libraries=正在下载必要文件
 launch.state.decompressing_natives=正在释放本地文件
+launch.state.waiting_launching=等待游戏启动
 
 install.no_version=未找到要安装的对应MC版本
 install.no_version_if_intall=未找到要安装的对应MC版本，是否自动安装需要的MC版本？
@@ -288,6 +289,7 @@ advancedsettings.Minecraft_arguments=Minecraft额外参数(不必填写)
 advancedsettings.launcher_visibility.close=游戏启动后结束启动器
 advancedsettings.launcher_visibility.hide=游戏启动后隐藏启动器
 advancedsettings.launcher_visibility.keep=保持启动器可见
+advancedsettings.launcher_visibility.hide_reopen=隐藏启动器并在游戏结束后重新打开
 advancedsettings.game_dir.default=默认(.minecraft/)
 advancedsettings.game_dir.independent=各版本独立(.minecraft/versions/<版本名>/,除assets,libraries)
 advancedsettings.no_jvm_args=不添加默认的JVM参数(使用Java9时必勾)

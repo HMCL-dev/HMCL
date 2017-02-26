@@ -31,7 +31,7 @@ public abstract class Task {
      * @param areDependTasksSucceeded Would be true if all of tasks which this task depends on have succeed.
      * @throws java.lang.Throwable If a task throws an exception, this task will be marked as `failed`.
      */
-    public abstract void executeTask(boolean areDependTasksSucceeded) throws Throwable;
+    public abstract void executeTask(boolean areDependTasksSucceeded) throws Exception;
 
     /**
      * if this func returns false, TaskList will force abort the thread. run in
@@ -56,10 +56,10 @@ public abstract class Task {
         return hidden;
     }
 
-    public Throwable getFailReason() {
+    public Exception getFailReason() {
         return failReason;
     }
-    protected Throwable failReason = null;
+    protected Exception failReason = null;
 
     /**
      * This method can be only invoked by TaskList.

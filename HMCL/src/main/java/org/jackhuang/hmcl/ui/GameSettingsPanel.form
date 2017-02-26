@@ -297,7 +297,7 @@
             <Component class="javax.swing.JComboBox" name="cboLauncherVisibility">
               <Properties>
                 <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-                  <Connection code="new javax.swing.DefaultComboBoxModel(new String[] { C.i18n(&quot;advancedsettings.launcher_visibility.close&quot;), C.i18n(&quot;advancedsettings.launcher_visibility.hide&quot;), C.i18n(&quot;advancedsettings.launcher_visibility.keep&quot;) })" type="code"/>
+                  <Connection code="new javax.swing.DefaultComboBoxModel(new String[] { C.i18n(&quot;advancedsettings.launcher_visibility.close&quot;), C.i18n(&quot;advancedsettings.launcher_visibility.hide&quot;), C.i18n(&quot;advancedsettings.launcher_visibility.keep&quot;),C.i18n(&quot;advancedsettings.launcher_visibility.hide_reopen&quot;) })" type="code"/>
                 </Property>
               </Properties>
               <Events>

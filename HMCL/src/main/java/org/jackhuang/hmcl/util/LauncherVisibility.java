@@ -36,5 +36,9 @@ public enum LauncherVisibility {
     /**
      * Keep the launcher visible even if the game launched successfully.
      */
-    KEEP;
+    KEEP,
+    /**
+     * Hide the launcher and reopen it when game closes.
+     */
+    HIDE_AND_REOPEN
 }

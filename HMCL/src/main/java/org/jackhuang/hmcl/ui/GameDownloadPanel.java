@@ -117,7 +117,7 @@ public class GameDownloadPanel extends Page {
                     lstDownloads.requestFocus();
                     if (model.getRowCount() > 0)
                         model.removeRow(0);
-                })).execute();
+                })).runAsync();
     }
 
     void downloadMinecraft() {

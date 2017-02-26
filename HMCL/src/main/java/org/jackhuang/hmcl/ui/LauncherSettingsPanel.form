@@ -140,9 +140,12 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="chkDecorated" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="btnCheckUpdate" alignment="3" min="-2" pref="26" max="-2" attributes="0"/>
-                  <Component id="btnMCBBS" alignment="3" max="32767" attributes="0"/>
+              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                  <Component id="btnCheckUpdate" min="-2" pref="26" max="-2" attributes="0"/>
+                  <Group type="102" attributes="0">
+                      <Component id="btnMCBBS" pref="26" max="32767" attributes="0"/>
+                      <EmptySpace min="1" pref="1" max="-2" attributes="0"/>
+                  </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblRestart" min="-2" max="-2" attributes="0"/>

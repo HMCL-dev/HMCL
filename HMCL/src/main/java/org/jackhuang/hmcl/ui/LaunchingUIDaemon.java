@@ -38,6 +38,8 @@ import org.jackhuang.hmcl.util.C;
 import org.jackhuang.hmcl.util.MessageBox;
 import org.jackhuang.hmcl.api.func.Consumer;
 import org.jackhuang.hmcl.api.HMCLog;
+import org.jackhuang.hmcl.api.event.SimpleEvent;
+import org.jackhuang.hmcl.api.event.launch.LaunchingState;
 import org.jackhuang.hmcl.util.DefaultPlugin;
 import org.jackhuang.hmcl.util.sys.FileUtils;
 import org.jackhuang.hmcl.util.sys.ProcessMonitor;
@@ -61,11 +63,12 @@ public class LaunchingUIDaemon {
             else {
                 if (LogWindow.INSTANCE.isVisible())
                     LogWindow.INSTANCE.setExit(() -> true);
-                MainFrame.INSTANCE.dispose();
+                HMCLApi.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(obj, LaunchingState.WaitingForGameLaunching));
             }
             // We promise that JavaProcessMonitor.tag is LauncherVisibility
             // See events below.
             ProcessMonitor monitor = new ProcessMonitor(p.getValue());
+            monitor.registerPrintlnEvent(PRINTLN);
             monitor.setTag(tag.launcherVisibility);
             monitor.start();
         });
@@ -103,7 +106,7 @@ public class LaunchingUIDaemon {
             noExitThisTime = true;
         });
     }
-    
+
     boolean noExitThisTime = false;
 
     void runGame(Profile profile) {
@@ -131,6 +134,15 @@ public class LaunchingUIDaemon {
         }, MainFrame.INSTANCE::failed, Settings.getInstance().getAuthenticator().getPassword());
     }
 
+    private static final Consumer<SimpleEvent<String>> PRINTLN = t -> {
+        LauncherVisibility l = ((LauncherVisibility) ((ProcessMonitor) t.getSource()).getTag());
+        if (t.getValue().contains("LWJGL Version: ") && l != LauncherVisibility.KEEP)
+            if (l != LauncherVisibility.HIDE_AND_REOPEN)
+                MainFrame.INSTANCE.dispose();
+            else
+                MainFrame.INSTANCE.setVisible(false);
+    };
+
     private static final Consumer<LaunchingStateChangedEvent> LAUNCHING_STATE_CHANGED = t -> {
         String message = null;
         switch (t.getValue()) {
@@ -145,6 +157,9 @@ public class LaunchingUIDaemon {
                 break;
             case DecompressingNatives:
                 message = "launch.state.decompressing_natives";
+                break;
+            case WaitingForGameLaunching:
+                message = "launch.state.waiting_launching";
                 break;
             case Done:
                 return;
@@ -162,7 +177,10 @@ public class LaunchingUIDaemon {
     };
 
     private void checkExit(LauncherVisibility v) {
-        if (v != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible() && !noExitThisTime) {
+        if (v == LauncherVisibility.HIDE_AND_REOPEN) {
+            HMCLog.log("Launcher will not exit now.");
+            MainFrame.INSTANCE.setVisible(true);
+        } else if (v != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible() && !noExitThisTime) {
             HMCLog.log("Launcher will exit now.");
             System.exit(0);
         } else {

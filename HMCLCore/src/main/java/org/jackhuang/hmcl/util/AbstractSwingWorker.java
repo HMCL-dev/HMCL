@@ -66,7 +66,7 @@ public abstract class AbstractSwingWorker<T> extends SwingWorker<Void, T> {
 
     final List<T> lastChunks = new ArrayList<>();
 
-    protected void send(T... t) {
+    public void send(T... t) {
         lastChunks.addAll(Arrays.asList(t));
         publish(t);
     }

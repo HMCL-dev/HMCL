@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui;
 
 import java.io.PrintStream;
-import javax.swing.JScrollBar;
 import javax.swing.SwingUtilities;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;

@@ -28,6 +28,8 @@ import org.jackhuang.hmcl.util.StrUtils;
 import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.util.log.Level;
 import org.jackhuang.hmcl.api.IProcess;
+import org.jackhuang.hmcl.api.event.SimpleEvent;
+import org.jackhuang.hmcl.api.func.Consumer;
 
 /**
  *
@@ -42,6 +44,11 @@ public class ProcessMonitor {
 
     public ProcessMonitor(IProcess p) {
         this.p = p;
+        inputThread = new ProcessThread(this, false);
+        errorThread = new ProcessThread(this, true);
+        inputThread.stopEvent.register(this::threadStopped);
+        inputThread.stopEvent.register(event -> processThreadStopped((ProcessThread) event.getSource()));
+        errorThread.stopEvent.register(this::threadStopped);
     }
 
     public IProcess getProcess() {
@@ -57,16 +64,17 @@ public class ProcessMonitor {
     public void setTag(Object tag) {
         this.tag = tag;
     }
+    
+    public void registerPrintlnEvent(Consumer<SimpleEvent<String>> c) {
+        inputThread.printlnEvent.register(c);
+        errorThread.printlnEvent.register(c);
+    }
 
     public void start() {
         MONITORS.add(this);
         HMCLApi.EVENT_BUS.fireChannel(new JavaProcessStartingEvent(this, p));
-        inputThread = new ProcessThread(p, false);
-        errorThread = new ProcessThread(p, true);
-        inputThread.stopEvent.register(this::threadStopped);
-        inputThread.stopEvent.register(event -> processThreadStopped((ProcessThread) event.getSource()));
-        errorThread.stopEvent.register(this::threadStopped);
         inputThread.start();
+        errorThread.start();
     }
 
     private void threadStopped() {
