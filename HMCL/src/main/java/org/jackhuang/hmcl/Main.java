@@ -53,13 +53,12 @@ import org.jackhuang.hmcl.util.log.layout.DefaultLayout;
 import org.jackhuang.hmcl.util.ui.MyRepaintManager;
 import org.jackhuang.hmcl.util.upgrade.IUpgrader;
 import org.jackhuang.hmcl.laf.BeautyEyeLNFHelper;
-import org.jackhuang.hmcl.util.sys.JavaProcess;
 
 /**
  *
  * @author huangyuhui
  */
-public final class Main implements Runnable {
+public final class Main {
 
     private static final X509TrustManager XTM = new X509TrustManager() {
         @Override
@@ -192,7 +191,6 @@ public final class Main implements Runnable {
             }
 
             LogWindow.INSTANCE.clean();
-            LogWindow.INSTANCE.setTerminateGame(new Main()::run);
 
             Settings.UPDATE_CHECKER.upgrade.register(IUpgrader.NOW_UPGRADER);
             Settings.UPDATE_CHECKER.process(false).reg(t -> Main.invokeUpdate()).execute();
@@ -212,12 +210,6 @@ public final class Main implements Runnable {
 
             MainFrame.showMainFrame();
         }
-    }
-
-    @Override
-    public void run() {
-        for (Process p : JavaProcess.processes)
-            p.destroy();
     }
 
     public static void invokeUpdate() {

@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui;
 import java.io.OutputStream;
 import java.util.Objects;
 import javax.swing.SwingUtilities;
-import org.jackhuang.hmcl.util.code.Charsets;
 import org.jackhuang.hmcl.util.log.Level;
 
 /**

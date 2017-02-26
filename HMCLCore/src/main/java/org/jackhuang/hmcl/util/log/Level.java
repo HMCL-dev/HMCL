@@ -50,7 +50,8 @@ public enum Level {
     public static final Pattern MINECRAFT_LOGGER = Pattern.compile("\\[(?<timestamp>[0-9:]+)\\] \\[[^/]+/(?<level>[^\\]]+)\\]");
     public static final String JAVA_SYMBOL = "([a-zA-Z_$][a-zA-Z\\d_$]*\\.)+[a-zA-Z_$][a-zA-Z\\d_$]*";
 
-    public static Level guessLevel(String line, Level level) {
+    public static Level guessLevel(String line, Level preLevel) {
+        Level level = preLevel;
         Matcher m = MINECRAFT_LOGGER.matcher(line);
         if (m.find()) {
             // New style logs from log4j
@@ -98,7 +99,7 @@ public enum Level {
             || line.matches("([a-zA-Z_$][a-zA-Z\\d_$]*\\.)+[a-zA-Z_$]?[a-zA-Z\\d_$]*(Exception|Error|Throwable)")
             || line.matches("... \\d+ more$"))
             return ERROR;
-        return level;
+        return preLevel.level < level.level ? preLevel : level;
     }
 
 }

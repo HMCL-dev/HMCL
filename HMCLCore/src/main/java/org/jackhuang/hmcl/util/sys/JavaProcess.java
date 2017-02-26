@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.util.sys;
 import org.jackhuang.hmcl.api.IProcess;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -28,7 +27,6 @@ import java.util.List;
  * @author huangyuhui
  */
 public class JavaProcess implements IProcess {
-    public static HashSet<Process> processes = new HashSet<>();
 
     private final List<String> commands;
     private final Process process;
@@ -37,7 +35,6 @@ public class JavaProcess implements IProcess {
     public JavaProcess(List<String> commands, Process process) {
         this.commands = commands;
         this.process = process;
-        processes.add(process);
     }
 
     public JavaProcess(String[] commands, Process process) {

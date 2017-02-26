@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.util.sys;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import org.jackhuang.hmcl.util.CollectionUtils;
 import org.jackhuang.hmcl.api.HMCLApi;
 import org.jackhuang.hmcl.api.event.process.JVMLaunchFailedEvent;
 import org.jackhuang.hmcl.api.event.process.JavaProcessExitedAbnormallyEvent;
@@ -36,7 +35,9 @@ import org.jackhuang.hmcl.api.IProcess;
  */
 public class ProcessMonitor {
 
-    private final HashSet<Thread> al = new HashSet<>();
+    public static final HashSet<ProcessMonitor> MONITORS = new HashSet<>();
+
+    ProcessThread inputThread, errorThread;
     private final IProcess p;
 
     public ProcessMonitor(IProcess p) {
@@ -46,7 +47,7 @@ public class ProcessMonitor {
     public IProcess getProcess() {
         return p;
     }
-    
+
     private Object tag;
 
     public Object getTag() {
@@ -56,36 +57,44 @@ public class ProcessMonitor {
     public void setTag(Object tag) {
         this.tag = tag;
     }
-    
+
     public void start() {
+        MONITORS.add(this);
         HMCLApi.EVENT_BUS.fireChannel(new JavaProcessStartingEvent(this, p));
-        ProcessThread a = new ProcessThread(p);
-        a.stopEvent.register(event -> {
-            HMCLog.log("Process exit code: " + p.getExitCode());
-            if (p.getExitCode() != 0 || StrUtils.containsOne(p.getStdOutLines(),
-                                                             Arrays.asList("Unable to launch"),
-                                                             x -> Level.guessLevel(x, Level.INFO).lessOrEqual(Level.ERROR)))
-                HMCLApi.EVENT_BUS.fireChannel(new JavaProcessExitedAbnormallyEvent(ProcessMonitor.this, p));
-            if (p.getExitCode() != 0 && StrUtils.containsOne(p.getStdOutLines(),
-                                                             Arrays.asList("Could not create the Java Virtual Machine.",
-                                                                           "Error occurred during initialization of VM",
-                                                                           "A fatal exception has occurred. Program will exit.",
-                                                                           "Unable to launch"),
-                                                             x -> Level.guessLevel(x, Level.INFO).lessOrEqual(Level.ERROR)))
-                HMCLApi.EVENT_BUS.fireChannel(new JVMLaunchFailedEvent(ProcessMonitor.this, p));
-            processThreadStopped((ProcessThread) event.getSource(), false);
-        });
-        a.start();
-        al.add(a);
+        inputThread = new ProcessThread(p, false);
+        errorThread = new ProcessThread(p, true);
+        inputThread.stopEvent.register(this::threadStopped);
+        inputThread.stopEvent.register(event -> processThreadStopped((ProcessThread) event.getSource()));
+        errorThread.stopEvent.register(this::threadStopped);
+        inputThread.start();
     }
 
-    void processThreadStopped(ProcessThread t1, boolean forceTermintate) {
-        CollectionUtils.removeIf(al, t -> t == t1 || !t.isAlive());
-        if (al.isEmpty() || forceTermintate) {
-            for (Thread a : al)
-                a.interrupt();
-            al.clear();
-            HMCLApi.EVENT_BUS.fireChannel(new JavaProcessStoppedEvent(this, p));
+    private void threadStopped() {
+        HMCLog.log("Process exit code: " + p.getExitCode());
+        if (p.getExitCode() != 0 || StrUtils.containsOne(p.getStdOutLines(),
+                Arrays.asList("Unable to launch"),
+                x -> Level.guessLevel(x, Level.INFO).lessOrEqual(Level.ERROR)))
+            HMCLApi.EVENT_BUS.fireChannel(new JavaProcessExitedAbnormallyEvent(ProcessMonitor.this, p));
+        if (p.getExitCode() != 0 && StrUtils.containsOne(p.getStdOutLines(),
+                Arrays.asList("Could not create the Java Virtual Machine.",
+                        "Error occurred during initialization of VM",
+                        "A fatal exception has occurred. Program will exit.",
+                        "Unable to launch"),
+                x -> Level.guessLevel(x, Level.INFO).lessOrEqual(Level.ERROR)))
+            HMCLApi.EVENT_BUS.fireChannel(new JVMLaunchFailedEvent(ProcessMonitor.this, p));
+    }
+
+    private void processThreadStopped(ProcessThread t1) {
+        MONITORS.remove(this);
+        errorThread.interrupt();
+        HMCLApi.EVENT_BUS.fireChannel(new JavaProcessStoppedEvent(this, p));
+    }
+
+    public static void stopAll() {
+        for (ProcessMonitor monitor : MONITORS) {
+            monitor.getProcess().getRawProcess().destroy();
+            monitor.inputThread.interrupt();
+            monitor.errorThread.interrupt();
         }
     }
 }

@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui;
 import java.io.File;
 import java.io.IOException;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.jackhuang.hmcl.api.HMCLApi;
 import org.jackhuang.hmcl.api.event.process.JVMLaunchFailedEvent;
 import org.jackhuang.hmcl.api.event.process.JavaProcessExitedAbnormallyEvent;
@@ -40,7 +41,6 @@ import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.util.DefaultPlugin;
 import org.jackhuang.hmcl.util.sys.FileUtils;
 import org.jackhuang.hmcl.util.sys.ProcessMonitor;
-import org.jackhuang.hmcl.util.net.WebFrame;
 
 /**
  *
@@ -89,29 +89,22 @@ public class LaunchingUIDaemon {
                     break;
                 }
             }
-            if (!LogWindow.INSTANCE.isVisible()) {
-                String msg = C.i18n("launch.exited_abnormally") + " exit code: " + exitCode;
-                if (errorText != null)
-                    msg += ", advice: " + MinecraftCrashAdvicer.getAdvice(FileUtils.readQuietly(new File(errorText)));
-                WebFrame f = new WebFrame(logs);
-                f.setModal(true);
-                f.setTitle(msg);
-                f.setVisible(true);
-            }
-            checkExit((LauncherVisibility) ((ProcessMonitor) event.getSource()).getTag());
+            String msg = C.i18n("launch.exited_abnormally") + " exit code: " + exitCode;
+            if (errorText != null)
+                msg += ", advice: " + MinecraftCrashAdvicer.getAdvice(FileUtils.readQuietly(new File(errorText)));
+            HMCLog.err(msg);
+            SwingUtilities.invokeLater(() -> LogWindow.INSTANCE.setVisible(true));
+            noExitThisTime = true;
         });
         HMCLApi.EVENT_BUS.channel(JVMLaunchFailedEvent.class).register(event -> {
             int exitCode = event.getValue().getExitCode();
             HMCLog.err("Cannot create jvm, exit code: " + exitCode);
-            if (!LogWindow.INSTANCE.isVisible()) {
-                WebFrame f = new WebFrame(event.getValue().getStdOutLines().toArray(new String[0]));
-                f.setModal(true);
-                f.setTitle(C.i18n("launch.cannot_create_jvm") + " exit code: " + exitCode);
-                f.setVisible(true);
-            }
-            checkExit((LauncherVisibility) ((ProcessMonitor) event.getSource()).getTag());
+            SwingUtilities.invokeLater(() -> LogWindow.INSTANCE.setVisible(true));
+            noExitThisTime = true;
         });
     }
+    
+    boolean noExitThisTime = false;
 
     void runGame(Profile profile) {
         MainFrame.INSTANCE.showMessage(C.i18n("ui.message.launching"));
@@ -168,12 +161,14 @@ public class LaunchingUIDaemon {
         }
     };
 
-    private static void checkExit(LauncherVisibility v) {
-        if (v != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible()) {
+    private void checkExit(LauncherVisibility v) {
+        if (v != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible() && !noExitThisTime) {
             HMCLog.log("Launcher will exit now.");
             System.exit(0);
-        } else
+        } else {
             HMCLog.log("Launcher will not exit now.");
+            noExitThisTime = false;
+        }
     }
 
     private static final Consumer<LaunchSucceededEvent> LAUNCH_SCRIPT_FINISHER = event -> {

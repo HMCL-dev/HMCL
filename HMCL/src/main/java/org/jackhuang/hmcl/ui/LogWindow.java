@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui;
 
 import java.io.PrintStream;
+import javax.swing.JScrollBar;
 import javax.swing.SwingUtilities;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
@@ -28,6 +29,7 @@ import org.jackhuang.hmcl.util.log.Level;
 import org.jackhuang.hmcl.api.func.NonFunction;
 import org.jackhuang.hmcl.util.DoubleOutputStream;
 import org.jackhuang.hmcl.util.Utils;
+import org.jackhuang.hmcl.util.sys.ProcessMonitor;
 import org.jackhuang.hmcl.util.ui.SwingUtils;
 
 /**
@@ -36,17 +38,13 @@ import org.jackhuang.hmcl.util.ui.SwingUtils;
  */
 public class LogWindow extends javax.swing.JFrame {
 
-    boolean movingEnd;
     NonFunction<Boolean> listener;
-    Runnable terminateGameListener;
 
     /**
      * Creates new form LogWindow
      */
     public LogWindow() {
         initComponents();
-
-        movingEnd = true;
 
         DoubleOutputStream out = new DoubleOutputStream(new LogWindowOutputStream(this, Level.INFO), System.out);
         System.setOut(new PrintStream(out));
@@ -79,7 +77,7 @@ public class LogWindow extends javax.swing.JFrame {
         btnMCF = new javax.swing.JButton();
         btnTerminateGame = new javax.swing.JButton();
         btnGitHub = new javax.swing.JButton();
-        jScrollPane2 = new javax.swing.JScrollPane();
+        pnlLog = new javax.swing.JScrollPane();
         txtLog = new javax.swing.JTextPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -148,7 +146,7 @@ public class LogWindow extends javax.swing.JFrame {
             }
         });
 
-        jScrollPane2.setViewportView(txtLog);
+        pnlLog.setViewportView(txtLog);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -157,7 +155,7 @@ public class LogWindow extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jScrollPane2)
+                    .addComponent(pnlLog)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(btnTieBa)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -183,7 +181,7 @@ public class LogWindow extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(lblCrash)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 356, Short.MAX_VALUE)
+                .addComponent(pnlLog, javax.swing.GroupLayout.DEFAULT_SIZE, 356, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnClear)
@@ -201,8 +199,8 @@ public class LogWindow extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCloseActionPerformed
-        if (listener != null && listener.apply() && terminateGameListener != null)
-            terminateGameListener.run();
+        if (listener != null && listener.apply())
+            terminateGames();
         SwingUtils.exitIfNoWindow(this, true);
     }//GEN-LAST:event_btnCloseActionPerformed
 
@@ -227,8 +225,7 @@ public class LogWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_btnMCFActionPerformed
 
     private void btnTerminateGameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTerminateGameActionPerformed
-        if (terminateGameListener != null)
-            terminateGameListener.run();
+        terminateGames();
     }//GEN-LAST:event_btnTerminateGameActionPerformed
 
     private void btnGitHubActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGitHubActionPerformed
@@ -236,10 +233,14 @@ public class LogWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_btnGitHubActionPerformed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-        if (listener != null && listener.apply() && terminateGameListener != null)
-            terminateGameListener.run();
+        if (listener != null && listener.apply())
+            terminateGames();
         SwingUtils.exitIfNoWindow(this);
     }//GEN-LAST:event_formWindowClosing
+
+    void terminateGames() {
+        ProcessMonitor.stopAll();
+    }
 
     public void log(final String status, final Level c) {
         SwingUtilities.invokeLater(() -> {
@@ -252,11 +253,6 @@ public class LogWindow extends javax.swing.JFrame {
             } catch (Exception ex) {
                 HMCLog.err("Failed to insert \"" + newStatus + "\" to " + d.getLength(), ex);
             }
-
-            if (movingEnd) {
-                int position = d.getLength();
-                txtLog.setCaretPosition(position);
-            }
         });
     }
 
@@ -264,20 +260,8 @@ public class LogWindow extends javax.swing.JFrame {
         this.listener = exit;
     }
 
-    public void setTerminateGame(Runnable l) {
-        this.terminateGameListener = l;
-    }
-
     public void clean() {
         txtLog.setText("");
-    }
-
-    public boolean getMovingEnd() {
-        return movingEnd;
-    }
-
-    public void setMovingEnd(boolean b) {
-        movingEnd = b;
     }
 
     @Override
@@ -316,8 +300,8 @@ public class LogWindow extends javax.swing.JFrame {
     private javax.swing.JButton btnMCF;
     private javax.swing.JButton btnTerminateGame;
     private javax.swing.JButton btnTieBa;
-    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel lblCrash;
+    private javax.swing.JScrollPane pnlLog;
     private javax.swing.JTextPane txtLog;
     // End of variables declaration//GEN-END:variables
 }

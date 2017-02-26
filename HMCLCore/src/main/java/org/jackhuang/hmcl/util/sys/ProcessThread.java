@@ -34,12 +34,14 @@ import org.jackhuang.hmcl.api.IProcess;
 public class ProcessThread extends Thread {
 
     IProcess p;
-    
+    boolean readError;
     public final EventHandler<SimpleEvent<String>> printlnEvent = new EventHandler<>();
     public final EventHandler<SimpleEvent<IProcess>> stopEvent = new EventHandler<>();
 
-    public ProcessThread(IProcess process) {
+    public ProcessThread(IProcess process, boolean readError) {
         p = process;
+        this.readError = readError;
+        setDaemon(readError);
     }
 
     public IProcess getProcess() {
@@ -51,7 +53,7 @@ public class ProcessThread extends Thread {
         setName("ProcessMonitor");
         BufferedReader br = null;
         try {
-            InputStream in = p.getRawProcess().getInputStream();
+            InputStream in = readError ? p.getRawProcess().getErrorStream() : p.getRawProcess().getInputStream();
             br = new BufferedReader(new InputStreamReader(in, Charsets.toCharset()));
 
             String line;
@@ -66,7 +68,6 @@ public class ProcessThread extends Thread {
                 System.out.println("MC: " + line);
                 p.getStdOutLines().add(line);
             }
-            JavaProcess.processes.remove(p.getRawProcess());
             stopEvent.fire(new SimpleEvent<>(this, p));
         } catch (IOException e) {
             HMCLog.err("An error occured when reading process stdout/stderr.", e);
