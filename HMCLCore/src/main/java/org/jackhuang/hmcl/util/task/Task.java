@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.task;
 
 import java.util.Collection;
+import org.jackhuang.hmcl.util.AbstractSwingWorker;
 
 /**
  *
@@ -27,7 +28,7 @@ public abstract class Task {
 
     /**
      * Run in a new thread(packed in TaskList).
-     * 
+     *
      * @param areDependTasksSucceeded Would be true if all of tasks which this task depends on have succeed.
      * @throws java.lang.Throwable If a task throws an exception, this task will be marked as `failed`.
      */
@@ -49,9 +50,9 @@ public abstract class Task {
     public boolean isAborted() {
         return aborted;
     }
-    
+
     protected boolean hidden = false;
-    
+
     public boolean isHidden() {
         return hidden;
     }
@@ -63,9 +64,10 @@ public abstract class Task {
 
     /**
      * This method can be only invoked by TaskList.
+     *
      * @param s what the `executeTask` throws.
      */
-    protected void setFailReason(Throwable s) {
+    protected void setFailReason(Exception s) {
         failReason = s;
     }
 
@@ -73,12 +75,13 @@ public abstract class Task {
 
     /**
      * For FileDownloadTask: info replacement.
-     * @return 
+     *
+     * @return
      */
     public String getTag() {
         return tag;
     }
-    
+
     public Task setTag(String tag) {
         this.tag = tag;
         return this;
@@ -105,7 +108,7 @@ public abstract class Task {
         return new DoubleTask(this, t);
     }
 
-    public void runWithException() throws Throwable {
+    public void runWithException() throws Exception {
         Collection<Task> c = getDependTasks();
         if (c != null)
             for (Task t : c)
@@ -115,5 +118,14 @@ public abstract class Task {
         if (c != null)
             for (Task t : c)
                 t.runWithException();
+    }
+
+    public void runAsync() {
+        new AbstractSwingWorker<Void>() {
+            @Override
+            protected void work() throws Exception {
+                runWithException();
+            }
+        }.execute();
     }
 }

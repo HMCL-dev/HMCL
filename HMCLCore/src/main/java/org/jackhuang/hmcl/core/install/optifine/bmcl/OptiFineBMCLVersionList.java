@@ -65,7 +65,7 @@ public class OptiFineBMCLVersionList extends InstallerVersionList {
             }
 
             @Override
-            public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
+            public void executeTask(boolean areDependTasksSucceeded) throws Exception {
                 String s = task.getResult();
 
                 versionMap = new HashMap<>();

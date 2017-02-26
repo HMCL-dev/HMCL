@@ -250,7 +250,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
             public void stateChanged(ChangeEvent e) {
                 if (tabVersionEdit.getSelectedComponent() == pnlAutoInstall && !b) {
                     b = true;
-                    TaskWindow.factory().execute(installerPanels[0].refreshVersionsTask());
+                    installerPanels[0].refreshVersions();
                 }
             }
         });

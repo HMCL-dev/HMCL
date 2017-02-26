@@ -86,7 +86,7 @@ public final class ModpackManager {
             Collection<Task> c = new ArrayList<>();
 
             @Override
-            public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
+            public void executeTask(boolean areDependTasksSucceeded) throws Exception {
                 String id = idFUCK;
                 String description = C.i18n("modpack.task.install.will");
 

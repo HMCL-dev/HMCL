@@ -75,7 +75,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
             }
 
             @Override
-            public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
+            public void executeTask(boolean areDependTasksSucceeded) throws Exception {
                 File vpath = new File(service.baseDirectory(), "versions/" + id);
                 if (!areDependTasksSucceeded) {
                     FileUtils.deleteDirectory(vpath);
@@ -131,7 +131,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
     public Task downloadMinecraftVersionJson(String id) {
         return new TaskInfo("Download Minecraft Json") {
             @Override
-            public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
+            public void executeTask(boolean areDependTasksSucceeded) throws Exception {
                 List<MinecraftRemoteVersion> versions = MinecraftRemoteVersions.getRemoteVersions(service.getDownloadType()).justDo();
                 MinecraftRemoteVersion currentVersion = null;
                 for (MinecraftRemoteVersion v : versions)

@@ -87,7 +87,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
             }
 
             @Override
-            public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
+            public void executeTask(boolean areDependTasksSucceeded) {
                 if (areDependTasksSucceeded) {
                     if (renamedFinal != null && !renamedFinal.delete())
                         HMCLog.warn("Failed to delete " + renamedFinal + ", maybe you should do it.");

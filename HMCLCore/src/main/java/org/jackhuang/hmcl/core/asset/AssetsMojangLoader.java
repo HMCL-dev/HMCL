@@ -61,7 +61,7 @@ public class AssetsMojangLoader extends IAssetsHandler {
             }
 
             @Override
-            public void executeTask(boolean areDependTasksSucceeded) throws Throwable {
+            public void executeTask(boolean areDependTasksSucceeded) throws Exception {
                 if (!areDependTasksSucceeded)
                     throw new IllegalStateException("Failed to get asset index");
                 String result = FileUtils.read(f);

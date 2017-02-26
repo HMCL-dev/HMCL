@@ -131,7 +131,7 @@ public class TaskList extends Thread {
         boolean flag = true;
         try {
             t.executeTask(areDependTasksSucceeded);
-        } catch (Throwable e) {
+        } catch (Exception e) {
             t.setFailReason(e);
             flag = false;
         }

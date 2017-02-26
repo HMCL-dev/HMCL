@@ -116,19 +116,19 @@ public class InstallerPanel extends Page {
     }//GEN-LAST:event_btnInstallActionPerformed
 
     private void btnRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefreshActionPerformed
-        TaskWindow.factory().execute(refreshVersionsTask());
+        refreshVersions();
     }//GEN-LAST:event_btnRefreshActionPerformed
 
     transient List<InstallerVersionList.InstallerVersion> versions;
     InstallerVersionList list;
     InstallerType id;
 
-    Task refreshVersionsTask() {
+    void refreshVersions() {
+        DefaultTableModel model = SwingUtils.clearDefaultTable(lstInstallers);
+        model.addRow(new Object[] { C.i18n("message.loading"), "", "" });
         Task t = list.refresh(new String[] { gsp.getMinecraftVersionFormatted() });
         if (t != null)
-            return t.with(new TaskRunnable(this::loadVersions));
-        else
-            return null;
+            t.with(new TaskRunnable(this::loadVersions)).runAsync();
     }
 
     public synchronized InstallerVersionList.InstallerVersion getVersion(int idx) {
@@ -143,7 +143,7 @@ public class InstallerPanel extends Page {
         }
         TaskWindow.factory()
                 .append(Settings.getLastProfile().service().install().download(Settings.getLastProfile().getSelectedVersion(), getVersion(idx), id))
-                .append(refreshVersionsTask())
+                .append(new TaskRunnable(() -> gsp.refreshVersions()))
                 .execute();
     }
 
@@ -158,6 +158,8 @@ public class InstallerPanel extends Page {
                     for (InstallerVersionList.InstallerVersion v : versions)
                         if (v != null)
                             model.addRow(new Object[] { v.selfVersion == null ? "null" : v.selfVersion, v.mcVersion == null ? "null" : v.mcVersion });
+                if (model.getRowCount() > 0)
+                    model.removeRow(0);
             }
         });
     }
@@ -168,7 +170,7 @@ public class InstallerPanel extends Page {
     public void onSelect(TopTabPage page) {
         super.onSelect(page);
         if (!refreshed) {
-            TaskWindow.factory().execute(refreshVersionsTask());
+            refreshVersions();
             refreshed = true;
         }
     }
