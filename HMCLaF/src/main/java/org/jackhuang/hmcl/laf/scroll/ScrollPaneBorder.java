@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.laf.widget.border.NinePatchBorder;
 public class ScrollPaneBorder extends NinePatchBorder {
 
     public ScrollPaneBorder() {
-        super(new Insets(6, 6, 8, 6),
+        super(new Insets(2, 2, 2, 2),
                  BEScrollBarUI.ICON_9.get("scroll_pane_border"));
     }
 }
