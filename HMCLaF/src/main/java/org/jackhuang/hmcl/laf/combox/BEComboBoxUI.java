@@ -183,7 +183,7 @@ public class BEComboBoxUI extends BasicComboBoxUI
         } else if (isPopupVisible(comboBox)) {
             state = State.PRESSED;
         } else if (mouseInside) {
-            state = State.HOT;
+            state = State.ROLLOVER;
         }
         return state;
     }
@@ -198,7 +198,7 @@ public class BEComboBoxUI extends BasicComboBoxUI
             case DISABLED:
                 key = "disabled";
                 break;
-            case HOT:
+            case ROLLOVER:
                 key = "rollover";
                 break;
             case NORMAL:

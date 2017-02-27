@@ -101,7 +101,7 @@ public class AnimationController implements ActionListener, PropertyChangeListen
             if (newState == State.DEFAULTED)
                 // it seems for DEFAULTED button state Vista does animation from
                 // HOT
-                oldState = State.HOT;
+                oldState = State.ROLLOVER;
             if (oldState != null) {
                 long duration;
                 //if (newState == State.DEFAULTED) {

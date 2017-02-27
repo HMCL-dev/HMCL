@@ -24,8 +24,13 @@ import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicScrollBarUI;
+import org.jackhuang.hmcl.laf.button.BEButtonUI;
+import org.jackhuang.hmcl.laf.utils.AnimationController;
 
 import org.jackhuang.hmcl.laf.utils.Icon9Factory;
+import org.jackhuang.hmcl.laf.utils.Skin;
+import org.jackhuang.hmcl.laf.utils.TMSchema;
+import org.jackhuang.hmcl.laf.utils.TMSchema.State;
 import org.jackhuang.hmcl.util.ui.GraphicsUtils;
 
 /**
@@ -37,7 +42,7 @@ import org.jackhuang.hmcl.util.ui.GraphicsUtils;
  * @version 1.0
  * @see com.sun.java.swing.plaf.windows.WindowsScrollBarUI
  */
-public class BEScrollBarUI extends BasicScrollBarUI {
+public class BEScrollBarUI extends BasicScrollBarUI implements Skin {
 
     public static final Icon9Factory ICON_9 = new Icon9Factory("scroll_bar");
 
@@ -68,7 +73,7 @@ public class BEScrollBarUI extends BasicScrollBarUI {
      * up/down. It differs from BasicArrowButton in that the preferred size is
      * always a square.
      */
-    protected class BEArrowButton extends BasicArrowButton {
+    protected class BEArrowButton extends BasicArrowButton implements Skin {
 
         /**
          * Instantiates a new windows arrow button.
@@ -91,7 +96,6 @@ public class BEScrollBarUI extends BasicScrollBarUI {
         @Override
         public void paint(Graphics g) {
             Graphics2D g2 = (Graphics2D) g;
-            String id = "arrow";
             switch (direction) {
                 case NORTH:
                     break;
@@ -108,8 +112,7 @@ public class BEScrollBarUI extends BasicScrollBarUI {
                     g2.rotate(Math.PI / 2);
                     break;
             }
-            ICON_9.getWithScrollState(id, getModel().isPressed(), getModel().isRollover())
-                    .draw(g2, 0, 0, getWidth(), getHeight());
+            AnimationController.paintSkin(this, this, g, 0, 0, getWidth(), getHeight(), BEButtonUI.getXPButtonState(this));
         }
 
         @Override
@@ -127,6 +130,16 @@ public class BEScrollBarUI extends BasicScrollBarUI {
                 size = Math.max(size, 5);
             }
             return new Dimension(size, size);
+        }
+
+        @Override
+        public void paintSkinRaw(Graphics g, int x, int y, int w, int h, TMSchema.State state) {
+            ICON_9.get("arrow", state.toString()).draw((Graphics2D) g, x, y, w, h);
+        }
+
+        @Override
+        public TMSchema.Part getPart(JComponent c) {
+            return TMSchema.Part.SBP_ARROWBTN;
         }
     }
     //----------------------------------------------------------------------------------- END
@@ -148,10 +161,21 @@ public class BEScrollBarUI extends BasicScrollBarUI {
     protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
         if (thumbBounds.isEmpty() || !scrollbar.isEnabled())
             return;
-        Color color = GraphicsUtils.getWebColor(isDragging ? "#616161" : isThumbRollover() ? "#919191" : "#C2C2C2");
-        g.setColor(color);
-        g.fillRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height);
+        AnimationController.paintSkin(c, this, g, thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, isDragging ? State.PRESSED : isThumbRollover() ? State.ROLLOVER : State.NORMAL);
     }
+
+    @Override
+    public void paintSkinRaw(Graphics g, int x, int y, int w, int h, State state) {
+        Color color = GraphicsUtils.getWebColor(state == State.PRESSED ? "#616161" : state == State.ROLLOVER ? "#919191" : "#C2C2C2");
+        g.setColor(color);
+        g.fillRect(x, y, w, h);
+    }
+
+    @Override
+    public TMSchema.Part getPart(JComponent c) {
+        return TMSchema.Part.SBP_THUMBBTNHORZ;
+    }
+    
     //----------------------------------------------------------------------------------- END
 
 }

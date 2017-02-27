@@ -203,32 +203,6 @@ public class BEButtonUI extends BasicButtonUI implements Skin {
                 dh -= (insets.top + insets.bottom);
             }
 
-            /*if (toolbar)
-                //此状态下JToggleButton和JButton使用各自的背景实现，2012-10-16前无论是不是JToggleButton都是使用该种实是不太合理的
-                if (model.isRollover() || model.isPressed())
-                    if (c instanceof JToggleButton)
-                        BEToggleButtonUI.ICON_9.get("rollover").draw((Graphics2D) g, dx, dy, dw, dh);
-                    else
-                        ICON_9.get("pressed").draw((Graphics2D) g, dx, dy, dw, dh);
-                else if (model.isSelected())
-                    BEToggleButtonUI.ICON_9.get("selected").draw((Graphics2D) g, dx, dy, dw, dh);
-                else {
-                    //TODO 其它状态下的按钮背景样式需要完善，要不然看起来太硬！
-//					skin.paintSkin(g, dx, dy, dw, dh, state);
-                }
-            else {
-                //TODO 其它状态下的按钮背景样式需要完善，要不然看起来太硬！
-                String key;
-                if (model.isArmed() && model.isPressed() || model.isSelected())
-                    key = "pressed";
-                else if (!model.isEnabled())
-                    key = "disabled";
-                else if (model.isRollover())
-                    key = "rollover";
-                else
-                    key = "normal";
-                ICON_9.get(key).draw((Graphics2D) g, dx, dy, dw, dh);
-            }*/
             AnimationController.paintSkin(c, INSTANCE, g, dx, dy, dw, dh, getXPButtonState(b));
         }
     }
@@ -247,7 +221,7 @@ public class BEButtonUI extends BasicButtonUI implements Skin {
         return toolbar ? Part.TP_BUTTON : Part.BP_PUSHBUTTON;
     }
 
-    static State getXPButtonState(AbstractButton b) {
+    public static State getXPButtonState(AbstractButton b) {
         Part part = getXPButtonType(b);
         ButtonModel model = b.getModel();
         State state = State.NORMAL;
@@ -276,13 +250,13 @@ public class BEButtonUI extends BasicButtonUI implements Skin {
                     else if (!model.isEnabled())
                         state = State.DISABLED;
                     else if (model.isSelected() && model.isRollover())
-                        state = State.HOTCHECKED;
+                        state = State.ROLLOVERCHECKED;
                     else if (model.isSelected())
                         state = State.CHECKED;
                     else if (model.isRollover())
-                        state = State.HOT;
+                        state = State.ROLLOVER;
                     else if (b.hasFocus())
-                        state = State.HOT;
+                        state = State.ROLLOVER;
                 } else
                     if ((model.isArmed() && model.isPressed())
                             || model.isSelected())
@@ -290,7 +264,7 @@ public class BEButtonUI extends BasicButtonUI implements Skin {
                     else if (!model.isEnabled())
                         state = State.DISABLED;
                     else if (model.isRollover() || model.isPressed())
-                        state = State.HOT;
+                        state = State.ROLLOVER;
                     else if (b instanceof JButton
                             && ((JButton) b).isDefaultButton())
                         state = State.DEFAULTED;
@@ -304,27 +278,7 @@ public class BEButtonUI extends BasicButtonUI implements Skin {
 
     @Override
     public void paintSkinRaw(Graphics g, int dx, int dy, int dw, int dh, TMSchema.State state) {
-        String key;
-        switch (state) {
-            case SELECTED:
-                key = "selected";
-                break;
-            case PRESSED:
-                key = "pressed";
-                break;
-            case DISABLED:
-                key = "disabled";
-                break;
-            case HOT:
-                key = "rollover";
-                break;
-            case NORMAL:
-                key = "normal";
-                break;
-            default:
-                return;
-        }
-        ICON_9.get(key).draw((Graphics2D) g, dx, dy, dw, dh);
+        ICON_9.get(state.toString()).draw((Graphics2D) g, dx, dy, dw, dh);
     }
 
     /**

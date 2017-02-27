@@ -136,7 +136,7 @@ public class Icon9Factory extends RawCache<NinePatch> {
         put("toggle_button", "selected", "toggle_button_selected");
         put("toggle_button", "rollover", "toggle_button_rover");
 
-        put("scroll_bar", "arrow", "arrow");
+        put("scroll_bar", "arrow_normal", "arrow");
         put("scroll_bar", "arrow_rollover", "arrow_rover");
         put("scroll_bar", "arrow_pressed", "arrow_pressed");
         put("scroll_bar", "scroll_pane_border", "scroll_pane_bg1");
