@@ -37,7 +37,11 @@ import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.plaf.basic.ComboPopup;
+import org.jackhuang.hmcl.laf.utils.AnimationController;
 import org.jackhuang.hmcl.laf.utils.Icon9Factory;
+import org.jackhuang.hmcl.laf.utils.Skin;
+import org.jackhuang.hmcl.laf.utils.TMSchema;
+import org.jackhuang.hmcl.laf.utils.TMSchema.State;
 
 /**
  * JComboBox的UI实现类.
@@ -47,7 +51,7 @@ import org.jackhuang.hmcl.laf.utils.Icon9Factory;
  * @see com.sun.java.swing.plaf.windows.WindowsComboBoxUI
  */
 public class BEComboBoxUI extends BasicComboBoxUI
-        implements org.jackhuang.hmcl.laf.BeautyEyeLNFHelper.__UseParentPaintSurported, MouseListener {
+        implements org.jackhuang.hmcl.laf.BeautyEyeLNFHelper.__UseParentPaintSurported, MouseListener, Skin {
 
     private static final Icon9Factory ICON_9 = new Icon9Factory("combo");
     private static final Dimension BTN_SIZE = new Dimension(17, 20);
@@ -164,9 +168,49 @@ public class BEComboBoxUI extends BasicComboBoxUI
      */
     @Override
     public void paintCurrentValueBackground(Graphics g, Rectangle bounds, boolean hasFocus) {
-        ICON_9.getWithComboState("", comboBox.isEnabled(), mouseDown, mouseInside)
-                .draw((Graphics2D) g, bounds.x, bounds.y, bounds.width, bounds.height);
+        AnimationController.paintSkin(comboBox, this, g, bounds.x, bounds.y, bounds.width, bounds.height, getXPComboBoxState(comboBox));
     }
+
+    @Override
+    public TMSchema.Part getPart(JComponent c) {
+        return TMSchema.Part.CP_COMBOBOX;
+    }
+    
+    State getXPComboBoxState(JComponent c) {
+        State state = State.NORMAL;
+        if (!c.isEnabled()) {
+            state = State.DISABLED;
+        } else if (isPopupVisible(comboBox)) {
+            state = State.PRESSED;
+        } else if (mouseInside) {
+            state = State.HOT;
+        }
+        return state;
+    }
+    
+    @Override
+    public void paintSkinRaw(Graphics g, int x, int y, int w, int h, TMSchema.State state) {
+        String key;
+        switch (state) {
+            case PRESSED:
+                key = "pressed";
+                break;
+            case DISABLED:
+                key = "disabled";
+                break;
+            case HOT:
+                key = "rollover";
+                break;
+            case NORMAL:
+                key = "normal";
+                break;
+            default:
+                return;
+        }
+        ICON_9.get(key).draw((Graphics2D) g, x, y, w, h);
+    }
+    
+    
 
     //* copy from BasicComboBoxUI and modified by jb2011
     /**

@@ -17,14 +17,13 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
-import java.awt.Rectangle;
 
 import javax.swing.AbstractButton;
 import javax.swing.ButtonModel;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JRadioButton;
-import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.LookAndFeel;
 import javax.swing.UIManager;
@@ -36,9 +35,13 @@ import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicButtonUI;
 import javax.swing.text.JTextComponent;
-import org.jackhuang.hmcl.laf.BEUtils;
+import org.jackhuang.hmcl.laf.utils.AnimationController;
 
 import org.jackhuang.hmcl.laf.utils.Icon9Factory;
+import org.jackhuang.hmcl.laf.utils.Skin;
+import org.jackhuang.hmcl.laf.utils.TMSchema;
+import org.jackhuang.hmcl.laf.utils.TMSchema.Part;
+import org.jackhuang.hmcl.laf.utils.TMSchema.State;
 
 /**
  * JButton的UI实现类.
@@ -47,7 +50,7 @@ import org.jackhuang.hmcl.laf.utils.Icon9Factory;
  * @version 1.0
  * @see com.sun.java.swing.plaf.windows.WindowsButtonUI
  */
-public class BEButtonUI extends BasicButtonUI {
+public class BEButtonUI extends BasicButtonUI implements Skin {
 
     private static final Icon9Factory ICON_9 = new Icon9Factory("button");
 
@@ -131,29 +134,6 @@ public class BEButtonUI extends BasicButtonUI {
     }
 
     // ********************************
-    //         Paint Methods
-    // ********************************
-    @Override
-    protected void paintFocus(Graphics g, AbstractButton b, Rectangle viewRect, Rectangle textRect, Rectangle iconRect) {
-        // focus painted same color as text on Basic??
-        int width = b.getWidth();
-        int height = b.getHeight();
-        g.setColor(getFocusColor());
-
-        //** modified by jb2011：绘制虚线方法改成可以设置虚线步进的方法，步进设为2则更好看一点
-//		BasicGraphicsUtils.drawDashedRect(g, dashedRectGapX, dashedRectGapY,
-//				width - dashedRectGapWidth, height - dashedRectGapHeight);
-        // 绘制虚线框
-        BEUtils.drawDashedRect(g, dashedRectGapX, dashedRectGapY,
-                width - dashedRectGapWidth, height - dashedRectGapHeight);
-        // 绘制虚线框的半透明白色立体阴影（半透明的用处在于若隐若现的效果比纯白要来的柔和的多）
-        g.setColor(new Color(255, 255, 255, 50));
-        // 立体阴影就是向右下偏移一个像素实现的
-        BEUtils.drawDashedRect(g, dashedRectGapX + 1, dashedRectGapY + 1,
-                width - dashedRectGapWidth, height - dashedRectGapHeight);
-    }
-
-    // ********************************
     //          Layout Methods
     // ********************************
     @Override
@@ -223,7 +203,7 @@ public class BEButtonUI extends BasicButtonUI {
                 dh -= (insets.top + insets.bottom);
             }
 
-            if (toolbar)
+            /*if (toolbar)
                 //此状态下JToggleButton和JButton使用各自的背景实现，2012-10-16前无论是不是JToggleButton都是使用该种实是不太合理的
                 if (model.isRollover() || model.isPressed())
                     if (c instanceof JToggleButton)
@@ -248,8 +228,103 @@ public class BEButtonUI extends BasicButtonUI {
                 else
                     key = "normal";
                 ICON_9.get(key).draw((Graphics2D) g, dx, dy, dw, dh);
-            }
+            }*/
+            AnimationController.paintSkin(c, INSTANCE, g, dx, dy, dw, dh, getXPButtonState(b));
         }
+    }
+
+    @Override
+    public Part getPart(JComponent c) {
+        return getXPButtonType((AbstractButton) c);
+    }
+
+    static Part getXPButtonType(AbstractButton b) {
+        if (b instanceof JCheckBox)
+            return Part.BP_CHECKBOX;
+        if (b instanceof JRadioButton)
+            return Part.BP_RADIOBUTTON;
+        boolean toolbar = (b.getParent() instanceof JToolBar);
+        return toolbar ? Part.TP_BUTTON : Part.BP_PUSHBUTTON;
+    }
+
+    static State getXPButtonState(AbstractButton b) {
+        Part part = getXPButtonType(b);
+        ButtonModel model = b.getModel();
+        State state = State.NORMAL;
+        switch (part) {
+            case BP_RADIOBUTTON:
+            case BP_CHECKBOX:
+                if (!model.isEnabled())
+                    state = (model.isSelected()) ? State.CHECKEDDISABLED
+                            : State.UNCHECKEDDISABLED;
+                else if (model.isPressed() && model.isArmed())
+                    state = (model.isSelected()) ? State.CHECKEDPRESSED
+                            : State.UNCHECKEDPRESSED;
+                else if (model.isRollover())
+                    state = (model.isSelected()) ? State.CHECKEDHOT
+                            : State.UNCHECKEDHOT;
+                else
+                    state = (model.isSelected()) ? State.CHECKEDNORMAL
+                            : State.UNCHECKEDNORMAL;
+                break;
+            case BP_PUSHBUTTON:
+            case TP_BUTTON:
+                boolean toolbar = (b.getParent() instanceof JToolBar);
+                if (toolbar) {
+                    if (model.isArmed() && model.isPressed())
+                        state = State.PRESSED;
+                    else if (!model.isEnabled())
+                        state = State.DISABLED;
+                    else if (model.isSelected() && model.isRollover())
+                        state = State.HOTCHECKED;
+                    else if (model.isSelected())
+                        state = State.CHECKED;
+                    else if (model.isRollover())
+                        state = State.HOT;
+                    else if (b.hasFocus())
+                        state = State.HOT;
+                } else
+                    if ((model.isArmed() && model.isPressed())
+                            || model.isSelected())
+                        state = State.PRESSED;
+                    else if (!model.isEnabled())
+                        state = State.DISABLED;
+                    else if (model.isRollover() || model.isPressed())
+                        state = State.HOT;
+                    else if (b instanceof JButton
+                            && ((JButton) b).isDefaultButton())
+                        state = State.DEFAULTED;
+                break;
+            default:
+                state = State.NORMAL;
+        }
+
+        return state;
+    }
+
+    @Override
+    public void paintSkinRaw(Graphics g, int dx, int dy, int dw, int dh, TMSchema.State state) {
+        String key;
+        switch (state) {
+            case SELECTED:
+                key = "selected";
+                break;
+            case PRESSED:
+                key = "pressed";
+                break;
+            case DISABLED:
+                key = "disabled";
+                break;
+            case HOT:
+                key = "rollover";
+                break;
+            case NORMAL:
+                key = "normal";
+                break;
+            default:
+                return;
+        }
+        ICON_9.get(key).draw((Graphics2D) g, dx, dy, dw, dh);
     }
 
     /**

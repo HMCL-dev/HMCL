@@ -149,10 +149,8 @@ public class TranslucentPopupFactory extends PopupFactory {
             Component c = getComponent();
             Window window = SwingUtilities.getWindowAncestor(c);
 
-            if (c instanceof JWindow) {
+            if (c instanceof JWindow)
                 ((Window) c).dispose();
-                c = null;
-            }
             // If our parent is a DefaultFrame, we need to dispose it, too.
             if (window instanceof DefaultFrame)
                 window.dispose();
