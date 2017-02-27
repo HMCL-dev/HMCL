@@ -9,7 +9,7 @@
  * WindowTranslucencyHelper.java at 2015-2-1 20:25:40, original version by Jack Jiang.
  * You can contact author with jb2011@163.com.
  */
-package org.jackhuang.hmcl.laf;
+package org.jackhuang.hmcl.laf.utils;
 
 import java.awt.Color;
 import java.awt.GraphicsDevice;

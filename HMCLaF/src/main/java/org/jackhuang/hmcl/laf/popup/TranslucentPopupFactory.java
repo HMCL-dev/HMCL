@@ -32,7 +32,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicComboPopup;
 import org.jackhuang.hmcl.laf.scroll.BEScrollBarUI;
 import org.jackhuang.hmcl.laf.utils.Icon9Factory;
-import org.jackhuang.hmcl.laf.WindowTranslucencyHelper;
+import org.jackhuang.hmcl.laf.utils.WindowTranslucencyHelper;
 import org.jackhuang.hmcl.laf.widget.ImageBgPanel;
 
 /**
@@ -183,10 +183,12 @@ public class TranslucentPopupFactory extends PopupFactory {
                 //如果contents是BasicComboPopup或其子类那当前就应该是用于下拉框的弹出列表罗
                 boolean isComboBoxPopup = (contents instanceof BasicComboPopup);
 
-                //每像素透明
-                WindowTranslucencyHelper.setWindowOpaque(w, false);
-                //内容组件半透明
-                w.setOpacity(isTooltip ? 1.0f : isComboBoxPopup ? 0.95f : 0.95f);//0.85f : 0.95f);//0.8f : 0.95f);
+                if (WindowTranslucencyHelper.isTranslucencySupported()) {
+                    //每像素透明
+                    WindowTranslucencyHelper.setWindowOpaque(w, false);
+                    //内容组件半透明
+                    w.setOpacity(isTooltip ? 1.0f : isComboBoxPopup ? 0.95f : 0.95f);//0.85f : 0.95f);//0.8f : 0.95f);
+                }
 
 //				component.getContentPane().add(contents, BorderLayout.CENTER);
 //				contents.invalidate();

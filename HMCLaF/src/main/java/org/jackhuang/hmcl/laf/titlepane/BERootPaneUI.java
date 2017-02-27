@@ -49,7 +49,7 @@ import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicRootPaneUI;
 
 import org.jackhuang.hmcl.laf.BeautyEyeLNFHelper;
-import org.jackhuang.hmcl.laf.WindowTranslucencyHelper;
+import org.jackhuang.hmcl.laf.utils.WindowTranslucencyHelper;
 
 /**
  * 窗体的UI实现.
@@ -315,7 +315,7 @@ public class BERootPaneUI extends BasicRootPaneUI {
         //* 窗口透明了，那么如果你的程序其它地方需要窗口透明的话，自行.setWindowOpaque(..)
         //* 就行了，由开发者自先决定，此处就不承载过多的要求了
         if (!BeautyEyeLNFHelper.isFrameBorderOpaque()
-                && window != null) {
+                && window != null && WindowTranslucencyHelper.isTranslucencySupported()) {
             //** 20111222 by jb2011，让窗口全透明（用以实现窗口的透明边框效果）
 //			AWTUtilities.setWindowOpaque(window, false);
             // TODO BUG：1）目前可知，在jdk1.7.0_u6下，JDialog的半透明边框的透明度比原设计深一倍
