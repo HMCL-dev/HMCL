@@ -11,7 +11,6 @@
  */
 package org.jackhuang.hmcl.laf.textcoms;
 
-import java.awt.Color;
 import java.awt.Graphics;
 
 import javax.swing.JComponent;
@@ -21,6 +20,7 @@ import javax.swing.plaf.basic.BasicPasswordFieldUI;
 import javax.swing.text.JTextComponent;
 
 import org.jackhuang.hmcl.laf.textcoms.__UI__.BgSwitchable;
+import org.jackhuang.hmcl.laf.utils.TMSchema;
 
 /**
  * 文本组件JPasswordField的UI实现类.
@@ -71,25 +71,24 @@ public class BEPasswordFieldUI extends BasicPasswordFieldUI implements BgSwitcha
         if (!isUseParentPaint()) {
             //用新的NP图实现真正的背景填充
             JTextComponent editor = this.getComponent();
-            BETextFieldUI.paintBg(g, 0, 0, editor.getWidth(), editor.getHeight(),
-                    editor.isEnabled(), border);
+            __UI__.TextSkin.paintBg(editor, g, 0, 0, editor.getWidth(), editor.getHeight(), state);
         }
     }
 
     @Override
     public void switchBgToNormal() {
-        border = __UI__.BORDER_NORMAL;
+        state = TMSchema.State.NORMAL;
     }
 
     @Override
     public void switchBgToFocused() {
-        border = __UI__.border_focused();
+        state = TMSchema.State.FOCUSED;
     }
 
     @Override
     public void switchBgToOver() {
-        border = __UI__.BORDER_OVER;
+        state = TMSchema.State.ROLLOVER;
     }
-    
-    Color border = __UI__.BORDER_NORMAL;
+
+    TMSchema.State state = TMSchema.State.NORMAL;
 }

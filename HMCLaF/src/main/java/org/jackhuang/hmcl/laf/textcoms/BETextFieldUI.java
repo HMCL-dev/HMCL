@@ -11,7 +11,6 @@
  */
 package org.jackhuang.hmcl.laf.textcoms;
 
-import java.awt.Color;
 import java.awt.Graphics;
 
 import javax.swing.JComponent;
@@ -20,6 +19,7 @@ import javax.swing.plaf.basic.BasicTextFieldUI;
 import javax.swing.text.JTextComponent;
 
 import org.jackhuang.hmcl.laf.textcoms.__UI__.BgSwitchable;
+import org.jackhuang.hmcl.laf.utils.TMSchema;
 
 /**
  * 文本组件JTextField的UI实现类.
@@ -61,23 +61,6 @@ public class BETextFieldUI extends BasicTextFieldUI implements BgSwitchable,
      */
     @Override
     protected void paintBackground(Graphics g) {
-//    	Color bgc = editor.getBackground();
-//        g.setColor(bgc);
-//        //先填 充背景
-//        g.fillRect(0, 0, editor.getWidth(), editor.getHeight());
-//        
-//        //(1) ---- 仿Numbus文本框效果
-//        //** top立体效果实现
-//        //第(0,0)开始的第一条线会被后来的border覆盖掉的，所以此处绘制没有意义，不搞了
-////        g.setColor(new Color(0,0,0));
-////        g.drawLine(0, 0, editor.getWidth(), 0);
-//        //第2条线颜色淡一点
-//        g.setColor(new Color(208,208,208));
-//        g.drawLine(0, 1, editor.getWidth(), 1);
-//        //第3条线颜色更淡一点
-//        g.setColor(new Color(231,231,225));
-//        g.drawLine(0, 2, editor.getWidth(), 2);
-
         //先调用父类方法把背景刷新下（比如本UI里使用的大圆角NP图如不先刷新背景则会因上下拉动滚动条
         //而致4个圆角位置得不到刷新，从而影响视觉效果（边角有前面的遗留），置于透明边角不被透明像素填
         //充的问题，它有可能是Android的NinePatch技术为了性能做作出的优化——一切全透明像素即意味着不需绘制）
@@ -87,101 +70,26 @@ public class BETextFieldUI extends BasicTextFieldUI implements BgSwitchable,
         if (!isUseParentPaint()) {
             //用新的NP图实现真正的背景填充
             JTextComponent editor = this.getComponent();
-            BETextFieldUI.paintBg(g, 0, 0, editor.getWidth(), editor.getHeight(),
-                    editor.isEnabled(), border);
+            __UI__.TextSkin.paintBg(editor, g, 0, 0, editor.getWidth(), editor.getHeight(), state);
         }
-
-//    	if(this.getComponent().isEnabled())
-//	    	//*** 重要说明：因使用的NinePatch图片作填充背景，所以后绪任何对JTextField设置
-//	    	//*** 背景色将不会起效，因为背景是用图片填充而非传统方法绘制出来的
-//	    	bg.draw((Graphics2D)g, 0, 0, editor.getWidth(), editor.getHeight());
-//    	else
-//    		__Icon9Factory__.getInstance().getTextFieldBgDisabled()
-//    			.draw((Graphics2D)g, 0, 0, editor.getWidth(), editor.getHeight());
-////      //(2) ---- 仿360软件管家文本框效果（不太好看）
-//        //** top立体效果实现
-//        //第(0,0)开始的第一条线会被后来的border覆盖掉的，所以此处绘制没有意义，不搞了
-////        g.setColor(new Color(0,0,0));
-////        g.drawLine(0, 0, editor.getWidth(), 0);
-//        //第2条线颜色淡一点
-//        g.setColor(new Color(232,232,232));
-//        g.drawLine(1, 1, editor.getWidth()-1, 1);
-//        //第3条线颜色更淡一点
-//        g.setColor(new Color(241,241,241));
-//        g.drawLine(1, 2, editor.getWidth()-1, 2);
-//        //第4条线颜色更淡一点
-//        g.setColor(new Color(248,248,248));
-//        g.drawLine(1, 3, editor.getWidth()-1, 3);
-//        //第5条线颜色更淡一点
-//        g.setColor(new Color(252,252,252));
-//        g.drawLine(1, 4, editor.getWidth()-1, 4);
-//        
-//        //** left
-//        //第2条线颜色淡一点
-//        g.setColor(new Color(241,241,241));
-//        g.drawLine(1, 1, 1, editor.getHeight()-1);
-//        //第3条线颜色淡一点
-//        g.setColor(new Color(248,248,248));
-//        g.drawLine(2, 1, 2, editor.getHeight()-1);
-//        //第4条线颜色淡一点
-//        g.setColor(new Color(253,253,253));
-//        g.drawLine(3, 1, 3, editor.getHeight()-1);
-//        
-//        //** right
-//        //第2条线颜色淡一点
-//        g.setColor(new Color(241,241,241));
-//        g.drawLine(editor.getWidth()-1, 1, editor.getWidth()-1, editor.getHeight()-1);
-//        //第3条线颜色淡一点
-//        g.setColor(new Color(248,248,248));
-//        g.drawLine(editor.getWidth()-2, 1, editor.getWidth()-2, editor.getHeight()-1);
-//        //第4条线颜色淡一点
-//        g.setColor(new Color(253,253,253));
-//        g.drawLine(editor.getWidth()-3, 1, editor.getWidth()-3, editor.getHeight()-1);
-//        
-//        //** bottom
-//        //第2条线颜色淡一点
-//        g.setColor(new Color(248,248,248));
-//        g.drawLine(1, editor.getHeight()-1, editor.getWidth()-1, editor.getHeight()-1);
-//        //第3条线颜色淡一点
-//        g.setColor(new Color(252,252,252));
-//        g.drawLine(1, editor.getHeight()-2, editor.getWidth()-1, editor.getHeight()-2);
     }
 
     @Override
     public void switchBgToNormal() {
-        border = __UI__.BORDER_NORMAL;
+        state = TMSchema.State.NORMAL;
     }
 
     @Override
     public void switchBgToFocused() {
-        border = __UI__.border_focused();
+        state = TMSchema.State.FOCUSED;
     }
 
     @Override
     public void switchBgToOver() {
-        border = __UI__.BORDER_OVER;
+        state = TMSchema.State.ROLLOVER;
     }
 
-    Color border = __UI__.BORDER_NORMAL;
-
-    /**
-     * Paint bg.
-     *
-     * @param g the g
-     * @param x the x
-     * @param y the y
-     * @param w the w
-     * @param h the h
-     * @param enabled the enabled
-     * @param bg the bg
-     */
-    public static void paintBg(Graphics g, int x, int y, int w, int h,
-            boolean enabled, Color border) {
-        g.setColor(enabled ? border : __UI__.BORDER_DISABLED);
-        g.fillRect(x, y, w, h);
-        g.setColor(Color.white);
-        g.fillRect(x + 2, y + 2, w - 4, h - 4);
-    }
+    TMSchema.State state = TMSchema.State.NORMAL;
 
     /**
      * 为组件添加焦点监听器（获得/取消焦点时可以自动设置/取消一个彩色的边框效果，以体高UI体验） 、右键菜单监听器（有复制/粘贴等功能）.

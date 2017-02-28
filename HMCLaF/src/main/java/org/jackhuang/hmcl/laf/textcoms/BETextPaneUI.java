@@ -11,14 +11,10 @@
  */
 package org.jackhuang.hmcl.laf.textcoms;
 
-import java.awt.Color;
-import java.awt.Graphics;
-
 import javax.swing.JComponent;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicTextPaneUI;
-import javax.swing.text.JTextComponent;
 
 import org.jackhuang.hmcl.laf.textcoms.__UI__.BgSwitchable;
 

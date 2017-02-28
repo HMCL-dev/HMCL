@@ -12,21 +12,27 @@
 package org.jackhuang.hmcl.laf.textcoms;
 
 import java.awt.Color;
+import java.awt.Graphics;
+import javax.swing.JComponent;
 
 import javax.swing.UIManager;
 import javax.swing.plaf.InsetsUIResource;
 import org.jackhuang.hmcl.util.ui.GraphicsUtils;
 
 import org.jackhuang.hmcl.laf.BeautyEyeLNFHelper;
+import org.jackhuang.hmcl.laf.utils.AnimationController;
 import org.jackhuang.hmcl.laf.utils.Icon9Factory;
+import org.jackhuang.hmcl.laf.utils.Skin;
+import org.jackhuang.hmcl.laf.utils.TMSchema;
 import org.jackhuang.hmcl.laf.utils.UI;
 import org.jackhuang.hmcl.laf.widget.border.BERoundBorder;
 
 public class __UI__ extends UI {
+
     static final Color BORDER_NORMAL = GraphicsUtils.getWebColor("#999999");
     static final Color BORDER_DISABLED = GraphicsUtils.getWebColor("#E3E3E3");
     static final Color BORDER_OVER = GraphicsUtils.getWebColor("#666666");
-    
+
     static Color border_focused() {
         return (Color) UIManager.get("TextField.focused");
     }
@@ -85,7 +91,46 @@ public class __UI__ extends UI {
         void switchBgToNormal();
 
         void switchBgToFocused();
-        
+
         void switchBgToOver();
+    }
+
+    public static class TextSkin implements Skin {
+        public static final TextSkin INSTANCE = new TextSkin();
+
+        @Override
+        public void paintSkinRaw(Graphics g, int x, int y, int w, int h, TMSchema.State state) {
+            Color border;
+            switch (state) {
+                case DISABLED:
+                    border = __UI__.BORDER_DISABLED;
+                    break;
+                case FOCUSED:
+                    border = __UI__.border_focused();
+                    break;
+                case NORMAL:
+                    border = __UI__.BORDER_NORMAL;
+                    break;
+                case ROLLOVER:
+                    border = __UI__.BORDER_OVER;
+                    break;
+                default:
+                    return;
+            }
+            g.setColor(border);
+            g.fillRect(x, y, w, h);
+        }
+        
+        public static void paintBg(JComponent c, Graphics g, int x, int y, int w, int h, TMSchema.State state) {
+            AnimationController.paintSkin(c, INSTANCE, g, x, y, w, h, state);
+            g.setColor(Color.white);
+            g.fillRect(x + 2, y + 2, w - 4, h - 4);
+        }
+
+        @Override
+        public TMSchema.Part getPart(JComponent c) {
+            return TMSchema.Part.EP_EDITTEXT;
+        }
+
     }
 }
