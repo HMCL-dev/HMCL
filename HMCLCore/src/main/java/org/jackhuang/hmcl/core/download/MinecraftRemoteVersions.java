@@ -19,8 +19,12 @@ package org.jackhuang.hmcl.core.download;
 
 import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import org.jackhuang.hmcl.util.C;
+import org.jackhuang.hmcl.util.net.HTTPGetTask;
 import org.jackhuang.hmcl.util.net.NetUtils;
+import org.jackhuang.hmcl.util.task.Task;
 import org.jackhuang.hmcl.util.task.TaskWorker;
 
 /**
@@ -57,15 +61,23 @@ public class MinecraftRemoteVersions {
 
     public static class RemoteVersionsTask extends TaskWorker<MinecraftRemoteVersion> {
 
+        HTTPGetTask task;
+        @Override
+        public Collection<Task> getDependTasks() {
+            return Arrays.asList(task);
+        }
+
         DownloadType type;
 
         public RemoteVersionsTask(DownloadType type) {
             this.type = type;
+            this.task = new HTTPGetTask(type.getProvider().getVersionsListDownloadURL());
         }
 
         @Override
         public void executeTask(boolean b) throws Exception {
-            MinecraftRemoteVersions r = C.GSON.fromJson(NetUtils.get(type.getProvider().getVersionsListDownloadURL()), MinecraftRemoteVersions.class);
+            if (!b) throw new IllegalStateException("Previous http get task failed");
+            MinecraftRemoteVersions r = C.GSON.fromJson(task.getResult(), MinecraftRemoteVersions.class);
             if (r != null && r.versions != null) {
                 INSTANCE = r;
                 send(r.versions.toArray(new MinecraftRemoteVersion[r.versions.size()]));

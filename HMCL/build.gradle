@@ -42,7 +42,7 @@ buildnumber = "0"
     
 def versionroot = System.getenv("VERSION_ROOT")
 if (versionroot == null)
-versionroot = "2.7.5"
+versionroot = "2.7.6"
 
 String mavenGroupId = 'HMCL'
 String mavenVersion = versionroot + '.' + buildnumber

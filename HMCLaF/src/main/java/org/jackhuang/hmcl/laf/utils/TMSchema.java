@@ -208,6 +208,7 @@ public class TMSchema {
             return str + control.toString();
         }
 
+        @Override
         public String toString() {
             return control.toString() + "." + name();
         }
@@ -295,7 +296,7 @@ public class TMSchema {
         private static EnumMap<Part, State[]> stateMap;
 
         private static synchronized void initStates() {
-            stateMap = new EnumMap<Part, State[]>(Part.class);
+            stateMap = new EnumMap<>(Part.class);
 
             stateMap.put(Part.EP_EDITTEXT,
                     new State[] {
@@ -453,92 +454,4 @@ public class TMSchema {
 
     }
 
-    /**
-     * An enumeration of the possible component attributes and the
-     * corresponding value type
-     */
-    public static enum Prop {
-        COLOR(Color.class, 204),
-        SIZE(Dimension.class, 207),
-        FLATMENUS(Boolean.class, 1001),
-        BORDERONLY(Boolean.class, 2203), // only draw the border area of the image
-
-        IMAGECOUNT(Integer.class, 2401), // the number of state images in an imagefile
-        BORDERSIZE(Integer.class, 2403), // the size of the border line for bgtype=BorderFill
-
-        PROGRESSCHUNKSIZE(Integer.class, 2411), // size of progress control chunks
-        PROGRESSSPACESIZE(Integer.class, 2412), // size of progress control spaces
-
-        TEXTSHADOWOFFSET(Point.class, 3402), // where char shadows are drawn, relative to orig. chars
-
-        NORMALSIZE(Dimension.class, 3409), // size of dest rect that exactly source
-
-        SIZINGMARGINS(Insets.class, 3601), // margins used for 9-grid sizing
-        CONTENTMARGINS(Insets.class, 3602), // margins that define where content can be placed
-        CAPTIONMARGINS(Insets.class, 3603), // margins that define where caption text can be placed
-
-        BORDERCOLOR(Color.class, 3801), // color of borders for BorderFill
-        FILLCOLOR(Color.class, 3802), // color of bg fill
-        TEXTCOLOR(Color.class, 3803), // color text is drawn in
-
-        TEXTSHADOWCOLOR(Color.class, 3818), // color of text shadow
-
-        BGTYPE(Integer.class, 4001), // basic drawing type for each part
-
-        TEXTSHADOWTYPE(Integer.class, 4010), // type of shadow to draw with text
-
-        TRANSITIONDURATIONS(Integer.class, 6000);
-
-        private final Class type;
-        private final int value;
-
-        private Prop(Class type, int value) {
-            this.type = type;
-            this.value = value;
-        }
-
-        public int getValue() {
-            return value;
-        }
-
-        public String toString() {
-            return name() + "[" + type.getName() + "] = " + value;
-        }
-    }
-
-    /**
-     * An enumeration of attribute values for some Props
-     */
-    public static enum TypeEnum {
-        BT_IMAGEFILE(Prop.BGTYPE, "imagefile", 0),
-        BT_BORDERFILL(Prop.BGTYPE, "borderfill", 1),
-        TST_NONE(Prop.TEXTSHADOWTYPE, "none", 0),
-        TST_SINGLE(Prop.TEXTSHADOWTYPE, "single", 1),
-        TST_CONTINUOUS(Prop.TEXTSHADOWTYPE, "continuous", 2);
-
-        private TypeEnum(Prop prop, String enumName, int value) {
-            this.prop = prop;
-            this.enumName = enumName;
-            this.value = value;
-        }
-
-        private final Prop prop;
-        private final String enumName;
-        private final int value;
-
-        public String toString() {
-            return prop + "=" + enumName + "=" + value;
-        }
-
-        String getName() {
-            return enumName;
-        }
-
-        static TypeEnum getTypeEnum(Prop prop, int enumval) {
-            for (TypeEnum e : TypeEnum.values())
-                if (e.prop == prop && e.value == enumval)
-                    return e;
-            return null;
-        }
-    }
 }

@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.util.task.TaskRunnable;
 import org.jackhuang.hmcl.util.task.TaskWindow;
 import org.jackhuang.hmcl.util.MessageBox;
 import org.jackhuang.hmcl.util.StrUtils;
+import org.jackhuang.hmcl.util.task.ProgressProviderListener;
 import org.jackhuang.hmcl.util.task.Task;
 import org.jackhuang.hmcl.util.ui.SwingUtils;
 
@@ -37,7 +38,7 @@ import org.jackhuang.hmcl.util.ui.SwingUtils;
  *
  * @author huangyuhui
  */
-public class InstallerPanel extends Page {
+public class InstallerPanel extends Page implements ProgressProviderListener {
 
     GameSettingsPanel gsp;
 
@@ -124,11 +125,36 @@ public class InstallerPanel extends Page {
     InstallerType id;
 
     void refreshVersions() {
-        DefaultTableModel model = SwingUtils.clearDefaultTable(lstInstallers);
-        model.addRow(new Object[] { C.i18n("message.loading"), "", "" });
+        if (loading)
+            return;
         Task t = list.refresh(new String[] { gsp.getMinecraftVersionFormatted() });
-        if (t != null)
-            t.with(new TaskRunnable(this::loadVersions)).runAsync();
+        if (t != null) {
+            loading = true;
+            DefaultTableModel model = SwingUtils.clearDefaultTable(lstInstallers);
+            model.addRow(new Object[] { C.i18n("message.loading"), "", "" });
+            t.with(new TaskRunnable(this::loadVersions)).setProgressProviderListener(this).runAsync();
+        }
+    }
+
+    boolean loading = false;
+
+    @Override
+    public void setProgress(Task task, int prog, int max) {
+        DefaultTableModel model = (DefaultTableModel) lstInstallers.getModel();
+        if (model.getRowCount() > 0)
+            model.setValueAt(C.i18n("message.loading") + " " + (prog < 0 ? "???" : Integer.toString(prog * 100 / max) + "%"), 0, 0);
+    }
+
+    @Override
+    public void setStatus(Task task, String sta) {
+    }
+
+    @Override
+    public void onProgressProviderDone(Task task) {
+        loading = false;
+        DefaultTableModel model = (DefaultTableModel) lstInstallers.getModel();
+        if (model.getRowCount() > 0)
+            model.removeRow(0);
     }
 
     public synchronized InstallerVersionList.InstallerVersion getVersion(int idx) {
@@ -158,8 +184,6 @@ public class InstallerPanel extends Page {
                     for (InstallerVersionList.InstallerVersion v : versions)
                         if (v != null)
                             model.addRow(new Object[] { v.selfVersion == null ? "null" : v.selfVersion, v.mcVersion == null ? "null" : v.mcVersion });
-                if (model.getRowCount() > 0)
-                    model.removeRow(0);
             }
         });
     }

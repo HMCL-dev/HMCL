@@ -55,4 +55,11 @@ public class DoubleTask extends TaskInfo {
             throw new IllegalStateException("Depend tasks failed.");
     }
 
+    @Override
+    public Task setProgressProviderListener(ProgressProviderListener p) {
+        a.setProgressProviderListener(p);
+        b.setProgressProviderListener(p);
+        return this;
+    }
+
 }

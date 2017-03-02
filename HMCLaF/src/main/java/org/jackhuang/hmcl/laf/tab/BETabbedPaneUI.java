@@ -11,7 +11,6 @@
  */
 package org.jackhuang.hmcl.laf.tab;
 
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -20,8 +19,6 @@ import javax.swing.JComponent;
 import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
-
-import org.jackhuang.hmcl.laf.BEUtils;
 
 /**
  * JTabbedPane的UI实现类.
@@ -245,49 +242,6 @@ public class BETabbedPaneUI extends BasicTabbedPaneUI {
             Rectangle[] rects, int tabIndex,
             Rectangle iconRect, Rectangle textRect,
             boolean isSelected) {
-        Rectangle tabRect = rects[tabIndex];
-        if (tabPane.hasFocus() && isSelected) {
-            int x, y, w, h;
-            g.setColor(focus);
-            switch (tabPlacement) {
-                case LEFT:
-                    x = tabRect.x + 4;//父类中默认是+3
-                    y = tabRect.y + 6;//父类中默认是+3
-                    w = tabRect.width - 7;//父类中默认是 - 5
-                    h = tabRect.height - 12;//父类中默认是-6
-                    break;
-                case RIGHT:
-                    x = tabRect.x + 4;//父类中默认是+ 2
-                    y = tabRect.y + 6;//父类中默认是+ 3
-                    w = tabRect.width - 9;//父类中默认是- 5
-                    h = tabRect.height - 12;//父类中默认是- 6
-                    break;
-                case BOTTOM:
-                    x = tabRect.x + 6;//父类中默认是+ 3
-                    y = tabRect.y + 4;//父类中默认是+ 2
-                    w = tabRect.width - 12;//父类中默认是- 6
-                    h = tabRect.height - 9;//父类中默认是- 5
-                    break;
-                case TOP:
-                default:
-                    //** modified by jb2011：根据整体效果进行偏移修正
-                    x = tabRect.x + 6;//父类中默认是+3
-                    //** modified by jb2011：根据整体效果进行偏移修正
-                    y = tabRect.y + 4;//父类中默认是+3
-                    //** modified by jb2011：根据整体效果进行偏移修正
-                    w = tabRect.width - 12;//父类中默认是-6
-                    //** modified by jb2011：-8的目的是使得焦点虚线框与选中底边保持一个像素的距离，否则挨在一起在视觉上效果会较差
-                    h = tabRect.height - 8;//父类中默认是 - 5
-            }
-
-            //** modified by jb2011：绘制虚线方法改成可以设置虚线步进的方法，步进设为2则更好看一点
-//			BasicGraphicsUtils.drawDashedRect(g, x, y, w, h);
-            BEUtils.drawDashedRect(g, x, y, w, h);
-            // 绘制虚线框的半透明白色立体阴影（因主背景色较淡，效果不明显，但显然比没有要好）
-            g.setColor(new Color(255, 255, 255, 255));// TODO 此值可提炼成UIManager属性哦
-            // 立体阴影就是向右下偏移一个像素实现的
-            BEUtils.drawDashedRect(g, x + 1, y + 1, w, h);
-        }
     }
 
     /**

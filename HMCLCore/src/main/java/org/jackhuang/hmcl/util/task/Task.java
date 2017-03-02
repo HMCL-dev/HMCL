@@ -21,7 +21,7 @@ import java.util.Collection;
 import org.jackhuang.hmcl.util.AbstractSwingWorker;
 
 /**
- *
+ * Create a new instance when you use a task anyway.
  * @author huangyuhui
  */
 public abstract class Task {
@@ -111,13 +111,19 @@ public abstract class Task {
     public void runWithException() throws Exception {
         Collection<Task> c = getDependTasks();
         if (c != null)
-            for (Task t : c)
+            for (Task t : c) {
+                if (t.ppl == null)
+                    t.setProgressProviderListener(this.ppl);
                 t.runWithException();
+            }
         executeTask(true);
         c = getAfterTasks();
         if (c != null)
-            for (Task t : c)
+            for (Task t : c) {
+                if (t.ppl == null)
+                    t.setProgressProviderListener(this.ppl);
                 t.runWithException();
+            }
     }
 
     public void runAsync() {
