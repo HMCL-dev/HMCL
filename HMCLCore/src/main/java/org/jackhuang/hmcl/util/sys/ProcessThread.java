@@ -21,6 +21,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.List;
+import java.util.Vector;
 import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.api.event.EventHandler;
 import org.jackhuang.hmcl.api.event.SimpleEvent;
@@ -28,11 +30,13 @@ import org.jackhuang.hmcl.util.code.Charsets;
 import org.jackhuang.hmcl.api.IProcess;
 
 /**
+ * Watch the process command line output(stdout or stderr).
  *
  * @author huangyuhui
  */
 public class ProcessThread extends Thread {
 
+    Vector<String> lines = new Vector<>();
     ProcessMonitor monitor;
     boolean readError;
     public final EventHandler<SimpleEvent<String>> printlnEvent = new EventHandler<>();
@@ -46,6 +50,13 @@ public class ProcessThread extends Thread {
 
     public IProcess getProcess() {
         return monitor.getProcess();
+    }
+
+    /**
+     * Only get stdout or stderr output according to readError().
+     */
+    public List<String> getLines() {
+        return lines;
     }
 
     @Override
@@ -62,18 +73,22 @@ public class ProcessThread extends Thread {
                 while ((line = br.readLine()) != null) {
                     printlnEvent.fire(new SimpleEvent<>(monitor, line));
                     System.out.println("MC: " + line);
+                    lines.add(line);
                     p.getStdOutLines().add(line);
                 }
             while ((line = br.readLine()) != null) {
                 printlnEvent.fire(new SimpleEvent<>(monitor, line));
                 System.out.println("MC: " + line);
+                lines.add(line);
                 p.getStdOutLines().add(line);
             }
-            stopEvent.fire(new SimpleEvent<>(this, p));
         } catch (IOException e) {
             HMCLog.err("An error occured when reading process stdout/stderr.", e);
         } finally {
             IOUtils.closeQuietly(br);
         }
+        if (p instanceof JavaProcess)
+            ((JavaProcess) p).getLatch().countDown();
+        stopEvent.fire(new SimpleEvent<>(this, p));
     }
 }

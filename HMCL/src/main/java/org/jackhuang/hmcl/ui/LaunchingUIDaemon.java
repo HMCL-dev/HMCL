@@ -82,6 +82,7 @@ public class LaunchingUIDaemon {
         HMCLApi.EVENT_BUS.channel(JavaProcessStoppedEvent.class).register(event -> checkExit((LauncherVisibility) ((ProcessMonitor) event.getSource()).getTag()));
         HMCLApi.EVENT_BUS.channel(JavaProcessExitedAbnormallyEvent.class).register(event -> {
             int exitCode = event.getValue().getExitCode();
+            event.getValue().waitForCommandLineCompletion();
             HMCLog.err("The game exited abnormally, exit code: " + exitCode);
             String[] logs = event.getValue().getStdOutLines().toArray(new String[0]);
             String errorText = null;

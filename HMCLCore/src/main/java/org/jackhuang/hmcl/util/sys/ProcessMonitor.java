@@ -77,13 +77,14 @@ public class ProcessMonitor {
         errorThread.start();
     }
 
-    private void threadStopped() {
+    private void threadStopped(SimpleEvent<IProcess> event) {
+        ProcessThread t = (ProcessThread) event.getSource();
         HMCLog.log("Process exit code: " + p.getExitCode());
-        if (p.getExitCode() != 0 || StrUtils.containsOne(p.getStdOutLines(),
+        if (p.getExitCode() != 0 || StrUtils.containsOne(t.getLines(),
                 Arrays.asList("Unable to launch"),
                 x -> Level.guessLevel(x, Level.INFO).lessOrEqual(Level.ERROR)))
             HMCLApi.EVENT_BUS.fireChannel(new JavaProcessExitedAbnormallyEvent(ProcessMonitor.this, p));
-        if (p.getExitCode() != 0 && StrUtils.containsOne(p.getStdOutLines(),
+        if (p.getExitCode() != 0 && StrUtils.containsOne(t.getLines(),
                 Arrays.asList("Could not create the Java Virtual Machine.",
                         "Error occurred during initialization of VM",
                         "A fatal exception has occurred. Program will exit.",

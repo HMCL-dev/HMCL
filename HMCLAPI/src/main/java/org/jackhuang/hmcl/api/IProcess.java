@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.api;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,10 +33,12 @@ public interface IProcess {
 
     List<String> getStartupCommands();
 
-    ArrayList<String> getStdOutLines();
+    List<String> getStdOutLines();
 
     boolean isRunning();
 
     void stop();
+    
+    void waitForCommandLineCompletion();
     
 }

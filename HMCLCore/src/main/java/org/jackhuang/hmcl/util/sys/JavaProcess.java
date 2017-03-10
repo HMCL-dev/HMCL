@@ -18,9 +18,11 @@
 package org.jackhuang.hmcl.util.sys;
 
 import org.jackhuang.hmcl.api.IProcess;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Vector;
+import java.util.concurrent.CountDownLatch;
+import org.jackhuang.hmcl.api.HMCLog;
 
 /**
  *
@@ -28,9 +30,10 @@ import java.util.List;
  */
 public class JavaProcess implements IProcess {
 
+    private final CountDownLatch latch = new CountDownLatch(2);
     private final List<String> commands;
     private final Process process;
-    private final ArrayList<String> stdOutLines = new ArrayList<>();
+    private final Vector<String> stdOutLines = new Vector<>();
 
     public JavaProcess(List<String> commands, Process process) {
         this.commands = commands;
@@ -57,7 +60,7 @@ public class JavaProcess implements IProcess {
     }
 
     @Override
-    public ArrayList<String> getStdOutLines() {
+    public List<String> getStdOutLines() {
         return this.stdOutLines;
     }
 
@@ -70,6 +73,19 @@ public class JavaProcess implements IProcess {
         }
 
         return false;
+    }
+
+    CountDownLatch getLatch() {
+        return latch;
+    }
+
+    @Override
+    public void waitForCommandLineCompletion() {
+        try {
+            latch.await();
+        } catch (InterruptedException ignore) {
+            HMCLog.warn("Thread has been interrupted.", ignore);
+        }
     }
 
     @Override
