@@ -98,7 +98,7 @@ public class AnimationController implements ActionListener, PropertyChangeListen
         State oldState = controller.getState(c, part);
         if (oldState != newState) {
             controller.putState(c, part, newState);
-            if (newState == State.DEFAULTED)
+            if (newState == State.DEFAULT)
                 // it seems for DEFAULTED button state Vista does animation from
                 // HOT
                 oldState = State.ROLLOVER;
@@ -182,7 +182,7 @@ public class AnimationController implements ActionListener, PropertyChangeListen
             State endState,
             long millis) {
         boolean isForwardAndReverse = false;
-        if (endState == State.DEFAULTED)
+        if (endState == State.DEFAULT)
             isForwardAndReverse = true;
         Map<Part, AnimationState> map = animationStateMap.get(component);
         if (millis <= 0) {

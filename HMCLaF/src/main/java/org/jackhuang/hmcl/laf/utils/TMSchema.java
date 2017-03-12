@@ -231,7 +231,7 @@ public class TMSchema {
         BULLETNORMAL,
         BULLETDISABLED,
         CLOSED,
-        DEFAULTED,
+        DEFAULT,
         DISABLED,
         DISABLEDHOT,
         DISABLEDPUSHED,
@@ -304,7 +304,7 @@ public class TMSchema {
                     });
 
             stateMap.put(Part.BP_PUSHBUTTON,
-                    new State[] { NORMAL, ROLLOVER, PRESSED, DISABLED, DEFAULTED });
+                    new State[] { NORMAL, ROLLOVER, PRESSED, DISABLED, DEFAULT });
 
             stateMap.put(Part.BP_RADIOBUTTON,
                     new State[] {

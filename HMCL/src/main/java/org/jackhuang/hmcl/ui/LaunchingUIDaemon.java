@@ -38,10 +38,10 @@ import org.jackhuang.hmcl.util.C;
 import org.jackhuang.hmcl.util.MessageBox;
 import org.jackhuang.hmcl.api.func.Consumer;
 import org.jackhuang.hmcl.api.HMCLog;
-import org.jackhuang.hmcl.api.event.SimpleEvent;
 import org.jackhuang.hmcl.api.event.launch.LaunchingState;
 import org.jackhuang.hmcl.util.DefaultPlugin;
 import org.jackhuang.hmcl.util.sys.FileUtils;
+import org.jackhuang.hmcl.util.sys.PrintlnEvent;
 import org.jackhuang.hmcl.util.sys.ProcessMonitor;
 
 /**
@@ -81,9 +81,10 @@ public class LaunchingUIDaemon {
         });
         HMCLApi.EVENT_BUS.channel(JavaProcessStoppedEvent.class).register(event -> checkExit((LauncherVisibility) ((ProcessMonitor) event.getSource()).getTag()));
         HMCLApi.EVENT_BUS.channel(JavaProcessExitedAbnormallyEvent.class).register(event -> {
+            ProcessMonitor monitor = (ProcessMonitor) event.getSource();
             int exitCode = event.getValue().getExitCode();
-            event.getValue().waitForCommandLineCompletion();
             HMCLog.err("The game exited abnormally, exit code: " + exitCode);
+            monitor.waitForCommandLineCompletion();
             String[] logs = event.getValue().getStdOutLines().toArray(new String[0]);
             String errorText = null;
             for (String s : logs) {
@@ -135,9 +136,9 @@ public class LaunchingUIDaemon {
         }, MainFrame.INSTANCE::failed, Settings.getInstance().getAuthenticator().getPassword());
     }
 
-    private static final Consumer<SimpleEvent<String>> PRINTLN = t -> {
+    private static final Consumer<PrintlnEvent> PRINTLN = t -> {
         LauncherVisibility l = ((LauncherVisibility) ((ProcessMonitor) t.getSource()).getTag());
-        if (t.getValue().contains("LWJGL Version: ") && l != LauncherVisibility.KEEP)
+        if (t.getLine().contains("LWJGL Version: ") && l != LauncherVisibility.KEEP)
             if (l != LauncherVisibility.HIDE_AND_REOPEN)
                 MainFrame.INSTANCE.dispose();
             else

@@ -17,12 +17,11 @@
  */
 package org.jackhuang.hmcl.util.sys;
 
+import java.util.ArrayList;
 import org.jackhuang.hmcl.api.IProcess;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Vector;
-import java.util.concurrent.CountDownLatch;
-import org.jackhuang.hmcl.api.HMCLog;
 
 /**
  *
@@ -30,10 +29,9 @@ import org.jackhuang.hmcl.api.HMCLog;
  */
 public class JavaProcess implements IProcess {
 
-    private final CountDownLatch latch = new CountDownLatch(2);
     private final List<String> commands;
     private final Process process;
-    private final Vector<String> stdOutLines = new Vector<>();
+    private final List<String> stdOutLines = Collections.synchronizedList(new ArrayList<>());
 
     public JavaProcess(List<String> commands, Process process) {
         this.commands = commands;
@@ -73,19 +71,6 @@ public class JavaProcess implements IProcess {
         }
 
         return false;
-    }
-
-    CountDownLatch getLatch() {
-        return latch;
-    }
-
-    @Override
-    public void waitForCommandLineCompletion() {
-        try {
-            latch.await();
-        } catch (InterruptedException ignore) {
-            HMCLog.warn("Thread has been interrupted.", ignore);
-        }
     }
 
     @Override

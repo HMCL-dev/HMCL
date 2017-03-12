@@ -21,8 +21,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.api.event.EventHandler;
 import org.jackhuang.hmcl.api.event.SimpleEvent;
@@ -36,24 +36,27 @@ import org.jackhuang.hmcl.api.IProcess;
  */
 public class ProcessThread extends Thread {
 
-    Vector<String> lines = new Vector<>();
+    List<String> lines = new ArrayList<>();
     ProcessMonitor monitor;
+    IProcess p;
     boolean readError;
-    public final EventHandler<SimpleEvent<String>> printlnEvent = new EventHandler<>();
+    public final EventHandler<PrintlnEvent> printlnEvent = new EventHandler<>();
     public final EventHandler<SimpleEvent<IProcess>> stopEvent = new EventHandler<>();
 
     public ProcessThread(ProcessMonitor monitor, boolean readError) {
         this.monitor = monitor;
         this.readError = readError;
+        p = monitor.getProcess();
         setDaemon(readError);
     }
 
     public IProcess getProcess() {
-        return monitor.getProcess();
+        return p;
     }
 
     /**
      * Only get stdout or stderr output according to readError().
+     * Invoke this method only if the process thread has stopped.
      */
     public List<String> getLines() {
         return lines;
@@ -63,32 +66,28 @@ public class ProcessThread extends Thread {
     public void run() {
         setName("ProcessMonitor");
         BufferedReader br = null;
-        IProcess p = monitor.getProcess();
         try {
             InputStream in = readError ? p.getRawProcess().getErrorStream() : p.getRawProcess().getInputStream();
             br = new BufferedReader(new InputStreamReader(in, Charsets.toCharset()));
 
             String line;
             while (p.isRunning())
-                while ((line = br.readLine()) != null) {
-                    printlnEvent.fire(new SimpleEvent<>(monitor, line));
-                    System.out.println("MC: " + line);
-                    lines.add(line);
-                    p.getStdOutLines().add(line);
-                }
-            while ((line = br.readLine()) != null) {
-                printlnEvent.fire(new SimpleEvent<>(monitor, line));
-                System.out.println("MC: " + line);
-                lines.add(line);
-                p.getStdOutLines().add(line);
-            }
+                while ((line = br.readLine()) != null)
+                    println(line);
+            while ((line = br.readLine()) != null)
+                println(line);
         } catch (IOException e) {
             HMCLog.err("An error occured when reading process stdout/stderr.", e);
         } finally {
             IOUtils.closeQuietly(br);
         }
-        if (p instanceof JavaProcess)
-            ((JavaProcess) p).getLatch().countDown();
         stopEvent.fire(new SimpleEvent<>(this, p));
+    }
+
+    protected void println(String line) {
+        printlnEvent.fire(new PrintlnEvent(monitor, line, readError));
+        (readError ? System.err : System.out).println("MC: " + line);
+        lines.add(line);
+        p.getStdOutLines().add(line);
     }
 }

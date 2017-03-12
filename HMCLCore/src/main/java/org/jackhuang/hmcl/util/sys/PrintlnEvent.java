@@ -15,28 +15,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.api;
+package org.jackhuang.hmcl.util.sys;
 
-import java.util.List;
+import java.util.EventObject;
 
 /**
- *
+ * For ProcessThread.
  * @author huang
  */
-public interface IProcess {
+public class PrintlnEvent extends EventObject {
+    
+    String line;
+    boolean error;
 
-    int getExitCode();
+    public PrintlnEvent(Object source, String line, boolean isError) {
+        super(source);
+        this.line = line;
+        this.error = isError;
+    }
 
-    Process getRawProcess();
+    public String getLine() {
+        return line;
+    }
 
-    String getStartupCommand();
-
-    List<String> getStartupCommands();
-
-    List<String> getStdOutLines();
-
-    boolean isRunning();
-
-    void stop();
+    public boolean isError() {
+        return error;
+    }
     
 }
