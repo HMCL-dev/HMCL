@@ -172,6 +172,8 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
                 if (newName != null)
                     if (Settings.getLastProfile().service().version().renameVersion(mcVersion, newName))
                         refreshVersions();
+                    else
+                        MessageBox.showLocalized("wizard.failed");
             }
         });
         ppmManage.add(itm);

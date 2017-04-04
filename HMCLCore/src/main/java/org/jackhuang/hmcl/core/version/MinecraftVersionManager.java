@@ -169,20 +169,19 @@ public class MinecraftVersionManager extends IMinecraftProvider {
     @Override
     public boolean renameVersion(String from, String to) {
         try {
-            File fromJson = new File(versionRoot(from), from + ".json");
-            MinecraftVersion mcVersion = C.GSON.fromJson(FileUtils.read(fromJson), MinecraftVersion.class);
-            mcVersion.id = to;
-            FileUtils.writeQuietly(fromJson, C.GSON.toJson(mcVersion));
             File toDir = versionRoot(to);
             if (!versionRoot(from).renameTo(toDir))
-                HMCLog.warn("MinecraftVersionManager.RenameVersion: Failed to rename version root " + from + " to " + to);
+                return false;
             File toJson = new File(toDir, to + ".json");
             File toJar = new File(toDir, to + ".jar");
-            if (new File(toDir, from + ".json").renameTo(toJson))
+            if (!new File(toDir, from + ".json").renameTo(toJson))
                 HMCLog.warn("MinecraftVersionManager.RenameVersion: Failed to rename json");
-            File newJar = new File(toDir, from + ".jar");
-            if (newJar.exists() && !newJar.renameTo(toJar))
-                HMCLog.warn("Failed to rename pre jar " + newJar + " to new jar " + toJar);
+            MinecraftVersion mcVersion = C.GSON.fromJson(FileUtils.read(toJson), MinecraftVersion.class);
+            mcVersion.id = to;
+            FileUtils.writeQuietly(toJson, C.GSON.toJson(mcVersion));
+            File oldJar = new File(toDir, from + ".jar");
+            if (oldJar.exists() && !oldJar.renameTo(toJar))
+                HMCLog.warn("Failed to rename pre jar " + oldJar + " to new jar " + toJar);
             return true;
         } catch (IOException | JsonSyntaxException e) {
             HMCLog.warn("Failed to rename " + from + " to " + to + ", the json of this Minecraft is malformed.", e);

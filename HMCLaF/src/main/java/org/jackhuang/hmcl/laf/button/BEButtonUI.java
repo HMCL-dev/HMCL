@@ -267,7 +267,7 @@ public class BEButtonUI extends BasicButtonUI implements Skin {
                         state = State.ROLLOVER;
                     else if (b instanceof JButton
                             && ((JButton) b).isDefaultButton())
-                        state = State.DEFAULT;
+                        state = State.NORMAL;
                 break;
             default:
                 state = State.NORMAL;

@@ -69,7 +69,7 @@ public class LaunchingUIDaemon {
             // See events below.
             ProcessMonitor monitor = new ProcessMonitor(p.getValue());
             monitor.registerPrintlnEvent(PRINTLN);
-            monitor.setTag(tag.launcherVisibility);
+            monitor.setTag(obj);
             monitor.start();
         });
         HMCLApi.EVENT_BUS.channel(LaunchSucceededEvent.class).register(p -> {
@@ -79,7 +79,9 @@ public class LaunchingUIDaemon {
             else if (state == 2)
                 LAUNCH_SCRIPT_FINISHER.accept(p);
         });
-        HMCLApi.EVENT_BUS.channel(JavaProcessStoppedEvent.class).register(event -> checkExit((LauncherVisibility) ((ProcessMonitor) event.getSource()).getTag()));
+        HMCLApi.EVENT_BUS.channel(JavaProcessStoppedEvent.class).register(event -> {
+            checkExit(unpackProcessMonitor(event.getSource()));
+                });
         HMCLApi.EVENT_BUS.channel(JavaProcessExitedAbnormallyEvent.class).register(event -> {
             ProcessMonitor monitor = (ProcessMonitor) event.getSource();
             int exitCode = event.getValue().getExitCode();
@@ -107,6 +109,12 @@ public class LaunchingUIDaemon {
             SwingUtilities.invokeLater(() -> LogWindow.INSTANCE.setVisible(true));
             noExitThisTime = true;
         });
+    }
+    
+    static LauncherVisibility unpackProcessMonitor(Object obj) {
+        GameLauncher launcher = ((GameLauncher) ((ProcessMonitor) obj).getTag());
+        HMCLGameLauncher.GameLauncherTag tag = (HMCLGameLauncher.GameLauncherTag) launcher.getTag();
+        return tag.launcherVisibility;
     }
 
     boolean noExitThisTime = false;
@@ -137,12 +145,16 @@ public class LaunchingUIDaemon {
     }
 
     private static final Consumer<PrintlnEvent> PRINTLN = t -> {
-        LauncherVisibility l = ((LauncherVisibility) ((ProcessMonitor) t.getSource()).getTag());
+        GameLauncher launcher = ((GameLauncher) ((ProcessMonitor) t.getSource()).getTag());
+        HMCLGameLauncher.GameLauncherTag tag = (HMCLGameLauncher.GameLauncherTag) launcher.getTag();
+        LauncherVisibility l = tag.launcherVisibility;
         if (t.getLine().contains("LWJGL Version: ") && l != LauncherVisibility.KEEP)
             if (l != LauncherVisibility.HIDE_AND_REOPEN)
                 MainFrame.INSTANCE.dispose();
-            else
+            else { // If current state is 'hide and reopen', closes the main window and reset the state to normal.
                 MainFrame.INSTANCE.setVisible(false);
+                HMCLApi.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(launcher, LaunchingState.Done));
+            }
     };
 
     private static final Consumer<LaunchingStateChangedEvent> LAUNCHING_STATE_CHANGED = t -> {
@@ -164,6 +176,7 @@ public class LaunchingUIDaemon {
                 message = "launch.state.waiting_launching";
                 break;
             case Done:
+                MainFrame.INSTANCE.closeMessage();
                 return;
         }
         MainFrame.INSTANCE.showMessage(C.i18n(message));
