@@ -98,9 +98,11 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
                 res.add("-Xmn128m");
             }
             if (!StrUtils.isBlank(options.getPermSize()))
-                if (jv == null || jv.getParsedVersion() < JdkVersion.JAVA_18)
+                if (jv == null || jv.getParsedVersion() < JdkVersion.JAVA_18) {
                     res.add("-XX:PermSize=" + options.getPermSize() + "m");
-                else if (jv.getParsedVersion() >= JdkVersion.JAVA_18)
+                    if (jv != null && jv.getParsedVersion() < JdkVersion.JAVA_18)
+                        MessageBox.showLocalized("advice.java8");
+                } else if (jv.getParsedVersion() >= JdkVersion.JAVA_18)
                     res.add("-XX:MetaspaceSize=" + options.getPermSize() + "m");
         }
 
@@ -111,7 +113,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
         HMCLog.log("System Platform: " + Platform.getPlatform().getBit());
 
         if (jv != null && jv.getPlatform() == Platform.BIT_32 && Platform.getPlatform() == Platform.BIT_64)
-            MessageBox.show(C.i18n("advice.os64butjdk32"));
+            MessageBox.showLocalized("advice.os64butjdk32");
 
         if (!StrUtils.isBlank(options.getMaxMemory())) {
             int mem = MathUtils.parseMemory(options.getMaxMemory(), 2147483647);

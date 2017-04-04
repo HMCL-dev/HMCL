@@ -347,6 +347,7 @@ versions.manage.redownload_assets_index=Download lại Assets Index
 versions.mamage.remove_libraries=Xóa libraries file
 
 advice.os64butjdk32=Hệ điều hành của bạn là 64-Bit nhưng phiên bản Java của bạn là 32-Bit. Khuyên bạn nên dùng Java 64-Bit.
+advice.java8=Java 8 is suggested, which can make game run more fluently. And many mods and Minecraft 1.12 and newer versions requires Java 8.
 
 assets.download_all=Download file assets
 assets.not_refreshed=Danh sách assets chưa được load lại, bạn hãy ấn nút Tải lại.

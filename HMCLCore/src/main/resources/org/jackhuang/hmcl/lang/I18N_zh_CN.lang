@@ -349,6 +349,7 @@ versions.manage.redownload_assets_index=重新下载资源配置(assets_index.js
 versions.mamage.remove_libraries=删除所有库文件
 
 advice.os64butjdk32=您的系统是64位的但是Java是32位的，推荐您安装64位Java.
+advice.java8=检测到您未使用Java 8及更新版本，Java 8能使游戏更流畅而且Minecraft 1.12及更新版本和很多Mod强制需要需要Java 8。
 
 assets.download_all=下载资源文件
 assets.not_refreshed=资源列表未刷新，请刷新一次。
