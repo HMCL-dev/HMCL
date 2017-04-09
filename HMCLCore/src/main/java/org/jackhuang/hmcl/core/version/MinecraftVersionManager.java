@@ -43,6 +43,7 @@ import org.jackhuang.hmcl.util.MessageBox;
 import org.jackhuang.hmcl.util.StrUtils;
 import org.jackhuang.hmcl.api.func.Consumer;
 import org.jackhuang.hmcl.api.func.Predicate;
+import org.jackhuang.hmcl.util.sys.IOUtils;
 import org.jackhuang.hmcl.util.ui.SwingUtils;
 
 /**
@@ -117,7 +118,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                 }
                 MinecraftVersion mcVersion;
                 try {
-                    mcVersion = C.GSON.fromJson(FileUtils.read(jsonFile), MinecraftVersion.class);
+                    mcVersion = readJson(jsonFile);
                     if (mcVersion == null)
                         throw new JsonSyntaxException("Wrong json format, got null.");
                 } catch (JsonSyntaxException | IOException e) {
@@ -125,7 +126,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
                     if (MessageBox.show(C.i18n("launcher.versions_json_not_formatted", id), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION) {
                         TaskWindow.factory().execute(service.download().downloadMinecraftVersionJson(id));
                         try {
-                            mcVersion = C.GSON.fromJson(FileUtils.read(jsonFile), MinecraftVersion.class);
+                            mcVersion = readJson(jsonFile);
                             if (mcVersion == null)
                                 throw new JsonSyntaxException("Wrong json format, got null.");
                         } catch (IOException | JsonSyntaxException ex) {
@@ -165,7 +166,24 @@ public class MinecraftVersionManager extends IMinecraftProvider {
         versions.remove(name);
         return FileUtils.deleteDirectoryQuietly(version);
     }
-
+    
+    /**
+     * 
+     * @param id version id
+     * @return null if json syntax is wrong or cannot read the json file.
+     */
+    public MinecraftVersion readJson(String id) {
+        try {
+            return readJson(new File(versionRoot(id), id + ".json"));
+        } catch(IOException | JsonSyntaxException e) {
+            return null;
+        }
+    }
+    
+    public MinecraftVersion readJson(File file) throws IOException {
+        return C.GSON.fromJson(FileUtils.read(file, IOUtils.DEFAULT_CHARSET), MinecraftVersion.class);
+    }
+    
     @Override
     public boolean renameVersion(String from, String to) {
         try {
@@ -176,7 +194,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
             File toJar = new File(toDir, to + ".jar");
             if (!new File(toDir, from + ".json").renameTo(toJson))
                 HMCLog.warn("MinecraftVersionManager.RenameVersion: Failed to rename json");
-            MinecraftVersion mcVersion = C.GSON.fromJson(FileUtils.read(toJson), MinecraftVersion.class);
+            MinecraftVersion mcVersion = readJson(toJson);
             mcVersion.id = to;
             FileUtils.writeQuietly(toJson, C.GSON.toJson(mcVersion));
             File oldJar = new File(toDir, from + ".jar");
@@ -203,7 +221,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
             return false;
         if (callback != null) {
             File mvt = new File(versionRoot(id), id + ".json");
-            MinecraftVersion v = C.GSON.fromJson(FileUtils.readQuietly(mvt), MinecraftVersion.class);
+            MinecraftVersion v = readJson(id);
             if (v == null)
                 return false;
             callback.accept(v);
