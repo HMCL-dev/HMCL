@@ -80,8 +80,10 @@ public class LaunchingUIDaemon {
                 LAUNCH_SCRIPT_FINISHER.accept(p);
         });
         HMCLApi.EVENT_BUS.channel(JavaProcessStoppedEvent.class).register(event -> {
+            GameLauncher launcher = ((GameLauncher) ((ProcessMonitor) event.getSource()).getTag());
+            HMCLApi.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(launcher, LaunchingState.Done));
             checkExit(unpackProcessMonitor(event.getSource()));
-                });
+        });
         HMCLApi.EVENT_BUS.channel(JavaProcessExitedAbnormallyEvent.class).register(event -> {
             ProcessMonitor monitor = (ProcessMonitor) event.getSource();
             int exitCode = event.getValue().getExitCode();
