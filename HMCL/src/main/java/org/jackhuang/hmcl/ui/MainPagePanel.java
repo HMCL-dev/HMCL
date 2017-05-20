@@ -519,7 +519,7 @@ public class MainPagePanel extends Page {
         isLoading = false;
     }
 
-    final Consumer<LaunchingStateChangedEvent> launchingStateChanged = t -> SwingUtils.setEnabled(MainFrame.INSTANCE.getRootPane(), t.getValue() == LaunchingState.Done);
+    final Consumer<LaunchingStateChangedEvent> launchingStateChanged = t -> SwingUtilities.invokeLater(() -> SwingUtils.setEnabled(MainFrame.INSTANCE.getRootPane(), t.getValue() == LaunchingState.Done));
 
     void versionChanged(String selectedVersion) {
         isLoading = true;

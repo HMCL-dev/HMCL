@@ -33,7 +33,9 @@ public class ParallelTask extends Task {
     }
 
     @Override
-    public void executeTask(boolean areDependTasksSucceeded) {
+    public void executeTask(boolean areDependTasksSucceeded) throws Exception {
+        if (!areDependTasksSucceeded)
+            throw new Exception("Tasks failed");
     }
 
     @Override
