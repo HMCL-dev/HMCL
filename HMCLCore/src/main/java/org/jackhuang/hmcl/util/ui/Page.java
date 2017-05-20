@@ -148,6 +148,11 @@ public class Page extends TopTabPage {
     Timer timer;
 
     protected boolean animationEnabled = true;
+    
+    public Page setAnimationEnabled(boolean a) {
+        animationEnabled = a;
+        return this;
+    }
 
     public void animate() {
         if (animationEnabled) {

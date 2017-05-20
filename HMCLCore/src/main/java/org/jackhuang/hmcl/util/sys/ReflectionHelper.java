@@ -26,7 +26,7 @@ import java.security.PrivilegedExceptionAction;
 import sun.misc.Unsafe;
 
 /**
- *
+ * This class is for breaking the module system of Java 9.
  * @author huang
  */
 public class ReflectionHelper {

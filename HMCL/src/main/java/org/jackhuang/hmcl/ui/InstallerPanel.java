@@ -50,6 +50,8 @@ public class InstallerPanel extends Page implements ProgressProviderListener {
      */
     public InstallerPanel(GameSettingsPanel gsp, InstallerType installerType) {
         initComponents();
+        
+        animationEnabled = Settings.getInstance().isEnableAnimation();
 
         setOpaque(false);
         this.gsp = gsp;

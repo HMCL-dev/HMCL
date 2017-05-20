@@ -110,7 +110,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
 
         for (int i = 0; i < InstallerType.values().length; i++)
             installerPanels[i] = new InstallerPanel(this, InstallerType.values()[i]);
-        pnlGameDownloads = new GameDownloadPanel(this);
+        pnlGameDownloads = new GameDownloadPanel(this).setAnimationEnabled(Settings.getInstance().isEnableAnimation());
 
         initExplorationMenu();
         initManagementMenu();
@@ -278,7 +278,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
 
         tabVersionEdit = new NewTabPane();
         ((NewTabPane)tabVersionEdit).initializing = true;
-        pnlSettings = new Page();
+        pnlSettings = new Page().setAnimationEnabled(Settings.getInstance().isEnableAnimation());
         lblGameDir = new javax.swing.JLabel();
         txtGameDir = new javax.swing.JTextField();
         lblDimension = new javax.swing.JLabel();
@@ -301,7 +301,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         btnChoosingGameDir = new javax.swing.JButton();
         btnCleanGame = new javax.swing.JButton();
         lblUsesGlobal = new javax.swing.JLabel();
-        pnlAdvancedSettings = new Page();
+        pnlAdvancedSettings = new Page().setAnimationEnabled(Settings.getInstance().isEnableAnimation());
         lblJavaArgs = new javax.swing.JLabel();
         txtJavaArgs = new javax.swing.JTextField();
         txtMinecraftArgs = new javax.swing.JTextField();
@@ -317,14 +317,14 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         txtWrapperLauncher = new javax.swing.JTextField();
         chkDontCheckGame = new javax.swing.JCheckBox();
         chkNoCommon = new javax.swing.JCheckBox();
-        pnlModManagement = new Page();
-        pnlModManagementContent = new Page();
+        pnlModManagement = new Page().setAnimationEnabled(Settings.getInstance().isEnableAnimation());
+        pnlModManagementContent = new Page().setAnimationEnabled(Settings.getInstance().isEnableAnimation());
         jScrollPane1 = new javax.swing.JScrollPane();
         lstExternalMods = new javax.swing.JTable();
         btnAddMod = new javax.swing.JButton();
         btnRemoveMod = new javax.swing.JButton();
         lblModInfo = new javax.swing.JLabel();
-        pnlAutoInstall = new Page();
+        pnlAutoInstall = new Page().setAnimationEnabled(Settings.getInstance().isEnableAnimation());
         tabInstallers = new NewTabPane();
         pnlTop = new javax.swing.JPanel();
         pnlSelection = new javax.swing.JPanel();
