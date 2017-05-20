@@ -68,6 +68,8 @@ public class MainPagePanel extends Page {
     void initGui() {
         initComponents();
 
+        animationEnabled = Settings.getInstance().isEnableAnimation();
+
         pnlButtons = new javax.swing.JPanel();
         pnlButtons.setLayout(null);
 

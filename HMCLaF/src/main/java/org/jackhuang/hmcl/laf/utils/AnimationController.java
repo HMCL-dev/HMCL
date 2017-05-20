@@ -60,6 +60,8 @@ import org.jackhuang.hmcl.laf.utils.TMSchema.Part;
  * @author Igor Kushnirskiy
  */
 public class AnimationController implements ActionListener, PropertyChangeListener {
+    
+    public static boolean ENABLE_ANIMATION = true;
 
     private static AnimationController INSTANCE = new AnimationController();
     private static final String ANIMATION_CONTROLLER_KEY = "BeautyEye.AnimationController";
@@ -205,7 +207,8 @@ public class AnimationController implements ActionListener, PropertyChangeListen
 
     public static void paintSkin(JComponent component, Skin skin,
             Graphics g, int dx, int dy, int dw, int dh, State state) {
-        triggerAnimation(component, skin.getPart(component), state);
+        if (ENABLE_ANIMATION)
+            triggerAnimation(component, skin.getPart(component), state);
         AnimationController controller = getAnimationController(component);
         synchronized (controller) {
             AnimationState animationState = null;

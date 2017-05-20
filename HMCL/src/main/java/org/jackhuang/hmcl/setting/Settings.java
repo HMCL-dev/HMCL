@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.util.CollectionUtils;
 import org.jackhuang.hmcl.api.HMCLApi;
 import org.jackhuang.hmcl.api.event.config.ProfileChangedEvent;
 import org.jackhuang.hmcl.api.event.config.ProfileLoadingEvent;
+import org.jackhuang.hmcl.laf.utils.AnimationController;
 import org.jackhuang.hmcl.util.sys.FileUtils;
 import org.jackhuang.hmcl.util.MessageBox;
 import org.jackhuang.hmcl.util.UpdateChecker;
@@ -56,6 +57,7 @@ public final class Settings {
     static {
         SETTINGS = initSettings();
         DownloadType.setSuggestedDownloadType(SETTINGS.getDownloadSource().name());
+        AnimationController.ENABLE_ANIMATION = SETTINGS.isEnableAnimation();
         if (!getProfiles().containsKey(DEFAULT_PROFILE))
             getProfiles().put(DEFAULT_PROFILE, new Profile(DEFAULT_PROFILE));
 

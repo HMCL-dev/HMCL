@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import java.awt.Font;
 import java.io.PrintStream;
 import javax.swing.SwingUtilities;
 import javax.swing.text.Document;
@@ -53,6 +54,11 @@ public class LogWindow extends javax.swing.JFrame {
         SwingUtilities.invokeLater(() -> {
             setLocationRelativeTo(null);
             txtLog.setEditable(false);
+            Font font = Font.decode("Consolas");
+            if (font == null)
+                font = Font.decode("Monospace");
+            if (font != null)
+                txtLog.setFont(font);
         });
     }
 
