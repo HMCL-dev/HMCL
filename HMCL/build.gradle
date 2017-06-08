@@ -19,16 +19,16 @@ import java.util.jar.JarFile
 import java.util.jar.Pack200
 import java.util.zip.GZIPOutputStream
 import java.security.MessageDigest
+import java.util.jar.JarOutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
 
 plugins {
     id "edu.sc.seis.macAppBundle" version "2.1.6"
     id "me.tatarka.retrolambda" version "3.5.0"
     id 'edu.sc.seis.launch4j' version '2.3.0'
+    id "org.jetbrains.kotlin.jvm" version "1.1.2-2"
 }
-
-import java.util.jar.JarOutputStream
-import java.util.zip.ZipEntry
-import java.util.zip.ZipFile
 
 if (!hasProperty('mainClass')) {
     ext.mainClass = 'org.jackhuang.hmcl.Main'

@@ -47,7 +47,7 @@ public enum Level {
         return this.level <= level.level;
     }
 
-    public static final Pattern MINECRAFT_LOGGER = Pattern.compile("\\[(?<timestamp>[0-9:]+)\\] \\[[^/]+/(?<level>[^\\]]+)\\]");
+    public static final Pattern MINECRAFT_LOGGER = Pattern.compile("\\[(?<timestamp>[0-9:]+)\\] \\[[^/]+/(?<level>[^\\]]+)\\] \\[(?<category>[^\\]]+)\\]");
     public static final String JAVA_SYMBOL = "([a-zA-Z_$][a-zA-Z\\d_$]*\\.)+[a-zA-Z_$][a-zA-Z\\d_$]*";
 
     public static Level guessLevel(String line, Level preLevel) {
@@ -58,26 +58,36 @@ public enum Level {
             String levelStr = m.group("level");
             if (null != levelStr)
                 switch (levelStr) {
-                case "INFO":
-                    level = INFO;
-                    break;
-                case "WARN":
-                    level = WARN;
-                    break;
-                case "ERROR":
-                    level = ERROR;
-                    break;
-                case "FATAL":
-                    level = FATAL;
-                    break;
-                case "TRACE":
-                    level = TRACE;
-                    break;
-                case "DEBUG":
-                    level = DEBUG;
-                    break;
-                default:
-                    break;
+                    case "INFO":
+                        level = INFO;
+                        break;
+                    case "WARN":
+                        level = WARN;
+                        break;
+                    case "ERROR":
+                        level = ERROR;
+                        break;
+                    case "FATAL":
+                        level = FATAL;
+                        break;
+                    case "TRACE":
+                        level = TRACE;
+                        break;
+                    case "DEBUG":
+                        level = DEBUG;
+                        break;
+                    default:
+                        break;
+                }
+            String level2Str = m.group("category");
+            if (null != level2Str)
+                switch(level2Str) {
+                    case "STDOUT":
+                        level = INFO;
+                        break;
+                    case "STDERR":
+                        level = ERROR;
+                        break;
                 }
         } else {
             if (line.contains("[INFO]") || line.contains("[CONFIG]") || line.contains("[FINE]")
@@ -94,10 +104,10 @@ public enum Level {
             return FATAL;
 
         if (line.contains("Exception in thread")
-            || line.matches("\\s+at " + JAVA_SYMBOL)
-            || line.matches("Caused by: " + JAVA_SYMBOL)
-            || line.matches("([a-zA-Z_$][a-zA-Z\\d_$]*\\.)+[a-zA-Z_$]?[a-zA-Z\\d_$]*(Exception|Error|Throwable)")
-            || line.matches("... \\d+ more$"))
+                || line.matches("\\s+at " + JAVA_SYMBOL)
+                || line.matches("Caused by: " + JAVA_SYMBOL)
+                || line.matches("([a-zA-Z_$][a-zA-Z\\d_$]*\\.)+[a-zA-Z_$]?[a-zA-Z\\d_$]*(Exception|Error|Throwable)")
+                || line.matches("... \\d+ more$"))
             return ERROR;
         return preLevel.level < level.level ? preLevel : level;
     }
