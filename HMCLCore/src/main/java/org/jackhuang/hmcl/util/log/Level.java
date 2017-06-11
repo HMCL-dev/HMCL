@@ -47,11 +47,13 @@ public enum Level {
         return this.level <= level.level;
     }
 
-    public static final Pattern MINECRAFT_LOGGER = Pattern.compile("\\[(?<timestamp>[0-9:]+)\\] \\[[^/]+/(?<level>[^\\]]+)\\] \\[(?<category>[^\\]]+)\\]");
+    public static final Pattern MINECRAFT_LOGGER = Pattern.compile("\\[(?<timestamp>[0-9:]+)\\] \\[[^/]+/(?<level>[^\\]]+)\\]");
+    public static final Pattern MINECRAFT_LOGGER_CATEGORY = Pattern.compile("\\[(?<timestamp>[0-9:]+)\\] \\[[^/]+/(?<level>[^\\]]+)\\] \\[(?<category>[^\\]]+)\\]");
     public static final String JAVA_SYMBOL = "([a-zA-Z_$][a-zA-Z\\d_$]*\\.)+[a-zA-Z_$][a-zA-Z\\d_$]*";
 
     public static Level guessLevel(String line, Level preLevel) {
-        if (line.startsWith("MC:")) line = line.substring("MC:".length());
+        if (line.startsWith("MC:"))
+            line = line.substring("MC:".length());
         Level level = preLevel;
         Matcher m = MINECRAFT_LOGGER.matcher(line);
         if (m.find()) {
@@ -80,19 +82,22 @@ public enum Level {
                     default:
                         break;
                 }
-            String level2Str = m.group("category");
-            if (null != level2Str)
-                switch(level2Str) {
-                    case "STDOUT":
-                        level = INFO;
-                        break;
-                    case "STDERR":
-                        level = ERROR;
-                        break;
-                }
+            Matcher m2 = MINECRAFT_LOGGER_CATEGORY.matcher(line);
+            if (m2.find()) {
+                String level2Str = m2.group("category");
+                if (null != level2Str)
+                    switch (level2Str) {
+                        case "STDOUT":
+                            level = INFO;
+                            break;
+                        case "STDERR":
+                            level = ERROR;
+                            break;
+                    }
+            }
         } else {
             if (line.contains("[INFO]") || line.contains("[CONFIG]") || line.contains("[FINE]")
-                || line.contains("[FINER]") || line.contains("[FINEST]"))
+                    || line.contains("[FINER]") || line.contains("[FINEST]"))
                 level = INFO;
             if (line.contains("[SEVERE]") || line.contains("[STDERR]"))
                 level = ERROR;
