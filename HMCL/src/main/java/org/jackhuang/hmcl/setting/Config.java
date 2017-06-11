@@ -112,7 +112,7 @@ public final class Config implements Cloneable {
     }
 
     public boolean isEnableShadow() {
-        return enableShadow;
+        return enableShadow && OS.os() == OS.WINDOWS;
     }
 
     public void setEnableShadow(boolean enableShadow) {
@@ -225,7 +225,9 @@ public final class Config implements Cloneable {
     public Config() {
         clientToken = UUID.randomUUID().toString();
         logintype = downloadtype = 0;
-        enableAnimation = enableBlur = enableShadow = true;
+        enableAnimation = enableBlur = true;
+        if (OS.os() == OS.WINDOWS)
+            enableShadow = true;
         theme = LAFTheme.BLUE.id;
         decorated = OS.os() == OS.LINUX;
         auth = new HashMap<>();
