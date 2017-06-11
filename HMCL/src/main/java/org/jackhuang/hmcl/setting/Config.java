@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 import org.jackhuang.hmcl.core.download.DownloadType;
 import com.google.gson.annotations.SerializedName;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -81,6 +82,10 @@ public final class Config implements Cloneable {
     private TreeMap<String, Profile> configurations;
     @SerializedName("auth")
     private Map<String, Map> auth;
+    @SerializedName("fontFamily")
+    private String fontFamily;
+    @SerializedName("fontSize")
+    private int fontSize;
 
     public List<JdkVersion> getJava() {
         return java == null ? java = new ArrayList<>() : java;
@@ -224,6 +229,12 @@ public final class Config implements Cloneable {
         theme = LAFTheme.BLUE.id;
         decorated = OS.os() == OS.LINUX;
         auth = new HashMap<>();
+        Font font = Font.decode("Consolas");
+        if (font == null)
+            font = Font.decode("Monospace");
+        if (font != null)
+            fontFamily = font.getFamily();
+        fontSize = 12;
         commonpath = MCUtils.getLocation().getPath();
     }
 
@@ -271,6 +282,28 @@ public final class Config implements Cloneable {
         Settings.save();
     }
 
+    public int getFontSize() {
+        return fontSize;
+    }
+
+    public void setFontSize(int fontSize) {
+        this.fontSize = fontSize;
+        Settings.save();
+    }
+    
+    public Font getConsoleFont() {
+        return Font.decode(fontFamily + "-" + fontSize);
+    }
+
+    public String getFontFamily() {
+        return Font.decode(fontFamily).getFamily();
+    }
+
+    public void setFontFamily(String fontFamily) {
+        this.fontFamily = Font.decode(fontFamily).getFamily(); // avoid invalid font family
+        Settings.save();
+    }
+    
     public String getLocalization() {
         return localization;
     }

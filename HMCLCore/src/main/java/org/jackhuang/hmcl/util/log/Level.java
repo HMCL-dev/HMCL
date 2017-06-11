@@ -51,6 +51,7 @@ public enum Level {
     public static final String JAVA_SYMBOL = "([a-zA-Z_$][a-zA-Z\\d_$]*\\.)+[a-zA-Z_$][a-zA-Z\\d_$]*";
 
     public static Level guessLevel(String line, Level preLevel) {
+        if (line.startsWith("MC:")) line = line.substring("MC:".length());
         Level level = preLevel;
         Matcher m = MINECRAFT_LOGGER.matcher(line);
         if (m.find()) {

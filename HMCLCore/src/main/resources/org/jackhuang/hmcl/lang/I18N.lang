@@ -330,6 +330,7 @@ launcher.decorated=Enable system window border(in order to fix the problem that 
 launcher.modpack=<html><a href="http://blog.163.com/huanghongxun2008@126/blog/static/7738046920160323812771/">Documentations for modpacks.</a></html>
 launcher.lang=Language
 launcher.restart=Options will be in operations only if restart this app.
+launcher.log_font=Log Font
 
 launcher.title.game=Games
 launcher.title.main=Home

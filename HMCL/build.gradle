@@ -27,7 +27,7 @@ plugins {
     id "edu.sc.seis.macAppBundle" version "2.1.6"
     id "me.tatarka.retrolambda" version "3.5.0"
     id 'edu.sc.seis.launch4j' version '2.3.0'
-    id "org.jetbrains.kotlin.jvm" version "1.1.2-2"
+    //id "org.jetbrains.kotlin.jvm" version "1.1.2-2"
 }
 
 if (!hasProperty('mainClass')) {

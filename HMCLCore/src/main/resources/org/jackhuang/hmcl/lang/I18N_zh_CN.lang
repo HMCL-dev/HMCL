@@ -330,6 +330,7 @@ launcher.decorated=启用窗口边框(Linux下可解决程序界面全灰问题)
 launcher.modpack=<html><a href="http://huangyuhui.duapp.com/link.php?type=modpack">整合包作者帮助</a></html>
 launcher.lang=语言
 launcher.restart=本界面选项需要重启本启动器生效
+launcher.log_font=日志字体
 
 launcher.title.game=游戏设置
 launcher.title.main=主页

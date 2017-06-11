@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.C;
 import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.util.log.Level;
 import org.jackhuang.hmcl.api.func.NonFunction;
+import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.util.DoubleOutputStream;
 import org.jackhuang.hmcl.util.Utils;
 import org.jackhuang.hmcl.util.sys.ProcessMonitor;
@@ -54,11 +55,7 @@ public class LogWindow extends javax.swing.JFrame {
         SwingUtilities.invokeLater(() -> {
             setLocationRelativeTo(null);
             txtLog.setEditable(false);
-            Font font = Font.decode("Consolas");
-            if (font == null)
-                font = Font.decode("Monospace");
-            if (font != null)
-                txtLog.setFont(font);
+            txtLog.setFont(Settings.getInstance().getConsoleFont());
         });
     }
 
@@ -271,6 +268,7 @@ public class LogWindow extends javax.swing.JFrame {
 
     @Override
     public void setVisible(boolean b) {
+        txtLog.setFont(Settings.getInstance().getConsoleFont());
         lblCrash.setVisible(false);
         btnMCBBS.setVisible(false);
         btnTieBa.setVisible(false);
@@ -279,6 +277,7 @@ public class LogWindow extends javax.swing.JFrame {
     }
 
     public void showAsCrashWindow(boolean out_date) {
+        txtLog.setFont(Settings.getInstance().getConsoleFont());
         if (out_date) {
             lblCrash.setVisible(false);
             btnMCBBS.setVisible(false);
