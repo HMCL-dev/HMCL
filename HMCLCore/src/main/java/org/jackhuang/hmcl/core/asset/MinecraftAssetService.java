@@ -135,6 +135,8 @@ public class MinecraftAssetService extends IMinecraftAssetService {
     public File getAssetObject(String assetId, String name) throws IOException {
         try {
             AssetsIndex index = (AssetsIndex) C.GSON.fromJson(FileUtils.read(getIndexFile(assetId), "UTF-8"), AssetsIndex.class);
+            if (index == null || index.getFileMap() == null || index.getFileMap().get(name) == null)
+                throw new IOException("Assets file format malformed.");
             return getAssetObject(assetId, (AssetsObject) index.getFileMap().get(name));
         } catch (JsonSyntaxException e) {
             throw new IOException("Assets file format malformed.", e);

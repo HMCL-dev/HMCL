@@ -27,7 +27,7 @@ apply plugin: 'maven'
 
 dependencies {
     compile 'com.google.code.gson:gson:2.2.4' // Apache License 2.0
-    compile "org.jetbrains.kotlin:kotlin-stdlib:1.1.2"
+    //compile "org.jetbrains.kotlin:kotlin-stdlib:1.1.2"
 }
 
 task sourcesJar(type: Jar, dependsOn: classes, description: 'Creates a jar from the source files.') {

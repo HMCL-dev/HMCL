@@ -59,7 +59,12 @@ public final class OfflineAuthenticator extends AbstractAuthenticator {
     public UserProfileProvider login(LoginInfo info) throws AuthenticationException {
         if (StrUtils.isBlank(info.username))
             throw new AuthenticationException(C.i18n("login.no_Player007"));
-        String uuid = getUUIDFromUserName(info.username);
+        String uuid;
+        try {
+            uuid = getUUIDFromUserName(info.username);
+        } catch(IllegalArgumentException e) {
+            throw new AuthenticationException("Could not find md5 digest algorithm, please reinstall Java or even your OS.", e);
+        }
         if (uuidMap != null && uuidMap.containsKey(info.username) && uuidMap.get(info.username) instanceof String)
             uuid = (String) uuidMap.get(info.username);
         else {

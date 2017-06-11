@@ -15,6 +15,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Frame;
 import java.awt.Graphics;
+import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Window;
 
@@ -182,10 +183,14 @@ public class TranslucentPopupFactory extends PopupFactory {
                 boolean isComboBoxPopup = (contents instanceof BasicComboPopup);
 
                 if (WindowTranslucencyHelper.isTranslucencySupported()) {
-                    //每像素透明
-                    WindowTranslucencyHelper.setWindowOpaque(w, false);
-                    //内容组件半透明
-                    w.setOpacity(isTooltip ? 1.0f : isComboBoxPopup ? 0.95f : 0.95f);//0.85f : 0.95f);//0.8f : 0.95f);
+                    try {
+                        //每像素透明
+                        WindowTranslucencyHelper.setWindowOpaque(w, false);
+                        //内容组件半透明
+                        w.setOpacity(isTooltip ? 1.0f : isComboBoxPopup ? 0.95f : 0.95f);//0.85f : 0.95f);//0.8f : 0.95f);
+                    } catch(Exception e) {
+                        // ignore
+                    }
                 }
 
 //				component.getContentPane().add(contents, BorderLayout.CENTER);

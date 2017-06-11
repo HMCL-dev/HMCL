@@ -27,7 +27,9 @@ public class WindowTranslucencyHelper {
      * @return true, if is translucency supported
      */
     public static boolean isTranslucencySupported() {
-        return GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.TRANSLUCENT);
+        GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        return device.isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.TRANSLUCENT) &&
+                device.isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.PERPIXEL_TRANSLUCENT);
     }
 
     /**
