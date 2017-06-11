@@ -331,6 +331,9 @@ launcher.modpack=<html><a href="http://huangyuhui.duapp.com/link.php?type=modpac
 launcher.lang=语言
 launcher.restart=本界面选项需要重启本启动器生效
 launcher.log_font=日志字体
+launcher.tab.general=通用
+launcher.tab.ui=界面
+launcher.tab.about=关于
 
 launcher.title.game=游戏设置
 launcher.title.main=主页

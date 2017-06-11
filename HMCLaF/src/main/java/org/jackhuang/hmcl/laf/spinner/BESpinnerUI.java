@@ -112,8 +112,6 @@ public class BESpinnerUI extends BasicSpinnerUI {
          * @param type the type
          */
         public GlyphButton(Component parent, Type type) {
-//			XPStyle xp = getXP();
-//			skin = xp.getSkin(parent, part);
             this.type = type;
             setBorder(null);
             setContentAreaFilled(false);

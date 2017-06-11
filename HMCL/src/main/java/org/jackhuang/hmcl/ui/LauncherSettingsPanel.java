@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import java.awt.Font;
 import java.io.IOException;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -103,7 +102,7 @@ public class LauncherSettingsPanel extends RepaintPage {
 
         lblModpack = new javax.swing.JLabel();
         lblRestart = new javax.swing.JLabel();
-        tabLauncherSettings = new javax.swing.JTabbedPane();
+        tabLauncherSettings = new NewTabPane();
         pnlGeneral = new Page().setAnimationEnabled(Settings.getInstance().isEnableAnimation());
         lblProxy = new javax.swing.JLabel();
         lblProxyHost = new javax.swing.JLabel();
@@ -311,7 +310,7 @@ public class LauncherSettingsPanel extends RepaintPage {
                 .addContainerGap())
         );
 
-        tabLauncherSettings.addTab("General", pnlGeneral);
+        tabLauncherSettings.addTab(C.i18n("launcher.tab.general"), pnlGeneral); // NOI18N
 
         lblTheme.setText(C.i18n("launcher.theme")); // NOI18N
 
@@ -449,7 +448,7 @@ public class LauncherSettingsPanel extends RepaintPage {
                 .addContainerGap())
         );
 
-        tabLauncherSettings.addTab("UI", pnlUI);
+        tabLauncherSettings.addTab(C.i18n("launcher.tab.ui"), pnlUI); // NOI18N
 
         lblAbout.setText(C.i18n("launcher.about")); // NOI18N
         lblAbout.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
@@ -471,7 +470,7 @@ public class LauncherSettingsPanel extends RepaintPage {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        tabLauncherSettings.addTab("About", pnlAbout);
+        tabLauncherSettings.addTab(C.i18n("launcher.tab.about"), pnlAbout); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -496,7 +495,7 @@ public class LauncherSettingsPanel extends RepaintPage {
                 .addContainerGap())
         );
 
-        tabLauncherSettings.getAccessibleContext().setAccessibleName("General");
+        tabLauncherSettings.getAccessibleContext().setAccessibleName("");
     }// </editor-fold>//GEN-END:initComponents
 
     private void cboDownloadSourceItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboDownloadSourceItemStateChanged
