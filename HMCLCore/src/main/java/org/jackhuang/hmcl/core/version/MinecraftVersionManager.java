@@ -50,7 +50,7 @@ import org.jackhuang.hmcl.util.ui.SwingUtils;
  *
  * @author huangyuhui
  */
-public class MinecraftVersionManager extends IMinecraftProvider {
+public class MinecraftVersionManager<T extends IMinecraftService> extends IMinecraftProvider<T> {
 
     final Map<String, MinecraftVersion> versions = new TreeMap<>();
 
@@ -58,7 +58,7 @@ public class MinecraftVersionManager extends IMinecraftProvider {
      *
      * @param p
      */
-    public MinecraftVersionManager(IMinecraftService p) {
+    public MinecraftVersionManager(T p) {
         super(p);
     }
 

@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.setting.VersionSetting;
  *
  * @author huangyuhui
  */
-public class HMCLGameProvider extends MinecraftVersionManager {
+public class HMCLGameProvider extends MinecraftVersionManager<HMCLMinecraftService> {
 
     public HMCLGameProvider(HMCLMinecraftService p) {
         super(p);
@@ -37,9 +37,9 @@ public class HMCLGameProvider extends MinecraftVersionManager {
 
     @Override
     public File getLibraryFile(MinecraftVersion version, IMinecraftLibrary lib) {
-        VersionSetting vs = ((HMCLMinecraftService) service).getVersionSetting(version.id);
+        VersionSetting vs = service.getProfile().getVersionSetting(version.id);
         File self = super.getLibraryFile(version, lib);
-        if (self.exists() || (vs != null && ((HMCLMinecraftService) service).p.isNoCommon()))
+        if (self.exists() || (vs != null && service.getProfile().isNoCommon()))
             return self;
         else
             return lib.getFilePath(new File(Settings.getInstance().getCommonpath()));
@@ -47,7 +47,7 @@ public class HMCLGameProvider extends MinecraftVersionManager {
 
     @Override
     public File getRunDirectory(String id) {
-        VersionSetting vs = ((HMCLMinecraftService) service).getVersionSetting(id);
+        VersionSetting vs = service.getProfile().getVersionSetting(id);
         if (vs == null)
             return super.getRunDirectory(id);
         else

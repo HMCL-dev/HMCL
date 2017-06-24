@@ -122,11 +122,11 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
         }
     }
 
-    public MinecraftVersion resolve(IMinecraftProvider provider) throws GameException {
+    public MinecraftVersion resolve(IMinecraftProvider<?> provider) throws GameException {
         return resolve(provider, new HashSet<>());
     }
 
-    protected MinecraftVersion resolve(IMinecraftProvider provider, Set<String> resolvedSoFar) throws GameException {
+    protected MinecraftVersion resolve(IMinecraftProvider<?> provider, Set<String> resolvedSoFar) throws GameException {
         if (inheritsFrom == null)
             return this;
         if (!resolvedSoFar.add(id))

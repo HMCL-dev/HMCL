@@ -87,6 +87,24 @@ public final class Config implements Cloneable {
     @SerializedName("fontSize")
     private int fontSize;
 
+    public Config() {
+        clientToken = UUID.randomUUID().toString();
+        logintype = downloadtype = 0;
+        enableAnimation = enableBlur = true;
+        if (OS.os() == OS.WINDOWS)
+            enableShadow = true;
+        theme = LAFTheme.BLUE.id;
+        decorated = OS.os() == OS.LINUX;
+        auth = new HashMap<>();
+        Font font = Font.decode("Consolas");
+        if (font == null)
+            font = Font.decode("Monospace");
+        if (font != null)
+            fontFamily = font.getFamily();
+        fontSize = 12;
+        commonpath = MCUtils.getLocation().getPath();
+    }
+
     public List<JdkVersion> getJava() {
         return java == null ? java = new ArrayList<>() : java;
     }
@@ -220,24 +238,6 @@ public final class Config implements Cloneable {
     public void setAuthenticatorConfig(String authId, Map map) {
         auth.put(authId, map);
         Settings.save();
-    }
-
-    public Config() {
-        clientToken = UUID.randomUUID().toString();
-        logintype = downloadtype = 0;
-        enableAnimation = enableBlur = true;
-        if (OS.os() == OS.WINDOWS)
-            enableShadow = true;
-        theme = LAFTheme.BLUE.id;
-        decorated = OS.os() == OS.LINUX;
-        auth = new HashMap<>();
-        Font font = Font.decode("Consolas");
-        if (font == null)
-            font = Font.decode("Monospace");
-        if (font != null)
-            fontFamily = font.getFamily();
-        fontSize = 12;
-        commonpath = MCUtils.getLocation().getPath();
     }
 
     public DownloadType getDownloadSource() {

@@ -33,11 +33,11 @@ import org.jackhuang.hmcl.api.game.IMinecraftLibrary;
  * org.jackhuang.hmcl.core.version.MinecraftVersionManager
  * @author huangyuhui
  */
-public abstract class IMinecraftProvider {
+public abstract class IMinecraftProvider<T extends IMinecraftService> {
 
-    protected IMinecraftService service;
+    protected T service;
 
-    public IMinecraftProvider(IMinecraftService service) {
+    public IMinecraftProvider(T service) {
         this.service = service;
     }
 

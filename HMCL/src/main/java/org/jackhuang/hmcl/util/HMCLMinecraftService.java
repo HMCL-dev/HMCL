@@ -18,12 +18,8 @@
 package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.core.service.IMinecraftService;
-import org.jackhuang.hmcl.core.service.IMinecraftAssetService;
 import org.jackhuang.hmcl.core.service.IMinecraftLoader;
-import org.jackhuang.hmcl.core.service.IMinecraftDownloadService;
-import org.jackhuang.hmcl.core.service.IMinecraftProvider;
 import org.jackhuang.hmcl.core.service.IMinecraftModService;
-import org.jackhuang.hmcl.core.service.IMinecraftInstallerService;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.util.HashMap;
@@ -35,7 +31,6 @@ import org.jackhuang.hmcl.api.event.version.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.api.event.version.RefreshingVersionsEvent;
 import org.jackhuang.hmcl.core.GameException;
 import org.jackhuang.hmcl.core.install.MinecraftInstallerService;
-import org.jackhuang.hmcl.core.asset.MinecraftAssetService;
 import org.jackhuang.hmcl.api.auth.UserProfileProvider;
 import org.jackhuang.hmcl.core.download.MinecraftDownloadService;
 import org.jackhuang.hmcl.api.game.LaunchOptions;
@@ -55,7 +50,7 @@ import org.jackhuang.hmcl.util.task.TaskWindow;
  */
 public class HMCLMinecraftService extends IMinecraftService {
 
-    Profile p;
+    private Profile p;
     final Map<String, VersionSetting> versionSettings = new HashMap<>();
 
     public HMCLMinecraftService(Profile p) {
@@ -143,10 +138,10 @@ public class HMCLMinecraftService extends IMinecraftService {
         return p.getGameDir();
     }
 
-    protected IMinecraftProvider provider;
+    protected HMCLGameProvider provider;
 
     @Override
-    public IMinecraftProvider version() {
+    public HMCLGameProvider version() {
         return provider;
     }
 
@@ -160,21 +155,21 @@ public class HMCLMinecraftService extends IMinecraftService {
     protected MinecraftDownloadService mds;
 
     @Override
-    public IMinecraftDownloadService download() {
+    public MinecraftDownloadService download() {
         return mds;
     }
 
-    final MinecraftAssetService mas;
+    final HMCLAssetService mas;
 
     @Override
-    public IMinecraftAssetService asset() {
+    public HMCLAssetService asset() {
         return mas;
     }
 
     protected MinecraftInstallerService mis;
 
     @Override
-    public IMinecraftInstallerService install() {
+    public MinecraftInstallerService install() {
         return mis;
     }
 

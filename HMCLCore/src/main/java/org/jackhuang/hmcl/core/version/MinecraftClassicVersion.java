@@ -48,7 +48,7 @@ public class MinecraftClassicVersion extends MinecraftVersion {
     }
 
     @Override
-    public MinecraftVersion resolve(IMinecraftProvider manager, Set<String> resolvedSoFar) {
+    public MinecraftVersion resolve(IMinecraftProvider<?> manager, Set<String> resolvedSoFar) {
         return this;
     }
 
