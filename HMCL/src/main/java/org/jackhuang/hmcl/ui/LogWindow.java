@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import java.awt.Font;
 import java.io.PrintStream;
 import javax.swing.SwingUtilities;
 import javax.swing.text.Document;
@@ -245,9 +244,17 @@ public class LogWindow extends javax.swing.JFrame {
     }
 
     public void log(final String status, final Level c) {
+        if (isVisible())
+            return;
         SwingUtilities.invokeLater(() -> {
-            String newStatus = status.replace("\t", "    ");
             Document d = txtLog.getStyledDocument();
+            try { // prevent too much memory used.
+                if (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() > 1l * 1024 * 1024 * 256)
+                    d.remove(0, d.getLength());
+            } catch (Exception ex) {
+                HMCLog.err("Failed to clear the text component", ex);
+            }
+            String newStatus = status.replace("\t", "    ");
             SimpleAttributeSet sas = new SimpleAttributeSet();
             StyleConstants.setForeground(sas, c.COLOR);
             try {
