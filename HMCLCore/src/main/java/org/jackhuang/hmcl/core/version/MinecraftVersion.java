@@ -21,8 +21,10 @@ import org.jackhuang.hmcl.api.game.IMinecraftLibrary;
 import com.google.gson.annotations.SerializedName;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -164,8 +166,7 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
     }
 
     public File getNatives(File gameDir) {
-        return new File(gameDir, "versions/" + id + "/" + id
-                                 + "-natives");
+        return new File(gameDir, "versions/" + id + "/" + id + "-natives");
     }
 
     public boolean isAllowedToUnpackNatives() {
@@ -193,8 +194,6 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
         return Objects.equals(this.id, ((MinecraftVersion) obj).id);
     }
     
-    
-
     public AssetIndexDownloadInfo getAssetsIndex() {
         if (assetIndex == null)
             assetIndex = new AssetIndexDownloadInfo(assets == null ? AssetsIndex.DEFAULT_ASSET_NAME : assets);
@@ -212,7 +211,7 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
         return i;
     }
 
-    public Set<IMinecraftLibrary> getLibraries() {
-        return libraries == null ? new HashSet<>() : new HashSet<>(libraries);
+    public List<IMinecraftLibrary> getLibraries() {
+        return libraries == null ? new LinkedList<>() : Collections.unmodifiableList(libraries);
     }
 }

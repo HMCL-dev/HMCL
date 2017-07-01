@@ -248,7 +248,7 @@ public class MinecraftVersionManager<T extends IMinecraftService> extends IMinec
         ArrayList<File> unzippings = new ArrayList<>();
         ArrayList<Extract> extractRules = new ArrayList<>();
         for (IMinecraftLibrary l : v.libraries)
-            if (l.isRequiredToUnzip() && v.isAllowedToUnpackNatives()) {
+            if (l.isNative() && v.isAllowedToUnpackNatives()) {
                 unzippings.add(getLibraryFile(v, l));
                 extractRules.add(l.getDecompressExtractRules());
             }

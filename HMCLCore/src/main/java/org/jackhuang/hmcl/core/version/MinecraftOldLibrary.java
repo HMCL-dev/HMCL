@@ -30,7 +30,7 @@ public class MinecraftOldLibrary extends MinecraftLibrary {
     }
 
     @Override
-    public boolean isRequiredToUnzip() {
+    public boolean isNative() {
         return false;
     }
 

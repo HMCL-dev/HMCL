@@ -26,7 +26,7 @@ import org.jackhuang.hmcl.api.game.IMinecraftLibrary;
  */
 public abstract class AbstractMinecraftLibrary implements IMinecraftLibrary {
 
-    private String name;
+    private final String name;
 
     public AbstractMinecraftLibrary(String name) {
         this.name = name;

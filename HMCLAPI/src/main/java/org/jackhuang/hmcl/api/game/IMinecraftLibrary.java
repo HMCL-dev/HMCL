@@ -37,8 +37,8 @@ public interface IMinecraftLibrary extends Cloneable {
     File getFilePath(File gameDir);
 
     String getName();
-
-    boolean isRequiredToUnzip();
+    
+    boolean isNative();
     
     String getDownloadURL(String downloadSource);
     

@@ -84,7 +84,7 @@ public class MinecraftLibrary extends AbstractMinecraftLibrary {
     }
 
     @Override
-    public boolean isRequiredToUnzip() {
+    public boolean isNative() {
         return natives != null && allow();
     }
 
@@ -125,11 +125,7 @@ public class MinecraftLibrary extends AbstractMinecraftLibrary {
                 downloads.classifiers = new HashMap<>();
             if (!downloads.classifiers.containsKey(getNative()))
                 downloads.classifiers.put(getNative(), info = new LibraryDownloadInfo());
-            else {
-                info = downloads.classifiers.get(getNative());
-                if (info == null)
-                    info = new LibraryDownloadInfo();
-            }
+            else info = downloads.classifiers.get(getNative());
         } else {
             if (downloads.artifact == null)
                 downloads.artifact = new LibraryDownloadInfo();

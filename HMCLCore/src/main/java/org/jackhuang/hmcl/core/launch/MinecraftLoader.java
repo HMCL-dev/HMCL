@@ -46,7 +46,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         StringBuilder library = new StringBuilder("");
         ArrayList<MinecraftLibrary> opt = new ArrayList<>();
         for (MinecraftLibrary l : version.libraries)
-            if (l.allow() && !l.isRequiredToUnzip()) {
+            if (l.allow() && !l.isNative()) {
                 if (l.getName().toLowerCase(Locale.US).contains("optifine")) {
                     opt.add(l);
                     continue;
