@@ -123,10 +123,9 @@ public class InstructionsPanelImpl extends JComponent implements WizardObserver,
     public InstructionsPanelImpl(BufferedImage img, Wizard wizard) {
         if (img == null)
             try {
-                img = ImageIO.read(InstructionsPanelImpl.class.getResourceAsStream(
-                        "/org/jackhuang/hmcl/wizard.jpg"));
-            } catch (IOException ioe) {
-                HMCLog.err("Failed to load wizard.jpg, maybe you fucking modified the launcher", ioe);
+                img = ImageIO.read(InstructionsPanelImpl.class.getResourceAsStream("/org/jackhuang/hmcl/wizard.jpg"));
+            } catch (IOException | NullPointerException ioe) {
+                HMCLog.err("Failed to load wizard.jpg, maybe you have fuckingly modified the launcher file", ioe);
             }
         this.img = img;
         this.wizard = wizard;

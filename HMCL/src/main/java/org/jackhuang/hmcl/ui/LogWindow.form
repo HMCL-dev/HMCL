@@ -29,18 +29,12 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="1" attributes="0">
+          <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="1" attributes="0">
-                  <Component id="pnlLog" max="32767" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="pnlLog" alignment="1" max="32767" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
-                      <Component id="btnTieBa" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="btnMCBBS" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="btnMCF" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="btnGitHub" min="-2" max="-2" attributes="0"/>
+                      <Component id="btnContact" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="btnTerminateGame" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
@@ -51,6 +45,21 @@
                       <Component id="btnClose" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Component id="lblCrash" alignment="0" max="32767" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cboShowLines" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                      <Component id="btnFatal" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="btnError" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="btnWarn" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="btnInfo" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="btnDebug" min="-2" max="-2" attributes="0"/>
+                  </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -60,19 +69,26 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cboShowLines" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnDebug" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnInfo" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnWarn" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnError" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnFatal" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="lblCrash" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="pnlLog" pref="356" max="32767" attributes="0"/>
+              <Component id="pnlLog" pref="281" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="btnClear" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnClose" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnCopy" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="btnMCBBS" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="btnTieBa" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="btnMCF" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnContact" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnTerminateGame" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="btnGitHub" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -117,30 +133,14 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JButton" name="btnMCBBS">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="MCBBS"/>
-      </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnMCBBSActionPerformed"/>
-      </Events>
-    </Component>
-    <Component class="javax.swing.JButton" name="btnTieBa">
+    <Component class="javax.swing.JButton" name="btnContact">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/jackhuang/hmcl/I18N.properties" key="logwindow.tieba" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+          <ResourceString bundle="org/jackhuang/hmcl/lang/I18N.properties" key="logwindow.contact" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnTieBaActionPerformed"/>
-      </Events>
-    </Component>
-    <Component class="javax.swing.JButton" name="btnMCF">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Minecraft Forum"/>
-      </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnMCFActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnContactActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JButton" name="btnTerminateGame">
@@ -151,14 +151,6 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnTerminateGameActionPerformed"/>
-      </Events>
-    </Component>
-    <Component class="javax.swing.JButton" name="btnGitHub">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="GitHub"/>
-      </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnGitHubActionPerformed"/>
       </Events>
     </Component>
     <Container class="javax.swing.JScrollPane" name="pnlLog">
@@ -172,5 +164,53 @@
         </Component>
       </SubComponents>
     </Container>
+    <Component class="javax.swing.JLabel" name="jLabel1">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#x663e;&#x793a;&#x884c;&#x6570;"/>
+        <Property name="toolTipText" type="java.lang.String" value=""/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="cboShowLines">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="3">
+            <StringItem index="0" value="100"/>
+            <StringItem index="1" value="1000"/>
+            <StringItem index="2" value="5000"/>
+          </StringArray>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="cboShowLinesItemStateChanged"/>
+      </Events>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+      </AuxValues>
+    </Component>
+    <Component class="javax.swing.JToggleButton" name="btnDebug">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="debugs"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JToggleButton" name="btnInfo">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="infos"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JToggleButton" name="btnWarn">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="warns"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="btnError">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="errors"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="btnFatal">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="fatals"/>
+      </Properties>
+    </Component>
   </SubComponents>
 </Form>

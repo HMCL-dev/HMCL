@@ -32,7 +32,7 @@ import org.jackhuang.hmcl.util.ui.SwingUtils;
 public class WebFrame extends JDialog {
 
     public WebFrame(String... strs) {
-        this(("<html>" + StrUtils.parseParams(t -> ("<font color='#" + GraphicsUtils.getColor(Level.guessLevel((String) t, Level.INFO).COLOR) + "'>"), strs, t -> "</font><br />") + "</html>")
+        this(("<html>" + StrUtils.parseParams(t -> ("<font color='#" + GraphicsUtils.getColor(Level.mergeLevel(Level.INFO, Level.guessLevel((String) t)).COLOR) + "'>"), strs, t -> "</font><br />") + "</html>")
             .replace(" ", "&nbsp;").replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;"));
     }
 

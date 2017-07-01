@@ -86,10 +86,13 @@ public final class Config implements Cloneable {
     private String fontFamily;
     @SerializedName("fontSize")
     private int fontSize;
+    @SerializedName("logLines")
+    private int logLines;
 
     public Config() {
         clientToken = UUID.randomUUID().toString();
         logintype = downloadtype = 0;
+        logLines = 100;
         enableAnimation = enableBlur = true;
         if (OS.os() == OS.WINDOWS)
             enableShadow = true;
@@ -312,6 +315,18 @@ public final class Config implements Cloneable {
 
     public void setLocalization(String localization) {
         this.localization = localization;
+        Settings.save();
+    }
+
+    public int getLogLines() {
+        if (logLines == 100 || logLines == 1000 || logLines == 5000)
+            return logLines;
+        else
+            return logLines = 100;
+    }
+
+    public void setLogLines(int logLines) {
+        this.logLines = logLines;
         Settings.save();
     }
 

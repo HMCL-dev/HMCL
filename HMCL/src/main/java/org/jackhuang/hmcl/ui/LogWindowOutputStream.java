@@ -45,10 +45,16 @@ public class LogWindowOutputStream extends OutputStream {
     public final void write(byte[] arr, int off, int len) {
         append(new String(arr, off, len));
     }
+    
+    final Object obj = new Object();
+    Level lastLevel = null;
 
     private void append(final String str) {
         SwingUtilities.invokeLater(() -> {
-            txt.log(str, Level.guessLevel(str, sas));
+            Level level = Level.guessLevel(str);
+            if (level == null) level = lastLevel;
+            else lastLevel = level;
+            txt.log(str, Level.mergeLevel(sas, level));
         });
     }
 

@@ -51,10 +51,8 @@ public enum Level {
     public static final Pattern MINECRAFT_LOGGER_CATEGORY = Pattern.compile("\\[(?<timestamp>[0-9:]+)\\] \\[[^/]+/(?<level>[^\\]]+)\\] \\[(?<category>[^\\]]+)\\]");
     public static final String JAVA_SYMBOL = "([a-zA-Z_$][a-zA-Z\\d_$]*\\.)+[a-zA-Z_$][a-zA-Z\\d_$]*";
 
-    public static Level guessLevel(String line, Level preLevel) {
-        if (line.startsWith("MC:"))
-            line = line.substring("MC:".length());
-        Level level = preLevel;
+    public static Level guessLevel(String line) {
+        Level level = null;
         Matcher m = MINECRAFT_LOGGER.matcher(line);
         if (m.find()) {
             // New style logs from log4j
@@ -109,13 +107,23 @@ public enum Level {
         if (line.contains("overwriting existing"))
             return FATAL;
 
-        if (line.contains("Exception in thread")
+        /*if (line.contains("Exception in thread")
                 || line.matches("\\s+at " + JAVA_SYMBOL)
                 || line.matches("Caused by: " + JAVA_SYMBOL)
                 || line.matches("([a-zA-Z_$][a-zA-Z\\d_$]*\\.)+[a-zA-Z_$]?[a-zA-Z\\d_$]*(Exception|Error|Throwable)")
                 || line.matches("... \\d+ more$"))
-            return ERROR;
-        return preLevel.level < level.level ? preLevel : level;
+            return ERROR;*/
+        return level;
+    }
+    
+    public static boolean isError(Level a) {
+        return a == null ? false : a.lessOrEqual(Level.ERROR);
+    }
+    
+    public static Level mergeLevel(Level a, Level b) {
+        if (a == null) return b;
+        else if (b == null) return a;
+        else return a.level < b.level ? a : b;
     }
 
 }

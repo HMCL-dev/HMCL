@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.ui;
 
 import java.io.PrintStream;
+import java.util.Deque;
+import java.util.LinkedList;
 import javax.swing.SwingUtilities;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
@@ -73,13 +75,17 @@ public class LogWindow extends javax.swing.JFrame {
         btnClose = new javax.swing.JButton();
         btnCopy = new javax.swing.JButton();
         lblCrash = new javax.swing.JLabel();
-        btnMCBBS = new javax.swing.JButton();
-        btnTieBa = new javax.swing.JButton();
-        btnMCF = new javax.swing.JButton();
+        btnContact = new javax.swing.JButton();
         btnTerminateGame = new javax.swing.JButton();
-        btnGitHub = new javax.swing.JButton();
         pnlLog = new javax.swing.JScrollPane();
         txtLog = new javax.swing.JTextPane();
+        jLabel1 = new javax.swing.JLabel();
+        cboShowLines = new javax.swing.JComboBox<>();
+        btnDebug = new javax.swing.JToggleButton();
+        btnInfo = new javax.swing.JToggleButton();
+        btnWarn = new javax.swing.JToggleButton();
+        btnError = new javax.swing.JButton();
+        btnFatal = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(C.i18n("logwindow.title")); // NOI18N
@@ -112,24 +118,10 @@ public class LogWindow extends javax.swing.JFrame {
 
         lblCrash.setText(C.i18n("ui.label.crashing")); // NOI18N
 
-        btnMCBBS.setText("MCBBS");
-        btnMCBBS.addActionListener(new java.awt.event.ActionListener() {
+        btnContact.setText(C.i18n("logwindow.contact")); // NOI18N
+        btnContact.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnMCBBSActionPerformed(evt);
-            }
-        });
-
-        btnTieBa.setText(C.i18n("logwindow.tieba")); // NOI18N
-        btnTieBa.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnTieBaActionPerformed(evt);
-            }
-        });
-
-        btnMCF.setText("Minecraft Forum");
-        btnMCF.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnMCFActionPerformed(evt);
+                btnContactActionPerformed(evt);
             }
         });
 
@@ -140,31 +132,38 @@ public class LogWindow extends javax.swing.JFrame {
             }
         });
 
-        btnGitHub.setText("GitHub");
-        btnGitHub.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnGitHubActionPerformed(evt);
+        pnlLog.setViewportView(txtLog);
+
+        jLabel1.setText("显示行数");
+        jLabel1.setToolTipText("");
+
+        cboShowLines.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "100", "1000", "5000" }));
+        cboShowLines.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                cboShowLinesItemStateChanged(evt);
             }
         });
 
-        pnlLog.setViewportView(txtLog);
+        btnDebug.setText("debugs");
+
+        btnInfo.setText("infos");
+
+        btnWarn.setText("warns");
+
+        btnError.setText("errors");
+
+        btnFatal.setText("fatals");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(pnlLog)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(btnTieBa)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnMCBBS)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnMCF)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnGitHub)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(pnlLog, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(btnContact)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(btnTerminateGame)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -173,26 +172,46 @@ public class LogWindow extends javax.swing.JFrame {
                         .addComponent(btnClear)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnClose))
-                    .addComponent(lblCrash, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(lblCrash, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cboShowLines, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnFatal)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnError)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnWarn)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnInfo)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnDebug)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(cboShowLines, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnDebug)
+                    .addComponent(btnInfo)
+                    .addComponent(btnWarn)
+                    .addComponent(btnError)
+                    .addComponent(btnFatal))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblCrash)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pnlLog, javax.swing.GroupLayout.DEFAULT_SIZE, 356, Short.MAX_VALUE)
+                .addComponent(pnlLog, javax.swing.GroupLayout.DEFAULT_SIZE, 281, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnClear)
                     .addComponent(btnClose)
                     .addComponent(btnCopy)
-                    .addComponent(btnMCBBS)
-                    .addComponent(btnTieBa)
-                    .addComponent(btnMCF)
-                    .addComponent(btnTerminateGame)
-                    .addComponent(btnGitHub))
+                    .addComponent(btnContact)
+                    .addComponent(btnTerminateGame))
                 .addContainerGap())
         );
 
@@ -213,25 +232,13 @@ public class LogWindow extends javax.swing.JFrame {
         Utils.setClipborad(this.txtLog.getText());
     }//GEN-LAST:event_btnCopyActionPerformed
 
-    private void btnMCBBSActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMCBBSActionPerformed
-        SwingUtils.openLink(C.URL_PUBLISH);
-    }//GEN-LAST:event_btnMCBBSActionPerformed
-
-    private void btnTieBaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTieBaActionPerformed
-        SwingUtils.openLink(C.URL_TIEBA);
-    }//GEN-LAST:event_btnTieBaActionPerformed
-
-    private void btnMCFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMCFActionPerformed
-        SwingUtils.openLink(C.URL_MINECRAFTFORUM);
-    }//GEN-LAST:event_btnMCFActionPerformed
+    private void btnContactActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnContactActionPerformed
+        SwingUtils.openLink(C.URL_CONTACT);
+    }//GEN-LAST:event_btnContactActionPerformed
 
     private void btnTerminateGameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTerminateGameActionPerformed
         terminateGames();
     }//GEN-LAST:event_btnTerminateGameActionPerformed
-
-    private void btnGitHubActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGitHubActionPerformed
-        SwingUtils.openLink(C.URL_GITHUB);
-    }//GEN-LAST:event_btnGitHubActionPerformed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         if (listener != null && listener.apply())
@@ -239,18 +246,29 @@ public class LogWindow extends javax.swing.JFrame {
         SwingUtils.exitIfNoWindow(this);
     }//GEN-LAST:event_formWindowClosing
 
+    private void cboShowLinesItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboShowLinesItemStateChanged
+        Settings.getInstance().setLogLines(Integer.parseInt(cboShowLines.getSelectedItem().toString()));
+    }//GEN-LAST:event_cboShowLinesItemStateChanged
+
     void terminateGames() {
         ProcessMonitor.stopAll();
     }
+    
+    int removedLength = 0;
+    Deque<Integer> offsets = new LinkedList<>();
+    int fatals = 0, errors = 0, warns = 0, infos = 0, debugs = 0;
 
     public void log(final String status, final Level c) {
-        if (isVisible())
+        if (!isVisible())
             return;
         SwingUtilities.invokeLater(() -> {
             Document d = txtLog.getStyledDocument();
             try { // prevent too much memory used.
-                if (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() > 1l * 1024 * 1024 * 256)
+                if (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() > 1l * 1024 * 1024 * 256) {
                     d.remove(0, d.getLength());
+                    offsets.clear();
+                    removedLength = 0;
+                }
             } catch (Exception ex) {
                 HMCLog.err("Failed to clear the text component", ex);
             }
@@ -258,9 +276,29 @@ public class LogWindow extends javax.swing.JFrame {
             SimpleAttributeSet sas = new SimpleAttributeSet();
             StyleConstants.setForeground(sas, c.COLOR);
             try {
+                offsets.add(d.getLength() + removedLength);
                 d.insertString(d.getLength(), newStatus, sas);
             } catch (Exception ex) {
                 HMCLog.err("Failed to insert \"" + newStatus + "\" to " + d.getLength(), ex);
+            }
+            
+            switch (c) {
+                case FATAL: btnFatal.setText(++fatals + " fatals"); break;
+                case ERROR: btnError.setText(++errors + " errors"); break;
+                case WARN: btnWarn.setText(++warns + " warns"); break;
+                case INFO: btnInfo.setText(++infos + " infos"); break;
+                case DEBUG: btnDebug.setText(++debugs + " debugs"); break;
+            }
+            
+            int maxLines = Integer.parseInt(cboShowLines.getSelectedItem().toString());
+            while (offsets.size() > maxLines) {
+                int start = offsets.pollFirst();
+                int end = offsets.peekFirst();
+                try {
+                    d.remove(start - removedLength, end - start); // start - removedLength must become 0
+                    removedLength = end;
+                } catch(Exception ignore) {
+                }
             }
         });
     }
@@ -275,27 +313,25 @@ public class LogWindow extends javax.swing.JFrame {
 
     @Override
     public void setVisible(boolean b) {
+        cboShowLines.setSelectedItem(Settings.getInstance().getLogLines());
+        
         txtLog.setFont(Settings.getInstance().getConsoleFont());
         lblCrash.setVisible(false);
-        btnMCBBS.setVisible(false);
-        btnTieBa.setVisible(false);
-        btnMCF.setVisible(false);
+        btnContact.setVisible(false);
         super.setVisible(b);
     }
 
     public void showAsCrashWindow(boolean out_date) {
+        cboShowLines.setSelectedItem(Settings.getInstance().getLogLines());
+        
         txtLog.setFont(Settings.getInstance().getConsoleFont());
         if (out_date) {
             lblCrash.setVisible(false);
-            btnMCBBS.setVisible(false);
-            btnTieBa.setVisible(false);
-            btnMCF.setVisible(false);
+            btnContact.setVisible(false);
             lblCrash.setText(C.i18n("ui.label.crashing_out_dated"));
         } else {
             lblCrash.setVisible(true);
-            btnMCBBS.setVisible(true);
-            btnTieBa.setVisible(true);
-            btnMCF.setVisible(true);
+            btnContact.setVisible(true);
             lblCrash.setText(C.i18n("ui.label.crashing"));
         }
 
@@ -305,12 +341,16 @@ public class LogWindow extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnClear;
     private javax.swing.JButton btnClose;
+    private javax.swing.JButton btnContact;
     private javax.swing.JButton btnCopy;
-    private javax.swing.JButton btnGitHub;
-    private javax.swing.JButton btnMCBBS;
-    private javax.swing.JButton btnMCF;
+    private javax.swing.JToggleButton btnDebug;
+    private javax.swing.JButton btnError;
+    private javax.swing.JButton btnFatal;
+    private javax.swing.JToggleButton btnInfo;
     private javax.swing.JButton btnTerminateGame;
-    private javax.swing.JButton btnTieBa;
+    private javax.swing.JToggleButton btnWarn;
+    private javax.swing.JComboBox<String> cboShowLines;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel lblCrash;
     private javax.swing.JScrollPane pnlLog;
     private javax.swing.JTextPane txtLog;

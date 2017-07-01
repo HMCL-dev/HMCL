@@ -41,7 +41,9 @@ public class ProcessMonitor {
     public static final HashSet<ProcessMonitor> MONITORS = new HashSet<>();
 
     private final CountDownLatch latch = new CountDownLatch(2);
-    ProcessThread inputThread, errorThread;
+    ProcessThread inputThread;
+    ProcessThread errorThread;
+    WaitForThread waitForThread;
     private final IProcess p;
 
     public ProcessMonitor(IProcess p) {
@@ -83,10 +85,15 @@ public class ProcessMonitor {
     private void threadStopped(SimpleEvent<IProcess> event) {
         latch.countDown();
         ProcessThread t = (ProcessThread) event.getSource();
-        HMCLog.log("Process exit code: " + p.getExitCode());
+        int exitCode = Integer.MAX_VALUE;
+        try {
+            exitCode = p.getExitCode();
+        } catch(IllegalThreadStateException e) {
+            HMCLog.err("Failed to ");
+        }
         if (p.getExitCode() != 0 || StrUtils.containsOne(t.getLines(),
-                Arrays.asList("Unable to launch"),
-                x -> Level.guessLevel(x, Level.INFO).lessOrEqual(Level.ERROR)))
+                Arrays.asList("Unable to launch"), // LaunchWrapper will terminate the application returning exit code 0, but this is an error state.
+                x -> Level.isError(Level.guessLevel(x))))
             synchronized (this) {
                 if (!hasFired) {
                     hasFired = true;
@@ -98,7 +105,7 @@ public class ProcessMonitor {
                         "Error occurred during initialization of VM",
                         "A fatal exception has occurred. Program will exit.",
                         "Unable to launch"),
-                x -> Level.guessLevel(x, Level.INFO).lessOrEqual(Level.ERROR)))
+                x -> Level.isError(Level.guessLevel(x))))
             synchronized (this) {
                 if (!hasFired) {
                     hasFired = true;
@@ -127,7 +134,6 @@ public class ProcessMonitor {
         try {
             latch.await();
         } catch (InterruptedException ignore) {
-            HMCLog.warn("Thread has been interrupted.", ignore);
         }
     }
 }
