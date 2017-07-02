@@ -452,7 +452,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
             }
         });
 
-        lblUsesGlobal.setText("jLabel1");
+        lblUsesGlobal.setText(C.i18n("settings.type.none")); // NOI18N
         lblUsesGlobal.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblUsesGlobal.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {

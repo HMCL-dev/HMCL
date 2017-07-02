@@ -370,7 +370,9 @@
             </Component>
             <Component class="javax.swing.JLabel" name="lblUsesGlobal">
               <Properties>
-                <Property name="text" type="java.lang.String" value="jLabel1"/>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/jackhuang/hmcl/lang/I18N.properties" key="settings.type.none" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+                </Property>
                 <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
                   <Color id="&#x624b;&#x578b;&#x5149;&#x6807;"/>
                 </Property>

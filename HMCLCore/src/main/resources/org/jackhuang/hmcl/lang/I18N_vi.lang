@@ -222,6 +222,7 @@ settings.choose_gamedir=Chọn thư mục game
 settings.failed_load=Đọc file cấu hình thất bại. Xóa nó không?
 settings.test_game=Chạy thử game
 
+settings.type.none=No version here, please turn to game download tab.
 settings.type.global=<html><a href="">Click here to switch to version specialized setting. Now it is global setting.</a></html>
 settings.type.special=<html><a href="">Click here to switch to global setting. Not it is version specialized setting.</a></html>
 
