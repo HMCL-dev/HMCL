@@ -34,7 +34,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="1" attributes="0">
                       <Component id="btnContact" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="183" max="32767" attributes="0"/>
+                      <EmptySpace pref="144" max="32767" attributes="0"/>
                       <Component id="btnTerminateGame" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="btnCopy" min="-2" max="-2" attributes="0"/>
@@ -45,10 +45,14 @@
                   </Group>
                   <Component id="lblCrash" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                      <Component id="lblShowLines" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cboShowLines" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="lblSearch" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="txtSearch" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="btnFatal" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="btnError" min="-2" max="-2" attributes="0"/>
@@ -70,13 +74,15 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="lblShowLines" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cboShowLines" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnDebug" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnInfo" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnWarn" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnError" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnFatal" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtSearch" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="lblSearch" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblCrash" min="-2" max="-2" attributes="0"/>
@@ -161,15 +167,20 @@
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
       <SubComponents>
         <Component class="javax.swing.JTextPane" name="txtLog">
+          <Properties>
+            <Property name="editable" type="boolean" value="false"/>
+          </Properties>
           <AuxValues>
             <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JLineWrapTextPane()"/>
           </AuxValues>
         </Component>
       </SubComponents>
     </Container>
-    <Component class="javax.swing.JLabel" name="jLabel1">
+    <Component class="javax.swing.JLabel" name="lblShowLines">
       <Properties>
-        <Property name="text" type="java.lang.String" value="&#x663e;&#x793a;&#x884c;&#x6570;"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/jackhuang/hmcl/lang/I18N.properties" key="logwindow.show_lines" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+        </Property>
         <Property name="toolTipText" type="java.lang.String" value=""/>
       </Properties>
     </Component>
@@ -192,27 +203,42 @@
     </Component>
     <Component class="javax.swing.JToggleButton" name="btnDebug">
       <Properties>
-        <Property name="text" type="java.lang.String" value="debugs"/>
+        <Property name="text" type="java.lang.String" value="0 debug"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JToggleButton" name="btnInfo">
       <Properties>
-        <Property name="text" type="java.lang.String" value="infos"/>
+        <Property name="text" type="java.lang.String" value="0 info"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JToggleButton" name="btnWarn">
       <Properties>
-        <Property name="text" type="java.lang.String" value="warns"/>
+        <Property name="text" type="java.lang.String" value="0 warn"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JButton" name="btnError">
       <Properties>
-        <Property name="text" type="java.lang.String" value="errors"/>
+        <Property name="text" type="java.lang.String" value="0 error"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JButton" name="btnFatal">
       <Properties>
-        <Property name="text" type="java.lang.String" value="fatals"/>
+        <Property name="text" type="java.lang.String" value="0 fatal"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtSearch">
+      <Properties>
+        <Property name="toolTipText" type="java.lang.String" value=""/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="txtSearchActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblSearch">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/jackhuang/hmcl/lang/I18N.properties" key="logwindow.search" replaceFormat="C.i18n(&quot;{key}&quot;)"/>
+        </Property>
       </Properties>
     </Component>
   </SubComponents>

@@ -392,6 +392,8 @@ update.found=(发现更新!)
 logwindow.terminate_game=结束游戏进程
 logwindow.title=日志
 logwindow.contact=联系我们
+logwindow.show_lines=显示行数
+logwindow.search=查找
 
 selector.choose=选择
 

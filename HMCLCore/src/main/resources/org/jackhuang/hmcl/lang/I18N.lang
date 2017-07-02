@@ -392,6 +392,8 @@ update.found=(Found Update!)
 logwindow.terminate_game=Terminate Game
 logwindow.title=Log
 logwindow.contact=Contact Us
+logwindow.show_lines=Show Lines
+logwindow.search=Search
 
 selector.choose=Choose
 

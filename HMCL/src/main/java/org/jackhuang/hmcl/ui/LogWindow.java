@@ -21,9 +21,11 @@ import java.io.PrintStream;
 import java.util.Deque;
 import java.util.LinkedList;
 import javax.swing.SwingUtilities;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import org.jackhuang.hmcl.util.C;
 import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.util.log.Level;
@@ -39,8 +41,9 @@ import org.jackhuang.hmcl.util.ui.SwingUtils;
  * @author huangyuhui
  */
 public class LogWindow extends javax.swing.JFrame {
+
     public static LogWindowOutputStream outputStream;
-    
+
     NonFunction<Boolean> listener;
 
     /**
@@ -56,8 +59,9 @@ public class LogWindow extends javax.swing.JFrame {
 
         SwingUtilities.invokeLater(() -> {
             setLocationRelativeTo(null);
-            txtLog.setEditable(false);
+            //txtLog.setEditable(false);
             txtLog.setFont(Settings.getInstance().getConsoleFont());
+            cboShowLines.setSelectedItem(String.valueOf(Settings.getInstance().getLogLines()));
         });
     }
 
@@ -80,13 +84,15 @@ public class LogWindow extends javax.swing.JFrame {
         btnTerminateGame = new javax.swing.JButton();
         pnlLog = new javax.swing.JScrollPane();
         txtLog = new JLineWrapTextPane();
-        jLabel1 = new javax.swing.JLabel();
+        lblShowLines = new javax.swing.JLabel();
         cboShowLines = new javax.swing.JComboBox<>();
         btnDebug = new javax.swing.JToggleButton();
         btnInfo = new javax.swing.JToggleButton();
         btnWarn = new javax.swing.JToggleButton();
         btnError = new javax.swing.JButton();
         btnFatal = new javax.swing.JButton();
+        txtSearch = new javax.swing.JTextField();
+        lblSearch = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(C.i18n("logwindow.title")); // NOI18N
@@ -133,10 +139,11 @@ public class LogWindow extends javax.swing.JFrame {
             }
         });
 
+        txtLog.setEditable(false);
         pnlLog.setViewportView(txtLog);
 
-        jLabel1.setText("显示行数");
-        jLabel1.setToolTipText("");
+        lblShowLines.setText(C.i18n("logwindow.show_lines")); // NOI18N
+        lblShowLines.setToolTipText("");
 
         cboShowLines.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "100", "1000", "5000" }));
         cboShowLines.addItemListener(new java.awt.event.ItemListener() {
@@ -145,15 +152,24 @@ public class LogWindow extends javax.swing.JFrame {
             }
         });
 
-        btnDebug.setText("debugs");
+        btnDebug.setText("0 debug");
 
-        btnInfo.setText("infos");
+        btnInfo.setText("0 info");
 
-        btnWarn.setText("warns");
+        btnWarn.setText("0 warn");
 
-        btnError.setText("errors");
+        btnError.setText("0 error");
 
-        btnFatal.setText("fatals");
+        btnFatal.setText("0 fatal");
+
+        txtSearch.setToolTipText("");
+        txtSearch.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtSearchActionPerformed(evt);
+            }
+        });
+
+        lblSearch.setText(C.i18n("logwindow.search")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -164,7 +180,7 @@ public class LogWindow extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(btnContact)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 183, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 144, Short.MAX_VALUE)
                         .addComponent(btnTerminateGame)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnCopy)
@@ -174,10 +190,14 @@ public class LogWindow extends javax.swing.JFrame {
                         .addComponent(btnClose))
                     .addComponent(lblCrash, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
+                        .addComponent(lblShowLines)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cboShowLines, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblSearch)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtSearch)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnFatal)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnError)
@@ -195,13 +215,15 @@ public class LogWindow extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
+                    .addComponent(lblShowLines)
                     .addComponent(cboShowLines, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnDebug)
                     .addComponent(btnInfo)
                     .addComponent(btnWarn)
                     .addComponent(btnError)
-                    .addComponent(btnFatal))
+                    .addComponent(btnFatal)
+                    .addComponent(txtSearch, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblSearch))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblCrash)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -251,10 +273,46 @@ public class LogWindow extends javax.swing.JFrame {
         Settings.getInstance().setLogLines(Integer.parseInt(cboShowLines.getSelectedItem().toString()));
     }//GEN-LAST:event_cboShowLinesItemStateChanged
 
+    private void txtSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtSearchActionPerformed
+        if (evt.getSource() != txtSearch || txtSearch.getText().isEmpty())
+            return;
+        try {
+            if (!s.equals(txtSearch.getText()))
+                pos = 0;
+            StyledDocument d = txtLog.getStyledDocument();
+            s = txtSearch.getText();
+            String content = d.getText(0, d.getLength());
+            int x = content.indexOf(s, pos);
+            if (x == -1) {
+                pos = 0;
+                x = content.indexOf(s, pos);
+            }
+            if (x == -1)
+                return;
+            int len = s.length();
+            pos = x + len;
+            SimpleAttributeSet set = new SimpleAttributeSet(d.getLogicalStyle(x).copyAttributes());
+            StyleConstants.setBackground(set, txtLog.getSelectionColor());
+            StyleConstants.setForeground(set, txtLog.getSelectedTextColor());
+            d.setCharacterAttributes(x, len, set, true);
+            set = new SimpleAttributeSet(d.getLogicalStyle(lastX).copyAttributes());
+            StyleConstants.setBackground(set, txtLog.getBackground());
+            StyleConstants.setForeground(set, txtLog.getForeground());
+            d.setCharacterAttributes(lastX, lastLen, set, true);
+            txtLog.select(x, pos);
+            lastX = x;
+            lastLen = len;
+        } catch (BadLocationException e) {
+        }
+    }//GEN-LAST:event_txtSearchActionPerformed
+
+    String s = "";
+    int pos = 0, lastX = 0, lastLen = 0;
+
     void terminateGames() {
         ProcessMonitor.stopAll();
     }
-    
+
     int removedLength = 0;
     Deque<Integer> offsets = new LinkedList<>();
     int fatals = 0, errors = 0, warns = 0, infos = 0, debugs = 0;
@@ -282,15 +340,25 @@ public class LogWindow extends javax.swing.JFrame {
             } catch (Exception ex) {
                 HMCLog.err("Failed to insert \"" + newStatus + "\" to " + d.getLength(), ex);
             }
-            
+
             switch (c) {
-                case FATAL: btnFatal.setText(++fatals + " fatals"); break;
-                case ERROR: btnError.setText(++errors + " errors"); break;
-                case WARN: btnWarn.setText(++warns + " warns"); break;
-                case INFO: btnInfo.setText(++infos + " infos"); break;
-                case DEBUG: btnDebug.setText(++debugs + " debugs"); break;
+                case FATAL:
+                    btnFatal.setText(++fatals + " fatals");
+                    break;
+                case ERROR:
+                    btnError.setText(++errors + " errors");
+                    break;
+                case WARN:
+                    btnWarn.setText(++warns + " warns");
+                    break;
+                case INFO:
+                    btnInfo.setText(++infos + " infos");
+                    break;
+                case DEBUG:
+                    btnDebug.setText(++debugs + " debugs");
+                    break;
             }
-            
+
             int maxLines = Integer.parseInt(cboShowLines.getSelectedItem().toString());
             while (offsets.size() > maxLines) {
                 int start = offsets.pollFirst();
@@ -298,7 +366,7 @@ public class LogWindow extends javax.swing.JFrame {
                 try {
                     d.remove(start - removedLength, end - start); // start - removedLength must become 0
                     removedLength = end;
-                } catch(Exception ignore) {
+                } catch (Exception ignore) {
                 }
             }
         });
@@ -314,8 +382,6 @@ public class LogWindow extends javax.swing.JFrame {
 
     @Override
     public void setVisible(boolean b) {
-        cboShowLines.setSelectedItem(Settings.getInstance().getLogLines());
-        
         txtLog.setFont(Settings.getInstance().getConsoleFont());
         lblCrash.setVisible(false);
         btnContact.setVisible(false);
@@ -323,8 +389,6 @@ public class LogWindow extends javax.swing.JFrame {
     }
 
     public void showAsCrashWindow(boolean out_date) {
-        cboShowLines.setSelectedItem(Settings.getInstance().getLogLines());
-        
         txtLog.setFont(Settings.getInstance().getConsoleFont());
         if (out_date) {
             lblCrash.setVisible(false);
@@ -351,9 +415,11 @@ public class LogWindow extends javax.swing.JFrame {
     private javax.swing.JButton btnTerminateGame;
     private javax.swing.JToggleButton btnWarn;
     private javax.swing.JComboBox<String> cboShowLines;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel lblCrash;
+    private javax.swing.JLabel lblSearch;
+    private javax.swing.JLabel lblShowLines;
     private javax.swing.JScrollPane pnlLog;
     private javax.swing.JTextPane txtLog;
+    private javax.swing.JTextField txtSearch;
     // End of variables declaration//GEN-END:variables
 }

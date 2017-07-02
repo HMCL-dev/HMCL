@@ -390,6 +390,8 @@ update.found=(Đã tìm thấy bản cập nhật!)
 logwindow.terminate_game=Tắt Game
 logwindow.title=HMCL Error Log (Hãy đăng cái này lên forum!)
 logwindow.contact=Contact Us
+logwindow.show_lines=Show Lines
+logwindow.search=Search
 
 selector.choose=Chọn
 
