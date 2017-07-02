@@ -388,8 +388,8 @@ update.failed=Kiểm tra cập nhật thất bại.
 update.found=(Đã tìm thấy bản cập nhật!)
 
 logwindow.terminate_game=Tắt Game
-logwindow.tieba=Baidu Tieba
 logwindow.title=HMCL Error Log (Hãy đăng cái này lên forum!)
+logwindow.contact=Contact Us
 
 selector.choose=Chọn
 

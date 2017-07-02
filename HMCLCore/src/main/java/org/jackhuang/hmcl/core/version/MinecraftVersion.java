@@ -73,11 +73,13 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
     private Map<String, GameDownloadInfo> downloads;
     @SerializedName("libraries")
     public ArrayList<MinecraftLibrary> libraries;
+    @SerializedName("logging")
+    public Map<String, LoggingInfo> logging;
 
     public MinecraftVersion() {
     }
 
-    public MinecraftVersion(String minecraftArguments, String mainClass, String time, String id, String type, String processArguments, String releaseTime, String assets, String jar, String inheritsFrom, String runDir, int minimumLauncherVersion, List<MinecraftLibrary> libraries, boolean hidden, Map<String, GameDownloadInfo> downloads, AssetIndexDownloadInfo assetIndexDownloadInfo) {
+    public MinecraftVersion(String minecraftArguments, String mainClass, String time, String id, String type, String processArguments, String releaseTime, String assets, String jar, String inheritsFrom, String runDir, int minimumLauncherVersion, List<MinecraftLibrary> libraries, boolean hidden, Map<String, GameDownloadInfo> downloads, AssetIndexDownloadInfo assetIndexDownloadInfo, Map<String, LoggingInfo> logging) {
         this();
         this.minecraftArguments = minecraftArguments;
         this.mainClass = mainClass;
@@ -110,6 +112,13 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
             this.downloads = new HashMap<>(downloads.size());
             for (Map.Entry<String, GameDownloadInfo> entry : downloads.entrySet())
                 this.downloads.put(entry.getKey(), (GameDownloadInfo) entry.getValue().clone());
+        }
+        if (logging == null)
+            this.logging = null;
+        else {
+            this.logging = new HashMap<>(logging.size());
+            for (Map.Entry<String, LoggingInfo> entry : logging.entrySet())
+                this.logging.put(entry.getKey(), (LoggingInfo) entry.getValue().clone());
         }
     }
 
@@ -150,7 +159,8 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
             null, this.runDir, parent.minimumLauncherVersion,
             this.libraries != null ? ArrayUtils.merge(this.libraries, parent.libraries) : parent.libraries, this.hidden,
             this.downloads != null ? this.downloads : parent.downloads,
-            this.assetIndex != null ? this.assetIndex : parent.assetIndex);
+            this.assetIndex != null ? this.assetIndex : parent.assetIndex,
+            this.logging != null ? this.logging : parent.logging);
 
         return result;
     }

@@ -35,6 +35,8 @@ public final class C {
 
     public static final String URL_FORGE_LIST = "http://files.minecraftforge.net/maven/net/minecraftforge/forge/json";
     public static final String URL_LITELOADER_LIST = "http://dl.liteloader.com/versions/versions.json";
+    
+    public static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
     private C() {
     }

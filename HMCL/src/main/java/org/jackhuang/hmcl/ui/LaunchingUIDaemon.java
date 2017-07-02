@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PipedOutputStream;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hmcl.api.HMCLApi;
@@ -40,15 +41,19 @@ import org.jackhuang.hmcl.api.func.Consumer;
 import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.api.event.launch.LaunchingState;
 import org.jackhuang.hmcl.util.DefaultPlugin;
+import org.jackhuang.hmcl.util.Log4jHandler;
 import org.jackhuang.hmcl.util.sys.FileUtils;
 import org.jackhuang.hmcl.util.sys.PrintlnEvent;
 import org.jackhuang.hmcl.util.sys.ProcessMonitor;
+import org.xml.sax.XMLReader;
 
 /**
  *
  * @author huangyuhui
  */
 public class LaunchingUIDaemon {
+    
+    XMLReader reader;
 
     public LaunchingUIDaemon() {
         HMCLApi.EVENT_BUS.channel(LaunchingStateChangedEvent.class).register(LAUNCHING_STATE_CHANGED);
@@ -68,8 +73,15 @@ public class LaunchingUIDaemon {
             // We promise that JavaProcessMonitor.tag is LauncherVisibility
             // See events below.
             ProcessMonitor monitor = new ProcessMonitor(p.getValue());
-            monitor.registerPrintlnEvent(PRINTLN);
+            PipedOutputStream os = new PipedOutputStream();
             monitor.setTag(obj);
+            try {
+                Log4jHandler handler = new Log4jHandler(os);
+                handler.start();
+            } catch(Exception e) {
+                HMCLog.err("", e);
+            }
+            monitor.registerPrintlnEvent(new PrintlnProcessor(obj, os));
             monitor.start();
         });
         HMCLApi.EVENT_BUS.channel(LaunchSucceededEvent.class).register(p -> {
@@ -145,19 +157,39 @@ public class LaunchingUIDaemon {
             ((HMCLGameLauncher.GameLauncherTag) value.getTag()).state = 2;
         }, MainFrame.INSTANCE::failed, Settings.getInstance().getAuthenticator().getPassword());
     }
+    
+    class PrintlnProcessor implements Consumer<PrintlnEvent> {
+        
+        GameLauncher launcher;
+        PipedOutputStream os;
 
-    private static final Consumer<PrintlnEvent> PRINTLN = t -> {
-        GameLauncher launcher = ((GameLauncher) ((ProcessMonitor) t.getSource()).getTag());
-        HMCLGameLauncher.GameLauncherTag tag = (HMCLGameLauncher.GameLauncherTag) launcher.getTag();
-        LauncherVisibility l = tag.launcherVisibility;
-        if (t.getLine().contains("LWJGL Version: ") && l != LauncherVisibility.KEEP)
-            if (l != LauncherVisibility.HIDE_AND_REOPEN)
-                MainFrame.INSTANCE.dispose();
-            else { // If current state is 'hide and reopen', closes the main window and reset the state to normal.
-                MainFrame.INSTANCE.setVisible(false);
-                HMCLApi.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(launcher, LaunchingState.Done));
-            }
-    };
+        public PrintlnProcessor(GameLauncher launcher, PipedOutputStream os) {
+            this.launcher = launcher;
+            this.os = os;
+        }
+
+        @Override
+        public void accept(PrintlnEvent t) {
+            if (!t.isError())
+                try {
+                    os.write((t.getLine() + C.LINE_SEPARATOR).replace("log4j:Event", "log4j_Event").replace("log4j:Message", "log4j_Message").getBytes());
+                    os.flush();
+                } catch(IOException e) {
+                    HMCLog.err("", e);
+                }
+            else System.err.println(t.getLine());
+            HMCLGameLauncher.GameLauncherTag tag = (HMCLGameLauncher.GameLauncherTag) launcher.getTag();
+            LauncherVisibility l = tag.launcherVisibility;
+            if (t.getLine().contains("LWJGL Version: ") && l != LauncherVisibility.KEEP)
+                if (l != LauncherVisibility.HIDE_AND_REOPEN)
+                    MainFrame.INSTANCE.dispose();
+                else { // If current state is 'hide and reopen', closes the main window and reset the state to normal.
+                    MainFrame.INSTANCE.setVisible(false);
+                    HMCLApi.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(launcher, LaunchingState.Done));
+                }
+        }
+        
+    }
 
     private static final Consumer<LaunchingStateChangedEvent> LAUNCHING_STATE_CHANGED = t -> {
         String message = null;
@@ -217,4 +249,5 @@ public class LaunchingUIDaemon {
         }
         MainFrame.INSTANCE.closeMessage();
     };
+    
 }

@@ -390,8 +390,8 @@ update.failed=Failed to check for updates.
 update.found=(Found Update!)
 
 logwindow.terminate_game=Terminate Game
-logwindow.tieba=Baidu Tieba
 logwindow.title=Log
+logwindow.contact=Contact Us
 
 selector.choose=Choose
 

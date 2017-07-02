@@ -175,7 +175,7 @@ public class HMCLMinecraftService extends IMinecraftService {
 
     @Override
     public IMinecraftLoader launch(LaunchOptions options, UserProfileProvider p) throws GameException {
-        MinecraftLoader l = new MinecraftLoader(options, this, p);
+        MinecraftLoader l = new HMCLMinecraftLoader(options, this, p);
         l.setAssetProvider(mas.ASSET_PROVIDER_IMPL);
         return l;
     }

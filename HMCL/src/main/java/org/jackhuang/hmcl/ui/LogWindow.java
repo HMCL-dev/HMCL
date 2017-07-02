@@ -39,7 +39,8 @@ import org.jackhuang.hmcl.util.ui.SwingUtils;
  * @author huangyuhui
  */
 public class LogWindow extends javax.swing.JFrame {
-
+    public static LogWindowOutputStream outputStream;
+    
     NonFunction<Boolean> listener;
 
     /**
@@ -48,7 +49,7 @@ public class LogWindow extends javax.swing.JFrame {
     public LogWindow() {
         initComponents();
 
-        DoubleOutputStream out = new DoubleOutputStream(new LogWindowOutputStream(this, Level.INFO), System.out);
+        DoubleOutputStream out = new DoubleOutputStream(outputStream = new LogWindowOutputStream(this, Level.INFO), System.out);
         System.setOut(new PrintStream(out));
         DoubleOutputStream err = new DoubleOutputStream(new LogWindowOutputStream(this, Level.ERROR), System.err);
         System.setErr(new PrintStream(err));
@@ -78,7 +79,7 @@ public class LogWindow extends javax.swing.JFrame {
         btnContact = new javax.swing.JButton();
         btnTerminateGame = new javax.swing.JButton();
         pnlLog = new javax.swing.JScrollPane();
-        txtLog = new javax.swing.JTextPane();
+        txtLog = new JLineWrapTextPane();
         jLabel1 = new javax.swing.JLabel();
         cboShowLines = new javax.swing.JComboBox<>();
         btnDebug = new javax.swing.JToggleButton();
@@ -161,10 +162,9 @@ public class LogWindow extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(pnlLog, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(btnContact)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 183, Short.MAX_VALUE)
                         .addComponent(btnTerminateGame)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnCopy)
@@ -186,7 +186,8 @@ public class LogWindow extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnInfo)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnDebug)))
+                        .addComponent(btnDebug))
+                    .addComponent(pnlLog))
                 .addContainerGap())
         );
         layout.setVerticalGroup(

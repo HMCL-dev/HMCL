@@ -187,7 +187,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         itm = new JMenuItem(C.i18n("versions.manage.redownload_json"));
         itm.addActionListener((e) -> {
             if (mcVersion != null)
-                Settings.getLastProfile().service().download().downloadMinecraftVersionJson(mcVersion);
+                TaskWindow.factory().execute(Settings.getLastProfile().service().download().downloadMinecraftVersionJson(mcVersion));
         });
         ppmManage.add(itm);
         itm = new JMenuItem(C.i18n("versions.manage.redownload_assets_index"));

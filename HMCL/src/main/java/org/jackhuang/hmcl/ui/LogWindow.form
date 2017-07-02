@@ -32,10 +32,9 @@
           <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="pnlLog" alignment="1" max="32767" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
                       <Component id="btnContact" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace pref="183" max="32767" attributes="0"/>
                       <Component id="btnTerminateGame" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="btnCopy" min="-2" max="-2" attributes="0"/>
@@ -60,6 +59,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="btnDebug" min="-2" max="-2" attributes="0"/>
                   </Group>
+                  <Component id="pnlLog" alignment="0" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -161,6 +161,9 @@
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
       <SubComponents>
         <Component class="javax.swing.JTextPane" name="txtLog">
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JLineWrapTextPane()"/>
+          </AuxValues>
         </Component>
       </SubComponents>
     </Container>

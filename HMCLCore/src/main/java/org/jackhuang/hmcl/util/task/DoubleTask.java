@@ -27,15 +27,21 @@ import java.util.Collection;
 public class DoubleTask extends TaskInfo {
 
     Task a, b;
+    boolean reliant;
 
     public DoubleTask(Task a, Task b) {
-        this(a, b, "Double Task");
+        this(a, b, true);
     }
 
-    public DoubleTask(Task a, Task b, String info) {
+    public DoubleTask(Task a, Task b, boolean reliant) {
+        this(a, b, "Double Task", reliant);
+    }
+
+    public DoubleTask(Task a, Task b, String info, boolean reliant) {
         super(info);
         this.a = a;
         this.b = b;
+        this.reliant = reliant;
         hidden = true;
     }
 
@@ -51,7 +57,7 @@ public class DoubleTask extends TaskInfo {
 
     @Override
     public void executeTask(boolean areDependTasksSucceeded) throws IllegalStateException {
-        if (!areDependTasksSucceeded)
+        if (!areDependTasksSucceeded && reliant)
             throw new IllegalStateException("Depend tasks failed.");
     }
 

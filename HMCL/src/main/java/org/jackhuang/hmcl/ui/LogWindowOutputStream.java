@@ -50,6 +50,9 @@ public class LogWindowOutputStream extends OutputStream {
     Level lastLevel = null;
 
     private void append(final String str) {
+        synchronized(this) {
+            if (manual) return;
+        }
         SwingUtilities.invokeLater(() -> {
             Level level = Level.guessLevel(str);
             if (level == null) level = lastLevel;
@@ -61,5 +64,20 @@ public class LogWindowOutputStream extends OutputStream {
     @Override
     public final void write(int i) {
         append(new String(new byte[] { (byte) i }));
+    }
+    
+    boolean manual = false;
+    
+    public void log(String s, Level l) {
+        synchronized(this) {
+            manual = true;
+            System.out.print(s);
+            manual = false;
+        }
+        if (l == null) append(s);
+        else
+        SwingUtilities.invokeLater(() -> {
+            txt.log(s, l);
+        });
     }
 }

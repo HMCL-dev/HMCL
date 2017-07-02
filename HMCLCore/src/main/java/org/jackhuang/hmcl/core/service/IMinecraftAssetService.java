@@ -22,6 +22,7 @@ import java.io.IOException;
 import org.jackhuang.hmcl.core.GameException;
 import org.jackhuang.hmcl.core.asset.AssetsObject;
 import org.jackhuang.hmcl.core.version.AssetIndexDownloadInfo;
+import org.jackhuang.hmcl.core.version.LoggingInfo;
 import org.jackhuang.hmcl.util.task.Task;
 
 /**
@@ -56,4 +57,6 @@ public abstract class IMinecraftAssetService extends IMinecraftBasicService {
     public abstract File getAssetObject(String assetVersion, String name) throws IOException;
     
     public abstract File getAssetObject(String assetId, AssetsObject assetsObject);
+    
+    public abstract File getLoggingObject(String assetId, LoggingInfo id);
 }

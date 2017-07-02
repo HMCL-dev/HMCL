@@ -1,7 +1,7 @@
 /*
- * Hello Minecraft!.
+ * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- *
+ * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -15,42 +15,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.util.task;
-
-import java.util.Collection;
-import java.util.HashSet;
+package org.jackhuang.hmcl.core.version;
 
 /**
  *
- * @author huangyuhui
+ * @author huang
  */
-public class ParallelTask extends Task {
-
-    Collection<Task> tasks = new HashSet<>();
-
-    public ParallelTask() {
-        hidden = true;
-    }
+public class LoggingInfo implements Cloneable {
+    public GameDownloadInfo file;
+    public String argument;
+    public String type;
 
     @Override
-    public void executeTask(boolean areDependTasksSucceeded) throws Exception {
-        if (!areDependTasksSucceeded)
-            throw new Exception("Tasks failed");
+    public Object clone() {
+        try {
+            LoggingInfo info = (LoggingInfo) super.clone();
+            info.file = (GameDownloadInfo) file.clone();
+            return info;
+        } catch(CloneNotSupportedException e) {
+            throw new Error(e);
+        }
     }
-
-    @Override
-    public String getInfo() {
-        return "PARALLEL";
-    }
-
-    @Override
-    public Collection<Task> getDependTasks() {
-        return tasks;
-    }
-
-    public ParallelTask addTask(Task t) {
-        tasks.add(t);
-        return this;
-    }
-
+    
+    
 }

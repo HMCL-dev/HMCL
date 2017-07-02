@@ -36,7 +36,9 @@ public class GameDownloadInfo implements Cloneable {
 
     /**
      * Ready for AssetIndexDownloadInfo, and GameDownloadInfo also need this.
+     * And LoggingInfo will have this field in json.
      */
+    @SerializedName("id")
     protected String id;
 
     /**

@@ -390,8 +390,8 @@ update.failed=檢查更新失敗
 update.found=(發現更新!)
 
 logwindow.terminate_game=結束遊戲進程
-logwindow.tieba=貼吧
 logwindow.title=日誌
+logwindow.contact=聯繫我們
 
 selector.choose=選擇
 

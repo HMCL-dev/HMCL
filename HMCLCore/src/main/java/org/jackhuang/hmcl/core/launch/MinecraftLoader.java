@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.core.GameException;
 import org.jackhuang.hmcl.api.auth.UserProfileProvider;
 import org.jackhuang.hmcl.core.version.MinecraftLibrary;
 import org.jackhuang.hmcl.core.service.IMinecraftService;
+import org.jackhuang.hmcl.core.version.LoggingInfo;
 
 /**
  *
@@ -110,6 +111,15 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
             }
         } catch (IOException e) {
             HMCLog.err("Failed to append jvm arguments when searching for asset objects.", e);
+        }
+        
+        list.add("-Dminecraft.client.jar=" + version.getJar(service.baseDirectory()).getAbsolutePath());
+        
+        if (version.logging != null && version.logging.containsKey("client")) {
+            LoggingInfo logging = version.logging.get("client");
+            File file = service.asset().getLoggingObject(version.getAssetsIndex().getId(), logging);
+            if (file.exists())
+                list.add(logging.argument.replace("${path}", file.getAbsolutePath()));
         }
     }
 

@@ -86,7 +86,6 @@ public class ProcessThread extends Thread {
 
     protected void println(String line) {
         printlnEvent.fire(new PrintlnEvent(monitor, line, readError));
-        (readError ? System.err : System.out).println(line);
         lines.add(line);
         p.getStdOutLines().add(line);
     }

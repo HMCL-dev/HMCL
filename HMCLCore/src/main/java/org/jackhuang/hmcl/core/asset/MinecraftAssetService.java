@@ -32,10 +32,12 @@ import org.jackhuang.hmcl.core.version.AssetIndexDownloadInfo;
 import org.jackhuang.hmcl.core.version.MinecraftVersion;
 import org.jackhuang.hmcl.util.MessageBox;
 import org.jackhuang.hmcl.api.HMCLog;
+import org.jackhuang.hmcl.core.version.LoggingInfo;
 import org.jackhuang.hmcl.util.task.Task;
 import org.jackhuang.hmcl.util.task.TaskWindow;
 import org.jackhuang.hmcl.util.net.FileDownloadTask;
 import org.jackhuang.hmcl.util.sys.FileUtils;
+import org.jackhuang.hmcl.util.task.ParallelTask;
 import org.jackhuang.hmcl.util.task.TaskInfo;
 
 /**
@@ -56,7 +58,21 @@ public class MinecraftAssetService extends IMinecraftAssetService {
     public Task downloadAssets(final MinecraftVersion mv) throws GameException {
         if (mv == null)
             return null;
-        return IAssetsHandler.ASSETS_HANDLER.getList(mv.resolve(service.version()), service.asset()).with(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(service.getDownloadType().getProvider()));
+        Task task = IAssetsHandler.ASSETS_HANDLER.getList(mv.resolve(service.version()), service.asset())
+                .with(IAssetsHandler.ASSETS_HANDLER.getDownloadTask(service.getDownloadType().getProvider()));
+        if (mv.logging != null && mv.logging.containsKey("client")) {
+            LoggingInfo info = mv.logging.get("client");
+            File file = getLoggingObject(mv.assetIndex.getId(), info);
+            if (!file.exists())
+                return new ParallelTask().addTask(task)
+                        .addTask(new FileDownloadTask(info.file.url, file, info.file.sha1));
+        }
+        return task;
+    }
+
+    @Override
+    public File getLoggingObject(String assetId, LoggingInfo logging) {
+        return new File(getAssets(assetId), "log_configs/" + logging.file.getId());
     }
 
     @Override
@@ -143,7 +159,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
         }
     }
 
-    protected boolean checkAssetsExistance(AssetIndexDownloadInfo assetIndex) {
+    protected boolean checkAssetsExistance(AssetIndexDownloadInfo assetIndex, LoggingInfo info) {
         String assetId = assetIndex.getId();
         File indexFile = getIndexFile(assetId);
         File assetDir = getAssets(assetId);
@@ -157,6 +173,10 @@ public class MinecraftAssetService extends IMinecraftAssetService {
 
             if (index == null)
                 return false;
+            
+            if (info != null && !getLoggingObject(assetId, info).exists())
+                return false;
+            
             for (Map.Entry<String, AssetsObject> entry : index.getFileMap().entrySet())
                 if (!assetObjectPath(assetDir, (AssetsObject) entry.getValue()).exists())
                     return false;
@@ -217,7 +237,10 @@ public class MinecraftAssetService extends IMinecraftAssetService {
     }
 
     public final IAssetProvider ASSET_PROVIDER_IMPL = (t, allow) -> {
-        if (allow && !checkAssetsExistance(t.getAssetsIndex()))
+        LoggingInfo logging = null;
+        if (t.logging != null)
+            logging = t.logging.get("client");
+        if (allow && !checkAssetsExistance(t.getAssetsIndex(), logging))
             if (MessageBox.show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                 TaskWindow.factory().execute(downloadAssets(t));
         return reconstructAssets(t.getAssetsIndex()).getAbsolutePath();
