@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
- *
+ * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -18,27 +18,18 @@
 package org.jackhuang.hmcl.core.install.liteloader;
 
 import com.google.gson.annotations.SerializedName;
-import java.util.List;
-import org.jackhuang.hmcl.core.version.MinecraftLibrary;
 
 /**
  *
- * @author huangyuhui
+ * @author huang
  */
-public class LiteLoaderVersion {
-
-    @SerializedName("tweakClass")
-    public String tweakClass;
-    @SerializedName("file")
-    public String file;
-    @SerializedName("version")
-    public String version;
-    @SerializedName("md5")
-    public String md5;
-    @SerializedName("timestamp")
-    public String timestamp;
-    @SerializedName("lastSuccessfulBuild")
-    public int lastSuccessfulBuild;
-    @SerializedName("libraries")
-    public List<MinecraftLibrary> libraries;
+public class LiteLoaderRepo {
+    @SerializedName("stream")
+    public String stream;
+    @SerializedName("type")
+    public String type;
+    @SerializedName("url")
+    public String url;
+    @SerializedName("classifier")
+    public String classifier;
 }

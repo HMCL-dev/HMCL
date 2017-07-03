@@ -30,7 +30,7 @@ public class LiteLoaderInstallerVersion extends InstallerVersionList.InstallerVe
 
     public MinecraftLibrary[] libraries;
     public String tweakClass;
-
+    
     public LiteLoaderInstallerVersion(String selfVersion, String mcVersion) {
         super(selfVersion, mcVersion);
     }

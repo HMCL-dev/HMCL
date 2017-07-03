@@ -18,14 +18,19 @@
 package org.jackhuang.hmcl.core.install.liteloader;
 
 import com.google.gson.annotations.SerializedName;
-import java.util.Map;
 
 /**
  *
  * @author huangyuhui
  */
 public class LiteLoaderMCVersions {
+    
+    @SerializedName("repo")
+    public LiteLoaderRepo repo;
 
     @SerializedName("artefacts")
-    public Map<String, Map<String, LiteLoaderVersion>> artefacts;
+    public LiteLoaderBranch artefacts;
+
+    @SerializedName("snapshots")
+    public LiteLoaderBranch snapshots;
 }

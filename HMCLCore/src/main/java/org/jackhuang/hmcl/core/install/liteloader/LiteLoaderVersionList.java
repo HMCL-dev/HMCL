@@ -22,11 +22,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import org.jackhuang.hmcl.core.download.DownloadType;
 import org.jackhuang.hmcl.util.C;
 import org.jackhuang.hmcl.core.install.InstallerVersionList;
 import org.jackhuang.hmcl.core.install.InstallerVersionNewerComparator;
+import org.jackhuang.hmcl.core.version.MinecraftLibrary;
 import org.jackhuang.hmcl.util.StrUtils;
 import org.jackhuang.hmcl.util.task.Task;
 import org.jackhuang.hmcl.util.task.TaskInfo;
@@ -60,6 +63,27 @@ public class LiteLoaderVersionList extends InstallerVersionList {
                 return Arrays.asList(task.setTag("Official Liteloader Download Site"));
             }
 
+            private void doBranch(String version, LiteLoaderRepo repo, LiteLoaderBranch branch, List<InstallerVersion> result, boolean snapshot) {
+                if (branch == null || branch.liteLoader == null)
+                    return;
+                for (Map.Entry<String, LiteLoaderVersion> entry : branch.liteLoader.entrySet()) {
+                    if ("latest".equals(entry.getKey()))
+                        continue;
+                    LiteLoaderVersion v = entry.getValue();
+                    LiteLoaderInstallerVersion iv = new LiteLoaderInstallerVersion(v.version.replace("SNAPSHOT", "SNAPSHOT-" + v.lastSuccessfulBuild), StrUtils.formatVersion(version));
+                    if (snapshot)
+                        iv.universal = String.format("http://jenkins.liteloader.com/view/%s/job/LiteLoader %s/lastSuccessfulBuild/artifact/build/libs/liteloader-%s-release.jar", version, version, v.version);
+                    else
+                        iv.universal = DownloadType.getSuggestedDownloadType().getProvider().getParsedDownloadURL(repo.url + "com/mumfrey/liteloader/" + version + "/" + v.file);
+                    iv.tweakClass = v.tweakClass;
+                    HashSet<MinecraftLibrary> set = new HashSet<>();
+                    if (v.libraries != null)
+                        set.addAll(v.libraries);
+                    iv.libraries = set.toArray(new MinecraftLibrary[set.size()]);
+                    result.add(iv);
+                }
+            }
+            
             @Override
             public void executeTask(boolean areDependTasksSucceeded) throws Exception {
                 if (!areDependTasksSucceeded)
@@ -74,21 +98,10 @@ public class LiteLoaderVersionList extends InstallerVersionList {
                 for (Map.Entry<String, LiteLoaderMCVersions> arr : root.versions.entrySet()) {
                     ArrayList<InstallerVersion> al = new ArrayList<>();
                     LiteLoaderMCVersions mcv = arr.getValue();
-                    if (mcv == null || mcv.artefacts == null || mcv.artefacts.get("com.mumfrey:liteloader") == null)
-                        continue;
-                    for (Map.Entry<String, LiteLoaderVersion> entry : mcv.artefacts.get("com.mumfrey:liteloader").entrySet()) {
-                        if ("latest".equals(entry.getKey()))
-                            continue;
-                        LiteLoaderVersion v = entry.getValue();
-                        LiteLoaderInstallerVersion iv = new LiteLoaderInstallerVersion(v.version, StrUtils.formatVersion(arr.getKey()));
-                        iv.universal = DownloadType.getSuggestedDownloadType().getProvider().getParsedDownloadURL("http://dl.liteloader.com/versions/com/mumfrey/liteloader/" + arr.getKey() + "/" + v.file);
-                        iv.tweakClass = v.tweakClass;
-                        iv.libraries = Arrays.copyOf(v.libraries, v.libraries.length);
-                        iv.installer = "http://dl.liteloader.com/redist/" + iv.mcVersion + "/liteloader-installer-" + iv.selfVersion.replace("_", "-") + ".jar";
-                        al.add(iv);
-                        versions.add(iv);
-                    }
+                    doBranch(arr.getKey(), mcv.repo, mcv.artefacts, al, false);
+                    doBranch(arr.getKey(), mcv.repo, mcv.snapshots, al, true);
                     Collections.sort(al, new InstallerVersionNewerComparator());
+                    versions.addAll(al);
                     versionMap.put(StrUtils.formatVersion(arr.getKey()), al);
                 }
 
