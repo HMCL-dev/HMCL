@@ -49,7 +49,7 @@ public final class YggdrasilAuthenticator extends AbstractAuthenticator {
     public UserProfileProvider login(LoginInfo info) throws AuthenticationException {
         UserProfileProvider result = new UserProfileProvider();
         if (ua.canPlayOnline()) {
-            result.setUserName(info.username)
+            result.setUserName(ua.getSelectedProfile().name)
                     .setUserId(UUIDTypeAdapter.fromUUID(ua.getSelectedProfile().id));
         } else {
             String usr = info.username;
