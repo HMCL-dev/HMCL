@@ -76,7 +76,11 @@ public class LaunchingUIDaemon {
             PipedOutputStream os = new PipedOutputStream();
             monitor.setTag(obj);
             try {
-                Log4jHandler handler = new Log4jHandler(os);
+                Log4jHandler handler = new Log4jHandler(monitor, os);
+                handler.addForbiddenToken(obj.getLoginResult().getAccessToken(), "<access token>");
+                handler.addForbiddenToken(obj.getLoginResult().getSession(), "<session>");
+                handler.addForbiddenToken(obj.getLoginResult().getUserId(), "<uuid>");
+                handler.addForbiddenToken("Setting user: " + obj.getLoginResult().getUserName(), "<player>");
                 handler.start();
             } catch(Exception e) {
                 HMCLog.err("", e);

@@ -41,5 +41,11 @@ public class HMCLMinecraftLoader extends MinecraftLoader {
         
         list.add("-Dminecraft.launcher.version=" + Main.LAUNCHER_VERSION);
         list.add("-Dminecraft.launcher.brand=" + Main.LAUNCHER_NAME);
+        
+        boolean flag = false;
+        for (String s : list) if (s.contains("-Dlog4j.configurationFile=")) flag = true;
+        if (!flag) {
+            list.add("-Dlog4j.configurationFile=" + Main.LOG4J_FILE.getAbsolutePath());
+        }
     }
 }

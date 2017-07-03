@@ -163,7 +163,11 @@ public abstract class GameLauncher {
             }
         }
         HMCLog.log("Starting process");
-        HMCLog.log(str.toString());
+        String s = StrUtils.makeCommand(str);
+        s = s.replace(result.getAccessToken(), "<access token>");
+        s = s.replace(result.getSession(), "<session>");
+        s = s.replace(result.getUserId(), "<uuid>");
+        HMCLog.log(s);
         ProcessBuilder builder = new ProcessBuilder(str);
         if (options.getLaunchVersion() == null || service.baseDirectory() == null)
             throw new Error("Fucking bug!");

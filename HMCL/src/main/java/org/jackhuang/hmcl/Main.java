@@ -20,6 +20,7 @@ package org.jackhuang.hmcl;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.security.GeneralSecurityException;
@@ -38,6 +39,7 @@ import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.api.ILogger;
 import org.jackhuang.hmcl.api.PluginManager;
 import org.jackhuang.hmcl.api.VersionNumber;
+import org.jackhuang.hmcl.core.MCUtils;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.LogWindow;
 import org.jackhuang.hmcl.ui.MainFrame;
@@ -207,6 +209,12 @@ public final class Main {
                         }
                     });
             }
+            
+            try {
+                unpackDefaultLog4jConfiguration();
+            } catch(IOException e) {
+                HMCLog.err("Failed to unpack log4j.xml, log window will not work well.", e);
+            }
 
             MainFrame.showMainFrame();
         }
@@ -214,6 +222,20 @@ public final class Main {
 
     public static void invokeUpdate() {
         MainFrame.INSTANCE.invokeUpdate();
+    }
+    
+    public static final File LOG4J_FILE = new File(MCUtils.getWorkingDirectory("hmcl"), "log4j.xml");
+    
+    public static void unpackDefaultLog4jConfiguration() throws IOException {
+        LOG4J_FILE.getParentFile().mkdirs();
+        if (LOG4J_FILE.exists()) return;
+        LOG4J_FILE.createNewFile();
+        try (InputStream is = Main.class.getResourceAsStream("/org/jackhuang/hmcl/log4j.xml");
+                FileOutputStream fos = new FileOutputStream(LOG4J_FILE)) {
+            int b;
+            while ((b = is.read()) != -1)
+                fos.write(b);
+        }
     }
 
     public static ImageIcon getIcon(String path) {

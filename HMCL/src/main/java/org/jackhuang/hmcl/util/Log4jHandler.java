@@ -22,9 +22,15 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
+import org.jackhuang.hmcl.api.HMCLApi;
+import org.jackhuang.hmcl.api.event.process.JavaProcessStoppedEvent;
+import org.jackhuang.hmcl.api.func.Consumer;
 import org.jackhuang.hmcl.ui.LogWindow;
 import org.jackhuang.hmcl.util.log.Level;
+import org.jackhuang.hmcl.util.sys.ProcessMonitor;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -36,19 +42,25 @@ import org.xml.sax.helpers.XMLReaderFactory;
  *
  * @author huang
  */
-public class Log4jHandler extends Thread {
+public class Log4jHandler extends Thread implements Consumer<JavaProcessStoppedEvent> {
 
     XMLReader reader;
+    ProcessMonitor monitor;
     PipedInputStream inputStream;
     PipedOutputStream outputStream;
+    List<Pair<String, String>> forbiddenTokens = new LinkedList<>();
 
-    public Log4jHandler(PipedOutputStream outputStream) throws ParserConfigurationException, IOException, SAXException {
-        /*SAXParserFactory factory = SAXParserFactory.newInstance();
-        factory.setNamespaceAware(true);
-        .*/
+    public Log4jHandler(ProcessMonitor monitor, PipedOutputStream outputStream) throws ParserConfigurationException, IOException, SAXException {
         reader = XMLReaderFactory.createXMLReader();
         inputStream = new PipedInputStream(outputStream);
         this.outputStream = outputStream;
+        this.monitor = monitor;
+        
+        HMCLApi.EVENT_BUS.channel(JavaProcessStoppedEvent.class).register((Consumer<JavaProcessStoppedEvent>) this);
+    }
+    
+    public void addForbiddenToken(String token, String replacement) {
+        forbiddenTokens.add(new Pair<>(token, replacement));
     }
 
     @Override
@@ -56,7 +68,6 @@ public class Log4jHandler extends Thread {
         try {
             outputStream.write("<output>".getBytes());
             outputStream.flush();
-            //reader.parse(inputStream, new Log4jHandlerImpl());
             reader.setContentHandler(new Log4jHandlerImpl());
             reader.parse(new InputSource(inputStream));
         } catch (SAXException | IOException e) {
@@ -64,10 +75,23 @@ public class Log4jHandler extends Thread {
         }
     }
 
+    @Override
+    public void accept(JavaProcessStoppedEvent t) {
+        if (t.getSource() == monitor) {
+            try {
+                outputStream.write("</output>".getBytes());
+                outputStream.close();
+            } catch (IOException ignore) { // won't happen
+                throw new Error(ignore);
+            }
+        }
+    }
+
     class Log4jHandlerImpl extends DefaultHandler {
         private final SimpleDateFormat df = new SimpleDateFormat("HH:mm:ss");
 
-        String message = "", date = "", thread = "", logger = "";
+        String date = "", thread = "", logger = "";
+        StringBuilder message = null;
         Level l = null;
         boolean readingMessage = false;
 
@@ -75,7 +99,7 @@ public class Log4jHandler extends Thread {
         public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
             switch (localName) {
                 case "log4j_Event":
-                    message = "";
+                    message = new StringBuilder();
                     Date d = new Date(Long.valueOf(attributes.getValue("timestamp")));
                     date = df.format(d);
                     try {
@@ -98,7 +122,7 @@ public class Log4jHandler extends Thread {
         public void endElement(String uri, String localName, String qName) throws SAXException {
             switch (localName) {
                 case "log4j_Event":
-                    println("[" + date + "] [" + thread + "/" + l.name() + "] [" + logger + "] " + message, l);
+                    println("[" + date + "] [" + thread + "/" + l.name() + "] [" + logger + "] " + message.toString(), l);
                     break;
                 case "log4j_Message":
                     readingMessage = false;
@@ -111,12 +135,14 @@ public class Log4jHandler extends Thread {
             String line = new String(ch, start, length);
             if (line.trim().isEmpty()) return;
             if (readingMessage)
-                message += line + C.LINE_SEPARATOR;
+                message.append(line).append(C.LINE_SEPARATOR);
             else
                 println(line, Level.guessLevel(line));
         }
 
         public void println(String message, Level l) {
+            for (Pair<String, String> entry : forbiddenTokens)
+                message = message.replace(entry.key, entry.value);
             if (LogWindow.outputStream != null)
                 LogWindow.outputStream.log(message, l);
         }
