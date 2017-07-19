@@ -24,7 +24,12 @@ import java.util.Locale;
  * @author huangyuhui
  */
 public enum SupportedLocales {
-    def(Locale.getDefault(), "lang.default"), en(Locale.ENGLISH, null), zh(Locale.TRADITIONAL_CHINESE, null), zh_CN(Locale.SIMPLIFIED_CHINESE, null), vi(new Locale("vi"), null);
+    def(Locale.getDefault(), "lang.default"),
+    en(Locale.ENGLISH, null),
+    zh(Locale.TRADITIONAL_CHINESE, null),
+    zh_CN(Locale.SIMPLIFIED_CHINESE, null),
+    vi(new Locale("vi"), null),
+    ru(new Locale("ru"), null);
 
     public Locale self;
     private String showString, customized;

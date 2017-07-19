@@ -1,0 +1,438 @@
+# Hello Minecraft! Launcher.
+# Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see {http://www.gnu.org/licenses/}.
+#
+#author: malyha2014@yandex.ru
+launch.failed=Не удалось запустить.
+launch.failed_creating_process=Не удалось создать процесс, возможно, ваш путь java - указан не верно, пожалуйста, измените свой путь java.
+launch.failed_sh_permission=Не удалось добавить разрешение на запуск скрипта.
+launch.failed_packing_jar=Не удалось упаковать в jar.
+launch.unsupported_launcher_version=Извините, Launcher не может запустить minecraft, но повторяет попытку запуска.
+launch.too_big_memory_alloc_64bit=Вы выделили слишком много памяти, потому что 32-разрядная Среда выполнения java, то игра скорее всего приведет к крашу. Максимальный объем памяти 1024МБ. Лаунчер будет пытаться запустить его.
+launch.too_big_memory_alloc_free_space_too_low=Вы выделили слишком много памяти, потому что размер физической памяти составляет %dMB, ваша игра скорее всего приведет к крашу. Лаунчер будет пытаться запустить его.
+launch.cannot_create_jvm=Мы видим, что он не может создать java виртуальная машина. В Java агреманы могут возникнуть проблемы. Вы можете включить режим No args в настройках.
+launch.circular_dependency_versions=Нашли круговой версии зависимостей, пожалуйста, проверьте, если ваш клиент был изменен.
+launch.not_finished_downloading_libraries=Не закончив загрузку библиотек, продолжить запуск игры?
+launch.not_finished_decompressing_natives=Не закончил распаковки собственных библиотек, продолжить запуск игры?
+launch.wrong_javadir=Неправильные каталоги java, будут сброшены по умолчанию каталогов java.
+launch.exited_abnormally=Игра завершилась аварийно, пожалуйста, посетите журнал, или попросить кого-то о помощи.
+
+launch.state.logging_in=Вход
+launch.state.generating_launching_codes=Генерирования стартового кода
+launch.state.downloading_libraries=Загрузки зависимостей
+launch.state.decompressing_natives=Туземцев распаковки
+launch.state.waiting_launching=Ждем запуска игры
+
+install.no_version=Версия не найдена.
+install.no_version_if_intall=Нужная версия не найдена, вы хотите, чтобы автоматически установить версию?
+install.not_refreshed=Список установки не обновляется.
+install.download_list=Скачать список
+
+install.liteloader.get_list=Получить список LiteLoader
+install.liteloader.install=Установить LiteLoader
+
+install.forge.get_list=Получить список Forge
+install.forge.install=Установить Forge
+install.forge.get_changelogs=Получить список изменений Forge
+
+install.optifine.install=Установить OptiFine
+install.optifine.get_list=Получить OptiFine лист
+install.optifine.get_download_link=Получить скачивание OptiFine
+
+install.failed_forge=Не удалось установить 'Forge'.
+install.failed_optifine=Не удалось установить 'OptiFine'.
+install.failed_liteloader=Не удалось установить 'LiteLoader'.
+install.failed_download_forge=Не удалось скачать 'Forge'.
+install.failed_download_optifine=Не удалось скачать 'OptiFine'.
+install.failed=Не удалось установить
+install.success=Успешная установка
+install.no_forge=Нету Forge
+install.choose_forge=Выберите версию, которую вы хотите установить Forge
+install.version=Версия
+install.mcversion=Версия игры
+install.time=Время
+install.release_time=Время выпуска
+install.type=Тип
+install.please_refresh=Если вы хотите установить что-то, пожалуйста, нажмите кнопку "Обновить".
+
+crash.launcher=Лаунчер крашнулся!
+crash.minecraft=Minecraft крашнулся!
+
+login.choose_charactor=Пожалуйста, выберите символ, который вы хотите
+login.no_charactor=Нет персонажа на этом аккаунте.
+login.your_password=Пароль
+login.failed=Не удалось войти
+login.no_Player007=Не задано имя пользователя!
+login.wrong_password=Неправильный пароль или имя пользователя
+login.invalid_username=Неверное имя пользователя
+login.invalid_uuid_and_username=Недопустимый UUID и имя пользователя
+login.invalid_password=Неверный пароль
+login.invalid_access_token=Недопустимый маркер доступа
+login.changed_client_token=Ответ сервера был изменен маркер клиента.
+login.not_email=Имя пользователя-это адрес электронной почты.
+login.type=Логин
+login.username=Ник
+login.account=Почта
+login.invalid_token=Пожалуйста, выйдите и повторно введите пароль для входа в систему.
+login.no_valid_character=Не допустимый характер, пожалуйста, посетите skinme.cc и создать своего собственного персонажа.
+
+proxy.username=Аккаунт
+proxy.password=Пароль
+proxy.host=Хост
+proxy.port=Порт
+
+login.failed.connect_authentication_server=Не удается подключиться к серверу авторизации. Проверьте вашу сеть.
+
+login.profile.not_logged_in=Вы не вошли в систему, Вы не можете изменить профиль!
+login.profile.selected=Не могу изменить профиль, выйти и пойти повторить.
+
+login.methods.yggdrasil=Email и пароль
+login.methods.offline=Введите ваш ник
+login.methods.no_method=Нет способа входа
+
+log.playername_null=Ник игрока пусто.
+
+minecraft.no_selected_version=Не выбрана Minecraft версия
+minecraft.wrong_path=Неправильный путь Minecraft, лаунчер не может найти путь.
+
+operation.stopped=Операция была прервана.
+operation.confirm_stop=Прекращать операции?
+
+ui.login.password=Пароль
+ui.more=Больше
+
+crash.advice.UnsupportedClassVersionError=Может быть, ваша версия java старая, попробуйте обновить java.
+crash.advice.ConcurrentModificationException=Может быть, ваш java новее, чем 1.8.0_11, вы можете понизить до версии java 7.
+crash.advice.ClassNotFoundException=Minecraft или моды, являются неполными. Повторите, если есть какие-то библиотеки, которые не скачали или обновить игру и модов! Или вы можете попробовать настройки игры -> Управление (версии) -> библиотека удалить файлы, чтобы решить проблему.
+crash.advice.NoSuchFieldError=Майнкрафт или моды, являются неполными. Повторите, если есть какие-то библиотеки, которые не скачали или обновить игру и модов!
+crash.advice.LWJGLException=Может быть, ваш видео драйвер не работает, пожалуйста, обновите ваш видео драйвер.
+crash.advice.SecurityException=Может быть, вы изменили minecraft.jar но не удалили META-INF.
+crash.advice.OutOfMemoryError=Максимум памяти для JVM слишком мал, пожалуйста, измените его.
+crash.advice.otherwise=Может быть моды вызвали проблемы.
+
+crash.advice.OpenGL=Может быть драйвера вызвали проблемы.
+crash.advice.no_lwjgl=Может быть драйвера вызвали проблемы.
+
+crash.advice.no=Никакие советы.
+
+crash.user_fault=Вашей операционной системы или среды java не может быть установлен неправильно, в результате сбой этой программы, пожалуйста, проверьте вашу среду java или компьютер!
+crash.headless=Если ваша ОС Linux можно использовать Oracle версии jdk вместо openjdk, то или добавить "-Djava.awt.headless=false" аргумент jvm, или проверить, если ваш x-сервер работает нормально.
+crash.NoClassDefFound=Пожалуйста, проверьте "Launcher" программное обеспечение в комплекте.
+
+crash.error=Minecraft крашнулся.
+crash.main_class_not_found=Главный Класс не найден, может быть ваш МК был нарушен.
+crash.class_path_wrong=Может запустить скрипт неправильный.
+
+ui.label.newProfileWindow.new_profile_name=Новое Имя Профиля:
+ui.label.newProfileWindow.copy_from=Скопировать Из:
+ui.newProfileWindow.title=Новый Конфиг
+
+ui.button.ok=OK
+ui.button.refresh=Обновить
+ui.button.run=Играть
+ui.button.settings=Настройки
+ui.button.about=About
+ui.button.others=Другие
+ui.button.logout=Выйти
+ui.button.download=Скачать
+ui.button.retry=Повторить
+ui.button.delete=Удалить
+ui.button.install=Установить
+ui.button.info=Информация
+ui.button.save=Сохранить
+ui.button.copy=Скопировать
+ui.button.clear=Очистить
+ui.button.close=Закрыть
+ui.button.explore=Выбрать
+ui.button.test=Тест
+ui.button.preview=Показать
+button.cancel=Отменить
+button.ok=OK
+
+ui.label.version=Версия
+ui.label.password=Пароль
+ui.label.profile=Профиль
+
+ui.message.first_load=Пожалуйста, введите ваш ник.
+ui.message.enter_password=Пожалуйста, введите Ваш пароль.
+ui.message.launching=Запуск...
+ui.message.making=Генерация...
+ui.message.sure_remove=Не забудьте удалить профиль %s?
+ui.message.update_java=Пожалуйста, обновите ваш Java.
+ui.message.open_jdk=Мы уже выяснили, что вы начали это приложение, используя OpenJDK, который станет причиной стольких бед для рисования интерфейса. Мы предлагаем Вам вместо того, чтобы с помощью Oracle версии JDK.
+
+ui.label.settings=Настройки
+ui.label.crashing=<html>Hello Minecraft! Launcher крашнулся!</html>
+ui.label.crashing_out_dated=<html>Hello Minecraft! Launcher крашнулся! Ваш лаунчер устарел. Обновить его</html>
+ui.label.failed_set=Не удалось установить:
+
+download=Скачать
+download.mojang=Mojang
+download.BMCL=BMCLAPI (bangbang93, http://bmclapi.bangbang93.com/)
+download.rapid_data=RapidData (https://www.rapiddata.org/)
+download.not_200=Не удалось скачать, код ответа
+download.failed=Не удалось скачать
+download.successfully=Успешно скачал
+download.source=Скачать Исходник
+
+message.error=Ошибка
+message.cannot_open_explorer=Cannot open explorer: 
+message.cancelled=Отменен
+message.info=Информация
+message.loading=Загрузка...
+
+folder.game=Game Dir
+folder.mod=Мод
+folder.coremod=Core Mod
+folder.config=Конфигурации
+folder.resourcepacks=Ресурс паки
+folder.screenshots=Скриншоты
+folder.saves=Сохранить
+
+settings.tabs.game_download=Скачать игру
+settings.tabs.installers=Установщик
+settings.tabs.assets_downloads=Дополнения
+
+settings=Настройки
+settings.explore=Выбрать
+settings.manage=Управлять
+settings.cannot_remove_default_config=Не удается удалить configution по умолчанию.
+settings.max_memory=Max Memory/MB
+settings.java_dir=Java Dir
+settings.game_directory=Директории Игры
+settings.dimension=Игра Окно Измерения
+settings.fullscreen=Полноэкранный
+settings.update_version=Обновление версии в формате json.
+settings.run_directory=Запуск Каталога(Изоляция Версия)
+settings.physical_memory=Размер Физической Памяти
+settings.choose_javapath=Выбрать Каталог Java.
+settings.default=Default
+settings.custom=Выбрать
+settings.choose_gamedir=Выбрать Директорию Игры
+settings.failed_load=Не смог файл загрузить настройки. Удалить его?
+settings.test_game=Тестовая игра
+
+settings.type.none=Нет версии игры, пожалуйста, откройте на разделе скачать игры.
+settings.type.global=<html><a href="">Нажмите здесь, чтобы перейти в специализированных версий. Сейчас это глобальная настройка.</a></html>
+settings.type.special=<html><a href="">Нажмите здесь, чтобы перейти в глобальные настройки. Не это версии специализированных условиях.</a></html>
+
+modpack=Мод пак
+modpack.choose=Выбрать zip-файл, пакет, который вы хотите импортировать. Если вы хотите обновить пакет, пожалуйста, введите версию вы хотите обновить.
+modpack.export_error=Не удалось экспортировать пакет, может быть Формат вашей игровой директории некорректно или не работать с файлами.
+modpack.export_finished=Экспорт произведений, готовые. Смотреть
+modpack.included_launcher=В пакет входит пусковая установка, вы можете опубликовать его сразу.
+modpack.not_included_launcher=Вы можете использовать пакет, нажав кнопку "Импорт произведений".
+modpack.enter_name=Введите желаемое имя для этой игры.
+
+modpack.task.save=Эскпортировать Modpack
+modpack.task.install=Импортировать Modpack
+modpack.task.install.error=Не удалось установить пакет. Может быть, файлы неправильно, или возникла проблема управления.
+modpack.task.install.will=Установить пакет:
+
+modpack.wizard=Экспорт modpack мастер
+modpack.wizard.step.1=Основные варианты
+modpack.wizard.step.1.title=Набор основных вариантов modpack.
+modpack.wizard.step.initialization.include_launcher=Включить лаунчер
+modpack.wizard.step.initialization.exported_version=Экспортируемые версии игры
+modpack.wizard.step.initialization.save=Выберите папку для экспорта игровых файлов для
+modpack.wizard.step.initialization.warning=<html>Прежде чем сделать суд, вы должны убедиться, что ваша игра сможет успешно запуска,<br/>и что ваш minecraft-это релиз, а не снимок.<br/>а что нельзя добавить модов, которые не позволили раздавать modpack.</html>
+modpack.wizard.step.2=Выбор файлов
+modpack.wizard.step.2.title=Выберите файлы, которые Вы не хотите положить в modpack.
+modpack.wizard.step.3=Описание
+modpack.wizard.step.3.title=Опишите ваш modpack.
+
+modpack.desc=Опишите свою modpack, включая меры предосторожности, changlog, поддерживая уценки(также поддерживает онлайн-картинки).
+modpack.incorrect_format.no_json=Формат произведений, является неверным, пакет.json-это отсутствует.
+modpack.incorrect_format.no_jar=Формат modpack неправильно, пакет.json не имеет атрибут 'банку'
+modpack.cannot_read_version=Не удалось собрать версии игры
+modpack.not_a_valid_location=Не является допустимым modpack расположение
+modpack.name=Modpack Название
+modpack.not_a_valid_name=Не является допустимым modpack название
+
+modpack.files.servers_dat=Список многопользовательских серверов
+modpack.files.saves=Сохраненные игры
+modpack.files.mods=Моды
+modpack.files.config=Mod конфигурации
+modpack.files.liteconfig=Mod конфигурации
+modpack.files.resourcepacks=Ресурс(текстур) паки
+modpack.files.options_txt=Варианты игры
+modpack.files.optionsshaders_txt=Варианты шейдеры
+modpack.files.mods.voxelmods=VoxelMods (включая VoxelMap) функции
+modpack.files.dumps=NEI отладочный вывод
+modpack.files.scripts=MineTweaker конфигурации
+modpack.files.blueprints=BuildCraft чертежи
+
+mods=Моды
+mods.choose_mod=Выбрать ваши моды
+mods.failed=Не удалось добавить моды
+mods.add=Добавить
+mods.remove=Удалить
+mods.default_information=<html><font color=#c0392b>Пожалуйста, убедитесь, что у вас есть установленный Forge или LiteLoader перед установкой модов!<br>Вы можете оставить свой mod файлов из проводника/Finder и удаление модов с помощью кнопки удалить.<br>Отключить мод, оставив флажок снят; выбрать товар, чтобы получить информацию.</font></html>
+
+advancedsettings=Расширенный
+advancedsettings.launcher_visible=Лаунчер Видимость
+advancedsettings.debug_mode=Режим Отладки
+advancedsettings.java_permanent_generation_space=PermGen Space/MB
+advancedsettings.jvm_args=Java VM Arguments
+advancedsettings.Minecraft_arguments=Майнкрафт Аргументы
+advancedsettings.launcher_visibility.close=Закрыть лаунчер, если игра запущена.
+advancedsettings.launcher_visibility.hide=Скрывать запуска, когда игра запущена.
+advancedsettings.launcher_visibility.keep=Держите пусковую видны.
+advancedsettings.launcher_visibility.hide_reopen=Скрывать запуска и повторного открытия, когда игра закрывается.
+advancedsettings.game_dir.default=По умолчанию (.minecraft/)
+advancedsettings.game_dir.independent=Независимые (.minecraft/версии/<номер версии>/, за исключением активов,библиотеки)
+advancedsettings.no_jvm_args=No Default JVM Args
+advancedsettings.no_common=Не использовать общий путь
+advancedsettings.java_args_default=Default java args: -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy -XX:MaxPermSize=???m -Xmx???m -Dfml.ignoreInvalidMinecraftCertificates=true -Dfml.ignorePatchDiscrepancies=true
+advancedsettings.wrapper_launcher=Лаунчер-оболочку(как и optirun...)
+advancedsettings.precall_command=Команда Precalling(будут выполняться до запуска игры)
+advancedsettings.server_ip=Сервера
+advancedsettings.cancel_wrapper_launcher=Отмена Запуска Оболочки
+advancedsettings.dont_check_game_completeness=Не проверить полноту игры
+
+mainwindow.show_log=Показать Логи
+mainwindow.make_launch_script=Сделать Запуск Скрипта.
+mainwindow.make_launch_script_failed=Не удалось сделать скрипт.
+mainwindow.enter_script_name=Введите имя скрипта.
+mainwindow.make_launch_succeed=Закончил создание скрипта.
+mainwindow.no_version=Версии не найдены. Переключить на вкладку загрузки игры?
+
+launcher.about=<html>Об Авторе<br/>Майнкрафт форум ID: klkl6523<br/>Copyright (c) 2013 huangyuhui<br/>Opened source under GPL v3 license:http://github.com/huanghongxun/HMCL/<br/>This software used project Gson which is under Apache License 2.0, thanks contributors.</html>
+launcher.download_source=Скачать Исходники
+launcher.background_location=Фон Расположение
+launcher.common_location=Общее Расположение
+launcher.exit_failed=Не удалось закрыть.
+launcher.versions_json_not_matched=Версия %s уродлив! Есть в формате json:%s в этой версии. Хотите ли вы решить эту проблему?
+launcher.versions_json_not_matched_cannot_auto_completion=Версия %s потерянной информации версии файла, удалить его?
+launcher.versions_json_not_formatted=Сведения о версии %s уродлив! Повторная загрузка?
+launcher.choose_bgpath=Выберите фоновый пути.
+launcher.choose_commonpath=Выбрать общий путь.
+launcher.commpath_tooltip=<html><body>Это приложение будет сохранить все игровые библиотеки и активы здесь, если там нет файлов в папку с игрой.</body></html>
+launcher.background_tooltip=<html><body>Лаучер использует по умолчанию фон.<br/>Если вы используете пользовательский фон.PNG, ссылку и оно будет использоваться.<br />Если есть "БГ" подкаталог, это приложение выбирает одну картинку в "bgskin" случайно.<br />Если вы установите параметр фон, это приложение будет использовать его.</body></html>
+launcher.update_launcher=Проверить обновления
+launcher.enable_shadow=Включить Window Shadow
+launcher.enable_animation=Включить Animation
+launcher.enable_blur=Включить Blur
+launcher.theme=Тема
+launcher.proxy=Прокси
+launcher.decorated=Включить границы окна(для того, чтобы исправить эту проблему, что пользовательский интерфейс становятся все серые в ОС Linux)
+launcher.modpack=<html><a href="http://blog.163.com/huanghongxun2008@126/blog/static/7738046920160323812771/">Документация для modpacks.</a></html>
+launcher.lang=Язык (Language)
+launcher.restart=Варианты будут в операции, только если перезапустить это приложение.
+launcher.log_font=Шрифт Лога
+launcher.tab.general=Общие
+launcher.tab.ui=Интерфейс
+launcher.tab.about=Автор
+
+launcher.title.game=Игры
+launcher.title.main=Главная
+launcher.title.launcher=Лаунчер
+
+versions.release=Release
+versions.snapshot=Snapshot
+versions.old_beta=Beta
+versions.old_alpha=Old Alpha
+
+versions.manage.rename=Переименовать эту версию
+versions.manage.rename.message=Пожалуйста, введите новый ник
+versions.manage.remove=Удалить версию
+versions.manage.remove.confirm=Не забудьте удалить версию
+versions.manage.redownload_json=Повторная загрузка конфигурации в Minecraft(minecraft.json)
+versions.manage.redownload_assets_index=Индекс Перекачайте Активов
+versions.mamage.remove_libraries=Библиотека удалять файлы
+
+advice.os64butjdk32=Ваша ОС 64-битных но ваш java является 32-разрядной. В 64-разрядной версии java рекомендуется.
+advice.java8=Java 8 представляет предположил, что может сделать игру работать более плавно. И много модов и Майнкрафт 1.12 и новые версии требуется java 8.
+
+assets.download_all=Скачать Файлы
+assets.not_refreshed=Список активов не обновляется, пожалуйста, обновите его один раз.
+assets.failed=Не удалось получить список, попробуйте еще раз.
+assets.list.1_7_3_after=1.7.3 и выше
+assets.list.1_6=1.6(BMCLAPI)
+assets.unkown_type_select_one=Неизвестная версия игры: %s, пожалуйста, выберите тип актива.
+assets.type=Тип Актива
+assets.download=Скачать Активы
+assets.no_assets=Активов не завершена, завершить их?
+assets.failed_download=Не удалось загрузить активы, может вызвать никаких звуков и языковые файлы.
+
+gamedownload.not_refreshed=Список игр не обновляется, пожалуйста, обновите его один раз.
+
+taskwindow.title=Задачи
+taskwindow.single_progress=Один прогресс
+taskwindow.total_progress=Общий прогресс
+taskwindow.cancel=Отменить
+taskwindow.no_more_instance=Может быть, вы открыли больше чем одно окно задач, не открыть его снова!
+taskwindow.file_name=Задача
+taskwindow.download_progress=Проценты.
+
+setupwindow.include_minecraft=Импорт игры
+setupwindow.find_in_configurations=Завершения импорта. Вы можете найти его в панели выбора конфигурации.
+setupwindow.give_a_name=Дать название новой игры.
+setupwindow.new=Новое
+setupwindow.no_empty_name=Название версии не может быть пустым.
+setupwindow.clean=Чистые файлы игры
+
+update.no_browser=Не можете открыть любым браузером. Ссылка была скопирована в буфер обмена. Вставьте его в адресную строку браузера обновить.
+update.should_open_link=Вы готовы обновить лаунчер?
+update.newest_version=Самая новая версия:
+update.failed=Не удалось проверить наличие обновлений.
+update.found=(Нашел Обновление!)
+
+logwindow.terminate_game=Завершить Игру
+logwindow.title=Лог
+logwindow.contact=Свяжитесь С Нами
+logwindow.show_lines=Показать Строки
+logwindow.search=Поиск
+
+selector.choose=Выбрать
+
+serverlistview.title=Выбрать сервер
+serverlistview.name=Название
+serverlistview.type=Тип
+serverlistview.version=Версия
+serverlistview.info=Информация
+
+minecraft.invalid=Invalid
+minecraft.invalid_jar=Invalid Jar
+minecraft.not_a_file=Not a file
+minecraft.not_found=Not found
+minecraft.not_readable=Not readable
+minecraft.modified=(Modified!)
+
+color.red=Красный
+color.blue=Голубой
+color.green=Зеленый
+color.orange=Оранжевый
+color.dark_blue=Темно-Синий
+color.purple=Фиолетовый
+
+wizard.next_>=Next >
+wizard.next_mnemonic=N
+wizard.<_prev=< Prev
+wizard.prev_mnemonic=P
+wizard.finish=Finish
+wizard.finish_mnemonic=F
+wizard.cancel=Cancel
+wizard.cancel_mnemonic=C
+wizard.help=Help
+wizard.help_mnemonic=H
+wizard.close=Close
+wizard.close_mnemonic=C
+wizard.summary=Summary
+wizard.failed=Failed
+wizard.steps=Steps
+
+lang=Russian
+lang.default=Belong to OS language.
