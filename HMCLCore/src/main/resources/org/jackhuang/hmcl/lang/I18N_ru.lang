@@ -160,6 +160,8 @@ ui.button.test=Тест
 ui.button.preview=Показать
 button.cancel=Отменить
 button.ok=OK
+button.yes=да
+button.no=Неа
 
 ui.label.version=Версия
 ui.label.password=Пароль

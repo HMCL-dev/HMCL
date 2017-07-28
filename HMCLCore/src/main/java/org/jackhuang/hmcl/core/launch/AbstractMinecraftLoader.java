@@ -27,7 +27,7 @@ import org.jackhuang.hmcl.util.C;
 import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.util.sys.JdkVersion;
 import org.jackhuang.hmcl.util.MathUtils;
-import org.jackhuang.hmcl.util.MessageBox;
+import org.jackhuang.hmcl.util.ui.MessageBox;
 import org.jackhuang.hmcl.util.sys.OS;
 import org.jackhuang.hmcl.util.sys.Platform;
 import org.jackhuang.hmcl.util.StrUtils;

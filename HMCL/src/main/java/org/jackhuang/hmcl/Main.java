@@ -33,6 +33,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.X509TrustManager;
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 import javax.swing.RepaintManager;
 import org.jackhuang.hmcl.api.HMCLApi;
 import org.jackhuang.hmcl.api.HMCLog;
@@ -46,7 +47,7 @@ import org.jackhuang.hmcl.ui.MainFrame;
 import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.DefaultPlugin;
 import org.jackhuang.hmcl.util.MathUtils;
-import org.jackhuang.hmcl.util.MessageBox;
+import org.jackhuang.hmcl.util.ui.MessageBox;
 import org.jackhuang.hmcl.util.StrUtils;
 import org.jackhuang.hmcl.util.lang.SupportedLocales;
 import org.jackhuang.hmcl.util.log.Configuration;
@@ -178,8 +179,9 @@ public final class Main {
             String s = Settings.getInstance().getLocalization();
             for (SupportedLocales sl : SupportedLocales.values())
                 if (sl.name().equals(s)) {
-                    SupportedLocales.NOW_LOCALE = sl;
+                    SupportedLocales.setNowLocale(sl);
                     Locale.setDefault(sl.self);
+                    JOptionPane.setDefaultLocale(sl.self);
                 }
 
             if (System.getProperty("java.vm.name").contains("Open")) // OpenJDK

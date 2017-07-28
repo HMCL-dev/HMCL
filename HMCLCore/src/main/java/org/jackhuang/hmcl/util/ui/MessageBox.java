@@ -15,10 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.util;
+package org.jackhuang.hmcl.util.ui;
 
-import org.jackhuang.hmcl.util.ui.SwingUtils;
 import javax.swing.JOptionPane;
+import javax.swing.UIManager;
+import org.jackhuang.hmcl.util.C;
 
 /**
  * @author huangyuhui
@@ -103,6 +104,18 @@ public class MessageBox {
         }
         return 0;
     }
+    
+    public static String showInputDialog(String msg) {
+        return showInputDialog(msg, UIManager.getString("OptionPane.inputDialogTitle"));
+    }
+    
+    public static String showInputDialog(String msg, String title) {
+        return showInputDialog(msg, title, null);
+    }
+    
+    public static String showInputDialog(String msg, String title, String init) {
+        return (String) JOptionPane.showInputDialog(null, msg, title, JOptionPane.QUESTION_MESSAGE, null, null, init);
+    }
 
     /**
      * Show MsgBox with options
@@ -129,5 +142,12 @@ public class MessageBox {
 
     public static int showLocalized(String msg) {
         return show(C.i18n(msg));
+    }
+    
+    static {
+        UIManager.put("OptionPane.cancelButtonText", C.i18n("button.cancel"));
+        UIManager.put("OptionPane.noButtonText", C.i18n("button.no"));
+        UIManager.put("OptionPane.okButtonText", C.i18n("button.ok"));
+        UIManager.put("OptionPane.yesButtonText", C.i18n("button.yes"));
     }
 }

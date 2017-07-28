@@ -39,7 +39,7 @@ import org.jackhuang.hmcl.core.service.IMinecraftService;
 import org.jackhuang.hmcl.util.sys.FileUtils;
 import org.jackhuang.hmcl.core.MCUtils;
 import org.jackhuang.hmcl.util.task.TaskWindow;
-import org.jackhuang.hmcl.util.MessageBox;
+import org.jackhuang.hmcl.util.ui.MessageBox;
 import org.jackhuang.hmcl.util.StrUtils;
 import org.jackhuang.hmcl.api.func.Consumer;
 import org.jackhuang.hmcl.api.func.Predicate;

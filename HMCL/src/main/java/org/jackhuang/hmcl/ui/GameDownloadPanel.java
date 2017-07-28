@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.api.ui.TopTabPage;
 import org.jackhuang.hmcl.core.download.MinecraftRemoteVersions;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.util.C;
-import org.jackhuang.hmcl.util.MessageBox;
+import org.jackhuang.hmcl.util.ui.MessageBox;
 import org.jackhuang.hmcl.util.StrUtils;
 import org.jackhuang.hmcl.util.task.ProgressProviderListener;
 import org.jackhuang.hmcl.util.task.Task;

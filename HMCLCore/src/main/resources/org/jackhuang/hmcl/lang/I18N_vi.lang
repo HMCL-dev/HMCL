@@ -158,6 +158,8 @@ ui.button.test=Test
 ui.button.preview=Xem trước
 button.cancel=Thoát
 button.ok=OK
+button.yes=Yes
+button.no=No
 
 ui.label.version=Phiên bản
 ui.label.password=Mật khẩu

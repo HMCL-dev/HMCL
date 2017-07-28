@@ -26,7 +26,6 @@ import java.awt.Font;
 import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.jackhuang.hmcl.api.HMCLApi;
@@ -55,6 +54,7 @@ import org.jackhuang.hmcl.util.ui.SwingUtils;
 import org.jackhuang.hmcl.util.ui.wizard.api.WizardDisplayer;
 import org.jackhuang.hmcl.api.auth.IAuthenticator;
 import org.jackhuang.hmcl.laf.button.CustomButtonUI;
+import org.jackhuang.hmcl.util.ui.MessageBox;
 
 /**
  *
@@ -402,7 +402,9 @@ public class MainPagePanel extends Page {
         fc.showOpenDialog(this);
         if (fc.getSelectedFile() == null)
             return;
-        String suggestedModpackId = JOptionPane.showInputDialog(C.i18n("modpack.enter_name"), FileUtils.getBaseName(fc.getSelectedFile().getName()));
+        String suggestedModpackId = MessageBox.showInputDialog(C.i18n("modpack.enter_name"), FileUtils.getBaseName(fc.getSelectedFile().getName()));
+        if (StrUtils.isBlank(suggestedModpackId))
+            return;
         TaskWindow.factory().append(ModpackManager.install(MainFrame.INSTANCE, fc.getSelectedFile(), Settings.getLastProfile().service(), suggestedModpackId)).execute();
         Settings.getLastProfile().service().version().refreshVersions();
     }//GEN-LAST:event_btnImportModpackActionPerformed

@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.util.C;
 import org.jackhuang.hmcl.util.lang.SupportedLocales;
 
 /**
@@ -34,7 +33,7 @@ public final class MinecraftCrashAdvicer {
     public static String getAdvice(String trace, boolean selfCrash) {
         if (trace == null)
             return C.i18n("crash.advice.no");
-        trace = trace.toLowerCase(SupportedLocales.NOW_LOCALE.self);
+        trace = trace.toLowerCase(SupportedLocales.getNowLocale().self);
         if (trace.contains("pixel format not accelerated"))
             return C.i18n("crash.advice.LWJGLException");
         else if (trace.contains("unsupportedclassversionrrror"))

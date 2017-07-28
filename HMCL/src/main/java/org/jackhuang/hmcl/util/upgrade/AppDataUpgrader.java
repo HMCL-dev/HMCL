@@ -46,7 +46,7 @@ import org.jackhuang.hmcl.util.task.Task;
 import org.jackhuang.hmcl.util.task.TaskWindow;
 import org.jackhuang.hmcl.util.net.FileDownloadTask;
 import org.jackhuang.hmcl.util.ArrayUtils;
-import org.jackhuang.hmcl.util.MessageBox;
+import org.jackhuang.hmcl.util.ui.MessageBox;
 import org.jackhuang.hmcl.util.UpdateChecker;
 import org.jackhuang.hmcl.util.Utils;
 import org.jackhuang.hmcl.api.VersionNumber;

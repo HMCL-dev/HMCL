@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.util.ui.MessageBox;
 import org.jackhuang.hmcl.api.VersionNumber;
 import org.jackhuang.hmcl.api.event.EventHandler;
 import org.jackhuang.hmcl.util.net.NetUtils;

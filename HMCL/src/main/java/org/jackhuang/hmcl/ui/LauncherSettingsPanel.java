@@ -27,7 +27,7 @@ import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.core.download.DownloadType;
 import org.jackhuang.hmcl.util.MathUtils;
 import org.jackhuang.hmcl.util.sys.IOUtils;
-import org.jackhuang.hmcl.util.MessageBox;
+import org.jackhuang.hmcl.util.ui.MessageBox;
 import org.jackhuang.hmcl.util.lang.SupportedLocales;
 import org.jackhuang.hmcl.util.ui.JFontComboBox;
 import org.jackhuang.hmcl.util.ui.JSystemFileChooser;

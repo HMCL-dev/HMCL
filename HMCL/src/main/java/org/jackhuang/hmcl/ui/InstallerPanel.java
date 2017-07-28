@@ -28,7 +28,7 @@ import org.jackhuang.hmcl.core.install.InstallerType;
 import org.jackhuang.hmcl.core.install.InstallerVersionList;
 import org.jackhuang.hmcl.util.task.TaskRunnable;
 import org.jackhuang.hmcl.util.task.TaskWindow;
-import org.jackhuang.hmcl.util.MessageBox;
+import org.jackhuang.hmcl.util.ui.MessageBox;
 import org.jackhuang.hmcl.util.StrUtils;
 import org.jackhuang.hmcl.util.task.ProgressProviderListener;
 import org.jackhuang.hmcl.util.task.Task;

@@ -24,7 +24,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumn;
 import org.jackhuang.hmcl.util.C;
 import org.jackhuang.hmcl.api.HMCLog;
-import org.jackhuang.hmcl.util.MessageBox;
+import org.jackhuang.hmcl.util.ui.MessageBox;
 import org.jackhuang.hmcl.util.StrUtils;
 import org.jackhuang.hmcl.util.ui.SwingUtils;
 

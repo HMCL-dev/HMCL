@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui;
 import java.io.File;
 import java.io.IOException;
 import java.io.PipedOutputStream;
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.jackhuang.hmcl.api.HMCLApi;
 import org.jackhuang.hmcl.api.event.process.JVMLaunchFailedEvent;
@@ -36,12 +35,13 @@ import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.util.HMCLGameLauncher;
 import org.jackhuang.hmcl.util.MinecraftCrashAdvicer;
 import org.jackhuang.hmcl.util.C;
-import org.jackhuang.hmcl.util.MessageBox;
+import org.jackhuang.hmcl.util.ui.MessageBox;
 import org.jackhuang.hmcl.api.func.Consumer;
 import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.api.event.launch.LaunchingState;
 import org.jackhuang.hmcl.util.DefaultPlugin;
 import org.jackhuang.hmcl.util.Log4jHandler;
+import org.jackhuang.hmcl.util.StrUtils;
 import org.jackhuang.hmcl.util.sys.FileUtils;
 import org.jackhuang.hmcl.util.sys.PrintlnEvent;
 import org.jackhuang.hmcl.util.sys.ProcessMonitor;
@@ -244,8 +244,8 @@ public class LaunchingUIDaemon {
 
     private static final Consumer<LaunchSucceededEvent> LAUNCH_SCRIPT_FINISHER = event -> {
         try {
-            String s = JOptionPane.showInputDialog(C.i18n("mainwindow.enter_script_name"));
-            if (s != null)
+            String s = MessageBox.showInputDialog(C.i18n("mainwindow.enter_script_name"));
+            if (StrUtils.isNotBlank(s))
                 MessageBox.show(C.i18n("mainwindow.make_launch_succeed") + " " + ((GameLauncher) event.getSource()).makeLauncher(s, event.getValue()).getAbsolutePath());
         } catch (IOException ex) {
             MessageBox.show(C.i18n("mainwindow.make_launch_script_failed"));

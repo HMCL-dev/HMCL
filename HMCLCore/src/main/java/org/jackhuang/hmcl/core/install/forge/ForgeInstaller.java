@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.core.service.IMinecraftService;
 import org.jackhuang.hmcl.util.task.Task;
 import org.jackhuang.hmcl.util.sys.FileUtils;
 import org.jackhuang.hmcl.core.version.MinecraftLibrary;
-import org.jackhuang.hmcl.util.MessageBox;
+import org.jackhuang.hmcl.util.ui.MessageBox;
 import org.jackhuang.hmcl.util.sys.IOUtils;
 
 /**

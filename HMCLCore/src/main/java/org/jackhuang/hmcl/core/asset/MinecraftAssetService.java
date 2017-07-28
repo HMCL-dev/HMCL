@@ -30,7 +30,7 @@ import org.jackhuang.hmcl.core.service.IMinecraftAssetService;
 import org.jackhuang.hmcl.core.service.IMinecraftService;
 import org.jackhuang.hmcl.core.version.AssetIndexDownloadInfo;
 import org.jackhuang.hmcl.core.version.MinecraftVersion;
-import org.jackhuang.hmcl.util.MessageBox;
+import org.jackhuang.hmcl.util.ui.MessageBox;
 import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.core.version.LoggingInfo;
 import org.jackhuang.hmcl.util.task.Task;

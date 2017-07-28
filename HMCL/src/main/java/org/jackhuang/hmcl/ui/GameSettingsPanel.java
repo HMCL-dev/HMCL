@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
@@ -59,7 +58,7 @@ import org.jackhuang.hmcl.core.install.InstallerType;
 import org.jackhuang.hmcl.api.game.GameDirType;
 import org.jackhuang.hmcl.core.version.MinecraftVersion;
 import org.jackhuang.hmcl.setting.VersionSetting;
-import org.jackhuang.hmcl.util.MessageBox;
+import org.jackhuang.hmcl.util.ui.MessageBox;
 import org.jackhuang.hmcl.util.AbstractSwingWorker;
 import org.jackhuang.hmcl.util.MinecraftVersionRequest;
 import org.jackhuang.hmcl.util.sys.OS;
@@ -168,7 +167,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         JMenuItem itm = new JMenuItem(C.i18n("versions.manage.rename"));
         itm.addActionListener((e) -> {
             if (mcVersion != null) {
-                String newName = JOptionPane.showInputDialog(C.i18n("versions.manage.rename.message"), mcVersion);
+                String newName = MessageBox.showInputDialog(C.i18n("versions.manage.rename.message"), mcVersion);
                 if (newName != null)
                     if (Settings.getLastProfile().service().version().renameVersion(mcVersion, newName))
                         refreshVersions();
@@ -994,7 +993,7 @@ public final class GameSettingsPanel extends RepaintPage implements DropTargetLi
         fc.setFileSelectionMode(JSystemFileChooser.DIRECTORIES_ONLY);
         if (fc.showOpenDialog(this) == JSystemFileChooser.APPROVE_OPTION) {
             File newGameDir = fc.getSelectedFile();
-            String name = JOptionPane.showInputDialog(C.i18n("setupwindow.give_a_name"));
+            String name = MessageBox.showInputDialog(C.i18n("setupwindow.give_a_name"));
             if (StrUtils.isBlank(name)) {
                 MessageBox.show(C.i18n("setupwindow.no_empty_name"));
                 return;

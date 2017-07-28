@@ -42,7 +42,7 @@ public final class C {
     }
 
     public static String i18n(String a, Object... format) {
-        return SupportedLocales.NOW_LOCALE.translate(a, format);
+        return SupportedLocales.getNowLocale().translate(a, format);
     }
 
 }

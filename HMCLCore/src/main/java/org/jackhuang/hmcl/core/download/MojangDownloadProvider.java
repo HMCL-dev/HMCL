@@ -79,7 +79,7 @@ public class MojangDownloadProvider extends IDownloadProvider {
         else if (str.contains("scala-swing") || str.contains("scala-xml") || str.contains("scala-parser-combinators"))
             return str.replace("http://files.minecraftforge.net/maven", "http://ftb.cursecdn.com/FTB2/maven/");
         else if (str.contains("typesafe") || str.contains("scala"))
-            if (SupportedLocales.NOW_LOCALE.self == Locale.CHINA)
+            if (SupportedLocales.getNowLocale().self == Locale.CHINA)
                 return str.replace("http://files.minecraftforge.net/maven", "http://maven.aliyun.com/nexus/content/groups/public");
             else
                 return str.replace("http://files.minecraftforge.net/maven", "http://repo1.maven.org/maven2");

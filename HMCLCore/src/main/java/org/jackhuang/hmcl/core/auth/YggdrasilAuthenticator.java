@@ -23,13 +23,13 @@ import org.jackhuang.hmcl.api.auth.AuthenticationException;
 import com.google.gson.GsonBuilder;
 import java.net.Proxy;
 import java.util.Map;
-import javax.swing.JOptionPane;
 import org.jackhuang.hmcl.util.C;
 import org.jackhuang.hmcl.util.ArrayUtils;
 import org.jackhuang.hmcl.core.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.core.auth.yggdrasil.UUIDTypeAdapter;
 import org.jackhuang.hmcl.core.auth.yggdrasil.PropertyMap;
 import org.jackhuang.hmcl.core.auth.yggdrasil.YggdrasilAuthentication;
+import org.jackhuang.hmcl.util.ui.MessageBox;
 import org.jackhuang.hmcl.util.ui.SwingUtils;
 
 /**
@@ -77,7 +77,7 @@ public final class YggdrasilAuthenticator extends AbstractAuthenticator {
                     selectedProfile = profiles[sel];
                     username = names[sel];
                 } else
-                    username = JOptionPane.showInputDialog(C.i18n("login.no_charactor"));
+                    username = MessageBox.showInputDialog(C.i18n("login.no_charactor"));
             else
                 username = selectedProfile.name;
             if (username == null)

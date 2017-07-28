@@ -160,6 +160,8 @@ ui.button.test=测试
 ui.button.preview=预览
 button.cancel=取消
 button.ok=确定
+button.yes=是
+button.no=不
 
 ui.label.version=版本
 ui.label.password=密码

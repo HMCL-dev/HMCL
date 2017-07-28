@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.core.download.DownloadLibraryJob;
 import org.jackhuang.hmcl.api.auth.LoginInfo;
 import org.jackhuang.hmcl.core.service.IMinecraftService;
 import org.jackhuang.hmcl.util.C;
-import org.jackhuang.hmcl.util.MessageBox;
+import org.jackhuang.hmcl.util.ui.MessageBox;
 import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.util.sys.CompressingUtils;
 import org.jackhuang.hmcl.util.task.ParallelTask;

@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.util.C;
 import org.jackhuang.hmcl.util.StrUtils;
-import org.jackhuang.hmcl.util.MessageBox;
+import org.jackhuang.hmcl.util.ui.MessageBox;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;

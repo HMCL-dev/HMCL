@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.util.Map;
 import javax.swing.JOptionPane;
 import org.jackhuang.hmcl.util.C;
-import org.jackhuang.hmcl.util.MessageBox;
+import org.jackhuang.hmcl.util.ui.MessageBox;
 import org.jackhuang.hmcl.util.StrUtils;
 import org.jackhuang.hmcl.util.net.WebPage;
 import org.jackhuang.hmcl.util.ui.wizard.spi.WizardController;

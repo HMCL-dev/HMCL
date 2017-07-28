@@ -53,7 +53,15 @@ public enum SupportedLocales {
             return NOW_LOCALE.translate(customized);
     }
 
-    public static SupportedLocales NOW_LOCALE = def;
+    private static SupportedLocales NOW_LOCALE = def;
+    
+    public static SupportedLocales getNowLocale() {
+        return NOW_LOCALE;
+    }
+    
+    public static void setNowLocale(SupportedLocales newLocale) {
+        NOW_LOCALE = newLocale;
+    }
 
     public String translate(String key, Object... format) {
         try {
