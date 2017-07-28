@@ -59,7 +59,7 @@ public abstract class InstallerVersionList {
      *
      * @return cached result.
      */
-    public List<InstallerVersion> getVersionsImpl(String mcVersion) {
+    private List<InstallerVersion> getVersionsImpl(String mcVersion) {
         if (versions == null || versionMap == null)
             return null;
         if (StrUtils.isBlank(mcVersion))

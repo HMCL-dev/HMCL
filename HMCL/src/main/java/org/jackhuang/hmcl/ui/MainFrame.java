@@ -394,6 +394,8 @@ public final class MainFrame extends DraggableFrame implements IRepaint {
     }
 
     public void reloadColor(Theme t) {
+        if (isShowedMessage)
+            return;
         for (Map.Entry<String, String> entry : t.settings.entrySet()) {
             if (entry.getValue().startsWith("#"))
                 UIManager.put(entry.getKey(), GraphicsUtils.getWebColor(entry.getValue()));

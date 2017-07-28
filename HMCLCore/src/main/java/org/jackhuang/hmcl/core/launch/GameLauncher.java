@@ -194,7 +194,7 @@ public abstract class GameLauncher {
         boolean isWin = OS.os() == OS.WINDOWS;
         File f = new File(launcherName + (isWin ? ".bat" : ".sh"));
         if (!f.exists() && !f.createNewFile())
-            HMCLog.warn("Failed to create " + f);
+            throw new IOException("Script file " + f.getAbsolutePath() + " does not exist but cannot be created.");
         BufferedWriter writer;
         try (FileOutputStream fos = FileUtils.openOutputStream(f)) {
             writer = new BufferedWriter(new OutputStreamWriter(fos, Charsets.toCharset()));

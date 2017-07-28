@@ -402,7 +402,7 @@ public class MainPagePanel extends Page {
         fc.showOpenDialog(this);
         if (fc.getSelectedFile() == null)
             return;
-        String suggestedModpackId = JOptionPane.showInputDialog("Please enter your favourite game name", FileUtils.getBaseName(fc.getSelectedFile().getName()));
+        String suggestedModpackId = JOptionPane.showInputDialog(C.i18n("modpack.enter_name"), FileUtils.getBaseName(fc.getSelectedFile().getName()));
         TaskWindow.factory().append(ModpackManager.install(MainFrame.INSTANCE, fc.getSelectedFile(), Settings.getLastProfile().service(), suggestedModpackId)).execute();
         Settings.getLastProfile().service().version().refreshVersions();
     }//GEN-LAST:event_btnImportModpackActionPerformed

@@ -29,7 +29,6 @@ public class LaunchOptions {
     private String proxyHost, proxyPort, proxyUser, proxyPass, javaDir, launchVersion, type, precalledCommand;
     private boolean fullscreen, noJVMArgs, notCheckGame;
     private File gameDir;
-    private GameDirType gameDirType;
 
     public String getVersionName() {
         return versionName;
@@ -113,14 +112,6 @@ public class LaunchOptions {
 
     public void setFullscreen(boolean fullscreen) {
         this.fullscreen = fullscreen;
-    }
-
-    public GameDirType getGameDirType() {
-        return gameDirType;
-    }
-
-    public void setGameDirType(GameDirType gameDirType) {
-        this.gameDirType = gameDirType;
     }
 
     public String getPermSize() {

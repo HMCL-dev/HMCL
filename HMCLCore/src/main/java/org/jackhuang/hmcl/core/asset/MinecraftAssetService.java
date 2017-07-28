@@ -120,6 +120,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
             HMCLog.warn("Failed to make directories: " + assetsDir);
         File assetsIndex = getIndexFile(assetIndex.getId());
         File renamed = null;
+        // This is unnecessary to do such backup job, FileDownloadTask can do this.
         if (assetsIndex.exists()) {
             renamed = new File(assetsDir, "indexes/" + assetIndex.getId() + "-renamed.json");
             if (assetsIndex.renameTo(renamed))
@@ -150,16 +151,16 @@ public class MinecraftAssetService extends IMinecraftAssetService {
     @Override
     public File getAssetObject(String assetId, String name) throws IOException {
         try {
-            AssetsIndex index = (AssetsIndex) C.GSON.fromJson(FileUtils.read(getIndexFile(assetId), "UTF-8"), AssetsIndex.class);
+            AssetsIndex index = C.GSON.fromJson(FileUtils.read(getIndexFile(assetId), "UTF-8"), AssetsIndex.class);
             if (index == null || index.getFileMap() == null || index.getFileMap().get(name) == null)
                 throw new IOException("Assets file format malformed.");
-            return getAssetObject(assetId, (AssetsObject) index.getFileMap().get(name));
+            return getAssetObject(assetId, index.getFileMap().get(name));
         } catch (JsonSyntaxException e) {
             throw new IOException("Assets file format malformed.", e);
         }
     }
 
-    protected boolean checkAssetsExistance(AssetIndexDownloadInfo assetIndex, LoggingInfo info) {
+    protected boolean checkAssetsExistence(AssetIndexDownloadInfo assetIndex, LoggingInfo info) {
         String assetId = assetIndex.getId();
         File indexFile = getIndexFile(assetId);
         File assetDir = getAssets(assetId);
@@ -208,8 +209,8 @@ public class MinecraftAssetService extends IMinecraftAssetService {
                 HMCLog.log("Reconstructing virtual assets folder at " + virtualRoot);
                 int tot = index.getFileMap().entrySet().size();
                 for (Map.Entry<String, AssetsObject> entry : index.getFileMap().entrySet()) {
-                    File target = new File(virtualRoot, (String) entry.getKey());
-                    File original = assetObjectPath(assetsDir, (AssetsObject) entry.getValue());
+                    File target = new File(virtualRoot, entry.getKey());
+                    File original = assetObjectPath(assetsDir, entry.getValue());
                     if (original.exists()) {
                         cnt++;
                         if (!target.isFile())
@@ -240,7 +241,7 @@ public class MinecraftAssetService extends IMinecraftAssetService {
         LoggingInfo logging = null;
         if (t.logging != null)
             logging = t.logging.get("client");
-        if (allow && !checkAssetsExistance(t.getAssetsIndex(), logging))
+        if (allow && !checkAssetsExistence(t.getAssetsIndex(), logging))
             if (MessageBox.show(C.i18n("assets.no_assets"), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                 TaskWindow.factory().execute(downloadAssets(t));
         return reconstructAssets(t.getAssetsIndex()).getAbsolutePath();

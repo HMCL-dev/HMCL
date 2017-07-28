@@ -103,7 +103,7 @@ public class TaskList extends Thread {
             }
             Invoker thread = new Invoker(t2, counter, bool);
             invokers.add(thread);
-            if (!EXECUTOR_SERVICE.isShutdown() && !EXECUTOR_SERVICE.isTerminated())
+            if (!EXECUTOR_SERVICE.isShutdown())
                 futures.put(thread, EXECUTOR_SERVICE.submit(thread));
         }
         try {

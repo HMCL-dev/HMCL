@@ -65,7 +65,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         }
         File f = version.getJar(service.baseDirectory());
         if (!f.exists())
-            throw new GameException("Minecraft jar does not exists");
+            throw new GameException("Minecraft jar does not exist");
         library.append(f.getAbsolutePath()).append(File.pathSeparator);
         res.add("-cp");
         res.add(library.toString().substring(0, library.length() - File.pathSeparator.length()));

@@ -56,7 +56,7 @@ public class HMCLMinecraftService extends IMinecraftService {
     public HMCLMinecraftService(Profile p) {
         this.p = p;
         this.provider = new HMCLGameProvider(this);
-        provider.initializeMiencraft();
+        provider.initializeMinecraft();
         HMCLApi.EVENT_BUS.channel(RefreshingVersionsEvent.class).register(versionSettings::clear);
         HMCLApi.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerFirst(() -> {
             if (!checkingModpack) {

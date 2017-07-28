@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import org.jackhuang.hmcl.util.C;
 import org.jackhuang.hmcl.util.net.HTTPGetTask;
-import org.jackhuang.hmcl.util.net.NetUtils;
 import org.jackhuang.hmcl.util.task.Task;
 import org.jackhuang.hmcl.util.task.TaskWorker;
 

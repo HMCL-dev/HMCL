@@ -44,7 +44,7 @@ public abstract class IMinecraftProvider<T extends IMinecraftService> {
     /**
      * To download mod packs.
      */
-    public abstract void initializeMiencraft();
+    public abstract void initializeMinecraft();
 
     /**
      * Get the run directory of given version.

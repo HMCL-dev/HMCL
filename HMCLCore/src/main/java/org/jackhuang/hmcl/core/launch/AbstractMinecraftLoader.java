@@ -177,7 +177,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
             if (StrUtils.isNotBlank(options.getProxyUser()) && StrUtils.isNotBlank(options.getProxyPass())) {
                 res.add("--proxyUser");
                 res.add(options.getProxyUser());
-                res.add("-=proxyPass");
+                res.add("--proxyPass");
                 res.add(options.getProxyPass());
             }
         }

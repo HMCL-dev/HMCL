@@ -108,7 +108,7 @@ public class MinecraftVersionManager<T extends IMinecraftService> extends IMinec
                 if (ask) {
                     HMCLog.warn("Found not matched filenames version: " + id + ", json: " + jsons[0].getName());
                     if (MessageBox.show(String.format(C.i18n("launcher.versions_json_not_matched"), id, jsons[0].getName()), MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                        if (!jsons[0].renameTo(new File(jsons[0].getParent(), id + ".json")))
+                        if (!jsons[0].renameTo(jsonFile))
                             HMCLog.warn("Failed to rename version json " + jsons[0]);
                 }
                 if (!jsonFile.exists()) {
@@ -283,6 +283,7 @@ public class MinecraftVersionManager<T extends IMinecraftService> extends IMinec
 
     @Override
     public boolean onLaunch(String id) {
+        // Fix bug in Minecraft 1.8
         File resourcePacks = new File(getRunDirectory(id), "resourcepacks");
         if (!FileUtils.makeDirectory(resourcePacks))
             HMCLog.warn("Failed to make resourcePacks: " + resourcePacks);
@@ -305,6 +306,6 @@ public class MinecraftVersionManager<T extends IMinecraftService> extends IMinec
     }
 
     @Override
-    public void initializeMiencraft() {
+    public void initializeMinecraft() {
     }
 }

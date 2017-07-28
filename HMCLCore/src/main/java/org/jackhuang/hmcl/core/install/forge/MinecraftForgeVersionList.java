@@ -78,7 +78,6 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
                         MinecraftForgeVersion v = root.number.get(num);
                         InstallerVersion iv = new InstallerVersion(v.version, StrUtils.formatVersion(v.mcversion));
                         for (String[] f : v.files) {
-
                             String ver = v.mcversion + "-" + v.version;
                             if (!StrUtils.isBlank(v.branch))
                                 ver = ver + "-" + v.branch;
@@ -105,7 +104,7 @@ public class MinecraftForgeVersionList extends InstallerVersionList {
                         versions.add(iv);
                     }
 
-                    versionMap.put(StrUtils.formatVersion(mcver), al);
+                    versionMap.put(mcver, al);
                 }
 
                 Collections.sort(versions, new InstallerVersionComparator());

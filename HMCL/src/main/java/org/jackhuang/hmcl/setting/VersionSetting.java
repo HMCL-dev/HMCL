@@ -310,7 +310,6 @@ public class VersionSetting {
         x.setFullscreen(isFullscreen());
         x.setWrapper(getWrapper());
         x.setGameDir(gameDir);
-        x.setGameDirType(getGameDirType());
         x.setHeight(getHeight());
         x.setJavaArgs(getJavaArgs());
         x.setLaunchVersion(id);
