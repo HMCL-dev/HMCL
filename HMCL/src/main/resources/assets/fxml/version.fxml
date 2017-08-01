@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.*?>
+<?import javafx.collections.FXCollections?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="org.jackhuang.hmcl.ui.VersionController">
+    <VBox spacing="20" GridPane.rowIndex="0">
+        <JFXToolbar maxHeight="20" styleClass="jfx-tool-bar">
+            <leftItems>
+                <JFXButton fx:id="backButton" maxHeight="20" styleClass="toggle-icon3"
+                           StackPane.alignment="CENTER_LEFT">
+                    <graphic>
+                        <fx:include source="/assets/svg/arrow-left.fxml" />
+                    </graphic>
+                    <StackPane.margin>
+                        <Insets left="20" />
+                    </StackPane.margin>
+                </JFXButton>
+                <Label fx:id="titleLabel" style="-fx-text-fill:WHITE; -fx-font-size: 20;"
+                       StackPane.alignment="CENTER_LEFT"/>
+            </leftItems>
+            <rightItems>
+
+            </rightItems>
+        </JFXToolbar>
+        <ScrollPane fx:id="scroll"
+                    style="-fx-margin: 10; -fx-background-color: white; -fx-font-size: 14; -fx-pref-width: 100%; "
+                    fitToHeight="true" fitToWidth="true">
+            <VBox.margin>
+                <Insets left="10" right="10"/>
+            </VBox.margin>
+            <VBox>
+            <GridPane fx:id="settingsPane" style="-fx-margin-left: 10; -fx-background-color: white; " hgap="5" vgap="10">
+                <Label GridPane.rowIndex="0" GridPane.columnIndex="0">Java Directory</Label>
+                <Label GridPane.rowIndex="1" GridPane.columnIndex="0">Max Memory</Label>
+                <Label GridPane.rowIndex="2" GridPane.columnIndex="0">Launcher Visibility</Label>
+                <Label GridPane.rowIndex="3" GridPane.columnIndex="0">Run Directory</Label>
+                <Label GridPane.rowIndex="4" GridPane.columnIndex="0">Dimension</Label>
+                <Label GridPane.rowIndex="5" GridPane.columnIndex="0"> </Label>
+
+                <JFXTextField styleClass="fit-width" fx:id="txtGameDir" GridPane.rowIndex="0" GridPane.columnIndex="1"
+                              maxWidth="Infinity"/>
+                <BorderPane GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.columnSpan="2">
+                    <left>
+                        <JFXTextField fx:id="txtMaxMemory" maxWidth="Infinity"/>
+                    </left>
+                    <right>
+                        <Label>Physical Memory: 16000MB
+                            <BorderPane.margin>
+                                <Insets right="7"/>
+                            </BorderPane.margin>
+                        </Label>
+                    </right>
+                </BorderPane>
+                <JFXComboBox fx:id="cboLauncherVisibility" GridPane.rowIndex="2" GridPane.columnIndex="1"
+                             GridPane.columnSpan="2" maxWidth="Infinity">
+                    <items>
+                        <FXCollections fx:factory="observableArrayList">
+                            <Label>Close</Label>
+                            <Label>Hide</Label>
+                            <Label>Keep</Label>
+                            <Label>Hide and Reopen</Label>
+                        </FXCollections>
+                    </items>
+                </JFXComboBox>
+                <JFXComboBox fx:id="cboRunDirectory" GridPane.rowIndex="3" GridPane.columnIndex="1"
+                             GridPane.columnSpan="2" maxWidth="Infinity">
+                    <items>
+                        <FXCollections fx:factory="observableArrayList">
+                            <Label>Default(.minecraft/)</Label>
+                            <Label>Divided(.minecraft/versions/&lt;versionName&gt;)</Label>
+                        </FXCollections>
+                    </items>
+                </JFXComboBox>
+                <BorderPane GridPane.rowIndex="4" GridPane.columnIndex="1" GridPane.columnSpan="2">
+                    <left>
+                        <HBox prefWidth="210">
+                            <JFXTextField fx:id="txtWidth" promptText="800" prefWidth="100"/>
+                            <Label>x</Label>
+                            <JFXTextField fx:id="txtHeight" promptText="480" prefWidth="100"/>
+                        </HBox>
+                    </left>
+                    <right>
+                        <JFXCheckBox fx:id="chkFullscreen" text="Fullscreen" alignment="CENTER">
+                            <BorderPane.margin>
+                                <Insets right="7"/>
+                            </BorderPane.margin>
+                        </JFXCheckBox>
+                    </right>
+                </BorderPane>
+
+                <JFXButton GridPane.rowIndex="0" GridPane.columnIndex="2" text="Explore" onMouseClicked="#onExploreJavaDir" />
+            </GridPane>
+            <VBox fx:id="advancedSettingsPane" style="-fx-padding-bottom: 10; -fx-background-color: white; " spacing="30">
+                <JFXTextField labelFloat="true" promptText="JVM Args" styleClass="fit-width" fx:id="txtJVMArgs" maxWidth="Infinity"/>
+                <JFXTextField labelFloat="true" promptText="Game Args" styleClass="fit-width" fx:id="txtGameArgs" maxWidth="Infinity"/>
+                <JFXTextField labelFloat="true" promptText="Metaspace" styleClass="fit-width" fx:id="txtMetaspace" maxWidth="Infinity"/>
+                <JFXTextField labelFloat="true" promptText="Wrapper Launcher(like optirun)" styleClass="fit-width" fx:id="txtWrapper" maxWidth="Infinity"/>
+                <JFXTextField labelFloat="true" promptText="Pre-calling command" styleClass="fit-width" fx:id="txtPrecallingCommand" maxWidth="Infinity"/>
+                <JFXTextField labelFloat="true" promptText="Server IP" styleClass="fit-width" fx:id="txtServerIP" maxWidth="Infinity"/>
+            </VBox>
+            </VBox>
+        </ScrollPane>
+    </VBox>
+</StackPane>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<fx:root xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         type="BorderPane" pickOnBounds="false">
+    <left>
+        <VBox alignment="CENTER_LEFT" mouseTransparent="true">
+            <Label fx:id="lblSelfVersion" style="-fx-font-size: 15;" />
+        </VBox>
+    </left>
+    <center>
+        <VBox alignment="CENTER" mouseTransparent="true">
+            <Label alignment="CENTER" fx:id="lblGameVersion" style="-fx-color: gray;" />
+        </VBox>
+    </center>
+    <right>
+        <fx:include source="/assets/svg/arrow-right.fxml" />
+    </right>
+</fx:root>

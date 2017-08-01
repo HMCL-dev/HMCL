@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXListView?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.StackPane?>
+<fx:root xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         type="StackPane"
+         prefHeight="400.0" prefWidth="600.0">
+    <JFXListView fx:id="list" styleClass="jfx-list-view" maxWidth="300" maxHeight="100">
+        <BorderPane mouseTransparent="true">
+            <left>
+                <Label>Install New Game</Label>
+            </left>
+            <right>
+                <fx:include source="/assets/svg/arrow-right.fxml"/>
+            </right>
+        </BorderPane>
+        <BorderPane mouseTransparent="true">
+            <left>
+                <Label>Install Modpack (CurseForge supported)</Label>
+            </left>
+            <right>
+                <fx:include source="/assets/svg/arrow-right.fxml"/>
+            </right>
+        </BorderPane>
+    </JFXListView>
+</fx:root>
