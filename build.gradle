@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,27 +15,52 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-import org.gradle.api.artifacts.*
 
-apply plugin: 'base' // To add "clean" task to the root project.
+group 'org.jackhuang'
+version '3.0'
 
-subprojects {
-    apply from: rootProject.file('common.gradle')
-}
+buildscript {
+    ext.kotlin_version = '1.1.3-2'
 
-task mergedJavadoc(type: Javadoc, description: 'Creates Javadoc from all the projects.') {
-    title = 'All modules'
-    destinationDir = new File(project.buildDir, 'merged-javadoc')
-
-    // Note: The closures below are executed lazily.
-    source {
-       subprojects*.sourceSets*.main*.allSource
+    repositories {
+        mavenCentral()
     }
-    classpath.from {
-        subprojects*.configurations*.compile*.copyRecursive({ !(it instanceof ProjectDependency); })*.resolve()
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
-task wrapper(type: Wrapper, description: 'Creates and deploys the Gradle wrapper to the current directory.') {
-    gradleVersion = '1.11'
+repositories {
+    mavenCentral()
+}
+
+allprojects {
+    group 'org.jackhuang'
+    version '3.0'
+
+    apply plugin: 'java'
+    apply plugin: 'kotlin'
+    apply plugin: 'idea'
+
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+
+	sourceCompatibility = 1.8
+
+    compileKotlin {
+        kotlinOptions.jvmTarget = "1.8"
+    }
+
+    compileTestKotlin {
+        kotlinOptions.jvmTarget = "1.8"
+    }
+
+    dependencies {
+        compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+        compile "com.google.code.gson:gson:2.8.1"
+        testCompile group: 'junit', name: 'junit', version: '4.12'
+    }
+
 }
