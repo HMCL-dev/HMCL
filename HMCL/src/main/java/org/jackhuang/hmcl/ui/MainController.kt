@@ -21,10 +21,17 @@ import com.jfoenix.controls.JFXButton
 import com.jfoenix.controls.JFXComboBox
 import com.jfoenix.controls.JFXListCell
 import com.jfoenix.controls.JFXListView
+import javafx.collections.FXCollections
 import javafx.fxml.FXML
 import javafx.scene.Node
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
+import org.jackhuang.hmcl.ProfileChangedEvent
+import org.jackhuang.hmcl.ProfileLoadingEvent
+import org.jackhuang.hmcl.event.EVENT_BUS
+import org.jackhuang.hmcl.event.RefreshedVersionsEvent
+import org.jackhuang.hmcl.game.minecraftVersion
+import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.setting.VersionSetting
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider
@@ -51,7 +58,7 @@ class MainController {
      */
     @FXML lateinit var page: StackPane
 
-    @FXML lateinit var listVersions: JFXListView<VersionSetting> // TODO: JFXListView<Version> including icon, title, game version(if equals to title, hidden)
+    @FXML lateinit var listVersions: JFXListView<VersionListItem> // TODO: JFXListView<Version> including icon, title, game version(if equals to title, hidden)
 
     lateinit var animationHandler: TransitionHandler
 
@@ -61,56 +68,23 @@ class MainController {
 
         animationHandler = TransitionHandler(page)
 
-        listVersions.items.add(VersionSetting("1"))
-        listVersions.items.add(VersionSetting("2"))
-        listVersions.items.add(VersionSetting("3"))
-        listVersions.items.add(VersionSetting("4"))
-        listVersions.items.add(VersionSetting("5"))
-        listVersions.items.add(VersionSetting("6"))
-        listVersions.items.add(VersionSetting("7"))
-        listVersions.items.add(VersionSetting("8"))
-        listVersions.items.add(VersionSetting("9"))
-        listVersions.items.add(VersionSetting("10"))
-        listVersions.items.add(VersionSetting("11"))
-        listVersions.items.add(VersionSetting("12"))
-
-        listVersions.setCellFactory {
-            object : JFXListCell<VersionSetting>() {
-                override fun updateItem(item: VersionSetting?, empty: Boolean) {
-                    super.updateItem(item, empty)
-
-                    if (item == null || empty) return
-                    val g = VersionListItem(item, item.gameVersion)
-                    g.onSettingsButtonClicked {
-                        setContentPage(Controllers.versionPane)
-                        Controllers.versionController.loadVersionSetting(g.setting)
-                    }
-                    graphic = g
-                }
-            }
-        }
+        EVENT_BUS.channel<RefreshedVersionsEvent>() += this::loadVersions
+        EVENT_BUS.channel<ProfileLoadingEvent>() += this::onProfilesLoading
+        EVENT_BUS.channel<ProfileChangedEvent>() += this::onProfileChanged
 
         listVersions.setOnMouseClicked {
             if (it.clickCount == 2) {
                 setContentPage(Controllers.versionPane)
-                Controllers.versionController.loadVersionSetting(listVersions.selectionModel.selectedItem)
+                val id = listVersions.selectionModel.selectedItem.id
+
+                Controllers.versionController.loadVersionSetting(id, Settings.getLastProfile().getVersionSetting(id))
             } else
                 it.consume()
         }
 
-        comboProfiles.items.add("SA")
-        comboProfiles.items.add("SB")
-        comboProfiles.items.add("SC")
-        comboProfiles.items.add("SD")
-        comboProfiles.items.add("SE")
-        comboProfiles.items.add("SF")
-        comboProfiles.items.add("SG")
-        comboProfiles.items.add("SH")
-        comboProfiles.items.add("SI")
-        comboProfiles.items.add("SJ")
-        comboProfiles.items.add("SK")
-
         listVersions.smoothScrolling()
+
+        Settings.onProfileLoading()
     }
 
     private val empty = Pane()
@@ -121,5 +95,35 @@ class MainController {
 
     fun installNewVersion() {
         setContentPage(Wizard.createWizard("Install New Game", DownloadWizardProvider()))
+    }
+
+    fun onProfilesLoading() {
+        // TODO: Profiles
+    }
+
+    fun onProfileChanged(event: ProfileChangedEvent) {
+        val profile = event.value
+        profile.selectedVersionProperty.addListener { _, _, newValue ->
+            versionChanged(newValue)
+        }
+    }
+
+    val versionListItems = mutableMapOf<String, VersionListItem>()
+
+    fun loadVersions() {
+        val profile = Settings.getLastProfile()
+        val list = mutableListOf<VersionListItem>()
+        versionListItems.clear()
+        profile.repository.getVersions().forEach {
+            val item = VersionListItem(it.id, minecraftVersion(Settings.getLastProfile().repository.getVersionJar(it.id)) ?: "Unknown")
+            list += item
+            versionListItems += it.id to item
+        }
+
+        listVersions.items = FXCollections.observableList(list)
+    }
+
+    fun versionChanged(selectedVersion: String) {
+        listVersions.selectionModel.select(versionListItems[selectedVersion])
     }
 }

@@ -17,12 +17,14 @@
  */
 package org.jackhuang.hmcl.util
 
+import com.google.gson.annotations.SerializedName
 import java.io.File
 import java.io.IOException
 import java.io.Serializable
 import java.util.regex.Pattern
 
 data class JavaVersion internal constructor(
+        @SerializedName("location")
         val binary: File,
         val version: Int,
         val platform: Platform) : Serializable
@@ -74,8 +76,8 @@ data class JavaVersion internal constructor(
         }
 
         fun getJavaFile(home: File): File {
-            var path = home.resolve("bin")
-            var javaw = path.resolve("javaw.exe")
+            val path = home.resolve("bin")
+            val javaw = path.resolve("javaw.exe")
             if (OS.CURRENT_OS === OS.WINDOWS && javaw.isFile)
                 return javaw
             else

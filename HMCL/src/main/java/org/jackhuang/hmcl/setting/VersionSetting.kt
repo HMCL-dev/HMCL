@@ -18,17 +18,14 @@
 package org.jackhuang.hmcl.setting
 
 import com.google.gson.*
+import javafx.beans.InvalidationListener
 import javafx.beans.property.*
 import org.jackhuang.hmcl.util.*
 import java.lang.reflect.Type
 
 class VersionSetting() {
 
-    /**
-     * The displayed name.
-     */
-    val nameProperty = SimpleStringProperty(this, "name", "")
-    var name: String by nameProperty
+    var isGlobal: Boolean = false
 
     /**
      * HMCL Version Settings have been divided into 2 parts.
@@ -162,15 +159,31 @@ class VersionSetting() {
     val launcherVisibilityProperty = SimpleObjectProperty<LauncherVisibility>(this, "launcherVisibility", LauncherVisibility.HIDE)
     var launcherVisibility: LauncherVisibility by launcherVisibilityProperty
 
-    val gameVersion: String
-        get() = "1.7.10"
+    fun addPropertyChangedListener(listener: InvalidationListener) {
+        usesGlobalProperty.addListener(listener)
+        javaProperty.addListener(listener)
+        javaDirProperty.addListener(listener)
+        wrapperProperty.addListener(listener)
+        permSizeProperty.addListener(listener)
+        maxMemoryProperty.addListener(listener)
+        precalledCommandProperty.addListener(listener)
+        javaArgsProperty.addListener(listener)
+        minecraftArgsProperty.addListener(listener)
+        noJVMArgsProperty.addListener(listener)
+        notCheckGameProperty.addListener(listener)
+        serverIpProperty.addListener(listener)
+        fullscreenProperty.addListener(listener)
+        widthProperty.addListener(listener)
+        heightProperty.addListener(listener)
+        gameDirTypeProperty.addListener(listener)
+        launcherVisibilityProperty.addListener(listener)
+    }
 
     companion object Serializer: JsonSerializer<VersionSetting>, JsonDeserializer<VersionSetting> {
         override fun serialize(src: VersionSetting?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
             if (src == null) return JsonNull.INSTANCE
             val jsonObject = JsonObject()
             with(jsonObject) {
-                addProperty("name", src.name)
                 addProperty("usesGlobal", src.usesGlobal)
                 addProperty("javaArgs", src.javaArgs)
                 addProperty("minecraftArgs", src.minecraftArgs)
@@ -197,7 +210,6 @@ class VersionSetting() {
             if (json == null || json == JsonNull.INSTANCE || json !is JsonObject) return null
 
             return VersionSetting().apply {
-                name = json["name"]?.asString ?: ""
                 usesGlobal = json["usesGlobal"]?.asBoolean ?: false
                 javaArgs = json["javaArgs"]?.asString ?: ""
                 minecraftArgs = json["minecraftArgs"]?.asString ?: ""

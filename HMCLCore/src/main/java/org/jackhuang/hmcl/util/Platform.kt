@@ -17,12 +17,33 @@
  */
 package org.jackhuang.hmcl.util
 
+import com.google.gson.*
+import java.lang.reflect.Type
+
 enum class Platform(val bit: String) {
     BIT_32("32"),
     BIT_64("64"),
     UNKNOWN("unknown");
 
-    companion object {
+    companion object Serializer: JsonSerializer<Platform>, JsonDeserializer<Platform> {
+
+        override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): Platform? {
+            if (json == null) return null
+            return when (json.asInt) {
+                0 -> BIT_32
+                1 -> BIT_64
+                else -> UNKNOWN
+            }
+        }
+
+        override fun serialize(src: Platform?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement? {
+            if (src == null) return null
+            return when (src) {
+                BIT_32 -> JsonPrimitive(0)
+                BIT_64 -> JsonPrimitive(1)
+                UNKNOWN -> JsonPrimitive(-1)
+            }
+        }
 
         val PLATFORM: Platform by lazy {
             if (IS_64_BIT) BIT_64 else BIT_32

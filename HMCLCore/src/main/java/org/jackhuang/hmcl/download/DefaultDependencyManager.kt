@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.task.Task
 import org.jackhuang.hmcl.task.then
 import java.net.Proxy
 
-class DefaultDependencyManager(override val repository: DefaultGameRepository, override val downloadProvider: DownloadProvider, val proxy: Proxy = Proxy.NO_PROXY)
+class DefaultDependencyManager(override val repository: DefaultGameRepository, override var downloadProvider: DownloadProvider, val proxy: Proxy = Proxy.NO_PROXY)
     : AbstractDependencyManager(repository) {
 
     override fun gameBuilder(): GameBuilder = DefaultGameBuilder(this)

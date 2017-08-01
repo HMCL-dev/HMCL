@@ -22,7 +22,7 @@ import javafx.scene.control.Label
 import javafx.scene.layout.BorderPane
 import org.jackhuang.hmcl.setting.VersionSetting
 
-class VersionListItem(val setting: VersionSetting, val gameVersion: String) : BorderPane() {
+class VersionListItem(val versionName: String, val gameVersion: String) : BorderPane() {
 
     @FXML lateinit var lblVersionName: Label
     @FXML lateinit var lblGameVersion: Label
@@ -31,7 +31,7 @@ class VersionListItem(val setting: VersionSetting, val gameVersion: String) : Bo
 
     init {
         loadFXML("/assets/fxml/version-list-item.fxml")
-        lblVersionName.text = setting.name
+        lblVersionName.text = versionName
         lblGameVersion.text = gameVersion
     }
 

@@ -15,26 +15,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.event
+package org.jackhuang.hmcl
 
-import java.util.*
+import org.jackhuang.hmcl.setting.Profile
+import java.util.EventObject
 
-class EventBus {
-    val events = HashMap<Class<*>, EventManager<*>>()
+/**
+ * This event gets fired when the selected profile changed.
+ * <br></br>
+ * This event is fired on the [org.jackhuang.hmcl.event.EVENT_BUS]
+ * @param source [org.jackhuang.hmcl.setting.Settings]
+ * *
+ * @param Profile the new profile.
+ * *
+ * @author huangyuhui
+ */
+class ProfileChangedEvent(source: Any, val value: Profile) : EventObject(source)
 
-    @Suppress("UNCHECKED_CAST")
-    fun <T : EventObject> channel(classOfT: Class<T>): EventManager<T> {
-        if (!events.containsKey(classOfT))
-            events.put(classOfT, EventManager<T>())
-        return events[classOfT] as EventManager<T>
-    }
-
-    inline fun <reified T: EventObject> channel() = channel(T::class.java)
-
-    fun fireEvent(obj: EventObject) {
-        channel(obj.javaClass).fireEvent(obj)
-    }
-
-}
-
-val EVENT_BUS = EventBus()
+/**
+ * This event gets fired when loading profiles.
+ * <br></br>
+ * This event is fired on the [org.jackhuang.hmcl.event.EVENT_BUS]
+ * @param source [org.jackhuang.hmcl.setting.Settings]
+ * *
+ * @author huangyuhui
+ */
+class ProfileLoadingEvent(source: Any) : EventObject(source)

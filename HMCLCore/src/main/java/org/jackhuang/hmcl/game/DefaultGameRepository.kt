@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.game
 
 import com.google.gson.JsonSyntaxException
+import org.jackhuang.hmcl.event.*
 import org.jackhuang.hmcl.util.GSON
 import org.jackhuang.hmcl.util.LOG
 import org.jackhuang.hmcl.util.fromJson
@@ -27,7 +28,7 @@ import java.io.IOException
 import java.util.*
 import java.util.logging.Level
 
-open class DefaultGameRepository(val baseDirectory: File): GameRepository {
+open class DefaultGameRepository(var baseDirectory: File): GameRepository {
     protected val versions: MutableMap<String, Version> = TreeMap<String, Version>()
 
     override fun hasVersion(id: String) = versions.containsKey(id)
@@ -81,9 +82,8 @@ open class DefaultGameRepository(val baseDirectory: File): GameRepository {
         return file.deleteRecursively()
     }
 
+    protected open fun refreshVersionsImpl() {
 
-    @Synchronized
-    override fun refreshVersions() {
         versions.clear()
 
         if (ClassicVersion.hasClassicVersion(baseDirectory)) {
@@ -123,7 +123,16 @@ open class DefaultGameRepository(val baseDirectory: File): GameRepository {
             }
 
             versions[id] = version
+            EVENT_BUS.fireEvent(LoadedOneVersionEvent(this, id))
         }
+
+    }
+
+    @Synchronized
+    final override fun refreshVersions() {
+        EVENT_BUS.fireEvent(RefreshingVersionsEvent(this))
+        refreshVersionsImpl()
+        EVENT_BUS.fireEvent(RefreshedVersionsEvent(this))
     }
 
     override fun getAssetIndex(assetId: String): AssetIndex {

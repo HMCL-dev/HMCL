@@ -28,6 +28,7 @@ import com.google.gson.TypeAdapter
 import com.google.gson.Gson
 import com.google.gson.TypeAdapterFactory
 import org.jackhuang.hmcl.game.Library
+import java.io.File
 import java.text.DateFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -40,6 +41,8 @@ val GSON: Gson = GsonBuilder()
         .registerTypeAdapter(Library::class.java, Library)
         .registerTypeAdapter(Date::class.java, DateTypeAdapter)
         .registerTypeAdapter(UUID::class.java, UUIDTypeAdapter)
+        .registerTypeAdapter(Platform::class.java, Platform)
+        .registerTypeAdapter(File::class.java, FileTypeAdapter)
         .registerTypeAdapterFactory(ValidationTypeAdapterFactory)
         .registerTypeAdapterFactory(LowerCaseEnumTypeAdapterFactory)
         .create()
@@ -47,6 +50,14 @@ val GSON: Gson = GsonBuilder()
 inline fun <reified T> typeOf(): Type = object : TypeToken<T>() {}.type
 
 inline fun <reified T> Gson.fromJson(json: String): T? = fromJson<T>(json, T::class.java)
+
+inline fun <reified T> Gson.fromJsonQuietly(json: String): T? {
+    try {
+        return fromJson<T>(json)
+    } catch (json: JsonParseException) {
+        return null
+    }
+}
 
 /**
  * Check if the json object's fields automatically filled by Gson are in right format.
@@ -189,4 +200,17 @@ object DateTypeAdapter : JsonSerializer<Date>, JsonDeserializer<Date> {
             return result.substring(0, 22) + ":" + result.substring(22)
         }
     }
+}
+
+object FileTypeAdapter : JsonSerializer<File>, JsonDeserializer<File> {
+    override fun serialize(src: File?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
+        if (src == null) return JsonNull.INSTANCE
+        else return JsonPrimitive(src.path)
+    }
+
+    override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): File? {
+        if (json == null) return null
+        else return File(json.asString)
+    }
+
 }

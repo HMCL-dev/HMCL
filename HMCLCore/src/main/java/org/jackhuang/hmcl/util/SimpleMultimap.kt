@@ -40,11 +40,17 @@ class SimpleMultimap<K, V>(val maper: () -> MutableMap<K, Collection<V>>, val va
         valuesImpl += value
     }
 
-    fun remove(key: K): Collection<V>? {
+    fun removeAll(key: K): Collection<V>? {
         val result = map.remove(key)
         if (result != null)
             valuesImpl.removeAll(result)
         return result
+    }
+
+    fun remove(value: V) {
+        map.values.forEach {
+            it.remove(value)
+        }
     }
 
     fun clear() {

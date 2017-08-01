@@ -96,6 +96,14 @@ interface GameRepository : VersionProvider {
     fun getVersionJar(version: Version): File
 
     /**
+     * Get minecraft jar
+     *
+     * @param version version id
+     * @return the minecraft jar
+     */
+    fun getVersionJar(version: String): File = getVersionJar(getVersion(version).resolve(this))
+
+    /**
      * Rename given version to new name.
      *
      * @param from The id of original version

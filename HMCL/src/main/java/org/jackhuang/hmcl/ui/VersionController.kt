@@ -59,8 +59,8 @@ class VersionController {
         JFXScrollPane.smoothScrolling(scroll)
     }
 
-    fun loadVersionSetting(version: VersionSetting) {
-        titleLabel.text = version.name
+    fun loadVersionSetting(id: String, version: VersionSetting) {
+        titleLabel.text = id
     }
 
     fun onExploreJavaDir() {
