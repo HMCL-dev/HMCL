@@ -31,7 +31,8 @@ abstract class VersionList<T> {
     abstract fun refreshAsync(downloadProvider: DownloadProvider): Task
 
     protected open fun getVersionsImpl(gameVersion: String): Collection<RemoteVersion<T>> {
-        return versions[gameVersion] ?: versions.values
+        val ans = versions[gameVersion]
+        return if (ans.isEmpty()) versions.values else ans
     }
 
     /**
@@ -44,7 +45,7 @@ abstract class VersionList<T> {
 
     fun getVersion(gameVersion: String, remoteVersion: String): RemoteVersion<T>? {
         var result : RemoteVersion<T>? = null
-        versions[gameVersion]?.forEach {
+        versions[gameVersion].forEach {
             if (it.selfVersion == remoteVersion)
                 result = it
         }

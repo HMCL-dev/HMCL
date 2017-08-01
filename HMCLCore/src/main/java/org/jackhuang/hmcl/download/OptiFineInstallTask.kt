@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.download
 
-import org.jackhuang.hmcl.download.game.GameLibrariesTask
 import org.jackhuang.hmcl.game.LibrariesDownloadInfo
 import org.jackhuang.hmcl.game.Library
 import org.jackhuang.hmcl.game.LibraryDownloadInfo

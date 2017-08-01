@@ -35,7 +35,6 @@ object GameVersionList : VersionList<GameRemoteVersionTag>() {
         val task = GetTask(provider.versionListURL.toURL())
         override val dependents: Collection<Task> = listOf(task)
         override fun execute() {
-            versionMap.clear()
             versions.clear()
 
             val root = GSON.fromJson<GameRemoteVersions>(task.result!!) ?: return
@@ -50,8 +49,7 @@ object GameVersionList : VersionList<GameRemoteVersionTag>() {
                                 time = remoteVersion.releaseTime
                         )
                 )
-                versions.add(x)
-                versionMap[gg] = listOf(x)
+                versions.put(gg, x)
             }
         }
     }

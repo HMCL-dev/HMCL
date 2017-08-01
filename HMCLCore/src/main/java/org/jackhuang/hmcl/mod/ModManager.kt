@@ -43,7 +43,7 @@ class ModManager(private val repository: GameRepository) {
     fun getMods(id: String) : Collection<ModInfo> {
         if (!modCache.containsKey(id))
             refreshMods(id)
-        return modCache[id] ?: emptyList()
+        return modCache[id]
     }
 
     fun addMod(id: String, file: File) {

@@ -17,10 +17,6 @@
  */
 package org.jackhuang.hmcl.download
 
-import org.jackhuang.hmcl.download.game.GameAssetDownloadTask
-import org.jackhuang.hmcl.download.game.GameLibrariesTask
-import org.jackhuang.hmcl.download.game.GameLoggingDownloadTask
-import org.jackhuang.hmcl.download.game.VersionJSONSaveTask
 import org.jackhuang.hmcl.game.*
 import org.jackhuang.hmcl.task.*
 import org.jackhuang.hmcl.util.*
@@ -31,8 +27,8 @@ class DefaultGameBuilder(val dependencyManager: DefaultDependencyManager): GameB
     val downloadProvider = dependencyManager.downloadProvider
 
     override fun buildAsync(): Task {
-        return VersionJSONDownloadTask(gameVersion = gameVersion) then { task ->
-            var version = GSON.fromJson<Version>(task.result!!)
+        return VersionJSONDownloadTask(gameVersion = gameVersion) then a@{ task ->
+            var version = GSON.fromJson<Version>(task.result!!) ?: return@a null
             version = version.copy(jar = version.id, id = name)
             var result = ParallelTask(
                     GameAssetDownloadTask(dependencyManager, version),

@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.download
 
-import org.jackhuang.hmcl.download.game.GameLibrariesTask
 import org.jackhuang.hmcl.game.Library
 import org.jackhuang.hmcl.game.SimpleVersionProvider
 import org.jackhuang.hmcl.game.Version
@@ -55,7 +54,7 @@ class ForgeInstallTask(private val dependencyManager: DefaultDependencyManager,
 
     override fun execute() {
         ZipFile(installer).use { zipFile ->
-            val installProfile = GSON.fromJson<InstallProfile>(zipFile.getInputStream(zipFile.getEntry("install_profile.json")).readFullyAsString())
+            val installProfile = GSON.fromJson<InstallProfile>(zipFile.getInputStream(zipFile.getEntry("install_profile.json")).readFullyAsString()) ?: throw IOException("install_profile.json is not found.")
 
             // unpack the universal jar in the installer file.
 

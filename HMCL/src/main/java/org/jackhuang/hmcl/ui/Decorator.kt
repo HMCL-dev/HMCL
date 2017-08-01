@@ -44,12 +44,12 @@ import javafx.stage.StageStyle
 import java.util.ArrayList
 
 class Decorator @JvmOverloads constructor(private val primaryStage: Stage, node: Node, max: Boolean = true, min: Boolean = true) : VBox() {
-    private var xOffset: Double = 0.toDouble()
-    private var yOffset: Double = 0.toDouble()
-    private var newX: Double = 0.toDouble()
-    private var newY: Double = 0.toDouble()
-    private var initX: Double = 0.toDouble()
-    private var initY: Double = 0.toDouble()
+    private var xOffset: Double = 0.0
+    private var yOffset: Double = 0.0
+    private var newX: Double = 0.0
+    private var newY: Double = 0.0
+    private var initX: Double = 0.0
+    private var initY: Double = 0.0
     private var allowMove: Boolean = false
     private var isDragging: Boolean = false
     private var windowDecoratorAnimation: Timeline? = null
@@ -189,12 +189,12 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, node:
         (node as Region).setMinSize(0.0, 0.0)
         VBox.setVgrow(this.contentPlaceHolder, Priority.ALWAYS)
         this.contentPlaceHolder.styleClass.add("resize-border")
-        this.contentPlaceHolder.border = Border(*arrayOf(BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths(0.0, 4.0, 4.0, 4.0))))
+        this.contentPlaceHolder.border = Border(BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths(0.0, 4.0, 4.0, 4.0)))
         val clip = Rectangle()
         clip.widthProperty().bind(node.widthProperty())
         clip.heightProperty().bind(node.heightProperty())
         node.setClip(clip)
-        this.children.addAll(*arrayOf<Node>(titleContainer, this.contentPlaceHolder))
+        this.children.addAll(titleContainer, this.contentPlaceHolder)
         this.setOnMouseMoved { mouseEvent ->
             if (!this.primaryStage.isMaximized && !this.primaryStage.isFullScreen && !this.maximized) {
                 if (!this.primaryStage.isResizable) {
@@ -328,15 +328,13 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, node:
     }
 
     internal fun setStageWidth(width: Double): Boolean {
-        var width = width
         if (width >= this.primaryStage.minWidth && width >= this.titleContainer.minWidth) {
             this.primaryStage.width = width
             this.initX = this.newX
             return true
         } else {
             if (width >= this.primaryStage.minWidth && width <= this.titleContainer.minWidth) {
-                width = this.titleContainer.minWidth
-                this.primaryStage.width = width
+                this.primaryStage.width = this.titleContainer.minWidth
             }
 
             return false
@@ -344,15 +342,13 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, node:
     }
 
     internal fun setStageHeight(height: Double): Boolean {
-        var height = height
         if (height >= this.primaryStage.minHeight && height >= this.titleContainer.height) {
             this.primaryStage.height = height
             this.initY = this.newY
             return true
         } else {
             if (height >= this.primaryStage.minHeight && height <= this.titleContainer.height) {
-                height = this.titleContainer.height
-                this.primaryStage.height = height
+                this.primaryStage.height = this.titleContainer.height
             }
 
             return false
@@ -379,6 +375,6 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, node:
     }
 
     fun setContent(content: Node) {
-        this.contentPlaceHolder.children.setAll(*arrayOf(content))
+        this.contentPlaceHolder.children.setAll(content)
     }
 }

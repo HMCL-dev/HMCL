@@ -34,7 +34,6 @@ object OptiFineBMCLVersionList : VersionList<Unit>() {
         val task = GetTask("http://bmclapi.bangbang93.com/optifine/versionlist".toURL())
         override val dependents: Collection<Task> = listOf(task)
         override fun execute() {
-            versionMap.clear()
             versions.clear()
 
             val duplicates = mutableSetOf<String>()
@@ -55,9 +54,7 @@ object OptiFineBMCLVersionList : VersionList<Unit>() {
                         tag = Unit
                 )
 
-                val set = versionMap.getOrPut(gameVersion, { TreeSet<RemoteVersion<Unit>>() }) as MutableCollection<RemoteVersion<Unit>>
-                set.add(remoteVersion)
-                versions.add(remoteVersion)
+                versions.put(gameVersion, remoteVersion)
             }
         }
 

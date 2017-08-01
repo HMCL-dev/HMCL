@@ -127,7 +127,7 @@ open class DefaultGameRepository(val baseDirectory: File): GameRepository {
     }
 
     override fun getAssetIndex(assetId: String): AssetIndex {
-        return GSON.fromJson(getIndexFile(assetId).readText())
+        return GSON.fromJson(getIndexFile(assetId).readText())!!
     }
 
     override fun getActualAssetDirectory(assetId: String): File {

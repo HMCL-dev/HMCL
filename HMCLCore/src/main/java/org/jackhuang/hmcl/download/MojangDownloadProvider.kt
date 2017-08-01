@@ -17,9 +17,6 @@
  */
 package org.jackhuang.hmcl.download
 
-import org.jackhuang.hmcl.download.forge.ForgeVersionList
-import org.jackhuang.hmcl.download.game.GameVersionList
-import org.jackhuang.hmcl.download.liteloader.LiteLoaderVersionList
 import java.util.*
 
 object MojangDownloadProvider : DownloadProvider() {
