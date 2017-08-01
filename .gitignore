@@ -4,14 +4,19 @@
 hs_err_pid*
 
 .gradle
-.nb-gradle
+.idea
 
 *.log
 .mine*
+NVIDIA
 *.json
-*.hmd
 
+# gradle build
+/build/
 /HMCL/build/
-/HMCLaF/build/
-/HMCLAPI/build/
 /HMCLCore/build/
+
+# idea output
+/out/
+/HMCL/out/
+/HMCLCore/out/
