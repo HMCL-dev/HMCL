@@ -9,7 +9,7 @@
          type="StackPane"
          xmlns:fx="http://javafx.com/fxml">
     <VBox>
-        <JFXToolbar fx:id="toolbar" maxHeight="20" styleClass="jfx-tool-bar">
+        <JFXToolbar fx:id="toolbar" styleClass="jfx-tool-bar">
             <leftItems>
                 <JFXButton fx:id="closeButton" maxHeight="20" styleClass="toggle-icon3"
                            StackPane.alignment="CENTER_RIGHT" onMouseClicked="#close">

@@ -21,6 +21,7 @@ import com.jfoenix.concurrency.JFXUtilities
 import com.jfoenix.controls.JFXButton
 import com.jfoenix.controls.JFXProgressBar
 import com.jfoenix.controls.JFXToolbar
+import com.jfoenix.effects.JFXDepthManager
 import javafx.fxml.FXML
 import javafx.scene.Node
 import javafx.scene.control.Label

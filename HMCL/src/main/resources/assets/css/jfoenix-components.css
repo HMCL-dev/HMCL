@@ -43,7 +43,7 @@
 
 .jfx-decorator .resize-border {
     -fx-border-color: -fx-decorator-color;
-    -fx-border-width: 0 4 4 4;
+    -fx-border-width: 0 1 1 1;
 }
 
 .jfx-text-area, .text-area {

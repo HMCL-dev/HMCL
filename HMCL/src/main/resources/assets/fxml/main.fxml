@@ -3,6 +3,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import com.jfoenix.controls.*?>
+<?import javafx.geometry.Insets?>
 <BorderPane
         maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
         fx:controller="org.jackhuang.hmcl.ui.MainController"
@@ -20,7 +21,7 @@
                       <StackPane>
                           <JFXListView fx:id="listVersions" styleClass="mylistview" style="-fx-background-color: #F1F1F1;" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER" />
                           <AnchorPane pickOnBounds="false">
-                                  <JFXButton onMouseClicked="#installNewVersion" AnchorPane.bottomAnchor="16" AnchorPane.rightAnchor="16" buttonType="RAISED" prefWidth="40" prefHeight="40" style="-fx-text-fill:WHITE;-fx-background-color:#5264AE;-fx-font-size:14px;-fx-background-radius: 80px;">
+                                  <JFXButton AnchorPane.bottomAnchor="16" AnchorPane.rightAnchor="16" buttonType="RAISED" prefWidth="40" prefHeight="40" style="-fx-text-fill:WHITE;-fx-background-color:#5264AE;-fx-font-size:14px;-fx-background-radius: 80px;">
                                       <graphic>
                                           <fx:include source="/assets/svg/plus.fxml" />
                                       </graphic>
@@ -30,6 +31,41 @@
                   </center>
               </BorderPane>
        </left>
+    <top>
+        <JFXToolbar fx:id="toolbar" styleClass="jfx-tool-bar">
+            <leftItems>
+                <JFXButton fx:id="closeButton" maxHeight="20" styleClass="toggle-icon3"
+                           StackPane.alignment="CENTER_RIGHT">
+                    <graphic>
+                        <fx:include source="/assets/svg/close.fxml"/>
+                    </graphic>
+                    <StackPane.margin>
+                        <Insets left="20"/>
+                    </StackPane.margin>
+                </JFXButton>
+                <JFXButton fx:id="backButton" maxHeight="20" styleClass="toggle-icon3"
+                           StackPane.alignment="CENTER_LEFT">
+                    <graphic>
+                        <fx:include source="/assets/svg/arrow-left.fxml"/>
+                    </graphic>
+                </JFXButton>
+                <Label fx:id="titleLabel" style="-fx-text-fill:WHITE; -fx-font-size: 15;"
+                       StackPane.alignment="CENTER_LEFT"/>
+            </leftItems>
+            <rightItems>
+                <JFXButton fx:id="refreshButton" maxHeight="20" styleClass="toggle-icon3" disable="true"
+                           StackPane.alignment="CENTER_RIGHT">
+                    <graphic>
+                        <fx:include source="/assets/svg/refresh.fxml"/>
+                    </graphic>
+                    <StackPane.margin>
+                        <Insets left="20"/>
+                    </StackPane.margin>
+                </JFXButton>
+            </rightItems>
+        </JFXToolbar>
+
+    </top>
        <bottom>
            <BorderPane prefHeight="50.0" prefWidth="200.0" BorderPane.alignment="CENTER">
                <right>

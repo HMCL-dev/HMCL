@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import javafx.scene.Cursor?>
+<?import javafx.geometry.Insets?>
+<?import java.lang.String?>
+<fx:root xmlns="http://javafx.com/javafx"
+         type="VBox"
+         xmlns:fx="http://javafx.com/fxml"
+         styleClass="jfx-decorator"
+         pickOnBounds="false"
+        onMouseReleased="#onMouseReleased"
+        onMouseDragged="#onMouseDragged"
+        onMouseMoved="#onMouseMoved">
+
+    <BorderPane fx:id="titleContainer" styleClass="jfx-decorator-buttons-container" pickOnBounds="false">
+        <left>
+            <HBox fx:id="titleWrapper" alignment="CENTER_LEFT" style="-fx-padding: 15;">
+                <Label text="Hello Minecraft! Launcher" mouseTransparent="false" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 15px;" />
+            </HBox>
+        </left>
+        <right>
+            <HBox fx:id="buttonsContainer" styleClass="jfx-decorator-buttons-container" alignment="CENTER_RIGHT" minWidth="180">
+                <padding>
+                    <Insets topRightBottomLeft="4.0" />
+                </padding>
+                <JFXButton fx:id="btnMin" styleClass="jfx-decorator-button" ripplerFill="white" onAction="#onMin">
+                    <cursor>
+                        <Cursor fx:constant="HAND" />
+                    </cursor>
+                </JFXButton>
+                <JFXButton fx:id="btnMax" styleClass="jfx-decorator-button" ripplerFill="white" onAction="#onMax">
+                    <cursor>
+                        <Cursor fx:constant="HAND" />
+                    </cursor>
+                </JFXButton>
+                <JFXButton fx:id="btnClose" styleClass="jfx-decorator-button" ripplerFill="white" onAction="#onClose">
+                    <cursor>
+                        <Cursor fx:constant="HAND" />
+                    </cursor>
+                </JFXButton>
+            </HBox>
+        </right>
+    </BorderPane>
+
+    <StackPane fx:id="contentPlaceHolder" styleClass="jfx-decorator-content-container resize-border" minWidth="0" minHeight="0" VBox.vgrow="ALWAYS">
+        <styleClass>
+            <String fx:value="jfx-decorator-content-container" />
+            <String fx:value="resize-border" />
+        </styleClass>
+        <!-- Node -->
+    </StackPane>
+</fx:root>

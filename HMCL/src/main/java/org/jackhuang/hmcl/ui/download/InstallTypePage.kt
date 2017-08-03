@@ -31,8 +31,8 @@ class InstallTypePage(private val controller: WizardController): StackPane(), Wi
     init {
         loadFXML("/assets/fxml/download/dltype.fxml")
 
-        list.selectionModel.selectedIndexProperty().addListener { _, _, newValue ->
-            controller.settings[INSTALL_TYPE] = newValue
+        list.setOnMouseClicked {
+            controller.settings[INSTALL_TYPE] = list.selectionModel.selectedIndex
             controller.onNext()
         }
     }

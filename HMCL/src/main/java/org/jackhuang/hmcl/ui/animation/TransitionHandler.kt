@@ -21,12 +21,17 @@ import javafx.animation.KeyFrame
 import javafx.animation.Timeline
 import javafx.event.EventHandler
 import javafx.scene.Node
+import javafx.scene.Parent
 import javafx.scene.SnapshotParameters
 import javafx.scene.image.ImageView
 import javafx.scene.image.WritableImage
 import javafx.scene.layout.StackPane
 import javafx.util.Duration
+import org.jackhuang.hmcl.ui.takeSnapshot
 
+/**
+ * @param view A stack pane that contains another control that is [Parent]
+ */
 class TransitionHandler(override val view: StackPane): AnimationHandler {
     private var animation: Timeline? = null
 
@@ -62,13 +67,16 @@ class TransitionHandler(override val view: StackPane): AnimationHandler {
 
     private fun updateContent(newView: Node) {
         if (view.width > 0 && view.height > 0) {
-            val image = view.snapshot(SnapshotParameters(), null)
-            val x = (image.width - view.width) / 2
-            val y = image.height - view.height
-            val newImage = WritableImage(image.pixelReader, x.toInt(), y.toInt(), view.width.toInt(), view.height.toInt())
-            snapshot.image = newImage
-            snapshot.fitWidth = newImage.width
-            snapshot.fitHeight = newImage.height
+            val content = view.children.firstOrNull()
+            val image: WritableImage
+            if (content != null && content is Parent) {
+                view.children.setAll()
+                image = takeSnapshot(content, view.width, view.height)
+                view.children.setAll(content)
+            } else image = view.snapshot(SnapshotParameters(), WritableImage(view.width.toInt(), view.height.toInt()))
+            snapshot.image = image
+            snapshot.fitWidth = view.width
+            snapshot.fitHeight = view.height
         } else
             snapshot.image = null
 

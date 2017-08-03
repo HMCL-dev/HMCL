@@ -8,31 +8,11 @@
 <StackPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
            fx:controller="org.jackhuang.hmcl.ui.VersionController">
-    <VBox spacing="20" GridPane.rowIndex="0">
-        <JFXToolbar maxHeight="20" styleClass="jfx-tool-bar">
-            <leftItems>
-                <JFXButton fx:id="backButton" maxHeight="20" styleClass="toggle-icon3"
-                           StackPane.alignment="CENTER_LEFT">
-                    <graphic>
-                        <fx:include source="/assets/svg/arrow-left.fxml" />
-                    </graphic>
-                    <StackPane.margin>
-                        <Insets left="20" />
-                    </StackPane.margin>
-                </JFXButton>
-                <Label fx:id="titleLabel" style="-fx-text-fill:WHITE; -fx-font-size: 20;"
-                       StackPane.alignment="CENTER_LEFT"/>
-            </leftItems>
-            <rightItems>
-
-            </rightItems>
-        </JFXToolbar>
+    <BorderPane>
+        <center>
         <ScrollPane fx:id="scroll"
-                    style="-fx-margin: 10; -fx-background-color: white; -fx-font-size: 14; -fx-pref-width: 100%; "
+                    style="-fx-background-color: white; -fx-font-size: 14; -fx-pref-width: 100%; "
                     fitToHeight="true" fitToWidth="true">
-            <VBox.margin>
-                <Insets left="10" right="10"/>
-            </VBox.margin>
             <VBox>
             <GridPane fx:id="settingsPane" style="-fx-margin-left: 10; -fx-background-color: white; " hgap="5" vgap="10">
                 <Label GridPane.rowIndex="0" GridPane.columnIndex="0">Java Directory</Label>
@@ -105,5 +85,26 @@
             </VBox>
             </VBox>
         </ScrollPane>
-    </VBox>
+        </center>
+        <top>
+            <JFXToolbar maxHeight="20" styleClass="jfx-tool-bar">
+                <leftItems>
+                    <JFXButton fx:id="backButton" maxHeight="20" styleClass="toggle-icon3"
+                               StackPane.alignment="CENTER_LEFT">
+                        <graphic>
+                            <fx:include source="/assets/svg/arrow-left.fxml" />
+                        </graphic>
+                        <StackPane.margin>
+                            <Insets left="20" />
+                        </StackPane.margin>
+                    </JFXButton>
+                    <Label fx:id="titleLabel" style="-fx-text-fill:WHITE; -fx-font-size: 20;"
+                           StackPane.alignment="CENTER_LEFT"/>
+                </leftItems>
+                <rightItems>
+
+                </rightItems>
+            </JFXToolbar>
+        </top>
+    </BorderPane>
 </StackPane>

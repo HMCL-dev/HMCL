@@ -46,9 +46,7 @@ object Controllers {
         decorator.isCustomMaximize = false
 
         scene = Scene(decorator, 800.0, 480.0)
-        scene.stylesheets.addAll(Controllers::class.java.getResource("/css/jfoenix-design.css").toExternalForm(),
-                Controllers::class.java.getResource("/assets/css/jfoenix-components.css").toExternalForm(),
-                Controllers::class.java.getResource("/assets/css/jfoenix-main-demo.css").toExternalForm())
+        scene.stylesheets.addAll(*stylesheets)
         stage.minWidth = 800.0
         stage.maxWidth = 800.0
         stage.maxHeight = 480.0
@@ -56,7 +54,7 @@ object Controllers {
     }
 
     fun navigate(node: Node?) {
-        mainController.setContentPage(node)
+        //mainController.setContentPage(node)
     }
 
     private fun <T> loadPane(s: String): T = FXMLLoader(Controllers::class.java.getResource("/assets/fxml/$s.fxml")).load()

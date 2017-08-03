@@ -52,7 +52,10 @@ interface Scheduler {
             override fun schedule(block: Runnable) = IO_EXECUTOR.submit(block)
         }
         val DEFAULT = NEW_THREAD
-        private val CACHED_EXECUTOR = Executors.newCachedThreadPool()
+        private val CACHED_EXECUTOR: ExecutorService by lazy {
+            Executors.newCachedThreadPool()
+        }
+
         private val IO_EXECUTOR: ExecutorService by lazy {
             Executors.newFixedThreadPool(6, { r: Runnable ->
                 val thread: Thread = Executors.defaultThreadFactory().newThread(r)

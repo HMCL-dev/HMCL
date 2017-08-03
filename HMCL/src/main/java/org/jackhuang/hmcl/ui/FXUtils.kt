@@ -25,10 +25,15 @@ import javafx.event.ActionEvent
 import javafx.event.EventHandler
 import javafx.fxml.FXMLLoader
 import javafx.scene.Node
+import javafx.scene.Parent
+import javafx.scene.Scene
 import javafx.scene.control.ListView
 import javafx.scene.control.ScrollBar
+import javafx.scene.image.WritableImage
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.ScrollEvent
+import javafx.scene.layout.Pane
+import javafx.scene.shape.Rectangle
 import javafx.util.Duration
 
 fun Node.loadFXML(absolutePath: String) {
@@ -87,3 +92,20 @@ fun ListView<*>.smoothScrolling() {
 fun runOnUiThread(runnable: () -> Unit) = {
     JFXUtilities.runInFX(runnable)
 }
+
+fun takeSnapshot(node: Parent, width: Double, height: Double): WritableImage {
+    val scene = Scene(node, width, height)
+    scene.stylesheets.addAll(*stylesheets)
+    return scene.snapshot(null)
+}
+
+fun setOverflowHidden(node: Pane) {
+    val rectangle = Rectangle()
+    rectangle.widthProperty().bind(node.widthProperty())
+    rectangle.heightProperty().bind(node.heightProperty())
+    node.clip = rectangle
+}
+
+val stylesheets = arrayOf(Controllers::class.java.getResource("/css/jfoenix-design.css").toExternalForm(),
+Controllers::class.java.getResource("/assets/css/jfoenix-components.css").toExternalForm(),
+Controllers::class.java.getResource("/assets/css/jfoenix-main-demo.css").toExternalForm())
