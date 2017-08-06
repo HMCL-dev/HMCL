@@ -199,8 +199,12 @@
 
 .jfx-tool-bar HBox {
     -fx-alignment: center;
-    -fx-spacing: 25.0;
-    -fx-padding: 0.0 10.0;
+/*    -fx-spacing: 25.0;*/
+    -fx-padding: 0.0 5.0;
+}
+
+.jfx-tool-bar .jfx-decorator-button {
+    -fx-cursor: head;
 }
 
 .jfx-tool-bar Label {
@@ -217,6 +221,26 @@
 
 .jfx-tool-bar .jfx-rippler {
     -jfx-rippler-fill: WHITE;
+}
+
+.jfx-decorator-button {
+    -fx-max-width: 35px;
+    -fx-background-radius: 40px;
+    -fx-max-height: 35px;
+    -fx-background-color: transparent;
+    -jfx-toggle-color: rgba(128, 128, 255, 0.2);
+    -jfx-untoggle-color: transparent;
+}
+
+.jfx-decorator-button .icon {
+    -fx-fill: rgb(204.0, 204.0, 51.0);
+    -fx-padding: 0.0;
+}
+
+.jfx-decorator-button .jfx-rippler {
+    -jfx-rippler-fill: white;
+    -jfx-mask-type: CIRCLE;
+    -fx-padding: 0.0;
 }
 
 .option-list-view {
@@ -617,7 +641,7 @@
     -jfx-mask-type: CIRCLE;
 }
 
-.toggle-icon2, .toggle-icon3 {
+.toggle-icon2, .toggle-icon3, .jfx-decorator-button {
     -fx-pref-width: 50px;
     -fx-background-radius: 50px;
     -fx-pref-height: 50px;
@@ -805,16 +829,21 @@
 *******************************************************************************/
 
 .jfx-decorator {
-    -fx-decorator-color: derive(#5264AE, -20%);
+    -fx-decorator-color: derive(#5264AE, 0);
 }
 
 .jfx-decorator .jfx-decorator-buttons-container {
     -fx-background-color: -fx-decorator-color;
 }
 
-.jfx-decorator .resize-border {
-    -fx-border-color: -fx-decorator-color;
-    -fx-border-width: 0 4 4 4;
+.resize-border {
+    -fx-border-color: #5264AE;
+    -fx-border-width: 0 2 2 2;
+}
+
+.debug-border {
+    -fx-border-color: red;
+    -fx-border-width: 1;
 }
 
 /*******************************************************************************

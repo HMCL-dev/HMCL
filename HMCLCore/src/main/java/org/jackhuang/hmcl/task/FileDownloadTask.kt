@@ -33,7 +33,7 @@ import java.net.URL
 import java.math.BigInteger
 import java.util.logging.Level
 
-class FileDownloadTask(val url: URL, val file: File, val hash: String? = null, val retry: Int = 5, val proxy: Proxy = Proxy.NO_PROXY): Task() {
+class FileDownloadTask @JvmOverloads constructor(val url: URL, val file: File, val hash: String? = null, val retry: Int = 5, val proxy: Proxy = Proxy.NO_PROXY): Task() {
     override val scheduler: Scheduler = Scheduler.IO_THREAD
 
     var onFailed = EventManager<FailedEvent<URL>>()

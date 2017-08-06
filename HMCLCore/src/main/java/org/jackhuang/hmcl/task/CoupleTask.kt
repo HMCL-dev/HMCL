@@ -30,7 +30,7 @@ private class CoupleTask<P: Task>(private val pred: P, private val succ: Task.(P
     }
 }
 
-infix fun <T: Task> T.then(b: Task): Task = CoupleTask(this, { b }, true)
+infix fun Task.then(b: Task): Task = CoupleTask(this, { b }, true)
 
 /**
  * @param b A runnable that decides what to do next, You can also do something here.

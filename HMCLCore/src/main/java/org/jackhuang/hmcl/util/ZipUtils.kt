@@ -23,13 +23,6 @@ import java.io.IOException
 import java.util.zip.ZipOutputStream
 import java.util.zip.ZipInputStream
 
-
-
-@Throws(IOException::class)
-fun zip(src: String, destZip: String) {
-    zip(File(src), File(destZip), null)
-}
-
 /**
  * 功能：把 src 目录下的所有文件进行 zip 格式的压缩，保存为指定 zip 文件
 
@@ -43,8 +36,9 @@ fun zip(src: String, destZip: String) {
  * *
  * @throws java.io.IOException 压缩失败或无法读取
  */
+@JvmOverloads
 @Throws(IOException::class)
-fun zip(src: File, destZip: File, pathNameCallback: ((String, Boolean) -> String?)?) {
+fun zip(src: File, destZip: File, pathNameCallback: ((String, Boolean) -> String?)? = null) {
     ZipOutputStream(destZip.outputStream()).use { zos ->
         val basePath: String
         if (src.isDirectory)
@@ -103,11 +97,6 @@ private fun zipFile(src: File,
         }
 }
 
-@Throws(IOException::class)
-fun unzip(zip: File, dest: File) {
-    unzip(zip, dest, null, true)
-}
-
 /**
  * 将文件压缩成zip文件
 
@@ -121,8 +110,9 @@ fun unzip(zip: File, dest: File) {
  * *
  * @throws java.io.IOException 解压失败或无法写入
  */
+@JvmOverloads
 @Throws(IOException::class)
-fun unzip(zip: File, dest: File, callback: ((String) -> Boolean)?, ignoreExistsFile: Boolean) {
+fun unzip(zip: File, dest: File, callback: ((String) -> Boolean)? = null, ignoreExistsFile: Boolean = true) {
     val buf = ByteArray(1024)
     dest.mkdirs()
     ZipInputStream(zip.inputStream()).use { zipFile ->

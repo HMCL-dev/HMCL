@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.task
 
+import javafx.beans.property.ReadOnlyDoubleProperty
 import javafx.beans.property.ReadOnlyDoubleWrapper
+import javafx.beans.property.ReadOnlyStringProperty
 import javafx.beans.property.ReadOnlyStringWrapper
 import org.jackhuang.hmcl.event.EventManager
 import org.jackhuang.hmcl.util.*
@@ -69,19 +71,23 @@ abstract class Task {
     protected open val progressInterval = 1000L
     private var lastTime = Long.MIN_VALUE
     private val progressUpdate = AtomicReference<Double>()
-    val progressProperty = ReadOnlyDoubleWrapper(this, "progress", 0.0)
+    private val progressPropertyImpl = ReadOnlyDoubleWrapper(this, "progress", 0.0)
+    val progressProperty: ReadOnlyDoubleProperty = progressPropertyImpl.readOnlyProperty
+        @JvmName("progressProperty") get
     protected fun updateProgress(progress: Int, total: Int) = updateProgress(1.0 * progress / total)
     protected fun updateProgress(progress: Double) {
         val now = System.currentTimeMillis()
         if (now - lastTime >= progressInterval) {
-            progressProperty.updateAsync(progress, progressUpdate)
+            progressPropertyImpl.updateAsync(progress, progressUpdate)
             lastTime = now
         }
     }
 
     private val messageUpdate = AtomicReference<String>()
-    val messageProperty = ReadOnlyStringWrapper(this, "message", null)
-    protected fun updateMessage(newMessage: String) = messageProperty.updateAsync(newMessage, messageUpdate)
+    private val messagePropertyImpl = ReadOnlyStringWrapper(this, "message", null)
+    val messageProperty: ReadOnlyStringProperty = messagePropertyImpl.readOnlyProperty
+        @JvmName("messageProperty") get
+    protected fun updateMessage(newMessage: String) = messagePropertyImpl.updateAsync(newMessage, messageUpdate)
 
     val onDone = EventManager<TaskEvent>()
 
@@ -97,11 +103,11 @@ abstract class Task {
     }
 
     private val subTaskRunnable = { task: Task ->
-        this.messageProperty.bind(task.messageProperty)
-        this.progressProperty.bind(task.progressProperty)
+        this.messagePropertyImpl.bind(task.messagePropertyImpl)
+        this.progressPropertyImpl.bind(task.progressPropertyImpl)
         task.run()
-        this.messageProperty.unbind()
-        this.progressProperty.unbind()
+        this.messagePropertyImpl.unbind()
+        this.progressPropertyImpl.unbind()
     }
 
     fun executor() = TaskExecutor().submit(this)

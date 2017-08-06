@@ -212,7 +212,7 @@
 
 .jfx-tool-bar HBox {
     -fx-alignment: center;
-    -fx-spacing: 25;
+/*    -fx-spacing: 25;*/
     -fx-padding: 0 10;
 }
 

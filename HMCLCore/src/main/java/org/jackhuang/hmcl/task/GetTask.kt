@@ -25,7 +25,7 @@ import java.net.Proxy
 import java.net.URL
 import java.nio.charset.Charset
 
-class GetTask(val url: URL, val encoding: Charset = Charsets.UTF_8, private val retry: Int = 5, private val proxy: Proxy = Proxy.NO_PROXY): TaskResult<String>() {
+class GetTask @JvmOverloads constructor(val url: URL, val encoding: Charset = Charsets.UTF_8, private val retry: Int = 5, private val proxy: Proxy = Proxy.NO_PROXY): TaskResult<String>() {
     override val scheduler: Scheduler = Scheduler.IO_THREAD
 
     override fun execute() {

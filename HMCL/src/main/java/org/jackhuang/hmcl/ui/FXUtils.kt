@@ -106,6 +106,8 @@ fun setOverflowHidden(node: Pane) {
     node.clip = rectangle
 }
 
-val stylesheets = arrayOf(Controllers::class.java.getResource("/css/jfoenix-design.css").toExternalForm(),
+val stylesheets = arrayOf(
+        Controllers::class.java.getResource("/css/jfoenix-fonts.css").toExternalForm(),
+Controllers::class.java.getResource("/css/jfoenix-design.css").toExternalForm(),
 Controllers::class.java.getResource("/assets/css/jfoenix-components.css").toExternalForm(),
-Controllers::class.java.getResource("/assets/css/jfoenix-main-demo.css").toExternalForm())
+        Controllers::class.java.getResource("/assets/css/jfoenix-main-demo.css").toExternalForm())

@@ -34,12 +34,14 @@ object Controllers {
     lateinit var versionController: VersionController
     val versionPane: Pane = loadPane("version")
 
+    lateinit var decorator: Decorator
+
     fun initialize(stage: Stage) {
         this.stage = stage
 
         val decorator = Decorator(stage, mainPane, max = false)
         // Let root pane fix window size.
-        (mainPane.parent as StackPane).run {
+        with(mainPane.parent as StackPane) {
             mainPane.prefWidthProperty().bind(widthProperty())
             mainPane.prefHeightProperty().bind(heightProperty())
         }

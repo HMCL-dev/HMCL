@@ -21,7 +21,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.util.logging.Level
 
-internal class StreamPump(
+internal class StreamPump @JvmOverloads constructor(
         val inputStream: InputStream,
         val callback: (String) -> Unit = {}
 ) : Runnable {

@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.JFXButton
+import com.jfoenix.effects.JFXDepthManager
 import com.jfoenix.svg.SVGGlyph
 import javafx.animation.*
 import javafx.application.Platform
@@ -31,6 +32,7 @@ import javafx.geometry.Bounds
 import javafx.geometry.Insets
 import javafx.scene.Cursor
 import javafx.scene.Node
+import javafx.scene.control.Label
 import javafx.scene.control.Tooltip
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.*
@@ -39,8 +41,11 @@ import javafx.scene.shape.Rectangle
 import javafx.stage.Screen
 import javafx.stage.Stage
 import javafx.stage.StageStyle
+import javafx.scene.layout.BorderStrokeStyle
+import javafx.scene.layout.BorderStroke
+import org.jackhuang.hmcl.util.*
 
-class Decorator @JvmOverloads constructor(private val primaryStage: Stage, node: Node, private val max: Boolean = true, min: Boolean = true) : VBox() {
+class Decorator @JvmOverloads constructor(private val primaryStage: Stage, node: Node, private val max: Boolean = true, min: Boolean = true) : GridPane() {
     private var xOffset: Double = 0.0
     private var yOffset: Double = 0.0
     private var newX: Double = 0.0
@@ -53,66 +58,62 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, node:
     @FXML lateinit var contentPlaceHolder: StackPane
     @FXML lateinit var titleContainer: BorderPane
     @FXML lateinit var buttonsContainer: HBox
-    private val onCloseButtonAction: ObjectProperty<Runnable>
-    private val customMaximize: BooleanProperty
+    @FXML lateinit var backNavButton: JFXButton
+    @FXML lateinit var refreshNavButton: JFXButton
+    @FXML lateinit var closeNavButton: JFXButton
+    @FXML lateinit var refreshMenuButton: JFXButton
+    @FXML lateinit var addMenuButton: JFXButton
+    @FXML lateinit var titleLabel: Label
+    @FXML lateinit var leftPane: VBox
+
+    private val onCloseButtonActionProperty: ObjectProperty<Runnable> = SimpleObjectProperty(Runnable { this.primaryStage.close() })
+        @JvmName("onCloseButtonActionProperty") get
+    var onCloseButtonAction: Runnable by onCloseButtonActionProperty
+
+    val customMaximizeProperty: BooleanProperty = SimpleBooleanProperty(false)
+        @JvmName("customMaximizeProperty") get
+    var isCustomMaximize: Boolean by customMaximizeProperty
+
     private var maximized: Boolean = false
     private var originalBox: BoundingBox? = null
     private var maximizedBox: BoundingBox? = null
     @FXML lateinit var btnMin: JFXButton
     @FXML lateinit var btnMax: JFXButton
     @FXML lateinit var btnClose: JFXButton
-    private val minus: SVGGlyph
-    private val resizeMax: SVGGlyph
-    private val resizeMin: SVGGlyph
-    private val close: SVGGlyph
+    private val minus = SVGGlyph(0, "MINUS", "M804.571 420.571v109.714q0 22.857-16 38.857t-38.857 16h-694.857q-22.857 0-38.857-16t-16-38.857v-109.714q0-22.857 16-38.857t38.857-16h694.857q22.857 0 38.857 16t16 38.857z", Color.WHITE)
+            .apply { setSize(12.0, 2.0); translateY = 4.0 }
+    private val resizeMax = SVGGlyph(0, "RESIZE_MAX", "M726 810v-596h-428v596h428zM726 44q34 0 59 25t25 59v768q0 34-25 60t-59 26h-428q-34 0-59-26t-25-60v-768q0-34 25-60t59-26z", Color.WHITE)
+            .apply { setPrefSize(12.0, 12.0); setSize(12.0, 12.0) }
+    private val resizeMin = SVGGlyph(0, "RESIZE_MIN", "M80.842 943.158v-377.264h565.894v377.264h-565.894zM0 404.21v619.79h727.578v-619.79h-727.578zM377.264 161.684h565.894v377.264h-134.736v80.842h215.578v-619.79h-727.578v323.37h80.842v-161.686z", Color.WHITE)
+            .apply { setPrefSize(12.0, 12.0); setSize(12.0, 12.0) }
+    private val close = SVGGlyph(0, "CLOSE", "M810 274l-238 238 238 238-60 60-238-238-238 238-60-60 238-238-238-238 60-60 238 238 238-238z", Color.WHITE)
+            .apply { setPrefSize(12.0, 12.0); setSize(12.0, 12.0) }
 
     init {
         loadFXML("/assets/fxml/decorator.fxml")
 
-        this.xOffset = 0.0
-        this.yOffset = 0.0
-        this.allowMove = false
-        this.isDragging = false
-        this.onCloseButtonAction = SimpleObjectProperty(Runnable { this.primaryStage.close() })
-        this.customMaximize = SimpleBooleanProperty(false)
-        this.maximized = false
         this.primaryStage.initStyle(StageStyle.UNDECORATED)
-        minus = SVGGlyph(0, "MINUS", "M804.571 420.571v109.714q0 22.857-16 38.857t-38.857 16h-694.857q-22.857 0-38.857-16t-16-38.857v-109.714q0-22.857 16-38.857t38.857-16h694.857q22.857 0 38.857 16t16 38.857z", Color.WHITE)
-        minus.setSize(12.0, 2.0)
-        minus.translateY = 4.0
-        resizeMax = SVGGlyph(0, "RESIZE_MAX", "M726 810v-596h-428v596h428zM726 44q34 0 59 25t25 59v768q0 34-25 60t-59 26h-428q-34 0-59-26t-25-60v-768q0-34 25-60t59-26z", Color.WHITE)
-        resizeMax.setSize(12.0, 12.0)
-        resizeMin = SVGGlyph(0, "RESIZE_MIN", "M80.842 943.158v-377.264h565.894v377.264h-565.894zM0 404.21v619.79h727.578v-619.79h-727.578zM377.264 161.684h565.894v377.264h-134.736v80.842h215.578v-619.79h-727.578v323.37h80.842v-161.686z", Color.WHITE)
-        resizeMin.setSize(12.0, 12.0)
-        close = SVGGlyph(0, "CLOSE", "M810 274l-238 238 238 238-60 60-238-238-238 238-60-60 238-238-238-238 60-60 238 238 238-238z", Color.WHITE)
-        close.setSize(12.0, 12.0)
         btnClose.graphic = close
         btnMin.graphic = minus
-        this.btnMax.graphic = resizeMax
+        btnMax.graphic = resizeMax
 
         buttonsContainer.background = Background(*arrayOf(BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)))
         titleContainer.addEventHandler(MouseEvent.MOUSE_CLICKED) { mouseEvent ->
             if (mouseEvent.clickCount == 2) {
-                this.btnMax.fire()
+                btnMax.fire()
             }
-
         }
 
         if (!min) buttonsContainer.children.remove(btnMin)
-
         if (!max) buttonsContainer.children.remove(btnMax)
 
-        titleContainer.addEventHandler(MouseEvent.MOUSE_ENTERED) { enter -> this.allowMove = true }
-        titleContainer.addEventHandler(MouseEvent.MOUSE_EXITED) { enter ->
-            if (!this.isDragging) {
-                this.allowMove = false
-            }
-
-        }
+        JFXDepthManager.setDepth(titleContainer, 1)
+        titleContainer.addEventHandler(MouseEvent.MOUSE_ENTERED) { this.allowMove = true }
+        titleContainer.addEventHandler(MouseEvent.MOUSE_EXITED) { if (!this.isDragging) this.allowMove = false }
 
         this.contentPlaceHolder.children.add(node)
         (node as Region).setMinSize(0.0, 0.0)
-        this.contentPlaceHolder.border = Border(BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths(0.0, 4.0, 4.0, 4.0)))
+        this.border = Border(BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths(0.0, 4.0, 4.0, 4.0)))
         val clip = Rectangle()
         clip.widthProperty().bind(node.widthProperty())
         clip.heightProperty().bind(node.heightProperty())
@@ -127,7 +128,7 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, node:
                 val x = mouseEvent.x
                 val y = mouseEvent.y
                 val boundsInParent = this.boundsInParent
-                if (this.contentPlaceHolder.border != null && this.contentPlaceHolder.border.strokes.size > 0) {
+                if (this.border != null && this.border.strokes.size > 0) {
                     val borderWidth = this.contentPlaceHolder.snappedLeftInset()
                     if (this.isRightEdge(x, y, boundsInParent)) {
                         if (y < borderWidth) {
@@ -274,7 +275,7 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, node:
     }
 
     fun onClose() {
-        (this.onCloseButtonAction.get() as Runnable).run()
+        this.onCloseButtonAction.run()
     }
 
     private fun updateInitMouseValues(mouseEvent: MouseEvent) {
@@ -327,18 +328,6 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, node:
             return false
         }
     }
-
-    fun setOnCloseButtonAction(onCloseButtonAction: Runnable) {
-        this.onCloseButtonAction.set(onCloseButtonAction)
-    }
-
-    fun customMaximizeProperty(): BooleanProperty {
-        return this.customMaximize
-    }
-
-    var isCustomMaximize: Boolean
-        get() = this.customMaximizeProperty().get()
-        set(customMaximize) = this.customMaximizeProperty().set(customMaximize)
 
     fun setMaximized(maximized: Boolean) {
         if (this.maximized != maximized) {

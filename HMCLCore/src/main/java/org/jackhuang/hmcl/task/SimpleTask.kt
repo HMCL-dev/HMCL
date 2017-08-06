@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.task
 
-internal class SimpleTask(private val runnable: () -> Unit, override val scheduler: Scheduler = Scheduler.DEFAULT) : Task() {
+internal class SimpleTask @JvmOverloads constructor(private val runnable: () -> Unit, override val scheduler: Scheduler = Scheduler.DEFAULT) : Task() {
     override fun execute() {
         runnable()
     }

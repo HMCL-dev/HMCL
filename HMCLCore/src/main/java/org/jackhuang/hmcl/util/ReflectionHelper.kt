@@ -23,7 +23,6 @@ import java.lang.reflect.Method
 import java.security.PrivilegedExceptionAction
 import java.security.AccessController
 
-
 object ReflectionHelper {
 
     private lateinit var unsafe: Unsafe

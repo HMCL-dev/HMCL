@@ -52,7 +52,7 @@ class TaskExecutor() {
             while (!taskQueue.isEmpty() && !canceled) {
                 val task = taskQueue.poll()
                 if (task != null) {
-                    val future = task.scheduler.schedule(Runnable { executeTask(task) })
+                    val future = task.scheduler.schedule(Callable { executeTask(task); Unit })
                     try {
                         future?.get()
                     } catch (e: InterruptedException) {
@@ -142,8 +142,8 @@ class TaskExecutor() {
         return flag
     }
 
-    private inner class Invoker(val task: Task, val latch: CountDownLatch, val boolean: AtomicBoolean): Runnable {
-        override fun run() {
+    private inner class Invoker(val task: Task, val latch: CountDownLatch, val boolean: AtomicBoolean): Callable<Unit> {
+        override fun call() {
             try {
                 Thread.currentThread().name = task.title
                 if (!executeTask(task))
