@@ -36,7 +36,7 @@ public enum UserType {
     }
 
     public static UserType byName(String name) {
-        return (UserType) BY_NAME.get(name.toLowerCase());
+        return BY_NAME.get(name.toLowerCase());
     }
     
     public static UserType byLegacy(boolean isLegacy) {

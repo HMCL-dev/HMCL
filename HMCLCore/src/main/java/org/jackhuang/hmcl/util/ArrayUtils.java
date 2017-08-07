@@ -86,7 +86,7 @@ public final class ArrayUtils {
         return l;
     }
     
-    public static <T> int matchArray(byte[] a, byte[] b) {
+    public static int matchArray(byte[] a, byte[] b) {
         for (int i = 0; i < a.length - b.length; i++) {
             int j = 1;
             for (int k = 0; k < b.length; k++) {

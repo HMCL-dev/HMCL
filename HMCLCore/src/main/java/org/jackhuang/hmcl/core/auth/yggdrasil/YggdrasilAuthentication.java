@@ -133,7 +133,7 @@ public class YggdrasilAuthentication {
 
         if (StrUtils.isNotBlank(getAuthenticatedToken())) {
             if (StrUtils.isBlank(getUserId()))
-                if (StrUtils.isBlank(username))
+                if (StrUtils.isNotBlank(username))
                     userid = username;
                 else
                     throw new AuthenticationException(C.i18n("login.invalid_uuid_and_username"));

@@ -82,7 +82,7 @@ public class MinecraftModService extends IMinecraftModService {
                 HMCLog.warn("Failed to make directories: " + modsFolder);
             File newf = new File(modsFolder, f.getName());
             FileUtils.copyFile(f, newf);
-            ModInfo i = ModInfo.readModInfo(f);
+            ModInfo i = ModInfo.readModInfo(newf);
             modCache.get(id).add(i);
             return true;
         } catch (IOException ex) {

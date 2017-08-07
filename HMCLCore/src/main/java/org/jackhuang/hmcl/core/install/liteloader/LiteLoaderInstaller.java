@@ -66,7 +66,7 @@ public class LiteLoaderInstaller extends Task implements PreviousResultRegistrar
         mv.libraries = new ArrayList<>(Arrays.asList(version.libraries));
 
         MinecraftLibrary ml = new MinecraftLibrary("com.mumfrey:liteloader:" + version.selfVersion);
-        ml.url = "http://dl.liteloader.com/versions";
+        ml.url = "http://dl.liteloader.com/versions/";
         mv.libraries.add(0, ml);
 
         // We use options from the old vanilla version.

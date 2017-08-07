@@ -71,8 +71,7 @@ public class PropertyMap extends HashMap<String, Property> {
                 for (Map.Entry<String, JsonElement> entry : object.entrySet())
                     if (entry.getValue() instanceof JsonArray)
                         for (JsonElement element : (JsonArray) entry.getValue())
-                            result.put(entry.getKey(),
-                                       new Property((String) entry.getKey(), element.getAsString()));
+                            result.put(entry.getKey(), new Property(entry.getKey(), element.getAsString()));
             } else if ((json instanceof JsonArray))
                 for (JsonElement element : (JsonArray) json)
                     if ((element instanceof JsonObject)) {

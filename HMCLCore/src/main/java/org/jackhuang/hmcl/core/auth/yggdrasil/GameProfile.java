@@ -81,7 +81,7 @@ public class GameProfile {
             if (!(json instanceof JsonObject))
                 throw new JsonParseException("The json element is not a JsonObject.");
             JsonObject object = (JsonObject) json;
-            UUID id = object.has("id") ? (UUID) context.deserialize(object.get("id"), UUID.class) : null;
+            UUID id = object.has("id") ? context.deserialize(object.get("id"), UUID.class) : null;
             String name = object.has("name") ? object.getAsJsonPrimitive("name").getAsString() : null;
             return new GameProfile(id, name);
         }

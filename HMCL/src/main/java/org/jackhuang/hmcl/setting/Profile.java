@@ -112,8 +112,7 @@ public final class Profile implements IProfile {
     }
 
     public void makeVersionSettingGlobal(String id) {
-        HMCLMinecraftService s = (HMCLMinecraftService) service();
-        VersionSetting vs = s.getVersionSetting(id);
+        VersionSetting vs = service().getVersionSetting(id);
         if (vs == null)
             return;
         vs.setUsesGlobal(true);
