@@ -11,7 +11,7 @@
     <VBox>
         <JFXToolbar fx:id="toolbar" styleClass="jfx-tool-bar">
             <leftItems>
-                <JFXButton fx:id="closeButton" maxHeight="20" styleClass="toggle-icon3"
+                <JFXButton maxHeight="20" styleClass="toggle-icon3"
                            StackPane.alignment="CENTER_RIGHT" onMouseClicked="#close">
                     <graphic>
                         <fx:include source="/assets/svg/close.fxml"/>
@@ -31,7 +31,7 @@
             </leftItems>
             <rightItems>
                 <JFXButton fx:id="refreshButton" maxHeight="20" styleClass="toggle-icon3" disable="true"
-                           StackPane.alignment="CENTER_RIGHT">
+                           StackPane.alignment="CENTER_RIGHT" onMouseClicked="#refrseh">
                     <graphic>
                         <fx:include source="/assets/svg/refresh.fxml"/>
                     </graphic>

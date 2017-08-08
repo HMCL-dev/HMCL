@@ -26,12 +26,13 @@ import java.io.File
 
 abstract class Launcher(
         protected val repository: GameRepository,
-        protected val version: Version,
+        protected val versionId: String,
         protected val account: AuthInfo,
         protected val options: LaunchOptions,
         protected val listener: ProcessListener? = null,
         protected val isDaemon: Boolean = true) {
 
+    val version: Version = repository.getVersion(versionId).resolve(repository)
     abstract val rawCommandLine: List<String>
     abstract fun launch(): JavaProcess
 

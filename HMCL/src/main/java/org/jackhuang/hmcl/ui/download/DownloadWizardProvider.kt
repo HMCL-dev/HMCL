@@ -20,14 +20,28 @@ package org.jackhuang.hmcl.ui.download
 import javafx.scene.Node
 import javafx.scene.layout.Pane
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider
+import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.ui.wizard.WizardController
 import org.jackhuang.hmcl.ui.wizard.WizardProvider
 
 class DownloadWizardProvider(): WizardProvider() {
 
     override fun finish(settings: Map<String, Any>): Any? {
-        println(settings)
-        return null
+        val builder = Settings.selectedProfile.dependency.gameBuilder()
+
+        builder.name(settings["name"] as String)
+        builder.gameVersion(settings["game"] as String)
+
+        if (settings.containsKey("forge"))
+            builder.version("forge", settings["forge"] as String)
+
+        if (settings.containsKey("liteloader"))
+            builder.version("liteloader", settings["liteloader"] as String)
+
+        if (settings.containsKey("optifine"))
+            builder.version("optifine", settings["optifine"] as String)
+
+        return builder.buildAsync()
     }
 
     override fun createPage(controller: WizardController, step: Int, settings: Map<String, Any>): Node {

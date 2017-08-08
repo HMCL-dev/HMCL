@@ -19,7 +19,7 @@ package org.jackhuang.hmcl
 
 import org.jackhuang.hmcl.auth.OfflineAccount
 import org.jackhuang.hmcl.download.DefaultDependencyManager
-import org.jackhuang.hmcl.download.liteloader.LiteLoaderVersionList
+import org.jackhuang.hmcl.download.LiteLoaderVersionList
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider
 import org.jackhuang.hmcl.download.MojangDownloadProvider
 import org.jackhuang.hmcl.game.DefaultGameRepository
@@ -50,7 +50,7 @@ class Test {
     fun launch() {
         val launcher = DefaultLauncher(
                 repository = repository,
-                version = repository.getVersion("test"),
+                versionId = "test",
                 account = OfflineAccount.fromUsername("player007").logIn(),
                 options = LaunchOptions(gameDir = repository.baseDirectory),
                 listener = object : ProcessListener {

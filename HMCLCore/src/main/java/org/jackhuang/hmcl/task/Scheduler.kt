@@ -23,16 +23,17 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.SwingUtilities
 
 interface Scheduler {
+    fun schedule(block: () -> Unit): Future<*>? = schedule(Callable { block() })
     fun schedule(block: Callable<Unit>): Future<*>?
 
     companion object Schedulers {
         val JAVAFX: Scheduler = SchedulerImpl(Platform::runLater)
         val SWING: Scheduler = SchedulerImpl(SwingUtilities::invokeLater)
-        private class SchedulerImpl(val executor: (() -> Unit) -> Unit) : Scheduler {
+        private class SchedulerImpl(val executor: (Runnable) -> Unit) : Scheduler {
             override fun schedule(block: Callable<Unit>): Future<*>? {
                 val latch = CountDownLatch(1)
                 val wrapper = AtomicReference<Exception>()
-                executor {
+                executor.invoke(Runnable {
                     try {
                         block.call()
                     } catch (e: Exception) {
@@ -40,7 +41,7 @@ interface Scheduler {
                     } finally {
                         latch.countDown()
                     }
-                }
+                })
                 return object : Future<Unit> {
                     override fun get(timeout: Long, unit: TimeUnit) {
                         latch.await(timeout, unit)
@@ -66,7 +67,9 @@ interface Scheduler {
         }
         val DEFAULT = NEW_THREAD
         private val CACHED_EXECUTOR: ExecutorService by lazy {
-            Executors.newCachedThreadPool()
+            ThreadPoolExecutor(0, Integer.MAX_VALUE,
+                    60L, TimeUnit.SECONDS,
+                    SynchronousQueue<Runnable>());
         }
 
         private val IO_EXECUTOR: ExecutorService by lazy {

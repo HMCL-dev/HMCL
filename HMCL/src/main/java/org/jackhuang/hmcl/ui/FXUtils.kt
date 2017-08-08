@@ -33,6 +33,7 @@ import javafx.scene.image.WritableImage
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.ScrollEvent
 import javafx.scene.layout.Pane
+import javafx.scene.layout.Region
 import javafx.scene.shape.Rectangle
 import javafx.util.Duration
 
@@ -99,7 +100,7 @@ fun takeSnapshot(node: Parent, width: Double, height: Double): WritableImage {
     return scene.snapshot(null)
 }
 
-fun setOverflowHidden(node: Pane) {
+fun setOverflowHidden(node: Region) {
     val rectangle = Rectangle()
     rectangle.widthProperty().bind(node.widthProperty())
     rectangle.heightProperty().bind(node.heightProperty())
@@ -109,5 +110,5 @@ fun setOverflowHidden(node: Pane) {
 val stylesheets = arrayOf(
         Controllers::class.java.getResource("/css/jfoenix-fonts.css").toExternalForm(),
 Controllers::class.java.getResource("/css/jfoenix-design.css").toExternalForm(),
-Controllers::class.java.getResource("/assets/css/jfoenix-components.css").toExternalForm(),
+//Controllers::class.java.getResource("/assets/css/jfoenix-components.css").toExternalForm(),
         Controllers::class.java.getResource("/assets/css/jfoenix-main-demo.css").toExternalForm())

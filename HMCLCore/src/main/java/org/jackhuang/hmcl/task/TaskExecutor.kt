@@ -29,7 +29,7 @@ class TaskExecutor() {
 
     var canceled = false
         private set
-    private val totTask = AtomicInteger(0)
+    val totTask = AtomicInteger(0)
     private val taskQueue = ConcurrentLinkedQueue<Task>()
     private val workerQueue = ConcurrentLinkedQueue<Future<*>>()
 
@@ -47,9 +47,10 @@ class TaskExecutor() {
      * Start the subscription and run all registered tasks asynchronously.
      */
     fun start() {
-        thread {
+        workerQueue.add(Scheduler.Schedulers.NEW_THREAD.schedule(Callable {
             totTask.addAndGet(taskQueue.size)
-            while (!taskQueue.isEmpty() && !canceled) {
+            while (!taskQueue.isEmpty()) {
+                if (canceled) break
                 val task = taskQueue.poll()
                 if (task != null) {
                     val future = task.scheduler.schedule(Callable { executeTask(task); Unit })
@@ -61,9 +62,9 @@ class TaskExecutor() {
                     }
                 }
             }
-            if (!canceled)
+            if (canceled || Thread.interrupted())
                 taskListener?.onTerminate()
-        }
+        }))
     }
 
     /**
@@ -91,9 +92,11 @@ class TaskExecutor() {
             if (future != null)
                 workerQueue.add(future)
         }
+        if (canceled)
+            return false
         try {
             counter.await()
-            return success.get()
+            return success.get() && !canceled
         } catch (e: InterruptedException) {
             Thread.currentThread().interrupt()
             // Once interrupted, we are aborting the subscription.
@@ -110,9 +113,10 @@ class TaskExecutor() {
             LOG.fine("Executing task: ${t.title}")
         taskListener?.onReady(t)
         val doDependentsSucceeded = executeTasks(t.dependents)
+
         var flag = false
         try {
-            if (!doDependentsSucceeded && t.reliant)
+            if (!doDependentsSucceeded && t.reliant || canceled)
                 throw SilentException()
 
             t.execute()

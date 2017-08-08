@@ -20,6 +20,9 @@ package org.jackhuang.hmcl.setting
 import com.google.gson.*
 import javafx.beans.InvalidationListener
 import javafx.beans.property.*
+import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider
+import org.jackhuang.hmcl.download.DefaultDependencyManager
+import org.jackhuang.hmcl.download.DependencyManager
 import org.jackhuang.hmcl.game.HMCLGameRepository
 import org.jackhuang.hmcl.util.*
 import java.io.File
@@ -39,6 +42,7 @@ class Profile(var name: String = "Default", gameDir: File = File(".minecraft")) 
     var noCommon: Boolean by noCommonProperty
 
     var repository = HMCLGameRepository(gameDir)
+    var dependency = DefaultDependencyManager(repository, BMCLAPIDownloadProvider)
 
     init {
         gameDirProperty.addListener { _, _, newValue ->

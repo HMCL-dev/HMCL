@@ -17,29 +17,30 @@
  */
 package org.jackhuang.hmcl.ui
 
-import javafx.fxml.FXML
-import javafx.scene.control.Label
-import javafx.scene.layout.BorderPane
-import org.jackhuang.hmcl.setting.VersionSetting
+import com.jfoenix.validation.base.ValidatorBase
+import javafx.scene.control.TextInputControl
 
-class VersionListItem(val versionName: String, val gameVersion: String) : BorderPane() {
+class NumberValidator @JvmOverloads constructor(val nullable: Boolean = false) : ValidatorBase() {
 
-    @FXML lateinit var lblVersionName: Label
-    @FXML lateinit var lblGameVersion: Label
+    override fun eval() {
+        if (this.srcControl.get() is TextInputControl) {
+            this.evalTextInputField()
+        }
 
-    private var handler: () -> Unit = {}
-
-    init {
-        loadFXML("/assets/fxml/version-list-item.fxml")
-        lblVersionName.text = versionName
-        lblGameVersion.text = gameVersion
     }
 
-    fun onSettings() {
-        handler()
-    }
+    private fun evalTextInputField() {
+        val textField = this.srcControl.get() as TextInputControl
 
-    fun onSettingsButtonClicked(handler: () -> Unit) {
-        this.handler = handler
+        if (textField.text.isBlank())
+            hasErrors.set(false)
+        else
+            try {
+                Integer.parseInt(textField.text)
+                this.hasErrors.set(false)
+            } catch (var3: Exception) {
+                this.hasErrors.set(true)
+            }
+
     }
 }

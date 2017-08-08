@@ -15,14 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.auth
+package org.jackhuang.hmcl.ui
 
-import java.net.Proxy
+import javafx.util.StringConverter
 
-abstract class Account() {
-    abstract val username: String
-    @Throws(AuthenticationException::class)
-    abstract fun logIn(proxy: Proxy = Proxy.NO_PROXY): AuthInfo
-    abstract fun logOut()
-    abstract fun toStorage(): MutableMap<Any, Any>
+class SafeIntStringConverter : StringConverter<Int>() {
+    /** {@inheritDoc}  */
+    override fun fromString(value: String?) = value?.toIntOrNull()
+
+    /** {@inheritDoc}  */
+    override fun toString(value: Int?) = value?.toString() ?: ""
 }

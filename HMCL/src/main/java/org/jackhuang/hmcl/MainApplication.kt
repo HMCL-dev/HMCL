@@ -19,6 +19,7 @@ package org.jackhuang.hmcl
 
 import javafx.application.Application
 import javafx.stage.Stage
+import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.ui.Controllers
 import org.jackhuang.hmcl.util.DEFAULT_USER_AGENT
 import org.jackhuang.hmcl.util.OS
@@ -27,6 +28,7 @@ import java.io.File
 class MainApplication : Application() {
 
     override fun start(stage: Stage) {
+        PRIMARY_STAGE = stage
         Controllers.initialize(stage)
 
         stage.isResizable = false
@@ -35,6 +37,10 @@ class MainApplication : Application() {
     }
 
     companion object {
+
+        val VERSION = "@HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING@"
+        val TITLE = "HMCL $VERSION"
+        lateinit var PRIMARY_STAGE: Stage
 
         @JvmStatic
         fun main(args: Array<String>) {
@@ -57,5 +63,10 @@ class MainApplication : Application() {
         }
 
         fun getMinecraftDirectory(): File = getWorkingDirectory("minecraft")
+
+        fun stop() {
+            PRIMARY_STAGE.close()
+            Scheduler.shutdown()
+        }
     }
 }

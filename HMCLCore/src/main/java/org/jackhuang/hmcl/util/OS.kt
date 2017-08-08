@@ -49,9 +49,9 @@ enum class OS {
             ReflectionHelper.get<Long>(ManagementFactory.getOperatingSystemMXBean(), "getTotalPhysicalMemorySize") ?: 1024L
         }
 
-        val SUGGESTED_MEMORY: Long by lazy {
+        val SUGGESTED_MEMORY: Int by lazy {
             val memory = TOTAL_MEMORY / 1024 / 1024 / 4
-            Math.round(1.0 * memory / 128.0) * 128
+            (Math.round(1.0 * memory / 128.0) * 128).toInt()
         }
 
         val PATH_SEPARATOR: String = File.pathSeparator

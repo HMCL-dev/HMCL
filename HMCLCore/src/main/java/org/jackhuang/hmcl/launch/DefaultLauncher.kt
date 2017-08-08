@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.launch
 
 import org.jackhuang.hmcl.auth.AuthInfo
 import org.jackhuang.hmcl.game.*
+import org.jackhuang.hmcl.task.TaskResult
 import org.jackhuang.hmcl.util.*
 import java.io.File
 import java.io.IOException
@@ -26,12 +27,12 @@ import java.util.*
 import kotlin.concurrent.thread
 
 /**
- * @param version A resolved version(calling [Version.resolve])
+ * @param versionId The version to be launched.
  * @param account The user account
  * @param options The launching configuration
  */
-open class DefaultLauncher(repository: GameRepository, version: Version, account: AuthInfo, options: LaunchOptions, listener: ProcessListener? = null, isDaemon: Boolean = true)
-    : Launcher(repository, version, account, options, listener, isDaemon) {
+open class DefaultLauncher(repository: GameRepository, versionId: String, account: AuthInfo, options: LaunchOptions, listener: ProcessListener? = null, isDaemon: Boolean = true)
+    : Launcher(repository, versionId, account, options, listener, isDaemon) {
 
     protected val native: File by lazy { repository.getNativeDirectory(version.id) }
 
@@ -234,13 +235,21 @@ open class DefaultLauncher(repository: GameRepository, version: Version, account
         }
 
         builder.directory(repository.getRunDirectory(version.id))
-                .environment().put("APPDATA", options.gameDir.parent)
+                .environment().put("APPDATA", options.gameDir.absoluteFile.parent)
         val p = JavaProcess(builder.start(), rawCommandLine)
         if (listener == null)
             startMonitors(p)
         else
             startMonitors(p, listener, isDaemon)
         return p
+    }
+
+    fun launchAsync(): TaskResult<JavaProcess> {
+        return object : TaskResult<JavaProcess>() {
+            override fun execute() {
+                result = launch()
+            }
+        }
     }
 
     override fun makeLaunchScript(file: String): File {

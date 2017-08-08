@@ -135,8 +135,8 @@ class YggdrasilAccount private constructor(override val username: String): Accou
         selectedProfile = null
     }
 
-    override fun toStorage(): Map<out Any, Any> {
-        val result = HashMap<String, Any>()
+    override fun toStorage(): MutableMap<Any, Any> {
+        val result = HashMap<Any, Any>()
 
         result[STORAGE_KEY_USER_NAME] = username
         if (userId != null)
@@ -188,6 +188,8 @@ class YggdrasilAccount private constructor(override val username: String): Accou
             return false
         }
     }
+
+    override fun toString() = "YggdrasilAccount[username=$username]"
 
     companion object YggdrasilAccountFactory : AccountFactory<YggdrasilAccount> {
         private val GSON = GsonBuilder()

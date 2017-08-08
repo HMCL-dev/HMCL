@@ -22,7 +22,9 @@ import javafx.animation.KeyFrame
 import javafx.animation.KeyValue
 import javafx.util.Duration
 
-enum class ContainerAnimations(val animationProducer: (AnimationHandler) -> List<KeyFrame>) {
+typealias AnimationProducer = (AnimationHandler) -> List<KeyFrame>
+
+enum class ContainerAnimations(val animationProducer: AnimationProducer) {
     /**
      * None
      */

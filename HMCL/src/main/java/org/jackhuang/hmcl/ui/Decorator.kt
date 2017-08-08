@@ -43,9 +43,18 @@ import javafx.stage.Stage
 import javafx.stage.StageStyle
 import javafx.scene.layout.BorderStrokeStyle
 import javafx.scene.layout.BorderStroke
+import org.jackhuang.hmcl.MainApplication
+import org.jackhuang.hmcl.ui.animation.AnimationProducer
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations
+import org.jackhuang.hmcl.ui.animation.TransitionHandler
+import org.jackhuang.hmcl.ui.wizard.*
 import org.jackhuang.hmcl.util.*
+import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
-class Decorator @JvmOverloads constructor(private val primaryStage: Stage, node: Node, private val max: Boolean = true, min: Boolean = true) : GridPane() {
+class Decorator @JvmOverloads constructor(private val primaryStage: Stage, private val max: Boolean = true, min: Boolean = true) : GridPane(), AbstractWizardDisplayer {
+    override val wizardController: WizardController = WizardController(this)
+
     private var xOffset: Double = 0.0
     private var yOffset: Double = 0.0
     private var newX: Double = 0.0
@@ -66,7 +75,7 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, node:
     @FXML lateinit var titleLabel: Label
     @FXML lateinit var leftPane: VBox
 
-    private val onCloseButtonActionProperty: ObjectProperty<Runnable> = SimpleObjectProperty(Runnable { this.primaryStage.close() })
+    private val onCloseButtonActionProperty: ObjectProperty<Runnable> = SimpleObjectProperty(Runnable { MainApplication.stop() })
         @JvmName("onCloseButtonActionProperty") get
     var onCloseButtonAction: Runnable by onCloseButtonActionProperty
 
@@ -88,6 +97,9 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, node:
             .apply { setPrefSize(12.0, 12.0); setSize(12.0, 12.0) }
     private val close = SVGGlyph(0, "CLOSE", "M810 274l-238 238 238 238-60 60-238-238-238 238-60-60 238-238-238-238 60-60 238 238 238-238z", Color.WHITE)
             .apply { setPrefSize(12.0, 12.0); setSize(12.0, 12.0) }
+
+    val animationHandler: TransitionHandler
+    override val cancelQueue: Queue<Any> = ConcurrentLinkedQueue<Any>()
 
     init {
         loadFXML("/assets/fxml/decorator.fxml")
@@ -111,13 +123,9 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, node:
         titleContainer.addEventHandler(MouseEvent.MOUSE_ENTERED) { this.allowMove = true }
         titleContainer.addEventHandler(MouseEvent.MOUSE_EXITED) { if (!this.isDragging) this.allowMove = false }
 
-        this.contentPlaceHolder.children.add(node)
-        (node as Region).setMinSize(0.0, 0.0)
-        this.border = Border(BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths(0.0, 4.0, 4.0, 4.0)))
-        val clip = Rectangle()
-        clip.widthProperty().bind(node.widthProperty())
-        clip.heightProperty().bind(node.heightProperty())
-        node.setClip(clip)
+        animationHandler = TransitionHandler(contentPlaceHolder)
+
+        setOverflowHidden(lookup("#contentPlaceHolderRoot") as Pane)
     }
 
     fun onMouseMoved(mouseEvent: MouseEvent) {
@@ -285,18 +293,22 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, node:
         this.yOffset = mouseEvent.sceneY
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun isRightEdge(x: Double, y: Double, boundsInParent: Bounds): Boolean {
         return x < this.width && x > this.width - this.contentPlaceHolder.snappedLeftInset()
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun isTopEdge(x: Double, y: Double, boundsInParent: Bounds): Boolean {
         return y >= 0.0 && y < this.contentPlaceHolder.snappedLeftInset()
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun isBottomEdge(x: Double, y: Double, boundsInParent: Bounds): Boolean {
         return y < this.height && y > this.height - this.contentPlaceHolder.snappedLeftInset()
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun isLeftEdge(x: Double, y: Double, boundsInParent: Bounds): Boolean {
         return x >= 0.0 && x < this.contentPlaceHolder.snappedLeftInset()
     }
@@ -335,7 +347,74 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, node:
         }
     }
 
-    fun setContent(content: Node) {
-        this.contentPlaceHolder.children.setAll(content)
+    private fun setContent(content: Node, animation: AnimationProducer) {
+        animationHandler.setContent(content, animation)
+
+        if (content is Region) {
+            content.setMinSize(0.0, 0.0)
+            setOverflowHidden(content)
+        }
+
+        backNavButton.isDisable = !wizardController.canPrev()
+
+        if (content is Refreshable)
+            refreshNavButton.isVisible = true
+
+        if (content != mainPage)
+            closeNavButton.isVisible = true
+
+        val prefix = if (category == null) "" else category + " - "
+
+        titleLabel.textProperty().unbind()
+
+        if (content is WizardPage)
+            titleLabel.text = prefix + content.title
+
+        if (content is HasTitle)
+            titleLabel.textProperty().bind(content.titleProperty)
+    }
+
+    lateinit var mainPage: Node
+    var category: String? = null
+
+    fun showPage(content: Node?) {
+        onEnd()
+        setContent(content ?: mainPage, ContainerAnimations.FADE.animationProducer)
+    }
+
+    fun startWizard(wizardProvider: WizardProvider, category: String? = null) {
+        this.category = category
+        wizardController.provider = wizardProvider
+        wizardController.onStart()
+    }
+
+    override fun onStart() {
+        backNavButton.isVisible = true
+        backNavButton.isDisable = false
+        closeNavButton.isVisible = true
+        refreshNavButton.isVisible = false
+    }
+
+    override fun onEnd() {
+        backNavButton.isVisible = false
+        closeNavButton.isVisible = false
+        refreshNavButton.isVisible = false
+    }
+
+    override fun navigateTo(page: Node, nav: Navigation.NavigationDirection) {
+        setContent(page, nav.animation.animationProducer)
+    }
+
+    fun onRefresh() {
+        (contentPlaceHolder.children.single() as Refreshable).refresh()
+    }
+
+    fun onCloseNav() {
+        wizardController.onCancel()
+        showPage(null)
+    }
+
+    fun onBack() {
+        wizardController.onPrev(true)
     }
 }

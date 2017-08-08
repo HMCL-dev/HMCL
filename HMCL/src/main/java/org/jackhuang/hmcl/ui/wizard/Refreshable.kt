@@ -15,14 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.auth
+package org.jackhuang.hmcl.ui.wizard
 
-import java.net.Proxy
-
-abstract class Account() {
-    abstract val username: String
-    @Throws(AuthenticationException::class)
-    abstract fun logIn(proxy: Proxy = Proxy.NO_PROXY): AuthInfo
-    abstract fun logOut()
-    abstract fun toStorage(): MutableMap<Any, Any>
+interface Refreshable {
+    fun refresh()
 }

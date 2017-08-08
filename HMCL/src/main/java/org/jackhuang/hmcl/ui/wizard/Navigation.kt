@@ -25,6 +25,7 @@ interface Navigation {
     fun onPrev(cleanUp: Boolean)
     fun canPrev(): Boolean
     fun onFinish()
+    fun onEnd()
     fun onCancel()
 
     enum class NavigationDirection(val animation: ContainerAnimations) {

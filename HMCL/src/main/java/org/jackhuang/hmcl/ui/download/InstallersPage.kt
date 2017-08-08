@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.download
 
 import com.jfoenix.controls.JFXListView
+import com.jfoenix.controls.JFXTextField
 import javafx.fxml.FXML
 import javafx.scene.control.Label
 import javafx.scene.layout.StackPane
@@ -33,15 +34,20 @@ class InstallersPage(private val controller: WizardController, private val downl
     @FXML lateinit var lblForge: Label
     @FXML lateinit var lblLiteLoader: Label
     @FXML lateinit var lblOptiFine: Label
+    @FXML lateinit var txtName: JFXTextField
 
     init {
         loadFXML("/assets/fxml/download/installers.fxml")
+
+        val gameVersion = controller.settings["game"] as String
+        txtName.text = gameVersion
+
         list.selectionModel.selectedIndexProperty().addListener { _, _, newValue ->
             controller.settings[INSTALLER_TYPE] = newValue
             controller.onNext(when (newValue){
-                0 -> VersionsPage(controller, controller.settings["game"] as String, downloadProvider, "forge") { controller.onPrev(false) }
-                1 -> VersionsPage(controller, controller.settings["game"] as String, downloadProvider, "liteloader") { controller.onPrev(false) }
-                2 -> VersionsPage(controller, controller.settings["game"] as String, downloadProvider, "optifine") { controller.onPrev(false) }
+                0 -> VersionsPage(controller, gameVersion, downloadProvider, "forge") { controller.onPrev(false) }
+                1 -> VersionsPage(controller, gameVersion, downloadProvider, "liteloader") { controller.onPrev(false) }
+                2 -> VersionsPage(controller, gameVersion, downloadProvider, "optifine") { controller.onPrev(false) }
                 else -> throw IllegalStateException()
             })
         }
@@ -70,6 +76,11 @@ class InstallersPage(private val controller: WizardController, private val downl
 
     override fun cleanup(settings: MutableMap<String, Any>) {
         settings.remove(INSTALLER_TYPE)
+    }
+
+    fun onInstall() {
+        controller.settings["name"] = txtName.text
+        controller.onFinish()
     }
 
     companion object {

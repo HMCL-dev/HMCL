@@ -52,6 +52,7 @@ data class JavaVersion internal constructor(
             }
         }
 
+        @Throws(IOException::class)
         fun fromExecutable(file: File): JavaVersion {
             var platform = Platform.BIT_32
             var version: String? = null
@@ -66,6 +67,7 @@ data class JavaVersion internal constructor(
                         platform = Platform.BIT_64
                 }
             } catch (e: InterruptedException) {
+                Thread.currentThread().interrupt()
                 throw IOException("Java process is interrupted", e)
             }
             val thisVersion = version ?: throw IOException("Java version not matched")

@@ -7,9 +7,6 @@
 <?import javafx.geometry.Insets?>
 <?import java.lang.String?>
 <?import javafx.scene.shape.Rectangle?>
-<?import com.jfoenix.controls.JFXComboBox?>
-<?import com.jfoenix.controls.JFXListView?>
-<?import com.jfoenix.controls.JFXListCell?>
 <fx:root xmlns="http://javafx.com/javafx"
          type="GridPane"
          xmlns:fx="http://javafx.com/fxml"
@@ -22,7 +19,7 @@
         <String fx:value="resize-border" />
     </styleClass>
     <columnConstraints>
-        <ColumnConstraints prefWidth="200" />
+        <ColumnConstraints minWidth="200" maxWidth="200" />
         <ColumnConstraints hgrow="ALWAYS" />
     </columnConstraints>
     <rowConstraints>
@@ -30,49 +27,62 @@
         <RowConstraints vgrow="ALWAYS" />
     </rowConstraints>
     <StackPane GridPane.rowIndex="1" GridPane.columnIndex="0" VBox.vgrow="ALWAYS" styleClass="jfx-decorator-content-container">
-        <BorderPane prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+        <BorderPane fx:id="leftRootPane">
             <center>
-                <ScrollPane fitToHeight="true" fitToWidth="true">
-                    <VBox fx:id="leftPane">
-                    </VBox>
-                </ScrollPane>
-            </center>
-            <bottom>
-                <BorderPane fx:id="menuBottomBar">
-                    <left>
-                        <JFXButton fx:id="refreshMenuButton" styleClass="toggle-icon3">
-                        <graphic>
-                        <fx:include source="/assets/svg/refresh-black.fxml"/>
-                        </graphic></JFXButton>
-                    </left>
-                    <right>
-                        <JFXButton fx:id="addMenuButton" styleClass="toggle-icon3">
-                        <graphic>
-                            <fx:include source="/assets/svg/plus-black.fxml"/>
-                        </graphic></JFXButton>
-                    </right>
+                <BorderPane>
+                    <center>
+                        <ScrollPane fitToHeight="true" fitToWidth="true">
+                            <VBox fx:id="leftPane" styleClass="jfx-decorator-left-pane" spacing="5">
+                            </VBox>
+                        </ScrollPane>
+                    </center>
+                    <bottom>
+                        <BorderPane fx:id="menuBottomBar">
+                            <left>
+                                <JFXButton fx:id="refreshMenuButton" styleClass="toggle-icon3">
+                                    <graphic>
+                                        <fx:include source="/assets/svg/refresh-black.fxml"/>
+                                    </graphic></JFXButton>
+                            </left>
+                            <right>
+                                <JFXButton fx:id="addMenuButton" styleClass="toggle-icon3">
+                                    <graphic>
+                                        <fx:include source="/assets/svg/plus-black.fxml"/>
+                                    </graphic></JFXButton>
+                            </right>
+                        </BorderPane>
+                    </bottom>
                 </BorderPane>
-            </bottom>
+            </center>
+            <right>
+                <Rectangle height="${leftRootPane.height}" width="1" fill="gray" />
+            </right>
         </BorderPane>
     </StackPane>
-    <StackPane GridPane.rowIndex="1" GridPane.columnIndex="1" fx:id="contentPlaceHolder" styleClass="jfx-decorator-content-container" minWidth="0" minHeight="0" VBox.vgrow="ALWAYS">
-        <styleClass>
-            <String fx:value="jfx-decorator-content-container" />
-        </styleClass>
-        <!-- Node -->
+    <StackPane fx:id="contentPlaceHolderRoot" GridPane.rowIndex="1" GridPane.columnIndex="1" styleClass="jfx-decorator-content-container" VBox.vgrow="ALWAYS">
+        <StackPane fx:id="contentPlaceHolder" styleClass="jfx-decorator-content-container">
+            <styleClass>
+                <String fx:value="jfx-decorator-content-container" />
+            </styleClass>
+            <!-- Node -->
+        </StackPane>
     </StackPane>
-        <BorderPane GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2" fx:id="titleContainer" styleClass="jfx-tool-bar" pickOnBounds="false">
+        <BorderPane GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2" fx:id="titleContainer" minHeight="30" styleClass="jfx-tool-bar" pickOnBounds="false">
             <left>
-                <HBox minWidth="200" fx:id="titleWrapper" alignment="CENTER_LEFT">
-                    <Label text="Hello Minecraft! Launcher" mouseTransparent="false" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 15px;" />
-                </HBox>
+                <BorderPane minWidth="200" maxWidth="200" fx:id="titleWrapper">
+                    <center>
+                        <Label text="Hello Minecraft! Launcher" BorderPane.alignment="CENTER" mouseTransparent="true" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 15px;" />
+                    </center>
+                    <right>
+                        <Rectangle height="${navBar.height}" width="1" fill="gray" />
+                    </right>
+                </BorderPane>
             </left>
             <center>
                 <BorderPane fx:id="navBar">
                     <left>
                         <HBox fx:id="navLeft" alignment="CENTER_LEFT" style="-fx-padding: 0;">
-                            <Rectangle height="${navBar.height}" width="1" fill="gray" />
-                            <JFXButton fx:id="backNavButton" maxHeight="20" styleClass="toggle-icon3">
+                            <JFXButton fx:id="backNavButton" onMouseClicked="#onBack" maxHeight="20" styleClass="toggle-icon3">
                                 <graphic>
                                     <fx:include source="/assets/svg/arrow-left.fxml"/>
                                 </graphic>
@@ -82,7 +92,7 @@
                     </left>
                     <right>
                         <HBox fx:id="navRight" alignment="CENTER_LEFT">
-                            <JFXButton fx:id="refreshNavButton" maxHeight="20" styleClass="toggle-icon3" disable="true">
+                            <JFXButton fx:id="refreshNavButton" onMouseClicked="#onRefresh" maxHeight="20" styleClass="toggle-icon3" disable="true">
                                 <graphic>
                                     <fx:include source="/assets/svg/refresh.fxml"/>
                                 </graphic>
@@ -90,7 +100,7 @@
                                     <Insets left="20"/>
                                 </StackPane.margin>
                             </JFXButton>
-                            <JFXButton fx:id="closeNavButton" maxHeight="20" styleClass="toggle-icon3">
+                            <JFXButton fx:id="closeNavButton" onMouseClicked="#onCloseNav" maxHeight="20" styleClass="toggle-icon3">
                                 <graphic>
                                     <fx:include source="/assets/svg/close.fxml"/>
                                 </graphic>

@@ -15,9 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui.wizard
+package org.jackhuang.hmcl.ui
 
-interface WizardObserver {
+import javafx.geometry.Pos
+import javafx.scene.Node
+import javafx.scene.control.Label
+import javafx.scene.layout.HBox
 
-    fun stepsChanged(wizard: Wizard)
-}
+class IconedItem(val icon: Node, val text: String)
+    : RipplerContainer(HBox().apply {
+    children += icon.apply { isMouseTransparent = true }
+    children += Label(text).apply { alignment = Pos.CENTER; isMouseTransparent = true }
+})

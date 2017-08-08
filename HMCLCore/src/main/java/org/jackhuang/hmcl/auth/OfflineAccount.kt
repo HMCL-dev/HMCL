@@ -35,12 +35,14 @@ class OfflineAccount private constructor(val uuid: String, override val username
         // Offline account need not log out.
     }
 
-    override fun toStorage(): Map<Any, Any> {
-        return mapOf(
+    override fun toStorage(): MutableMap<Any, Any> {
+        return mutableMapOf(
                 "uuid" to uuid,
                 "username" to username
         )
     }
+
+    override fun toString() = "OfflineAccount[username=$username,uuid=$uuid]"
 
     companion object OfflineAccountFactory : AccountFactory<OfflineAccount> {
 

@@ -18,15 +18,20 @@
 package org.jackhuang.hmcl.ui.wizard
 
 import javafx.scene.Node
+import org.jackhuang.hmcl.task.Task
 import java.util.*
 
-class WizardController(protected val displayer: WizardDisplayer, protected val provider: WizardProvider) : Navigation {
+class WizardController(protected val displayer: WizardDisplayer) : Navigation {
+    lateinit var provider: WizardProvider
     val settings = mutableMapOf<String, Any>()
     val pages = Stack<Node>()
 
     override fun onStart() {
+        settings.clear()
+        pages.clear()
         val page = navigatingTo(0)
         pages.push(page)
+        displayer.onStart()
         displayer.navigateTo(page, Navigation.NavigationDirection.START)
     }
 
@@ -62,11 +67,19 @@ class WizardController(protected val displayer: WizardDisplayer, protected val p
         when (result) {
             is DeferredWizardResult -> displayer.handleDeferredWizardResult(settings, result)
             is Summary -> displayer.navigateTo(result.component, Navigation.NavigationDirection.NEXT)
+            is Task -> displayer.handleTask(settings, result)
         }
     }
 
-    override fun onCancel() {
+    override fun onEnd() {
+        settings.clear()
+        pages.clear()
+        displayer.onEnd()
+    }
 
+    override fun onCancel() {
+        displayer.onCancel()
+        onEnd()
     }
 
     fun navigatingTo(step: Int): Node {

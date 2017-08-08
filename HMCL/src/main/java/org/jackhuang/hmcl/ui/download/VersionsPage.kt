@@ -24,6 +24,7 @@ import javafx.scene.layout.StackPane
 import org.jackhuang.hmcl.download.RemoteVersion
 import org.jackhuang.hmcl.download.DownloadProvider
 import org.jackhuang.hmcl.task.Scheduler
+import org.jackhuang.hmcl.task.TaskExecutor
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations
 import org.jackhuang.hmcl.ui.animation.TransitionHandler
 import org.jackhuang.hmcl.ui.loadFXML
@@ -37,6 +38,7 @@ class VersionsPage(private val controller: WizardController, private val gameVer
 
     val transitionHandler = TransitionHandler(this)
     private val versionList = downloadProvider.getVersionListById(libraryId)
+    private var executor: TaskExecutor? = null
 
     init {
         loadFXML("/assets/fxml/download/versions.fxml")
@@ -45,7 +47,7 @@ class VersionsPage(private val controller: WizardController, private val gameVer
             controller.settings[libraryId] = newValue.remoteVersion.selfVersion
             callback()
         }
-        versionList.refreshAsync(downloadProvider).subscribe(Scheduler.JAVAFX) {
+        executor = versionList.refreshAsync(downloadProvider).subscribe(Scheduler.JAVAFX) {
             val versions = ArrayList(versionList.getVersions(gameVersion))
             versions.sortWith(RemoteVersion)
             for (version in versions) {
@@ -61,5 +63,6 @@ class VersionsPage(private val controller: WizardController, private val gameVer
 
     override fun cleanup(settings: MutableMap<String, Any>) {
         settings.remove(libraryId)
+        executor?.cancel()
     }
 }

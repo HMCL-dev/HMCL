@@ -21,9 +21,12 @@ import com.jfoenix.controls.JFXButton
 import com.jfoenix.controls.JFXComboBox
 import com.jfoenix.controls.JFXListCell
 import com.jfoenix.controls.JFXListView
+import javafx.beans.property.SimpleStringProperty
+import javafx.beans.property.StringProperty
 import javafx.collections.FXCollections
 import javafx.fxml.FXML
 import javafx.scene.Node
+import javafx.scene.layout.BorderPane
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
 import org.jackhuang.hmcl.ProfileChangedEvent
@@ -36,11 +39,19 @@ import org.jackhuang.hmcl.setting.VersionSetting
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider
 import org.jackhuang.hmcl.ui.animation.TransitionHandler
+import org.jackhuang.hmcl.ui.wizard.HasTitle
 import org.jackhuang.hmcl.ui.wizard.Wizard
 
 /**
  * @see /assets/fxml/main.fxml
  */
-class MainController {
+class MainPage : BorderPane(), HasTitle {
+    override val titleProperty: StringProperty = SimpleStringProperty(this, "title", "Main Page")
+
+    @FXML lateinit var buttonLaunch: JFXButton
+
+    init {
+        loadFXML("/assets/fxml/main.fxml")
+    }
 
 }

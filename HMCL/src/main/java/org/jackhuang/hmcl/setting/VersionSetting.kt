@@ -20,7 +20,11 @@ package org.jackhuang.hmcl.setting
 import com.google.gson.*
 import javafx.beans.InvalidationListener
 import javafx.beans.property.*
+import org.jackhuang.hmcl.MainApplication
+import org.jackhuang.hmcl.game.LaunchOptions
 import org.jackhuang.hmcl.util.*
+import java.io.File
+import java.io.IOException
 import java.lang.reflect.Type
 
 class VersionSetting() {
@@ -61,14 +65,14 @@ class VersionSetting() {
     /**
      * The permanent generation size of JVM garbage collection.
      */
-    val permSizeProperty = SimpleIntegerProperty(this, "permSize", 0)
-    var permSize: Int by permSizeProperty
+    val permSizeProperty = SimpleStringProperty(this, "permSize", "")
+    var permSize: String by permSizeProperty
 
     /**
      * The maximum memory that JVM can allocate.
      * The size of JVM heap.
      */
-    val maxMemoryProperty = SimpleIntegerProperty(this, "maxMemory", 0)
+    val maxMemoryProperty = SimpleIntegerProperty(this, "maxMemory", OS.SUGGESTED_MEMORY)
     var maxMemory: Int by maxMemoryProperty
 
     /**
@@ -127,7 +131,7 @@ class VersionSetting() {
      * String type prevents unexpected value from causing JsonSyntaxException.
      * We can only reset this field instead of recreating the whole setting file.
      */
-    val widthProperty = SimpleIntegerProperty(this, "width", 0)
+    val widthProperty = SimpleIntegerProperty(this, "width", 854)
     var width: Int by widthProperty
 
 
@@ -138,7 +142,7 @@ class VersionSetting() {
      * String type prevents unexpected value from causing JsonSyntaxException.
      * We can only reset this field instead of recreating the whole setting file.
      */
-    val heightProperty = SimpleIntegerProperty(this, "height", 0)
+    val heightProperty = SimpleIntegerProperty(this, "height", 480)
     var height: Int by heightProperty
 
 
@@ -179,6 +183,32 @@ class VersionSetting() {
         launcherVisibilityProperty.addListener(listener)
     }
 
+    @Throws(IOException::class)
+    fun toLaunchOptions(gameDir: File): LaunchOptions {
+        return LaunchOptions(
+                gameDir = gameDir,
+                java = if (java == null) JavaVersion.fromCurrentEnvironment()
+                       else JavaVersion.fromExecutable(File(java)),
+                versionName = MainApplication.TITLE,
+                profileName = MainApplication.TITLE,
+                minecraftArgs = minecraftArgs,
+                javaArgs = javaArgs,
+                maxMemory = maxMemory,
+                metaspace = permSize.toIntOrNull(),
+                width = width,
+                height = height,
+                fullscreen = fullscreen,
+                serverIp = serverIp,
+                wrapper = wrapper,
+                proxyHost = Settings.SETTINGS.proxyHost,
+                proxyPort = Settings.SETTINGS.proxyPort,
+                proxyUser = Settings.SETTINGS.proxyUserName,
+                proxyPass = Settings.SETTINGS.proxyPassword,
+                precalledCommand = precalledCommand,
+                noGeneratedJVMArgs = noJVMArgs
+        )
+    }
+
     companion object Serializer: JsonSerializer<VersionSetting>, JsonDeserializer<VersionSetting> {
         override fun serialize(src: VersionSetting?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
             if (src == null) return JsonNull.INSTANCE
@@ -214,7 +244,7 @@ class VersionSetting() {
                 javaArgs = json["javaArgs"]?.asString ?: ""
                 minecraftArgs = json["minecraftArgs"]?.asString ?: ""
                 maxMemory = parseJsonPrimitive(json["maxMemory"]?.asJsonPrimitive)
-                permSize = parseJsonPrimitive(json["permSize"]?.asJsonPrimitive)
+                permSize = json["permSize"]?.asString ?: ""
                 width = parseJsonPrimitive(json["width"]?.asJsonPrimitive)
                 height = parseJsonPrimitive(json["height"]?.asJsonPrimitive)
                 javaDir = json["javaDir"]?.asString ?: ""

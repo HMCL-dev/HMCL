@@ -18,9 +18,16 @@
 package org.jackhuang.hmcl.ui.wizard
 
 import javafx.scene.Node
+import org.jackhuang.hmcl.task.Task
 
 interface WizardDisplayer {
+    fun onStart()
+    fun onEnd()
+    fun onCancel()
+
     fun navigateTo(page: Node, nav: Navigation.NavigationDirection)
 
     fun handleDeferredWizardResult(settings: Map<String, Any>, deferredResult: DeferredWizardResult)
+
+    fun handleTask(settings: Map<String, Any>, task: Task)
 }

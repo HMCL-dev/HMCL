@@ -20,10 +20,11 @@ package org.jackhuang.hmcl.ui.download
 import javafx.fxml.FXML
 import javafx.scene.control.Label
 import javafx.scene.layout.BorderPane
+import javafx.scene.layout.StackPane
 import org.jackhuang.hmcl.download.RemoteVersion
 import org.jackhuang.hmcl.ui.loadFXML
 
-class VersionsPageItem(val remoteVersion: RemoteVersion<*>) : BorderPane() {
+class VersionsPageItem(val remoteVersion: RemoteVersion<*>) : StackPane() {
 
     @FXML lateinit var lblSelfVersion: Label
     @FXML lateinit var lblGameVersion: Label

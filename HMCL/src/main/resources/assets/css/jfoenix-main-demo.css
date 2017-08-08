@@ -25,6 +25,25 @@
     -fx-text-fill: rgba(0.0, 0.0, 0.0, 0.87);
 }
 
+.class-title {
+    -fx-font-size: 12px;
+    -fx-padding: 0 16 0 16;
+}
+
+.rippler-container HBox {
+    -fx-font-size: 14px;
+    -fx-padding: 10 16 10 16;
+    -fx-spacing: 10;
+}
+
+.left-pane-item {
+    -fx-padding: 10 16 10 16;
+}
+
+.jfx-decorator-left-pane {
+    -fx-padding: 20 0 20 0;
+}
+
 /*******************************************************************************
  *                                                                             *
  * JFX Drawer                                                                  *
@@ -80,6 +99,11 @@
 
 .dialog-accept {
     -fx-text-fill: #03A9F4;
+    -fx-font-weight: BOLD;
+    -fx-padding: 0.7em 0.8em;
+}
+
+.dialog-cancel {
     -fx-font-weight: BOLD;
     -fx-padding: 0.7em 0.8em;
 }
@@ -453,7 +477,6 @@
     -fx-font-weight: BOLD;
     -fx-prompt-text-fill: #808080;
     -fx-alignment: top-left;
-    -fx-max-width: 300.0;
     -fx-pref-width: 300.0;
     -jfx-focus-color: #4059A9;
     -jfx-unfocus-color: #4d4d4d;
@@ -658,9 +681,9 @@
 }
 
 .toggle-icon3 {
-    -fx-pref-width: 40px;
+    -fx-pref-width: 5px;
     -fx-background-radius: 50px;
-    -fx-pref-height: 30px;
+    -fx-pref-height: 5px;
     -fx-background-color: transparent;
     -jfx-toggle-color: rgba(128, 128, 255, 0.2);
     -jfx-untoggle-color: transparent;
@@ -672,8 +695,31 @@
 }
 
 .toggle-icon3 .jfx-rippler {
+    -jfx-rippler-fill: white;
+    -jfx-mask-type: CIRCLE;
+}
+
+.toggle-icon4 {
+    -fx-pref-width: 5px;
+    -fx-background-radius: 50px;
+    -fx-pref-height: 5px;
+    -fx-background-color: transparent;
+    -jfx-toggle-color: rgba(128, 128, 255, 0.2);
+    -jfx-untoggle-color: transparent;
+}
+
+.toggle-icon4 .icon {
+    -fx-fill: rgb(204.0, 204.0, 51.0);
+    -fx-padding: 10.0;
+}
+
+.toggle-icon4 .jfx-rippler {
     -jfx-rippler-fill: #0F9D58;
     -jfx-mask-type: CIRCLE;
+}
+
+.transparent {
+    -fx-background-color: null;
 }
 
 /*******************************************************************************

@@ -5,16 +5,19 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<StackPane xmlns="http://javafx.com/javafx"
-           xmlns:fx="http://javafx.com/fxml"
-           fx:controller="org.jackhuang.hmcl.ui.VersionController">
-    <BorderPane>
-        <center>
-        <ScrollPane fx:id="scroll"
-                    style="-fx-background-color: white; -fx-font-size: 14; -fx-pref-width: 100%; "
+<fx:root xmlns="http://javafx.com/javafx"
+          xmlns:fx="http://javafx.com/fxml"
+          type="StackPane">
+    <ScrollPane fx:id="scroll"
+                    style="-fx-font-size: 14; -fx-pref-width: 100%; "
                     fitToHeight="true" fitToWidth="true">
-            <VBox>
-            <GridPane fx:id="settingsPane" style="-fx-margin-left: 10; -fx-background-color: white; " hgap="5" vgap="10">
+        <VBox fx:id="rootPane" style="-fx-padding: 20;">
+            <GridPane fx:id="settingsPane" hgap="5" vgap="10">
+                <columnConstraints>
+                    <ColumnConstraints />
+                    <ColumnConstraints hgrow="ALWAYS" />
+                    <ColumnConstraints />
+                </columnConstraints>
                 <Label GridPane.rowIndex="0" GridPane.columnIndex="0">Java Directory</Label>
                 <Label GridPane.rowIndex="1" GridPane.columnIndex="0">Max Memory</Label>
                 <Label GridPane.rowIndex="2" GridPane.columnIndex="0">Launcher Visibility</Label>
@@ -59,9 +62,9 @@
                 <BorderPane GridPane.rowIndex="4" GridPane.columnIndex="1" GridPane.columnSpan="2">
                     <left>
                         <HBox prefWidth="210">
-                            <JFXTextField fx:id="txtWidth" promptText="800" prefWidth="100"/>
+                            <JFXTextField fx:id="txtWidth" promptText="800" prefWidth="100" />
                             <Label>x</Label>
-                            <JFXTextField fx:id="txtHeight" promptText="480" prefWidth="100"/>
+                            <JFXTextField fx:id="txtHeight" promptText="480" prefWidth="100" />
                         </HBox>
                     </left>
                     <right>
@@ -75,36 +78,17 @@
 
                 <JFXButton GridPane.rowIndex="0" GridPane.columnIndex="2" text="Explore" onMouseClicked="#onExploreJavaDir" />
             </GridPane>
-            <VBox fx:id="advancedSettingsPane" style="-fx-padding-bottom: 10; -fx-background-color: white; " spacing="30">
-                <JFXTextField labelFloat="true" promptText="JVM Args" styleClass="fit-width" fx:id="txtJVMArgs" maxWidth="Infinity"/>
-                <JFXTextField labelFloat="true" promptText="Game Args" styleClass="fit-width" fx:id="txtGameArgs" maxWidth="Infinity"/>
-                <JFXTextField labelFloat="true" promptText="Metaspace" styleClass="fit-width" fx:id="txtMetaspace" maxWidth="Infinity"/>
-                <JFXTextField labelFloat="true" promptText="Wrapper Launcher(like optirun)" styleClass="fit-width" fx:id="txtWrapper" maxWidth="Infinity"/>
-                <JFXTextField labelFloat="true" promptText="Pre-calling command" styleClass="fit-width" fx:id="txtPrecallingCommand" maxWidth="Infinity"/>
-                <JFXTextField labelFloat="true" promptText="Server IP" styleClass="fit-width" fx:id="txtServerIP" maxWidth="Infinity"/>
+            <HBox alignment="CENTER">
+                <JFXButton text="Show advanced settings" onMouseClicked="#onShowAdvanced" />
+            </HBox>
+            <VBox fx:id="advancedSettingsPane" spacing="30">
+                <JFXTextField labelFloat="true" promptText="JVM Args" styleClass="fit-width" fx:id="txtJVMArgs" prefWidth="${advancedSettingsPane.width}" />
+                <JFXTextField labelFloat="true" promptText="Game Args" styleClass="fit-width" fx:id="txtGameArgs" prefWidth="${advancedSettingsPane.width}" />
+                <JFXTextField labelFloat="true" promptText="Metaspace" styleClass="fit-width" fx:id="txtMetaspace" prefWidth="${advancedSettingsPane.width}" />
+                <JFXTextField labelFloat="true" promptText="Wrapper Launcher(like optirun)" styleClass="fit-width" fx:id="txtWrapper" prefWidth="${advancedSettingsPane.width}" />
+                <JFXTextField labelFloat="true" promptText="Pre-calling command" styleClass="fit-width" fx:id="txtPrecallingCommand" prefWidth="${advancedSettingsPane.width}" />
+                <JFXTextField labelFloat="true" promptText="Server IP" styleClass="fit-width" fx:id="txtServerIP" prefWidth="${advancedSettingsPane.width}" />
             </VBox>
-            </VBox>
-        </ScrollPane>
-        </center>
-        <top>
-            <JFXToolbar maxHeight="20" styleClass="jfx-tool-bar">
-                <leftItems>
-                    <JFXButton fx:id="backButton" maxHeight="20" styleClass="toggle-icon3"
-                               StackPane.alignment="CENTER_LEFT">
-                        <graphic>
-                            <fx:include source="/assets/svg/arrow-left.fxml" />
-                        </graphic>
-                        <StackPane.margin>
-                            <Insets left="20" />
-                        </StackPane.margin>
-                    </JFXButton>
-                    <Label fx:id="titleLabel" style="-fx-text-fill:WHITE; -fx-font-size: 20;"
-                           StackPane.alignment="CENTER_LEFT"/>
-                </leftItems>
-                <rightItems>
-
-                </rightItems>
-            </JFXToolbar>
-        </top>
-    </BorderPane>
-</StackPane>
+        </VBox>
+    </ScrollPane>
+</fx:root>

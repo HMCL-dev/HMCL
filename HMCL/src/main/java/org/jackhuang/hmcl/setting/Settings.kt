@@ -30,8 +30,15 @@ import java.io.File
 import java.util.logging.Level
 import org.jackhuang.hmcl.ProfileLoadingEvent
 import org.jackhuang.hmcl.ProfileChangedEvent
+import org.jackhuang.hmcl.auth.Account
+import org.jackhuang.hmcl.auth.Accounts
+import org.jackhuang.hmcl.auth.OfflineAccount
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
 import org.jackhuang.hmcl.event.EVENT_BUS
 import org.jackhuang.hmcl.util.FileTypeAdapter
+import org.jackhuang.hmcl.util.ignoreException
+import java.net.Proxy
+import java.util.*
 
 
 object Settings {
@@ -48,8 +55,31 @@ object Settings {
 
     val SETTINGS: Config
 
+    private val ACCOUNTS = mutableMapOf<String, Account>()
+
     init {
         SETTINGS = initSettings();
+
+        loop@for ((name, settings) in SETTINGS.accounts) {
+            val factory = when(settings["type"]) {
+                "yggdrasil" -> YggdrasilAccount
+                "offline" -> OfflineAccount
+                else -> {
+                    SETTINGS.accounts.remove(name)
+                    continue@loop
+                }
+            }
+
+            val account = factory.fromStorage(settings)
+
+            if (account.username != name) {
+                SETTINGS.accounts.remove(name)
+                continue
+            }
+
+            ACCOUNTS[name] = account
+        }
+
         save()
 
         if (!getProfiles().containsKey(DEFAULT_PROFILE))
@@ -58,6 +88,10 @@ object Settings {
         for ((name, profile) in getProfiles().entries) {
             profile.name = name
             profile.addPropertyChangedListener(InvalidationListener { save() })
+        }
+
+        ignoreException {
+            Runtime.getRuntime().addShutdownHook(Thread(this::save))
         }
     }
 
@@ -93,16 +127,62 @@ object Settings {
 
     fun save() {
         try {
+            SETTINGS.accounts.clear()
+            for ((name, account) in ACCOUNTS) {
+                val storage = account.toStorage()
+                storage["type"] = when(account) {
+                    is OfflineAccount -> "offline"
+                    is YggdrasilAccount -> "yggdrasil"
+                    else -> ""
+                }
+                SETTINGS.accounts[name] = storage
+            }
+
             SETTINGS_FILE.writeText(GSON.toJson(SETTINGS))
         } catch (ex: IOException) {
             LOG.log(Level.SEVERE, "Failed to save config", ex)
         }
     }
 
-    fun getLastProfile(): Profile {
-        if (!hasProfile(SETTINGS.last))
-            SETTINGS.last = DEFAULT_PROFILE
-        return getProfile(SETTINGS.last)
+    val selectedProfile: Profile
+        get() {
+            if (!hasProfile(SETTINGS.selectedProfile))
+                SETTINGS.selectedProfile = DEFAULT_PROFILE
+            return getProfile(SETTINGS.selectedProfile)
+        }
+
+    val selectedAccount: Account?
+        get() {
+            val a = getAccount(SETTINGS.selectedAccount)
+            if (a == null && ACCOUNTS.isNotEmpty()) {
+                val (key, acc) = ACCOUNTS.entries.first()
+                SETTINGS.selectedAccount = key
+                return acc
+            }
+            return a
+        }
+
+    fun setSelectedAccount(name: String) {
+        if (ACCOUNTS.containsKey(name))
+            SETTINGS.selectedAccount = name
+    }
+
+    val PROXY: Proxy = Proxy.NO_PROXY
+
+    fun addAccount(account: Account) {
+        ACCOUNTS[account.username] = account
+    }
+
+    fun getAccount(name: String): Account? {
+        return ACCOUNTS[name]
+    }
+
+    fun getAccounts(): Map<String, Account> {
+        return Collections.unmodifiableMap(ACCOUNTS)
+    }
+
+    fun deleteAccount(name: String) {
+        ACCOUNTS.remove(name)
     }
 
     fun getProfile(name: String?): Profile {
@@ -136,16 +216,16 @@ object Settings {
         return true
     }
 
-    fun delProfile(ver: Profile): Boolean {
-        return delProfile(ver.name)
+    fun deleteProfile(ver: Profile): Boolean {
+        return deleteProfile(ver.name)
     }
 
-    fun delProfile(ver: String): Boolean {
+    fun deleteProfile(ver: String): Boolean {
         if (DEFAULT_PROFILE == ver) {
             return false
         }
         var notify = false
-        if (getLastProfile().name == ver)
+        if (selectedProfile.name == ver)
             notify = true
         val flag = getProfiles().remove(ver) != null
         if (notify && flag)
@@ -154,9 +234,8 @@ object Settings {
     }
 
     internal fun onProfileChanged() {
-        val p = getLastProfile()
-        EVENT_BUS.fireEvent(ProfileChangedEvent(SETTINGS, p))
-        p.repository.refreshVersions()
+        EVENT_BUS.fireEvent(ProfileChangedEvent(SETTINGS, selectedProfile))
+        selectedProfile.repository.refreshVersions()
     }
 
     /**

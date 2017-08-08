@@ -17,29 +17,26 @@
  */
 package org.jackhuang.hmcl.ui.wizard
 
-import com.jfoenix.concurrency.JFXUtilities
 import com.jfoenix.controls.JFXButton
-import com.jfoenix.controls.JFXProgressBar
 import com.jfoenix.controls.JFXToolbar
-import com.jfoenix.effects.JFXDepthManager
 import javafx.fxml.FXML
 import javafx.scene.Node
 import javafx.scene.control.Label
 import javafx.scene.layout.StackPane
-import javafx.scene.layout.VBox
 import org.jackhuang.hmcl.ui.Controllers
 import org.jackhuang.hmcl.ui.animation.TransitionHandler
 import org.jackhuang.hmcl.ui.loadFXML
-import kotlin.concurrent.thread
+import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
-internal class DefaultWizardDisplayer(private val prefix: String, wizardProvider: WizardProvider) : StackPane(), WizardDisplayer {
+internal class DefaultWizardDisplayer(private val prefix: String, wizardProvider: WizardProvider) : StackPane(), AbstractWizardDisplayer {
 
-    val wizardController = WizardController(this, wizardProvider)
+    override val wizardController = WizardController(this).apply { provider = wizardProvider }
+    override val cancelQueue: Queue<Any> = ConcurrentLinkedQueue<Any>()
 
     lateinit var transitionHandler: TransitionHandler
 
     @FXML lateinit var root: StackPane
-    @FXML lateinit var closeButton: JFXButton
     @FXML lateinit var backButton: JFXButton
     @FXML lateinit var toolbar: JFXToolbar
     /**
@@ -47,6 +44,8 @@ internal class DefaultWizardDisplayer(private val prefix: String, wizardProvider
      */
     @FXML lateinit var refreshButton: JFXButton
     @FXML lateinit var titleLabel: Label
+
+    lateinit var nowPage: Node
 
     init {
         loadFXML("/assets/fxml/wizard.fxml")
@@ -59,6 +58,16 @@ internal class DefaultWizardDisplayer(private val prefix: String, wizardProvider
         wizardController.onStart()
     }
 
+    override fun onStart() {
+    }
+
+    override fun onEnd() {
+    }
+
+    override fun onCancel() {
+
+    }
+
     fun back() {
         wizardController.onPrev(true)
     }
@@ -68,58 +77,17 @@ internal class DefaultWizardDisplayer(private val prefix: String, wizardProvider
         Controllers.navigate(null)
     }
 
+    fun refresh() {
+        (nowPage as Refreshable).refresh()
+    }
+
     override fun navigateTo(page: Node, nav: Navigation.NavigationDirection) {
         backButton.isDisable = !wizardController.canPrev()
         transitionHandler.setContent(page, nav.animation.animationProducer)
         val title = if (prefix.isEmpty()) "" else "$prefix - "
         if (page is WizardPage)
             titleLabel.text = title + page.title
-    }
-
-    override fun handleDeferredWizardResult(settings: Map<String, Any>, deferredResult: DeferredWizardResult) {
-        val vbox = VBox()
-        val progressBar = JFXProgressBar()
-        val label = Label()
-        progressBar.maxHeight = 10.0
-        vbox.children += progressBar
-        vbox.children += label
-
-        root.children.setAll(progressBar)
-
-        thread {
-            deferredResult.start(settings, object : ResultProgressHandle {
-                private var running = true
-
-                override fun setProgress(currentStep: Int, totalSteps: Int) {
-                    progressBar.progress = 1.0 * currentStep / totalSteps
-                }
-
-                override fun setProgress(description: String, currentStep: Int, totalSteps: Int) {
-                    label.text = description
-                    progressBar.progress = 1.0 * currentStep / totalSteps
-                }
-
-                override fun setBusy(description: String) {
-                    progressBar.progress = JFXProgressBar.INDETERMINATE_PROGRESS
-                }
-
-                override fun finished(result: Any) {
-                    running = false
-                }
-
-                override fun failed(message: String, canNavigateBack: Boolean) {
-                    label.text = message
-                    running = false
-                }
-
-                override val isRunning: Boolean
-                    get() = running
-
-            })
-
-            JFXUtilities.runInFX {
-                navigateTo(Label("Successful"), Navigation.NavigationDirection.FINISH)
-            }
-        }
+        refreshButton.isVisible = page is Refreshable
+        nowPage = page
     }
 }

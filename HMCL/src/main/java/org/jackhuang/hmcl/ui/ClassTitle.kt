@@ -15,14 +15,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.auth
+package org.jackhuang.hmcl.ui
 
-import java.net.Proxy
+import javafx.scene.layout.StackPane
+import javafx.scene.layout.VBox
+import javafx.scene.paint.Color
+import javafx.scene.shape.Rectangle
+import javafx.scene.text.Text
 
-abstract class Account() {
-    abstract val username: String
-    @Throws(AuthenticationException::class)
-    abstract fun logIn(proxy: Proxy = Proxy.NO_PROXY): AuthInfo
-    abstract fun logOut()
-    abstract fun toStorage(): MutableMap<Any, Any>
+class ClassTitle(val text: String) : StackPane() {
+
+    init {
+        val vbox = VBox()
+        vbox.children += Text(text).apply {
+        }
+        vbox.children += Rectangle().apply {
+            widthProperty().bind(vbox.widthProperty())
+            height = 1.0
+            fill = Color.GRAY
+        }
+        children.setAll(vbox)
+        styleClass += "class-title"
+    }
 }

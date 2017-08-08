@@ -17,12 +17,11 @@
  */
 package org.jackhuang.hmcl.auth
 
-import java.net.Proxy
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
 
-abstract class Account() {
-    abstract val username: String
-    @Throws(AuthenticationException::class)
-    abstract fun logIn(proxy: Proxy = Proxy.NO_PROXY): AuthInfo
-    abstract fun logOut()
-    abstract fun toStorage(): MutableMap<Any, Any>
+object Accounts {
+    val ACCOUNTS = mapOf(
+            "offline" to OfflineAccount,
+            "yggdrasil" to YggdrasilAccount
+    )
 }

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<fx:root xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         type="StackPane">
+    <VBox fx:id="content">
+        <StackPane fx:id="header" VBox.vgrow="ALWAYS">
+            <BorderPane>
+                <top>
+                    <HBox alignment="CENTER_RIGHT">
+                        <JFXButton fx:id="btnDelete" styleClass="toggle-icon3" />
+                    </HBox>
+                </top>
+                <center>
+                    <VBox style="-fx-padding: 0 0 0 20;">
+                        <Label fx:id="lblUser" style="-fx-font-size: 20;" />
+                        <Label fx:id="lblType" style="-fx-font-size: 10;" />
+                    </VBox>
+                </center>
+            </BorderPane>
+        </StackPane>
+        <StackPane fx:id="body" style="-fx-background-radius: 0 0 5 5; -fx-background-color: rgb(255,255,255,0.87);" />
+    </VBox>
+    <StackPane fx:id="icon" StackPane.alignment="TOP_RIGHT">
+        <ImageView StackPane.alignment="CENTER_RIGHT">
+            <StackPane.margin>
+                <Insets right="12" />
+            </StackPane.margin>
+            <Image url="/assets/img/icon.png" />
+        </ImageView>
+    </StackPane>
+</fx:root>

@@ -3,29 +3,31 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 <?import com.jfoenix.controls.JFXButton?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
-         style="-fx-background-color: transparent; "
+         styleClass="transparent"
          type="BorderPane" pickOnBounds="false">
     <left>
-        <VBox alignment="CENTER_LEFT" mouseTransparent="true">
-            <Label fx:id="lblVersionName" style="-fx-font-size: 15;" />
-            <Label fx:id="lblGameVersion" />
-        </VBox>
+        <HBox alignment="CENTER" mouseTransparent="true">
+            <ImageView>
+                <Image url="/assets/img/icon.png" requestedWidth="25" requestedHeight="25" />
+            </ImageView>
+            <VBox alignment="CENTER_LEFT">
+                <Label fx:id="lblVersionName" style="-fx-font-size: 15;" />
+                <Label fx:id="lblGameVersion" style="-fx-font-size: 10;" />
+            </VBox>
+        </HBox>
     </left>
     <right>
-        <HBox>
-        <JFXButton onMouseClicked="#onSettings" styleClass="toggle-icon3">
-            <graphic>
-                <fx:include source="/assets/svg/gear.fxml"/>
-            </graphic>
-        </JFXButton>
-        <JFXButton onMouseClicked="#onLaunch" styleClass="toggle-icon3">
-            <graphic>
-                <fx:include source="/assets/svg/rocket.fxml"/>
-            </graphic>
-        </JFXButton>
+        <HBox alignment="CENTER" pickOnBounds="false">
+            <JFXButton styleClass="toggle-icon4" onMouseClicked="#onSettings">
+                <graphic>
+                    <fx:include source="/assets/svg/gear.fxml"/>
+                </graphic>
+            </JFXButton>
         </HBox>
     </right>
 </fx:root>

@@ -25,7 +25,7 @@ import java.util.TreeMap
 
 class Config {
     @SerializedName("last")
-    var last: String = ""
+    var selectedProfile: String = ""
         set(value) {
             field = value
             Settings.save()
@@ -97,7 +97,13 @@ class Config {
             Settings.save()
         }
     @SerializedName("accounts")
-    var accounts: MutableMap<String, MutableMap<*, *>> = TreeMap()
+    var accounts: MutableMap<String, MutableMap<Any, Any>> = TreeMap()
+        set(value) {
+            field = value
+            Settings.save()
+        }
+    @SerializedName("selectedAccount")
+    var selectedAccount: String = ""
         set(value) {
             field = value
             Settings.save()

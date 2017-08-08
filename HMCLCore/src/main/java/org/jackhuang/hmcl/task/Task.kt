@@ -57,6 +57,8 @@ abstract class Task {
     abstract fun execute()
 
     infix fun parallel(couple: Task): Task = ParallelTask(this, couple)
+    infix fun then(b: Task): Task = CoupleTask(this, { b }, true)
+    infix fun with(b: Task): Task = CoupleTask(this, { b }, false)
 
     /**
      * The collection of sub-tasks that should execute before this task running.
@@ -112,18 +114,18 @@ abstract class Task {
 
     fun executor() = TaskExecutor().submit(this)
 
-    fun subscribe(subscriber: Task) {
-        executor().submit(subscriber).start()
+    fun subscribe(subscriber: Task) = executor().apply {
+        submit(subscriber).start()
     }
 
-    fun subscribe(scheduler: Scheduler = Scheduler.DEFAULT, closure: () -> Unit) = subscribe(Task.of(closure, scheduler))
+    fun subscribe(scheduler: Scheduler = Scheduler.DEFAULT, closure: () -> Unit) = subscribe(Task.of(scheduler, closure))
 
     override fun toString(): String {
         return title
     }
 
     companion object {
-        fun of(closure: () -> Unit, scheduler: Scheduler = Scheduler.DEFAULT): Task = SimpleTask(closure, scheduler)
+        fun of(scheduler: Scheduler = Scheduler.DEFAULT, closure: () -> Unit): Task = SimpleTask(closure, scheduler)
         fun <V> of(callable: Callable<V>): TaskResult<V> = TaskCallable(callable)
     }
 }

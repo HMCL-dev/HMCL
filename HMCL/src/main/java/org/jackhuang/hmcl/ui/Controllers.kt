@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui
 import javafx.fxml.FXMLLoader
 import javafx.scene.Node
 import javafx.scene.Scene
-import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
 import javafx.stage.Stage
 
@@ -28,18 +27,22 @@ object Controllers {
     lateinit var scene: Scene private set
     lateinit var stage: Stage private set
 
-    lateinit var mainController: MainController
-    private val mainPane: Pane = loadPane("main")
+    val mainPane = MainPage()
 
-    lateinit var versionController: VersionController
-    val versionPane: Pane = loadPane("version")
+    val versionPane = VersionPage()
+
+    lateinit var leftPaneController: LeftPaneController
 
     lateinit var decorator: Decorator
 
     fun initialize(stage: Stage) {
         this.stage = stage
 
-        val decorator = Decorator(stage, mainPane, max = false)
+        decorator = Decorator(stage, max = false)
+        decorator.mainPage = mainPane
+        decorator.showPage(null)
+        leftPaneController = LeftPaneController(decorator.leftPane)
+
         // Let root pane fix window size.
         with(mainPane.parent as StackPane) {
             mainPane.prefWidthProperty().bind(widthProperty())
@@ -56,7 +59,7 @@ object Controllers {
     }
 
     fun navigate(node: Node?) {
-        //mainController.setContentPage(node)
+        decorator.showPage(node)
     }
 
     private fun <T> loadPane(s: String): T = FXMLLoader(Controllers::class.java.getResource("/assets/fxml/$s.fxml")).load()

@@ -26,7 +26,9 @@ import javafx.scene.SnapshotParameters
 import javafx.scene.image.ImageView
 import javafx.scene.image.WritableImage
 import javafx.scene.layout.StackPane
+import javafx.scene.shape.Rectangle
 import javafx.util.Duration
+import org.jackhuang.hmcl.ui.setOverflowHidden
 import org.jackhuang.hmcl.ui.takeSnapshot
 
 /**
@@ -43,7 +45,7 @@ class TransitionHandler(override val view: StackPane): AnimationHandler {
     override lateinit var duration: Duration
         private set
 
-    fun setContent(newView: Node, transition: (TransitionHandler) -> List<KeyFrame>, duration: Duration = Duration.millis(320.0)) {
+    fun setContent(newView: Node, transition: AnimationProducer, duration: Duration = Duration.millis(320.0)) {
         this.duration = duration
 
         val prevAnimation = animation
@@ -82,8 +84,7 @@ class TransitionHandler(override val view: StackPane): AnimationHandler {
 
         snapshot.isVisible = true
         snapshot.opacity = 1.0
-        view.children.setAll(snapshot)
-        view.children.add(newView)
+        view.children.setAll(snapshot, newView)
         snapshot.toFront()
     }
 }
