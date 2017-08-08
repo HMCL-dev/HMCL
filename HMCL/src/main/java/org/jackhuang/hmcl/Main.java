@@ -101,7 +101,10 @@ public final class Main {
     public static void main(String[] args) throws IOException {
         {
             try {
-                File file = new File("hmcl.log").getAbsoluteFile();
+                File file = new File(".hmcl/hmcl.log").getAbsoluteFile();
+                File parent = file.getParentFile();
+                if (!parent.exists() && !parent.mkdirs())
+                    LOGGER.log(Level.WARNING, "Failed to create log file parent {0}", parent);
                 if (!file.exists() && !file.createNewFile())
                     LOGGER.log(Level.WARNING, "Failed to create log file {0}", file);
                 Configuration.DEFAULT.appenders.add(new ConsoleAppender("File", new DefaultLayout(), true, new FileOutputStream(file), true));
