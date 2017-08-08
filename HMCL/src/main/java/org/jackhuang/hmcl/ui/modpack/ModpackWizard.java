@@ -119,7 +119,7 @@ public class ModpackWizard extends WizardBranchController {
                                     if (!IOUtils.isAbsolutePath(Settings.getInstance().getBgpath()))
                                         s.setBgpath(Settings.getInstance().getBgpath());
                                     s.setDownloadType(Settings.getInstance().getDownloadType());
-                                    engine.putTextFile(C.GSON.toJson(s), "/Users/rhj/.hmcl/hmcl.json");
+                                    engine.putTextFile(C.GSON.toJson(s), ".hmcl/hmcl.json");
                                     engine.putFile(modpack, "modpack.zip");
                                     File bg = new File("bg").getAbsoluteFile();
                                     if (bg.isDirectory())
