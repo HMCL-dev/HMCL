@@ -1,4 +1,124 @@
+import java.security.MessageDigest
+import java.util.jar.JarFile
+import java.util.jar.Pack200
+import java.util.zip.GZIPOutputStream
+
+if (!hasProperty('mainClass')) {
+    ext.mainClass = 'org.jackhuang.hmcl.Main'
+}
+
+def buildnumber = System.getenv("TRAVIS_BUILD_NUMBER")
+if (buildnumber == null)
+    buildnumber = System.getenv("BUILD_NUMBER")
+if (buildnumber == null)
+    buildnumber = "33"
+
+def versionroot = System.getenv("VERSION_ROOT")
+if (versionroot == null)
+    versionroot = "2.7.8"
+
+String mavenGroupId = 'HMCL'
+String mavenVersion = versionroot + '.' + buildnumber
+String bundleName = "Hello Minecraft! Launcher"
+
 dependencies {
     compile project(":HMCLCore")
     compile rootProject.files("lib/JFoenix.jar")
 }
+
+task generateSources(type: Sync) {
+    from 'src/main/java'
+    into "$buildDir/generated-src"
+    filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [
+            'HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING': mavenVersion
+    ])
+}
+
+compileJava.setSource "$buildDir/generated-src"
+compileJava.dependsOn generateSources
+
+configurations {
+    coreCompile.extendsFrom compile
+    coreRuntime.extendsFrom runtime
+}
+
+jar {
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+
+    manifest {
+        attributes 'Created-By'        : 'Copyright(c) 2013-2017 huangyuhui.',
+                'Main-Class'        : mainClass
+    }
+
+    doLast {
+        new File("build/signed").mkdirs()
+        ant.signjar(signedjar: archivePath, jar: archivePath,
+                keystore: "HMCL.keystore", storepass: "123456",
+                alias: "HMCL")
+
+        def messageDigest = MessageDigest.getInstance("SHA1")
+        archivePath.eachByte 1024 * 1024, { byte[] buf, int bytesRead ->
+            messageDigest.update(buf, 0, bytesRead);
+        }
+        def sha1Hex = new BigInteger(1, messageDigest.digest()).toString(16).padLeft(40, '0')
+        def fileEx = new File(project.buildDir, "libs/" + archivePath.getName() + ".sha1")
+        if (!fileEx.exists()) fileEx.createNewFile()
+        fileEx.append sha1Hex
+    }
+}
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'icon.icns'
+    }
+}
+
+task makeExecutable(dependsOn: jar) doLast {
+    ext {
+        jar.classifier = ''
+        makeExecutableinjar = jar.archivePath
+        jar.classifier = ''
+        makeExecutableoutjar = jar.archivePath
+        jar.classifier = ''
+    }
+    def loc = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".exe")
+    def fos = new FileOutputStream(loc)
+    def is = new FileInputStream(new File(project.buildDir, '../HMCLauncher.exe'))
+    int read
+    def bytes = new byte[8192]
+    while((read = is.read(bytes)) != -1)
+        fos.write(bytes, 0, read);
+    is.close()
+    is = new FileInputStream(makeExecutableinjar)
+    while((read = is.read(bytes)) != -1)
+        fos.write(bytes, 0, read);
+    is.close()
+    fos.close()
+
+}
+
+task makePackGZ(dependsOn: jar) doLast {
+    ext {
+        jar.classifier = ''
+        makeExecutableinjar = jar.archivePath
+        jar.classifier = ''
+        makeExecutableoutjar = jar.archivePath
+        jar.classifier = ''
+    }
+    def loc = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".pack.gz")
+    def os = new GZIPOutputStream(new FileOutputStream(loc))
+    Pack200.newPacker().pack new JarFile(makeExecutableinjar), os
+    os.close()
+
+    def messageDigest = MessageDigest.getInstance("SHA1")
+    loc.eachByte 1024 * 1024, { byte[] buf, int bytesRead ->
+        messageDigest.update(buf, 0, bytesRead);
+    }
+    def sha1Hex = new BigInteger(1, messageDigest.digest()).toString(16).padLeft(40, '0')
+    def fileEx = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".pack.gz.sha1")
+    if (!fileEx.exists()) fileEx.createNewFile()
+    fileEx.append sha1Hex
+}
+
+build.dependsOn makeExecutable
+build.dependsOn makePackGZ
