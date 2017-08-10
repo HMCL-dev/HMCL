@@ -18,9 +18,7 @@
 package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.JFXComboBox
-import javafx.beans.property.StringProperty
 import javafx.beans.value.ChangeListener
-import javafx.scene.Node
 import javafx.scene.layout.*
 import javafx.scene.paint.Paint
 import org.jackhuang.hmcl.ProfileChangedEvent
@@ -33,24 +31,23 @@ import org.jackhuang.hmcl.game.minecraftVersion
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider
 
-class LeftPaneController(val leftPane: VBox) {
+class LeftPaneController(leftPane: AdvancedListBox) {
     val versionsPane = VBox()
     val cboProfiles = JFXComboBox<String>().apply { items.add("Default"); prefWidthProperty().bind(leftPane.widthProperty()) }
     val accountItem = VersionListItem("mojang@mojang.com", "Yggdrasil")
 
     init {
-        addChildren(ClassTitle("ACCOUNTS"))
-        addChildren(RipplerContainer(accountItem).apply {
-            accountItem.onSettingsButtonClicked {
-                Controllers.navigate(AccountsPage())
-            }
-        })
-        addChildren(ClassTitle("LAUNCHER"))
-        addChildren(IconedItem(SVG.gear("black"), "Settings").apply { prefWidthProperty().bind(leftPane.widthProperty()) })
-        addChildren(ClassTitle("PROFILES"))
-        addChildren(cboProfiles)
-        addChildren(ClassTitle("VERSIONS"))
-        addChildren(versionsPane)
+        leftPane
+                .startCategory("ACCOUNTS")
+                .add(RipplerContainer(accountItem).apply {
+                    accountItem.onSettingsButtonClicked {
+                        Controllers.navigate(AccountsPage())
+                    }
+                })
+                .startCategory("PROFILES")
+                .add(cboProfiles)
+                .startCategory("VERSIONS")
+                .add(versionsPane)
 
         EVENT_BUS.channel<RefreshedVersionsEvent>() += this::loadVersions
         EVENT_BUS.channel<ProfileLoadingEvent>() += this::onProfilesLoading
@@ -80,17 +77,6 @@ class LeftPaneController(val leftPane: VBox) {
 
         if (Settings.getAccounts().isEmpty())
             Controllers.navigate(AccountsPage())
-    }
-
-    private fun addChildren(content: Node) {
-        if (content is Pane) {
-            leftPane.children += content
-        } else {
-            val pane = StackPane()
-            pane.styleClass += "left-pane-item"
-            pane.children.setAll(content)
-            leftPane.children += pane
-        }
     }
 
     fun onProfilesLoading() {

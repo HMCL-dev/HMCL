@@ -1,130 +1,160 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-
-<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.*?>
+<?import com.jfoenix.transitions.hamburger.HamburgerBackArrowBasicTransition?>
 <?import javafx.geometry.Insets?>
-<?import java.lang.String?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Rectangle?>
+<?import java.lang.String?>
+<?import org.jackhuang.hmcl.ui.AdvancedListBox?>
 <fx:root xmlns="http://javafx.com/javafx"
-         type="GridPane"
-         xmlns:fx="http://javafx.com/fxml"
-         pickOnBounds="false"
-         onMouseReleased="#onMouseReleased"
-         onMouseDragged="#onMouseDragged"
-         onMouseMoved="#onMouseMoved">
+         type="StackPane"
+         xmlns:fx="http://javafx.com/fxml">
     <styleClass>
-        <String fx:value="jfx-decorator" />
-        <String fx:value="resize-border" />
+        <String fx:value="jfx-decorator"/>
+        <String fx:value="resize-border"/>
     </styleClass>
-    <columnConstraints>
-        <ColumnConstraints minWidth="200" maxWidth="200" />
-        <ColumnConstraints hgrow="ALWAYS" />
-    </columnConstraints>
-    <rowConstraints>
-        <RowConstraints />
-        <RowConstraints vgrow="ALWAYS" />
-    </rowConstraints>
-    <StackPane GridPane.rowIndex="1" GridPane.columnIndex="0" VBox.vgrow="ALWAYS" styleClass="jfx-decorator-content-container">
-        <BorderPane fx:id="leftRootPane">
-            <center>
+    <BorderPane fx:id="drawerWrapper">
+        <center>
+            <JFXDrawer fx:id="drawer" defaultDrawerSize="200" direction="LEFT">
+                <styleClass>
+                    <String fx:value="body"/>
+                </styleClass>
+                <sidePane>
+                    <AdvancedListBox fx:id="sidePane" />
+                </sidePane>
                 <BorderPane>
-                    <center>
-                        <ScrollPane fitToHeight="true" fitToWidth="true">
-                            <VBox fx:id="leftPane" styleClass="jfx-decorator-left-pane" spacing="5">
-                            </VBox>
-                        </ScrollPane>
-                    </center>
-                    <bottom>
-                        <BorderPane fx:id="menuBottomBar">
-                            <left>
-                                <JFXButton fx:id="refreshMenuButton" styleClass="toggle-icon4">
-                                    <graphic>
-                                        <fx:include source="/assets/svg/refresh-black.fxml"/>
-                                    </graphic></JFXButton>
-                            </left>
-                            <right>
-                                <JFXButton fx:id="addMenuButton" styleClass="toggle-icon4">
-                                    <graphic>
-                                        <fx:include source="/assets/svg/plus-black.fxml"/>
-                                    </graphic></JFXButton>
-                            </right>
-                        </BorderPane>
-                    </bottom>
-                </BorderPane>
-            </center>
-            <right>
-                <Rectangle height="${leftRootPane.height}" width="1" fill="gray" />
-            </right>
-        </BorderPane>
-    </StackPane>
-    <StackPane fx:id="contentPlaceHolderRoot" GridPane.rowIndex="1" GridPane.columnIndex="1" styleClass="jfx-decorator-content-container" VBox.vgrow="ALWAYS">
-        <StackPane fx:id="contentPlaceHolder" styleClass="jfx-decorator-content-container">
-            <styleClass>
-                <String fx:value="jfx-decorator-content-container" />
-            </styleClass>
-            <!-- Node -->
-        </StackPane>
-    </StackPane>
-        <BorderPane GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2" fx:id="titleContainer" minHeight="30" styleClass="jfx-tool-bar" pickOnBounds="false">
-            <left>
-                <BorderPane minWidth="200" maxWidth="200" fx:id="titleWrapper">
-                    <center>
-                        <Label text="Hello Minecraft! Launcher" BorderPane.alignment="CENTER" mouseTransparent="true" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 15px;" />
-                    </center>
-                    <right>
-                        <Rectangle height="${navBar.height}" width="1" fill="gray" />
-                    </right>
-                </BorderPane>
-            </left>
-            <center>
-                <BorderPane fx:id="navBar">
                     <left>
-                        <HBox fx:id="navLeft" alignment="CENTER_LEFT" style="-fx-padding: 0;">
-                            <JFXButton fx:id="backNavButton" onMouseClicked="#onBack" maxHeight="20" styleClass="toggle-icon3">
-                                <graphic>
-                                    <fx:include source="/assets/svg/arrow-left.fxml"/>
-                                </graphic>
-                            </JFXButton>
-                            <Label fx:id="titleLabel" style="-fx-text-fill:WHITE; -fx-font-size: 15;"/>
-                        </HBox>
+                        <StackPane minWidth="200" maxWidth="200" styleClass="jfx-decorator-content-container">
+                            <BorderPane fx:id="leftRootPane">
+                                <center>
+                                    <BorderPane>
+                                        <center>
+                                            <AdvancedListBox fx:id="leftPane" />
+                                        </center>
+                                        <bottom>
+                                            <BorderPane fx:id="menuBottomBar">
+                                                <left>
+                                                    <JFXButton fx:id="refreshMenuButton" styleClass="toggle-icon4">
+                                                        <graphic>
+                                                            <fx:include source="/assets/svg/refresh-black.fxml"/>
+                                                        </graphic>
+                                                    </JFXButton>
+                                                </left>
+                                                <right>
+                                                    <JFXButton fx:id="addMenuButton" styleClass="toggle-icon4">
+                                                        <graphic>
+                                                            <fx:include source="/assets/svg/plus-black.fxml"/>
+                                                        </graphic>
+                                                    </JFXButton>
+                                                </right>
+                                            </BorderPane>
+                                        </bottom>
+                                    </BorderPane>
+                                </center>
+                                <right>
+                                    <Rectangle height="${leftRootPane.height}" width="1" fill="gray"/>
+                                </right>
+                            </BorderPane>
+                        </StackPane>
                     </left>
-                    <right>
-                        <HBox fx:id="navRight" alignment="CENTER_LEFT">
-                            <JFXButton fx:id="refreshNavButton" onMouseClicked="#onRefresh" maxHeight="20" styleClass="toggle-icon3" disable="true">
-                                <graphic>
-                                    <fx:include source="/assets/svg/refresh.fxml"/>
-                                </graphic>
-                                <StackPane.margin>
-                                    <Insets left="20"/>
-                                </StackPane.margin>
-                            </JFXButton>
-                            <JFXButton fx:id="closeNavButton" onMouseClicked="#onCloseNav" maxHeight="20" styleClass="toggle-icon3">
-                                <graphic>
-                                    <fx:include source="/assets/svg/close.fxml"/>
-                                </graphic>
-                                <StackPane.margin>
-                                    <Insets left="20"/>
-                                </StackPane.margin>
-                            </JFXButton>
-                            <Rectangle height="${navBar.height}" width="1" fill="gray" />
-                        </HBox>
-                    </right>
+                    <center>
+                        <StackPane fx:id="contentPlaceHolderRoot" styleClass="jfx-decorator-content-container" VBox.vgrow="ALWAYS">
+                            <StackPane fx:id="contentPlaceHolder" styleClass="jfx-decorator-content-container">
+                                <styleClass>
+                                    <String fx:value="jfx-decorator-content-container"/>
+                                </styleClass>
+                                <!-- Node -->
+                            </StackPane>
+                        </StackPane>
+                    </center>
                 </BorderPane>
-            </center>
-            <right>
-                <HBox fx:id="buttonsContainer" style="-fx-background-color: transparent;" alignment="CENTER_RIGHT">
-                    <padding>
-                        <Insets topRightBottomLeft="4.0" />
-                    </padding>
-                    <JFXButton fx:id="btnMin" styleClass="jfx-decorator-button" ripplerFill="white" onAction="#onMin">
-                    </JFXButton>
-                    <JFXButton fx:id="btnMax" styleClass="jfx-decorator-button" ripplerFill="white" onAction="#onMax">
-                    </JFXButton>
-                    <JFXButton fx:id="btnClose" styleClass="jfx-decorator-button" ripplerFill="white" onAction="#onClose">
-                    </JFXButton>
-                </HBox>
-            </right>
-        </BorderPane>
+            </JFXDrawer>
+        </center>
+        <top>
+            <BorderPane fx:id="titleContainer" minHeight="30" styleClass="jfx-tool-bar"
+                        pickOnBounds="false"
+                        onMouseReleased="#onMouseReleased"
+                        onMouseDragged="#onMouseDragged"
+                        onMouseMoved="#onMouseMoved">
+                <left>
+                    <BorderPane minWidth="200" maxWidth="200" fx:id="titleWrapper">
+                        <center>
+                            <HBox>
+                                <JFXRippler maskType="CIRCLE" style="-fx-ripple-color:WHITE;">
+                                    <StackPane fx:id="titleBurgerContainer">
+                                        <JFXHamburger fx:id="titleBurger">
+                                            <HamburgerBackArrowBasicTransition/>
+                                        </JFXHamburger>
+                                    </StackPane>
+                                </JFXRippler>
+                                <Label text="Hello Minecraft! Launcher" BorderPane.alignment="CENTER"
+                                       mouseTransparent="true"
+                                       style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 15px;"/>
+                            </HBox>
+                        </center>
+                        <right>
+                            <Rectangle height="${navBar.height}" width="1" fill="gray"/>
+                        </right>
+                    </BorderPane>
+                </left>
+                <center>
+                    <BorderPane fx:id="navBar">
+                        <left>
+                            <HBox fx:id="navLeft" alignment="CENTER_LEFT" style="-fx-padding: 0;">
+                                <JFXButton fx:id="backNavButton" onMouseClicked="#onBack" maxHeight="20"
+                                           styleClass="toggle-icon3">
+                                    <graphic>
+                                        <fx:include source="/assets/svg/arrow-left.fxml"/>
+                                    </graphic>
+                                </JFXButton>
+                                <Label fx:id="titleLabel" style="-fx-text-fill:WHITE; -fx-font-size: 15;"/>
+                            </HBox>
+                        </left>
+                        <right>
+                            <HBox fx:id="navRight" alignment="CENTER_LEFT">
+                                <JFXButton fx:id="refreshNavButton" onMouseClicked="#onRefresh" maxHeight="20"
+                                           styleClass="toggle-icon3" disable="true">
+                                    <graphic>
+                                        <fx:include source="/assets/svg/refresh.fxml"/>
+                                    </graphic>
+                                    <StackPane.margin>
+                                        <Insets left="20"/>
+                                    </StackPane.margin>
+                                </JFXButton>
+                                <JFXButton fx:id="closeNavButton" onMouseClicked="#onCloseNav" maxHeight="20"
+                                           styleClass="toggle-icon3">
+                                    <graphic>
+                                        <fx:include source="/assets/svg/close.fxml"/>
+                                    </graphic>
+                                    <StackPane.margin>
+                                        <Insets left="20"/>
+                                    </StackPane.margin>
+                                </JFXButton>
+                                <Rectangle height="${navBar.height}" width="1" fill="gray"/>
+                            </HBox>
+                        </right>
+                    </BorderPane>
+                </center>
+                <right>
+                    <HBox fx:id="buttonsContainer" style="-fx-background-color: transparent;" alignment="CENTER_RIGHT">
+                        <padding>
+                            <Insets topRightBottomLeft="4.0"/>
+                        </padding>
+                        <JFXButton fx:id="btnMin" styleClass="jfx-decorator-button" ripplerFill="white"
+                                   onAction="#onMin">
+                        </JFXButton>
+                        <JFXButton fx:id="btnMax" styleClass="jfx-decorator-button" ripplerFill="white"
+                                   onAction="#onMax">
+                        </JFXButton>
+                        <JFXButton fx:id="btnClose" styleClass="jfx-decorator-button" ripplerFill="white"
+                                   onAction="#onClose">
+                        </JFXButton>
+                    </HBox>
+                </right>
+            </BorderPane>
+        </top>
+    </BorderPane>
 </fx:root>

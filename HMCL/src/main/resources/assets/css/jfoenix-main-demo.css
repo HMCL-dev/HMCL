@@ -25,22 +25,22 @@
     -fx-text-fill: rgba(0.0, 0.0, 0.0, 0.87);
 }
 
-.class-title {
-    -fx-font-size: 12px;
-    -fx-padding: 0 16 0 16;
-}
-
 .rippler-container HBox {
     -fx-font-size: 14px;
     -fx-padding: 10 16 10 16;
     -fx-spacing: 10;
 }
 
-.left-pane-item {
+.class-title {
+    -fx-font-size: 12px;
+    -fx-padding: 0 16 0 16;
+}
+
+.advanced-list-box-item {
     -fx-padding: 10 16 10 16;
 }
 
-.jfx-decorator-left-pane {
+.advanced-list-box-content {
     -fx-padding: 20 0 20 0;
 }
 

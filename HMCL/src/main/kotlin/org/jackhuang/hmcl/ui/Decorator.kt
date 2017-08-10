@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.JFXButton
+import com.jfoenix.controls.JFXDrawer
+import com.jfoenix.controls.JFXHamburger
 import com.jfoenix.effects.JFXDepthManager
 import com.jfoenix.svg.SVGGlyph
 import javafx.animation.*
@@ -33,6 +35,7 @@ import javafx.geometry.Insets
 import javafx.scene.Cursor
 import javafx.scene.Node
 import javafx.scene.control.Label
+import javafx.scene.control.ScrollPane
 import javafx.scene.control.Tooltip
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.*
@@ -40,7 +43,7 @@ import javafx.scene.paint.Color
 import javafx.stage.Screen
 import javafx.stage.Stage
 import javafx.stage.StageStyle
-import org.jackhuang.hmcl.MainApplication
+import org.jackhuang.hmcl.Main
 import org.jackhuang.hmcl.ui.animation.AnimationProducer
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations
 import org.jackhuang.hmcl.ui.animation.TransitionHandler
@@ -49,7 +52,7 @@ import org.jackhuang.hmcl.util.*
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class Decorator @JvmOverloads constructor(private val primaryStage: Stage, private val mainPage: Node, private val max: Boolean = true, min: Boolean = true) : GridPane(), AbstractWizardDisplayer {
+class Decorator @JvmOverloads constructor(private val primaryStage: Stage, private val mainPage: Node, private val max: Boolean = true, min: Boolean = true) : StackPane(), AbstractWizardDisplayer {
     override val wizardController: WizardController = WizardController(this)
 
     private var xOffset: Double = 0.0
@@ -70,9 +73,13 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, priva
     @FXML lateinit var refreshMenuButton: JFXButton
     @FXML lateinit var addMenuButton: JFXButton
     @FXML lateinit var titleLabel: Label
-    @FXML lateinit var leftPane: VBox
+    @FXML lateinit var leftPane: AdvancedListBox
+    @FXML lateinit var drawer: JFXDrawer
+    @FXML lateinit var sidePane: AdvancedListBox
+    @FXML lateinit var titleBurgerContainer: StackPane
+    @FXML lateinit var titleBurger: JFXHamburger
 
-    private val onCloseButtonActionProperty: ObjectProperty<Runnable> = SimpleObjectProperty(Runnable { MainApplication.stop() })
+    private val onCloseButtonActionProperty: ObjectProperty<Runnable> = SimpleObjectProperty(Runnable { Main.stop() })
         @JvmName("onCloseButtonActionProperty") get
     var onCloseButtonAction: Runnable by onCloseButtonActionProperty
 
@@ -123,6 +130,26 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, priva
         animationHandler = TransitionHandler(contentPlaceHolder)
 
         setOverflowHidden(lookup("#contentPlaceHolderRoot") as Pane)
+        setOverflowHidden(lookup("#drawerWrapper") as Pane)
+
+        // init the title hamburger icon
+        drawer.setOnDrawerOpening {
+            val animation = titleBurger.getAnimation()
+            animation.setRate(1.0)
+            animation.play()
+        }
+        drawer.setOnDrawerClosing {
+            val animation = titleBurger.getAnimation()
+            animation.setRate(-1.0)
+            animation.play()
+        }
+        titleBurgerContainer.setOnMouseClicked({
+            if (drawer.isHidden || drawer.isHiding) {
+                drawer.open()
+            } else {
+                drawer.close()
+            }
+        })
     }
 
     fun onMouseMoved(mouseEvent: MouseEvent) {

@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.setting
 import com.google.gson.GsonBuilder
 import javafx.beans.InvalidationListener
 import java.io.IOException
-import org.jackhuang.hmcl.MainApplication
+import org.jackhuang.hmcl.Main
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider
 import org.jackhuang.hmcl.download.DownloadProvider
 import org.jackhuang.hmcl.download.MojangDownloadProvider
@@ -117,7 +117,7 @@ object Settings {
         else {
             LOG.config("No settings file here, may be first loading.")
             if (!c.configurations.containsKey(HOME_PROFILE))
-                c.configurations[HOME_PROFILE] = Profile(HOME_PROFILE, MainApplication.getMinecraftDirectory())
+                c.configurations[HOME_PROFILE] = Profile(HOME_PROFILE, Main.getMinecraftDirectory())
         }
         return c
     }

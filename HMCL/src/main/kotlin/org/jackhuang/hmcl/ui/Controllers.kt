@@ -32,6 +32,7 @@ object Controllers {
     val versionPane = VersionPage()
 
     lateinit var leftPaneController: LeftPaneController
+    lateinit var sidePaneController: SidePaneController
 
     lateinit var decorator: Decorator
 
@@ -41,6 +42,7 @@ object Controllers {
         decorator = Decorator(stage, mainPane, max = false)
         decorator.showPage(null)
         leftPaneController = LeftPaneController(decorator.leftPane)
+        sidePaneController = SidePaneController(decorator.sidePane)
 
         decorator.isCustomMaximize = false
 

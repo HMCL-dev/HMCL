@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.util.DEFAULT_USER_AGENT
 import org.jackhuang.hmcl.util.OS
 import java.io.File
 
-class MainApplication : Application() {
+class Main : Application() {
 
     override fun start(stage: Stage) {
         PRIMARY_STAGE = stage
@@ -46,7 +46,7 @@ class MainApplication : Application() {
         fun main(args: Array<String>) {
             DEFAULT_USER_AGENT = "Hello Minecraft! Launcher"
 
-            launch(MainApplication::class.java, *args)
+            launch(Main::class.java, *args)
         }
 
         fun getWorkingDirectory(folder: String): File {

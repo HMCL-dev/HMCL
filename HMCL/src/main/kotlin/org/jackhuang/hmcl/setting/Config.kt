@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.setting
 
 import com.google.gson.annotations.SerializedName
-import org.jackhuang.hmcl.MainApplication
+import org.jackhuang.hmcl.Main
 import org.jackhuang.hmcl.util.JavaVersion
 import java.io.File
 import java.util.TreeMap
@@ -37,7 +37,7 @@ class Config {
             Settings.save()
         }
     @SerializedName("commonpath")
-    var commonpath: File = MainApplication.getMinecraftDirectory()
+    var commonpath: File = Main.getMinecraftDirectory()
         set(value) {
             field = value
             Settings.save()
