@@ -29,14 +29,16 @@ import java.util.concurrent.Callable
 class ModController {
     @FXML lateinit var scrollPane: ScrollPane
     @FXML lateinit var rootPane: VBox
-    lateinit var modManager: ModManager
-    lateinit var versionId: String
+    private lateinit var modManager: ModManager
+    private lateinit var versionId: String
 
     fun initialize() {
         scrollPane.smoothScrolling()
     }
 
-    fun loadMods() {
+    fun loadMods(modManager: ModManager, versionId: String) {
+        this.modManager = modManager
+        this.versionId = versionId
         Task.of(Callable {
             modManager.refreshMods(versionId)
         }).subscribe(Scheduler.JAVAFX) {

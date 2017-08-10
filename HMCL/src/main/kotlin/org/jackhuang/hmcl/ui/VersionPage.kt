@@ -46,9 +46,7 @@ class VersionPage : StackPane(), DecoratorPage {
     fun load(id: String, profile: Profile) {
         titleProperty.set("Version settings - " + id)
 
-        versionSettingsController.loadVersionSetting(id, profile.getVersionSetting(id))
-        modController.modManager = profile.modManager
-        modController.versionId = id
-        modController.loadMods()
+        versionSettingsController.loadVersionSetting(profile.getVersionSetting(id))
+        modController.loadMods(profile.modManager, id)
     }
 }

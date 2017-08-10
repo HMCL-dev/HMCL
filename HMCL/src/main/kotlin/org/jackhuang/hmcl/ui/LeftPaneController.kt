@@ -99,7 +99,7 @@ class LeftPaneController(val leftPane: VBox) {
 
     fun onProfileChanged(event: ProfileChangedEvent) {
         val profile = event.value
-        profile.selectedVersionProperty.addListener { observable ->
+        profile.selectedVersionProperty.addListener { _ ->
             versionChanged(profile.selectedVersion)
         }
         profile.selectedVersionProperty.fireValueChangedEvent()
@@ -122,14 +122,15 @@ class LeftPaneController(val leftPane: VBox) {
                 ripplerContainer.selected = true
                 profile.selectedVersion = version.id
             }
-            ripplerContainer.userData = version.id to item
+            ripplerContainer.properties["version"] = version.id to item
             versionsPane.children += ripplerContainer
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     fun versionChanged(selectedVersion: String) {
         versionsPane.children
-                .filter { it is RipplerContainer && it.userData is Pair<*, *> }
-                .forEach { (it as RipplerContainer).selected = (it.userData as Pair<String, VersionListItem>).first == selectedVersion }
+                .filter { it is RipplerContainer && it.properties["version"] is Pair<*, *> }
+                .forEach { (it as RipplerContainer).selected = (it.properties["version"] as Pair<String, VersionListItem>).first == selectedVersion }
     }
 }

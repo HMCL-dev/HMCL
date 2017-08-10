@@ -24,13 +24,10 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.io.File
 
-private fun lessThan32(b: ByteArray, x: Int): Int {
-    var x = x
-    while (x < b.size) {
-        if (b[x] < 32)
-            return x
-        x++
-    }
+private fun lessThan32(b: ByteArray, startIndex: Int): Int {
+    for (i in startIndex until b.size)
+        if (b[i] < 32)
+            return i
     return -1
 }
 

@@ -71,7 +71,7 @@ class VersionSettingsController {
         txtMetaspace.textProperty().addListener(validation(txtMetaspace))
     }
 
-    fun loadVersionSetting(id: String, version: VersionSetting) {
+    fun loadVersionSetting(version: VersionSetting) {
         rootPane.children -= advancedSettingsPane
 
         lastVersionSetting?.apply {

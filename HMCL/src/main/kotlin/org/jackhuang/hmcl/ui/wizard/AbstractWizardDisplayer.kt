@@ -96,6 +96,7 @@ interface AbstractWizardDisplayer : WizardDisplayer {
         navigateTo(StackPane().apply { children += vbox }, Navigation.NavigationDirection.FINISH)
 
         task.executor().let { executor ->
+            @Suppress("NAME_SHADOWING")
             executor.taskListener = object : TaskListener {
                 override fun onReady(task: Task) {
                     Platform.runLater { tasksBar.progressProperty().set(finishedTasks * 1.0 / executor.totTask.get()) }

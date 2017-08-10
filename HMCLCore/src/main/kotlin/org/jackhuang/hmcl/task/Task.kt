@@ -113,6 +113,7 @@ abstract class Task {
     }
 
     fun executor() = TaskExecutor().submit(this)
+    fun executor(taskListener: TaskListener) = TaskExecutor().submit(this).apply { this.taskListener = taskListener }
 
     fun subscribe(subscriber: Task) = executor().apply {
         submit(subscriber).start()

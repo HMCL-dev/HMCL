@@ -30,7 +30,7 @@ import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
 import java.util.concurrent.Callable
 
-class AccountItem(i: Int, width: Double, height: Double, group: ToggleGroup) : StackPane() {
+class AccountItem(i: Int, group: ToggleGroup) : StackPane() {
     @FXML lateinit var icon: Pane
     @FXML lateinit var content: VBox
     @FXML lateinit var header: StackPane

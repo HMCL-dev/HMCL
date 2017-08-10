@@ -68,7 +68,7 @@ class ModInfo (
             val file = if (modFile.extension == DISABLED_EXTENSION)
                             modFile.absoluteFile.parentFile.resolve(modFile.nameWithoutExtension)
                         else modFile
-            var description = "Unrecognized mod file"
+            val description: String
             if (file.extension == "zip" || file.extension == "jar")
                 try {
                     return ForgeModMetadata.fromFile(modFile)

@@ -121,4 +121,5 @@ task makePackGZ(dependsOn: jar) doLast {
 }
 
 build.dependsOn makeExecutable
-build.dependsOn makePackGZ
+//build.dependsOn makePackGZ
+//Kotlin classes will be ignored by Pack200 due to class unrecognized attribute

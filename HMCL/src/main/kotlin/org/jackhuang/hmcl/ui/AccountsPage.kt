@@ -112,7 +112,7 @@ class AccountsPage() : StackPane(), DecoratorPage {
     }
 
     private fun buildNode(i: Int, account: Account, group: ToggleGroup): Node {
-        return AccountItem(i, Math.random() * 100 + 100, Math.random() * 100 + 100, group).apply {
+        return AccountItem(i, group).apply {
             chkSelected.properties["account"] = account
             chkSelected.isSelected = Settings.selectedAccount == account
             lblUser.text = account.username

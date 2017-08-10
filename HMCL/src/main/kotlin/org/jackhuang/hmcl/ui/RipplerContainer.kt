@@ -129,7 +129,7 @@ open class RipplerContainer(@NamedArg("container") container: Node): StackPane()
                 return@Callable background
             }
         }, backgroundProperty()))
-        ripplerFillProperty.addListener { o, oldVal, newVal -> this.buttonRippler.ripplerFill = newVal }
+        ripplerFillProperty.addListener { _, _, newVal -> this.buttonRippler.ripplerFill = newVal }
         if (background == null || this.isJavaDefaultBackground(background)) {
             background = Background(BackgroundFill(Color.TRANSPARENT, this.defaultRadii, null))
         }
@@ -149,44 +149,12 @@ open class RipplerContainer(@NamedArg("container") container: Node): StackPane()
     }
 
     protected fun updateChildren() {
-        children.add(container)
-
-        if (this.buttonContainer != null) {
-            this.children.add(0, this.buttonContainer)
-        }
+        children.addAll(buttonContainer, container)
 
         for (i in 1..this.children.size - 1) {
             this.children[i].isPickOnBounds = false
         }
 
-    }
-
-    fun layoutChildren(x: Double, y: Double, w: Double, h: Double) {
-        if (this.invalid) {
-            if (ripplerFill == null) {
-                for (i in this.children.size - 1 downTo 1) {
-                    if (this.children[i] is Shape) {
-                        this.buttonRippler.ripplerFill = (this.children[i] as Shape).fill
-                        (this.children[i] as Shape).fillProperty().addListener { o, oldVal, newVal -> this.buttonRippler.ripplerFill = newVal }
-                        break
-                    }
-
-                    if (this.children[i] is Label) {
-                        this.buttonRippler.ripplerFill = (this.children[i] as Label).textFill
-                        (this.children[i] as Label).textFillProperty().addListener { o, oldVal, newVal -> this.buttonRippler.ripplerFill = newVal }
-                        break
-                    }
-                }
-            } else {
-                this.buttonRippler.ripplerFill = ripplerFill
-            }
-
-            this.invalid = false
-        }
-
-        val shift = 1.0
-        this.buttonContainer.resizeRelocate(layoutBounds.minX - shift, layoutBounds.minY - shift, width + 2.0 * shift, height + 2.0 * shift)
-        //this.layoutLabelInArea(x, y, w, h)
     }
 
     private fun isJavaDefaultBackground(background: Background): Boolean {
