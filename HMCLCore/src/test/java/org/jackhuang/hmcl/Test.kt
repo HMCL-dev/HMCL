@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.download.MojangDownloadProvider
 import org.jackhuang.hmcl.game.DefaultGameRepository
 import org.jackhuang.hmcl.launch.DefaultLauncher
 import org.jackhuang.hmcl.game.LaunchOptions
+import org.jackhuang.hmcl.game.minecraftVersion
 import org.jackhuang.hmcl.launch.ProcessListener
 import org.jackhuang.hmcl.util.makeCommand
 import org.jackhuang.hmcl.task.Task
@@ -115,10 +116,11 @@ class Test {
     fun installForge() {
         val thread = Thread.currentThread()
         val version = repository.getVersion("test").resolve(repository)
+        val minecraftVersion = minecraftVersion(repository.getVersionJar(version)) ?: ""
         // optifine HD_U_C4
         // forge 14.21.1.2426
         // liteloader 1.12-SNAPSHOT-4
-        dependency.installLibraryAsync(version, "liteloader", "1.12-SNAPSHOT-4").executor().apply {
+        dependency.installLibraryAsync(minecraftVersion, version, "liteloader", "1.12-SNAPSHOT-4").executor().apply {
             taskListener = taskListener(thread)
         }.start()
         try {

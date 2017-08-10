@@ -19,10 +19,10 @@ package org.jackhuang.hmcl.setting
 
 import com.google.gson.*
 import javafx.beans.InvalidationListener
-import javafx.beans.property.*
 import org.jackhuang.hmcl.MainApplication
 import org.jackhuang.hmcl.game.LaunchOptions
 import org.jackhuang.hmcl.util.*
+import org.jackhuang.hmcl.util.property.*
 import java.io.File
 import java.io.IOException
 import java.lang.reflect.Type
@@ -39,7 +39,7 @@ class VersionSetting() {
      *
      * Defaults false because if one version uses global first, custom version file will not be generated.
      */
-    val usesGlobalProperty = SimpleBooleanProperty(this, "usesGlobal", false)
+    val usesGlobalProperty = ImmediateBooleanProperty(this, "usesGlobal", false)
     var usesGlobal: Boolean by usesGlobalProperty
 
     // java
@@ -47,39 +47,39 @@ class VersionSetting() {
     /**
      * Java version or null if user customizes java directory.
      */
-    val javaProperty = SimpleStringProperty(this, "java", null)
+    val javaProperty = ImmediateNullableStringProperty(this, "java", null)
     var java: String? by javaProperty
 
     /**
      * User customized java directory or null if user uses system Java.
      */
-    val javaDirProperty = SimpleStringProperty(this, "javaDir", "")
+    val javaDirProperty = ImmediateStringProperty(this, "javaDir", "")
     var javaDir: String by javaDirProperty
 
     /**
      * The command to launch java, i.e. optirun.
      */
-    val wrapperProperty = SimpleStringProperty(this, "wrapper", "")
+    val wrapperProperty = ImmediateStringProperty(this, "wrapper", "")
     var wrapper: String by wrapperProperty
 
     /**
      * The permanent generation size of JVM garbage collection.
      */
-    val permSizeProperty = SimpleStringProperty(this, "permSize", "")
+    val permSizeProperty = ImmediateStringProperty(this, "permSize", "")
     var permSize: String by permSizeProperty
 
     /**
      * The maximum memory that JVM can allocate.
      * The size of JVM heap.
      */
-    val maxMemoryProperty = SimpleIntegerProperty(this, "maxMemory", OS.SUGGESTED_MEMORY)
+    val maxMemoryProperty = ImmediateIntegerProperty(this, "maxMemory", OS.SUGGESTED_MEMORY)
     var maxMemory: Int by maxMemoryProperty
 
     /**
      * The command that will be executed before launching the Minecraft.
      * Operating system relevant.
      */
-    val precalledCommandProperty = SimpleStringProperty(this, "precalledCommand", "")
+    val precalledCommandProperty = ImmediateStringProperty(this, "precalledCommand", "")
     var precalledCommand: String by precalledCommandProperty
 
     // options
@@ -87,25 +87,25 @@ class VersionSetting() {
     /**
      * The user customized arguments passed to JVM.
      */
-    val javaArgsProperty = SimpleStringProperty(this, "javaArgs", "")
+    val javaArgsProperty = ImmediateStringProperty(this, "javaArgs", "")
     var javaArgs: String by javaArgsProperty
 
     /**
      * The user customized arguments passed to Minecraft.
      */
-    val minecraftArgsProperty = SimpleStringProperty(this, "minecraftArgs", "")
+    val minecraftArgsProperty = ImmediateStringProperty(this, "minecraftArgs", "")
     var minecraftArgs: String by minecraftArgsProperty
 
     /**
      * True if disallow HMCL use default JVM arguments.
      */
-    val noJVMArgsProperty = SimpleBooleanProperty(this, "noJVMArgs", false)
+    val noJVMArgsProperty = ImmediateBooleanProperty(this, "noJVMArgs", false)
     var noJVMArgs: Boolean by noJVMArgsProperty
 
     /**
      * True if HMCL does not check game's completeness.
      */
-    val notCheckGameProperty = SimpleBooleanProperty(this, "notCheckGame", false)
+    val notCheckGameProperty = ImmediateBooleanProperty(this, "notCheckGame", false)
     var notCheckGame: Boolean by notCheckGameProperty
 
     // Minecraft settings.
@@ -115,13 +115,13 @@ class VersionSetting() {
      *
      * Format: ip:port or without port.
      */
-    val serverIpProperty = SimpleStringProperty(this, "serverIp", "")
+    val serverIpProperty = ImmediateStringProperty(this, "serverIp", "")
     var serverIp: String by serverIpProperty
 
     /**
      * True if Minecraft started in fullscreen mode.
      */
-    val fullscreenProperty = SimpleBooleanProperty(this, "fullscreen", false)
+    val fullscreenProperty = ImmediateBooleanProperty(this, "fullscreen", false)
     var fullscreen: Boolean by fullscreenProperty
 
     /**
@@ -131,7 +131,7 @@ class VersionSetting() {
      * String type prevents unexpected value from causing JsonSyntaxException.
      * We can only reset this field instead of recreating the whole setting file.
      */
-    val widthProperty = SimpleIntegerProperty(this, "width", 854)
+    val widthProperty = ImmediateIntegerProperty(this, "width", 854)
     var width: Int by widthProperty
 
 
@@ -142,7 +142,7 @@ class VersionSetting() {
      * String type prevents unexpected value from causing JsonSyntaxException.
      * We can only reset this field instead of recreating the whole setting file.
      */
-    val heightProperty = SimpleIntegerProperty(this, "height", 480)
+    val heightProperty = ImmediateIntegerProperty(this, "height", 480)
     var height: Int by heightProperty
 
 
@@ -150,7 +150,7 @@ class VersionSetting() {
      * 0 - .minecraft<br/>
      * 1 - .minecraft/versions/&lt;version&gt;/<br/>
      */
-    val gameDirTypeProperty = SimpleObjectProperty<EnumGameDirectory>(this, "gameDirTypeProperty", EnumGameDirectory.ROOT_FOLDER)
+    val gameDirTypeProperty = ImmediateObjectProperty<EnumGameDirectory>(this, "gameDirTypeProperty", EnumGameDirectory.ROOT_FOLDER)
     var gameDirType: EnumGameDirectory by gameDirTypeProperty
 
     // launcher settings
@@ -160,7 +160,7 @@ class VersionSetting() {
      * 1 - Hide the launcher when the game starts.<br/>
      * 2 - Keep the launcher open.<br/>
      */
-    val launcherVisibilityProperty = SimpleObjectProperty<LauncherVisibility>(this, "launcherVisibility", LauncherVisibility.HIDE)
+    val launcherVisibilityProperty = ImmediateObjectProperty<LauncherVisibility>(this, "launcherVisibility", LauncherVisibility.HIDE)
     var launcherVisibility: LauncherVisibility by launcherVisibilityProperty
 
     fun addPropertyChangedListener(listener: InvalidationListener) {
@@ -200,10 +200,10 @@ class VersionSetting() {
                 fullscreen = fullscreen,
                 serverIp = serverIp,
                 wrapper = wrapper,
-                proxyHost = Settings.SETTINGS.proxyHost,
-                proxyPort = Settings.SETTINGS.proxyPort,
-                proxyUser = Settings.SETTINGS.proxyUserName,
-                proxyPass = Settings.SETTINGS.proxyPassword,
+                proxyHost = Settings.PROXY_HOST,
+                proxyPort = Settings.PROXY_PORT,
+                proxyUser = Settings.PROXY_USER,
+                proxyPass = Settings.PROXY_PASS,
                 precalledCommand = precalledCommand,
                 noGeneratedJVMArgs = noJVMArgs
         )
@@ -217,7 +217,7 @@ class VersionSetting() {
                 addProperty("usesGlobal", src.usesGlobal)
                 addProperty("javaArgs", src.javaArgs)
                 addProperty("minecraftArgs", src.minecraftArgs)
-                addProperty("maxMemory", src.maxMemory)
+                addProperty("maxMemory", if (src.maxMemory <= 0) OS.SUGGESTED_MEMORY else src.maxMemory)
                 addProperty("permSize", src.permSize)
                 addProperty("width", src.width)
                 addProperty("height", src.height)
@@ -239,11 +239,14 @@ class VersionSetting() {
         override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): VersionSetting? {
             if (json == null || json == JsonNull.INSTANCE || json !is JsonObject) return null
 
+            var maxMemoryN = parseJsonPrimitive(json["maxMemory"]?.asJsonPrimitive, OS.SUGGESTED_MEMORY)
+            if (maxMemoryN <= 0) maxMemoryN = OS.SUGGESTED_MEMORY
+
             return VersionSetting().apply {
                 usesGlobal = json["usesGlobal"]?.asBoolean ?: false
                 javaArgs = json["javaArgs"]?.asString ?: ""
                 minecraftArgs = json["minecraftArgs"]?.asString ?: ""
-                maxMemory = parseJsonPrimitive(json["maxMemory"]?.asJsonPrimitive)
+                maxMemory = maxMemoryN
                 permSize = json["permSize"]?.asString ?: ""
                 width = parseJsonPrimitive(json["width"]?.asJsonPrimitive)
                 height = parseJsonPrimitive(json["height"]?.asJsonPrimitive)

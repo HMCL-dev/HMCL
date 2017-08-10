@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.ui.wizard
 
 import javafx.beans.property.StringProperty
 
-interface HasTitle {
+interface DecoratorPage {
     val titleProperty: StringProperty
+
+    fun onClose() {}
 }

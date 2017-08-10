@@ -46,11 +46,13 @@ enum class OS {
         }
 
         val TOTAL_MEMORY: Long by lazy {
-            ReflectionHelper.get<Long>(ManagementFactory.getOperatingSystemMXBean(), "getTotalPhysicalMemorySize") ?: 1024L
+            val bytes = ReflectionHelper.invoke<Long>(ManagementFactory.getOperatingSystemMXBean(), "getTotalPhysicalMemorySize")
+            if (bytes == null) 1024
+            else bytes / 1024 / 1024
         }
 
         val SUGGESTED_MEMORY: Int by lazy {
-            val memory = TOTAL_MEMORY / 1024 / 1024 / 4
+            val memory = TOTAL_MEMORY / 4
             (Math.round(1.0 * memory / 128.0) * 128).toInt()
         }
 

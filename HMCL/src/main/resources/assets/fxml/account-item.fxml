@@ -3,11 +3,11 @@
 <?import javafx.scene.layout.*?>
 
 <?import com.jfoenix.controls.JFXButton?>
-<?import javafx.scene.shape.SVGPath?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.image.Image?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
+<?import com.jfoenix.controls.JFXRadioButton?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
@@ -27,9 +27,11 @@
                 </center>
             </BorderPane>
         </StackPane>
-        <StackPane fx:id="body" style="-fx-background-radius: 0 0 5 5; -fx-background-color: rgb(255,255,255,0.87);" />
+        <StackPane fx:id="body" style="-fx-background-radius: 0 0 5 5; -fx-background-color: rgb(255,255,255,0.87); -fx-padding: 0 0 10 0;">
+            <JFXRadioButton fx:id="chkSelected" StackPane.alignment="BOTTOM_RIGHT" />
+        </StackPane>
     </VBox>
-    <StackPane fx:id="icon" StackPane.alignment="TOP_RIGHT">
+    <StackPane fx:id="icon" StackPane.alignment="TOP_RIGHT" pickOnBounds="false">
         <ImageView StackPane.alignment="CENTER_RIGHT">
             <StackPane.margin>
                 <Insets right="12" />

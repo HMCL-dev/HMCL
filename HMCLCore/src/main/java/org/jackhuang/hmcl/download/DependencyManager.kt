@@ -36,7 +36,7 @@ abstract class DependencyManager(open val repository: GameRepository) {
      */
     abstract fun gameBuilder(): GameBuilder
 
-    abstract fun installLibraryAsync(version: Version, libraryId: String, libraryVersion: String): Task
+    abstract fun installLibraryAsync(gameVersion: String, version: Version, libraryId: String, libraryVersion: String): Task
 
     /**
      * Get registered version list.

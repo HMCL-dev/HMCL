@@ -167,7 +167,7 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
             res.add(options.width.toString())
         }
 
-        if (options.serverIp != null) {
+        if (options.serverIp != null && options.serverIp.isNotBlank()) {
             val args = options.serverIp.split(":")
             res.add("--server")
             res.add(args[0])

@@ -39,13 +39,13 @@
                     <bottom>
                         <BorderPane fx:id="menuBottomBar">
                             <left>
-                                <JFXButton fx:id="refreshMenuButton" styleClass="toggle-icon3">
+                                <JFXButton fx:id="refreshMenuButton" styleClass="toggle-icon4">
                                     <graphic>
                                         <fx:include source="/assets/svg/refresh-black.fxml"/>
                                     </graphic></JFXButton>
                             </left>
                             <right>
-                                <JFXButton fx:id="addMenuButton" styleClass="toggle-icon3">
+                                <JFXButton fx:id="addMenuButton" styleClass="toggle-icon4">
                                     <graphic>
                                         <fx:include source="/assets/svg/plus-black.fxml"/>
                                     </graphic></JFXButton>

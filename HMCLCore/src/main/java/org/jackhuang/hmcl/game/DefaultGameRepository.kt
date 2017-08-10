@@ -41,7 +41,7 @@ open class DefaultGameRepository(var baseDirectory: File): GameRepository {
     override fun getRunDirectory(id: String) = baseDirectory
     override fun getVersionJar(version: Version): File {
         val v = version.resolve(this)
-        val id = v.id
+        val id = v.jar ?: v.id
         return getVersionRoot(id).resolve("$id.jar")
     }
     override fun getNativeDirectory(id: String) = File(getVersionRoot(id), "$id-natives")

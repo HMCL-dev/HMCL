@@ -17,23 +17,29 @@
  */
 package org.jackhuang.hmcl.ui
 
-import com.jfoenix.controls.JFXButton
-import javafx.beans.property.SimpleStringProperty
-import javafx.beans.property.StringProperty
+import com.jfoenix.controls.JFXCheckBox
 import javafx.fxml.FXML
-import javafx.scene.layout.StackPane
-import org.jackhuang.hmcl.ui.wizard.DecoratorPage
+import javafx.scene.control.Label
+import javafx.scene.layout.BorderPane
+import org.jackhuang.hmcl.mod.ModInfo
 
-/**
- * @see /assets/fxml/main.fxml
- */
-class MainPage : StackPane(), DecoratorPage {
-    override val titleProperty: StringProperty = SimpleStringProperty(this, "title", "Main Page")
-
-    @FXML lateinit var buttonLaunch: JFXButton
+class ModItem(info: ModInfo, private val deleteCallback: () -> Unit) : BorderPane() {
+    @FXML lateinit var lblModFileName: Label
+    @FXML lateinit var lblModAuthor: Label
+    @FXML lateinit var chkEnabled: JFXCheckBox
 
     init {
-        loadFXML("/assets/fxml/main.fxml")
+        loadFXML("/assets/fxml/mod-item.fxml")
+
+        lblModFileName.text = info.fileName
+        lblModAuthor.text = "${info.name}, Version: ${info.version}, Game Version: ${info.mcversion}, Authors: ${info.authors}"
+        chkEnabled.isSelected = info.isActive
+        chkEnabled.selectedProperty().addListener { _, _, newValue ->
+            info.activeProperty.set(newValue)
+        }
     }
 
+    fun onDelete() {
+        deleteCallback()
+    }
 }

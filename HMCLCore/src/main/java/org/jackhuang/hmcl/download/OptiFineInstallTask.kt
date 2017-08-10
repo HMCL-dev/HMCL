@@ -27,23 +27,22 @@ import org.jackhuang.hmcl.task.then
 import org.jackhuang.hmcl.util.merge
 
 class OptiFineInstallTask(private val dependencyManager: DefaultDependencyManager,
-                          private val version: Version,
-                          private val remoteVersion: String): TaskResult<Version>() {
+                           private val gameVersion: String,
+                           private val version: Version,
+                           private val remoteVersion: String): TaskResult<Version>() {
     private val optiFineVersionList = dependencyManager.getVersionList("optifine")
     lateinit var remote: RemoteVersion<*>
     override val dependents: MutableCollection<Task> = mutableListOf()
     override val dependencies: MutableCollection<Task> = mutableListOf()
 
     init {
-        if (version.jar == null)
-            throw IllegalArgumentException()
         if (!optiFineVersionList.loaded)
             dependents += optiFineVersionList.refreshAsync(dependencyManager.downloadProvider) then {
-                remote = optiFineVersionList.getVersion(version.jar, remoteVersion) ?: throw IllegalArgumentException("Remote LiteLoader version $remoteVersion not found")
+                remote = optiFineVersionList.getVersion(gameVersion, remoteVersion) ?: throw IllegalArgumentException("Remote OptiFine version $gameVersion-$remoteVersion not found")
                 null
             }
         else {
-            remote = optiFineVersionList.getVersion(version.jar, remoteVersion) ?: throw IllegalArgumentException("Remote LiteLoader version $remoteVersion not found")
+            remote = optiFineVersionList.getVersion(gameVersion, remoteVersion) ?: throw IllegalArgumentException("Remote OptiFine version $gameVersion-$remoteVersion not found")
         }
     }
     override fun execute() {

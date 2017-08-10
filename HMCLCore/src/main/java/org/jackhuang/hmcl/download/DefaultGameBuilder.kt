@@ -27,9 +27,10 @@ class DefaultGameBuilder(val dependencyManager: DefaultDependencyManager): GameB
     val downloadProvider = dependencyManager.downloadProvider
 
     override fun buildAsync(): Task {
+        val gameVersion = gameVersion
         return VersionJSONDownloadTask(gameVersion = gameVersion) then a@{ task ->
             var version = GSON.fromJson<Version>(task.result!!) ?: return@a null
-            version = version.copy(jar = version.id, id = name)
+            version = version.copy(id = name)
             var result = ParallelTask(
                     GameAssetDownloadTask(dependencyManager, version),
                     GameLoggingDownloadTask(dependencyManager, version),
@@ -38,21 +39,21 @@ class DefaultGameBuilder(val dependencyManager: DefaultDependencyManager): GameB
             ) then VersionJSONSaveTask(dependencyManager, version)
 
             if (toolVersions.containsKey("forge"))
-                result = result then libraryTaskHelper(version, "forge")
+                result = result then libraryTaskHelper(gameVersion, version, "forge")
             if (toolVersions.containsKey("liteloader"))
-                result = result then libraryTaskHelper(version, "liteloader")
+                result = result then libraryTaskHelper(gameVersion, version, "liteloader")
             if (toolVersions.containsKey("optifine"))
-                result = result then libraryTaskHelper(version, "optifine")
+                result = result then libraryTaskHelper(gameVersion, version, "optifine")
             result
         }
     }
 
-    private fun libraryTaskHelper(version: Version, libraryId: String): Task.(Task) -> Task = { prev ->
+    private fun libraryTaskHelper(gameVersion: String, version: Version, libraryId: String): Task.(Task) -> Task = { prev ->
         var thisVersion = version
         if (prev is TaskResult<*> && prev.result is Version) {
             thisVersion = prev.result as Version
         }
-        dependencyManager.installLibraryAsync(thisVersion, libraryId, toolVersions[libraryId]!!)
+        dependencyManager.installLibraryAsync(gameVersion, thisVersion, libraryId, toolVersions[libraryId]!!)
     }
 
     inner class VersionJSONDownloadTask(val gameVersion: String): Task() {

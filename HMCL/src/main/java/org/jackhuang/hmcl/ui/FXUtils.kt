@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui
 
 import com.jfoenix.concurrency.JFXUtilities
+import com.jfoenix.controls.JFXScrollPane
 import javafx.animation.Animation
 import javafx.animation.KeyFrame
 import javafx.animation.Timeline
@@ -29,10 +30,10 @@ import javafx.scene.Parent
 import javafx.scene.Scene
 import javafx.scene.control.ListView
 import javafx.scene.control.ScrollBar
+import javafx.scene.control.ScrollPane
 import javafx.scene.image.WritableImage
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.ScrollEvent
-import javafx.scene.layout.Pane
 import javafx.scene.layout.Region
 import javafx.scene.shape.Rectangle
 import javafx.util.Duration
@@ -90,6 +91,8 @@ fun ListView<*>.smoothScrolling() {
     }
 }
 
+fun ScrollPane.smoothScrolling() = JFXScrollPane.smoothScrolling(this)
+
 fun runOnUiThread(runnable: () -> Unit) = {
     JFXUtilities.runInFX(runnable)
 }
@@ -109,6 +112,5 @@ fun setOverflowHidden(node: Region) {
 
 val stylesheets = arrayOf(
         Controllers::class.java.getResource("/css/jfoenix-fonts.css").toExternalForm(),
-Controllers::class.java.getResource("/css/jfoenix-design.css").toExternalForm(),
-//Controllers::class.java.getResource("/assets/css/jfoenix-components.css").toExternalForm(),
+        Controllers::class.java.getResource("/css/jfoenix-design.css").toExternalForm(),
         Controllers::class.java.getResource("/assets/css/jfoenix-main-demo.css").toExternalForm())

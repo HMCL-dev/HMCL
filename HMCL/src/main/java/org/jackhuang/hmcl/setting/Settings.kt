@@ -24,22 +24,19 @@ import org.jackhuang.hmcl.MainApplication
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider
 import org.jackhuang.hmcl.download.DownloadProvider
 import org.jackhuang.hmcl.download.MojangDownloadProvider
-import org.jackhuang.hmcl.util.GSON
 import org.jackhuang.hmcl.util.LOG
 import java.io.File
 import java.util.logging.Level
 import org.jackhuang.hmcl.ProfileLoadingEvent
 import org.jackhuang.hmcl.ProfileChangedEvent
 import org.jackhuang.hmcl.auth.Account
-import org.jackhuang.hmcl.auth.Accounts
+import org.jackhuang.hmcl.util.*
 import org.jackhuang.hmcl.auth.OfflineAccount
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
 import org.jackhuang.hmcl.event.EVENT_BUS
-import org.jackhuang.hmcl.util.FileTypeAdapter
-import org.jackhuang.hmcl.util.ignoreException
+import org.jackhuang.hmcl.util.property.ImmediateObjectProperty
 import java.net.Proxy
 import java.util.*
-
 
 object Settings {
     val GSON = GsonBuilder()
@@ -53,7 +50,7 @@ object Settings {
 
     val SETTINGS_FILE = File("hmcl.json").absoluteFile
 
-    val SETTINGS: Config
+    private val SETTINGS: Config
 
     private val ACCOUNTS = mutableMapOf<String, Account>()
 
@@ -82,10 +79,10 @@ object Settings {
 
         save()
 
-        if (!getProfiles().containsKey(DEFAULT_PROFILE))
-            getProfiles().put(DEFAULT_PROFILE, Profile());
+        if (!getProfileMap().containsKey(DEFAULT_PROFILE))
+            getProfileMap().put(DEFAULT_PROFILE, Profile());
 
-        for ((name, profile) in getProfiles().entries) {
+        for ((name, profile) in getProfileMap().entries) {
             profile.name = name
             profile.addPropertyChangedListener(InvalidationListener { save() })
         }
@@ -151,23 +148,35 @@ object Settings {
             return getProfile(SETTINGS.selectedProfile)
         }
 
-    val selectedAccount: Account?
-        get() {
-            val a = getAccount(SETTINGS.selectedAccount)
-            if (a == null && ACCOUNTS.isNotEmpty()) {
-                val (key, acc) = ACCOUNTS.entries.first()
-                SETTINGS.selectedAccount = key
+    val selectedAccountProperty = object : ImmediateObjectProperty<Account?>(this, "selectedAccount", getAccount(SETTINGS.selectedAccount)) {
+        override fun get(): Account? {
+            val a = super.get()
+            if (a == null || !ACCOUNTS.containsKey(a.username)) {
+                val acc = if (ACCOUNTS.isEmpty()) null else ACCOUNTS.values.first()
+                set(acc)
                 return acc
-            }
-            return a
+            } else return a
         }
 
-    fun setSelectedAccount(name: String) {
-        if (ACCOUNTS.containsKey(name))
-            SETTINGS.selectedAccount = name
+        override fun set(newValue: Account?) {
+            if (newValue == null || ACCOUNTS.containsKey(newValue.username)) {
+                super.set(newValue)
+            }
+        }
+
+        override fun invalidated() {
+            super.invalidated()
+
+            SETTINGS.selectedAccount = value?.username ?: ""
+        }
     }
+    var selectedAccount: Account? by selectedAccountProperty
 
     val PROXY: Proxy = Proxy.NO_PROXY
+    val PROXY_HOST: String? get() = SETTINGS.proxyHost
+    val PROXY_PORT: String? get() = SETTINGS.proxyPort
+    val PROXY_USER: String? get() = SETTINGS.proxyUserName
+    val PROXY_PASS: String? get() = SETTINGS.proxyPassword
 
     fun addAccount(account: Account) {
         ACCOUNTS[account.username] = account
@@ -183,36 +192,38 @@ object Settings {
 
     fun deleteAccount(name: String) {
         ACCOUNTS.remove(name)
+
+        selectedAccountProperty.get()
     }
 
     fun getProfile(name: String?): Profile {
-        var p: Profile? = getProfiles()[name ?: DEFAULT_PROFILE]
+        var p: Profile? = getProfileMap()[name ?: DEFAULT_PROFILE]
         if (p == null)
-            if (getProfiles().containsKey(DEFAULT_PROFILE))
-                p = getProfiles()[DEFAULT_PROFILE]!!
+            if (getProfileMap().containsKey(DEFAULT_PROFILE))
+                p = getProfileMap()[DEFAULT_PROFILE]!!
             else {
                 p = Profile()
-                getProfiles().put(DEFAULT_PROFILE, p)
+                getProfileMap().put(DEFAULT_PROFILE, p)
             }
         return p
     }
 
     fun hasProfile(name: String?): Boolean {
-        return getProfiles().containsKey(name ?: DEFAULT_PROFILE)
+        return getProfileMap().containsKey(name ?: DEFAULT_PROFILE)
     }
 
-    fun getProfiles(): MutableMap<String, Profile> {
+    fun getProfileMap(): MutableMap<String, Profile> {
         return SETTINGS.configurations
     }
 
-    fun getProfilesFiltered(): Collection<Profile> {
-        return getProfiles().values.filter { t -> t.name.isNotBlank()  }
+    fun getProfiles(): Collection<Profile> {
+        return getProfileMap().values.filter { t -> t.name.isNotBlank()  }
     }
 
     fun putProfile(ver: Profile?): Boolean {
-        if (ver == null || ver.name.isBlank() || getProfiles().containsKey(ver.name))
+        if (ver == null || ver.name.isBlank() || getProfileMap().containsKey(ver.name))
             return false
-        getProfiles().put(ver.name, ver)
+        getProfileMap().put(ver.name, ver)
         return true
     }
 
@@ -227,15 +238,15 @@ object Settings {
         var notify = false
         if (selectedProfile.name == ver)
             notify = true
-        val flag = getProfiles().remove(ver) != null
+        val flag = getProfileMap().remove(ver) != null
         if (notify && flag)
             onProfileChanged()
         return flag
     }
 
     internal fun onProfileChanged() {
-        EVENT_BUS.fireEvent(ProfileChangedEvent(SETTINGS, selectedProfile))
         selectedProfile.repository.refreshVersions()
+        EVENT_BUS.fireEvent(ProfileChangedEvent(SETTINGS, selectedProfile))
     }
 
     /**

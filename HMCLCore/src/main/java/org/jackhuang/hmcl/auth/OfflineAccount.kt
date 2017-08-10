@@ -21,6 +21,12 @@ import org.jackhuang.hmcl.util.DigestUtils
 import java.net.Proxy
 
 class OfflineAccount private constructor(val uuid: String, override val username: String): Account() {
+
+    init {
+        if (username.isBlank())
+            throw IllegalArgumentException("Username cannot be blank")
+    }
+
     override fun logIn(proxy: Proxy): AuthInfo {
         if (username.isBlank() || uuid.isBlank())
             throw AuthenticationException("Username cannot be empty")

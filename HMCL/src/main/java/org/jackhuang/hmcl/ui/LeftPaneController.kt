@@ -18,11 +18,14 @@
 package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.JFXComboBox
+import javafx.beans.property.StringProperty
+import javafx.beans.value.ChangeListener
 import javafx.scene.Node
 import javafx.scene.layout.*
 import javafx.scene.paint.Paint
 import org.jackhuang.hmcl.ProfileChangedEvent
 import org.jackhuang.hmcl.ProfileLoadingEvent
+import org.jackhuang.hmcl.auth.Account
 import org.jackhuang.hmcl.event.EVENT_BUS
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent
 import org.jackhuang.hmcl.game.LauncherHelper
@@ -62,6 +65,21 @@ class LeftPaneController(val leftPane: VBox) {
             Settings.selectedProfile.repository.refreshVersions()
         }
         Controllers.mainPane.buttonLaunch.setOnMouseClicked { LauncherHelper.launch() }
+
+        val listener = ChangeListener<Account?> { _, _, newValue ->
+            if (newValue == null) {
+                accountItem.lblVersionName.text = "mojang@mojang.com"
+                accountItem.lblGameVersion.text = "Yggdrasil"
+            } else {
+                accountItem.lblVersionName.text = newValue.username
+                accountItem.lblGameVersion.text = accountType(newValue)
+            }
+        }
+        Settings.selectedAccountProperty.addListener(listener)
+        listener.changed(null, null, Settings.selectedAccount)
+
+        if (Settings.getAccounts().isEmpty())
+            Controllers.navigate(AccountsPage())
     }
 
     private fun addChildren(content: Node) {
@@ -81,13 +99,10 @@ class LeftPaneController(val leftPane: VBox) {
 
     fun onProfileChanged(event: ProfileChangedEvent) {
         val profile = event.value
-        profile.selectedVersionProperty.addListener { _, _, newValue ->
-            versionChanged(newValue)
+        profile.selectedVersionProperty.addListener { observable ->
+            versionChanged(profile.selectedVersion)
         }
-    }
-
-    private fun loadAccounts() {
-
+        profile.selectedVersionProperty.fireValueChangedEvent()
     }
 
     private fun loadVersions() {
@@ -98,7 +113,7 @@ class LeftPaneController(val leftPane: VBox) {
             val ripplerContainer = RipplerContainer(item)
             item.onSettingsButtonClicked {
                 Controllers.decorator.showPage(Controllers.versionPane)
-                Controllers.versionPane.loadVersionSetting(item.versionName, profile.getVersionSetting(item.versionName))
+                Controllers.versionPane.load(item.versionName, profile)
             }
             ripplerContainer.ripplerFill = Paint.valueOf("#89E1F9")
             ripplerContainer.setOnMouseClicked {

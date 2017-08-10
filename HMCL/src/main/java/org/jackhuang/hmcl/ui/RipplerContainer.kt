@@ -81,42 +81,22 @@ open class RipplerContainer(@NamedArg("container") container: Node): StackPane()
     init {
         styleClass += "rippler-container"
         this.container = container
-        /*
-        armedProperty().addListener { o, oldVal, newVal ->
-            if (newVal!!.booleanValue()) {
-                this.releaseManualRippler = this.buttonRippler.createManualRipple()
-                if (this.clickedAnimation != null) {
-                    this.clickedAnimation!!.rate = 1.0
-                    this.clickedAnimation!!.play()
-                }
-            } else {
-                if (this.releaseManualRippler != null) {
-                    this.releaseManualRippler!!.run()
-                }
-
-                if (this.clickedAnimation != null) {
-                    this.clickedAnimation!!.rate = -1.0
-                    this.clickedAnimation!!.play()
-                }
-            }
-
-        }*/
         this.buttonContainer.children.add(this.buttonRippler)
-        setOnMousePressed { e ->
+        setOnMousePressed {
             if (this.clickedAnimation != null) {
                 this.clickedAnimation!!.rate = 1.0
                 this.clickedAnimation!!.play()
             }
 
         }
-        setOnMouseReleased { e ->
+        setOnMouseReleased {
             if (this.clickedAnimation != null) {
                 this.clickedAnimation!!.rate = -1.0
                 this.clickedAnimation!!.play()
             }
 
         }
-        focusedProperty().addListener { o, oldVal, newVal ->
+        focusedProperty().addListener { _, _, newVal ->
             if (newVal) {
                 if (!isPressed) {
                     this.buttonRippler.showOverlay()
@@ -126,7 +106,7 @@ open class RipplerContainer(@NamedArg("container") container: Node): StackPane()
             }
 
         }
-        pressedProperty().addListener { _, _, _ -> this.buttonRippler.hideOverlay() }
+        pressedProperty().addListener { _ -> this.buttonRippler.hideOverlay() }
         isPickOnBounds = false
         this.buttonContainer.isPickOnBounds = false
         this.buttonContainer.shapeProperty().bind(shapeProperty())
@@ -157,8 +137,8 @@ open class RipplerContainer(@NamedArg("container") container: Node): StackPane()
         this.updateChildren()
 
         containerProperty.addListener { _ -> updateChildren() }
-        selectedProperty.addListener { _, _, newValue ->
-            if (newValue) background = Background(BackgroundFill(ripplerFill, defaultRadii, null))
+        selectedProperty.addListener { _ ->
+            if (selected) background = Background(BackgroundFill(ripplerFill, defaultRadii, null))
             else background = Background(BackgroundFill(Color.TRANSPARENT, defaultRadii, null))
         }
 

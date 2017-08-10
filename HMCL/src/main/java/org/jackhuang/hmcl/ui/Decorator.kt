@@ -37,12 +37,9 @@ import javafx.scene.control.Tooltip
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.*
 import javafx.scene.paint.Color
-import javafx.scene.shape.Rectangle
 import javafx.stage.Screen
 import javafx.stage.Stage
 import javafx.stage.StageStyle
-import javafx.scene.layout.BorderStrokeStyle
-import javafx.scene.layout.BorderStroke
 import org.jackhuang.hmcl.MainApplication
 import org.jackhuang.hmcl.ui.animation.AnimationProducer
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations
@@ -52,7 +49,7 @@ import org.jackhuang.hmcl.util.*
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class Decorator @JvmOverloads constructor(private val primaryStage: Stage, private val max: Boolean = true, min: Boolean = true) : GridPane(), AbstractWizardDisplayer {
+class Decorator @JvmOverloads constructor(private val primaryStage: Stage, private val mainPage: Node, private val max: Boolean = true, min: Boolean = true) : GridPane(), AbstractWizardDisplayer {
     override val wizardController: WizardController = WizardController(this)
 
     private var xOffset: Double = 0.0
@@ -370,16 +367,28 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, priva
         if (content is WizardPage)
             titleLabel.text = prefix + content.title
 
-        if (content is HasTitle)
+        if (content is DecoratorPage)
             titleLabel.textProperty().bind(content.titleProperty)
     }
 
-    lateinit var mainPage: Node
     var category: String? = null
+    var nowPage: Node? = null
 
     fun showPage(content: Node?) {
+        val c = content ?: mainPage
         onEnd()
-        setContent(content ?: mainPage, ContainerAnimations.FADE.animationProducer)
+        val nowPage = nowPage
+        if (nowPage is DecoratorPage)
+            nowPage.onClose()
+        this.nowPage = content
+        setContent(c, ContainerAnimations.FADE.animationProducer)
+
+        if (c is Region)
+            // Let root pane fix window size.
+            with(c.parent as StackPane) {
+                c.prefWidthProperty().bind(widthProperty())
+                c.prefHeightProperty().bind(heightProperty())
+            }
     }
 
     fun startWizard(wizardProvider: WizardProvider, category: String? = null) {

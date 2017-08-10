@@ -38,16 +38,10 @@ object Controllers {
     fun initialize(stage: Stage) {
         this.stage = stage
 
-        decorator = Decorator(stage, max = false)
-        decorator.mainPage = mainPane
+        decorator = Decorator(stage, mainPane, max = false)
         decorator.showPage(null)
         leftPaneController = LeftPaneController(decorator.leftPane)
 
-        // Let root pane fix window size.
-        with(mainPane.parent as StackPane) {
-            mainPane.prefWidthProperty().bind(widthProperty())
-            mainPane.prefHeightProperty().bind(heightProperty())
-        }
         decorator.isCustomMaximize = false
 
         scene = Scene(decorator, 800.0, 480.0)

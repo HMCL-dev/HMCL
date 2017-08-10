@@ -18,37 +18,35 @@
 package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.JFXButton
+import com.jfoenix.controls.JFXCheckBox
+import com.jfoenix.controls.JFXRadioButton
 import com.jfoenix.effects.JFXDepthManager
 import javafx.beans.binding.Bindings
 import javafx.fxml.FXML
 import javafx.scene.control.Label
+import javafx.scene.control.ToggleGroup
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
 import java.util.concurrent.Callable
 
-class AccountItem(i: Int, width: Double, height: Double) : StackPane() {
+class AccountItem(i: Int, width: Double, height: Double, group: ToggleGroup) : StackPane() {
     @FXML lateinit var icon: Pane
     @FXML lateinit var content: VBox
     @FXML lateinit var header: StackPane
     @FXML lateinit var body: StackPane
     @FXML lateinit var btnDelete: JFXButton
-    @FXML lateinit var btnEdit: JFXButton
     @FXML lateinit var lblUser: Label
+    @FXML lateinit var chkSelected: JFXRadioButton
     @FXML lateinit var lblType: Label
 
     init {
         loadFXML("/assets/fxml/account-item.fxml")
 
-        minWidth = width
-        maxWidth = width
-        prefWidth = width
-
-        minHeight = height
-        maxHeight = height
-        prefHeight = height
-
         JFXDepthManager.setDepth(this, 1)
+
+        chkSelected.toggleGroup = group
+        btnDelete.graphic = SVG.delete("white", 15.0, 15.0)
 
         // create content
         val headerColor = getDefaultColor(i % 12)

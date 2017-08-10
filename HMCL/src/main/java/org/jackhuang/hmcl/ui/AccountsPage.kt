@@ -25,18 +25,19 @@ import javafx.scene.control.ScrollPane
 import javafx.scene.layout.StackPane
 import javafx.beans.property.SimpleStringProperty
 import javafx.beans.property.StringProperty
+import javafx.beans.value.ChangeListener
 import javafx.scene.control.Label
+import javafx.scene.control.ToggleGroup
 import org.jackhuang.hmcl.auth.Account
 import org.jackhuang.hmcl.auth.OfflineAccount
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.Scheduler
-import org.jackhuang.hmcl.task.with
 import org.jackhuang.hmcl.task.Task
-import org.jackhuang.hmcl.ui.wizard.HasTitle
+import org.jackhuang.hmcl.ui.wizard.DecoratorPage
 import java.util.concurrent.Callable
 
-class AccountsPage : StackPane(), HasTitle {
+class AccountsPage() : StackPane(), DecoratorPage {
     override val titleProperty: StringProperty = SimpleStringProperty(this, "title", "Accounts")
 
     @FXML lateinit var scrollPane: ScrollPane
@@ -48,12 +49,30 @@ class AccountsPage : StackPane(), HasTitle {
     @FXML lateinit var lblCreationWarning: Label
     @FXML lateinit var cboType: JFXComboBox<String>
 
+    val listener = ChangeListener<Account?> { _, _, newValue ->
+        masonryPane.children.forEach {
+            if (it is AccountItem) {
+                it.chkSelected.isSelected = newValue?.username == it.lblUser.text
+            }
+        }
+    }
+
     init {
         loadFXML("/assets/fxml/account.fxml")
         children.remove(dialog)
         dialog.dialogContainer = this
 
-        JFXScrollPane.smoothScrolling(scrollPane)
+        scrollPane.smoothScrolling()
+
+        txtUsername.textProperty().addListener { _ ->
+            txtUsername.validate()
+        }
+        txtUsername.validate()
+
+        txtPassword.textProperty().addListener { _ ->
+            txtPassword.validate()
+        }
+        txtPassword.validate()
 
         cboType.selectionModel.selectedIndexProperty().addListener { _, _, newValue ->
             val visible = newValue != 0
@@ -62,54 +81,47 @@ class AccountsPage : StackPane(), HasTitle {
         }
         cboType.selectionModel.select(0)
 
+        Settings.selectedAccountProperty.addListener(listener)
+
         loadAccounts()
+
+        if (Settings.getAccounts().isEmpty())
+            addNewAccount()
+    }
+
+    override fun onClose() {
+        Settings.selectedAccountProperty.removeListener(listener)
     }
 
     fun loadAccounts() {
         val children = mutableListOf<Node>()
         var i = 0
+        val group = ToggleGroup()
         for ((_, account) in Settings.getAccounts()) {
-            children += buildNode(++i, account)
+            children += buildNode(++i, account, group)
+        }
+        group.selectedToggleProperty().addListener { _, _, newValue ->
+            if (newValue != null)
+                Settings.selectedAccount = newValue.properties["account"] as Account
         }
         masonryPane.children.setAll(children)
-        Platform.runLater { scrollPane.requestLayout() }
+        Platform.runLater {
+            masonryPane.requestLayout()
+            scrollPane.requestLayout()
+        }
     }
 
-    private fun buildNode(i: Int, account: Account): Node {
-        return AccountItem(i, Math.random() * 100 + 100, Math.random() * 100 + 100).apply {
+    private fun buildNode(i: Int, account: Account, group: ToggleGroup): Node {
+        return AccountItem(i, Math.random() * 100 + 100, Math.random() * 100 + 100, group).apply {
+            chkSelected.properties["account"] = account
+            chkSelected.isSelected = Settings.selectedAccount == account
             lblUser.text = account.username
-            lblType.text = when(account) {
-                is OfflineAccount -> "Offline Account"
-                is YggdrasilAccount -> "Yggdrasil Account"
-                else -> throw Error("Unsupported account: $account")
-            }
+            lblType.text = accountType(account)
             btnDelete.setOnMouseClicked {
                 Settings.deleteAccount(account.username)
                 Platform.runLater(this@AccountsPage::loadAccounts)
             }
         }
-    }
-
-    private fun getDefaultColor(i: Int): String {
-        var color = "#FFFFFF"
-        when (i) {
-            0 -> color = "#8F3F7E"
-            1 -> color = "#B5305F"
-            2 -> color = "#CE584A"
-            3 -> color = "#DB8D5C"
-            4 -> color = "#DA854E"
-            5 -> color = "#E9AB44"
-            6 -> color = "#FEE435"
-            7 -> color = "#99C286"
-            8 -> color = "#01A05E"
-            9 -> color = "#4A8895"
-            10 -> color = "#16669B"
-            11 -> color = "#2F65A5"
-            12 -> color = "#4E6A9C"
-            else -> {
-            }
-        }
-        return color
     }
 
     fun addNewAccount() {
@@ -150,3 +162,10 @@ class AccountsPage : StackPane(), HasTitle {
         dialog.close()
     }
 }
+
+fun accountType(account: Account) =
+        when(account) {
+            is OfflineAccount -> "Offline Account"
+            is YggdrasilAccount -> "Yggdrasil Account"
+            else -> throw Error("Unsupported account: $account")
+        }

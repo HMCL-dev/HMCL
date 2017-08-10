@@ -18,19 +18,34 @@
 package org.jackhuang.hmcl.mod
 
 import com.google.gson.JsonParseException
+import org.jackhuang.hmcl.util.property.ImmediateBooleanProperty
+import org.jackhuang.hmcl.util.*
 import java.io.File
 
 class ModInfo (
-        val file: File,
+        var file: File,
         val name: String,
         val description: String = "",
-        val authors: String = "",
-        val version: String = "",
-        val mcversion: String = "",
+        val authors: String = "unknown",
+        val version: String = "unknown",
+        val mcversion: String = "unknown",
         val url: String = ""
 ): Comparable<ModInfo> {
-    val isActive: Boolean
-        get() = file.extension != DISABLED_EXTENSION
+    val activeProperty = object : ImmediateBooleanProperty(this, "active", file.extension != DISABLED_EXTENSION) {
+        override fun invalidated() {
+            val f = file.absoluteFile
+            val newf: File
+            if (f.extension == DISABLED_EXTENSION)
+                newf = File(f.parentFile, f.nameWithoutExtension)
+            else
+                newf = File(f.parentFile, f.name + ".disabled")
+            if (f.renameTo(newf))
+                file = newf
+        }
+    }
+        @JvmName("activeProperty") get
+
+    var isActive: Boolean by activeProperty
 
     val fileName: String = (if (isActive) file.name else file.nameWithoutExtension).substringBeforeLast(".")
 
@@ -53,22 +68,23 @@ class ModInfo (
             val file = if (modFile.extension == DISABLED_EXTENSION)
                             modFile.absoluteFile.parentFile.resolve(modFile.nameWithoutExtension)
                         else modFile
+            var description = "Unrecognized mod file"
             if (file.extension == "zip" || file.extension == "jar")
                 try {
                     return ForgeModMetadata.fromFile(modFile)
-                } catch (e: JsonParseException) {
-                    throw e
-                } catch (ignore: Exception) {}
+                } catch (ignore: Exception) {
+                    description = "May be Forge mod"
+                }
 
             else if (file.extension == "litemod")
                 try {
                     return LiteModMetadata.fromFile(modFile)
-                } catch (e: JsonParseException) {
-                    throw e
-                } catch (ignore: Exception) {}
+                } catch (ignore: Exception) {
+                    description = "May be LiteLoader mod"
+                }
             else throw IllegalArgumentException("File $modFile is not mod")
 
-            return ModInfo(file = modFile, name = modFile.nameWithoutExtension, description = "Unrecognized mod file")
+            return ModInfo(file = modFile, name = modFile.nameWithoutExtension, description = description)
         }
     }
 }

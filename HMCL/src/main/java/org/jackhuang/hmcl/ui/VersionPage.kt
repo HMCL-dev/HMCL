@@ -17,107 +17,38 @@
  */
 package org.jackhuang.hmcl.ui
 
-import com.jfoenix.controls.JFXScrollPane
-import com.jfoenix.controls.JFXTextField
+import com.jfoenix.controls.*
 import javafx.beans.InvalidationListener
 import javafx.beans.property.Property
 import javafx.beans.property.SimpleStringProperty
 import javafx.beans.property.StringProperty
+import javafx.beans.value.ChangeListener
 import javafx.fxml.FXML
+import javafx.scene.control.Label
 import javafx.scene.control.ScrollPane
 import javafx.scene.layout.*
 import javafx.stage.DirectoryChooser
+import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.setting.VersionSetting
-import org.jackhuang.hmcl.ui.wizard.HasTitle
+import org.jackhuang.hmcl.ui.wizard.DecoratorPage
+import org.jackhuang.hmcl.util.OS
 
-class VersionPage : StackPane(), HasTitle {
+class VersionPage : StackPane(), DecoratorPage {
     override val titleProperty: StringProperty = SimpleStringProperty(this, "title", null)
-    var lastVersionSetting: VersionSetting? = null
 
-    @FXML lateinit var rootPane: VBox
-    @FXML lateinit var scroll: ScrollPane
-    @FXML lateinit var settingsPane: GridPane
-    @FXML lateinit var txtWidth: JFXTextField
-    @FXML lateinit var txtHeight: JFXTextField
-    @FXML lateinit var txtMaxMemory: JFXTextField
-    @FXML lateinit var txtJVMArgs: JFXTextField
-    @FXML lateinit var txtGameArgs: JFXTextField
-    @FXML lateinit var txtMetaspace: JFXTextField
-    @FXML lateinit var txtWrapper: JFXTextField
-    @FXML lateinit var txtPrecallingCommand: JFXTextField
-    @FXML lateinit var txtServerIP: JFXTextField
-    @FXML lateinit var txtGameDir: JFXTextField
-    @FXML lateinit var advancedSettingsPane: VBox
+    @FXML lateinit var versionSettingsController: VersionSettingsController
+    @FXML lateinit var modController: ModController
 
     init {
         loadFXML("/assets/fxml/version.fxml")
     }
 
-    fun initialize() {
-        JFXScrollPane.smoothScrolling(scroll)
-
-        fun validation(field: JFXTextField) = InvalidationListener { field.validate() }
-        fun validator(nullable: Boolean = false) = NumberValidator(nullable).apply { message = "Must be a number." }
-
-        txtWidth.setValidators(validator())
-        txtWidth.textProperty().addListener(validation(txtWidth))
-        txtHeight.setValidators(validator())
-        txtHeight.textProperty().addListener(validation(txtHeight))
-        txtMaxMemory.setValidators(validator())
-        txtMaxMemory.textProperty().addListener(validation(txtMaxMemory))
-        txtMetaspace.setValidators(validator(true))
-        txtMetaspace.textProperty().addListener(validation(txtMetaspace))
-    }
-
-    fun loadVersionSetting(id: String, version: VersionSetting) {
+    fun load(id: String, profile: Profile) {
         titleProperty.set("Version settings - " + id)
-        rootPane.children -= advancedSettingsPane
 
-        lastVersionSetting?.apply {
-            widthProperty.unbind()
-            heightProperty.unbind()
-            maxMemoryProperty.unbind()
-            javaArgsProperty.unbind()
-            minecraftArgsProperty.unbind()
-            permSizeProperty.unbind()
-            wrapperProperty.unbind()
-            precalledCommandProperty.unbind()
-            serverIpProperty.unbind()
-        }
-
-        bindInt(txtWidth, version.widthProperty)
-        bindInt(txtHeight, version.heightProperty)
-        bindInt(txtMaxMemory, version.maxMemoryProperty)
-        bindString(txtJVMArgs, version.javaArgsProperty)
-        bindString(txtGameArgs, version.minecraftArgsProperty)
-        bindString(txtMetaspace, version.permSizeProperty)
-        bindString(txtWrapper, version.wrapperProperty)
-        bindString(txtPrecallingCommand, version.precalledCommandProperty)
-        bindString(txtServerIP, version.serverIpProperty)
-
-        lastVersionSetting = version
-    }
-
-    private fun bindInt(textField: JFXTextField, property: Property<*>) {
-        textField.textProperty().unbind()
-        textField.textProperty().bindBidirectional(property as Property<Int>, SafeIntStringConverter())
-    }
-
-    private fun bindString(textField: JFXTextField, property: Property<String>) {
-        textField.textProperty().unbind()
-        textField.textProperty().bindBidirectional(property)
-    }
-
-    fun onShowAdvanced() {
-        if (!rootPane.children.contains(advancedSettingsPane))
-            rootPane.children += advancedSettingsPane
-    }
-
-    fun onExploreJavaDir() {
-        val chooser = DirectoryChooser()
-        chooser.title = "Selecting Java Directory"
-        val selectedDir = chooser.showDialog(Controllers.stage)
-        if (selectedDir != null)
-            txtGameDir.text = selectedDir.absolutePath
+        versionSettingsController.loadVersionSetting(id, profile.getVersionSetting(id))
+        modController.modManager = profile.modManager
+        modController.versionId = id
+        modController.loadMods()
     }
 }

@@ -19,41 +19,44 @@ package org.jackhuang.hmcl.setting
 
 import com.google.gson.*
 import javafx.beans.InvalidationListener
-import javafx.beans.property.*
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider
 import org.jackhuang.hmcl.download.DefaultDependencyManager
-import org.jackhuang.hmcl.download.DependencyManager
 import org.jackhuang.hmcl.game.HMCLGameRepository
+import org.jackhuang.hmcl.mod.ModManager
 import org.jackhuang.hmcl.util.*
+import org.jackhuang.hmcl.util.property.ImmediateBooleanProperty
+import org.jackhuang.hmcl.util.property.ImmediateObjectProperty
+import org.jackhuang.hmcl.util.property.ImmediateStringProperty
 import java.io.File
 import java.lang.reflect.Type
 
-class Profile(var name: String = "Default", gameDir: File = File(".minecraft")) {
-    val globalProperty = SimpleObjectProperty<VersionSetting>(this, "global", VersionSetting())
+class Profile(var name: String = "Default", initialGameDir: File = File(".minecraft"), initialSelectedVersion: String = "") {
+    val globalProperty = ImmediateObjectProperty<VersionSetting>(this, "global", VersionSetting())
     var global: VersionSetting by globalProperty
 
-    val selectedVersionProperty = SimpleStringProperty(this, "selectedVersion", "")
+    val selectedVersionProperty = ImmediateStringProperty(this, "selectedVersion", initialSelectedVersion)
     var selectedVersion: String by selectedVersionProperty
 
-    val gameDirProperty = SimpleObjectProperty<File>(this, "gameDir", gameDir)
+    val gameDirProperty = ImmediateObjectProperty<File>(this, "gameDir", initialGameDir)
     var gameDir: File by gameDirProperty
 
-    val noCommonProperty = SimpleBooleanProperty(this, "noCommon", false)
+    val noCommonProperty = ImmediateBooleanProperty(this, "noCommon", false)
     var noCommon: Boolean by noCommonProperty
 
-    var repository = HMCLGameRepository(gameDir)
+    var repository = HMCLGameRepository(initialGameDir)
     var dependency = DefaultDependencyManager(repository, BMCLAPIDownloadProvider)
+    var modManager = ModManager(repository)
 
     init {
-        gameDirProperty.addListener { _, _, newValue ->
-            repository.baseDirectory = newValue
+        gameDirProperty.addListener { _ ->
+            repository.baseDirectory = gameDir
             repository.refreshVersions()
         }
 
-        selectedVersionProperty.addListener { _, _, newValue ->
-            if (newValue.isNotBlank() && !repository.hasVersion(newValue)) {
+        selectedVersionProperty.addListener { _ ->
+            if (selectedVersion.isNotBlank() && !repository.hasVersion(selectedVersion)) {
                 val newVersion = repository.getVersions().firstOrNull()
-                // will cause anthor change event, we must insure that there will not be dead recursion.
+                // will cause anthor change event, we must ensure that there will not be dead recursion.
                 selectedVersion = newVersion?.id ?: ""
             }
         }
@@ -110,9 +113,8 @@ class Profile(var name: String = "Default", gameDir: File = File(".minecraft")) 
         override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext): Profile? {
             if (json == null || json == JsonNull.INSTANCE || json !is JsonObject) return null
 
-            return Profile(gameDir = File(json["gameDir"]?.asString ?: "")).apply {
+            return Profile(initialGameDir = File(json["gameDir"]?.asString ?: ""), initialSelectedVersion = json["selectedVersion"]?.asString ?: "").apply {
                 global = context.deserialize(json["global"], VersionSetting::class.java)
-                selectedVersion = json["selectedVersion"]?.asString ?: ""
                 noCommon = json["noCommon"]?.asBoolean ?: false
             }
         }

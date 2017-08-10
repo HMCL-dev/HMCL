@@ -30,23 +30,22 @@ import org.jackhuang.hmcl.util.merge
  * LiteLoader must be installed after Forge.
  */
 class LiteLoaderInstallTask(private val dependencyManager: DefaultDependencyManager,
-                            private val version: Version,
-                            private val remoteVersion: String): TaskResult<Version>() {
+                             private val gameVersion: String,
+                             private val version: Version,
+                             private val remoteVersion: String): TaskResult<Version>() {
     private val liteLoaderVersionList = dependencyManager.getVersionList("liteloader") as LiteLoaderVersionList
     lateinit var remote: RemoteVersion<LiteLoaderRemoteVersionTag>
     override val dependents: MutableCollection<Task> = mutableListOf()
     override val dependencies: MutableCollection<Task> = mutableListOf()
 
     init {
-        if (version.jar == null)
-            throw IllegalArgumentException()
         if (!liteLoaderVersionList.loaded)
             dependents += LiteLoaderVersionList.refreshAsync(dependencyManager.downloadProvider) then {
-                remote = liteLoaderVersionList.getVersion(version.jar, remoteVersion) ?: throw IllegalArgumentException("Remote LiteLoader version ${version.jar}, $remoteVersion not found")
+                remote = liteLoaderVersionList.getVersion(gameVersion, remoteVersion) ?: throw IllegalArgumentException("Remote LiteLoader version $gameVersion, $remoteVersion not found")
                 null
             }
         else {
-            remote = liteLoaderVersionList.getVersion(version.jar, remoteVersion) ?: throw IllegalArgumentException("Remote LiteLoader version ${version.jar}, $remoteVersion not found")
+            remote = liteLoaderVersionList.getVersion(gameVersion, remoteVersion) ?: throw IllegalArgumentException("Remote LiteLoader version $gameVersion, $remoteVersion not found")
         }
     }
 

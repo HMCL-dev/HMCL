@@ -30,8 +30,9 @@ import java.io.IOException
 import java.util.zip.ZipFile
 
 class ForgeInstallTask(private val dependencyManager: DefaultDependencyManager,
-                       private val version: Version,
-                       private val remoteVersion: String) : TaskResult<Version>() {
+                        private val gameVersion: String,
+                        private val version: Version,
+                        private val remoteVersion: String) : TaskResult<Version>() {
     private val forgeVersionList = dependencyManager.getVersionList("forge")
     private val installer: File = File("forge-installer.jar").absoluteFile
     lateinit var remote: RemoteVersion<*>
@@ -39,15 +40,13 @@ class ForgeInstallTask(private val dependencyManager: DefaultDependencyManager,
     override val dependencies: MutableCollection<Task> = mutableListOf()
 
     init {
-        if (version.jar == null)
-            throw IllegalArgumentException()
         if (!forgeVersionList.loaded)
             dependents += forgeVersionList.refreshAsync(dependencyManager.downloadProvider) then {
-                remote = forgeVersionList.getVersion(version.jar, remoteVersion) ?: throw IllegalArgumentException("Remote forge version ${version.jar}, $remoteVersion not found")
+                remote = forgeVersionList.getVersion(gameVersion, remoteVersion) ?: throw IllegalArgumentException("Remote forge version $gameVersion, $remoteVersion not found")
                 FileDownloadTask(remote.url.toURL(), installer)
             }
         else {
-            remote = forgeVersionList.getVersion(version.jar, remoteVersion) ?: throw IllegalArgumentException("Remote forge version ${version.jar}, $remoteVersion not found")
+            remote = forgeVersionList.getVersion(gameVersion, remoteVersion) ?: throw IllegalArgumentException("Remote forge version $gameVersion, $remoteVersion not found")
             dependents += FileDownloadTask(remote.url.toURL(), installer)
         }
     }
