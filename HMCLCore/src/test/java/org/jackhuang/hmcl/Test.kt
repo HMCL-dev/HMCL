@@ -47,7 +47,6 @@ class Test {
         repository.refreshVersions()
     }
 
-    @Test
     fun launch() {
         val launcher = DefaultLauncher(
                 repository = repository,
@@ -79,7 +78,6 @@ class Test {
         }
     }
 
-    @Test
     fun downloadNewVersion() {
         val thread = Thread.currentThread()
         dependency.gameBuilder()
@@ -98,7 +96,6 @@ class Test {
         }
     }
 
-    @Test
     fun completeGame() {
         val thread = Thread.currentThread()
         val version = repository.getVersion("test").resolve(repository)
@@ -112,7 +109,6 @@ class Test {
         }
     }
 
-    @Test
     fun installForge() {
         val thread = Thread.currentThread()
         val version = repository.getVersion("test").resolve(repository)
@@ -130,7 +126,6 @@ class Test {
         }
     }
 
-    @Test
     fun refreshAsync() {
         val thread = Thread.currentThread()
         LiteLoaderVersionList.refreshAsync(BMCLAPIDownloadProvider).executor().apply {
