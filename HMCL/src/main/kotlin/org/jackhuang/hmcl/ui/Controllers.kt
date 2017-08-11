@@ -22,13 +22,14 @@ import javafx.scene.Node
 import javafx.scene.Scene
 import javafx.scene.layout.StackPane
 import javafx.stage.Stage
+import org.jackhuang.hmcl.Main
 
 object Controllers {
     lateinit var scene: Scene private set
     lateinit var stage: Stage private set
 
     val mainPane = MainPage()
-
+    val settingsPane = SettingsPage()
     val versionPane = VersionPage()
 
     lateinit var leftPaneController: LeftPaneController
@@ -39,10 +40,10 @@ object Controllers {
     fun initialize(stage: Stage) {
         this.stage = stage
 
-        decorator = Decorator(stage, mainPane, max = false)
+        decorator = Decorator(stage, mainPane, Main.TITLE, max = false)
         decorator.showPage(null)
         leftPaneController = LeftPaneController(decorator.leftPane)
-        sidePaneController = SidePaneController(decorator.sidePane)
+        sidePaneController = SidePaneController(decorator.sidePane, decorator.drawer)
 
         decorator.isCustomMaximize = false
 
@@ -57,6 +58,4 @@ object Controllers {
     fun navigate(node: Node?) {
         decorator.showPage(node)
     }
-
-    private fun <T> loadPane(s: String): T = FXMLLoader(Controllers::class.java.getResource("/assets/fxml/$s.fxml")).load()
 }

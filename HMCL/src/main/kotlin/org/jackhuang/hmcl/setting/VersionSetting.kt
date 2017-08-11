@@ -108,6 +108,12 @@ class VersionSetting() {
     val notCheckGameProperty = ImmediateBooleanProperty(this, "notCheckGame", false)
     var notCheckGame: Boolean by notCheckGameProperty
 
+    /**
+     * True if HMCL does not find/download libraries in/to common path.
+     */
+    val noCommonProperty = ImmediateBooleanProperty(this, "noCommon", false)
+    var noCommon: Boolean by noCommonProperty
+
     // Minecraft settings.
 
     /**
@@ -175,6 +181,7 @@ class VersionSetting() {
         minecraftArgsProperty.addListener(listener)
         noJVMArgsProperty.addListener(listener)
         notCheckGameProperty.addListener(listener)
+        noCommonProperty.addListener(listener)
         serverIpProperty.addListener(listener)
         fullscreenProperty.addListener(listener)
         widthProperty.addListener(listener)
@@ -229,6 +236,7 @@ class VersionSetting() {
                 addProperty("fullscreen", src.fullscreen)
                 addProperty("noJVMArgs", src.noJVMArgs)
                 addProperty("notCheckGame", src.notCheckGame)
+                addProperty("noCommon", src.noCommon)
                 addProperty("launcherVisibility", src.launcherVisibility.ordinal)
                 addProperty("gameDirType", src.gameDirType.ordinal)
             }
@@ -258,6 +266,7 @@ class VersionSetting() {
                 fullscreen = json["fullscreen"]?.asBoolean ?: false
                 noJVMArgs = json["noJVMArgs"]?.asBoolean ?: false
                 notCheckGame = json["notCheckGame"]?.asBoolean ?: false
+                noCommon = json["noCommon"]?.asBoolean ?: false
                 launcherVisibility = LauncherVisibility.values()[json["launcherVisibility"]?.asInt ?: 1]
                 gameDirType = EnumGameDirectory.values()[json["gameDirType"]?.asInt ?: 0]
             }

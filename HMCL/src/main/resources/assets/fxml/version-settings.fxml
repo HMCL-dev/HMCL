@@ -25,11 +25,11 @@
                     <ColumnConstraints hgrow="ALWAYS" />
                     <ColumnConstraints />
                 </columnConstraints>
-                <Label GridPane.rowIndex="0" GridPane.columnIndex="0">Java Directory</Label>
-                <Label GridPane.rowIndex="1" GridPane.columnIndex="0">Max Memory</Label>
-                <Label GridPane.rowIndex="2" GridPane.columnIndex="0">Launcher Visibility</Label>
-                <Label GridPane.rowIndex="3" GridPane.columnIndex="0">Run Directory</Label>
-                <Label GridPane.rowIndex="4" GridPane.columnIndex="0">Dimension</Label>
+                <Label GridPane.rowIndex="0" GridPane.columnIndex="0" text="%settings.java_dir" />
+                <Label GridPane.rowIndex="1" GridPane.columnIndex="0" text="%settings.max_memory" />
+                <Label GridPane.rowIndex="2" GridPane.columnIndex="0" text="%advancedsettings.launcher_visible" />
+                <Label GridPane.rowIndex="3" GridPane.columnIndex="0" text="%settings.run_directory" />
+                <Label GridPane.rowIndex="4" GridPane.columnIndex="0" text="%settings.dimension" />
                 <Label GridPane.rowIndex="5" GridPane.columnIndex="0"> </Label>
 
                 <JFXTextField styleClass="fit-width" fx:id="txtGameDir" GridPane.rowIndex="0" GridPane.columnIndex="1"
@@ -46,10 +46,10 @@
                              GridPane.columnSpan="2" prefWidth="Infinity">
                     <items>
                         <FXCollections fx:factory="observableArrayList">
-                            <Label>Close</Label>
-                            <Label>Hide</Label>
-                            <Label>Keep</Label>
-                            <Label>Hide and Reopen</Label>
+                            <Label text="%advancedsettings.launcher_visibility.close" />
+                            <Label text="%advancedsettings.launcher_visibility.hide" />
+                            <Label text="%advancedsettings.launcher_visibility.keep" />
+                            <Label text="%advancedsettings.launcher_visibility.hide_reopen" />
                         </FXCollections>
                     </items>
                 </JFXComboBox>
@@ -57,8 +57,8 @@
                              GridPane.columnSpan="2" maxWidth="Infinity">
                     <items>
                         <FXCollections fx:factory="observableArrayList">
-                            <Label>Default(.minecraft/)</Label>
-                            <Label>Divided(.minecraft/versions/&lt;versionName&gt;)</Label>
+                            <Label text="%advancedsettings.game_dir.default" />
+                            <Label text="%advancedsettings.game_dir.independent" />
                         </FXCollections>
                     </items>
                 </JFXComboBox>
@@ -71,7 +71,7 @@
                         </HBox>
                     </left>
                     <right>
-                        <JFXCheckBox fx:id="chkFullscreen" text="Fullscreen" alignment="CENTER">
+                        <JFXCheckBox fx:id="chkFullscreen" text="%settings.fullscreen" alignment="CENTER">
                             <BorderPane.margin>
                                 <Insets right="7"/>
                             </BorderPane.margin>
@@ -79,18 +79,29 @@
                     </right>
                 </BorderPane>
 
-                <JFXButton GridPane.rowIndex="0" GridPane.columnIndex="2" text="Explore" onMouseClicked="#onExploreJavaDir" />
+                <JFXButton GridPane.rowIndex="0" GridPane.columnIndex="2" onMouseClicked="#onExploreJavaDir">
+                    <graphic>
+                        <fx:include source="/assets/svg/folder-open.fxml" />
+                    </graphic>
+                </JFXButton>
             </GridPane>
             <HBox alignment="CENTER">
-                <JFXButton text="Show advanced settings" onMouseClicked="#onShowAdvanced" />
+                <JFXButton text="%advancedsettings" onMouseClicked="#onShowAdvanced" />
             </HBox>
             <VBox fx:id="advancedSettingsPane" spacing="30">
-                <JFXTextField labelFloat="true" promptText="JVM Args" styleClass="fit-width" fx:id="txtJVMArgs" prefWidth="${advancedSettingsPane.width}" />
-                <JFXTextField labelFloat="true" promptText="Game Args" styleClass="fit-width" fx:id="txtGameArgs" prefWidth="${advancedSettingsPane.width}" />
-                <JFXTextField labelFloat="true" promptText="Metaspace" styleClass="fit-width" fx:id="txtMetaspace" prefWidth="${advancedSettingsPane.width}" />
-                <JFXTextField labelFloat="true" promptText="Wrapper Launcher(like optirun)" styleClass="fit-width" fx:id="txtWrapper" prefWidth="${advancedSettingsPane.width}" />
-                <JFXTextField labelFloat="true" promptText="Pre-calling command" styleClass="fit-width" fx:id="txtPrecallingCommand" prefWidth="${advancedSettingsPane.width}" />
-                <JFXTextField labelFloat="true" promptText="Server IP" styleClass="fit-width" fx:id="txtServerIP" prefWidth="${advancedSettingsPane.width}" />
+                <JFXTextField labelFloat="true" promptText="%advancedsettings.jvm_args" styleClass="fit-width" fx:id="txtJVMArgs" prefWidth="${advancedSettingsPane.width}">
+                    <tooltip>
+                        <Tooltip text="%advancedsettings.java_args_default" />
+                    </tooltip>
+                </JFXTextField>
+                <JFXTextField labelFloat="true" promptText="%advancedsettings.Minecraft_arguments" styleClass="fit-width" fx:id="txtGameArgs" prefWidth="${advancedSettingsPane.width}" />
+                <JFXTextField labelFloat="true" promptText="%advancedsettings.java_permanent_generation_space" styleClass="fit-width" fx:id="txtMetaspace" prefWidth="${advancedSettingsPane.width}" />
+                <JFXTextField labelFloat="true" promptText="%advancedsettings.wrapper_launcher" styleClass="fit-width" fx:id="txtWrapper" prefWidth="${advancedSettingsPane.width}" />
+                <JFXTextField labelFloat="true" promptText="%advancedsettings.precall_command" styleClass="fit-width" fx:id="txtPrecallingCommand" prefWidth="${advancedSettingsPane.width}" />
+                <JFXTextField labelFloat="true" promptText="%advancedsettings.server_ip" styleClass="fit-width" fx:id="txtServerIP" prefWidth="${advancedSettingsPane.width}" />
+                <JFXCheckBox fx:id="chkNoJVMArgs" text="%advancedsettings.no_jvm_args" />
+                <JFXCheckBox fx:id="chkNoCommon" text="%advancedsettings.no_common" />
+                <JFXCheckBox fx:id="chkNoGameCheck" text="%advancedsettings.dont_check_game_completeness" />
             </VBox>
         </VBox>
     </ScrollPane>

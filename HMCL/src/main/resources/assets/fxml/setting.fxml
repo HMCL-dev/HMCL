@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import com.jfoenix.controls.JFXComboBox?>
+<?import javafx.collections.FXCollections?>
+<?import com.jfoenix.controls.JFXTextField?>
+<fx:root xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         type="StackPane">
+    <ScrollPane fx:id="scroll"
+                style="-fx-font-size: 14; -fx-pref-width: 100%; "
+                fitToHeight="true" fitToWidth="true">
+        <VBox fx:id="rootPane" style="-fx-padding: 20;">
+            <GridPane fx:id="settingsPane" hgap="5" vgap="10">
+                <columnConstraints>
+                    <ColumnConstraints />
+                    <ColumnConstraints hgrow="ALWAYS" />
+                </columnConstraints>
+                <Label text="%launcher.common_location" GridPane.rowIndex="0" GridPane.columnIndex="0" />
+                <Label text="%launcher.background_location" GridPane.rowIndex="1" GridPane.columnIndex="0" />
+                <Label text="%launcher.download_source" GridPane.rowIndex="2" GridPane.columnIndex="0" />
+                <Label text="%launcher.lang" GridPane.rowIndex="3" GridPane.columnIndex="0" />
+                <Label text="%launcher.proxy" GridPane.rowIndex="4" GridPane.columnIndex="0" />
+                <Label text="%launcher.theme" GridPane.rowIndex="5" GridPane.columnIndex="0" />
+
+                <JFXComboBox fx:id="cboDownloadSource" GridPane.rowIndex="2" GridPane.columnIndex="1">
+                    <items>
+                        <FXCollections fx:factory="observableArrayList">
+                            <Label text="%download.mojang" />
+                            <Label text="%download.BMCL" />
+                        </FXCollections>
+                    </items>
+                </JFXComboBox>
+
+                <JFXComboBox fx:id="cboLanguage" GridPane.rowIndex="3" GridPane.columnIndex="1" />
+
+                <HBox alignment="CENTER_LEFT" GridPane.rowIndex="4" GridPane.columnIndex="1">
+                    <JFXComboBox fx:id="cboProxyType">
+                        <items>
+                            <FXCollections fx:factory="observableArrayList">
+                                <Label text="Direct" />
+                                <Label text="HTTP" />
+                                <Label text="Socks" />
+                            </FXCollections>
+                        </items>
+                    </JFXComboBox>
+                    <Label text="%proxy.host" />
+                    <JFXTextField fx:id="txtProxyHost" maxWidth="50" />
+                    <Label text="%proxy.port" />
+                    <JFXTextField fx:id="txtProxyPort" maxWidth="50" />
+                    <Label text="%proxy.username" />
+                    <JFXTextField fx:id="txtProxyUsername" maxWidth="50" />
+                    <Label text="%proxy.password" />
+                    <JFXTextField fx:id="txtProxyPassword" maxWidth="50" />
+                </HBox>
+            </GridPane>
+        </VBox>
+    </ScrollPane>
+</fx:root>

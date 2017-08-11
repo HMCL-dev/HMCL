@@ -14,6 +14,7 @@
 <?import java.lang.String?>
 <?import com.jfoenix.validation.RequiredFieldValidator?>
 <?import com.jfoenix.controls.JFXNodesList?>
+<?import com.jfoenix.controls.JFXProgressBar?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
@@ -30,48 +31,49 @@
     </AnchorPane>
 
     <JFXDialog fx:id="dialog" transitionType="CENTER">
-        <JFXDialogLayout>
-            <heading>
-                <Label>Create a new account</Label>
-            </heading>
-            <body>
-                <GridPane vgap="15" hgap="15" style="-fx-padding: 15 0 0 0;">
-                    <columnConstraints>
-                        <ColumnConstraints maxWidth="100" />
-                        <ColumnConstraints />
-                    </columnConstraints>
-                    <Label text="Type" GridPane.halignment="RIGHT" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                    <Label text="Username" GridPane.halignment="RIGHT" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                    <Label fx:id="lblPassword" text="Password" GridPane.halignment="RIGHT" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+        <StackPane>
+            <JFXDialogLayout>
+                <heading>
+                    <Label>Create a new account</Label>
+                </heading>
+                <body>
+                    <GridPane vgap="15" hgap="15" style="-fx-padding: 15 0 0 0;">
+                        <columnConstraints>
+                            <ColumnConstraints maxWidth="100" />
+                            <ColumnConstraints />
+                        </columnConstraints>
+                        <Label text="Type" GridPane.halignment="RIGHT" GridPane.columnIndex="0" GridPane.rowIndex="0" />
 
-                    <JFXComboBox fx:id="cboType" GridPane.columnIndex="1" GridPane.rowIndex="0">
-                        <items>
-                            <FXCollections fx:factory="observableArrayList">
-                                <String fx:value="Offline Account"/>
-                                <String fx:value="Online Account" />
-                            </FXCollections>
-                        </items>
-                    </JFXComboBox>
+                        <JFXComboBox fx:id="cboType" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                            <items>
+                                <FXCollections fx:factory="observableArrayList">
+                                    <String fx:value="Offline Account"/>
+                                    <String fx:value="Online Account" />
+                                </FXCollections>
+                            </items>
+                        </JFXComboBox>
 
-                    <JFXTextField fx:id="txtUsername" promptText="Username" labelFloat="true" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                        <validators>
-                            <RequiredFieldValidator message="Input Required!">
-                            </RequiredFieldValidator>
-                        </validators>
-                    </JFXTextField>
-                    <JFXPasswordField fx:id="txtPassword" promptText="Password" labelFloat="true" GridPane.columnIndex="1" GridPane.rowIndex="2">
-                        <validators>
-                            <RequiredFieldValidator message="Input Required!">
-                            </RequiredFieldValidator>
-                        </validators>
-                    </JFXPasswordField>
-                </GridPane>
-            </body>
-            <actions>
-                <Label fx:id="lblCreationWarning" />
-                <JFXButton onMouseClicked="#onCreationAccept" text="Accept" styleClass="dialog-accept" />
-                <JFXButton onMouseClicked="#onCreationCancel" text="Cancel" styleClass="dialog-cancel" />
-            </actions>
-        </JFXDialogLayout>
+                        <JFXTextField fx:id="txtUsername" promptText="Username" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2">
+                            <validators>
+                                <RequiredFieldValidator message="Input Required!">
+                                </RequiredFieldValidator>
+                            </validators>
+                        </JFXTextField>
+                        <JFXPasswordField fx:id="txtPassword" promptText="%ui.label.password" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2">
+                            <validators>
+                                <RequiredFieldValidator message="Input Required!">
+                                </RequiredFieldValidator>
+                            </validators>
+                        </JFXPasswordField>
+                    </GridPane>
+                </body>
+                <actions>
+                    <Label fx:id="lblCreationWarning" />
+                    <JFXButton onMouseClicked="#onCreationAccept" text="%button.ok" styleClass="dialog-accept" />
+                    <JFXButton onMouseClicked="#onCreationCancel" text="%button.cancel" styleClass="dialog-cancel" />
+                </actions>
+            </JFXDialogLayout>
+            <JFXProgressBar fx:id="progressBar" visible="false" StackPane.alignment="TOP_CENTER" />
+        </StackPane>
     </JFXDialog>
 </fx:root>

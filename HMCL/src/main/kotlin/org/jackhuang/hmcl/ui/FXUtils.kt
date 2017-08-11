@@ -18,10 +18,15 @@
 package org.jackhuang.hmcl.ui
 
 import com.jfoenix.concurrency.JFXUtilities
+import com.jfoenix.controls.JFXCheckBox
+import com.jfoenix.controls.JFXComboBox
 import com.jfoenix.controls.JFXScrollPane
+import com.jfoenix.controls.JFXTextField
 import javafx.animation.Animation
 import javafx.animation.KeyFrame
 import javafx.animation.Timeline
+import javafx.beans.property.Property
+import javafx.beans.value.ChangeListener
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
 import javafx.fxml.FXMLLoader
@@ -37,9 +42,10 @@ import javafx.scene.input.ScrollEvent
 import javafx.scene.layout.Region
 import javafx.scene.shape.Rectangle
 import javafx.util.Duration
+import org.jackhuang.hmcl.Main
 
 fun Node.loadFXML(absolutePath: String) {
-    val fxmlLoader = FXMLLoader(this.javaClass.getResource(absolutePath))
+    val fxmlLoader = FXMLLoader(this.javaClass.getResource(absolutePath), Main.RESOURCE_BUNDLE)
     fxmlLoader.setRoot(this)
     fxmlLoader.setController(this)
     fxmlLoader.load<Any>()
@@ -114,3 +120,37 @@ val stylesheets = arrayOf(
         Controllers::class.java.getResource("/css/jfoenix-fonts.css").toExternalForm(),
         Controllers::class.java.getResource("/css/jfoenix-design.css").toExternalForm(),
         Controllers::class.java.getResource("/assets/css/jfoenix-main-demo.css").toExternalForm())
+
+
+
+fun bindInt(textField: JFXTextField, property: Property<*>) {
+    textField.textProperty().unbind()
+    @Suppress("UNCHECKED_CAST")
+    textField.textProperty().bindBidirectional(property as Property<Int>, SafeIntStringConverter())
+}
+
+fun bindString(textField: JFXTextField, property: Property<String>) {
+    textField.textProperty().unbind()
+    textField.textProperty().bindBidirectional(property)
+}
+
+fun bindBoolean(checkBox: JFXCheckBox, property: Property<Boolean>) {
+    checkBox.selectedProperty().unbind()
+    checkBox.selectedProperty().bindBidirectional(property)
+}
+
+fun bindEnum(comboBox: JFXComboBox<*>, property: Property<out Enum<*>>) {
+    unbindEnum(comboBox)
+    val listener = ChangeListener<Number> { _, _, newValue ->
+        property.value = property.value.javaClass.enumConstants[newValue.toInt()]
+    }
+    comboBox.selectionModel.select(property.value.ordinal)
+    comboBox.properties["listener"] = listener
+    comboBox.selectionModel.selectedIndexProperty().addListener(listener)
+}
+
+fun unbindEnum(comboBox: JFXComboBox<*>) {
+    @Suppress("UNCHECKED_CAST")
+    val listener = comboBox.properties["listener"] as? ChangeListener<Number> ?: return
+    comboBox.selectionModel.selectedIndexProperty().removeListener(listener)
+}

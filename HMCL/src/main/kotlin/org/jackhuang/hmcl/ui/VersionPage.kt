@@ -28,6 +28,7 @@ import javafx.scene.control.Label
 import javafx.scene.control.ScrollPane
 import javafx.scene.layout.*
 import javafx.stage.DirectoryChooser
+import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.setting.VersionSetting
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage
@@ -44,7 +45,7 @@ class VersionPage : StackPane(), DecoratorPage {
     }
 
     fun load(id: String, profile: Profile) {
-        titleProperty.set("Version settings - " + id)
+        titleProperty.set(i18n("launcher.title.game") + " - " + id)
 
         versionSettingsController.loadVersionSetting(profile.getVersionSetting(id))
         modController.loadMods(profile.modManager, id)

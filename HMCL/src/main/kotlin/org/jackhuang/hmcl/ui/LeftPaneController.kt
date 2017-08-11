@@ -28,13 +28,14 @@ import org.jackhuang.hmcl.event.EVENT_BUS
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent
 import org.jackhuang.hmcl.game.LauncherHelper
 import org.jackhuang.hmcl.game.minecraftVersion
+import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider
 
-class LeftPaneController(leftPane: AdvancedListBox) {
+class LeftPaneController(private val leftPane: AdvancedListBox) {
     val versionsPane = VBox()
     val cboProfiles = JFXComboBox<String>().apply { items.add("Default"); prefWidthProperty().bind(leftPane.widthProperty()) }
-    val accountItem = VersionListItem("mojang@mojang.com", "Yggdrasil")
+    val accountItem = VersionListItem("No account", "unknown")
 
     init {
         leftPane
@@ -44,9 +45,9 @@ class LeftPaneController(leftPane: AdvancedListBox) {
                         Controllers.navigate(AccountsPage())
                     }
                 })
-                .startCategory("PROFILES")
+                .startCategory(i18n("ui.label.profile"))
                 .add(cboProfiles)
-                .startCategory("VERSIONS")
+                .startCategory(i18n("ui.label.version"))
                 .add(versionsPane)
 
         EVENT_BUS.channel<RefreshedVersionsEvent>() += this::loadVersions
@@ -109,6 +110,7 @@ class LeftPaneController(leftPane: AdvancedListBox) {
                 profile.selectedVersion = version.id
             }
             ripplerContainer.properties["version"] = version.id to item
+            ripplerContainer.maxWidthProperty().bind(leftPane.widthProperty())
             versionsPane.children += ripplerContainer
         }
     }

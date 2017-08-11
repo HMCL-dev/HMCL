@@ -11,15 +11,16 @@ def buildnumber = System.getenv("TRAVIS_BUILD_NUMBER")
 if (buildnumber == null)
     buildnumber = System.getenv("BUILD_NUMBER")
 if (buildnumber == null)
-    buildnumber = "33"
+    buildnumber = "SNAPSHOT"
 
 def versionroot = System.getenv("VERSION_ROOT")
 if (versionroot == null)
-    versionroot = "2.7.8"
+    versionroot = "3.0"
 
 String mavenGroupId = 'HMCL'
 String mavenVersion = versionroot + '.' + buildnumber
 String bundleName = "Hello Minecraft! Launcher"
+version = mavenVersion
 
 dependencies {
     compile project(":HMCLCore")

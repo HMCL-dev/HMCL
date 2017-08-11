@@ -8,14 +8,14 @@
         xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1">
     <BorderPane>
        <center>
-           <StackPane fx:id="page" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER" />
+           <StackPane fx:id="page" BorderPane.alignment="CENTER" />
        </center>
        <bottom>
-           <BorderPane prefHeight="50.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+           <BorderPane prefHeight="50.0" BorderPane.alignment="CENTER">
                <right>
-                   <StackPane prefHeight="50.0" prefWidth="150.0" BorderPane.alignment="CENTER">
+                   <StackPane prefHeight="50.0" BorderPane.alignment="CENTER">
                         <JFXSpinner fx:id="spinner" style="-fx-radius:16" styleClass="materialDesign-purple, first-spinner" />
-                        <JFXButton fx:id="buttonLaunch" prefWidth="100" prefHeight="40" buttonType="RAISED" text="Launch"
+                        <JFXButton fx:id="buttonLaunch" prefWidth="200" prefHeight="40" buttonType="RAISED" text="%ui.button.run"
                                    style="-fx-text-fill:WHITE;-fx-background-color:#5264AE;-fx-font-size:14px;"/>
                    </StackPane>
                </right>

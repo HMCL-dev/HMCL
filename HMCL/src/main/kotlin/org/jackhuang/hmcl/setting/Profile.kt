@@ -40,11 +40,8 @@ class Profile(var name: String = "Default", initialGameDir: File = File(".minecr
     val gameDirProperty = ImmediateObjectProperty<File>(this, "gameDir", initialGameDir)
     var gameDir: File by gameDirProperty
 
-    val noCommonProperty = ImmediateBooleanProperty(this, "noCommon", false)
-    var noCommon: Boolean by noCommonProperty
-
     var repository = HMCLGameRepository(initialGameDir)
-    var dependency = DefaultDependencyManager(repository, BMCLAPIDownloadProvider)
+    val dependency: DefaultDependencyManager get() = DefaultDependencyManager(repository, Settings.DOWNLOAD_PROVIDER, Settings.PROXY)
     var modManager = ModManager(repository)
 
     init {
@@ -93,7 +90,6 @@ class Profile(var name: String = "Default", initialGameDir: File = File(".minecr
         globalProperty.addListener(listener)
         selectedVersionProperty.addListener(listener)
         gameDirProperty.addListener(listener)
-        noCommonProperty.addListener(listener)
     }
 
     companion object Serializer: JsonSerializer<Profile>, JsonDeserializer<Profile> {
@@ -104,7 +100,6 @@ class Profile(var name: String = "Default", initialGameDir: File = File(".minecr
                 add("global", context.serialize(src.global))
                 addProperty("selectedVersion", src.selectedVersion)
                 addProperty("gameDir", src.gameDir.path)
-                addProperty("noCommon", src.noCommon)
             }
 
             return jsonObject
@@ -115,7 +110,6 @@ class Profile(var name: String = "Default", initialGameDir: File = File(".minecr
 
             return Profile(initialGameDir = File(json["gameDir"]?.asString ?: ""), initialSelectedVersion = json["selectedVersion"]?.asString ?: "").apply {
                 global = context.deserialize(json["global"], VersionSetting::class.java)
-                noCommon = json["noCommon"]?.asBoolean ?: false
             }
         }
 

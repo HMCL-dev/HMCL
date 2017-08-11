@@ -7,11 +7,20 @@
           xmlns:fx="http://javafx.com/fxml"
           type="StackPane">
     <JFXTabPane>
-        <Tab text="Settings">
+        <Tab text="%settings">
             <fx:include source="version-settings.fxml" fx:id="versionSettings" />
         </Tab>
-        <Tab text="Mods">
+        <Tab text="%mods">
             <fx:include source="mod.fxml" fx:id="mod" />
         </Tab>
     </JFXTabPane>
+
+    <JFXRippler fx:id="optionsRippler" maskType="CIRCLE"
+                  style="-fx-ripple-color:WHITE;"
+                  StackPane.alignment="TOP_RIGHT" maxWidth="15" maxHeight="15">
+        <StackPane fx:id="optionsBurger">
+            <JFXHamburger styleClass="jfx-options-burger">
+            </JFXHamburger>
+        </StackPane>
+    </JFXRippler>
 </fx:root>

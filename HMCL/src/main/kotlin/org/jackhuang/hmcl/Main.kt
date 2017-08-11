@@ -19,11 +19,25 @@ package org.jackhuang.hmcl
 
 import javafx.application.Application
 import javafx.stage.Stage
+import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.ui.Controllers
+import org.jackhuang.hmcl.ui.UTF8Control
 import org.jackhuang.hmcl.util.DEFAULT_USER_AGENT
+import org.jackhuang.hmcl.util.LOG
 import org.jackhuang.hmcl.util.OS
 import java.io.File
+import java.util.*
+import java.util.logging.Level
+
+fun i18n(key: String): String {
+    try {
+        return Main.RESOURCE_BUNDLE.getString(key)
+    } catch (e: Exception) {
+        LOG.log(Level.WARNING, "Cannot find key $key in resource bundle", e)
+        return key
+    }
+}
 
 class Main : Application() {
 
@@ -68,5 +82,7 @@ class Main : Application() {
             PRIMARY_STAGE.close()
             Scheduler.shutdown()
         }
+
+        val RESOURCE_BUNDLE = Settings.LANG.resourceBundle
     }
 }

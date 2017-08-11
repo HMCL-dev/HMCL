@@ -42,6 +42,12 @@ class Config {
             field = value
             Settings.save()
         }
+    @SerializedName("proxyType")
+    var proxyType: Int = 0
+        set(value) {
+            field = value
+            Settings.save()
+        }
     @SerializedName("proxyHost")
     var proxyHost: String? = null
         set(value) {

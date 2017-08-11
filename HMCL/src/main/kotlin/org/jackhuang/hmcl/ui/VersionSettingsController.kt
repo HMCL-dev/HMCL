@@ -21,14 +21,13 @@ import com.jfoenix.controls.JFXCheckBox
 import com.jfoenix.controls.JFXComboBox
 import com.jfoenix.controls.JFXTextField
 import javafx.beans.InvalidationListener
-import javafx.beans.property.Property
-import javafx.beans.value.ChangeListener
 import javafx.fxml.FXML
 import javafx.scene.control.Label
 import javafx.scene.control.ScrollPane
 import javafx.scene.layout.GridPane
 import javafx.scene.layout.VBox
 import javafx.stage.DirectoryChooser
+import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.VersionSetting
 import org.jackhuang.hmcl.util.OS
 
@@ -52,9 +51,12 @@ class VersionSettingsController {
     @FXML lateinit var cboRunDirectory: JFXComboBox<*>
     @FXML lateinit var chkFullscreen: JFXCheckBox
     @FXML lateinit var lblPhysicalMemory: Label
+    @FXML lateinit var chkNoJVMArgs: JFXCheckBox
+    @FXML lateinit var chkNoCommon: JFXCheckBox
+    @FXML lateinit var chkNoGameCheck: JFXCheckBox
 
     fun initialize() {
-        lblPhysicalMemory.text = "Physical Memory: ${OS.TOTAL_MEMORY}MB"
+        lblPhysicalMemory.text = i18n("settings.physical_memory") + ": ${OS.TOTAL_MEMORY}MB"
 
         scroll.smoothScrolling()
 
@@ -85,6 +87,8 @@ class VersionSettingsController {
             precalledCommandProperty.unbind()
             serverIpProperty.unbind()
             fullscreenProperty.unbind()
+            notCheckGameProperty.unbind()
+            noCommonProperty.unbind()
             unbindEnum(cboLauncherVisibility)
             unbindEnum(cboRunDirectory)
         }
@@ -100,38 +104,11 @@ class VersionSettingsController {
         bindString(txtServerIP, version.serverIpProperty)
         bindEnum(cboLauncherVisibility, version.launcherVisibilityProperty)
         bindEnum(cboRunDirectory, version.gameDirTypeProperty)
-
-        chkFullscreen.selectedProperty().unbind()
-        chkFullscreen.selectedProperty().bindBidirectional(version.fullscreenProperty)
+        bindBoolean(chkFullscreen, version.fullscreenProperty)
+        bindBoolean(chkNoGameCheck, version.notCheckGameProperty)
+        bindBoolean(chkNoCommon, version.noCommonProperty)
 
         lastVersionSetting = version
-    }
-
-    private fun bindInt(textField: JFXTextField, property: Property<*>) {
-        textField.textProperty().unbind()
-        @Suppress("UNCHECKED_CAST")
-        textField.textProperty().bindBidirectional(property as Property<Int>, SafeIntStringConverter())
-    }
-
-    private fun bindString(textField: JFXTextField, property: Property<String>) {
-        textField.textProperty().unbind()
-        textField.textProperty().bindBidirectional(property)
-    }
-
-    private fun bindEnum(comboBox: JFXComboBox<*>, property: Property<out Enum<*>>) {
-        unbindEnum(comboBox)
-        val listener = ChangeListener<Number> { _, _, newValue ->
-            property.value = property.value.javaClass.enumConstants[newValue.toInt()]
-        }
-        comboBox.selectionModel.select(property.value.ordinal)
-        comboBox.properties["listener"] = listener
-        comboBox.selectionModel.selectedIndexProperty().addListener(listener)
-    }
-
-    private fun unbindEnum(comboBox: JFXComboBox<*>) {
-        @Suppress("UNCHECKED_CAST")
-        val listener = comboBox.properties["listener"] as? ChangeListener<Number> ?: return
-        comboBox.selectionModel.selectedIndexProperty().removeListener(listener)
     }
 
     fun onShowAdvanced() {
@@ -143,7 +120,7 @@ class VersionSettingsController {
 
     fun onExploreJavaDir() {
         val chooser = DirectoryChooser()
-        chooser.title = "Selecting Java Directory"
+        chooser.title = i18n("settings.choose_javapath")
         val selectedDir = chooser.showDialog(Controllers.stage)
         if (selectedDir != null)
             txtGameDir.text = selectedDir.absolutePath

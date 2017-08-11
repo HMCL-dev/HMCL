@@ -17,10 +17,18 @@
  */
 package org.jackhuang.hmcl.ui
 
-class SidePaneController(sidePane: AdvancedListBox) {
+import com.jfoenix.controls.JFXDrawer
+
+class SidePaneController(sidePane: AdvancedListBox, drawer: JFXDrawer) {
     init {
         sidePane
                 .startCategory("LAUNCHER")
-                .add(IconedItem(SVG.gear("black"), "Settings").apply { prefWidthProperty().bind(sidePane.widthProperty()) })
+                .add(IconedItem(SVG.gear("black"), "Settings").apply {
+                    prefWidthProperty().bind(sidePane.widthProperty())
+                    setOnMouseClicked {
+                        Controllers.navigate(Controllers.settingsPane)
+                        drawer.close()
+                    }
+                })
     }
 }

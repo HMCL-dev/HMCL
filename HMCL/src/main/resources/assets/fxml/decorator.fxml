@@ -74,7 +74,7 @@
             </JFXDrawer>
         </center>
         <top>
-            <BorderPane fx:id="titleContainer" minHeight="30" styleClass="jfx-tool-bar"
+            <BorderPane fx:id="titleContainer" minHeight="40" styleClass="jfx-tool-bar"
                         pickOnBounds="false"
                         onMouseReleased="#onMouseReleased"
                         onMouseDragged="#onMouseDragged"
@@ -90,7 +90,7 @@
                                         </JFXHamburger>
                                     </StackPane>
                                 </JFXRippler>
-                                <Label text="Hello Minecraft! Launcher" BorderPane.alignment="CENTER"
+                                <Label fx:id="lblTitle" BorderPane.alignment="CENTER"
                                        mouseTransparent="true"
                                        style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 15px;"/>
                             </HBox>

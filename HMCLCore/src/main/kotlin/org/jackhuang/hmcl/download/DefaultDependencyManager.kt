@@ -24,6 +24,9 @@ import org.jackhuang.hmcl.task.Task
 import org.jackhuang.hmcl.task.then
 import java.net.Proxy
 
+/**
+ * This class has no state.
+ */
 class DefaultDependencyManager(override val repository: DefaultGameRepository, override var downloadProvider: DownloadProvider, val proxy: Proxy = Proxy.NO_PROXY)
     : AbstractDependencyManager(repository) {
 

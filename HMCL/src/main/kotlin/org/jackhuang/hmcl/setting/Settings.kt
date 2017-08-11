@@ -31,10 +31,11 @@ import org.jackhuang.hmcl.ProfileLoadingEvent
 import org.jackhuang.hmcl.ProfileChangedEvent
 import org.jackhuang.hmcl.auth.Account
 import org.jackhuang.hmcl.util.*
-import org.jackhuang.hmcl.auth.OfflineAccount
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
 import org.jackhuang.hmcl.event.EVENT_BUS
 import org.jackhuang.hmcl.util.property.ImmediateObjectProperty
+import java.net.Authenticator
+import java.net.InetSocketAddress
+import java.net.PasswordAuthentication
 import java.net.Proxy
 import java.util.*
 
@@ -58,13 +59,10 @@ object Settings {
         SETTINGS = initSettings();
 
         loop@for ((name, settings) in SETTINGS.accounts) {
-            val factory = when(settings["type"]) {
-                "yggdrasil" -> YggdrasilAccount
-                "offline" -> OfflineAccount
-                else -> {
-                    SETTINGS.accounts.remove(name)
-                    continue@loop
-                }
+            val factory = Accounts.ACCOUNT_FACTORY[settings["type"] ?: ""]
+            if (factory == null) {
+                SETTINGS.accounts.remove(name)
+                continue@loop
             }
 
             val account = factory.fromStorage(settings)
@@ -90,12 +88,6 @@ object Settings {
         ignoreException {
             Runtime.getRuntime().addShutdownHook(Thread(this::save))
         }
-    }
-
-    fun getDownloadProvider(): DownloadProvider = when (SETTINGS.downloadtype) {
-        0 -> MojangDownloadProvider
-        1 -> BMCLAPIDownloadProvider
-        else -> MojangDownloadProvider
     }
 
     private fun initSettings(): Config {
@@ -127,11 +119,7 @@ object Settings {
             SETTINGS.accounts.clear()
             for ((name, account) in ACCOUNTS) {
                 val storage = account.toStorage()
-                storage["type"] = when(account) {
-                    is OfflineAccount -> "offline"
-                    is YggdrasilAccount -> "yggdrasil"
-                    else -> ""
-                }
+                storage["type"] = Accounts.getAccountType(account)
                 SETTINGS.accounts[name] = storage
             }
 
@@ -141,12 +129,69 @@ object Settings {
         }
     }
 
-    val selectedProfile: Profile
-        get() {
-            if (!hasProfile(SETTINGS.selectedProfile))
-                SETTINGS.selectedProfile = DEFAULT_PROFILE
-            return getProfile(SETTINGS.selectedProfile)
+    var LANG: Locales.SupportedLocale = Locales.getLocaleByName(SETTINGS.localization)
+        set(value) {
+            field = value
+            SETTINGS.localization = Locales.getNameByLocal(value)
         }
+
+    var PROXY: Proxy = Proxy.NO_PROXY
+    var PROXY_TYPE: Proxy.Type? = Proxies.getProxyType(SETTINGS.proxyType)
+        set(value) {
+            field = value
+            SETTINGS.proxyType = Proxies.PROXIES.indexOf(value)
+            loadProxy()
+        }
+
+    var PROXY_HOST: String? get() = SETTINGS.proxyHost; set(value) { SETTINGS.proxyHost = value }
+    var PROXY_PORT: String? get() = SETTINGS.proxyPort; set(value) { SETTINGS.proxyPort = value }
+    var PROXY_USER: String? get() = SETTINGS.proxyUserName; set(value) { SETTINGS.proxyUserName = value }
+    var PROXY_PASS: String? get() = SETTINGS.proxyPassword; set(value) { SETTINGS.proxyPassword = value }
+
+    private fun loadProxy() {
+        val host = PROXY_HOST
+        val port = PROXY_PORT?.toIntOrNull()
+        if (host == null || host.isBlank() || port == null)
+            PROXY = Proxy.NO_PROXY
+        else {
+            System.setProperty("http.proxyHost", PROXY_HOST)
+            System.setProperty("http.proxyPort", PROXY_PORT)
+            PROXY = Proxy(PROXY_TYPE, InetSocketAddress(host, port))
+
+            val user = PROXY_USER
+            val pass = PROXY_PASS
+            if (user != null && user.isNotBlank() && pass != null && pass.isNotBlank()) {
+                System.setProperty("http.proxyUser", user)
+                System.setProperty("http.proxyPassword", pass)
+
+                Authenticator.setDefault(object : Authenticator() {
+                    override fun getPasswordAuthentication(): PasswordAuthentication {
+                        return PasswordAuthentication(user, pass.toCharArray())
+                    }
+                })
+            }
+        }
+    }
+
+    init { loadProxy() }
+
+    var DOWNLOAD_PROVIDER: DownloadProvider
+        get() = when (SETTINGS.downloadtype) {
+            0 -> MojangDownloadProvider
+            1 -> BMCLAPIDownloadProvider
+            else -> MojangDownloadProvider
+        }
+        set(value) {
+            SETTINGS.downloadtype = when (value) {
+                MojangDownloadProvider -> 0
+                BMCLAPIDownloadProvider -> 1
+                else -> 0
+            }
+        }
+
+    /****************************************
+     *               ACCOUNTS               *
+     ****************************************/
 
     val selectedAccountProperty = object : ImmediateObjectProperty<Account?>(this, "selectedAccount", getAccount(SETTINGS.selectedAccount)) {
         override fun get(): Account? {
@@ -172,12 +217,6 @@ object Settings {
     }
     var selectedAccount: Account? by selectedAccountProperty
 
-    val PROXY: Proxy = Proxy.NO_PROXY
-    val PROXY_HOST: String? get() = SETTINGS.proxyHost
-    val PROXY_PORT: String? get() = SETTINGS.proxyPort
-    val PROXY_USER: String? get() = SETTINGS.proxyUserName
-    val PROXY_PASS: String? get() = SETTINGS.proxyPassword
-
     fun addAccount(account: Account) {
         ACCOUNTS[account.username] = account
     }
@@ -195,6 +234,17 @@ object Settings {
 
         selectedAccountProperty.get()
     }
+
+    /****************************************
+     *               PROFILES               *
+     ****************************************/
+
+    val selectedProfile: Profile
+        get() {
+            if (!hasProfile(SETTINGS.selectedProfile))
+                SETTINGS.selectedProfile = DEFAULT_PROFILE
+            return getProfile(SETTINGS.selectedProfile)
+        }
 
     fun getProfile(name: String?): Profile {
         var p: Profile? = getProfileMap()[name ?: DEFAULT_PROFILE]

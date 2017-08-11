@@ -22,13 +22,14 @@ import javafx.beans.property.SimpleStringProperty
 import javafx.beans.property.StringProperty
 import javafx.fxml.FXML
 import javafx.scene.layout.StackPane
+import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage
 
 /**
  * @see /assets/fxml/main.fxml
  */
 class MainPage : StackPane(), DecoratorPage {
-    override val titleProperty: StringProperty = SimpleStringProperty(this, "title", "Main Page")
+    override val titleProperty: StringProperty = SimpleStringProperty(this, "title", i18n("launcher.title.main"))
 
     @FXML lateinit var buttonLaunch: JFXButton
 

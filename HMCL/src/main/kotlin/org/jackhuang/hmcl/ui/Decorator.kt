@@ -52,7 +52,7 @@ import org.jackhuang.hmcl.util.*
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class Decorator @JvmOverloads constructor(private val primaryStage: Stage, private val mainPage: Node, private val max: Boolean = true, min: Boolean = true) : StackPane(), AbstractWizardDisplayer {
+class Decorator @JvmOverloads constructor(private val primaryStage: Stage, private val mainPage: Node, title: String, private val max: Boolean = true, min: Boolean = true) : StackPane(), AbstractWizardDisplayer {
     override val wizardController: WizardController = WizardController(this)
 
     private var xOffset: Double = 0.0
@@ -73,6 +73,7 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, priva
     @FXML lateinit var refreshMenuButton: JFXButton
     @FXML lateinit var addMenuButton: JFXButton
     @FXML lateinit var titleLabel: Label
+    @FXML lateinit var lblTitle: Label
     @FXML lateinit var leftPane: AdvancedListBox
     @FXML lateinit var drawer: JFXDrawer
     @FXML lateinit var sidePane: AdvancedListBox
@@ -112,6 +113,8 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, priva
         btnClose.graphic = close
         btnMin.graphic = minus
         btnMax.graphic = resizeMax
+
+        lblTitle.text = title
 
         buttonsContainer.background = Background(*arrayOf(BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)))
         titleContainer.addEventHandler(MouseEvent.MOUSE_CLICKED) { mouseEvent ->

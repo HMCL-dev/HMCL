@@ -31,6 +31,7 @@ import javafx.scene.control.ToggleGroup
 import org.jackhuang.hmcl.auth.Account
 import org.jackhuang.hmcl.auth.OfflineAccount
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
+import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.task.Task
@@ -45,9 +46,9 @@ class AccountsPage() : StackPane(), DecoratorPage {
     @FXML lateinit var dialog: JFXDialog
     @FXML lateinit var txtUsername: JFXTextField
     @FXML lateinit var txtPassword: JFXPasswordField
-    @FXML lateinit var lblPassword: Label
     @FXML lateinit var lblCreationWarning: Label
     @FXML lateinit var cboType: JFXComboBox<String>
+    @FXML lateinit var progressBar: JFXProgressBar
 
     val listener = ChangeListener<Account?> { _, _, newValue ->
         masonryPane.children.forEach {
@@ -76,7 +77,6 @@ class AccountsPage() : StackPane(), DecoratorPage {
 
         cboType.selectionModel.selectedIndexProperty().addListener { _, _, newValue ->
             val visible = newValue != 0
-            lblPassword.isVisible = visible
             txtPassword.isVisible = visible
         }
         cboType.selectionModel.select(0)
@@ -125,6 +125,8 @@ class AccountsPage() : StackPane(), DecoratorPage {
     }
 
     fun addNewAccount() {
+        txtUsername.text = ""
+        txtPassword.text = ""
         dialog.show()
     }
 
@@ -132,6 +134,7 @@ class AccountsPage() : StackPane(), DecoratorPage {
         val type = cboType.selectionModel.selectedIndex
         val username = txtUsername.text
         val password = txtPassword.text
+        progressBar.isVisible = true
         val task = Task.of(Callable {
             try {
                 val account = when (type) {
@@ -155,6 +158,7 @@ class AccountsPage() : StackPane(), DecoratorPage {
             } else if (account is Exception) {
                 lblCreationWarning.text = account.localizedMessage
             }
+            progressBar.isVisible = false
         }
     }
 
@@ -165,7 +169,7 @@ class AccountsPage() : StackPane(), DecoratorPage {
 
 fun accountType(account: Account) =
         when(account) {
-            is OfflineAccount -> "Offline Account"
-            is YggdrasilAccount -> "Yggdrasil Account"
-            else -> throw Error("Unsupported account: $account")
+            is OfflineAccount -> i18n("login.methods.offline")
+            is YggdrasilAccount -> i18n("login.methods.yggdrasil")
+            else -> throw Error("${i18n("login.methods.no_method")}: $account")
         }
