@@ -40,6 +40,7 @@ public final class NetUtils {
 
     public static HttpURLConnection createConnection(URL url, Proxy proxy) throws IOException {
         HttpURLConnection con = (HttpURLConnection) url.openConnection(proxy);
+        con.setRequestProperty("User-Agent", "Hello Minecraft!");
         con.setDoInput(true);
         con.setUseCaches(false);
         con.setConnectTimeout(15000);
@@ -48,7 +49,9 @@ public final class NetUtils {
     }
 
     public static String get(String url, String encoding) throws IOException {
-        return IOUtils.toString(new URL(url).openConnection().getInputStream());
+        HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
+        con.setRequestProperty("User-Agent", "Hello Minecraft!");
+        return IOUtils.toString(con.getInputStream());
     }
 
     public static String get(String url) throws IOException {
