@@ -27,6 +27,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import org.jackhuang.hmcl.util.ArrayUtils;
 import org.jackhuang.hmcl.util.C;
@@ -86,6 +87,13 @@ public class YggdrasilAuthentication {
 
     public GameProfile getSelectedProfile() {
         return this.selectedProfile;
+    }
+    
+    public void setSelectedProfile(GameProfile profile) {
+        if (profiles != null)
+            for (GameProfile p : profiles)
+                if (Objects.equals(profile, p))
+                    selectedProfile = profile;
     }
 
     public String getUserId() {

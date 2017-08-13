@@ -75,6 +75,7 @@ public final class YggdrasilAuthenticator extends AbstractAuthenticator {
                     if (sel == -1)
                         throw new AuthenticationException("No selection");
                     selectedProfile = profiles[sel];
+                    ua.setSelectedProfile(profiles[sel]);
                     username = names[sel];
                 } else
                     username = MessageBox.showInputDialog(C.i18n("login.no_charactor"));
