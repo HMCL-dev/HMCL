@@ -43,13 +43,8 @@ public class DefaultGameLauncher extends GameLauncher {
     public boolean downloadLibraries(List<DownloadLibraryJob> jobs) {
         final TaskWindow.TaskWindowFactory dw = TaskWindow.factory();
         ParallelTask parallelTask = new ParallelTask();
-        HashSet<String> names = new HashSet<>();
-        for (DownloadLibraryJob s : jobs) {
-            if (names.contains(s.lib.getName()))
-                continue;
-            names.add(s.lib.getName());
+        for (DownloadLibraryJob s : jobs)
             parallelTask.addTask(new LibraryDownloadTask(s, service.getDownloadType()));
-        }
         dw.append(parallelTask);
         boolean flag = true;
         if (jobs.size() > 0)
