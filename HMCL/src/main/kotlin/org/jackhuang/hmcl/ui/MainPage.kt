@@ -48,25 +48,21 @@ import org.jackhuang.hmcl.ui.wizard.DecoratorPage
 class MainPage : StackPane(), DecoratorPage {
     override val titleProperty: StringProperty = SimpleStringProperty(this, "title", i18n("launcher.title.main"))
 
-    @FXML lateinit var buttonLaunch: JFXButton
+    @FXML lateinit var btnLaunch: JFXButton
     @FXML lateinit var masonryPane: JFXMasonryPane
 
     init {
         loadFXML("/assets/fxml/main.fxml")
 
-        //EVENT_BUS.channel<RefreshedVersionsEvent>() += this::loadVersions
-        //EVENT_BUS.channel<ProfileLoadingEvent>() += this::onProfilesLoading
-        //EVENT_BUS.channel<ProfileChangedEvent>() += this::onProfileChanged
+        EVENT_BUS.channel<RefreshedVersionsEvent>() += this::loadVersions
+        EVENT_BUS.channel<ProfileLoadingEvent>() += this::onProfilesLoading
+        EVENT_BUS.channel<ProfileChangedEvent>() += this::onProfileChanged
 
-        //Settings.onProfileLoading()
+        Settings.onProfileLoading()
 
-        //Controllers.decorator.addMenuButton.setOnMouseClicked {
         //    Controllers.decorator.startWizard(DownloadWizardProvider(), "Install New Game")
-        //}
-        //Controllers.decorator.refreshMenuButton.setOnMouseClicked {
         //    Settings.selectedProfile.repository.refreshVersions()
-        //}
-        //buttonLaunch.setOnMouseClicked { LauncherHelper.launch() }
+        btnLaunch.setOnMouseClicked { LauncherHelper.launch() }
     }
 
     private fun buildNode(i: Int, profile: Profile, version: String, game: String, group: ToggleGroup): Node {
@@ -78,6 +74,10 @@ class MainPage : StackPane(), DecoratorPage {
             btnDelete.setOnMouseClicked {
                 profile.repository.removeVersionFromDisk(version)
                 Platform.runLater(this@MainPage::loadVersions)
+            }
+            btnSettings.setOnMouseClicked {
+                Controllers.decorator.showPage(Controllers.versionPane)
+                Controllers.versionPane.load(version, profile)
             }
         }
     }

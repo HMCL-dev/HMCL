@@ -4,13 +4,10 @@
 <?import com.jfoenix.transitions.hamburger.HamburgerBackArrowBasicTransition?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Rectangle?>
 <?import java.lang.String?>
 <?import org.jackhuang.hmcl.ui.AdvancedListBox?>
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.image.Image?>
 <fx:root xmlns="http://javafx.com/javafx"
          type="StackPane"
          xmlns:fx="http://javafx.com/fxml">
@@ -37,24 +34,6 @@
                                             <center>
                                                 <AdvancedListBox fx:id="leftPane" />
                                             </center>
-                                            <bottom>
-                                                <BorderPane fx:id="menuBottomBar">
-                                                    <left>
-                                                        <JFXButton fx:id="refreshMenuButton" styleClass="toggle-icon4">
-                                                            <graphic>
-                                                                <fx:include source="/assets/svg/refresh-black.fxml"/>
-                                                            </graphic>
-                                                        </JFXButton>
-                                                    </left>
-                                                    <right>
-                                                        <JFXButton fx:id="addMenuButton" styleClass="toggle-icon4">
-                                                            <graphic>
-                                                                <fx:include source="/assets/svg/plus-black.fxml"/>
-                                                            </graphic>
-                                                        </JFXButton>
-                                                    </right>
-                                                </BorderPane>
-                                            </bottom>
                                         </BorderPane>
                                     </center>
                                     <right>

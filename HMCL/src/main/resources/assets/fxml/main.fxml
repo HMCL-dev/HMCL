@@ -7,25 +7,30 @@
         maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
         styleClass="transparent" type="StackPane"
         xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1">
-    <!--ScrollPane fitToHeight="true" fitToWidth="true" fx:id="scrollPane" hbarPolicy="NEVER">
-        <JFXMasonryPane fx:id="masonryPane">
+    <ScrollPane fitToHeight="true" fitToWidth="true" fx:id="scrollPane" hbarPolicy="NEVER">
+        <JFXMasonryPane fx:id="masonryPane" HSpacing="3" VSpacing="3" cellWidth="192" cellHeight="160">
         </JFXMasonryPane>
-    </ScrollPane-->
-    <BorderPane>
-        <center>
-            <StackPane fx:id="page" BorderPane.alignment="CENTER" />
-        </center>
-        <bottom>
-            <BorderPane prefHeight="50.0" BorderPane.alignment="CENTER">
-                <right>
-                    <StackPane prefHeight="50.0" BorderPane.alignment="CENTER">
-                        <JFXSpinner fx:id="spinner" style="-fx-radius:16" styleClass="materialDesign-purple, first-spinner" />
-                        <JFXButton fx:id="buttonLaunch" prefWidth="200" prefHeight="40" buttonType="RAISED" text="%ui.button.run"
-                                   style="-fx-text-fill:WHITE;-fx-background-color:#5264AE;-fx-font-size:14px;"/>
-                    </StackPane>
-                </right>
-            </BorderPane>
-        </bottom>
-    </BorderPane>
+    </ScrollPane>
+    <VBox style="-fx-padding: 15;" spacing="15" pickOnBounds="false" alignment="BOTTOM_RIGHT">
+        <!--JFXSpinner fx:id="spinner" style="-fx-radius:10" styleClass="materialDesign-purple, first-spinner" /-->
+        <JFXButton prefWidth="40" prefHeight="40" buttonType="RAISED" fx:id="btnRefresh"
+                   style="-fx-background-color:#5264AE;-fx-background-radius: 50px;">
+            <graphic>
+                <fx:include source="/assets/svg/refresh.fxml" />
+            </graphic>
+        </JFXButton>
+        <JFXButton prefWidth="40" prefHeight="40" buttonType="RAISED" fx:id="btnAdd"
+                   style="-fx-background-color:#5264AE;-fx-background-radius: 50px;">
+            <graphic>
+                <fx:include source="/assets/svg/plus.fxml" />
+            </graphic>
+        </JFXButton>
+        <JFXButton prefWidth="40" prefHeight="40" buttonType="RAISED" fx:id="btnLaunch"
+                   style="-fx-background-color:#5264AE;-fx-background-radius: 50px;">
+            <graphic>
+                <fx:include source="/assets/svg/rocket.fxml" />
+            </graphic>
+        </JFXButton>
+    </VBox>
 
 </fx:root>

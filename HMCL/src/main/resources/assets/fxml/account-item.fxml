@@ -12,25 +12,22 @@
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
     <VBox fx:id="content">
-        <StackPane styleClass="debug-border" fx:id="header" VBox.vgrow="ALWAYS">
+        <StackPane fx:id="header" VBox.vgrow="ALWAYS">
             <BorderPane>
                 <top>
-                    <HBox styleClass="debug-border" alignment="CENTER_RIGHT">
-                        <JFXButton fx:id="btnDelete" styleClass="toggle-icon3" />
+                    <HBox alignment="CENTER_RIGHT">
+                        <JFXButton fx:id="btnDelete" styleClass="toggle-icon3" maxWidth="30" maxHeight="30" minWidth="30" minHeight="30" prefWidth="30" prefHeight="30" />
                     </HBox>
                 </top>
                 <center>
-                    <BorderPane styleClass="debug-border" style="-fx-padding: 0 0 0 20;">
-                        <top>
+                    <VBox style="-fx-padding: 0 0 5 20;">
                         <Label fx:id="lblUser" style="-fx-font-size: 20;" wrapText="true" textAlignment="JUSTIFY" />
-                        </top><bottom>
                         <Label fx:id="lblType" style="-fx-font-size: 10;" />
-                    </bottom>
-                    </BorderPane>
+                    </VBox>
                 </center>
             </BorderPane>
         </StackPane>
-        <StackPane fx:id="body" styleClass="debug-border" style="-fx-background-radius: 0 0 5 5; -fx-background-color: rgb(255,255,255,0.87); -fx-padding: 0 0 10 0;">
+        <StackPane fx:id="body" style="-fx-background-radius: 0 0 2 2; -fx-background-color: rgb(255,255,255,0.87); -fx-padding: 0 0 10 0;">
             <JFXRadioButton fx:id="chkSelected" StackPane.alignment="BOTTOM_RIGHT" />
         </StackPane>
     </VBox>

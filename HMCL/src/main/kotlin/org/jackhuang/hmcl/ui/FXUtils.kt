@@ -121,7 +121,17 @@ val stylesheets = arrayOf(
         Controllers::class.java.getResource("/css/jfoenix-design.css").toExternalForm(),
         Controllers::class.java.getResource("/assets/css/jfoenix-main-demo.css").toExternalForm())
 
+fun Region.limitWidth(width: Double) {
+    maxWidth = width
+    minWidth = width
+    prefWidth = width
+}
 
+fun Region.limitHeight(height: Double) {
+    maxHeight = height
+    minHeight = height
+    prefHeight = height
+}
 
 fun bindInt(textField: JFXTextField, property: Property<*>) {
     textField.textProperty().unbind()

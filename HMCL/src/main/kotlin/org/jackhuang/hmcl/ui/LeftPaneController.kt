@@ -47,7 +47,14 @@ class LeftPaneController(private val leftPane: AdvancedListBox) {
                 })
                 .startCategory(i18n("ui.label.profile"))
                 .add(cboProfiles)
-                .startCategory(i18n("ui.label.version"))
+                .startCategory("LAUNCHER")
+                .add(IconedItem(SVG.gear("black"), "Settings").apply {
+                    prefWidthProperty().bind(leftPane.widthProperty())
+                    setOnMouseClicked {
+                        Controllers.navigate(Controllers.settingsPane)
+                    }
+                })
+/*                .startCategory(i18n("ui.label.version"))
                 .add(versionsPane)
 
         EVENT_BUS.channel<RefreshedVersionsEvent>() += this::loadVersions
@@ -62,7 +69,7 @@ class LeftPaneController(private val leftPane: AdvancedListBox) {
         Controllers.decorator.refreshMenuButton.setOnMouseClicked {
             Settings.selectedProfile.repository.refreshVersions()
         }
-        Controllers.mainPane.buttonLaunch.setOnMouseClicked { LauncherHelper.launch() }
+        Controllers.mainPane.buttonLaunch.setOnMouseClicked { LauncherHelper.launch() }*/
 
         Settings.selectedAccountProperty.addListener { _, _, newValue ->
             if (newValue == null) {
@@ -78,7 +85,7 @@ class LeftPaneController(private val leftPane: AdvancedListBox) {
         if (Settings.getAccounts().isEmpty())
             Controllers.navigate(AccountsPage())
     }
-
+/*
     fun onProfilesLoading() {
         // TODO: Profiles
     }
@@ -119,5 +126,5 @@ class LeftPaneController(private val leftPane: AdvancedListBox) {
         versionsPane.children
                 .filter { it is RipplerContainer && it.properties["version"] is Pair<*, *> }
                 .forEach { (it as RipplerContainer).selected = (it.properties["version"] as Pair<String, VersionListItem>).first == selectedVersion }
-    }
+    }*/
 }

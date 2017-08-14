@@ -25,9 +25,12 @@ import javafx.beans.binding.Bindings
 import javafx.fxml.FXML
 import javafx.scene.control.Label
 import javafx.scene.control.ToggleGroup
+import javafx.scene.effect.BlurType
+import javafx.scene.effect.DropShadow
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
+import javafx.scene.paint.Color
 import java.util.concurrent.Callable
 
 class VersionItem(i: Int, group: ToggleGroup) : StackPane() {
@@ -36,6 +39,7 @@ class VersionItem(i: Int, group: ToggleGroup) : StackPane() {
     @FXML lateinit var header: StackPane
     @FXML lateinit var body: StackPane
     @FXML lateinit var btnDelete: JFXButton
+    @FXML lateinit var btnSettings: JFXButton
     @FXML lateinit var lblVersionName: Label
     @FXML lateinit var chkSelected: JFXRadioButton
     @FXML lateinit var lblGameVersion: Label
@@ -43,18 +47,21 @@ class VersionItem(i: Int, group: ToggleGroup) : StackPane() {
     init {
         loadFXML("/assets/fxml/version-item.fxml")
 
-        JFXDepthManager.setDepth(this, 1)
+        limitWidth(190.0)
+        limitHeight(156.0)
+
+        effect = DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.26), 5.0, 0.12, -1.0, 1.0)
 
         chkSelected.toggleGroup = group
-        btnDelete.graphic = SVG.delete("white", 15.0, 15.0)
+        btnSettings.graphic = SVG.gear("black", 15.0, 15.0)
+        btnDelete.graphic = SVG.delete("black", 15.0, 15.0)
 
         // create content
         val headerColor = getDefaultColor(i % 12)
-        header.style = "-fx-background-radius: 5 5 0 0; -fx-background-color: " + headerColor
-        body.minHeight = 50.0
+        header.style = "-fx-background-radius: 2 2 0 0; -fx-background-color: " + headerColor
 
         // create image view
-        icon.translateYProperty().bind(Bindings.createDoubleBinding(Callable { header.boundsInParent.height - icon.height / 2 }, header.boundsInParentProperty(), icon.heightProperty()))
+        icon.translateYProperty().bind(Bindings.createDoubleBinding(Callable { header.boundsInParent.height - icon.height }, header.boundsInParentProperty(), icon.heightProperty()))
     }
 
     private fun getDefaultColor(i: Int): String {

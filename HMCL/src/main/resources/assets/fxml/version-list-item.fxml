@@ -19,10 +19,10 @@
                 </ImageView>
                 <BorderPane style="-fx-padding: 0 0 0 10;">
                     <top>
-                    <Label fx:id="lblVersionName" maxWidth="100" style="-fx-font-size: 15;" textAlignment="JUSTIFY" />
+                        <Label fx:id="lblVersionName" maxWidth="100" style="-fx-font-size: 15;" textAlignment="JUSTIFY" />
                     </top>
                     <bottom>
-                    <Label fx:id="lblGameVersion" maxWidth="100" style="-fx-font-size: 10;" textAlignment="JUSTIFY" />
+                        <Label fx:id="lblGameVersion" maxWidth="100" style="-fx-font-size: 10;" textAlignment="JUSTIFY" />
                     </bottom>
                 </BorderPane>
             </HBox>

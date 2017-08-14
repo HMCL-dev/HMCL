@@ -41,13 +41,11 @@ class AdvancedListBox: ScrollPane() {
 
     fun add(child: Node): AdvancedListBox {
         if (child is Pane) {
-            //child.maxWidthProperty().bind(this.widthProperty())
             container.children += child
         } else {
             val pane = StackPane()
             pane.styleClass += "advanced-list-box-item"
             pane.children.setAll(child)
-            //pane.maxWidthProperty().bind(this.widthProperty())
             container.children += pane
         }
         return this

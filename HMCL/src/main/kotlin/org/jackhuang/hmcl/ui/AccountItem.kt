@@ -25,9 +25,12 @@ import javafx.beans.binding.Bindings
 import javafx.fxml.FXML
 import javafx.scene.control.Label
 import javafx.scene.control.ToggleGroup
+import javafx.scene.effect.BlurType
+import javafx.scene.effect.DropShadow
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
+import javafx.scene.paint.Color
 import java.util.concurrent.Callable
 
 class AccountItem(i: Int, group: ToggleGroup) : StackPane() {
@@ -43,14 +46,17 @@ class AccountItem(i: Int, group: ToggleGroup) : StackPane() {
     init {
         loadFXML("/assets/fxml/account-item.fxml")
 
-        JFXDepthManager.setDepth(this, 1)
+        limitWidth(150.0)
+        limitHeight(140.0)
+
+        effect = DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.26), 5.0, 0.12, -0.5, 1.0)
 
         chkSelected.toggleGroup = group
         btnDelete.graphic = SVG.delete("white", 15.0, 15.0)
 
         // create content
         val headerColor = getDefaultColor(i % 12)
-        header.style = "-fx-background-radius: 5 5 0 0; -fx-background-color: " + headerColor
+        header.style = "-fx-background-radius: 2 2 0 0; -fx-background-color: " + headerColor
         body.minHeight = Math.random() * 20 + 50
 
         // create image view
