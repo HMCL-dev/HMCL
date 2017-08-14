@@ -28,10 +28,11 @@ import org.jackhuang.hmcl.task.TaskExecutor
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations
 import org.jackhuang.hmcl.ui.animation.TransitionHandler
 import org.jackhuang.hmcl.ui.loadFXML
+import org.jackhuang.hmcl.ui.wizard.Refreshable
 import org.jackhuang.hmcl.ui.wizard.WizardController
 import org.jackhuang.hmcl.ui.wizard.WizardPage
 
-class VersionsPage(private val controller: WizardController, private val gameVersion: String, private val downloadProvider: DownloadProvider, private val libraryId: String, private val callback: () -> Unit): StackPane(), WizardPage {
+class VersionsPage(private val controller: WizardController, private val gameVersion: String, private val downloadProvider: DownloadProvider, private val libraryId: String, private val callback: () -> Unit): StackPane(), WizardPage, Refreshable {
 
     @FXML lateinit var list: JFXListView<VersionsPageItem>
     @FXML lateinit var spinner: JFXSpinner
@@ -47,6 +48,10 @@ class VersionsPage(private val controller: WizardController, private val gameVer
             controller.settings[libraryId] = newValue.remoteVersion.selfVersion
             callback()
         }
+        refresh()
+    }
+
+    override fun refresh() {
         executor = versionList.refreshAsync(downloadProvider).subscribe(Scheduler.JAVAFX) {
             val versions = ArrayList(versionList.getVersions(gameVersion))
             versions.sortWith(RemoteVersion)

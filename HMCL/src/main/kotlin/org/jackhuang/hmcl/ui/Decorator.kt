@@ -65,7 +65,9 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, priva
     private var isDragging: Boolean = false
     private var windowDecoratorAnimation: Timeline? = null
     @FXML lateinit var contentPlaceHolder: StackPane
+    @FXML lateinit var drawerWrapper: StackPane
     @FXML lateinit var titleContainer: BorderPane
+    @FXML lateinit var leftRootPane: BorderPane
     @FXML lateinit var buttonsContainer: HBox
     @FXML lateinit var backNavButton: JFXButton
     @FXML lateinit var refreshNavButton: JFXButton
@@ -133,7 +135,7 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, priva
         animationHandler = TransitionHandler(contentPlaceHolder)
 
         setOverflowHidden(lookup("#contentPlaceHolderRoot") as Pane)
-        setOverflowHidden(lookup("#drawerWrapper") as Pane)
+        setOverflowHidden(drawerWrapper)
 
         // init the title hamburger icon
         drawer.setOnDrawerOpening {

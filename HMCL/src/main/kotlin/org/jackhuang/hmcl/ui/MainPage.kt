@@ -18,11 +18,28 @@
 package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.JFXButton
+import com.jfoenix.controls.JFXMasonryPane
+import javafx.application.Platform
 import javafx.beans.property.SimpleStringProperty
 import javafx.beans.property.StringProperty
+import javafx.beans.value.ChangeListener
 import javafx.fxml.FXML
+import javafx.scene.Node
+import javafx.scene.control.ToggleGroup
 import javafx.scene.layout.StackPane
+import javafx.scene.paint.Paint
+import org.jackhuang.hmcl.ProfileChangedEvent
+import org.jackhuang.hmcl.ProfileLoadingEvent
+import org.jackhuang.hmcl.auth.Account
+import org.jackhuang.hmcl.event.EVENT_BUS
+import org.jackhuang.hmcl.event.RefreshedVersionsEvent
+import org.jackhuang.hmcl.game.LauncherHelper
+import org.jackhuang.hmcl.game.Version
+import org.jackhuang.hmcl.game.minecraftVersion
 import org.jackhuang.hmcl.i18n
+import org.jackhuang.hmcl.setting.Profile
+import org.jackhuang.hmcl.setting.Settings
+import org.jackhuang.hmcl.ui.download.DownloadWizardProvider
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage
 
 /**
@@ -32,9 +49,70 @@ class MainPage : StackPane(), DecoratorPage {
     override val titleProperty: StringProperty = SimpleStringProperty(this, "title", i18n("launcher.title.main"))
 
     @FXML lateinit var buttonLaunch: JFXButton
+    @FXML lateinit var masonryPane: JFXMasonryPane
 
     init {
         loadFXML("/assets/fxml/main.fxml")
+
+        //EVENT_BUS.channel<RefreshedVersionsEvent>() += this::loadVersions
+        //EVENT_BUS.channel<ProfileLoadingEvent>() += this::onProfilesLoading
+        //EVENT_BUS.channel<ProfileChangedEvent>() += this::onProfileChanged
+
+        //Settings.onProfileLoading()
+
+        //Controllers.decorator.addMenuButton.setOnMouseClicked {
+        //    Controllers.decorator.startWizard(DownloadWizardProvider(), "Install New Game")
+        //}
+        //Controllers.decorator.refreshMenuButton.setOnMouseClicked {
+        //    Settings.selectedProfile.repository.refreshVersions()
+        //}
+        //buttonLaunch.setOnMouseClicked { LauncherHelper.launch() }
     }
 
+    private fun buildNode(i: Int, profile: Profile, version: String, game: String, group: ToggleGroup): Node {
+        return VersionItem(i, group).apply {
+            chkSelected.properties["version"] = version
+            chkSelected.isSelected = profile.selectedVersion == version
+            lblGameVersion.text = game
+            lblVersionName.text = version
+            btnDelete.setOnMouseClicked {
+                profile.repository.removeVersionFromDisk(version)
+                Platform.runLater(this@MainPage::loadVersions)
+            }
+        }
+    }
+
+    fun onProfilesLoading() {
+        // TODO: Profiles
+    }
+
+    fun onProfileChanged(event: ProfileChangedEvent) {
+        val profile = event.value
+        profile.selectedVersionProperty.addListener { _ ->
+            versionChanged(profile.selectedVersion)
+        }
+        profile.selectedVersionProperty.fireValueChangedEvent()
+    }
+
+    private fun loadVersions() {
+        val profile = Settings.selectedProfile
+        val group = ToggleGroup()
+        val children = mutableListOf<Node>()
+        var i = 0
+        profile.repository.getVersions().forEach { version ->
+            children += buildNode(++i, profile, version.id, minecraftVersion(profile.repository.getVersionJar(version.id)) ?: "Unknown", group)
+        }
+        group.selectedToggleProperty().addListener { _, _, newValue ->
+            if (newValue != null)
+                profile.selectedVersion = newValue.properties["version"] as String
+        }
+        masonryPane.children.setAll(children)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun versionChanged(selectedVersion: String) {
+        masonryPane.children
+                .filter { it is RipplerContainer && it.properties["version"] is Pair<*, *> }
+                .forEach { (it as RipplerContainer).selected = (it.properties["version"] as Pair<String, VersionListItem>).first == selectedVersion }
+    }
 }

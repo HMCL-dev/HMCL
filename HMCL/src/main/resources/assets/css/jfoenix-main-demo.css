@@ -25,10 +25,7 @@
     -fx-text-fill: rgba(0.0, 0.0, 0.0, 0.87);
 }
 
-.rippler-container HBox {
-    -fx-font-size: 14px;
-    -fx-padding: 10 16 10 16;
-    -fx-spacing: 10;
+.rippler-container {
 }
 
 .class-title {
@@ -704,9 +701,14 @@
 }
 
 .toggle-icon4 {
-    -fx-pref-width: 5px;
+    -fx-toggle-icon4-size: 30px;
+    -fx-pref-width: -fx-toggle-icon4-size;
+    -fx-max-width: -fx-toggle-icon4-size;
+    -fx-min-width: -fx-toggle-icon4-size;
+    -fx-pref-height: -fx-toggle-icon4-size;
+    -fx-max-height: -fx-toggle-icon4-size;
+    -fx-min-height: -fx-toggle-icon4-size;
     -fx-background-radius: 50px;
-    -fx-pref-height: 5px;
     -fx-background-color: transparent;
     -jfx-toggle-color: rgba(128, 128, 255, 0.2);
     -jfx-untoggle-color: transparent;

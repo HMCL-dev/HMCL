@@ -18,14 +18,18 @@
 package org.jackhuang.hmcl.ui
 
 import javafx.fxml.FXML
+import javafx.scene.control.Button
 import javafx.scene.control.Label
+import javafx.scene.control.Tooltip
 import javafx.scene.layout.BorderPane
+import javafx.scene.layout.StackPane
 import org.jackhuang.hmcl.setting.VersionSetting
 
-class VersionListItem(val versionName: String, val gameVersion: String) : BorderPane() {
+class VersionListItem(val versionName: String, val gameVersion: String) : StackPane() {
 
     @FXML lateinit var lblVersionName: Label
     @FXML lateinit var lblGameVersion: Label
+    @FXML lateinit var btnSettings: Button
 
     private var handler: () -> Unit = {}
 

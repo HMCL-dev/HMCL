@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui
 import javafx.fxml.FXMLLoader
 import javafx.scene.Node
 import javafx.scene.Scene
-import javafx.scene.layout.StackPane
 import javafx.stage.Stage
 import org.jackhuang.hmcl.Main
 

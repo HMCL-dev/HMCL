@@ -13,7 +13,6 @@
 <?import javafx.collections.FXCollections?>
 <?import java.lang.String?>
 <?import com.jfoenix.validation.RequiredFieldValidator?>
-<?import com.jfoenix.controls.JFXNodesList?>
 <?import com.jfoenix.controls.JFXProgressBar?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"

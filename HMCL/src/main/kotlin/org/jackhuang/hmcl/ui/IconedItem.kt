@@ -26,4 +26,6 @@ class IconedItem(val icon: Node, val text: String)
     : RipplerContainer(HBox().apply {
     children += icon.apply { isMouseTransparent = true }
     children += Label(text).apply { alignment = Pos.CENTER; isMouseTransparent = true }
+    style += "-fx-padding: 10 16 10 16; -fx-spacing: 10; -fx-font-size: 14; "
+    alignment = Pos.CENTER_LEFT
 })

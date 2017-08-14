@@ -35,7 +35,7 @@ import org.jackhuang.hmcl.ui.download.DownloadWizardProvider
 class LeftPaneController(private val leftPane: AdvancedListBox) {
     val versionsPane = VBox()
     val cboProfiles = JFXComboBox<String>().apply { items.add("Default"); prefWidthProperty().bind(leftPane.widthProperty()) }
-    val accountItem = VersionListItem("No account", "unknown")
+    val accountItem = VersionListItem("No Account", "unknown")
 
     init {
         leftPane
@@ -64,7 +64,7 @@ class LeftPaneController(private val leftPane: AdvancedListBox) {
         }
         Controllers.mainPane.buttonLaunch.setOnMouseClicked { LauncherHelper.launch() }
 
-        val listener = ChangeListener<Account?> { _, _, newValue ->
+        Settings.selectedAccountProperty.addListener { _, _, newValue ->
             if (newValue == null) {
                 accountItem.lblVersionName.text = "mojang@mojang.com"
                 accountItem.lblGameVersion.text = "Yggdrasil"
@@ -73,8 +73,7 @@ class LeftPaneController(private val leftPane: AdvancedListBox) {
                 accountItem.lblGameVersion.text = accountType(newValue)
             }
         }
-        Settings.selectedAccountProperty.addListener(listener)
-        listener.changed(null, null, Settings.selectedAccount)
+        Settings.selectedAccountProperty.fireValueChangedEvent()
 
         if (Settings.getAccounts().isEmpty())
             Controllers.navigate(AccountsPage())

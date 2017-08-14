@@ -20,21 +20,18 @@
                     </HBox>
                 </top>
                 <center>
-                    <BorderPane styleClass="debug-border" style="-fx-padding: 0 0 0 20;">
-                        <top>
-                        <Label fx:id="lblUser" style="-fx-font-size: 20;" wrapText="true" textAlignment="JUSTIFY" />
-                        </top><bottom>
-                        <Label fx:id="lblType" style="-fx-font-size: 10;" />
-                    </bottom>
-                    </BorderPane>
+                    <VBox styleClass="debug-border" style="-fx-padding: 0 0 0 20;">
+                        <Label fx:id="lblVersionName" style="-fx-font-size: 15;" />
+                        <Label fx:id="lblGameVersion" style="-fx-font-size: 10;" />
+                    </VBox>
                 </center>
             </BorderPane>
         </StackPane>
-        <StackPane fx:id="body" styleClass="debug-border" style="-fx-background-radius: 0 0 5 5; -fx-background-color: rgb(255,255,255,0.87); -fx-padding: 0 0 10 0;">
+        <StackPane styleClass="debug-border" fx:id="body" style="-fx-background-radius: 0 0 5 5; -fx-background-color: rgb(255,255,255,0.87); -fx-padding: 0 0 10 0;">
             <JFXRadioButton fx:id="chkSelected" StackPane.alignment="BOTTOM_RIGHT" />
         </StackPane>
     </VBox>
-    <StackPane fx:id="icon" StackPane.alignment="TOP_RIGHT" pickOnBounds="false">
+    <StackPane styleClass="debug-border" fx:id="icon" StackPane.alignment="TOP_RIGHT" pickOnBounds="false">
         <ImageView StackPane.alignment="CENTER_RIGHT">
             <StackPane.margin>
                 <Insets right="12" />

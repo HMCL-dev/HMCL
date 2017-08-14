@@ -2,24 +2,30 @@
 
 <?import javafx.scene.layout.*?>
 <?import com.jfoenix.controls.*?>
+<?import javafx.scene.control.ScrollPane?>
 <fx:root
         maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
-        style="-fx-background-color: white;" type="StackPane"
+        styleClass="transparent" type="StackPane"
         xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1">
+    <!--ScrollPane fitToHeight="true" fitToWidth="true" fx:id="scrollPane" hbarPolicy="NEVER">
+        <JFXMasonryPane fx:id="masonryPane">
+        </JFXMasonryPane>
+    </ScrollPane-->
     <BorderPane>
-       <center>
-           <StackPane fx:id="page" BorderPane.alignment="CENTER" />
-       </center>
-       <bottom>
-           <BorderPane prefHeight="50.0" BorderPane.alignment="CENTER">
-               <right>
-                   <StackPane prefHeight="50.0" BorderPane.alignment="CENTER">
+        <center>
+            <StackPane fx:id="page" BorderPane.alignment="CENTER" />
+        </center>
+        <bottom>
+            <BorderPane prefHeight="50.0" BorderPane.alignment="CENTER">
+                <right>
+                    <StackPane prefHeight="50.0" BorderPane.alignment="CENTER">
                         <JFXSpinner fx:id="spinner" style="-fx-radius:16" styleClass="materialDesign-purple, first-spinner" />
                         <JFXButton fx:id="buttonLaunch" prefWidth="200" prefHeight="40" buttonType="RAISED" text="%ui.button.run"
                                    style="-fx-text-fill:WHITE;-fx-background-color:#5264AE;-fx-font-size:14px;"/>
-                   </StackPane>
-               </right>
-           </BorderPane>
-       </bottom>
+                    </StackPane>
+                </right>
+            </BorderPane>
+        </bottom>
     </BorderPane>
+
 </fx:root>
