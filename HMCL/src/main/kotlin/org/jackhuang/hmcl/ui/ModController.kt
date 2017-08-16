@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui
 
+import com.jfoenix.effects.JFXDepthManager
 import javafx.fxml.FXML
 import javafx.scene.Node
 import javafx.scene.control.ScrollPane
@@ -46,6 +47,19 @@ class ModController {
             for (modInfo in modManager.getMods(versionId)) {
                 rootPane.children += ModItem(modInfo) {
                     modManager.removeMods(versionId, modInfo)
+                }.apply {
+                    JFXDepthManager.setDepth(this, 1)
+                    style += "-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;"
+
+                    modInfo.activeProperty.addListener { _, _, newValue ->
+                        if (newValue)
+                            styleClass -= "disabled"
+                        else
+                            styleClass += "disabled"
+                    }
+
+                    if (!modInfo.isActive)
+                        styleClass += "disabled"
                 }
             }
         }

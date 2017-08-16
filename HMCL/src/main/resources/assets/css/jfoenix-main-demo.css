@@ -6,6 +6,10 @@
     -fx-font-family: "Roboto";
 }
 
+.disabled Label {
+    -fx-text-fill: gray;
+}
+
 .side-menu {
     -fx-padding: 20.0, 10.0;
     -fx-font-size: 15.0;

@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
@@ -10,7 +7,7 @@
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="org.jackhuang.hmcl.ui.ModController">
     <ScrollPane fx:id="scrollPane" fitToWidth="true" fitToHeight="true">
-        <VBox fx:id="rootPane" spacing="10" style="-fx-padding: 10 0 40 0;">
+        <VBox fx:id="rootPane" spacing="10" style="-fx-padding: 20;">
 
         </VBox>
     </ScrollPane>

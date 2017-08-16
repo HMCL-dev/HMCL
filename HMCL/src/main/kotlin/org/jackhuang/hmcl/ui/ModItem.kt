@@ -23,7 +23,7 @@ import javafx.scene.control.Label
 import javafx.scene.layout.BorderPane
 import org.jackhuang.hmcl.mod.ModInfo
 
-class ModItem(info: ModInfo, private val deleteCallback: () -> Unit) : BorderPane() {
+class ModItem(info: ModInfo, private val deleteCallback: (ModItem) -> Unit) : BorderPane() {
     @FXML lateinit var lblModFileName: Label
     @FXML lateinit var lblModAuthor: Label
     @FXML lateinit var chkEnabled: JFXCheckBox
@@ -40,6 +40,6 @@ class ModItem(info: ModInfo, private val deleteCallback: () -> Unit) : BorderPan
     }
 
     fun onDelete() {
-        deleteCallback()
+        deleteCallback(this)
     }
 }

@@ -23,7 +23,7 @@
         <right>
             <JFXButton onMouseClicked="#onDelete" styleClass="toggle-icon4" BorderPane.alignment="CENTER">
                 <graphic>
-                    <fx:include source="/assets/svg/delete-black.fxml"/>
+                    <fx:include source="/assets/svg/close-black.fxml"/>
                 </graphic>
             </JFXButton>
         </right>
