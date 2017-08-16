@@ -56,4 +56,12 @@ object SVG {
     fun dotsVertical(fill: String = "white", width: Double = 20.0, height: Double = 20.0): Node = createSVGPath("M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z", fill, width, height)
     fun delete(fill: String = "white", width: Double = 20.0, height: Double = 20.0): Node = createSVGPath("M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z", fill, width, height)
     fun accountEdit(fill: String = "white", width: Double = 20.0, height: Double = 20.0) = createSVGPath("M21.7,13.35L20.7,14.35L18.65,12.3L19.65,11.3C19.86,11.09 20.21,11.09 20.42,11.3L21.7,12.58C21.91,12.79 21.91,13.14 21.7,13.35M12,18.94L18.06,12.88L20.11,14.93L14.06,21H12V18.94M12,14C7.58,14 4,15.79 4,18V20H10V18.11L14,14.11C13.34,14.03 12.67,14 12,14M12,4A4,4 0 0,0 8,8A4,4 0 0,0 12,12A4,4 0 0,0 16,8A4,4 0 0,0 12,4Z", fill, width, height)
+    fun expand(fill: String = "white", width: Double = 20.0, height: Double = 20.0) = createSVGPath("M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z", fill, width, height)
+    fun collapse(fill: String = "white", width: Double = 20.0, height: Double = 20.0) = createSVGPath("M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z", fill, width, height)
+    fun navigate(fill: String = "white", width: Double = 20.0, height: Double = 20.0) = createSVGPath("M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z", fill, width, height)
+    fun launch(fill: String = "white", width: Double = 20.0, height: Double = 20.0) = createSVGPath("M1008 6.286q18.857 13.714 15.429 36.571l-146.286 877.714q-2.857 16.571-18.286 25.714-8 4.571-17.714 4.571-6.286 "
+            + "0-13.714-2.857l-258.857-105.714-138.286 168.571q-10.286 13.143-28 13.143-7.429 "
+            + "0-12.571-2.286-10.857-4-17.429-13.429t-6.571-20.857v-199.429l493.714-605.143-610.857 "
+            + "528.571-225.714-92.571q-21.143-8-22.857-31.429-1.143-22.857 18.286-33.714l950.857-548.571q8.571-5.143 18.286-5.143"
+            + " 11.429 0 20.571 6.286z", fill, width, height)
 }

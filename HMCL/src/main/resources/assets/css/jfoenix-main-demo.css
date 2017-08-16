@@ -567,6 +567,54 @@
     -fx-border-width: 1 0 1 0;
 }
 
+.options-list {
+    -fx-background-color: transparent;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+}
+
+.options-sublist {
+    -fx-background-color: white;
+}
+
+.options-list-item {
+    -fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 10 16 10 16;
+    -fx-font-size: 12;
+}
+
+.options-list-item-ahead {
+    -fx-background-radius: 2 2 0 0;
+    -fx-background-color: white;
+    -fx-padding: 10 16 10 16;
+    -fx-font-size: 12;
+}
+
+.options-list-item-expand-button {
+    -fx-toggle-icon4-size: 15px;
+    -fx-pref-width: -fx-toggle-icon4-size;
+    -fx-max-width: -fx-toggle-icon4-size;
+    -fx-min-width: -fx-toggle-icon4-size;
+    -fx-pref-height: -fx-toggle-icon4-size;
+    -fx-max-height: -fx-toggle-icon4-size;
+    -fx-min-height: -fx-toggle-icon4-size;
+    -fx-background-radius: 50px;
+    -fx-background-color: transparent;
+    -jfx-toggle-color: rgba(128, 128, 255, 0.2);
+    -jfx-untoggle-color: transparent;
+}
+
+.options-list-item-expand-button .icon {
+    -fx-fill: rgb(204.0, 204.0, 51.0);
+    -fx-padding: 10.0;
+}
+
+.options-list-item-expand-button .jfx-rippler {
+    -jfx-rippler-fill: #0F9D58;
+    -jfx-mask-type: CIRCLE;
+}
+
 .custom-jfx-list-view .jfx-list-cell .sublist-header > .drop-icon {
     -fx-background-color: GRAY;
 }

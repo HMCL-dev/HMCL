@@ -18,11 +18,9 @@
 package org.jackhuang.hmcl.ui
 
 import com.jfoenix.concurrency.JFXUtilities
-import com.jfoenix.controls.JFXCheckBox
-import com.jfoenix.controls.JFXComboBox
-import com.jfoenix.controls.JFXScrollPane
-import com.jfoenix.controls.JFXTextField
+import com.jfoenix.controls.*
 import javafx.animation.Animation
+import javafx.animation.Interpolator
 import javafx.animation.KeyFrame
 import javafx.animation.Timeline
 import javafx.beans.property.Property
@@ -144,6 +142,11 @@ fun bindString(textField: JFXTextField, property: Property<String>) {
     textField.textProperty().bindBidirectional(property)
 }
 
+fun bindBoolean(toggleButton: JFXToggleButton, property: Property<Boolean>) {
+    toggleButton.selectedProperty().unbind()
+    toggleButton.selectedProperty().bindBidirectional(property)
+}
+
 fun bindBoolean(checkBox: JFXCheckBox, property: Property<Boolean>) {
     checkBox.selectedProperty().unbind()
     checkBox.selectedProperty().bindBidirectional(property)
@@ -163,4 +166,20 @@ fun unbindEnum(comboBox: JFXComboBox<*>) {
     @Suppress("UNCHECKED_CAST")
     val listener = comboBox.properties["listener"] as? ChangeListener<Number> ?: return
     comboBox.selectionModel.selectedIndexProperty().removeListener(listener)
+}
+
+
+/**
+ * Built-in interpolator that provides discrete time interpolation. The
+ * return value of `interpolate()` is `endValue` only when the
+ * input `fraction` is 1.0, and `startValue` otherwise.
+ */
+val SINE: Interpolator = object : Interpolator() {
+    override fun curve(t: Double): Double {
+        return Math.sin(t * Math.PI / 2)
+    }
+
+    override fun toString(): String {
+        return "Interpolator.DISCRETE"
+    }
 }

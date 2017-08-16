@@ -47,6 +47,9 @@ class SettingsPage : StackPane(), DecoratorPage {
     init {
         loadFXML("/assets/fxml/setting.fxml")
 
+        cboLanguage.limitWidth(400.0)
+        cboDownloadSource.limitWidth(400.0)
+
         txtProxyHost.text = Settings.PROXY_HOST
         txtProxyHost.textProperty().addListener { _, _, newValue ->
             Settings.PROXY_HOST = newValue

@@ -6,6 +6,9 @@ hs_err_pid*
 .gradle
 .idea
 
+*.lck
+*.1
+*.2
 *.log
 .mine*
 NVIDIA

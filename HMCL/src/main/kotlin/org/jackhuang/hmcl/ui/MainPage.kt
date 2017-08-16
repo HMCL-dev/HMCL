@@ -54,6 +54,10 @@ class MainPage : StackPane(), DecoratorPage {
     init {
         loadFXML("/assets/fxml/main.fxml")
 
+        btnLaunch.graphic = SVG.launch("white", 15.0, 15.0)
+        btnLaunch.limitWidth(40.0)
+        btnLaunch.limitHeight(40.0)
+
         EVENT_BUS.channel<RefreshedVersionsEvent>() += this::loadVersions
         EVENT_BUS.channel<ProfileLoadingEvent>() += this::onProfilesLoading
         EVENT_BUS.channel<ProfileChangedEvent>() += this::onProfileChanged
