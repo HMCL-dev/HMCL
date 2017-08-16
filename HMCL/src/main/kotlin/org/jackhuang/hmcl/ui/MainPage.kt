@@ -22,24 +22,20 @@ import com.jfoenix.controls.JFXMasonryPane
 import javafx.application.Platform
 import javafx.beans.property.SimpleStringProperty
 import javafx.beans.property.StringProperty
-import javafx.beans.value.ChangeListener
 import javafx.fxml.FXML
 import javafx.scene.Node
 import javafx.scene.control.ToggleGroup
 import javafx.scene.layout.StackPane
-import javafx.scene.paint.Paint
 import org.jackhuang.hmcl.ProfileChangedEvent
 import org.jackhuang.hmcl.ProfileLoadingEvent
-import org.jackhuang.hmcl.auth.Account
 import org.jackhuang.hmcl.event.EVENT_BUS
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent
 import org.jackhuang.hmcl.game.LauncherHelper
-import org.jackhuang.hmcl.game.Version
 import org.jackhuang.hmcl.game.minecraftVersion
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.setting.Settings
-import org.jackhuang.hmcl.ui.download.DownloadWizardProvider
+import org.jackhuang.hmcl.ui.construct.RipplerContainer
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage
 
 /**

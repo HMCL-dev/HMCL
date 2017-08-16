@@ -37,7 +37,7 @@ class Config {
             Settings.save()
         }
     @SerializedName("commonpath")
-    var commonpath: File = Main.getMinecraftDirectory()
+    var commonpath: String = Main.getMinecraftDirectory().absolutePath
         set(value) {
             field = value
             Settings.save()

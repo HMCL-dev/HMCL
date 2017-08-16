@@ -31,7 +31,7 @@ object LauncherHelper {
                 repository = repository,
                 versionId = profile.selectedVersion,
                 options = profile.getVersionSetting(profile.selectedVersion).toLaunchOptions(profile.gameDir),
-                account = account.logIn(Settings.PROXY)
+                account = account.logIn(Settings.proxy)
         )
 
         profile.dependency.checkGameCompletionAsync(version)

@@ -28,6 +28,7 @@ import javafx.stage.DirectoryChooser
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.VersionSetting
 import org.jackhuang.hmcl.ui.construct.ComponentList
+import org.jackhuang.hmcl.ui.construct.NumberValidator
 import org.jackhuang.hmcl.util.OS
 
 class VersionSettingsController {

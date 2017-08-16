@@ -35,13 +35,10 @@
                     </VBox>
                 </ComponentList>
 
-                <VBox>
-                    <BorderPane> <!-- Max Memory -->
-                        <left><Label text="%settings.max_memory" BorderPane.alignment="CENTER_LEFT" /></left>
-                        <right><JFXTextField fx:id="txtMaxMemory" BorderPane.alignment="CENTER_RIGHT" /></right>
-                    </BorderPane>
-                    <Label fx:id="lblPhysicalMemory" style="-fx-text-fill: gray;" />
-                </VBox>
+                <BorderPane> <!-- Max Memory -->
+                    <left><VBox><Label text="%settings.max_memory" BorderPane.alignment="CENTER_LEFT" /><Label fx:id="lblPhysicalMemory" style="-fx-text-fill: gray;" /></VBox></left>
+                    <right><JFXTextField fx:id="txtMaxMemory" BorderPane.alignment="CENTER_RIGHT" /></right>
+                </BorderPane>
 
                 <BorderPane> <!-- Launcher Visibility -->
                     <left><Label text="%advancedsettings.launcher_visible" BorderPane.alignment="CENTER_LEFT" /></left>

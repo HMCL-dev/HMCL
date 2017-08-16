@@ -22,12 +22,10 @@ import javafx.stage.Stage
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.ui.Controllers
-import org.jackhuang.hmcl.ui.UTF8Control
 import org.jackhuang.hmcl.util.DEFAULT_USER_AGENT
 import org.jackhuang.hmcl.util.LOG
 import org.jackhuang.hmcl.util.OS
 import java.io.File
-import java.util.*
 import java.util.logging.Level
 
 fun i18n(key: String): String {
@@ -83,6 +81,6 @@ class Main : Application() {
             Scheduler.shutdown()
         }
 
-        val RESOURCE_BUNDLE = Settings.LANG.resourceBundle
+        val RESOURCE_BUNDLE = Settings.locale.resourceBundle
     }
 }

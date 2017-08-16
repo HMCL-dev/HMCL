@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.auth.Account
 import org.jackhuang.hmcl.util.*
 import org.jackhuang.hmcl.event.EVENT_BUS
 import org.jackhuang.hmcl.util.property.ImmediateObjectProperty
+import org.jackhuang.hmcl.util.property.ImmediateStringProperty
 import java.net.Authenticator
 import java.net.InetSocketAddress
 import java.net.PasswordAuthentication
@@ -46,14 +47,14 @@ object Settings {
             .registerTypeAdapter(File::class.java, FileTypeAdapter)
             .setPrettyPrinting().create()
 
-    val DEFAULT_PROFILE = "Default"
-    val HOME_PROFILE = "Home"
+    const val DEFAULT_PROFILE = "Default"
+    const val HOME_PROFILE = "Home"
 
-    val SETTINGS_FILE = File("hmcl.json").absoluteFile
+    val SETTINGS_FILE: File = File("hmcl.json").absoluteFile
 
     private val SETTINGS: Config
 
-    private val ACCOUNTS = mutableMapOf<String, Account>()
+    private val accounts = mutableMapOf<String, Account>()
 
     init {
         SETTINGS = initSettings();
@@ -72,7 +73,7 @@ object Settings {
                 continue
             }
 
-            ACCOUNTS[name] = account
+            accounts[name] = account
         }
 
         save()
@@ -117,7 +118,7 @@ object Settings {
     fun save() {
         try {
             SETTINGS.accounts.clear()
-            for ((name, account) in ACCOUNTS) {
+            for ((name, account) in accounts) {
                 val storage = account.toStorage()
                 storage["type"] = Accounts.getAccountType(account)
                 SETTINGS.accounts[name] = storage
@@ -129,37 +130,46 @@ object Settings {
         }
     }
 
-    var LANG: Locales.SupportedLocale = Locales.getLocaleByName(SETTINGS.localization)
+    val commonPathProperty = object : ImmediateStringProperty(this, "commonPath", SETTINGS.commonpath) {
+        override fun invalidated() {
+            super.invalidated()
+
+            SETTINGS.commonpath = get()
+        }
+    }
+    var commonPath: String by commonPathProperty
+
+    var locale: Locales.SupportedLocale = Locales.getLocaleByName(SETTINGS.localization)
         set(value) {
             field = value
             SETTINGS.localization = Locales.getNameByLocal(value)
         }
 
-    var PROXY: Proxy = Proxy.NO_PROXY
-    var PROXY_TYPE: Proxy.Type? = Proxies.getProxyType(SETTINGS.proxyType)
+    var proxy: Proxy = Proxy.NO_PROXY
+    var proxyType: Proxy.Type? = Proxies.getProxyType(SETTINGS.proxyType)
         set(value) {
             field = value
             SETTINGS.proxyType = Proxies.PROXIES.indexOf(value)
             loadProxy()
         }
 
-    var PROXY_HOST: String? get() = SETTINGS.proxyHost; set(value) { SETTINGS.proxyHost = value }
-    var PROXY_PORT: String? get() = SETTINGS.proxyPort; set(value) { SETTINGS.proxyPort = value }
-    var PROXY_USER: String? get() = SETTINGS.proxyUserName; set(value) { SETTINGS.proxyUserName = value }
-    var PROXY_PASS: String? get() = SETTINGS.proxyPassword; set(value) { SETTINGS.proxyPassword = value }
+    var proxyHost: String? get() = SETTINGS.proxyHost; set(value) { SETTINGS.proxyHost = value }
+    var proxyPort: String? get() = SETTINGS.proxyPort; set(value) { SETTINGS.proxyPort = value }
+    var proxyUser: String? get() = SETTINGS.proxyUserName; set(value) { SETTINGS.proxyUserName = value }
+    var proxyPass: String? get() = SETTINGS.proxyPassword; set(value) { SETTINGS.proxyPassword = value }
 
     private fun loadProxy() {
-        val host = PROXY_HOST
-        val port = PROXY_PORT?.toIntOrNull()
+        val host = proxyHost
+        val port = proxyPort?.toIntOrNull()
         if (host == null || host.isBlank() || port == null)
-            PROXY = Proxy.NO_PROXY
+            proxy = Proxy.NO_PROXY
         else {
-            System.setProperty("http.proxyHost", PROXY_HOST)
-            System.setProperty("http.proxyPort", PROXY_PORT)
-            PROXY = Proxy(PROXY_TYPE, InetSocketAddress(host, port))
+            System.setProperty("http.proxyHost", proxyHost)
+            System.setProperty("http.proxyPort", proxyPort)
+            proxy = Proxy(proxyType, InetSocketAddress(host, port))
 
-            val user = PROXY_USER
-            val pass = PROXY_PASS
+            val user = proxyUser
+            val pass = proxyPass
             if (user != null && user.isNotBlank() && pass != null && pass.isNotBlank()) {
                 System.setProperty("http.proxyUser", user)
                 System.setProperty("http.proxyPassword", pass)
@@ -175,7 +185,7 @@ object Settings {
 
     init { loadProxy() }
 
-    var DOWNLOAD_PROVIDER: DownloadProvider
+    var downloadProvider: DownloadProvider
         get() = when (SETTINGS.downloadtype) {
             0 -> MojangDownloadProvider
             1 -> BMCLAPIDownloadProvider
@@ -196,15 +206,15 @@ object Settings {
     val selectedAccountProperty = object : ImmediateObjectProperty<Account?>(this, "selectedAccount", getAccount(SETTINGS.selectedAccount)) {
         override fun get(): Account? {
             val a = super.get()
-            if (a == null || !ACCOUNTS.containsKey(a.username)) {
-                val acc = if (ACCOUNTS.isEmpty()) null else ACCOUNTS.values.first()
+            if (a == null || !accounts.containsKey(a.username)) {
+                val acc = if (accounts.isEmpty()) null else accounts.values.first()
                 set(acc)
                 return acc
             } else return a
         }
 
         override fun set(newValue: Account?) {
-            if (newValue == null || ACCOUNTS.containsKey(newValue.username)) {
+            if (newValue == null || accounts.containsKey(newValue.username)) {
                 super.set(newValue)
             }
         }
@@ -218,19 +228,19 @@ object Settings {
     var selectedAccount: Account? by selectedAccountProperty
 
     fun addAccount(account: Account) {
-        ACCOUNTS[account.username] = account
+        accounts[account.username] = account
     }
 
     fun getAccount(name: String): Account? {
-        return ACCOUNTS[name]
+        return accounts[name]
     }
 
     fun getAccounts(): Map<String, Account> {
-        return Collections.unmodifiableMap(ACCOUNTS)
+        return Collections.unmodifiableMap(accounts)
     }
 
     fun deleteAccount(name: String) {
-        ACCOUNTS.remove(name)
+        accounts.remove(name)
 
         selectedAccountProperty.get()
     }

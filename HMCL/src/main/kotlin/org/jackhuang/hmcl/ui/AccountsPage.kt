@@ -143,7 +143,7 @@ class AccountsPage() : StackPane(), DecoratorPage {
                     else -> throw UnsupportedOperationException()
                 }
 
-                account.logIn(Settings.PROXY)
+                account.logIn(Settings.proxy)
                 account
             } catch (e: Exception) {
                 e

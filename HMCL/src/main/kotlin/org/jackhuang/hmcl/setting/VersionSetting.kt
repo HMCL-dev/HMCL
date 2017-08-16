@@ -207,10 +207,10 @@ class VersionSetting() {
                 fullscreen = fullscreen,
                 serverIp = serverIp,
                 wrapper = wrapper,
-                proxyHost = Settings.PROXY_HOST,
-                proxyPort = Settings.PROXY_PORT,
-                proxyUser = Settings.PROXY_USER,
-                proxyPass = Settings.PROXY_PASS,
+                proxyHost = Settings.proxyHost,
+                proxyPort = Settings.proxyPort,
+                proxyUser = Settings.proxyUser,
+                proxyPass = Settings.proxyPass,
                 precalledCommand = precalledCommand,
                 noGeneratedJVMArgs = noJVMArgs
         )

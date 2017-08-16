@@ -19,12 +19,10 @@ package org.jackhuang.hmcl.setting
 
 import com.google.gson.*
 import javafx.beans.InvalidationListener
-import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider
 import org.jackhuang.hmcl.download.DefaultDependencyManager
 import org.jackhuang.hmcl.game.HMCLGameRepository
 import org.jackhuang.hmcl.mod.ModManager
 import org.jackhuang.hmcl.util.*
-import org.jackhuang.hmcl.util.property.ImmediateBooleanProperty
 import org.jackhuang.hmcl.util.property.ImmediateObjectProperty
 import org.jackhuang.hmcl.util.property.ImmediateStringProperty
 import java.io.File
@@ -41,7 +39,7 @@ class Profile(var name: String = "Default", initialGameDir: File = File(".minecr
     var gameDir: File by gameDirProperty
 
     var repository = HMCLGameRepository(initialGameDir)
-    val dependency: DefaultDependencyManager get() = DefaultDependencyManager(repository, Settings.DOWNLOAD_PROVIDER, Settings.PROXY)
+    val dependency: DefaultDependencyManager get() = DefaultDependencyManager(repository, Settings.downloadProvider, Settings.proxy)
     var modManager = ModManager(repository)
 
     init {

@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui
+package org.jackhuang.hmcl.ui.construct
 
 import javafx.scene.canvas.GraphicsContext
 import javafx.scene.paint.Color

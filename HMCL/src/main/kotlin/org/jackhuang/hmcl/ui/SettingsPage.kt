@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.JFXComboBox
 import com.jfoenix.controls.JFXTextField
-import javafx.beans.binding.Bindings
 import javafx.beans.property.SimpleStringProperty
 import javafx.beans.property.StringProperty
 import javafx.collections.FXCollections
@@ -31,6 +30,7 @@ import org.jackhuang.hmcl.setting.DownloadProviders
 import org.jackhuang.hmcl.setting.Locales
 import org.jackhuang.hmcl.setting.Proxies
 import org.jackhuang.hmcl.setting.Settings
+import org.jackhuang.hmcl.ui.construct.FileItem
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage
 
 class SettingsPage : StackPane(), DecoratorPage {
@@ -43,6 +43,8 @@ class SettingsPage : StackPane(), DecoratorPage {
     @FXML lateinit var cboProxyType: JFXComboBox<*>
     @FXML lateinit var cboLanguage: JFXComboBox<*>
     @FXML lateinit var cboDownloadSource: JFXComboBox<*>
+    @FXML lateinit var fileCommonLocation: FileItem
+    @FXML lateinit var fileBackgroundLocation: FileItem
 
     init {
         loadFXML("/assets/fxml/setting.fxml")
@@ -50,45 +52,47 @@ class SettingsPage : StackPane(), DecoratorPage {
         cboLanguage.limitWidth(400.0)
         cboDownloadSource.limitWidth(400.0)
 
-        txtProxyHost.text = Settings.PROXY_HOST
+        txtProxyHost.text = Settings.proxyHost
         txtProxyHost.textProperty().addListener { _, _, newValue ->
-            Settings.PROXY_HOST = newValue
+            Settings.proxyHost = newValue
         }
 
-        txtProxyPort.text = Settings.PROXY_PORT
+        txtProxyPort.text = Settings.proxyPort
         txtProxyPort.textProperty().addListener { _, _, newValue ->
-            Settings.PROXY_PORT = newValue
+            Settings.proxyPort = newValue
         }
 
-        txtProxyUsername.text = Settings.PROXY_USER
+        txtProxyUsername.text = Settings.proxyUser
         txtProxyUsername.textProperty().addListener { _, _, newValue ->
-            Settings.PROXY_USER = newValue
+            Settings.proxyUser = newValue
         }
 
-        txtProxyPassword.text = Settings.PROXY_PASS
+        txtProxyPassword.text = Settings.proxyPass
         txtProxyPassword.textProperty().addListener { _, _, newValue ->
-            Settings.PROXY_PASS = newValue
+            Settings.proxyPass = newValue
         }
 
-        cboDownloadSource.selectionModel.select(DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(Settings.DOWNLOAD_PROVIDER))
+        cboDownloadSource.selectionModel.select(DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(Settings.downloadProvider))
         cboDownloadSource.selectionModel.selectedIndexProperty().addListener { _, _, newValue ->
-            Settings.DOWNLOAD_PROVIDER = DownloadProviders.getDownloadProvider(newValue.toInt())
+            Settings.downloadProvider = DownloadProviders.getDownloadProvider(newValue.toInt())
         }
 
         val list = FXCollections.observableArrayList<Label>()
         for (locale in Locales.LOCALES) {
-            list += Label(locale.getName(Settings.LANG.resourceBundle))
+            list += Label(locale.getName(Settings.locale.resourceBundle))
         }
         cboLanguage.items = list
-        cboLanguage.selectionModel.select(Locales.LOCALES.indexOf(Settings.LANG))
+        cboLanguage.selectionModel.select(Locales.LOCALES.indexOf(Settings.locale))
         cboLanguage.selectionModel.selectedIndexProperty().addListener { _, _, newValue ->
-            Settings.LANG = Locales.getLocale(newValue.toInt())
+            Settings.locale = Locales.getLocale(newValue.toInt())
         }
 
-        cboProxyType.selectionModel.select(Proxies.PROXIES.indexOf(Settings.PROXY_TYPE))
+        cboProxyType.selectionModel.select(Proxies.PROXIES.indexOf(Settings.proxyType))
         cboProxyType.selectionModel.selectedIndexProperty().addListener { _, _, newValue ->
-            Settings.PROXY_TYPE = Proxies.getProxyType(newValue.toInt())
+            Settings.proxyType = Proxies.getProxyType(newValue.toInt())
         }
+
+        fileCommonLocation.setProperty(Settings.commonPathProperty)
     }
 
 

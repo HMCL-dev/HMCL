@@ -7,6 +7,7 @@
 <?import javafx.collections.FXCollections?>
 <?import com.jfoenix.controls.JFXTextField?>
 <?import org.jackhuang.hmcl.ui.construct.ComponentList?>
+<?import org.jackhuang.hmcl.ui.construct.FileItem?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
@@ -15,8 +16,8 @@
                 fitToHeight="true" fitToWidth="true">
         <VBox fx:id="rootPane" style="-fx-padding: 20;">
             <ComponentList fx:id="settingsPane">
-                <BorderPane><left><Label text="%launcher.common_location" /></left><right></right></BorderPane>
-                <BorderPane><left><Label text="%launcher.background_location" /></left><right></right></BorderPane>
+                <FileItem fx:id="fileCommonLocation" name="%launcher.common_location" title="%launcher.choose_commonpath" tooltip="%launcher.commpath_tooltip" />
+                <!--FileItem fx:id="fileBackgroundLocation" name="%launcher.background_location" title="%launcher.choose_bgpath" tooltip="%launcher.background_tooltip" /-->
                 <BorderPane><left><Label text="%launcher.download_source" /></left><right><JFXComboBox fx:id="cboDownloadSource">
                     <items>
                         <FXCollections fx:factory="observableArrayList">

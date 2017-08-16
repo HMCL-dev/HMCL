@@ -15,25 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui
+package org.jackhuang.hmcl.ui.construct
 
 import com.jfoenix.controls.JFXRippler
 import javafx.animation.Transition
 import javafx.beans.DefaultProperty
 import javafx.beans.NamedArg
-import javafx.beans.Observable
 import javafx.beans.binding.Bindings
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.geometry.Insets
-import javafx.geometry.Pos
 import javafx.scene.Node
-import javafx.scene.control.Label
 import javafx.scene.layout.*
 import javafx.scene.paint.Color
 import javafx.scene.paint.Paint
 import javafx.scene.shape.Rectangle
-import javafx.scene.shape.Shape
 import org.jackhuang.hmcl.util.getValue
 import org.jackhuang.hmcl.util.setValue
 import java.util.concurrent.Callable

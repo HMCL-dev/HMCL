@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.auth.OfflineAccount
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider
 import org.jackhuang.hmcl.download.MojangDownloadProvider
-import org.jackhuang.hmcl.ui.UTF8Control
+import org.jackhuang.hmcl.ui.construct.UTF8Control
 import java.net.Proxy
 import java.util.*
 

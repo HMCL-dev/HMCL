@@ -18,19 +18,11 @@
 package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.JFXComboBox
-import javafx.beans.value.ChangeListener
 import javafx.scene.layout.*
-import javafx.scene.paint.Paint
-import org.jackhuang.hmcl.ProfileChangedEvent
-import org.jackhuang.hmcl.ProfileLoadingEvent
-import org.jackhuang.hmcl.auth.Account
-import org.jackhuang.hmcl.event.EVENT_BUS
-import org.jackhuang.hmcl.event.RefreshedVersionsEvent
-import org.jackhuang.hmcl.game.LauncherHelper
-import org.jackhuang.hmcl.game.minecraftVersion
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Settings
-import org.jackhuang.hmcl.ui.download.DownloadWizardProvider
+import org.jackhuang.hmcl.ui.construct.IconedItem
+import org.jackhuang.hmcl.ui.construct.RipplerContainer
 
 class LeftPaneController(private val leftPane: AdvancedListBox) {
     val versionsPane = VBox()
