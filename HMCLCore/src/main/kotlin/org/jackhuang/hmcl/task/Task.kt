@@ -61,12 +61,12 @@ abstract class Task {
     infix fun with(b: Task): Task = CoupleTask(this, { b }, false)
 
     /**
-     * The collection of sub-tasks that should execute before this task running.
+     * The collection of sub-tasks that should execute **before** this task running.
      */
     open val dependents: Collection<Task> = emptySet()
 
     /**
-     * The collection of sub-tasks that should execute after this task running.
+     * The collection of sub-tasks that should execute **after** this task running.
      */
     open val dependencies: Collection<Task> = emptySet()
 
@@ -119,14 +119,12 @@ abstract class Task {
         submit(subscriber).start()
     }
 
-    fun subscribe(scheduler: Scheduler = Scheduler.DEFAULT, closure: () -> Unit) = subscribe(Task.of(scheduler, closure))
+    fun subscribe(scheduler: Scheduler = Scheduler.DEFAULT, closure: () -> Unit) = subscribe(task(scheduler, closure))
 
     override fun toString(): String {
         return title
     }
-
-    companion object {
-        fun of(scheduler: Scheduler = Scheduler.DEFAULT, closure: () -> Unit): Task = SimpleTask(closure, scheduler)
-        fun <V> of(callable: Callable<V>): TaskResult<V> = TaskCallable(callable)
-    }
 }
+
+fun task(scheduler: Scheduler = Scheduler.DEFAULT, closure: () -> Unit): Task = SimpleTask(closure, scheduler)
+fun <V> task(callable: Callable<V>): TaskResult<V> = TaskCallable(callable)

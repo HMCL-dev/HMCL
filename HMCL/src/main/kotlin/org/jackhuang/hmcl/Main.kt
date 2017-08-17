@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.util.DEFAULT_USER_AGENT
 import org.jackhuang.hmcl.util.LOG
 import org.jackhuang.hmcl.util.OS
 import java.io.File
+import java.util.concurrent.Callable
 import java.util.logging.Level
 
 fun i18n(key: String): String {
@@ -51,12 +52,13 @@ class Main : Application() {
     companion object {
 
         val VERSION = "@HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING@"
-        val TITLE = "HMCL $VERSION"
+        val NAME = "HMCL"
+        val TITLE = "$NAME $VERSION"
         lateinit var PRIMARY_STAGE: Stage
 
         @JvmStatic
         fun main(args: Array<String>) {
-            DEFAULT_USER_AGENT = "Hello Minecraft! Launcher"
+            DEFAULT_USER_AGENT = { "Hello Minecraft! Launcher" }
 
             launch(Main::class.java, *args)
         }

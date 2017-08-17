@@ -156,3 +156,61 @@ fun unzip(zip: File, dest: File, callback: ((String) -> Boolean)? = null, ignore
         }
     }
 }
+
+/**
+ * 将文件压缩成zip文件
+
+ * @param zip zip文件路径
+ * *
+ * @param dest    待压缩文件根目录
+ * *
+ * @param callback    will be called for every entry in the zip file,
+ * *                    returns false if you dont want this file unzipped.
+ * *
+ * *
+ * @throws java.io.IOException 解压失败或无法写入
+ */
+@JvmOverloads
+@Throws(IOException::class)
+fun unzipSubDirectory(zip: File, dest: File, subDirectory: String, ignoreExistsFile: Boolean = true) {
+    val buf = ByteArray(1024)
+    dest.mkdirs()
+    ZipInputStream(zip.inputStream()).use { zipFile ->
+        if (zip.exists()) {
+            var gbkPath: String
+            var strtemp: String
+            val strPath = dest.absolutePath
+            var zipEnt: ZipEntry?
+            while (true) {
+                zipEnt = zipFile.nextEntry
+                if (zipEnt == null)
+                    break
+                gbkPath = zipEnt.name
+                if (!gbkPath.startsWith(subDirectory))
+                    continue
+                gbkPath = gbkPath.substring(subDirectory.length)
+                if (gbkPath.startsWith("/") || gbkPath.startsWith("\\")) gbkPath = gbkPath.substring(1)
+                strtemp = strPath + File.separator + gbkPath
+                if (zipEnt.isDirectory) {
+                    val dir = File(strtemp)
+                    dir.mkdirs()
+                } else {
+                    //建目录
+                    val strsubdir = gbkPath
+                    for (i in 0..strsubdir.length - 1)
+                        if (strsubdir.substring(i, i + 1).equals("/", ignoreCase = true)) {
+                            val temp = strPath + File.separator + strsubdir.substring(0, i)
+                            val subdir = File(temp)
+                            if (!subdir.exists())
+                                subdir.mkdir()
+                        }
+                    if (ignoreExistsFile && File(strtemp).exists())
+                        continue
+                    File(strtemp).outputStream().use({ fos ->
+                        zipFile.copyTo(fos, buf)
+                    })
+                }
+            }
+        }
+    }
+}

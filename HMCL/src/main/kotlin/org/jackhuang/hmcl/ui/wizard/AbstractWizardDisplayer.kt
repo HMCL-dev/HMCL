@@ -126,7 +126,7 @@ interface AbstractWizardDisplayer : WizardDisplayer {
 
             cancelQueue.add(executor)
 
-            executor.submit(Task.of(Scheduler.JAVAFX) {
+            executor.submit(org.jackhuang.hmcl.task.task(Scheduler.JAVAFX) {
                 navigateTo(Label("Successful"), Navigation.NavigationDirection.FINISH)
             })
         }.start()

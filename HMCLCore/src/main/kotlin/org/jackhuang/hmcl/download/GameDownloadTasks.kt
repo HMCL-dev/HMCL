@@ -53,7 +53,7 @@ class GameLoggingDownloadTask(private val dependencyManager: DefaultDependencyMa
     override val dependencies: MutableCollection<Task> = LinkedList()
     override fun execute() {
         val logging = version.logging?.get(DownloadType.CLIENT) ?: return
-        val file = dependencyManager.repository.getLoggingObject(version.actualAssetIndex.id, logging)
+        val file = dependencyManager.repository.getLoggingObject(version.id, version.actualAssetIndex.id, logging)
         if (!file.exists())
             dependencies += FileDownloadTask(logging.file.url.toURL(), file, proxy = dependencyManager.proxy)
     }
@@ -63,11 +63,11 @@ class GameAssetIndexDownloadTask(private val dependencyManager: DefaultDependenc
     override val dependencies: MutableCollection<Task> = LinkedList()
     override fun execute() {
         val assetIndexInfo = version.actualAssetIndex
-        val assetDir = dependencyManager.repository.getAssetDirectory(assetIndexInfo.id)
+        val assetDir = dependencyManager.repository.getAssetDirectory(version.id, assetIndexInfo.id)
         if (!assetDir.makeDirectory())
             throw IOException("Cannot create directory: $assetDir")
 
-        val assetIndexFile = dependencyManager.repository.getIndexFile(assetIndexInfo.id)
+        val assetIndexFile = dependencyManager.repository.getIndexFile(version.id, assetIndexInfo.id)
         dependencies += FileDownloadTask(dependencyManager.downloadProvider.injectURL(assetIndexInfo.url).toURL(), assetIndexFile, proxy = dependencyManager.proxy)
     }
 }
@@ -75,7 +75,7 @@ class GameAssetIndexDownloadTask(private val dependencyManager: DefaultDependenc
 class GameAssetRefreshTask(private val dependencyManager: DefaultDependencyManager, private val version: Version) : TaskResult<Collection<Pair<File, AssetObject>>>() {
     private val assetIndexTask = GameAssetIndexDownloadTask(dependencyManager, version)
     private val assetIndexInfo = version.actualAssetIndex
-    private val assetIndexFile = dependencyManager.repository.getIndexFile(assetIndexInfo.id)
+    private val assetIndexFile = dependencyManager.repository.getIndexFile(version.id, assetIndexInfo.id)
     override val dependents: MutableCollection<Task> = LinkedList()
 
     init {
@@ -88,7 +88,7 @@ class GameAssetRefreshTask(private val dependencyManager: DefaultDependencyManag
         val res = LinkedList<Pair<File, AssetObject>>()
         var progress = 0
         index?.objects?.entries?.forEach { (_, assetObject) ->
-            res += Pair(dependencyManager.repository.getAssetObject(assetIndexInfo.id, assetObject), assetObject)
+            res += Pair(dependencyManager.repository.getAssetObject(version.id, assetIndexInfo.id, assetObject), assetObject)
             updateProgress(++progress, index.objects.size)
         }
         result = res

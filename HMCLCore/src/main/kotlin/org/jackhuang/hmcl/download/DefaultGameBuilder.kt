@@ -30,7 +30,7 @@ class DefaultGameBuilder(val dependencyManager: DefaultDependencyManager): GameB
         val gameVersion = gameVersion
         return VersionJSONDownloadTask(gameVersion = gameVersion) then a@{ task ->
             var version = GSON.fromJson<Version>(task.result!!) ?: return@a null
-            version = version.copy(id = name)
+            version = version.copy(id = name, jar = null)
             var result = ParallelTask(
                     GameAssetDownloadTask(dependencyManager, version),
                     GameLoggingDownloadTask(dependencyManager, version),

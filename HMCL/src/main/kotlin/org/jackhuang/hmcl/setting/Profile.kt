@@ -38,7 +38,7 @@ class Profile(var name: String = "Default", initialGameDir: File = File(".minecr
     val gameDirProperty = ImmediateObjectProperty<File>(this, "gameDir", initialGameDir)
     var gameDir: File by gameDirProperty
 
-    var repository = HMCLGameRepository(initialGameDir)
+    var repository = HMCLGameRepository(this, initialGameDir)
     val dependency: DefaultDependencyManager get() = DefaultDependencyManager(repository, Settings.downloadProvider, Settings.proxy)
     var modManager = ModManager(repository)
 
@@ -57,11 +57,15 @@ class Profile(var name: String = "Default", initialGameDir: File = File(".minecr
         }
     }
 
-    fun specializeVersionSetting(id: String) {
+    /**
+     * @return null if the given version id does not exist.
+     */
+    fun specializeVersionSetting(id: String): VersionSetting? {
         var vs = repository.getVersionSetting(id)
         if (vs == null)
-            vs = repository.createVersionSetting(id) ?: return
+            vs = repository.createVersionSetting(id) ?: return null
         vs.usesGlobal = false
+        return vs
     }
 
     fun globalizeVersionSetting(id: String) {

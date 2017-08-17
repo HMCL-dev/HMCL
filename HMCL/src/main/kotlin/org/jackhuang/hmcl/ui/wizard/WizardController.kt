@@ -31,6 +31,7 @@ class WizardController(protected val displayer: WizardDisplayer) : Navigation {
         pages.clear()
         val page = navigatingTo(0)
         pages.push(page)
+        provider.start(settings)
         displayer.onStart()
         displayer.navigateTo(page, Navigation.NavigationDirection.START)
     }

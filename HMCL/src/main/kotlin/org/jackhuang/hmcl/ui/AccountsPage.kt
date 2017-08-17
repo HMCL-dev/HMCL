@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.task.Task
+import org.jackhuang.hmcl.task.task
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage
 import java.util.concurrent.Callable
 
@@ -104,7 +105,7 @@ class AccountsPage() : StackPane(), DecoratorPage {
             if (newValue != null)
                 Settings.selectedAccount = newValue.properties["account"] as Account
         }
-        masonryPane.children.setAll(children)
+        masonryPane.resetChildren(children)
         Platform.runLater {
             masonryPane.requestLayout()
             scrollPane.requestLayout()
@@ -135,7 +136,7 @@ class AccountsPage() : StackPane(), DecoratorPage {
         val username = txtUsername.text
         val password = txtPassword.text
         progressBar.isVisible = true
-        val task = Task.of(Callable {
+        val task = task(Callable {
             try {
                 val account = when (type) {
                     0 -> OfflineAccount.fromUsername(username)

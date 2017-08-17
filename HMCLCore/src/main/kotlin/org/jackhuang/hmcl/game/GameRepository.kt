@@ -60,6 +60,13 @@ interface GameRepository : VersionProvider {
     fun refreshVersions()
 
     /**
+     * Gets the root folder of specific version.
+     * The root folders the versions must be unique.
+     * For example, .minecraft/versions/<version name>/.
+     */
+    fun getVersionRoot(id: String): File
+
+    /**
      * Gets the current running directory of the given version for game.
      * @param id the version id
      */
@@ -69,11 +76,11 @@ interface GameRepository : VersionProvider {
      * Get the library file in disk.
      * This method allows versions and libraries that are not loaded by this game repository.
      *
-     * @param id version id
+     * @param version versionversion
      * @param lib the library, [Version.libraries]
      * @return the library file
      */
-    fun getLibraryFile(id: Version, lib: Library): File
+    fun getLibraryFile(version: Version, lib: Library): File
 
     /**
      * Get the directory that native libraries will be unzipped to.
@@ -123,12 +130,12 @@ interface GameRepository : VersionProvider {
      * @throws java.io.IOException if I/O operation fails.
      * @return the actual asset directory
      */
-    fun getActualAssetDirectory(assetId: String): File
+    fun getActualAssetDirectory(version: String, assetId: String): File
 
     /**
      * Get the asset directory according to the asset id.
      */
-    fun getAssetDirectory(assetId: String): File
+    fun getAssetDirectory(version: String, assetId: String): File
 
     /**
      * Get the file that given asset object refers to
@@ -138,7 +145,7 @@ interface GameRepository : VersionProvider {
      * @throws java.io.IOException if I/O operation fails.
      * @return the file that given asset object refers to
      */
-    fun getAssetObject(assetId: String, name: String): File
+    fun getAssetObject(version: String, assetId: String, name: String): File
 
     /**
      * Get the file that given asset object refers to
@@ -147,7 +154,7 @@ interface GameRepository : VersionProvider {
      * @param obj the asset object, [AssetIndex.objects]
      * @return the file that given asset object refers to
      */
-    fun getAssetObject(assetId: String, obj: AssetObject): File
+    fun getAssetObject(version: String, assetId: String, obj: AssetObject): File
 
     /**
      * Get asset index that assetId represents
@@ -155,7 +162,7 @@ interface GameRepository : VersionProvider {
      * @param assetId the asset id, [AssetIndexInfo.id] [Version.assets]
      * @return the asset index
      */
-    fun getAssetIndex(assetId: String): AssetIndex
+    fun getAssetIndex(version: String, assetId: String): AssetIndex
 
     /**
      * Get logging object
@@ -164,5 +171,5 @@ interface GameRepository : VersionProvider {
      * @param loggingInfo the logging info
      * @return the file that loggingInfo refers to
      */
-    fun getLoggingObject(assetId: String, loggingInfo: LoggingInfo): File
+    fun getLoggingObject(version: String, assetId: String, loggingInfo: LoggingInfo): File
 }

@@ -20,8 +20,9 @@ package org.jackhuang.hmcl.download
 import org.jackhuang.hmcl.game.GameRepository
 import org.jackhuang.hmcl.game.Version
 import org.jackhuang.hmcl.task.Task
+import java.net.Proxy
 
-abstract class DependencyManager(open val repository: GameRepository) {
+abstract class DependencyManager(open val repository: GameRepository, open val proxy: Proxy) {
 
     /**
      * Check if the game is complete.

@@ -27,7 +27,7 @@
                     </items>
                 </JFXComboBox></right></BorderPane>
                 <BorderPane><left><Label text="%launcher.lang" /></left><right><JFXComboBox fx:id="cboLanguage" /></right></BorderPane>
-                <BorderPane><left><Label text="%launcher.proxy" /></left><right><HBox alignment="CENTER_LEFT">
+                <BorderPane><left><Label text="%launcher.proxy" /></left><right><HBox alignment="CENTER_LEFT" spacing="5">
                     <JFXComboBox fx:id="cboProxyType">
                         <items>
                             <FXCollections fx:factory="observableArrayList">

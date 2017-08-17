@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.ui.construct.RipplerContainer
+import org.jackhuang.hmcl.ui.download.DownloadWizardProvider
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage
 
 /**
@@ -45,6 +46,8 @@ class MainPage : StackPane(), DecoratorPage {
     override val titleProperty: StringProperty = SimpleStringProperty(this, "title", i18n("launcher.title.main"))
 
     @FXML lateinit var btnLaunch: JFXButton
+    @FXML lateinit var btnRefresh: JFXButton
+    @FXML lateinit var btnAdd: JFXButton
     @FXML lateinit var masonryPane: JFXMasonryPane
 
     init {
@@ -60,8 +63,8 @@ class MainPage : StackPane(), DecoratorPage {
 
         Settings.onProfileLoading()
 
-        //    Controllers.decorator.startWizard(DownloadWizardProvider(), "Install New Game")
-        //    Settings.selectedProfile.repository.refreshVersions()
+        btnAdd.setOnMouseClicked { Controllers.decorator.startWizard(DownloadWizardProvider(), "Install New Game") }
+        btnRefresh.setOnMouseClicked { Settings.selectedProfile.repository.refreshVersions() }
         btnLaunch.setOnMouseClicked { LauncherHelper.launch() }
     }
 
@@ -106,7 +109,7 @@ class MainPage : StackPane(), DecoratorPage {
             if (newValue != null)
                 profile.selectedVersion = newValue.properties["version"] as String
         }
-        masonryPane.children.setAll(children)
+        masonryPane.resetChildren(children)
     }
 
     @Suppress("UNCHECKED_CAST")

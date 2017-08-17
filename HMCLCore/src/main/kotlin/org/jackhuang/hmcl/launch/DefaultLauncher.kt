@@ -68,14 +68,14 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
 
             if (OS.CURRENT_OS == OS.OSX) {
                 res.add("-Xdock:name=Minecraft ${version.id}")
-                res.add("-Xdock:icon=" + repository.getAssetObject(version.actualAssetIndex.id, "icons/minecraft.icns").absolutePath);
+                res.add("-Xdock:icon=" + repository.getAssetObject(version.id, version.actualAssetIndex.id, "icons/minecraft.icns").absolutePath);
             }
 
             val logging = version.logging
             if (logging != null) {
                 val loggingInfo = logging[DownloadType.CLIENT]
                 if (loggingInfo != null) {
-                    val loggingFile = repository.getLoggingObject(version.actualAssetIndex.id, loggingInfo)
+                    val loggingFile = repository.getLoggingObject(version.id, version.actualAssetIndex.id, loggingInfo)
                     if (loggingFile.exists())
                         res.add(loggingInfo.argument.replace("\${path}", loggingFile.absolutePath))
                 }
@@ -139,7 +139,7 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
         res.add(version.mainClass!!)
 
         // Provided Minecraft arguments
-        val gameAssets = repository.getActualAssetDirectory(version.actualAssetIndex.id)
+        val gameAssets = repository.getActualAssetDirectory(version.id, version.actualAssetIndex.id)
 
         version.minecraftArguments!!.tokenize().forEach { line ->
             res.add(line

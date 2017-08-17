@@ -27,8 +27,8 @@ import java.net.Proxy
 /**
  * This class has no state.
  */
-class DefaultDependencyManager(override val repository: DefaultGameRepository, override var downloadProvider: DownloadProvider, val proxy: Proxy = Proxy.NO_PROXY)
-    : AbstractDependencyManager(repository) {
+class DefaultDependencyManager(override val repository: DefaultGameRepository, override var downloadProvider: DownloadProvider, proxy: Proxy = Proxy.NO_PROXY)
+    : AbstractDependencyManager(repository, proxy) {
 
     override fun gameBuilder(): GameBuilder = DefaultGameBuilder(this)
 

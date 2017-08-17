@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui
 
+import com.jfoenix.adapters.ReflectionHelper
 import com.jfoenix.concurrency.JFXUtilities
 import com.jfoenix.controls.*
 import javafx.animation.Animation
@@ -182,4 +183,10 @@ val SINE: Interpolator = object : Interpolator() {
     override fun toString(): String {
         return "Interpolator.DISCRETE"
     }
+}
+
+fun JFXMasonryPane.resetChildren(children: List<Node>) {
+    // Fixes mis-repositioning.
+    ReflectionHelper.setFieldContent(JFXMasonryPane::class.java, this, "oldBoxes", null)
+    this.children.setAll(children)
 }

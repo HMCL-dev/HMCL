@@ -37,7 +37,7 @@ open class DefaultGameRepository(var baseDirectory: File): GameRepository {
     }
     override fun getVersionCount() = versions.size
     override fun getVersions() = versions.values
-    override fun getLibraryFile(id: Version, lib: Library) = File(baseDirectory, "libraries/${lib.path}")
+    override fun getLibraryFile(version: Version, lib: Library) = baseDirectory.resolve("libraries/${lib.path}")
     override fun getRunDirectory(id: String) = baseDirectory
     override fun getVersionJar(version: Version): File {
         val v = version.resolve(this)
@@ -45,7 +45,7 @@ open class DefaultGameRepository(var baseDirectory: File): GameRepository {
         return getVersionRoot(id).resolve("$id.jar")
     }
     override fun getNativeDirectory(id: String) = File(getVersionRoot(id), "$id-natives")
-    open fun getVersionRoot(id: String) = File(baseDirectory, "versions/$id")
+    override fun getVersionRoot(id: String) = File(baseDirectory, "versions/$id")
     open fun getVersionJson(id: String) = File(getVersionRoot(id), "$id.json")
     open fun readVersionJson(id: String): Version? = readVersionJson(getVersionJson(id))
     @Throws(IOException::class, JsonSyntaxException::class, VersionNotFoundException::class)
@@ -135,49 +135,49 @@ open class DefaultGameRepository(var baseDirectory: File): GameRepository {
         EVENT_BUS.fireEvent(RefreshedVersionsEvent(this))
     }
 
-    override fun getAssetIndex(assetId: String): AssetIndex {
-        return GSON.fromJson(getIndexFile(assetId).readText())!!
+    override fun getAssetIndex(version: String, assetId: String): AssetIndex {
+        return GSON.fromJson(getIndexFile(version, assetId).readText())!!
     }
 
-    override fun getActualAssetDirectory(assetId: String): File {
+    override fun getActualAssetDirectory(version: String, assetId: String): File {
         try {
-            return reconstructAssets(assetId)
+            return reconstructAssets(version, assetId)
         } catch (e: IOException) {
             LOG.log(Level.SEVERE, "Unable to reconstruct asset directory", e)
-            return getAssetDirectory(assetId)
+            return getAssetDirectory(version, assetId)
         }
     }
 
-    override fun getAssetDirectory(assetId: String): File =
+    override fun getAssetDirectory(version: String, assetId: String): File =
         baseDirectory.resolve("assets")
 
     @Throws(IOException::class)
-    override fun getAssetObject(assetId: String, name: String): File {
+    override fun getAssetObject(version: String, assetId: String, name: String): File {
         try {
-            return getAssetObject(assetId, getAssetIndex(assetId).objects["name"]!!)
+            return getAssetObject(version, assetId, getAssetIndex(version, assetId).objects["name"]!!)
         } catch (e: Exception) {
             throw IOException("Asset index file malformed", e)
         }
     }
 
-    override fun getAssetObject(assetId: String, obj: AssetObject): File =
-        getAssetObject(getAssetDirectory(assetId), obj)
+    override fun getAssetObject(version: String, assetId: String, obj: AssetObject): File =
+        getAssetObject(version, getAssetDirectory(version, assetId), obj)
 
-    open fun getAssetObject(assetDir: File, obj: AssetObject): File {
+    open fun getAssetObject(version: String, assetDir: File, obj: AssetObject): File {
         return assetDir.resolve("objects/${obj.location}")
     }
 
-    open fun getIndexFile(assetId: String): File =
-        getAssetDirectory(assetId).resolve("indexes/$assetId.json")
+    open fun getIndexFile(version: String, assetId: String): File =
+        getAssetDirectory(version, assetId).resolve("indexes/$assetId.json")
 
-    override fun getLoggingObject(assetId: String, loggingInfo: LoggingInfo): File =
-        getAssetDirectory(assetId).resolve("log_configs/${loggingInfo.file.id}")
+    override fun getLoggingObject(version: String, assetId: String, loggingInfo: LoggingInfo): File =
+        getAssetDirectory(version, assetId).resolve("log_configs/${loggingInfo.file.id}")
 
     @Throws(IOException::class, JsonSyntaxException::class)
-    protected open fun reconstructAssets(assetId: String): File {
-        val assetsDir = getAssetDirectory(assetId)
+    protected open fun reconstructAssets(version: String, assetId: String): File {
+        val assetsDir = getAssetDirectory(version, assetId)
         val assetVersion = assetId
-        val indexFile: File = getIndexFile(assetVersion)
+        val indexFile: File = getIndexFile(version, assetVersion)
         val virtualRoot = assetsDir.resolve("virtual").resolve(assetVersion)
 
         if (!indexFile.isFile) {
@@ -193,7 +193,7 @@ open class DefaultGameRepository(var baseDirectory: File): GameRepository {
             val tot = index.objects.entries.size
             for ((location, assetObject) in index.objects.entries) {
                 val target = File(virtualRoot, location)
-                val original = getAssetObject(assetsDir, assetObject)
+                val original = getAssetObject(version, assetsDir, assetObject)
                 if (original.exists()) {
                     cnt++
                     if (!target.isFile)

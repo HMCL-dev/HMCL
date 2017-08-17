@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import com.jfoenix.controls.JFXTextField?>
+<?import com.jfoenix.controls.JFXButton?>
+<fx:root xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         type="StackPane">
+    <VBox maxWidth="500" maxHeight="500" spacing="50">
+        <Label text="Installing modpack" />
+        <Label fx:id="lblModpackLocation" />
+        <JFXTextField fx:id="txtModpackName" labelFloat="true" promptText="%modpack.enter_name" />
+        <GridPane>
+            <columnConstraints>
+                <ColumnConstraints />
+                <ColumnConstraints hgrow="ALWAYS" />
+            </columnConstraints>
+
+            <Label text="Name" GridPane.rowIndex="0" GridPane.columnIndex="0" />
+            <Label text="Version" GridPane.rowIndex="1" GridPane.columnIndex="0" />
+            <Label text="Author" GridPane.rowIndex="2" GridPane.columnIndex="0" />
+
+            <Label fx:id="lblName" GridPane.rowIndex="0" GridPane.columnIndex="1" />
+            <Label fx:id="lblVersion" GridPane.rowIndex="1" GridPane.columnIndex="1" />
+            <Label fx:id="lblAuthor" GridPane.rowIndex="2" GridPane.columnIndex="1" />
+        </GridPane>
+        <JFXButton buttonType="RAISED" fx:id="btnInstall" onMouseClicked="#onInstall" text="%ui.button.install" styleClass="jfx-button-raised" />
+    </VBox>
+</fx:root>

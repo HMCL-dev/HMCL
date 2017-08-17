@@ -30,6 +30,8 @@ import org.jackhuang.hmcl.launch.ProcessListener
 import org.jackhuang.hmcl.util.makeCommand
 import org.jackhuang.hmcl.task.Task
 import org.jackhuang.hmcl.task.TaskListener
+import org.jackhuang.hmcl.util.detectFileName
+import org.jackhuang.hmcl.util.toURL
 import org.junit.Test
 import java.io.File
 import java.net.InetSocketAddress

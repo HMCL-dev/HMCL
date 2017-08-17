@@ -414,6 +414,12 @@
     -jfx-mask-type: CIRCLE;
 }
 
+.jfx-button-raised {
+    -fx-text-fill: white;
+    -fx-background-color: #5264AE;
+    -fx-font-size:14px;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Check Box                                                                *

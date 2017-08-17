@@ -30,6 +30,8 @@ import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
 import java.io.OutputStream
+import java.util.*
+import java.util.logging.Level
 import kotlin.text.Charsets
 
 private val XTM = object : X509TrustManager {
@@ -56,7 +58,7 @@ fun initHttps() {
     HttpsURLConnection.setDefaultHostnameVerifier(HNV);
 }
 
-var DEFAULT_USER_AGENT = "JMCCC"
+var DEFAULT_USER_AGENT: () -> String = { RandomUserAgent.randomUserAgent }
 
 fun String.toURL() = URL(this)
 
@@ -67,7 +69,7 @@ fun URL.createConnection(proxy: Proxy): HttpURLConnection {
         useCaches = false
         connectTimeout = 15000
         readTimeout = 15000
-        addRequestProperty("User-Agent", DEFAULT_USER_AGENT)
+        addRequestProperty("User-Agent", DEFAULT_USER_AGENT())
     } as HttpURLConnection
 }
 
@@ -118,4 +120,34 @@ fun HttpURLConnection.readData(): String {
     } finally {
         input?.closeQuietly()
     }
+}
+
+fun URL.detectFileNameQuietly(proxy: Proxy = Proxy.NO_PROXY): String {
+    try {
+        val conn = createConnection(proxy)
+        conn.connect()
+        if (conn.responseCode / 100 != 2)
+            throw IOException("Response code ${conn.responseCode}")
+        return conn.detectFileName()
+    } catch (e: IOException) {
+        LOG.log(Level.WARNING, "Cannot detect the file name of URL $this", e)
+        return UUIDTypeAdapter.fromUUID(UUID.randomUUID())
+    }
+}
+
+fun URL.detectFileName(proxy: Proxy = Proxy.NO_PROXY): String {
+    val conn = createConnection(proxy)
+    conn.connect()
+    if (conn.responseCode / 100 != 2)
+        throw IOException("Response code ${conn.responseCode}")
+    return conn.detectFileName()
+}
+
+fun HttpURLConnection.detectFileName(): String {
+    val disposition = getHeaderField("Content-Disposition")
+    if (disposition == null || disposition.indexOf("filename=") == -1) {
+        val u = url.toString()
+        return u.substringAfterLast('/')
+    } else
+        return disposition.substringAfter("filename=").removeSurrounding("\"")
 }

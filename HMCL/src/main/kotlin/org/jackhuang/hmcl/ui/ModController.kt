@@ -25,6 +25,7 @@ import javafx.scene.layout.VBox
 import org.jackhuang.hmcl.mod.ModManager
 import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.task.Task
+import org.jackhuang.hmcl.task.task
 import java.util.concurrent.Callable
 
 class ModController {
@@ -40,9 +41,9 @@ class ModController {
     fun loadMods(modManager: ModManager, versionId: String) {
         this.modManager = modManager
         this.versionId = versionId
-        Task.of(Callable {
+        task {
             modManager.refreshMods(versionId)
-        }).subscribe(Scheduler.JAVAFX) {
+        }.subscribe(Scheduler.JAVAFX) {
             rootPane.children.clear()
             for (modInfo in modManager.getMods(versionId)) {
                 rootPane.children += ModItem(modInfo) {

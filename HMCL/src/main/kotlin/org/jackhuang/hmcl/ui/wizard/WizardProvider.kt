@@ -20,8 +20,8 @@ package org.jackhuang.hmcl.ui.wizard
 import javafx.scene.Node
 
 abstract class WizardProvider {
-
-    abstract fun finish(settings: Map<String, Any>): Any?
-    abstract fun createPage(controller: WizardController, step: Int, settings: Map<String, Any>): Node
+    abstract fun start(settings: MutableMap<String, Any>)
+    abstract fun finish(settings: MutableMap<String, Any>): Any?
+    abstract fun createPage(controller: WizardController, step: Int, settings: MutableMap<String, Any>): Node
     abstract fun cancel(): Boolean
 }

@@ -19,6 +19,9 @@ package org.jackhuang.hmcl.game
 
 import com.google.gson.GsonBuilder
 import javafx.beans.InvalidationListener
+import org.jackhuang.hmcl.setting.EnumGameDirectory
+import org.jackhuang.hmcl.setting.Profile
+import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.setting.VersionSetting
 import org.jackhuang.hmcl.util.GSON
 import org.jackhuang.hmcl.util.LOG
@@ -27,10 +30,44 @@ import java.io.File
 import java.io.IOException
 import java.util.logging.Level
 
-class HMCLGameRepository(baseDirectory: File)
+class HMCLGameRepository(val profile: Profile, baseDirectory: File)
     : DefaultGameRepository(baseDirectory) {
 
-    private val versionSettings = HashMap<String, VersionSetting>()
+    private val versionSettings = mutableMapOf<String, VersionSetting>()
+    private val beingModpackVersions = mutableSetOf<String>()
+
+    private fun useSelf(version: String, assetId: String): Boolean {
+        val vs = profile.getVersionSetting(version)
+        return File(baseDirectory, "assets/indexes/$assetId.json").exists() || vs.noCommon
+    }
+
+    override fun getAssetDirectory(version: String, assetId: String): File {
+        if (useSelf(version, assetId))
+            return super.getAssetDirectory(version, assetId)
+        else
+            return File(Settings.commonPath).resolve("assets")
+    }
+
+    override fun getRunDirectory(id: String): File {
+        if (beingModpackVersions.contains(id))
+            return getVersionRoot(id)
+        else {
+            val vs = profile.getVersionSetting(id)
+            return when (vs.gameDirType) {
+                EnumGameDirectory.VERSION_FOLDER -> getVersionRoot(id)
+                EnumGameDirectory.ROOT_FOLDER -> super.getRunDirectory(id)
+            }
+        }
+    }
+
+    override fun getLibraryFile(version: Version, lib: Library): File {
+        val vs = profile.getVersionSetting(version.id)
+        val self = super.getLibraryFile(version, lib);
+        if (self.exists() || vs.noCommon)
+            return self;
+        else
+            return File(Settings.commonPath).resolve("libraries/${lib.path}")
+    }
 
     override fun refreshVersionsImpl() {
         versionSettings.clear()
@@ -89,6 +126,14 @@ class HMCLGameRepository(baseDirectory: File)
         if (!versionSettings.containsKey(id))
             loadVersionSetting(id)
         return versionSettings[id]
+    }
+
+    fun markVersionAsModpack(id: String) {
+        beingModpackVersions += id
+    }
+
+    fun undoMark(id: String) {
+        beingModpackVersions -= id
     }
 
     companion object {

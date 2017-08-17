@@ -15,7 +15,7 @@
         <top>
             <VBox alignment="CENTER" style="-fx-padding: 40px;" spacing="20">
                 <Label fx:id="lblGameVersion" alignment="CENTER" />
-                <JFXTextField fx:id="txtName" labelFloat="true" promptText="Enter the name of this new version" maxWidth="300" />
+                <JFXTextField fx:id="txtName" labelFloat="true" promptText="%modpack.enter_name" maxWidth="300" />
             </VBox>
         </top>
         <center>
@@ -48,8 +48,7 @@
         </center>
         <bottom>
             <HBox alignment="CENTER">
-                <JFXButton onMouseClicked="#onInstall" prefWidth="100" prefHeight="40" buttonType="RAISED" text="Install"
-                           style="-fx-text-fill:WHITE;-fx-background-color:#5264AE;-fx-font-size:14px;"/>
+                <JFXButton onMouseClicked="#onInstall" prefWidth="100" prefHeight="40" buttonType="RAISED" text="%ui.button.install" styleClass="jfx-button-raised" />
             </HBox>
         </bottom>
     </BorderPane>

@@ -15,20 +15,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.download
+package org.jackhuang.hmcl.ui.construct
 
-import org.jackhuang.hmcl.game.*
-import java.net.Proxy
+import com.jfoenix.validation.base.ValidatorBase
+import javafx.scene.control.TextInputControl
 
-abstract class AbstractDependencyManager(repository: GameRepository, proxy: Proxy)
-    : DependencyManager(repository, proxy) {
-    abstract val downloadProvider: DownloadProvider
-
-    fun getVersions(id: String, selfVersion: String) =
-            downloadProvider.getVersionListById(id).getVersions(selfVersion)
-
-    override fun getVersionList(id: String): VersionList<*> {
-        return downloadProvider.getVersionListById(id)
+/**
+ * @param validator return true if the input string is valid.
+ */
+class Validator(val validator: (String) -> Boolean) : ValidatorBase() {
+    override fun eval() {
+        if (this.srcControl.get() is TextInputControl) {
+            val text = (srcControl.get() as TextInputControl).text
+            hasErrors.set(!validator(text))
+        }
     }
-
 }

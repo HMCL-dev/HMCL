@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game
 
-import org.jackhuang.hmcl.launch.DefaultLauncher
+import org.jackhuang.hmcl.mod.CurseForgeModpackCompletionTask
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.Scheduler
 
@@ -25,16 +25,18 @@ object LauncherHelper {
     fun launch() {
         val profile = Settings.selectedProfile
         val repository = profile.repository
+        val dependency = profile.dependency
         val account = Settings.selectedAccount ?: throw IllegalStateException("No account here")
         val version = repository.getVersion(profile.selectedVersion)
-        val launcher = DefaultLauncher(
+        val launcher = HMCLGameLauncher(
                 repository = repository,
                 versionId = profile.selectedVersion,
                 options = profile.getVersionSetting(profile.selectedVersion).toLaunchOptions(profile.gameDir),
                 account = account.logIn(Settings.proxy)
         )
 
-        profile.dependency.checkGameCompletionAsync(version)
+        dependency.checkGameCompletionAsync(version)
+                .then(CurseForgeModpackCompletionTask(dependency, profile.selectedVersion))
                 .then(launcher.launchAsync())
                 .subscribe(Scheduler.JAVAFX) { println("lalala") }
     }

@@ -28,7 +28,7 @@ import java.net.Proxy
 import java.util.*
 
 object Proxies {
-    val PROXIES = listOf(null, Proxy.Type.DIRECT, Proxy.Type.HTTP, Proxy.Type.SOCKS)
+    val PROXIES = listOf(Proxy.Type.DIRECT, Proxy.Type.HTTP, Proxy.Type.SOCKS)
 
     fun getProxyType(index: Int): Proxy.Type? = PROXIES.getOrNull(index)
 }

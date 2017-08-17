@@ -20,14 +20,29 @@ package org.jackhuang.hmcl.ui.download
 import javafx.scene.Node
 import javafx.scene.layout.Pane
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider
+import org.jackhuang.hmcl.mod.CurseForgeModpackCompletionTask
+import org.jackhuang.hmcl.mod.CurseForgeModpackInstallTask
+import org.jackhuang.hmcl.mod.CurseForgeModpackManifest
+import org.jackhuang.hmcl.setting.EnumGameDirectory
+import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.setting.Settings
+import org.jackhuang.hmcl.task.Task
+import org.jackhuang.hmcl.task.task
 import org.jackhuang.hmcl.ui.wizard.WizardController
 import org.jackhuang.hmcl.ui.wizard.WizardProvider
+import java.io.File
 
 class DownloadWizardProvider(): WizardProvider() {
+    lateinit var profile: Profile
 
-    override fun finish(settings: Map<String, Any>): Any? {
-        val builder = Settings.selectedProfile.dependency.gameBuilder()
+    override fun start(settings: MutableMap<String, Any>) {
+        profile = Settings.selectedProfile
+        settings[PROFILE] = profile
+    }
+
+    private fun finishVersionDownloading(settings: MutableMap<String, Any>): Task {
+
+        val builder = profile.dependency.gameBuilder()
 
         builder.name(settings["name"] as String)
         builder.gameVersion(settings["game"] as String)
@@ -44,12 +59,42 @@ class DownloadWizardProvider(): WizardProvider() {
         return builder.buildAsync()
     }
 
-    override fun createPage(controller: WizardController, step: Int, settings: Map<String, Any>): Node {
+    private fun finishModpackInstalling(settings: MutableMap<String, Any>): Task? {
+        if (!settings.containsKey(ModpackPage.MODPACK_FILE))
+            return null
+
+        val selectedFile = settings[ModpackPage.MODPACK_FILE] as? File? ?: return null
+        val manifest = settings[ModpackPage.MODPACK_CURSEFORGE_MANIFEST] as? CurseForgeModpackManifest? ?: return null
+        val name = settings[ModpackPage.MODPACK_NAME] as? String? ?: return null
+
+        profile.repository.markVersionAsModpack(name)
+        return CurseForgeModpackInstallTask(profile.dependency, selectedFile, manifest, name) with task {
+            profile.repository.refreshVersions()
+            val vs = profile.specializeVersionSetting(name)
+            profile.repository.undoMark(name)
+            if (vs != null) {
+                vs.gameDirType = EnumGameDirectory.VERSION_FOLDER
+            }
+        }
+    }
+
+    override fun finish(settings: MutableMap<String, Any>): Any? {
+        return when (settings[InstallTypePage.INSTALL_TYPE]) {
+            0 -> finishVersionDownloading(settings)
+            1 -> finishModpackInstalling(settings)
+            else -> null
+        }
+    }
+
+    override fun createPage(controller: WizardController, step: Int, settings: MutableMap<String, Any>): Node {
+
+
         return when (step) {
             0 -> InstallTypePage(controller)
             1 -> when (settings[InstallTypePage.INSTALL_TYPE]) {
                 0 -> VersionsPage(controller, "", BMCLAPIDownloadProvider, "game", { controller.onNext(InstallersPage(controller, BMCLAPIDownloadProvider)) })
-                else -> Pane()
+                1 -> ModpackPage(controller)
+                else -> throw Error()
             }
             else -> throw IllegalStateException()
         }
@@ -57,6 +102,10 @@ class DownloadWizardProvider(): WizardProvider() {
 
     override fun cancel(): Boolean {
         return true
+    }
+
+    companion object {
+        const val PROFILE = "PROFILE"
     }
 
 }
