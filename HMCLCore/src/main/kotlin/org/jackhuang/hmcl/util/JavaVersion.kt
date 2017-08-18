@@ -82,7 +82,7 @@ data class JavaVersion internal constructor(
             val parsedVersion = parseVersion(thisVersion)
             if (parsedVersion == UNKNOWN)
                 throw IOException("Java version '$thisVersion' can not be recognized")
-            return JavaVersion(file.parentFile, thisVersion, platform)
+            return JavaVersion(file, thisVersion, platform)
         }
 
         private fun fromExecutable(file: File, version: String) =

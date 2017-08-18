@@ -50,10 +50,6 @@ open class ImmediateStringProperty(bean: Any, name: String, initialValue: String
     init {
         addListener(changeListener)
     }
-
-    public override fun fireValueChangedEvent() {
-        super.fireValueChangedEvent()
-    }
 }
 
 open class ImmediateBooleanProperty(bean: Any, name: String, initialValue: Boolean): SimpleBooleanProperty(bean, name, initialValue) {
@@ -84,10 +80,6 @@ open class ImmediateBooleanProperty(bean: Any, name: String, initialValue: Boole
 
     init {
         addListener(changeListener)
-    }
-
-    public override fun fireValueChangedEvent() {
-        super.fireValueChangedEvent()
     }
 }
 
@@ -120,10 +112,6 @@ open class ImmediateIntegerProperty(bean: Any, name: String, initialValue: Int):
     init {
         addListener(changeListener)
     }
-
-    public override fun fireValueChangedEvent() {
-        super.fireValueChangedEvent()
-    }
 }
 
 open class ImmediateDoubleProperty(bean: Any, name: String, initialValue: Double): SimpleDoubleProperty(bean, name, initialValue) {
@@ -155,10 +143,6 @@ open class ImmediateDoubleProperty(bean: Any, name: String, initialValue: Double
     init {
         addListener(changeListener)
     }
-
-    public override fun fireValueChangedEvent() {
-        super.fireValueChangedEvent()
-    }
 }
 
 open class ImmediateObjectProperty<T>(bean: Any, name: String, initialValue: T): SimpleObjectProperty<T>(bean, name, initialValue) {
@@ -185,13 +169,10 @@ open class ImmediateObjectProperty<T>(bean: Any, name: String, initialValue: T):
 
     fun setChangedListener(listener: (T) -> Unit) {
         myListener = listener
+        listener(get())
     }
 
     init {
         addListener(changeListener)
-    }
-
-    public override fun fireValueChangedEvent() {
-        super.fireValueChangedEvent()
     }
 }

@@ -36,7 +36,8 @@ class YggdrasilAccount private constructor(override val username: String): Accou
     private var clientToken: String = UUID.randomUUID().toString()
     private var isOnline: Boolean = false
     private var userProperties = PropertyMap()
-    private var selectedProfile: GameProfile? = null
+    var selectedProfile: GameProfile? = null
+        private set
     private var profiles: Array<GameProfile>? = null
     private var userType: UserType = UserType.LEGACY
 
@@ -166,7 +167,11 @@ class YggdrasilAccount private constructor(override val username: String): Accou
 
             if (response.error?.isNotBlank() ?: false) {
                 LOG.severe("Failed to log in, the auth server returned an error: " + response.error + ", message: " + response.errorMessage + ", cause: " + response.cause)
-                throw AuthenticationException("Request error: ${response.errorMessage}")
+                throw when (response.errorMessage) {
+                    "Invalid token." -> InvalidTokenException(this)
+                    "Invalid credentials. Invalid username or password." -> InvalidCredentialsException(this)
+                    else -> AuthenticationException("Request error: ${response.errorMessage}")
+                }
             }
 
             return response

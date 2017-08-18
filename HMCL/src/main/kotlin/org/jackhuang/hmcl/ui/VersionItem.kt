@@ -47,7 +47,7 @@ class VersionItem(i: Int, group: ToggleGroup) : StackPane() {
     init {
         loadFXML("/assets/fxml/version-item.fxml")
 
-        limitWidth(190.0)
+        limitWidth(160.0)
         limitHeight(156.0)
 
         effect = DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.26), 5.0, 0.12, -1.0, 1.0)

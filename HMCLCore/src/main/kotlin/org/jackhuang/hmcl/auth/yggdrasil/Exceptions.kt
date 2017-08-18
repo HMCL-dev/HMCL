@@ -15,10 +15,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.auth
+package org.jackhuang.hmcl.auth.yggdrasil
 
-open class AuthenticationException : Exception {
-    constructor() : super() {}
-    constructor(message: String) : super(message) {}
-    constructor(message: String, cause: Throwable) : super(message, cause) {}
-}
+import org.jackhuang.hmcl.auth.AuthenticationException
+
+class InvalidTokenException(val account: YggdrasilAccount) : AuthenticationException()
+
+class InvalidCredentialsException(val account: YggdrasilAccount) : AuthenticationException()

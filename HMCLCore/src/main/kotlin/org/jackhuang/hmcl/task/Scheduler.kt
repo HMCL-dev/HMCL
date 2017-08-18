@@ -62,7 +62,7 @@ interface Scheduler {
         val NEW_THREAD: Scheduler = object : Scheduler {
             override fun schedule(block: Callable<Unit>) = CACHED_EXECUTOR.submit(block)
         }
-        val IO_THREAD: Scheduler = object : Scheduler {
+        val IO: Scheduler = object : Scheduler {
             override fun schedule(block: Callable<Unit>) = IO_EXECUTOR.submit(block)
         }
         val DEFAULT = NEW_THREAD

@@ -19,48 +19,81 @@ package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.JFXButton
 import com.jfoenix.controls.JFXCheckBox
+import com.jfoenix.controls.JFXProgressBar
 import com.jfoenix.controls.JFXRadioButton
 import com.jfoenix.effects.JFXDepthManager
 import javafx.beans.binding.Bindings
 import javafx.fxml.FXML
+import javafx.geometry.Rectangle2D
 import javafx.scene.control.Label
 import javafx.scene.control.ToggleGroup
 import javafx.scene.effect.BlurType
 import javafx.scene.effect.DropShadow
+import javafx.scene.image.ImageView
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
+import org.jackhuang.hmcl.auth.Account
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
+import org.jackhuang.hmcl.setting.AccountSkin
+import org.jackhuang.hmcl.setting.Settings
+import org.jackhuang.hmcl.task.Scheduler
 import java.util.concurrent.Callable
 
-class AccountItem(i: Int, group: ToggleGroup) : StackPane() {
+class AccountItem(i: Int, val account: Account, group: ToggleGroup) : StackPane() {
     @FXML lateinit var icon: Pane
     @FXML lateinit var content: VBox
     @FXML lateinit var header: StackPane
     @FXML lateinit var body: StackPane
     @FXML lateinit var btnDelete: JFXButton
+    @FXML lateinit var btnRefresh: JFXButton
     @FXML lateinit var lblUser: Label
     @FXML lateinit var chkSelected: JFXRadioButton
     @FXML lateinit var lblType: Label
+    @FXML lateinit var pgsSkin: JFXProgressBar
+    @FXML lateinit var portraitView: ImageView
 
     init {
         loadFXML("/assets/fxml/account-item.fxml")
 
-        limitWidth(150.0)
-        limitHeight(140.0)
+        limitWidth(160.0)
+        limitHeight(156.0)
 
         effect = DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.26), 5.0, 0.12, -0.5, 1.0)
 
         chkSelected.toggleGroup = group
-        btnDelete.graphic = SVG.delete("white", 15.0, 15.0)
+        btnDelete.graphic = SVG.delete("black", 15.0, 15.0)
+        btnRefresh.graphic = SVG.refresh("black", 15.0, 15.0)
 
         // create content
         val headerColor = getDefaultColor(i % 12)
         header.style = "-fx-background-radius: 2 2 0 0; -fx-background-color: " + headerColor
-        body.minHeight = Math.random() * 20 + 50
 
         // create image view
         icon.translateYProperty().bind(Bindings.createDoubleBinding(Callable { header.boundsInParent.height - icon.height / 2 }, header.boundsInParentProperty(), icon.heightProperty()))
+
+        chkSelected.properties["account"] = account
+        chkSelected.isSelected = Settings.selectedAccount == account
+        lblUser.text = account.username
+        lblType.text = accountType(account)
+
+        if (account is YggdrasilAccount)
+            btnRefresh.setOnMouseClicked {
+                pgsSkin.isVisible = true
+                AccountSkin.refreshSkinAsync(account).subscribe(Scheduler.JAVAFX) { loadSkin() }
+            }
+    }
+
+    fun loadSkin() {
+        if (account !is YggdrasilAccount)
+            return
+        pgsSkin.isVisible = false
+        val size = 8.0 * 4
+        portraitView.viewport = Rectangle2D(size, size, size, size)
+        portraitView.image = AccountSkin.getSkin(account, 4.0)
+        portraitView.fitHeight = 32.0
+        portraitView.fitWidth = 32.0
     }
 
     private fun getDefaultColor(i: Int): String {

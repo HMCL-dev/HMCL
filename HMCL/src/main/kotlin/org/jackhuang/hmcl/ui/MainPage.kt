@@ -91,10 +91,9 @@ class MainPage : StackPane(), DecoratorPage {
 
     fun onProfileChanged(event: ProfileChangedEvent) {
         val profile = event.value
-        profile.selectedVersionProperty.addListener { _ ->
+        profile.selectedVersionProperty.setChangedListener {
             versionChanged(profile.selectedVersion)
         }
-        profile.selectedVersionProperty.fireValueChangedEvent()
     }
 
     private fun loadVersions() {

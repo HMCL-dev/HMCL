@@ -18,7 +18,7 @@
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
     <ScrollPane fitToHeight="true" fitToWidth="true" fx:id="scrollPane" hbarPolicy="NEVER">
-        <JFXMasonryPane fx:id="masonryPane">
+        <JFXMasonryPane fx:id="masonryPane" HSpacing="3" VSpacing="3" cellWidth="182" cellHeight="160">
         </JFXMasonryPane>
     </ScrollPane>
     <AnchorPane pickOnBounds="false">

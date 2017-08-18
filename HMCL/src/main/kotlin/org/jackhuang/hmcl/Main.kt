@@ -54,6 +54,7 @@ class Main : Application() {
         val VERSION = "@HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING@"
         val NAME = "HMCL"
         val TITLE = "$NAME $VERSION"
+        val APPDATA = getWorkingDirectory("hmcl")
         lateinit var PRIMARY_STAGE: Stage
 
         @JvmStatic

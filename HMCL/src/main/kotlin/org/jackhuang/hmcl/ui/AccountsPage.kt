@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.auth.Account
 import org.jackhuang.hmcl.auth.OfflineAccount
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
 import org.jackhuang.hmcl.i18n
+import org.jackhuang.hmcl.setting.AccountSkin
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.task.taskResult
@@ -111,15 +112,16 @@ class AccountsPage() : StackPane(), DecoratorPage {
     }
 
     private fun buildNode(i: Int, account: Account, group: ToggleGroup): Node {
-        return AccountItem(i, group).apply {
-            chkSelected.properties["account"] = account
-            chkSelected.isSelected = Settings.selectedAccount == account
-            lblUser.text = account.username
-            lblType.text = accountType(account)
+        return AccountItem(i, account, group).apply {
             btnDelete.setOnMouseClicked {
                 Settings.deleteAccount(account.username)
                 Platform.runLater(this@AccountsPage::loadAccounts)
             }
+
+            if (account is YggdrasilAccount)
+                AccountSkin.loadSkinAsync(account).subscribe(Scheduler.JAVAFX) {
+                    loadSkin()
+                }
         }
     }
 

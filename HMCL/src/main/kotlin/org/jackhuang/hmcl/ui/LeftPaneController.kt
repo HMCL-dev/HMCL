@@ -19,10 +19,12 @@ package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.JFXComboBox
 import javafx.scene.layout.*
+import org.jackhuang.hmcl.auth.Account
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.ui.construct.IconedItem
 import org.jackhuang.hmcl.ui.construct.RipplerContainer
+import javax.swing.event.ChangeListener
 
 class LeftPaneController(private val leftPane: AdvancedListBox) {
     val versionsPane = VBox()
@@ -63,16 +65,15 @@ class LeftPaneController(private val leftPane: AdvancedListBox) {
         }
         Controllers.mainPane.buttonLaunch.setOnMouseClicked { LauncherHelper.launch() }*/
 
-        Settings.selectedAccountProperty.addListener { _, _, newValue ->
-            if (newValue == null) {
+        Settings.selectedAccountProperty.setChangedListener {
+            if (it == null) {
                 accountItem.lblVersionName.text = "mojang@mojang.com"
                 accountItem.lblGameVersion.text = "Yggdrasil"
             } else {
-                accountItem.lblVersionName.text = newValue.username
-                accountItem.lblGameVersion.text = accountType(newValue)
+                accountItem.lblVersionName.text = it.username
+                accountItem.lblGameVersion.text = accountType(it)
             }
         }
-        Settings.selectedAccountProperty.fireValueChangedEvent()
 
         if (Settings.getAccounts().isEmpty())
             Controllers.navigate(AccountsPage())

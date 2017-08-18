@@ -60,7 +60,7 @@ class VersionSettingsController {
     @FXML lateinit var chkNoGameCheck: JFXToggleButton
     @FXML lateinit var componentJava: ComponentList
     @FXML lateinit var javaPane: VBox
-    @FXML lateinit var javaPaneCustom: HBox
+    @FXML lateinit var javaPaneCustom: BorderPane
     @FXML lateinit var radioCustom: JFXRadioButton
     @FXML lateinit var btnJavaSelect: JFXButton
 
@@ -100,21 +100,21 @@ class VersionSettingsController {
             javaPane.children += createJavaPane(javaVersion, javaGroup)
         }
         javaPane.children += javaPaneCustom
+        javaPaneCustom.limitHeight(20.0)
         radioCustom.toggleGroup = javaGroup
         txtJavaDir.disableProperty().bind(radioCustom.selectedProperty().not())
         btnJavaSelect.disableProperty().bind(radioCustom.selectedProperty().not())
     }
 
     private fun createJavaPane(java: JavaVersion, group: ToggleGroup): Pane {
-        return HBox().apply {
+        return BorderPane().apply {
             style = "-fx-padding: 3;"
-            spacing = 8.0
-            alignment = Pos.CENTER_LEFT
-            children += JFXRadioButton(java.longVersion).apply {
+            limitHeight(20.0)
+            left = JFXRadioButton(java.longVersion).apply {
                 toggleGroup = group
                 userData = java
             }
-            children += Label(java.binary.absolutePath).apply {
+            right = Label(java.binary.absolutePath).apply {
                 styleClass += "subtitle-label"
                 style += "-fx-font-size: 10;"
             }

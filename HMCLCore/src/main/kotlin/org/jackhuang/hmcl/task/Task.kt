@@ -58,7 +58,6 @@ abstract class Task {
     @Throws(Exception::class)
     abstract fun execute()
 
-    infix fun parallel(couple: Task): Task = ParallelTask(this, couple)
     infix fun then(b: Task): Task = CoupleTask(this, { b }, true)
     infix fun with(b: Task): Task = CoupleTask(this, { b }, false)
 
@@ -116,7 +115,7 @@ abstract class Task {
 
     fun executor() = TaskExecutor().submit(this)
     fun executor(taskListener: TaskListener) = TaskExecutor().submit(this).apply { this.taskListener = taskListener }
-
+    fun start() = executor().start()
     fun subscribe(subscriber: Task) = executor().apply {
         submit(subscriber).start()
     }

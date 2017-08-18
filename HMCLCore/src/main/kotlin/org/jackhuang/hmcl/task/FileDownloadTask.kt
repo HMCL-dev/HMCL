@@ -34,7 +34,7 @@ import java.math.BigInteger
 import java.util.logging.Level
 
 class FileDownloadTask @JvmOverloads constructor(val url: URL, val file: File, val hash: String? = null, val retry: Int = 5, val proxy: Proxy = Proxy.NO_PROXY): Task() {
-    override val scheduler: Scheduler = Scheduler.IO_THREAD
+    override val scheduler: Scheduler = Scheduler.IO
 
     var onFailed = EventManager<FailedEvent<URL>>()
     private var rFile: RandomAccessFile? = null

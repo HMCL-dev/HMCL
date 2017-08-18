@@ -22,16 +22,22 @@
             <ComponentList depth="1">
 
                 <ComponentList fx:id="componentJava" title="%settings.java_dir" hasSubtitle="true"> <!-- Java Directory -->
-                    <VBox fx:id="javaPane" spacing="8">
-                        <HBox fx:id="javaPaneCustom" style="-fx-padding: 3;" spacing="3" alignment="CENTER_LEFT">
-                            <JFXRadioButton fx:id="radioCustom" text="%settings.custom" />
-                            <JFXTextField fx:id="txtJavaDir" BorderPane.alignment="CENTER_RIGHT" />
-                            <JFXButton fx:id="btnJavaSelect" onMouseClicked="#onExploreJavaDir">
-                                <graphic>
-                                    <fx:include source="/assets/svg/folder-open.fxml" />
-                                </graphic>
-                            </JFXButton>
-                        </HBox>
+                    <VBox fx:id="javaPane" spacing="8" style="-fx-padding: 0 0 10 0;">
+                        <BorderPane fx:id="javaPaneCustom" style="-fx-padding: 3;">
+                            <left>
+                                <JFXRadioButton fx:id="radioCustom" text="%settings.custom" />
+                            </left>
+                            <right>
+                                <HBox spacing="3">
+                                    <JFXTextField fx:id="txtJavaDir" BorderPane.alignment="CENTER_RIGHT" />
+                                    <JFXButton fx:id="btnJavaSelect" onMouseClicked="#onExploreJavaDir">
+                                        <graphic>
+                                            <fx:include source="/assets/svg/folder-open.fxml" />
+                                        </graphic>
+                                    </JFXButton>
+                                </HBox>
+                            </right>
+                        </BorderPane>
                     </VBox>
                 </ComponentList>
 
