@@ -52,8 +52,9 @@ import org.xml.sax.XMLReader;
  * @author huangyuhui
  */
 public class LaunchingUIDaemon {
-    
+
     XMLReader reader;
+    Log4jHandler logHandler;
 
     public LaunchingUIDaemon() {
         HMCLApi.EVENT_BUS.channel(LaunchingStateChangedEvent.class).register(LAUNCHING_STATE_CHANGED);
@@ -76,12 +77,12 @@ public class LaunchingUIDaemon {
             PipedOutputStream os = new PipedOutputStream();
             monitor.setTag(obj);
             try {
-                Log4jHandler handler = new Log4jHandler(monitor, os);
-                handler.addForbiddenToken(obj.getLoginResult().getAccessToken(), "<access token>");
-                handler.addForbiddenToken(obj.getLoginResult().getSession(), "<session>");
-                handler.addForbiddenToken(obj.getLoginResult().getUserId(), "<uuid>");
-                handler.addForbiddenToken("Setting user: " + obj.getLoginResult().getUserName(), "<player>");
-                handler.start();
+                logHandler = new Log4jHandler(monitor, os);
+                logHandler.addForbiddenToken(obj.getLoginResult().getAccessToken(), "<access token>");
+                logHandler.addForbiddenToken(obj.getLoginResult().getSession(), "<session>");
+                logHandler.addForbiddenToken(obj.getLoginResult().getUserId(), "<uuid>");
+                logHandler.addForbiddenToken("Setting user: " + obj.getLoginResult().getUserName(), "<player>");
+                logHandler.start();
             } catch(Exception e) {
                 HMCLog.err("", e);
             }
@@ -128,7 +129,7 @@ public class LaunchingUIDaemon {
             noExitThisTime = true;
         });
     }
-    
+
     static LauncherVisibility unpackProcessMonitor(Object obj) {
         GameLauncher launcher = ((GameLauncher) ((ProcessMonitor) obj).getTag());
         HMCLGameLauncher.GameLauncherTag tag = (HMCLGameLauncher.GameLauncherTag) launcher.getTag();
@@ -161,9 +162,9 @@ public class LaunchingUIDaemon {
             ((HMCLGameLauncher.GameLauncherTag) value.getTag()).state = 2;
         }, MainFrame.INSTANCE::failed, Settings.getInstance().getAuthenticator().getPassword());
     }
-    
+
     class PrintlnProcessor implements Consumer<PrintlnEvent> {
-        
+
         GameLauncher launcher;
         PipedOutputStream os;
 
@@ -174,13 +175,8 @@ public class LaunchingUIDaemon {
 
         @Override
         public void accept(PrintlnEvent t) {
-            if (!t.isError())
-                try {
-                    os.write((t.getLine() + C.LINE_SEPARATOR).replace("log4j:Event", "log4j_Event").replace("log4j:Message", "log4j_Message").getBytes());
-                    os.flush();
-                } catch(IOException e) {
-                    HMCLog.err("", e);
-                }
+            if (!t.isError() && logHandler != null)
+                logHandler.writeAndFlush((t.getLine() + C.LINE_SEPARATOR).replace("log4j:Event", "log4j_Event").replace("log4j:Message", "log4j_Message"));
             else System.err.println(t.getLine());
             HMCLGameLauncher.GameLauncherTag tag = (HMCLGameLauncher.GameLauncherTag) launcher.getTag();
             LauncherVisibility l = tag.launcherVisibility;
@@ -192,7 +188,7 @@ public class LaunchingUIDaemon {
                     HMCLApi.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(launcher, LaunchingState.Done));
                 }
         }
-        
+
     }
 
     private static final Consumer<LaunchingStateChangedEvent> LAUNCHING_STATE_CHANGED = t -> {
@@ -253,5 +249,5 @@ public class LaunchingUIDaemon {
         }
         MainFrame.INSTANCE.closeMessage();
     };
-    
+
 }
