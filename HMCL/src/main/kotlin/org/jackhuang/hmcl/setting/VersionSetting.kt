@@ -47,8 +47,8 @@ class VersionSetting() {
     /**
      * Java version or null if user customizes java directory.
      */
-    val javaProperty = ImmediateNullableStringProperty(this, "java", null)
-    var java: String? by javaProperty
+    val javaProperty = ImmediateStringProperty(this, "java", "")
+    var java: String by javaProperty
 
     /**
      * User customized java directory or null if user uses system Java.
@@ -169,6 +169,27 @@ class VersionSetting() {
     val launcherVisibilityProperty = ImmediateObjectProperty<LauncherVisibility>(this, "launcherVisibility", LauncherVisibility.HIDE)
     var launcherVisibility: LauncherVisibility by launcherVisibilityProperty
 
+    val javaVersion: JavaVersion? get() {
+        // TODO: lazy initialization may result in UI suspension.
+        if (java.isBlank())
+            java = if (javaDir.isBlank()) "Default" else "Custom"
+        if (java == "Default") return JavaVersion.fromCurrentEnvironment()
+        else if (java == "Custom") {
+            try {
+                return JavaVersion.fromExecutable(File(javaDir))
+            } catch (e: IOException) {
+                return null // Custom Java Directory not found,
+            }
+        } else if (java.isNotBlank()) {
+            val c = JavaVersion.JAVAS[java]
+            if (c == null) {
+                java = "Default"
+                return JavaVersion.fromCurrentEnvironment()
+            } else
+                return c
+        } else throw Error()
+    }
+
     fun addPropertyChangedListener(listener: InvalidationListener) {
         usesGlobalProperty.addListener(listener)
         javaProperty.addListener(listener)
@@ -194,8 +215,7 @@ class VersionSetting() {
     fun toLaunchOptions(gameDir: File): LaunchOptions {
         return LaunchOptions(
                 gameDir = gameDir,
-                java = if (java == null) JavaVersion.fromCurrentEnvironment()
-                       else JavaVersion.fromExecutable(File(java)),
+                java = javaVersion ?: JavaVersion.fromCurrentEnvironment(),
                 versionName = Main.TITLE,
                 profileName = Main.TITLE,
                 minecraftArgs = minecraftArgs,
@@ -261,7 +281,7 @@ class VersionSetting() {
                 javaDir = json["javaDir"]?.asString ?: ""
                 precalledCommand = json["precalledCommand"]?.asString ?: ""
                 serverIp = json["serverIp"]?.asString ?: ""
-                java = json["java"]?.asString
+                java = json["java"]?.asString ?: ""
                 wrapper = json["wrapper"]?.asString ?: ""
                 fullscreen = json["fullscreen"]?.asBoolean ?: false
                 noJVMArgs = json["noJVMArgs"]?.asBoolean ?: false

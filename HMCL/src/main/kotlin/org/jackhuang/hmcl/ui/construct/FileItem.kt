@@ -45,7 +45,7 @@ class FileItem : BorderPane() {
     init {
         left = VBox().apply {
             children += Label().apply { textProperty().bind(nameProperty) }
-            children += x.apply { style += "-fx-text-fill: gray;" }
+            children += x.apply { styleClass += "subtitle-label" }
         }
 
         right = JFXButton().apply {

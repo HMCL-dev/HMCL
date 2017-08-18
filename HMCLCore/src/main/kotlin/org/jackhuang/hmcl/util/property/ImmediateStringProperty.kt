@@ -18,16 +18,13 @@
 package org.jackhuang.hmcl.util.property
 
 import javafx.beans.property.*
+import javafx.beans.value.ChangeListener
 import javafx.beans.value.ObservableValue
 
 open class ImmediateStringProperty(bean: Any, name: String, initialValue: String): SimpleStringProperty(bean, name, initialValue) {
 
     override fun set(newValue: String) {
         super.get()
-        super.set(newValue)
-    }
-
-    protected fun superSet(newValue: String) {
         super.set(newValue)
     }
 
@@ -41,30 +38,17 @@ open class ImmediateStringProperty(bean: Any, name: String, initialValue: String
         super.unbind()
     }
 
-    public override fun fireValueChangedEvent() {
-        super.fireValueChangedEvent()
-    }
-}
-
-open class ImmediateNullableStringProperty(bean: Any, name: String, initialValue: String?): SimpleStringProperty(bean, name, initialValue) {
-
-    override fun set(newValue: String?) {
-        super.get()
-        super.set(newValue)
+    private var myListener: (String) -> Unit = {}
+    private val changeListener = ChangeListener<String> { _, _, newValue ->
+        myListener(newValue)
     }
 
-    protected fun superSet(newValue: String?) {
-        super.set(newValue)
+    fun setChangedListener(listener: (String) -> Unit) {
+        myListener = listener
     }
 
-    override fun bind(newObservable: ObservableValue<out String?>) {
-        super.get()
-        super.bind(newObservable)
-    }
-
-    override fun unbind() {
-        super.get()
-        super.unbind()
+    init {
+        addListener(changeListener)
     }
 
     public override fun fireValueChangedEvent() {
@@ -79,10 +63,6 @@ open class ImmediateBooleanProperty(bean: Any, name: String, initialValue: Boole
         super.set(newValue)
     }
 
-    protected fun superSet(newValue: Boolean) {
-        super.set(newValue)
-    }
-
     override fun bind(rawObservable: ObservableValue<out Boolean>?) {
         super.get()
         super.bind(rawObservable)
@@ -91,6 +71,19 @@ open class ImmediateBooleanProperty(bean: Any, name: String, initialValue: Boole
     override fun unbind() {
         super.get()
         super.unbind()
+    }
+
+    private var myListener: (Boolean) -> Unit = {}
+    private val changeListener = ChangeListener<Boolean> { _, _, newValue ->
+        myListener(newValue)
+    }
+
+    fun setChangedListener(listener: (Boolean) -> Unit) {
+        myListener = listener
+    }
+
+    init {
+        addListener(changeListener)
     }
 
     public override fun fireValueChangedEvent() {
@@ -105,10 +98,6 @@ open class ImmediateIntegerProperty(bean: Any, name: String, initialValue: Int):
         super.set(newValue)
     }
 
-    protected fun superSet(newValue: Int) {
-        super.set(newValue)
-    }
-
     override fun bind(rawObservable: ObservableValue<out Number>) {
         super.get()
         super.bind(rawObservable)
@@ -117,6 +106,19 @@ open class ImmediateIntegerProperty(bean: Any, name: String, initialValue: Int):
     override fun unbind() {
         super.get()
         super.unbind()
+    }
+
+    private var myListener: (Int) -> Unit = {}
+    private val changeListener = ChangeListener<Number> { _, _, newValue ->
+        myListener(newValue.toInt())
+    }
+
+    fun setChangedListener(listener: (Int) -> Unit) {
+        myListener = listener
+    }
+
+    init {
+        addListener(changeListener)
     }
 
     public override fun fireValueChangedEvent() {
@@ -131,10 +133,6 @@ open class ImmediateDoubleProperty(bean: Any, name: String, initialValue: Double
         super.set(newValue)
     }
 
-    protected fun superSet(newValue: Double) {
-        super.set(newValue)
-    }
-
     override fun bind(rawObservable: ObservableValue<out Number>) {
         super.get()
         super.bind(rawObservable)
@@ -143,6 +141,19 @@ open class ImmediateDoubleProperty(bean: Any, name: String, initialValue: Double
     override fun unbind() {
         super.get()
         super.unbind()
+    }
+
+    private var myListener: (Double) -> Unit = {}
+    private val changeListener = ChangeListener<Number> { _, _, newValue ->
+        myListener(newValue.toDouble())
+    }
+
+    fun setChangedListener(listener: (Double) -> Unit) {
+        myListener = listener
+    }
+
+    init {
+        addListener(changeListener)
     }
 
     public override fun fireValueChangedEvent() {
@@ -165,6 +176,19 @@ open class ImmediateObjectProperty<T>(bean: Any, name: String, initialValue: T):
     override fun unbind() {
         super.get()
         super.unbind()
+    }
+
+    private var myListener: (T) -> Unit = {}
+    private val changeListener = ChangeListener<T> { _, _, newValue ->
+        myListener(newValue)
+    }
+
+    fun setChangedListener(listener: (T) -> Unit) {
+        myListener = listener
+    }
+
+    init {
+        addListener(changeListener)
     }
 
     public override fun fireValueChangedEvent() {

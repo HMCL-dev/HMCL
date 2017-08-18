@@ -19,14 +19,11 @@ package org.jackhuang.hmcl.ui
 
 import com.jfoenix.effects.JFXDepthManager
 import javafx.fxml.FXML
-import javafx.scene.Node
 import javafx.scene.control.ScrollPane
 import javafx.scene.layout.VBox
 import org.jackhuang.hmcl.mod.ModManager
 import org.jackhuang.hmcl.task.Scheduler
-import org.jackhuang.hmcl.task.Task
 import org.jackhuang.hmcl.task.task
-import java.util.concurrent.Callable
 
 class ModController {
     @FXML lateinit var scrollPane: ScrollPane

@@ -68,7 +68,7 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
 
             if (OS.CURRENT_OS == OS.OSX) {
                 res.add("-Xdock:name=Minecraft ${version.id}")
-                res.add("-Xdock:icon=" + repository.getAssetObject(version.id, version.actualAssetIndex.id, "icons/minecraft.icns").absolutePath);
+                res.add("-Xdock:icon=" + repository.getAssetObject(version.id, version.actualAssetIndex.id, "icons/minecraft.icns").absolutePath)
             }
 
             val logging = version.logging
@@ -107,8 +107,8 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
             if (options.minMemory != null && options.minMemory > 0)
                 res.add("-Xms${options.minMemory}m")
 
-            res.add("-Dfml.ignoreInvalidMinecraftCertificates=true");
-            res.add("-Dfml.ignorePatchDiscrepancies=true");
+            res.add("-Dfml.ignoreInvalidMinecraftCertificates=true")
+            res.add("-Dfml.ignorePatchDiscrepancies=true")
         }
 
         // Classpath
@@ -161,9 +161,9 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
 
         // Optional Minecraft arguments
         if (options.height != null && options.width != null) {
-            res.add("--height");
+            res.add("--height")
             res.add(options.height.toString())
-            res.add("--width");
+            res.add("--width")
             res.add(options.width.toString())
         }
 
@@ -180,16 +180,16 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
 
         if (options.proxyHost != null && options.proxyHost.isNotBlank() &&
                 options.proxyPort != null && options.proxyPort.isNotBlank()) {
-            res.add("--proxyHost");
+            res.add("--proxyHost")
             res.add(options.proxyHost)
-            res.add("--proxyPort");
+            res.add("--proxyPort")
             res.add(options.proxyPort)
             if (options.proxyUser != null && options.proxyUser.isNotBlank() &&
                     options.proxyPass != null && options.proxyPass.isNotBlank()) {
-                res.add("--proxyUser");
-                res.add(options.proxyUser);
-                res.add("--proxyPass");
-                res.add(options.proxyPass);
+                res.add("--proxyUser")
+                res.add(options.proxyUser)
+                res.add("--proxyPass")
+                res.add(options.proxyPass)
             }
         }
 
@@ -246,6 +246,7 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
 
     fun launchAsync(): TaskResult<JavaProcess> {
         return object : TaskResult<JavaProcess>() {
+            override val id = LAUNCH_ASYNC_ID
             override fun execute() {
                 result = launch()
             }
@@ -259,11 +260,11 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
             throw IOException("Script file: $scriptFile cannot be created.")
         scriptFile.bufferedWriter().use { writer ->
             if (isWindows) {
-                writer.write("@echo off");
+                writer.write("@echo off")
                 writer.newLine()
-                writer.write("set APPDATA=" + options.gameDir.parent);
+                writer.write("set APPDATA=" + options.gameDir.parent)
                 writer.newLine()
-                writer.write("cd /D %APPDATA%");
+                writer.write("cd /D %APPDATA%")
                 writer.newLine()
             }
             if (options.precalledCommand != null && options.precalledCommand.isNotBlank()) {
@@ -286,5 +287,9 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
         thread(name = "stdout-pump", isDaemon = isDaemon, block = StreamPump(javaProcess.process.inputStream, processListener::onLog)::run)
         thread(name = "stderr-pump", isDaemon = isDaemon, block = StreamPump(javaProcess.process.errorStream, processListener::onErrorLog)::run)
         thread(name = "exit-waiter", isDaemon = isDaemon, block = ExitWaiter(javaProcess.process, processListener::onExit)::run)
+    }
+
+    companion object {
+        const val LAUNCH_ASYNC_ID = "process"
     }
 }

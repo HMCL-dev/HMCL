@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.construct
 import javafx.beans.DefaultProperty
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleObjectProperty
+import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
 import javafx.collections.ListChangeListener
 import javafx.collections.ObservableList
@@ -52,10 +53,12 @@ class ComponentList: StackPane() {
     }
 
     fun addChildren(node: Node) {
-        if (node is ComponentList)
+        if (node is ComponentList) {
             node.properties["title"] = node.title
+            node.properties["subtitle"] = node.subtitle
+        }
         vbox.children += StackPane().apply {
-            children += ComponentListCell(this@ComponentList, node)
+            children += ComponentListCell(node)
             if (vbox.children.isEmpty())
                 styleClass += "options-list-item-ahead"
             else {
@@ -64,8 +67,13 @@ class ComponentList: StackPane() {
         }
     }
 
-    val titleProperty = SimpleObjectProperty(this, "title", "Group")
+    val titleProperty = SimpleStringProperty(this, "title", "Group")
     var title: String by titleProperty
+
+    val subtitleProperty = SimpleStringProperty(this, "subtitle", "")
+    var subtitle: String by subtitleProperty
+
+    var hasSubtitle: Boolean = false
 
     val depthProperty = SimpleIntegerProperty(this, "depth", 0)
     var depth: Int by depthProperty

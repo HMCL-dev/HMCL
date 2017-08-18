@@ -23,6 +23,10 @@
     -fx-text-fill: rgba(0.0, 0.0, 0.0, 0.87);
 }
 
+.subtitle-label {
+    -fx-text-fill: gray;
+}
+
 .radio-button-title-label {
     -fx-font-size: 16.0px;
     -fx-padding: 14.0 0.0 -20.0 0.0;
@@ -579,7 +583,11 @@
 
 .options-list {
     -fx-background-color: transparent;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
+}
+
+.card {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
 }
 
 .options-sublist {
@@ -602,7 +610,7 @@
 }
 
 .options-list-item-expand-button {
-    -fx-toggle-icon4-size: 15px;
+    -fx-toggle-icon4-size: 20px;
     -fx-pref-width: -fx-toggle-icon4-size;
     -fx-max-width: -fx-toggle-icon4-size;
     -fx-min-width: -fx-toggle-icon4-size;

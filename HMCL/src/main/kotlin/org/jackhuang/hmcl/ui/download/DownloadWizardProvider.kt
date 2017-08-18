@@ -18,9 +18,7 @@
 package org.jackhuang.hmcl.ui.download
 
 import javafx.scene.Node
-import javafx.scene.layout.Pane
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider
-import org.jackhuang.hmcl.mod.CurseForgeModpackCompletionTask
 import org.jackhuang.hmcl.mod.CurseForgeModpackInstallTask
 import org.jackhuang.hmcl.mod.CurseForgeModpackManifest
 import org.jackhuang.hmcl.setting.EnumGameDirectory

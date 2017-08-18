@@ -36,8 +36,9 @@ class ForgeInstallTask(private val dependencyManager: DefaultDependencyManager,
     private val forgeVersionList = dependencyManager.getVersionList("forge")
     private val installer: File = File("forge-installer.jar").absoluteFile
     lateinit var remote: RemoteVersion<*>
-    override val dependents: MutableCollection<Task> = mutableListOf()
-    override val dependencies: MutableCollection<Task> = mutableListOf()
+    override val dependents = mutableListOf<Task>()
+    override val dependencies = mutableListOf<Task>()
+    override val id = ID
 
     init {
         if (!forgeVersionList.loaded)
@@ -76,5 +77,7 @@ class ForgeInstallTask(private val dependencyManager: DefaultDependencyManager,
         check(installer.delete(), { "Unable to delete installer file $installer" })
     }
 
-
+    companion object {
+        const val ID = "forge_install_task"
+    }
 }

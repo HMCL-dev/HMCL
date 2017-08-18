@@ -35,8 +35,9 @@ class LiteLoaderInstallTask(private val dependencyManager: DefaultDependencyMana
                              private val remoteVersion: String): TaskResult<Version>() {
     private val liteLoaderVersionList = dependencyManager.getVersionList("liteloader") as LiteLoaderVersionList
     lateinit var remote: RemoteVersion<LiteLoaderRemoteVersionTag>
-    override val dependents: MutableCollection<Task> = mutableListOf()
-    override val dependencies: MutableCollection<Task> = mutableListOf()
+    override val dependents = mutableListOf<Task>()
+    override val dependencies = mutableListOf<Task>()
+    override val id = ID
 
     init {
         if (!liteLoaderVersionList.loaded)
@@ -70,4 +71,7 @@ class LiteLoaderInstallTask(private val dependencyManager: DefaultDependencyMana
         dependencies += GameLibrariesTask(dependencyManager, tempVersion)
     }
 
+    companion object {
+        const val ID = "lite_loader_install_task"
+    }
 }

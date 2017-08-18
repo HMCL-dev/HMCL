@@ -37,7 +37,7 @@ import java.util.logging.Level
  * @param resolvedVersion the <b>resolved</b> version
  */
 class GameLibrariesTask(private val dependencyManager: DefaultDependencyManager, private val resolvedVersion: Version): Task() {
-    override val dependencies: MutableCollection<Task> = LinkedList()
+    override val dependencies = LinkedList<Task>()
     override fun execute() {
         for (library in resolvedVersion.libraries)
             if (library.appliesToCurrentEnvironment) {
@@ -50,7 +50,7 @@ class GameLibrariesTask(private val dependencyManager: DefaultDependencyManager,
 }
 
 class GameLoggingDownloadTask(private val dependencyManager: DefaultDependencyManager, private val version: Version) : Task() {
-    override val dependencies: MutableCollection<Task> = LinkedList()
+    override val dependencies = LinkedList<Task>()
     override fun execute() {
         val logging = version.logging?.get(DownloadType.CLIENT) ?: return
         val file = dependencyManager.repository.getLoggingObject(version.id, version.actualAssetIndex.id, logging)
@@ -60,7 +60,7 @@ class GameLoggingDownloadTask(private val dependencyManager: DefaultDependencyMa
 }
 
 class GameAssetIndexDownloadTask(private val dependencyManager: DefaultDependencyManager, private val version: Version) : Task() {
-    override val dependencies: MutableCollection<Task> = LinkedList()
+    override val dependencies = LinkedList<Task>()
     override fun execute() {
         val assetIndexInfo = version.actualAssetIndex
         val assetDir = dependencyManager.repository.getAssetDirectory(version.id, assetIndexInfo.id)
@@ -76,7 +76,8 @@ class GameAssetRefreshTask(private val dependencyManager: DefaultDependencyManag
     private val assetIndexTask = GameAssetIndexDownloadTask(dependencyManager, version)
     private val assetIndexInfo = version.actualAssetIndex
     private val assetIndexFile = dependencyManager.repository.getIndexFile(version.id, assetIndexInfo.id)
-    override val dependents: MutableCollection<Task> = LinkedList()
+    override val dependents = LinkedList<Task>()
+    override val id = ID
 
     init {
         if (!assetIndexFile.exists())
@@ -93,12 +94,16 @@ class GameAssetRefreshTask(private val dependencyManager: DefaultDependencyManag
         }
         result = res
     }
+
+    companion object {
+        val ID = "game_asset_refresh_task"
+    }
 }
 
 class GameAssetDownloadTask(private val dependencyManager: DefaultDependencyManager, private val version: Version) : Task() {
     private val refreshTask = GameAssetRefreshTask(dependencyManager, version)
-    override val dependents: Collection<Task> = listOf(refreshTask)
-    override val dependencies: MutableCollection<Task> = LinkedList()
+    override val dependents = listOf(refreshTask)
+    override val dependencies = LinkedList<Task>()
     override fun execute() {
         val size = refreshTask.result?.size ?: 0
         refreshTask.result?.forEach single@{ (file, assetObject) ->

@@ -49,6 +49,8 @@ abstract class Task {
 
     var title: String = this.javaClass.toString()
 
+    var variables: AutoTypingMap<String>? = null
+
     /**
      * @see Thread.isInterrupted
      * @throws InterruptedException if current thread is interrupted
@@ -119,12 +121,13 @@ abstract class Task {
         submit(subscriber).start()
     }
 
-    fun subscribe(scheduler: Scheduler = Scheduler.DEFAULT, closure: () -> Unit) = subscribe(task(scheduler, closure))
+    fun subscribe(scheduler: Scheduler = Scheduler.DEFAULT, closure: (AutoTypingMap<String>) -> Unit) = subscribe(task(scheduler, closure))
 
     override fun toString(): String {
         return title
     }
 }
 
-fun task(scheduler: Scheduler = Scheduler.DEFAULT, closure: () -> Unit): Task = SimpleTask(closure, scheduler)
-fun <V> task(callable: Callable<V>): TaskResult<V> = TaskCallable(callable)
+fun task(scheduler: Scheduler = Scheduler.DEFAULT, closure: (AutoTypingMap<String>) -> Unit): Task = SimpleTask(closure, scheduler)
+fun <V> taskResult(id: String, callable: Callable<V>): TaskResult<V> = TaskCallable(id, callable)
+fun <V> taskResult(id: String, callable: (AutoTypingMap<String>) -> V): TaskResult<V> = TaskCallable2(id, callable)

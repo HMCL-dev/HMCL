@@ -15,12 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.task
+package org.jackhuang.hmcl.util
 
-import org.jackhuang.hmcl.util.AutoTypingMap
+class AutoTypingMap<K>(private val impl: MutableMap<K, Any>) {
 
-internal class SimpleTask @JvmOverloads constructor(private val runnable: (AutoTypingMap<String>) -> Unit, override val scheduler: Scheduler = Scheduler.DEFAULT) : Task() {
-    override fun execute() {
-        runnable(variables!!)
+    fun clear() = impl.clear()
+
+    @Suppress("UNCHECKED_CAST")
+    operator fun <V> get(key: K): V = impl[key] as V
+    operator fun set(key: K, value: Any?) {
+        if (value != null)
+            impl.set(key, value)
     }
+    val values get() = impl.values
+    val keys get() = impl.keys
+
+    fun containsKey(key: K) = impl.containsKey(key)
+    fun remove(key: K) = impl.remove(key)
 }

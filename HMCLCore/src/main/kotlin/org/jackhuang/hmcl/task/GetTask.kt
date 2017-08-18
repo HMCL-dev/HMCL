@@ -27,6 +27,7 @@ import java.nio.charset.Charset
 
 class GetTask @JvmOverloads constructor(val url: URL, val encoding: Charset = Charsets.UTF_8, private val retry: Int = 5, private val proxy: Proxy = Proxy.NO_PROXY): TaskResult<String>() {
     override val scheduler: Scheduler = Scheduler.IO_THREAD
+    override val id = ID
 
     override fun execute() {
         var exception: IOException? = null
@@ -62,5 +63,9 @@ class GetTask @JvmOverloads constructor(val url: URL, val encoding: Charset = Ch
         }
         if (exception != null)
             throw exception
+    }
+
+    companion object {
+        const val ID = "http_get"
     }
 }

@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
@@ -12,9 +9,9 @@
 <?import javafx.geometry.Insets?>
 <?import com.jfoenix.controls.JFXComboBox?>
 <?import javafx.collections.FXCollections?>
-<?import com.jfoenix.controls.JFXListView?>
 <?import org.jackhuang.hmcl.ui.construct.ComponentList?>
 <?import com.jfoenix.controls.JFXToggleButton?>
+<?import com.jfoenix.controls.JFXRadioButton?>
 <StackPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
            fx:controller="org.jackhuang.hmcl.ui.VersionSettingsController">
@@ -24,19 +21,22 @@
         <VBox fx:id="rootPane" style="-fx-padding: 20;">
             <ComponentList depth="1">
 
-                <ComponentList title="%settings.java_dir"> <!-- Java Directory -->
-                    <VBox>
-                        <JFXTextField fx:id="txtGameDir" BorderPane.alignment="CENTER_RIGHT" />
-                        <JFXButton GridPane.rowIndex="0" GridPane.columnIndex="2" onMouseClicked="#onExploreJavaDir">
-                            <graphic>
-                                <fx:include source="/assets/svg/folder-open.fxml" />
-                            </graphic>
-                        </JFXButton>
+                <ComponentList fx:id="componentJava" title="%settings.java_dir" hasSubtitle="true"> <!-- Java Directory -->
+                    <VBox fx:id="javaPane" spacing="8">
+                        <HBox fx:id="javaPaneCustom" style="-fx-padding: 3;" spacing="3" alignment="CENTER_LEFT">
+                            <JFXRadioButton fx:id="radioCustom" text="%settings.custom" />
+                            <JFXTextField fx:id="txtJavaDir" BorderPane.alignment="CENTER_RIGHT" />
+                            <JFXButton fx:id="btnJavaSelect" onMouseClicked="#onExploreJavaDir">
+                                <graphic>
+                                    <fx:include source="/assets/svg/folder-open.fxml" />
+                                </graphic>
+                            </JFXButton>
+                        </HBox>
                     </VBox>
                 </ComponentList>
 
                 <BorderPane> <!-- Max Memory -->
-                    <left><VBox><Label text="%settings.max_memory" BorderPane.alignment="CENTER_LEFT" /><Label fx:id="lblPhysicalMemory" style="-fx-text-fill: gray;" /></VBox></left>
+                    <left><VBox><Label text="%settings.max_memory" BorderPane.alignment="CENTER_LEFT" /><Label fx:id="lblPhysicalMemory" styleClass="subtitle-label" /></VBox></left>
                     <right><JFXTextField fx:id="txtMaxMemory" BorderPane.alignment="CENTER_RIGHT" /></right>
                 </BorderPane>
 
@@ -73,16 +73,16 @@
                 <BorderPane> <!-- Dimension -->
                     <left><Label text="%settings.dimension" BorderPane.alignment="CENTER_LEFT" /></left>
                     <right>
-                        <BorderPane BorderPane.alignment="CENTER_RIGHT">
+                        <BorderPane>
                             <left>
-                                <HBox prefWidth="210">
+                                <HBox prefWidth="210" spacing="3" alignment="CENTER" BorderPane.alignment="CENTER">
                                     <JFXTextField fx:id="txtWidth" promptText="800" prefWidth="100" />
                                     <Label>x</Label>
                                     <JFXTextField fx:id="txtHeight" promptText="480" prefWidth="100" />
                                 </HBox>
                             </left>
                             <right>
-                                <JFXCheckBox fx:id="chkFullscreen" text="%settings.fullscreen" alignment="CENTER">
+                                <JFXCheckBox fx:id="chkFullscreen" text="%settings.fullscreen" alignment="CENTER" BorderPane.alignment="CENTER">
                                     <BorderPane.margin>
                                         <Insets right="7"/>
                                     </BorderPane.margin>
@@ -101,11 +101,14 @@
                         <Tooltip text="%advancedsettings.java_args_default" />
                     </tooltip>
                 </JFXTextField>
-                <JFXTextField labelFloat="true" promptText="%advancedsettings.Minecraft_arguments" styleClass="fit-width" fx:id="txtGameArgs" />
-                <JFXTextField labelFloat="true" promptText="%advancedsettings.java_permanent_generation_space" styleClass="fit-width" fx:id="txtMetaspace" />
-                <JFXTextField labelFloat="true" promptText="%advancedsettings.wrapper_launcher" styleClass="fit-width" fx:id="txtWrapper" />
-                <JFXTextField labelFloat="true" promptText="%advancedsettings.precall_command" styleClass="fit-width" fx:id="txtPrecallingCommand" />
-                <JFXTextField labelFloat="true" promptText="%advancedsettings.server_ip" styleClass="fit-width" fx:id="txtServerIP" />
+                <fx:define>
+                    <Insets fx:id="insets" bottom="8" />
+                </fx:define>
+                <JFXTextField labelFloat="true" promptText="%advancedsettings.Minecraft_arguments" styleClass="fit-width" fx:id="txtGameArgs" StackPane.margin="$insets" />
+                <JFXTextField labelFloat="true" promptText="%advancedsettings.java_permanent_generation_space" styleClass="fit-width" fx:id="txtMetaspace" StackPane.margin="$insets" />
+                <JFXTextField labelFloat="true" promptText="%advancedsettings.wrapper_launcher" styleClass="fit-width" fx:id="txtWrapper" StackPane.margin="$insets" />
+                <JFXTextField labelFloat="true" promptText="%advancedsettings.precall_command" styleClass="fit-width" fx:id="txtPrecallingCommand" StackPane.margin="$insets" />
+                <JFXTextField labelFloat="true" promptText="%advancedsettings.server_ip" styleClass="fit-width" fx:id="txtServerIP" StackPane.margin="$insets" />
                 <BorderPane><left><Label text="%advancedsettings.no_jvm_args" /></left><right><JFXToggleButton fx:id="chkNoJVMArgs" size="7" /></right></BorderPane>
                 <BorderPane><left><Label text="%advancedsettings.no_common" /></left><right><JFXToggleButton fx:id="chkNoCommon" size="7" /></right></BorderPane>
                 <BorderPane><left><Label text="%advancedsettings.dont_check_game_completeness" /></left><right><JFXToggleButton fx:id="chkNoGameCheck" size="7" /></right></BorderPane>

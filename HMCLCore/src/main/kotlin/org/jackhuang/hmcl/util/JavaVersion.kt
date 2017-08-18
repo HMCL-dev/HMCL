@@ -21,16 +21,21 @@ import com.google.gson.annotations.SerializedName
 import java.io.File
 import java.io.IOException
 import java.io.Serializable
+import java.util.*
 import java.util.regex.Pattern
 
 data class JavaVersion internal constructor(
         @SerializedName("location")
         val binary: File,
-        val version: Int,
+        val longVersion: String,
         val platform: Platform) : Serializable
 {
+    val version = parseVersion(longVersion)
+
     companion object {
         private val regex = Pattern.compile("java version \"(?<version>[1-9]*\\.[1-9]*\\.[0-9]*(.*?))\"")
+
+        val JAVAS: Map<String, JavaVersion>
 
         val UNKNOWN: Int = -1
         val JAVA_5: Int = 50
@@ -54,12 +59,15 @@ data class JavaVersion internal constructor(
 
         @Throws(IOException::class)
         fun fromExecutable(file: File): JavaVersion {
+            var actualFile = file
             var platform = Platform.BIT_32
             var version: String? = null
+            if (actualFile.nameWithoutExtension == "javaw") // javaw will not output version information
+                actualFile = actualFile.absoluteFile.parentFile.resolve("java")
             try {
-                val process = ProcessBuilder(file.absolutePath, "-version").start()
+                val process = ProcessBuilder(actualFile.absolutePath, "-version").start()
                 process.waitFor()
-                process.inputStream.bufferedReader().forEachLine { line ->
+                process.errorStream.bufferedReader().forEachLine { line ->
                     val m = regex.matcher(line)
                     if (m.find())
                         version = m.group("version")
@@ -74,10 +82,26 @@ data class JavaVersion internal constructor(
             val parsedVersion = parseVersion(thisVersion)
             if (parsedVersion == UNKNOWN)
                 throw IOException("Java version '$thisVersion' can not be recognized")
-            return JavaVersion(file.parentFile, parsedVersion, platform)
+            return JavaVersion(file.parentFile, thisVersion, platform)
         }
 
-        fun getJavaFile(home: File): File {
+        private fun fromExecutable(file: File, version: String) =
+                JavaVersion (
+                        binary = file,
+                        longVersion = version,
+                        platform = Platform.UNKNOWN
+                )
+
+        @Throws(IOException::class)
+        fun fromJavaHome(home: File): JavaVersion {
+            return fromExecutable(getJavaFile(home))
+        }
+
+        private fun fromJavaHome(home: File, version: String): JavaVersion {
+            return fromExecutable(getJavaFile(home), version)
+        }
+
+        private fun getJavaFile(home: File): File {
             val path = home.resolve("bin")
             val javaw = path.resolve("javaw.exe")
             if (OS.CURRENT_OS === OS.WINDOWS && javaw.isFile)
@@ -86,11 +110,80 @@ data class JavaVersion internal constructor(
                 return path.resolve("java")
         }
 
-        fun fromCurrentEnvironment(): JavaVersion {
-            return JavaVersion(
-                    binary = getJavaFile(File(System.getProperty("java.home"))),
-                    version = parseVersion(System.getProperty("java.version")),
-                    platform = Platform.PLATFORM)
+        private val currentJava: JavaVersion = JavaVersion(
+                binary = getJavaFile(File(System.getProperty("java.home"))),
+                longVersion = System.getProperty("java.version"),
+                platform = Platform.PLATFORM)
+        fun fromCurrentEnvironment() = currentJava
+
+        init {
+            val temp = mutableMapOf<String, JavaVersion>()
+            (when (OS.CURRENT_OS) {
+                OS.WINDOWS -> queryWindows()
+                OS.OSX -> queryMacintosh()
+                else -> emptyList<JavaVersion>() /* Cannot detect Java in linux. */
+            }).forEach { javaVersion ->
+                temp.put(javaVersion.longVersion, javaVersion)
+            }
+            JAVAS = temp
+        }
+
+        private fun queryMacintosh() = LinkedList<JavaVersion>().apply {
+            val currentJRE = File("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home")
+            if (currentJRE.exists())
+                this += fromJavaHome(currentJRE)
+            File("/Library/Java/JavaVirtualMachines/").listFiles()?.forEach { file ->
+                this += fromJavaHome(file.resolve("Contents/Home"))
+            }
+        }
+
+        private fun queryWindows() = LinkedList<JavaVersion>().apply {
+            ignoreException { this += queryRegisterKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\") }
+            ignoreException { this += queryRegisterKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\") }
+        }
+
+        private fun queryRegisterKey(location: String) = LinkedList<JavaVersion>().apply {
+            querySubFolders(location).forEach { java ->
+                val s = java.count { it == '.' }
+                if (s > 1) {
+                    val home = queryRegisterValue(java, "JavaHome")
+                    if (home != null)
+                        this += fromJavaHome(File(home))
+                }
+            }
+        }
+
+        private fun querySubFolders(location: String) = LinkedList<String>().apply {
+            val cmd = arrayOf("cmd", "/c", "reg", "query", location)
+            val process = Runtime.getRuntime().exec(cmd)
+            process.waitFor()
+            process.inputStream.bufferedReader().readLines().forEach { s ->
+                if (s.startsWith(location) && s != location)
+                    this += s
+            }
+        }
+
+        private fun queryRegisterValue(location: String, name: String): String? {
+            val cmd = arrayOf("cmd", "/c", "reg", "query", location, "/v", name)
+            var last = false
+            val process = Runtime.getRuntime().exec(cmd)
+            process.waitFor()
+            process.inputStream.bufferedReader().readLines().forEach { s ->
+                if (s.isNotBlank()) {
+                    if (last && s.trim().startsWith(name)) {
+                        var begins = s.indexOf(name)
+                        if (begins > 0) {
+                            val s2 = s.substring(begins + name.length)
+                            begins = s2.indexOf("REG_SZ")
+                            if (begins > 0)
+                                return s2.substring(begins + "REG_SZ".length).trim()
+                        }
+                    }
+                    if (s.trim() == location)
+                        last = true
+                }
+            }
+            return null
         }
     }
 }

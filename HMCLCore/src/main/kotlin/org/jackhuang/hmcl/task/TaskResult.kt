@@ -19,4 +19,9 @@ package org.jackhuang.hmcl.task
 
 abstract class TaskResult<V> : Task() {
     open var result: V? = null
+
+    /**
+     * The task id, will be stored as key of [variables]
+     */
+    abstract val id: String
 }

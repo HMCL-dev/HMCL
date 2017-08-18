@@ -32,8 +32,9 @@ class OptiFineInstallTask(private val dependencyManager: DefaultDependencyManage
                            private val remoteVersion: String): TaskResult<Version>() {
     private val optiFineVersionList = dependencyManager.getVersionList("optifine")
     lateinit var remote: RemoteVersion<*>
-    override val dependents: MutableCollection<Task> = mutableListOf()
-    override val dependencies: MutableCollection<Task> = mutableListOf()
+    override val dependents = mutableListOf<Task>()
+    override val dependencies = mutableListOf<Task>()
+    override val id = ID
 
     init {
         if (!optiFineVersionList.loaded)
@@ -45,6 +46,7 @@ class OptiFineInstallTask(private val dependencyManager: DefaultDependencyManage
             remote = optiFineVersionList.getVersion(gameVersion, remoteVersion) ?: throw IllegalArgumentException("Remote OptiFine version $gameVersion-$remoteVersion not found")
         }
     }
+
     override fun execute() {
         val library = Library(
                 groupId = "net.optifine",
@@ -72,5 +74,9 @@ class OptiFineInstallTask(private val dependencyManager: DefaultDependencyManage
         }
         result = version.copy(libraries = merge(version.libraries, libraries), mainClass = mainClass, minecraftArguments = arg)
         dependencies += GameLibrariesTask(dependencyManager, version.copy(libraries = libraries))
+    }
+
+    companion object {
+        const val ID = "optifine_install_task"
     }
 }

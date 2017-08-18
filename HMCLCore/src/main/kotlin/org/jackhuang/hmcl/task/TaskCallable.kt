@@ -17,10 +17,17 @@
  */
 package org.jackhuang.hmcl.task
 
+import org.jackhuang.hmcl.util.AutoTypingMap
 import java.util.concurrent.Callable
 
-internal class TaskCallable<V>(private val callable: Callable<V>) : TaskResult<V>() {
+internal class TaskCallable<V>(override val id: String, private val callable: Callable<V>) : TaskResult<V>() {
     override fun execute() {
         result = callable.call()
+    }
+}
+
+internal class TaskCallable2<V>(override val id: String, private val callable: (AutoTypingMap<String>) -> V) : TaskResult<V>() {
+    override fun execute() {
+        result = callable(variables!!)
     }
 }

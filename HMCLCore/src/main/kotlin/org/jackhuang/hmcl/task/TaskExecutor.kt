@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.task
 
+import org.jackhuang.hmcl.util.AutoTypingMap
 import org.jackhuang.hmcl.util.LOG
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -30,6 +31,7 @@ class TaskExecutor() {
     var canceled = false
         private set
     val totTask = AtomicInteger(0)
+    val variables = AutoTypingMap<String>(mutableMapOf())
     private val taskQueue = ConcurrentLinkedQueue<Task>()
     private val workerQueue = ConcurrentLinkedQueue<Future<*>>()
 
@@ -119,7 +121,10 @@ class TaskExecutor() {
             if (!doDependentsSucceeded && t.reliant || canceled)
                 throw SilentException()
 
+            t.variables = variables
             t.execute()
+            if (t is TaskResult<*>)
+                variables[t.id] = t.result
             flag = true
             if (!t.hidden)
                 LOG.finer("Task finished: ${t.title}")
@@ -142,6 +147,8 @@ class TaskExecutor() {
                 t.onDone(TaskEvent(source = this, task = t, failed = true))
                 taskListener?.onFailed(t)
             }
+        } finally {
+            t.variables = null
         }
         return flag
     }

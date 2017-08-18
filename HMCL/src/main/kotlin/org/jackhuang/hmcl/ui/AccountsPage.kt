@@ -34,10 +34,8 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.Scheduler
-import org.jackhuang.hmcl.task.Task
-import org.jackhuang.hmcl.task.task
+import org.jackhuang.hmcl.task.taskResult
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage
-import java.util.concurrent.Callable
 
 class AccountsPage() : StackPane(), DecoratorPage {
     override val titleProperty: StringProperty = SimpleStringProperty(this, "title", "Accounts")
@@ -136,7 +134,7 @@ class AccountsPage() : StackPane(), DecoratorPage {
         val username = txtUsername.text
         val password = txtPassword.text
         progressBar.isVisible = true
-        val task = task(Callable {
+        taskResult("create_account") {
             try {
                 val account = when (type) {
                     0 -> OfflineAccount.fromUsername(username)
@@ -149,9 +147,8 @@ class AccountsPage() : StackPane(), DecoratorPage {
             } catch (e: Exception) {
                 e
             }
-        })
-        task.subscribe(Scheduler.JAVAFX) {
-            val account = task.result
+        }.subscribe(Scheduler.JAVAFX) {
+            val account: Any = it["create_account"]
             if (account is Account) {
                 Settings.addAccount(account)
                 dialog.close()

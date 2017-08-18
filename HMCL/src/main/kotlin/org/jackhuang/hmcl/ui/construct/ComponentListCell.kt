@@ -35,7 +35,7 @@ import org.jackhuang.hmcl.ui.SVG
 import org.jackhuang.hmcl.ui.limitHeight
 import org.jackhuang.hmcl.util.*
 
-class ComponentListCell(private val superList: ComponentList, private val content: Node) : StackPane() {
+class ComponentListCell(private val content: Node) : StackPane() {
 
     var expandAnimation: Animation? = null
     private var clipRect: Rectangle? = null
@@ -67,9 +67,7 @@ class ComponentListCell(private val superList: ComponentList, private val conten
     }
 
     private fun updateLayout() {
-        val isSubList = content is ComponentList
-
-        if (isSubList) {
+        if (content is ComponentList) {
             content.styleClass -= "options-list"
             content.styleClass += "options-sublist"
 
@@ -82,12 +80,33 @@ class ComponentListCell(private val superList: ComponentList, private val conten
             expandButton.styleClass += "options-list-item-expand-button"
             StackPane.setAlignment(expandButton, Pos.CENTER_RIGHT)
 
+            val labelVBox = VBox()
+            Label().apply {
+                textProperty().bind(content.titleProperty)
+                isMouseTransparent = true
+                labelVBox.children += this
+            }
+
+            if (content.hasSubtitle)
+                Label().apply {
+                    textProperty().bind(content.subtitleProperty)
+                    isMouseTransparent = true
+                    styleClass += "subtitle-label"
+                    labelVBox.children += this
+                }
+
+            StackPane.setAlignment(labelVBox, Pos.CENTER_LEFT)
             groupNode.children.setAll(
-                    Label(content.properties["title"]?.toString() ?: "Group").apply { isMouseTransparent = true; StackPane.setAlignment(this, Pos.CENTER_LEFT) },
+                    labelVBox,
                     expandButton)
 
             val container = VBox().apply {
+                style += "-fx-padding: 8 0 0 0;"
                 limitHeight(0.0)
+                val clipRect = Rectangle()
+                clipRect.widthProperty().bind(widthProperty())
+                clipRect.heightProperty().bind(heightProperty())
+                clip = clipRect
                 children.setAll(content)
             }
 

@@ -19,23 +19,27 @@ package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.*
 import javafx.beans.InvalidationListener
+import javafx.beans.binding.Bindings
+import javafx.beans.value.ChangeListener
 import javafx.fxml.FXML
+import javafx.geometry.Pos
 import javafx.scene.control.Label
 import javafx.scene.control.ScrollPane
-import javafx.scene.layout.GridPane
-import javafx.scene.layout.VBox
+import javafx.scene.control.Toggle
+import javafx.scene.control.ToggleGroup
+import javafx.scene.layout.*
 import javafx.stage.DirectoryChooser
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.VersionSetting
 import org.jackhuang.hmcl.ui.construct.ComponentList
 import org.jackhuang.hmcl.ui.construct.NumberValidator
+import org.jackhuang.hmcl.util.JavaVersion
 import org.jackhuang.hmcl.util.OS
 
 class VersionSettingsController {
     var lastVersionSetting: VersionSetting? = null
     @FXML lateinit var rootPane: VBox
     @FXML lateinit var scroll: ScrollPane
-    @FXML lateinit var settingsPane: GridPane
     @FXML lateinit var txtWidth: JFXTextField
     @FXML lateinit var txtHeight: JFXTextField
     @FXML lateinit var txtMaxMemory: JFXTextField
@@ -45,7 +49,7 @@ class VersionSettingsController {
     @FXML lateinit var txtWrapper: JFXTextField
     @FXML lateinit var txtPrecallingCommand: JFXTextField
     @FXML lateinit var txtServerIP: JFXTextField
-    @FXML lateinit var txtGameDir: JFXTextField
+    @FXML lateinit var txtJavaDir: JFXTextField
     @FXML lateinit var advancedSettingsPane: ComponentList
     @FXML lateinit var cboLauncherVisibility: JFXComboBox<*>
     @FXML lateinit var cboRunDirectory: JFXComboBox<*>
@@ -54,6 +58,13 @@ class VersionSettingsController {
     @FXML lateinit var chkNoJVMArgs: JFXToggleButton
     @FXML lateinit var chkNoCommon: JFXToggleButton
     @FXML lateinit var chkNoGameCheck: JFXToggleButton
+    @FXML lateinit var componentJava: ComponentList
+    @FXML lateinit var javaPane: VBox
+    @FXML lateinit var javaPaneCustom: HBox
+    @FXML lateinit var radioCustom: JFXRadioButton
+    @FXML lateinit var btnJavaSelect: JFXButton
+
+    val javaGroup = ToggleGroup()
 
     fun initialize() {
         lblPhysicalMemory.text = i18n("settings.physical_memory") + ": ${OS.TOTAL_MEMORY}MB"
@@ -61,7 +72,7 @@ class VersionSettingsController {
         scroll.smoothScrolling()
 
         val limit = 300.0
-        txtGameDir.limitWidth(limit)
+        //txtJavaDir.limitWidth(limit)
         txtMaxMemory.limitWidth(limit)
         cboLauncherVisibility.limitWidth(limit)
         cboRunDirectory.limitWidth(limit)
@@ -82,6 +93,32 @@ class VersionSettingsController {
         txtMaxMemory.textProperty().addListener(validation(txtMaxMemory))
         txtMetaspace.setValidators(validator(true))
         txtMetaspace.textProperty().addListener(validation(txtMetaspace))
+
+        javaPane.children.clear()
+        javaPane.children += createJavaPane(JavaVersion.fromCurrentEnvironment(), javaGroup)
+        JavaVersion.JAVAS.values.forEach { javaVersion ->
+            javaPane.children += createJavaPane(javaVersion, javaGroup)
+        }
+        javaPane.children += javaPaneCustom
+        radioCustom.toggleGroup = javaGroup
+        txtJavaDir.disableProperty().bind(radioCustom.selectedProperty().not())
+        btnJavaSelect.disableProperty().bind(radioCustom.selectedProperty().not())
+    }
+
+    private fun createJavaPane(java: JavaVersion, group: ToggleGroup): Pane {
+        return HBox().apply {
+            style = "-fx-padding: 3;"
+            spacing = 8.0
+            alignment = Pos.CENTER_LEFT
+            children += JFXRadioButton(java.longVersion).apply {
+                toggleGroup = group
+                userData = java
+            }
+            children += Label(java.binary.absolutePath).apply {
+                styleClass += "subtitle-label"
+                style += "-fx-font-size: 10;"
+            }
+        }
     }
 
     fun loadVersionSetting(version: VersionSetting) {
@@ -100,6 +137,7 @@ class VersionSettingsController {
             fullscreenProperty.unbind()
             notCheckGameProperty.unbind()
             noCommonProperty.unbind()
+            javaDirProperty.unbind()
             unbindEnum(cboLauncherVisibility)
             unbindEnum(cboRunDirectory)
         }
@@ -107,6 +145,7 @@ class VersionSettingsController {
         bindInt(txtWidth, version.widthProperty)
         bindInt(txtHeight, version.heightProperty)
         bindInt(txtMaxMemory, version.maxMemoryProperty)
+        bindString(txtJavaDir, version.javaDirProperty)
         bindString(txtJVMArgs, version.javaArgsProperty)
         bindString(txtGameArgs, version.minecraftArgsProperty)
         bindString(txtMetaspace, version.permSizeProperty)
@@ -119,7 +158,45 @@ class VersionSettingsController {
         bindBoolean(chkNoGameCheck, version.notCheckGameProperty)
         bindBoolean(chkNoCommon, version.noCommonProperty)
 
+        val javaGroupKey = "java_group.listener"
+        @Suppress("UNCHECKED_CAST")
+        if (javaGroup.properties.containsKey(javaGroupKey))
+            javaGroup.selectedToggleProperty().removeListener(javaGroup.properties[javaGroupKey] as ChangeListener<in Toggle>)
+
+        var flag = false
+        var defaultToggle: JFXRadioButton? = null
+        for (toggle in javaGroup.toggles)
+            if (toggle is JFXRadioButton)
+                if (toggle.userData == version.javaVersion) {
+                    toggle.isSelected = true
+                    flag = true
+                } else if (toggle.userData == JavaVersion.fromCurrentEnvironment()) {
+                    defaultToggle = toggle
+                }
+
+        val listener = ChangeListener<Toggle> { _, _, newValue ->
+            if (newValue == radioCustom) { // Custom
+                version.java = "Custom"
+            } else {
+                version.java = ((newValue as JFXRadioButton).userData as JavaVersion).longVersion
+            }
+        }
+        javaGroup.properties[javaGroupKey] = listener
+        javaGroup.selectedToggleProperty().addListener(listener)
+
+        if (!flag) {
+            defaultToggle?.isSelected = true
+        }
+
+        version.javaDirProperty.setChangedListener { initJavaSubtitle(version) }
+        version.javaProperty.setChangedListener { initJavaSubtitle(version)}
+        initJavaSubtitle(version)
+
         lastVersionSetting = version
+    }
+
+    private fun initJavaSubtitle(version: VersionSetting) {
+        componentJava.subtitle = version.javaVersion?.binary?.absolutePath ?: "Invalid Java Directory"
     }
 
     fun onShowAdvanced() {
@@ -134,6 +211,6 @@ class VersionSettingsController {
         chooser.title = i18n("settings.choose_javapath")
         val selectedDir = chooser.showDialog(Controllers.stage)
         if (selectedDir != null)
-            txtGameDir.text = selectedDir.absolutePath
+            txtJavaDir.text = selectedDir.absolutePath
     }
 }
