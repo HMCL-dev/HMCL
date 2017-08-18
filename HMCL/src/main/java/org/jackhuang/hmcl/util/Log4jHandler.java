@@ -66,8 +66,7 @@ public class Log4jHandler extends Thread implements Consumer<JavaProcessStoppedE
     @Override
     public void run() {
         try {
-            outputStream.write("<output>".getBytes());
-            outputStream.flush();
+            writeAndFlush("<output>");
             reader.setContentHandler(new Log4jHandlerImpl());
             reader.parse(new InputSource(inputStream));
         } catch (SAXException | IOException e) {
@@ -78,12 +77,32 @@ public class Log4jHandler extends Thread implements Consumer<JavaProcessStoppedE
     @Override
     public void accept(JavaProcessStoppedEvent t) {
         if (t.getSource() == monitor) {
+            writeAndFlush("</output>");
             try {
-                outputStream.write("</output>".getBytes());
                 outputStream.close();
             } catch (IOException ignore) { // won't happen
                 throw new Error(ignore);
             }
+        }
+    }
+
+    /**
+     * Always use this instance method to write to the log,
+     * to make sure only this Thread writes to the PipedOutputStream.
+     *
+     * It will also flush the buffer, directly after write.
+     *
+     * This prevents java.io.IOException: Read end dead
+     * See also https://techtavern.wordpress.com/2008/07/16/whats-this-ioexception-write-end-dead/
+     *
+     * @param content The content to be written to the log
+     */
+    public void writeAndFlush(String content) {
+        try {
+            outputStream.write(content.getBytes());
+            outputStream.flush();
+        } catch (IOException ignore) { // won't happen
+            throw new Error(ignore);
         }
     }
 
