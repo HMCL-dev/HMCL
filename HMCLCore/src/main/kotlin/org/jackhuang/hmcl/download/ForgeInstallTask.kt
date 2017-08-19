@@ -38,11 +38,11 @@ class ForgeInstallTask(private val dependencyManager: DefaultDependencyManager,
     lateinit var remote: RemoteVersion<*>
     override val dependents = mutableListOf<Task>()
     override val dependencies = mutableListOf<Task>()
-    override val id = ID
+    override val id = "version"
 
     init {
         if (!forgeVersionList.loaded)
-            dependents += forgeVersionList.refreshAsync(dependencyManager.downloadProvider) then {
+            dependents += forgeVersionList.refreshAsync(dependencyManager.downloadProvider).then {
                 remote = forgeVersionList.getVersion(gameVersion, remoteVersion) ?: throw IllegalArgumentException("Remote forge version $gameVersion, $remoteVersion not found")
                 FileDownloadTask(remote.url.toURL(), installer)
             }
@@ -75,9 +75,5 @@ class ForgeInstallTask(private val dependencyManager: DefaultDependencyManager,
         }
 
         check(installer.delete(), { "Unable to delete installer file $installer" })
-    }
-
-    companion object {
-        const val ID = "forge_install_task"
     }
 }

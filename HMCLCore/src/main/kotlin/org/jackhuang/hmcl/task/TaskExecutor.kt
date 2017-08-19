@@ -49,13 +49,13 @@ class TaskExecutor() {
      * Start the subscription and run all registered tasks asynchronously.
      */
     fun start() {
-        workerQueue.add(Scheduler.Schedulers.NEW_THREAD.schedule(Callable {
+        workerQueue.add(Scheduler.NEW_THREAD.schedule {
             totTask.addAndGet(taskQueue.size)
             while (!taskQueue.isEmpty()) {
                 if (canceled) break
                 val task = taskQueue.poll()
                 if (task != null) {
-                    val future = task.scheduler.schedule(Callable { executeTask(task); Unit })
+                    val future = task.scheduler.schedule { executeTask(task) }
                     try {
                         future?.get()
                     } catch (e: InterruptedException) {
@@ -66,7 +66,9 @@ class TaskExecutor() {
             }
             if (canceled || Thread.interrupted())
                 taskListener?.onTerminate()
-        }))
+            else
+                taskListener?.end()
+        })
     }
 
     /**

@@ -37,11 +37,11 @@ class LiteLoaderInstallTask(private val dependencyManager: DefaultDependencyMana
     lateinit var remote: RemoteVersion<LiteLoaderRemoteVersionTag>
     override val dependents = mutableListOf<Task>()
     override val dependencies = mutableListOf<Task>()
-    override val id = ID
+    override val id = "version"
 
     init {
         if (!liteLoaderVersionList.loaded)
-            dependents += LiteLoaderVersionList.refreshAsync(dependencyManager.downloadProvider) then {
+            dependents += LiteLoaderVersionList.refreshAsync(dependencyManager.downloadProvider).then {
                 remote = liteLoaderVersionList.getVersion(gameVersion, remoteVersion) ?: throw IllegalArgumentException("Remote LiteLoader version $gameVersion, $remoteVersion not found")
                 null
             }
@@ -69,9 +69,5 @@ class LiteLoaderInstallTask(private val dependencyManager: DefaultDependencyMana
                 libraries = merge(tempVersion.libraries, version.libraries)
         )
         dependencies += GameLibrariesTask(dependencyManager, tempVersion)
-    }
-
-    companion object {
-        const val ID = "lite_loader_install_task"
     }
 }

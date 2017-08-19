@@ -20,8 +20,9 @@ package org.jackhuang.hmcl.task
 import java.util.*
 
 interface TaskListener : EventListener {
-    fun onReady(task: Task)
-    fun onFinished(task: Task)
-    fun onFailed(task: Task)
-    fun onTerminate()
+    fun onReady(task: Task) {}
+    fun onFinished(task: Task) {}
+    fun onFailed(task: Task) {}
+    fun onTerminate() {}
+    fun end() {}
 }

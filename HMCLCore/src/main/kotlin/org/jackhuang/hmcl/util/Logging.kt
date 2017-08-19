@@ -26,14 +26,14 @@ import java.util.logging.*
 import java.util.logging.Formatter
 
 val LOG = Logger.getLogger("HMCL").apply {
-    level = Level.FINEST
+    level = Level.FINER
     useParentHandlers = false
     addHandler(FileHandler("hmcl.log").apply {
-        level = Level.FINEST
+        level = Level.FINER
         formatter = DefaultFormatter
     })
     addHandler(ConsoleHandler().apply {
-        level = Level.FINEST
+        level = Level.FINER
         formatter = DefaultFormatter
     })
 }

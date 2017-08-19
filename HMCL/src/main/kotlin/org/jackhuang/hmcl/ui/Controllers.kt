@@ -17,9 +17,11 @@
  */
 package org.jackhuang.hmcl.ui
 
+import com.jfoenix.controls.JFXDialog
 import javafx.fxml.FXMLLoader
 import javafx.scene.Node
 import javafx.scene.Scene
+import javafx.scene.layout.Region
 import javafx.stage.Stage
 import org.jackhuang.hmcl.Main
 
@@ -32,7 +34,6 @@ object Controllers {
     val versionPane = VersionPage()
 
     lateinit var leftPaneController: LeftPaneController
-    lateinit var sidePaneController: SidePaneController
 
     lateinit var decorator: Decorator
 
@@ -42,7 +43,6 @@ object Controllers {
         decorator = Decorator(stage, mainPane, Main.TITLE, max = false)
         decorator.showPage(null)
         leftPaneController = LeftPaneController(decorator.leftPane)
-        sidePaneController = SidePaneController(decorator.sidePane, decorator.drawer)
 
         decorator.isCustomMaximize = false
 
@@ -52,6 +52,14 @@ object Controllers {
         stage.maxWidth = 800.0
         stage.maxHeight = 480.0
         stage.minHeight = 480.0
+    }
+
+    fun dialog(content: Region): JFXDialog {
+        return decorator.showDialog(content)
+    }
+
+    fun closeDialog() {
+        decorator.dialog.close()
     }
 
     fun navigate(node: Node?) {

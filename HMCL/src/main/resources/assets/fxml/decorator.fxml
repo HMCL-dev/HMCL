@@ -6,8 +6,8 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Rectangle?>
-<?import java.lang.String?>
 <?import org.jackhuang.hmcl.ui.AdvancedListBox?>
+<?import java.lang.String?>
 <fx:root xmlns="http://javafx.com/javafx"
          type="StackPane"
          xmlns:fx="http://javafx.com/fxml">
@@ -18,42 +18,36 @@
     <BorderPane>
         <center>
             <StackPane fx:id="drawerWrapper">
-                <JFXDrawer fx:id="drawer" defaultDrawerSize="200" direction="LEFT">
-                    <styleClass>
-                        <String fx:value="body"/>
-                    </styleClass>
-                    <sidePane>
-                        <AdvancedListBox fx:id="sidePane" />
-                    </sidePane>
-                    <BorderPane>
-                        <left>
-                            <StackPane minWidth="200" maxWidth="200" styleClass="jfx-decorator-content-container">
-                                <BorderPane fx:id="leftRootPane">
-                                    <center>
-                                        <BorderPane>
-                                            <center>
-                                                <AdvancedListBox fx:id="leftPane" />
-                                            </center>
-                                        </BorderPane>
-                                    </center>
-                                    <right>
-                                        <Rectangle height="${leftRootPane.height}" width="1" fill="gray"/>
-                                    </right>
-                                </BorderPane>
+                <JFXDialog fx:id="dialog" overlayClose="false" />
+                <BorderPane>
+                    <left>
+                        <StackPane minWidth="200" maxWidth="200" styleClass="jfx-decorator-content-container">
+                            <BorderPane fx:id="leftRootPane">
+                                <center>
+                                    <BorderPane>
+                                        <center>
+                                            <AdvancedListBox fx:id="leftPane"/>
+                                        </center>
+                                    </BorderPane>
+                                </center>
+                                <right>
+                                    <Rectangle height="${leftRootPane.height}" width="1" fill="gray"/>
+                                </right>
+                            </BorderPane>
+                        </StackPane>
+                    </left>
+                    <center>
+                        <StackPane fx:id="contentPlaceHolderRoot" styleClass="jfx-decorator-content-container"
+                                   VBox.vgrow="ALWAYS">
+                            <StackPane fx:id="contentPlaceHolder" styleClass="jfx-decorator-content-container">
+                                <styleClass>
+                                    <String fx:value="jfx-decorator-content-container"/>
+                                </styleClass>
+                                <!-- Node -->
                             </StackPane>
-                        </left>
-                        <center>
-                            <StackPane fx:id="contentPlaceHolderRoot" styleClass="jfx-decorator-content-container" VBox.vgrow="ALWAYS">
-                                <StackPane fx:id="contentPlaceHolder" styleClass="jfx-decorator-content-container">
-                                    <styleClass>
-                                        <String fx:value="jfx-decorator-content-container"/>
-                                    </styleClass>
-                                    <!-- Node -->
-                                </StackPane>
-                            </StackPane>
-                        </center>
-                    </BorderPane>
-                </JFXDrawer>
+                        </StackPane>
+                    </center>
+                </BorderPane>
             </StackPane>
         </center>
         <top>
@@ -65,18 +59,8 @@
                 <left>
                     <BorderPane minWidth="200" maxWidth="200" fx:id="titleWrapper">
                         <center>
-                            <HBox>
-                                <JFXRippler maskType="CIRCLE" style="-fx-ripple-color:WHITE;">
-                                    <StackPane fx:id="titleBurgerContainer" maxWidth="30" maxHeight="30" minWidth="30" minHeight="30" prefWidth="30" prefHeight="30">
-                                        <JFXHamburger fx:id="titleBurger">
-                                            <HamburgerBackArrowBasicTransition/>
-                                        </JFXHamburger>
-                                    </StackPane>
-                                </JFXRippler>
-                                <Label fx:id="lblTitle" BorderPane.alignment="CENTER"
-                                       mouseTransparent="true"
-                                       style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 15px;"/>
-                            </HBox>
+                            <Label fx:id="lblTitle" BorderPane.alignment="CENTER" mouseTransparent="true"
+                                   style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 15px;"/>
                         </center>
                         <right>
                             <Rectangle height="${navBar.height}" width="1" fill="gray"/>
@@ -87,7 +71,8 @@
                     <BorderPane fx:id="navBar">
                         <left>
                             <HBox fx:id="navLeft" alignment="CENTER_LEFT" style="-fx-padding: 0 5 0 5;">
-                                <JFXButton fx:id="backNavButton" onMouseClicked="#onBack" styleClass="jfx-decorator-button" ripplerFill="white">
+                                <JFXButton fx:id="backNavButton" onMouseClicked="#onBack"
+                                           styleClass="jfx-decorator-button" ripplerFill="white">
                                     <graphic>
                                         <fx:include source="/assets/svg/arrow-left.fxml"/>
                                     </graphic>
@@ -97,12 +82,14 @@
                         </left>
                         <right>
                             <HBox fx:id="navRight" alignment="CENTER_LEFT">
-                                <JFXButton fx:id="refreshNavButton" onMouseClicked="#onRefresh" styleClass="jfx-decorator-button" ripplerFill="white">
+                                <JFXButton fx:id="refreshNavButton" onMouseClicked="#onRefresh"
+                                           styleClass="jfx-decorator-button" ripplerFill="white">
                                     <graphic>
                                         <fx:include source="/assets/svg/refresh.fxml"/>
                                     </graphic>
                                 </JFXButton>
-                                <JFXButton fx:id="closeNavButton" onMouseClicked="#onCloseNav" styleClass="jfx-decorator-button" ripplerFill="white">
+                                <JFXButton fx:id="closeNavButton" onMouseClicked="#onCloseNav"
+                                           styleClass="jfx-decorator-button" ripplerFill="white">
                                     <graphic>
                                         <fx:include source="/assets/svg/close.fxml"/>
                                     </graphic>

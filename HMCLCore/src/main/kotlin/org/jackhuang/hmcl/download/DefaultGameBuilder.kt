@@ -28,53 +28,48 @@ class DefaultGameBuilder(val dependencyManager: DefaultDependencyManager): GameB
 
     override fun buildAsync(): Task {
         val gameVersion = gameVersion
-        return VersionJSONDownloadTask(gameVersion = gameVersion) then a@{ task ->
-            var version = GSON.fromJson<Version>(task.result!!) ?: return@a null
-            version = version.copy(id = name, jar = null)
-            var result = ParallelTask(
-                    GameAssetDownloadTask(dependencyManager, version),
-                    GameLoggingDownloadTask(dependencyManager, version),
-                    GameDownloadTask(version),
-                    GameLibrariesTask(dependencyManager, version) // Game libraries will be downloaded for multiple times partly, this time is for vanilla libraries.
-            ) then VersionJSONSaveTask(dependencyManager, version)
+        return VersionJSONDownloadTask(gameVersion, dependencyManager, "raw_version_json")
+                .then {
+                    var version = GSON.fromJson<Version>(it["raw_version_json"])!!
+                    it["version"] = version
+                    version = version.copy(id = name, jar = null)
+                    var result = ParallelTask(
+                            GameAssetDownloadTask(dependencyManager, version),
+                            GameLoggingDownloadTask(dependencyManager, version),
+                            GameDownloadTask(version),
+                            GameLibrariesTask(dependencyManager, version) // Game libraries will be downloaded for multiple times partly, this time is for vanilla libraries.
+                    ) then VersionJSONSaveTask(dependencyManager, version)
 
-            if (toolVersions.containsKey("forge"))
-                result = result then libraryTaskHelper(gameVersion, version, "forge")
-            if (toolVersions.containsKey("liteloader"))
-                result = result then libraryTaskHelper(gameVersion, version, "liteloader")
-            if (toolVersions.containsKey("optifine"))
-                result = result then libraryTaskHelper(gameVersion, version, "optifine")
-            result
-        }
+                    if (toolVersions.containsKey("forge"))
+                        result = result then libraryTaskHelper(gameVersion, "forge")
+                    if (toolVersions.containsKey("liteloader"))
+                        result = result then libraryTaskHelper(gameVersion, "liteloader")
+                    if (toolVersions.containsKey("optifine"))
+                        result = result then libraryTaskHelper(gameVersion, "optifine")
+                    result
+                }
     }
 
-    private fun libraryTaskHelper(gameVersion: String, version: Version, libraryId: String): Task.(Task) -> Task = { prev ->
-        var thisVersion = version
-        if (prev is TaskResult<*> && prev.result is Version) {
-            thisVersion = prev.result as Version
-        }
-        dependencyManager.installLibraryAsync(gameVersion, thisVersion, libraryId, toolVersions[libraryId]!!)
+    private fun libraryTaskHelper(gameVersion: String, libraryId: String): (AutoTypingMap<String>) -> Task = {
+        dependencyManager.installLibraryAsync(gameVersion, it["version"], libraryId, toolVersions[libraryId]!!)
     }
 
-    inner class VersionJSONDownloadTask(val gameVersion: String): Task() {
+    private class VersionJSONDownloadTask(val gameVersion: String, val dependencyManager: DefaultDependencyManager, val id: String): Task() {
         override val dependents: MutableCollection<Task> = LinkedList()
         override val dependencies: MutableCollection<Task> = LinkedList()
-        var httpTask: GetTask? = null
-        val result: String? get() = httpTask?.result
 
-        val gameVersionList: VersionList<*> = dependencyManager.getVersionList("game")
+        private val gameVersionList: VersionList<*> = dependencyManager.getVersionList("game")
         init {
             if (!gameVersionList.loaded)
-                dependents += gameVersionList.refreshAsync(downloadProvider)
+                dependents += gameVersionList.refreshAsync(dependencyManager.downloadProvider)
         }
 
         override fun execute() {
             val remoteVersion = gameVersionList.getVersions(gameVersion).firstOrNull()
                     ?: throw Error("Cannot find specific version $gameVersion in remote repository")
 
-            val jsonURL = downloadProvider.injectURL(remoteVersion.url)
-            httpTask = GetTask(jsonURL.toURL(), proxy = dependencyManager.proxy)
-            dependencies += httpTask!!
+            val jsonURL = dependencyManager.downloadProvider.injectURL(remoteVersion.url)
+            dependencies += GetTask(jsonURL.toURL(), proxy = dependencyManager.proxy, id = id)
         }
     }
 

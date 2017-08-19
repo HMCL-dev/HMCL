@@ -43,20 +43,14 @@ class DefaultDependencyManager(override val repository: DefaultGameRepository, o
 
     override fun installLibraryAsync(gameVersion: String, version: Version, libraryId: String, libraryVersion: String): Task {
         if (libraryId == "forge")
-            return ForgeInstallTask(this, gameVersion, version, libraryVersion) then { task ->
-                val newVersion = task.result!!
-                VersionJSONSaveTask(this@DefaultDependencyManager, newVersion)
-            }
+            return ForgeInstallTask(this, gameVersion, version, libraryVersion)
+                    .then { VersionJSONSaveTask(this, it["version"]) }
         else if (libraryId == "liteloader")
-            return LiteLoaderInstallTask(this, gameVersion, version, libraryVersion) then { task ->
-                val newVersion = task.result!!
-                VersionJSONSaveTask(this@DefaultDependencyManager, newVersion)
-            }
+            return LiteLoaderInstallTask(this, gameVersion, version, libraryVersion)
+                    .then { VersionJSONSaveTask(this, it["version"]) }
         else if (libraryId == "optifine")
-            return OptiFineInstallTask(this, gameVersion, version, libraryVersion) then { task ->
-                val newVersion = task.result!!
-                VersionJSONSaveTask(this@DefaultDependencyManager, newVersion)
-            }
+            return OptiFineInstallTask(this, gameVersion, version, libraryVersion)
+                    .then { VersionJSONSaveTask(this, it["version"]) }
         else
             throw IllegalArgumentException("Library id $libraryId is unrecognized.")
     }

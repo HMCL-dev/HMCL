@@ -81,9 +81,13 @@ abstract class Task {
     protected fun updateProgress(progress: Double) {
         val now = System.currentTimeMillis()
         if (now - lastTime >= progressInterval) {
-            progressPropertyImpl.updateAsync(progress, progressUpdate)
+            updateProgressImmediately(progress)
             lastTime = now
         }
+    }
+
+    protected fun updateProgressImmediately(progress: Double) {
+        progressPropertyImpl.updateAsync(progress, progressUpdate)
     }
 
     private val messageUpdate = AtomicReference<String>()

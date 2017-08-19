@@ -32,7 +32,6 @@ import org.jackhuang.hmcl.auth.Account
 import org.jackhuang.hmcl.auth.OfflineAccount
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
 import org.jackhuang.hmcl.i18n
-import org.jackhuang.hmcl.setting.AccountSkin
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.task.taskResult
@@ -117,11 +116,6 @@ class AccountsPage() : StackPane(), DecoratorPage {
                 Settings.deleteAccount(account.username)
                 Platform.runLater(this@AccountsPage::loadAccounts)
             }
-
-            if (account is YggdrasilAccount)
-                AccountSkin.loadSkinAsync(account).subscribe(Scheduler.JAVAFX) {
-                    loadSkin()
-                }
         }
     }
 
@@ -136,6 +130,7 @@ class AccountsPage() : StackPane(), DecoratorPage {
         val username = txtUsername.text
         val password = txtPassword.text
         progressBar.isVisible = true
+        lblCreationWarning.text = ""
         taskResult("create_account") {
             try {
                 val account = when (type) {

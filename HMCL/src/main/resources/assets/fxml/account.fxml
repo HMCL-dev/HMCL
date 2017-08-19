@@ -29,7 +29,7 @@
         </JFXButton>
     </AnchorPane>
 
-    <JFXDialog fx:id="dialog" transitionType="CENTER">
+    <JFXDialog fx:id="dialog">
         <StackPane>
             <JFXDialogLayout>
                 <heading>

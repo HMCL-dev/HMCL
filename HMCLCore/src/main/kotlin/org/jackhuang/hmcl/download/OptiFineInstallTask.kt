@@ -34,7 +34,7 @@ class OptiFineInstallTask(private val dependencyManager: DefaultDependencyManage
     lateinit var remote: RemoteVersion<*>
     override val dependents = mutableListOf<Task>()
     override val dependencies = mutableListOf<Task>()
-    override val id = ID
+    override val id = "version"
 
     init {
         if (!optiFineVersionList.loaded)
@@ -74,9 +74,5 @@ class OptiFineInstallTask(private val dependencyManager: DefaultDependencyManage
         }
         result = version.copy(libraries = merge(version.libraries, libraries), mainClass = mainClass, minecraftArguments = arg)
         dependencies += GameLibrariesTask(dependencyManager, version.copy(libraries = libraries))
-    }
-
-    companion object {
-        const val ID = "optifine_install_task"
     }
 }

@@ -23,10 +23,11 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
 import org.jackhuang.hmcl.task.FileDownloadTask
 import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.task.Task
+import org.jackhuang.hmcl.ui.DialogController
 import org.jackhuang.hmcl.util.toURL
 import java.net.Proxy
 
-object AccountSkin {
+object AccountHelper {
     val SKIN_DIR = Main.APPDATA.resolve("skins")
 
     fun loadSkins(proxy: Proxy = Settings.proxy) {
@@ -49,7 +50,7 @@ object AccountSkin {
 
         override fun execute() {
             if (account.canLogIn && (account.selectedProfile == null || refresh))
-                account.logIn(proxy)
+                DialogController.logIn(account)
             val profile = account.selectedProfile ?: return
             val name = profile.name ?: return
             val url = "http://skins.minecraft.net/MinecraftSkins/$name.png"

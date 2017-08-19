@@ -17,9 +17,20 @@
  */
 package org.jackhuang.hmcl.ui
 
-import com.jfoenix.controls.JFXDrawer
+import com.jfoenix.controls.JFXProgressBar
+import javafx.fxml.FXML
+import javafx.scene.control.Label
+import javafx.scene.layout.StackPane
 
-class SidePaneController(sidePane: AdvancedListBox, drawer: JFXDrawer) {
+class LaunchingStepsPane(): StackPane() {
+    @FXML lateinit var pgsTasks: JFXProgressBar
+    @FXML lateinit var lblCurrentState: Label
+    @FXML lateinit var lblSteps: Label
     init {
+        loadFXML("/assets/fxml/launching-steps.fxml")
+
+        limitHeight(200.0)
+        limitWidth(400.0)
     }
+
 }

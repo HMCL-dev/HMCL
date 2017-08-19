@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.*?>
+<?import com.jfoenix.validation.RequiredFieldValidator?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.*?>
+<fx:root xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         type="StackPane">
+    <JFXDialogLayout>
+        <heading>
+            <Label text="%ui.message.enter_password" />
+        </heading>
+        <body>
+            <VBox spacing="15" style="-fx-padding: 15 0 0 0;">
+                <Label fx:id="lblUsername" />
+                <JFXPasswordField fx:id="txtPassword" promptText="%ui.label.password" labelFloat="true">
+                    <validators>
+                        <RequiredFieldValidator message="Input Required!">
+                        </RequiredFieldValidator>
+                    </validators>
+                </JFXPasswordField>
+            </VBox>
+        </body>
+        <actions>
+            <Label fx:id="lblCreationWarning" />
+            <JFXButton onMouseClicked="#onAccept" text="%button.ok" styleClass="dialog-accept"/>
+            <JFXButton onMouseClicked="#onCancel" text="%button.cancel" styleClass="dialog-cancel"/>
+        </actions>
+    </JFXDialogLayout>
+    <JFXProgressBar fx:id="progressBar" visible="false" StackPane.alignment="TOP_CENTER"/>
+</fx:root>

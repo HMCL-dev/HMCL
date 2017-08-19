@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.JFXButton
+import com.jfoenix.controls.JFXDialog
 import com.jfoenix.controls.JFXDrawer
 import com.jfoenix.controls.JFXHamburger
 import com.jfoenix.effects.JFXDepthManager
@@ -64,6 +65,7 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, priva
     private var allowMove: Boolean = false
     private var isDragging: Boolean = false
     private var windowDecoratorAnimation: Timeline? = null
+    private var dialogShown = false
     @FXML lateinit var contentPlaceHolder: StackPane
     @FXML lateinit var drawerWrapper: StackPane
     @FXML lateinit var titleContainer: BorderPane
@@ -78,9 +80,9 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, priva
     @FXML lateinit var lblTitle: Label
     @FXML lateinit var leftPane: AdvancedListBox
     @FXML lateinit var drawer: JFXDrawer
-    @FXML lateinit var sidePane: AdvancedListBox
     @FXML lateinit var titleBurgerContainer: StackPane
     @FXML lateinit var titleBurger: JFXHamburger
+    @FXML lateinit var dialog: JFXDialog
 
     private val onCloseButtonActionProperty: ObjectProperty<Runnable> = SimpleObjectProperty(Runnable { Main.stop() })
         @JvmName("onCloseButtonActionProperty") get
@@ -125,6 +127,11 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, priva
             }
         }
 
+        drawerWrapper.children -= dialog
+        dialog.dialogContainer = drawerWrapper
+        dialog.setOnDialogClosed { dialogShown = false }
+        dialog.setOnDialogOpened { dialogShown = true }
+
         if (!min) buttonsContainer.children.remove(btnMin)
         if (!max) buttonsContainer.children.remove(btnMax)
 
@@ -136,25 +143,6 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, priva
 
         setOverflowHidden(lookup("#contentPlaceHolderRoot") as Pane)
         setOverflowHidden(drawerWrapper)
-
-        // init the title hamburger icon
-        drawer.setOnDrawerOpening {
-            val animation = titleBurger.getAnimation()
-            animation.setRate(1.0)
-            animation.play()
-        }
-        drawer.setOnDrawerClosing {
-            val animation = titleBurger.getAnimation()
-            animation.setRate(-1.0)
-            animation.play()
-        }
-        titleBurgerContainer.setOnMouseClicked({
-            if (drawer.isHidden || drawer.isHiding) {
-                drawer.open()
-            } else {
-                drawer.close()
-            }
-        })
     }
 
     fun onMouseMoved(mouseEvent: MouseEvent) {
@@ -421,6 +409,13 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, priva
                 c.prefWidthProperty().bind(widthProperty())
                 c.prefHeightProperty().bind(heightProperty())
             }
+    }
+
+    fun showDialog(content: Region): JFXDialog {
+        dialog.content = content
+        if (!dialogShown)
+            dialog.show()
+        return dialog
     }
 
     fun startWizard(wizardProvider: WizardProvider, category: String? = null) {

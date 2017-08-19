@@ -17,14 +17,16 @@
  */
 package org.jackhuang.hmcl.task
 
-internal class CoupleTask<P: Task>(private val pred: P, private val succ: Task.(P) -> Task?, override val reliant: Boolean) : Task() {
+import org.jackhuang.hmcl.util.AutoTypingMap
+
+internal class CoupleTask<P: Task>(pred: P, private val succ: (AutoTypingMap<String>) -> Task?, override val reliant: Boolean) : Task() {
     override val hidden: Boolean = true
 
     override val dependents: Collection<Task> = listOf(pred)
     override val dependencies: MutableCollection<Task> = mutableListOf()
 
     override fun execute() {
-        val task = this.succ(pred)
+        val task = this.succ(variables!!)
         if (task != null)
             dependencies += task
     }
@@ -33,9 +35,9 @@ internal class CoupleTask<P: Task>(private val pred: P, private val succ: Task.(
 /**
  * @param b A runnable that decides what to do next, You can also do something here.
  */
-infix fun <T: Task> T.then(b: Task.(T) -> Task?): Task = CoupleTask(this, b, true)
+infix fun <T: Task> T.then(b: (AutoTypingMap<String>) -> Task?): Task = CoupleTask(this, b, true)
 
 /**
  * @param b A runnable that decides what to do next, You can also do something here.
  */
-infix fun <T: Task> T.with(b: Task.(T) -> Task?): Task = CoupleTask(this, b, false)
+infix fun <T: Task> T.with(b: (AutoTypingMap<String>) -> Task?): Task = CoupleTask(this, b, false)

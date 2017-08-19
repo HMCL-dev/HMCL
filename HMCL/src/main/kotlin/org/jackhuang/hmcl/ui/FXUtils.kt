@@ -98,9 +98,7 @@ fun ListView<*>.smoothScrolling() {
 
 fun ScrollPane.smoothScrolling() = JFXScrollPane.smoothScrolling(this)
 
-fun runOnUiThread(runnable: () -> Unit) = {
-    JFXUtilities.runInFX(runnable)
-}
+fun runOnUiThread(runnable: () -> Unit) = JFXUtilities.runInFX(runnable)
 
 fun takeSnapshot(node: Parent, width: Double, height: Double): WritableImage {
     val scene = Scene(node, width, height)

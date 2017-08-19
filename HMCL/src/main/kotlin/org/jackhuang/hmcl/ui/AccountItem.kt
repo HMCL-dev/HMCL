@@ -18,10 +18,8 @@
 package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.JFXButton
-import com.jfoenix.controls.JFXCheckBox
 import com.jfoenix.controls.JFXProgressBar
 import com.jfoenix.controls.JFXRadioButton
-import com.jfoenix.effects.JFXDepthManager
 import javafx.beans.binding.Bindings
 import javafx.fxml.FXML
 import javafx.geometry.Rectangle2D
@@ -30,13 +28,15 @@ import javafx.scene.control.ToggleGroup
 import javafx.scene.effect.BlurType
 import javafx.scene.effect.DropShadow
 import javafx.scene.image.ImageView
+import javafx.scene.layout.HBox
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import org.jackhuang.hmcl.auth.Account
+import org.jackhuang.hmcl.auth.OfflineAccount
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
-import org.jackhuang.hmcl.setting.AccountSkin
+import org.jackhuang.hmcl.setting.AccountHelper
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.Scheduler
 import java.util.concurrent.Callable
@@ -53,6 +53,7 @@ class AccountItem(i: Int, val account: Account, group: ToggleGroup) : StackPane(
     @FXML lateinit var lblType: Label
     @FXML lateinit var pgsSkin: JFXProgressBar
     @FXML lateinit var portraitView: ImageView
+    @FXML lateinit var buttonPane: HBox
 
     init {
         loadFXML("/assets/fxml/account-item.fxml")
@@ -78,11 +79,19 @@ class AccountItem(i: Int, val account: Account, group: ToggleGroup) : StackPane(
         lblUser.text = account.username
         lblType.text = accountType(account)
 
-        if (account is YggdrasilAccount)
+        if (account is YggdrasilAccount) {
             btnRefresh.setOnMouseClicked {
                 pgsSkin.isVisible = true
-                AccountSkin.refreshSkinAsync(account).subscribe(Scheduler.JAVAFX) { loadSkin() }
+                AccountHelper.refreshSkinAsync(account)
+                        .subscribe(Scheduler.JAVAFX) { loadSkin() }
             }
+            AccountHelper.loadSkinAsync(account)
+                    .subscribe(Scheduler.JAVAFX) { loadSkin() }
+        }
+
+        if (account is OfflineAccount) { // Offline Account cannot be refreshed,
+            buttonPane.children -= btnRefresh
+        }
     }
 
     fun loadSkin() {
@@ -91,7 +100,7 @@ class AccountItem(i: Int, val account: Account, group: ToggleGroup) : StackPane(
         pgsSkin.isVisible = false
         val size = 8.0 * 4
         portraitView.viewport = Rectangle2D(size, size, size, size)
-        portraitView.image = AccountSkin.getSkin(account, 4.0)
+        portraitView.image = AccountHelper.getSkin(account, 4.0)
         portraitView.fitHeight = 32.0
         portraitView.fitWidth = 32.0
     }
