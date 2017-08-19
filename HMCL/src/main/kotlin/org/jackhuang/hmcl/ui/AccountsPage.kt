@@ -30,6 +30,7 @@ import javafx.scene.control.Label
 import javafx.scene.control.ToggleGroup
 import org.jackhuang.hmcl.auth.Account
 import org.jackhuang.hmcl.auth.OfflineAccount
+import org.jackhuang.hmcl.auth.yggdrasil.InvalidCredentialsException
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Settings
@@ -79,6 +80,9 @@ class AccountsPage() : StackPane(), DecoratorPage {
             txtPassword.isVisible = visible
         }
         cboType.selectionModel.select(0)
+
+        txtPassword.setOnAction { onCreationAccept() }
+        txtUsername.setOnAction { onCreationAccept() }
 
         Settings.selectedAccountProperty.addListener(listener)
 
@@ -150,6 +154,8 @@ class AccountsPage() : StackPane(), DecoratorPage {
                 Settings.addAccount(account)
                 dialog.close()
                 loadAccounts()
+            } else if (account is InvalidCredentialsException) {
+                lblCreationWarning.text = i18n("login.wrong_password")
             } else if (account is Exception) {
                 lblCreationWarning.text = account.localizedMessage
             }

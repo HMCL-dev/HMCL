@@ -42,10 +42,7 @@ object DialogController {
                 pane.dialog = Controllers.dialog(pane)
             }
             latch.await()
-            if (res.get() == null)
-                throw SilentException()
-            else
-                return res.get()
+            return res.get() ?: throw SilentException()
         }
         return null
     }

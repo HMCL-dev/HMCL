@@ -66,7 +66,14 @@ object Settings {
                 continue@loop
             }
 
-            val account = factory.fromStorage(settings)
+            val account: Account
+            try {
+                account = factory.fromStorage(settings)
+            } catch (e: Exception) {
+                SETTINGS.accounts.remove(name)
+                // storage is malformed, delete.
+                continue@loop
+            }
 
             if (account.username != name) {
                 SETTINGS.accounts.remove(name)

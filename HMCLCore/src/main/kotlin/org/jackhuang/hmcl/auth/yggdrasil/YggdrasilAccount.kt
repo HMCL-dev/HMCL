@@ -33,7 +33,7 @@ class YggdrasilAccount private constructor(override val username: String): Accou
     private var password: String? = null
     private var userId: String? = null
     private var accessToken: String? = null
-    private var clientToken: String = UUID.randomUUID().toString()
+    private var clientToken: String = randomToken()
     private var isOnline: Boolean = false
     private var userProperties = PropertyMap()
     var selectedProfile: GameProfile? = null
@@ -96,7 +96,7 @@ class YggdrasilAccount private constructor(override val username: String): Accou
                 isOnline = true
                 return
             }
-            logIn1(ROUTE_REFRESH, RefreshRequest(accessToken!!, clientToken, selectedProfile), proxy)
+            logIn1(ROUTE_REFRESH, RefreshRequest(clientToken = clientToken, accessToken = accessToken!!, selectedProfile = selectedProfile), proxy)
         } else if (isNotBlank(password)) {
             logIn1(ROUTE_AUTHENTICATE, AuthenticationRequest(username, password!!, clientToken), proxy)
         } else
@@ -122,7 +122,7 @@ class YggdrasilAccount private constructor(override val username: String): Accou
         userProperties.clear()
         accessToken = response.accessToken
 
-        if (user != null && user.properties != null)
+        if (user?.properties != null)
             userProperties.putAll(user.properties)
     }
 
@@ -140,18 +140,19 @@ class YggdrasilAccount private constructor(override val username: String): Accou
         val result = HashMap<Any, Any>()
 
         result[STORAGE_KEY_USER_NAME] = username
+        result[STORAGE_KEY_CLIENT_TOKEN] = clientToken
         if (userId != null)
             result[STORAGE_KEY_USER_ID] = userId!!
         if (!userProperties.isEmpty())
             result[STORAGE_KEY_USER_PROPERTIES] = userProperties.toList()
         val profile = selectedProfile
-        if (profile != null && profile.name != null && profile.id != null) {
+        if (profile?.name != null && profile.id != null) {
             result[STORAGE_KEY_PROFILE_NAME] = profile.name
-            result[STORAGE_KEY_PROFILE_ID] = profile.id
+            result[STORAGE_KEY_PROFILE_ID] = UUIDTypeAdapter.fromUUID(profile.id)
             if (!profile.properties.isEmpty())
                 result[STORAGE_KEY_PROFILE_PROPERTIES] = profile.properties.toList()
         }
-        if (accessToken?.isNotBlank() ?: false)
+        if (accessToken != null && accessToken!!.isNotBlank())
             result[STORAGE_KEY_ACCESS_TOKEN] = accessToken!!
 
         return result
@@ -167,11 +168,12 @@ class YggdrasilAccount private constructor(override val username: String): Accou
 
             if (response.error?.isNotBlank() ?: false) {
                 LOG.severe("Failed to log in, the auth server returned an error: " + response.error + ", message: " + response.errorMessage + ", cause: " + response.cause)
-                throw when (response.errorMessage) {
-                    "Invalid token." -> InvalidTokenException(this)
-                    "Invalid credentials. Invalid username or password." -> InvalidCredentialsException(this)
-                    else -> AuthenticationException("Request error: ${response.errorMessage}")
-                }
+                if (response.errorMessage != null)
+                    if (response.errorMessage.contains("Invalid credentials"))
+                        throw InvalidCredentialsException(this)
+                    else if (response.errorMessage.contains("Invalid token"))
+                        throw InvalidTokenException(this)
+                throw AuthenticationException("Request error: ${response.errorMessage}")
             }
 
             return response
@@ -183,10 +185,8 @@ class YggdrasilAccount private constructor(override val username: String): Accou
     }
 
     private fun checkTokenValidity(proxy: Proxy): Boolean {
-        val access = accessToken
+        val access = accessToken ?: return false
         try {
-            if (access == null)
-                return false
             makeRequest(ROUTE_VALIDATE, ValidateRequest(clientToken, access), proxy)
             return true
         } catch (e: AuthenticationException) {
@@ -215,6 +215,9 @@ class YggdrasilAccount private constructor(override val username: String): Accou
         private val STORAGE_KEY_USER_NAME = "username"
         private val STORAGE_KEY_USER_ID = "userid"
         private val STORAGE_KEY_USER_PROPERTIES = "userProperties"
+        private val STORAGE_KEY_CLIENT_TOKEN = "clientToken"
+
+        fun randomToken() = UUIDTypeAdapter.fromUUID(UUID.randomUUID())
 
         override fun fromUsername(username: String, password: String): YggdrasilAccount {
             val account = YggdrasilAccount(username)
@@ -223,10 +226,11 @@ class YggdrasilAccount private constructor(override val username: String): Accou
         }
 
         override fun fromStorage(storage: Map<Any, Any>): YggdrasilAccount {
-            val username = storage[STORAGE_KEY_USER_NAME] as? String ?: throw IllegalArgumentException("storage does not have key $STORAGE_KEY_USER_NAME")
+            val username = storage[STORAGE_KEY_USER_NAME] as? String? ?: throw IllegalArgumentException("storage does not have key $STORAGE_KEY_USER_NAME")
             val account = YggdrasilAccount(username)
             account.userId = storage[STORAGE_KEY_USER_ID] as? String ?: username
             account.accessToken = storage[STORAGE_KEY_ACCESS_TOKEN] as? String
+            account.clientToken = storage[STORAGE_KEY_CLIENT_TOKEN] as? String? ?: throw IllegalArgumentException("storage does not have key $STORAGE_KEY_CLIENT_TOKEN")
             val userProperties = storage[STORAGE_KEY_USER_PROPERTIES] as? List<*>
             if (userProperties != null)
                 account.userProperties.fromList(userProperties)

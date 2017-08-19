@@ -20,6 +20,6 @@ package org.jackhuang.hmcl.auth.yggdrasil
 data class RefreshRequest(
         val clientToken: String,
         val accessToken: String,
-        val selectedProfile: GameProfile?,
+        val selectedProfile: GameProfile? = null,
         val requestUser: Boolean = true
 )

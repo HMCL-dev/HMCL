@@ -17,8 +17,7 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil
 
-data class ValidateRequest (
+data class ValidateRequest @JvmOverloads constructor(
         val clientToken: String = "",
         val accessToken: String = ""
-) {
-}
+)
