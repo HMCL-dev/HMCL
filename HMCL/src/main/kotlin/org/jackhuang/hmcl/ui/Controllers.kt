@@ -58,6 +58,10 @@ object Controllers {
         return decorator.showDialog(content)
     }
 
+    fun dialog(text: String) {
+        dialog(MessageDialogPane(text, decorator.dialog))
+    }
+
     fun closeDialog() {
         decorator.dialog.close()
     }

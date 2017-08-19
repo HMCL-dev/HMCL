@@ -21,6 +21,8 @@ import com.jfoenix.effects.JFXDepthManager
 import javafx.fxml.FXML
 import javafx.scene.control.ScrollPane
 import javafx.scene.layout.VBox
+import javafx.stage.FileChooser
+import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.mod.ModManager
 import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.task.task
@@ -45,6 +47,7 @@ class ModController {
             for (modInfo in modManager.getMods(versionId)) {
                 rootPane.children += ModItem(modInfo) {
                     modManager.removeMods(versionId, modInfo)
+                    loadMods(modManager, versionId)
                 }.apply {
                     JFXDepthManager.setDepth(this, 1)
                     style += "-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;"
@@ -60,6 +63,19 @@ class ModController {
                         styleClass += "disabled"
                 }
             }
+        }
+    }
+
+    fun onAdd() {
+        val chooser = FileChooser()
+        chooser.title = i18n("mods.choose_mod")
+        chooser.extensionFilters.setAll(FileChooser.ExtensionFilter("Mod", "*.jar", "*.zip", "*.litemod"))
+        val res = chooser.showOpenDialog(Controllers.stage) ?: return
+        try {
+            modManager.addMod(versionId, res)
+            loadMods(modManager, versionId)
+        } catch (e: Exception) {
+            Controllers.dialog(i18n("mods.failed"))
         }
     }
 }

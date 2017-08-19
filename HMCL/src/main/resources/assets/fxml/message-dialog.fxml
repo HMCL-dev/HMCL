@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXDialogLayout?>
+<fx:root xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         type="StackPane">
+    <JFXDialogLayout>
+        <heading>
+            <Label>JFoenix Dialog</Label>
+        </heading>
+        <body>
+            <Label fx:id="content" textAlignment="JUSTIFY" wrapText="true" />
+        </body>
+        <actions>
+            <JFXButton fx:id="acceptButton" styleClass="dialog-accept">ACCEPT
+            </JFXButton>
+        </actions>
+    </JFXDialogLayout>
+</fx:root>
