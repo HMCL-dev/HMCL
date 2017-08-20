@@ -30,6 +30,7 @@ class ModManager(private val repository: GameRepository) {
     private val modCache = SimpleMultimap<String, ModInfo>(::HashMap, ::TreeSet)
 
     fun refreshMods(id: String): Collection<ModInfo> {
+        modCache.removeAll(id)
         val modsDirectory = repository.getRunDirectory(id).resolve("mods")
         val puter = { modFile: File -> ignoreException { modCache.put(id, ModInfo.fromFile(modFile)) } }
         modsDirectory.listFiles()?.forEach { modFile ->

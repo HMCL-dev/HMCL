@@ -6,14 +6,15 @@
 <?import com.jfoenix.controls.JFXButton?>
 <StackPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
+           fx:id="rootPane"
            fx:controller="org.jackhuang.hmcl.ui.ModController">
     <ScrollPane fx:id="scrollPane" fitToWidth="true" fitToHeight="true">
-        <VBox fx:id="rootPane" spacing="10" style="-fx-padding: 20;">
+        <VBox fx:id="contentPane" spacing="10" style="-fx-padding: 20;">
 
         </VBox>
     </ScrollPane>
     <VBox style="-fx-padding: 15;" spacing="15" pickOnBounds="false" alignment="BOTTOM_RIGHT">
-        <JFXButton prefWidth="40" prefHeight="40" buttonType="RAISED" fx:id="btnAdd" onMouseClicked="#onAdd"
+        <JFXButton prefWidth="40" prefHeight="40" buttonType="RAISED" onMouseClicked="#onAdd"
                    style="-fx-background-color:#5264AE;-fx-background-radius: 50px;">
             <graphic>
                 <fx:include source="/assets/svg/plus.fxml" />

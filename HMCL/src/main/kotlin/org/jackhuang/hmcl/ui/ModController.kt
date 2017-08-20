@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.ui
 import com.jfoenix.effects.JFXDepthManager
 import javafx.fxml.FXML
 import javafx.scene.control.ScrollPane
+import javafx.scene.input.TransferMode
+import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
 import javafx.stage.FileChooser
 import org.jackhuang.hmcl.i18n
@@ -29,12 +31,29 @@ import org.jackhuang.hmcl.task.task
 
 class ModController {
     @FXML lateinit var scrollPane: ScrollPane
-    @FXML lateinit var rootPane: VBox
+    @FXML lateinit var rootPane: StackPane
+    @FXML lateinit var contentPane: VBox
     private lateinit var modManager: ModManager
     private lateinit var versionId: String
 
     fun initialize() {
         scrollPane.smoothScrolling()
+
+        rootPane.setOnDragOver { event ->
+            if (event.gestureSource != rootPane && event.dragboard.hasFiles())
+                event.acceptTransferModes(*TransferMode.COPY_OR_MOVE)
+            event.consume()
+        }
+        rootPane.setOnDragDropped { event ->
+            val mods = event.dragboard.files
+                    ?.filter { it.extension in listOf("jar", "zip", "litemod") }
+            if (mods != null && mods.isNotEmpty()) {
+                mods.forEach { modManager.addMod(versionId, it) }
+                loadMods(modManager, versionId)
+                event.isDropCompleted = true
+            }
+            event.consume()
+        }
     }
 
     fun loadMods(modManager: ModManager, versionId: String) {
@@ -43,9 +62,9 @@ class ModController {
         task {
             modManager.refreshMods(versionId)
         }.subscribe(Scheduler.JAVAFX) {
-            rootPane.children.clear()
+            contentPane.children.clear()
             for (modInfo in modManager.getMods(versionId)) {
-                rootPane.children += ModItem(modInfo) {
+                contentPane.children += ModItem(modInfo) {
                     modManager.removeMods(versionId, modInfo)
                     loadMods(modManager, versionId)
                 }.apply {
