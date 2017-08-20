@@ -181,12 +181,14 @@ public class LaunchingUIDaemon {
             HMCLGameLauncher.GameLauncherTag tag = (HMCLGameLauncher.GameLauncherTag) launcher.getTag();
             LauncherVisibility l = tag.launcherVisibility;
             if (t.getLine().contains("LWJGL Version: ") && l != LauncherVisibility.KEEP)
-                if (l != LauncherVisibility.HIDE_AND_REOPEN)
-                    MainFrame.INSTANCE.dispose();
-                else { // If current state is 'hide and reopen', closes the main window and reset the state to normal.
-                    MainFrame.INSTANCE.setVisible(false);
-                    HMCLApi.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(launcher, LaunchingState.Done));
-                }
+                SwingUtilities.invokeLater(() -> {
+                    if (l != LauncherVisibility.HIDE_AND_REOPEN)
+                        MainFrame.INSTANCE.dispose();
+                    else { // If current state is 'hide and reopen', closes the main window and reset the state to normal.
+                        MainFrame.INSTANCE.setVisible(false);
+                        HMCLApi.EVENT_BUS.fireChannel(new LaunchingStateChangedEvent(launcher, LaunchingState.Done));
+                    }
+                });
         }
 
     }

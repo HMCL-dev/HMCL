@@ -71,11 +71,20 @@ public class ProcessThread extends Thread {
             br = new BufferedReader(new InputStreamReader(in, Charsets.toCharset()));
 
             String line;
-            while (p.isRunning())
-                while ((line = br.readLine()) != null)
+            while (p.isRunning()) {
+                if (isInterrupted())
+                    return;
+                while ((line = br.readLine()) != null) {
+                    if (isInterrupted())
+                        return;
                     println(line);
-            while ((line = br.readLine()) != null)
+                }
+            }
+            while ((line = br.readLine()) != null) {
+                if (isInterrupted())
+                    return;
                 println(line);
+            }
         } catch (IOException e) {
             HMCLog.err("An error occured when reading process stdout/stderr.", e);
         } finally {
