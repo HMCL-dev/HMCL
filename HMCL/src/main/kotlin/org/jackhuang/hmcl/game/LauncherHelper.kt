@@ -25,11 +25,9 @@ import org.jackhuang.hmcl.launch.ProcessListener
 import org.jackhuang.hmcl.mod.CurseForgeModpackCompletionTask
 import org.jackhuang.hmcl.setting.LauncherVisibility
 import org.jackhuang.hmcl.setting.Settings
+import org.jackhuang.hmcl.setting.VersionSetting
 import org.jackhuang.hmcl.task.*
-import org.jackhuang.hmcl.ui.Controllers
-import org.jackhuang.hmcl.ui.DialogController
-import org.jackhuang.hmcl.ui.LaunchingStepsPane
-import org.jackhuang.hmcl.ui.runOnUiThread
+import org.jackhuang.hmcl.ui.*
 import org.jackhuang.hmcl.util.JavaProcess
 import org.jackhuang.hmcl.util.Log4jLevel
 import java.util.concurrent.ConcurrentSkipListSet
@@ -71,7 +69,7 @@ object LauncherHelper {
                             repository = repository,
                             versionId = profile.selectedVersion,
                             options = setting.toLaunchOptions(profile.gameDir),
-                            listener = HMCLProcessListener(it["account"], setting.launcherVisibility),
+                            listener = HMCLProcessListener(it["account"], setting),
                             account = it["account"]
                     )
                 })
@@ -110,17 +108,23 @@ object LauncherHelper {
      * Guarantee that one [JavaProcess], one [HMCLProcessListener].
      * Because every time we launched a game, we generates a new [HMCLProcessListener]
      */
-    class HMCLProcessListener(authInfo: AuthInfo?, private val launcherVisibility: LauncherVisibility) : ProcessListener {
+    class HMCLProcessListener(authInfo: AuthInfo?, private val setting: VersionSetting) : ProcessListener {
         val forbiddenTokens: List<Pair<String, String>> = if (authInfo == null) emptyList() else
             listOf(
                     authInfo.authToken to "<access token>",
                     authInfo.userId to "<uuid>",
                     authInfo.username to "<player>"
             )
+        private val launcherVisibility = setting.launcherVisibility
         private lateinit var process: JavaProcess
         private var lwjgl = false
+        private var logWindow: LogWindow? = null
         override fun setProcess(process: JavaProcess) {
             this.process = process
+
+            if (setting.showLogs) {
+                runOnUiThread { logWindow = LogWindow(); logWindow?.show() }
+            }
         }
 
         override fun onLog(log: String, level: Log4jLevel) {
@@ -128,6 +132,8 @@ object LauncherHelper {
                 System.err.print(log)
             else
                 System.out.print(log)
+
+            runOnUiThread { logWindow?.logLine(log, level) }
 
             if (!lwjgl && log.contains("LWJGL Version: ")) {
                 lwjgl = true

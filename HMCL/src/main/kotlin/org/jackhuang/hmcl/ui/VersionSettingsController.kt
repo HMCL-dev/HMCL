@@ -63,6 +63,7 @@ class VersionSettingsController {
     @FXML lateinit var javaPaneCustom: BorderPane
     @FXML lateinit var radioCustom: JFXRadioButton
     @FXML lateinit var btnJavaSelect: JFXButton
+    @FXML lateinit var chkShowLogs: JFXToggleButton
 
     val javaGroup = ToggleGroup()
 
@@ -81,6 +82,7 @@ class VersionSettingsController {
         chkNoJVMArgs.limitHeight(limitHeight)
         chkNoCommon.limitHeight(limitHeight)
         chkNoGameCheck.limitHeight(limitHeight)
+        chkShowLogs.limitHeight(limitHeight)
 
         fun validation(field: JFXTextField) = InvalidationListener { field.validate() }
         fun validator(nullable: Boolean = false) = NumberValidator(nullable).apply { message = "Must be a number." }
@@ -138,6 +140,7 @@ class VersionSettingsController {
             notCheckGameProperty.unbind()
             noCommonProperty.unbind()
             javaDirProperty.unbind()
+            showLogsProperty.unbind()
             unbindEnum(cboLauncherVisibility)
             unbindEnum(cboRunDirectory)
         }
@@ -157,6 +160,7 @@ class VersionSettingsController {
         bindBoolean(chkFullscreen, version.fullscreenProperty)
         bindBoolean(chkNoGameCheck, version.notCheckGameProperty)
         bindBoolean(chkNoCommon, version.noCommonProperty)
+        bindBoolean(chkShowLogs, version.showLogsProperty)
 
         val javaGroupKey = "java_group.listener"
         @Suppress("UNCHECKED_CAST")

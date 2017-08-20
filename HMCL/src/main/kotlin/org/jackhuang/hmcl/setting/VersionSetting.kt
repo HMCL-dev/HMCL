@@ -114,6 +114,12 @@ class VersionSetting() {
     val noCommonProperty = ImmediateBooleanProperty(this, "noCommon", false)
     var noCommon: Boolean by noCommonProperty
 
+    /**
+     * True if show the logs after game launched.
+     */
+    val showLogsProperty = ImmediateBooleanProperty(this, "showLogs", false)
+    var showLogs: Boolean by showLogsProperty
+
     // Minecraft settings.
 
     /**
@@ -203,6 +209,7 @@ class VersionSetting() {
         noJVMArgsProperty.addListener(listener)
         notCheckGameProperty.addListener(listener)
         noCommonProperty.addListener(listener)
+        showLogsProperty.addListener(listener)
         serverIpProperty.addListener(listener)
         fullscreenProperty.addListener(listener)
         widthProperty.addListener(listener)
@@ -257,6 +264,7 @@ class VersionSetting() {
                 addProperty("noJVMArgs", src.noJVMArgs)
                 addProperty("notCheckGame", src.notCheckGame)
                 addProperty("noCommon", src.noCommon)
+                addProperty("showLogs", src.showLogs)
                 addProperty("launcherVisibility", src.launcherVisibility.ordinal)
                 addProperty("gameDirType", src.gameDirType.ordinal)
             }
@@ -287,6 +295,7 @@ class VersionSetting() {
                 noJVMArgs = json["noJVMArgs"]?.asBoolean ?: false
                 notCheckGame = json["notCheckGame"]?.asBoolean ?: false
                 noCommon = json["noCommon"]?.asBoolean ?: false
+                showLogs = json["showLogs"]?.asBoolean ?: false
                 launcherVisibility = LauncherVisibility.values()[json["launcherVisibility"]?.asInt ?: 1]
                 gameDirType = EnumGameDirectory.values()[json["gameDirType"]?.asInt ?: 0]
             }
