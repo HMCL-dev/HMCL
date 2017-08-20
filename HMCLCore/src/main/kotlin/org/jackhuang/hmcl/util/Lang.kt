@@ -122,6 +122,14 @@ fun parseParams(beforeFunc: (Any?) -> String, params: Array<*>?, afterFunc: (Any
     return sb.toString()
 }
 
+fun Collection<String>.containsOne(vararg matcher: String): Boolean {
+    for (a in this)
+        for (b in matcher)
+            if (a.toLowerCase().contains(b.toLowerCase()))
+                return true
+    return false
+}
+
 fun <T> Property<in T>.updateAsync(newValue: T, update: AtomicReference<T>) {
     if (update.getAndSet(newValue) == null) {
         UI_THREAD_SCHEDULER {

@@ -17,17 +17,49 @@
  */
 package org.jackhuang.hmcl.util
 
+import org.jackhuang.hmcl.event.EVENT_BUS
+import org.jackhuang.hmcl.event.JVMLaunchFailedEvent
+import org.jackhuang.hmcl.event.JavaProcessExitedAbnormallyEvent
+import org.jackhuang.hmcl.event.JavaProcessStoppedEvent
+import org.jackhuang.hmcl.launch.ProcessListener
+import java.util.*
+
 /**
  * @param process the process to wait for
  * @param watcher the callback that will be called after process stops.
  */
-internal class ExitWaiter(val process: Process, val watcher: (Int) -> Unit) : Runnable {
+internal class ExitWaiter(val process: JavaProcess, val joins: Collection<Thread>, val watcher: (Int, ProcessListener.ExitType) -> Unit) : Runnable {
     override fun run() {
         try {
-            process.waitFor()
-            watcher(process.exitValue())
+            process.process.waitFor()
+
+            joins.forEach { it.join() }
+
+            val exitCode = process.exitCode
+            val lines = LinkedList<String>()
+            lines.addAll(process.stdErrLines)
+            lines.addAll(process.stdOutLines)
+            val errorLines = lines.filter(::guessLogLineError)
+            val exitType: ProcessListener.ExitType
+            // LaunchWrapper will catch the exception logged and will exit normally.
+            if (exitCode != 0 || errorLines.containsOne("Unable to launch")) {
+                EVENT_BUS.fireEvent(JavaProcessExitedAbnormallyEvent(this, process))
+                exitType = ProcessListener.ExitType.APPLICATION_ERROR
+            } else if (exitCode != 0 && errorLines.containsOne(
+                    "Could not create the Java Virtual Machine.",
+                    "Error occurred during initialization of VM",
+                    "A fatal exception has occurred. Program will exit.",
+                    "Unable to launch")) {
+                EVENT_BUS.fireEvent(JVMLaunchFailedEvent(this, process))
+                exitType = ProcessListener.ExitType.JVM_ERROR
+            } else
+                exitType = ProcessListener.ExitType.NORMAL
+
+            EVENT_BUS.fireEvent(JavaProcessStoppedEvent(this, process))
+
+            watcher(exitCode, exitType)
         } catch (e: InterruptedException) {
-            watcher(1)
+            watcher(1, ProcessListener.ExitType.NORMAL)
         }
     }
 }

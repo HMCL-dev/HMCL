@@ -25,6 +25,7 @@ import java.io.File
 import java.io.IOException
 import java.util.*
 import kotlin.concurrent.thread
+import kotlin.coroutines.experimental.EmptyCoroutineContext.plus
 
 /**
  * @param versionId The version to be launched.
@@ -279,14 +280,19 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
     }
 
     private fun startMonitors(javaProcess: JavaProcess) {
-        thread(name = "stdout-pump", isDaemon = true, block = StreamPump(javaProcess.process.inputStream)::run)
-        thread(name = "stderr-pump", isDaemon = true, block = StreamPump(javaProcess.process.errorStream)::run)
+        javaProcess.relatedThreads += thread(name = "stdout-pump", isDaemon = true, block = StreamPump(javaProcess.process.inputStream)::run)
+        javaProcess.relatedThreads += thread(name = "stderr-pump", isDaemon = true, block = StreamPump(javaProcess.process.errorStream)::run)
     }
 
     private fun startMonitors(javaProcess: JavaProcess, processListener: ProcessListener, isDaemon: Boolean = true) {
-        thread(name = "stdout-pump", isDaemon = isDaemon, block = StreamPump(javaProcess.process.inputStream, processListener::onLog)::run)
-        thread(name = "stderr-pump", isDaemon = isDaemon, block = StreamPump(javaProcess.process.errorStream, processListener::onErrorLog)::run)
-        thread(name = "exit-waiter", isDaemon = isDaemon, block = ExitWaiter(javaProcess.process, processListener::onExit)::run)
+        processListener.setProcess(javaProcess)
+        val logHandler = Log4jHandler { line, level -> processListener.onLog(line, level); javaProcess.stdOutLines += line }.apply { start() }
+        javaProcess.relatedThreads += logHandler
+        val stdout = thread(name = "stdout-pump", isDaemon = isDaemon, block = StreamPump(javaProcess.process.inputStream, { logHandler.newLine(it) } )::run)
+        javaProcess.relatedThreads += stdout
+        val stderr = thread(name = "stderr-pump", isDaemon = isDaemon, block = StreamPump(javaProcess.process.errorStream, { processListener.onLog(it + OS.LINE_SEPARATOR, Log4jLevel.ERROR); javaProcess.stdErrLines += it })::run)
+        javaProcess.relatedThreads += stderr
+        javaProcess.relatedThreads += thread(name = "exit-waiter", isDaemon = isDaemon, block = ExitWaiter(javaProcess, listOf(stdout, stderr), { exitCode, exitType -> logHandler.onStopped(); processListener.onExit(exitCode, exitType) })::run)
     }
 
     companion object {

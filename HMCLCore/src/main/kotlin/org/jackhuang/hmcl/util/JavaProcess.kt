@@ -17,13 +17,16 @@
  */
 package org.jackhuang.hmcl.util
 
-import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
 class JavaProcess(
         val process: Process,
         val commands: List<String>
 ) {
-    val stdOutLines: List<String> = Collections.synchronizedList(LinkedList<String>())
+    val properties = mutableMapOf<String, Any>()
+    val stdOutLines: MutableCollection<String> = ConcurrentLinkedQueue<String>()
+    val stdErrLines: MutableCollection<String> = ConcurrentLinkedQueue<String>()
+    val relatedThreads = mutableListOf<Thread>()
     val isRunning: Boolean = try {
         process.exitValue()
         true
@@ -32,11 +35,10 @@ class JavaProcess(
     }
     val exitCode: Int get() = process.exitValue()
 
-    override fun toString(): String {
-        return "JavaProcess[commands=$commands, isRunning=$isRunning]"
-    }
+    override fun toString() = "JavaProcess[commands=$commands, isRunning=$isRunning]"
 
     fun stop() {
         process.destroy()
+        relatedThreads.forEach(Thread::interrupt)
     }
 }

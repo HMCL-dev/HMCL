@@ -15,13 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.task
+package org.jackhuang.hmcl.launch
 
-import java.util.*
+fun parseCrashReport(lines: List<String>) {
+    var errorText: String? = null
+    for (line in lines) {
+        errorText = line.substringAfterLast("#@!@#")
+        if (errorText.isNotBlank())
+            break
+    }
 
-interface TaskListener : EventListener {
-    fun onReady(task: Task) {}
-    fun onFinished(task: Task) {}
-    fun onFailed(task: Task) {}
-    fun onTerminate() {}
+    if (errorText != null && errorText.isNotBlank()) {
+
+    }
 }

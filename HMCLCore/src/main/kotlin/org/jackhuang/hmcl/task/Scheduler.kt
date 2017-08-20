@@ -26,46 +26,42 @@ interface Scheduler {
     fun schedule(block: () -> Unit): Future<*>? = schedule(Callable { block() })
     fun schedule(block: Callable<Unit>): Future<*>?
 
-    companion object Schedulers {
-        val JAVAFX: Scheduler = SchedulerImpl(Platform::runLater)
-        val SWING: Scheduler = SchedulerImpl(SwingUtilities::invokeLater)
-        private class SchedulerImpl(val executor: (Runnable) -> Unit) : Scheduler {
-            override fun schedule(block: Callable<Unit>): Future<*>? {
-                val latch = CountDownLatch(1)
-                val wrapper = AtomicReference<Exception>()
-                executor.invoke(Runnable {
-                    try {
-                        block.call()
-                    } catch (e: Exception) {
-                        wrapper.set(e)
-                    } finally {
-                        latch.countDown()
-                    }
-                })
-                return object : Future<Unit> {
-                    override fun get(timeout: Long, unit: TimeUnit) {
-                        latch.await(timeout, unit)
-                        val e = wrapper.get()
-                        if (e != null) throw ExecutionException(e)
-                    }
-                    override fun get() {
-                        latch.await()
-                        val e = wrapper.get()
-                        if (e != null) throw ExecutionException(e)
-                    }
-                    override fun isDone() = latch.count == 0L
-                    override fun isCancelled() = false
-                    override fun cancel(mayInterruptIfRunning: Boolean) = false
+    private class SchedulerImpl(val executor: (Runnable) -> Unit) : Scheduler {
+        override fun schedule(block: Callable<Unit>): Future<*>? {
+            val latch = CountDownLatch(1)
+            val wrapper = AtomicReference<Exception>()
+            executor.invoke(Runnable {
+                try {
+                    block.call()
+                } catch (e: Exception) {
+                    wrapper.set(e)
+                } finally {
+                    latch.countDown()
                 }
+            })
+            return object : Future<Unit> {
+                override fun get(timeout: Long, unit: TimeUnit) {
+                    latch.await(timeout, unit)
+                    val e = wrapper.get()
+                    if (e != null) throw ExecutionException(e)
+                }
+                override fun get() {
+                    latch.await()
+                    val e = wrapper.get()
+                    if (e != null) throw ExecutionException(e)
+                }
+                override fun isDone() = latch.count == 0L
+                override fun isCancelled() = false
+                override fun cancel(mayInterruptIfRunning: Boolean) = false
             }
         }
-        val NEW_THREAD: Scheduler = object : Scheduler {
-            override fun schedule(block: Callable<Unit>) = CACHED_EXECUTOR.submit(block)
-        }
-        val IO: Scheduler = object : Scheduler {
-            override fun schedule(block: Callable<Unit>) = IO_EXECUTOR.submit(block)
-        }
-        val DEFAULT = NEW_THREAD
+    }
+
+    private class SchedulerExecutorService(val executorService: ExecutorService) : Scheduler {
+        override fun schedule(block: Callable<Unit>) = executorService.submit(block)
+    }
+
+    companion object Schedulers {
         private val CACHED_EXECUTOR: ExecutorService by lazy {
             ThreadPoolExecutor(0, Integer.MAX_VALUE,
                     60L, TimeUnit.SECONDS,
@@ -80,9 +76,31 @@ interface Scheduler {
             }
         }
 
+        private val SINGLE_EXECUTOR: ExecutorService by lazy {
+            Executors.newSingleThreadExecutor { r: Runnable ->
+                val thread: Thread = Executors.defaultThreadFactory().newThread(r)
+                thread.isDaemon = true
+                thread
+            }
+        }
+
+        val IMMEDIATE: Scheduler = object : Scheduler {
+            override fun schedule(block: Callable<Unit>): Future<*>? {
+                block.call()
+                return null
+            }
+        }
+        val JAVAFX: Scheduler = SchedulerImpl(Platform::runLater)
+        val SWING: Scheduler = SchedulerImpl(SwingUtilities::invokeLater)
+        val NEW_THREAD: Scheduler = SchedulerExecutorService(CACHED_EXECUTOR)
+        val IO: Scheduler = SchedulerExecutorService(IO_EXECUTOR)
+        val COMPUTATION: Scheduler = SchedulerExecutorService(SINGLE_EXECUTOR)
+        val DEFAULT = NEW_THREAD
+
         fun shutdown() {
             CACHED_EXECUTOR.shutdown()
             IO_EXECUTOR.shutdown()
+            SINGLE_EXECUTOR.shutdown()
         }
     }
 }

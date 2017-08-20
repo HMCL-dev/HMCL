@@ -17,10 +17,11 @@
  */
 package org.jackhuang.hmcl.event
 
+import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.util.SimpleMultimap
 import java.util.*
 
-class EventManager<T : EventObject> {
+class EventManager<T : EventObject>(val scheduler: Scheduler = Scheduler.IMMEDIATE) {
     private val handlers = SimpleMultimap<EventPriority, (T) -> Unit>({ EnumMap(EventPriority::class.java) }, ::HashSet)
     private val handlers2 = SimpleMultimap<EventPriority, () -> Unit>({ EnumMap(EventPriority::class.java) }, ::HashSet)
 
@@ -43,11 +44,13 @@ class EventManager<T : EventObject> {
     }
 
     fun fireEvent(event: T) {
-        for (priority in EventPriority.values()) {
-            for (handler in handlers[priority])
-                handler(event)
-            for (handler in handlers2[priority])
-                handler()
+        scheduler.schedule {
+            for (priority in EventPriority.values()) {
+                for (handler in handlers[priority])
+                    handler(event)
+                for (handler in handlers2[priority])
+                    handler()
+            }
         }
     }
 

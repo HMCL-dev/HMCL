@@ -18,10 +18,13 @@
 package org.jackhuang.hmcl
 
 import javafx.application.Application
+import javafx.application.Platform
 import javafx.stage.Stage
+import javafx.stage.StageStyle
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.ui.Controllers
+import org.jackhuang.hmcl.ui.runOnUiThread
 import org.jackhuang.hmcl.util.DEFAULT_USER_AGENT
 import org.jackhuang.hmcl.util.LOG
 import org.jackhuang.hmcl.util.OS
@@ -41,7 +44,10 @@ fun i18n(key: String): String {
 class Main : Application() {
 
     override fun start(stage: Stage) {
-        PRIMARY_STAGE = stage
+        // When launcher visibility is set to "hide and reopen" without [Platform.implicitExit] = false,
+        // Stage.show() cannot work again because JavaFX Toolkit have already shut down.
+        Platform.setImplicitExit(false)
+
         Controllers.initialize(stage)
 
         stage.isResizable = false
@@ -55,7 +61,6 @@ class Main : Application() {
         val NAME = "HMCL"
         val TITLE = "$NAME $VERSION"
         val APPDATA = getWorkingDirectory("hmcl")
-        lateinit var PRIMARY_STAGE: Stage
 
         @JvmStatic
         fun main(args: Array<String>) {
@@ -79,8 +84,9 @@ class Main : Application() {
 
         fun getMinecraftDirectory(): File = getWorkingDirectory("minecraft")
 
-        fun stop() {
-            PRIMARY_STAGE.close()
+        fun stop() = runOnUiThread {
+            Controllers.stage.close()
+            Platform.exit()
             Scheduler.shutdown()
         }
 

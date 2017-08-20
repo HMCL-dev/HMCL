@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.JFXDialog
-import javafx.fxml.FXMLLoader
 import javafx.scene.Node
 import javafx.scene.Scene
 import javafx.scene.layout.Region

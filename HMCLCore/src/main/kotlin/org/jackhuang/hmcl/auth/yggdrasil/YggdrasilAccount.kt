@@ -96,7 +96,7 @@ class YggdrasilAccount private constructor(override val username: String): Accou
                 isOnline = true
                 return
             }
-            logIn1(ROUTE_REFRESH, RefreshRequest(clientToken = clientToken, accessToken = accessToken!!, selectedProfile = selectedProfile), proxy)
+            logIn1(ROUTE_REFRESH, RefreshRequest(clientToken = clientToken, accessToken = accessToken!!), proxy)
         } else if (isNotBlank(password)) {
             logIn1(ROUTE_AUTHENTICATE, AuthenticationRequest(username, password!!, clientToken), proxy)
         } else

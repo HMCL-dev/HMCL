@@ -17,19 +17,27 @@
  */
 package org.jackhuang.hmcl.game
 
+import org.jackhuang.hmcl.Main
+import org.jackhuang.hmcl.auth.AuthInfo
 import org.jackhuang.hmcl.auth.AuthenticationException
 import org.jackhuang.hmcl.launch.DefaultLauncher
+import org.jackhuang.hmcl.launch.ProcessListener
 import org.jackhuang.hmcl.mod.CurseForgeModpackCompletionTask
+import org.jackhuang.hmcl.setting.LauncherVisibility
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.*
 import org.jackhuang.hmcl.ui.Controllers
 import org.jackhuang.hmcl.ui.DialogController
 import org.jackhuang.hmcl.ui.LaunchingStepsPane
 import org.jackhuang.hmcl.ui.runOnUiThread
+import org.jackhuang.hmcl.util.JavaProcess
+import org.jackhuang.hmcl.util.Log4jLevel
+import java.util.concurrent.ConcurrentSkipListSet
 
 
 object LauncherHelper {
-    val launchingStepsPane = LaunchingStepsPane()
+    private val launchingStepsPane = LaunchingStepsPane()
+    val PROCESS = ConcurrentSkipListSet<JavaProcess>()
 
     fun launch() {
         val profile = Settings.selectedProfile
@@ -37,6 +45,7 @@ object LauncherHelper {
         val dependency = profile.dependency
         val account = Settings.selectedAccount ?: throw IllegalStateException("No account here")
         val version = repository.getVersion(profile.selectedVersion)
+        val setting = profile.getVersionSetting(profile.selectedVersion)
         var finished = 0
 
         Controllers.dialog(launchingStepsPane)
@@ -61,13 +70,17 @@ object LauncherHelper {
                     it["launcher"] = HMCLGameLauncher(
                             repository = repository,
                             versionId = profile.selectedVersion,
-                            options = profile.getVersionSetting(profile.selectedVersion).toLaunchOptions(profile.gameDir),
+                            options = setting.toLaunchOptions(profile.gameDir),
+                            listener = HMCLProcessListener(it["account"], setting.launcherVisibility),
                             account = it["account"]
                     )
                 })
                 .then { it.get<DefaultLauncher>("launcher").launchAsync() }
+                .then(task {
+                    if (setting.launcherVisibility == LauncherVisibility.CLOSE)
+                        Main.stop()
+                })
 
-                .then(task(Scheduler.JAVAFX) { emitStatus(LoadingState.DONE) })
                 .executor()
                 .apply {
                     taskListener = object : TaskListener {
@@ -79,17 +92,85 @@ object LauncherHelper {
                         override fun onTerminate() {
                             runOnUiThread { Controllers.closeDialog() }
                         }
-
-                        override fun end() {
-                            runOnUiThread { Controllers.closeDialog() }
-                        }
                     }
                 }.start()
     }
 
     fun emitStatus(state: LoadingState) {
+        if (state == LoadingState.DONE) {
+            Controllers.closeDialog()
+        }
+
         launchingStepsPane.lblCurrentState.text = state.toString()
         launchingStepsPane.lblSteps.text = "${state.ordinal + 1} / ${LoadingState.values().size}"
+    }
+
+    /**
+     * The managed process listener.
+     * Guarantee that one [JavaProcess], one [HMCLProcessListener].
+     * Because every time we launched a game, we generates a new [HMCLProcessListener]
+     */
+    class HMCLProcessListener(authInfo: AuthInfo?, private val launcherVisibility: LauncherVisibility) : ProcessListener {
+        val forbiddenTokens: List<Pair<String, String>> = if (authInfo == null) emptyList() else
+            listOf(
+                    authInfo.authToken to "<access token>",
+                    authInfo.userId to "<uuid>",
+                    authInfo.username to "<player>"
+            )
+        private lateinit var process: JavaProcess
+        private var lwjgl = false
+        override fun setProcess(process: JavaProcess) {
+            this.process = process
+        }
+
+        override fun onLog(log: String, level: Log4jLevel) {
+            if (level.lessOrEqual(Log4jLevel.ERROR))
+                System.err.print(log)
+            else
+                System.out.print(log)
+
+            if (!lwjgl && log.contains("LWJGL Version: ")) {
+                lwjgl = true
+                when (launcherVisibility) {
+                    LauncherVisibility.HIDE_AND_REOPEN -> {
+                        runOnUiThread {
+                            Controllers.stage.hide()
+                            emitStatus(LoadingState.DONE)
+                        }
+                    }
+                    LauncherVisibility.CLOSE -> {
+                        throw Error("Never come to here")
+                    }
+                    LauncherVisibility.KEEP -> {
+                        // No operations here.
+                    }
+                    LauncherVisibility.HIDE -> {
+                        runOnUiThread {
+                            Controllers.stage.close()
+                            emitStatus(LoadingState.DONE)
+                        }
+                    }
+                }
+            }
+        }
+
+        override fun onExit(exitCode: Int, exitType: ProcessListener.ExitType) {
+            checkExit(launcherVisibility)
+        }
+
+    }
+
+    private fun checkExit(launcherVisibility: LauncherVisibility) {
+        when (launcherVisibility) {
+            LauncherVisibility.HIDE_AND_REOPEN -> runOnUiThread { Controllers.stage.show() }
+            LauncherVisibility.KEEP -> {}
+            LauncherVisibility.CLOSE -> {}
+            LauncherVisibility.HIDE -> Main.stop()
+        }
+    }
+
+    fun stopManagedProcess() {
+        PROCESS.forEach(JavaProcess::stop)
     }
 
     enum class LoadingState {

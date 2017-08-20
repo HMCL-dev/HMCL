@@ -66,8 +66,6 @@ class TaskExecutor() {
             }
             if (canceled || Thread.interrupted())
                 taskListener?.onTerminate()
-            else
-                taskListener?.end()
         })
     }
 

@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.event
 
+import org.jackhuang.hmcl.task.Scheduler
 import java.util.*
 
 class EventBus {
@@ -25,7 +26,7 @@ class EventBus {
     @Suppress("UNCHECKED_CAST")
     fun <T : EventObject> channel(classOfT: Class<T>): EventManager<T> {
         if (!events.containsKey(classOfT))
-            events.put(classOfT, EventManager<T>())
+            events.put(classOfT, EventManager<T>(Scheduler.COMPUTATION))
         return events[classOfT] as EventManager<T>
     }
 

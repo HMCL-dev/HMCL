@@ -22,17 +22,23 @@ import java.io.InputStream
 import java.util.logging.Level
 
 internal class StreamPump @JvmOverloads constructor(
-        val inputStream: InputStream,
-        val callback: (String) -> Unit = {}
+        private val inputStream: InputStream,
+        private val callback: (String) -> Unit = {}
 ) : Runnable {
 
     override fun run() {
         try {
-            inputStream.bufferedReader(SYSTEM_CHARSET).useLines {
-                it.forEach(callback)
+            inputStream.bufferedReader(SYSTEM_CHARSET).useLines { lines ->
+                for (line in lines) {
+                    if (Thread.currentThread().isInterrupted) {
+                        Thread.currentThread().interrupt()
+                        break
+                    }
+                    callback(line)
+                }
             }
         } catch (e: IOException) {
-            LOG.log(Level.SEVERE, "An error occured when reading stream", e)
+            LOG.log(Level.SEVERE, "An error occurred when reading stream", e)
         }
     }
 }
