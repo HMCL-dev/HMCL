@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game
 
+import javafx.application.Platform
 import org.jackhuang.hmcl.Main
 import org.jackhuang.hmcl.auth.AuthInfo
 import org.jackhuang.hmcl.auth.AuthenticationException
@@ -169,9 +170,14 @@ object LauncherHelper {
     private fun checkExit(launcherVisibility: LauncherVisibility) {
         when (launcherVisibility) {
             LauncherVisibility.HIDE_AND_REOPEN -> runOnUiThread { Controllers.stage.show() }
-            LauncherVisibility.KEEP -> {}
-            LauncherVisibility.CLOSE -> {}
-            LauncherVisibility.HIDE -> Main.stop()
+            LauncherVisibility.KEEP -> { /* no operations here. */ }
+            LauncherVisibility.CLOSE -> { throw Error("Never get to here") }
+            LauncherVisibility.HIDE -> runOnUiThread {
+                // Shut down the platform when user closed log window.
+                Platform.setImplicitExit(true)
+                // If we use Main.stop(), log window will be halt immediately.
+                Main.stopWithoutJavaFXPlatform()
+            }
         }
     }
 

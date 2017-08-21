@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.setting
 
+import javafx.scene.text.Font
 import org.jackhuang.hmcl.auth.Account
 import org.jackhuang.hmcl.auth.AccountFactory
 import org.jackhuang.hmcl.auth.OfflineAccount
@@ -101,4 +102,8 @@ object Locales {
         DEFAULT -> "def"
         else -> throw IllegalArgumentException("Unknown argument: " + supportedLocale)
     }
+}
+
+object Fonts {
+    val FONTS = Font.getFamilies()
 }

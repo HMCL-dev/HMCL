@@ -23,7 +23,10 @@ import javafx.scene.layout.StackPane
 import javafx.scene.web.WebEngine
 import javafx.scene.web.WebView
 import javafx.stage.Stage
+import org.jackhuang.hmcl.i18n
+import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.util.Log4jLevel
+import org.jackhuang.hmcl.util.readFullyAsString
 import org.w3c.dom.Document
 import org.w3c.dom.Node
 
@@ -38,20 +41,25 @@ class LogWindow : Stage() {
 
     init {
         scene = Scene(rootPane, 800.0, 480.0)
+        title = i18n("logwindow.title")
+
+        contentPane.onScroll
         engine = contentPane.engine
-        engine.loadContent("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\" /></head><body></body></html>")
+        engine.loadContent(javaClass.getResourceAsStream("/assets/log-window-content.html").readFullyAsString().replace("\${FONT}", "${Settings.font.size}px \"${Settings.font.family}\""))
         engine.loadWorker.stateProperty().addListener { _, _, newValue ->
             if (newValue == Worker.State.SUCCEEDED) {
                 document = engine.document
                 body = document.getElementsByTagName("body").item(0)
             }
         }
+
     }
 
     fun logLine(line: String, level: Log4jLevel) {
         body.appendChild(contentPane.engine.document.createElement("div").apply {
-            setAttribute("style", "color: #${level.color.toString().substring(2)};")
+            setAttribute("style", "background-color: #${level.color.toString().substring(2)};")
             textContent = line
         })
+        engine.executeScript("scrollToBottom()")
     }
 }

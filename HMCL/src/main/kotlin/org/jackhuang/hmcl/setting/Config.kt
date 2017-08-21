@@ -115,13 +115,13 @@ class Config {
             Settings.save()
         }
     @SerializedName("fontFamily")
-    var fontFamily: String? = null
+    var fontFamily: String? = "Consolas"
         set(value) {
             field = value
             Settings.save()
         }
     @SerializedName("fontSize")
-    var fontSize: Int = 12
+    var fontSize: Double = 12.0
         set(value) {
             field = value
             Settings.save()

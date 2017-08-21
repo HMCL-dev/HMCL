@@ -25,12 +25,15 @@ import javafx.collections.FXCollections
 import javafx.fxml.FXML
 import javafx.scene.control.Label
 import javafx.scene.layout.StackPane
+import javafx.scene.text.Font
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.DownloadProviders
 import org.jackhuang.hmcl.setting.Locales
 import org.jackhuang.hmcl.setting.Proxies
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.ui.construct.FileItem
+import org.jackhuang.hmcl.ui.construct.FontComboBox
+import org.jackhuang.hmcl.ui.construct.Validator
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage
 
 class SettingsPage : StackPane(), DecoratorPage {
@@ -41,10 +44,13 @@ class SettingsPage : StackPane(), DecoratorPage {
     @FXML lateinit var txtProxyUsername: JFXTextField
     @FXML lateinit var txtProxyPassword: JFXTextField
     @FXML lateinit var cboProxyType: JFXComboBox<*>
+    @FXML lateinit var cboFont: FontComboBox
     @FXML lateinit var cboLanguage: JFXComboBox<*>
     @FXML lateinit var cboDownloadSource: JFXComboBox<*>
     @FXML lateinit var fileCommonLocation: FileItem
     @FXML lateinit var fileBackgroundLocation: FileItem
+    @FXML lateinit var lblDisplay: Label
+    @FXML lateinit var txtFontSize: JFXTextField
 
     init {
         loadFXML("/assets/fxml/setting.fxml")
@@ -76,6 +82,23 @@ class SettingsPage : StackPane(), DecoratorPage {
         cboDownloadSource.selectionModel.selectedIndexProperty().addListener { _, _, newValue ->
             Settings.downloadProvider = DownloadProviders.getDownloadProvider(newValue.toInt())
         }
+
+        cboFont.selectionModel.select(Settings.font.family)
+        cboFont.valueProperty().addListener { _, _, newValue ->
+            val font = Font.font(newValue, Settings.font.size)
+            Settings.font = font
+            lblDisplay.style = "-fx-font: ${Settings.font.size} \"${font.family}\";"
+        }
+        txtFontSize.text = Settings.font.size.toString()
+        txtFontSize.validators += Validator { it.toDoubleOrNull() != null }
+        txtFontSize.textProperty().addListener { _, _, newValue ->
+            if (txtFontSize.validate()) {
+                val font = Font.font(Settings.font.family, newValue.toDouble())
+                Settings.font = font
+                lblDisplay.style = "-fx-font: ${font.size} \"${Settings.font.family}\";"
+            }
+        }
+        lblDisplay.style = "-fx-font: ${Settings.font.size} \"${Settings.font.family}\";"
 
         val list = FXCollections.observableArrayList<Label>()
         for (locale in Locales.LOCALES) {

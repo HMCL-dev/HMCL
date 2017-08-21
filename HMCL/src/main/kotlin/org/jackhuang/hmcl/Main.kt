@@ -85,8 +85,12 @@ class Main : Application() {
         fun getMinecraftDirectory(): File = getWorkingDirectory("minecraft")
 
         fun stop() = runOnUiThread {
-            Controllers.stage.close()
+            stopWithoutJavaFXPlatform()
             Platform.exit()
+        }
+
+        fun stopWithoutJavaFXPlatform() = runOnUiThread {
+            Controllers.stage.close()
             Scheduler.shutdown()
         }
 

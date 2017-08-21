@@ -60,11 +60,11 @@ internal object DefaultFormatter : Formatter() {
  */
 enum class Log4jLevel constructor(val level: Int, val color: Color) {
 
-    FATAL(1, Color.RED),
-    ERROR(2, Color.RED),
-    WARN(3, Color.ORANGE),
-    INFO(4, Color.BLACK),
-    DEBUG(5, Color.BLUE),
+    FATAL(1, Color.web("#F7A699")),
+    ERROR(2, Color.web("#FFCCBB")),
+    WARN(3, Color.web("#FFEECC")),
+    INFO(4, Color.web("#FBFBFB")),
+    DEBUG(5, Color.web("#EEE9E0")),
     TRACE(6, Color.BLUE),
     ALL(2147483647, Color.BLACK);
 

@@ -8,6 +8,7 @@
 <?import com.jfoenix.controls.JFXTextField?>
 <?import org.jackhuang.hmcl.ui.construct.ComponentList?>
 <?import org.jackhuang.hmcl.ui.construct.FileItem?>
+<?import org.jackhuang.hmcl.ui.construct.FontComboBox?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
@@ -18,7 +19,7 @@
             <ComponentList fx:id="settingsPane">
                 <FileItem fx:id="fileCommonLocation" name="%launcher.common_location" title="%launcher.choose_commonpath" tooltip="%launcher.commpath_tooltip" />
                 <!--FileItem fx:id="fileBackgroundLocation" name="%launcher.background_location" title="%launcher.choose_bgpath" tooltip="%launcher.background_tooltip" /-->
-                <BorderPane><left><Label text="%launcher.download_source" /></left><right><JFXComboBox fx:id="cboDownloadSource">
+                <BorderPane><left><Label text="%launcher.download_source" BorderPane.alignment="CENTER_LEFT" /></left><right><JFXComboBox fx:id="cboDownloadSource">
                     <items>
                         <FXCollections fx:factory="observableArrayList">
                             <Label text="%download.mojang" />
@@ -26,8 +27,8 @@
                         </FXCollections>
                     </items>
                 </JFXComboBox></right></BorderPane>
-                <BorderPane><left><Label text="%launcher.lang" /></left><right><JFXComboBox fx:id="cboLanguage" /></right></BorderPane>
-                <BorderPane><left><Label text="%launcher.proxy" /></left><right><HBox alignment="CENTER_LEFT" spacing="5">
+                <BorderPane><left><Label text="%launcher.lang" BorderPane.alignment="CENTER_LEFT" /></left><right><JFXComboBox fx:id="cboLanguage" /></right></BorderPane>
+                <BorderPane><left><Label text="%launcher.proxy" BorderPane.alignment="CENTER_LEFT" /></left><right><HBox alignment="CENTER_LEFT" spacing="5">
                     <JFXComboBox fx:id="cboProxyType">
                         <items>
                             <FXCollections fx:factory="observableArrayList">
@@ -47,6 +48,10 @@
                     <JFXTextField fx:id="txtProxyPassword" maxWidth="50" />
                 </HBox></right></BorderPane>
                 <BorderPane><left><Label text="%launcher.theme" /></left><right></right></BorderPane>
+                <VBox spacing="5">
+                    <BorderPane><left><Label text="%launcher.log_font" BorderPane.alignment="CENTER_LEFT" /></left><right><HBox spacing="3"><FontComboBox fontSize="12" enableStyle="false" fx:id="cboFont" /><JFXTextField fx:id="txtFontSize" maxWidth="50" minWidth="50" /></HBox></right></BorderPane>
+                    <Label fx:id="lblDisplay" text="[23:33:33] [Client Thread/INFO] [WaterPower]: Loaded mod WaterPower." />
+                </VBox>
             </ComponentList>
         </VBox>
     </ScrollPane>

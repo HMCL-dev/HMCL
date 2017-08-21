@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui
 import com.jfoenix.controls.JFXDialog
 import javafx.scene.Node
 import javafx.scene.Scene
+import javafx.scene.image.Image
 import javafx.scene.layout.Region
 import javafx.stage.Stage
 import org.jackhuang.hmcl.Main
@@ -51,6 +52,9 @@ object Controllers {
         stage.maxWidth = 800.0
         stage.maxHeight = 480.0
         stage.minHeight = 480.0
+
+        stage.icons += Image("/assets/img/icon.png")
+        stage.title = Main.TITLE
     }
 
     fun dialog(content: Region): JFXDialog {

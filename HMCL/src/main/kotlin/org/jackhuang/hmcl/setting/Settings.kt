@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.setting
 
 import com.google.gson.GsonBuilder
 import javafx.beans.InvalidationListener
+import javafx.scene.text.Font
 import java.io.IOException
 import org.jackhuang.hmcl.Main
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider
@@ -191,6 +192,13 @@ object Settings {
     }
 
     init { loadProxy() }
+
+    var font: Font
+        get() = Font.font(SETTINGS.fontFamily, SETTINGS.fontSize)
+        set(value) {
+            SETTINGS.fontFamily = value.family
+            SETTINGS.fontSize = value.size
+        }
 
     var downloadProvider: DownloadProvider
         get() = when (SETTINGS.downloadtype) {
