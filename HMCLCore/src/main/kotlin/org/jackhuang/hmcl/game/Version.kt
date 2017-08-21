@@ -111,8 +111,10 @@ open class Version(
     protected open fun resolve(provider: VersionProvider, resolvedSoFar: MutableSet<String>): Version {
         if (this.inheritsFrom == null)
             return this
-        if (!resolvedSoFar.add(this.id))
-            throw CircleDependencyException(resolvedSoFar.toString())
+        if (!resolvedSoFar.add(this.id)) {
+            LOG.warning("Found circular dependency versions: $resolvedSoFar")
+            return this
+        }
 
         // It is supposed to auto install an version in getVersion.
         val parent = provider.getVersion(this.inheritsFrom).resolve(provider, resolvedSoFar)

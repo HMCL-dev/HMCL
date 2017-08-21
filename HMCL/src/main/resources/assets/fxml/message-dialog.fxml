@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
@@ -13,14 +10,13 @@
          type="StackPane">
     <JFXDialogLayout>
         <heading>
-            <Label>JFoenix Dialog</Label>
+            <Label text="%message.info" />
         </heading>
         <body>
             <Label fx:id="content" textAlignment="JUSTIFY" wrapText="true" />
         </body>
         <actions>
-            <JFXButton fx:id="acceptButton" styleClass="dialog-accept">ACCEPT
-            </JFXButton>
+            <JFXButton fx:id="acceptButton" styleClass="dialog-accept" text="%button.ok" />
         </actions>
     </JFXDialogLayout>
 </fx:root>

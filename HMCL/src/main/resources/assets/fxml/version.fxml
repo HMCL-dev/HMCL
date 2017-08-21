@@ -15,12 +15,33 @@
         </Tab>
     </JFXTabPane>
 
-    <JFXRippler fx:id="optionsRippler" maskType="CIRCLE"
-                  style="-fx-ripple-color:WHITE;"
-                  StackPane.alignment="TOP_RIGHT" maxWidth="15" maxHeight="15">
-        <StackPane fx:id="optionsBurger">
-            <JFXHamburger styleClass="jfx-options-burger">
-            </JFXHamburger>
-        </StackPane>
-    </JFXRippler>
+    <HBox alignment="TOP_RIGHT" style="-fx-padding: 3px;" pickOnBounds="false">
+        <JFXButton fx:id="btnBrowseMenu" maxHeight="28.0" minHeight="28.0" onMouseClicked="#onBrowseMenu" styleClass="toggle-icon3" ripplerFill="white">
+            <graphic>
+                <fx:include source="/assets/svg/folder-open.fxml"/>
+            </graphic>
+        </JFXButton>
+        <JFXButton fx:id="btnManagementMenu" maxHeight="28.0" minHeight="28.0" onMouseClicked="#onManagementMenu" styleClass="toggle-icon3" ripplerFill="white">
+            <graphic>
+                <fx:include source="/assets/svg/wrench-black.fxml"/>
+            </graphic>
+        </JFXButton>
+    </HBox>
+
+    <JFXListView fx:id="browseList" styleClass="option-list-view" onMouseClicked="#onBrowse" maxWidth="150.0" minWidth="150.0">
+        <Label text="%folder.game" />
+        <Label text="%folder.mod" />
+        <Label text="%folder.coremod" />
+        <Label text="%folder.config" />
+        <Label text="%folder.resourcepacks" />
+        <Label text="%folder.screenshots" />
+        <Label text="%folder.saves" />
+    </JFXListView>
+
+    <JFXListView fx:id="managementList" styleClass="option-list-view" onMouseClicked="#onManagement" maxWidth="300.0" minWidth="300.0">
+        <Label text="%versions.manage.rename" />
+        <Label text="%versions.manage.remove" />
+        <Label text="%versions.manage.redownload_assets_index" />
+        <Label text="%versions.manage.remove_libraries" />
+    </JFXListView>
 </fx:root>

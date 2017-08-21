@@ -32,9 +32,7 @@ import javafx.fxml.FXMLLoader
 import javafx.scene.Node
 import javafx.scene.Parent
 import javafx.scene.Scene
-import javafx.scene.control.ListView
-import javafx.scene.control.ScrollBar
-import javafx.scene.control.ScrollPane
+import javafx.scene.control.*
 import javafx.scene.image.WritableImage
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.ScrollEvent
@@ -42,6 +40,11 @@ import javafx.scene.layout.Region
 import javafx.scene.shape.Rectangle
 import javafx.util.Duration
 import org.jackhuang.hmcl.Main
+import org.jackhuang.hmcl.util.LOG
+import org.jackhuang.hmcl.util.OS
+import java.io.File
+import java.io.IOException
+import java.util.logging.Level
 
 fun Node.loadFXML(absolutePath: String) {
     val fxmlLoader = FXMLLoader(this.javaClass.getResource(absolutePath), Main.RESOURCE_BUNDLE)
@@ -188,3 +191,41 @@ fun JFXMasonryPane.resetChildren(children: List<Node>) {
     ReflectionHelper.setFieldContent(JFXMasonryPane::class.java, this, "oldBoxes", null)
     this.children.setAll(children)
 }
+
+fun openFolder(f: File) {
+    f.mkdirs()
+    val path = f.absolutePath
+    when (OS.CURRENT_OS) {
+        OS.OSX ->
+            try {
+                Runtime.getRuntime().exec(arrayOf("/usr/bin/open", path));
+            } catch (ex: IOException) {
+                LOG.log(Level.SEVERE, "Failed to open $path through /usr/bin/open", ex);
+            }
+        else ->
+            try {
+                java.awt.Desktop.getDesktop().open(f);
+            } catch (ex: Throwable) {
+                LOG.log(Level.SEVERE, "Failed to open $path through java.awt.Desktop.getDesktop().open()", ex);
+            }
+    }
+}
+
+@JvmOverloads
+fun alert(type: Alert.AlertType, title: String, contentText: String, headerText: String? = null): Boolean {
+    Alert(type).apply {
+        this.title = title
+        this.headerText = headerText
+        this.contentText = contentText
+    }.showAndWait().run {
+        return isPresent && get() == ButtonType.OK
+    }
+}
+
+@JvmOverloads
+fun inputDialog(title: String, contentText: String, headerText: String? = null, defaultValue: String = "") =
+        TextInputDialog(defaultValue).apply {
+            this.title = title
+            this.headerText = headerText
+            this.contentText = contentText
+        }.showAndWait()

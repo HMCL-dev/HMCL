@@ -13,8 +13,8 @@
 <?import com.jfoenix.controls.JFXToggleButton?>
 <?import com.jfoenix.controls.JFXRadioButton?>
 <StackPane xmlns="http://javafx.com/javafx"
-           xmlns:fx="http://javafx.com/fxml"
-           fx:controller="org.jackhuang.hmcl.ui.VersionSettingsController">
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.jackhuang.hmcl.ui.VersionSettingsController">
     <ScrollPane fx:id="scroll" fitToHeight="true" fitToWidth="true">
         <VBox fx:id="rootPane" style="-fx-padding: 20;">
             <ComponentList depth="1">
