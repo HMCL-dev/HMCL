@@ -15,13 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.util
+package org.jackhuang.hmcl.launch
 
 import org.jackhuang.hmcl.event.EVENT_BUS
 import org.jackhuang.hmcl.event.JVMLaunchFailedEvent
 import org.jackhuang.hmcl.event.JavaProcessExitedAbnormallyEvent
 import org.jackhuang.hmcl.event.JavaProcessStoppedEvent
-import org.jackhuang.hmcl.launch.ProcessListener
+import org.jackhuang.hmcl.util.JavaProcess
+import org.jackhuang.hmcl.util.containsOne
+import org.jackhuang.hmcl.util.guessLogLineError
 import java.util.*
 
 /**
@@ -36,10 +38,7 @@ internal class ExitWaiter(val process: JavaProcess, val joins: Collection<Thread
             joins.forEach { it.join() }
 
             val exitCode = process.exitCode
-            val lines = LinkedList<String>()
-            lines.addAll(process.stdErrLines)
-            lines.addAll(process.stdOutLines)
-            val errorLines = lines.filter(::guessLogLineError)
+            val errorLines = process.lines.filter(::guessLogLineError)
             val exitType: ProcessListener.ExitType
             // LaunchWrapper will catch the exception logged and will exit normally.
             if (exitCode != 0 || errorLines.containsOne("Unable to launch")) {

@@ -31,12 +31,13 @@ import org.jackhuang.hmcl.task.*
 import org.jackhuang.hmcl.ui.*
 import org.jackhuang.hmcl.util.JavaProcess
 import org.jackhuang.hmcl.util.Log4jLevel
-import java.util.concurrent.ConcurrentSkipListSet
+import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
 
 object LauncherHelper {
     private val launchingStepsPane = LaunchingStepsPane()
-    val PROCESS = ConcurrentSkipListSet<JavaProcess>()
+    val PROCESS = ConcurrentLinkedQueue<JavaProcess>()
 
     fun launch() {
         val profile = Settings.selectedProfile
@@ -76,6 +77,7 @@ object LauncherHelper {
                 })
                 .then { it.get<DefaultLauncher>("launcher").launchAsync() }
                 .then(task {
+                    PROCESS.add(it[DefaultLauncher.LAUNCH_ASYNC_ID])
                     if (setting.launcherVisibility == LauncherVisibility.CLOSE)
                         Main.stop()
                 })
@@ -120,6 +122,7 @@ object LauncherHelper {
         private lateinit var process: JavaProcess
         private var lwjgl = false
         private var logWindow: LogWindow? = null
+        private val logs = LinkedList<Pair<String, Log4jLevel>>()
         override fun setProcess(process: JavaProcess) {
             this.process = process
 
@@ -129,12 +132,21 @@ object LauncherHelper {
         }
 
         override fun onLog(log: String, level: Log4jLevel) {
+            var newLog = log
+            for ((original, replacement) in forbiddenTokens)
+                newLog = newLog.replace(original, replacement)
+
             if (level.lessOrEqual(Log4jLevel.ERROR))
                 System.err.print(log)
             else
                 System.out.print(log)
 
-            runOnUiThread { logWindow?.logLine(log, level) }
+            runOnUiThread {
+                logs += log to level
+                if (logs.size > Settings.logLines)
+                    logs.removeFirst()
+                logWindow?.logLine(log, level)
+            }
 
             if (!lwjgl && log.contains("LWJGL Version: ")) {
                 lwjgl = true
@@ -162,6 +174,16 @@ object LauncherHelper {
         }
 
         override fun onExit(exitCode: Int, exitType: ProcessListener.ExitType) {
+            if (exitType != ProcessListener.ExitType.NORMAL && logWindow == null){
+                runOnUiThread {
+                    LogWindow().apply {
+                        for ((line, level) in logs)
+                            logLine(line, level)
+                        show()
+                    }
+                }
+            }
+
             checkExit(launcherVisibility)
         }
 
@@ -181,8 +203,11 @@ object LauncherHelper {
         }
     }
 
-    fun stopManagedProcess() {
-        PROCESS.forEach(JavaProcess::stop)
+    fun stopManagedProcesses() {
+        synchronized(PROCESS) {
+            while (PROCESS.isNotEmpty())
+                PROCESS.poll()?.stop()
+        }
     }
 
     enum class LoadingState {

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import javafx.scene.web.WebView?>
+<?import javafx.scene.control.Label?>
+<?import com.jfoenix.controls.JFXComboBox?>
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<fx:root xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         type="StackPane"
+         style="-fx-background-color: white; -fx-padding: 3 0 3 0;">
+    <VBox spacing="3">
+            <BorderPane style="-fx-padding: 0 3 0 3;">
+                <left>
+                    <HBox alignment="CENTER_LEFT" style="-fx-padding: 0 0 0 4;" spacing="3">
+                        <Label text="%logwindow.show_lines" />
+                        <JFXComboBox fx:id="cboLines">
+                            <items>
+                                <FXCollections fx:factory="observableArrayList">
+                                    <String fx:value="500" />
+                                    <String fx:value="2000" />
+                                    <String fx:value="5000" />
+                                </FXCollections>
+                            </items>
+                        </JFXComboBox>
+                    </HBox>
+                </left>
+                <right>
+                    <HBox spacing="3">
+                        <ToggleButton styleClass="log-toggle" style="-fx-background-color: #F7A699;" fx:id="btnFatals" text="0 fatals" selected="true">
+                            <toggleGroup><ToggleGroup /></toggleGroup>
+                        </ToggleButton>
+                        <ToggleButton styleClass="log-toggle" style="-fx-background-color: #FFCCBB;" fx:id="btnErrors" text="0 errors" selected="true">
+                            <toggleGroup><ToggleGroup /></toggleGroup>
+                        </ToggleButton>
+                        <ToggleButton styleClass="log-toggle" style="-fx-background-color: #FFEECC;" fx:id="btnWarns" text="0 warns" selected="true">
+                            <toggleGroup><ToggleGroup /></toggleGroup>
+                        </ToggleButton>
+                        <ToggleButton styleClass="log-toggle" style="-fx-background-color: #FBFBFB;" fx:id="btnInfos" text="0 infos" selected="true">
+                            <toggleGroup><ToggleGroup /></toggleGroup>
+                        </ToggleButton>
+                        <ToggleButton styleClass="log-toggle" style="-fx-background-color: #EEE9E0;" fx:id="btnDebugs" text="0 debugs" selected="true">
+                            <toggleGroup><ToggleGroup /></toggleGroup>
+                        </ToggleButton>
+                    </HBox>
+                </right>
+            </BorderPane>
+            <StackPane style="-fx-border: 1 0 1 0; -fx-border-color: #dddddd;" VBox.vgrow="ALWAYS">
+                <WebView fx:id="webView" />
+            </StackPane>
+            <HBox alignment="CENTER_RIGHT" style="-fx-padding: 0 3 0 3;" spacing="3">
+                <JFXButton onMouseClicked="#onTerminateGame" text="%logwindow.terminate_game" />
+                <JFXButton onMouseClicked="#onClear" text="%ui.button.clear" />
+            </HBox>
+    </VBox>
+</fx:root>

@@ -794,6 +794,20 @@
     -fx-background-color: null;
 }
 
+.log-toggle:selected {
+    -fx-background-color: transparent;
+    -fx-border: 1px;
+    -fx-border-color: black;
+    -fx-text-fill: black;
+}
+
+.log-toggle {
+    -fx-background-color: transparent;
+    -fx-border: 1px;
+    -fx-border-color: gray;
+    -fx-text-fill: gray;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Spinner                                                                  *

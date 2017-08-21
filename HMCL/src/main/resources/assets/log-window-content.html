@@ -8,6 +8,7 @@
             margin: 0;
             overflow-x: hidden;
         }
+
         div {
             font: ${FONT};
             margin: 0px;
@@ -16,10 +17,55 @@
             border-width: 0 0 1px 0;
             border-color: #dddddd;
         }
+
+        .fatal { background-color: #F7A699; }
+        .error { background-color: #FFCCBB; }
+        .warn  { background-color: #FFEECC; }
+        .info  { background-color: #FFFFFF; }
+        .debug { background-color: #EEE9E0; }
+        .trace { background-color: blue; }
     </style>
     <script>
+        var colors = ["fatal", "error", "warn", "info", "debug", "trace"]
+        var limitedLogs = 100;
+        function appendLog(log, level) {
+            var e = document.createElement("div");
+            e.textContent = log;
+            document.body.appendChild(e);
+            checkNewLog(level);
+        }
+        function checkNewLog(level) {
+            var e = document.body.lastElementChild;
+            e.className = level;
+            redisplay(e);
+            while (document.body.children.length > limitedLogs)
+                removeFirst()
+        }
         function scrollToBottom() {
-            window.scrollTo(0, document.body.scrollHeight)
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+        function removeFirst() {
+            document.body.removeChild(document.body.firstElementChild);
+        }
+        function clear() {
+            while (document.body.children.length > 0) removeFirst();
+        }
+        function specific(newColors) {
+            colors = newColors;
+            var c = document.body.children;
+            for (var i = 0; i < c.length; ++i)
+                redisplay(c[i]);
+        }
+        function redisplay(div) {
+            var flag = false
+            for (var j = 0; j < colors.length; ++j) {
+                if (div.className == colors[j]) {
+                    flag = true;
+                    break;
+                }
+                div.hidden = div.className != colors[j];
+            }
+            div.hidden = !flag;
         }
     </script>
 </head>

@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util
 
+import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 class JavaProcess(
@@ -24,8 +25,7 @@ class JavaProcess(
         val commands: List<String>
 ) {
     val properties = mutableMapOf<String, Any>()
-    val stdOutLines: MutableCollection<String> = ConcurrentLinkedQueue<String>()
-    val stdErrLines: MutableCollection<String> = ConcurrentLinkedQueue<String>()
+    val lines: Queue<String> = ConcurrentLinkedQueue<String>()
     val relatedThreads = mutableListOf<Thread>()
     val isRunning: Boolean = try {
         process.exitValue()

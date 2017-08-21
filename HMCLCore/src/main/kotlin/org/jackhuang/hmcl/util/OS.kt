@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.util
 
 import com.google.gson.annotations.SerializedName
+import javafx.scene.input.Clipboard
+import javafx.scene.input.ClipboardContent
 import java.io.File
 import java.lang.management.ManagementFactory
 import java.nio.charset.Charset
@@ -65,5 +67,12 @@ enum class OS {
 
         val SYSTEM_VERSION: String by lazy { System.getProperty("os.version") }
         val SYSTEM_ARCH: String by lazy { System.getProperty("os.arch") }
+
+        fun setClipboard(string: String) {
+            val clipboard = Clipboard.getSystemClipboard()
+            clipboard.setContent(ClipboardContent().apply {
+                putString(string)
+            })
+        }
     }
 }

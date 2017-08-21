@@ -200,6 +200,12 @@ object Settings {
             SETTINGS.fontSize = value.size
         }
 
+    var logLines: Int
+        get() = maxOf(SETTINGS.logLines, 100)
+        set(value) {
+            SETTINGS.logLines = value
+        }
+
     var downloadProvider: DownloadProvider
         get() = when (SETTINGS.downloadtype) {
             0 -> MojangDownloadProvider

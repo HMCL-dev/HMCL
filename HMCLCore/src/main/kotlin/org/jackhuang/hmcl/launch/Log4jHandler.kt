@@ -24,10 +24,12 @@ import org.xml.sax.Attributes
 import org.xml.sax.InputSource
 import org.xml.sax.helpers.DefaultHandler
 import org.xml.sax.helpers.XMLReaderFactory
+import java.io.InterruptedIOException
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * This class is to parse log4j classic XML layout logging, since only vanilla Minecraft will enable this layout.
@@ -38,18 +40,28 @@ internal class Log4jHandler(val callback: (String, Log4jLevel) -> Unit) : Thread
     }
     private val outputStream = PipedOutputStream()
     private val inputStream = PipedInputStream(outputStream)
+    private val interrupted = AtomicBoolean(false)
 
     override fun run() {
         name = "log4j-handler"
         newLine("<output>")
-        reader.parse(InputSource(inputStream))
+        try {
+            reader.parse(InputSource(inputStream))
+        } catch (e: InterruptedIOException) {
+            // Game has been interrupted.
+            interrupted.set(true)
+        }
     }
 
     fun onStopped() {
+        if (interrupted.get())
+            return
         Scheduler.NEW_THREAD.schedule {
-            newLine("</output>")?.get()
-            outputStream.close()
-            join()
+            if (!interrupted.get()) {
+                newLine("</output>")?.get()
+                outputStream.close()
+                join()
+            }
         }!!.get()
     }
 

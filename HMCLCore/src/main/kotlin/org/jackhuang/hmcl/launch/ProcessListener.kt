@@ -28,7 +28,9 @@ interface ProcessListener {
     fun setProcess(process: JavaProcess) {}
 
     /**
-     * Called when receiving a log from stdout
+     * Called when receiving a log from stdout/stderr.
+     *
+     * Does not guarantee that this method is thread safe.
      *
      * @param log the log
      */

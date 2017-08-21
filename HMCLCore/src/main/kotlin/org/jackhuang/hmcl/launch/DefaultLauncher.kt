@@ -286,11 +286,11 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
 
     private fun startMonitors(javaProcess: JavaProcess, processListener: ProcessListener, isDaemon: Boolean = true) {
         processListener.setProcess(javaProcess)
-        val logHandler = Log4jHandler { line, level -> processListener.onLog(line, level); javaProcess.stdOutLines += line }.apply { start() }
+        val logHandler = Log4jHandler { line, level -> processListener.onLog(line, level); javaProcess.lines += line }.apply { start() }
         javaProcess.relatedThreads += logHandler
         val stdout = thread(name = "stdout-pump", isDaemon = isDaemon, block = StreamPump(javaProcess.process.inputStream, { logHandler.newLine(it) } )::run)
         javaProcess.relatedThreads += stdout
-        val stderr = thread(name = "stderr-pump", isDaemon = isDaemon, block = StreamPump(javaProcess.process.errorStream, { processListener.onLog(it + OS.LINE_SEPARATOR, Log4jLevel.ERROR); javaProcess.stdErrLines += it })::run)
+        val stderr = thread(name = "stderr-pump", isDaemon = isDaemon, block = StreamPump(javaProcess.process.errorStream, { processListener.onLog(it + OS.LINE_SEPARATOR, Log4jLevel.ERROR); javaProcess.lines += it })::run)
         javaProcess.relatedThreads += stderr
         javaProcess.relatedThreads += thread(name = "exit-waiter", isDaemon = isDaemon, block = ExitWaiter(javaProcess, listOf(stdout, stderr), { exitCode, exitType -> logHandler.onStopped(); processListener.onExit(exitCode, exitType) })::run)
     }
