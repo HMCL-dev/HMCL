@@ -17,8 +17,10 @@
  */
 package org.jackhuang.hmcl.mod
 
-import java.io.File
-
-class Modpack(val file: File) {
-
-}
+data class Modpack @JvmOverloads constructor(
+        val name: String = "",
+        val author: String = "",
+        val version: String = "",
+        val description: String = "",
+        val manifest: Any? = null
+)

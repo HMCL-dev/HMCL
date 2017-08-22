@@ -19,8 +19,11 @@ package org.jackhuang.hmcl.ui.download
 
 import javafx.scene.Node
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider
+import org.jackhuang.hmcl.game.HMCLModpackInstallTask
+import org.jackhuang.hmcl.game.HMCLModpackManifest
 import org.jackhuang.hmcl.mod.CurseForgeModpackInstallTask
 import org.jackhuang.hmcl.mod.CurseForgeModpackManifest
+import org.jackhuang.hmcl.mod.Modpack
 import org.jackhuang.hmcl.setting.EnumGameDirectory
 import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.setting.Settings
@@ -62,11 +65,12 @@ class DownloadWizardProvider(): WizardProvider() {
             return null
 
         val selectedFile = settings[ModpackPage.MODPACK_FILE] as? File? ?: return null
-        val manifest = settings[ModpackPage.MODPACK_CURSEFORGE_MANIFEST] as? CurseForgeModpackManifest? ?: return null
+        val modpack = settings[ModpackPage.MODPACK_CURSEFORGE_MANIFEST] as? Modpack? ?: return null
         val name = settings[ModpackPage.MODPACK_NAME] as? String? ?: return null
 
         profile.repository.markVersionAsModpack(name)
-        return CurseForgeModpackInstallTask(profile.dependency, selectedFile, manifest, name) with task {
+
+        val finalizeTask = task {
             profile.repository.refreshVersions()
             val vs = profile.specializeVersionSetting(name)
             profile.repository.undoMark(name)
@@ -74,6 +78,12 @@ class DownloadWizardProvider(): WizardProvider() {
                 vs.gameDirType = EnumGameDirectory.VERSION_FOLDER
             }
         }
+
+        return when (modpack.manifest) {
+            is CurseForgeModpackManifest -> CurseForgeModpackInstallTask(profile.dependency, selectedFile, modpack.manifest as CurseForgeModpackManifest, name)
+            is HMCLModpackManifest -> HMCLModpackInstallTask(profile, selectedFile, name)
+            else -> throw Error()
+        } with finalizeTask
     }
 
     override fun finish(settings: MutableMap<String, Any>): Any? {

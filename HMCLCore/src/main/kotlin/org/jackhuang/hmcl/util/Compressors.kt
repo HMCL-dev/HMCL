@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util
 import java.io.File
 import java.io.IOException
 import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
@@ -193,5 +194,36 @@ fun unzipSubDirectory(zip: File, dest: File, subDirectory: String, ignoreExisten
                 }
             }
         }
+    }
+}
+
+/**
+ * Read the text content of a file in zip.
+ *
+ * @param f the zip file
+ * @param location the location of the text in zip file, something like A/B/C/D.txt
+ * @throws IOException if the file is not a valid zip file.
+ * @return the content of given file.
+ */
+@Throws(IOException::class)
+fun readTextFromZipFile(f: File, location: String): String {
+    ZipFile(f).use { zipFile ->
+        val entry = zipFile.getEntry(location) ?: throw IOException("`$location` not found.")
+        return zipFile.getInputStream(entry).readFullyAsString()
+    }
+}
+
+/**
+ * Read the text content of a file in zip.
+ *
+ * @param f the zip file
+ * @param location the location of the text in zip file, something like A/B/C/D.txt
+ * @return the content of given file.
+ */
+fun readTextFromZipFileQuietly(f: File, location: String): String? {
+    try {
+        return readTextFromZipFile(f, location)
+    } catch (e: IOException) {
+        return null
     }
 }

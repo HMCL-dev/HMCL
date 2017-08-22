@@ -15,11 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.setting
+package org.jackhuang.hmcl.game
 
 import javafx.scene.image.Image
 import org.jackhuang.hmcl.Main
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
+import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.FileDownloadTask
 import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.task.Task

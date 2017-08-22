@@ -30,7 +30,6 @@ import java.io.File
 import java.io.IOException
 import java.net.URL
 import java.util.logging.Level
-import java.util.zip.ZipFile
 
 class CurseForgeModpackManifest @JvmOverloads constructor(
         @SerializedName("manifestType")
@@ -53,6 +52,8 @@ class CurseForgeModpackManifest @JvmOverloads constructor(
     override fun validate() {
         check(manifestType == MINECRAFT_MODPACK, { "Only support Minecraft modpack" })
     }
+
+    fun toModpack() = Modpack(name = name, author = author, version = version, description = "No description")
 
     companion object {
         val MINECRAFT_MODPACK = "minecraftModpack"
@@ -101,14 +102,15 @@ class CurseForgeModpackManifestFile (
 
 /**
  * @param f the CurseForge modpack file.
+ * @throws IOException if the file is not a valid zip file.
+ * @throws JsonParseException if the manifest.json is missing or malformed.
  * @return the manifest.
  */
+@Throws(IOException::class, JsonParseException::class)
 fun readCurseForgeModpackManifest(f: File): CurseForgeModpackManifest {
-    ZipFile(f).use { zipFile ->
-        val entry = zipFile.getEntry("manifest.json") ?: throw IOException("`manifest.json` not found. Not a valid CurseForge modpack.")
-        val json = zipFile.getInputStream(entry).readFullyAsString()
-        return GSON.fromJson<CurseForgeModpackManifest>(json) ?: throw JsonParseException("`manifest.json` not found. Not a valid CurseForge modpack.")
-    }
+    val json = readTextFromZipFile(f, "manifest.json")
+    return GSON.fromJson<CurseForgeModpackManifest>(json)
+            ?: throw JsonParseException("`manifest.json` not found. Not a valid CurseForge modpack.")
 }
 
 /**
@@ -123,8 +125,7 @@ fun readCurseForgeModpackManifest(f: File): CurseForgeModpackManifest {
 class CurseForgeModpackInstallTask(private val dependencyManager: DefaultDependencyManager, private val zipFile: File, private val manifest: CurseForgeModpackManifest, private val name: String): Task() {
     val repository = dependencyManager.repository
     init {
-        if (repository.hasVersion(name))
-            throw IllegalStateException("Version $name already exists.")
+        check(!repository.hasVersion(name), { "Version $name already exists." })
     }
 
     val root = repository.getVersionRoot(name)

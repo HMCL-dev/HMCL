@@ -36,7 +36,7 @@ import javafx.scene.paint.Color
 import org.jackhuang.hmcl.auth.Account
 import org.jackhuang.hmcl.auth.OfflineAccount
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
-import org.jackhuang.hmcl.setting.AccountHelper
+import org.jackhuang.hmcl.game.AccountHelper
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.Scheduler
 import java.util.concurrent.Callable

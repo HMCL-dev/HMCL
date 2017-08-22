@@ -25,6 +25,7 @@ import javafx.fxml.FXML
 import javafx.scene.control.Label
 import javafx.scene.layout.StackPane
 import javafx.stage.FileChooser
+import org.jackhuang.hmcl.game.readModpackManifest
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.mod.readCurseForgeModpackManifest
 import org.jackhuang.hmcl.setting.Profile
@@ -52,6 +53,7 @@ class ModpackPage(private val controller: WizardController): StackPane(), Wizard
 
         val chooser = FileChooser()
         chooser.title = i18n("modpack.choose")
+        chooser.extensionFilters += FileChooser.ExtensionFilter("Zip", "*.zip")
         val selectedFile = chooser.showOpenDialog(Controllers.stage)
         if (selectedFile == null) Platform.runLater { controller.onFinish() }
         else {
@@ -65,14 +67,12 @@ class ModpackPage(private val controller: WizardController): StackPane(), Wizard
             }
 
             try {
-                val manifest = readCurseForgeModpackManifest(selectedFile)
+                val manifest = readModpackManifest(selectedFile)
                 controller.settings[MODPACK_CURSEFORGE_MANIFEST] = manifest
                 lblName.text = manifest.name
                 lblVersion.text = manifest.version
                 lblAuthor.text = manifest.author
-            } catch (e: IOException) {
-                // TODO
-            } catch (e: JsonParseException) {
+            } catch (e: Exception) {
                 // TODO
             }
         }
