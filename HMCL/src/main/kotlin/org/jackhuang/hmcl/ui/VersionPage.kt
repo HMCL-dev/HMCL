@@ -17,13 +17,15 @@
  */
 package org.jackhuang.hmcl.ui
 
-import com.jfoenix.controls.*
+import com.jfoenix.controls.JFXButton
+import com.jfoenix.controls.JFXListView
+import com.jfoenix.controls.JFXPopup
 import javafx.beans.property.SimpleStringProperty
 import javafx.beans.property.StringProperty
 import javafx.fxml.FXML
 import javafx.scene.control.Alert
-import javafx.scene.layout.*
-import org.jackhuang.hmcl.download.GameAssetIndexDownloadTask
+import javafx.scene.layout.StackPane
+import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage

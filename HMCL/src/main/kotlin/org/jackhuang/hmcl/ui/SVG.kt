@@ -21,7 +21,6 @@ import javafx.fxml.FXMLLoader
 import javafx.scene.Group
 import javafx.scene.Node
 import javafx.scene.shape.SVGPath
-import kotlin.coroutines.experimental.EmptyCoroutineContext.plus
 
 object SVG {
     val svgNames = setOf("gear")

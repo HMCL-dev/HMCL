@@ -20,8 +20,7 @@ package org.jackhuang.hmcl.setting
 import com.google.gson.annotations.SerializedName
 import org.jackhuang.hmcl.Main
 import org.jackhuang.hmcl.util.JavaVersion
-import java.io.File
-import java.util.TreeMap
+import java.util.*
 
 class Config {
     @SerializedName("last")

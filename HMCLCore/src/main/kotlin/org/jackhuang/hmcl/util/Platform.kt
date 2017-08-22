@@ -20,11 +20,18 @@ package org.jackhuang.hmcl.util
 import com.google.gson.*
 import java.lang.reflect.Type
 
+/**
+ * The platform that indicates which the platform of operating system is, 64-bit or 32-bit.
+ * Of course, 128-bit and 16-bit is not supported.
+ */
 enum class Platform(val bit: String) {
     BIT_32("32"),
     BIT_64("64"),
     UNKNOWN("unknown");
 
+    /**
+     * The json serializer to [Platform]
+     */
     companion object Serializer: JsonSerializer<Platform>, JsonDeserializer<Platform> {
 
         override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): Platform? {
@@ -45,10 +52,16 @@ enum class Platform(val bit: String) {
             }
         }
 
+        /**
+         * The platform of current Java Environment.
+         */
         val PLATFORM: Platform by lazy {
             if (IS_64_BIT) BIT_64 else BIT_32
         }
 
+        /**
+         * True if current Java Environment is 64-bit.
+         */
         val IS_64_BIT: Boolean by lazy {
             val arch = System.getProperty("sun.arch.data.model") ?: System.getProperty("os.arch")
             arch.contains("64")

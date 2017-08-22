@@ -21,7 +21,7 @@ import org.jackhuang.hmcl.auth.AuthInfo
 import org.jackhuang.hmcl.game.GameRepository
 import org.jackhuang.hmcl.game.LaunchOptions
 import org.jackhuang.hmcl.game.Version
-import org.jackhuang.hmcl.util.JavaProcess
+import org.jackhuang.hmcl.util.ManagedProcess
 import java.io.File
 
 abstract class Launcher(
@@ -34,7 +34,7 @@ abstract class Launcher(
 
     val version: Version = repository.getVersion(versionId).resolve(repository)
     abstract val rawCommandLine: List<String>
-    abstract fun launch(): JavaProcess
+    abstract fun launch(): ManagedProcess
 
     /**
      * @param file The file path without extension

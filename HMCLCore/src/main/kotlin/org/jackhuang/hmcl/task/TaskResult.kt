@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.task
 
+/**
+ * A task that has a result.
+ */
 abstract class TaskResult<V> : Task() {
     open var result: V? = null
 

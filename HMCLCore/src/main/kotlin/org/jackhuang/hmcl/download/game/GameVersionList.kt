@@ -15,13 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.download
+package org.jackhuang.hmcl.download.game
 
+import org.jackhuang.hmcl.download.DownloadProvider
+import org.jackhuang.hmcl.download.RemoteVersion
+import org.jackhuang.hmcl.download.VersionList
+import org.jackhuang.hmcl.task.GetTask
+import org.jackhuang.hmcl.task.Task
 import org.jackhuang.hmcl.util.GSON
 import org.jackhuang.hmcl.util.asVersion
 import org.jackhuang.hmcl.util.fromJson
-import org.jackhuang.hmcl.task.GetTask
-import org.jackhuang.hmcl.task.Task
 import org.jackhuang.hmcl.util.toURL
 
 

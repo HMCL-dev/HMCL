@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.download.DownloadProvider
 import org.jackhuang.hmcl.ui.loadFXML
 import org.jackhuang.hmcl.ui.wizard.WizardController
 import org.jackhuang.hmcl.ui.wizard.WizardPage
+import org.jackhuang.hmcl.util.onChange
 
 class InstallersPage(private val controller: WizardController, private val downloadProvider: DownloadProvider): StackPane(), WizardPage {
 
@@ -42,9 +43,9 @@ class InstallersPage(private val controller: WizardController, private val downl
         val gameVersion = controller.settings["game"] as String
         txtName.text = gameVersion
 
-        list.selectionModel.selectedIndexProperty().addListener { _, _, newValue ->
-            controller.settings[INSTALLER_TYPE] = newValue
-            controller.onNext(when (newValue){
+        list.selectionModel.selectedIndexProperty().onChange {
+            controller.settings[INSTALLER_TYPE] = it
+            controller.onNext(when (it){
                 0 -> VersionsPage(controller, gameVersion, downloadProvider, "forge") { controller.onPrev(false) }
                 1 -> VersionsPage(controller, gameVersion, downloadProvider, "liteloader") { controller.onPrev(false) }
                 2 -> VersionsPage(controller, gameVersion, downloadProvider, "optifine") { controller.onPrev(false) }

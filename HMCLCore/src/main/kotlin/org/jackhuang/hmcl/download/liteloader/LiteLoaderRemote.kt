@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.download
+package org.jackhuang.hmcl.download.liteloader
 
 import com.google.gson.annotations.SerializedName
 import org.jackhuang.hmcl.game.Library

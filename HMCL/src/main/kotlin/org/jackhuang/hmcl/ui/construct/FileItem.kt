@@ -27,7 +27,8 @@ import javafx.scene.layout.VBox
 import javafx.stage.DirectoryChooser
 import org.jackhuang.hmcl.ui.Controllers
 import org.jackhuang.hmcl.ui.SVG
-import org.jackhuang.hmcl.util.*
+import org.jackhuang.hmcl.util.getValue
+import org.jackhuang.hmcl.util.setValue
 
 class FileItem : BorderPane() {
     val nameProperty = SimpleStringProperty(this, "name")

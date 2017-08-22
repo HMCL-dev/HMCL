@@ -22,27 +22,51 @@ import org.jackhuang.hmcl.game.Version
 import org.jackhuang.hmcl.task.Task
 import java.net.Proxy
 
-abstract class DependencyManager(open val repository: GameRepository, open val proxy: Proxy) {
+/**
+ * Do everything that will connect to Internet.
+ * Downloading Minecraft files.
+ */
+interface DependencyManager {
+    /**
+     * The relied game repository.
+     */
+    val repository: GameRepository
+
+    /**
+     * The proxy that all network operations should go through.
+     */
+    val proxy: Proxy
 
     /**
      * Check if the game is complete.
      * Check libraries, assets, logging files and so on.
      *
-     * @return
+     * @return the task to check game completion.
      */
-    abstract fun checkGameCompletionAsync(version: Version): Task
+    fun checkGameCompletionAsync(version: Version): Task
 
     /**
      * The builder to build a brand new game then libraries such as Forge, LiteLoader and OptiFine.
      */
-    abstract fun gameBuilder(): GameBuilder
+    fun gameBuilder(): GameBuilder
 
-    abstract fun installLibraryAsync(gameVersion: String, version: Version, libraryId: String, libraryVersion: String): Task
+    /**
+     * Install a library to a version.
+     * **Note**: Installing a library may change the version.json.
+     *
+     * @param gameVersion the Minecraft version that the library relies on.
+     * @param version the version.json.
+     * @param libraryId the type of being installed library. i.e. "forge", "liteloader", "optifine"
+     * @param libraryVersion the version of being installed library.
+     * @return the task to install the specific library.
+     */
+    fun installLibraryAsync(gameVersion: String, version: Version, libraryId: String, libraryVersion: String): Task
 
     /**
      * Get registered version list.
+     *
      * @param id the id of version list. i.e. game, forge, liteloader, optifine
      * @throws IllegalArgumentException if the version list of specific id is not found.
      */
-    abstract fun getVersionList(id: String): VersionList<*>
+    fun getVersionList(id: String): VersionList<*>
 }

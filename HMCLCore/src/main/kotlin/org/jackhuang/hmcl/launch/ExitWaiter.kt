@@ -21,16 +21,15 @@ import org.jackhuang.hmcl.event.EVENT_BUS
 import org.jackhuang.hmcl.event.JVMLaunchFailedEvent
 import org.jackhuang.hmcl.event.JavaProcessExitedAbnormallyEvent
 import org.jackhuang.hmcl.event.JavaProcessStoppedEvent
-import org.jackhuang.hmcl.util.JavaProcess
+import org.jackhuang.hmcl.util.ManagedProcess
 import org.jackhuang.hmcl.util.containsOne
 import org.jackhuang.hmcl.util.guessLogLineError
-import java.util.*
 
 /**
  * @param process the process to wait for
  * @param watcher the callback that will be called after process stops.
  */
-internal class ExitWaiter(val process: JavaProcess, val joins: Collection<Thread>, val watcher: (Int, ProcessListener.ExitType) -> Unit) : Runnable {
+internal class ExitWaiter(val process: ManagedProcess, val joins: Collection<Thread>, val watcher: (Int, ProcessListener.ExitType) -> Unit) : Runnable {
     override fun run() {
         try {
             process.process.waitFor()

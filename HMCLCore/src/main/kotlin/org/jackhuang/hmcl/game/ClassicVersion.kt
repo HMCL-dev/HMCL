@@ -20,6 +20,9 @@ package org.jackhuang.hmcl.game
 import org.jackhuang.hmcl.util.Immutable
 import java.io.File
 
+/**
+ * The Minecraft version for 1.5.x and earlier.
+ */
 @Immutable
 class ClassicVersion : Version(
         mainClass = "net.minecraft.client.Minecraft",
@@ -41,6 +44,9 @@ class ClassicVersion : Version(
             )
 
     companion object {
+        /**
+         * Check if this directory is an old style Minecraft repository.
+         */
         fun hasClassicVersion(baseDirectory: File): Boolean {
             val file = File(baseDirectory, "bin")
             if (!file.exists()) return false

@@ -23,12 +23,13 @@ import javafx.collections.FXCollections
 import javafx.scene.control.ListCell
 import javafx.scene.text.Font
 import javafx.util.Callback
+import org.jackhuang.hmcl.util.onChange
 
 class FontComboBox(@NamedArg("fontSize") fontSize: Double = 12.0, @NamedArg("enableStyle") enableStyle: Boolean = false) : JFXComboBox<String>(FXCollections.observableArrayList(Font.getFamilies())) {
     init {
-        valueProperty().addListener { _, _, newValue ->
+        valueProperty().onChange {
             if (enableStyle)
-                style = "-fx-font-family: \"$newValue\";"
+                style = "-fx-font-family: \"$it\";"
         }
         cellFactory = Callback {
             object : ListCell<String>() {

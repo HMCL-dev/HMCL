@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.setting.EnumGameDirectory
 import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.setting.VersionSetting
-import org.jackhuang.hmcl.util.GSON
 import org.jackhuang.hmcl.util.LOG
 import org.jackhuang.hmcl.util.fromJson
 import java.io.File

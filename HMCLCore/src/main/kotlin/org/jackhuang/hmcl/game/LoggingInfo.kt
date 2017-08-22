@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.game
 
-import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.SerializedName
 import org.jackhuang.hmcl.util.Immutable
 import org.jackhuang.hmcl.util.Validation

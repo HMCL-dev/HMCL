@@ -18,14 +18,14 @@
 package org.jackhuang.hmcl.ui.construct
 
 import com.jfoenix.controls.JFXButton
-import javafx.animation.*
+import javafx.animation.Animation
+import javafx.animation.KeyFrame
+import javafx.animation.KeyValue
+import javafx.animation.Timeline
 import javafx.beans.property.SimpleBooleanProperty
-import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.Node
 import javafx.scene.control.Label
-import javafx.scene.layout.HBox
-import javafx.scene.layout.Priority
 import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
 import javafx.scene.shape.Rectangle
@@ -33,7 +33,9 @@ import javafx.util.Duration
 import org.jackhuang.hmcl.ui.SINE
 import org.jackhuang.hmcl.ui.SVG
 import org.jackhuang.hmcl.ui.limitHeight
-import org.jackhuang.hmcl.util.*
+import org.jackhuang.hmcl.util.getValue
+import org.jackhuang.hmcl.util.onChange
+import org.jackhuang.hmcl.util.setValue
 
 class ComponentListCell(private val content: Node) : StackPane() {
 
@@ -146,8 +148,8 @@ class ComponentListCell(private val content: Node) : StackPane() {
                 expandAnimation?.play()
             }
 
-            expandedProperty.addListener { _, _, newValue ->
-                if (newValue) {
+            expandedProperty.onChange {
+                if (it) {
                     expandIcon.rotate = 180.0
                 } else {
                     expandIcon.rotate = 0.0

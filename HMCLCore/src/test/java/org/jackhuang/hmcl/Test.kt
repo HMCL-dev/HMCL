@@ -19,7 +19,7 @@ package org.jackhuang.hmcl
 
 import org.jackhuang.hmcl.auth.OfflineAccount
 import org.jackhuang.hmcl.download.DefaultDependencyManager
-import org.jackhuang.hmcl.download.LiteLoaderVersionList
+import org.jackhuang.hmcl.download.liteloader.LiteLoaderVersionList
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider
 import org.jackhuang.hmcl.download.MojangDownloadProvider
 import org.jackhuang.hmcl.game.DefaultGameRepository
@@ -30,9 +30,6 @@ import org.jackhuang.hmcl.launch.ProcessListener
 import org.jackhuang.hmcl.util.makeCommand
 import org.jackhuang.hmcl.task.Task
 import org.jackhuang.hmcl.task.TaskListener
-import org.jackhuang.hmcl.util.detectFileName
-import org.jackhuang.hmcl.util.toURL
-import org.junit.Test
 import java.io.File
 import java.net.InetSocketAddress
 import java.net.Proxy

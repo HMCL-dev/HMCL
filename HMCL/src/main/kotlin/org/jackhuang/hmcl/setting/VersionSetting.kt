@@ -22,7 +22,6 @@ import javafx.beans.InvalidationListener
 import org.jackhuang.hmcl.Main
 import org.jackhuang.hmcl.game.LaunchOptions
 import org.jackhuang.hmcl.util.*
-import org.jackhuang.hmcl.util.property.*
 import java.io.File
 import java.io.IOException
 import java.lang.reflect.Type

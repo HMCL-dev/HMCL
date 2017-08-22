@@ -23,6 +23,12 @@ import java.io.IOException
 import java.io.InputStream
 import java.util.logging.Level
 
+/**
+ * Pump the given input stream.
+ * @param inputStream the input stream to pump
+ * @param callback receives each line
+ *
+ */
 internal class StreamPump @JvmOverloads constructor(
         private val inputStream: InputStream,
         private val callback: (String) -> Unit = {}

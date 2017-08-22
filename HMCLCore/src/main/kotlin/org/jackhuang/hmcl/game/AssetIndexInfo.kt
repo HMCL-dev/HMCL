@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.game
 
 import jdk.nashorn.internal.ir.annotations.Immutable
-import java.net.URL
 
 @Immutable
 class AssetIndexInfo(

@@ -21,8 +21,8 @@ import com.jfoenix.controls.JFXListView
 import com.jfoenix.controls.JFXSpinner
 import javafx.fxml.FXML
 import javafx.scene.layout.StackPane
-import org.jackhuang.hmcl.download.RemoteVersion
 import org.jackhuang.hmcl.download.DownloadProvider
+import org.jackhuang.hmcl.download.RemoteVersion
 import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.task.TaskExecutor
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations
@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.ui.loadFXML
 import org.jackhuang.hmcl.ui.wizard.Refreshable
 import org.jackhuang.hmcl.ui.wizard.WizardController
 import org.jackhuang.hmcl.ui.wizard.WizardPage
+import org.jackhuang.hmcl.util.onChange
 
 class VersionsPage(private val controller: WizardController, private val gameVersion: String, private val downloadProvider: DownloadProvider, private val libraryId: String, private val callback: () -> Unit): StackPane(), WizardPage, Refreshable {
 
@@ -44,8 +45,8 @@ class VersionsPage(private val controller: WizardController, private val gameVer
     init {
         loadFXML("/assets/fxml/download/versions.fxml")
         children.setAll(spinner)
-        list.selectionModel.selectedItemProperty().addListener { _, _, newValue ->
-            controller.settings[libraryId] = newValue.remoteVersion.selfVersion
+        list.selectionModel.selectedItemProperty().onChange {
+            controller.settings[libraryId] = it!!.remoteVersion.selfVersion
             callback()
         }
         refresh()

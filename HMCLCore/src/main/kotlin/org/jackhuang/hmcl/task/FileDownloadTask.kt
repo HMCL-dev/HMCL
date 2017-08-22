@@ -19,28 +19,39 @@ package org.jackhuang.hmcl.task
 
 import org.jackhuang.hmcl.event.EventManager
 import org.jackhuang.hmcl.event.FailedEvent
-import org.jackhuang.hmcl.util.LOG
-import org.jackhuang.hmcl.util.closeQuietly
-import org.jackhuang.hmcl.util.DigestUtils
-import org.jackhuang.hmcl.util.makeDirectory
-import org.jackhuang.hmcl.util.createConnection
+import org.jackhuang.hmcl.util.*
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.RandomAccessFile
+import java.math.BigInteger
 import java.net.Proxy
 import java.net.URL
-import java.math.BigInteger
 import java.util.logging.Level
 
+/**
+ * A task that can download a file online.
+ *
+ * @param url the URL of remote file.
+ * @param file the location that download to.
+ * @param hash the SHA-1 hash code of remote file, null if the hash is unknown or it is no need to check the hash code.
+ * @param retry the times for retrying if downloading fails.
+ * @param proxy the proxy.
+ *
+ * @author huangyuhui
+ */
 class FileDownloadTask @JvmOverloads constructor(val url: URL, val file: File, val hash: String? = null, val retry: Int = 5, val proxy: Proxy = Proxy.NO_PROXY): Task() {
     override val scheduler: Scheduler = Scheduler.IO
 
+    /**
+     * Once downloading fails, this event will be fired to gain the substitute URL.
+     */
     var onFailed = EventManager<FailedEvent<URL>>()
+
     private var rFile: RandomAccessFile? = null
     private var stream: InputStream? = null
 
-    fun closeFiles() {
+    private fun closeFiles() {
         rFile?.closeQuietly()
         rFile = null
         stream?.closeQuietly()

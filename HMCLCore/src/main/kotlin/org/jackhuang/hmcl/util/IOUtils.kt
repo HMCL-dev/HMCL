@@ -64,6 +64,10 @@ fun InputStream.copyToAndClose(dest: OutputStream) {
     }
 }
 
+/**
+ * @param cmd the command line
+ * @return the final command line
+ */
 fun makeCommand(cmd: List<String>): String {
     val cmdbuf = StringBuilder(120)
     for (i in cmd.indices) {

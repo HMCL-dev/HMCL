@@ -15,23 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.download
+package org.jackhuang.hmcl.download.optifine
 
-import com.google.gson.annotations.SerializedName
 
-data class OptiFineVersion (
-        @SerializedName("dl")
-        val downloadLink: String? = null,
-        @SerializedName("ver")
-        val version: String? = null,
-        @SerializedName("date")
-        val date: String? = null,
-        @SerializedName("type")
-        val type: String? = null,
-        @SerializedName("patch")
-        val patch: String? = null,
-        @SerializedName("mirror")
-        val mirror: String? = null,
-        @SerializedName("mcversion")
-        val gameVersion: String? = null
-)
+object Opt

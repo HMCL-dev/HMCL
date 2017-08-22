@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.mod.ModManager
 import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.task.task
+import org.jackhuang.hmcl.util.onChange
 
 class ModController {
     @FXML lateinit var scrollPane: ScrollPane
@@ -71,8 +72,8 @@ class ModController {
                     JFXDepthManager.setDepth(this, 1)
                     style += "-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;"
 
-                    modInfo.activeProperty.addListener { _, _, newValue ->
-                        if (newValue)
+                    modInfo.activeProperty.onChange {
+                        if (it)
                             styleClass -= "disabled"
                         else
                             styleClass += "disabled"

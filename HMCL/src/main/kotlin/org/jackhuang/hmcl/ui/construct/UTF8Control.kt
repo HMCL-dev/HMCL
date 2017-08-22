@@ -17,12 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.construct
 
-import java.io.InputStreamReader
-import java.util.PropertyResourceBundle
-import java.util.ResourceBundle
 import java.io.IOException
 import java.io.InputStream
-import java.util.Locale
+import java.io.InputStreamReader
+import java.util.*
 
 object UTF8Control : ResourceBundle.Control() {
     @Throws(IllegalAccessException::class, InstantiationException::class, IOException::class)

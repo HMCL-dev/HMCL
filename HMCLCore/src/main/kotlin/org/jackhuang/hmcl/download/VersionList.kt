@@ -22,20 +22,37 @@ import org.jackhuang.hmcl.util.SimpleMultimap
 import java.util.*
 import kotlin.collections.HashMap
 
+/**
+ * The remote version list.
+ * @param T The type of RemoteVersion<T>, the type of tags.
+ */
 abstract class VersionList<T> {
-    @JvmField
+    /**
+     * the remote version list.
+     * key: game version.
+     * values: corresponding remote versions.
+     */
     protected val versions = SimpleMultimap<String, RemoteVersion<T>>(::HashMap, ::TreeSet)
 
+    /**
+     * True if the version list has been loaded.
+     */
     val loaded = versions.isNotEmpty
 
+    /**
+     * @param downloadProvider DownloadProvider
+     * @return the task to reload the remote version list.
+     */
     abstract fun refreshAsync(downloadProvider: DownloadProvider): Task
 
-    protected open fun getVersionsImpl(gameVersion: String): Collection<RemoteVersion<T>> {
+    private fun getVersionsImpl(gameVersion: String): Collection<RemoteVersion<T>> {
         val ans = versions[gameVersion]
         return if (ans.isEmpty()) versions.values else ans
     }
 
     /**
+     * Get the remote versions that specifics Minecraft version.
+     *
      * @param gameVersion the Minecraft version that remote versions belong to
      * @return the collection of specific remote versions
      */
@@ -43,6 +60,13 @@ abstract class VersionList<T> {
         return Collections.unmodifiableCollection(getVersionsImpl(gameVersion))
     }
 
+    /**
+     * Get the specific remote version.
+     *
+     * @param gameVersion the Minecraft version that remote versions belong to
+     * @param remoteVersion the version of the remote version.
+     * @return the specific remote version, null if it is not found.
+     */
     fun getVersion(gameVersion: String, remoteVersion: String): RemoteVersion<T>? {
         var result : RemoteVersion<T>? = null
         versions[gameVersion].forEach {

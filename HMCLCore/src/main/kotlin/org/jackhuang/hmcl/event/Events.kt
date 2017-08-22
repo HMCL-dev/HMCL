@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.event
 
-import org.jackhuang.hmcl.util.JavaProcess
-import java.util.EventObject
+import org.jackhuang.hmcl.util.ManagedProcess
+import java.util.*
 
 /**
  * This event gets fired when loading versions in a .minecraft folder.
@@ -59,7 +59,7 @@ class LoadedOneVersionEvent(source: Any, val version: String) : EventObject(sour
  * @param JavaProcess The process that exited abnormally.
  * @author huangyuhui
  */
-class JavaProcessExitedAbnormallyEvent(source: Any, val value: JavaProcess) : EventObject(source)
+class JavaProcessExitedAbnormallyEvent(source: Any, val value: ManagedProcess) : EventObject(source)
 
 /**
  * This event gets fired when minecraft process exited successfully and the exit code is 0.
@@ -69,7 +69,7 @@ class JavaProcessExitedAbnormallyEvent(source: Any, val value: JavaProcess) : Ev
  * @param JavaProcess minecraft process
  * @author huangyuhui
  */
-class JavaProcessStoppedEvent(source: Any, val value: JavaProcess) : EventObject(source)
+class JavaProcessStoppedEvent(source: Any, val value: ManagedProcess) : EventObject(source)
 
 /**
  * This event gets fired when we launch the JVM and it got crashed.
@@ -79,4 +79,4 @@ class JavaProcessStoppedEvent(source: Any, val value: JavaProcess) : EventObject
  * @param JavaProcess the crashed process.
  * @author huangyuhui
  */
-class JVMLaunchFailedEvent(source: Any, val value: JavaProcess) : EventObject(source)
+class JVMLaunchFailedEvent(source: Any, val value: ManagedProcess) : EventObject(source)

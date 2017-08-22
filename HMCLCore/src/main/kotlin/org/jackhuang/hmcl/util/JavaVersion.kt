@@ -24,12 +24,26 @@ import java.io.Serializable
 import java.util.*
 import java.util.regex.Pattern
 
+/**
+ * Represents a Java installation.
+ */
 data class JavaVersion internal constructor(
         @SerializedName("location")
         val binary: File,
         val longVersion: String,
         val platform: Platform) : Serializable
 {
+    /**
+     * The major version of Java installation.
+     *
+     * @see JAVA_X
+     * @see JAVA_9
+     * @see JAVA_8
+     * @see JAVA_7
+     * @see JAVA_6
+     * @see JAVA_5
+     * @see UNKNOWN
+     */
     val version = parseVersion(longVersion)
 
     companion object {
@@ -110,10 +124,12 @@ data class JavaVersion internal constructor(
                 return path.resolve("java")
         }
 
-        private val currentJava: JavaVersion = JavaVersion(
-                binary = getJavaFile(File(System.getProperty("java.home"))),
-                longVersion = System.getProperty("java.version"),
-                platform = Platform.PLATFORM)
+        private val currentJava: JavaVersion by lazy {
+            JavaVersion(
+                    binary = getJavaFile(File(System.getProperty("java.home"))),
+                    longVersion = System.getProperty("java.version"),
+                    platform = Platform.PLATFORM)
+        }
         fun fromCurrentEnvironment() = currentJava
 
         init {

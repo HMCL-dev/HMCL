@@ -18,13 +18,15 @@
 package org.jackhuang.hmcl.game
 
 import java.io.File
+import java.io.IOException
 
 /**
  * Supports operations on versioning.
  *
- * Note that game repository will not do any tasks that connect to Internet.
+ * Note that game repository will not do any tasks that connect to Internet, if do, see [org.jackhuang.hmcl.download.DependencyManager]
  */
 interface GameRepository : VersionProvider {
+
     /**
      * Does the version of id exist?
      * @param id the id of version
@@ -126,7 +128,8 @@ interface GameRepository : VersionProvider {
      * Will reconstruct assets or do some blocking tasks if necessary.
      * You'd better create a new thread to invoke this method.
      *
-     * @param assetId the asset id, [AssetIndexInfo.id] [Version.assets]
+     * @param version the id of specific version that is relevant to [assetId]
+     * @param assetId the asset id, you can find it in [AssetIndexInfo.id] [Version.actualAssetIndex.id]
      * @throws java.io.IOException if I/O operation fails.
      * @return the actual asset directory
      */
@@ -134,24 +137,31 @@ interface GameRepository : VersionProvider {
 
     /**
      * Get the asset directory according to the asset id.
+     *
+     * @param version the id of specific version that is relevant to [assetId]
+     * @param assetId the asset id, you can find it in [AssetIndexInfo.id] [Version.actualAssetIndex.id]
+     * @return the asset directory
      */
     fun getAssetDirectory(version: String, assetId: String): File
 
     /**
      * Get the file that given asset object refers to
      *
-     * @param assetId the asset id, [AssetIndexInfo.id] [Version.assets]
-     * @param name the asset object name, [AssetIndex.objects.key]
+     * @param version the id of specific version that is relevant to [assetId]
+     * @param assetId the asset id, you can find it in [AssetIndexInfo.id] [Version.actualAssetIndex.id]
+     * @param name the asset object name, you can find it in [AssetIndex.objects.keys]
      * @throws java.io.IOException if I/O operation fails.
      * @return the file that given asset object refers to
      */
+    @Throws(IOException::class)
     fun getAssetObject(version: String, assetId: String, name: String): File
 
     /**
      * Get the file that given asset object refers to
      *
-     * @param assetId the asset id, [AssetIndexInfo.id] [Version.assets]
-     * @param obj the asset object, [AssetIndex.objects]
+     * @param version the id of specific version that is relevant to [assetId]
+     * @param assetId the asset id, you can find it in [AssetIndexInfo.id] [Version.actualAssetIndex.id]
+     * @param obj the asset object, you can find it in [AssetIndex.objects]
      * @return the file that given asset object refers to
      */
     fun getAssetObject(version: String, assetId: String, obj: AssetObject): File
@@ -159,17 +169,28 @@ interface GameRepository : VersionProvider {
     /**
      * Get asset index that assetId represents
      *
-     * @param assetId the asset id, [AssetIndexInfo.id] [Version.assets]
+     * @param version the id of specific version that is relevant to [assetId]
+     * @param assetId the asset id, you can find it in [AssetIndexInfo.id] [Version.actualAssetIndex.id]
      * @return the asset index
      */
     fun getAssetIndex(version: String, assetId: String): AssetIndex
 
     /**
+     * Get the asset_index.json which includes asset objects information.
+     *
+     * @param version the id of specific version that is relevant to [assetId]
+     * @param assetId the asset id, you can find it in [AssetIndexInfo.id] [Version.actualAssetIndex.id]
+     */
+    fun getIndexFile(version: String, assetId: String): File
+
+    /**
      * Get logging object
      *
-     * @param assetId the asset id, [AssetIndexInfo.id] [Version.assets]
+     * @param version the id of specific version that is relevant to [assetId]
+     * @param assetId the asset id, you can find it in [AssetIndexInfo.id] [Version.assets]
      * @param loggingInfo the logging info
      * @return the file that loggingInfo refers to
      */
     fun getLoggingObject(version: String, assetId: String, loggingInfo: LoggingInfo): File
+
 }

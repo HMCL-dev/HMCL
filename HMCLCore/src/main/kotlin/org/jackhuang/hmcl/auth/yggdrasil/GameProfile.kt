@@ -19,9 +19,7 @@ package org.jackhuang.hmcl.auth.yggdrasil
 
 import com.google.gson.*
 import java.lang.reflect.Type
-import com.google.gson.JsonObject
-import java.util.UUID
-import com.google.gson.JsonParseException
+import java.util.*
 
 data class GameProfile(
         val id: UUID? = null,

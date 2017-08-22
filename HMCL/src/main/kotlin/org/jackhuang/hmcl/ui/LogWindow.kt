@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.util.Log4jLevel
 import org.jackhuang.hmcl.util.inc
+import org.jackhuang.hmcl.util.onChange
 import org.jackhuang.hmcl.util.readFullyAsString
 import org.w3c.dom.Document
 import org.w3c.dom.Node
@@ -90,8 +91,8 @@ class LogWindow : Stage() {
 
             engine = webView.engine
             engine.loadContent(javaClass.getResourceAsStream("/assets/log-window-content.html").readFullyAsString().replace("\${FONT}", "${Settings.font.size}px \"${Settings.font.family}\""))
-            engine.loadWorker.stateProperty().addListener { _, _, newValue ->
-                if (newValue == Worker.State.SUCCEEDED) {
+            engine.loadWorker.stateProperty().onChange {
+                if (it == Worker.State.SUCCEEDED) {
                     document = engine.document
                     body = document.getElementsByTagName("body").item(0)
                     engine.executeScript("limitedLogs=${Settings.logLines};")
@@ -105,8 +106,8 @@ class LogWindow : Stage() {
                     flag = true
                 }
             }
-            cboLines.selectionModel.selectedItemProperty().addListener { _, _, newValue ->
-                Settings.logLines = newValue.toInt()
+            cboLines.selectionModel.selectedItemProperty().onChange {
+                Settings.logLines = it?.toInt() ?: 100
                 engine.executeScript("limitedLogs=${Settings.logLines};")
             }
             if (!flag) {

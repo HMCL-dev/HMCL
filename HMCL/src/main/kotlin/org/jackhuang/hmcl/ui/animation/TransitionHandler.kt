@@ -26,9 +26,7 @@ import javafx.scene.SnapshotParameters
 import javafx.scene.image.ImageView
 import javafx.scene.image.WritableImage
 import javafx.scene.layout.StackPane
-import javafx.scene.shape.Rectangle
 import javafx.util.Duration
-import org.jackhuang.hmcl.ui.setOverflowHidden
 import org.jackhuang.hmcl.ui.takeSnapshot
 
 /**

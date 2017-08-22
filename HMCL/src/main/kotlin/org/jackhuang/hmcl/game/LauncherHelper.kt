@@ -29,15 +29,15 @@ import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.setting.VersionSetting
 import org.jackhuang.hmcl.task.*
 import org.jackhuang.hmcl.ui.*
-import org.jackhuang.hmcl.util.JavaProcess
 import org.jackhuang.hmcl.util.Log4jLevel
+import org.jackhuang.hmcl.util.ManagedProcess
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 
 object LauncherHelper {
     private val launchingStepsPane = LaunchingStepsPane()
-    val PROCESS = ConcurrentLinkedQueue<JavaProcess>()
+    val PROCESS = ConcurrentLinkedQueue<ManagedProcess>()
 
     fun launch() {
         val profile = Settings.selectedProfile
@@ -119,11 +119,11 @@ object LauncherHelper {
                     authInfo.username to "<player>"
             )
         private val launcherVisibility = setting.launcherVisibility
-        private lateinit var process: JavaProcess
+        private lateinit var process: ManagedProcess
         private var lwjgl = false
         private var logWindow: LogWindow? = null
         private val logs = LinkedList<Pair<String, Log4jLevel>>()
-        override fun setProcess(process: JavaProcess) {
+        override fun setProcess(process: ManagedProcess) {
             this.process = process
 
             if (setting.showLogs) {

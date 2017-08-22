@@ -22,9 +22,10 @@ import javafx.beans.InvalidationListener
 import org.jackhuang.hmcl.download.DefaultDependencyManager
 import org.jackhuang.hmcl.game.HMCLGameRepository
 import org.jackhuang.hmcl.mod.ModManager
-import org.jackhuang.hmcl.util.*
-import org.jackhuang.hmcl.util.property.ImmediateObjectProperty
-import org.jackhuang.hmcl.util.property.ImmediateStringProperty
+import org.jackhuang.hmcl.util.ImmediateObjectProperty
+import org.jackhuang.hmcl.util.ImmediateStringProperty
+import org.jackhuang.hmcl.util.getValue
+import org.jackhuang.hmcl.util.setValue
 import java.io.File
 import java.lang.reflect.Type
 

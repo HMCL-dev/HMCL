@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * This class is to parse log4j classic XML layout logging, since only vanilla Minecraft will enable this layout.
+ * Also supports plain logs.
  */
 internal class Log4jHandler(val callback: (String, Log4jLevel) -> Unit) : Thread() {
     val reader = XMLReaderFactory.createXMLReader().apply {
@@ -53,6 +54,9 @@ internal class Log4jHandler(val callback: (String, Log4jLevel) -> Unit) : Thread
         }
     }
 
+    /**
+     * Should be called to stop [Log4jHandler] manually.
+     */
     fun onStopped() {
         if (interrupted.get())
             return
@@ -66,7 +70,7 @@ internal class Log4jHandler(val callback: (String, Log4jLevel) -> Unit) : Thread
     }
 
     /**
-     * Should be called in [ProcessListener.onErrorLog] and [ProcessListener.onLog] manually.
+     * New XML line.
      */
     fun newLine(content: String) =
         Scheduler.COMPUTATION.schedule {
@@ -102,6 +106,7 @@ internal class Log4jHandler(val callback: (String, Log4jLevel) -> Unit) : Thread
                         l = Log4jLevel.ERROR
                 }
                 "log4j_Message" -> readingMessage = true
+                "log4j_Throwable" -> {}
             }
         }
 

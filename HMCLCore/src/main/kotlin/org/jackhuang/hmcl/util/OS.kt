@@ -25,17 +25,31 @@ import java.lang.management.ManagementFactory
 import java.nio.charset.Charset
 import java.util.*
 
+/**
+ * Represents the operating system.
+ */
 enum class OS {
-    @SerializedName("windows")
+    /**
+     * Microsoft Windows.
+     */
     WINDOWS,
-    @SerializedName("linux")
+    /**
+     * Linux and Unix like OS, including Solaris.
+     */
     LINUX,
-    @SerializedName("osx")
+    /**
+     * Mac OS X.
+     */
     OSX,
-    @SerializedName("unknown")
+    /**
+     * Unknown operating system.
+     */
     UNKNOWN;
 
     companion object {
+        /**
+         * The current operating system.
+         */
         val CURRENT_OS: OS by lazy {
             System.getProperty("os.name").toLowerCase(Locale.US).run {
                 when {
@@ -47,12 +61,18 @@ enum class OS {
             }
         }
 
-        val TOTAL_MEMORY: Long by lazy {
+        /**
+         * The total memory/MB this computer have.
+         */
+        val TOTAL_MEMORY: Int by lazy {
             val bytes = ReflectionHelper.invoke<Long>(ManagementFactory.getOperatingSystemMXBean(), "getTotalPhysicalMemorySize")
             if (bytes == null) 1024
-            else bytes / 1024 / 1024
+            else (bytes / 1024 / 1024).toInt()
         }
 
+        /**
+         * The suggested memory size/MB for Minecraft to allocate.
+         */
         val SUGGESTED_MEMORY: Int by lazy {
             val memory = TOTAL_MEMORY / 4
             (Math.round(1.0 * memory / 128.0) * 128).toInt()
@@ -61,13 +81,27 @@ enum class OS {
         val PATH_SEPARATOR: String = File.pathSeparator
         val FILE_SEPARATOR: String = File.separator
         val LINE_SEPARATOR: String by lazy(System::lineSeparator)
+
+        /**
+         * The system default encoding.
+         */
         val ENCODING: String by lazy {
             System.getProperty("sun.jnu.encoding", Charset.defaultCharset().name())
         }
 
+        /**
+         * The version of current operating system.
+         */
         val SYSTEM_VERSION: String by lazy { System.getProperty("os.version") }
+
+        /**
+         * The arch of current operating system.
+         */
         val SYSTEM_ARCH: String by lazy { System.getProperty("os.arch") }
 
+        /**
+         * Set the content of clipboard.
+         */
         fun setClipboard(string: String) {
             val clipboard = Clipboard.getSystemClipboard()
             clipboard.setContent(ClipboardContent().apply {

@@ -28,7 +28,6 @@ import javafx.stage.FileChooser
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.mod.readCurseForgeModpackManifest
 import org.jackhuang.hmcl.setting.Profile
-import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.ui.Controllers
 import org.jackhuang.hmcl.ui.construct.Validator
 import org.jackhuang.hmcl.ui.loadFXML

@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.ui.construct.RipplerContainer
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage
+import org.jackhuang.hmcl.util.onChange
 
 /**
  * @see /assets/fxml/main.fxml
@@ -104,9 +105,9 @@ class MainPage : StackPane(), DecoratorPage {
         profile.repository.getVersions().forEach { version ->
             children += buildNode(++i, profile, version.id, minecraftVersion(profile.repository.getVersionJar(version.id)) ?: "Unknown", group)
         }
-        group.selectedToggleProperty().addListener { _, _, newValue ->
-            if (newValue != null)
-                profile.selectedVersion = newValue.properties["version"] as String
+        group.selectedToggleProperty().onChange {
+            if (it != null)
+                profile.selectedVersion = it.properties["version"] as String
         }
         masonryPane.resetChildren(children)
     }

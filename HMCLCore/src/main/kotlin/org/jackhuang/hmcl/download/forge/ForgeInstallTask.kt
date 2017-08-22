@@ -15,8 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.download
+package org.jackhuang.hmcl.download.forge
 
+import org.jackhuang.hmcl.download.DefaultDependencyManager
+import org.jackhuang.hmcl.download.RemoteVersion
+import org.jackhuang.hmcl.download.game.GameLibrariesTask
 import org.jackhuang.hmcl.game.Library
 import org.jackhuang.hmcl.game.SimpleVersionProvider
 import org.jackhuang.hmcl.game.Version
@@ -30,9 +33,9 @@ import java.io.IOException
 import java.util.zip.ZipFile
 
 class ForgeInstallTask(private val dependencyManager: DefaultDependencyManager,
-                        private val gameVersion: String,
-                        private val version: Version,
-                        private val remoteVersion: String) : TaskResult<Version>() {
+                       private val gameVersion: String,
+                       private val version: Version,
+                       private val remoteVersion: String) : TaskResult<Version>() {
     private val forgeVersionList = dependencyManager.getVersionList("forge")
     private val installer: File = File("forge-installer.jar").absoluteFile
     lateinit var remote: RemoteVersion<*>

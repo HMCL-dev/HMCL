@@ -17,24 +17,19 @@
  */
 package org.jackhuang.hmcl.util
 
-import java.util.zip.ZipEntry
 import java.io.File
 import java.io.IOException
-import java.util.zip.ZipOutputStream
+import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 
 /**
- * 功能：把 src 目录下的所有文件进行 zip 格式的压缩，保存为指定 zip 文件
-
- * @param src        源文件夹
- * *
- * @param destZip          压缩生成的zip文件路径。
- * *
- * @param pathNameCallback callback(pathName, isDirectory) returns your
- * *                         modified pathName
- * *
- * *
- * @throws java.io.IOException 压缩失败或无法读取
+ * Compress the given directory to a zip file.
+ *
+ * @param src the source directory or a file.
+ * @param destZip the location of dest zip file.
+ * @param pathNameCallback callback(pathName, isDirectory) returns your modified pathName
+ * @throws IOException
  */
 @JvmOverloads
 @Throws(IOException::class)
@@ -53,14 +48,11 @@ fun zip(src: File, destZip: File, pathNameCallback: ((String, Boolean) -> String
 
 /**
  * Zip file.
-
- * @param src           源文件夹
- * @param basePath         file directory that will be compressed
- * *
- * @param zos              zip文件的os
- * *
- * @param pathNameCallback callback(pathName, isDirectory) returns your
- * *                         modified pathName, null if you dont want this file zipped
+ * @param src source directory to be compressed.
+ * @param basePath the file directory to be compressed, if [src] is a file, this is the parent directory of [src]
+ * @param zos the [ZipOutputStream] of dest zip file.
+ * @param pathNameCallback callback(pathName, isDirectory) returns your modified pathName, null if you dont want this file zipped
+ * @throws IOException
  */
 @Throws(IOException::class)
 private fun zipFile(src: File,
@@ -98,17 +90,11 @@ private fun zipFile(src: File,
 }
 
 /**
- * 将文件压缩成zip文件
-
- * @param zip zip文件路径
- * *
- * @param dest    待压缩文件根目录
- * *
- * @param callback    will be called for every entry in the zip file,
- * *                    returns false if you dont want this file unzipped.
- * *
- * *
- * @throws java.io.IOException 解压失败或无法写入
+ * Decompress the given zip file to a directory.
+ * @param zip the source zip file.
+ * @param dest the dest directory.
+ * @param callback will be called for every entry in the zip file, returns false if you dont want this file unzipped.
+ * @throws IOException
  */
 @JvmOverloads
 @Throws(IOException::class)
@@ -158,21 +144,16 @@ fun unzip(zip: File, dest: File, callback: ((String) -> Boolean)? = null, ignore
 }
 
 /**
- * 将文件压缩成zip文件
-
- * @param zip zip文件路径
- * *
- * @param dest    待压缩文件根目录
- * *
- * @param callback    will be called for every entry in the zip file,
- * *                    returns false if you dont want this file unzipped.
- * *
- * *
- * @throws java.io.IOException 解压失败或无法写入
+ * Decompress the subdirectory of given zip file.
+ * @param zip the source zip file.
+ * @param dest the dest directory.
+ * @param subDirectory the subdirectory of the zip file to be decompressed.
+ * @param ignoreExistentFile true if skip all existent files.
+ * @throws IOException
  */
 @JvmOverloads
 @Throws(IOException::class)
-fun unzipSubDirectory(zip: File, dest: File, subDirectory: String, ignoreExistsFile: Boolean = true) {
+fun unzipSubDirectory(zip: File, dest: File, subDirectory: String, ignoreExistentFile: Boolean = true) {
     val buf = ByteArray(1024)
     dest.mkdirs()
     ZipInputStream(zip.inputStream()).use { zipFile ->
@@ -204,7 +185,7 @@ fun unzipSubDirectory(zip: File, dest: File, subDirectory: String, ignoreExistsF
                             if (!subdir.exists())
                                 subdir.mkdir()
                         }
-                    if (ignoreExistsFile && File(strtemp).exists())
+                    if (ignoreExistentFile && File(strtemp).exists())
                         continue
                     File(strtemp).outputStream().use({ fos ->
                         zipFile.copyTo(fos, buf)

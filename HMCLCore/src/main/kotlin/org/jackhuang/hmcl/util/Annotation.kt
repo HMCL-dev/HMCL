@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.util
 
+/**
+ * Mark if the model is immutable.
+ */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.SOURCE)
 annotation class Immutable

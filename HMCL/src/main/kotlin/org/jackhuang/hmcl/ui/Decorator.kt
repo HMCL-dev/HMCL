@@ -23,7 +23,7 @@ import com.jfoenix.controls.JFXDrawer
 import com.jfoenix.controls.JFXHamburger
 import com.jfoenix.effects.JFXDepthManager
 import com.jfoenix.svg.SVGGlyph
-import javafx.animation.*
+import javafx.animation.Timeline
 import javafx.application.Platform
 import javafx.beans.property.BooleanProperty
 import javafx.beans.property.ObjectProperty
@@ -36,7 +36,6 @@ import javafx.geometry.Insets
 import javafx.scene.Cursor
 import javafx.scene.Node
 import javafx.scene.control.Label
-import javafx.scene.control.ScrollPane
 import javafx.scene.control.Tooltip
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.*
@@ -49,7 +48,8 @@ import org.jackhuang.hmcl.ui.animation.AnimationProducer
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations
 import org.jackhuang.hmcl.ui.animation.TransitionHandler
 import org.jackhuang.hmcl.ui.wizard.*
-import org.jackhuang.hmcl.util.*
+import org.jackhuang.hmcl.util.getValue
+import org.jackhuang.hmcl.util.setValue
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 

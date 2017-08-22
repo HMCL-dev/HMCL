@@ -19,6 +19,10 @@ package org.jackhuang.hmcl.util
 
 import java.util.*
 
+/**
+ * A simple implementation of Multimap.
+ * Just a combination of map and set.
+ */
 class SimpleMultimap<K, V>(val maper: () -> MutableMap<K, Collection<V>>, val valuer: () -> MutableCollection<V>) {
     private val map = HashMap<K, MutableCollection<V>>()
     private val valuesImpl: MutableCollection<V> = valuer()

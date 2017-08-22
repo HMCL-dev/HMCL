@@ -25,6 +25,17 @@ import java.net.Proxy
 import java.net.URL
 import java.nio.charset.Charset
 
+/**
+ * A task that can read the content of a remote text file.
+ *
+ * @param url the URL of remote text file.
+ * @param encoding the encoding/charset of the remote text file.
+ * @param retry the times for retrying if downloading fails.
+ * @param proxy the proxy.
+ * @param id the result variable id, see [Task.variables]
+ *
+ * @author huangyuhui
+ */
 class GetTask @JvmOverloads constructor(val url: URL, val encoding: Charset = Charsets.UTF_8, private val retry: Int = 5, private val proxy: Proxy = Proxy.NO_PROXY, override val id: String = ID): TaskResult<String>() {
     override val scheduler: Scheduler = Scheduler.IO
 
@@ -65,6 +76,9 @@ class GetTask @JvmOverloads constructor(val url: URL, val encoding: Charset = Ch
     }
 
     companion object {
+        /**
+         * The default task result ID.
+         */
         const val ID = "http_get"
     }
 }

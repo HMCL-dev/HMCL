@@ -19,15 +19,14 @@ package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.*
 import javafx.application.Platform
-import javafx.fxml.FXML
-import javafx.scene.Node
-import javafx.scene.control.ScrollPane
-import javafx.scene.layout.StackPane
 import javafx.beans.property.SimpleStringProperty
 import javafx.beans.property.StringProperty
-import javafx.beans.value.ChangeListener
+import javafx.fxml.FXML
+import javafx.scene.Node
 import javafx.scene.control.Label
+import javafx.scene.control.ScrollPane
 import javafx.scene.control.ToggleGroup
+import javafx.scene.layout.StackPane
 import org.jackhuang.hmcl.auth.Account
 import org.jackhuang.hmcl.auth.OfflineAccount
 import org.jackhuang.hmcl.auth.yggdrasil.InvalidCredentialsException
@@ -37,6 +36,7 @@ import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.task.taskResult
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage
+import org.jackhuang.hmcl.util.onChange
 
 class AccountsPage() : StackPane(), DecoratorPage {
     override val titleProperty: StringProperty = SimpleStringProperty(this, "title", "Accounts")
@@ -49,14 +49,6 @@ class AccountsPage() : StackPane(), DecoratorPage {
     @FXML lateinit var lblCreationWarning: Label
     @FXML lateinit var cboType: JFXComboBox<String>
     @FXML lateinit var progressBar: JFXProgressBar
-
-    val listener = ChangeListener<Account?> { _, _, newValue ->
-        masonryPane.children.forEach {
-            if (it is AccountItem) {
-                it.chkSelected.isSelected = newValue?.username == it.lblUser.text
-            }
-        }
-    }
 
     init {
         loadFXML("/assets/fxml/account.fxml")
@@ -75,8 +67,8 @@ class AccountsPage() : StackPane(), DecoratorPage {
         }
         txtPassword.validate()
 
-        cboType.selectionModel.selectedIndexProperty().addListener { _, _, newValue ->
-            val visible = newValue != 0
+        cboType.selectionModel.selectedIndexProperty().onChange {
+            val visible = it != 0
             txtPassword.isVisible = visible
         }
         cboType.selectionModel.select(0)
@@ -84,16 +76,18 @@ class AccountsPage() : StackPane(), DecoratorPage {
         txtPassword.setOnAction { onCreationAccept() }
         txtUsername.setOnAction { onCreationAccept() }
 
-        Settings.selectedAccountProperty.addListener(listener)
+        Settings.selectedAccountProperty.setChangedListener { account ->
+            masonryPane.children.forEach { node ->
+                if (node is AccountItem) {
+                    node.chkSelected.isSelected = account?.username == node.lblUser.text
+                }
+            }
+        }
 
         loadAccounts()
 
         if (Settings.getAccounts().isEmpty())
             addNewAccount()
-    }
-
-    override fun onClose() {
-        Settings.selectedAccountProperty.removeListener(listener)
     }
 
     fun loadAccounts() {
@@ -103,9 +97,9 @@ class AccountsPage() : StackPane(), DecoratorPage {
         for ((_, account) in Settings.getAccounts()) {
             children += buildNode(++i, account, group)
         }
-        group.selectedToggleProperty().addListener { _, _, newValue ->
-            if (newValue != null)
-                Settings.selectedAccount = newValue.properties["account"] as Account
+        group.selectedToggleProperty().onChange {
+            if (it != null)
+                Settings.selectedAccount = it.properties["account"] as Account
         }
         masonryPane.resetChildren(children)
         Platform.runLater {

@@ -17,9 +17,16 @@
  */
 package org.jackhuang.hmcl.download
 
-import org.jackhuang.hmcl.game.*
+import org.jackhuang.hmcl.download.game.GameAssetDownloadTask
+import org.jackhuang.hmcl.download.game.GameLibrariesTask
+import org.jackhuang.hmcl.download.game.GameLoggingDownloadTask
+import org.jackhuang.hmcl.download.game.VersionJSONSaveTask
+import org.jackhuang.hmcl.game.Version
 import org.jackhuang.hmcl.task.*
-import org.jackhuang.hmcl.util.*
+import org.jackhuang.hmcl.util.AutoTypingMap
+import org.jackhuang.hmcl.util.GSON
+import org.jackhuang.hmcl.util.fromJson
+import org.jackhuang.hmcl.util.toURL
 import java.util.*
 
 class DefaultGameBuilder(val dependencyManager: DefaultDependencyManager): GameBuilder() {

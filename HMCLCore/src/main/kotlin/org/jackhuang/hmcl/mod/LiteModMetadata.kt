@@ -18,11 +18,13 @@
 package org.jackhuang.hmcl.mod
 
 import com.google.gson.JsonParseException
-import org.jackhuang.hmcl.util.*
+import org.jackhuang.hmcl.util.GSON
+import org.jackhuang.hmcl.util.fromJson
+import org.jackhuang.hmcl.util.readFullyAsString
 import java.io.File
 import java.util.zip.ZipFile
 
-class LiteModMetadata (
+class LiteModMetadata @JvmOverloads internal constructor(
         val name: String = "",
         val version: String = "",
         val mcversion: String = "",
@@ -37,6 +39,9 @@ class LiteModMetadata (
 ) {
 
     companion object {
+        /**
+         * Read LiteLoader mod ModInfo.
+         */
         fun fromFile(modFile: File): ModInfo {
             ZipFile(modFile).use {
                 val entry = it.getEntry("litemod.json")

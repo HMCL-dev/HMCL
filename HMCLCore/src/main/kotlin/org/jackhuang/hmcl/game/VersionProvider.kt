@@ -23,6 +23,7 @@ package org.jackhuang.hmcl.game
  * @see Version.resolve
  */
 interface VersionProvider {
+
     /**
      * Does the version of id exist?
      * @param id the id of version
@@ -36,4 +37,5 @@ interface VersionProvider {
      * @return the version you want
      */
     fun getVersion(id: String): Version
+
 }

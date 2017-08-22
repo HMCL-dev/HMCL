@@ -22,6 +22,7 @@ import javafx.fxml.FXML
 import javafx.scene.control.Label
 import javafx.scene.layout.BorderPane
 import org.jackhuang.hmcl.mod.ModInfo
+import org.jackhuang.hmcl.util.onChange
 
 class ModItem(info: ModInfo, private val deleteCallback: (ModItem) -> Unit) : BorderPane() {
     @FXML lateinit var lblModFileName: Label
@@ -34,8 +35,8 @@ class ModItem(info: ModInfo, private val deleteCallback: (ModItem) -> Unit) : Bo
         lblModFileName.text = info.fileName
         lblModAuthor.text = "${info.name}, Version: ${info.version}, Game Version: ${info.mcversion}, Authors: ${info.authors}"
         chkEnabled.isSelected = info.isActive
-        chkEnabled.selectedProperty().addListener { _, _, newValue ->
-            info.activeProperty.set(newValue)
+        chkEnabled.selectedProperty().onChange {
+            info.activeProperty.set(it)
         }
     }
 

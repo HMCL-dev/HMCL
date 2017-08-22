@@ -17,13 +17,25 @@
  */
 package org.jackhuang.hmcl.task
 
-import javafx.application.Platform
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicReference
-import javax.swing.SwingUtilities
 
+/**
+ * Determines how a task is executed.
+ *
+ * @see [Task.scheduler]
+ */
 interface Scheduler {
+    /**
+     * Schedules the given task.
+     * @return the future, null if future is not supported.
+     */
     fun schedule(block: () -> Unit): Future<*>? = schedule(Callable { block() })
+
+    /**
+     * Schedules the given task.
+     * @return the future, null if future is not supported.
+     */
     fun schedule(block: Callable<Unit>): Future<*>?
 
     private class SchedulerImpl(val executor: (Runnable) -> Unit) : Scheduler {
@@ -58,7 +70,7 @@ interface Scheduler {
     }
 
     private class SchedulerExecutorService(val executorService: ExecutorService) : Scheduler {
-        override fun schedule(block: Callable<Unit>) = executorService.submit(block)
+        override fun schedule(block: Callable<Unit>): Future<*> = executorService.submit(block)
     }
 
     companion object Schedulers {
@@ -90,13 +102,44 @@ interface Scheduler {
                 return null
             }
         }
-        val JAVAFX: Scheduler = SchedulerImpl(Platform::runLater)
-        val SWING: Scheduler = SchedulerImpl(SwingUtilities::invokeLater)
+
+        /**
+         * A scheduler for JavaFX UI operations.
+         */
+        val JAVAFX: Scheduler = SchedulerImpl(javafx.application.Platform::runLater)
+
+        /**
+         * A scheduler for Swing UI operations.
+         */
+        val SWING: Scheduler = SchedulerImpl(javax.swing.SwingUtilities::invokeLater)
+
+        /**
+         * A scheduler that always create new threads to execute tasks.
+         * For tasks that do not do heavy operations.
+         */
         val NEW_THREAD: Scheduler = SchedulerExecutorService(CACHED_EXECUTOR)
+
+        /**
+         * A scheduler that exclusively executes tasks that do I/O operations.
+         * The number tasks that do I/O operations in the meantime cannot be larger then 6.
+         */
         val IO: Scheduler = SchedulerExecutorService(IO_EXECUTOR)
+
+        /**
+         * A scheduler that exclusively executes tasks that do computations.
+         * The best way to do computations is an event queue.
+         */
         val COMPUTATION: Scheduler = SchedulerExecutorService(SINGLE_EXECUTOR)
+
+        /**
+         * The default scheduler for tasks to be executed.
+         * @see [Task.scheduler]
+         */
         val DEFAULT = NEW_THREAD
 
+        /**
+         * Shut down all executor services to guarantee that the application can stop implicitly.
+         */
         fun shutdown() {
             CACHED_EXECUTOR.shutdown()
             IO_EXECUTOR.shutdown()

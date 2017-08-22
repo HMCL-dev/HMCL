@@ -17,6 +17,13 @@
  */
 package org.jackhuang.hmcl.download
 
+import org.jackhuang.hmcl.download.forge.ForgeInstallTask
+import org.jackhuang.hmcl.download.game.GameAssetDownloadTask
+import org.jackhuang.hmcl.download.game.GameLibrariesTask
+import org.jackhuang.hmcl.download.game.GameLoggingDownloadTask
+import org.jackhuang.hmcl.download.game.VersionJSONSaveTask
+import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask
+import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask
 import org.jackhuang.hmcl.game.DefaultGameRepository
 import org.jackhuang.hmcl.game.Version
 import org.jackhuang.hmcl.task.ParallelTask
@@ -27,8 +34,8 @@ import java.net.Proxy
 /**
  * This class has no state.
  */
-class DefaultDependencyManager(override val repository: DefaultGameRepository, override var downloadProvider: DownloadProvider, proxy: Proxy = Proxy.NO_PROXY)
-    : AbstractDependencyManager(repository, proxy) {
+class DefaultDependencyManager(override val repository: DefaultGameRepository, override var downloadProvider: DownloadProvider, override val proxy: Proxy = Proxy.NO_PROXY)
+    : AbstractDependencyManager() {
 
     override fun gameBuilder(): GameBuilder = DefaultGameBuilder(this)
 

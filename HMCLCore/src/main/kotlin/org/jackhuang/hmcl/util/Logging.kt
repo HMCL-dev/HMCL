@@ -18,13 +18,13 @@
 @file:JvmName("HMCLog")
 package org.jackhuang.hmcl.util
 
+import javafx.scene.paint.Color
 import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.logging.*
 import java.util.logging.Formatter
-import javafx.scene.paint.Color
 import java.util.regex.Pattern
 
 val LOG = Logger.getLogger("HMCL").apply {

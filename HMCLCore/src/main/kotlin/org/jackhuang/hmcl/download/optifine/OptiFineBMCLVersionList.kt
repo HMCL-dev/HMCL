@@ -15,15 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.download
+package org.jackhuang.hmcl.download.optifine
 
+import org.jackhuang.hmcl.download.DownloadProvider
+import org.jackhuang.hmcl.download.RemoteVersion
+import org.jackhuang.hmcl.download.VersionList
 import org.jackhuang.hmcl.task.GetTask
 import org.jackhuang.hmcl.task.Task
 import org.jackhuang.hmcl.util.GSON
 import org.jackhuang.hmcl.util.asVersion
 import org.jackhuang.hmcl.util.toURL
 import org.jackhuang.hmcl.util.typeOf
-import java.util.TreeSet
 
 object OptiFineBMCLVersionList : VersionList<Unit>() {
     override fun refreshAsync(downloadProvider: DownloadProvider): Task {

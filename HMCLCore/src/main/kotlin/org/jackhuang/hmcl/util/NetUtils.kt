@@ -19,20 +19,19 @@ package org.jackhuang.hmcl.util
 
 import java.io.IOException
 import java.io.InputStream
+import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.Proxy
 import java.net.URL
 import java.security.GeneralSecurityException
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
+import java.util.*
+import java.util.logging.Level
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
-import java.io.OutputStream
-import java.util.*
-import java.util.logging.Level
-import kotlin.text.Charsets
 
 private val XTM = object : X509TrustManager {
     override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}

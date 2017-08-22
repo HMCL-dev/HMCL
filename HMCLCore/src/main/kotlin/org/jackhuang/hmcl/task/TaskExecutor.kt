@@ -19,11 +19,13 @@ package org.jackhuang.hmcl.task
 
 import org.jackhuang.hmcl.util.AutoTypingMap
 import org.jackhuang.hmcl.util.LOG
-import java.util.concurrent.*
+import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Level
-import kotlin.concurrent.thread
 
 class TaskExecutor() {
     var taskListener: TaskListener? = null

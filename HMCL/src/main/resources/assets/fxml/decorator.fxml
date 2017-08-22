@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import com.jfoenix.controls.*?>
-<?import com.jfoenix.transitions.hamburger.HamburgerBackArrowBasicTransition?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.*?>
@@ -60,7 +59,11 @@
                     <BorderPane minWidth="200" maxWidth="200" fx:id="titleWrapper">
                         <center>
                             <Label fx:id="lblTitle" BorderPane.alignment="CENTER" mouseTransparent="true"
-                                   style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 15px;"/>
+                                   style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 15px;">
+                                <BorderPane.margin>
+                                    <Insets left="3" />
+                                </BorderPane.margin>
+                            </Label>
                         </center>
                         <right>
                             <Rectangle height="${navBar.height}" width="1" fill="gray"/>

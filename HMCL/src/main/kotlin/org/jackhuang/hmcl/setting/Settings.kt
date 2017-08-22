@@ -20,26 +20,23 @@ package org.jackhuang.hmcl.setting
 import com.google.gson.GsonBuilder
 import javafx.beans.InvalidationListener
 import javafx.scene.text.Font
-import java.io.IOException
 import org.jackhuang.hmcl.Main
+import org.jackhuang.hmcl.ProfileChangedEvent
+import org.jackhuang.hmcl.ProfileLoadingEvent
+import org.jackhuang.hmcl.auth.Account
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider
 import org.jackhuang.hmcl.download.DownloadProvider
 import org.jackhuang.hmcl.download.MojangDownloadProvider
-import org.jackhuang.hmcl.util.LOG
-import java.io.File
-import java.util.logging.Level
-import org.jackhuang.hmcl.ProfileLoadingEvent
-import org.jackhuang.hmcl.ProfileChangedEvent
-import org.jackhuang.hmcl.auth.Account
-import org.jackhuang.hmcl.util.*
 import org.jackhuang.hmcl.event.EVENT_BUS
-import org.jackhuang.hmcl.util.property.ImmediateObjectProperty
-import org.jackhuang.hmcl.util.property.ImmediateStringProperty
+import org.jackhuang.hmcl.util.*
+import java.io.File
+import java.io.IOException
 import java.net.Authenticator
 import java.net.InetSocketAddress
 import java.net.PasswordAuthentication
 import java.net.Proxy
 import java.util.*
+import java.util.logging.Level
 
 object Settings {
     val GSON = GsonBuilder()

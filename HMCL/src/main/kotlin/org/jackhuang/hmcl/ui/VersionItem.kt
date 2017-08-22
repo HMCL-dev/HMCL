@@ -18,9 +18,7 @@
 package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.JFXButton
-import com.jfoenix.controls.JFXCheckBox
 import com.jfoenix.controls.JFXRadioButton
-import com.jfoenix.effects.JFXDepthManager
 import javafx.beans.binding.Bindings
 import javafx.fxml.FXML
 import javafx.scene.control.Label

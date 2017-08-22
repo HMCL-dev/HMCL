@@ -26,11 +26,15 @@ import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.geometry.Insets
 import javafx.scene.Node
-import javafx.scene.layout.*
+import javafx.scene.layout.Background
+import javafx.scene.layout.BackgroundFill
+import javafx.scene.layout.CornerRadii
+import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
 import javafx.scene.paint.Paint
 import javafx.scene.shape.Rectangle
 import org.jackhuang.hmcl.util.getValue
+import org.jackhuang.hmcl.util.onChange
 import org.jackhuang.hmcl.util.setValue
 import java.util.concurrent.Callable
 
@@ -92,8 +96,8 @@ open class RipplerContainer(@NamedArg("container") container: Node): StackPane()
             }
 
         }
-        focusedProperty().addListener { _, _, newVal ->
-            if (newVal) {
+        focusedProperty().onChange {
+            if (it) {
                 if (!isPressed) {
                     this.buttonRippler.showOverlay()
                 }
@@ -125,7 +129,7 @@ open class RipplerContainer(@NamedArg("container") container: Node): StackPane()
                 return@Callable background
             }
         }, backgroundProperty()))
-        ripplerFillProperty.addListener { _, _, newVal -> this.buttonRippler.ripplerFill = newVal }
+        ripplerFillProperty.onChange { this.buttonRippler.ripplerFill = it }
         if (background == null || this.isJavaDefaultBackground(background)) {
             background = Background(BackgroundFill(Color.TRANSPARENT, this.defaultRadii, null))
         }

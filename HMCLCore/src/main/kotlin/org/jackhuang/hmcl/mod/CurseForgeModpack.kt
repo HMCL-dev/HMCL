@@ -99,14 +99,27 @@ class CurseForgeModpackManifestFile (
     val url: URL get() = "https://minecraft.curseforge.com/projects/$projectID/files/$fileID/download".toURL()
 }
 
+/**
+ * @param f the CurseForge modpack file.
+ * @return the manifest.
+ */
 fun readCurseForgeModpackManifest(f: File): CurseForgeModpackManifest {
     ZipFile(f).use { zipFile ->
-        val entry = zipFile.getEntry("manifest.json") ?: throw IOException("Manifest.json not found. Not a valid CurseForge modpack.")
+        val entry = zipFile.getEntry("manifest.json") ?: throw IOException("`manifest.json` not found. Not a valid CurseForge modpack.")
         val json = zipFile.getInputStream(entry).readFullyAsString()
-        return GSON.fromJson<CurseForgeModpackManifest>(json) ?: throw JsonParseException("Manifest.json not found. Not a valid CurseForge modpack.")
+        return GSON.fromJson<CurseForgeModpackManifest>(json) ?: throw JsonParseException("`manifest.json` not found. Not a valid CurseForge modpack.")
     }
 }
 
+/**
+ * Install a downloaded CurseForge modpack.
+ *
+ * @param dependencyManager the dependency manager.
+ * @param zipFile the CurseForge modpack file.
+ * @param manifest The manifest content of given CurseForge modpack.
+ * @param name the new version name
+ * @see readCurseForgeModpackManifest
+ */
 class CurseForgeModpackInstallTask(private val dependencyManager: DefaultDependencyManager, private val zipFile: File, private val manifest: CurseForgeModpackManifest, private val name: String): Task() {
     val repository = dependencyManager.repository
     init {
@@ -136,7 +149,8 @@ class CurseForgeModpackInstallTask(private val dependencyManager: DefaultDepende
                 f.fileName = f.url.detectFileName(dependencyManager.proxy)
                 dependencies += FileDownloadTask(f.url, run.resolve("mods").resolve(f.fileName), proxy = dependencyManager.proxy)
             } catch (e: IOException) {
-                // ignore it and retry next time.
+                // Because in China, the CurseForge is too difficult to visit.
+                // So if failed, ignore it and retry next time.
             }
             ++finished
             updateProgress(1.0 * finished / manifest.files.size)
@@ -146,6 +160,12 @@ class CurseForgeModpackInstallTask(private val dependencyManager: DefaultDepende
     }
 }
 
+/**
+ * Complete the CurseForge version.
+ *
+ * @param dependencyManager the dependency manager.
+ * @param version the existent and physical version.
+ */
 class CurseForgeModpackCompletionTask(dependencyManager: DependencyManager, version: String): Task() {
     val repository = dependencyManager.repository
     val run = repository.getRunDirectory(version)
@@ -161,6 +181,8 @@ class CurseForgeModpackCompletionTask(dependencyManager: DependencyManager, vers
             else {
                 manifest = GSON.fromJson<CurseForgeModpackManifest>(repository.getVersionRoot(version).resolve("manifest.json").readText())!!
 
+                // Because in China, the CurseForge is too difficult to visit.
+                // So caching the file name is necessary.
                 for (f in manifest!!.files) {
                     if (f.fileName.isBlank())
                         dependents += task { f.fileName = f.url.detectFileName(proxy) }

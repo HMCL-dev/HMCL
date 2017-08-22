@@ -19,6 +19,9 @@ package org.jackhuang.hmcl.util
 
 import java.util.*
 
+/**
+ * The formatted version number represents a version string.
+ */
 abstract class VersionNumber: Comparable<VersionNumber> {
     companion object {
         @JvmStatic
@@ -47,6 +50,9 @@ abstract class VersionNumber: Comparable<VersionNumber> {
     }
 }
 
+/**
+ * If a version string contains alphabets, a [StringVersionNumber] will be constructed.
+ */
 class StringVersionNumber internal constructor(val version: String): VersionNumber() {
     override fun compareTo(other: VersionNumber): Int {
         if (other !is StringVersionNumber) return 0
@@ -64,6 +70,9 @@ class StringVersionNumber internal constructor(val version: String): VersionNumb
     }
 }
 
+/**
+ * If a version string formats x.x.x.x, a [IntVersionNumber] will be generated.
+ */
 class IntVersionNumber internal constructor(val version: List<Int>): VersionNumber() {
 
     override fun compareTo(other: VersionNumber): Int {

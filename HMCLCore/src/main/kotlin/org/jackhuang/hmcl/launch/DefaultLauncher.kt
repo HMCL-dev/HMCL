@@ -18,14 +18,16 @@
 package org.jackhuang.hmcl.launch
 
 import org.jackhuang.hmcl.auth.AuthInfo
-import org.jackhuang.hmcl.game.*
+import org.jackhuang.hmcl.game.DownloadType
+import org.jackhuang.hmcl.game.GameException
+import org.jackhuang.hmcl.game.GameRepository
+import org.jackhuang.hmcl.game.LaunchOptions
 import org.jackhuang.hmcl.task.TaskResult
 import org.jackhuang.hmcl.util.*
 import java.io.File
 import java.io.IOException
 import java.util.*
 import kotlin.concurrent.thread
-import kotlin.coroutines.experimental.EmptyCoroutineContext.plus
 
 /**
  * @param versionId The version to be launched.
@@ -220,7 +222,7 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
         }
     }
 
-    override fun launch(): JavaProcess {
+    override fun launch(): ManagedProcess {
 
         // To guarantee that when failed to generate code, we will not call precalled command
         val builder = ProcessBuilder(rawCommandLine)
@@ -237,7 +239,7 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
 
         builder.directory(repository.getRunDirectory(version.id))
                 .environment().put("APPDATA", options.gameDir.absoluteFile.parent)
-        val p = JavaProcess(builder.start(), rawCommandLine)
+        val p = ManagedProcess(builder.start(), rawCommandLine)
         if (listener == null)
             startMonitors(p)
         else
@@ -245,8 +247,8 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
         return p
     }
 
-    fun launchAsync(): TaskResult<JavaProcess> {
-        return object : TaskResult<JavaProcess>() {
+    fun launchAsync(): TaskResult<ManagedProcess> {
+        return object : TaskResult<ManagedProcess>() {
             override val id = LAUNCH_ASYNC_ID
             override fun execute() {
                 result = launch()
@@ -279,20 +281,20 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
         return scriptFile
     }
 
-    private fun startMonitors(javaProcess: JavaProcess) {
-        javaProcess.relatedThreads += thread(name = "stdout-pump", isDaemon = true, block = StreamPump(javaProcess.process.inputStream)::run)
-        javaProcess.relatedThreads += thread(name = "stderr-pump", isDaemon = true, block = StreamPump(javaProcess.process.errorStream)::run)
+    private fun startMonitors(managedProcess: ManagedProcess) {
+        managedProcess.relatedThreads += thread(name = "stdout-pump", isDaemon = true, block = StreamPump(managedProcess.process.inputStream)::run)
+        managedProcess.relatedThreads += thread(name = "stderr-pump", isDaemon = true, block = StreamPump(managedProcess.process.errorStream)::run)
     }
 
-    private fun startMonitors(javaProcess: JavaProcess, processListener: ProcessListener, isDaemon: Boolean = true) {
-        processListener.setProcess(javaProcess)
-        val logHandler = Log4jHandler { line, level -> processListener.onLog(line, level); javaProcess.lines += line }.apply { start() }
-        javaProcess.relatedThreads += logHandler
-        val stdout = thread(name = "stdout-pump", isDaemon = isDaemon, block = StreamPump(javaProcess.process.inputStream, { logHandler.newLine(it) } )::run)
-        javaProcess.relatedThreads += stdout
-        val stderr = thread(name = "stderr-pump", isDaemon = isDaemon, block = StreamPump(javaProcess.process.errorStream, { processListener.onLog(it + OS.LINE_SEPARATOR, Log4jLevel.ERROR); javaProcess.lines += it })::run)
-        javaProcess.relatedThreads += stderr
-        javaProcess.relatedThreads += thread(name = "exit-waiter", isDaemon = isDaemon, block = ExitWaiter(javaProcess, listOf(stdout, stderr), { exitCode, exitType -> logHandler.onStopped(); processListener.onExit(exitCode, exitType) })::run)
+    private fun startMonitors(managedProcess: ManagedProcess, processListener: ProcessListener, isDaemon: Boolean = true) {
+        processListener.setProcess(managedProcess)
+        val logHandler = Log4jHandler { line, level -> processListener.onLog(line, level); managedProcess.lines += line }.apply { start() }
+        managedProcess.relatedThreads += logHandler
+        val stdout = thread(name = "stdout-pump", isDaemon = isDaemon, block = StreamPump(managedProcess.process.inputStream, { logHandler.newLine(it) } )::run)
+        managedProcess.relatedThreads += stdout
+        val stderr = thread(name = "stderr-pump", isDaemon = isDaemon, block = StreamPump(managedProcess.process.errorStream, { processListener.onLog(it + OS.LINE_SEPARATOR, Log4jLevel.ERROR); managedProcess.lines += it })::run)
+        managedProcess.relatedThreads += stderr
+        managedProcess.relatedThreads += thread(name = "exit-waiter", isDaemon = isDaemon, block = ExitWaiter(managedProcess, listOf(stdout, stderr), { exitCode, exitType -> logHandler.onStopped(); processListener.onExit(exitCode, exitType) })::run)
     }
 
     companion object {

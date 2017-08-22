@@ -17,11 +17,11 @@
  */
 package org.jackhuang.hmcl.util
 
-import java.lang.reflect.AccessibleObject
 import sun.misc.Unsafe
+import java.lang.reflect.AccessibleObject
 import java.lang.reflect.Method
-import java.security.PrivilegedExceptionAction
 import java.security.AccessController
+import java.security.PrivilegedExceptionAction
 
 object ReflectionHelper {
 

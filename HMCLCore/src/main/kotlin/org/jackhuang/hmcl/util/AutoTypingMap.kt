@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.util
 
+/**
+ * A map that support auto casting.
+ */
 class AutoTypingMap<K>(private val impl: MutableMap<K, Any>) {
 
     fun clear() = impl.clear()

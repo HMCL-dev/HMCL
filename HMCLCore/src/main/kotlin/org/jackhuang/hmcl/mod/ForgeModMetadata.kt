@@ -26,7 +26,7 @@ import org.jackhuang.hmcl.util.typeOf
 import java.io.File
 import java.util.zip.ZipFile
 
-class ForgeModMetadata(
+class ForgeModMetadata @JvmOverloads internal constructor(
         @SerializedName("modid")
         val modId: String = "",
         val name: String = "",
@@ -42,6 +42,9 @@ class ForgeModMetadata(
 ) {
 
     companion object {
+        /**
+         * Read Forge mod ModInfo.
+         */
         fun fromFile(modFile: File): ModInfo {
             ZipFile(modFile).use {
                 val entry = it.getEntry("mcmod.info") ?: throw JsonParseException("File $modFile is not a Forge mod.")

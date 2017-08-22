@@ -19,15 +19,15 @@ package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.*
 import javafx.beans.InvalidationListener
-import javafx.beans.binding.Bindings
 import javafx.beans.value.ChangeListener
 import javafx.fxml.FXML
-import javafx.geometry.Pos
 import javafx.scene.control.Label
 import javafx.scene.control.ScrollPane
 import javafx.scene.control.Toggle
 import javafx.scene.control.ToggleGroup
-import javafx.scene.layout.*
+import javafx.scene.layout.BorderPane
+import javafx.scene.layout.Pane
+import javafx.scene.layout.VBox
 import javafx.stage.DirectoryChooser
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.VersionSetting

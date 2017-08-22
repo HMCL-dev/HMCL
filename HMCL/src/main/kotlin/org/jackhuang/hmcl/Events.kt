@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl
 
 import org.jackhuang.hmcl.setting.Profile
-import java.util.EventObject
+import java.util.*
 
 /**
  * This event gets fired when the selected profile changed.

@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.ui.construct.FileItem
 import org.jackhuang.hmcl.ui.construct.FontComboBox
 import org.jackhuang.hmcl.ui.construct.Validator
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage
+import org.jackhuang.hmcl.util.onChange
 
 class SettingsPage : StackPane(), DecoratorPage {
     override val titleProperty: StringProperty = SimpleStringProperty(this, "title", i18n("launcher.title.launcher"))
@@ -59,41 +60,33 @@ class SettingsPage : StackPane(), DecoratorPage {
         cboDownloadSource.limitWidth(400.0)
 
         txtProxyHost.text = Settings.proxyHost
-        txtProxyHost.textProperty().addListener { _, _, newValue ->
-            Settings.proxyHost = newValue
-        }
+        txtProxyHost.textProperty().onChange { Settings.proxyHost = it }
 
         txtProxyPort.text = Settings.proxyPort
-        txtProxyPort.textProperty().addListener { _, _, newValue ->
-            Settings.proxyPort = newValue
-        }
+        txtProxyPort.textProperty().onChange { Settings.proxyPort = it }
 
         txtProxyUsername.text = Settings.proxyUser
-        txtProxyUsername.textProperty().addListener { _, _, newValue ->
-            Settings.proxyUser = newValue
-        }
+        txtProxyUsername.textProperty().onChange { Settings.proxyUser = it }
 
         txtProxyPassword.text = Settings.proxyPass
-        txtProxyPassword.textProperty().addListener { _, _, newValue ->
-            Settings.proxyPass = newValue
-        }
+        txtProxyPassword.textProperty().onChange { Settings.proxyPass = it }
 
         cboDownloadSource.selectionModel.select(DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(Settings.downloadProvider))
-        cboDownloadSource.selectionModel.selectedIndexProperty().addListener { _, _, newValue ->
-            Settings.downloadProvider = DownloadProviders.getDownloadProvider(newValue.toInt())
+        cboDownloadSource.selectionModel.selectedIndexProperty().onChange {
+            Settings.downloadProvider = DownloadProviders.getDownloadProvider(it)
         }
 
         cboFont.selectionModel.select(Settings.font.family)
-        cboFont.valueProperty().addListener { _, _, newValue ->
-            val font = Font.font(newValue, Settings.font.size)
+        cboFont.valueProperty().onChange {
+            val font = Font.font(it, Settings.font.size)
             Settings.font = font
             lblDisplay.style = "-fx-font: ${Settings.font.size} \"${font.family}\";"
         }
         txtFontSize.text = Settings.font.size.toString()
         txtFontSize.validators += Validator { it.toDoubleOrNull() != null }
-        txtFontSize.textProperty().addListener { _, _, newValue ->
+        txtFontSize.textProperty().onChange {
             if (txtFontSize.validate()) {
-                val font = Font.font(Settings.font.family, newValue.toDouble())
+                val font = Font.font(Settings.font.family, it!!.toDouble())
                 Settings.font = font
                 lblDisplay.style = "-fx-font: ${font.size} \"${Settings.font.family}\";"
             }
@@ -106,13 +99,13 @@ class SettingsPage : StackPane(), DecoratorPage {
         }
         cboLanguage.items = list
         cboLanguage.selectionModel.select(Locales.LOCALES.indexOf(Settings.locale))
-        cboLanguage.selectionModel.selectedIndexProperty().addListener { _, _, newValue ->
-            Settings.locale = Locales.getLocale(newValue.toInt())
+        cboLanguage.selectionModel.selectedIndexProperty().onChange {
+            Settings.locale = Locales.getLocale(it)
         }
 
         cboProxyType.selectionModel.select(Proxies.PROXIES.indexOf(Settings.proxyType))
-        cboProxyType.selectionModel.selectedIndexProperty().addListener { _, _, newValue ->
-            Settings.proxyType = Proxies.getProxyType(newValue.toInt())
+        cboProxyType.selectionModel.selectedIndexProperty().onChange {
+            Settings.proxyType = Proxies.getProxyType(it)
         }
 
         fileCommonLocation.setProperty(Settings.commonPathProperty)

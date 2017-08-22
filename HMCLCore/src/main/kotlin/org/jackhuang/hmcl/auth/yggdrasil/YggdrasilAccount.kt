@@ -21,9 +21,6 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonParseException
 import org.jackhuang.hmcl.auth.*
 import org.jackhuang.hmcl.util.*
-import org.jackhuang.hmcl.util.doGet
-import org.jackhuang.hmcl.util.doPost
-import org.jackhuang.hmcl.util.toURL
 import java.io.IOException
 import java.net.Proxy
 import java.net.URL

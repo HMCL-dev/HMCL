@@ -17,15 +17,15 @@
  */
 package org.jackhuang.hmcl.launch
 
-import org.jackhuang.hmcl.util.JavaProcess
 import org.jackhuang.hmcl.util.Log4jLevel
+import org.jackhuang.hmcl.util.ManagedProcess
 
 interface ProcessListener {
     /**
      * When a game launched, this method will be called to get the new process.
      * You should not override this method when your ProcessListener is shared with all processes.
      */
-    fun setProcess(process: JavaProcess) {}
+    fun setProcess(process: ManagedProcess) {}
 
     /**
      * Called when receiving a log from stdout/stderr.

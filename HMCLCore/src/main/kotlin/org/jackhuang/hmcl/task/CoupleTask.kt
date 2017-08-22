@@ -19,6 +19,13 @@ package org.jackhuang.hmcl.task
 
 import org.jackhuang.hmcl.util.AutoTypingMap
 
+/**
+ * A task that combines two tasks and make sure [pred] runs before [succ].
+ *
+ * @param pred the task that runs before [succ]
+ * @param succ a callback that returns the task runs after [pred], [succ] will be executed asynchronously. You can do something that relies on the result of [pred].
+ * @param reliant true if this task chain will be broken when task [pred] fails.
+ */
 internal class CoupleTask<P: Task>(pred: P, private val succ: (AutoTypingMap<String>) -> Task?, override val reliant: Boolean) : Task() {
     override val hidden: Boolean = true
 

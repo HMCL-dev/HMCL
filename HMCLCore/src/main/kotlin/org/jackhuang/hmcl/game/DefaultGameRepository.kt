@@ -18,7 +18,10 @@
 package org.jackhuang.hmcl.game
 
 import com.google.gson.JsonSyntaxException
-import org.jackhuang.hmcl.event.*
+import org.jackhuang.hmcl.event.EVENT_BUS
+import org.jackhuang.hmcl.event.LoadedOneVersionEvent
+import org.jackhuang.hmcl.event.RefreshedVersionsEvent
+import org.jackhuang.hmcl.event.RefreshingVersionsEvent
 import org.jackhuang.hmcl.util.GSON
 import org.jackhuang.hmcl.util.LOG
 import org.jackhuang.hmcl.util.fromJson
@@ -28,6 +31,9 @@ import java.io.IOException
 import java.util.*
 import java.util.logging.Level
 
+/**
+ * An implementation of classic Minecraft game repository.
+ */
 open class DefaultGameRepository(var baseDirectory: File): GameRepository {
     protected val versions: MutableMap<String, Version> = TreeMap<String, Version>()
 
@@ -44,6 +50,11 @@ open class DefaultGameRepository(var baseDirectory: File): GameRepository {
         val id = v.jar ?: v.id
         return getVersionRoot(id).resolve("$id.jar")
     }
+
+    /**
+     * {@inheritsDoc}
+     * @return something like ".minecraft/versions/<version name>/<version name>-natives"
+     */
     override fun getNativeDirectory(id: String) = File(getVersionRoot(id), "$id-natives")
     override fun getVersionRoot(id: String) = File(baseDirectory, "versions/$id")
     open fun getVersionJson(id: String) = File(getVersionRoot(id), "$id.json")
@@ -83,7 +94,6 @@ open class DefaultGameRepository(var baseDirectory: File): GameRepository {
     }
 
     protected open fun refreshVersionsImpl() {
-
         versions.clear()
 
         if (ClassicVersion.hasClassicVersion(baseDirectory)) {
@@ -167,7 +177,7 @@ open class DefaultGameRepository(var baseDirectory: File): GameRepository {
         return assetDir.resolve("objects/${obj.location}")
     }
 
-    open fun getIndexFile(version: String, assetId: String): File =
+    override fun getIndexFile(version: String, assetId: String): File =
         getAssetDirectory(version, assetId).resolve("indexes/$assetId.json")
 
     override fun getLoggingObject(version: String, assetId: String, loggingInfo: LoggingInfo): File =
@@ -176,9 +186,8 @@ open class DefaultGameRepository(var baseDirectory: File): GameRepository {
     @Throws(IOException::class, JsonSyntaxException::class)
     protected open fun reconstructAssets(version: String, assetId: String): File {
         val assetsDir = getAssetDirectory(version, assetId)
-        val assetVersion = assetId
-        val indexFile: File = getIndexFile(version, assetVersion)
-        val virtualRoot = assetsDir.resolve("virtual").resolve(assetVersion)
+        val indexFile: File = getIndexFile(version, assetId)
+        val virtualRoot = assetsDir.resolve("virtual").resolve(assetId)
 
         if (!indexFile.isFile) {
             return assetsDir

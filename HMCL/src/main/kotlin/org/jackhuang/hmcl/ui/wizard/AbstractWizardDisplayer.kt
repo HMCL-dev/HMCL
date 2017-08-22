@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.wizard
 import com.jfoenix.concurrency.JFXUtilities
 import com.jfoenix.controls.JFXProgressBar
 import javafx.application.Platform
-import javafx.scene.Node
 import javafx.scene.control.Label
 import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox

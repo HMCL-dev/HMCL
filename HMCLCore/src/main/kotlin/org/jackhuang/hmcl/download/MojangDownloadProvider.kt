@@ -17,8 +17,15 @@
  */
 package org.jackhuang.hmcl.download
 
+import org.jackhuang.hmcl.download.forge.ForgeVersionList
+import org.jackhuang.hmcl.download.game.GameVersionList
+import org.jackhuang.hmcl.download.liteloader.LiteLoaderVersionList
+import org.jackhuang.hmcl.download.optifine.OptiFineVersionList
 import java.util.*
 
+/**
+ * @see {@link http://wiki.vg}
+ */
 object MojangDownloadProvider : DownloadProvider() {
     override val libraryBaseURL: String = "https://libraries.minecraft.net/"
     override val versionBaseURL: String = "http://s3.amazonaws.com/Minecraft.Download/versions/"
@@ -37,15 +44,6 @@ object MojangDownloadProvider : DownloadProvider() {
     }
 
     override fun injectURL(baseURL: String): String {
-        /**if (baseURL.contains("scala-swing") || baseURL.contains("scala-xml") || baseURL.contains("scala-parser-combinators"))
-            return baseURL.replace("http://files.minecraftforge.net/maven", "http://ftb.cursecdn.com/FTB2/maven/");
-        else if (baseURL.contains("typesafe") || baseURL.contains("scala"))
-            if (Locale.getDefault() == Locale.CHINA)
-                return baseURL.replace("http://files.minecraftforge.net/maven", "http://maven.aliyun.com/nexus/content/groups/public");
-            else
-                return baseURL.replace("http://files.minecraftforge.net/maven", "http://repo1.maven.org/maven2");
-        else
-            return baseURL; */
         if (baseURL.endsWith("net/minecraftforge/forge/json"))
             return baseURL
         else if (Locale.getDefault() == Locale.CHINA)

@@ -15,15 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.download
+package org.jackhuang.hmcl.download.optifine
 
+import org.jackhuang.hmcl.download.DownloadProvider
+import org.jackhuang.hmcl.download.RemoteVersion
+import org.jackhuang.hmcl.download.VersionList
 import org.jackhuang.hmcl.task.GetTask
 import org.jackhuang.hmcl.task.Task
 import org.jackhuang.hmcl.util.toURL
 import org.w3c.dom.Element
 import java.io.ByteArrayInputStream
-import javax.xml.parsers.DocumentBuilderFactory
 import java.util.regex.Pattern
+import javax.xml.parsers.DocumentBuilderFactory
 
 object OptiFineVersionList : VersionList<Unit>() {
     private val pattern = Pattern.compile("OptiFine (.*?) ")

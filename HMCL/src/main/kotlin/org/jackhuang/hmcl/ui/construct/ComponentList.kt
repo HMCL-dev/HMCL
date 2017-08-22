@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.construct
 
 import javafx.beans.DefaultProperty
 import javafx.beans.property.SimpleIntegerProperty
-import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
 import javafx.collections.ListChangeListener
@@ -27,7 +26,10 @@ import javafx.collections.ObservableList
 import javafx.scene.Node
 import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
-import org.jackhuang.hmcl.util.*
+import org.jackhuang.hmcl.util.getValue
+import org.jackhuang.hmcl.util.setValue
+import kotlin.collections.plusAssign
+import kotlin.collections.set
 
 @DefaultProperty("content")
 class ComponentList: StackPane() {

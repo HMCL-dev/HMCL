@@ -15,30 +15,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.util
+package org.jackhuang.hmcl.download.optifine
 
-import java.util.*
-import java.util.concurrent.ConcurrentLinkedQueue
+import com.google.gson.annotations.SerializedName
 
-class JavaProcess(
-        val process: Process,
-        val commands: List<String>
-) {
-    val properties = mutableMapOf<String, Any>()
-    val lines: Queue<String> = ConcurrentLinkedQueue<String>()
-    val relatedThreads = mutableListOf<Thread>()
-    val isRunning: Boolean = try {
-        process.exitValue()
-        true
-    } catch (ex: IllegalThreadStateException) {
-        false
-    }
-    val exitCode: Int get() = process.exitValue()
-
-    override fun toString() = "JavaProcess[commands=$commands, isRunning=$isRunning]"
-
-    fun stop() {
-        process.destroy()
-        relatedThreads.forEach(Thread::interrupt)
-    }
-}
+data class OptiFineVersion (
+        @SerializedName("dl")
+        val downloadLink: String? = null,
+        @SerializedName("ver")
+        val version: String? = null,
+        @SerializedName("date")
+        val date: String? = null,
+        @SerializedName("type")
+        val type: String? = null,
+        @SerializedName("patch")
+        val patch: String? = null,
+        @SerializedName("mirror")
+        val mirror: String? = null,
+        @SerializedName("mcversion")
+        val gameVersion: String? = null
+)

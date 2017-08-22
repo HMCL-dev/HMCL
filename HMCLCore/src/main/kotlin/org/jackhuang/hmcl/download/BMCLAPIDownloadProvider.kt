@@ -17,6 +17,14 @@
  */
 package org.jackhuang.hmcl.download
 
+import org.jackhuang.hmcl.download.forge.ForgeVersionList
+import org.jackhuang.hmcl.download.game.GameVersionList
+import org.jackhuang.hmcl.download.liteloader.LiteLoaderVersionList
+import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList
+
+/**
+ * @see {@link http://bmclapi2.bangbang93.com}
+ */
 object BMCLAPIDownloadProvider : DownloadProvider() {
     override val libraryBaseURL: String = "http://bmclapi2.bangbang93.com/libraries/"
     override val versionListURL: String = "http://bmclapi2.bangbang93.com/mc/game/version_manifest.json"

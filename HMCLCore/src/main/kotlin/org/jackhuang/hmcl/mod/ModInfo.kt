@@ -17,9 +17,9 @@
  */
 package org.jackhuang.hmcl.mod
 
-import com.google.gson.JsonParseException
-import org.jackhuang.hmcl.util.property.ImmediateBooleanProperty
-import org.jackhuang.hmcl.util.*
+import org.jackhuang.hmcl.util.ImmediateBooleanProperty
+import org.jackhuang.hmcl.util.getValue
+import org.jackhuang.hmcl.util.setValue
 import java.io.File
 
 class ModInfo (

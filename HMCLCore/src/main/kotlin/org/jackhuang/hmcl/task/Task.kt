@@ -22,12 +22,15 @@ import javafx.beans.property.ReadOnlyDoubleWrapper
 import javafx.beans.property.ReadOnlyStringProperty
 import javafx.beans.property.ReadOnlyStringWrapper
 import org.jackhuang.hmcl.event.EventManager
-import org.jackhuang.hmcl.util.*
+import org.jackhuang.hmcl.util.AutoTypingMap
+import org.jackhuang.hmcl.util.updateAsync
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Disposable task.
+ *
+ * @see [TaskExecutor]
  */
 abstract class Task {
     /**

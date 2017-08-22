@@ -20,13 +20,6 @@ package org.jackhuang.hmcl.auth.yggdrasil
 import com.google.gson.*
 import java.lang.reflect.Type
 import java.util.*
-import com.google.gson.JsonObject
-import com.google.gson.JsonArray
-import com.google.gson.JsonElement
-import kotlin.collections.HashMap
-import com.google.gson.JsonPrimitive
-import com.google.gson.JsonSerializationContext
-
 
 
 class PropertyMap: HashMap<String, Property>() {

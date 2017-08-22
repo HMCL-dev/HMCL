@@ -19,14 +19,18 @@ package org.jackhuang.hmcl.download
 
 import org.jackhuang.hmcl.util.VersionNumber
 import java.util.*
-import kotlin.Comparator
 
+/**
+ * The remote version.
+ *
+ * @param gameVersion the Minecraft version that this remote version suits.
+ * @param selfVersion the version string of the remote version.
+ * @param url the installer or universal jar URL.
+ * @param tag some necessary information for Installer Task.
+ */
 data class RemoteVersion<T> (
         val gameVersion: String,
         val selfVersion: String,
-        /**
-         * The file of remote version, may be an installer or an universal jar.
-         */
         val url: String,
         val tag: T
 ): Comparable<RemoteVersion<T>> {
@@ -39,6 +43,7 @@ data class RemoteVersion<T> (
     }
 
     override fun compareTo(other: RemoteVersion<T>): Int {
+        // newer versions are smaller than older versions
         return -selfVersion.compareTo(other.selfVersion)
     }
 

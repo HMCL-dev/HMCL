@@ -17,8 +17,7 @@
  */
 package org.jackhuang.hmcl.task
 
-class SilentException : Exception {
-    constructor() : super() {}
-    constructor(message: String) : super(message) {}
-    constructor(message: String, cause: Throwable) : super(message, cause) {}
-}
+/**
+ * If a task throws [SilentException], the task will be marked as failure but do not log the stacktrace.
+ */
+class SilentException : Exception()

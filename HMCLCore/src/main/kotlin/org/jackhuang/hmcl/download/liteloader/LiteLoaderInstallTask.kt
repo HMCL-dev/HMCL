@@ -15,8 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.download
+package org.jackhuang.hmcl.download.liteloader
 
+import org.jackhuang.hmcl.download.DefaultDependencyManager
+import org.jackhuang.hmcl.download.RemoteVersion
+import org.jackhuang.hmcl.download.game.GameLibrariesTask
 import org.jackhuang.hmcl.game.LibrariesDownloadInfo
 import org.jackhuang.hmcl.game.Library
 import org.jackhuang.hmcl.game.LibraryDownloadInfo
@@ -27,12 +30,12 @@ import org.jackhuang.hmcl.task.then
 import org.jackhuang.hmcl.util.merge
 
 /**
- * LiteLoader must be installed after Forge.
+ * Note: LiteLoader must be installed after Forge.
  */
 class LiteLoaderInstallTask(private val dependencyManager: DefaultDependencyManager,
-                             private val gameVersion: String,
-                             private val version: Version,
-                             private val remoteVersion: String): TaskResult<Version>() {
+                            private val gameVersion: String,
+                            private val version: Version,
+                            private val remoteVersion: String): TaskResult<Version>() {
     private val liteLoaderVersionList = dependencyManager.getVersionList("liteloader") as LiteLoaderVersionList
     lateinit var remote: RemoteVersion<LiteLoaderRemoteVersionTag>
     override val dependents = mutableListOf<Task>()

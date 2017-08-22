@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.util
 
-import java.util.HashMap
+import java.util.*
 
 object RandomUserAgent {
 

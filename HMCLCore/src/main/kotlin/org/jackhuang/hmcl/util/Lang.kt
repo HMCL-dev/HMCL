@@ -18,12 +18,9 @@
 package org.jackhuang.hmcl.util
 
 import javafx.beans.property.Property
-import javafx.beans.value.ObservableValue
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.HashMap
-import sun.text.normalizer.UTF16.append
-import java.lang.reflect.Array.getLength
 
 inline fun ignoreException(func: () -> Unit) {
     try {

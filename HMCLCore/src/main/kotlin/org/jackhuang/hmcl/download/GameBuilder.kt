@@ -19,12 +19,20 @@ package org.jackhuang.hmcl.download
 
 import org.jackhuang.hmcl.task.Task
 
-
+/**
+ * The builder which provide a task to build Minecraft environment.
+ *
+ * @author huangyuhui
+ */
 abstract class GameBuilder {
     var name: String = ""
     protected var gameVersion: String = ""
     protected var toolVersions = HashMap<String, String>()
 
+    /**
+     * The new game version name, for .minecraft/<version name>.
+     * @param name the name of new game version.
+     */
     fun name(name: String): GameBuilder {
         this.name = name
         return this
@@ -35,10 +43,17 @@ abstract class GameBuilder {
         return this
     }
 
+    /**
+     * @param id the core library id. i.e. "forge", "liteloader", "optifine"
+     * @param version the version of the core library. For documents, you can first try [VersionList.versions]
+     */
     fun version(id: String, version: String): GameBuilder {
         toolVersions[id] = version
         return this
     }
 
+    /**
+     * @return the task that can build thw whole Minecraft environment
+     */
     abstract fun buildAsync(): Task
 }

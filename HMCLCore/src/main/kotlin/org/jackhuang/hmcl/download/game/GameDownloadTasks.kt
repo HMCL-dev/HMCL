@@ -15,8 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.download
+package org.jackhuang.hmcl.download.game
 
+import org.jackhuang.hmcl.download.AbstractDependencyManager
+import org.jackhuang.hmcl.download.DefaultDependencyManager
+import org.jackhuang.hmcl.download.DependencyManager
 import org.jackhuang.hmcl.game.AssetIndex
 import org.jackhuang.hmcl.game.AssetObject
 import org.jackhuang.hmcl.game.DownloadType
@@ -30,13 +33,12 @@ import java.io.IOException
 import java.util.*
 import java.util.logging.Level
 
-
 /**
  * This task is to download game libraries.
  * This task should be executed last(especially after game downloading, Forge, LiteLoader and OptiFine install task)
  * @param resolvedVersion the <b>resolved</b> version
  */
-class GameLibrariesTask(private val dependencyManager: DefaultDependencyManager, private val resolvedVersion: Version): Task() {
+class GameLibrariesTask(private val dependencyManager: AbstractDependencyManager, private val resolvedVersion: Version): Task() {
     override val dependencies = LinkedList<Task>()
     override fun execute() {
         for (library in resolvedVersion.libraries)
@@ -49,7 +51,12 @@ class GameLibrariesTask(private val dependencyManager: DefaultDependencyManager,
 
 }
 
-class GameLoggingDownloadTask(private val dependencyManager: DefaultDependencyManager, private val version: Version) : Task() {
+/**
+ * This task is to download log4j configuration file provided in minecraft.json.
+ * @param dependencyManager the dependency manager that can provides proxy settings and [GameRepository]
+ * @param version the **resolved** version
+ */
+class GameLoggingDownloadTask(private val dependencyManager: DependencyManager, private val version: Version) : Task() {
     override val dependencies = LinkedList<Task>()
     override fun execute() {
         val logging = version.logging?.get(DownloadType.CLIENT) ?: return
@@ -59,6 +66,11 @@ class GameLoggingDownloadTask(private val dependencyManager: DefaultDependencyMa
     }
 }
 
+/**
+ * This task is to download asset index file provided in minecraft.json.
+ * @param dependencyManager the dependency manager that can provides proxy settings and [GameRepository]
+ * @param version the **resolved** version
+ */
 class GameAssetIndexDownloadTask(private val dependencyManager: DefaultDependencyManager, private val version: Version) : Task() {
     override val dependencies = LinkedList<Task>()
     override fun execute() {
@@ -72,6 +84,11 @@ class GameAssetIndexDownloadTask(private val dependencyManager: DefaultDependenc
     }
 }
 
+/**
+ * This task is to extract all asset objects described in asset index json.
+ * @param dependencyManager the dependency manager that can provides proxy settings and [GameRepository]
+ * @param version the **resolved** version
+ */
 class GameAssetRefreshTask(private val dependencyManager: DefaultDependencyManager, private val version: Version) : TaskResult<Collection<Pair<File, AssetObject>>>() {
     private val assetIndexTask = GameAssetIndexDownloadTask(dependencyManager, version)
     private val assetIndexInfo = version.actualAssetIndex
@@ -100,6 +117,11 @@ class GameAssetRefreshTask(private val dependencyManager: DefaultDependencyManag
     }
 }
 
+/**
+ * This task is to download all asset objects provided in asset index json.
+ * @param dependencyManager the dependency manager that can provides proxy settings and [GameRepository]
+ * @param version the **resolved** version
+ */
 class GameAssetDownloadTask(private val dependencyManager: DefaultDependencyManager, private val version: Version) : Task() {
     private val refreshTask = GameAssetRefreshTask(dependencyManager, version)
     override val dependents = listOf(refreshTask)
@@ -140,6 +162,11 @@ class GameAssetDownloadTask(private val dependencyManager: DefaultDependencyMana
     }
 }
 
+/**
+ * This task is to save the version json.
+ * @param dependencyManager the dependency manager that can provides proxy settings and [GameRepository]
+ * @param version the **resolved** version
+ */
 class VersionJSONSaveTask(private val dependencyManager: DefaultDependencyManager, private val version: Version): Task() {
     override fun execute() {
         val json = dependencyManager.repository.getVersionJson(version.id).absoluteFile

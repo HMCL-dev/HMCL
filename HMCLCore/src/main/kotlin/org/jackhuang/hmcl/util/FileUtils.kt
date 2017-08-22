@@ -18,10 +18,6 @@
 package org.jackhuang.hmcl.util
 
 import java.io.File
-import java.io.FileNotFoundException
-import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 
 fun File.makeDirectory(): Boolean = isDirectory || mkdirs()
 

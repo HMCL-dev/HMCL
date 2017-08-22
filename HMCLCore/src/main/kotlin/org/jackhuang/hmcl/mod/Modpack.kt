@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.mod
 
-import org.jackhuang.hmcl.download.DefaultDependencyManager
-import org.jackhuang.hmcl.task.Task
 import java.io.File
 
 class Modpack(val file: File) {

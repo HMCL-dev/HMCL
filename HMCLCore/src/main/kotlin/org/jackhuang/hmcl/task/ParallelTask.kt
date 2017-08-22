@@ -17,6 +17,11 @@
  */
 package org.jackhuang.hmcl.task
 
+/**
+ * The tasks that provides a way to execute tasks parallelly.
+ *
+ * @param tasks the tasks that can be executed parallelly.
+ */
 class ParallelTask(vararg tasks: Task): Task() {
     override val hidden: Boolean = true
     override val dependents: Collection<Task> = listOf(*tasks)

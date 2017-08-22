@@ -19,10 +19,10 @@ package org.jackhuang.hmcl.game
 
 import org.jackhuang.hmcl.util.closeQuietly
 import org.jackhuang.hmcl.util.readFullyAsByteArray
+import java.io.File
 import java.io.IOException
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
-import java.io.File
 
 private fun lessThan32(b: ByteArray, startIndex: Int): Int {
     for (i in startIndex until b.size)
