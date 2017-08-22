@@ -21,6 +21,7 @@ data class Modpack @JvmOverloads constructor(
         val name: String = "",
         val author: String = "",
         val version: String = "",
+        val gameVersion: String = "",
         val description: String = "",
         val manifest: Any? = null
 )

@@ -22,12 +22,21 @@ import org.jackhuang.hmcl.download.game.VersionJSONSaveTask
 import org.jackhuang.hmcl.mod.Modpack
 import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.task.Task
-import org.jackhuang.hmcl.util.GSON
-import org.jackhuang.hmcl.util.fromJson
-import org.jackhuang.hmcl.util.readTextFromZipFile
-import org.jackhuang.hmcl.util.unzipSubDirectory
 import java.io.File
 import java.io.IOException
+import sun.misc.IOUtils
+import jdk.nashorn.internal.objects.NativeFunction.call
+import org.jackhuang.hmcl.task.TaskResult
+import org.jackhuang.hmcl.util.*
+import sun.plugin2.util.PojoUtil.toJson
+import sun.tools.jar.resources.jar
+import java.util.Collections.addAll
+import java.util.ArrayList
+import java.util.Arrays
+
+
+
+
 
 /**
  * Read the manifest in a HMCL modpack.
@@ -69,5 +78,44 @@ class HMCLModpackInstallTask(profile: Profile, private val zipFile: File, privat
         val json = run.resolve("pack.json")
         if (repository.getVersionJson(name) != json)
             json.delete()
+    }
+}
+
+val MODPACK_BLACK_LIST = listOf("usernamecache.json", "asm", "logs", "backups", "versions", "assets", "usercache.json", "libraries", "crash-reports", "launcher_profiles.json", "NVIDIA", "AMD", "TCNodeTracker", "screenshots", "natives", "native", "\$native", "pack.json", "launcher.jar", "minetweaker.log", "launcher.pack.lzma", "hmclmc.log")
+val MODPACK_SUGGESTED_BLACK_LIST = listOf("fonts", "saves", "servers.dat", "options.txt", "optionsof.txt", "journeymap", "optionsshaders.txt", "mods/VoxelMods")
+
+class HMCLModpackExportTask @JvmOverloads constructor(
+        private val repository: DefaultGameRepository,
+        private val version: String,
+        private val blacklist: List<String>,
+        private val modpack: Modpack,
+        private val output: File,
+        override val id: String = ID): TaskResult<ZipEngine>() {
+    override fun execute() {
+        val b = ArrayList<String>(MODPACK_BLACK_LIST)
+        b.addAll(blacklist)
+        b.add(version + ".jar")
+        b.add(version + ".json")
+        LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker")
+        ZipEngine(output).use { zip ->
+            zip.putDirectory(repository.getRunDirectory(version)) a@ { x: String, y: Boolean ->
+                for (s in b)
+                    if (y) {
+                        if (x.startsWith(s + "/"))
+                            return@a null
+                    } else if (x == s)
+                        return@a null
+                "minecraft/" + x
+            }
+
+            val mv = repository.getVersion(version).resolve(repository)
+            val gameVersion = minecraftVersion(repository.getVersionJar(version)) ?: throw IllegalStateException("Cannot parse the version of $version")
+            zip.putTextFile(GSON.toJson(mv), "minecraft/pack.json")
+            zip.putTextFile(GSON.toJson(modpack.copy(gameVersion = gameVersion)), "modpack.json")
+        }
+    }
+
+    companion object {
+        val ID = "zip_engine"
     }
 }
