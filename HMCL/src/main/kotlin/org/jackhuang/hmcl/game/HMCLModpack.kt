@@ -48,8 +48,12 @@ import java.util.Arrays
  */
 @Throws(IOException::class, JsonParseException::class)
 fun readHMCLModpackManifest(f: File): Modpack {
-    val json = readTextFromZipFile(f, "modpack.json")
-    return GSON.fromJson<Modpack>(json)?.copy(manifest = HMCLModpackManifest) ?: throw JsonParseException("`modpack.json` not found. Not a valid CurseForge modpack.")
+    val manifestJson = readTextFromZipFile(f, "modpack.json")
+    val manifest = GSON.fromJson<Modpack>(manifestJson) ?: throw JsonParseException("`modpack.json` not found. Not a valid HMCL modpack.")
+    val gameJson = readTextFromZipFile(f, "minecraft/pack.json")
+    val game = GSON.fromJson<Version>(gameJson) ?: throw JsonParseException("`minecraft/pack.json` not found. Not a valid HMCL modpack.")
+    return if (game.jar == null) manifest.copy(manifest = HMCLModpackManifest)
+    else manifest.copy(manifest = HMCLModpackManifest, gameVersion = game.jar!!)
 }
 
 object HMCLModpackManifest

@@ -65,7 +65,7 @@ enum class OS {
          * The total memory/MB this computer have.
          */
         val TOTAL_MEMORY: Int by lazy {
-            val bytes = ReflectionHelper.invoke<Long>(ManagementFactory.getOperatingSystemMXBean(), "getTotalPhysicalMemorySize")
+            val bytes = ManagementFactory.getOperatingSystemMXBean().call("getTotalPhysicalMemorySize") as? Long?
             if (bytes == null) 1024
             else (bytes / 1024 / 1024).toInt()
         }

@@ -29,6 +29,7 @@ fun readModpackManifest(f: File): Modpack {
                 name = manifest.name,
                 version = manifest.version,
                 author = manifest.author,
+                gameVersion = manifest.minecraft.gameVersion,
                 description = readTextFromZipFileQuietly(f, "modlist.html") ?: "No description",
                 manifest = manifest)
     } catch (e: Exception) {

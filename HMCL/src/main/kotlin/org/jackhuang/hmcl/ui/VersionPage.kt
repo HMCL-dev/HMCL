@@ -24,6 +24,7 @@ import javafx.beans.property.SimpleStringProperty
 import javafx.beans.property.StringProperty
 import javafx.fxml.FXML
 import javafx.scene.control.Alert
+import javafx.scene.control.Tooltip
 import javafx.scene.layout.StackPane
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask
 import org.jackhuang.hmcl.i18n
@@ -52,6 +53,9 @@ class VersionPage : StackPane(), DecoratorPage {
 
         browsePopup = JFXPopup(browseList)
         managementPopup = JFXPopup(managementList)
+
+        btnBrowseMenu.installTooltip(openDelay = 0.0, closeDelay = 0.0, tooltip = Tooltip(i18n("settings.explore")))
+        btnManagementMenu.installTooltip(openDelay = 0.0, closeDelay = 0.0, tooltip = Tooltip(i18n("settings.manage")))
     }
 
     fun load(id: String, profile: Profile) {

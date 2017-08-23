@@ -40,8 +40,7 @@ import javafx.scene.layout.Region
 import javafx.scene.shape.Rectangle
 import javafx.util.Duration
 import org.jackhuang.hmcl.Main
-import org.jackhuang.hmcl.util.LOG
-import org.jackhuang.hmcl.util.OS
+import org.jackhuang.hmcl.util.*
 import java.io.File
 import java.io.IOException
 import java.util.logging.Level
@@ -229,3 +228,14 @@ fun inputDialog(title: String, contentText: String, headerText: String? = null, 
             this.headerText = headerText
             this.contentText = contentText
         }.showAndWait()
+
+fun Node.installTooltip(openDelay: Double = 1000.0, visibleDelay: Double = 5000.0, closeDelay: Double = 200.0, tooltip: Tooltip) {
+    try {
+        Class.forName("javafx.scene.control.Tooltip\$TooltipBehavior")
+                .construct(Duration(openDelay), Duration(visibleDelay), Duration(closeDelay), false)!!
+                .call("install", this, tooltip)
+    } catch (e: Throwable) {
+        LOG.log(Level.SEVERE, "Cannot install tooltip by reflection", e)
+        Tooltip.install(this, tooltip)
+    }
+}

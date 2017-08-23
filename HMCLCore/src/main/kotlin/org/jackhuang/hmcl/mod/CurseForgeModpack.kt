@@ -53,8 +53,6 @@ class CurseForgeModpackManifest @JvmOverloads constructor(
         check(manifestType == MINECRAFT_MODPACK, { "Only support Minecraft modpack" })
     }
 
-    fun toModpack() = Modpack(name = name, author = author, version = version, description = "No description")
-
     companion object {
         val MINECRAFT_MODPACK = "minecraftModpack"
     }
