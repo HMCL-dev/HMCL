@@ -176,7 +176,7 @@ public class LaunchingUIDaemon {
         @Override
         public void accept(PrintlnEvent t) {
             if (!t.isError() && logHandler != null)
-                logHandler.writeAndFlush(t.getLine() + C.LINE_SEPARATOR);
+                logHandler.newLogLine(t.getLine() + C.LINE_SEPARATOR);
             else System.err.println(t.getLine());
             HMCLGameLauncher.GameLauncherTag tag = (HMCLGameLauncher.GameLauncherTag) launcher.getTag();
             LauncherVisibility l = tag.launcherVisibility;
@@ -229,13 +229,10 @@ public class LaunchingUIDaemon {
 
     private void checkExit(LauncherVisibility v) {
         if (v == LauncherVisibility.HIDE_AND_REOPEN) {
-            HMCLog.log("Launcher will not exit now.");
             MainFrame.INSTANCE.setVisible(true);
         } else if (v != LauncherVisibility.KEEP && !LogWindow.INSTANCE.isVisible() && !noExitThisTime) {
-            HMCLog.log("Launcher will exit now.");
             System.exit(0);
         } else {
-            HMCLog.log("Launcher will not exit now.");
             noExitThisTime = false;
         }
     }

@@ -18,12 +18,15 @@
 package org.jackhuang.hmcl.util;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.xml.parsers.ParserConfigurationException;
 import org.jackhuang.hmcl.api.HMCLApi;
 import org.jackhuang.hmcl.api.event.process.JavaProcessStoppedEvent;
@@ -49,6 +52,8 @@ public class Log4jHandler extends Thread implements Consumer<JavaProcessStoppedE
     PipedInputStream inputStream;
     PipedOutputStream outputStream;
     List<Pair<String, String>> forbiddenTokens = new LinkedList<>();
+    AtomicBoolean interrupted = new AtomicBoolean(false);
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     public Log4jHandler(ProcessMonitor monitor, PipedOutputStream outputStream) throws ParserConfigurationException, IOException, SAXException {
         reader = XMLReaderFactory.createXMLReader();
@@ -66,23 +71,32 @@ public class Log4jHandler extends Thread implements Consumer<JavaProcessStoppedE
     @Override
     public void run() {
         try {
-            writeAndFlush("<output>");
+            setName("log4j-handler");
+            newLogLine("<output>");
             reader.setContentHandler(new Log4jHandlerImpl());
             reader.parse(new InputSource(inputStream));
+        } catch (InterruptedIOException e) {
+            interrupted.set(true);
         } catch (SAXException | IOException e) {
-
+            throw new Error(e);
+        } finally {
+            executorService.shutdown();
         }
     }
 
     @Override
     public void accept(JavaProcessStoppedEvent t) {
+        if (!interrupted.get())
+            return;
         if (t.getSource() == monitor) {
-            writeAndFlush("</output>");
-            try {
-                outputStream.close();
-            } catch (IOException ignore) { // won't happen
-                throw new Error(ignore);
-            }
+            executorService.submit(() -> {
+                if (!interrupted.get()) {
+                    newLogLine("</output>").get();
+                    outputStream.close();
+                    join();
+                }
+                return null;
+            });
         }
     }
 
@@ -97,13 +111,19 @@ public class Log4jHandler extends Thread implements Consumer<JavaProcessStoppedE
      *
      * @param content The content to be written to the log
      */
-    public void writeAndFlush(String content) {
-        try {
-            outputStream.write(content.replace("log4j:Event", "log4j_Event").replace("log4j:Message", "log4j_Message").getBytes());
-            outputStream.flush();
-        } catch (IOException ignore) { // won't happen
-            throw new Error(ignore);
-        }
+    public Future newLogLine(String content) {
+        return executorService.submit(() -> {
+            try {
+                outputStream.write(content
+                        .replace("log4j:Event", "log4j_Event")
+                        .replace("log4j:Message", "log4j_Message")
+                        .replace("log4j:Throwable", "log4j_Throwable")
+                        .getBytes());
+                outputStream.flush();
+            } catch (IOException ignore) { // won't happen
+                throw new Error(ignore);
+            }
+        });
     }
 
     class Log4jHandlerImpl extends DefaultHandler {
