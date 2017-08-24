@@ -105,10 +105,17 @@ class CurseForgeModpackManifestFile (
  * @return the manifest.
  */
 @Throws(IOException::class, JsonParseException::class)
-fun readCurseForgeModpackManifest(f: File): CurseForgeModpackManifest {
+fun readCurseForgeModpackManifest(f: File): Modpack {
     val json = readTextFromZipFile(f, "manifest.json")
-    return GSON.fromJson<CurseForgeModpackManifest>(json)
+    val manifest = GSON.fromJson<CurseForgeModpackManifest>(json)
             ?: throw JsonParseException("`manifest.json` not found. Not a valid CurseForge modpack.")
+    return Modpack(
+            name = manifest.name,
+            version = manifest.version,
+            author = manifest.author,
+            gameVersion = manifest.minecraft.gameVersion,
+            description = readTextFromZipFileQuietly(f, "modlist.html") ?: "No description",
+            manifest = manifest)
 }
 
 /**

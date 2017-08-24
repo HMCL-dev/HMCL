@@ -21,9 +21,8 @@ import javafx.scene.Node
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask
 import org.jackhuang.hmcl.game.HMCLModpackManifest
-import org.jackhuang.hmcl.mod.CurseForgeModpackInstallTask
-import org.jackhuang.hmcl.mod.CurseForgeModpackManifest
-import org.jackhuang.hmcl.mod.Modpack
+import org.jackhuang.hmcl.game.MMCInstallVersionSettingTask
+import org.jackhuang.hmcl.mod.*
 import org.jackhuang.hmcl.setting.EnumGameDirectory
 import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.setting.Settings
@@ -82,6 +81,7 @@ class DownloadWizardProvider(): WizardProvider() {
         return when (modpack.manifest) {
             is CurseForgeModpackManifest -> CurseForgeModpackInstallTask(profile.dependency, selectedFile, modpack.manifest as CurseForgeModpackManifest, name)
             is HMCLModpackManifest -> HMCLModpackInstallTask(profile, selectedFile, modpack, name)
+            is InstanceConfiguration -> MMCModpackInstallTask(profile.dependency, selectedFile, modpack.manifest as InstanceConfiguration, name) with MMCInstallVersionSettingTask(profile, modpack.manifest as InstanceConfiguration, name)
             else -> throw Error()
         } with finalizeTask
     }

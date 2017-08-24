@@ -75,8 +75,7 @@ class HMCLModpackInstallTask(profile: Profile, private val zipFile: File, privat
         var version = GSON.fromJson<Version>(json)!!
         version = version.copy(jar = null)
         dependents += dependency.gameBuilder().name(name).gameVersion(modpack.gameVersion!!).buildAsync()
-        dependencies += dependency.checkGameCompletionAsync(version)
-        dependencies += VersionJSONSaveTask(repository, version)
+        dependencies += VersionJSONSaveTask(repository, version) // override the json created by buildAsync()
     }
 
     private val run = repository.getRunDirectory(name)

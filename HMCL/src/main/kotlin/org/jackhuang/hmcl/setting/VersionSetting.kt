@@ -68,11 +68,16 @@ class VersionSetting() {
     var permSize: String by permSizeProperty
 
     /**
-     * The maximum memory that JVM can allocate.
-     * The size of JVM heap.
+     * The maximum memory that JVM can allocate for heap.
      */
     val maxMemoryProperty = ImmediateIntegerProperty(this, "maxMemory", OS.SUGGESTED_MEMORY)
     var maxMemory: Int by maxMemoryProperty
+
+    /**
+     * The minimum memory that JVM can allocate for heap.
+     */
+    val minMemoryProperty = ImmediateObjectProperty<Int?>(this, "minMemory", null)
+    var minMemory: Int? by minMemoryProperty
 
     /**
      * The command that will be executed before launching the Minecraft.
@@ -202,6 +207,7 @@ class VersionSetting() {
         wrapperProperty.addListener(listener)
         permSizeProperty.addListener(listener)
         maxMemoryProperty.addListener(listener)
+        minMemoryProperty.addListener(listener)
         precalledCommandProperty.addListener(listener)
         javaArgsProperty.addListener(listener)
         minecraftArgsProperty.addListener(listener)
@@ -227,6 +233,7 @@ class VersionSetting() {
                 minecraftArgs = minecraftArgs,
                 javaArgs = javaArgs,
                 maxMemory = maxMemory,
+                minMemory = minMemory,
                 metaspace = permSize.toIntOrNull(),
                 width = width,
                 height = height,
@@ -251,6 +258,7 @@ class VersionSetting() {
                 addProperty("javaArgs", src.javaArgs)
                 addProperty("minecraftArgs", src.minecraftArgs)
                 addProperty("maxMemory", if (src.maxMemory <= 0) OS.SUGGESTED_MEMORY else src.maxMemory)
+                addProperty("minMemory", src.minMemory)
                 addProperty("permSize", src.permSize)
                 addProperty("width", src.width)
                 addProperty("height", src.height)
@@ -282,6 +290,7 @@ class VersionSetting() {
                 javaArgs = json["javaArgs"]?.asString ?: ""
                 minecraftArgs = json["minecraftArgs"]?.asString ?: ""
                 maxMemory = maxMemoryN
+                minMemory = json["minMemory"]?.asInt
                 permSize = json["permSize"]?.asString ?: ""
                 width = parseJsonPrimitive(json["width"]?.asJsonPrimitive)
                 height = parseJsonPrimitive(json["height"]?.asJsonPrimitive)

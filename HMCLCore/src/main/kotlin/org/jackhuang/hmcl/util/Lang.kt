@@ -81,6 +81,7 @@ fun String.asVersion(): String? {
     return builder.deleteCharAt(builder.length - 1).toString()
 }
 
+fun Any?.toStringOrEmpty() = this?.toString().orEmpty()
 
 fun parseParams(addBefore: String, objects: Collection<*>, addAfter: String): String {
     return parseParams(addBefore, objects.toTypedArray(), addAfter)

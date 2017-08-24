@@ -17,31 +17,83 @@
  */
 package org.jackhuang.hmcl.game
 
+import org.jackhuang.hmcl.mod.InstanceConfiguration
 import org.jackhuang.hmcl.mod.Modpack
 import org.jackhuang.hmcl.mod.readCurseForgeModpackManifest
-import org.jackhuang.hmcl.util.readTextFromZipFileQuietly
+import org.jackhuang.hmcl.mod.readMMCModpackManifest
+import org.jackhuang.hmcl.setting.EnumGameDirectory
+import org.jackhuang.hmcl.setting.Profile
+import org.jackhuang.hmcl.setting.VersionSetting
+import org.jackhuang.hmcl.task.Scheduler
+import org.jackhuang.hmcl.task.Task
+import org.jackhuang.hmcl.util.toStringOrEmpty
 import java.io.File
 
 fun readModpackManifest(f: File): Modpack {
     try {
-        val manifest = readCurseForgeModpackManifest(f)
-        return Modpack(
-                name = manifest.name,
-                version = manifest.version,
-                author = manifest.author,
-                gameVersion = manifest.minecraft.gameVersion,
-                description = readTextFromZipFileQuietly(f, "modlist.html") ?: "No description",
-                manifest = manifest)
+        return readCurseForgeModpackManifest(f)
     } catch (e: Exception) {
-        // ignore it, not a CurseForge modpack.
+        // ignore it, not a valid CurseForge modpack.
     }
 
     try {
         val manifest = readHMCLModpackManifest(f)
         return manifest
     } catch (e: Exception) {
-        // ignore it, not a HMCL modpack.
+        // ignore it, not a valid HMCL modpack.
+    }
+
+    try {
+        val manifest = readMMCModpackManifest(f)
+        return manifest
+    } catch (e: Exception) {
+        // ignore it, not a valid MMC modpack.
     }
 
     throw IllegalArgumentException("Modpack file $f is not supported.")
+}
+
+fun InstanceConfiguration.toVersionSetting(vs: VersionSetting) {
+    vs.usesGlobal = false
+    vs.gameDirType = EnumGameDirectory.VERSION_FOLDER
+
+    if (overrideJavaLocation) {
+        vs.javaDir = javaPath.toStringOrEmpty()
+    }
+
+    if (overrideMemory) {
+        vs.permSize = permGen.toStringOrEmpty()
+        if (maxMemory != null)
+            vs.maxMemory = maxMemory!!
+        vs.minMemory = minMemory
+    }
+
+    if (overrideCommands) {
+        vs.wrapper = wrapperCommand.orEmpty()
+        vs.precalledCommand = preLaunchCommand.orEmpty()
+    }
+
+    if (overrideJavaArgs) {
+        vs.javaArgs = jvmArgs.orEmpty()
+    }
+
+    if (overrideConsole) {
+        vs.showLogs = showConsole
+    }
+
+    if (overrideWindow) {
+        vs.fullscreen = fullscreen
+        if (width != null)
+            vs.width = width!!
+        if (height != null)
+            vs.height = height!!
+    }
+}
+
+class MMCInstallVersionSettingTask(private val profile: Profile, val manifest: InstanceConfiguration, val name: String): Task() {
+    override val scheduler = Scheduler.JAVAFX
+    override fun execute() {
+        val vs = profile.specializeVersionSetting(name)!!
+        manifest.toVersionSetting(vs)
+    }
 }
