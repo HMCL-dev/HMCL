@@ -65,6 +65,10 @@ class GetTask @JvmOverloads constructor(val url: URL, val encoding: Charset = Ch
                         return
                 }
 
+                if (size > 0 && size != read) {
+                    throw IllegalStateException("Not completed! Readed: $read, Size: $size")
+                }
+
                 result = baos.toString(encoding.name())
                 return
             } catch (e: IOException) {

@@ -13,6 +13,9 @@
         <Tab text="%mods">
             <fx:include source="mod.fxml" fx:id="mod" />
         </Tab>
+        <Tab text="%settings.tabs.installers">
+            <fx:include source="installer.fxml" fx:id="installer" />
+        </Tab>
     </JFXTabPane>
 
     <HBox alignment="TOP_RIGHT" style="-fx-padding: 3px;" pickOnBounds="false">

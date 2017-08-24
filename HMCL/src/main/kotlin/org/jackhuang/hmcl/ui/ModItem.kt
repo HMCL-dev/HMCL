@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.JFXCheckBox
+import com.jfoenix.effects.JFXDepthManager
 import javafx.fxml.FXML
 import javafx.scene.control.Label
 import javafx.scene.layout.BorderPane
@@ -30,8 +31,10 @@ class ModItem(info: ModInfo, private val deleteCallback: (ModItem) -> Unit) : Bo
     @FXML lateinit var chkEnabled: JFXCheckBox
 
     init {
-        loadFXML("/assets/fxml/mod-item.fxml")
+        loadFXML("/assets/fxml/version/mod-item.fxml")
 
+        style = "-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;"
+        JFXDepthManager.setDepth(this, 1)
         lblModFileName.text = info.fileName
         lblModAuthor.text = "${info.name}, Version: ${info.version}, Game Version: ${info.mcversion}, Authors: ${info.authors}"
         chkEnabled.isSelected = info.isActive

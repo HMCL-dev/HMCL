@@ -19,55 +19,48 @@ package org.jackhuang.hmcl.ui.download
 
 import com.jfoenix.controls.JFXButton
 import com.jfoenix.controls.JFXListView
-import com.jfoenix.controls.JFXTextField
 import javafx.fxml.FXML
 import javafx.scene.control.Label
 import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
 import org.jackhuang.hmcl.download.DownloadProvider
 import org.jackhuang.hmcl.game.GameRepository
-import org.jackhuang.hmcl.i18n
-import org.jackhuang.hmcl.ui.construct.Validator
 import org.jackhuang.hmcl.ui.loadFXML
 import org.jackhuang.hmcl.ui.wizard.WizardController
 import org.jackhuang.hmcl.ui.wizard.WizardPage
 
-class InstallersPage(private val controller: WizardController, private val repository: GameRepository, private val downloadProvider: DownloadProvider): StackPane(), WizardPage {
+class AdditionalInstallersPage(private val provider: InstallWizardProvider, private val controller: WizardController, private val repository: GameRepository, private val downloadProvider: DownloadProvider): StackPane(), WizardPage {
 
     @FXML lateinit var list: VBox
     @FXML lateinit var btnForge: JFXButton
     @FXML lateinit var btnLiteLoader: JFXButton
     @FXML lateinit var btnOptiFine: JFXButton
     @FXML lateinit var lblGameVersion: Label
+    @FXML lateinit var lblVersionName: Label
     @FXML lateinit var lblForge: Label
     @FXML lateinit var lblLiteLoader: Label
     @FXML lateinit var lblOptiFine: Label
-    @FXML lateinit var txtName: JFXTextField
     @FXML lateinit var btnInstall: JFXButton
 
     init {
-        loadFXML("/assets/fxml/download/installers.fxml")
+        loadFXML("/assets/fxml/download/additional-installers.fxml")
 
-        val gameVersion = controller.settings["game"] as String
-        txtName.validators += Validator { !repository.hasVersion(it) && it.isNotBlank() }.apply { message = i18n("version.already_exists") }
-        txtName.textProperty().addListener { _ ->
-            btnInstall.isDisable = !txtName.validate()
-        }
-        txtName.text = gameVersion
+        lblGameVersion.text = provider.gameVersion
+        lblVersionName.text = provider.version.id
 
         btnForge.setOnMouseClicked {
             controller.settings[INSTALLER_TYPE] = 0
-            controller.onNext(VersionsPage(controller, gameVersion, downloadProvider, "forge") { controller.onPrev(false) })
+            controller.onNext(VersionsPage(controller, provider.gameVersion, downloadProvider, "forge") { controller.onPrev(false) })
         }
 
         btnLiteLoader.setOnMouseClicked {
             controller.settings[INSTALLER_TYPE] = 1
-            controller.onNext(VersionsPage(controller, gameVersion, downloadProvider, "liteloader") { controller.onPrev(false) })
+            controller.onNext(VersionsPage(controller, provider.gameVersion, downloadProvider, "liteloader") { controller.onPrev(false) })
         }
 
         btnOptiFine.setOnMouseClicked {
             controller.settings[INSTALLER_TYPE] = 2
-            controller.onNext(VersionsPage(controller, gameVersion, downloadProvider, "optifine") { controller.onPrev(false) })
+            controller.onNext(VersionsPage(controller, provider.gameVersion, downloadProvider, "optifine") { controller.onPrev(false) })
         }
     }
 
@@ -75,21 +68,25 @@ class InstallersPage(private val controller: WizardController, private val repos
         get() = "Choose a game version"
 
     override fun onNavigate(settings: MutableMap<String, Any>) {
-        lblGameVersion.text = "Current Game Version: ${controller.settings["game"]}"
-        if (controller.settings.containsKey("forge"))
-            lblForge.text = "Forge Versoin: ${controller.settings["forge"]}"
+        lblGameVersion.text = "Current Game Version: ${provider.gameVersion}"
+        btnForge.isDisable = provider.forge != null
+        if (provider.forge != null || controller.settings.containsKey("forge"))
+            lblForge.text = "Forge Versoin: ${provider.forge ?: controller.settings["forge"]}"
         else
             lblForge.text = "Forge not installed"
 
-        if (controller.settings.containsKey("liteloader"))
-            lblLiteLoader.text = "LiteLoader Versoin: ${controller.settings["liteloader"]}"
+        btnLiteLoader.isDisable = provider.liteloader != null
+        if (provider.liteloader != null || controller.settings.containsKey("liteloader"))
+            lblLiteLoader.text = "LiteLoader Versoin: ${provider.liteloader ?: controller.settings["liteloader"]}"
         else
             lblLiteLoader.text = "LiteLoader not installed"
 
-        if (controller.settings.containsKey("optifine"))
-            lblOptiFine.text = "OptiFine Versoin: ${controller.settings["optifine"]}"
+        btnOptiFine.isDisable = provider.optifine != null
+        if (provider.optifine != null || controller.settings.containsKey("optifine"))
+            lblOptiFine.text = "OptiFine Versoin: ${provider.optifine ?: controller.settings["optifine"]}"
         else
             lblOptiFine.text = "OptiFine not installed"
+
     }
 
     override fun cleanup(settings: MutableMap<String, Any>) {
@@ -97,7 +94,6 @@ class InstallersPage(private val controller: WizardController, private val repos
     }
 
     fun onInstall() {
-        controller.settings["name"] = txtName.text
         controller.onFinish()
     }
 

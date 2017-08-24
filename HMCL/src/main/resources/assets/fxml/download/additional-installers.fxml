@@ -10,7 +10,7 @@
         <top>
             <VBox alignment="CENTER" style="-fx-padding: 40px;" spacing="20">
                 <Label fx:id="lblGameVersion" alignment="CENTER"/>
-                <JFXTextField fx:id="txtName" labelFloat="true" promptText="%modpack.enter_name" maxWidth="300"/>
+                <Label fx:id="lblVersionName" alignment="CENTER"/>
             </VBox>
         </top>
         <center>

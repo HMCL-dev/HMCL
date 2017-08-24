@@ -28,10 +28,15 @@ class WizardController(protected val displayer: WizardDisplayer) : Navigation {
 
     override fun onStart() {
         settings.clear()
+        provider.start(settings)
+
         pages.clear()
         val page = navigatingTo(0)
         pages.push(page)
-        provider.start(settings)
+
+        if (page is WizardPage)
+            page.onNavigate(settings)
+
         displayer.onStart()
         displayer.navigateTo(page, Navigation.NavigationDirection.START)
     }

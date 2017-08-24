@@ -20,10 +20,7 @@ package org.jackhuang.hmcl.download.game
 import org.jackhuang.hmcl.download.AbstractDependencyManager
 import org.jackhuang.hmcl.download.DefaultDependencyManager
 import org.jackhuang.hmcl.download.DependencyManager
-import org.jackhuang.hmcl.game.AssetIndex
-import org.jackhuang.hmcl.game.AssetObject
-import org.jackhuang.hmcl.game.DownloadType
-import org.jackhuang.hmcl.game.Version
+import org.jackhuang.hmcl.game.*
 import org.jackhuang.hmcl.task.FileDownloadTask
 import org.jackhuang.hmcl.task.Task
 import org.jackhuang.hmcl.task.TaskResult
@@ -164,12 +161,12 @@ class GameAssetDownloadTask(private val dependencyManager: DefaultDependencyMana
 
 /**
  * This task is to save the version json.
- * @param dependencyManager the dependency manager that can provides proxy settings and [GameRepository]
+ * @param repository the game repository
  * @param version the **resolved** version
  */
-class VersionJSONSaveTask(private val dependencyManager: DefaultDependencyManager, private val version: Version): Task() {
+class VersionJSONSaveTask(private val repository: DefaultGameRepository, private val version: Version): Task() {
     override fun execute() {
-        val json = dependencyManager.repository.getVersionJson(version.id).absoluteFile
+        val json = repository.getVersionJson(version.id).absoluteFile
         if (!json.makeFile())
             throw IOException("Cannot create file $json")
         json.writeText(GSON.toJson(version))

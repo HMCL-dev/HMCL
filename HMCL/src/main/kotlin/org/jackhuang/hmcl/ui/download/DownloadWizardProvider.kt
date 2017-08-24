@@ -95,10 +95,11 @@ class DownloadWizardProvider(): WizardProvider() {
     }
 
     override fun createPage(controller: WizardController, step: Int, settings: MutableMap<String, Any>): Node {
+        val provider = profile.dependency.downloadProvider
         return when (step) {
             0 -> InstallTypePage(controller)
             1 -> when (settings[InstallTypePage.INSTALL_TYPE]) {
-                0 -> VersionsPage(controller, "", BMCLAPIDownloadProvider, "game") { controller.onNext(InstallersPage(controller, profile.repository, BMCLAPIDownloadProvider)) }
+                0 -> VersionsPage(controller, "", provider, "game") { controller.onNext(InstallersPage(controller, profile.repository, provider)) }
                 1 -> ModpackPage(controller)
                 else -> throw Error()
             }

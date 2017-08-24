@@ -76,7 +76,7 @@ class HMCLModpackInstallTask(profile: Profile, private val zipFile: File, privat
         version = version.copy(jar = null)
         dependents += dependency.gameBuilder().name(name).gameVersion(modpack.gameVersion!!).buildAsync()
         dependencies += dependency.checkGameCompletionAsync(version)
-        dependencies += VersionJSONSaveTask(dependency, version)
+        dependencies += VersionJSONSaveTask(repository, version)
     }
 
     private val run = repository.getRunDirectory(name)

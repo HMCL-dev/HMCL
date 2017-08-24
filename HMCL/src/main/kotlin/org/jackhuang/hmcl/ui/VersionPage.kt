@@ -37,6 +37,8 @@ class VersionPage : StackPane(), DecoratorPage {
 
     @FXML lateinit var versionSettingsController: VersionSettingsController
     @FXML lateinit var modController: ModController
+    @FXML lateinit var installerController: InstallerController
+
     @FXML lateinit var browseList: JFXListView<*>
     @FXML lateinit var managementList: JFXListView<*>
     @FXML lateinit var btnBrowseMenu: JFXButton
@@ -48,7 +50,7 @@ class VersionPage : StackPane(), DecoratorPage {
     lateinit var version: String
 
     init {
-        loadFXML("/assets/fxml/version.fxml")
+        loadFXML("/assets/fxml/version/version.fxml")
 
         children -= browseList
         children -= managementList
@@ -68,6 +70,7 @@ class VersionPage : StackPane(), DecoratorPage {
 
         versionSettingsController.loadVersionSetting(profile.getVersionSetting(id))
         modController.loadMods(profile.modManager, id)
+        installerController.loadVersion(profile, id)
     }
 
     fun onBrowseMenu() {

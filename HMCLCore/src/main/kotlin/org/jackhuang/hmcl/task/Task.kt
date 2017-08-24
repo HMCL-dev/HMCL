@@ -50,7 +50,7 @@ abstract class Task {
      */
     open val reliant: Boolean = true
 
-    var title: String = this.javaClass.toString()
+    open var title: String = this.javaClass.toString()
 
     var variables: AutoTypingMap<String>? = null
 

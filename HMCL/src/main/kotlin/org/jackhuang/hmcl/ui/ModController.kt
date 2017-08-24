@@ -69,9 +69,6 @@ class ModController {
                     modManager.removeMods(versionId, modInfo)
                     loadMods(modManager, versionId)
                 }.apply {
-                    JFXDepthManager.setDepth(this, 1)
-                    style += "-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;"
-
                     modInfo.activeProperty.onChange {
                         if (it)
                             styleClass -= "disabled"

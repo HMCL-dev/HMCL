@@ -45,7 +45,7 @@ class DefaultGameBuilder(val dependencyManager: DefaultDependencyManager): GameB
                             GameLoggingDownloadTask(dependencyManager, version),
                             GameDownloadTask(version),
                             GameLibrariesTask(dependencyManager, version) // Game libraries will be downloaded for multiple times partly, this time is for vanilla libraries.
-                    ) then VersionJSONSaveTask(dependencyManager, version)
+                    ) then VersionJSONSaveTask(dependencyManager.repository, version)
 
                     if (toolVersions.containsKey("forge"))
                         result = result then libraryTaskHelper(gameVersion, "forge")
