@@ -176,7 +176,7 @@ public class LaunchingUIDaemon {
         @Override
         public void accept(PrintlnEvent t) {
             if (!t.isError() && logHandler != null)
-                logHandler.writeAndFlush((t.getLine() + C.LINE_SEPARATOR).replace("log4j:Event", "log4j_Event").replace("log4j:Message", "log4j_Message"));
+                logHandler.writeAndFlush(t.getLine() + C.LINE_SEPARATOR);
             else System.err.println(t.getLine());
             HMCLGameLauncher.GameLauncherTag tag = (HMCLGameLauncher.GameLauncherTag) launcher.getTag();
             LauncherVisibility l = tag.launcherVisibility;

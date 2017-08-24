@@ -89,7 +89,7 @@ public class ProcessMonitor {
         try {
             exitCode = p.getExitCode();
         } catch(IllegalThreadStateException e) {
-            HMCLog.err("Failed to ");
+            HMCLog.err("Failed to get exit code ", e);
         }
         if (p.getExitCode() != 0 || StrUtils.containsOne(t.getLines(),
                 Arrays.asList("Unable to launch"), // LaunchWrapper will terminate the application returning exit code 0, but this is an error state.

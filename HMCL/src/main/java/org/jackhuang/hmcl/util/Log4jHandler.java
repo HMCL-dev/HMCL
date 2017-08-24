@@ -99,7 +99,7 @@ public class Log4jHandler extends Thread implements Consumer<JavaProcessStoppedE
      */
     public void writeAndFlush(String content) {
         try {
-            outputStream.write(content.getBytes());
+            outputStream.write(content.replace("log4j:Event", "log4j_Event").replace("log4j:Message", "log4j_Message").getBytes());
             outputStream.flush();
         } catch (IOException ignore) { // won't happen
             throw new Error(ignore);

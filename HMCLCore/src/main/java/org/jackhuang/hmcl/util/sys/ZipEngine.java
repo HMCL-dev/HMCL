@@ -79,10 +79,9 @@ public class ZipEngine implements Closeable {
         File[] files;
         if (source.isDirectory())
             files = source.listFiles();
-        else {
-            files = new File[1];
-            files[0] = source;
-        }
+        else
+            files = new File[] { source };
+        
         if (files == null)
             return;
         String pathName;//存相对路径(相对于待压缩的根目录)

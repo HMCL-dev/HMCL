@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util.log;
 import java.awt.Color;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jackhuang.hmcl.util.ui.GraphicsUtils;
 
 /**
  *
@@ -27,12 +28,12 @@ import java.util.regex.Pattern;
  */
 public enum Level {
 
-    FATAL(1, Color.red),
-    ERROR(2, Color.red),
-    WARN(3, Color.orange),
+    FATAL(1, GraphicsUtils.getWebColor("#C0392B")),
+    ERROR(2, GraphicsUtils.getWebColor("#D35400")),
+    WARN(3, GraphicsUtils.getWebColor("#F39C12")),
     INFO(4, Color.black),
-    DEBUG(5, Color.blue),
-    TRACE(6, Color.blue),
+    DEBUG(5, GraphicsUtils.getWebColor("#2980B9")),
+    TRACE(6, GraphicsUtils.getWebColor("#16A085")),
     ALL(2147483647, Color.black);
 
     public final int level;
