@@ -16,6 +16,11 @@
     </JFXTabPane>
 
     <HBox alignment="TOP_RIGHT" style="-fx-padding: 3px;" pickOnBounds="false">
+        <JFXButton fx:id="btnExport" maxHeight="28.0" minHeight="28.0" onMouseClicked="#onExport" styleClass="toggle-icon3" ripplerFill="white">
+            <graphic>
+                <fx:include source="/assets/svg/export.fxml"/>
+            </graphic>
+        </JFXButton>
         <JFXButton fx:id="btnBrowseMenu" maxHeight="28.0" minHeight="28.0" onMouseClicked="#onBrowseMenu" styleClass="toggle-icon3" ripplerFill="white">
             <graphic>
                 <fx:include source="/assets/svg/folder-open.fxml"/>

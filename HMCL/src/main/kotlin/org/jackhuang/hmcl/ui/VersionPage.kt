@@ -29,6 +29,7 @@ import javafx.scene.layout.StackPane
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Profile
+import org.jackhuang.hmcl.ui.export.ExportWizardProvider
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage
 
 class VersionPage : StackPane(), DecoratorPage {
@@ -40,6 +41,7 @@ class VersionPage : StackPane(), DecoratorPage {
     @FXML lateinit var managementList: JFXListView<*>
     @FXML lateinit var btnBrowseMenu: JFXButton
     @FXML lateinit var btnManagementMenu: JFXButton
+    @FXML lateinit var btnExport: JFXButton
     val browsePopup: JFXPopup
     val managementPopup: JFXPopup
     lateinit var profile: Profile
@@ -56,6 +58,7 @@ class VersionPage : StackPane(), DecoratorPage {
 
         btnBrowseMenu.installTooltip(openDelay = 0.0, closeDelay = 0.0, tooltip = Tooltip(i18n("settings.explore")))
         btnManagementMenu.installTooltip(openDelay = 0.0, closeDelay = 0.0, tooltip = Tooltip(i18n("settings.manage")))
+        btnExport.installTooltip(openDelay = 0.0, closeDelay = 0.0, tooltip = Tooltip(i18n("modpack.task.save")))
     }
 
     fun load(id: String, profile: Profile) {
@@ -75,6 +78,10 @@ class VersionPage : StackPane(), DecoratorPage {
     fun onManagementMenu() {
         managementList.selectionModel.select(-1)
         managementPopup.show(btnManagementMenu, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, -12.0, 15.0)
+    }
+
+    fun onExport() {
+        Controllers.decorator.startWizard(ExportWizardProvider(profile, version), i18n("modpack.wizard"))
     }
 
     fun onBrowse() {

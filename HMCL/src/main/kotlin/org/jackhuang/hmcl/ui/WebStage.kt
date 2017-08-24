@@ -15,13 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.mod
+package org.jackhuang.hmcl.ui
 
-data class Modpack @JvmOverloads constructor(
-        val name: String = "",
-        val author: String? = null,
-        val version: String? = null,
-        val gameVersion: String? = null,
-        val description: String? = null,
-        val manifest: Any? = null
-)
+import javafx.scene.Scene
+import javafx.scene.image.Image
+import javafx.scene.web.WebView
+import javafx.stage.Stage
+
+class WebStage: Stage() {
+    val webView = WebView()
+    init {
+        scene = Scene(webView, 800.0, 480.0)
+        scene.stylesheets.addAll(*stylesheets)
+        icons += Image("/assets/img/icon.png")
+    }
+}

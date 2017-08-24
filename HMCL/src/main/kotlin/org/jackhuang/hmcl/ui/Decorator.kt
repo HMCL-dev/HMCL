@@ -141,8 +141,8 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, priva
 
         animationHandler = TransitionHandler(contentPlaceHolder)
 
-        setOverflowHidden(lookup("#contentPlaceHolderRoot") as Pane)
-        setOverflowHidden(drawerWrapper)
+        (lookup("#contentPlaceHolderRoot") as Pane).setOverflowHidden()
+        drawerWrapper.setOverflowHidden()
     }
 
     fun onMouseMoved(mouseEvent: MouseEvent) {
@@ -369,7 +369,7 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, priva
 
         if (content is Region) {
             content.setMinSize(0.0, 0.0)
-            setOverflowHidden(content)
+            content.setOverflowHidden()
         }
 
         backNavButton.isDisable = !wizardController.canPrev()

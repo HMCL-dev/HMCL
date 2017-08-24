@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+
+<?import com.jfoenix.controls.JFXTreeView?>
+<?import com.jfoenix.controls.JFXButton?>
+<?import javafx.geometry.Insets?>
+<fx:root xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         type="StackPane">
+    <fx:define>
+    </fx:define>
+    <BorderPane>
+        <center>
+            <JFXTreeView fx:id="treeView" />
+        </center>
+        <bottom>
+            <HBox alignment="CENTER_RIGHT" style="-fx-padding: 16 16 16 0;">
+                <JFXButton fx:id="btnNext" onMouseClicked="#onNext" prefWidth="100" prefHeight="40" buttonType="RAISED"
+                           text="%wizard.finish" styleClass="jfx-button-raised"/>
+            </HBox>
+        </bottom>
+    </BorderPane>
+</fx:root>

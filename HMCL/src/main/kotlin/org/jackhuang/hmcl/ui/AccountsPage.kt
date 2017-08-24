@@ -57,15 +57,8 @@ class AccountsPage() : StackPane(), DecoratorPage {
 
         scrollPane.smoothScrolling()
 
-        txtUsername.textProperty().addListener { _ ->
-            txtUsername.validate()
-        }
-        txtUsername.validate()
-
-        txtPassword.textProperty().addListener { _ ->
-            txtPassword.validate()
-        }
-        txtPassword.validate()
+        txtUsername.setValidateWhileTextChanged()
+        txtPassword.setValidateWhileTextChanged()
 
         cboType.selectionModel.selectedIndexProperty().onChange {
             val visible = it != 0

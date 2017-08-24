@@ -81,7 +81,7 @@ class DownloadWizardProvider(): WizardProvider() {
 
         return when (modpack.manifest) {
             is CurseForgeModpackManifest -> CurseForgeModpackInstallTask(profile.dependency, selectedFile, modpack.manifest as CurseForgeModpackManifest, name)
-            is HMCLModpackManifest -> HMCLModpackInstallTask(profile, selectedFile, name)
+            is HMCLModpackManifest -> HMCLModpackInstallTask(profile, selectedFile, modpack, name)
             else -> throw Error()
         } with finalizeTask
     }
@@ -95,12 +95,10 @@ class DownloadWizardProvider(): WizardProvider() {
     }
 
     override fun createPage(controller: WizardController, step: Int, settings: MutableMap<String, Any>): Node {
-
-
         return when (step) {
             0 -> InstallTypePage(controller)
             1 -> when (settings[InstallTypePage.INSTALL_TYPE]) {
-                0 -> VersionsPage(controller, "", BMCLAPIDownloadProvider, "game", { controller.onNext(InstallersPage(controller, BMCLAPIDownloadProvider)) })
+                0 -> VersionsPage(controller, "", BMCLAPIDownloadProvider, "game") { controller.onNext(InstallersPage(controller, profile.repository, BMCLAPIDownloadProvider)) }
                 1 -> ModpackPage(controller)
                 else -> throw Error()
             }

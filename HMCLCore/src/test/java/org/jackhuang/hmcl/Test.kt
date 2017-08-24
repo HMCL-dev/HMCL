@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.launch.ProcessListener
 import org.jackhuang.hmcl.util.makeCommand
 import org.jackhuang.hmcl.task.Task
 import org.jackhuang.hmcl.task.TaskListener
+import org.jackhuang.hmcl.util.Log4jLevel
 import java.io.File
 import java.net.InetSocketAddress
 import java.net.Proxy
@@ -53,15 +54,11 @@ class Test {
                 account = OfflineAccount.fromUsername("player007").logIn(),
                 options = LaunchOptions(gameDir = repository.baseDirectory),
                 listener = object : ProcessListener {
-                    override fun onLog(log: String) {
+                    override fun onLog(log: String, level: Log4jLevel) {
                         println(log)
                     }
 
-                    override fun onErrorLog(log: String) {
-                        System.err.println(log)
-                    }
-
-                    override fun onExit(exitCode: Int) {
+                    override fun onExit(exitCode: Int, exitType: ProcessListener.ExitType) {
                         println("Process exited then exit code $exitCode")
                     }
 

@@ -17,18 +17,22 @@
  */
 package org.jackhuang.hmcl.ui.download
 
+import com.jfoenix.controls.JFXButton
 import com.jfoenix.controls.JFXListView
 import com.jfoenix.controls.JFXTextField
 import javafx.fxml.FXML
 import javafx.scene.control.Label
 import javafx.scene.layout.StackPane
 import org.jackhuang.hmcl.download.DownloadProvider
+import org.jackhuang.hmcl.game.GameRepository
+import org.jackhuang.hmcl.i18n
+import org.jackhuang.hmcl.ui.construct.Validator
 import org.jackhuang.hmcl.ui.loadFXML
 import org.jackhuang.hmcl.ui.wizard.WizardController
 import org.jackhuang.hmcl.ui.wizard.WizardPage
 import org.jackhuang.hmcl.util.onChange
 
-class InstallersPage(private val controller: WizardController, private val downloadProvider: DownloadProvider): StackPane(), WizardPage {
+class InstallersPage(private val controller: WizardController, private val repository: GameRepository, private val downloadProvider: DownloadProvider): StackPane(), WizardPage {
 
     @FXML lateinit var list: JFXListView<VersionsPageItem>
     @FXML lateinit var lblGameVersion: Label
@@ -36,11 +40,16 @@ class InstallersPage(private val controller: WizardController, private val downl
     @FXML lateinit var lblLiteLoader: Label
     @FXML lateinit var lblOptiFine: Label
     @FXML lateinit var txtName: JFXTextField
+    @FXML lateinit var btnInstall: JFXButton
 
     init {
         loadFXML("/assets/fxml/download/installers.fxml")
 
         val gameVersion = controller.settings["game"] as String
+        txtName.validators += Validator { !repository.hasVersion(it) && it.isNotBlank() }.apply { message = i18n("version.already_exists") }
+        txtName.textProperty().addListener { _ ->
+            btnInstall.isDisable = !txtName.validate()
+        }
         txtName.text = gameVersion
 
         list.selectionModel.selectedIndexProperty().onChange {

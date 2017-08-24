@@ -84,17 +84,16 @@ class VersionSettingsController {
         chkNoGameCheck.limitHeight(limitHeight)
         chkShowLogs.limitHeight(limitHeight)
 
-        fun validation(field: JFXTextField) = InvalidationListener { field.validate() }
         fun validator(nullable: Boolean = false) = NumberValidator(nullable).apply { message = "Must be a number." }
 
         txtWidth.setValidators(validator())
-        txtWidth.textProperty().addListener(validation(txtWidth))
+        txtWidth.setValidateWhileTextChanged()
         txtHeight.setValidators(validator())
-        txtHeight.textProperty().addListener(validation(txtHeight))
+        txtHeight.setValidateWhileTextChanged()
         txtMaxMemory.setValidators(validator())
-        txtMaxMemory.textProperty().addListener(validation(txtMaxMemory))
+        txtMaxMemory.setValidateWhileTextChanged()
         txtMetaspace.setValidators(validator(true))
-        txtMetaspace.textProperty().addListener(validation(txtMetaspace))
+        txtMetaspace.setValidateWhileTextChanged()
 
         javaPane.children.clear()
         javaPane.children += createJavaPane(JavaVersion.fromCurrentEnvironment(), javaGroup)

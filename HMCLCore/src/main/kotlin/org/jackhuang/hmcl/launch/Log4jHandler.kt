@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * This class is to parse log4j classic XML layout logging, since only vanilla Minecraft will enable this layout.
  * Also supports plain logs.
  */
-internal class Log4jHandler(val callback: (String, Log4jLevel) -> Unit) : Thread() {
+internal class Log4jHandler(private val callback: (String, Log4jLevel) -> Unit) : Thread() {
     val reader = XMLReaderFactory.createXMLReader().apply {
         contentHandler = Log4jHandlerImpl()
     }
@@ -94,10 +94,10 @@ internal class Log4jHandler(val callback: (String, Log4jLevel) -> Unit) : Thread
                     message = StringBuilder()
                     val d = Date(attributes.getValue("timestamp").toLong())
                     date = df.format(d)
-                    try {
-                        l = Log4jLevel.valueOf(attributes.getValue("level"))
+                    l = try {
+                        Log4jLevel.valueOf(attributes.getValue("level"))
                     } catch (e: IllegalArgumentException) {
-                        l = Log4jLevel.INFO
+                        Log4jLevel.INFO
                     }
 
                     thread = attributes.getValue("thread")

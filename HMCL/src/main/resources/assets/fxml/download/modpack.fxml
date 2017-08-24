@@ -5,27 +5,26 @@
 
 <?import com.jfoenix.controls.JFXTextField?>
 <?import com.jfoenix.controls.JFXButton?>
+<?import org.jackhuang.hmcl.ui.construct.ComponentList?>
+<?import javafx.geometry.Insets?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
-    <VBox maxWidth="500" maxHeight="500" spacing="50">
-        <Label text="Installing modpack" />
-        <Label fx:id="lblModpackLocation" />
-        <JFXTextField fx:id="txtModpackName" labelFloat="true" promptText="%modpack.enter_name" />
-        <GridPane>
-            <columnConstraints>
-                <ColumnConstraints />
-                <ColumnConstraints hgrow="ALWAYS" />
-            </columnConstraints>
-
-            <Label text="Name" GridPane.rowIndex="0" GridPane.columnIndex="0" />
-            <Label text="Version" GridPane.rowIndex="1" GridPane.columnIndex="0" />
-            <Label text="Author" GridPane.rowIndex="2" GridPane.columnIndex="0" />
-
-            <Label fx:id="lblName" GridPane.rowIndex="0" GridPane.columnIndex="1" />
-            <Label fx:id="lblVersion" GridPane.rowIndex="1" GridPane.columnIndex="1" />
-            <Label fx:id="lblAuthor" GridPane.rowIndex="2" GridPane.columnIndex="1" />
-        </GridPane>
-        <JFXButton buttonType="RAISED" fx:id="btnInstall" onMouseClicked="#onInstall" text="%ui.button.install" styleClass="jfx-button-raised" />
-    </VBox>
+    <fx:define>
+        <Insets fx:id="insets" bottom="12" />
+    </fx:define>
+        <VBox fx:id="borderPane" alignment="CENTER">
+            <HBox style="-fx-padding: 0 0 16 5;"><Label text="%modpack.task.install" /></HBox>
+            <ComponentList>
+                <BorderPane><left><Label text="%modpack.task.install.will" /></left><right><Label fx:id="lblModpackLocation" /></right></BorderPane>
+                <JFXTextField fx:id="txtModpackName" labelFloat="true" promptText="%modpack.enter_name" StackPane.margin="$insets" />
+                <BorderPane><left><Label text="%modpack.name"/></left><right><Label fx:id="lblName" /></right></BorderPane>
+                <BorderPane><left><Label text="%ui.label.version"/></left><right><Label fx:id="lblVersion" /></right></BorderPane>
+                <BorderPane><left><Label text="Author"/></left><right><Label fx:id="lblAuthor" /></right></BorderPane>
+                <BorderPane>
+                    <left><JFXButton fx:id="btnDescription" onMouseClicked="#onDescribe" text="%modpack.wizard.step.3" styleClass="jfx-button" /></left>
+                    <right><JFXButton buttonType="RAISED" fx:id="btnInstall" onMouseClicked="#onInstall" text="%ui.button.install" styleClass="jfx-button-raised" /></right>
+                </BorderPane>
+            </ComponentList>
+        </VBox>
 </fx:root>

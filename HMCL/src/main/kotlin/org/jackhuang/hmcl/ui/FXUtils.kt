@@ -108,11 +108,11 @@ fun takeSnapshot(node: Parent, width: Double, height: Double): WritableImage {
     return scene.snapshot(null)
 }
 
-fun setOverflowHidden(node: Region) {
+fun Region.setOverflowHidden() {
     val rectangle = Rectangle()
-    rectangle.widthProperty().bind(node.widthProperty())
-    rectangle.heightProperty().bind(node.heightProperty())
-    node.clip = rectangle
+    rectangle.widthProperty().bind(widthProperty())
+    rectangle.heightProperty().bind(heightProperty())
+    clip = rectangle
 }
 
 val stylesheets = arrayOf(
@@ -238,4 +238,14 @@ fun Node.installTooltip(openDelay: Double = 1000.0, visibleDelay: Double = 5000.
         LOG.log(Level.SEVERE, "Cannot install tooltip by reflection", e)
         Tooltip.install(this, tooltip)
     }
+}
+
+fun JFXTextField.setValidateWhileTextChanged() {
+    textProperty().addListener { _ -> validate() }
+    validate()
+}
+
+fun JFXPasswordField.setValidateWhileTextChanged() {
+    textProperty().addListener { _ -> validate() }
+    validate()
 }

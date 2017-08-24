@@ -33,6 +33,9 @@ import sun.tools.jar.resources.jar
 import java.util.Collections.addAll
 import java.util.ArrayList
 import java.util.Arrays
+import com.sun.javafx.scene.layout.region.BorderStyleConverter.HIDDEN
+
+
 
 
 
@@ -49,16 +52,18 @@ import java.util.Arrays
 @Throws(IOException::class, JsonParseException::class)
 fun readHMCLModpackManifest(f: File): Modpack {
     val manifestJson = readTextFromZipFile(f, "modpack.json")
-    val manifest = GSON.fromJson<Modpack>(manifestJson) ?: throw JsonParseException("`modpack.json` not found. Not a valid HMCL modpack.")
+    val manifest = GSON.fromJson<Modpack>(manifestJson) ?: throw JsonParseException("`modpack.json` not found. $f is not a valid HMCL modpack.")
     val gameJson = readTextFromZipFile(f, "minecraft/pack.json")
-    val game = GSON.fromJson<Version>(gameJson) ?: throw JsonParseException("`minecraft/pack.json` not found. Not a valid HMCL modpack.")
-    return if (game.jar == null) manifest.copy(manifest = HMCLModpackManifest)
+    val game = GSON.fromJson<Version>(gameJson) ?: throw JsonParseException("`minecraft/pack.json` not found. $f iot a valid HMCL modpack.")
+    return if (game.jar == null)
+        if (manifest.gameVersion.isNullOrBlank()) throw JsonParseException("Cannot recognize the game version of modpack $f.")
+        else manifest.copy(manifest = HMCLModpackManifest)
     else manifest.copy(manifest = HMCLModpackManifest, gameVersion = game.jar!!)
 }
 
 object HMCLModpackManifest
 
-class HMCLModpackInstallTask(profile: Profile, private val zipFile: File, private val name: String): Task() {
+class HMCLModpackInstallTask(profile: Profile, private val zipFile: File, private val modpack: Modpack, private val name: String): Task() {
     private val dependency = profile.dependency
     private val repository = profile.repository
     override val dependencies = mutableListOf<Task>()
@@ -68,9 +73,8 @@ class HMCLModpackInstallTask(profile: Profile, private val zipFile: File, privat
         check(!repository.hasVersion(name), { "Version $name already exists." })
         val json = readTextFromZipFile(zipFile, "minecraft/pack.json")
         var version = GSON.fromJson<Version>(json)!!
-        val jar = version.jar!!
         version = version.copy(jar = null)
-        dependents += dependency.gameBuilder().name(name).gameVersion(jar).buildAsync()
+        dependents += dependency.gameBuilder().name(name).gameVersion(modpack.gameVersion!!).buildAsync()
         dependencies += dependency.checkGameCompletionAsync(version)
         dependencies += VersionJSONSaveTask(dependency, version)
     }
@@ -86,36 +90,76 @@ class HMCLModpackInstallTask(profile: Profile, private val zipFile: File, privat
 }
 
 val MODPACK_BLACK_LIST = listOf("usernamecache.json", "asm", "logs", "backups", "versions", "assets", "usercache.json", "libraries", "crash-reports", "launcher_profiles.json", "NVIDIA", "AMD", "TCNodeTracker", "screenshots", "natives", "native", "\$native", "pack.json", "launcher.jar", "minetweaker.log", "launcher.pack.lzma", "hmclmc.log")
-val MODPACK_SUGGESTED_BLACK_LIST = listOf("fonts", "saves", "servers.dat", "options.txt", "optionsof.txt", "journeymap", "optionsshaders.txt", "mods/VoxelMods")
+val MODPACK_NORMAL_LIST = listOf("fonts", "saves", "servers.dat", "options.txt", "optionsof.txt", "journeymap", "optionsshaders.txt", "mods/VoxelMods")
+
+/**
+ *
+ * @author huang
+ */
+interface ModAdviser {
+
+    fun advise(fileName: String, isDirectory: Boolean): ModSuggestion
+
+    enum class ModSuggestion {
+        SUGGESTED,
+        NORMAL,
+        HIDDEN
+    }
+
+}
+
+private fun match(l: List<String>, fileName: String, isDirectory: Boolean): Boolean {
+    for (s in l)
+        if (isDirectory) {
+            if (fileName.startsWith(s + "/"))
+                return true
+        } else if (fileName == s)
+            return true
+    return false
+}
+
+var MODPACK_PREDICATE = object : ModAdviser {
+    override fun advise(fileName: String, isDirectory: Boolean): ModAdviser.ModSuggestion {
+        return if (match(MODPACK_BLACK_LIST, fileName, isDirectory))
+            ModAdviser.ModSuggestion.HIDDEN
+        else if (match(MODPACK_NORMAL_LIST, fileName, isDirectory))
+            ModAdviser.ModSuggestion.NORMAL
+        else
+            ModAdviser.ModSuggestion.SUGGESTED
+    }
+}
 
 class HMCLModpackExportTask @JvmOverloads constructor(
         private val repository: DefaultGameRepository,
         private val version: String,
-        private val blacklist: List<String>,
+        private val whitelist: List<String>,
         private val modpack: Modpack,
         private val output: File,
         override val id: String = ID): TaskResult<ZipEngine>() {
     override fun execute() {
-        val b = ArrayList<String>(MODPACK_BLACK_LIST)
-        b.addAll(blacklist)
-        b.add(version + ".jar")
-        b.add(version + ".json")
+        val blackList = ArrayList<String>(MODPACK_BLACK_LIST)
+        blackList.add(version + ".jar")
+        blackList.add(version + ".json")
         LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker")
         ZipEngine(output).use { zip ->
-            zip.putDirectory(repository.getRunDirectory(version)) a@ { x: String, y: Boolean ->
-                for (s in b)
-                    if (y) {
-                        if (x.startsWith(s + "/"))
+            zip.putDirectory(repository.getRunDirectory(version)) a@ { pathName: String, isDirectory: Boolean ->
+                for (s in blackList) {
+                    if (isDirectory) {
+                        if (pathName.startsWith(s + "/"))
                             return@a null
-                    } else if (x == s)
+                    } else if (pathName == s)
                         return@a null
-                "minecraft/" + x
+                }
+                for (s in whitelist)
+                    if (s + (if (isDirectory) "/" else "") == pathName)
+                        return@a "minecraft/" + pathName
+                null
             }
 
             val mv = repository.getVersion(version).resolve(repository)
             val gameVersion = minecraftVersion(repository.getVersionJar(version)) ?: throw IllegalStateException("Cannot parse the version of $version")
-            zip.putTextFile(GSON.toJson(mv), "minecraft/pack.json")
-            zip.putTextFile(GSON.toJson(modpack.copy(gameVersion = gameVersion)), "modpack.json")
+            zip.putTextFile(GSON.toJson(mv.copy(jar = gameVersion)), "minecraft/pack.json") // Making "jar" to gameVersion is to be compatible with old HMCL.
+            zip.putTextFile(GSON.toJson(modpack.copy(gameVersion = gameVersion)), "modpack.json") // Newer HMCL only reads 'gameVersion' field.
         }
     }
 
