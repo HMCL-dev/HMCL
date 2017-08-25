@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download.forge
 
+import org.apache.commons.compress.archivers.zip.ZipFile
 import org.jackhuang.hmcl.download.DefaultDependencyManager
 import org.jackhuang.hmcl.download.RemoteVersion
 import org.jackhuang.hmcl.download.game.GameLibrariesTask
@@ -30,7 +31,6 @@ import org.jackhuang.hmcl.task.then
 import org.jackhuang.hmcl.util.*
 import java.io.File
 import java.io.IOException
-import java.util.zip.ZipFile
 
 class ForgeInstallTask(private val dependencyManager: DefaultDependencyManager,
                        private val gameVersion: String,

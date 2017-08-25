@@ -17,12 +17,12 @@
  */
 package org.jackhuang.hmcl.util
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
+import org.apache.commons.compress.archivers.zip.ZipFile
 import java.io.File
 import java.io.IOException
-import java.util.zip.ZipEntry
-import java.util.zip.ZipFile
-import java.util.zip.ZipInputStream
-import java.util.zip.ZipOutputStream
 
 /**
  * Compress the given directory to a zip file.
@@ -35,7 +35,7 @@ import java.util.zip.ZipOutputStream
 @JvmOverloads
 @Throws(IOException::class)
 fun zip(src: File, destZip: File, pathNameCallback: ((String, Boolean) -> String?)? = null) {
-    ZipOutputStream(destZip.outputStream()).use { zos ->
+    ZipArchiveOutputStream(destZip.outputStream()).use { zos ->
         val basePath: String
         if (src.isDirectory)
             basePath = src.path
@@ -43,7 +43,7 @@ fun zip(src: File, destZip: File, pathNameCallback: ((String, Boolean) -> String
         //直接压缩单个文件时，取父目录
             basePath = src.parent
         zipFile(src, basePath, zos, pathNameCallback)
-        zos.closeEntry()
+        zos.closeArchiveEntry()
     }
 }
 
@@ -58,7 +58,7 @@ fun zip(src: File, destZip: File, pathNameCallback: ((String, Boolean) -> String
 @Throws(IOException::class)
 private fun zipFile(src: File,
                     basePath: String,
-                    zos: ZipOutputStream,
+                    zos: ZipArchiveOutputStream,
                     pathNameCallback: ((String, Boolean) -> String?)?) {
     val files: Array<File>
     if (src.isDirectory)
@@ -75,7 +75,7 @@ private fun zipFile(src: File,
                 pathName = pathNameCallback.invoke(pathName, true)
             if (pathName == null)
                 continue
-            zos.putNextEntry(ZipEntry(pathName))
+            zos.putArchiveEntry(ZipArchiveEntry(pathName))
             zipFile(file, basePath, zos, pathNameCallback)
         } else {
             pathName = file.path.substring(basePath.length + 1)
@@ -84,7 +84,7 @@ private fun zipFile(src: File,
             if (pathName == null)
                 continue
             file.inputStream().use { inputStream ->
-                zos.putNextEntry(ZipEntry(pathName))
+                zos.putArchiveEntry(ZipArchiveEntry(pathName))
                 inputStream.copyTo(zos, buf)
             }
         }
@@ -102,17 +102,13 @@ private fun zipFile(src: File,
 fun unzip(zip: File, dest: File, callback: ((String) -> Boolean)? = null, ignoreExistsFile: Boolean = true) {
     val buf = ByteArray(1024)
     dest.mkdirs()
-    ZipInputStream(zip.inputStream()).use { zipFile ->
+    ZipArchiveInputStream(zip.inputStream()).use { zipFile ->
         if (zip.exists()) {
-            var gbkPath: String
-            var strtemp: String
             val strPath = dest.absolutePath
-            var zipEnt: ZipEntry?
             while (true) {
-                zipEnt = zipFile.nextEntry
-                if (zipEnt == null)
-                    break
-                gbkPath = zipEnt.name
+                val zipEnt = zipFile.nextEntry ?: break
+                var strtemp: String
+                var gbkPath = zipEnt.name
                 if (callback != null)
                     if (!callback.invoke(gbkPath))
                         continue
@@ -126,7 +122,7 @@ fun unzip(zip: File, dest: File, callback: ((String) -> Boolean)? = null, ignore
                     strtemp = strPath + File.separator + gbkPath
                     //建目录
                     val strsubdir = gbkPath
-                    for (i in 0..strsubdir.length - 1)
+                    for (i in 0 until strsubdir.length)
                         if (strsubdir.substring(i, i + 1).equals("/", ignoreCase = true)) {
                             val temp = strPath + File.separator + strsubdir.substring(0, i)
                             val subdir = File(temp)
@@ -157,16 +153,13 @@ fun unzip(zip: File, dest: File, callback: ((String) -> Boolean)? = null, ignore
 fun unzipSubDirectory(zip: File, dest: File, subDirectory: String, ignoreExistentFile: Boolean = true) {
     val buf = ByteArray(1024)
     dest.mkdirs()
-    ZipInputStream(zip.inputStream()).use { zipFile ->
+    ZipArchiveInputStream(zip.inputStream()).use { zipFile ->
         if (zip.exists()) {
-            var gbkPath: String
-            var strtemp: String
             val strPath = dest.absolutePath
-            var zipEnt: ZipEntry?
             while (true) {
-                zipEnt = zipFile.nextEntry
-                if (zipEnt == null)
-                    break
+                val zipEnt = zipFile.nextEntry ?: break
+                var strtemp: String
+                var gbkPath: String
                 gbkPath = zipEnt.name
                 if (!gbkPath.startsWith(subDirectory))
                     continue

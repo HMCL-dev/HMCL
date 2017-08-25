@@ -19,12 +19,12 @@ package org.jackhuang.hmcl.mod
 
 import com.google.gson.JsonParseException
 import com.google.gson.annotations.SerializedName
+import org.apache.commons.compress.archivers.zip.ZipFile
 import org.jackhuang.hmcl.util.GSON
 import org.jackhuang.hmcl.util.parseParams
 import org.jackhuang.hmcl.util.readFullyAsString
 import org.jackhuang.hmcl.util.typeOf
 import java.io.File
-import java.util.zip.ZipFile
 
 class ForgeModMetadata @JvmOverloads internal constructor(
         @SerializedName("modid")

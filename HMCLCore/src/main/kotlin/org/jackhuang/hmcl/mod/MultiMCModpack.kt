@@ -18,17 +18,16 @@
 package org.jackhuang.hmcl.mod
 
 import com.google.gson.annotations.SerializedName
+import org.apache.commons.compress.archivers.zip.ZipFile
 import org.jackhuang.hmcl.download.DefaultDependencyManager
 import org.jackhuang.hmcl.download.game.VersionJSONSaveTask
 import org.jackhuang.hmcl.game.Library
-import org.jackhuang.hmcl.game.Version
 import org.jackhuang.hmcl.task.Task
 import org.jackhuang.hmcl.util.*
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
-import java.util.zip.ZipFile
 
 class InstancePatch @JvmOverloads constructor(
         val name: String = "",
@@ -221,7 +220,7 @@ class MMCModpackInstallTask(private val dependencyManager: DefaultDependencyMana
         unzipSubDirectory(zipFile, run, "minecraft/", false)
 
         ZipFile(zipFile).use { zip ->
-            for (entry in zip.entries()) {
+            for (entry in zip.entries) {
                 // ensure that this entry is in folder 'patches' and is a json file.
                 if (!entry.isDirectory && entry.name.startsWith("patches/") && entry.name.endsWith(".json")) {
                     val patch = GSON.fromJson<InstancePatch>(zip.getInputStream(entry).readFullyAsString())!!
