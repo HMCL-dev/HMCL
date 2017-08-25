@@ -18,19 +18,24 @@
 package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.*
-import javafx.beans.InvalidationListener
 import javafx.beans.value.ChangeListener
 import javafx.fxml.FXML
 import javafx.scene.control.Label
 import javafx.scene.control.ScrollPane
 import javafx.scene.control.Toggle
 import javafx.scene.control.ToggleGroup
+import javafx.scene.image.Image
+import javafx.scene.image.ImageView
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.Pane
 import javafx.scene.layout.VBox
 import javafx.stage.DirectoryChooser
+import javafx.stage.FileChooser
 import org.jackhuang.hmcl.i18n
+import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.setting.VersionSetting
+import org.jackhuang.hmcl.task.Scheduler
+import org.jackhuang.hmcl.task.task
 import org.jackhuang.hmcl.ui.construct.ComponentList
 import org.jackhuang.hmcl.ui.construct.NumberValidator
 import org.jackhuang.hmcl.util.JavaVersion
@@ -64,8 +69,14 @@ class VersionSettingsController {
     @FXML lateinit var radioCustom: JFXRadioButton
     @FXML lateinit var btnJavaSelect: JFXButton
     @FXML lateinit var chkShowLogs: JFXToggleButton
+    @FXML lateinit var btnIconSelection: JFXButton
+    @FXML lateinit var iconView: ImageView
+
+    lateinit var profile: Profile
+    lateinit var versionId: String
 
     val javaGroup = ToggleGroup()
+
 
     fun initialize() {
         lblPhysicalMemory.text = i18n("settings.physical_memory") + ": ${OS.TOTAL_MEMORY}MB"
@@ -122,8 +133,11 @@ class VersionSettingsController {
         }
     }
 
-    fun loadVersionSetting(version: VersionSetting) {
+    fun loadVersionSetting(profile: Profile, versionId: String, version: VersionSetting) {
         rootPane.children -= advancedSettingsPane
+
+        this.profile = profile
+        this.versionId = versionId
 
         lastVersionSetting?.apply {
             widthProperty.unbind()
@@ -192,14 +206,17 @@ class VersionSettingsController {
         }
 
         version.javaDirProperty.setChangedListener { initJavaSubtitle(version) }
-        version.javaProperty.setChangedListener { initJavaSubtitle(version)}
+        version.javaProperty.setChangedListener { initJavaSubtitle(version) }
         initJavaSubtitle(version)
 
         lastVersionSetting = version
+
+        loadIcon()
     }
 
     private fun initJavaSubtitle(version: VersionSetting) {
-        componentJava.subtitle = version.javaVersion?.binary?.absolutePath ?: "Invalid Java Directory"
+        task { it["java"] = version.javaVersion }
+                .then(task(Scheduler.JAVAFX) { componentJava.subtitle = it.get<JavaVersion?>("java")?.binary?.absolutePath ?: "Invalid Java Directory" })
     }
 
     fun onShowAdvanced() {
@@ -215,5 +232,25 @@ class VersionSettingsController {
         val selectedDir = chooser.showDialog(Controllers.stage)
         if (selectedDir != null)
             txtJavaDir.text = selectedDir.absolutePath
+    }
+
+    fun onExploreIcon() {
+        val chooser = FileChooser()
+        chooser.extensionFilters += FileChooser.ExtensionFilter("Image", "*.png")
+        val selectedFile = chooser.showOpenDialog(Controllers.stage)
+        if (selectedFile != null) {
+            val iconFile = profile.repository.getVersionIcon(versionId)
+            selectedFile.copyTo(iconFile, overwrite = true)
+            loadIcon()
+        }
+    }
+
+    private fun loadIcon() {
+        val iconFile = profile.repository.getVersionIcon(versionId)
+        if (iconFile.exists())
+            iconView.image = Image("file:" + iconFile.absolutePath)
+        else
+            iconView.image = DEFAULT_ICON
+        iconView.limitSize(32.0, 32.0)
     }
 }

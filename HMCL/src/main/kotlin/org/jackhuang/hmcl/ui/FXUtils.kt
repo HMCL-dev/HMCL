@@ -33,6 +33,8 @@ import javafx.scene.Node
 import javafx.scene.Parent
 import javafx.scene.Scene
 import javafx.scene.control.*
+import javafx.scene.image.Image
+import javafx.scene.image.ImageView
 import javafx.scene.image.WritableImage
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.ScrollEvent
@@ -249,3 +251,18 @@ fun JFXPasswordField.setValidateWhileTextChanged() {
     textProperty().addListener { _ -> validate() }
     validate()
 }
+
+fun ImageView.limitSize(maxWidth: Double, maxHeight: Double) {
+    isPreserveRatio = true
+    imageProperty().onChangeAndOperate {
+        if (it != null && (it.width > maxWidth || it.height > maxHeight)) {
+            fitHeight = maxHeight
+            fitWidth = maxWidth
+        } else {
+            fitHeight = -1.0
+            fitWidth = -1.0
+        }
+    }
+}
+
+val DEFAULT_ICON = Image("/assets/img/icon.png")

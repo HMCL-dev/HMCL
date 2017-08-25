@@ -25,6 +25,7 @@ import javafx.beans.property.StringProperty
 import javafx.fxml.FXML
 import javafx.scene.Node
 import javafx.scene.control.ToggleGroup
+import javafx.scene.image.Image
 import javafx.scene.layout.StackPane
 import org.jackhuang.hmcl.ProfileChangedEvent
 import org.jackhuang.hmcl.ProfileLoadingEvent
@@ -83,6 +84,9 @@ class MainPage : StackPane(), DecoratorPage {
                 Controllers.decorator.showPage(Controllers.versionPane)
                 Controllers.versionPane.load(version, profile)
             }
+            val iconFile = profile.repository.getVersionIcon(version)
+            if (iconFile.exists())
+                iconView.image = Image("file:" + iconFile.absolutePath)
         }
     }
 

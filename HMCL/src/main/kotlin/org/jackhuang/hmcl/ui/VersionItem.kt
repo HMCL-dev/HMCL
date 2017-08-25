@@ -25,6 +25,7 @@ import javafx.scene.control.Label
 import javafx.scene.control.ToggleGroup
 import javafx.scene.effect.BlurType
 import javafx.scene.effect.DropShadow
+import javafx.scene.image.ImageView
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
@@ -41,6 +42,7 @@ class VersionItem(i: Int, group: ToggleGroup) : StackPane() {
     @FXML lateinit var lblVersionName: Label
     @FXML lateinit var chkSelected: JFXRadioButton
     @FXML lateinit var lblGameVersion: Label
+    @FXML lateinit var iconView: ImageView
 
     init {
         loadFXML("/assets/fxml/version-item.fxml")
@@ -60,6 +62,7 @@ class VersionItem(i: Int, group: ToggleGroup) : StackPane() {
 
         // create image view
         icon.translateYProperty().bind(Bindings.createDoubleBinding(Callable { header.boundsInParent.height - icon.height }, header.boundsInParentProperty(), icon.heightProperty()))
+        iconView.limitSize(32.0, 32.0)
     }
 
     private fun getDefaultColor(i: Int): String {

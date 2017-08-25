@@ -44,6 +44,8 @@ class VersionPage : StackPane(), DecoratorPage {
     @FXML lateinit var btnBrowseMenu: JFXButton
     @FXML lateinit var btnManagementMenu: JFXButton
     @FXML lateinit var btnExport: JFXButton
+    @FXML lateinit var rootPane: StackPane
+    @FXML lateinit var contentPane: StackPane
     val browsePopup: JFXPopup
     val managementPopup: JFXPopup
     lateinit var profile: Profile
@@ -68,7 +70,7 @@ class VersionPage : StackPane(), DecoratorPage {
         this.profile = profile
         titleProperty.set(i18n("launcher.title.game") + " - " + id)
 
-        versionSettingsController.loadVersionSetting(profile.getVersionSetting(id))
+        versionSettingsController.loadVersionSetting(profile, id, profile.getVersionSetting(id))
         modController.loadMods(profile.modManager, id)
         installerController.loadVersion(profile, id)
     }

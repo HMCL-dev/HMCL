@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.task.taskResult
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage
 import org.jackhuang.hmcl.util.onChange
+import org.jackhuang.hmcl.util.onChangeAndOperate
 
 class AccountsPage() : StackPane(), DecoratorPage {
     override val titleProperty: StringProperty = SimpleStringProperty(this, "title", "Accounts")
@@ -69,7 +70,7 @@ class AccountsPage() : StackPane(), DecoratorPage {
         txtPassword.setOnAction { onCreationAccept() }
         txtUsername.setOnAction { onCreationAccept() }
 
-        Settings.selectedAccountProperty.setChangedListener { account ->
+        Settings.selectedAccountProperty.onChangeAndOperate { account ->
             masonryPane.children.forEach { node ->
                 if (node is AccountItem) {
                     node.chkSelected.isSelected = account?.username == node.lblUser.text

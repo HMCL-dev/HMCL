@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game
 
+import javafx.geometry.Rectangle2D
 import javafx.scene.image.Image
 import org.jackhuang.hmcl.Main
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
@@ -24,6 +25,7 @@ import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.FileDownloadTask
 import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.task.Task
+import org.jackhuang.hmcl.ui.DEFAULT_ICON
 import org.jackhuang.hmcl.ui.DialogController
 import org.jackhuang.hmcl.util.toURL
 import java.net.Proxy
@@ -63,16 +65,20 @@ object AccountHelper {
     }
 
     private fun getSkinFile(name: String) = SKIN_DIR.resolve("$name.png")
-    private val DEFAULT_IMAGE = Image("/assets/img/icon.png")
 
     fun getSkin(account: YggdrasilAccount, scaleRatio: Double = 1.0): Image {
-        if (account.selectedProfile == null) return DEFAULT_IMAGE
-        val name = account.selectedProfile?.name ?: return DEFAULT_IMAGE
+        if (account.selectedProfile == null) return DEFAULT_ICON
+        val name = account.selectedProfile?.name ?: return DEFAULT_ICON
         val file = getSkinFile(name)
         if (file.exists()) {
             val original = Image("file:" + file.absolutePath)
             return Image("file:" + file.absolutePath, original.width * scaleRatio, original.height * scaleRatio, false, false)
         }
-        else return DEFAULT_IMAGE
+        else return DEFAULT_ICON
+    }
+
+    fun getViewport(scaleRatio: Double): Rectangle2D {
+        val size = 8.0 * scaleRatio
+        return Rectangle2D(size, size, size, size)
     }
 }

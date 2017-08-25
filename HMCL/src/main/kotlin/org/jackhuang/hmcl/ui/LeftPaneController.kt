@@ -19,10 +19,13 @@ package org.jackhuang.hmcl.ui
 
 import com.jfoenix.controls.JFXComboBox
 import javafx.scene.layout.VBox
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
+import org.jackhuang.hmcl.game.AccountHelper
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.ui.construct.IconedItem
 import org.jackhuang.hmcl.ui.construct.RipplerContainer
+import org.jackhuang.hmcl.util.onChangeAndOperate
 
 class LeftPaneController(private val leftPane: AdvancedListBox) {
     val versionsPane = VBox()
@@ -63,13 +66,20 @@ class LeftPaneController(private val leftPane: AdvancedListBox) {
         }
         Controllers.mainPane.buttonLaunch.setOnMouseClicked { LauncherHelper.launch() }*/
 
-        Settings.selectedAccountProperty.setChangedListener {
+        Settings.selectedAccountProperty.onChangeAndOperate {
             if (it == null) {
                 accountItem.lblVersionName.text = "mojang@mojang.com"
                 accountItem.lblGameVersion.text = "Yggdrasil"
             } else {
                 accountItem.lblVersionName.text = it.username
                 accountItem.lblGameVersion.text = accountType(it)
+            }
+            if (it is YggdrasilAccount) {
+                accountItem.imageView.image = AccountHelper.getSkin(it, 4.0)
+                accountItem.imageView.viewport = AccountHelper.getViewport(4.0)
+            } else {
+                accountItem.imageView.image = DEFAULT_ICON
+                accountItem.imageView.viewport = null
             }
         }
 

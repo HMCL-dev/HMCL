@@ -20,13 +20,15 @@ package org.jackhuang.hmcl.ui
 import javafx.fxml.FXML
 import javafx.scene.control.Button
 import javafx.scene.control.Label
+import javafx.scene.image.ImageView
 import javafx.scene.layout.StackPane
 
-class VersionListItem(val versionName: String, val gameVersion: String) : StackPane() {
+class VersionListItem(versionName: String, gameVersion: String) : StackPane() {
 
     @FXML lateinit var lblVersionName: Label
     @FXML lateinit var lblGameVersion: Label
-    @FXML lateinit var btnSettings: Button
+    @FXML lateinit var imageView: ImageView
+    @FXML lateinit var imageViewContainer: StackPane
 
     private var handler: () -> Unit = {}
 
@@ -34,6 +36,10 @@ class VersionListItem(val versionName: String, val gameVersion: String) : StackP
         loadFXML("/assets/fxml/version-list-item.fxml")
         lblVersionName.text = versionName
         lblGameVersion.text = gameVersion
+
+        imageView.limitSize(32.0, 32.0)
+        imageViewContainer.limitWidth(32.0)
+        imageViewContainer.limitHeight(32.0)
     }
 
     fun onSettings() {

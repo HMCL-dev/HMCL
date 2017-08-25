@@ -14,15 +14,17 @@
     <BorderPane pickOnBounds="false">
         <left>
             <HBox alignment="CENTER" mouseTransparent="true">
-                <ImageView>
+                <StackPane fx:id="imageViewContainer">
+                <ImageView preserveRatio="true" fx:id="imageView" smooth="false">
                     <Image url="/assets/img/icon.png" requestedWidth="25" requestedHeight="25" />
                 </ImageView>
+                </StackPane>
                 <BorderPane style="-fx-padding: 0 0 0 10;">
                     <top>
-                        <Label fx:id="lblVersionName" maxWidth="100" style="-fx-font-size: 15;" textAlignment="JUSTIFY" />
+                        <Label fx:id="lblVersionName" maxWidth="90" style="-fx-font-size: 15;" textAlignment="JUSTIFY" />
                     </top>
                     <bottom>
-                        <Label fx:id="lblGameVersion" maxWidth="100" style="-fx-font-size: 10;" textAlignment="JUSTIFY" />
+                        <Label fx:id="lblGameVersion" maxWidth="90" style="-fx-font-size: 10;" textAlignment="JUSTIFY" />
                     </bottom>
                 </BorderPane>
             </HBox>

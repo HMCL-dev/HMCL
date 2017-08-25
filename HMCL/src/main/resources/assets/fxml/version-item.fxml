@@ -42,7 +42,7 @@
         </StackPane>
     </VBox>
     <StackPane fx:id="icon" StackPane.alignment="TOP_RIGHT" pickOnBounds="false">
-        <ImageView StackPane.alignment="CENTER_RIGHT">
+        <ImageView fx:id="iconView" StackPane.alignment="CENTER_RIGHT">
             <StackPane.margin>
                 <Insets right="12" />
             </StackPane.margin>

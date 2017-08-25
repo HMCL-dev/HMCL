@@ -127,6 +127,9 @@ class HMCLGameRepository(val profile: Profile, baseDirectory: File)
         return versionSettings[id]
     }
 
+    fun getVersionIcon(id: String): File =
+            getVersionRoot(id).resolve("icon.png")
+
     fun markVersionAsModpack(id: String) {
         beingModpackVersions += id
     }

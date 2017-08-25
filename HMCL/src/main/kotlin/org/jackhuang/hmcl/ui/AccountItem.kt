@@ -98,11 +98,9 @@ class AccountItem(i: Int, val account: Account, group: ToggleGroup) : StackPane(
         if (account !is YggdrasilAccount)
             return
         pgsSkin.isVisible = false
-        val size = 8.0 * 4
-        portraitView.viewport = Rectangle2D(size, size, size, size)
+        portraitView.viewport = AccountHelper.getViewport(4.0)
         portraitView.image = AccountHelper.getSkin(account, 4.0)
-        portraitView.fitHeight = 32.0
-        portraitView.fitWidth = 32.0
+        portraitView.limitSize(32.0, 32.0)
     }
 
     private fun getDefaultColor(i: Int): String {

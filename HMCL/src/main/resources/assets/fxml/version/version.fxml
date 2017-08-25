@@ -2,54 +2,64 @@
 
 <?import com.jfoenix.controls.*?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <fx:root xmlns="http://javafx.com/javafx"
-          xmlns:fx="http://javafx.com/fxml"
-          type="StackPane">
-    <JFXTabPane>
-        <Tab text="%settings">
-            <fx:include source="version-settings.fxml" fx:id="versionSettings" />
-        </Tab>
-        <Tab text="%mods">
-            <fx:include source="mod.fxml" fx:id="mod" />
-        </Tab>
-        <Tab text="%settings.tabs.installers">
-            <fx:include source="installer.fxml" fx:id="installer" />
-        </Tab>
-    </JFXTabPane>
+         xmlns:fx="http://javafx.com/fxml"
+         fx:id="rootPane"
+         type="StackPane">
+    <JFXRippler />
+    <StackPane fx:id="contentPane">
+        <JFXTabPane>
+            <Tab text="%settings">
+                <fx:include source="version-settings.fxml" fx:id="versionSettings"/>
+            </Tab>
+            <Tab text="%mods">
+                <fx:include source="mod.fxml" fx:id="mod"/>
+            </Tab>
+            <Tab text="%settings.tabs.installers">
+                <fx:include source="installer.fxml" fx:id="installer"/>
+            </Tab>
+        </JFXTabPane>
 
-    <HBox alignment="TOP_RIGHT" style="-fx-padding: 3px;" pickOnBounds="false">
-        <JFXButton fx:id="btnExport" maxHeight="28.0" minHeight="28.0" onMouseClicked="#onExport" styleClass="toggle-icon3" ripplerFill="white">
-            <graphic>
-                <fx:include source="/assets/svg/export.fxml"/>
-            </graphic>
-        </JFXButton>
-        <JFXButton fx:id="btnBrowseMenu" maxHeight="28.0" minHeight="28.0" onMouseClicked="#onBrowseMenu" styleClass="toggle-icon3" ripplerFill="white">
-            <graphic>
-                <fx:include source="/assets/svg/folder-open.fxml"/>
-            </graphic>
-        </JFXButton>
-        <JFXButton fx:id="btnManagementMenu" maxHeight="28.0" minHeight="28.0" onMouseClicked="#onManagementMenu" styleClass="toggle-icon3" ripplerFill="white">
-            <graphic>
-                <fx:include source="/assets/svg/wrench-black.fxml"/>
-            </graphic>
-        </JFXButton>
-    </HBox>
+        <HBox alignment="TOP_RIGHT" style="-fx-padding: 3px;" pickOnBounds="false">
+            <JFXButton fx:id="btnExport" maxHeight="28.0" minHeight="28.0" onMouseClicked="#onExport"
+                       styleClass="toggle-icon3" ripplerFill="white">
+                <graphic>
+                    <fx:include source="/assets/svg/export.fxml"/>
+                </graphic>
+            </JFXButton>
+            <JFXButton fx:id="btnBrowseMenu" maxHeight="28.0" minHeight="28.0" onMouseClicked="#onBrowseMenu"
+                       styleClass="toggle-icon3" ripplerFill="white">
+                <graphic>
+                    <fx:include source="/assets/svg/folder-open.fxml"/>
+                </graphic>
+            </JFXButton>
+            <JFXButton fx:id="btnManagementMenu" maxHeight="28.0" minHeight="28.0" onMouseClicked="#onManagementMenu"
+                       styleClass="toggle-icon3" ripplerFill="white">
+                <graphic>
+                    <fx:include source="/assets/svg/wrench-black.fxml"/>
+                </graphic>
+            </JFXButton>
+        </HBox>
+    </StackPane>
 
-    <JFXListView fx:id="browseList" styleClass="option-list-view" onMouseClicked="#onBrowse" maxWidth="150.0" minWidth="150.0">
-        <Label text="%folder.game" />
-        <Label text="%folder.mod" />
-        <Label text="%folder.coremod" />
-        <Label text="%folder.config" />
-        <Label text="%folder.resourcepacks" />
-        <Label text="%folder.screenshots" />
-        <Label text="%folder.saves" />
+    <JFXListView fx:id="browseList" styleClass="option-list-view" onMouseClicked="#onBrowse" maxWidth="150.0"
+                 minWidth="150.0">
+        <Label text="%folder.game"/>
+        <Label text="%folder.mod"/>
+        <Label text="%folder.coremod"/>
+        <Label text="%folder.config"/>
+        <Label text="%folder.resourcepacks"/>
+        <Label text="%folder.screenshots"/>
+        <Label text="%folder.saves"/>
     </JFXListView>
 
-    <JFXListView fx:id="managementList" styleClass="option-list-view" onMouseClicked="#onManagement" maxWidth="300.0" minWidth="300.0">
-        <Label text="%versions.manage.rename" />
-        <Label text="%versions.manage.remove" />
-        <Label text="%versions.manage.redownload_assets_index" />
-        <Label text="%versions.manage.remove_libraries" />
+    <JFXListView fx:id="managementList" styleClass="option-list-view" onMouseClicked="#onManagement"
+                 maxWidth="300.0" minWidth="300.0">
+        <Label text="%versions.manage.rename"/>
+        <Label text="%versions.manage.remove"/>
+        <Label text="%versions.manage.redownload_assets_index"/>
+        <Label text="%versions.manage.remove_libraries"/>
     </JFXListView>
 </fx:root>
