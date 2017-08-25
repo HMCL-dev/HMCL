@@ -23,7 +23,7 @@ import javafx.scene.control.Label
 import javafx.scene.image.ImageView
 import javafx.scene.layout.StackPane
 
-class VersionListItem(versionName: String, gameVersion: String) : StackPane() {
+class VersionListItem(versionName: String, gameVersion: String = "") : StackPane() {
 
     @FXML lateinit var lblVersionName: Label
     @FXML lateinit var lblGameVersion: Label

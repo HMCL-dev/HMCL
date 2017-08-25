@@ -21,6 +21,9 @@ import javafx.beans.property.*
 import javafx.beans.value.ChangeListener
 import javafx.beans.value.ObservableValue
 
+/**
+ * Any operation of properties should run on JavaFX thread.
+ */
 open class ImmediateStringProperty(bean: Any, name: String, initialValue: String): SimpleStringProperty(bean, name, initialValue) {
 
     override fun set(newValue: String) {

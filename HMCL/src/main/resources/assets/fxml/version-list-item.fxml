@@ -16,7 +16,7 @@
             <HBox alignment="CENTER" mouseTransparent="true">
                 <StackPane fx:id="imageViewContainer">
                 <ImageView preserveRatio="true" fx:id="imageView" smooth="false">
-                    <Image url="/assets/img/icon.png" requestedWidth="25" requestedHeight="25" />
+                    <Image url="/assets/img/icon.png" />
                 </ImageView>
                 </StackPane>
                 <BorderPane style="-fx-padding: 0 0 0 10;">

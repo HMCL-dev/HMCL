@@ -20,21 +20,24 @@ package org.jackhuang.hmcl.setting
 import com.google.gson.*
 import javafx.beans.InvalidationListener
 import org.jackhuang.hmcl.download.DefaultDependencyManager
+import org.jackhuang.hmcl.event.EVENT_BUS
+import org.jackhuang.hmcl.event.RefreshedVersionsEvent
 import org.jackhuang.hmcl.game.HMCLGameRepository
 import org.jackhuang.hmcl.mod.ModManager
-import org.jackhuang.hmcl.util.ImmediateObjectProperty
-import org.jackhuang.hmcl.util.ImmediateStringProperty
-import org.jackhuang.hmcl.util.getValue
-import org.jackhuang.hmcl.util.setValue
+import org.jackhuang.hmcl.ui.runOnUiThread
+import org.jackhuang.hmcl.util.*
 import java.io.File
 import java.lang.reflect.Type
 
-class Profile(var name: String = "Default", initialGameDir: File = File(".minecraft"), initialSelectedVersion: String = "") {
+class Profile(name: String = "Default", initialGameDir: File = File(".minecraft"), initialSelectedVersion: String = "") {
+    val nameProperty = ImmediateStringProperty(this, "name", name)
+    var name: String by nameProperty
+
     val globalProperty = ImmediateObjectProperty<VersionSetting>(this, "global", VersionSetting())
     var global: VersionSetting by globalProperty
 
-    val selectedVersionProperty = ImmediateStringProperty(this, "selectedVersion", initialSelectedVersion)
-    var selectedVersion: String by selectedVersionProperty
+    val selectedVersionProperty = ImmediateObjectProperty<String?>(this, "selectedVersion", initialSelectedVersion)
+    var selectedVersion: String? by selectedVersionProperty
 
     val gameDirProperty = ImmediateObjectProperty<File>(this, "gameDir", initialGameDir)
     var gameDir: File by gameDirProperty
@@ -44,17 +47,21 @@ class Profile(var name: String = "Default", initialGameDir: File = File(".minecr
     var modManager = ModManager(repository)
 
     init {
-        gameDirProperty.addListener { _ ->
-            repository.baseDirectory = gameDir
+        gameDirProperty.onChange { newGameDir ->
+            repository.baseDirectory = newGameDir!!
             repository.refreshVersions()
         }
 
-        selectedVersionProperty.addListener { _ ->
-            if (selectedVersion.isNotBlank() && !repository.hasVersion(selectedVersion)) {
-                val newVersion = repository.getVersions().firstOrNull()
-                // will cause anthor change event, we must ensure that there will not be dead recursion.
-                selectedVersion = newVersion?.id ?: ""
-            }
+        selectedVersionProperty.addListener { _ -> verifySelectedVersion() }
+        EVENT_BUS.channel<RefreshedVersionsEvent>() += { event -> if (event.source == repository) verifySelectedVersion() }
+    }
+
+    private fun verifySelectedVersion() = runOnUiThread {
+        // To prevent not loaded profile's selectedVersion being changed.
+        if (repository.isLoaded && ((selectedVersion == null && repository.getVersions().isNotEmpty()) || (selectedVersion != null && !repository.hasVersion(selectedVersion!!)))) {
+            val newVersion = repository.getVersions().firstOrNull()
+            // will cause anthor change event, we must ensure that there will not be dead recursion.
+            selectedVersion = newVersion?.id
         }
     }
 
@@ -86,10 +93,10 @@ class Profile(var name: String = "Default", initialGameDir: File = File(".minecr
             return vs
     }
 
-    fun getSelectedVersionSetting(): VersionSetting =
-            getVersionSetting(selectedVersion)
+    fun getSelectedVersionSetting(): VersionSetting? = if (selectedVersion == null) null else getVersionSetting(selectedVersion!!)
 
     fun addPropertyChangedListener(listener: InvalidationListener) {
+        nameProperty.addListener(listener)
         globalProperty.addListener(listener)
         selectedVersionProperty.addListener(listener)
         gameDirProperty.addListener(listener)

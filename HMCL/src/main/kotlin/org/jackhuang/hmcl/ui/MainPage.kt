@@ -45,7 +45,7 @@ import org.jackhuang.hmcl.util.onChange
  * @see /assets/fxml/main.fxml
  */
 class MainPage : StackPane(), DecoratorPage {
-    override val titleProperty: StringProperty = SimpleStringProperty(this, "title", i18n("launcher.title.main"))
+    override val titleProperty = SimpleStringProperty(this, "title", i18n("launcher.title.main"))
 
     @FXML lateinit var btnLaunch: JFXButton
     @FXML lateinit var btnRefresh: JFXButton
@@ -59,15 +59,20 @@ class MainPage : StackPane(), DecoratorPage {
         btnLaunch.limitWidth(40.0)
         btnLaunch.limitHeight(40.0)
 
-        EVENT_BUS.channel<RefreshedVersionsEvent>() += this::loadVersions
+        EVENT_BUS.channel<RefreshedVersionsEvent>() += { -> loadVersions() }
         EVENT_BUS.channel<ProfileLoadingEvent>() += this::onProfilesLoading
         EVENT_BUS.channel<ProfileChangedEvent>() += this::onProfileChanged
 
-        Settings.onProfileLoading()
-
         btnAdd.setOnMouseClicked { Controllers.decorator.startWizard(DownloadWizardProvider(), "Install New Game") }
         btnRefresh.setOnMouseClicked { Settings.selectedProfile.repository.refreshVersions() }
-        btnLaunch.setOnMouseClicked { LauncherHelper.launch() }
+        btnLaunch.setOnMouseClicked {
+            if (Settings.selectedAccount == null) {
+                Controllers.dialog(i18n("login.no_Player007"))
+            } else if (Settings.selectedProfile.selectedVersion == null) {
+                Controllers.dialog(i18n("minecraft.no_selected_version"))
+            } else
+                LauncherHelper.launch()
+        }
     }
 
     private fun buildNode(i: Int, profile: Profile, version: String, game: String, group: ToggleGroup): Node {
@@ -78,7 +83,7 @@ class MainPage : StackPane(), DecoratorPage {
             lblVersionName.text = version
             btnDelete.setOnMouseClicked {
                 profile.repository.removeVersionFromDisk(version)
-                Platform.runLater(this@MainPage::loadVersions)
+                Platform.runLater { loadVersions() }
             }
             btnSettings.setOnMouseClicked {
                 Controllers.decorator.showPage(Controllers.versionPane)
@@ -94,15 +99,15 @@ class MainPage : StackPane(), DecoratorPage {
         // TODO: Profiles
     }
 
-    fun onProfileChanged(event: ProfileChangedEvent) {
+    fun onProfileChanged(event: ProfileChangedEvent) = runOnUiThread {
         val profile = event.value
-        profile.selectedVersionProperty.setChangedListener {
+        profile.selectedVersionProperty.setChangedListener { t ->
             versionChanged(profile.selectedVersion)
         }
+        loadVersions(profile)
     }
 
-    private fun loadVersions() {
-        val profile = Settings.selectedProfile
+    private fun loadVersions(profile: Profile = Settings.selectedProfile) {
         val group = ToggleGroup()
         val children = mutableListOf<Node>()
         var i = 0
@@ -117,7 +122,7 @@ class MainPage : StackPane(), DecoratorPage {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun versionChanged(selectedVersion: String) {
+    fun versionChanged(selectedVersion: String?) {
         masonryPane.children
                 .filter { it is RipplerContainer && it.properties["version"] is Pair<*, *> }
                 .forEach { (it as RipplerContainer).selected = (it.properties["version"] as Pair<String, VersionListItem>).first == selectedVersion }

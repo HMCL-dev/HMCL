@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider
 import org.jackhuang.hmcl.download.DownloadProvider
 import org.jackhuang.hmcl.download.MojangDownloadProvider
 import org.jackhuang.hmcl.event.EVENT_BUS
+import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.util.*
 import java.io.File
 import java.io.IOException
@@ -270,11 +271,19 @@ object Settings {
      *               PROFILES               *
      ****************************************/
 
-    val selectedProfile: Profile
+    var selectedProfile: Profile
         get() {
-            if (!hasProfile(SETTINGS.selectedProfile))
+            if (!hasProfile(SETTINGS.selectedProfile)) {
                 SETTINGS.selectedProfile = DEFAULT_PROFILE
+                Scheduler.COMPUTATION.schedule { onProfileChanged() }
+            }
             return getProfile(SETTINGS.selectedProfile)
+        }
+        set(value) {
+            if (hasProfile(value.name) && value.name != SETTINGS.selectedProfile) {
+                SETTINGS.selectedProfile = value.name
+                Scheduler.COMPUTATION.schedule { onProfileChanged() }
+            }
         }
 
     fun getProfile(name: String?): Profile {
@@ -316,12 +325,10 @@ object Settings {
         if (DEFAULT_PROFILE == ver) {
             return false
         }
-        var notify = false
-        if (selectedProfile.name == ver)
-            notify = true
         val flag = getProfileMap().remove(ver) != null
-        if (notify && flag)
-            onProfileChanged()
+        if (flag)
+            Scheduler.COMPUTATION.schedule { onProfileLoading() }
+
         return flag
     }
 

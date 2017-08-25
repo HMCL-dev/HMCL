@@ -52,19 +52,21 @@ class FileItem : BorderPane() {
         right = JFXButton().apply {
             graphic = SVG.pencil("black", 15.0, 15.0)
             styleClass += "toggle-icon4"
-            setOnMouseClicked {
-                val chooser = DirectoryChooser()
-                chooser.titleProperty().bind(titleProperty)
-                val selectedDir = chooser.showDialog(Controllers.stage)
-                if (selectedDir != null)
-                    property.value = selectedDir.absolutePath
-                chooser.titleProperty().unbind()
-            }
+            setOnMouseClicked { onExplore() }
         }
 
         Tooltip.install(this, Tooltip().apply {
             textProperty().bind(tooltipProperty)
         })
+    }
+
+    fun onExplore() {
+        val chooser = DirectoryChooser()
+        chooser.titleProperty().bind(titleProperty)
+        val selectedDir = chooser.showDialog(Controllers.stage)
+        if (selectedDir != null)
+            property.value = selectedDir.absolutePath
+        chooser.titleProperty().unbind()
     }
 
     fun setProperty(property: Property<String>) {

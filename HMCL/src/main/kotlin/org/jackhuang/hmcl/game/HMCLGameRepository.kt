@@ -87,6 +87,14 @@ class HMCLGameRepository(val profile: Profile, baseDirectory: File)
 
     }
 
+    fun changeDirectory(newDir: File) {
+        baseDirectory = newDir
+
+
+
+        refreshVersions()
+    }
+
     private fun checkModpack() {}
 
     private fun getVersionSettingFile(id: String) = getVersionRoot(id).resolve("hmclversion.cfg")

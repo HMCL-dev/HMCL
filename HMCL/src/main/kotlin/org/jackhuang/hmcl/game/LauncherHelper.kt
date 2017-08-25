@@ -41,11 +41,12 @@ object LauncherHelper {
 
     fun launch() {
         val profile = Settings.selectedProfile
+        val selectedVersion = profile.selectedVersion ?: throw IllegalStateException("No version here")
         val repository = profile.repository
         val dependency = profile.dependency
         val account = Settings.selectedAccount ?: throw IllegalStateException("No account here")
-        val version = repository.getVersion(profile.selectedVersion)
-        val setting = profile.getVersionSetting(profile.selectedVersion)
+        val version = repository.getVersion(selectedVersion)
+        val setting = profile.getVersionSetting(selectedVersion)
         var finished = 0
 
         Controllers.dialog(launchingStepsPane)
@@ -53,7 +54,7 @@ object LauncherHelper {
                 .then(dependency.checkGameCompletionAsync(version))
 
                 .then(task(Scheduler.JAVAFX) { emitStatus(LoadingState.MODS) })
-                .then(CurseForgeModpackCompletionTask(dependency, profile.selectedVersion))
+                .then(CurseForgeModpackCompletionTask(dependency, selectedVersion))
 
                 .then(task(Scheduler.JAVAFX) { emitStatus(LoadingState.LOGIN) })
                 .then(task {
@@ -69,7 +70,7 @@ object LauncherHelper {
                 .then(task {
                     it["launcher"] = HMCLGameLauncher(
                             repository = repository,
-                            versionId = profile.selectedVersion,
+                            versionId = selectedVersion,
                             options = setting.toLaunchOptions(profile.gameDir),
                             listener = HMCLProcessListener(it["account"], setting),
                             account = it["account"]

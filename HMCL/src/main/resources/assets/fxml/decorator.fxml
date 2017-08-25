@@ -27,6 +27,17 @@
                                         <center>
                                             <AdvancedListBox fx:id="leftPane"/>
                                         </center>
+                                        <bottom>
+                                            <BorderPane fx:id="menuBottomBar">
+                                                <right>
+                                                    <JFXButton fx:id="addMenuButton" styleClass="toggle-icon4">
+                                                        <graphic>
+                                                            <fx:include source="/assets/svg/plus-black.fxml"/>
+                                                        </graphic>
+                                                    </JFXButton>
+                                                </right>
+                                            </BorderPane>
+                                        </bottom>
                                     </BorderPane>
                                 </center>
                                 <right>

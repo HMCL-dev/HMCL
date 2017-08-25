@@ -72,7 +72,7 @@ class AccountItem(i: Int, val account: Account, group: ToggleGroup) : StackPane(
         header.style = "-fx-background-radius: 2 2 0 0; -fx-background-color: " + headerColor
 
         // create image view
-        icon.translateYProperty().bind(Bindings.createDoubleBinding(Callable { header.boundsInParent.height - icon.height / 2 }, header.boundsInParentProperty(), icon.heightProperty()))
+        icon.translateYProperty().bind(Bindings.createDoubleBinding(Callable { header.boundsInParent.height - icon.height / 2 - 32.0 }, header.boundsInParentProperty(), icon.heightProperty()))
 
         chkSelected.properties["account"] = account
         chkSelected.isSelected = Settings.selectedAccount == account

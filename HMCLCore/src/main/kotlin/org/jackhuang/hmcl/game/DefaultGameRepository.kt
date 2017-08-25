@@ -36,6 +36,8 @@ import java.util.logging.Level
  */
 open class DefaultGameRepository(var baseDirectory: File): GameRepository {
     protected val versions: MutableMap<String, Version> = TreeMap<String, Version>()
+    var isLoaded: Boolean = false
+        protected set
 
     override fun hasVersion(id: String) = versions.containsKey(id)
     override fun getVersion(id: String): Version {
@@ -135,7 +137,7 @@ open class DefaultGameRepository(var baseDirectory: File): GameRepository {
             versions[id] = version
             EVENT_BUS.fireEvent(LoadedOneVersionEvent(this, id))
         }
-
+        isLoaded = true
     }
 
     @Synchronized

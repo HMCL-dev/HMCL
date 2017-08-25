@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXTextField?>
+<?import com.jfoenix.validation.RequiredFieldValidator?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.*?>
+<?import org.jackhuang.hmcl.ui.construct.ComponentList?>
+<?import org.jackhuang.hmcl.ui.construct.FileItem?>
+<fx:root xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         type="StackPane">
+    <ScrollPane fx:id="scroll" fitToHeight="true" fitToWidth="true">
+        <VBox fx:id="rootPane" style="-fx-padding: 20;">
+
+            <ComponentList depth="1">
+
+                <BorderPane> <!-- Name -->
+                    <left>
+                        <VBox>
+                            <Label text="%ui.label.profile" BorderPane.alignment="CENTER_LEFT"/>
+                        </VBox>
+                    </left>
+                    <right>
+                        <JFXTextField fx:id="txtProfileName" BorderPane.alignment="CENTER_RIGHT">
+                            <validators>
+                                <RequiredFieldValidator/>
+                            </validators>
+                        </JFXTextField>
+                    </right>
+                </BorderPane>
+
+                <FileItem fx:id="gameDir" name="%settings.game_directory" title="%settings.choose_gamedir"/>
+            </ComponentList>
+
+        </VBox>
+    </ScrollPane>
+    <BorderPane pickOnBounds="false" style="-fx-padding: 20;">
+        <left>
+            <JFXButton BorderPane.alignment="BOTTOM_LEFT" fx:id="btnDelete" onMouseClicked="#onDelete" prefWidth="100" prefHeight="40"
+                       buttonType="RAISED" text="%ui.button.delete" styleClass="jfx-button-raised" />
+        </left>
+        <right>
+            <JFXButton BorderPane.alignment="BOTTOM_RIGHT" fx:id="btnSave" onMouseClicked="#onSave" prefWidth="100" prefHeight="40"
+                       buttonType="RAISED" text="%ui.button.save" styleClass="jfx-button-raised"/>
+        </right>
+    </BorderPane>
+</fx:root>

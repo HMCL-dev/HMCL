@@ -24,6 +24,7 @@ import javafx.scene.image.Image
 import javafx.scene.layout.Region
 import javafx.stage.Stage
 import org.jackhuang.hmcl.Main
+import org.jackhuang.hmcl.setting.Settings
 
 object Controllers {
     lateinit var scene: Scene private set
@@ -43,6 +44,8 @@ object Controllers {
         decorator = Decorator(stage, mainPane, Main.TITLE, max = false)
         decorator.showPage(null)
         leftPaneController = LeftPaneController(decorator.leftPane)
+
+        Settings.onProfileLoading()
 
         decorator.isCustomMaximize = false
 
