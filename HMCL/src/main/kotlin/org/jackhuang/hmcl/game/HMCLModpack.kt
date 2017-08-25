@@ -24,22 +24,9 @@ import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.task.Task
 import java.io.File
 import java.io.IOException
-import sun.misc.IOUtils
-import jdk.nashorn.internal.objects.NativeFunction.call
 import org.jackhuang.hmcl.task.TaskResult
 import org.jackhuang.hmcl.util.*
-import sun.plugin2.util.PojoUtil.toJson
-import sun.tools.jar.resources.jar
-import java.util.Collections.addAll
 import java.util.ArrayList
-import java.util.Arrays
-import com.sun.javafx.scene.layout.region.BorderStyleConverter.HIDDEN
-
-
-
-
-
-
 
 /**
  * Read the manifest in a HMCL modpack.

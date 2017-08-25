@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game
 
-import jdk.nashorn.internal.ir.annotations.Immutable
+import org.jackhuang.hmcl.util.Immutable
 
 @Immutable
 class AssetIndexInfo(
