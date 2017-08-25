@@ -34,21 +34,22 @@ import java.io.IOException
  */
 @JvmOverloads
 @Throws(IOException::class)
-fun zip(src: File, destZip: File, pathNameCallback: ((String, Boolean) -> String?)? = null) {
+fun File.zipTo(destZip: File, pathNameCallback: ((String, Boolean) -> String?)? = null) {
     ZipArchiveOutputStream(destZip.outputStream()).use { zos ->
         val basePath: String
-        if (src.isDirectory)
-            basePath = src.path
+        if (this.isDirectory)
+            basePath = this.path
         else
-        //直接压缩单个文件时，取父目录
-            basePath = src.parent
-        zipFile(src, basePath, zos, pathNameCallback)
+            //直接压缩单个文件时，取父目录
+            basePath = this.parent
+        zipFile(this, basePath, zos, pathNameCallback)
         zos.closeArchiveEntry()
     }
 }
 
 /**
  * Zip file.
+ *
  * @param src source directory to be compressed.
  * @param basePath the file directory to be compressed, if [src] is a file, this is the parent directory of [src]
  * @param zos the [ZipOutputStream] of dest zip file.
@@ -92,69 +93,21 @@ private fun zipFile(src: File,
 
 /**
  * Decompress the given zip file to a directory.
- * @param zip the source zip file.
- * @param dest the dest directory.
- * @param callback will be called for every entry in the zip file, returns false if you dont want this file unzipped.
- * @throws IOException
- */
-@JvmOverloads
-@Throws(IOException::class)
-fun unzip(zip: File, dest: File, callback: ((String) -> Boolean)? = null, ignoreExistsFile: Boolean = true) {
-    val buf = ByteArray(1024)
-    dest.mkdirs()
-    ZipArchiveInputStream(zip.inputStream()).use { zipFile ->
-        if (zip.exists()) {
-            val strPath = dest.absolutePath
-            while (true) {
-                val zipEnt = zipFile.nextEntry ?: break
-                var strtemp: String
-                var gbkPath = zipEnt.name
-                if (callback != null)
-                    if (!callback.invoke(gbkPath))
-                        continue
-                if (zipEnt.isDirectory) {
-                    strtemp = strPath + File.separator + gbkPath
-                    val dir = File(strtemp)
-                    dir.mkdirs()
-                } else {
-                    //读写文件
-                    gbkPath = zipEnt.name
-                    strtemp = strPath + File.separator + gbkPath
-                    //建目录
-                    val strsubdir = gbkPath
-                    for (i in 0 until strsubdir.length)
-                        if (strsubdir.substring(i, i + 1).equals("/", ignoreCase = true)) {
-                            val temp = strPath + File.separator + strsubdir.substring(0, i)
-                            val subdir = File(temp)
-                            if (!subdir.exists())
-                                subdir.mkdir()
-                        }
-                    if (ignoreExistsFile && File(strtemp).exists())
-                        continue
-                    File(strtemp).outputStream().use({ fos ->
-                        zipFile.copyTo(fos, buf)
-                    })
-                }
-            }
-        }
-    }
-}
-
-/**
- * Decompress the subdirectory of given zip file.
- * @param zip the source zip file.
+ *
  * @param dest the dest directory.
  * @param subDirectory the subdirectory of the zip file to be decompressed.
+ * @param callback will be called for every entry in the zip file, returns false if you dont want this file being uncompressed.
  * @param ignoreExistentFile true if skip all existent files.
+ * @param allowStoredEntriesWithDataDescriptor whether the zip stream will try to read STORED entries that use a data descriptor
  * @throws IOException
  */
 @JvmOverloads
 @Throws(IOException::class)
-fun unzipSubDirectory(zip: File, dest: File, subDirectory: String, ignoreExistentFile: Boolean = true) {
+fun File.uncompressTo(dest: File, subDirectory: String = "", callback: ((String) -> Boolean)? = null, ignoreExistentFile: Boolean = true, allowStoredEntriesWithDataDescriptor: Boolean = false) {
     val buf = ByteArray(1024)
     dest.mkdirs()
-    ZipArchiveInputStream(zip.inputStream()).use { zipFile ->
-        if (zip.exists()) {
+    ZipArchiveInputStream(this.inputStream(), null, true, allowStoredEntriesWithDataDescriptor).use { zipFile ->
+        if (this.exists()) {
             val strPath = dest.absolutePath
             while (true) {
                 val zipEnt = zipFile.nextEntry ?: break
@@ -166,13 +119,18 @@ fun unzipSubDirectory(zip: File, dest: File, subDirectory: String, ignoreExisten
                 gbkPath = gbkPath.substring(subDirectory.length)
                 if (gbkPath.startsWith("/") || gbkPath.startsWith("\\")) gbkPath = gbkPath.substring(1)
                 strtemp = strPath + File.separator + gbkPath
+
+                if (callback != null)
+                    if (!callback.invoke(gbkPath))
+                        continue
+
                 if (zipEnt.isDirectory) {
                     val dir = File(strtemp)
                     dir.mkdirs()
                 } else {
                     //建目录
                     val strsubdir = gbkPath
-                    for (i in 0..strsubdir.length - 1)
+                    for (i in 0 until strsubdir.length)
                         if (strsubdir.substring(i, i + 1).equals("/", ignoreCase = true)) {
                             val temp = strPath + File.separator + strsubdir.substring(0, i)
                             val subdir = File(temp)
@@ -194,14 +152,14 @@ fun unzipSubDirectory(zip: File, dest: File, subDirectory: String, ignoreExisten
  * Read the text content of a file in zip.
  *
  * @param f the zip file
- * @param location the location of the text in zip file, something like A/B/C/D.txt
+ * @param name the location of the text in zip file, something like A/B/C/D.txt
  * @throws IOException if the file is not a valid zip file.
  * @return the content of given file.
  */
 @Throws(IOException::class)
-fun readTextFromZipFile(f: File, location: String): String {
-    ZipFile(f).use { zipFile ->
-        val entry = zipFile.getEntry(location) ?: throw IOException("`$location` not found.")
+fun File.readTextZipEntry(name: String): String {
+    ZipFile(this).use { zipFile ->
+        val entry = zipFile.getEntry(name) ?: throw IOException("`$name` not found.")
         return zipFile.getInputStream(entry).readFullyAsString()
     }
 }
@@ -213,10 +171,9 @@ fun readTextFromZipFile(f: File, location: String): String {
  * @param location the location of the text in zip file, something like A/B/C/D.txt
  * @return the content of given file.
  */
-fun readTextFromZipFileQuietly(f: File, location: String): String? {
+fun File.readTextZipEntryQuietly(location: String) =
     try {
-        return readTextFromZipFile(f, location)
+        readTextZipEntry(location)
     } catch (e: IOException) {
-        return null
+        null
     }
-}

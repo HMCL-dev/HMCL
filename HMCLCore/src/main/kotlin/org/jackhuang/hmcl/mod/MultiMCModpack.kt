@@ -42,7 +42,7 @@ class InstancePatch @JvmOverloads constructor(
         val libraries: List<Library> = emptyList()
 )
 
-class InstanceConfiguration(contentStream: InputStream) {
+class InstanceConfiguration(defaultName: String, contentStream: InputStream) {
     /**
      * The instance's name
      */
@@ -183,15 +183,17 @@ class InstanceConfiguration(contentStream: InputStream) {
         showConsole = p.getProperty("ShowConsole") == "true"
         showConsoleOnError = p.getProperty("ShowConsoleOnError") == "true"
         wrapperCommand = p.getProperty("WrapperCommand")
-        name = p.getProperty("name")
-        notes = p.getProperty("notes")
+        name = defaultName
+        notes = p.getProperty("notes") ?: ""
     }
 }
 
 fun readMMCModpackManifest(f: File): Modpack {
     ZipFile(f).use { zipFile ->
-        val entry = zipFile.getEntry("instance.cfg") ?: throw IOException("`instance.cfg` not found, $f is not a valid MultiMC modpack.")
-        val cfg = InstanceConfiguration(zipFile.getInputStream(entry))
+        val firstEntry = zipFile.entries.nextElement()
+        val name = firstEntry.name.substringBefore("/")
+        val entry = zipFile.getEntry("$name/instance.cfg") ?: throw IOException("`instance.cfg` not found, $f is not a valid MultiMC modpack.")
+        val cfg = InstanceConfiguration(name, zipFile.getInputStream(entry))
         return Modpack(
                 name = cfg.name,
                 version = "",
@@ -217,12 +219,12 @@ class MMCModpackInstallTask(private val dependencyManager: DefaultDependencyMana
 
     override fun execute() {
         var version = repository.readVersionJson(name)!!
-        unzipSubDirectory(zipFile, run, "minecraft/", false)
+        zipFile.uncompressTo(run, subDirectory = "${manifest.name}/minecraft/", ignoreExistentFile = false, allowStoredEntriesWithDataDescriptor = true)
 
         ZipFile(zipFile).use { zip ->
             for (entry in zip.entries) {
                 // ensure that this entry is in folder 'patches' and is a json file.
-                if (!entry.isDirectory && entry.name.startsWith("patches/") && entry.name.endsWith(".json")) {
+                if (!entry.isDirectory && entry.name.startsWith("${manifest.name}/patches/") && entry.name.endsWith(".json")) {
                     val patch = GSON.fromJson<InstancePatch>(zip.getInputStream(entry).readFullyAsString())!!
                     val args = StringBuilder(version.minecraftArguments)
                     for (arg in patch.tweakers)

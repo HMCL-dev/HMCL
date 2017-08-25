@@ -106,7 +106,7 @@ class CurseForgeModpackManifestFile (
  */
 @Throws(IOException::class, JsonParseException::class)
 fun readCurseForgeModpackManifest(f: File): Modpack {
-    val json = readTextFromZipFile(f, "manifest.json")
+    val json = f.readTextZipEntry("manifest.json")
     val manifest = GSON.fromJson<CurseForgeModpackManifest>(json)
             ?: throw JsonParseException("`manifest.json` not found. Not a valid CurseForge modpack.")
     return Modpack(
@@ -114,7 +114,7 @@ fun readCurseForgeModpackManifest(f: File): Modpack {
             version = manifest.version,
             author = manifest.author,
             gameVersion = manifest.minecraft.gameVersion,
-            description = readTextFromZipFileQuietly(f, "modlist.html") ?: "No description",
+            description = f.readTextZipEntryQuietly("modlist.html") ?: "No description",
             manifest = manifest)
 }
 
@@ -147,7 +147,7 @@ class CurseForgeModpackInstallTask(private val dependencyManager: DefaultDepende
     }
 
     override fun execute() {
-        unzipSubDirectory(zipFile, run, manifest.overrides)
+        zipFile.uncompressTo(run, subDirectory = manifest.overrides)
 
         var finished = 0
         for (f in manifest.files) {

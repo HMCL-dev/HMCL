@@ -46,8 +46,6 @@ object MojangDownloadProvider : DownloadProvider() {
     override fun injectURL(baseURL: String): String {
         if (baseURL.endsWith("net/minecraftforge/forge/json"))
             return baseURL
-        else if (Locale.getDefault() == Locale.CHINA)
-            return baseURL.replace("http://files.minecraftforge.net/maven", "http://maven.aliyun.com/nexus/content/groups/public");
         else
             return baseURL.replace("http://files.minecraftforge.net/maven", "http://ftb.cursecdn.com/FTB2/maven")
     }

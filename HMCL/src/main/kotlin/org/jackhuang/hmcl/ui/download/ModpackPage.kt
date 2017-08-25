@@ -72,7 +72,7 @@ class ModpackPage(private val controller: WizardController): StackPane(), Wizard
                 lblName.text = manifest!!.name
                 lblVersion.text = manifest!!.version
                 lblAuthor.text = manifest!!.author
-                txtModpackName.text = manifest!!.name + "-" + manifest!!.version
+                txtModpackName.text = manifest!!.name + (if (manifest!!.version.isNullOrBlank()) "" else ("-" + manifest!!.version))
             } catch (e: Exception) {
                 // TODO
                 txtModpackName.text = i18n("modpack.task.install.error")

@@ -30,13 +30,11 @@ import javafx.scene.layout.StackPane
 import javafx.scene.web.WebEngine
 import javafx.scene.web.WebView
 import javafx.stage.Stage
+import netscape.javascript.JSObject
 import org.jackhuang.hmcl.game.LauncherHelper
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Settings
-import org.jackhuang.hmcl.util.Log4jLevel
-import org.jackhuang.hmcl.util.inc
-import org.jackhuang.hmcl.util.onChange
-import org.jackhuang.hmcl.util.readFullyAsString
+import org.jackhuang.hmcl.util.*
 import org.w3c.dom.Document
 import org.w3c.dom.Node
 import java.util.concurrent.Callable
@@ -59,7 +57,10 @@ class LogWindow : Stage() {
 
     fun logLine(line: String, level: Log4jLevel) {
         impl.body.appendChild(impl.engine.document.createElement("div").apply {
-            textContent = line
+            // a <pre> element to prevent multiple spaces and tabs being removed.
+            appendChild(impl.engine.document.createElement("pre").apply {
+                textContent = line
+            })
         })
         impl.engine.executeScript("checkNewLog(\"${level.name.toLowerCase()}\");scrollToBottom();")
 

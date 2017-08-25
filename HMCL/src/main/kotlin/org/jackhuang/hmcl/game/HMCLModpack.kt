@@ -51,9 +51,9 @@ import com.sun.javafx.scene.layout.region.BorderStyleConverter.HIDDEN
  */
 @Throws(IOException::class, JsonParseException::class)
 fun readHMCLModpackManifest(f: File): Modpack {
-    val manifestJson = readTextFromZipFile(f, "modpack.json")
+    val manifestJson = f.readTextZipEntry("modpack.json")
     val manifest = GSON.fromJson<Modpack>(manifestJson) ?: throw JsonParseException("`modpack.json` not found. $f is not a valid HMCL modpack.")
-    val gameJson = readTextFromZipFile(f, "minecraft/pack.json")
+    val gameJson = f.readTextZipEntry("minecraft/pack.json")
     val game = GSON.fromJson<Version>(gameJson) ?: throw JsonParseException("`minecraft/pack.json` not found. $f iot a valid HMCL modpack.")
     return if (game.jar == null)
         if (manifest.gameVersion.isNullOrBlank()) throw JsonParseException("Cannot recognize the game version of modpack $f.")
@@ -71,7 +71,7 @@ class HMCLModpackInstallTask(profile: Profile, private val zipFile: File, privat
 
     init {
         check(!repository.hasVersion(name), { "Version $name already exists." })
-        val json = readTextFromZipFile(zipFile, "minecraft/pack.json")
+        val json = zipFile.readTextZipEntry("minecraft/pack.json")
         var version = GSON.fromJson<Version>(json)!!
         version = version.copy(jar = null)
         dependents += dependency.gameBuilder().name(name).gameVersion(modpack.gameVersion!!).buildAsync()
@@ -81,10 +81,7 @@ class HMCLModpackInstallTask(profile: Profile, private val zipFile: File, privat
     private val run = repository.getRunDirectory(name)
 
     override fun execute() {
-        unzipSubDirectory(zipFile, run, "minecraft/", false)
-        val json = run.resolve("pack.json")
-        if (repository.getVersionJson(name) != json)
-            json.delete()
+        zipFile.uncompressTo(run, "minecraft/", callback = { it != "minecraft/pack.json" }, ignoreExistentFile = false)
     }
 }
 

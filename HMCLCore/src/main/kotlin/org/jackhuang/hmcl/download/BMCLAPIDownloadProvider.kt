@@ -43,10 +43,10 @@ object BMCLAPIDownloadProvider : DownloadProvider() {
     }
 
     override fun injectURL(baseURL: String): String = baseURL
-            .replace("https://launchermeta.mojang.com", "http://bmclapi2.bangbang93.com")
-            .replace("https://launcher.mojang.com", "http://bmclapi2.bangbang93.com")
-            .replace("https://libraries.minecraft.net", "http://bmclapi2.bangbang93.com/libraries")
-            .replace("http://files.minecraftforge.net/maven", "http://bmclapi2.bangbang93.com/maven")
-            .replace("http://dl.liteloader.com/versions/versions.json", "http://bmclapi2.bangbang93.com/maven/com/mumfrey/liteloader/versions.json")
-            .replace("http://dl.liteloader.com/versions", "http://bmclapi2.bangbang93.com/maven")
+            .replace("https://launchermeta.mojang.com", "https://bmclapi2.bangbang93.com")
+            .replace("https://launcher.mojang.com", "https://bmclapi2.bangbang93.com")
+            .replace("https://libraries.minecraft.net", "https://bmclapi2.bangbang93.com/libraries")
+            .replace("http://files.minecraftforge.net/maven", "https://bmclapi2.bangbang93.com/maven")
+            .replace("http://dl.liteloader.com/versions/versions.json", "httsp://bmclapi2.bangbang93.com/maven/com/mumfrey/liteloader/versions.json")
+            .replace("http://dl.liteloader.com/versions", "https://bmclapi2.bangbang93.com/maven")
 }

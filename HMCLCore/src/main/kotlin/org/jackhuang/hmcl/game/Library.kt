@@ -73,7 +73,7 @@ open class Library(
 
     companion object LibrarySerializer : JsonDeserializer<Library>, JsonSerializer<Library> {
         fun fromName(name: String, url: String? = null, downloads: LibrariesDownloadInfo? = null, extract: ExtractRules? = null, natives: Map<OS, String>? = null, rules: List<CompatibilityRule>? = null): Library {
-            val arr = name.split(":".toRegex(), 3)
+            val arr = name.split(":".toRegex(), 4)
             if (arr.size != 3 && arr.size != 4)
                 throw IllegalArgumentException("Library name is malformed. Correct example: group:artifact:version.")
             return Library(

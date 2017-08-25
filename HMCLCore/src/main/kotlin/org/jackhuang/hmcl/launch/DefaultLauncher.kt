@@ -214,11 +214,11 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
     open fun decompressNatives() {
         version.libraries.filter { it.isNative }.forEach { library ->
             @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
-            unzip(zip = repository.getLibraryFile(version, library),
+            repository.getLibraryFile(version, library).uncompressTo(
                     dest = native,
                     callback = if (library.extract == null) null
                     else library.extract!!::shouldExtract,
-                    ignoreExistsFile = false)
+                    ignoreExistentFile = false)
         }
     }
 
@@ -230,10 +230,13 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
         decompressNatives()
 
         if (options.precalledCommand != null && options.precalledCommand.isNotBlank()) {
-            val process = Runtime.getRuntime().exec(options.precalledCommand)
-            ignoreException {
-                if (process.isAlive)
-                    process.waitFor()
+            try {
+                val process = Runtime.getRuntime().exec(options.precalledCommand)
+                    if (process.isAlive)
+                        process.waitFor()
+            } catch (e: IOException) {
+                // TODO: alert precalledCommand is wrong.
+                // rethrow InterruptedException
             }
         }
 
@@ -287,6 +290,14 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
     }
 
     private fun startMonitors(managedProcess: ManagedProcess, processListener: ProcessListener, isDaemon: Boolean = true) {
+        val enablesLoggingInfo = version.logging?.containsKey(DownloadType.CLIENT) ?: false
+        if (enablesLoggingInfo)
+            startMonitorsWithLoggingInfo(managedProcess, processListener, isDaemon)
+        else
+            startMonitorsWithoutLoggingInfo(managedProcess, processListener, isDaemon)
+    }
+
+    private fun startMonitorsWithLoggingInfo(managedProcess: ManagedProcess, processListener: ProcessListener, isDaemon: Boolean = true) {
         processListener.setProcess(managedProcess)
         val logHandler = Log4jHandler { line, level -> processListener.onLog(line, level); managedProcess.lines += line }.apply { start() }
         managedProcess.relatedThreads += logHandler
@@ -295,6 +306,15 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
         val stderr = thread(name = "stderr-pump", isDaemon = isDaemon, block = StreamPump(managedProcess.process.errorStream, { processListener.onLog(it + OS.LINE_SEPARATOR, Log4jLevel.ERROR); managedProcess.lines += it })::run)
         managedProcess.relatedThreads += stderr
         managedProcess.relatedThreads += thread(name = "exit-waiter", isDaemon = isDaemon, block = ExitWaiter(managedProcess, listOf(stdout, stderr), { exitCode, exitType -> logHandler.onStopped(); processListener.onExit(exitCode, exitType) })::run)
+    }
+
+    private fun startMonitorsWithoutLoggingInfo(managedProcess: ManagedProcess, processListener: ProcessListener, isDaemon: Boolean = true) {
+        processListener.setProcess(managedProcess)
+        val stdout = thread(name = "stdout-pump", isDaemon = isDaemon, block = StreamPump(managedProcess.process.inputStream, { processListener.onLog(it + OS.LINE_SEPARATOR, Log4jLevel.guessLevel(it) ?: Log4jLevel.INFO); managedProcess.lines += it })::run)
+        managedProcess.relatedThreads += stdout
+        val stderr = thread(name = "stderr-pump", isDaemon = isDaemon, block = StreamPump(managedProcess.process.errorStream, { processListener.onLog(it + OS.LINE_SEPARATOR, Log4jLevel.ERROR); managedProcess.lines += it })::run)
+        managedProcess.relatedThreads += stderr
+        managedProcess.relatedThreads += thread(name = "exit-waiter", isDaemon = isDaemon, block = ExitWaiter(managedProcess, listOf(stdout, stderr), { exitCode, exitType -> processListener.onExit(exitCode, exitType) })::run)
     }
 
     companion object {

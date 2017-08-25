@@ -5,14 +5,13 @@
 <?import javafx.scene.control.ScrollPane?>
 <fx:root
         maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
-        styleClass="transparent" type="StackPane"
+        styleClass="transparent" type="StackPane" pickOnBounds="false"
         xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1">
     <ScrollPane fitToHeight="true" fitToWidth="true" fx:id="scrollPane" hbarPolicy="NEVER">
         <JFXMasonryPane fx:id="masonryPane" HSpacing="3" VSpacing="3" cellWidth="182" cellHeight="160">
         </JFXMasonryPane>
     </ScrollPane>
     <VBox style="-fx-padding: 15;" spacing="15" pickOnBounds="false" alignment="BOTTOM_RIGHT">
-        <!--JFXSpinner fx:id="spinner" style="-fx-radius:10" styleClass="materialDesign-purple, first-spinner" /-->
         <JFXButton prefWidth="40" prefHeight="40" buttonType="RAISED" fx:id="btnRefresh"
                    style="-fx-background-color:#5264AE;-fx-background-radius: 50px;">
             <graphic>

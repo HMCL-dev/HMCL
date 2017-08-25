@@ -171,7 +171,10 @@ object Settings {
         else {
             System.setProperty("http.proxyHost", proxyHost)
             System.setProperty("http.proxyPort", proxyPort)
-            proxy = Proxy(proxyType, InetSocketAddress(host, port))
+            if (proxyType == Proxy.Type.DIRECT)
+                proxy = Proxy.NO_PROXY
+            else
+                proxy = Proxy(proxyType, InetSocketAddress(host, port))
 
             val user = proxyUser
             val pass = proxyPass

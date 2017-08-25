@@ -10,9 +10,9 @@
 <?import com.jfoenix.controls.JFXRadioButton?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
-         type="StackPane">
-    <VBox fx:id="content">
-        <StackPane fx:id="header" VBox.vgrow="ALWAYS">
+         type="StackPane" pickOnBounds="false">
+    <VBox fx:id="content" pickOnBounds="false">
+        <StackPane fx:id="header" VBox.vgrow="ALWAYS" pickOnBounds="false">
             <BorderPane>
                 <top>
                     <HBox alignment="CENTER_RIGHT">
@@ -26,7 +26,7 @@
                 </center>
             </BorderPane>
         </StackPane>
-        <StackPane fx:id="body" style="-fx-background-radius: 0 0 2 2; -fx-background-color: rgb(255,255,255,0.87); -fx-padding: 8;" minHeight="40">
+        <StackPane fx:id="body" style="-fx-background-radius: 0 0 2 2; -fx-background-color: rgb(255,255,255,0.87); -fx-padding: 8;" minHeight="40" pickOnBounds="false">
             <BorderPane>
                 <left>
                     <HBox spacing="8">

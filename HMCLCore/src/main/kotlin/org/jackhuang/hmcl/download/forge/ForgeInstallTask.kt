@@ -73,7 +73,7 @@ class ForgeInstallTask(private val dependencyManager: DefaultDependencyManager,
             val versionProvider = SimpleVersionProvider()
             versionProvider.addVersion(version)
 
-            result = installProfile.versionInfo!!.copy(inheritsFrom = version.id).resolve(versionProvider).copy(id = version.id)
+            result = installProfile.versionInfo!!.copy(inheritsFrom = version.id).resolve(versionProvider).copy(id = version.id, logging = emptyMap())
             dependencies += GameLibrariesTask(dependencyManager, installProfile.versionInfo)
         }
 

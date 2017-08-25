@@ -69,7 +69,8 @@ class LiteLoaderInstallTask(private val dependencyManager: DefaultDependencyMana
         result = version.copy(
                 mainClass = "net.minecraft.launchwrapper.Launch",
                 minecraftArguments = version.minecraftArguments + " --tweakClass " + remote.tag.tweakClass,
-                libraries = merge(tempVersion.libraries, version.libraries)
+                libraries = merge(tempVersion.libraries, version.libraries),
+                logging = emptyMap()
         )
         dependencies += GameLibrariesTask(dependencyManager, tempVersion)
     }
