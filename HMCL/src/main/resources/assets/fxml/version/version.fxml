@@ -10,11 +10,11 @@
          type="StackPane">
     <JFXRippler />
     <StackPane fx:id="contentPane">
-        <JFXTabPane>
+        <JFXTabPane fx:id="tabPane">
             <Tab text="%settings">
                 <fx:include source="version-settings.fxml" fx:id="versionSettings"/>
             </Tab>
-            <Tab text="%mods">
+            <Tab fx:id="modTab" text="%mods">
                 <fx:include source="mod.fxml" fx:id="mod"/>
             </Tab>
             <Tab text="%settings.tabs.installers">

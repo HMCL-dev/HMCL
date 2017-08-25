@@ -216,7 +216,7 @@ class VersionSettingsController {
 
     private fun initJavaSubtitle(version: VersionSetting) {
         task { it["java"] = version.javaVersion }
-                .then(task(Scheduler.JAVAFX) { componentJava.subtitle = it.get<JavaVersion?>("java")?.binary?.absolutePath ?: "Invalid Java Directory" })
+                .subscribe(task(Scheduler.JAVAFX) { componentJava.subtitle = it.get<JavaVersion?>("java")?.binary?.absolutePath ?: "Invalid Java Directory" })
     }
 
     fun onShowAdvanced() {

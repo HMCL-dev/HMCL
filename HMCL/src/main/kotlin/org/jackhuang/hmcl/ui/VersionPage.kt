@@ -20,10 +20,12 @@ package org.jackhuang.hmcl.ui
 import com.jfoenix.controls.JFXButton
 import com.jfoenix.controls.JFXListView
 import com.jfoenix.controls.JFXPopup
+import com.jfoenix.controls.JFXTabPane
 import javafx.beans.property.SimpleStringProperty
 import javafx.beans.property.StringProperty
 import javafx.fxml.FXML
 import javafx.scene.control.Alert
+import javafx.scene.control.Tab
 import javafx.scene.control.Tooltip
 import javafx.scene.layout.StackPane
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask
@@ -36,6 +38,7 @@ class VersionPage : StackPane(), DecoratorPage {
     override val titleProperty: StringProperty = SimpleStringProperty(this, "title", null)
 
     @FXML lateinit var versionSettingsController: VersionSettingsController
+    @FXML lateinit var modTab: Tab
     @FXML lateinit var modController: ModController
     @FXML lateinit var installerController: InstallerController
 
@@ -46,6 +49,7 @@ class VersionPage : StackPane(), DecoratorPage {
     @FXML lateinit var btnExport: JFXButton
     @FXML lateinit var rootPane: StackPane
     @FXML lateinit var contentPane: StackPane
+    @FXML lateinit var tabPane: JFXTabPane
     val browsePopup: JFXPopup
     val managementPopup: JFXPopup
     lateinit var profile: Profile
@@ -71,6 +75,8 @@ class VersionPage : StackPane(), DecoratorPage {
         titleProperty.set(i18n("launcher.title.game") + " - " + id)
 
         versionSettingsController.loadVersionSetting(profile, id, profile.getVersionSetting(id))
+        modController.parentTab = tabPane
+        modTab.userData = modController
         modController.loadMods(profile.modManager, id)
         installerController.loadVersion(profile, id)
     }

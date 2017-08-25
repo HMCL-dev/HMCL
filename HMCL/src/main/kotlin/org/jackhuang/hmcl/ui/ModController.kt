@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.ui
 
-import com.jfoenix.effects.JFXDepthManager
+import com.jfoenix.controls.JFXTabPane
 import javafx.fxml.FXML
 import javafx.scene.control.ScrollPane
 import javafx.scene.input.TransferMode
@@ -29,11 +29,15 @@ import org.jackhuang.hmcl.mod.ModManager
 import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.task.task
 import org.jackhuang.hmcl.util.onChange
+import org.jackhuang.hmcl.util.onChangeAndOperateWeakly
+import java.util.*
 
 class ModController {
     @FXML lateinit var scrollPane: ScrollPane
     @FXML lateinit var rootPane: StackPane
-    @FXML lateinit var contentPane: VBox
+    @FXML lateinit var modPane: VBox
+    @FXML lateinit var contentPane: StackPane
+    lateinit var parentTab: JFXTabPane
     private lateinit var modManager: ModManager
     private lateinit var versionId: String
 
@@ -61,23 +65,36 @@ class ModController {
         this.modManager = modManager
         this.versionId = versionId
         task {
-            modManager.refreshMods(versionId)
-        }.subscribe(Scheduler.JAVAFX) {
-            contentPane.children.clear()
-            for (modInfo in modManager.getMods(versionId)) {
-                contentPane.children += ModItem(modInfo) {
-                    modManager.removeMods(versionId, modInfo)
-                    loadMods(modManager, versionId)
-                }.apply {
-                    modInfo.activeProperty.onChange {
-                        if (it)
-                            styleClass -= "disabled"
-                        else
+            synchronized(contentPane) {
+                runOnUiThread { rootPane.children -= contentPane }
+                modManager.refreshMods(versionId)
+
+                // Surprisingly, if there are a great number of mods, this processing will cause a UI pause.
+                // We must do this asynchronously.
+                val list = LinkedList<ModItem>()
+                for (modInfo in modManager.getMods(versionId)) {
+                    list += ModItem(modInfo) {
+                        modManager.removeMods(versionId, modInfo)
+                        loadMods(modManager, versionId)
+                    }.apply {
+                        modInfo.activeProperty.onChange {
+                            if (it)
+                                styleClass -= "disabled"
+                            else
+                                styleClass += "disabled"
+                        }
+
+                        if (!modInfo.isActive)
                             styleClass += "disabled"
                     }
-
-                    if (!modInfo.isActive)
-                        styleClass += "disabled"
+                }
+                runOnUiThread { rootPane.children += contentPane }
+                it["list"] = list
+            }
+        }.subscribe(Scheduler.JAVAFX) { variables ->
+            parentTab.selectionModel.selectedItemProperty().onChangeAndOperateWeakly {
+                if (it?.userData == this) {
+                    modPane.children.setAll(variables.get<List<ModItem>>("list"))
                 }
             }
         }
@@ -88,11 +105,7 @@ class ModController {
         chooser.title = i18n("mods.choose_mod")
         chooser.extensionFilters.setAll(FileChooser.ExtensionFilter("Mod", "*.jar", "*.zip", "*.litemod"))
         val res = chooser.showOpenDialog(Controllers.stage) ?: return
-        try {
-            modManager.addMod(versionId, res)
-            loadMods(modManager, versionId)
-        } catch (e: Exception) {
-            Controllers.dialog(i18n("mods.failed"))
-        }
+        task { modManager.addMod(versionId, res) }
+                .subscribe(task(Scheduler.JAVAFX) { loadMods(modManager, versionId) })
     }
 }

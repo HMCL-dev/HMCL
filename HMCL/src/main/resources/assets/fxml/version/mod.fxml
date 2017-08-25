@@ -1,24 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-
 <?import com.jfoenix.controls.JFXButton?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import com.jfoenix.controls.JFXSpinner?>
 <StackPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
            fx:id="rootPane"
            fx:controller="org.jackhuang.hmcl.ui.ModController">
-    <ScrollPane fx:id="scrollPane" fitToWidth="true" fitToHeight="true">
-        <VBox fx:id="contentPane" spacing="10" style="-fx-padding: 20;">
+    <JFXSpinner style="-fx-radius:16" styleClass="materialDesign-purple, first-spinner" />
+    <StackPane fx:id="contentPane">
+        <ScrollPane fx:id="scrollPane" fitToWidth="true" fitToHeight="true">
+            <VBox fx:id="modPane" spacing="10" style="-fx-padding: 20;">
 
+            </VBox>
+        </ScrollPane>
+        <VBox style="-fx-padding: 15;" spacing="15" pickOnBounds="false" alignment="BOTTOM_RIGHT">
+            <JFXButton prefWidth="40" prefHeight="40" buttonType="RAISED" onMouseClicked="#onAdd"
+                       style="-fx-background-color:#5264AE;-fx-background-radius: 50px;">
+                <graphic>
+                    <fx:include source="/assets/svg/plus.fxml"/>
+                </graphic>
+            </JFXButton>
         </VBox>
-    </ScrollPane>
-    <VBox style="-fx-padding: 15;" spacing="15" pickOnBounds="false" alignment="BOTTOM_RIGHT">
-        <JFXButton prefWidth="40" prefHeight="40" buttonType="RAISED" onMouseClicked="#onAdd"
-                   style="-fx-background-color:#5264AE;-fx-background-radius: 50px;">
-            <graphic>
-                <fx:include source="/assets/svg/plus.fxml" />
-            </graphic>
-        </JFXButton>
-    </VBox>
+    </StackPane>
 </StackPane>

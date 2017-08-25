@@ -23,6 +23,7 @@ import javafx.collections.ObservableList
 
 fun <T> ObservableValue<T>.onChange(op: (T?) -> Unit) = apply { addListener { _, _, new -> op(new) } }
 fun <T> ObservableValue<T>.onChangeAndOperate(op: (T?) -> Unit) = apply { addListener { _, _, new -> op(new) }; op(value) }
+fun <T> ObservableValue<T>.onChangeAndOperateWeakly(op: (T?) -> Unit) = apply { addListener(WeakChangeListener { _, _, new -> op(new) }); op(value) }
 fun ObservableBooleanValue.onChange(op: (Boolean) -> Unit) = apply { addListener { _, _, new -> op(new ?: false) } }
 fun ObservableIntegerValue.onChange(op: (Int) -> Unit) = apply { addListener { _, _, new -> op((new ?: 0).toInt()) } }
 fun ObservableLongValue.onChange(op: (Long) -> Unit) = apply { addListener { _, _, new -> op((new ?: 0L).toLong()) } }
