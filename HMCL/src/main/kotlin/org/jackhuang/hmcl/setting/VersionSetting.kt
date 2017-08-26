@@ -191,7 +191,7 @@ class VersionSetting() {
                 return null // Custom Java Directory not found,
             }
         } else if (java.isNotBlank()) {
-            val c = JavaVersion.JAVAS[java]
+            val c = JavaVersion.getJREs()[java]
             if (c == null) {
                 java = "Default"
                 return JavaVersion.fromCurrentEnvironment()

@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui
 import com.jfoenix.controls.*
 import javafx.beans.value.ChangeListener
 import javafx.fxml.FXML
+import javafx.scene.Node
 import javafx.scene.control.Label
 import javafx.scene.control.ScrollPane
 import javafx.scene.control.Toggle
@@ -106,16 +107,22 @@ class VersionSettingsController {
         txtMetaspace.setValidators(validator(true))
         txtMetaspace.setValidateWhileTextChanged()
 
-        javaPane.children.clear()
-        javaPane.children += createJavaPane(JavaVersion.fromCurrentEnvironment(), javaGroup)
-        JavaVersion.JAVAS.values.forEach { javaVersion ->
-            javaPane.children += createJavaPane(javaVersion, javaGroup)
-        }
-        javaPane.children += javaPaneCustom
         javaPaneCustom.limitHeight(20.0)
         radioCustom.toggleGroup = javaGroup
         txtJavaDir.disableProperty().bind(radioCustom.selectedProperty().not())
         btnJavaSelect.disableProperty().bind(radioCustom.selectedProperty().not())
+
+        task {
+            val list = mutableListOf<Node>()
+            list += createJavaPane(JavaVersion.fromCurrentEnvironment(), javaGroup)
+            JavaVersion.getJREs().values.forEach { javaVersion ->
+                list += createJavaPane(javaVersion, javaGroup)
+            }
+            list += javaPaneCustom
+            it["list"] = list
+        }.subscribe(Scheduler.JAVAFX) {
+            javaPane.children.setAll(it.get<List<Node>>("list"))
+        }
     }
 
     private fun createJavaPane(java: JavaVersion, group: ToggleGroup): Pane {

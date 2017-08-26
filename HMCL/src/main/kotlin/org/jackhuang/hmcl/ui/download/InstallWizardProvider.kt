@@ -35,7 +35,7 @@ class InstallWizardProvider(val profile: Profile, val gameVersion: String, val v
         if (settings.containsKey("optifine"))
             ret = ret with profile.dependency.installLibraryAsync(gameVersion, version, "optifine", settings["optifine"] as String)
 
-        return ret with task(Scheduler.JAVAFX) { profile.repository.refreshVersions() }
+        return ret with task { profile.repository.refreshVersions() }
     }
 
     override fun createPage(controller: WizardController, step: Int, settings: MutableMap<String, Any>): Node {

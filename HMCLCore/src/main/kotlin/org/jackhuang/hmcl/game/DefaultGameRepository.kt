@@ -140,7 +140,6 @@ open class DefaultGameRepository(var baseDirectory: File): GameRepository {
         isLoaded = true
     }
 
-    @Synchronized
     final override fun refreshVersions() {
         EVENT_BUS.fireEvent(RefreshingVersionsEvent(this))
         refreshVersionsImpl()

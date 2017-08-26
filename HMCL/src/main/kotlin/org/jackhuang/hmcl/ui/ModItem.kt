@@ -17,21 +17,38 @@
  */
 package org.jackhuang.hmcl.ui
 
+import com.jfoenix.controls.JFXButton
 import com.jfoenix.controls.JFXCheckBox
 import com.jfoenix.effects.JFXDepthManager
-import javafx.fxml.FXML
+import javafx.geometry.Pos
 import javafx.scene.control.Label
 import javafx.scene.layout.BorderPane
+import javafx.scene.layout.VBox
 import org.jackhuang.hmcl.mod.ModInfo
 import org.jackhuang.hmcl.util.onChange
 
 class ModItem(info: ModInfo, private val deleteCallback: (ModItem) -> Unit) : BorderPane() {
-    @FXML lateinit var lblModFileName: Label
-    @FXML lateinit var lblModAuthor: Label
-    @FXML lateinit var chkEnabled: JFXCheckBox
+    val lblModFileName = Label().apply { style = "-fx-font-size: 15;" }
+    val lblModAuthor = Label().apply { style = "-fx-font-size: 10;" }
+    val chkEnabled = JFXCheckBox().apply { BorderPane.setAlignment(this, Pos.CENTER) }
 
     init {
-        loadFXML("/assets/fxml/version/mod-item.fxml")
+        left = chkEnabled
+
+        center = VBox().apply {
+            BorderPane.setAlignment(this, Pos.CENTER)
+
+            children += lblModFileName
+            children += lblModAuthor
+        }
+
+        right = JFXButton().apply {
+            setOnMouseClicked { onDelete() }
+            styleClass += "toggle-icon4"
+
+            BorderPane.setAlignment(this, Pos.CENTER)
+            graphic = SVG.close("black", 15.0, 15.0)
+        }
 
         style = "-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;"
         JFXDepthManager.setDepth(this, 1)

@@ -18,10 +18,12 @@
 package org.jackhuang.hmcl.util
 
 import com.google.gson.annotations.SerializedName
+import org.jackhuang.hmcl.game.Version
 import java.io.File
 import java.io.IOException
 import java.io.Serializable
 import java.util.*
+import java.util.concurrent.CountDownLatch
 import java.util.regex.Pattern
 
 /**
@@ -48,8 +50,6 @@ data class JavaVersion internal constructor(
 
     companion object {
         private val regex = Pattern.compile("java version \"(?<version>[1-9]*\\.[1-9]*\\.[0-9]*(.*?))\"")
-
-        val JAVAS: Map<String, JavaVersion>
 
         val UNKNOWN: Int = -1
         val JAVA_5: Int = 50
@@ -132,7 +132,22 @@ data class JavaVersion internal constructor(
         }
         fun fromCurrentEnvironment() = currentJava
 
-        init {
+        private var javas: Map<String, JavaVersion>? = null
+        private val await = CountDownLatch(1)
+
+        /**
+         * This method will block until [initialize] succeeds.
+         */
+        fun getJREs(): Map<String, JavaVersion> {
+            if (javas != null) return javas!!
+            await.await()
+            return javas!!
+        }
+
+        @Synchronized
+        fun initialize() {
+            if (javas != null)
+                throw IllegalStateException("JavaVersions have already been initialized.")
             val temp = mutableMapOf<String, JavaVersion>()
             (when (OS.CURRENT_OS) {
                 OS.WINDOWS -> queryWindows()
@@ -141,7 +156,8 @@ data class JavaVersion internal constructor(
             }).forEach { javaVersion ->
                 temp.put(javaVersion.longVersion, javaVersion)
             }
-            JAVAS = temp
+            javas = temp
+            await.countDown()
         }
 
         private fun queryMacintosh() = LinkedList<JavaVersion>().apply {

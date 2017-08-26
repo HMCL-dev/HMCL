@@ -25,14 +25,16 @@ import javafx.scene.layout.Region
 import javafx.stage.Stage
 import org.jackhuang.hmcl.Main
 import org.jackhuang.hmcl.setting.Settings
+import org.jackhuang.hmcl.task.task
+import org.jackhuang.hmcl.util.JavaVersion
 
 object Controllers {
     lateinit var scene: Scene private set
     lateinit var stage: Stage private set
 
     val mainPane = MainPage()
-    val settingsPane = SettingsPage()
-    val versionPane = VersionPage()
+    val settingsPane by lazy { SettingsPage() }
+    val versionPane by lazy { VersionPage() }
 
     lateinit var leftPaneController: LeftPaneController
 
@@ -46,6 +48,7 @@ object Controllers {
         leftPaneController = LeftPaneController(decorator.leftPane)
 
         Settings.onProfileLoading()
+        task { JavaVersion.initialize() }.start()
 
         decorator.isCustomMaximize = false
 

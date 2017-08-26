@@ -47,11 +47,7 @@ class Profile(name: String = "Default", initialGameDir: File = File(".minecraft"
     var modManager = ModManager(repository)
 
     init {
-        gameDirProperty.onChange { newGameDir ->
-            repository.baseDirectory = newGameDir!!
-            repository.refreshVersions()
-        }
-
+        gameDirProperty.onChange { repository.changeDirectory(it!!) }
         selectedVersionProperty.addListener { _ -> verifySelectedVersion() }
         EVENT_BUS.channel<RefreshedVersionsEvent>() += { event -> if (event.source == repository) verifySelectedVersion() }
     }

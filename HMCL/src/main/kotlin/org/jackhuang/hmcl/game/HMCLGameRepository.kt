@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.setting.EnumGameDirectory
 import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.setting.VersionSetting
+import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.util.LOG
 import org.jackhuang.hmcl.util.fromJson
 import java.io.File
@@ -68,30 +69,29 @@ class HMCLGameRepository(val profile: Profile, baseDirectory: File)
             return File(Settings.commonPath).resolve("libraries/${lib.path}")
     }
 
+    @Synchronized
     override fun refreshVersionsImpl() {
-        versionSettings.clear()
+        Scheduler.NEW_THREAD.schedule {
+            versionSettings.clear()
 
-        super.refreshVersionsImpl()
+            super.refreshVersionsImpl()
 
-        versions.keys.forEach(this::loadVersionSetting)
+            versions.keys.forEach(this::loadVersionSetting)
 
-        checkModpack()
+            checkModpack()
 
-        try {
-            val file = baseDirectory.resolve("launcher_profiles.json")
-            if (!file.exists() && versions.isNotEmpty())
-                file.writeText(PROFILE)
-        } catch (ex: IOException) {
-            LOG.log(Level.WARNING, "Unable to create launcher_profiles.json, Forge/LiteLoader installer will not work.", ex)
+            try {
+                val file = baseDirectory.resolve("launcher_profiles.json")
+                if (!file.exists() && versions.isNotEmpty())
+                    file.writeText(PROFILE)
+            } catch (ex: IOException) {
+                LOG.log(Level.WARNING, "Unable to create launcher_profiles.json, Forge/LiteLoader installer will not work.", ex)
+            }
         }
-
     }
 
     fun changeDirectory(newDir: File) {
         baseDirectory = newDir
-
-
-
         refreshVersions()
     }
 
