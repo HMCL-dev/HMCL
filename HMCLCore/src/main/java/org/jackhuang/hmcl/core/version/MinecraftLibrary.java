@@ -123,6 +123,8 @@ public class MinecraftLibrary extends AbstractMinecraftLibrary {
         if (natives != null) {
             if (downloads.classifiers == null)
                 downloads.classifiers = new HashMap<>();
+            if (StrUtils.isBlank(getNative()))
+                return null;
             if (!downloads.classifiers.containsKey(getNative()))
                 downloads.classifiers.put(getNative(), info = new LibraryDownloadInfo());
             else info = downloads.classifiers.get(getNative());

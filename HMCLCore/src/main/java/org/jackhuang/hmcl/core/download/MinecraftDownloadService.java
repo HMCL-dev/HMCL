@@ -57,7 +57,7 @@ public class MinecraftDownloadService extends IMinecraftDownloadService {
         for (IMinecraftLibrary l : v.getLibraries())
             if (l != null && l.allow()) {
                 File ff = service.version().getLibraryFile(mv, l);
-                if (!ff.exists() && l.getDownloadURL(service.getDownloadType().name()) != null) {
+                if (ff != null && !ff.exists() && l.getDownloadURL(service.getDownloadType().name()) != null) {
                     String libURL = l.getDownloadURL(service.getDownloadType().name());
                     if (libURL != null)
                         downloadLibraries.add(new DownloadLibraryJob(l, libURL, ff));

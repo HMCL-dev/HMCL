@@ -41,7 +41,11 @@ public abstract class AbstractMinecraftLibrary implements IMinecraftLibrary {
 
     @Override
     public String getDownloadURL(String downloadSource) {
-        return getDownloadInfo().getUrl(DownloadType.valueOf(downloadSource));
+        LibraryDownloadInfo info = getDownloadInfo();
+        if (info == null)
+            return null;
+        else
+            return info.getUrl(DownloadType.valueOf(downloadSource));
     }
 
     @Override

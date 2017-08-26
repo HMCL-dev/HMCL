@@ -39,7 +39,7 @@ public class HMCLGameProvider extends MinecraftVersionManager<HMCLMinecraftServi
     public File getLibraryFile(MinecraftVersion version, IMinecraftLibrary lib) {
         VersionSetting vs = service.getProfile().getVersionSetting(version.id);
         File self = super.getLibraryFile(version, lib);
-        if (self.exists() || (vs != null && service.getProfile().isNoCommon()))
+        if (self == null || self.exists() || (vs != null && service.getProfile().isNoCommon()))
             return self;
         else
             return lib.getFilePath(new File(Settings.getInstance().getCommonpath()));
