@@ -178,7 +178,7 @@ public class LaunchingUIDaemon {
             String log = t.getLine();
             if (!t.isError() && logHandler != null) {
                 if (!log.trim().startsWith("<")) { // without logging configuration.
-                    log = "<![CDATA[" + log + "]]>";
+                    log = "<![CDATA[" + log.replace("]]>", "") + "]]>";
                 }
                 logHandler.newLogLine(log + C.LINE_SEPARATOR);
             }
