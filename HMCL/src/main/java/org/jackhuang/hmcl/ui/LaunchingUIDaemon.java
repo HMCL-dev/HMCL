@@ -175,8 +175,13 @@ public class LaunchingUIDaemon {
 
         @Override
         public void accept(PrintlnEvent t) {
-            if (!t.isError() && logHandler != null)
-                logHandler.newLogLine(t.getLine() + C.LINE_SEPARATOR);
+            String log = t.getLine();
+            if (!t.isError() && logHandler != null) {
+                if (!log.trim().startsWith("<")) { // without logging configuration.
+                    log = "<![CDATA[" + log + "]]>";
+                }
+                logHandler.newLogLine(log + C.LINE_SEPARATOR);
+            }
             else System.err.println(t.getLine());
             HMCLGameLauncher.GameLauncherTag tag = (HMCLGameLauncher.GameLauncherTag) launcher.getTag();
             LauncherVisibility l = tag.launcherVisibility;
