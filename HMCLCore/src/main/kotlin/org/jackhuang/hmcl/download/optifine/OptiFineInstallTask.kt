@@ -42,6 +42,8 @@ class OptiFineInstallTask(private val dependencyManager: DefaultDependencyManage
     override val dependencies = mutableListOf<Task>()
     override val id = "version"
 
+    override val reliesOnDependencies = false
+
     init {
         if (!optiFineVersionList.loaded)
             dependents += optiFineVersionList.refreshAsync(dependencyManager.downloadProvider) then {

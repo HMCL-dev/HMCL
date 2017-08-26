@@ -141,7 +141,7 @@ class Test {
         override fun onFinished(task: Task) {
         }
 
-        override fun onFailed(task: Task) {
+        override fun onFailed(task: Task, throwable: Throwable) {
         }
 
         override fun onTerminate() {

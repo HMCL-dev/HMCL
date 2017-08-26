@@ -27,46 +27,22 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Level
 
-class TaskExecutor() {
+class TaskExecutor(private val task: Task) {
     var taskListener: TaskListener? = null
 
     var canceled = false
         private set
     val totTask = AtomicInteger(0)
     val variables = AutoTypingMap<String>(mutableMapOf())
-    private val taskQueue = ConcurrentLinkedQueue<Task>()
+    var lastException: Exception? = null
     private val workerQueue = ConcurrentLinkedQueue<Future<*>>()
-
-    /**
-     * Submit a task to subscription to run.
-     * You can submit a task even when started this subscription.
-     * Thread-safe function.
-     */
-    fun submit(task: Task): TaskExecutor {
-        taskQueue.add(task)
-        return this
-    }
 
     /**
      * Start the subscription and run all registered tasks asynchronously.
      */
     fun start() {
         workerQueue.add(Scheduler.NEW_THREAD.schedule {
-            totTask.addAndGet(taskQueue.size)
-            while (!taskQueue.isEmpty()) {
-                if (canceled) break
-                val task = taskQueue.poll()
-                if (task != null) {
-                    val future = task.scheduler.schedule { executeTask(task) }
-                    try {
-                        future?.get()
-                    } catch (e: InterruptedException) {
-                        Thread.currentThread().interrupt()
-                        break
-                    }
-                }
-            }
-            if (canceled || Thread.interrupted())
+            if (!executeTasks(listOf(task)))
                 taskListener?.onTerminate()
         })
     }
@@ -120,34 +96,40 @@ class TaskExecutor() {
 
         var flag = false
         try {
-            if (!doDependentsSucceeded && t.reliant || canceled)
+            if (!doDependentsSucceeded && t.reliesOnDependents || canceled)
                 throw SilentException()
 
             t.variables = variables
             t.execute()
             if (t is TaskResult<*>)
                 variables[t.id] = t.result
+
+            if (!executeTasks(t.dependencies) && t.reliesOnDependencies)
+                throw IllegalStateException("Subtasks failed for ${t.title}")
+
             flag = true
             if (!t.hidden)
                 LOG.finer("Task finished: ${t.title}")
-            executeTasks(t.dependencies)
+
             if (!t.hidden) {
                 t.onDone(TaskEvent(source = this, task = t, failed = false))
                 taskListener?.onFinished(t)
             }
         } catch (e: InterruptedException) {
             if (!t.hidden) {
+                lastException = e
                 LOG.log(Level.FINE, "Task aborted: ${t.title}", e)
                 t.onDone(TaskEvent(source = this, task = t, failed = true))
-                taskListener?.onFailed(t)
+                taskListener?.onFailed(t, e)
             }
         } catch (e: SilentException) {
             // nothing here
         } catch (e: Exception) {
             if (!t.hidden) {
+                lastException = e
                 LOG.log(Level.SEVERE, "Task failed: ${t.title}", e)
                 t.onDone(TaskEvent(source = this, task = t, failed = true))
-                taskListener?.onFailed(t)
+                taskListener?.onFailed(t, e)
             }
         } finally {
             t.variables = null

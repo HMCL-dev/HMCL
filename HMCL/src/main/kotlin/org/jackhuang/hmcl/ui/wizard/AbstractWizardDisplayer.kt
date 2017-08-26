@@ -94,26 +94,28 @@ interface AbstractWizardDisplayer : WizardDisplayer {
 
         navigateTo(StackPane().apply { children += vbox }, Navigation.NavigationDirection.FINISH)
 
-        task.executor().let { executor ->
+        task.with(org.jackhuang.hmcl.task.task(Scheduler.JAVAFX) {
+            navigateTo(Label("Successful"), Navigation.NavigationDirection.FINISH)
+        }).executor().apply {
             @Suppress("NAME_SHADOWING")
-            executor.taskListener = object : TaskListener {
+            taskListener = object : TaskListener {
                 override fun onReady(task: Task) {
-                    Platform.runLater { tasksBar.progressProperty().set(finishedTasks * 1.0 / executor.totTask.get()) }
+                    Platform.runLater { tasksBar.progressProperty().set(finishedTasks * 1.0 / totTask.get()) }
                 }
 
                 override fun onFinished(task: Task) {
                     Platform.runLater {
                         label.text = task.title
                         ++finishedTasks
-                        tasksBar.progressProperty().set(finishedTasks * 1.0 / executor.totTask.get())
+                        tasksBar.progressProperty().set(finishedTasks * 1.0 / totTask.get())
                     }
                 }
 
-                override fun onFailed(task: Task) {
+                override fun onFailed(task: Task, throwable: Throwable) {
                     Platform.runLater {
                         label.text = task.title
                         ++finishedTasks
-                        tasksBar.progressProperty().set(finishedTasks * 1.0 / executor.totTask.get())
+                        tasksBar.progressProperty().set(finishedTasks * 1.0 / totTask.get())
                     }
                 }
 
@@ -123,11 +125,7 @@ interface AbstractWizardDisplayer : WizardDisplayer {
 
             }
 
-            cancelQueue.add(executor)
-
-            executor.submit(org.jackhuang.hmcl.task.task(Scheduler.JAVAFX) {
-                navigateTo(Label("Successful"), Navigation.NavigationDirection.FINISH)
-            })
+            cancelQueue.add(this)
         }.start()
     }
 

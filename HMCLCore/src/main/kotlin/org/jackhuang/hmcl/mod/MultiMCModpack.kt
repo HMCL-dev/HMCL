@@ -213,6 +213,8 @@ class MMCModpackInstallTask(private val dependencyManager: DefaultDependencyMana
     init {
         check(!repository.hasVersion(name), { "Version $name already exists." })
         dependents += dependencyManager.gameBuilder().name(name).gameVersion(manifest.gameVersion).buildAsync()
+
+        onDone += { event -> if (event.failed) repository.removeVersionFromDisk(name) }
     }
 
     private val run = repository.getRunDirectory(name)

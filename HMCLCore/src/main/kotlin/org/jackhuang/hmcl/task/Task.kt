@@ -44,11 +44,20 @@ abstract class Task {
     open val scheduler: Scheduler = Scheduler.DEFAULT
 
     /**
-     * True if requires all dependent tasks finishing successfully.
+     * True if requires all [dependents] finishing successfully.
      *
      * **Note** if this field is set false, you are not supposed to invoke [run]
+     * @defaultValue true
      */
-    open val reliant: Boolean = true
+    open val reliesOnDependents: Boolean = true
+
+    /**
+     * True if requires all [dependencies] finishing successfully.
+     *
+     * **Note** if this field is set false, you are not supposed to invoke [run]
+     * @defaultValue false
+     */
+    open val reliesOnDependencies: Boolean = true
 
     open var title: String = this.javaClass.toString()
 
@@ -102,7 +111,7 @@ abstract class Task {
     val onDone = EventManager<TaskEvent>()
 
     /**
-     * **Note** reliant does not work here, which is always treated as true here.
+     * **Note** [reliesOnDependents] and [reliesOnDependencies] does not work here, which is always treated as true here.
      */
     @Throws(Exception::class)
     fun run() {
@@ -120,12 +129,10 @@ abstract class Task {
         this.progressPropertyImpl.unbind()
     }
 
-    fun executor() = TaskExecutor().submit(this)
-    fun executor(taskListener: TaskListener) = TaskExecutor().submit(this).apply { this.taskListener = taskListener }
+    fun executor() = TaskExecutor(this)
+    fun executor(taskListener: TaskListener) = TaskExecutor(this).apply { this.taskListener = taskListener }
     fun start() = executor().start()
-    fun subscribe(subscriber: Task) = executor().apply {
-        submit(subscriber).start()
-    }
+    fun subscribe(subscriber: Task) = TaskExecutor(with(subscriber)).apply { start() }
 
     fun subscribe(scheduler: Scheduler = Scheduler.DEFAULT, closure: (AutoTypingMap<String>) -> Unit) = subscribe(task(scheduler, closure))
 

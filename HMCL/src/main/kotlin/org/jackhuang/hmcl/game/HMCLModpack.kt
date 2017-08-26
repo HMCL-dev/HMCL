@@ -50,7 +50,7 @@ fun readHMCLModpackManifest(f: File): Modpack {
 
 object HMCLModpackManifest
 
-class HMCLModpackInstallTask(profile: Profile, private val zipFile: File, private val modpack: Modpack, private val name: String): Task() {
+class HMCLModpackInstallTask(profile: Profile, private val zipFile: File, modpack: Modpack, private val name: String): Task() {
     private val dependency = profile.dependency
     private val repository = profile.repository
     override val dependencies = mutableListOf<Task>()
@@ -63,6 +63,8 @@ class HMCLModpackInstallTask(profile: Profile, private val zipFile: File, privat
         version = version.copy(jar = null)
         dependents += dependency.gameBuilder().name(name).gameVersion(modpack.gameVersion!!).buildAsync()
         dependencies += VersionJSONSaveTask(repository, version) // override the json created by buildAsync()
+
+        onDone += { event -> if (event.failed) repository.removeVersionFromDisk(name) }
     }
 
     private val run = repository.getRunDirectory(name)
@@ -119,6 +121,11 @@ class HMCLModpackExportTask @JvmOverloads constructor(
         private val modpack: Modpack,
         private val output: File,
         override val id: String = ID): TaskResult<ZipEngine>() {
+
+    init {
+        onDone += { event -> if (event.failed) output.delete() }
+    }
+
     override fun execute() {
         val blackList = ArrayList<String>(MODPACK_BLACK_LIST)
         blackList.add(version + ".jar")

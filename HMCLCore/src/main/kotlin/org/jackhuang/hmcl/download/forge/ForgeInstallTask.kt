@@ -43,6 +43,8 @@ class ForgeInstallTask(private val dependencyManager: DefaultDependencyManager,
     override val dependencies = mutableListOf<Task>()
     override val id = "version"
 
+    override val reliesOnDependencies = false
+
     init {
         if (!forgeVersionList.loaded)
             dependents += forgeVersionList.refreshAsync(dependencyManager.downloadProvider).then {

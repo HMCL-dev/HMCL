@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.task
 
 /**
  * The tasks that provides a way to execute tasks parallelly.
+ * Fails when some of [tasks] failed.
  *
  * @param tasks the tasks that can be executed parallelly.
  */
