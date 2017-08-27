@@ -42,19 +42,15 @@ fun i18n(key: String): String {
 class Main : Application() {
 
     override fun start(stage: Stage) {
-        println(System.currentTimeMillis())
         // When launcher visibility is set to "hide and reopen" without [Platform.implicitExit] = false,
         // Stage.show() cannot work again because JavaFX Toolkit have already shut down.
         Platform.setImplicitExit(false)
 
         Controllers.initialize(stage)
 
-        println("Showing stage: " + System.currentTimeMillis())
-
         stage.isResizable = false
         stage.scene = Controllers.scene
         stage.show()
-        println("Showed stage: " + System.currentTimeMillis())
     }
 
     companion object {

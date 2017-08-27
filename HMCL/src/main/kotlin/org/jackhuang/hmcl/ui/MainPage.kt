@@ -101,7 +101,7 @@ class MainPage : StackPane(), DecoratorPage {
 
     fun onProfileChanged(event: ProfileChangedEvent) = runOnUiThread {
         val profile = event.value
-        profile.selectedVersionProperty.setChangedListener { t ->
+        profile.selectedVersionProperty.setChangedListener {
             versionChanged(profile.selectedVersion)
         }
         loadVersions(profile)

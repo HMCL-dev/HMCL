@@ -2,6 +2,7 @@ import java.security.MessageDigest
 import java.util.jar.JarFile
 import java.util.jar.Pack200
 import java.util.zip.GZIPOutputStream
+import java.io.File
 
 if (!hasProperty('mainClass')) {
     ext.mainClass = 'org.jackhuang.hmcl.Main'
@@ -48,7 +49,8 @@ jar {
 
     manifest {
         attributes 'Created-By'        : 'Copyright(c) 2013-2017 huangyuhui.',
-                'Main-Class'        : mainClass
+                'Main-Class'        : mainClass,
+                'Multi-Release': "true"
     }
 
     doLast {
@@ -78,7 +80,7 @@ task makeExecutable(dependsOn: jar) doLast {
     ext {
         jar.classifier = ''
         makeExecutableinjar = jar.archivePath
-        jar.classifier = ''
+        jar.classifier = 'optimized'
         makeExecutableoutjar = jar.archivePath
         jar.classifier = ''
     }
@@ -90,7 +92,7 @@ task makeExecutable(dependsOn: jar) doLast {
     while((read = is.read(bytes)) != -1)
         fos.write(bytes, 0, read);
     is.close()
-    is = new FileInputStream(makeExecutableinjar)
+    is = new FileInputStream(makeExecutableoutjar)
     while((read = is.read(bytes)) != -1)
         fos.write(bytes, 0, read);
     is.close()
@@ -119,6 +121,42 @@ task makePackGZ(dependsOn: jar) doLast {
     def fileEx = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".pack.gz.sha1")
     if (!fileEx.exists()) fileEx.createNewFile()
     fileEx.append sha1Hex
+}
+
+task proguard(type: proguard.gradle.ProGuardTask, dependsOn: jar) {
+    ext {
+        def re = jar.classifier
+        injar = jar.archivePath
+        jar.classifier = 'optimized'
+        outjar = jar.archivePath
+        jar.classifier = re
+    }
+
+    injars(/*["filter": "!META-INF/**,**"], */injar)
+    String javaHome = System.getProperty("java.home")
+    if (!javaHome.endsWith("jre"))
+        javaHome += File.separator + "jre"
+    libraryjars javaHome + "/lib/rt.jar"
+    libraryjars javaHome + "/lib/jce.jar"
+    libraryjars javaHome + "/lib/jsse.jar"
+    libraryjars javaHome + "/lib/ext/jfxrt.jar"
+    outjars outjar
+
+    configuration 'proguard.pro'
+}
+
+task combineMETA_INF(type: Jar) {
+    ext {
+        def re = jar.classifier
+        injar = jar.archivePath
+        jar.classifier = 'optimized'
+        outjar = jar.archivePath
+        jar.classifier = re
+    }
+    from zipTree(outjar)
+    from zipTree(injar).matching {
+        include "META-INF/"
+    }
 }
 
 build.dependsOn makeExecutable

@@ -89,7 +89,7 @@ class LeftPaneController(private val leftPane: AdvancedListBox) {
 
         profilePane.children
                 .filter { it is RipplerContainer && it.properties["profile"] is Pair<*, *> }
-                .forEach { (it as RipplerContainer).selected = (it.properties["profile"] as Pair<String, VersionListItem>).first == profile.name }
+                .forEach { (it as RipplerContainer).selected = (it.properties["profile"] as Pair<*, *>).first == profile.name }
     }
 
     fun onProfilesLoading() {

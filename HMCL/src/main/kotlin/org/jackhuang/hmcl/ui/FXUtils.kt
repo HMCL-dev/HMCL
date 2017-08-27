@@ -55,7 +55,7 @@ fun Node.loadFXML(absolutePath: String) {
 }
 
 fun ListView<*>.smoothScrolling() {
-    skinProperty().addListener { _ ->
+    skinProperty().onInvalidated {
         val bar = lookup(".scroll-bar") as ScrollBar
         val virtualFlow = lookup(".virtual-flow")
         val frictions = doubleArrayOf(0.99, 0.1, 0.05, 0.04, 0.03, 0.02, 0.01, 0.04, 0.01, 0.008, 0.008, 0.008, 0.008, 0.0006, 0.0005, 0.00003, 0.00001)
@@ -85,7 +85,7 @@ fun ListView<*>.smoothScrolling() {
             for (i in derivatives.indices) {
                 derivatives[i] *= frictions[i]
             }
-            for (i in 1..derivatives.size - 1) {
+            for (i in 1 until derivatives.size) {
                 derivatives[i] += derivatives[i - 1]
             }
             val dy = derivatives[derivatives.size - 1]
@@ -243,12 +243,12 @@ fun Node.installTooltip(openDelay: Double = 1000.0, visibleDelay: Double = 5000.
 }
 
 fun JFXTextField.setValidateWhileTextChanged() {
-    textProperty().addListener { _ -> validate() }
+    textProperty().onInvalidated(this::validate)
     validate()
 }
 
 fun JFXPasswordField.setValidateWhileTextChanged() {
-    textProperty().addListener { _ -> validate() }
+    textProperty().onInvalidated(this::validate)
     validate()
 }
 

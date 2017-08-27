@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.ui.loadFXML
 import org.jackhuang.hmcl.ui.smoothScrolling
 import org.jackhuang.hmcl.ui.wizard.WizardController
 import org.jackhuang.hmcl.ui.wizard.WizardPage
+import org.jackhuang.hmcl.util.onInvalidated
 
 class ModpackInfoPage(private val controller: WizardController, version: String): StackPane(), WizardPage {
     override val title: String = i18n("modpack.wizard.step.1.title")
@@ -50,14 +51,14 @@ class ModpackInfoPage(private val controller: WizardController, version: String)
         loadFXML("/assets/fxml/modpack/info.fxml")
         scroll.smoothScrolling()
         txtModpackName.text = version
-        txtModpackName.textProperty().addListener { _ -> checkValidation() }
-        txtModpackAuthor.textProperty().addListener { _ -> checkValidation() }
-        txtModpackVersion.textProperty().addListener { _ -> checkValidation() }
+        txtModpackName.textProperty().onInvalidated(this::checkValidation)
+        txtModpackAuthor.textProperty().onInvalidated(this::checkValidation)
+        txtModpackVersion.textProperty().onInvalidated(this::checkValidation)
         txtModpackAuthor.text = Settings.selectedAccount?.username ?: ""
         lblVersionName.text = version
     }
 
-    fun checkValidation() {
+    private fun checkValidation() {
         btnNext.isDisable = !txtModpackName.validate() || !txtModpackVersion.validate() || !txtModpackAuthor.validate()
     }
 

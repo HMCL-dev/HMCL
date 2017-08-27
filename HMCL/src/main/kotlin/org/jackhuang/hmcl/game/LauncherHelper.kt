@@ -47,7 +47,6 @@ object LauncherHelper {
         val account = Settings.selectedAccount ?: throw IllegalStateException("No account here")
         val version = repository.getVersion(selectedVersion)
         val setting = profile.getVersionSetting(selectedVersion)
-        var finished = 0
 
         Controllers.dialog(launchingStepsPane)
         task(Scheduler.JAVAFX) { emitStatus(LoadingState.DEPENDENCIES) }
@@ -86,13 +85,15 @@ object LauncherHelper {
                 .executor()
                 .apply {
                     taskListener = object : TaskListener {
+                        var finished = 0
+
                         override fun onFinished(task: Task) {
                             ++finished
                             runOnUiThread { launchingStepsPane.pgsTasks.progress = 1.0 * finished / totTask.get() }
                         }
 
                         override fun onTerminate() {
-                            runOnUiThread { Controllers.closeDialog() }
+                            runOnUiThread(Controllers::closeDialog)
                         }
                     }
                 }.start()

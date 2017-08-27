@@ -121,14 +121,14 @@ class LogWindow : Stage() {
             btnInfos.textProperty().bind(Bindings.createStringBinding(Callable { infoProperty.get().toString() + " infos" }, infoProperty))
             btnDebugs.textProperty().bind(Bindings.createStringBinding(Callable { debugProperty.get().toString() + " debugs" }, debugProperty))
 
-            btnFatals.selectedProperty().addListener(this::specificChanged)
-            btnErrors.selectedProperty().addListener(this::specificChanged)
-            btnWarns.selectedProperty().addListener(this::specificChanged)
-            btnInfos.selectedProperty().addListener(this::specificChanged)
-            btnDebugs.selectedProperty().addListener(this::specificChanged)
+            btnFatals.selectedProperty().onInvalidated(this::specificChanged)
+            btnErrors.selectedProperty().onInvalidated(this::specificChanged)
+            btnWarns.selectedProperty().onInvalidated(this::specificChanged)
+            btnInfos.selectedProperty().onInvalidated(this::specificChanged)
+            btnDebugs.selectedProperty().onInvalidated(this::specificChanged)
         }
 
-        private fun specificChanged(observable: Observable) {
+        private fun specificChanged() {
             var res = ""
             if (btnFatals.isSelected) res += "\"fatal\", "
             if (btnErrors.isSelected) res += "\"error\", "

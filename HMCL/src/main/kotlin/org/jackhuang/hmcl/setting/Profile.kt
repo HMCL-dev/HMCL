@@ -48,7 +48,7 @@ class Profile(name: String = "Default", initialGameDir: File = File(".minecraft"
 
     init {
         gameDirProperty.onChange { repository.changeDirectory(it!!) }
-        selectedVersionProperty.addListener { _ -> verifySelectedVersion() }
+        selectedVersionProperty.onInvalidated(this::verifySelectedVersion)
         EVENT_BUS.channel<RefreshedVersionsEvent>() += { event -> if (event.source == repository) verifySelectedVersion() }
     }
 

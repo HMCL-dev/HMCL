@@ -32,3 +32,5 @@ fun ObservableDoubleValue.onChange(op: (Double) -> Unit) = apply { addListener {
 fun <T> ObservableList<T>.onChange(op: (ListChangeListener.Change<out T>) -> Unit) = apply {
     addListener(ListChangeListener { op(it) })
 }
+
+fun <T> ObservableValue<*>.onInvalidated(op: () -> T) = apply { addListener { _ -> op() } }

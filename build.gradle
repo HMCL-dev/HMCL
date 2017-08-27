@@ -27,6 +27,7 @@ buildscript {
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'net.sf.proguard:proguard-gradle:5.3.3'
     }
 }
 
@@ -61,6 +62,7 @@ allprojects {
         compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
         compile "com.google.code.gson:gson:2.8.1"
         compile "org.apache.commons:commons-compress:1.8.1"
+        compile "org.tukaani:xz:1.6"
         testCompile group: 'junit', name: 'junit', version: '4.12'
     }
 

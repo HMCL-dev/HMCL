@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.ui.*
 import org.jackhuang.hmcl.ui.construct.Validator
 import org.jackhuang.hmcl.ui.wizard.WizardController
 import org.jackhuang.hmcl.ui.wizard.WizardPage
+import org.jackhuang.hmcl.util.onInvalidated
 
 class ModpackPage(private val controller: WizardController): StackPane(), WizardPage {
     override val title: String = i18n("modpack.task.install")
@@ -62,9 +63,7 @@ class ModpackPage(private val controller: WizardController): StackPane(), Wizard
             controller.settings[MODPACK_FILE] = selectedFile
             lblModpackLocation.text = selectedFile.absolutePath
             txtModpackName.validators += Validator { !profile.repository.hasVersion(it) && it.isNotBlank() }.apply { message = i18n("version.already_exists") }
-            txtModpackName.textProperty().addListener { _ ->
-                btnInstall.isDisable = !txtModpackName.validate()
-            }
+            txtModpackName.textProperty().onInvalidated { btnInstall.isDisable = !txtModpackName.validate() }
 
             try {
                 manifest = readModpackManifest(selectedFile)

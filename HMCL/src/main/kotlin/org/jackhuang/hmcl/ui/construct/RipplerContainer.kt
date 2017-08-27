@@ -35,6 +35,7 @@ import javafx.scene.paint.Paint
 import javafx.scene.shape.Rectangle
 import org.jackhuang.hmcl.util.getValue
 import org.jackhuang.hmcl.util.onChange
+import org.jackhuang.hmcl.util.onInvalidated
 import org.jackhuang.hmcl.util.setValue
 import java.util.concurrent.Callable
 
@@ -106,7 +107,7 @@ open class RipplerContainer(@NamedArg("container") container: Node): StackPane()
             }
 
         }
-        pressedProperty().addListener { _ -> this.buttonRippler.hideOverlay() }
+        pressedProperty().onInvalidated(this.buttonRippler::hideOverlay)
         isPickOnBounds = false
         this.buttonContainer.isPickOnBounds = false
         this.buttonContainer.shapeProperty().bind(shapeProperty())
@@ -136,8 +137,8 @@ open class RipplerContainer(@NamedArg("container") container: Node): StackPane()
 
         this.updateChildren()
 
-        containerProperty.addListener { _ -> updateChildren() }
-        selectedProperty.addListener { _ ->
+        containerProperty.onInvalidated(this::updateChildren)
+        selectedProperty.onInvalidated {
             if (selected) background = Background(BackgroundFill(ripplerFill, defaultRadii, null))
             else background = Background(BackgroundFill(Color.TRANSPARENT, defaultRadii, null))
         }

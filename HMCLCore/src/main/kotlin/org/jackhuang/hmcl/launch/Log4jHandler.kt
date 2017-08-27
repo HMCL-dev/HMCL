@@ -74,7 +74,14 @@ internal class Log4jHandler(private val callback: (String, Log4jLevel) -> Unit) 
      */
     fun newLine(content: String) =
         Scheduler.COMPUTATION.schedule {
-            outputStream.write((content + OS.LINE_SEPARATOR).replace("log4j:Event", "log4j_Event").replace("log4j:Message", "log4j_Message").replace("log4j:Throwable", "log4j_Throwable").toByteArray())
+            var log = content
+            if (!log.trim().startsWith("<"))
+                log = "<![CDATA[" + log.replace("]]>", "") + "]]>"
+            outputStream.write((log + OS.LINE_SEPARATOR)
+                    .replace("log4j:Event", "log4j_Event")
+                    .replace("log4j:Message", "log4j_Message")
+                    .replace("log4j:Throwable", "log4j_Throwable")
+                    .toByteArray())
             outputStream.flush()
         }
 
