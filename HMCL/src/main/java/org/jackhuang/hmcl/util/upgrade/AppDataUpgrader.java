@@ -47,7 +47,6 @@ import org.jackhuang.hmcl.util.task.TaskWindow;
 import org.jackhuang.hmcl.util.net.FileDownloadTask;
 import org.jackhuang.hmcl.util.ArrayUtils;
 import org.jackhuang.hmcl.util.ui.MessageBox;
-import org.jackhuang.hmcl.util.UpdateChecker;
 import org.jackhuang.hmcl.util.Utils;
 import org.jackhuang.hmcl.api.VersionNumber;
 import org.jackhuang.hmcl.util.StrUtils;
@@ -137,17 +136,17 @@ public class AppDataUpgrader extends IUpgrader {
                 else {
                     String url = C.URL_PUBLISH;
                     if (map != null)
-                        if (map.containsKey(OS.os().checked_name))
-                            url = map.get(OS.os().checked_name);
-                        else if (map.containsKey(OS.UNKOWN.checked_name))
-                            url = map.get(OS.UNKOWN.checked_name);
+                        if (map.containsKey(OS.os().checkedName))
+                            url = map.get(OS.os().checkedName);
+                        else if (map.containsKey(OS.UNKNOWN.checkedName))
+                            url = map.get(OS.UNKNOWN.checkedName);
                     if (url == null)
                         url = C.URL_PUBLISH;
                     try {
                         java.awt.Desktop.getDesktop().browse(new URI(url));
                     } catch (URISyntaxException | IOException e) {
                         HMCLog.err("Failed to browse uri: " + url, e);
-                        Utils.setClipborad(url);
+                        Utils.setClipboard(url);
                         MessageBox.show(C.i18n("update.no_browser"));
                     }
                 }

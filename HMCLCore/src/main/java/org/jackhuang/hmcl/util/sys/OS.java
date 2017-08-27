@@ -31,14 +31,14 @@ public enum OS {
     LINUX('/', "linux"),
     WINDOWS('\\', "windows"),
     OSX('/', "osx"),
-    UNKOWN('/', "universal");
+    UNKNOWN('/', "universal");
 
     public final char fileSeparator;
-    public final String checked_name;
+    public final String checkedName;
 
     private OS(char fileSeparator, String n) {
         this.fileSeparator = fileSeparator;
-        checked_name = n;
+        checkedName = n;
     }
 
     public static OS os() {
@@ -55,7 +55,7 @@ public enum OS {
             return OS.LINUX;
         if (str.contains("unix"))
             return OS.LINUX;
-        return OS.UNKOWN;
+        return OS.UNKNOWN;
     }
 
     /**

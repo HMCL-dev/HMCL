@@ -38,7 +38,7 @@ public final class Utils {
         return ((URLClassLoader) Utils.class.getClassLoader()).getURLs();
     }
 
-    public static void setClipborad(String text) {
+    public static void setClipboard(String text) {
         try {
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text), null);
         } catch(HeadlessException ignored) {

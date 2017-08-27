@@ -33,7 +33,7 @@ import org.jackhuang.hmcl.api.event.config.ProfileLoadingEvent;
 import org.jackhuang.hmcl.laf.utils.AnimationController;
 import org.jackhuang.hmcl.util.sys.FileUtils;
 import org.jackhuang.hmcl.util.ui.MessageBox;
-import org.jackhuang.hmcl.util.UpdateChecker;
+import org.jackhuang.hmcl.util.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.sys.IOUtils;
 
 /**

@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.setting;
 import org.jackhuang.hmcl.core.download.DownloadType;
 import com.google.gson.annotations.SerializedName;
 import java.awt.Font;
+import java.net.Proxy;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -60,6 +61,8 @@ public final class Config implements Cloneable {
     private String proxyUserName;
     @SerializedName("proxyPassword")
     private String proxyPassword;
+    @SerializedName("proxyType")
+    private int proxyType;
     @SerializedName("enableShadow")
     private boolean enableShadow;
     @SerializedName("enableBlur")
@@ -91,7 +94,7 @@ public final class Config implements Cloneable {
 
     public Config() {
         clientToken = UUID.randomUUID().toString();
-        logintype = downloadtype = 0;
+        proxyType = logintype = downloadtype = 0;
         logLines = 100;
         enableAnimation = enableBlur = true;
         if (OS.os() == OS.WINDOWS)
@@ -266,6 +269,19 @@ public final class Config implements Cloneable {
 
     public void setProxyPort(String proxyPort) {
         this.proxyPort = proxyPort;
+        Settings.save();
+    }
+
+    public Proxy.Type getProxyType() {
+        if (proxyType < 0 || proxyType >= 3) {
+            proxyType = 0;
+            Settings.save();
+        }
+        return Proxy.Type.values()[proxyType];
+    }
+
+    public void setProxyType(Proxy.Type proxyType) {
+        this.proxyType = proxyType.ordinal();
         Settings.save();
     }
 

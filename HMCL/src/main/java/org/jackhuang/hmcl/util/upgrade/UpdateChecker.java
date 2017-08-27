@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.util;
+package org.jackhuang.hmcl.util.upgrade;
 
 import org.jackhuang.hmcl.util.ui.MessageBox;
 import org.jackhuang.hmcl.api.VersionNumber;
@@ -28,6 +28,9 @@ import java.util.Map;
 import org.jackhuang.hmcl.api.HMCLApi;
 import org.jackhuang.hmcl.api.event.SimpleEvent;
 import org.jackhuang.hmcl.api.event.OutOfDateEvent;
+import org.jackhuang.hmcl.util.AbstractSwingWorker;
+import org.jackhuang.hmcl.util.C;
+import org.jackhuang.hmcl.util.IUpdateChecker;
 
 /**
  *

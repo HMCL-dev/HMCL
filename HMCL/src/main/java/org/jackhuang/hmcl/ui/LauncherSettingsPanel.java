@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui;
 
 import java.io.IOException;
+import java.net.Proxy;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.jackhuang.hmcl.util.C;
@@ -78,6 +79,7 @@ public class LauncherSettingsPanel extends RepaintPage {
         spinnerFontSize.setValue(Settings.getInstance().getFontSize());
         cboFontFamily.setSelectedItem(Settings.getInstance().getFontFamily());
         cboDownloadSource.setSelectedIndex(Settings.getInstance().getDownloadType());
+        cboProxyType.setSelectedIndex(Settings.getInstance().getProxyType().ordinal());
         cboTheme.setSelectedItem(Settings.getInstance().getTheme());
         chkEnableShadow.setSelected(Settings.getInstance().isEnableShadow());
         chkEnableBlur.setSelected(Settings.getInstance().isEnableBlur());
@@ -122,6 +124,7 @@ public class LauncherSettingsPanel extends RepaintPage {
         btnMCBBS = new javax.swing.JButton();
         cboLang = new javax.swing.JComboBox();
         lblLang = new javax.swing.JLabel();
+        cboProxyType = new javax.swing.JComboBox<>();
         pnlUI = new Page().setAnimationEnabled(Settings.getInstance().isEnableAnimation());
         lblTheme = new javax.swing.JLabel();
         cboTheme = new javax.swing.JComboBox();
@@ -231,6 +234,13 @@ public class LauncherSettingsPanel extends RepaintPage {
 
         lblLang.setText(C.i18n("launcher.lang")); // NOI18N
 
+        cboProxyType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Direct", "HTTP", "Socks" }));
+        cboProxyType.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                cboProxyTypeItemStateChanged(evt);
+            }
+        });
+
         javax.swing.GroupLayout pnlGeneralLayout = new javax.swing.GroupLayout(pnlGeneral);
         pnlGeneral.setLayout(pnlGeneralLayout);
         pnlGeneralLayout.setHorizontalGroup(
@@ -242,32 +252,33 @@ public class LauncherSettingsPanel extends RepaintPage {
                         .addComponent(btnCheckUpdate)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnMCBBS)
-                        .addGap(0, 418, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlGeneralLayout.createSequentialGroup()
-                        .addComponent(lblProxy)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(lblProxyHost)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtProxyHost, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblProxyPort)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtProxyPort, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblProxyUserName)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtProxyUsername, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblProxyPassword)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtProxyPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(pnlGeneralLayout.createSequentialGroup()
                         .addGroup(pnlGeneralLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblDownloadSource)
                             .addComponent(lblCommonPath)
-                            .addComponent(lblLang))
+                            .addComponent(lblLang)
+                            .addComponent(lblProxy))
                         .addGap(28, 28, 28)
                         .addGroup(pnlGeneralLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(pnlGeneralLayout.createSequentialGroup()
+                                .addComponent(cboProxyType, 0, 156, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblProxyHost)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtProxyHost, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblProxyPort)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtProxyPort, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblProxyUserName)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtProxyUsername, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblProxyPassword)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtProxyPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(cboLang, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(pnlGeneralLayout.createSequentialGroup()
                                 .addComponent(txtCommonPath)
@@ -302,7 +313,8 @@ public class LauncherSettingsPanel extends RepaintPage {
                     .addComponent(txtProxyUsername, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lblProxyUserName)
                     .addComponent(txtProxyPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblProxyPassword))
+                    .addComponent(lblProxyPassword)
+                    .addComponent(cboProxyType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 69, Short.MAX_VALUE)
                 .addGroup(pnlGeneralLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnCheckUpdate, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -397,7 +409,7 @@ public class LauncherSettingsPanel extends RepaintPage {
                                 .addComponent(chkEnableBlur)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(chkEnableAnimation)))
-                        .addGap(0, 15, Short.MAX_VALUE))
+                        .addGap(0, 163, Short.MAX_VALUE))
                     .addGroup(pnlUILayout.createSequentialGroup()
                         .addGroup(pnlUILayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblBackground)
@@ -460,7 +472,7 @@ public class LauncherSettingsPanel extends RepaintPage {
             .addGroup(pnlAboutLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(lblAbout, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(104, Short.MAX_VALUE))
+                .addContainerGap(252, Short.MAX_VALUE))
         );
         pnlAboutLayout.setVerticalGroup(
             pnlAboutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -612,6 +624,10 @@ public class LauncherSettingsPanel extends RepaintPage {
         lblExample.setFont(Settings.getInstance().getConsoleFont());
     }//GEN-LAST:event_spinnerFontSizeStateChanged
 
+    private void cboProxyTypeItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboProxyTypeItemStateChanged
+        Settings.getInstance().setProxyType(Proxy.Type.values()[cboProxyType.getSelectedIndex()]);
+    }//GEN-LAST:event_cboProxyTypeItemStateChanged
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCheckUpdate;
     private javax.swing.JButton btnMCBBS;
@@ -620,6 +636,7 @@ public class LauncherSettingsPanel extends RepaintPage {
     private javax.swing.JComboBox cboDownloadSource;
     private javax.swing.JComboBox cboFontFamily;
     private javax.swing.JComboBox cboLang;
+    private javax.swing.JComboBox<String> cboProxyType;
     private javax.swing.JComboBox cboTheme;
     private javax.swing.JCheckBox chkDecorated;
     private javax.swing.JCheckBox chkEnableAnimation;

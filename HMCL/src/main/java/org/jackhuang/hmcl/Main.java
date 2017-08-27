@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
+import java.net.Proxy;
 import java.security.GeneralSecurityException;
 import java.security.cert.X509Certificate;
 import java.util.Locale;
@@ -199,10 +200,24 @@ public final class Main {
             Settings.UPDATE_CHECKER.upgrade.register(IUpgrader.NOW_UPGRADER);
             Settings.UPDATE_CHECKER.process(false).reg(t -> Main.invokeUpdate()).execute();
 
-            if (StrUtils.isNotBlank(Settings.getInstance().getProxyHost()) && StrUtils.isNotBlank(Settings.getInstance().getProxyPort()) && MathUtils.canParseInt(Settings.getInstance().getProxyPort())) {
-                HMCLog.log("Initializing customized proxy");
-                System.setProperty("http.proxyHost", Settings.getInstance().getProxyHost());
-                System.setProperty("http.proxyPort", Settings.getInstance().getProxyPort());
+            if (Settings.getInstance().getProxyType() != Proxy.Type.DIRECT && StrUtils.isNotBlank(Settings.getInstance().getProxyHost())) {
+                switch (Settings.getInstance().getProxyType()) {
+                    case DIRECT:
+                        break;
+                    case HTTP:
+                        System.setProperty("http.proxyHost", Settings.getInstance().getProxyHost());
+                        if (StrUtils.isNotBlank(Settings.getInstance().getProxyPort()))
+                            System.setProperty("http.proxyPort", Settings.getInstance().getProxyPort());
+                        HMCLog.log("Initialized HTTP proxy.");
+                        break;
+                    case SOCKS:
+                        System.setProperty("socksProxyHost", Settings.getInstance().getProxyHost());
+                        if (StrUtils.isNotBlank(Settings.getInstance().getProxyPort()))
+                            System.setProperty("socksProxyPort", Settings.getInstance().getProxyPort());
+                        HMCLog.log("Initialized Socks v4/v5 proxy.");
+                        break;
+                }
+                
                 if (StrUtils.isNotBlank(Settings.getInstance().getProxyUserName()) && StrUtils.isNotBlank(Settings.getInstance().getProxyPassword()))
                     Authenticator.setDefault(new Authenticator() {
                         @Override

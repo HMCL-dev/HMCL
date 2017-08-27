@@ -252,7 +252,7 @@ public class LogWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_btnClearActionPerformed
 
     private void btnCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCopyActionPerformed
-        Utils.setClipborad(this.txtLog.getText());
+        Utils.setClipboard(this.txtLog.getText());
     }//GEN-LAST:event_btnCopyActionPerformed
 
     private void btnContactActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnContactActionPerformed
