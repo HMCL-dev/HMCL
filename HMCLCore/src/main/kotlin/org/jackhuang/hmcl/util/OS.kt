@@ -28,23 +28,23 @@ import java.util.*
 /**
  * Represents the operating system.
  */
-enum class OS {
+enum class OS(val checkedName: String) {
     /**
      * Microsoft Windows.
      */
-    WINDOWS,
+    WINDOWS("windows"),
     /**
      * Linux and Unix like OS, including Solaris.
      */
-    LINUX,
+    LINUX("linux"),
     /**
      * Mac OS X.
      */
-    OSX,
+    OSX("osx"),
     /**
      * Unknown operating system.
      */
-    UNKNOWN;
+    UNKNOWN("universal");
 
     companion object {
         /**

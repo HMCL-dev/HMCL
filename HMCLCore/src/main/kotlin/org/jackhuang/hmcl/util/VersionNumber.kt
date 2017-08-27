@@ -75,6 +75,8 @@ class StringVersionNumber internal constructor(val version: String): VersionNumb
  */
 class IntVersionNumber internal constructor(val version: List<Int>): VersionNumber() {
 
+    operator fun get(index: Int) = version[index]
+
     override fun compareTo(other: VersionNumber): Int {
         if (other !is IntVersionNumber) return 0
         val len = minOf(this.version.size, other.version.size)

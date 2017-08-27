@@ -132,6 +132,7 @@ abstract class Task {
     fun executor() = TaskExecutor(this)
     fun executor(taskListener: TaskListener) = TaskExecutor(this).apply { this.taskListener = taskListener }
     fun start() = executor().start()
+    fun test() = executor().test()
     fun subscribe(subscriber: Task) = TaskExecutor(with(subscriber)).apply { start() }
 
     fun subscribe(scheduler: Scheduler = Scheduler.DEFAULT, closure: (AutoTypingMap<String>) -> Unit) = subscribe(task(scheduler, closure))

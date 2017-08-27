@@ -47,6 +47,20 @@ class TaskExecutor(private val task: Task) {
         })
     }
 
+    @Throws(InterruptedException::class)
+    fun test(): Boolean {
+        var flag = true
+        val future = Scheduler.NEW_THREAD.schedule {
+            if (!executeTasks(listOf(task))) {
+                taskListener?.onTerminate()
+                flag = false
+            }
+        }
+        workerQueue.add(future)
+        future!!.get()
+        return flag
+    }
+
     /**
      * Cancel the subscription ant interrupt all tasks.
      */
