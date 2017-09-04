@@ -166,8 +166,14 @@ class VersionSetting() {
      * 0 - .minecraft<br/>
      * 1 - .minecraft/versions/&lt;version&gt;/<br/>
      */
-    val gameDirTypeProperty = ImmediateObjectProperty<EnumGameDirectory>(this, "gameDirTypeProperty", EnumGameDirectory.ROOT_FOLDER)
+    val gameDirTypeProperty = ImmediateObjectProperty<EnumGameDirectory>(this, "gameDirType", EnumGameDirectory.ROOT_FOLDER)
     var gameDirType: EnumGameDirectory by gameDirTypeProperty
+
+    /**
+     * Your custom gameDir
+     */
+    val gameDirProperty = ImmediateStringProperty(this, "gameDir", "")
+    var gameDir: String by gameDirProperty
 
     // launcher settings
 
@@ -220,6 +226,7 @@ class VersionSetting() {
         widthProperty.addListener(listener)
         heightProperty.addListener(listener)
         gameDirTypeProperty.addListener(listener)
+        gameDirProperty.addListener(listener)
         launcherVisibilityProperty.addListener(listener)
     }
 
@@ -272,6 +279,7 @@ class VersionSetting() {
                 addProperty("notCheckGame", src.notCheckGame)
                 addProperty("noCommon", src.noCommon)
                 addProperty("showLogs", src.showLogs)
+                addProperty("gameDir", src.gameDir)
                 addProperty("launcherVisibility", src.launcherVisibility.ordinal)
                 addProperty("gameDirType", src.gameDirType.ordinal)
             }
@@ -299,6 +307,7 @@ class VersionSetting() {
                 serverIp = json["serverIp"]?.asString ?: ""
                 java = json["java"]?.asString ?: ""
                 wrapper = json["wrapper"]?.asString ?: ""
+                gameDir = json["gameDir"]?.asString ?: ""
                 fullscreen = json["fullscreen"]?.asBoolean ?: false
                 noJVMArgs = json["noJVMArgs"]?.asBoolean ?: false
                 notCheckGame = json["notCheckGame"]?.asBoolean ?: false

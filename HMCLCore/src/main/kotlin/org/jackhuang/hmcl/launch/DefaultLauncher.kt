@@ -163,7 +163,7 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
         }
 
         // Optional Minecraft arguments
-        if (options.height != null && options.width != null) {
+        if (options.height != null && options.height != 0 && options.width != null && options.width != 0) {
             res.add("--height")
             res.add(options.height.toString())
             res.add("--width")

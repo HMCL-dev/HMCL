@@ -149,6 +149,7 @@ data class JavaVersion internal constructor(
             if (javas != null)
                 throw IllegalStateException("JavaVersions have already been initialized.")
             val temp = mutableMapOf<String, JavaVersion>()
+            temp += currentJava.longVersion to currentJava
             (when (OS.CURRENT_OS) {
                 OS.WINDOWS -> queryWindows()
                 OS.OSX -> queryMacintosh()

@@ -56,6 +56,7 @@ class HMCLGameRepository(val profile: Profile, baseDirectory: File)
             return when (vs.gameDirType) {
                 EnumGameDirectory.VERSION_FOLDER -> getVersionRoot(id)
                 EnumGameDirectory.ROOT_FOLDER -> super.getRunDirectory(id)
+                EnumGameDirectory.CUSTOM -> File(vs.gameDir)
             }
         }
     }

@@ -19,5 +19,6 @@ package org.jackhuang.hmcl.setting
 
 enum class EnumGameDirectory {
     ROOT_FOLDER,
-    VERSION_FOLDER
+    VERSION_FOLDER,
+    CUSTOM
 }

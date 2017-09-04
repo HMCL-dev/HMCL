@@ -34,3 +34,11 @@ fun <T> ObservableList<T>.onChange(op: (ListChangeListener.Change<out T>) -> Uni
 }
 
 fun <T> ObservableValue<*>.onInvalidated(op: () -> T) = apply { addListener { _ -> op() } }
+
+fun <T> ObservableValue<T>.setOnChangeListener(properties: MutableMap<Any, Any>, key: String = "changeListener", changeListener: ChangeListener<in T>) {
+    @Suppress("UNCHECKED_CAST")
+    if (properties.containsKey(key))
+        removeListener(properties[key] as ChangeListener<in T>)
+    properties[key] = changeListener
+    addListener(changeListener)
+}

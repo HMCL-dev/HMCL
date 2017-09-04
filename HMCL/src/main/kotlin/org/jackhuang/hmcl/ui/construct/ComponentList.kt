@@ -32,9 +32,9 @@ import kotlin.collections.plusAssign
 import kotlin.collections.set
 
 @DefaultProperty("content")
-class ComponentList: StackPane() {
+open class ComponentList: StackPane() {
 
-    val vbox: VBox
+    val vbox = VBox()
 
     val content: ObservableList<Node> = FXCollections.observableArrayList<Node>().apply {
         addListener { change: ListChangeListener.Change<out Node> ->
@@ -47,8 +47,6 @@ class ComponentList: StackPane() {
     }
 
     init {
-        vbox = VBox().apply {
-        }
         children.setAll(vbox)
 
         styleClass += "options-list"

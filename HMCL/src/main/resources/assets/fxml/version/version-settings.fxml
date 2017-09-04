@@ -8,6 +8,7 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import org.jackhuang.hmcl.ui.construct.ComponentList?>
+<?import org.jackhuang.hmcl.ui.construct.MultiFileItem?>
 <StackPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
            fx:controller="org.jackhuang.hmcl.ui.VersionSettingsController">
@@ -37,26 +38,11 @@
                     </right>
                 </BorderPane>
 
-                <ComponentList fx:id="componentJava" title="%settings.java_dir"
-                               hasSubtitle="true"> <!-- Java Directory -->
-                    <VBox fx:id="javaPane" spacing="8" style="-fx-padding: 0 0 10 0;">
-                        <BorderPane fx:id="javaPaneCustom" style="-fx-padding: 3;">
-                            <left>
-                                <JFXRadioButton fx:id="radioCustom" text="%settings.custom"/>
-                            </left>
-                            <right>
-                                <HBox spacing="3">
-                                    <JFXTextField fx:id="txtJavaDir" BorderPane.alignment="CENTER_RIGHT"/>
-                                    <JFXButton fx:id="btnJavaSelect" onMouseClicked="#onExploreJavaDir">
-                                        <graphic>
-                                            <fx:include source="/assets/svg/folder-open.fxml"/>
-                                        </graphic>
-                                    </JFXButton>
-                                </HBox>
-                            </right>
-                        </BorderPane>
-                    </VBox>
-                </ComponentList>
+                <MultiFileItem fx:id="javaItem" title="%settings.java_dir" chooserTitle="%settings.choose_javapath"
+                               hasSubtitle="true" customText="%settings.custom" />
+
+                <MultiFileItem fx:id="gameDirItem" title="%settings.game_directory" chooserTitle="%settings.choose_gamedir"
+                               hasSubtitle="true" customText="%settings.custom" />
 
                 <BorderPane> <!-- Max Memory -->
                     <left>
@@ -82,22 +68,6 @@
                                     <Label text="%advancedsettings.launcher_visibility.hide"/>
                                     <Label text="%advancedsettings.launcher_visibility.keep"/>
                                     <Label text="%advancedsettings.launcher_visibility.hide_reopen"/>
-                                </FXCollections>
-                            </items>
-                        </JFXComboBox>
-                    </right>
-                </BorderPane>
-
-                <BorderPane> <!-- Run Directory -->
-                    <left>
-                        <Label text="%settings.run_directory" BorderPane.alignment="CENTER_LEFT"/>
-                    </left>
-                    <right>
-                        <JFXComboBox fx:id="cboRunDirectory" BorderPane.alignment="CENTER_RIGHT">
-                            <items>
-                                <FXCollections fx:factory="observableArrayList">
-                                    <Label text="%advancedsettings.game_dir.default"/>
-                                    <Label text="%advancedsettings.game_dir.independent"/>
                                 </FXCollections>
                             </items>
                         </JFXComboBox>
