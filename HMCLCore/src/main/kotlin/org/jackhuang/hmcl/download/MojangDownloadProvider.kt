@@ -44,7 +44,7 @@ object MojangDownloadProvider : DownloadProvider() {
     }
 
     override fun injectURL(baseURL: String): String {
-        if (baseURL.endsWith("net/minecraftforge/forge/json"))
+        if (baseURL.contains("net/minecraftforge/forge"))
             return baseURL
         else
             return baseURL.replace("http://files.minecraftforge.net/maven", "http://ftb.cursecdn.com/FTB2/maven")
