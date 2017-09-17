@@ -165,7 +165,7 @@ open class DefaultGameRepository(var baseDirectory: File): GameRepository {
     @Throws(IOException::class)
     override fun getAssetObject(version: String, assetId: String, name: String): File {
         try {
-            return getAssetObject(version, assetId, getAssetIndex(version, assetId).objects["name"]!!)
+            return getAssetObject(version, assetId, getAssetIndex(version, assetId).objects[name]!!)
         } catch (e: Exception) {
             throw IOException("Asset index file malformed", e)
         }
