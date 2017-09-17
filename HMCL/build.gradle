@@ -80,11 +80,11 @@ task makeExecutable(dependsOn: jar) doLast {
     ext {
         jar.classifier = ''
         makeExecutableinjar = jar.archivePath
-        jar.classifier = 'optimized'
+        jar.classifier = ''
         makeExecutableoutjar = jar.archivePath
         jar.classifier = ''
     }
-    def loc = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".exe")
+    def loc = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length() - 4) + ".exe")
     def fos = new FileOutputStream(loc)
     def is = new FileInputStream(new File(project.buildDir, '../HMCLauncher.exe'))
     int read
