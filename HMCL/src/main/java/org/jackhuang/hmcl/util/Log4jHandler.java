@@ -29,6 +29,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.xml.parsers.ParserConfigurationException;
 import org.jackhuang.hmcl.api.HMCLApi;
+import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.api.event.process.JavaProcessStoppedEvent;
 import org.jackhuang.hmcl.api.func.Consumer;
 import org.jackhuang.hmcl.ui.LogWindow;
@@ -92,15 +93,24 @@ public class Log4jHandler extends Thread implements Consumer<JavaProcessStoppedE
         if (!interrupted.get())
             return;
         if (t.getSource() == monitor) {
-            executorService.submit(() -> {
-                if (!interrupted.get()) {
-                    if (enabled)
-                        newLogLine("</output>").get();
-                    outputStream.close();
-                    join();
-                }
-                return null;
-            });
+            try {
+                executorService.submit(() -> {
+                    if (!interrupted.get()) {
+                        if (enabled) {
+                            Future f = newLogLine("</output>");
+                            if (f != null)
+                                f.get();
+                        }
+                        outputStream.close();
+                        join();
+                    }
+                    return null;
+                }).get();
+            } catch (Exception e) {
+                HMCLog.err("Please contact author", e);
+            } finally {
+                executorService.shutdown();
+            }
         }
     }
 
@@ -116,25 +126,29 @@ public class Log4jHandler extends Thread implements Consumer<JavaProcessStoppedE
      * @param content The content to be written to the log
      */
     public Future newLogLine(String content) {
-        return executorService.submit(() -> {
-            if (enabled)
-                try {
-                    String log = content;
-                    if (!log.trim().startsWith("<")) { // without logging configuration.
-                        log = "<![CDATA[" + log.replace("]]>", "") + "]]>";
+        try {
+            return executorService.submit(() -> {
+                if (enabled)
+                    try {
+                        String log = content;
+                        if (!log.trim().startsWith("<")) { // without logging configuration.
+                            log = "<![CDATA[" + log.replace("]]>", "") + "]]>";
+                        }
+                        outputStream.write(log
+                                .replace("log4j:Event", "log4j_Event")
+                                .replace("log4j:Message", "log4j_Message")
+                                .replace("log4j:Throwable", "log4j_Throwable")
+                                .getBytes());
+                        outputStream.flush();
+                    } catch (IOException ignore) { // won't happen
+                        throw new Error(ignore);
                     }
-                    outputStream.write(log
-                            .replace("log4j:Event", "log4j_Event")
-                            .replace("log4j:Message", "log4j_Message")
-                            .replace("log4j:Throwable", "log4j_Throwable")
-                            .getBytes());
-                    outputStream.flush();
-                } catch (IOException ignore) { // won't happen
-                    throw new Error(ignore);
-                }
-            else
-                printlnImpl(content, Level.guessLevel(content));
-        });
+                else
+                    printlnImpl(content, Level.guessLevel(content));
+            });
+        } catch (RejectedExecutionException e) {
+            return null;
+        }
     }
 
     class Log4jHandlerImpl extends DefaultHandler {
