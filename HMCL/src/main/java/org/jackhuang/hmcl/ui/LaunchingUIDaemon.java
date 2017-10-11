@@ -77,7 +77,7 @@ public class LaunchingUIDaemon {
             PipedOutputStream os = new PipedOutputStream();
             monitor.setTag(obj);
             try {
-                logHandler = new Log4jHandler(monitor, os);
+                logHandler = new Log4jHandler(monitor, os, false);
                 logHandler.addForbiddenToken(obj.getLoginResult().getAccessToken(), "<access token>");
                 logHandler.addForbiddenToken(obj.getLoginResult().getSession(), "<session>");
                 logHandler.addForbiddenToken(obj.getLoginResult().getUserId(), "<uuid>");
@@ -177,9 +177,6 @@ public class LaunchingUIDaemon {
         public void accept(PrintlnEvent t) {
             String log = t.getLine();
             if (!t.isError() && logHandler != null) {
-                if (!log.trim().startsWith("<")) { // without logging configuration.
-                    log = "<![CDATA[" + log.replace("]]>", "") + "]]>";
-                }
                 logHandler.newLogLine(log + C.LINE_SEPARATOR);
             }
             else System.err.println(t.getLine());

@@ -54,12 +54,14 @@ public class Log4jHandler extends Thread implements Consumer<JavaProcessStoppedE
     List<Pair<String, String>> forbiddenTokens = new LinkedList<>();
     AtomicBoolean interrupted = new AtomicBoolean(false);
     ExecutorService executorService = Executors.newSingleThreadExecutor();
+    boolean enabled = true;
 
-    public Log4jHandler(ProcessMonitor monitor, PipedOutputStream outputStream) throws ParserConfigurationException, IOException, SAXException {
+    public Log4jHandler(ProcessMonitor monitor, PipedOutputStream outputStream, boolean enabled) throws ParserConfigurationException, IOException, SAXException {
         reader = XMLReaderFactory.createXMLReader();
         inputStream = new PipedInputStream(outputStream);
         this.outputStream = outputStream;
         this.monitor = monitor;
+        this.enabled = enabled;
         
         HMCLApi.EVENT_BUS.channel(JavaProcessStoppedEvent.class).register((Consumer<JavaProcessStoppedEvent>) this);
     }
@@ -72,7 +74,8 @@ public class Log4jHandler extends Thread implements Consumer<JavaProcessStoppedE
     public void run() {
         try {
             setName("log4j-handler");
-            newLogLine("<output>");
+            if (enabled)
+                newLogLine("<output>");
             reader.setContentHandler(new Log4jHandlerImpl());
             reader.parse(new InputSource(inputStream));
         } catch (InterruptedIOException e) {
@@ -91,7 +94,8 @@ public class Log4jHandler extends Thread implements Consumer<JavaProcessStoppedE
         if (t.getSource() == monitor) {
             executorService.submit(() -> {
                 if (!interrupted.get()) {
-                    newLogLine("</output>").get();
+                    if (enabled)
+                        newLogLine("</output>").get();
                     outputStream.close();
                     join();
                 }
@@ -113,16 +117,23 @@ public class Log4jHandler extends Thread implements Consumer<JavaProcessStoppedE
      */
     public Future newLogLine(String content) {
         return executorService.submit(() -> {
-            try {
-                outputStream.write(content
-                        .replace("log4j:Event", "log4j_Event")
-                        .replace("log4j:Message", "log4j_Message")
-                        .replace("log4j:Throwable", "log4j_Throwable")
-                        .getBytes());
-                outputStream.flush();
-            } catch (IOException ignore) { // won't happen
-                throw new Error(ignore);
-            }
+            if (enabled)
+                try {
+                    String log = content;
+                    if (!log.trim().startsWith("<")) { // without logging configuration.
+                        log = "<![CDATA[" + log.replace("]]>", "") + "]]>";
+                    }
+                    outputStream.write(log
+                            .replace("log4j:Event", "log4j_Event")
+                            .replace("log4j:Message", "log4j_Message")
+                            .replace("log4j:Throwable", "log4j_Throwable")
+                            .getBytes());
+                    outputStream.flush();
+                } catch (IOException ignore) { // won't happen
+                    throw new Error(ignore);
+                }
+            else
+                printlnImpl(content, Level.guessLevel(content));
         });
     }
 
@@ -180,10 +191,14 @@ public class Log4jHandler extends Thread implements Consumer<JavaProcessStoppedE
         }
 
         public void println(String message, Level l) {
-            for (Pair<String, String> entry : forbiddenTokens)
-                message = message.replace(entry.key, entry.value);
-            if (LogWindow.outputStream != null)
-                LogWindow.outputStream.log(message, l);
+            printlnImpl(message, l);
         }
+    }
+    
+    private void printlnImpl(String message, Level l) {
+        for (Pair<String, String> entry : forbiddenTokens)
+            message = message.replace(entry.key, entry.value);
+        if (LogWindow.outputStream != null)
+            LogWindow.outputStream.log(message, l);
     }
 }

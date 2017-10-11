@@ -115,12 +115,14 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         
         list.add("-Dminecraft.client.jar=" + version.getJar(service.baseDirectory()).getAbsolutePath());
         
+        /*
         if (version.logging != null && version.logging.containsKey("client")) {
             LoggingInfo logging = version.logging.get("client");
             File file = service.asset().getLoggingObject(version.getAssetsIndex().getId(), logging);
             if (file.exists())
                 list.add(logging.argument.replace("${path}", file.getAbsolutePath()));
         }
+*/
     }
 
     private final IAssetProvider DEFAULT_ASSET_PROVIDER = (t, allow) -> {
