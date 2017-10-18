@@ -38,7 +38,7 @@ def buildnumber = System.getenv("TRAVIS_BUILD_NUMBER")
 if (buildnumber == null)
 buildnumber = System.getenv("BUILD_NUMBER")
 if (buildnumber == null)
-buildnumber = "40"
+buildnumber = "42"
     
 def versionroot = System.getenv("VERSION_ROOT")
 if (versionroot == null)
