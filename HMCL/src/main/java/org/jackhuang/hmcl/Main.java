@@ -101,6 +101,11 @@ public final class Main {
 
     public static void main(String[] args) throws IOException {
         {
+            if (new File("").getAbsolutePath().contains("!")) {
+                MessageBox.show("HMCL cannot run at such path that contains '!'");
+                return;
+            }
+            
             try {
                 File file = new File("hmcl.log").getAbsoluteFile();
                 if (!file.exists() && !file.createNewFile())
