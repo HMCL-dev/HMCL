@@ -18,7 +18,8 @@
 package org.jackhuang.hmcl.core.version;
 
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.util.StrUtils;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.jackhuang.hmcl.util.sys.OS;
 
 /**
@@ -31,6 +32,8 @@ public class OSRestriction {
     private String version;
     @SerializedName("name")
     public String name;
+    @SerializedName("arch")
+    public String arch;
 
     public String getVersion() {
         return version;
@@ -49,6 +52,24 @@ public class OSRestriction {
     }
 
     public boolean isCurrentOS() {
-        return StrUtils.isBlank(getName()) || OS.os().name().equalsIgnoreCase(getName());
+        if (name != null && !OS.os().name().equalsIgnoreCase(name))
+            return false;
+        if (version != null) {
+            try {
+                Pattern pattern = Pattern.compile(version);
+                Matcher matcher = pattern.matcher(System.getProperty("os.version"));
+                if (!matcher.matches())
+                    return false;
+            } catch (Throwable t) {}
+        }
+        if (arch != null) {
+            try {
+                Pattern pattern = Pattern.compile(arch);
+                Matcher matcher = pattern.matcher(System.getProperty("os.arch"));
+                if (!matcher.matches())
+                    return false;
+            } catch (Throwable t) {}
+        }
+        return true;
     }
 }

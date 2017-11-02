@@ -47,7 +47,6 @@ import org.jackhuang.hmcl.ui.LogWindow;
 import org.jackhuang.hmcl.ui.MainFrame;
 import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.DefaultPlugin;
-import org.jackhuang.hmcl.util.MathUtils;
 import org.jackhuang.hmcl.util.ui.MessageBox;
 import org.jackhuang.hmcl.util.StrUtils;
 import org.jackhuang.hmcl.util.lang.SupportedLocales;

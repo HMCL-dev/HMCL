@@ -21,6 +21,8 @@ import org.jackhuang.hmcl.api.func.Predicate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
+import org.jackhuang.hmcl.api.func.Function;
 
 /**
  *
@@ -31,11 +33,25 @@ public final class CollectionUtils {
     private CollectionUtils() {
     }
 
-    public static <T> ArrayList<T> filter(Collection<T> coll, Predicate<T> p) {
+    public static <T> List<T> filter(Collection<T> coll, Predicate<T> p) {
         ArrayList<T> newColl = new ArrayList<>();
         for (T t : coll)
             if (p.apply(t))
                 newColl.add(t);
+        return newColl;
+    }
+
+    public static <U, V> List<V> map(Collection<U> coll, Function<U, V> p) {
+        ArrayList<V> newColl = new ArrayList<>(coll.size());
+        for (U t : coll)
+            newColl.add(p.apply(t));
+        return newColl;
+    }
+
+    public static <U, V> List<V> flatMap(Collection<U> coll, Function<U, Collection<V>> p) {
+        ArrayList<V> newColl = new ArrayList<>(coll.size());
+        for (U t : coll)
+            newColl.addAll(p.apply(t));
         return newColl;
     }
 

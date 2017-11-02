@@ -43,6 +43,8 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
 
     @SerializedName("minecraftArguments")
     public String minecraftArguments;
+    @SerializedName("arguments")
+    public Arguments arguments;
     @SerializedName("mainClass")
     public String mainClass;
     @SerializedName("time")
@@ -151,16 +153,16 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
         }
         parent = parent.resolve(provider, resolvedSoFar);
         MinecraftVersion result = new MinecraftVersion(
-            this.minecraftArguments != null ? this.minecraftArguments : parent.minecraftArguments,
-            this.mainClass != null ? this.mainClass : parent.mainClass,
-            this.time, this.id, this.type, parent.processArguments, this.releaseTime,
-            this.assets != null ? this.assets : parent.assets,
-            this.jar != null ? this.jar : parent.jar,
-            null, this.runDir, parent.minimumLauncherVersion,
-            this.libraries != null ? ArrayUtils.merge(this.libraries, parent.libraries) : parent.libraries, this.hidden,
-            this.downloads != null ? this.downloads : parent.downloads,
-            this.assetIndex != null ? this.assetIndex : parent.assetIndex,
-            this.logging != null ? this.logging : parent.logging);
+                this.minecraftArguments != null ? this.minecraftArguments : parent.minecraftArguments,
+                this.mainClass != null ? this.mainClass : parent.mainClass,
+                this.time, this.id, this.type, parent.processArguments, this.releaseTime,
+                this.assets != null ? this.assets : parent.assets,
+                this.jar != null ? this.jar : parent.jar,
+                null, this.runDir, parent.minimumLauncherVersion,
+                this.libraries != null ? ArrayUtils.merge(this.libraries, parent.libraries) : parent.libraries, this.hidden,
+                this.downloads != null ? this.downloads : parent.downloads,
+                this.assetIndex != null ? this.assetIndex : parent.assetIndex,
+                this.logging != null ? this.logging : parent.logging);
 
         return result;
     }
@@ -203,7 +205,7 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
             return false;
         return Objects.equals(this.id, ((MinecraftVersion) obj).id);
     }
-    
+
     public AssetIndexDownloadInfo getAssetsIndex() {
         if (assetIndex == null)
             assetIndex = new AssetIndexDownloadInfo(assets == null ? AssetsIndex.DEFAULT_ASSET_NAME : assets);

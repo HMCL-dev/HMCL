@@ -18,6 +18,10 @@
 package org.jackhuang.hmcl.core.version;
 
 import com.google.gson.annotations.SerializedName;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -29,12 +33,40 @@ public class Rules {
     private String action;
     @SerializedName("os")
     private OSRestriction os;
+    @SerializedName("features")
+    private Map<String, Boolean> features;
 
     public Rules() {
     }
 
-    public String action() {
-        return os == null || os.isCurrentOS() ? action : null;
+    public String action(Map<String, Boolean> features) {
+        if (os != null && !os.isCurrentOS()) return null;
+        if (this.features != null) {
+            for (Map.Entry<String, Boolean> entry : this.features.entrySet())
+                if (!features.containsKey(entry.getKey()))
+                    return null;
+                else
+                    if (!features.get(entry.getKey()).equals(entry.getValue()))
+                        return null;
+        }
+        return action;
+    }
+    
+    public static boolean allow(Collection<Rules> c) {
+        return allow(c, Collections.EMPTY_MAP);
+    }
+    
+    public static boolean allow(Collection<Rules> c, Map<String, Boolean> features) {
+        if (c != null) {
+            boolean flag = false;
+            for (Rules r : c)
+                if ("disallow".equals(r.action(features)))
+                    return false;
+                else if ("allow".equals(r.action(features)))
+                    flag = true;
+            return flag;
+        } else
+            return true;
     }
 
 }

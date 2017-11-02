@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.util;
 import org.jackhuang.hmcl.util.lang.SupportedLocales;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.jackhuang.hmcl.core.version.Argument;
+import org.jackhuang.hmcl.core.version.RuledArgument;
 
 /**
  *
@@ -27,7 +29,10 @@ import com.google.gson.GsonBuilder;
  */
 public final class C {
 
-    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    public static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(RuledArgument.class, new RuledArgument.RuledArgumentSerializer())
+            .registerTypeAdapter(Argument.class, new Argument.ArgumentSerializer())
+            .setPrettyPrinting().create();
 
     //http://repo1.maven.org/maven2
     public static final String URL_PUBLISH = "http://www.mcbbs.net/thread-142335-1-1.html";
@@ -35,7 +40,7 @@ public final class C {
 
     public static final String URL_FORGE_LIST = "http://files.minecraftforge.net/maven/net/minecraftforge/forge/json";
     public static final String URL_LITELOADER_LIST = "http://dl.liteloader.com/versions/versions.json";
-    
+
     public static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
     private C() {

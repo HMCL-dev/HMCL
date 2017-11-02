@@ -21,8 +21,11 @@ import org.jackhuang.hmcl.api.game.LaunchOptions;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import org.jackhuang.hmcl.util.StrUtils;
 import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.util.sys.OS;
@@ -30,18 +33,19 @@ import org.jackhuang.hmcl.core.GameException;
 import org.jackhuang.hmcl.api.auth.UserProfileProvider;
 import org.jackhuang.hmcl.core.version.MinecraftLibrary;
 import org.jackhuang.hmcl.core.service.IMinecraftService;
-import org.jackhuang.hmcl.core.version.LoggingInfo;
+import org.jackhuang.hmcl.core.version.Argument;
+import org.jackhuang.hmcl.core.version.Arguments;
 
 /**
  *
  * @author huangyuhui
  */
 public class MinecraftLoader extends AbstractMinecraftLoader {
-
+    
     public MinecraftLoader(LaunchOptions p, IMinecraftService provider, UserProfileProvider lr) throws GameException {
         super(p, provider, p.getLaunchVersion(), lr);
     }
-
+    
     @Override
     protected void makeSelf(List<String> res) throws GameException {
         StringBuilder library = new StringBuilder("");
@@ -71,39 +75,40 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         res.add(library.toString().substring(0, library.length() - File.pathSeparator.length()));
         res.add(version.mainClass);
 
-        if (version.minecraftArguments == null)
-            throw new GameException(new NullPointerException("Minecraft Arguments can not be null."));
-        String[] splitted = StrUtils.tokenize(version.minecraftArguments);
-
         String game_assets = assetProvider.provide(version, !options.isNotCheckGame());
-
-        for (String t : splitted) {
-            t = t.replace("${auth_player_name}", lr.getUserName());
-            t = t.replace("${auth_session}", lr.getSession());
-            t = t.replace("${auth_uuid}", lr.getUserId());
-            t = t.replace("${version_name}", options.getVersionName());
-            t = t.replace("${profile_name}", options.getName());
-            t = t.replace("${version_type}", options.getType());
-            t = t.replace("${game_directory}", service.version().getRunDirectory(version.id).getAbsolutePath());
-            t = t.replace("${game_assets}", game_assets);
-            t = t.replace("${assets_root}", service.asset().getAssets(version.getAssetsIndex().getId()).getAbsolutePath());
-            t = t.replace("${auth_access_token}", lr.getAccessToken());
-            t = t.replace("${user_type}", lr.getUserType());
-            t = t.replace("${assets_index_name}", version.getAssetsIndex().getId());
-            t = t.replace("${user_properties}", lr.getUserProperties());
-            res.add(t);
-        }
-
+        
+        Map<String, String> keys = new HashMap() {{
+            put("${auth_player_name}", lr.getUserName());
+            put("${auth_session}", lr.getSession());
+            put("${auth_uuid}", lr.getUserId());
+            put("${version_name}", options.getVersionName());
+            put("${profile_name}", options.getName());
+            put("${version_type}", options.getType());
+            put("${game_directory}", service.version().getRunDirectory(version.id).getAbsolutePath());
+            put("${game_assets}", game_assets);
+            put("${assets_root}", service.asset().getAssets(version.getAssetsIndex().getId()).getAbsolutePath());
+            put("${auth_access_token}", lr.getAccessToken());
+            put("${user_type}", lr.getUserType());
+            put("${assets_index_name}", version.getAssetsIndex().getId());
+            put("${user_properties}", lr.getUserProperties());
+            put("${is_demo_user}", false);
+        }};
+        
+        Map<String, Boolean> features = new HashMap<>();
+        
+        res.addAll(Arguments.parseArguments(version.arguments.game, keys, features));
+        res.addAll(Arguments.parseStringArguments(Arrays.asList(StrUtils.tokenize(version.minecraftArguments)), keys));
+        
         if (res.indexOf("--gameDir") != -1 && res.indexOf("--workDir") != -1) {
             res.add("--workDir");
             res.add(gameDir.getAbsolutePath());
         }
     }
-
+    
     @Override
     protected void appendJVMArgs(List<String> list) {
         super.appendJVMArgs(list);
-
+        
         try {
             if (OS.os() == OS.OSX) {
                 list.add("-Xdock:icon=" + service.asset().getAssetObject(version.getAssetsIndex().getId(), "icons/minecraft.icns").getAbsolutePath());
@@ -114,7 +119,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         }
         
         list.add("-Dminecraft.client.jar=" + version.getJar(service.baseDirectory()).getAbsolutePath());
-        
+
         /*
         if (version.logging != null && version.logging.containsKey("client")) {
             LoggingInfo logging = version.logging.get("client");
@@ -122,15 +127,15 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
             if (file.exists())
                 list.add(logging.argument.replace("${path}", file.getAbsolutePath()));
         }
-*/
+         */
     }
-
+    
     private final IAssetProvider DEFAULT_ASSET_PROVIDER = (t, allow) -> {
         return new File(service.baseDirectory(), "assets").getAbsolutePath();
     };
-
+    
     private IAssetProvider assetProvider = DEFAULT_ASSET_PROVIDER;
-
+    
     public void setAssetProvider(IAssetProvider assetProvider) {
         if (assetProvider == null)
             this.assetProvider = DEFAULT_ASSET_PROVIDER;

@@ -154,8 +154,11 @@ public final class StrUtils {
         return sb.toString();
     }
 
-    public static String[] tokenize(String paramString1) {
-        return tokenize(paramString1, " \t\n\r\f");
+    public static String[] tokenize(String str) {
+        if (str == null)
+            return new String[0];
+        else
+            return tokenize(str, " \t\n\r\f");
     }
 
     public static String[] tokenize(String str, String delim) {
