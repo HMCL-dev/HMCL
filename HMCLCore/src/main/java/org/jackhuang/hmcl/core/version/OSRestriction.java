@@ -34,6 +34,24 @@ public class OSRestriction {
     public String name;
     @SerializedName("arch")
     public String arch;
+    
+    public OSRestriction() {
+        this(null);
+    }
+    
+    public OSRestriction(String name) {
+        this(name, null);
+    }
+    
+    public OSRestriction(String name, String version) {
+        this(name, version, null);
+    }
+    
+    public OSRestriction(String name, String version, String arch) {
+        this.name = name;
+        this.version = version;
+        this.arch = arch;
+    }
 
     public String getVersion() {
         return version;

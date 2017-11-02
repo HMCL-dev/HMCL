@@ -15,32 +15,36 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.util;
+package org.jackhuang.hmcl.core.version;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import org.jackhuang.hmcl.Main;
-import org.jackhuang.hmcl.api.auth.UserProfileProvider;
-import org.jackhuang.hmcl.api.game.LaunchOptions;
-import org.jackhuang.hmcl.core.GameException;
-import org.jackhuang.hmcl.core.launch.MinecraftLoader;
-import org.jackhuang.hmcl.core.service.IMinecraftService;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
  * @author huang
  */
-public class HMCLMinecraftLoader extends MinecraftLoader {
-    
-    public HMCLMinecraftLoader(LaunchOptions p, IMinecraftService provider, UserProfileProvider lr) throws GameException {
-        super(p, provider, lr);
+public class StringArgument implements Argument {
+
+    String argument;
+
+    public StringArgument(String argument) {
+        this.argument = argument;
     }
 
     @Override
-    protected Map<String, String> getConfigurations() {
-        Map<String, String> map = super.getConfigurations();
-        map.put("${launcher_version}", Main.LAUNCHER_VERSION);
-        map.put("${launcher_name}", Main.LAUNCHER_NAME);
-        return map;
+    public List<String> toString(Map<String, String> keys, Map<String, Boolean> features) {
+        String res = argument;
+        Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
+        Matcher m = pattern.matcher(argument);
+        while (m.find()) {
+            String entry = m.group();
+            res = res.replace(entry, keys.getOrDefault(entry, entry));
+        }
+        return Collections.singletonList(res);
     }
+
 }

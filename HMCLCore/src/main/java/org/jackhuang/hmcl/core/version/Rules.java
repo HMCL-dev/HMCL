@@ -21,7 +21,6 @@ import com.google.gson.annotations.SerializedName;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
 /**
  *
@@ -37,6 +36,11 @@ public class Rules {
     private Map<String, Boolean> features;
 
     public Rules() {
+    }
+    
+    public Rules(String action, OSRestriction os) {
+        this.action = action;
+        this.os = os;
     }
 
     public String action(Map<String, Boolean> features) {

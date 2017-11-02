@@ -33,7 +33,6 @@ import org.jackhuang.hmcl.core.GameException;
 import org.jackhuang.hmcl.api.auth.UserProfileProvider;
 import org.jackhuang.hmcl.core.version.MinecraftLibrary;
 import org.jackhuang.hmcl.core.service.IMinecraftService;
-import org.jackhuang.hmcl.core.version.Argument;
 import org.jackhuang.hmcl.core.version.Arguments;
 
 /**
@@ -41,13 +40,21 @@ import org.jackhuang.hmcl.core.version.Arguments;
  * @author huangyuhui
  */
 public class MinecraftLoader extends AbstractMinecraftLoader {
-    
+
     public MinecraftLoader(LaunchOptions p, IMinecraftService provider, UserProfileProvider lr) throws GameException {
         super(p, provider, p.getLaunchVersion(), lr);
+        
+        if (version.arguments == null)
+            version.arguments = new Arguments();
+        if (version.arguments.jvm == null)
+            version.arguments.jvm = Arguments.DEFAULT_JVM_ARGUMENTS;
     }
-    
+
     @Override
     protected void makeSelf(List<String> res) throws GameException {
+        String game_assets = assetProvider.provide(version, !options.isNotCheckGame());
+        Map<String, String> configuration = getConfigurations();
+        
         StringBuilder library = new StringBuilder("");
         ArrayList<MinecraftLibrary> opt = new ArrayList<>();
         for (MinecraftLibrary l : version.libraries)
@@ -71,44 +78,48 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         if (!f.exists())
             throw new GameException("Minecraft jar does not exist");
         library.append(f.getAbsolutePath()).append(File.pathSeparator);
-        res.add("-cp");
-        res.add(library.toString().substring(0, library.length() - File.pathSeparator.length()));
+        String classpath = library.toString().substring(0, library.length() - File.pathSeparator.length());
+        configuration.put("${classpath}", classpath);
+        configuration.put("${natives_directory}", service.version().getDecompressNativesToLocation(version).getAbsolutePath());
+        configuration.put("${game_assets}", game_assets);
+        
+        res.addAll(Arguments.parseArguments(version.arguments.jvm, configuration));
         res.add(version.mainClass);
 
-        String game_assets = assetProvider.provide(version, !options.isNotCheckGame());
-        
-        Map<String, String> keys = new HashMap() {{
-            put("${auth_player_name}", lr.getUserName());
-            put("${auth_session}", lr.getSession());
-            put("${auth_uuid}", lr.getUserId());
-            put("${version_name}", options.getVersionName());
-            put("${profile_name}", options.getName());
-            put("${version_type}", options.getType());
-            put("${game_directory}", service.version().getRunDirectory(version.id).getAbsolutePath());
-            put("${game_assets}", game_assets);
-            put("${assets_root}", service.asset().getAssets(version.getAssetsIndex().getId()).getAbsolutePath());
-            put("${auth_access_token}", lr.getAccessToken());
-            put("${user_type}", lr.getUserType());
-            put("${assets_index_name}", version.getAssetsIndex().getId());
-            put("${user_properties}", lr.getUserProperties());
-            put("${is_demo_user}", false);
-        }};
-        
         Map<String, Boolean> features = new HashMap<>();
-        
-        res.addAll(Arguments.parseArguments(version.arguments.game, keys, features));
-        res.addAll(Arguments.parseStringArguments(Arrays.asList(StrUtils.tokenize(version.minecraftArguments)), keys));
-        
+
+        if (version.arguments.game != null)
+            res.addAll(Arguments.parseArguments(version.arguments.game, configuration, features));
+        res.addAll(Arguments.parseStringArguments(Arrays.asList(StrUtils.tokenize(version.minecraftArguments)), configuration));
+
         if (res.indexOf("--gameDir") != -1 && res.indexOf("--workDir") != -1) {
             res.add("--workDir");
             res.add(gameDir.getAbsolutePath());
         }
     }
-    
+
+    protected Map<String, String> getConfigurations() {
+        HashMap<String, String> map = new HashMap();
+        map.put("${auth_player_name}", lr.getUserName());
+        map.put("${auth_session}", lr.getSession());
+        map.put("${auth_uuid}", lr.getUserId());
+        map.put("${version_name}", options.getVersionName());
+        map.put("${profile_name}", options.getName());
+        map.put("${version_type}", options.getType());
+        map.put("${game_directory}", service.version().getRunDirectory(version.id).getAbsolutePath());
+        map.put("${assets_root}", service.asset().getAssets(version.getAssetsIndex().getId()).getAbsolutePath());
+        map.put("${auth_access_token}", lr.getAccessToken());
+        map.put("${user_type}", lr.getUserType());
+        map.put("${assets_index_name}", version.getAssetsIndex().getId());
+        map.put("${user_properties}", lr.getUserProperties());
+        map.put("${natives_directory}", service.version().getDecompressNativesToLocation(version).getAbsolutePath());
+        return map;
+    }
+
     @Override
     protected void appendJVMArgs(List<String> list) {
         super.appendJVMArgs(list);
-        
+
         try {
             if (OS.os() == OS.OSX) {
                 list.add("-Xdock:icon=" + service.asset().getAssetObject(version.getAssetsIndex().getId(), "icons/minecraft.icns").getAbsolutePath());
@@ -117,7 +128,7 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         } catch (IOException e) {
             HMCLog.err("Failed to append jvm arguments when searching for asset objects.", e);
         }
-        
+
         list.add("-Dminecraft.client.jar=" + version.getJar(service.baseDirectory()).getAbsolutePath());
 
         /*
@@ -129,13 +140,13 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         }
          */
     }
-    
+
     private final IAssetProvider DEFAULT_ASSET_PROVIDER = (t, allow) -> {
         return new File(service.baseDirectory(), "assets").getAbsolutePath();
     };
-    
+
     private IAssetProvider assetProvider = DEFAULT_ASSET_PROVIDER;
-    
+
     public void setAssetProvider(IAssetProvider assetProvider) {
         if (assetProvider == null)
             this.assetProvider = DEFAULT_ASSET_PROVIDER;
