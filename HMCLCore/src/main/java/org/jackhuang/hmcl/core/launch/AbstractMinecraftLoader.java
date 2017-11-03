@@ -147,13 +147,6 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
 
         HMCLog.log("On making launcher args.");
 
-        if (StrUtils.isNotBlank(options.getHeight()) && StrUtils.isNotBlank(options.getWidth())) {
-            res.add("--height");
-            res.add(options.getHeight());
-            res.add("--width");
-            res.add(options.getWidth());
-        }
-
         String serverIp = options.getServerIp();
         if (StrUtils.isNotBlank(serverIp)) {
             String[] args = serverIp.split(":");

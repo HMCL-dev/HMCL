@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.core.GameException;
 import org.jackhuang.hmcl.api.auth.UserProfileProvider;
 import org.jackhuang.hmcl.core.version.MinecraftLibrary;
 import org.jackhuang.hmcl.core.service.IMinecraftService;
+import org.jackhuang.hmcl.core.version.Argument;
 import org.jackhuang.hmcl.core.version.Arguments;
 
 /**
@@ -46,8 +47,18 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         
         if (version.arguments == null)
             version.arguments = new Arguments();
+        if (version.arguments.game == null)
+            version.arguments.game = getDefaultGameArguments();
         if (version.arguments.jvm == null)
-            version.arguments.jvm = Arguments.DEFAULT_JVM_ARGUMENTS;
+            version.arguments.jvm = getDefaultJVMArguments();
+    }
+    
+    protected List<Argument> getDefaultJVMArguments() {
+        return Arguments.DEFAULT_JVM_ARGUMENTS;
+    }
+    
+    protected List<Argument> getDefaultGameArguments() {
+        return Arguments.DEFAULT_GAME_ARGUMENTS;
     }
 
     @Override
@@ -86,16 +97,16 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         res.addAll(Arguments.parseArguments(version.arguments.jvm, configuration));
         res.add(version.mainClass);
 
-        Map<String, Boolean> features = new HashMap<>();
+        Map<String, Boolean> features = getFeatures();
 
-        if (version.arguments.game != null)
-            res.addAll(Arguments.parseArguments(version.arguments.game, configuration, features));
+        res.addAll(Arguments.parseArguments(version.arguments.game, configuration, features));
         res.addAll(Arguments.parseStringArguments(Arrays.asList(StrUtils.tokenize(version.minecraftArguments)), configuration));
-
-        if (res.indexOf("--gameDir") != -1 && res.indexOf("--workDir") != -1) {
-            res.add("--workDir");
-            res.add(gameDir.getAbsolutePath());
-        }
+    }
+    
+    protected Map<String, Boolean> getFeatures() {
+        Map<String, Boolean> features = new HashMap<>();
+        features.put("has_custom_resolution", StrUtils.isNotBlank(options.getHeight()) && StrUtils.isNotBlank(options.getWidth()));
+        return features;
     }
 
     protected Map<String, String> getConfigurations() {
@@ -112,6 +123,8 @@ public class MinecraftLoader extends AbstractMinecraftLoader {
         map.put("${user_type}", lr.getUserType());
         map.put("${assets_index_name}", version.getAssetsIndex().getId());
         map.put("${user_properties}", lr.getUserProperties());
+        map.put("${resolution_width}", options.getWidth());
+        map.put("${resolution_height}", options.getHeight());
         map.put("${natives_directory}", service.version().getDecompressNativesToLocation(version).getAbsolutePath());
         return map;
     }

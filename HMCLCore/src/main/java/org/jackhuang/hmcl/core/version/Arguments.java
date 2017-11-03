@@ -48,6 +48,7 @@ public class Arguments {
     }
     
     public static final List<Argument> DEFAULT_JVM_ARGUMENTS;
+    public static final List<Argument> DEFAULT_GAME_ARGUMENTS;
     
     static {
         List<Argument> jvm = new LinkedList<>();
@@ -60,5 +61,9 @@ public class Arguments {
         jvm.add(new StringArgument("-cp"));
         jvm.add(new StringArgument("${classpath}"));
         DEFAULT_JVM_ARGUMENTS = Collections.unmodifiableList(jvm);
+        
+        List<Argument> game = new LinkedList<>();
+        game.add(new RuledArgument(Collections.singletonList(new Rules("allow", Collections.singletonMap("has_custom_resolution", true))), Arrays.asList("--width", "${resolution_width}", "--height", "${resolution_height}")));
+        DEFAULT_GAME_ARGUMENTS = Collections.unmodifiableList(game);
     }
 }

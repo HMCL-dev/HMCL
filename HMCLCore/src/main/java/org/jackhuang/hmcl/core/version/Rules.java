@@ -42,6 +42,11 @@ public class Rules {
         this.action = action;
         this.os = os;
     }
+    
+    public Rules(String action, Map<String, Boolean> features) {
+        this.action = action;
+        this.features = features;
+    }
 
     public String action(Map<String, Boolean> features) {
         if (os != null && !os.isCurrentOS()) return null;

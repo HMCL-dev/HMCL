@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
  */
 public class StringArgument implements Argument {
 
-    String argument;
+    public String argument;
 
     public StringArgument(String argument) {
         this.argument = argument;
