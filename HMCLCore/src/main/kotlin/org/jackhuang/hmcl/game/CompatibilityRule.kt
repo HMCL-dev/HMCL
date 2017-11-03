@@ -26,18 +26,28 @@ import java.util.regex.Pattern
 @Immutable
 data class CompatibilityRule(
         val action: Action = CompatibilityRule.Action.ALLOW,
-        val os: OSRestriction? = null
+        val os: OSRestriction? = null,
+        val features: Map<String, Boolean>? = null
 ) {
 
-    val appliedAction: Action? get() = if (os != null && !os.allow()) null else action
+    fun getAppliedAction(supportedFeatures: Map<String, Boolean>): Action? {
+        if (os != null && !os.allow()) return null
+        if (features != null) {
+            features.entries.forEach {
+                if (supportedFeatures[it.key] != it.value)
+                    return null
+            }
+        }
+        return action
+    }
 
     companion object {
-        fun appliesToCurrentEnvironment(rules: Collection<CompatibilityRule>?): Boolean {
+        fun appliesToCurrentEnvironment(rules: Collection<CompatibilityRule>?, features: Map<String, Boolean> = emptyMap()): Boolean {
             if (rules == null)
                 return true
             var action = CompatibilityRule.Action.DISALLOW
             for (rule in rules) {
-                val thisAction = rule.appliedAction
+                val thisAction = rule.getAppliedAction(features)
                 if (thisAction != null) action = thisAction
             }
             return action == CompatibilityRule.Action.ALLOW

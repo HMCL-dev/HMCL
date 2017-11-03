@@ -26,6 +26,8 @@ import java.util.*
 open class Version(
         @SerializedName("minecraftArguments")
         val minecraftArguments: String? = null,
+        @SerializedName("arguments")
+        val arguments: Arguments? = null,
         @SerializedName("mainClass")
         val mainClass: String? = null,
         @SerializedName("time")
@@ -138,6 +140,7 @@ open class Version(
 
     fun copy(
             minecraftArguments: String? = this.minecraftArguments,
+            arguments: Arguments? = this.arguments,
             mainClass: String? = this.mainClass,
             time: Date = this.time,
             releaseTime: Date = this.releaseTime,
@@ -153,6 +156,7 @@ open class Version(
             downloads: Map<DownloadType, DownloadInfo>? = this.downloads,
             logging: Map<DownloadType, LoggingInfo>? = this.logging) =
             Version(minecraftArguments,
+                    arguments,
                     mainClass,
                     time,
                     id,

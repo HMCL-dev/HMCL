@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.launch
 
 import org.jackhuang.hmcl.auth.AuthInfo
-import org.jackhuang.hmcl.game.DownloadType
-import org.jackhuang.hmcl.game.GameException
-import org.jackhuang.hmcl.game.GameRepository
-import org.jackhuang.hmcl.game.LaunchOptions
+import org.jackhuang.hmcl.game.*
 import org.jackhuang.hmcl.task.TaskResult
 import org.jackhuang.hmcl.util.*
 import java.io.File
@@ -47,6 +44,9 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
         if (version.mainClass == null || version.mainClass.isBlank())
             throw NullPointerException("Version main class can not be null")
     }
+
+    protected open val defaultJVMArguments = Arguments.DEFAULT_JVM_ARGUMENTS
+    protected open val defaultGameArguments = Arguments.DEFAULT_GAME_ARGUMENTS
 
     /**
      * Note: the [account] must have logged in when calling this property
@@ -84,9 +84,7 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
                 }
             }
 
-            if (OS.CURRENT_OS == OS.WINDOWS)
-                res.add("-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump")
-            else
+            if (OS.CURRENT_OS != OS.WINDOWS)
                 res.add("-Duser.home=${options.gameDir.parent}")
 
             if (options.java.version >= JavaVersion.JAVA_7)
@@ -114,9 +112,6 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
             res.add("-Dfml.ignorePatchDiscrepancies=true")
         }
 
-        // Classpath
-        res.add("-Djava.library.path=${native.absolutePath}")
-
         val lateload = LinkedList<File>()
         val classpath = StringBuilder()
         for (library in version.libraries)
@@ -135,32 +130,21 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
         if (!jar.exists() || !jar.isFile)
             throw GameException("Minecraft jar does not exist")
         classpath.append(jar.absolutePath)
-        res.add("-cp")
-        res.add(classpath.toString())
-
-        // Main Class
-        res.add(version.mainClass!!)
 
         // Provided Minecraft arguments
         val gameAssets = repository.getActualAssetDirectory(version.id, version.actualAssetIndex.id)
+        val configuration = getConfigurations()
+        configuration["\${classpath}"] = classpath.toString()
+        configuration["\${natives_directory}"] = native.absolutePath
+        configuration["\${game_assets}"] = gameAssets.absolutePath
+        configuration["\${assets_root}"] = gameAssets.absolutePath
 
-        version.minecraftArguments!!.tokenize().forEach { line ->
-            res.add(line
-                    .replace("\${auth_player_name}", account.username)
-                    .replace("\${auth_session}", account.authToken)
-                    .replace("\${auth_access_token}", account.authToken)
-                    .replace("\${auth_uuid}", account.userId)
-                    .replace("\${version_name}", options.versionName ?: version.id)
-                    .replace("\${profile_name}", options.profileName ?: "Minecraft")
-                    .replace("\${version_type}", version.type.id)
-                    .replace("\${game_directory}", repository.getRunDirectory(version.id).absolutePath)
-                    .replace("\${game_assets}", gameAssets.absolutePath)
-                    .replace("\${assets_root}", gameAssets.absolutePath)
-                    .replace("\${user_type}", account.userType.toString().toLowerCase())
-                    .replace("\${assets_index_name}", version.actualAssetIndex.id)
-                    .replace("\${user_properties}", account.userProperties)
-            )
-        }
+        res.addAll(Arguments.parseArguments(version.arguments?.jvm ?: defaultJVMArguments, configuration))
+        res.add(version.mainClass!!)
+
+        val features = getFeatures()
+        res.addAll(Arguments.parseArguments(version.arguments?.game ?: defaultGameArguments, configuration, features))
+        res.addAll(Arguments.parseStringArguments(version.minecraftArguments?.tokenize()?.toList() ?: emptyList(), configuration))
 
         // Optional Minecraft arguments
         if (options.height != null && options.height != 0 && options.width != null && options.width != 0) {
@@ -222,6 +206,24 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
         }
     }
 
+    open fun getConfigurations(): MutableMap<String, String> = mutableMapOf(
+            "\${auth_player_name}" to account.username,
+            "\${auth_session}" to account.authToken,
+            "\${auth_access_token}" to account.authToken,
+            "\${auth_uuid}" to account.userId,
+            "\${version_name}" to (options.versionName ?: version.id),
+            "\${profile_name}" to (options.profileName ?: "Minecraft"),
+            "\${version_type}" to version.type.id,
+            "\${game_directory}" to repository.getRunDirectory(version.id).absolutePath,
+            "\${user_type}" to account.userType.toString().toLowerCase(),
+            "\${assets_index_name}" to version.actualAssetIndex.id,
+            "\${user_properties}" to account.userProperties
+    )
+
+    open fun getFeatures(): MutableMap<String, Boolean> = mutableMapOf(
+            "has_custom_resolution" to (options.height != null && options.height != 0 && options.width != null && options.width != 0)
+    )
+
     override fun launch(): ManagedProcess {
 
         // To guarantee that when failed to generate code, we will not call precalled command
@@ -232,8 +234,8 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
         if (options.precalledCommand != null && options.precalledCommand.isNotBlank()) {
             try {
                 val process = Runtime.getRuntime().exec(options.precalledCommand)
-                    if (process.isAlive)
-                        process.waitFor()
+                if (process.isAlive)
+                    process.waitFor()
             } catch (e: IOException) {
                 // TODO: alert precalledCommand is wrong.
                 // rethrow InterruptedException
@@ -301,7 +303,7 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
         processListener.setProcess(managedProcess)
         val logHandler = Log4jHandler { line, level -> processListener.onLog(line, level); managedProcess.lines += line }.apply { start() }
         managedProcess.relatedThreads += logHandler
-        val stdout = thread(name = "stdout-pump", isDaemon = isDaemon, block = StreamPump(managedProcess.process.inputStream, { logHandler.newLine(it) } )::run)
+        val stdout = thread(name = "stdout-pump", isDaemon = isDaemon, block = StreamPump(managedProcess.process.inputStream, { logHandler.newLine(it) })::run)
         managedProcess.relatedThreads += stdout
         val stderr = thread(name = "stderr-pump", isDaemon = isDaemon, block = StreamPump(managedProcess.process.errorStream, { processListener.onLog(it + OS.LINE_SEPARATOR, Log4jLevel.ERROR); managedProcess.lines += it })::run)
         managedProcess.relatedThreads += stderr

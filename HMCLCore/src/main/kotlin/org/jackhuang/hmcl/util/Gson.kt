@@ -22,7 +22,9 @@ import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
+import org.jackhuang.hmcl.game.Argument
 import org.jackhuang.hmcl.game.Library
+import org.jackhuang.hmcl.game.RuledArgument
 import java.io.File
 import java.io.IOException
 import java.lang.reflect.Type
@@ -36,6 +38,8 @@ val GSON: Gson = GsonBuilder()
         .enableComplexMapKeySerialization()
         .setPrettyPrinting()
         .registerTypeAdapter(Library::class.java, Library)
+        .registerTypeAdapter(Argument::class.java, Argument)
+        .registerTypeAdapter(RuledArgument::class.java, RuledArgument)
         .registerTypeAdapter(Date::class.java, DateTypeAdapter)
         .registerTypeAdapter(UUID::class.java, UUIDTypeAdapter)
         .registerTypeAdapter(Platform::class.java, Platform)
