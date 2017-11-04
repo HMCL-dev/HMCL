@@ -49,7 +49,7 @@ data class JavaVersion internal constructor(
     val version = parseVersion(longVersion)
 
     companion object {
-        private val regex = Pattern.compile("java version \"(?<version>[1-9]*\\.[1-9]*\\.[0-9]*(.*?))\"")
+        private val regex = Pattern.compile("java version \"(?<version>(.*?))\"")
 
         val UNKNOWN: Int = -1
         val JAVA_5: Int = 50
@@ -173,16 +173,15 @@ data class JavaVersion internal constructor(
         private fun queryWindows() = LinkedList<JavaVersion>().apply {
             ignoreException { this += queryRegisterKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\") }
             ignoreException { this += queryRegisterKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\") }
+            ignoreException { this += queryRegisterKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JRE\\") }
+            ignoreException { this += queryRegisterKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JDK\\") }
         }
 
         private fun queryRegisterKey(location: String) = LinkedList<JavaVersion>().apply {
             querySubFolders(location).forEach { java ->
-                val s = java.count { it == '.' }
-                if (s > 1) {
-                    val home = queryRegisterValue(java, "JavaHome")
-                    if (home != null)
-                        this += fromJavaHome(File(home))
-                }
+                val home = queryRegisterValue(java, "JavaHome")
+                if (home != null)
+                    this += fromJavaHome(File(home))
             }
         }
 

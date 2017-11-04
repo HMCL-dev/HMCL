@@ -47,6 +47,7 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
 
     protected open val defaultJVMArguments = Arguments.DEFAULT_JVM_ARGUMENTS
     protected open val defaultGameArguments = Arguments.DEFAULT_GAME_ARGUMENTS
+    protected open val forbidden = mapOf("-Xincgc" to { options.java.version >= JavaVersion.JAVA_9 })
 
     /**
      * Note: the [account] must have logged in when calling this property
@@ -89,8 +90,6 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
 
             if (options.java.version >= JavaVersion.JAVA_7)
                 res.add("-XX:+UseG1GC")
-            else
-                res.add("-Xincgc")
 
             if (options.metaspace != null && options.metaspace > 0) {
                 if (options.java.version < JavaVersion.JAVA_8)
@@ -183,7 +182,7 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
         if (options.minecraftArgs != null && options.minecraftArgs.isNotBlank())
             res.addAll(options.minecraftArgs.tokenize())
 
-        res
+        res.filter { !(forbidden[it]?.invoke() ?: false) }
     }
 
     /**

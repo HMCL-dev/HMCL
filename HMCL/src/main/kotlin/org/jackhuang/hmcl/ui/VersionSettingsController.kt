@@ -162,7 +162,6 @@ class VersionSettingsController {
 
         var flag = false
         var defaultToggle: JFXRadioButton? = null
-        var customToggle = javaItem.radioCustom
         javaItem.group.toggles.filter { it is JFXRadioButton }.forEach { toggle ->
             if (toggle.userData == version.javaVersion) {
                 toggle.isSelected = true
