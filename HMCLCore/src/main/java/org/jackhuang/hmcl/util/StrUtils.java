@@ -87,10 +87,10 @@ public final class StrUtils {
         return false;
     }
 
-    public static boolean containsOne(List<String> base, List<String> match, Predicate<String> pred) {
+    public static boolean containsOne(Collection<String> base, String... match) {
         for (String a : base)
             for (String b : match)
-                if (pred.apply(a) && a.toLowerCase().contains(b.toLowerCase()))
+                if (a.toLowerCase().contains(b.toLowerCase()))
                     return true;
         return false;
     }

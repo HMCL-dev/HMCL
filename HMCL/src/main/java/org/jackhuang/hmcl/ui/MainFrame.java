@@ -69,7 +69,6 @@ import org.jackhuang.hmcl.api.auth.IAuthenticator;
 import org.jackhuang.hmcl.api.ui.Theme;
 import org.jackhuang.hmcl.api.ui.TopTabPage;
 
-
 /**
  *
  * @author huangyuhui
@@ -256,7 +255,7 @@ public final class MainFrame extends DraggableFrame implements IRepaint {
 
         realPanel.setBounds(1, 0, 800, 511);
         add(realPanel);
-        
+
         reloadColor(Settings.getInstance().getTheme());
     }
 
@@ -396,11 +395,10 @@ public final class MainFrame extends DraggableFrame implements IRepaint {
     public void reloadColor(Theme t) {
         if (isShowedMessage)
             return;
-        for (Map.Entry<String, String> entry : t.settings.entrySet()) {
+        for (Map.Entry<String, String> entry : t.settings.entrySet())
             if (entry.getValue().startsWith("#"))
                 UIManager.put(entry.getKey(), GraphicsUtils.getWebColor(entry.getValue()));
-        }
-        
+
         initBorderColor();
         if (border != null)
             border.setColor(borderColor);
@@ -423,14 +421,14 @@ public final class MainFrame extends DraggableFrame implements IRepaint {
 
     @Override
     public void paint(Graphics g) {
-        if (!enableShadow)
+        int off = enableShadow ? 16 : 0;
+        int width = this.getWidth();
+        int height = this.getHeight();
+        int contentWidth = width - off - off;
+        int contentHeight = height - off - off;
+        if (!enableShadow || contentWidth <= 0 || contentHeight <= 0)
             paintImpl(g);
         else {
-            int off = enableShadow ? 16 : 0;
-            int width = this.getWidth();
-            int height = this.getHeight();
-            int contentWidth = width - off - off;
-            int contentHeight = height - off - off;
             BufferedImage contentImage = new BufferedImage(contentWidth,
                     contentHeight, Transparency.OPAQUE);
             Graphics2D contentG2d = contentImage.createGraphics();

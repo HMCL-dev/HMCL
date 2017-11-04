@@ -17,9 +17,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -27,20 +24,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.xml.parsers.ParserConfigurationException;
 import org.jackhuang.hmcl.api.HMCLApi;
-import org.jackhuang.hmcl.api.HMCLog;
 import org.jackhuang.hmcl.api.event.process.JavaProcessStoppedEvent;
 import org.jackhuang.hmcl.api.func.Consumer;
 import org.jackhuang.hmcl.ui.LogWindow;
 import org.jackhuang.hmcl.util.log.Level;
 import org.jackhuang.hmcl.util.sys.ProcessMonitor;
 import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
-import org.xml.sax.helpers.XMLReaderFactory;
 
 /**
  *
@@ -48,70 +40,28 @@ import org.xml.sax.helpers.XMLReaderFactory;
  */
 public class Log4jHandler extends Thread implements Consumer<JavaProcessStoppedEvent> {
 
-    XMLReader reader;
     ProcessMonitor monitor;
-    PipedInputStream inputStream;
-    PipedOutputStream outputStream;
     List<Pair<String, String>> forbiddenTokens = new LinkedList<>();
     AtomicBoolean interrupted = new AtomicBoolean(false);
-    ExecutorService executorService = Executors.newSingleThreadExecutor();
     boolean enabled = true;
 
-    public Log4jHandler(ProcessMonitor monitor, PipedOutputStream outputStream, boolean enabled) throws ParserConfigurationException, IOException, SAXException {
-        reader = XMLReaderFactory.createXMLReader();
-        inputStream = new PipedInputStream(outputStream);
-        this.outputStream = outputStream;
+    public Log4jHandler(ProcessMonitor monitor, PipedOutputStream outputStream, boolean enabled) {
         this.monitor = monitor;
         this.enabled = enabled;
-        
+
         HMCLApi.EVENT_BUS.channel(JavaProcessStoppedEvent.class).register((Consumer<JavaProcessStoppedEvent>) this);
     }
-    
+
     public void addForbiddenToken(String token, String replacement) {
         forbiddenTokens.add(new Pair<>(token, replacement));
     }
 
     @Override
     public void run() {
-        try {
-            setName("log4j-handler");
-            if (enabled)
-                newLogLine("<output>");
-            reader.setContentHandler(new Log4jHandlerImpl());
-            reader.parse(new InputSource(inputStream));
-        } catch (InterruptedIOException e) {
-            interrupted.set(true);
-        } catch (SAXException | IOException e) {
-            throw new Error(e);
-        } finally {
-            executorService.shutdown();
-        }
     }
 
     @Override
     public void accept(JavaProcessStoppedEvent t) {
-        if (!interrupted.get())
-            return;
-        if (t.getSource() == monitor) {
-            try {
-                executorService.submit(() -> {
-                    if (!interrupted.get()) {
-                        if (enabled) {
-                            Future f = newLogLine("</output>");
-                            if (f != null)
-                                f.get();
-                        }
-                        outputStream.close();
-                        join();
-                    }
-                    return null;
-                }).get();
-            } catch (Exception e) {
-                HMCLog.err("Please contact author", e);
-            } finally {
-                executorService.shutdown();
-            }
-        }
     }
 
     /**
@@ -126,32 +76,12 @@ public class Log4jHandler extends Thread implements Consumer<JavaProcessStoppedE
      * @param content The content to be written to the log
      */
     public Future newLogLine(String content) {
-        try {
-            return executorService.submit(() -> {
-                if (enabled)
-                    try {
-                        String log = content;
-                        if (!log.trim().startsWith("<")) { // without logging configuration.
-                            log = "<![CDATA[" + log.replace("]]>", "") + "]]>";
-                        }
-                        outputStream.write(log
-                                .replace("log4j:Event", "log4j_Event")
-                                .replace("log4j:Message", "log4j_Message")
-                                .replace("log4j:Throwable", "log4j_Throwable")
-                                .getBytes());
-                        outputStream.flush();
-                    } catch (IOException ignore) { // won't happen
-                        throw new Error(ignore);
-                    }
-                else
-                    printlnImpl(content, Level.guessLevel(content));
-            });
-        } catch (RejectedExecutionException e) {
-            return null;
-        }
+        printlnImpl(content, Level.guessLevel(content));
+        return null;
     }
 
     class Log4jHandlerImpl extends DefaultHandler {
+
         private final SimpleDateFormat df = new SimpleDateFormat("HH:mm:ss");
 
         String date = "", thread = "", logger = "";
@@ -168,7 +98,7 @@ public class Log4jHandler extends Thread implements Consumer<JavaProcessStoppedE
                     date = df.format(d);
                     try {
                         l = Level.valueOf(attributes.getValue("level"));
-                    } catch(IllegalArgumentException e) {
+                    } catch (IllegalArgumentException e) {
                         l = Level.INFO;
                     }
                     thread = attributes.getValue("thread");
@@ -197,7 +127,8 @@ public class Log4jHandler extends Thread implements Consumer<JavaProcessStoppedE
         @Override
         public void characters(char[] ch, int start, int length) throws SAXException {
             String line = new String(ch, start, length);
-            if (line.trim().isEmpty()) return;
+            if (line.trim().isEmpty())
+                return;
             if (readingMessage)
                 message.append(line).append(C.LINE_SEPARATOR);
             else
@@ -208,7 +139,7 @@ public class Log4jHandler extends Thread implements Consumer<JavaProcessStoppedE
             printlnImpl(message, l);
         }
     }
-    
+
     private void printlnImpl(String message, Level l) {
         for (Pair<String, String> entry : forbiddenTokens)
             message = message.replace(entry.key, entry.value);
