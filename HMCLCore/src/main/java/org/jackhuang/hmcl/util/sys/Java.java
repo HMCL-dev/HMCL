@@ -121,6 +121,8 @@ public class Java {
         try {
             queryJava(ans, "HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\");
             queryJava(ans, "HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\");
+            queryJava(ans, "HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JRE\\");
+            queryJava(ans, "HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JDK\\");
         } catch (IOException | InterruptedException ex) {
             HMCLog.err("Faield to query java", ex);
         }

@@ -88,8 +88,7 @@ public abstract class AbstractMinecraftLoader implements IMinecraftLoader {
             if (jv == null || !jv.isEarlyAccess()) {
                 if (jv != null && jv.getParsedVersion() >= JdkVersion.JAVA_17)
                     res.add("-XX:+UseG1GC");
-                else
-                    res.add("-Xincgc");
+                
                 res.add("-XX:-UseAdaptiveSizePolicy");
                 res.add("-XX:-OmitStackTraceInFastThrow");
 
