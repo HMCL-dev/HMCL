@@ -36,6 +36,15 @@ public class StringArgument implements Argument {
     }
 
     @Override
+    public Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException ex) {
+            throw new AssertionError(ex);
+        }
+    }
+
+    @Override
     public List<String> toString(Map<String, String> keys, Map<String, Boolean> features) {
         String res = argument;
         Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");

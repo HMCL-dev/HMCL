@@ -32,7 +32,7 @@ import java.util.Map;
  *
  * @author huang
  */
-public interface Argument {
+public interface Argument extends Cloneable {
 
     /**
      * Parse this argument in form: ${key name} or simply a string.
@@ -42,6 +42,8 @@ public interface Argument {
      * @return parsed argument element, empty if this argument is ignored and will not be added.
      */
     List<String> toString(Map<String, String> keys, Map<String, Boolean> features);
+    
+    public Object clone();
 
     public static class ArgumentSerializer implements JsonDeserializer<Argument>, JsonSerializer<Argument> {
 

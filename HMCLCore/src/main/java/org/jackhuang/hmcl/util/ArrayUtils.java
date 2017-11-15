@@ -73,6 +73,9 @@ public final class ArrayUtils {
     }
 
     public static <T> ArrayList<T> merge(List<T> a, List<T> b) {
+        if (a == null && b == null) return null;
+        else if (a == null) return new ArrayList<>(b);
+        else if (b == null) return new ArrayList<>(a);
         ArrayList<T> al = new ArrayList<>(a.size() + b.size());
         al.addAll(a);
         al.addAll(b);

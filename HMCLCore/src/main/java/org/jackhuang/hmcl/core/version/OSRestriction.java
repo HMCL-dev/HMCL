@@ -26,7 +26,7 @@ import org.jackhuang.hmcl.util.sys.OS;
  *
  * @author huangyuhui
  */
-public class OSRestriction {
+public class OSRestriction implements Cloneable {
 
     @SerializedName("version")
     private String version;
@@ -89,5 +89,14 @@ public class OSRestriction {
             } catch (Throwable t) {}
         }
         return true;
+    }
+
+    @Override
+    public Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException ex) {
+            throw new AssertionError(ex);
+        }
     }
 }

@@ -18,11 +18,13 @@
 package org.jackhuang.hmcl.core.version;
 
 import com.google.gson.annotations.SerializedName;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import org.jackhuang.hmcl.util.ArrayUtils;
 import org.jackhuang.hmcl.util.CollectionUtils;
 
 /**
@@ -34,6 +36,25 @@ public class Arguments {
     public List<Argument> game;
     @SerializedName("jvm")
     public List<Argument> jvm;
+    
+    public static Arguments clone(Arguments original) {
+        if (original == null)
+            return null;
+        Arguments ret = new Arguments();
+        ret.game = CollectionUtils.deepCopy(original.game, value -> (Argument) value.clone());
+        ret.jvm = CollectionUtils.deepCopy(original.jvm, value -> (Argument) value.clone());
+        return ret;
+    }
+    
+    public static Arguments merge(Arguments a, Arguments b) {
+        if (a == null) return b;
+        else if (b == null) return a;
+        Arguments ret = new Arguments();
+        ret.game = ArrayUtils.merge(a.game, b.game);
+        ret.jvm = ArrayUtils.merge(a.jvm, b.jvm);
+        if (ret.game == null && ret.jvm == null) return null;
+        return ret;
+    }
 
     public static List<String> parseStringArguments(List<String> arguments, Map<String, String> keys) {
         return CollectionUtils.map(arguments, str -> keys.getOrDefault(str, str));

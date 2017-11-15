@@ -48,6 +48,18 @@ public class RuledArgument implements Argument {
     }
 
     @Override
+    public Object clone() {
+        try {
+            RuledArgument ret = (RuledArgument) super.clone();
+            ret.rules = CollectionUtils.deepCopy(rules, value -> (Rules) value.clone());
+            ret.value = CollectionUtils.copy(value);
+            return ret;
+        } catch (CloneNotSupportedException ex) {
+            throw new AssertionError(ex);
+        }
+    }
+
+    @Override
     public List<String> toString(Map<String, String> keys, Map<String, Boolean> features) {
         if (!Rules.allow(rules, features))
             return Collections.EMPTY_LIST;

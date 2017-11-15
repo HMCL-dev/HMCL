@@ -21,12 +21,13 @@ import com.google.gson.annotations.SerializedName;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import org.jackhuang.hmcl.util.CollectionUtils;
 
 /**
  *
  * @author huangyuhui
  */
-public class Rules {
+public class Rules implements Cloneable {
 
     @SerializedName("action")
     private String action;
@@ -46,6 +47,18 @@ public class Rules {
     public Rules(String action, Map<String, Boolean> features) {
         this.action = action;
         this.features = features;
+    }
+
+    @Override
+    public Object clone() {
+        try {
+            Rules rules = (Rules) super.clone();
+            rules.os = (OSRestriction) os.clone();
+            rules.features = CollectionUtils.copy(features);
+            return rules;
+        } catch (CloneNotSupportedException ex) {
+            throw new AssertionError(ex);
+        }
     }
 
     public String action(Map<String, Boolean> features) {

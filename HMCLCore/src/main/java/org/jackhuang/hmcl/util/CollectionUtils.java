@@ -20,8 +20,10 @@ package org.jackhuang.hmcl.util;
 import org.jackhuang.hmcl.api.func.Predicate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import org.jackhuang.hmcl.api.func.Function;
 
 /**
@@ -64,5 +66,41 @@ public final class CollectionUtils {
                 removed = true;
             }
         return removed;
+    }
+    
+    public static <T extends Cloneable> ArrayList<T> deepCopy(List<T> original, Function<T, T> clone) {
+        if (original == null)
+            return null;
+        ArrayList<T> ret = new ArrayList<>(original.size());
+        for (T x : original)
+            ret.add(clone.apply(x));
+        return ret;
+    }
+    
+    public static <T> ArrayList<T> copy(List<T> original) {
+        if (original == null)
+            return null;
+        ArrayList<T> ret = new ArrayList<>(original.size());
+        for (T x : original)
+            ret.add(x);
+        return ret;
+    }
+    
+    public static <K, V extends Cloneable> Map<K, V> deepCopy(Map<K, V> original, Function<V, V> clone) {
+        if (original == null)
+            return null;
+        HashMap<K, V> ret = new HashMap<>(original.size());
+        for (HashMap.Entry<K, V> x : original.entrySet())
+            ret.put(x.getKey(), clone.apply(x.getValue()));
+        return ret;
+    }
+    
+    public static <K, V> Map<K, V> copy(Map<K, V> original) {
+        if (original == null)
+            return null;
+        HashMap<K, V> ret = new HashMap<>(original.size());
+        for (HashMap.Entry<K, V> x : original.entrySet())
+            ret.put(x.getKey(), x.getValue());
+        return ret;
     }
 }

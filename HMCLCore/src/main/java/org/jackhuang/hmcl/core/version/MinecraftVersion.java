@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.core.GameException;
 import org.jackhuang.hmcl.core.service.IMinecraftProvider;
 import org.jackhuang.hmcl.core.asset.AssetsIndex;
 import org.jackhuang.hmcl.util.ArrayUtils;
+import org.jackhuang.hmcl.util.CollectionUtils;
 
 /**
  *
@@ -81,8 +82,9 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
     public MinecraftVersion() {
     }
 
-    public MinecraftVersion(String minecraftArguments, String mainClass, String time, String id, String type, String processArguments, String releaseTime, String assets, String jar, String inheritsFrom, String runDir, int minimumLauncherVersion, List<MinecraftLibrary> libraries, boolean hidden, Map<String, GameDownloadInfo> downloads, AssetIndexDownloadInfo assetIndexDownloadInfo, Map<String, LoggingInfo> logging) {
+    public MinecraftVersion(Arguments arguments, String minecraftArguments, String mainClass, String time, String id, String type, String processArguments, String releaseTime, String assets, String jar, String inheritsFrom, String runDir, int minimumLauncherVersion, List<MinecraftLibrary> libraries, boolean hidden, Map<String, GameDownloadInfo> downloads, AssetIndexDownloadInfo assetIndexDownloadInfo, Map<String, LoggingInfo> logging) {
         this();
+        this.arguments = Arguments.clone(arguments);
         this.minecraftArguments = minecraftArguments;
         this.mainClass = mainClass;
         this.time = time;
@@ -100,28 +102,9 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
             this.assetIndex = null;
         else
             this.assetIndex = (AssetIndexDownloadInfo) assetIndexDownloadInfo.clone();
-        if (libraries == null)
-            this.libraries = new ArrayList<>();
-        else {
-            this.libraries = new ArrayList<>(libraries.size());
-            for (MinecraftLibrary library : libraries)
-                if (library != null)
-                    this.libraries.add((MinecraftLibrary) library.clone());
-        }
-        if (downloads == null)
-            this.downloads = null;
-        else {
-            this.downloads = new HashMap<>(downloads.size());
-            for (Map.Entry<String, GameDownloadInfo> entry : downloads.entrySet())
-                this.downloads.put(entry.getKey(), (GameDownloadInfo) entry.getValue().clone());
-        }
-        if (logging == null)
-            this.logging = null;
-        else {
-            this.logging = new HashMap<>(logging.size());
-            for (Map.Entry<String, LoggingInfo> entry : logging.entrySet())
-                this.logging.put(entry.getKey(), (LoggingInfo) entry.getValue().clone());
-        }
+        this.libraries = CollectionUtils.deepCopy(libraries, value -> (MinecraftLibrary) value.clone());
+        this.downloads = CollectionUtils.deepCopy(downloads, value -> (GameDownloadInfo) value.clone());
+        this.logging = CollectionUtils.deepCopy(logging, value -> (LoggingInfo) value.clone());
     }
 
     @Override
@@ -153,6 +136,7 @@ public class MinecraftVersion implements Cloneable, Comparable<MinecraftVersion>
         }
         parent = parent.resolve(provider, resolvedSoFar);
         MinecraftVersion result = new MinecraftVersion(
+                Arguments.merge(parent.arguments, this.arguments),
                 this.minecraftArguments != null ? this.minecraftArguments : parent.minecraftArguments,
                 this.mainClass != null ? this.mainClass : parent.mainClass,
                 this.time, this.id, this.type, parent.processArguments, this.releaseTime,
