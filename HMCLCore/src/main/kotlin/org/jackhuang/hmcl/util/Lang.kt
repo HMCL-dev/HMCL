@@ -50,9 +50,10 @@ fun <T> copyList(list: List<T>?): MutableList<T>? =
         if (list == null) null
         else LinkedList(list)
 
-fun <T> merge(vararg c: Collection<T>): List<T> = LinkedList<T>().apply {
+fun <T> merge(vararg c: Collection<T>?): List<T> = LinkedList<T>().apply {
     for (a in c)
-        addAll(a)
+        if (a != null)
+            addAll(a)
 }
 
 fun isBlank(str: String?) = str?.isBlank() ?: true

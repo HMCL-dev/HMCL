@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game
 import com.google.gson.annotations.SerializedName
 import org.jackhuang.hmcl.util.OS
 import org.jackhuang.hmcl.game.CompatibilityRule.*
+import org.jackhuang.hmcl.util.merge
 
 class Arguments @JvmOverloads constructor(
         @SerializedName("game")
@@ -28,6 +29,16 @@ class Arguments @JvmOverloads constructor(
         val jvm: List<Argument>? = null
 ) {
     companion object {
+        fun mergeArguments(a: Arguments?, b: Arguments?): Arguments? {
+            if (a == null && b == null) return null
+            else if (a == null) return b
+            else if (b == null) return a
+            else return Arguments(
+                    game = merge(a.game, b.game),
+                    jvm = merge(a.jvm, b.jvm)
+            )
+        }
+
         fun parseStringArguments(arguments: List<String>, keys: Map<String, String>, features: Map<String, Boolean> = emptyMap()): List<String> {
             return arguments.flatMap { StringArgument(it).toString(keys, features) }
         }

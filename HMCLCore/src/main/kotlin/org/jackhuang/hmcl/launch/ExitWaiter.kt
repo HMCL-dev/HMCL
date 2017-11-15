@@ -32,11 +32,10 @@ import org.jackhuang.hmcl.util.guessLogLineError
 internal class ExitWaiter(val process: ManagedProcess, val joins: Collection<Thread>, val watcher: (Int, ProcessListener.ExitType) -> Unit) : Runnable {
     override fun run() {
         try {
-            process.process.waitFor()
+            val exitCode = process.process.waitFor()
 
             joins.forEach { it.join() }
 
-            val exitCode = process.exitCode
             val errorLines = process.lines.filter(::guessLogLineError)
             val exitType: ProcessListener.ExitType
             // LaunchWrapper will catch the exception logged and will exit normally.

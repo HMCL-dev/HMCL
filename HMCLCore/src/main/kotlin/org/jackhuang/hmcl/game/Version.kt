@@ -131,6 +131,7 @@ open class Version(
                 libraries = merge(this.libraries, parent.libraries),
                 downloads = this.downloads ?: parent.downloads,
                 assetIndex = this.assetIndex ?: parent.assetIndex,
+                arguments = Arguments.mergeArguments(parent.arguments, this.arguments),
                 releaseTime = this.releaseTime,
                 inheritsFrom = null,
                 minecraftArguments = this.minecraftArguments ?: parent.minecraftArguments,
