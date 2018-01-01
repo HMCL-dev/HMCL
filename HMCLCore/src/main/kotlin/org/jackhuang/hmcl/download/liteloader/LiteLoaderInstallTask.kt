@@ -44,7 +44,7 @@ class LiteLoaderInstallTask(private val dependencyManager: DefaultDependencyMana
 
     init {
         if (!liteLoaderVersionList.loaded)
-            dependents += LiteLoaderVersionList.refreshAsync(dependencyManager.downloadProvider).then {
+            dependents += liteLoaderVersionList.refreshAsync(dependencyManager.downloadProvider).then {
                 remote = liteLoaderVersionList.getVersion(gameVersion, remoteVersion) ?: throw IllegalArgumentException("Remote LiteLoader version $gameVersion, $remoteVersion not found")
                 null
             }

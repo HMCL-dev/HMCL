@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil
 
-data class AuthenticationRequest(
+data class AuthenticationRequest @JvmOverloads constructor(
         val username: String,
         val password: String,
         val clientToken: String,

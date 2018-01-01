@@ -21,7 +21,7 @@ package org.jackhuang.hmcl.game
  * What's circle dependency?
  * When C inherits from B, and B inherits from something else, and finally inherits from C again.
  */
-class CircleDependencyException : Exception {
+class CircleDependencyException : GameException {
     constructor() : super() {}
     constructor(message: String) : super(message) {}
     constructor(message: String, cause: Throwable) : super(message, cause) {}

@@ -17,5 +17,4 @@
  */
 package org.jackhuang.hmcl.event
 
-open class FailedEvent<T>(source: Any, val failedTime: Int, var newResult: T) : Event(source) {
-}
+open class FailedEvent<T>(source: Any, val failedTime: Int, var newResult: T) : Event(source)

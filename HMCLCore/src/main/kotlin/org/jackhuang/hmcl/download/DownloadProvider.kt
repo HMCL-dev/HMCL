@@ -20,12 +20,12 @@ package org.jackhuang.hmcl.download
 /**
  * The service provider that provides Minecraft online file downloads.
  */
-abstract class DownloadProvider {
-    abstract val libraryBaseURL: String
-    abstract val versionListURL: String
-    abstract val versionBaseURL: String
-    abstract val assetIndexBaseURL: String
-    abstract val assetBaseURL: String
+interface DownloadProvider {
+    val libraryBaseURL: String
+    val versionListURL: String
+    val versionBaseURL: String
+    val assetIndexBaseURL: String
+    val assetBaseURL: String
 
     /**
      * Inject into original URL provided by Mojang and Forge.
@@ -36,12 +36,12 @@ abstract class DownloadProvider {
      * @param baseURL original URL provided by Mojang and Forge.
      * @return the URL that is equivalent to [baseURL], but belongs to your own service provider.
      */
-    abstract fun injectURL(baseURL: String): String
+    fun injectURL(baseURL: String): String
 
     /**
      * the specific version list that this download provider provides. i.e. "forge", "liteloader", "game", "optifine"
      * @param id the id of specific version list that this download provider provides. i.e. "forge", "liteloader", "game", "optifine"
      * @return the version list
      */
-    abstract fun getVersionListById(id: String): VersionList<*>
+    fun getVersionListById(id: String): VersionList<*>
 }

@@ -33,7 +33,7 @@ internal class GameRemoteLatestVersions(
 )
 
 @Immutable
-internal class GameRemoteVersion(
+internal class GameRemoteVersion @JvmOverloads constructor(
         @SerializedName("id")
         val gameVersion: String = "",
         @SerializedName("time")

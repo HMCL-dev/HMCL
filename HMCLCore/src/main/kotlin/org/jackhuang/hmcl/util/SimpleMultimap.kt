@@ -23,8 +23,8 @@ import java.util.*
  * A simple implementation of Multimap.
  * Just a combination of map and set.
  */
-class SimpleMultimap<K, V>(val maper: () -> MutableMap<K, Collection<V>>, val valuer: () -> MutableCollection<V>) {
-    private val map = HashMap<K, MutableCollection<V>>()
+class SimpleMultimap<K, V>(mapper: () -> MutableMap<K, MutableCollection<V>>, private val valuer: () -> MutableCollection<V>) {
+    private val map = mapper()
     private val valuesImpl: MutableCollection<V> = valuer()
 
     val size = valuesImpl.size
@@ -35,7 +35,7 @@ class SimpleMultimap<K, V>(val maper: () -> MutableMap<K, Collection<V>>, val va
     val isEmpty: Boolean = size == 0
     val isNotEmpty: Boolean = size != 0
 
-    fun containsKey(key: K): Boolean = map.containsKey(key)
+    fun containsKey(key: K): Boolean = map[key]?.isNotEmpty() ?: false
     operator fun get(key: K): Collection<V> = map.getOrPut(key, valuer)
 
     fun put(key: K, value: V) {

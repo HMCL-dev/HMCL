@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.game
 import com.google.gson.annotations.SerializedName
 import java.util.*
 
-class AssetIndex(
+class AssetIndex @JvmOverloads constructor(
         @SerializedName("virtual")
         val virtual: Boolean = false,
         objects: Map<String, AssetObject> = emptyMap()

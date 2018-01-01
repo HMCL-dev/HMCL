@@ -28,7 +28,7 @@ class AutoTypingMap<K>(private val impl: MutableMap<K, Any>) {
     operator fun <V> get(key: K): V = impl[key] as V
     operator fun set(key: K, value: Any?) {
         if (value != null)
-            impl.set(key, value)
+            impl[key] = value
     }
     val values get() = impl.values
     val keys get() = impl.keys

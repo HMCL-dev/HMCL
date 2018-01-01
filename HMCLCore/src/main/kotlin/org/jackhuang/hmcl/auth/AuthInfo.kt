@@ -17,14 +17,24 @@
  */
 package org.jackhuang.hmcl.auth
 
+import org.jackhuang.hmcl.auth.yggdrasil.GameProfile
 import org.jackhuang.hmcl.util.Immutable
+import org.jackhuang.hmcl.util.UUIDTypeAdapter
 
 @Immutable
-data class AuthInfo(
+data class AuthInfo @JvmOverloads constructor(
         val username: String,
         val userId: String,
         val authToken: String,
         val userType: UserType = UserType.LEGACY,
         val userProperties: String = "{}",
         val userPropertyMap: String = "{}"
-)
+) {
+    constructor(profile: GameProfile,
+                authToken: String,
+                userType: UserType = UserType.LEGACY,
+                userProperties: String = "{}",
+                userPropertyMap: String = "{}")
+            : this(profile.name!!, UUIDTypeAdapter.fromUUID(profile.id!!), authToken, userType, userProperties, userPropertyMap) {
+    }
+}

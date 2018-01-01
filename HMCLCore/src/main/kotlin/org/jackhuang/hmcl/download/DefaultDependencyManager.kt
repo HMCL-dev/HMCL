@@ -34,7 +34,7 @@ import java.net.Proxy
 /**
  * This class has no state.
  */
-class DefaultDependencyManager(override val repository: DefaultGameRepository, override var downloadProvider: DownloadProvider, override val proxy: Proxy = Proxy.NO_PROXY)
+class DefaultDependencyManager @JvmOverloads constructor(override val repository: DefaultGameRepository, override var downloadProvider: DownloadProvider, override val proxy: Proxy = Proxy.NO_PROXY)
     : AbstractDependencyManager() {
 
     override fun gameBuilder(): GameBuilder = DefaultGameBuilder(this)
@@ -48,17 +48,19 @@ class DefaultDependencyManager(override val repository: DefaultGameRepository, o
         return ParallelTask(*tasks)
     }
 
-    override fun installLibraryAsync(gameVersion: String, version: Version, libraryId: String, libraryVersion: String): Task {
-        if (libraryId == "forge")
-            return ForgeInstallTask(this, gameVersion, version, libraryVersion)
-                    .then { VersionJSONSaveTask(repository, it["version"]) }
-        else if (libraryId == "liteloader")
-            return LiteLoaderInstallTask(this, gameVersion, version, libraryVersion)
-                    .then { VersionJSONSaveTask(repository, it["version"]) }
-        else if (libraryId == "optifine")
-            return OptiFineInstallTask(this, gameVersion, version, libraryVersion)
-                    .then { VersionJSONSaveTask(repository, it["version"]) }
-        else
-            throw IllegalArgumentException("Library id $libraryId is unrecognized.")
-    }
+    override fun installLibraryAsync(gameVersion: String, version: Version, libraryId: String, libraryVersion: String): Task =
+        when (libraryId) {
+            "forge" ->
+                ForgeInstallTask(this, gameVersion, version, libraryVersion)
+                        .then { VersionJSONSaveTask(repository, it["version"]) }
+            "liteloader" ->
+                LiteLoaderInstallTask(this, gameVersion, version, libraryVersion)
+                        .then { VersionJSONSaveTask(repository, it["version"]) }
+            "optifine" ->
+                OptiFineInstallTask(this, gameVersion, version, libraryVersion)
+                        .then { VersionJSONSaveTask(repository, it["version"]) }
+            else ->
+                throw IllegalArgumentException("Library id $libraryId is unrecognized.")
+        }
+
 }

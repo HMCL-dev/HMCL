@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.game
 import java.util.*
 import java.util.regex.Pattern
 
-class StringArgument(var argument: String) : Argument {
+class StringArgument(val argument: String) : Argument {
 
     override fun toString(keys: Map<String, String>, features: Map<String, Boolean>): List<String> {
         var res = argument

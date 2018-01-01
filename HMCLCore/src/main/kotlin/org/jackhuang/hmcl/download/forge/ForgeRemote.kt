@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.util.Immutable
 import org.jackhuang.hmcl.util.Validation
 
 @Immutable
-internal class ForgeVersion (
+internal class ForgeVersion @JvmOverloads constructor(
         val branch: String? = null,
         val mcversion: String? = null,
         val jobver: String? = null,
@@ -40,7 +40,7 @@ internal class ForgeVersion (
 }
 
 @Immutable
-internal class ForgeVersionRoot (
+internal class ForgeVersionRoot @JvmOverloads constructor(
         val artifact: String? = null,
         val webpath: String? = null,
         val adfly: String? = null,
@@ -58,7 +58,7 @@ internal class ForgeVersionRoot (
 }
 
 @Immutable
-internal data class Install (
+internal data class Install @JvmOverloads constructor(
         val profileName: String? = null,
         val target: String? = null,
         val path: String? = null,
@@ -71,7 +71,7 @@ internal data class Install (
 )
 
 @Immutable
-internal data class InstallProfile (
+internal data class InstallProfile @JvmOverloads constructor(
         @SerializedName("install")
         val install: Install? = null,
         @SerializedName("versionInfo")

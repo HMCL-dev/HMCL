@@ -21,7 +21,7 @@ import com.google.gson.annotations.SerializedName
 import org.jackhuang.hmcl.util.Immutable
 
 @Immutable
-class LibraryDownloadInfo(
+class LibraryDownloadInfo @JvmOverloads constructor(
         url: String = "",
         sha1: String? = null,
         size: Int = 0,

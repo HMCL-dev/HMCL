@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.auth.yggdrasil
 import com.google.gson.JsonParseException
 import org.jackhuang.hmcl.util.Validation
 
-class User (
+class User @JvmOverloads constructor(
         val id: String = "",
         val properties: PropertyMap? = null
 ) : Validation {

@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.game.Version
 import org.jackhuang.hmcl.util.ManagedProcess
 import java.io.File
 
-abstract class Launcher(
+abstract class Launcher @JvmOverloads constructor(
         protected val repository: GameRepository,
         protected val versionId: String,
         protected val account: AuthInfo,

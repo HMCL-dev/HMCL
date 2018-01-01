@@ -22,20 +22,17 @@ import java.util.*
 
 /**
  * This event gets fired when loading versions in a .minecraft folder.
- * <br></br>
- * This event is fired on the [org.jackhuang.hmcl.api.HMCLApi.EVENT_BUS]
- * @param source [org.jackhuang.hmcl.core.version.MinecraftVersionManager]
- * *
- * @param IMinecraftService .minecraft folder.
- * *
- * @author huangyuhui
+ * <br>
+ * This event is fired on the [org.jackhuang.hmcl.event.EVENT_BUS]
+ *
+ * @param source [org.jackhuang.hmcl.game.GameRepository]
  */
 class RefreshingVersionsEvent(source: Any) : EventObject(source)
 
 /**
  * This event gets fired when all the versions in .minecraft folder are loaded.
  * <br>
- * This event is fired on the {@link org.jackhuang.hmcl.api.HMCLApi#EVENT_BUS}
+ * This event is fired on the [org.jackhuang.hmcl.event.EVENT_BUS]
  * @param source [org.jackhuang.hmcl.game.GameRepository]
  * @author huangyuhui
  */
@@ -43,9 +40,9 @@ class RefreshedVersionsEvent(source: Any) : EventObject(source)
 
 /**
  * This event gets fired when a minecraft version has been loaded.
- * <br></br>
- * This event is fired on the [org.jackhuang.hmcl.api.HMCLApi.EVENT_BUS]
- * @param source [org.jackhuang.hmcl.core.version.MinecraftVersionManager]
+ * <br>
+ * This event is fired on the [org.jackhuang.hmcl.event.EVENT_BUS]
+ * @param source [org.jackhuang.hmcl.game.GameRepository]
  * @param version the version id.
  * @author huangyuhui
  */
@@ -54,29 +51,29 @@ class LoadedOneVersionEvent(source: Any, val version: String) : EventObject(sour
 /**
  * This event gets fired when a JavaProcess exited abnormally and the exit code is not zero.
  * <br></br>
- * This event is fired on the [org.jackhuang.hmcl.api.HMCLApi.EVENT_BUS]
- * @param source [org.jackhuang.hmcl.util.sys.JavaProcessMonitor]
- * @param JavaProcess The process that exited abnormally.
+ * This event is fired on the [org.jackhuang.hmcl.event.EVENT_BUS]
+ * @param source [org.jackhuang.hmcl.launch.ExitWaiter]
+ * @param value The process that exited abnormally.
  * @author huangyuhui
  */
-class JavaProcessExitedAbnormallyEvent(source: Any, val value: ManagedProcess) : EventObject(source)
+class ProcessExitedAbnormallyEvent(source: Any, val value: ManagedProcess) : EventObject(source)
 
 /**
  * This event gets fired when minecraft process exited successfully and the exit code is 0.
- * <br></br>
- * This event is fired on the [org.jackhuang.hmcl.api.HMCLApi.EVENT_BUS]
- * @param source [org.jackhuang.hmcl.util.sys.JavaProcessMonitor]
- * @param JavaProcess minecraft process
+ * <br>
+ * This event is fired on the [org.jackhuang.hmcl.event.EVENT_BUS]
+ * @param source [org.jackhuang.hmcl.launch.ExitWaiter]
+ * @param value minecraft process
  * @author huangyuhui
  */
-class JavaProcessStoppedEvent(source: Any, val value: ManagedProcess) : EventObject(source)
+class ProcessStoppedEvent(source: Any, val value: ManagedProcess) : EventObject(source)
 
 /**
  * This event gets fired when we launch the JVM and it got crashed.
- * <br></br>
- * This event is fired on the [org.jackhuang.hmcl.api.HMCLApi.EVENT_BUS]
- * @param source [org.jackhuang.hmcl.util.sys.JavaProcessMonitor]
- * @param JavaProcess the crashed process.
+ * <br>
+ * This event is fired on the [org.jackhuang.hmcl.event.EVENT_BUS]
+ * @param source [org.jackhuang.hmcl.launch.ExitWaiter]
+ * @param value the crashed process.
  * @author huangyuhui
  */
 class JVMLaunchFailedEvent(source: Any, val value: ManagedProcess) : EventObject(source)

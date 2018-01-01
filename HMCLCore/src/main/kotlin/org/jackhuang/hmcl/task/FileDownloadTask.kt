@@ -46,7 +46,7 @@ class FileDownloadTask @JvmOverloads constructor(val url: URL, val file: File, v
     /**
      * Once downloading fails, this event will be fired to gain the substitute URL.
      */
-    var onFailed = EventManager<FailedEvent<URL>>()
+    val onFailed = EventManager<FailedEvent<URL>>()
 
     private var rFile: RandomAccessFile? = null
     private var stream: InputStream? = null
@@ -81,7 +81,7 @@ class FileDownloadTask @JvmOverloads constructor(val url: URL, val file: File, v
             try {
                 updateProgress(0.0)
 
-                val conn = url.createConnection(proxy)
+                val conn = currentURL.createConnection(proxy)
                 conn.connect()
 
                 if (conn.responseCode / 100 != 2)

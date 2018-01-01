@@ -21,7 +21,7 @@ import org.jackhuang.hmcl.task.Scheduler
 import org.jackhuang.hmcl.util.SimpleMultimap
 import java.util.*
 
-class EventManager<T : EventObject>(val scheduler: Scheduler = Scheduler.IMMEDIATE) {
+class EventManager<T : EventObject> @JvmOverloads constructor(val scheduler: Scheduler = Scheduler.IMMEDIATE) {
     private val handlers = SimpleMultimap<EventPriority, (T) -> Unit>({ EnumMap(EventPriority::class.java) }, ::HashSet)
     private val handlers2 = SimpleMultimap<EventPriority, () -> Unit>({ EnumMap(EventPriority::class.java) }, ::HashSet)
 

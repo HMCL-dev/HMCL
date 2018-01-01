@@ -17,15 +17,9 @@
  */
 package org.jackhuang.hmcl.download
 
-import org.jackhuang.hmcl.game.GameRepository
-import java.net.Proxy
-
 abstract class AbstractDependencyManager
     : DependencyManager {
     abstract val downloadProvider: DownloadProvider
-
-    fun getVersions(id: String, selfVersion: String) =
-            downloadProvider.getVersionListById(id).getVersions(selfVersion)
 
     override fun getVersionList(id: String): VersionList<*> {
         return downloadProvider.getVersionListById(id)

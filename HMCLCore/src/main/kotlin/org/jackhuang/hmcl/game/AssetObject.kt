@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.game
 
 import org.jackhuang.hmcl.util.Validation
 
-data class AssetObject(
+data class AssetObject @JvmOverloads constructor(
         val hash: String = "",
         val size: Long = 0
 ): Validation {

@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.game
 import org.jackhuang.hmcl.util.Immutable
 
 @Immutable
-class AssetIndexInfo(
+class AssetIndexInfo @JvmOverloads constructor(
         url: String = "",
         sha1: String? = null,
         size: Int = 0,

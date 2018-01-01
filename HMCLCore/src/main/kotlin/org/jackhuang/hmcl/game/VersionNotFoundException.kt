@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game
 
-class VersionNotFoundException : Exception {
+class VersionNotFoundException : GameException {
     constructor() : super() {}
     constructor(message: String) : super(message) {}
     constructor(message: String, cause: Throwable) : super(message, cause) {}

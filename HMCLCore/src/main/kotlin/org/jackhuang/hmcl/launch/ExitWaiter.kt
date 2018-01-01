@@ -19,8 +19,8 @@ package org.jackhuang.hmcl.launch
 
 import org.jackhuang.hmcl.event.EVENT_BUS
 import org.jackhuang.hmcl.event.JVMLaunchFailedEvent
-import org.jackhuang.hmcl.event.JavaProcessExitedAbnormallyEvent
-import org.jackhuang.hmcl.event.JavaProcessStoppedEvent
+import org.jackhuang.hmcl.event.ProcessExitedAbnormallyEvent
+import org.jackhuang.hmcl.event.ProcessStoppedEvent
 import org.jackhuang.hmcl.util.ManagedProcess
 import org.jackhuang.hmcl.util.containsOne
 import org.jackhuang.hmcl.util.guessLogLineError
@@ -34,13 +34,13 @@ internal class ExitWaiter(val process: ManagedProcess, val joins: Collection<Thr
         try {
             val exitCode = process.process.waitFor()
 
-            joins.forEach { it.join() }
+            joins.forEach(Thread::join)
 
             val errorLines = process.lines.filter(::guessLogLineError)
             val exitType: ProcessListener.ExitType
             // LaunchWrapper will catch the exception logged and will exit normally.
             if (exitCode != 0 || errorLines.containsOne("Unable to launch")) {
-                EVENT_BUS.fireEvent(JavaProcessExitedAbnormallyEvent(this, process))
+                EVENT_BUS.fireEvent(ProcessExitedAbnormallyEvent(this, process))
                 exitType = ProcessListener.ExitType.APPLICATION_ERROR
             } else if (exitCode != 0 && errorLines.containsOne(
                     "Could not create the Java Virtual Machine.",
@@ -52,7 +52,7 @@ internal class ExitWaiter(val process: ManagedProcess, val joins: Collection<Thr
             } else
                 exitType = ProcessListener.ExitType.NORMAL
 
-            EVENT_BUS.fireEvent(JavaProcessStoppedEvent(this, process))
+            EVENT_BUS.fireEvent(ProcessStoppedEvent(this, process))
 
             watcher(exitCode, exitType)
         } catch (e: InterruptedException) {

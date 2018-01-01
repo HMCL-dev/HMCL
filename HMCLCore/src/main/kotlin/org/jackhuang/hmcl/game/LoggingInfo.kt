@@ -22,9 +22,9 @@ import org.jackhuang.hmcl.util.Immutable
 import org.jackhuang.hmcl.util.Validation
 
 @Immutable
-class LoggingInfo(
+class LoggingInfo @JvmOverloads constructor(
         @SerializedName("file")
-        val file: IdDownloadInfo = IdDownloadInfo(""),
+        val file: IdDownloadInfo = IdDownloadInfo(),
 
         @SerializedName("argument")
         val argument: String = "",

@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.util.*
 import java.util.*
 
 @Immutable
-open class Version(
+open class Version @JvmOverloads constructor(
         @SerializedName("minecraftArguments")
         val minecraftArguments: String? = null,
         @SerializedName("arguments")
@@ -88,7 +88,7 @@ open class Version(
     val actualAssetIndex: AssetIndexInfo
         get() {
             val id = assets ?: "legacy"
-            return assetIndex ?: AssetIndexInfo(id = id, url = "$DEFAULT_VERSION_DOWNLOAD_URL$id.json")
+            return assetIndex ?: AssetIndexInfo(id = id, url = "$DEFAULT_INDEX_URL$id.json")
         }
 
     fun appliesToCurrentEnvironment() = CompatibilityRule.appliesToCurrentEnvironment(compatibilityRules)
@@ -134,8 +134,9 @@ open class Version(
                 arguments = Arguments.mergeArguments(parent.arguments, this.arguments),
                 releaseTime = this.releaseTime,
                 inheritsFrom = null,
+                compatibilityRules = merge(this.compatibilityRules, parent.compatibilityRules),
                 minecraftArguments = this.minecraftArguments ?: parent.minecraftArguments,
-                minimumLauncherVersion = parent.minimumLauncherVersion
+                minimumLauncherVersion = maxOf(minimumLauncherVersion, parent.minimumLauncherVersion)
         )
     }
 

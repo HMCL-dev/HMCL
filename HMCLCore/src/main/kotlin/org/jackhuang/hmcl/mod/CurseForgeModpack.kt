@@ -58,7 +58,7 @@ class CurseForgeModpackManifest @JvmOverloads constructor(
     }
 }
 
-class CurseForgeModpackManifestMinecraft (
+class CurseForgeModpackManifestMinecraft @JvmOverloads constructor(
         @SerializedName("version")
         val gameVersion: String = "",
         @SerializedName("modLoaders")
@@ -69,7 +69,7 @@ class CurseForgeModpackManifestMinecraft (
     }
 }
 
-class CurseForgeModpackManifestModLoader (
+class CurseForgeModpackManifestModLoader @JvmOverloads constructor(
         @SerializedName("id")
         val id: String = "",
         @SerializedName("primary")
@@ -80,7 +80,7 @@ class CurseForgeModpackManifestModLoader (
     }
 }
 
-class CurseForgeModpackManifestFile (
+class CurseForgeModpackManifestFile @JvmOverloads constructor(
         @SerializedName("projectID")
         val projectID: Int = 0,
         @SerializedName("fileID")
@@ -185,10 +185,10 @@ class CurseForgeModpackCompletionTask(dependencyManager: DependencyManager, vers
             val manifestFile = repository.getVersionRoot(version).resolve("manifest.json")
             if (!manifestFile.exists()) manifest = null
             else {
-                manifest = GSON.fromJson<CurseForgeModpackManifest>(repository.getVersionRoot(version).resolve("manifest.json").readText())!!
+                manifest = GSON.fromJson<CurseForgeModpackManifest>(manifestFile.readText())!!
 
-                // Because in China, the CurseForge is too difficult to visit.
-                // So caching the file name is necessary.
+                // Because in China, CurseForge is too difficult to visit,
+                // caching the file name is necessary.
                 for (f in manifest!!.files) {
                     if (f.fileName.isBlank())
                         dependents += task { f.fileName = f.url.detectFileName(proxy) }

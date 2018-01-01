@@ -20,13 +20,13 @@ package org.jackhuang.hmcl.game
 import com.google.gson.annotations.SerializedName
 import java.util.*
 
-class ExtractRules(exclude: List<String> = emptyList()) {
+class ExtractRules @JvmOverloads constructor(exclude: List<String> = emptyList()) {
     val exclude: List<String> get() = Collections.unmodifiableList(excludeImpl)
 
     @SerializedName("exclude")
     private val excludeImpl: MutableList<String> = LinkedList(exclude)
 
     fun shouldExtract(path: String): Boolean =
-        exclude.filter { path.startsWith(it) }.isEmpty()
+        exclude.none { path.startsWith(it) }
 
 }

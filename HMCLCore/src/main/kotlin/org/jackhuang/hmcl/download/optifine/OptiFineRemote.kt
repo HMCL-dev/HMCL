@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.download.optifine
 
 import com.google.gson.annotations.SerializedName
 
-data class OptiFineVersion (
+data class OptiFineVersion @JvmOverloads constructor(
         @SerializedName("dl")
         val downloadLink: String? = null,
         @SerializedName("ver")

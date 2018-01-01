@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.util.getValue
 import org.jackhuang.hmcl.util.setValue
 import java.io.File
 
-class ModInfo (
+class ModInfo @JvmOverloads constructor(
         var file: File,
         val name: String,
         val description: String = "",

@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.util.AutoTypingMap
  *
  * @param pred the task that runs before [succ]
  * @param succ a callback that returns the task runs after [pred], [succ] will be executed asynchronously. You can do something that relies on the result of [pred].
- * @param reliant true if this task chain will be broken when task [pred] fails.
+ * @param reliesOnDependents true if this task chain will be broken when task [pred] fails.
  */
 internal class CoupleTask<P: Task>(pred: P, private val succ: (AutoTypingMap<String>) -> Task?, override val reliesOnDependents: Boolean) : Task() {
     override val hidden: Boolean = true

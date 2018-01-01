@@ -57,11 +57,13 @@ interface Scheduler {
                     val e = wrapper.get()
                     if (e != null) throw ExecutionException(e)
                 }
+
                 override fun get() {
                     latch.await()
                     val e = wrapper.get()
                     if (e != null) throw ExecutionException(e)
                 }
+
                 override fun isDone() = latch.count == 0L
                 override fun isCancelled() = false
                 override fun cancel(mayInterruptIfRunning: Boolean) = false
@@ -117,19 +119,25 @@ interface Scheduler {
          * A scheduler that always create new threads to execute tasks.
          * For tasks that do not do heavy operations.
          */
-        val NEW_THREAD: Scheduler = SchedulerExecutorService(CACHED_EXECUTOR)
+        val NEW_THREAD: Scheduler by lazy {
+            SchedulerExecutorService(CACHED_EXECUTOR)
+        }
 
         /**
          * A scheduler that exclusively executes tasks that do I/O operations.
          * The number tasks that do I/O operations in the meantime cannot be larger then 6.
          */
-        val IO: Scheduler = SchedulerExecutorService(IO_EXECUTOR)
+        val IO: Scheduler by lazy {
+            SchedulerExecutorService(IO_EXECUTOR)
+        }
 
         /**
          * A scheduler that exclusively executes tasks that do computations.
          * The best way to do computations is an event queue.
          */
-        val COMPUTATION: Scheduler = SchedulerExecutorService(SINGLE_EXECUTOR)
+        val COMPUTATION: Scheduler by lazy {
+            SchedulerExecutorService(SINGLE_EXECUTOR)
+        }
 
         /**
          * The default scheduler for tasks to be executed.

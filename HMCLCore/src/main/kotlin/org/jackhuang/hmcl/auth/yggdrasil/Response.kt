@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil
 
-class Response (
+class Response @JvmOverloads constructor(
         val accessToken: String? = null,
         val clientToken: String? = null,
         val selectedProfile: GameProfile? = null,

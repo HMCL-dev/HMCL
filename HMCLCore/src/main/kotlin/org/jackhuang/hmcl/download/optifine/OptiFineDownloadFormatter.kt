@@ -18,4 +18,4 @@
 package org.jackhuang.hmcl.download.optifine
 
 
-object Opt
+object OptiFineDownloadFormatter

@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game
 
-class GameException : Exception {
+open class GameException : Exception {
     constructor() : super() {}
     constructor(message: String) : super(message) {}
     constructor(message: String, cause: Throwable) : super(message, cause) {}

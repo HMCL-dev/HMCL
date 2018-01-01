@@ -24,11 +24,9 @@ import java.lang.reflect.Type
 
 /**
  * A class that describes a Minecraft dependency.
- *
- * @see LibraryDeserializer
  */
 @Immutable
-open class Library(
+open class Library @JvmOverloads constructor(
         val groupId: String,
         val artifactId: String,
         val version: String,
@@ -100,6 +98,7 @@ open class Library(
                     context.deserialize(jsonObject["natives"], typeOf<Map<OS, String>>()),
                     context.deserialize(jsonObject["rules"], typeOf<List<CompatibilityRule>>()))
         }
+
         override fun serialize(src: Library?, typeOfSrc: Type?, context: JsonSerializationContext): JsonElement {
             if (src == null) return JsonNull.INSTANCE
             val obj = JsonObject()

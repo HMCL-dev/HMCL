@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.util.Immutable
 import org.jackhuang.hmcl.util.Validation
 
 @Immutable
-open class DownloadInfo(
+open class DownloadInfo @JvmOverloads constructor(
         @SerializedName("url")
         val url: String = "",
         @SerializedName("sha1")
@@ -38,7 +38,7 @@ open class DownloadInfo(
 }
 
 @Immutable
-open class IdDownloadInfo(
+open class IdDownloadInfo @JvmOverloads constructor(
         url: String = "",
         sha1: String? = null,
         size: Int = 0,

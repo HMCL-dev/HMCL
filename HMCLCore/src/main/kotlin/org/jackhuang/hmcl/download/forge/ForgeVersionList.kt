@@ -42,7 +42,7 @@ object ForgeVersionList : VersionList<Unit>() {
             for ((x, versions) in root.mcversion!!.entries) {
                 val gameVersion = x.asVersion() ?: continue
                 for (v in versions) {
-                    val version = root.number!!.get(v) ?: continue
+                    val version = root.number!![v] ?: continue
                     var jar: String? = null
                     for (file in version.files!!)
                         if (file.getOrNull(1) == "installer") {

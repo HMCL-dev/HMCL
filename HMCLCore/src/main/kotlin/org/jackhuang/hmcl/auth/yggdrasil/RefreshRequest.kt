@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil
 
-data class RefreshRequest(
+data class RefreshRequest @JvmOverloads constructor(
         val clientToken: String,
         val accessToken: String,
         val selectedProfile: GameProfile? = null,

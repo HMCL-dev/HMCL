@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList
 /**
  * @see {@link http://bmclapi2.bangbang93.com}
  */
-object BMCLAPIDownloadProvider : DownloadProvider() {
+object BMCLAPIDownloadProvider : DownloadProvider {
     override val libraryBaseURL: String = "http://bmclapi2.bangbang93.com/libraries/"
     override val versionListURL: String = "http://bmclapi2.bangbang93.com/mc/game/version_manifest.json"
     override val versionBaseURL: String = "http://bmclapi2.bangbang93.com/versions/"

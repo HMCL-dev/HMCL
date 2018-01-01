@@ -31,7 +31,7 @@ import kotlin.concurrent.thread
  * @param account The user account
  * @param options The launching configuration
  */
-open class DefaultLauncher(repository: GameRepository, versionId: String, account: AuthInfo, options: LaunchOptions, listener: ProcessListener? = null, isDaemon: Boolean = true)
+open class DefaultLauncher @JvmOverloads constructor(repository: GameRepository, versionId: String, account: AuthInfo, options: LaunchOptions, listener: ProcessListener? = null, isDaemon: Boolean = true)
     : Launcher(repository, versionId, account, options, listener, isDaemon) {
 
     protected val native: File by lazy { repository.getNativeDirectory(version.id) }
@@ -143,7 +143,7 @@ open class DefaultLauncher(repository: GameRepository, versionId: String, accoun
 
         val features = getFeatures()
         res.addAll(Arguments.parseArguments(version.arguments?.game ?: defaultGameArguments, configuration, features))
-        res.addAll(Arguments.parseStringArguments(version.minecraftArguments?.tokenize()?.toList() ?: emptyList(), configuration))
+        res.addAll(Arguments.parseStringArguments(version.minecraftArguments?.tokenize() ?: emptyList(), configuration))
 
         // Optional Minecraft arguments
         if (options.height != null && options.height != 0 && options.width != null && options.width != 0) {

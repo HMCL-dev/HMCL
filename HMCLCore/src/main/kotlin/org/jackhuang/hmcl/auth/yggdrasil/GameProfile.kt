@@ -21,7 +21,7 @@ import com.google.gson.*
 import java.lang.reflect.Type
 import java.util.*
 
-data class GameProfile(
+data class GameProfile @JvmOverloads constructor(
         val id: UUID? = null,
         val name: String? = null,
         val properties: PropertyMap = PropertyMap(),
@@ -40,7 +40,7 @@ data class GameProfile(
         override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext): GameProfile {
             if (json !is JsonObject)
                 throw JsonParseException("The json element is not a JsonObject.")
-            val id = if (json.has("id")) context.deserialize<UUID>(json.get("id"), UUID::class.java) else null
+            val id = if (json.has("id")) context.deserialize(json.get("id"), UUID::class.java) else null
             val name = if (json.has("name")) json.getAsJsonPrimitive("name").asString else null
             return GameProfile(id, name)
         }

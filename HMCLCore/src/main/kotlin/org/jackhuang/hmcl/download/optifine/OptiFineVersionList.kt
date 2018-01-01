@@ -48,15 +48,15 @@ object OptiFineVersionList : VersionList<Unit>() {
             val doc = db.parse(ByteArrayInputStream(html.toByteArray()))
             val r = doc.documentElement
             val tables = r.getElementsByTagName("table")
-            for (i in 0..tables.length - 1) {
+            for (i in 0 until tables.length) {
                 val e = tables.item(i) as Element
                 if ("downloadTable" == e.getAttribute("class")) {
                     val tr = e.getElementsByTagName("tr")
-                    for (k in 0..tr.length - 1) {
+                    for (k in 0 until tr.length) {
                         val downloadLine = (tr.item(k) as Element).getElementsByTagName("td")
                         var url: String? = null
                         var version: String? = null
-                        for (j in 0..downloadLine.length - 1) {
+                        for (j in 0 until downloadLine.length) {
                             val td = downloadLine.item(j) as Element
                             if (td.getAttribute("class")?.startsWith("downloadLineMirror") ?: false)
                                 url = (td.getElementsByTagName("a").item(0) as Element).getAttribute("href")

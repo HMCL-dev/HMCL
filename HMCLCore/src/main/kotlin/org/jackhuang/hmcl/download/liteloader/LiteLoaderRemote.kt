@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.game.Library
 import org.jackhuang.hmcl.util.Immutable
 
 @Immutable
-internal data class LiteLoaderVersionsMeta (
+internal data class LiteLoaderVersionsMeta @JvmOverloads constructor(
         @SerializedName("description")
         val description: String = "",
         @SerializedName("authors")
@@ -32,7 +32,7 @@ internal data class LiteLoaderVersionsMeta (
 )
 
 @Immutable
-internal data class LiteLoaderRepository (
+internal data class LiteLoaderRepository @JvmOverloads constructor(
         @SerializedName("stream")
         val stream: String = "",
         @SerializedName("type")
@@ -44,7 +44,7 @@ internal data class LiteLoaderRepository (
 )
 
 @Immutable
-internal class LiteLoaderVersion (
+internal class LiteLoaderVersion @JvmOverloads constructor(
         @SerializedName("tweakClass")
         val tweakClass: String = "",
         @SerializedName("file")
@@ -62,7 +62,7 @@ internal class LiteLoaderVersion (
 )
 
 @Immutable
-internal class LiteLoaderBranch (
+internal class LiteLoaderBranch @JvmOverloads constructor(
         @SerializedName("libraries")
         val libraries: Collection<Library> = emptyList(),
         @SerializedName("com.mumfrey:liteloader")
@@ -70,7 +70,7 @@ internal class LiteLoaderBranch (
 )
 
 @Immutable
-internal class LiteLoaderGameVersions (
+internal class LiteLoaderGameVersions @JvmOverloads constructor(
         @SerializedName("repo")
         val repo: LiteLoaderRepository? = null,
         @SerializedName("artefacts")
@@ -80,7 +80,7 @@ internal class LiteLoaderGameVersions (
 )
 
 @Immutable
-internal class LiteLoaderVersionsRoot (
+internal class LiteLoaderVersionsRoot @JvmOverloads constructor(
         @SerializedName("versions")
         val versions: Map<String, LiteLoaderGameVersions> = emptyMap(),
         @SerializedName("meta")

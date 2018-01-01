@@ -21,7 +21,7 @@ import org.jackhuang.hmcl.task.Scheduler
 import java.util.*
 
 class EventBus {
-    val events = HashMap<Class<*>, EventManager<*>>()
+    private val events = HashMap<Class<*>, EventManager<*>>()
 
     @Suppress("UNCHECKED_CAST")
     fun <T : EventObject> channel(classOfT: Class<T>): EventManager<T> {

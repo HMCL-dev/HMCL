@@ -26,10 +26,10 @@ import java.util.*
 /**
  * @see {@link http://wiki.vg}
  */
-object MojangDownloadProvider : DownloadProvider() {
+object MojangDownloadProvider : DownloadProvider {
     override val libraryBaseURL: String = "https://libraries.minecraft.net/"
-    override val versionBaseURL: String = "http://s3.amazonaws.com/Minecraft.Download/versions/"
     override val versionListURL: String = "https://launchermeta.mojang.com/mc/game/version_manifest.json"
+    override val versionBaseURL: String = "http://s3.amazonaws.com/Minecraft.Download/versions/"
     override val assetIndexBaseURL: String = "http://s3.amazonaws.com/Minecraft.Download/indexes/"
     override val assetBaseURL: String =  "http://resources.download.minecraft.net/"
 

@@ -78,16 +78,16 @@ interface Validation {
 
 object ValidationTypeAdapterFactory : TypeAdapterFactory {
     override fun <T : Any?> create(gson: Gson, type: TypeToken<T?>?): TypeAdapter<T?> {
-        val delgate = gson.getDelegateAdapter(this, type)
+        val delegate = gson.getDelegateAdapter(this, type)
         return object : TypeAdapter<T?>() {
             override fun write(out: JsonWriter?, value: T?) {
                 if (value is Validation)
                     value.validate()
-                delgate.write(out, value)
+                delegate.write(out, value)
             }
 
             override fun read(reader: JsonReader?): T? {
-                val value = delgate.read(reader)
+                val value = delegate.read(reader)
                 if (value is Validation)
                     value.validate()
                 return value
@@ -160,7 +160,7 @@ object DateTypeAdapter : JsonSerializer<Date>, JsonDeserializer<Date> {
         if (json !is JsonPrimitive) {
             throw JsonParseException("The date should be a string value")
         } else {
-            val date = this.deserializeToDate(json.getAsString())
+            val date = this.deserializeToDate(json.asString)
             if (typeOfT === Date::class.java) {
                 return date
             } else {
@@ -170,23 +170,23 @@ object DateTypeAdapter : JsonSerializer<Date>, JsonDeserializer<Date> {
     }
 
     override fun serialize(src: Date, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
-        synchronized(this.enUsFormat) {
+        synchronized(enUsFormat) {
             return JsonPrimitive(this.serializeToString(src))
         }
     }
 
     fun deserializeToDate(string: String): Date {
-        synchronized(this.enUsFormat) {
+        synchronized(enUsFormat) {
             try {
-                return this.enUsFormat.parse(string)
+                return enUsFormat.parse(string)
             } catch (ex1: ParseException) {
                 try {
-                    return this.iso8601Format.parse(string)
+                    return iso8601Format.parse(string)
                 } catch (ex2: ParseException) {
                     try {
                         var cleaned = string.replace("Z", "+00:00")
                         cleaned = cleaned.substring(0, 22) + cleaned.substring(23)
-                        return this.iso8601Format.parse(cleaned)
+                        return iso8601Format.parse(cleaned)
                     } catch (e: Exception) {
                         throw JsonSyntaxException("Invalid date: " + string, e)
                     }

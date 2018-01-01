@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.util.ignoreThrowable
 import java.util.regex.Pattern
 
 @Immutable
-data class CompatibilityRule(
+data class CompatibilityRule @JvmOverloads constructor(
         val action: Action = CompatibilityRule.Action.ALLOW,
         val os: OSRestriction? = null,
         val features: Map<String, Boolean>? = null
@@ -33,8 +33,8 @@ data class CompatibilityRule(
     fun getAppliedAction(supportedFeatures: Map<String, Boolean>): Action? {
         if (os != null && !os.allow()) return null
         if (features != null) {
-            features.entries.forEach {
-                if (supportedFeatures[it.key] != it.value)
+            features.entries.forEach { (key, value) ->
+                if (supportedFeatures[key] != value)
                     return null
             }
         }

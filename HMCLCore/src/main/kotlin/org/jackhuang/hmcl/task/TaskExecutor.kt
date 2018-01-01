@@ -35,6 +35,7 @@ class TaskExecutor(private val task: Task) {
     val totTask = AtomicInteger(0)
     val variables = AutoTypingMap<String>(mutableMapOf())
     var lastException: Exception? = null
+        private set
     private val workerQueue = ConcurrentLinkedQueue<Future<*>>()
 
     /**
@@ -151,7 +152,7 @@ class TaskExecutor(private val task: Task) {
         return flag
     }
 
-    private inner class Invoker(val task: Task, val latch: CountDownLatch, val boolean: AtomicBoolean): Callable<Unit> {
+    private inner class Invoker(private val task: Task, private val latch: CountDownLatch, private val boolean: AtomicBoolean): Callable<Unit> {
         override fun call() {
             try {
                 Thread.currentThread().name = task.title

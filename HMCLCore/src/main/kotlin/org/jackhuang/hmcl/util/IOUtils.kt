@@ -30,9 +30,7 @@ fun Closeable.closeQuietly() {
 
 fun InputStream.readFully(): ByteArrayOutputStream {
     try {
-        val ans = ByteArrayOutputStream()
-        copyTo(ans)
-        return ans
+        return ByteArrayOutputStream().apply { copyTo(this) }
     } finally {
         this.closeQuietly()
     }

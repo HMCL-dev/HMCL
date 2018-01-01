@@ -23,7 +23,7 @@ import java.util.*
 import kotlin.collections.HashMap
 
 @Immutable
-class LibrariesDownloadInfo(
+class LibrariesDownloadInfo @JvmOverloads constructor(
         @SerializedName("artifact")
         val artifact: LibraryDownloadInfo? = null,
         classifier_: Map<String, LibraryDownloadInfo>? = null

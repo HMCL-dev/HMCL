@@ -47,14 +47,14 @@ fun initHttps() {
     if (INIT_HTTPS)
         return
     INIT_HTTPS = true
-    System.setProperty("https.protocols", "SSLv3,TLSv1");
+    System.setProperty("https.protocols", "SSLv3,TLSv1")
     try {
-        val c = SSLContext.getInstance("SSL");
-        c.init(null, arrayOf(XTM), SecureRandom());
-        HttpsURLConnection.setDefaultSSLSocketFactory(c.getSocketFactory());
+        val c = SSLContext.getInstance("SSL")
+        c.init(null, arrayOf(XTM), SecureRandom())
+        HttpsURLConnection.setDefaultSSLSocketFactory(c.socketFactory)
     } catch (e: GeneralSecurityException) {
     }
-    HttpsURLConnection.setDefaultHostnameVerifier(HNV);
+    HttpsURLConnection.setDefaultHostnameVerifier(HNV)
 }
 
 var DEFAULT_USER_AGENT: () -> String = { RandomUserAgent.randomUserAgent }
@@ -144,7 +144,7 @@ fun URL.detectFileName(proxy: Proxy = Proxy.NO_PROXY): String {
 
 fun HttpURLConnection.detectFileName(): String {
     val disposition = getHeaderField("Content-Disposition")
-    if (disposition == null || disposition.indexOf("filename=") == -1) {
+    if (disposition == null || !disposition.contains("filename=")) {
         val u = url.toString()
         return u.substringAfterLast('/')
     } else

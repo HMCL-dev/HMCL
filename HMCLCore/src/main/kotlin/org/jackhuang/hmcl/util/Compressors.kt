@@ -151,7 +151,6 @@ fun File.uncompressTo(dest: File, subDirectory: String = "", callback: ((String)
 /**
  * Read the text content of a file in zip.
  *
- * @param f the zip file
  * @param name the location of the text in zip file, something like A/B/C/D.txt
  * @throws IOException if the file is not a valid zip file.
  * @return the content of given file.
@@ -167,7 +166,6 @@ fun File.readTextZipEntry(name: String): String {
 /**
  * Read the text content of a file in zip.
  *
- * @param f the zip file
  * @param location the location of the text in zip file, something like A/B/C/D.txt
  * @return the content of given file.
  */

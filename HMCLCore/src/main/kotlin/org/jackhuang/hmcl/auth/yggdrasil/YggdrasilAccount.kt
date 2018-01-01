@@ -57,8 +57,7 @@ class YggdrasilAccount private constructor(override val username: String): Accou
     override fun logIn(proxy: Proxy): AuthInfo {
         if (canPlayOnline)
             return AuthInfo(
-                    username = selectedProfile!!.name!!,
-                    userId = UUIDTypeAdapter.fromUUID(selectedProfile!!.id!!),
+                    profile = selectedProfile!!,
                     authToken = accessToken!!,
                     userType = userType,
                     userProperties = GSON.toJson(userProperties)
@@ -72,8 +71,7 @@ class YggdrasilAccount private constructor(override val username: String): Accou
                 throw UnsupportedOperationException("Do not support multi-available-profiles account yet.")
             } else {
                 return AuthInfo(
-                        username = selectedProfile!!.name!!,
-                        userId = UUIDTypeAdapter.fromUUID(selectedProfile!!.id!!),
+                        profile = selectedProfile!!,
                         authToken = accessToken!!,
                         userType = userType,
                         userProperties = GSON.toJson(userProperties)
@@ -149,7 +147,7 @@ class YggdrasilAccount private constructor(override val username: String): Accou
             if (!profile.properties.isEmpty())
                 result[STORAGE_KEY_PROFILE_PROPERTIES] = profile.properties.toList()
         }
-        if (accessToken != null && accessToken!!.isNotBlank())
+        if (!accessToken.isNullOrBlank())
             result[STORAGE_KEY_ACCESS_TOKEN] = accessToken!!
 
         return result
@@ -163,7 +161,7 @@ class YggdrasilAccount private constructor(override val username: String): Accou
 
             val response = GSON.fromJson<Response>(jsonResult) ?: return null
 
-            if (response.error?.isNotBlank() ?: false) {
+            if (!response.error.isNullOrBlank()) {
                 LOG.severe("Failed to log in, the auth server returned an error: " + response.error + ", message: " + response.errorMessage + ", cause: " + response.cause)
                 if (response.errorMessage != null)
                     if (response.errorMessage.contains("Invalid credentials"))
@@ -216,10 +214,8 @@ class YggdrasilAccount private constructor(override val username: String): Accou
 
         fun randomToken() = UUIDTypeAdapter.fromUUID(UUID.randomUUID())
 
-        override fun fromUsername(username: String, password: String): YggdrasilAccount {
-            val account = YggdrasilAccount(username)
-            account.password = password
-            return account
+        override fun fromUsername(username: String, password: String) = YggdrasilAccount(username).apply {
+            this.password = password
         }
 
         override fun fromStorage(storage: Map<Any, Any>): YggdrasilAccount {

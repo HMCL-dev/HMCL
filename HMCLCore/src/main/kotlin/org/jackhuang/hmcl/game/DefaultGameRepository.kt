@@ -57,12 +57,16 @@ open class DefaultGameRepository(var baseDirectory: File): GameRepository {
      * {@inheritsDoc}
      * @return something like ".minecraft/versions/<version name>/<version name>-natives"
      */
-    override fun getNativeDirectory(id: String) = File(getVersionRoot(id), "$id-natives")
-    override fun getVersionRoot(id: String) = File(baseDirectory, "versions/$id")
-    open fun getVersionJson(id: String) = File(getVersionRoot(id), "$id.json")
+    override fun getNativeDirectory(id: String) = getVersionRoot(id).resolve("$id-natives")
+    override fun getVersionRoot(id: String) = baseDirectory.resolve("versions/$id")
+    open fun getVersionJson(id: String) = getVersionRoot(id).resolve("$id.json")
+
+    @Throws(IOException::class, JsonSyntaxException::class)
     open fun readVersionJson(id: String): Version? = readVersionJson(getVersionJson(id))
-    @Throws(IOException::class, JsonSyntaxException::class, VersionNotFoundException::class)
+
+    @Throws(IOException::class, JsonSyntaxException::class)
     open fun readVersionJson(file: File): Version? = GSON.fromJson<Version>(file.readText())
+
     override fun renameVersion(from: String, to: String): Boolean {
         try {
             val fromVersion = getVersion(from)
@@ -87,6 +91,7 @@ open class DefaultGameRepository(var baseDirectory: File): GameRepository {
             return false
         }
     }
+
     open fun removeVersionFromDisk(name: String): Boolean {
         val file = getVersionRoot(name)
         if (!file.exists())
@@ -153,7 +158,7 @@ open class DefaultGameRepository(var baseDirectory: File): GameRepository {
     override fun getActualAssetDirectory(version: String, assetId: String): File {
         try {
             return reconstructAssets(version, assetId)
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             LOG.log(Level.SEVERE, "Unable to reconstruct asset directory", e)
             return getAssetDirectory(version, assetId)
         }

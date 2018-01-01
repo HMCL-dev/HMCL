@@ -124,8 +124,8 @@ internal class Log4jHandler(private val callback: (String, Log4jLevel) -> Unit) 
             }
         }
 
-        override fun characters(ch: CharArray?, start: Int, length: Int) {
-            val line = String(ch!!, start, length)
+        override fun characters(ch: CharArray, start: Int, length: Int) {
+            val line = String(ch, start, length)
             if (line.trim { it <= ' ' }.isEmpty()) return
             if (readingMessage)
                 message!!.append(line).append(OS.LINE_SEPARATOR)

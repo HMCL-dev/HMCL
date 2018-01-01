@@ -32,7 +32,7 @@ private fun lessThan32(b: ByteArray, startIndex: Int): Int {
 }
 
 fun matchArray(a: ByteArray, b: ByteArray): Int {
-    for (i in 0..a.size - b.size - 1) {
+    for (i in 0 until a.size - b.size) {
         var j = 1
         for (k in b.indices) {
             if (b[k] == a[i + k])

@@ -56,9 +56,9 @@ class GetTask @JvmOverloads constructor(val url: URL, val encoding: Charset = Ch
                     val len = input.read(buf)
                     if (len == -1)
                         break
-                    read += len
 
                     baos.write(buf, 0, len)
+                    read += len
                     updateProgress(read, size)
 
                     if (Thread.currentThread().isInterrupted)

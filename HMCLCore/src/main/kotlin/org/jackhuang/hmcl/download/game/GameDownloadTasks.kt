@@ -102,7 +102,7 @@ class GameAssetRefreshTask(private val dependencyManager: DefaultDependencyManag
         val index = GSON.fromJson<AssetIndex>(assetIndexFile.readText())
         val res = LinkedList<Pair<File, AssetObject>>()
         var progress = 0
-        index?.objects?.entries?.forEach { (_, assetObject) ->
+        index?.objects?.values?.forEach { assetObject ->
             res += Pair(dependencyManager.repository.getAssetObject(version.id, assetIndexInfo.id, assetObject), assetObject)
             updateProgress(++progress, index.objects.size)
         }
@@ -119,7 +119,7 @@ class GameAssetRefreshTask(private val dependencyManager: DefaultDependencyManag
  * @param dependencyManager the dependency manager that can provides proxy settings and [GameRepository]
  * @param version the **resolved** version
  */
-class GameAssetDownloadTask(private val dependencyManager: DefaultDependencyManager, private val version: Version) : Task() {
+class GameAssetDownloadTask(private val dependencyManager: DefaultDependencyManager, version: Version) : Task() {
     private val refreshTask = GameAssetRefreshTask(dependencyManager, version)
     override val dependents = listOf(refreshTask)
     override val dependencies = LinkedList<Task>()
