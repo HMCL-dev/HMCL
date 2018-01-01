@@ -21,6 +21,8 @@ import java.io.IOException
 import com.google.gson.JsonSyntaxException
 import org.jackhuang.hmcl.task.TaskResult
 import org.jackhuang.hmcl.util.*
+import org.jackhuang.hmcl.util.Constants.GSON
+import org.jackhuang.hmcl.util.Logging.LOG
 import java.util.logging.Level
 
 
@@ -58,10 +60,10 @@ class UpdateChecker(var base: VersionNumber, var type: String) {
      */
     fun process(showMessage: Boolean): TaskResult<VersionNumber> {
         return object : TaskResult<VersionNumber>() {
-            override val id = "update_checker.process"
+            override fun getId() = "update_checker.process"
             override fun execute() {
                 if (newVersion == null) {
-                    versionString = ("http://huangyuhui.duapp.com/info.php?type=$type").toURL().doGet()
+                    versionString = NetworkUtils.doGet("http://huangyuhui.duapp.com/info.php?type=$type".toURL())
                     newVersion = VersionNumber.asVersion(versionString!!)
                 }
 
@@ -83,12 +85,12 @@ class UpdateChecker(var base: VersionNumber, var type: String) {
     @Synchronized
     fun requestDownloadLink(): TaskResult<Map<String, String>> {
         return object : TaskResult<Map<String, String>>() {
-            override val id = "update_checker.request_download_link"
+            override fun getId() = "update_checker.request_download_link"
             override fun execute() {
                 @Suppress("UNCHECKED_CAST")
                 if (download_link == null)
                     try {
-                        download_link = GSON.fromJson(("http://huangyuhui.duapp.com/update_link.php?type=$type").toURL().doGet(), Map::class.java) as Map<String, String>
+                        download_link = GSON.fromJson(NetworkUtils.doGet("http://huangyuhui.duapp.com/update_link.php?type=$type".toURL()), Map::class.java) as Map<String, String>
                     } catch (e: JsonSyntaxException) {
                         LOG.log(Level.WARNING, "Failed to get update link.", e)
                     } catch (e: IOException) {

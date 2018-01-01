@@ -34,10 +34,12 @@ class ExportWizardProvider(private val profile: Profile, private val version: St
         @Suppress("UNCHECKED_CAST")
         return HMCLModpackExportTask(profile.repository, version, settings[ModpackFileSelectionPage.MODPACK_FILE_SELECTION] as List<String>,
                 Modpack(
-                        name = settings[ModpackInfoPage.MODPACK_NAME] as String,
-                        author = settings[ModpackInfoPage.MODPACK_AUTHOR] as String,
-                        version = settings[ModpackInfoPage.MODPACK_VERSION] as String,
-                        description = settings[ModpackInfoPage.MODPACK_DESCRIPTION] as String
+                        settings[ModpackInfoPage.MODPACK_NAME] as String,
+                        settings[ModpackInfoPage.MODPACK_AUTHOR] as String,
+                        settings[ModpackInfoPage.MODPACK_VERSION] as String,
+                        null,
+                        settings[ModpackInfoPage.MODPACK_DESCRIPTION] as String,
+                        null
                 ), settings[ModpackInfoPage.MODPACK_FILE] as File)
     }
 

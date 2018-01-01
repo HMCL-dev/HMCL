@@ -23,10 +23,7 @@ import javafx.application.Platform
 import javafx.scene.control.Label
 import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
-import org.jackhuang.hmcl.task.Scheduler
-import org.jackhuang.hmcl.task.Task
-import org.jackhuang.hmcl.task.TaskExecutor
-import org.jackhuang.hmcl.task.TaskListener
+import org.jackhuang.hmcl.task.*
 import java.util.*
 import kotlin.concurrent.thread
 
@@ -94,28 +91,28 @@ interface AbstractWizardDisplayer : WizardDisplayer {
 
         navigateTo(StackPane().apply { children += vbox }, Navigation.NavigationDirection.FINISH)
 
-        task.with(org.jackhuang.hmcl.task.task(Scheduler.JAVAFX) {
+        task.with(org.jackhuang.hmcl.util.task(Schedulers.javafx()) {
             navigateTo(Label("Successful"), Navigation.NavigationDirection.FINISH)
         }).executor().apply {
             @Suppress("NAME_SHADOWING")
-            taskListener = object : TaskListener {
+            taskListener = object : TaskListener() {
                 override fun onReady(task: Task) {
-                    Platform.runLater { tasksBar.progressProperty().set(finishedTasks * 1.0 / totTask.get()) }
+                    Platform.runLater { tasksBar.progressProperty().set(finishedTasks * 1.0 / runningTasks) }
                 }
 
                 override fun onFinished(task: Task) {
                     Platform.runLater {
-                        label.text = task.title
+                        label.text = task.name
                         ++finishedTasks
-                        tasksBar.progressProperty().set(finishedTasks * 1.0 / totTask.get())
+                        tasksBar.progressProperty().set(finishedTasks * 1.0 / runningTasks)
                     }
                 }
 
                 override fun onFailed(task: Task, throwable: Throwable) {
                     Platform.runLater {
-                        label.text = task.title
+                        label.text = task.name
                         ++finishedTasks
-                        tasksBar.progressProperty().set(finishedTasks * 1.0 / totTask.get())
+                        tasksBar.progressProperty().set(finishedTasks * 1.0 / runningTasks)
                     }
                 }
 

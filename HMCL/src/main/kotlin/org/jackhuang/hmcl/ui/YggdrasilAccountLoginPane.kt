@@ -26,10 +26,11 @@ import javafx.scene.layout.StackPane
 import org.jackhuang.hmcl.auth.AuthInfo
 import org.jackhuang.hmcl.auth.yggdrasil.InvalidCredentialsException
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Settings
-import org.jackhuang.hmcl.task.Scheduler
-import org.jackhuang.hmcl.task.taskResult
+import org.jackhuang.hmcl.task.Schedulers
+import org.jackhuang.hmcl.util.taskResult
 
 class YggdrasilAccountLoginPane(private val oldAccount: YggdrasilAccount, private val success: (AuthInfo) -> Unit, private val failed: () -> Unit) : StackPane() {
     @FXML lateinit var lblUsername: Label
@@ -54,12 +55,12 @@ class YggdrasilAccountLoginPane(private val oldAccount: YggdrasilAccount, privat
         lblCreationWarning.text = ""
         taskResult("login") {
             try {
-                val account = YggdrasilAccount.fromUsername(username, password)
+                val account = YggdrasilAccountFactory.INSTANCE.fromUsername(username, password)
                 account.logIn(Settings.proxy)
             } catch (e: Exception) {
                 e
             }
-        }.subscribe(Scheduler.JAVAFX) {
+        }.subscribe(Schedulers.javafx()) {
             val account: Any = it["login"]
             if (account is AuthInfo) {
                 success(account)

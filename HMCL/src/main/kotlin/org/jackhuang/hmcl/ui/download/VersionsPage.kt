@@ -24,6 +24,7 @@ import javafx.scene.layout.StackPane
 import org.jackhuang.hmcl.download.DownloadProvider
 import org.jackhuang.hmcl.download.RemoteVersion
 import org.jackhuang.hmcl.task.Scheduler
+import org.jackhuang.hmcl.task.Schedulers
 import org.jackhuang.hmcl.task.TaskExecutor
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations
 import org.jackhuang.hmcl.ui.animation.TransitionHandler
@@ -53,9 +54,9 @@ class VersionsPage(private val controller: WizardController, private val gameVer
     }
 
     override fun refresh() {
-        executor = versionList.refreshAsync(downloadProvider).subscribe(Scheduler.JAVAFX) {
+        executor = versionList.refreshAsync(downloadProvider).subscribe(Schedulers.javafx()) {
             val versions = ArrayList(versionList.getVersions(gameVersion))
-            versions.sortWith(RemoteVersion)
+            versions.sortWith(RemoteVersion.RemoteVersionComparator.INSTANCE)
             for (version in versions) {
                 list.items.add(VersionsPageItem(version))
             }

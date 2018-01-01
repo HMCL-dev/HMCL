@@ -23,8 +23,8 @@ import org.jackhuang.hmcl.setting.EnumGameDirectory
 import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.setting.VersionSetting
-import org.jackhuang.hmcl.task.Scheduler
-import org.jackhuang.hmcl.util.LOG
+import org.jackhuang.hmcl.task.Schedulers
+import org.jackhuang.hmcl.util.Logging.LOG
 import org.jackhuang.hmcl.util.fromJson
 import java.io.File
 import java.io.IOException
@@ -72,7 +72,7 @@ class HMCLGameRepository(val profile: Profile, baseDirectory: File)
 
     @Synchronized
     override fun refreshVersionsImpl() {
-        Scheduler.NEW_THREAD.schedule {
+        Schedulers.newThread().schedule {
             versionSettings.clear()
 
             super.refreshVersionsImpl()

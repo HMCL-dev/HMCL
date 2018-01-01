@@ -37,10 +37,12 @@ import java.util.jar.Pack200
 import java.util.jar.JarOutputStream
 import org.jackhuang.hmcl.util.*
 import java.net.URISyntaxException
-import org.jackhuang.hmcl.util.OS
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.ui.alert
+import org.jackhuang.hmcl.util.Constants.GSON
+import org.jackhuang.hmcl.util.Logging.LOG
 import org.jackhuang.hmcl.util.VersionNumber
+import java.net.Proxy
 import java.net.URI
 
 class AppDataUpgrader : IUpgrader {
@@ -123,18 +125,18 @@ class AppDataUpgrader : IUpgrader {
                 else {
                     var url = URL_PUBLISH
                     if (map != null)
-                        if (map.containsKey(OS.CURRENT_OS.checkedName))
-                            url = map.get(OS.CURRENT_OS.checkedName)!!
-                        else if (map.containsKey(OS.UNKNOWN.checkedName))
-                            url = map.get(OS.UNKNOWN.checkedName)!!
+                        if (map.containsKey(OperatingSystem.CURRENT_OS.checkedName))
+                            url = map.get(OperatingSystem.CURRENT_OS.checkedName)!!
+                        else if (map.containsKey(OperatingSystem.UNKNOWN.checkedName))
+                            url = map.get(OperatingSystem.UNKNOWN.checkedName)!!
                     try {
                         java.awt.Desktop.getDesktop().browse(URI(url))
                     } catch (e: URISyntaxException) {
                         LOG.log(Level.SEVERE, "Failed to browse uri: " + url, e)
-                        OS.setClipboard(url)
+                        OperatingSystem.setClipboard(url)
                     } catch (e: IOException) {
                         LOG.log(Level.SEVERE, "Failed to browse uri: " + url, e)
-                        OS.setClipboard(url)
+                        OperatingSystem.setClipboard(url)
                     }
 
                 }
@@ -144,16 +146,17 @@ class AppDataUpgrader : IUpgrader {
 
     class AppDataUpgraderPackGzTask(downloadLink: String, private val newestVersion: String, private val expectedHash: String) : Task() {
         private val tempFile: File = File.createTempFile("hmcl", ".pack.gz")
-        override val dependents = listOf(FileDownloadTask(downloadLink.toURL(), tempFile, expectedHash))
+        private val dependents = listOf(FileDownloadTask(downloadLink.toURL(), tempFile, Proxy.NO_PROXY, expectedHash))
+        override fun getDependents() = dependents
 
         init {
-            onDone += { event -> if (event.failed) tempFile.delete() }
+            onDone() += { event -> if (event.isFailed) tempFile.delete() }
         }
 
         override fun execute() {
             val json = HashMap<String, String>()
             var f = getSelf(newestVersion)
-            if (!f.parentFile.makeDirectory())
+            if (!FileUtils.makeDirectory(f.parentFile))
                 throw IOException("Failed to make directories: " + f.parent)
 
             var i = 0
@@ -187,15 +190,15 @@ class AppDataUpgrader : IUpgrader {
     }
 
     class AppDataUpgraderJarTask(downloadLink: String, private val newestVersion: String, expectedHash: String) : Task() {
-        override var title = "Upgrade"
-            set(value) {}
         private val tempFile = File.createTempFile("hmcl", ".jar")
 
         init {
-            onDone += { event -> if (event.failed) tempFile.delete() }
+            name = "Upgrade"
+            onDone() += { event -> if (event.isFailed) tempFile.delete() }
         }
 
-        override val dependents = listOf(FileDownloadTask(downloadLink.toURL(), tempFile, expectedHash))
+        private val dependents = listOf(FileDownloadTask(downloadLink.toURL(), tempFile, Proxy.NO_PROXY, expectedHash))
+        override fun getDependents() = dependents
 
         override fun execute() {
             val json = HashMap<String, String>()

@@ -53,10 +53,10 @@ class ModItem(info: ModInfo, private val deleteCallback: (ModItem) -> Unit) : Bo
         style = "-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;"
         JFXDepthManager.setDepth(this, 1)
         lblModFileName.text = info.fileName
-        lblModAuthor.text = "${info.name}, Version: ${info.version}, Game Version: ${info.mcversion}, Authors: ${info.authors}"
+        lblModAuthor.text = "${info.name}, Version: ${info.version}, Game Version: ${info.gameVersion}, Authors: ${info.authors}"
         chkEnabled.isSelected = info.isActive
         chkEnabled.selectedProperty().onChange {
-            info.activeProperty.set(it)
+            info.activeProperty().set(it)
         }
     }
 

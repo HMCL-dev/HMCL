@@ -22,13 +22,15 @@ import javafx.scene.paint.Paint
 import org.jackhuang.hmcl.ProfileChangedEvent
 import org.jackhuang.hmcl.ProfileLoadingEvent
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
-import org.jackhuang.hmcl.event.EVENT_BUS
+import org.jackhuang.hmcl.event.EventBus
 import org.jackhuang.hmcl.game.AccountHelper
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.ui.construct.IconedItem
 import org.jackhuang.hmcl.ui.construct.RipplerContainer
+import org.jackhuang.hmcl.util.channel
 import org.jackhuang.hmcl.util.onChangeAndOperate
+import org.jackhuang.hmcl.util.plusAssign
 import java.util.*
 
 class LeftPaneController(private val leftPane: AdvancedListBox) {
@@ -56,8 +58,8 @@ class LeftPaneController(private val leftPane: AdvancedListBox) {
                 .startCategory(i18n("ui.label.profile"))
                 .add(profilePane)
 
-        EVENT_BUS.channel<ProfileLoadingEvent>() += this::onProfilesLoading
-        EVENT_BUS.channel<ProfileChangedEvent>() += this::onProfileChanged
+        EventBus.EVENT_BUS.channel<ProfileLoadingEvent>() += this::onProfilesLoading
+        EventBus.EVENT_BUS.channel<ProfileChangedEvent>() += this::onProfileChanged
 
         Controllers.decorator.addMenuButton.setOnMouseClicked {
             Controllers.decorator.showPage(ProfilePage(null))

@@ -22,11 +22,13 @@ import javafx.application.Platform
 import javafx.stage.Stage
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.Scheduler
+import org.jackhuang.hmcl.task.Schedulers
 import org.jackhuang.hmcl.ui.Controllers
 import org.jackhuang.hmcl.ui.runOnUiThread
-import org.jackhuang.hmcl.util.DEFAULT_USER_AGENT
-import org.jackhuang.hmcl.util.LOG
-import org.jackhuang.hmcl.util.OS
+import org.jackhuang.hmcl.util.Constants
+import org.jackhuang.hmcl.util.Logging.LOG
+import org.jackhuang.hmcl.util.NetworkUtils
+import org.jackhuang.hmcl.util.OperatingSystem
 import java.io.File
 import java.util.logging.Level
 
@@ -34,7 +36,7 @@ fun i18n(key: String): String {
     try {
         return Main.RESOURCE_BUNDLE.getString(key)
     } catch (e: Exception) {
-        LOG.log(Level.WARNING, "Cannot find key $key in resource bundle", e)
+        LOG.log(Level.SEVERE, "Cannot find key $key in resource bundle", e)
         return key
     }
 }
@@ -62,20 +64,21 @@ class Main : Application() {
 
         @JvmStatic
         fun main(args: Array<String>) {
-            DEFAULT_USER_AGENT = { "Hello Minecraft! Launcher" }
+            NetworkUtils.setUserAgentSupplier { "Hello Minecraft! Launcher" }
+            Constants.UI_THREAD_SCHEDULER = Constants.JAVAFX_UI_THREAD_SCHEDULER;
 
             launch(Main::class.java, *args)
         }
 
         fun getWorkingDirectory(folder: String): File {
             val userhome = System.getProperty("user.home", ".")
-            return when (OS.CURRENT_OS) {
-                OS.LINUX -> File(userhome, ".$folder/")
-                OS.WINDOWS -> {
+            return when (OperatingSystem.CURRENT_OS) {
+                OperatingSystem.LINUX -> File(userhome, ".$folder/")
+                OperatingSystem.WINDOWS -> {
                     val appdata: String? = System.getenv("APPDATA")
                     File(appdata ?: userhome, ".$folder/")
                 }
-                OS.OSX -> File(userhome, "Library/Application Support/" + folder)
+                OperatingSystem.OSX -> File(userhome, "Library/Application Support/" + folder)
                 else -> File(userhome, "$folder/")
             }
         }
@@ -89,7 +92,7 @@ class Main : Application() {
 
         fun stopWithoutJavaFXPlatform() = runOnUiThread {
             Controllers.stage.close()
-            Scheduler.shutdown()
+            Schedulers.shutdown()
         }
 
         val RESOURCE_BUNDLE = Settings.locale.resourceBundle

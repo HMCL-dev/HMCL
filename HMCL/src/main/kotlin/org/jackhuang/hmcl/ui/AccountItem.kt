@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
 import org.jackhuang.hmcl.game.AccountHelper
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.Scheduler
+import org.jackhuang.hmcl.task.Schedulers
 import java.util.concurrent.Callable
 
 class AccountItem(i: Int, val account: Account, group: ToggleGroup) : StackPane() {
@@ -83,10 +84,10 @@ class AccountItem(i: Int, val account: Account, group: ToggleGroup) : StackPane(
             btnRefresh.setOnMouseClicked {
                 pgsSkin.isVisible = true
                 AccountHelper.refreshSkinAsync(account)
-                        .subscribe(Scheduler.JAVAFX) { loadSkin() }
+                        .subscribe(Schedulers.javafx()) { loadSkin() }
             }
             AccountHelper.loadSkinAsync(account)
-                    .subscribe(Scheduler.JAVAFX) { loadSkin() }
+                    .subscribe(Schedulers.javafx()) { loadSkin() }
         }
 
         if (account is OfflineAccount) { // Offline Account cannot be refreshed,

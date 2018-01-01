@@ -29,17 +29,19 @@ import javafx.scene.image.Image
 import javafx.scene.layout.StackPane
 import org.jackhuang.hmcl.ProfileChangedEvent
 import org.jackhuang.hmcl.ProfileLoadingEvent
-import org.jackhuang.hmcl.event.EVENT_BUS
+import org.jackhuang.hmcl.event.EventBus
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent
+import org.jackhuang.hmcl.game.GameVersion.minecraftVersion
 import org.jackhuang.hmcl.game.LauncherHelper
-import org.jackhuang.hmcl.game.minecraftVersion
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.ui.construct.RipplerContainer
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage
+import org.jackhuang.hmcl.util.channel
 import org.jackhuang.hmcl.util.onChange
+import org.jackhuang.hmcl.util.plusAssign
 
 /**
  * @see /assets/fxml/main.fxml
@@ -59,9 +61,9 @@ class MainPage : StackPane(), DecoratorPage {
         btnLaunch.limitWidth(40.0)
         btnLaunch.limitHeight(40.0)
 
-        EVENT_BUS.channel<RefreshedVersionsEvent>() += { -> loadVersions() }
-        EVENT_BUS.channel<ProfileLoadingEvent>() += this::onProfilesLoading
-        EVENT_BUS.channel<ProfileChangedEvent>() += this::onProfileChanged
+        EventBus.EVENT_BUS.channel<RefreshedVersionsEvent>() += { -> loadVersions() }
+        EventBus.EVENT_BUS.channel<ProfileLoadingEvent>() += this::onProfilesLoading
+        EventBus.EVENT_BUS.channel<ProfileChangedEvent>() += this::onProfileChanged
 
         btnAdd.setOnMouseClicked { Controllers.decorator.startWizard(DownloadWizardProvider(), "Install New Game") }
         btnRefresh.setOnMouseClicked { Settings.selectedProfile.repository.refreshVersions() }

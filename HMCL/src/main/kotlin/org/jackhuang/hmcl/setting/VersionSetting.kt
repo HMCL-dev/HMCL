@@ -21,6 +21,10 @@ import com.google.gson.*
 import javafx.beans.InvalidationListener
 import org.jackhuang.hmcl.Main
 import org.jackhuang.hmcl.game.LaunchOptions
+import org.jackhuang.hmcl.setting.Settings.proxyHost
+import org.jackhuang.hmcl.setting.Settings.proxyPass
+import org.jackhuang.hmcl.setting.Settings.proxyPort
+import org.jackhuang.hmcl.setting.Settings.proxyUser
 import org.jackhuang.hmcl.util.*
 import java.io.File
 import java.io.IOException
@@ -70,7 +74,7 @@ class VersionSetting() {
     /**
      * The maximum memory that JVM can allocate for heap.
      */
-    val maxMemoryProperty = ImmediateIntegerProperty(this, "maxMemory", OS.SUGGESTED_MEMORY)
+    val maxMemoryProperty = ImmediateIntegerProperty(this, "maxMemory", OperatingSystem.SUGGESTED_MEMORY.toInt())
     var maxMemory: Int by maxMemoryProperty
 
     /**
@@ -232,28 +236,28 @@ class VersionSetting() {
 
     @Throws(IOException::class)
     fun toLaunchOptions(gameDir: File): LaunchOptions {
-        return LaunchOptions(
-                gameDir = gameDir,
-                java = javaVersion ?: JavaVersion.fromCurrentEnvironment(),
-                versionName = Main.TITLE,
-                profileName = Main.TITLE,
-                minecraftArgs = minecraftArgs,
-                javaArgs = javaArgs,
-                maxMemory = maxMemory,
-                minMemory = minMemory,
-                metaspace = permSize.toIntOrNull(),
-                width = width,
-                height = height,
-                fullscreen = fullscreen,
-                serverIp = serverIp,
-                wrapper = wrapper,
-                proxyHost = Settings.proxyHost,
-                proxyPort = Settings.proxyPort,
-                proxyUser = Settings.proxyUser,
-                proxyPass = Settings.proxyPass,
-                precalledCommand = precalledCommand,
-                noGeneratedJVMArgs = noJVMArgs
-        )
+        return LaunchOptions.Builder()
+                .setGameDir(gameDir)
+                .setJava(javaVersion ?: JavaVersion.fromCurrentEnvironment())
+                .setVersionName(Main.TITLE)
+                .setProfileName(Main.TITLE)
+                .setMinecraftArgs(minecraftArgs)
+                .setJavaArgs(javaArgs)
+                .setMaxMemory(maxMemory)
+                .setMinMemory(minMemory)
+                .setMetaspace(permSize.toIntOrNull())
+                .setWidth(width)
+                .setHeight(height)
+                .setFullscreen(fullscreen)
+                .setServerIp(serverIp)
+                .setWrapper(wrapper)
+                .setProxyHost(Settings.proxyHost)
+                .setProxyPort(Settings.proxyPort)
+                .setProxyUser(Settings.proxyUser)
+                .setProxyPass(Settings.proxyPass)
+                .setPrecalledCommand(precalledCommand)
+                .setNoGeneratedJVMArgs(noJVMArgs)
+                .create()
     }
 
     companion object Serializer: JsonSerializer<VersionSetting>, JsonDeserializer<VersionSetting> {
@@ -264,7 +268,7 @@ class VersionSetting() {
                 addProperty("usesGlobal", src.usesGlobal)
                 addProperty("javaArgs", src.javaArgs)
                 addProperty("minecraftArgs", src.minecraftArgs)
-                addProperty("maxMemory", if (src.maxMemory <= 0) OS.SUGGESTED_MEMORY else src.maxMemory)
+                addProperty("maxMemory", if (src.maxMemory <= 0) OperatingSystem.SUGGESTED_MEMORY.toInt() else src.maxMemory)
                 addProperty("minMemory", src.minMemory)
                 addProperty("permSize", src.permSize)
                 addProperty("width", src.width)
@@ -290,8 +294,8 @@ class VersionSetting() {
         override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): VersionSetting? {
             if (json == null || json == JsonNull.INSTANCE || json !is JsonObject) return null
 
-            var maxMemoryN = parseJsonPrimitive(json["maxMemory"]?.asJsonPrimitive, OS.SUGGESTED_MEMORY)
-            if (maxMemoryN <= 0) maxMemoryN = OS.SUGGESTED_MEMORY
+            var maxMemoryN = parseJsonPrimitive(json["maxMemory"]?.asJsonPrimitive, OperatingSystem.SUGGESTED_MEMORY.toInt())
+            if (maxMemoryN <= 0) maxMemoryN = OperatingSystem.SUGGESTED_MEMORY.toInt()
 
             return VersionSetting().apply {
                 usesGlobal = json["usesGlobal"]?.asBoolean ?: false

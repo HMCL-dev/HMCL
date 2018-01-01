@@ -27,9 +27,10 @@ import org.jackhuang.hmcl.auth.Account
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider
 import org.jackhuang.hmcl.download.DownloadProvider
 import org.jackhuang.hmcl.download.MojangDownloadProvider
-import org.jackhuang.hmcl.event.EVENT_BUS
-import org.jackhuang.hmcl.task.Scheduler
+import org.jackhuang.hmcl.event.EventBus
+import org.jackhuang.hmcl.task.Schedulers
 import org.jackhuang.hmcl.util.*
+import org.jackhuang.hmcl.util.Logging.LOG
 import java.io.File
 import java.io.IOException
 import java.net.Authenticator
@@ -43,7 +44,7 @@ object Settings {
     val GSON = GsonBuilder()
             .registerTypeAdapter(VersionSetting::class.java, VersionSetting)
             .registerTypeAdapter(Profile::class.java, Profile)
-            .registerTypeAdapter(File::class.java, FileTypeAdapter)
+            .registerTypeAdapter(File::class.java, FileTypeAdapter.INSTANCE)
             .setPrettyPrinting().create()
 
     const val DEFAULT_PROFILE = "Default"
@@ -209,14 +210,14 @@ object Settings {
 
     var downloadProvider: DownloadProvider
         get() = when (SETTINGS.downloadtype) {
-            0 -> MojangDownloadProvider
-            1 -> BMCLAPIDownloadProvider
-            else -> MojangDownloadProvider
+            0 -> MojangDownloadProvider.INSTANCE
+            1 -> BMCLAPIDownloadProvider.INSTANCE
+            else -> MojangDownloadProvider.INSTANCE
         }
         set(value) {
             SETTINGS.downloadtype = when (value) {
-                MojangDownloadProvider -> 0
-                BMCLAPIDownloadProvider -> 1
+                MojangDownloadProvider.INSTANCE -> 0
+                BMCLAPIDownloadProvider.INSTANCE -> 1
                 else -> 0
             }
         }
@@ -275,14 +276,14 @@ object Settings {
         get() {
             if (!hasProfile(SETTINGS.selectedProfile)) {
                 SETTINGS.selectedProfile = DEFAULT_PROFILE
-                Scheduler.COMPUTATION.schedule { onProfileChanged() }
+                Schedulers.computation().schedule { onProfileChanged() }
             }
             return getProfile(SETTINGS.selectedProfile)
         }
         set(value) {
             if (hasProfile(value.name) && value.name != SETTINGS.selectedProfile) {
                 SETTINGS.selectedProfile = value.name
-                Scheduler.COMPUTATION.schedule { onProfileChanged() }
+                Schedulers.computation().schedule { onProfileChanged() }
             }
         }
 
@@ -327,14 +328,14 @@ object Settings {
         }
         val flag = getProfileMap().remove(ver) != null
         if (flag)
-            Scheduler.COMPUTATION.schedule { onProfileLoading() }
+            Schedulers.computation().schedule { onProfileLoading() }
 
         return flag
     }
 
     internal fun onProfileChanged() {
         selectedProfile.repository.refreshVersions()
-        EVENT_BUS.fireEvent(ProfileChangedEvent(SETTINGS, selectedProfile))
+        EventBus.EVENT_BUS.fireEvent(ProfileChangedEvent(SETTINGS, selectedProfile))
     }
 
     /**
@@ -342,7 +343,7 @@ object Settings {
      * Invoked by loading GUI phase.
      */
     fun onProfileLoading() {
-        EVENT_BUS.fireEvent(ProfileLoadingEvent(SETTINGS))
+        EventBus.EVENT_BUS.fireEvent(ProfileLoadingEvent(SETTINGS))
         onProfileChanged()
     }
 }

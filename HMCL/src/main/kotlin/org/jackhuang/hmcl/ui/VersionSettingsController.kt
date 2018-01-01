@@ -24,25 +24,21 @@ import javafx.scene.Node
 import javafx.scene.control.Label
 import javafx.scene.control.ScrollPane
 import javafx.scene.control.Toggle
-import javafx.scene.control.ToggleGroup
 import javafx.scene.image.Image
 import javafx.scene.image.ImageView
-import javafx.scene.layout.BorderPane
-import javafx.scene.layout.Pane
 import javafx.scene.layout.VBox
-import javafx.stage.DirectoryChooser
 import javafx.stage.FileChooser
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.EnumGameDirectory
 import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.setting.VersionSetting
-import org.jackhuang.hmcl.task.Scheduler
-import org.jackhuang.hmcl.task.task
+import org.jackhuang.hmcl.task.Schedulers
 import org.jackhuang.hmcl.ui.construct.ComponentList
 import org.jackhuang.hmcl.ui.construct.MultiFileItem
 import org.jackhuang.hmcl.ui.construct.NumberValidator
 import org.jackhuang.hmcl.util.JavaVersion
-import org.jackhuang.hmcl.util.OS
+import org.jackhuang.hmcl.util.OperatingSystem
+import org.jackhuang.hmcl.util.task
 
 class VersionSettingsController {
     var lastVersionSetting: VersionSetting? = null
@@ -74,7 +70,7 @@ class VersionSettingsController {
     lateinit var versionId: String
 
     fun initialize() {
-        lblPhysicalMemory.text = i18n("settings.physical_memory") + ": ${OS.TOTAL_MEMORY}MB"
+        lblPhysicalMemory.text = i18n("settings.physical_memory") + ": ${OperatingSystem.TOTAL_MEMORY}MB"
 
         scroll.smoothScrolling()
 
@@ -102,9 +98,9 @@ class VersionSettingsController {
 
         task {
             it["list"] = JavaVersion.getJREs().values.map { javaVersion ->
-                javaItem.createChildren(javaVersion.longVersion, javaVersion.binary.absolutePath, javaVersion)
+                javaItem.createChildren(javaVersion.version, javaVersion.binary.absolutePath, javaVersion)
             }
-        }.subscribe(Scheduler.JAVAFX) {
+        }.subscribe(Schedulers.javafx()) {
             javaItem.loadChildren(it.get<Collection<Node>>("list"))
         }
 
@@ -175,7 +171,7 @@ class VersionSettingsController {
             if (newValue == javaItem.radioCustom) { // Custom
                 version.java = "Custom"
             } else {
-                version.java = ((newValue as JFXRadioButton).userData as JavaVersion).longVersion
+                version.java = ((newValue as JFXRadioButton).userData as JavaVersion).version
             }
         }
         javaItem.group.properties[javaGroupKey] = listener
@@ -220,7 +216,7 @@ class VersionSettingsController {
 
     private fun initJavaSubtitle(version: VersionSetting) {
         task { it["java"] = version.javaVersion }
-                .subscribe(task(Scheduler.JAVAFX) { javaItem.subtitle = it.get<JavaVersion?>("java")?.binary?.absolutePath ?: "Invalid Java Directory" })
+                .subscribe(task(Schedulers.javafx()) { javaItem.subtitle = it.get<JavaVersion?>("java")?.binary?.absolutePath ?: "Invalid Java Directory" })
     }
 
     private fun initGameDirSubtitle(version: VersionSetting) {

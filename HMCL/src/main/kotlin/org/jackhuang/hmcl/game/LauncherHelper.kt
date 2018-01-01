@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.auth.AuthInfo
 import org.jackhuang.hmcl.auth.AuthenticationException
 import org.jackhuang.hmcl.launch.DefaultLauncher
 import org.jackhuang.hmcl.launch.ProcessListener
-import org.jackhuang.hmcl.mod.CurseForgeModpackCompletionTask
+import org.jackhuang.hmcl.mod.CurseCompletionTask
 import org.jackhuang.hmcl.setting.LauncherVisibility
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.setting.VersionSetting
@@ -31,9 +31,9 @@ import org.jackhuang.hmcl.task.*
 import org.jackhuang.hmcl.ui.*
 import org.jackhuang.hmcl.util.Log4jLevel
 import org.jackhuang.hmcl.util.ManagedProcess
+import org.jackhuang.hmcl.util.task
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
-
 
 object LauncherHelper {
     private val launchingStepsPane = LaunchingStepsPane()
@@ -49,13 +49,13 @@ object LauncherHelper {
         val setting = profile.getVersionSetting(selectedVersion)
 
         Controllers.dialog(launchingStepsPane)
-        task(Scheduler.JAVAFX) { emitStatus(LoadingState.DEPENDENCIES) }
+        task(Schedulers.javafx()) { emitStatus(LoadingState.DEPENDENCIES) }
                 .then(dependency.checkGameCompletionAsync(version))
 
-                .then(task(Scheduler.JAVAFX) { emitStatus(LoadingState.MODS) })
-                .then(CurseForgeModpackCompletionTask(dependency, selectedVersion))
+                .then(task(Schedulers.javafx()) { emitStatus(LoadingState.MODS) })
+                .then(CurseCompletionTask(dependency, selectedVersion))
 
-                .then(task(Scheduler.JAVAFX) { emitStatus(LoadingState.LOGIN) })
+                .then(task(Schedulers.javafx()) { emitStatus(LoadingState.LOGIN) })
                 .then(task {
                     try {
                         it["account"] = account.logIn(Settings.proxy)
@@ -65,7 +65,7 @@ object LauncherHelper {
                     }
                 })
 
-                .then(task(Scheduler.JAVAFX) { emitStatus(LoadingState.LAUNCHING) })
+                .then(task(Schedulers.javafx()) { emitStatus(LoadingState.LAUNCHING) })
                 .then(task {
                     it["launcher"] = HMCLGameLauncher(
                             repository = repository,
@@ -84,12 +84,12 @@ object LauncherHelper {
 
                 .executor()
                 .apply {
-                    taskListener = object : TaskListener {
+                    taskListener = object : TaskListener() {
                         var finished = 0
 
                         override fun onFinished(task: Task) {
                             ++finished
-                            runOnUiThread { launchingStepsPane.pgsTasks.progress = 1.0 * finished / totTask.get() }
+                            runOnUiThread { launchingStepsPane.pgsTasks.progress = 1.0 * finished / runningTasks }
                         }
 
                         override fun onTerminate() {
@@ -179,9 +179,14 @@ object LauncherHelper {
             if (exitType != ProcessListener.ExitType.NORMAL && logWindow == null){
                 runOnUiThread {
                     LogWindow().apply {
-                        for ((line, level) in logs)
-                            logLine(line, level)
                         show()
+                        Schedulers.newThread().schedule {
+                            waitForShown()
+                            runOnUiThread {
+                                for ((line, level) in logs)
+                                    logLine(line, level)
+                            }
+                        }
                     }
                 }
             }

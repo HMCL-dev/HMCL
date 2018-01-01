@@ -20,13 +20,13 @@ package org.jackhuang.hmcl.ui
 import javafx.fxml.FXML
 import javafx.scene.control.ScrollPane
 import javafx.scene.layout.VBox
-import org.jackhuang.hmcl.download.game.VersionJSONSaveTask
+import org.jackhuang.hmcl.download.game.VersionJsonSaveTask
+import org.jackhuang.hmcl.game.GameVersion.minecraftVersion
 import org.jackhuang.hmcl.game.Version
-import org.jackhuang.hmcl.game.minecraftVersion
 import org.jackhuang.hmcl.setting.Profile
-import org.jackhuang.hmcl.task.Scheduler
-import org.jackhuang.hmcl.task.task
+import org.jackhuang.hmcl.task.Schedulers
 import org.jackhuang.hmcl.ui.download.InstallWizardProvider
+import org.jackhuang.hmcl.util.task
 import java.util.*
 
 class InstallerController {
@@ -59,9 +59,9 @@ class InstallerController {
             val removeAction = { _: InstallerItem ->
                 val newList = LinkedList(version.libraries)
                 newList.remove(library)
-                VersionJSONSaveTask(profile.repository, version.copy(libraries = newList))
+                VersionJsonSaveTask(profile.repository, version.setLibraries(newList))
                         .with(task { profile.repository.refreshVersions() })
-                        .with(task(Scheduler.JAVAFX) { loadVersion(this.profile, this.versionId) })
+                        .with(task(Schedulers.javafx()) { loadVersion(this.profile, this.versionId) })
                         .start()
             }
             if (library.groupId.equals("net.minecraftforge", ignoreCase = true) && library.artifactId.equals("forge", ignoreCase = true)) {

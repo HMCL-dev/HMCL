@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.setting
 import com.google.gson.*
 import javafx.beans.InvalidationListener
 import org.jackhuang.hmcl.download.DefaultDependencyManager
-import org.jackhuang.hmcl.event.EVENT_BUS
+import org.jackhuang.hmcl.event.EventBus
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent
 import org.jackhuang.hmcl.game.HMCLGameRepository
 import org.jackhuang.hmcl.mod.ModManager
@@ -49,7 +49,7 @@ class Profile(name: String = "Default", initialGameDir: File = File(".minecraft"
     init {
         gameDirProperty.onChange { repository.changeDirectory(it!!) }
         selectedVersionProperty.onInvalidated(this::verifySelectedVersion)
-        EVENT_BUS.channel<RefreshedVersionsEvent>() += { event -> if (event.source == repository) verifySelectedVersion() }
+        EventBus.EVENT_BUS.channel<RefreshedVersionsEvent>().register { event -> if (event.source == repository) verifySelectedVersion() }
     }
 
     private fun verifySelectedVersion() = runOnUiThread {

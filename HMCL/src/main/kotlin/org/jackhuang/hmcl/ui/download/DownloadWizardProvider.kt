@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.download
 
 import javafx.scene.Node
-import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask
 import org.jackhuang.hmcl.game.HMCLModpackManifest
 import org.jackhuang.hmcl.game.MMCInstallVersionSettingTask
@@ -27,9 +26,9 @@ import org.jackhuang.hmcl.setting.EnumGameDirectory
 import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.Task
-import org.jackhuang.hmcl.task.task
 import org.jackhuang.hmcl.ui.wizard.WizardController
 import org.jackhuang.hmcl.ui.wizard.WizardProvider
+import org.jackhuang.hmcl.util.task
 import java.io.File
 
 class DownloadWizardProvider(): WizardProvider() {
@@ -79,11 +78,11 @@ class DownloadWizardProvider(): WizardProvider() {
         }
 
         return when (modpack.manifest) {
-            is CurseForgeModpackManifest -> CurseForgeModpackInstallTask(profile.dependency, selectedFile, modpack.manifest as CurseForgeModpackManifest, name)
+            is CurseManifest -> CurseInstallTask(profile.dependency, selectedFile, modpack.manifest as CurseManifest, name)
             is HMCLModpackManifest -> HMCLModpackInstallTask(profile, selectedFile, modpack, name)
-            is InstanceConfiguration -> MMCModpackInstallTask(profile.dependency, selectedFile, modpack.manifest as InstanceConfiguration, name) with MMCInstallVersionSettingTask(profile, modpack.manifest as InstanceConfiguration, name)
+            is MultiMCInstanceConfiguration -> MultiMCModpackInstallTask(profile.dependency, selectedFile, modpack.manifest as MultiMCInstanceConfiguration, name).with(MMCInstallVersionSettingTask(profile, modpack.manifest as MultiMCInstanceConfiguration, name))
             else -> throw Error()
-        } with finalizeTask
+        }.with(finalizeTask)
     }
 
     override fun finish(settings: MutableMap<String, Any>): Any? {

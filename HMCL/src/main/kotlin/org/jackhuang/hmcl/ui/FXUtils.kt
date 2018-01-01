@@ -43,6 +43,7 @@ import javafx.scene.shape.Rectangle
 import javafx.util.Duration
 import org.jackhuang.hmcl.Main
 import org.jackhuang.hmcl.util.*
+import org.jackhuang.hmcl.util.Logging.LOG
 import java.io.File
 import java.io.IOException
 import java.util.logging.Level
@@ -196,8 +197,8 @@ fun JFXMasonryPane.resetChildren(children: List<Node>) {
 fun openFolder(f: File) {
     f.mkdirs()
     val path = f.absolutePath
-    when (OS.CURRENT_OS) {
-        OS.OSX ->
+    when (OperatingSystem.CURRENT_OS) {
+        OperatingSystem.OSX ->
             try {
                 Runtime.getRuntime().exec(arrayOf("/usr/bin/open", path));
             } catch (ex: IOException) {

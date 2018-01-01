@@ -17,21 +17,18 @@
  */
 package org.jackhuang.hmcl.game
 
-import org.jackhuang.hmcl.mod.InstanceConfiguration
-import org.jackhuang.hmcl.mod.Modpack
-import org.jackhuang.hmcl.mod.readCurseForgeModpackManifest
-import org.jackhuang.hmcl.mod.readMMCModpackManifest
+import org.jackhuang.hmcl.mod.*
 import org.jackhuang.hmcl.setting.EnumGameDirectory
 import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.setting.VersionSetting
-import org.jackhuang.hmcl.task.Scheduler
+import org.jackhuang.hmcl.task.Schedulers
 import org.jackhuang.hmcl.task.Task
 import org.jackhuang.hmcl.util.toStringOrEmpty
 import java.io.File
 
 fun readModpackManifest(f: File): Modpack {
     try {
-        return readCurseForgeModpackManifest(f)
+        return CurseManifest.readCurseForgeModpackManifest(f);
     } catch (e: Exception) {
         // ignore it, not a valid CurseForge modpack.
     }
@@ -44,7 +41,7 @@ fun readModpackManifest(f: File): Modpack {
     }
 
     try {
-        val manifest = readMMCModpackManifest(f)
+        val manifest = MultiMCInstanceConfiguration.readMultiMCModpackManifest(f)
         return manifest
     } catch (e: Exception) {
         // ignore it, not a valid MMC modpack.
@@ -53,36 +50,36 @@ fun readModpackManifest(f: File): Modpack {
     throw IllegalArgumentException("Modpack file $f is not supported.")
 }
 
-fun InstanceConfiguration.toVersionSetting(vs: VersionSetting) {
+fun MultiMCInstanceConfiguration.toVersionSetting(vs: VersionSetting) {
     vs.usesGlobal = false
     vs.gameDirType = EnumGameDirectory.VERSION_FOLDER
 
-    if (overrideJavaLocation) {
+    if (isOverrideJavaLocation) {
         vs.javaDir = javaPath.toStringOrEmpty()
     }
 
-    if (overrideMemory) {
+    if (isOverrideMemory) {
         vs.permSize = permGen.toStringOrEmpty()
         if (maxMemory != null)
             vs.maxMemory = maxMemory!!
         vs.minMemory = minMemory
     }
 
-    if (overrideCommands) {
+    if (isOverrideCommands) {
         vs.wrapper = wrapperCommand.orEmpty()
         vs.precalledCommand = preLaunchCommand.orEmpty()
     }
 
-    if (overrideJavaArgs) {
+    if (isOverrideJavaArgs) {
         vs.javaArgs = jvmArgs.orEmpty()
     }
 
-    if (overrideConsole) {
-        vs.showLogs = showConsole
+    if (isOverrideConsole) {
+        vs.showLogs = isShowConsole
     }
 
-    if (overrideWindow) {
-        vs.fullscreen = fullscreen
+    if (isOverrideWindow) {
+        vs.fullscreen = isFullscreen
         if (width != null)
             vs.width = width!!
         if (height != null)
@@ -90,10 +87,10 @@ fun InstanceConfiguration.toVersionSetting(vs: VersionSetting) {
     }
 }
 
-class MMCInstallVersionSettingTask(private val profile: Profile, val manifest: InstanceConfiguration, val name: String): Task() {
-    override val scheduler = Scheduler.JAVAFX
+class MMCInstallVersionSettingTask(private val profile: Profile, val manifest: MultiMCInstanceConfiguration, private val version: String): Task() {
+    override fun getScheduler() = Schedulers.javafx()
     override fun execute() {
-        val vs = profile.specializeVersionSetting(name)!!
+        val vs = profile.specializeVersionSetting(version)!!
         manifest.toVersionSetting(vs)
     }
 }

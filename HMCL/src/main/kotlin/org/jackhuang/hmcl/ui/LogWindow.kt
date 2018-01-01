@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.util.*
 import org.w3c.dom.Document
 import org.w3c.dom.Node
 import java.util.concurrent.Callable
+import java.util.concurrent.CountDownLatch
 
 class LogWindow : Stage() {
     val fatalProperty = SimpleIntegerProperty(0)
@@ -47,6 +48,7 @@ class LogWindow : Stage() {
     val debugProperty = SimpleIntegerProperty(0)
 
     val impl = LogWindowImpl()
+    val latch = CountDownLatch(1)
 
     init {
         scene = Scene(impl, 800.0, 480.0)
@@ -74,6 +76,8 @@ class LogWindow : Stage() {
         }
     }
 
+    fun waitForShown() = latch.await()
+
     inner class LogWindowImpl: StackPane() {
         @FXML lateinit var webView: WebView
         @FXML lateinit var btnFatals: ToggleButton
@@ -97,6 +101,7 @@ class LogWindow : Stage() {
                     document = engine.document
                     body = document.getElementsByTagName("body").item(0)
                     engine.executeScript("limitedLogs=${Settings.logLines};")
+                    latch.countDown()
                 }
             }
 

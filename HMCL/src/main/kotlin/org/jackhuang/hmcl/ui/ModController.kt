@@ -27,9 +27,10 @@ import javafx.stage.FileChooser
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.mod.ModManager
 import org.jackhuang.hmcl.task.Scheduler
-import org.jackhuang.hmcl.task.task
+import org.jackhuang.hmcl.task.Schedulers
 import org.jackhuang.hmcl.util.onChange
 import org.jackhuang.hmcl.util.onChangeAndOperateWeakly
+import org.jackhuang.hmcl.util.task
 import java.util.*
 
 class ModController {
@@ -77,7 +78,7 @@ class ModController {
                         modManager.removeMods(versionId, modInfo)
                         loadMods(modManager, versionId)
                     }.apply {
-                        modInfo.activeProperty.onChange {
+                        modInfo.activeProperty().onChange {
                             if (it)
                                 styleClass -= "disabled"
                             else
@@ -91,7 +92,7 @@ class ModController {
                 runOnUiThread { rootPane.children += contentPane }
                 it["list"] = list
             }
-        }.subscribe(Scheduler.JAVAFX) { variables ->
+        }.subscribe(Schedulers.javafx()) { variables ->
             parentTab.selectionModel.selectedItemProperty().onChangeAndOperateWeakly {
                 if (it?.userData == this) {
                     modPane.children.setAll(variables.get<List<ModItem>>("list"))
@@ -106,6 +107,6 @@ class ModController {
         chooser.extensionFilters.setAll(FileChooser.ExtensionFilter("Mod", "*.jar", "*.zip", "*.litemod"))
         val res = chooser.showOpenDialog(Controllers.stage) ?: return
         task { modManager.addMod(versionId, res) }
-                .subscribe(task(Scheduler.JAVAFX) { loadMods(modManager, versionId) })
+                .subscribe(task(Schedulers.javafx()) { loadMods(modManager, versionId) })
     }
 }

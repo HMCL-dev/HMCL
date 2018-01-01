@@ -29,15 +29,17 @@ import javafx.scene.control.ToggleGroup
 import javafx.scene.layout.StackPane
 import org.jackhuang.hmcl.auth.Account
 import org.jackhuang.hmcl.auth.OfflineAccount
+import org.jackhuang.hmcl.auth.OfflineAccountFactory
 import org.jackhuang.hmcl.auth.yggdrasil.InvalidCredentialsException
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Settings
-import org.jackhuang.hmcl.task.Scheduler
-import org.jackhuang.hmcl.task.taskResult
+import org.jackhuang.hmcl.task.Schedulers
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage
 import org.jackhuang.hmcl.util.onChange
 import org.jackhuang.hmcl.util.onChangeAndOperate
+import org.jackhuang.hmcl.util.taskResult
 
 class AccountsPage() : StackPane(), DecoratorPage {
     override val titleProperty: StringProperty = SimpleStringProperty(this, "title", "Accounts")
@@ -126,8 +128,8 @@ class AccountsPage() : StackPane(), DecoratorPage {
         taskResult("create_account") {
             try {
                 val account = when (type) {
-                    0 -> OfflineAccount.fromUsername(username)
-                    1 -> YggdrasilAccount.fromUsername(username, password)
+                    0 -> OfflineAccountFactory.INSTANCE.fromUsername(username)
+                    1 -> YggdrasilAccountFactory.INSTANCE.fromUsername(username, password)
                     else -> throw UnsupportedOperationException()
                 }
 
@@ -136,7 +138,7 @@ class AccountsPage() : StackPane(), DecoratorPage {
             } catch (e: Exception) {
                 e
             }
-        }.subscribe(Scheduler.JAVAFX) {
+        }.subscribe(Schedulers.javafx()) {
             val account: Any = it["create_account"]
             if (account is Account) {
                 Settings.addAccount(account)

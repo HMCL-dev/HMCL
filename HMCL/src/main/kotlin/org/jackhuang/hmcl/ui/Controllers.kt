@@ -25,8 +25,8 @@ import javafx.scene.layout.Region
 import javafx.stage.Stage
 import org.jackhuang.hmcl.Main
 import org.jackhuang.hmcl.setting.Settings
-import org.jackhuang.hmcl.task.task
 import org.jackhuang.hmcl.util.JavaVersion
+import org.jackhuang.hmcl.util.task
 
 object Controllers {
     lateinit var scene: Scene private set

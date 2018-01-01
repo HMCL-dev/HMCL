@@ -18,7 +18,8 @@
 package org.jackhuang.hmcl.game
 
 import com.google.gson.JsonParseException
-import org.jackhuang.hmcl.download.game.VersionJSONSaveTask
+import org.jackhuang.hmcl.download.game.VersionJsonSaveTask
+import org.jackhuang.hmcl.game.GameVersion.minecraftVersion
 import org.jackhuang.hmcl.mod.Modpack
 import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.task.Task
@@ -26,6 +27,8 @@ import java.io.File
 import java.io.IOException
 import org.jackhuang.hmcl.task.TaskResult
 import org.jackhuang.hmcl.util.*
+import org.jackhuang.hmcl.util.Constants.GSON
+import org.jackhuang.hmcl.util.Logging.LOG
 import java.util.ArrayList
 
 /**
@@ -38,39 +41,42 @@ import java.util.ArrayList
  */
 @Throws(IOException::class, JsonParseException::class)
 fun readHMCLModpackManifest(f: File): Modpack {
-    val manifestJson = f.readTextZipEntry("modpack.json")
+    val manifestJson = CompressingUtils.readTextZipEntry(f, "modpack.json")
     val manifest = GSON.fromJson<Modpack>(manifestJson) ?: throw JsonParseException("`modpack.json` not found. $f is not a valid HMCL modpack.")
-    val gameJson = f.readTextZipEntry("minecraft/pack.json")
+    val gameJson = CompressingUtils.readTextZipEntry(f, "minecraft/pack.json")
     val game = GSON.fromJson<Version>(gameJson) ?: throw JsonParseException("`minecraft/pack.json` not found. $f iot a valid HMCL modpack.")
     return if (game.jar == null)
         if (manifest.gameVersion.isNullOrBlank()) throw JsonParseException("Cannot recognize the game version of modpack $f.")
-        else manifest.copy(manifest = HMCLModpackManifest)
-    else manifest.copy(manifest = HMCLModpackManifest, gameVersion = game.jar!!)
+        else manifest.setManifest(HMCLModpackManifest)
+    else manifest.setManifest(HMCLModpackManifest).setGameVersion(game.jar)
 }
 
 object HMCLModpackManifest
 
-class HMCLModpackInstallTask(profile: Profile, private val zipFile: File, modpack: Modpack, private val name: String): Task() {
+class HMCLModpackInstallTask(profile: Profile, private val zipFile: File, modpack: Modpack, private val version: String): Task() {
     private val dependency = profile.dependency
     private val repository = profile.repository
-    override val dependencies = mutableListOf<Task>()
-    override val dependents = mutableListOf<Task>()
+    private val dependencies = mutableListOf<Task>()
+    private val dependents = mutableListOf<Task>()
+
+    override fun getDependencies() = dependencies
+    override fun getDependents() = dependents
 
     init {
-        check(!repository.hasVersion(name), { "Version $name already exists." })
-        val json = zipFile.readTextZipEntry("minecraft/pack.json")
+        check(!repository.hasVersion(version), { "Version $version already exists." })
+        val json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json")
         var version = GSON.fromJson<Version>(json)!!
-        version = version.copy(jar = null)
-        dependents += dependency.gameBuilder().name(name).gameVersion(modpack.gameVersion!!).buildAsync()
-        dependencies += VersionJSONSaveTask(repository, version) // override the json created by buildAsync()
+        version = version.setJar(null)
+        dependents += dependency.gameBuilder().name(this.version).gameVersion(modpack.gameVersion!!).buildAsync()
+        dependencies += VersionJsonSaveTask(repository, version) // override the json created by buildAsync()
 
-        onDone += { event -> if (event.failed) repository.removeVersionFromDisk(name) }
+        onDone() += { event -> if (event.isFailed) repository.removeVersionFromDisk(this.version) }
     }
 
-    private val run = repository.getRunDirectory(name)
+    private val run = repository.getRunDirectory(version)
 
     override fun execute() {
-        zipFile.uncompressTo(run, "minecraft/", callback = { it != "minecraft/pack.json" }, ignoreExistentFile = false)
+        CompressingUtils.unzip(zipFile, run, "minecraft/", { it != "minecraft/pack.json" }, false)
     }
 }
 
@@ -120,10 +126,12 @@ class HMCLModpackExportTask @JvmOverloads constructor(
         private val whitelist: List<String>,
         private val modpack: Modpack,
         private val output: File,
-        override val id: String = ID): TaskResult<ZipEngine>() {
+        private val id: String = ID): TaskResult<ZipEngine>() {
+
+    override fun getId() = id
 
     init {
-        onDone += { event -> if (event.failed) output.delete() }
+        onDone() += { event -> if (event.isFailed) output.delete() }
     }
 
     override fun execute() {
@@ -148,8 +156,8 @@ class HMCLModpackExportTask @JvmOverloads constructor(
 
             val mv = repository.getVersion(version).resolve(repository)
             val gameVersion = minecraftVersion(repository.getVersionJar(version)) ?: throw IllegalStateException("Cannot parse the version of $version")
-            zip.putTextFile(GSON.toJson(mv.copy(jar = gameVersion)), "minecraft/pack.json") // Making "jar" to gameVersion is to be compatible with old HMCL.
-            zip.putTextFile(GSON.toJson(modpack.copy(gameVersion = gameVersion)), "modpack.json") // Newer HMCL only reads 'gameVersion' field.
+            zip.putTextFile(GSON.toJson(mv.setJar(gameVersion)), "minecraft/pack.json") // Making "jar" to gameVersion is to be compatible with old HMCL.
+            zip.putTextFile(GSON.toJson(modpack.setGameVersion(gameVersion)), "modpack.json") // Newer HMCL only reads 'gameVersion' field.
         }
     }
 

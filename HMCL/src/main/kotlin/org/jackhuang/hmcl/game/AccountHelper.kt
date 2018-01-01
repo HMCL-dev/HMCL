@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.FileDownloadTask
 import org.jackhuang.hmcl.task.Scheduler
+import org.jackhuang.hmcl.task.Schedulers
 import org.jackhuang.hmcl.task.Task
 import org.jackhuang.hmcl.ui.DEFAULT_ICON
 import org.jackhuang.hmcl.ui.DialogController
@@ -48,11 +49,13 @@ object AccountHelper {
             SkinLoadTask(account, proxy, true)
 
     private class SkinLoadTask(val account: YggdrasilAccount, val proxy: Proxy, val refresh: Boolean = false): Task() {
-        override val scheduler = Scheduler.IO
-        override val dependencies = mutableListOf<Task>()
+
+        override fun getScheduler() = Schedulers.io()
+        private val dependencies = mutableListOf<Task>()
+        override fun getDependencies() = dependencies
 
         override fun execute() {
-            if (account.canLogIn && (account.selectedProfile == null || refresh))
+            if (account.canLogIn() && (account.selectedProfile == null || refresh))
                 DialogController.logIn(account)
             val profile = account.selectedProfile ?: return
             val name = profile.name ?: return
@@ -60,7 +63,7 @@ object AccountHelper {
             val file = getSkinFile(name)
             if (!refresh && file.exists())
                 return
-            dependencies += FileDownloadTask(url.toURL(), file, proxy = proxy)
+            dependencies += FileDownloadTask(url.toURL(), file, proxy)
         }
     }
 

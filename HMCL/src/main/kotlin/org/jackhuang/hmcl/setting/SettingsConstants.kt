@@ -21,7 +21,9 @@ import javafx.scene.text.Font
 import org.jackhuang.hmcl.auth.Account
 import org.jackhuang.hmcl.auth.AccountFactory
 import org.jackhuang.hmcl.auth.OfflineAccount
+import org.jackhuang.hmcl.auth.OfflineAccountFactory
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider
 import org.jackhuang.hmcl.download.MojangDownloadProvider
 import org.jackhuang.hmcl.ui.construct.UTF8Control
@@ -35,19 +37,18 @@ object Proxies {
 }
 
 object DownloadProviders {
-    val DOWNLOAD_PROVIDERS = listOf(MojangDownloadProvider, BMCLAPIDownloadProvider)
+    val DOWNLOAD_PROVIDERS = listOf(MojangDownloadProvider.INSTANCE, BMCLAPIDownloadProvider.INSTANCE)
 
-    fun getDownloadProvider(index: Int) = DOWNLOAD_PROVIDERS.getOrElse(index, { MojangDownloadProvider })
+    fun getDownloadProvider(index: Int) = DOWNLOAD_PROVIDERS.getOrElse(index, { MojangDownloadProvider.INSTANCE })
 }
 
 object Accounts {
     val OFFLINE_ACCOUNT_KEY = "offline"
     val YGGDRASIL_ACCOUNT_KEY = "yggdrasil"
 
-    val ACCOUNTS = listOf(OfflineAccount, YggdrasilAccount)
     val ACCOUNT_FACTORY = mapOf<String, AccountFactory<*>>(
-            OFFLINE_ACCOUNT_KEY to OfflineAccount,
-            YGGDRASIL_ACCOUNT_KEY to YggdrasilAccount
+            OFFLINE_ACCOUNT_KEY to OfflineAccountFactory.INSTANCE,
+            YGGDRASIL_ACCOUNT_KEY to YggdrasilAccountFactory.INSTANCE
     )
 
     fun getAccountType(account: Account): String {
