@@ -23,16 +23,20 @@ import org.jackhuang.hmcl.util.ManagedProcess;
 /**
  * This event gets fired when we launch the JVM and it got crashed.
  * <br>
- * This event is fired on the [org.jackhuang.hmcl.event.EVENT_BUS]
+ * This event is fired on the {@link org.jackhuang.hmcl.event.EventBus#EVENT_BUS}
  *
- * @param source [org.jackhuang.hmcl.launch.ExitWaiter]
- * @param value the crashed process.
  * @author huangyuhui
  */
-public class JVMLaunchFailedEvent extends EventObject {
+public class JVMLaunchFailedEvent extends Event {
 
     private final ManagedProcess process;
 
+    /**
+     * Constructor.
+     *
+     * @param source {@link org.jackhuang.hmcl.launch.ExitWaiter}
+     * @param process the crashed process.
+     */
     public JVMLaunchFailedEvent(Object source, ManagedProcess process) {
         super(source);
         this.process = process;

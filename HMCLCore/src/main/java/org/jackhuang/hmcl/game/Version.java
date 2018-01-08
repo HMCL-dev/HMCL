@@ -155,8 +155,6 @@ public class Version implements Comparable<Version>, Validation {
 
     /**
      * Resolve given version
-     *
-     * @throws CircleDependencyException
      */
     public Version resolve(VersionProvider provider) {
         return resolve(provider, new HashSet<>());
@@ -231,10 +229,7 @@ public class Version implements Comparable<Version>, Validation {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof Version)
-            return Objects.equals(id, ((Version) obj).id);
-        else
-            return false;
+        return obj instanceof Version && Objects.equals(id, ((Version) obj).id);
     }
 
     @Override

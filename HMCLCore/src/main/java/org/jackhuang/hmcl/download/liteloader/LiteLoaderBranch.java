@@ -38,7 +38,7 @@ public final class LiteLoaderBranch {
     private final Map<String, LiteLoaderVersion> liteLoader;
 
     public LiteLoaderBranch() {
-        this(Collections.EMPTY_SET, Collections.EMPTY_MAP);
+        this(Collections.emptySet(), Collections.emptyMap());
     }
 
     public LiteLoaderBranch(Collection<Library> libraries, Map<String, LiteLoaderVersion> liteLoader) {

@@ -23,16 +23,20 @@ import org.jackhuang.hmcl.util.ManagedProcess;
 /**
  * This event gets fired when minecraft process exited successfully and the exit code is 0.
  * <br>
- * This event is fired on the {@link org.jackhuang.hmcl.event.EVENT_BUS}
+ * This event is fired on the {@link org.jackhuang.hmcl.event.EventBus#EVENT_BUS}
  *
- * @param source {@link org.jackhuang.hmcl.launch.ExitWaiter}
- * @param value minecraft process
  * @author huangyuhui
  */
-public class ProcessStoppedEvent extends EventObject {
+public class ProcessStoppedEvent extends Event {
 
     private final ManagedProcess process;
 
+    /**
+     * Constructor.
+     *
+     * @param source {@link org.jackhuang.hmcl.launch.ExitWaiter}
+     * @param process minecraft process
+     */
     public ProcessStoppedEvent(Object source, ManagedProcess process) {
         super(source);
         this.process = process;

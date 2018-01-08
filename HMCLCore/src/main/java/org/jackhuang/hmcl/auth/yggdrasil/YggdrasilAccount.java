@@ -23,14 +23,9 @@ import com.google.gson.JsonParseException;
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.auth.AuthenticationException;
-import org.jackhuang.hmcl.auth.UserType;
+import java.util.*;
+
+import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.util.NetworkUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
@@ -111,7 +106,7 @@ public final class YggdrasilAccount extends Account {
     }
 
     @Override
-    public AuthInfo logIn(Proxy proxy) throws AuthenticationException {
+    public AuthInfo logIn(MultiCharacterSelector selector, Proxy proxy) throws AuthenticationException {
         if (canPlayOnline())
             return new AuthInfo(selectedProfile, accessToken, userType, GSON.toJson(userProperties));
         else {
@@ -119,11 +114,13 @@ public final class YggdrasilAccount extends Account {
             if (!isLoggedIn())
                 throw new AuthenticationException("Wrong password for account " + username);
 
-            if (selectedProfile == null)
-                // TODO: multi-available-profiles support
-                throw new UnsupportedOperationException("Do not support multi-available-profiles account yet.");
-            else
-                return new AuthInfo(selectedProfile, accessToken, userType, GSON.toJson(userProperties));
+            if (selectedProfile == null) {
+                if (profiles == null || profiles.length <= 0)
+                    throw new NoCharacterException(this);
+
+                selectedProfile = selector.select(this, Arrays.asList(profiles));
+            }
+            return new AuthInfo(selectedProfile, accessToken, userType, GSON.toJson(userProperties));
         }
     }
 

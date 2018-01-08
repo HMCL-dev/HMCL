@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.mod;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 import java.util.Properties;
 
 import org.apache.commons.compress.archivers.zip.ZipFile;
@@ -83,7 +84,7 @@ public final class MultiMCInstanceConfiguration {
         showConsoleOnError = Boolean.parseBoolean(p.getProperty("ShowConsoleOnError"));
         wrapperCommand = p.getProperty("WrapperCommand");
         name = defaultName;
-        notes = Lang.nonNull(p.getProperty("notes"), "");
+        notes = Optional.ofNullable(p.getProperty("notes")).orElse("");
     }
 
     /**

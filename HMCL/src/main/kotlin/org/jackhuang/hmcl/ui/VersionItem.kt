@@ -32,15 +32,15 @@ import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import java.util.concurrent.Callable
 
-class VersionItem(i: Int, group: ToggleGroup) : StackPane() {
+class VersionItem() : StackPane() {
     @FXML lateinit var icon: Pane
     @FXML lateinit var content: VBox
     @FXML lateinit var header: StackPane
     @FXML lateinit var body: StackPane
     @FXML lateinit var btnDelete: JFXButton
     @FXML lateinit var btnSettings: JFXButton
+    @FXML lateinit var btnLaunch: JFXButton
     @FXML lateinit var lblVersionName: Label
-    @FXML lateinit var chkSelected: JFXRadioButton
     @FXML lateinit var lblGameVersion: Label
     @FXML lateinit var iconView: ImageView
 
@@ -52,20 +52,20 @@ class VersionItem(i: Int, group: ToggleGroup) : StackPane() {
 
         effect = DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.26), 5.0, 0.12, -1.0, 1.0)
 
-        chkSelected.toggleGroup = group
         btnSettings.graphic = SVG.gear("black", 15.0, 15.0)
         btnDelete.graphic = SVG.delete("black", 15.0, 15.0)
+        btnLaunch.graphic = SVG.launch("black", 15.0, 15.0)
 
         // create content
-        val headerColor = getDefaultColor(i % 12)
-        header.style = "-fx-background-radius: 2 2 0 0; -fx-background-color: " + headerColor
+        //val headerColor = getDefaultColor(i % 12)
+        //header.style = "-fx-background-radius: 2 2 0 0; -fx-background-color: " + headerColor
 
         // create image view
-        icon.translateYProperty().bind(Bindings.createDoubleBinding(Callable { header.boundsInParent.height - icon.height / 2 - 32.0 }, header.boundsInParentProperty(), icon.heightProperty()))
+        icon.translateYProperty().bind(Bindings.createDoubleBinding(Callable { header.boundsInParent.height - icon.height / 2 - 16.0 }, header.boundsInParentProperty(), icon.heightProperty()))
         iconView.limitSize(32.0, 32.0)
     }
 
-    private fun getDefaultColor(i: Int): String {
+    /*private fun getDefaultColor(i: Int): String {
         var color = "#FFFFFF"
         when (i) {
             0 -> color = "#8F3F7E"
@@ -85,5 +85,5 @@ class VersionItem(i: Int, group: ToggleGroup) : StackPane() {
             }
         }
         return color
-    }
+    }*/
 }

@@ -21,16 +21,11 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.logging.Level;
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.LoadedOneVersionEvent;
-import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
-import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
+
+import org.jackhuang.hmcl.event.*;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Lang;
@@ -94,7 +89,7 @@ public class DefaultGameRepository implements GameRepository {
     @Override
     public File getVersionJar(Version version) {
         Version v = version.resolve(this);
-        String id = Lang.nonNull(v.getJar(), v.getId());
+        String id = Optional.ofNullable(v.getJar()).orElse(v.getId());
         return new File(getVersionRoot(id), id + ".jar");
     }
 
@@ -184,9 +179,15 @@ public class DefaultGameRepository implements GameRepository {
                         version = Objects.requireNonNull(readVersionJson(json));
                     } catch (Exception e) {
                         // JsonSyntaxException or IOException or NullPointerException(!!)
-                        // TODO: auto making up for the missing json
-                        // TODO: and even asking for removing the redundant version folder.
-                        continue;
+                        if (EventBus.EVENT_BUS.fireEvent(new GameJsonParseFailedEvent(this, json, id)) != Event.Result.ALLOW)
+                            continue;
+
+                        try {
+                            version = Objects.requireNonNull(readVersionJson(json));
+                        } catch (Exception e2) {
+                            Logging.LOG.log(Level.SEVERE, "User corrected version json is still malformed");
+                            continue;
+                        }
                     }
 
                     if (!id.equals(version.getId())) {
@@ -199,18 +200,20 @@ public class DefaultGameRepository implements GameRepository {
                         }
                     }
 
-                    versions.put(id, version);
-                    EventBus.EVENT_BUS.fireEvent(new LoadedOneVersionEvent(this, id));
+                    if (EventBus.EVENT_BUS.fireEvent(new LoadedOneVersionEvent(this, version)) != Event.Result.DENY)
+                        versions.put(id, version);
                 }
 
         loaded = true;
     }
 
     @Override
-    public final void refreshVersions() {
+    public void refreshVersions() {
         EventBus.EVENT_BUS.fireEvent(new RefreshingVersionsEvent(this));
-        refreshVersionsImpl();
-        EventBus.EVENT_BUS.fireEvent(new RefreshedVersionsEvent(this));
+        Schedulers.newThread().schedule(() -> {
+            refreshVersionsImpl();
+            EventBus.EVENT_BUS.fireEvent(new RefreshedVersionsEvent(this));
+        });
     }
 
     @Override

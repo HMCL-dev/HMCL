@@ -23,7 +23,7 @@ import java.util.EventObject;
  *
  * @author huang
  */
-public class FailedEvent<T> extends EventObject {
+public class FailedEvent<T> extends Event {
 
     private final int failedTime;
     private T newResult;

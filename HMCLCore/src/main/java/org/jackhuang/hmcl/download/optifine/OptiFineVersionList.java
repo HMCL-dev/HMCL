@@ -80,10 +80,13 @@ public final class OptiFineVersionList extends VersionList<Void> {
                                 if (td.getAttribute("class") != null && td.getAttribute("class").startsWith("downloadLineFile"))
                                     version = td.getTextContent();
                             }
+                            if (version == null || url == null)
+                                continue;
+
                             Matcher matcher = PATTERN.matcher(version);
                             while (matcher.find())
                                 gameVersion = matcher.group(1);
-                            if (gameVersion == null || version == null || url == null)
+                            if (gameVersion == null)
                                 continue;
                             versions.put(gameVersion, new RemoteVersion<>(gameVersion, version, url, null));
                         }

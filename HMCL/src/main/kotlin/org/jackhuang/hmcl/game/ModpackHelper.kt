@@ -51,7 +51,7 @@ fun readModpackManifest(f: File): Modpack {
 }
 
 fun MultiMCInstanceConfiguration.toVersionSetting(vs: VersionSetting) {
-    vs.usesGlobal = false
+    vs.isUsesGlobal = false
     vs.gameDirType = EnumGameDirectory.VERSION_FOLDER
 
     if (isOverrideJavaLocation) {
@@ -67,7 +67,7 @@ fun MultiMCInstanceConfiguration.toVersionSetting(vs: VersionSetting) {
 
     if (isOverrideCommands) {
         vs.wrapper = wrapperCommand.orEmpty()
-        vs.precalledCommand = preLaunchCommand.orEmpty()
+        vs.preLaunchCommand = preLaunchCommand.orEmpty()
     }
 
     if (isOverrideJavaArgs) {
@@ -75,11 +75,11 @@ fun MultiMCInstanceConfiguration.toVersionSetting(vs: VersionSetting) {
     }
 
     if (isOverrideConsole) {
-        vs.showLogs = isShowConsole
+        vs.isShowLogs = isShowConsole
     }
 
     if (isOverrideWindow) {
-        vs.fullscreen = isFullscreen
+        vs.isFullscreen = isFullscreen
         if (width != null)
             vs.width = width!!
         if (height != null)

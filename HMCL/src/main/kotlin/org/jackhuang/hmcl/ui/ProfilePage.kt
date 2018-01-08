@@ -75,7 +75,7 @@ class ProfilePage(private val profile: Profile?): StackPane(), DecoratorPage {
             if (locationProperty.get().isNullOrBlank()) {
                 gameDir.onExplore()
             }
-            Settings.putProfile(Profile(name = txtProfileName.text, initialGameDir = File(locationProperty.get())))
+            Settings.putProfile(Profile(txtProfileName.text, File(locationProperty.get())))
         }
 
         Settings.onProfileLoading()

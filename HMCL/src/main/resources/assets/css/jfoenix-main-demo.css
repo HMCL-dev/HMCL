@@ -968,6 +968,11 @@
     -fx-background-color: -fx-decorator-color;
 }
 
+.jfx-decorator-drawer {
+    -fx-background-image: url("/assets/img/background.jpg");
+    -fx-background-size: cover;
+}
+
 .resize-border {
     -fx-border-color: #5264AE;
     -fx-border-width: 0 2 2 2;
@@ -1136,6 +1141,7 @@
  ******************************************************************************/
 
 .scroll-pane {
+    -fx-background-color: null;
     -fx-background-insets: 0;
     -fx-padding: 0;
 }
@@ -1147,6 +1153,10 @@
 .scroll-pane .corner {
     -fx-background-insets: 0;
 }
+
+.scroll-pane > .viewport {
+    -fx-background-color: null;
+ }
 
 /*******************************************************************************
 *                                                                              *

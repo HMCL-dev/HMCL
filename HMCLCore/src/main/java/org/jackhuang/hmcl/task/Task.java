@@ -29,6 +29,8 @@ import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import org.jackhuang.hmcl.util.AutoTypingMap;
 import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.util.ExceptionalConsumer;
+import org.jackhuang.hmcl.util.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.Properties;
 
 /**
@@ -204,11 +206,11 @@ public abstract class Task {
         return executor;
     }
 
-    public final TaskExecutor subscribe(Scheduler scheduler, Consumer<AutoTypingMap<String>> closure) {
+    public final TaskExecutor subscribe(Scheduler scheduler, ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
         return subscribe(of(closure, scheduler));
     }
 
-    public final TaskExecutor subscribe(Consumer<AutoTypingMap<String>> closure) {
+    public final TaskExecutor subscribe(ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
         return subscribe(of(closure));
     }
 
@@ -228,15 +230,15 @@ public abstract class Task {
         return new CoupleTask<>(this, b, false);
     }
 
-    public static Task of(Runnable runnable) {
+    public static Task of(ExceptionalRunnable<?> runnable) {
         return of(s -> runnable.run());
     }
 
-    public static Task of(Consumer<AutoTypingMap<String>> closure) {
+    public static Task of(ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
         return of(closure, Schedulers.defaultScheduler());
     }
 
-    public static Task of(Consumer<AutoTypingMap<String>> closure, Scheduler scheduler) {
+    public static Task of(ExceptionalConsumer<AutoTypingMap<String>, ?> closure, Scheduler scheduler) {
         return new SimpleTask(closure, scheduler);
     }
 

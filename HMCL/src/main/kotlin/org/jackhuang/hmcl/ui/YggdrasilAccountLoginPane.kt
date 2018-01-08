@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.auth.AuthInfo
 import org.jackhuang.hmcl.auth.yggdrasil.InvalidCredentialsException
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory
+import org.jackhuang.hmcl.game.HMCLMultiCharacterSelector
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.Schedulers
@@ -56,7 +57,7 @@ class YggdrasilAccountLoginPane(private val oldAccount: YggdrasilAccount, privat
         taskResult("login") {
             try {
                 val account = YggdrasilAccountFactory.INSTANCE.fromUsername(username, password)
-                account.logIn(Settings.proxy)
+                account.logIn(HMCLMultiCharacterSelector, Settings.proxy)
             } catch (e: Exception) {
                 e
             }

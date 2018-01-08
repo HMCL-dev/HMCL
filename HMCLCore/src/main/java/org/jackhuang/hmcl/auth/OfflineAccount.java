@@ -54,7 +54,7 @@ public class OfflineAccount extends Account {
     }
 
     @Override
-    public AuthInfo logIn(Proxy proxy) throws AuthenticationException {
+    public AuthInfo logIn(MultiCharacterSelector selector, Proxy proxy) throws AuthenticationException {
         if (StringUtils.isBlank(username) || StringUtils.isBlank(uuid))
             throw new AuthenticationException("Username cannot be empty");
 

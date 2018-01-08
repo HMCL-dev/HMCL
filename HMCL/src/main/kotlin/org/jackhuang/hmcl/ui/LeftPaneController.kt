@@ -97,9 +97,7 @@ class LeftPaneController(private val leftPane: AdvancedListBox) {
     fun onProfilesLoading() {
         val list = LinkedList<RipplerContainer>()
         Settings.getProfiles().forEach { profile ->
-            val item = VersionListItem(profile.name).apply {
-                lblGameVersion.textProperty().bind(profile.selectedVersionProperty)
-            }
+            val item = VersionListItem(profile.name)
             val ripplerContainer = RipplerContainer(item)
             item.onSettingsButtonClicked {
                 Controllers.decorator.showPage(ProfilePage(profile))

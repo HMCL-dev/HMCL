@@ -266,4 +266,4 @@ fun ImageView.limitSize(maxWidth: Double, maxHeight: Double) {
     }
 }
 
-val DEFAULT_ICON = Image("/assets/img/icon.png")
+@JvmField val DEFAULT_ICON = Image("/assets/img/icon.png")

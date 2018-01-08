@@ -17,13 +17,13 @@
  */
 package org.jackhuang.hmcl.task;
 
-import java.util.EventObject;
+import org.jackhuang.hmcl.event.Event;
 
 /**
  *
  * @author huang
  */
-public class TaskEvent extends EventObject {
+public class TaskEvent extends Event {
 
     private final Task task;
     private final boolean failed;

@@ -49,7 +49,7 @@ public final class CurseInstallTask extends Task {
      * @param zipFile the CurseForge modpack file.
      * @param manifest The manifest content of given CurseForge modpack.
      * @param name the new version name
-     * @see readCurseForgeModpackManifest
+     * @see CurseManifest#readCurseForgeModpackManifest
      */
     public CurseInstallTask(DefaultDependencyManager dependencyManager, File zipFile, CurseManifest manifest, String name) {
         this.dependencyManager = dependencyManager;

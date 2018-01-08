@@ -107,7 +107,7 @@ public final class ForgeInstallTask extends TaskResult<Version> {
             if (stream == null)
                 throw new IOException("Malformed forge installer file, install_profile.json does not exist.");
             String json = IOUtils.readFullyAsString(stream);
-            InstallProfile installProfile = Constants.GSON.fromJson(json, InstallProfile.class);
+            ForgeInstallProfile installProfile = Constants.GSON.fromJson(json, ForgeInstallProfile.class);
             if (installProfile == null)
                 throw new IOException("Malformed forge installer file, install_profile.json does not exist.");
             

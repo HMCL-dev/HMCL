@@ -22,11 +22,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.jackhuang.hmcl.auth.AuthInfo;
@@ -207,7 +203,7 @@ public class DefaultLauncher extends Launcher {
                 .filter(it -> !getForbiddens().containsKey(it) || !getForbiddens().get(it).get())
                 .collect(Collectors.toList());
     }
-//http://jenkins.liteloader.com/job/LiteLoader%201.12.2/lastSuccessfulBuild/artifact/build/libs/liteloader-1.12.2-SNAPSHOT-release.jar
+
     public Map<String, Boolean> getFeatures() {
         return Collections.singletonMap(
                 "has_custom_resolution",
@@ -251,14 +247,14 @@ public class DefaultLauncher extends Launcher {
                         false);
     }
 
-    public Map<String, String> getConfigurations() {
+    protected Map<String, String> getConfigurations() {
         return Lang.mapOf(
                 new Pair<>("${auth_player_name}", authInfo.getUsername()),
                 new Pair<>("${auth_session}", authInfo.getAuthToken()),
                 new Pair<>("${auth_access_token}", authInfo.getAuthToken()),
                 new Pair<>("${auth_uuid}", authInfo.getUserId()),
-                new Pair<>("${version_name}", Lang.nonNull(options.getVersionName(), version.getId())),
-                new Pair<>("${profile_name}", Lang.nonNull(options.getProfileName(), "Minecraft")),
+                new Pair<>("${version_name}", Optional.ofNullable(options.getVersionName()).orElse(version.getId())),
+                new Pair<>("${profile_name}", Optional.ofNullable(options.getProfileName()).orElse("Minecraft")),
                 new Pair<>("${version_type}", version.getType().getId()),
                 new Pair<>("${game_directory}", repository.getRunDirectory(version.getId()).getAbsolutePath()),
                 new Pair<>("${user_type}", authInfo.getUserType().toString().toLowerCase()),
@@ -275,11 +271,8 @@ public class DefaultLauncher extends Launcher {
 
         decompressNatives();
 
-        if (StringUtils.isNotBlank(options.getPrecalledCommand())) {
-            Process process = Runtime.getRuntime().exec(options.getPrecalledCommand());
-            if (process.isAlive())
-                process.waitFor();
-        }
+        if (StringUtils.isNotBlank(options.getPrecalledCommand()))
+            Runtime.getRuntime().exec(options.getPrecalledCommand()).waitFor();
 
         builder.directory(repository.getRunDirectory(version.getId()))
                 .environment().put("APPDATA", options.getGameDir().getAbsoluteFile().getParent());
@@ -372,7 +365,7 @@ public class DefaultLauncher extends Launcher {
     private void startMonitorsWithoutLoggingInfo(ManagedProcess managedProcess, ProcessListener processListener, boolean isDaemon) {
         processListener.setProcess(managedProcess);
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
-            processListener.onLog(it + OperatingSystem.LINE_SEPARATOR, Lang.nonNull(Log4jLevel.guessLevel(it), Log4jLevel.INFO));
+            processListener.onLog(it + OperatingSystem.LINE_SEPARATOR, Optional.ofNullable(Log4jLevel.guessLevel(it)).orElse(Log4jLevel.INFO));
             managedProcess.addLine(it);
         }), "stdout-pump", isDaemon);
         managedProcess.addRelatedThread(stdout);

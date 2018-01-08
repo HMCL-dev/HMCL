@@ -42,8 +42,8 @@ import java.util.logging.Level
 
 object Settings {
     val GSON = GsonBuilder()
-            .registerTypeAdapter(VersionSetting::class.java, VersionSetting)
-            .registerTypeAdapter(Profile::class.java, Profile)
+            .registerTypeAdapter(VersionSetting::class.java, VersionSetting.Serializer.INSTANCE)
+            .registerTypeAdapter(Profile::class.java, Profile.Serializer.INSTANCE)
             .registerTypeAdapter(File::class.java, FileTypeAdapter.INSTANCE)
             .setPrettyPrinting().create()
 

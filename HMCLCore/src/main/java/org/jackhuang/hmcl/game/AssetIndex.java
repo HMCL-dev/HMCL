@@ -35,7 +35,7 @@ public final class AssetIndex {
     private final Map<String, AssetObject> objects;
 
     public AssetIndex() {
-        this(false, Collections.EMPTY_MAP);
+        this(false, Collections.emptyMap());
     }
 
     public AssetIndex(boolean virtual, Map<String, AssetObject> objects) {

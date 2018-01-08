@@ -5,7 +5,7 @@
 <?import javafx.scene.control.ScrollPane?>
 <fx:root
         maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
-        styleClass="transparent" type="StackPane" pickOnBounds="false"
+        type="StackPane" pickOnBounds="false"
         xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1">
     <ScrollPane fitToHeight="true" fitToWidth="true" fx:id="scrollPane" hbarPolicy="NEVER">
         <JFXMasonryPane fx:id="masonryPane" HSpacing="3" VSpacing="3" cellWidth="182" cellHeight="160">
@@ -22,12 +22,6 @@
                    style="-fx-background-color:#5264AE;-fx-background-radius: 50px;">
             <graphic>
                 <fx:include source="/assets/svg/plus.fxml" />
-            </graphic>
-        </JFXButton>
-        <JFXButton prefWidth="40" prefHeight="40" buttonType="RAISED" fx:id="btnLaunch"
-                   style="-fx-background-color:#5264AE;-fx-background-radius: 50px;">
-            <graphic>
-                <fx:include source="/assets/svg/rocket.fxml" />
             </graphic>
         </JFXButton>
     </VBox>

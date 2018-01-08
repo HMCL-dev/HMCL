@@ -61,7 +61,7 @@ public final class VersionJsonDownloadTask extends Task {
     @Override
     public void execute() throws Exception {
         RemoteVersion<?> remoteVersion = gameVersionList.getVersions(gameVersion).stream().findFirst()
-                .orElseThrow(() -> new IllegalStateException("Cannot find specific version "+gameVersion+" in remote repository"));
+                .orElseThrow(() -> new IllegalStateException("Cannot find specific version " + gameVersion + " in remote repository"));
         String jsonURL = dependencyManager.getDownloadProvider().injectURL(remoteVersion.getUrl());
         dependencies.add(new GetTask(NetworkUtils.toURL(jsonURL), Proxy.NO_PROXY, ID));
     }

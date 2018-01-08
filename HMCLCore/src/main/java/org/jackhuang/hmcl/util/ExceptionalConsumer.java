@@ -15,20 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.game
+package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.Main
-import org.jackhuang.hmcl.auth.AuthInfo
-import org.jackhuang.hmcl.launch.DefaultLauncher
-import org.jackhuang.hmcl.launch.ProcessListener
-
-class HMCLGameLauncher(repository: GameRepository, versionId: String, account: AuthInfo, options: LaunchOptions, listener: ProcessListener? = null, isDaemon: Boolean = true)
-    : DefaultLauncher(repository, versionId, account, options, listener, isDaemon) {
-
-    override fun appendJvmArgs(res: MutableList<String>) {
-        super.appendJvmArgs(res)
-
-        res.add("-Dminecraft.launcher.version=" + Main.VERSION);
-        res.add("-Dminecraft.launcher.brand=" + Main.NAME);
-    }
+/**
+ * @author huangyuhui
+ */
+public interface ExceptionalConsumer<T, E extends Exception> {
+    void accept(T t) throws E;
 }

@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.util.Immutable;
  * @author huangyuhui
  */
 @Immutable
-public final class Install {
+public final class ForgeInstall {
 
     private final String profileName;
     private final String target;
@@ -36,11 +36,11 @@ public final class Install {
     private final String mirrorList;
     private final String logo;
 
-    public Install() {
+    public ForgeInstall() {
         this(null, null, null, null, null, null, null, null, null);
     }
 
-    public Install(String profileName, String target, String path, String version, String filePath, String welcome, String minecraft, String mirrorList, String logo) {
+    public ForgeInstall(String profileName, String target, String path, String version, String filePath, String welcome, String minecraft, String mirrorList, String logo) {
         this.profileName = profileName;
         this.target = target;
         this.path = path;

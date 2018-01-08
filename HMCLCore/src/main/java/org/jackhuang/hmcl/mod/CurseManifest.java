@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+
 import org.jackhuang.hmcl.util.CompressingUtils;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Immutable;
@@ -122,7 +124,7 @@ public final class CurseManifest {
         if (manifest == null)
             throw new JsonParseException("`manifest.json` not found. Not a valid Curse modpack.");
         return new Modpack(manifest.getName(), manifest.getAuthor(), manifest.getVersion(), manifest.getMinecraft().getGameVersion(),
-                Lang.nonNull(CompressingUtils.readTextZipEntryQuietly(f, "modlist.html"), "No description"), manifest);
+                Optional.ofNullable(CompressingUtils.readTextZipEntryQuietly(f, "modlist.html")).orElse( "No description"), manifest);
     }
 
     public static final String MINECRAFT_MODPACK = "minecraftModpack";

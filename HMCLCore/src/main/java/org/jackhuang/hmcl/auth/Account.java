@@ -28,11 +28,11 @@ public abstract class Account {
 
     public abstract String getUsername();
 
-    public AuthInfo logIn() throws AuthenticationException {
-        return logIn(Proxy.NO_PROXY);
+    public AuthInfo logIn(MultiCharacterSelector selector) throws AuthenticationException {
+        return logIn(selector, Proxy.NO_PROXY);
     }
 
-    public abstract AuthInfo logIn(Proxy proxy) throws AuthenticationException;
+    public abstract AuthInfo logIn(MultiCharacterSelector selector, Proxy proxy) throws AuthenticationException;
 
     public abstract void logOut();
 

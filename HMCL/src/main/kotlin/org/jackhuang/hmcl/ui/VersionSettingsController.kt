@@ -117,39 +117,39 @@ class VersionSettingsController {
         this.versionId = versionId
 
         lastVersionSetting?.apply {
-            widthProperty.unbind()
-            heightProperty.unbind()
-            maxMemoryProperty.unbind()
-            javaArgsProperty.unbind()
-            minecraftArgsProperty.unbind()
-            permSizeProperty.unbind()
-            wrapperProperty.unbind()
-            precalledCommandProperty.unbind()
-            serverIpProperty.unbind()
-            fullscreenProperty.unbind()
-            notCheckGameProperty.unbind()
-            noCommonProperty.unbind()
-            javaDirProperty.unbind()
-            showLogsProperty.unbind()
+            widthProperty().unbind()
+            heightProperty().unbind()
+            maxMemoryProperty().unbind()
+            javaArgsProperty().unbind()
+            minecraftArgsProperty().unbind()
+            permSizeProperty().unbind()
+            wrapperProperty().unbind()
+            preLaunchCommandProperty().unbind()
+            serverIpProperty().unbind()
+            fullscreenProperty().unbind()
+            notCheckGameProperty().unbind()
+            noCommonProperty().unbind()
+            javaDirProperty().unbind()
+            showLogsProperty().unbind()
             unbindEnum(cboLauncherVisibility)
         }
 
-        bindInt(txtWidth, version.widthProperty)
-        bindInt(txtHeight, version.heightProperty)
-        bindInt(txtMaxMemory, version.maxMemoryProperty)
-        bindString(javaItem.txtCustom, version.javaDirProperty)
-        bindString(gameDirItem.txtCustom, version.gameDirProperty)
-        bindString(txtJVMArgs, version.javaArgsProperty)
-        bindString(txtGameArgs, version.minecraftArgsProperty)
-        bindString(txtMetaspace, version.permSizeProperty)
-        bindString(txtWrapper, version.wrapperProperty)
-        bindString(txtPrecallingCommand, version.precalledCommandProperty)
-        bindString(txtServerIP, version.serverIpProperty)
-        bindEnum(cboLauncherVisibility, version.launcherVisibilityProperty)
-        bindBoolean(chkFullscreen, version.fullscreenProperty)
-        bindBoolean(chkNoGameCheck, version.notCheckGameProperty)
-        bindBoolean(chkNoCommon, version.noCommonProperty)
-        bindBoolean(chkShowLogs, version.showLogsProperty)
+        bindInt(txtWidth, version.widthProperty())
+        bindInt(txtHeight, version.heightProperty())
+        bindInt(txtMaxMemory, version.maxMemoryProperty())
+        bindString(javaItem.txtCustom, version.javaDirProperty())
+        bindString(gameDirItem.txtCustom, version.gameDirProperty())
+        bindString(txtJVMArgs, version.javaArgsProperty())
+        bindString(txtGameArgs, version.minecraftArgsProperty())
+        bindString(txtMetaspace, version.permSizeProperty())
+        bindString(txtWrapper, version.wrapperProperty())
+        bindString(txtPrecallingCommand, version.preLaunchCommandProperty())
+        bindString(txtServerIP, version.serverIpProperty())
+        bindEnum(cboLauncherVisibility, version.launcherVisibilityProperty())
+        bindBoolean(chkFullscreen, version.fullscreenProperty())
+        bindBoolean(chkNoGameCheck, version.notCheckGameProperty())
+        bindBoolean(chkNoCommon, version.noCommonProperty())
+        bindBoolean(chkShowLogs, version.showLogsProperty())
 
         val javaGroupKey = "java_group.listener"
         @Suppress("UNCHECKED_CAST")
@@ -181,8 +181,8 @@ class VersionSettingsController {
             defaultToggle?.isSelected = true
         }
 
-        version.javaDirProperty.setChangedListener { initJavaSubtitle(version) }
-        version.javaProperty.setChangedListener { initJavaSubtitle(version) }
+        version.javaDirProperty().setChangedListener { initJavaSubtitle(version) }
+        version.javaProperty().setChangedListener { initJavaSubtitle(version) }
         initJavaSubtitle(version)
 
         val gameDirKey = "game_dir.listener"
@@ -205,8 +205,8 @@ class VersionSettingsController {
         gameDirItem.group.properties[gameDirKey] = gameDirListener
         gameDirItem.group.selectedToggleProperty().addListener(gameDirListener)
 
-        version.gameDirProperty.setChangedListener { initGameDirSubtitle(version) }
-        version.gameDirTypeProperty.setChangedListener { initGameDirSubtitle(version) }
+        version.gameDirProperty().setChangedListener { initGameDirSubtitle(version) }
+        version.gameDirTypeProperty().setChangedListener { initGameDirSubtitle(version) }
         initGameDirSubtitle(version)
 
         lastVersionSetting = version

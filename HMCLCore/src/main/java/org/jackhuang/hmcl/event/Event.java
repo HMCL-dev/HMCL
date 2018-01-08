@@ -62,7 +62,7 @@ public class Event extends EventObject {
         return false;
     }
 
-    private Result result;
+    private Result result = Result.DEFAULT;
 
     /**
      * Retutns the value set as the result of this event

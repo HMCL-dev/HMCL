@@ -29,6 +29,8 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.OperatingSystem;
@@ -99,7 +101,7 @@ public class Library {
                     + (this.classifier == null ? "" : "-" + this.classifier) + ".jar";
 
         download = new LibraryDownloadInfo(path,
-                Lang.nonNull(Lang.nonNull(temp != null ? temp.getUrl() : null), Lang.nonNull(url, Constants.DEFAULT_LIBRARY_URL) + path),
+                Optional.ofNullable(temp).map(LibraryDownloadInfo::getUrl).orElse(Optional.ofNullable(url).orElse(Constants.DEFAULT_LIBRARY_URL) + path),
                 temp != null ? temp.getSha1() : null,
                 temp != null ? temp.getSize() : 0
         );

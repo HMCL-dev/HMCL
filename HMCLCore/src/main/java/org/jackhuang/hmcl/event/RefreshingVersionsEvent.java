@@ -22,14 +22,17 @@ import java.util.EventObject;
 /**
  * This event gets fired when loading versions in a .minecraft folder.
  * <br>
- * This event is fired on the {@link org.jackhuang.hmcl.event.EVENT_BUS}
- *
- * @param source {@link org.jackhuang.hmcl.game.GameRepository}
+ * This event is fired on the {@link org.jackhuang.hmcl.event.EventBus#EVENT_BUS}
  *
  * @author huangyuhui
  */
-public final class RefreshingVersionsEvent extends EventObject {
+public final class RefreshingVersionsEvent extends Event {
 
+    /**
+     * Constructor.
+     *
+     * @param source {@link org.jackhuang.hmcl.game.GameRepository}
+     */
     public RefreshingVersionsEvent(Object source) {
         super(source);
     }

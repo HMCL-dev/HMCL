@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl
 
+import org.jackhuang.hmcl.event.Event
 import org.jackhuang.hmcl.setting.Profile
 import java.util.*
 
@@ -30,7 +31,7 @@ import java.util.*
  * *
  * @author huangyuhui
  */
-class ProfileChangedEvent(source: Any, val value: Profile) : EventObject(source)
+class ProfileChangedEvent(source: Any, val value: Profile) : Event(source)
 
 /**
  * This event gets fired when loading profiles.
@@ -40,4 +41,4 @@ class ProfileChangedEvent(source: Any, val value: Profile) : EventObject(source)
  * *
  * @author huangyuhui
  */
-class ProfileLoadingEvent(source: Any) : EventObject(source)
+class ProfileLoadingEvent(source: Any) : Event(source)

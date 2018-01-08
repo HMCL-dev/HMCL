@@ -36,7 +36,7 @@ public final class GameRemoteVersions {
     private final GameRemoteLatestVersions latest;
 
     public GameRemoteVersions() {
-        this(Collections.EMPTY_LIST, null);
+        this(Collections.emptyList(), null);
     }
 
     public GameRemoteVersions(List<GameRemoteVersion> versions, GameRemoteLatestVersions latest) {

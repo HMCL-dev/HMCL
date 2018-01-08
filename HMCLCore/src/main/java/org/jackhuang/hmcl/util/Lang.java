@@ -59,7 +59,7 @@ public final class Lang {
      *
      * @param <T> type of argument.
      * @param <R> type of result.
-     * @param supplier your method.
+     * @param function your method.
      * @return the result of the method to invoke.
      */
     public static <T, R, E extends Exception> R invoke(ExceptionalFunction<T, R, E> function, T t) {
@@ -190,19 +190,19 @@ public final class Lang {
         return convert(map.get(key), clazz, defaultValue);
     }
 
-    public static <T> List<T> merge(Collection<T>... collections) {
+    public static <T> List<T> merge(Collection<T> a, Collection<T> b) {
         LinkedList<T> result = new LinkedList<>();
-        for (Collection<T> collection : collections)
-            if (collection != null)
-                result.addAll(collection);
+        result.addAll(a);
+        result.addAll(b);
         return result;
     }
 
-    public static <T> T nonNull(T... t) {
-        for (T a : t)
-            if (a != null)
-                return a;
-        return null;
+    public static <T> List<T> merge(Collection<T> a, Collection<T> b, Collection<T> c) {
+        LinkedList<T> result = new LinkedList<>();
+        result.addAll(a);
+        result.addAll(b);
+        result.addAll(c);
+        return result;
     }
 
     public static Thread thread(Runnable runnable) {
@@ -223,10 +223,6 @@ public final class Lang {
         return thread;
     }
 
-    public static <T> T get(Optional<T> optional) {
-        return optional.isPresent() ? optional.get() : null;
-    }
-
     public static <T> Iterator<T> asIterator(Enumeration<T> enumeration) {
         return new Iterator<T>() {
             @Override
@@ -243,5 +239,13 @@ public final class Lang {
 
     public static <T> Iterable<T> asIterable(Enumeration<T> enumeration) {
         return () -> asIterator(enumeration);
+    }
+
+    public static int parseInt(String string, int defaultValue) {
+        try {
+            return Integer.parseInt(string);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
     }
 }

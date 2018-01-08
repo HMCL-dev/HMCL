@@ -113,7 +113,7 @@ public final class OptiFineInstallTask extends TaskResult<Version> {
             hasFMLTweaker = true;
         if (version.getArguments().isPresent()) {
             List<Argument> game = version.getArguments().get().getGame();
-            if (game.stream().anyMatch(arg -> arg.toString(Collections.EMPTY_MAP, Collections.EMPTY_MAP).contains("FMLTweaker")))
+            if (game.stream().anyMatch(arg -> arg.toString(Collections.emptyMap(), Collections.emptyMap()).contains("FMLTweaker")))
                 hasFMLTweaker = true;
         }
 

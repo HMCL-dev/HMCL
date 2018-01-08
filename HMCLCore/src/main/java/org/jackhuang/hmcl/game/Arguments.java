@@ -50,11 +50,11 @@ public final class Arguments {
     }
 
     public List<Argument> getGame() {
-        return game == null ? Collections.EMPTY_LIST : Collections.unmodifiableList(game);
+        return game == null ? Collections.emptyList() : Collections.unmodifiableList(game);
     }
 
     public List<Argument> getJvm() {
-        return jvm == null ? Collections.EMPTY_LIST : Collections.unmodifiableList(jvm);
+        return jvm == null ? Collections.emptyList() : Collections.unmodifiableList(jvm);
     }
 
     public static Arguments addGameArguments(Arguments arguments, String... gameArguments) {
@@ -83,7 +83,7 @@ public final class Arguments {
     }
 
     public static List<String> parseArguments(List<Argument> arguments, Map<String, String> keys) {
-        return parseArguments(arguments, keys, Collections.EMPTY_MAP);
+        return parseArguments(arguments, keys, Collections.emptyMap());
     }
 
     public static List<String> parseArguments(List<Argument> arguments, Map<String, String> keys, Map<String, Boolean> features) {

@@ -75,7 +75,7 @@ public class RuledArgument implements Argument {
                     .map(StringArgument::new)
                     .map(str -> str.toString(keys, features).get(0))
                     .collect(Collectors.toList());
-        return Collections.EMPTY_LIST;
+        return Collections.emptyList();
     }
 
     public static class Serializer implements JsonSerializer<RuledArgument>, JsonDeserializer<RuledArgument> {

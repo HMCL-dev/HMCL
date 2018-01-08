@@ -17,28 +17,37 @@
  */
 package org.jackhuang.hmcl.event;
 
+import org.jackhuang.hmcl.game.Version;
+
 import java.util.EventObject;
 
 /**
  * This event gets fired when a minecraft version has been loaded.
  * <br>
- * This event is fired on the {@link org.jackhuang.hmcl.event.EVENT_BUS}
- *
- * @param source {@link org.jackhuang.hmcl.game.GameRepository}
- * @param version the version id.
+ * This event is fired on the {@link org.jackhuang.hmcl.event.EventBus#EVENT_BUS}
  *
  * @author huangyuhui
  */
-public final class LoadedOneVersionEvent extends EventObject {
+public final class LoadedOneVersionEvent extends Event {
 
-    private final String version;
+    private final Version version;
 
-    public LoadedOneVersionEvent(Object source, String version) {
+    /**
+     *
+     * @param source {@link org.jackhuang.hmcl.game.GameRepository}
+     * @param version the version id.
+     */
+    public LoadedOneVersionEvent(Object source, Version version) {
         super(source);
         this.version = version;
     }
 
-    public String getVersion() {
+    public Version getVersion() {
         return version;
+    }
+
+    @Override
+    public boolean hasResult() {
+        return true;
     }
 }

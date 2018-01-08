@@ -57,10 +57,10 @@ class Main : Application() {
 
     companion object {
 
-        val VERSION = "@HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING@"
-        val NAME = "HMCL"
-        val TITLE = "$NAME $VERSION"
-        val APPDATA = getWorkingDirectory("hmcl")
+        @JvmField val VERSION = "@HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING@"
+        @JvmField val NAME = "HMCL"
+        @JvmField val TITLE = "$NAME $VERSION"
+        @JvmField val APPDATA = getWorkingDirectory("hmcl")
 
         @JvmStatic
         fun main(args: Array<String>) {

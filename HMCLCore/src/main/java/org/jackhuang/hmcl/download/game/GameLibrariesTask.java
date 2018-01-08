@@ -57,14 +57,13 @@ public final class GameLibrariesTask extends Task {
 
     @Override
     public void execute() throws Exception {
-        for (Library library : version.getLibraries())
-            if (library.appliesToCurrentEnvironment()) {
-                File file = dependencyManager.getGameRepository().getLibraryFile(version, library);
-                if (!file.exists())
-                    dependencies.add(new FileDownloadTask(
-                            NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(library.getDownload().getUrl())),
-                            file, dependencyManager.getProxy(), library.getDownload().getSha1()));
-            }
+        version.getLibraries().stream().filter(Library::appliesToCurrentEnvironment).forEach(library -> {
+            File file = dependencyManager.getGameRepository().getLibraryFile(version, library);
+            if (!file.exists())
+                dependencies.add(new FileDownloadTask(
+                        NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(library.getDownload().getUrl())),
+                        file, dependencyManager.getProxy(), library.getDownload().getSha1()));
+        });
     }
 
 }

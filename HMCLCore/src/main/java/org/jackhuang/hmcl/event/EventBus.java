@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.event;
 
-import java.util.EventObject;
 import java.util.HashMap;
 import org.jackhuang.hmcl.task.Schedulers;
 
@@ -29,14 +28,14 @@ public final class EventBus {
 
     private final HashMap<Class<?>, EventManager<?>> events = new HashMap<>();
 
-    public <T extends EventObject> EventManager<T> channel(Class<T> clazz) {
+    public <T extends Event> EventManager<T> channel(Class<T> clazz) {
         if (!events.containsKey(clazz))
-            events.put(clazz, new EventManager<>(Schedulers.computation()));
+            events.put(clazz, new EventManager<>());
         return (EventManager<T>) events.get(clazz);
     }
 
-    public void fireEvent(EventObject obj) {
-        channel((Class<EventObject>) obj.getClass()).fireEvent(obj);
+    public Event.Result fireEvent(Event obj) {
+        return channel((Class<Event>) obj.getClass()).fireEvent(obj);
     }
 
     public static final EventBus EVENT_BUS = new EventBus();

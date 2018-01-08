@@ -22,6 +22,7 @@ import com.google.gson.JsonParseException
 import com.google.gson.reflect.TypeToken
 import javafx.beans.property.Property
 import javafx.event.Event.fireEvent
+import org.jackhuang.hmcl.event.Event
 import org.jackhuang.hmcl.event.EventBus
 import org.jackhuang.hmcl.event.EventManager
 import org.jackhuang.hmcl.task.Scheduler
@@ -113,10 +114,10 @@ fun <V> taskResult(id: String, callable: Callable<V>): TaskResult<V> = Task.ofRe
 fun <V> taskResult(id: String, callable: (AutoTypingMap<String>) -> V): TaskResult<V> = Task.ofResult(id, callable)
 
 fun InputStream.readFullyAsString() = IOUtils.readFullyAsString(this)
-inline fun <reified T : EventObject> EventBus.channel() = channel(T::class.java)
+inline fun <reified T : Event> EventBus.channel() = channel(T::class.java)
 
-operator fun <T : EventObject> EventManager<T>.plusAssign(func: (T) -> Unit) = register(func)
-operator fun <T : EventObject> EventManager<T>.plusAssign(func: () -> Unit) = register(func)
-operator fun <T : EventObject> EventManager<T>.minusAssign(func: (T) -> Unit) = unregister(func)
-operator fun <T : EventObject> EventManager<T>.minusAssign(func: () -> Unit) = unregister(func)
-operator fun <T : EventObject> EventManager<T>.invoke(event: T) = fireEvent(event)
+operator fun <T : Event> EventManager<T>.plusAssign(func: (T) -> Unit) = register(func)
+operator fun <T : Event> EventManager<T>.plusAssign(func: () -> Unit) = register(func)
+operator fun <T : Event> EventManager<T>.minusAssign(func: (T) -> Unit) = unregister(func)
+operator fun <T : Event> EventManager<T>.minusAssign(func: () -> Unit) = unregister(func)
+operator fun <T : Event> EventManager<T>.invoke(event: T) = fireEvent(event)

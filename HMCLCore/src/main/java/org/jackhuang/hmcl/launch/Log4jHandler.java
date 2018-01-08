@@ -17,11 +17,9 @@
  */
 package org.jackhuang.hmcl.launch;
 
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.io.*;
 import java.util.Date;
+import java.util.Optional;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
@@ -55,6 +53,7 @@ final class Log4jHandler extends Thread {
 
     public Log4jHandler(BiConsumer<String, Log4jLevel> callback) {
         this.callback = callback;
+        newLine("<output>");
 
         reader = Lang.invoke(() -> XMLReaderFactory.createXMLReader());
         reader.setContentHandler(new Log4jHandlerImpl());
@@ -63,7 +62,6 @@ final class Log4jHandler extends Thread {
     @Override
     public void run() {
         setName("log4j-handler");
-        newLine("<output>");
 
         try {
             reader.parse(new InputSource(inputStream));
@@ -88,17 +86,14 @@ final class Log4jHandler extends Thread {
         }).get());
     }
 
-    public Future<?> newLine(String content) {
+    public Future<?> newLine(String log) {
         return Schedulers.computation().schedule(() -> {
-            String log = content;
-            if (!log.trim().startsWith("<"))
-                log = "<![CDATA[" + log.replace("]]>", "") + "]]>";
-            outputStream.write((log + OperatingSystem.LINE_SEPARATOR)
+            byte[] bytes = (log + OperatingSystem.LINE_SEPARATOR)
                     .replace("log4j:Event", "log4j_Event")
                     .replace("log4j:Message", "log4j_Message")
                     .replace("log4j:Throwable", "log4j_Throwable")
-                    .getBytes()
-            );
+                    .getBytes();
+            outputStream.write(bytes);
             outputStream.flush();
         });
     }
@@ -155,7 +150,7 @@ final class Log4jHandler extends Thread {
             if (readingMessage)
                 message.append(line).append(OperatingSystem.LINE_SEPARATOR);
             else
-                callback.accept(line, Lang.nonNull(Log4jLevel.guessLevel(line), Log4jLevel.INFO));
+                callback.accept(line, Optional.ofNullable(Log4jLevel.guessLevel(line)).orElse(Log4jLevel.INFO));
         }
     }
 }

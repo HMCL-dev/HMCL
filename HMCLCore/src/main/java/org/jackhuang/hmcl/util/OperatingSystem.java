@@ -65,12 +65,12 @@ public enum OperatingSystem {
     /**
      * The total memory/MB this computer have.
      */
-    public static final long TOTAL_MEMORY;
+    public static final int TOTAL_MEMORY;
 
     /**
      * The suggested memory size/MB for Minecraft to allocate.
      */
-    public static final long SUGGESTED_MEMORY;
+    public static final int SUGGESTED_MEMORY;
 
     public static final String PATH_SEPARATOR = File.pathSeparator;
     public static final String FILE_SEPARATOR = File.separator;
@@ -104,11 +104,11 @@ public enum OperatingSystem {
 
         Object bytes = ReflectionHelper.call(ManagementFactory.getOperatingSystemMXBean(), "getTotalPhysicalMemorySize");
         if (bytes instanceof Long)
-            TOTAL_MEMORY = ((Long) bytes) / 1024 / 1024;
+            TOTAL_MEMORY = (int) (((Long) bytes) / 1024 / 1024);
         else
             TOTAL_MEMORY = 1024;
 
-        SUGGESTED_MEMORY = Math.round(1.0 * TOTAL_MEMORY / 4.0 / 128.0) * 128;
+        SUGGESTED_MEMORY = (int) (Math.round(1.0 * TOTAL_MEMORY / 4.0 / 128.0) * 128);
 
         String arch = System.getProperty("sun.arch.data.model");
         if (arch == null)

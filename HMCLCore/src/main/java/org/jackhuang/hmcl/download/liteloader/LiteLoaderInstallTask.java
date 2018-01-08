@@ -96,11 +96,11 @@ public final class LiteLoaderInstallTask extends TaskResult<Version> {
                 new LibrariesDownloadInfo(new LibraryDownloadInfo(null, remote.getUrl()))
         );
 
-        Version tempVersion = version.setLibraries(Lang.merge(remote.getTag().getLibraries(), Arrays.asList(library)));
+        Version tempVersion = version.setLibraries(Lang.merge(remote.getTag().getLibraries(), Collections.singleton(library)));
         setResult(version
                 .setMainClass("net.minecraft.launchwrapper.Launch")
                 .setLibraries(Lang.merge(tempVersion.getLibraries(), version.getLibraries()))
-                .setLogging(Collections.EMPTY_MAP)
+                .setLogging(Collections.emptyMap())
                 .setMinecraftArguments(version.getMinecraftArguments().orElse("") + " --tweakClass " + remote.getTag().getTweakClass())
                 //.setArguments(Arguments.addGameArguments(Lang.get(version.getArguments()), "--tweakClass", remote.getTag().getTweakClass()))
         );

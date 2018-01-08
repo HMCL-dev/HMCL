@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.event;
 
 import java.util.EnumMap;
-import java.util.EventObject;
 import java.util.HashSet;
 import java.util.function.Consumer;
 import org.jackhuang.hmcl.task.Scheduler;
@@ -29,21 +28,12 @@ import org.jackhuang.hmcl.util.SimpleMultimap;
  *
  * @author huangyuhui
  */
-public final class EventManager<T extends EventObject> {
+public final class EventManager<T extends Event> {
 
-    private final Scheduler scheduler;
     private final SimpleMultimap<EventPriority, Consumer<T>> handlers
             = new SimpleMultimap<>(() -> new EnumMap<>(EventPriority.class), HashSet::new);
     private final SimpleMultimap<EventPriority, Runnable> handlers2
             = new SimpleMultimap<>(() -> new EnumMap<>(EventPriority.class), HashSet::new);
-
-    public EventManager() {
-        this(Schedulers.immediate());
-    }
-
-    public EventManager(Scheduler scheduler) {
-        this.scheduler = scheduler;
-    }
 
     public void register(Consumer<T> consumer) {
         register(consumer, EventPriority.NORMAL);
@@ -71,15 +61,18 @@ public final class EventManager<T extends EventObject> {
         handlers2.removeValue(runnable);
     }
 
-    public void fireEvent(T event) {
-        scheduler.schedule(() -> {
-            for (EventPriority priority : EventPriority.values()) {
-                for (Consumer<T> handler : handlers.get(priority))
-                    handler.accept(event);
-                for (Runnable runnable : handlers2.get(priority))
-                    runnable.run();
-            }
-        });
+    public Event.Result fireEvent(T event) {
+        for (EventPriority priority : EventPriority.values()) {
+            for (Consumer<T> handler : handlers.get(priority))
+                handler.accept(event);
+            for (Runnable runnable : handlers2.get(priority))
+                runnable.run();
+        }
+
+        if (event.hasResult())
+            return event.getResult();
+        else
+            return Event.Result.DEFAULT;
     }
 
 }

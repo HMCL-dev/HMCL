@@ -24,13 +24,16 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import org.jackhuang.hmcl.util.Immutable;
+
 import java.lang.reflect.Type;
 import java.util.UUID;
 
 /**
  *
- * @author huang
+ * @author huangyuhui
  */
+@Immutable
 public final class GameProfile {
 
     private final UUID id;

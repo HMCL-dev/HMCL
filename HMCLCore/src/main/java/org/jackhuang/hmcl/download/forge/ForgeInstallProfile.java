@@ -28,20 +28,20 @@ import org.jackhuang.hmcl.util.Validation;
  * @author huangyuhui
  */
 @Immutable
-public final class InstallProfile implements Validation {
+public final class ForgeInstallProfile implements Validation {
 
     @SerializedName("install")
-    private final Install install;
+    private final ForgeInstall install;
 
     @SerializedName("versionInfo")
     private final Version versionInfo;
 
-    public InstallProfile(Install install, Version versionInfo) {
+    public ForgeInstallProfile(ForgeInstall install, Version versionInfo) {
         this.install = install;
         this.versionInfo = versionInfo;
     }
 
-    public Install getInstall() {
+    public ForgeInstall getInstall() {
         return install;
     }
 

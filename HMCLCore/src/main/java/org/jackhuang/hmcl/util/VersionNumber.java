@@ -29,7 +29,7 @@ public abstract class VersionNumber implements Comparable<VersionNumber> {
 
     /**
      * @throws IllegalArgumentException if there are some characters excluding digits and dots.
-     * @param version
+     * @param version version string in form x.x.x
      * @return the int version number
      */
     public static IntVersionNumber asIntVersionNumber(String version) {

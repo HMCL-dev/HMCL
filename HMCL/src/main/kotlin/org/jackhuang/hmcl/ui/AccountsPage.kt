@@ -28,11 +28,13 @@ import javafx.scene.control.ScrollPane
 import javafx.scene.control.ToggleGroup
 import javafx.scene.layout.StackPane
 import org.jackhuang.hmcl.auth.Account
+import org.jackhuang.hmcl.auth.MultiCharacterSelector
 import org.jackhuang.hmcl.auth.OfflineAccount
 import org.jackhuang.hmcl.auth.OfflineAccountFactory
 import org.jackhuang.hmcl.auth.yggdrasil.InvalidCredentialsException
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory
+import org.jackhuang.hmcl.game.HMCLMultiCharacterSelector
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Settings
 import org.jackhuang.hmcl.task.Schedulers
@@ -133,7 +135,7 @@ class AccountsPage() : StackPane(), DecoratorPage {
                     else -> throw UnsupportedOperationException()
                 }
 
-                account.logIn(Settings.proxy)
+                account.logIn(HMCLMultiCharacterSelector, Settings.proxy)
                 account
             } catch (e: Exception) {
                 e

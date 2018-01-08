@@ -52,7 +52,7 @@ object Controllers {
 
         decorator.isCustomMaximize = false
 
-        scene = Scene(decorator, 800.0, 480.0)
+        scene = Scene(decorator, 804.0, 521.0)
         scene.stylesheets.addAll(*stylesheets)
         stage.minWidth = 800.0
         stage.maxWidth = 800.0
