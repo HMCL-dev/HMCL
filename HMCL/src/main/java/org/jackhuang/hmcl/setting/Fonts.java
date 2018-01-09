@@ -15,25 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.game;
+package org.jackhuang.hmcl.setting;
 
-import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.auth.MultiCharacterSelector;
-import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
-import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
+import javafx.scene.text.Font;
 
 import java.util.List;
 
-/**
- * @author huangyuhui
- */
-public final class HMCLMultiCharacterSelector implements MultiCharacterSelector {
-    public static final HMCLMultiCharacterSelector INSTANCE = new HMCLMultiCharacterSelector();
+public final class Fonts {
+    private Fonts() {}
 
-    private HMCLMultiCharacterSelector() {}
-
-    @Override
-    public GameProfile select(Account account, List<GameProfile> names) throws NoSelectedCharacterException {
-        return names.stream().findFirst().orElseThrow(() -> new NoSelectedCharacterException(account));
-    }
+    public static final List<String> FONTS = Font.getFamilies();
 }

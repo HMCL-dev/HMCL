@@ -25,6 +25,7 @@ import javafx.scene.Parent
 import javafx.scene.SnapshotParameters
 import javafx.scene.image.ImageView
 import javafx.scene.image.WritableImage
+import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
 import javafx.util.Duration
 import org.jackhuang.hmcl.ui.takeSnapshot
@@ -32,16 +33,17 @@ import org.jackhuang.hmcl.ui.takeSnapshot
 /**
  * @param view A stack pane that contains another control that is [Parent]
  */
-class TransitionHandler(override val view: StackPane): AnimationHandler {
+class TransitionHandler(private val view: StackPane): AnimationHandler {
     private var animation: Timeline? = null
 
-    override val snapshot = ImageView().apply {
+    override fun getSnapshot() = ImageView().apply {
         isPreserveRatio = true
         isSmooth = true
     }
 
-    override lateinit var duration: Duration
-        private set
+    override fun getView() = view
+    private lateinit var duration: Duration
+    override fun getDuration() = duration
 
     fun setContent(newView: Node, transition: AnimationProducer, duration: Duration = Duration.millis(320.0)) {
         this.duration = duration

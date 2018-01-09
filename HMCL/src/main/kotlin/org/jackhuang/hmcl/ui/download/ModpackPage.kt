@@ -22,11 +22,10 @@ import com.jfoenix.controls.JFXTextField
 import javafx.application.Platform
 import javafx.fxml.FXML
 import javafx.scene.control.Label
-import javafx.scene.layout.BorderPane
 import javafx.scene.layout.Region
 import javafx.scene.layout.StackPane
 import javafx.stage.FileChooser
-import org.jackhuang.hmcl.game.readModpackManifest
+import org.jackhuang.hmcl.game.ModpackHelper
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.mod.Modpack
 import org.jackhuang.hmcl.setting.Profile
@@ -66,7 +65,7 @@ class ModpackPage(private val controller: WizardController): StackPane(), Wizard
             txtModpackName.textProperty().onInvalidated { btnInstall.isDisable = !txtModpackName.validate() }
 
             try {
-                manifest = readModpackManifest(selectedFile)
+                manifest = ModpackHelper.readModpackManifest(selectedFile)
                 controller.settings[MODPACK_CURSEFORGE_MANIFEST] = manifest!!
                 lblName.text = manifest!!.name
                 lblVersion.text = manifest!!.version

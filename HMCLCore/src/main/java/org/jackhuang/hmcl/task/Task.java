@@ -194,7 +194,7 @@ public abstract class Task {
         executor().start();
     }
 
-    public final boolean test() throws Exception {
+    public final boolean test() {
         return executor().test();
     }
 

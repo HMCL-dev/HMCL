@@ -17,23 +17,15 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.auth.MultiCharacterSelector;
-import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
-import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
-
-import java.util.List;
-
 /**
  * @author huangyuhui
  */
-public final class HMCLMultiCharacterSelector implements MultiCharacterSelector {
-    public static final HMCLMultiCharacterSelector INSTANCE = new HMCLMultiCharacterSelector();
+public interface ModAdviser {
+    ModSuggestion advise(String fileName, boolean isDirectory);
 
-    private HMCLMultiCharacterSelector() {}
-
-    @Override
-    public GameProfile select(Account account, List<GameProfile> names) throws NoSelectedCharacterException {
-        return names.stream().findFirst().orElseThrow(() -> new NoSelectedCharacterException(account));
+    enum ModSuggestion {
+        SUGGESTED,
+        NORMAL,
+        HIDDEN
     }
 }

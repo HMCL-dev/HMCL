@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.MainKt;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.util.*;
 
@@ -110,11 +111,13 @@ public class AppDataUpgrader extends IUpgrader {
                         String hash = null;
                         if (map.containsKey("jarsha1"))
                             hash = map.get("jarsha1");
-                        if (TaskWindow.factory().append(new AppDataUpgraderJarTask(NetworkUtils.toURL(map.get("jar")), version.toString(), hash)).execute()) {
+                        Controllers.INSTANCE.dialog(MainKt.i18n("ui.message.downloading"));
+                        if (new AppDataUpgraderJarTask(NetworkUtils.toURL(map.get("jar")), version.toString(), hash).test()) {
                             new ProcessBuilder(JavaVersion.fromCurrentEnvironment().getBinary().getAbsolutePath(), "-jar", AppDataUpgraderJarTask.getSelf(version.toString()).getAbsolutePath())
                                     .directory(new File("").getAbsoluteFile()).start();
                             System.exit(0);
                         }
+                        Controllers.INSTANCE.closeDialog();
                     } catch (IOException ex) {
                         Logging.LOG.log(Level.SEVERE, "Failed to create upgrader", ex);
                     }
@@ -123,11 +126,13 @@ public class AppDataUpgrader extends IUpgrader {
                         String hash = null;
                         if (map.containsKey("packsha1"))
                             hash = map.get("packsha1");
-                        if (TaskWindow.factory().append(new AppDataUpgraderPackGzTask(NetworkUtils.toURL(map.get("pack")), version.toString(), hash)).execute()) {
+                        Controllers.INSTANCE.dialog(MainKt.i18n("ui.message.downloading"));
+                        if (new AppDataUpgraderPackGzTask(NetworkUtils.toURL(map.get("pack")), version.toString(), hash).test()) {
                             new ProcessBuilder(JavaVersion.fromCurrentEnvironment().getBinary().getAbsolutePath(), "-jar", AppDataUpgraderPackGzTask.getSelf(version.toString()).getAbsolutePath())
                                     .directory(new File("").getAbsoluteFile()).start();
                             System.exit(0);
                         }
+                        Controllers.INSTANCE.closeDialog();
                     } catch (IOException ex) {
                         Logging.LOG.log(Level.SEVERE, "Failed to create upgrader", ex);
                     }

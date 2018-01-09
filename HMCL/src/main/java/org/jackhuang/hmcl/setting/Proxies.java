@@ -15,25 +15,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.game;
+package org.jackhuang.hmcl.setting;
 
-import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.auth.MultiCharacterSelector;
-import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
-import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
+import org.jackhuang.hmcl.util.Lang;
 
+import java.net.Proxy;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author huangyuhui
  */
-public final class HMCLMultiCharacterSelector implements MultiCharacterSelector {
-    public static final HMCLMultiCharacterSelector INSTANCE = new HMCLMultiCharacterSelector();
+public final class Proxies {
+    private Proxies() {}
 
-    private HMCLMultiCharacterSelector() {}
+    public static final List<Proxy.Type> PROXIES = Arrays.asList(Proxy.Type.DIRECT, Proxy.Type.HTTP, Proxy.Type.SOCKS);
 
-    @Override
-    public GameProfile select(Account account, List<GameProfile> names) throws NoSelectedCharacterException {
-        return names.stream().findFirst().orElseThrow(() -> new NoSelectedCharacterException(account));
+    public static Proxy.Type getProxyType(int index) {
+        return Lang.get(PROXIES, index).orElse(null);
     }
 }

@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.ui.export
 
 import javafx.scene.Node
 import org.jackhuang.hmcl.game.HMCLModpackExportTask
-import org.jackhuang.hmcl.game.MODPACK_PREDICATE
+import org.jackhuang.hmcl.game.HMCLModpackManager.MODPACK_PREDICATE
 import org.jackhuang.hmcl.mod.Modpack
 import org.jackhuang.hmcl.setting.Profile
 import org.jackhuang.hmcl.ui.wizard.WizardController

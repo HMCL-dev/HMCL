@@ -15,10 +15,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui.wizard
+package org.jackhuang.hmcl.setting;
 
-import javafx.scene.Node
+import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
+import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.MojangDownloadProvider;
+import org.jackhuang.hmcl.util.Lang;
 
-object Wizard {
-    fun createWizard(namespace: String = "", provider: WizardProvider): Node = DefaultWizardDisplayer(namespace, provider)
+import java.util.Arrays;
+import java.util.List;
+
+public final class DownloadProviders {
+    private DownloadProviders() {}
+
+    public static List<DownloadProvider> DOWNLOAD_PROVIDERS = Arrays.asList(MojangDownloadProvider.INSTANCE, BMCLAPIDownloadProvider.INSTANCE);
+
+    public static DownloadProvider getDownloadProvider(int index) {
+        return Lang.get(DOWNLOAD_PROVIDERS, index).orElse(MojangDownloadProvider.INSTANCE);
+    }
 }

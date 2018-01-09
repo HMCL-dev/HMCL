@@ -15,27 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui.wizard
+package org.jackhuang.hmcl.ui.wizard;
 
-import com.jfoenix.controls.JFXListView
-import com.jfoenix.controls.JFXTextArea
-import javafx.scene.Node
+import javafx.scene.Node;
 
-class Summary(
-        /**
-         * The component that will display the summary information
-         */
-        val component: Node,
-        /**
-         * The object that represents the actual result of whatever that Wizard
-         * that created this Summary object computes, or null.
-         */
-        val result: Any?) {
-    constructor(items: Array<String>, result: Any?)
-            : this(JFXListView<String>().apply { this.items.addAll(*items) }, result) {
+public final class Wizard {
+
+    public static Node createWizard(WizardProvider provider) {
+        return createWizard("", provider);
     }
 
-    constructor(text: String, result: Any?)
-            : this(JFXTextArea(text).apply { isEditable = false }, result) {
+    public static Node createWizard(String namespace, WizardProvider provider) {
+        return new DefaultWizardDisplayer(namespace, provider);
     }
 }

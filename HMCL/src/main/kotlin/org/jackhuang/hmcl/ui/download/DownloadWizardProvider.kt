@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.ui.download
 import javafx.scene.Node
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask
 import org.jackhuang.hmcl.game.HMCLModpackManifest
-import org.jackhuang.hmcl.game.MMCInstallVersionSettingTask
+import org.jackhuang.hmcl.game.MultiMCInstallVersionSettingTask
 import org.jackhuang.hmcl.mod.*
 import org.jackhuang.hmcl.setting.EnumGameDirectory
 import org.jackhuang.hmcl.setting.Profile
@@ -80,7 +80,7 @@ class DownloadWizardProvider(): WizardProvider() {
         return when (modpack.manifest) {
             is CurseManifest -> CurseInstallTask(profile.dependency, selectedFile, modpack.manifest as CurseManifest, name)
             is HMCLModpackManifest -> HMCLModpackInstallTask(profile, selectedFile, modpack, name)
-            is MultiMCInstanceConfiguration -> MultiMCModpackInstallTask(profile.dependency, selectedFile, modpack.manifest as MultiMCInstanceConfiguration, name).with(MMCInstallVersionSettingTask(profile, modpack.manifest as MultiMCInstanceConfiguration, name))
+            is MultiMCInstanceConfiguration -> MultiMCModpackInstallTask(profile.dependency, selectedFile, modpack.manifest as MultiMCInstanceConfiguration, name).with(MultiMCInstallVersionSettingTask(profile, modpack.manifest as MultiMCInstanceConfiguration, name))
             else -> throw Error()
         }.with(finalizeTask)
     }

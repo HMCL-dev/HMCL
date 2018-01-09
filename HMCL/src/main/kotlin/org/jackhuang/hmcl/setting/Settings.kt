@@ -149,7 +149,7 @@ object Settings {
     var locale: Locales.SupportedLocale = Locales.getLocaleByName(SETTINGS.localization)
         set(value) {
             field = value
-            SETTINGS.localization = Locales.getNameByLocal(value)
+            SETTINGS.localization = Locales.getNameByLocale(value)
         }
 
     var proxy: Proxy = Proxy.NO_PROXY

@@ -135,7 +135,7 @@ class AccountsPage() : StackPane(), DecoratorPage {
                     else -> throw UnsupportedOperationException()
                 }
 
-                account.logIn(HMCLMultiCharacterSelector, Settings.proxy)
+                account.logIn(HMCLMultiCharacterSelector.INSTANCE, Settings.proxy)
                 account
             } catch (e: Exception) {
                 e

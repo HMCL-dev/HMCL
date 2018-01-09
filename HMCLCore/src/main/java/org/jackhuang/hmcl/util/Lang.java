@@ -182,6 +182,13 @@ public final class Lang {
             return (V) o;
     }
 
+    public static <V> Optional<V> get(List<V> list, int index) {
+        if (index < 0 || index >= list.size())
+            return Optional.empty();
+        else
+            return Optional.ofNullable(list.get(index));
+    }
+
     public static <V> Optional<V> get(Map<?, ?> map, Object key, Class<V> clazz) {
         return convert(map.get(key), clazz);
     }
@@ -247,5 +254,10 @@ public final class Lang {
         } catch (NumberFormatException e) {
             return defaultValue;
         }
+    }
+
+    public static <T> T nonNull(T... t) {
+        for (T a : t) if (a != null) return a;
+        return null;
     }
 }
