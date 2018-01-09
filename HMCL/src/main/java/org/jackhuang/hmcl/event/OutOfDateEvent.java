@@ -15,33 +15,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.setting
+package org.jackhuang.hmcl.event;
+
+import org.jackhuang.hmcl.util.VersionNumber;
 
 /**
- * The visibility of launcher.
+ *
+ * Result: Deny if do not upgrade HMCL.
+ *
  * @author huangyuhui
  */
-enum class LauncherVisibility {
+public final class OutOfDateEvent extends Event {
+    private final VersionNumber version;
 
-    /**
-     * Close the launcher anyway when the game process created even if failed to
-     * launch game.
-     */
-    CLOSE,
+    public OutOfDateEvent(Object source, VersionNumber version) {
+        super(source);
+        this.version = version;
+    }
 
-    /**
-     * Hide the launcher when the game process created, if failed to launch
-     * game, will show the log window.
-     */
-    HIDE,
+    public VersionNumber getVersion() {
+        return version;
+    }
 
-    /**
-     * Keep the launcher visible even if the game launched successfully.
-     */
-    KEEP,
+    @Override
+    public boolean hasResult() {
+        return true;
+    }
 
-    /**
-     * Hide the launcher and reopen it when game closes.
-     */
-    HIDE_AND_REOPEN
 }

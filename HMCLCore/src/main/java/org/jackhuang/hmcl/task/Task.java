@@ -108,14 +108,14 @@ public abstract class Task {
      * The collection of sub-tasks that should execute **before** this task running.
      */
     public Collection<Task> getDependents() {
-        return Collections.EMPTY_SET;
+        return Collections.emptySet();
     }
 
     /**
      * The collection of sub-tasks that should execute **after** this task running.
      */
     public Collection<Task> getDependencies() {
-        return Collections.EMPTY_SET;
+        return Collections.emptySet();
     }
 
     public EventManager<TaskEvent> onDone() {
@@ -180,8 +180,6 @@ public abstract class Task {
         progressProperty.unbind();
     }
 
-    ;
-    
     public final TaskExecutor executor() {
         return new TaskExecutor(this);
     }

@@ -15,25 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui.wizard
+package org.jackhuang.hmcl.setting;
 
-import org.jackhuang.hmcl.ui.animation.ContainerAnimations
-
-interface Navigation {
-    fun onStart()
-    fun onNext()
-    fun onPrev(cleanUp: Boolean)
-    fun canPrev(): Boolean
-    fun onFinish()
-    fun onEnd()
-    fun onCancel()
-
-    enum class NavigationDirection(val animation: ContainerAnimations) {
-        START(ContainerAnimations.NONE),
-        PREVIOUS(ContainerAnimations.SWIPE_RIGHT),
-        NEXT(ContainerAnimations.SWIPE_LEFT),
-        FINISH(ContainerAnimations.SWIPE_LEFT),
-        IN(ContainerAnimations.ZOOM_IN),
-        OUT(ContainerAnimations.ZOOM_OUT)
-    }
+/**
+ * Determines where game runs in and game files such as mods.
+ *
+ * @author huangyuhui
+ */
+public enum EnumGameDirectory {
+    /**
+     * .minecraft
+     */
+    ROOT_FOLDER,
+    /**
+     * .minecraft/versions/&lt;version name&gt;
+     */
+    VERSION_FOLDER,
+    /**
+     * user customized directory.
+     */
+    CUSTOM
 }

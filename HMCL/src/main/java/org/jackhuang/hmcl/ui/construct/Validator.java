@@ -15,15 +15,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.game
+package org.jackhuang.hmcl.ui.construct;
 
-import org.jackhuang.hmcl.auth.Account
-import org.jackhuang.hmcl.auth.MultiCharacterSelector
-import org.jackhuang.hmcl.auth.NoSelectedCharacterException
-import org.jackhuang.hmcl.auth.yggdrasil.GameProfile
+import com.jfoenix.validation.base.ValidatorBase;
+import javafx.scene.control.TextInputControl;
 
-object HMCLMultiCharacterSelector : MultiCharacterSelector {
-    override fun select(account: Account, names: MutableList<GameProfile>): GameProfile {
-        return names.firstOrNull() ?: throw NoSelectedCharacterException(account)
+import java.util.function.Predicate;
+
+public final class Validator extends ValidatorBase {
+    private final Predicate<String> validator;
+
+    /**
+     * @param validator return true if the input string is valid.
+     */
+    public Validator(Predicate<String> validator) {
+        this.validator = validator;
+    }
+
+    @Override
+    protected void eval() {
+        if (this.srcControl.get() instanceof TextInputControl) {
+            String text = ((TextInputControl) srcControl.get()).getText();
+            hasErrors.set(!validator.test(text));
+        }
     }
 }

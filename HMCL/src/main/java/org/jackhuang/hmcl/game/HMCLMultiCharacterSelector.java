@@ -15,35 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.upgrade
+package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.util.VersionNumber
+import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.MultiCharacterSelector;
+import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
+import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
+
+import java.util.List;
 
 /**
- *
  * @author huangyuhui
  */
-interface IUpgrader {
-
-    /**
-     * Paring arguments to decide on whether the upgrade is needed.
-     *
-     * @param nowVersion now launcher version
-     * @param args       Application CommandLine Arguments
-     */
-    fun parseArguments(nowVersion: VersionNumber, args: Array<String>)
-
-    /**
-     * Just download the new app.
-     *
-     * @param checker Should be VersionChecker
-     * @param versionNumber the newest version
-     *
-     * @return should return true
-     */
-    fun download(checker: UpdateChecker, versionNumber: VersionNumber)
-
-    companion object {
-        val NOW_UPGRADER: IUpgrader = AppDataUpgrader()
+public final class HMCLMultiCharacterSelector implements MultiCharacterSelector {
+    @Override
+    public GameProfile select(Account account, List<GameProfile> names) throws NoSelectedCharacterException {
+        return names.stream().findFirst().orElseThrow(() -> new NoSelectedCharacterException(account));
     }
 }

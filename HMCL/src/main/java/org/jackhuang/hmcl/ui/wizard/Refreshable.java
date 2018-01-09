@@ -15,10 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.setting
+package org.jackhuang.hmcl.ui.wizard;
 
-enum class EnumGameDirectory {
-    ROOT_FOLDER,
-    VERSION_FOLDER,
-    CUSTOM
+public interface Refreshable {
+    void refresh();
 }

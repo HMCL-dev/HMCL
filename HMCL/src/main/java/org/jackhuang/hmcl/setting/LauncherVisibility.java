@@ -15,14 +15,33 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui.animation
+package org.jackhuang.hmcl.setting;
 
-import javafx.scene.Node
-import javafx.scene.layout.Pane
-import javafx.util.Duration
+/**
+ * The visibility of launcher.
+ * @author huangyuhui
+ */
+public enum LauncherVisibility {
 
-interface AnimationHandler {
-    val snapshot: Node
-    val duration: Duration
-    val view: Pane
+    /**
+     * Close the launcher anyway when the game process created even if failed to
+     * launch game.
+     */
+    CLOSE,
+
+    /**
+     * Hide the launcher when the game process created, if failed to launch
+     * game, will show the log window.
+     */
+    HIDE,
+
+    /**
+     * Keep the launcher visible even if the game launched successfully.
+     */
+    KEEP,
+
+    /**
+     * Hide the launcher and reopen it when game closes.
+     */
+    HIDE_AND_REOPEN
 }

@@ -70,6 +70,7 @@ class Main : Application() {
             launch(Main::class.java, *args)
         }
 
+        @JvmStatic
         fun getWorkingDirectory(folder: String): File {
             val userhome = System.getProperty("user.home", ".")
             return when (OperatingSystem.CURRENT_OS) {
@@ -83,6 +84,7 @@ class Main : Application() {
             }
         }
 
+        @JvmStatic
         fun getMinecraftDirectory(): File = getWorkingDirectory("minecraft")
 
         fun stop() = runOnUiThread {
