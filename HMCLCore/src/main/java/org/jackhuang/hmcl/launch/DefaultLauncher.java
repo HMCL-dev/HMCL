@@ -107,8 +107,14 @@ public class DefaultLauncher extends Launcher {
             if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
                 res.add("-Duser.home=" + options.getGameDir().getParent());
 
-            if (options.getJava().getParsedVersion() >= JavaVersion.JAVA_7)
+            if (options.getJava().getParsedVersion() >= JavaVersion.JAVA_7) {
+                res.add("-XX:+UnlockExperimentalVMOptions");
                 res.add("-XX:+UseG1GC");
+                res.add("-XX:G1NewSizePercent=20");
+                res.add("-XX:G1ReservePercent=20");
+                res.add("-XX:MaxGCPauseMillis=50");
+                res.add("-XX:G1HeapRegionSize=16M");
+            }
 
             if (options.getMetaspace() != null && options.getMetaspace() > 0)
                 if (options.getJava().getParsedVersion() < JavaVersion.JAVA_8)
@@ -199,7 +205,7 @@ public class DefaultLauncher extends Launcher {
         if (StringUtils.isNotBlank(options.getMinecraftArgs()))
             res.addAll(StringUtils.tokenize(options.getMinecraftArgs()));
 
-        return res.stream()
+        return rawCommandLine = res.stream()
                 .filter(it -> !getForbiddens().containsKey(it) || !getForbiddens().get(it).get())
                 .collect(Collectors.toList());
     }
