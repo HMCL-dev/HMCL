@@ -9,7 +9,7 @@
            xmlns:fx="http://javafx.com/fxml"
            fx:id="rootPane"
            fx:controller="org.jackhuang.hmcl.ui.ModController">
-    <JFXSpinner style="-fx-radius:16" styleClass="materialDesign-purple, first-spinner" />
+    <JFXSpinner fx:id="spinner" style="-fx-radius:16" styleClass="materialDesign-purple, first-spinner" />
     <StackPane fx:id="contentPane">
         <ScrollPane fx:id="scrollPane" fitToWidth="true" fitToHeight="true">
             <VBox fx:id="modPane" spacing="10" style="-fx-padding: 20 20 70 20;">

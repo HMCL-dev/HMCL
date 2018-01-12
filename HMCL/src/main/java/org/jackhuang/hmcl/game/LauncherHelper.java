@@ -100,7 +100,7 @@ public final class LauncherHelper {
             public void onFinished(Task task) {
                 finished.incrementAndGet();
                 Platform.runLater(() -> {
-                    launchingStepsPane.getPgsTasks().setProgress(1.0 * finished.get() / executor.getRunningTasks());
+                    launchingStepsPane.setProgress(1.0 * finished.get() / executor.getRunningTasks());
                 });
             }
 
@@ -124,8 +124,8 @@ public final class LauncherHelper {
         if (state == LoadingState.DONE)
             Controllers.INSTANCE.closeDialog();
 
-        launchingStepsPane.getLblCurrentState().setText(state.toString());
-        launchingStepsPane.getLblSteps().setText((state.ordinal() + 1) + " / " + LoadingState.values().length);
+        launchingStepsPane.setCurrentState(state.toString());
+        launchingStepsPane.setSteps((state.ordinal() + 1) + " / " + LoadingState.values().length);
     }
 
     private void checkExit(LauncherVisibility v) {

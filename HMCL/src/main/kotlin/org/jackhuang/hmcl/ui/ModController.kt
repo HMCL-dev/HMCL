@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui
 
+import com.jfoenix.controls.JFXSpinner
 import com.jfoenix.controls.JFXTabPane
 import javafx.fxml.FXML
 import javafx.scene.control.ScrollPane
@@ -38,6 +39,7 @@ class ModController {
     @FXML lateinit var rootPane: StackPane
     @FXML lateinit var modPane: VBox
     @FXML lateinit var contentPane: StackPane
+    @FXML lateinit var spinner: JFXSpinner
     lateinit var parentTab: JFXTabPane
     private lateinit var modManager: ModManager
     private lateinit var versionId: String
@@ -67,7 +69,7 @@ class ModController {
         this.versionId = versionId
         task {
             synchronized(contentPane) {
-                runOnUiThread { rootPane.children -= contentPane }
+                runOnUiThread { rootPane.children -= contentPane; spinner.isVisible = true }
                 modManager.refreshMods(versionId)
 
                 // Surprisingly, if there are a great number of mods, this processing will cause a UI pause.
@@ -89,7 +91,7 @@ class ModController {
                             styleClass += "disabled"
                     }
                 }
-                runOnUiThread { rootPane.children += contentPane }
+                runOnUiThread { rootPane.children += contentPane; spinner.isVisible = false }
                 it["list"] = list
             }
         }.subscribe(Schedulers.javafx()) { variables ->

@@ -67,8 +67,7 @@ interface AbstractWizardDisplayer : WizardDisplayer {
                     running = false
                 }
 
-                override val isRunning: Boolean
-                    get() = running
+                override fun isRunning() = running
 
             })
 

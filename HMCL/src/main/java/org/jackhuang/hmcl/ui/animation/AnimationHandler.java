@@ -24,5 +24,5 @@ import javafx.util.Duration;
 public interface AnimationHandler {
     Node getSnapshot();
     Duration getDuration();
-    Pane getView();
+    Pane getCurrentRoot();
 }

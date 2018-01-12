@@ -21,13 +21,14 @@ import com.jfoenix.controls.JFXButton
 import com.jfoenix.controls.JFXMasonryPane
 import javafx.application.Platform
 import javafx.beans.property.SimpleStringProperty
+import javafx.beans.property.StringProperty
 import javafx.fxml.FXML
 import javafx.scene.Node
 import javafx.scene.image.Image
 import javafx.scene.layout.StackPane
-import org.jackhuang.hmcl.ProfileChangedEvent
-import org.jackhuang.hmcl.ProfileLoadingEvent
 import org.jackhuang.hmcl.event.EventBus
+import org.jackhuang.hmcl.event.ProfileChangedEvent
+import org.jackhuang.hmcl.event.ProfileLoadingEvent
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent
 import org.jackhuang.hmcl.game.GameVersion.minecraftVersion
 import org.jackhuang.hmcl.game.LauncherHelper
@@ -43,7 +44,8 @@ import org.jackhuang.hmcl.util.plusAssign
  * @see /assets/fxml/main.fxml
  */
 class MainPage : StackPane(), DecoratorPage {
-    override val titleProperty = SimpleStringProperty(this, "title", i18n("launcher.title.main"))
+    private val titleProperty = SimpleStringProperty(this, "title", i18n("launcher.title.main"))
+    override fun titleProperty() = titleProperty
 
     @FXML lateinit var btnRefresh: JFXButton
     @FXML lateinit var btnAdd: JFXButton
@@ -57,30 +59,31 @@ class MainPage : StackPane(), DecoratorPage {
         EventBus.EVENT_BUS.channel<ProfileChangedEvent>() += this::onProfileChanged
 
         btnAdd.setOnMouseClicked { Controllers.decorator.startWizard(DownloadWizardProvider(), "Install New Game") }
-        btnRefresh.setOnMouseClicked { Settings.selectedProfile.repository.refreshVersions() }
+        btnRefresh.setOnMouseClicked { Settings.INSTANCE.selectedProfile.repository.refreshVersions() }
     }
 
     private fun buildNode(i: Int, profile: Profile, version: String, game: String): Node {
         return VersionItem().apply {
-            lblGameVersion.text = game
-            lblVersionName.text = version
-            btnLaunch.setOnMouseClicked {
-                if (Settings.selectedAccount == null) {
+            setGameVersion(game)
+            setVersionName(version)
+
+            setOnLaunchButtonClicked {
+                if (Settings.INSTANCE.selectedAccount == null) {
                     Controllers.dialog(i18n("login.no_Player007"))
                 } else
                     LauncherHelper.INSTANCE.launch(version)
             }
-            btnDelete.setOnMouseClicked {
+            setOnDeleteButtonClicked {
                 profile.repository.removeVersionFromDisk(version)
                 Platform.runLater { loadVersions() }
             }
-            btnSettings.setOnMouseClicked {
+            setOnSettingsButtonClicked {
                 Controllers.decorator.showPage(Controllers.versionPane)
                 Controllers.versionPane.load(version, profile)
             }
             val iconFile = profile.repository.getVersionIcon(version)
             if (iconFile.exists())
-                iconView.image = Image("file:" + iconFile.absolutePath)
+                setImage(Image("file:" + iconFile.absolutePath))
         }
     }
 
@@ -89,11 +92,11 @@ class MainPage : StackPane(), DecoratorPage {
     }
 
     fun onProfileChanged(event: ProfileChangedEvent) = runOnUiThread {
-        val profile = event.value
+        val profile = event.profile
         loadVersions(profile)
     }
 
-    private fun loadVersions(profile: Profile = Settings.selectedProfile) {
+    private fun loadVersions(profile: Profile = Settings.INSTANCE.selectedProfile) {
         val children = mutableListOf<Node>()
         var i = 0
         profile.repository.versions.forEach { version ->

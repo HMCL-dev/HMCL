@@ -44,7 +44,8 @@ import org.jackhuang.hmcl.util.onChangeAndOperate
 import org.jackhuang.hmcl.util.taskResult
 
 class AccountsPage() : StackPane(), DecoratorPage {
-    override val titleProperty: StringProperty = SimpleStringProperty(this, "title", "Accounts")
+    private val titleProperty: StringProperty = SimpleStringProperty(this, "title", "Accounts")
+    override fun titleProperty() = titleProperty
 
     @FXML lateinit var scrollPane: ScrollPane
     @FXML lateinit var masonryPane: JFXMasonryPane
@@ -74,7 +75,7 @@ class AccountsPage() : StackPane(), DecoratorPage {
         txtPassword.setOnAction { onCreationAccept() }
         txtUsername.setOnAction { onCreationAccept() }
 
-        Settings.selectedAccountProperty.onChangeAndOperate { account ->
+        Settings.INSTANCE.selectedAccountProperty().onChangeAndOperate { account ->
             masonryPane.children.forEach { node ->
                 if (node is AccountItem) {
                     node.chkSelected.isSelected = account?.username == node.lblUser.text
@@ -84,7 +85,7 @@ class AccountsPage() : StackPane(), DecoratorPage {
 
         loadAccounts()
 
-        if (Settings.getAccounts().isEmpty())
+        if (Settings.INSTANCE.getAccounts().isEmpty())
             addNewAccount()
     }
 
@@ -92,12 +93,12 @@ class AccountsPage() : StackPane(), DecoratorPage {
         val children = mutableListOf<Node>()
         var i = 0
         val group = ToggleGroup()
-        for ((_, account) in Settings.getAccounts()) {
+        for ((_, account) in Settings.INSTANCE.getAccounts()) {
             children += buildNode(++i, account, group)
         }
         group.selectedToggleProperty().onChange {
             if (it != null)
-                Settings.selectedAccount = it.properties["account"] as Account
+                Settings.INSTANCE.selectedAccount = it.properties["account"] as Account
         }
         masonryPane.resetChildren(children)
         Platform.runLater {
@@ -109,7 +110,7 @@ class AccountsPage() : StackPane(), DecoratorPage {
     private fun buildNode(i: Int, account: Account, group: ToggleGroup): Node {
         return AccountItem(i, account, group).apply {
             btnDelete.setOnMouseClicked {
-                Settings.deleteAccount(account.username)
+                Settings.INSTANCE.deleteAccount(account.username)
                 Platform.runLater(this@AccountsPage::loadAccounts)
             }
         }
@@ -135,7 +136,7 @@ class AccountsPage() : StackPane(), DecoratorPage {
                     else -> throw UnsupportedOperationException()
                 }
 
-                account.logIn(HMCLMultiCharacterSelector.INSTANCE, Settings.proxy)
+                account.logIn(HMCLMultiCharacterSelector.INSTANCE, Settings.INSTANCE.proxy)
                 account
             } catch (e: Exception) {
                 e
@@ -143,7 +144,7 @@ class AccountsPage() : StackPane(), DecoratorPage {
         }.subscribe(Schedulers.javafx()) {
             val account: Any = it["create_account"]
             if (account is Account) {
-                Settings.addAccount(account)
+                Settings.INSTANCE.addAccount(account)
                 dialog.close()
                 loadAccounts()
             } else if (account is InvalidCredentialsException) {

@@ -388,7 +388,7 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, priva
             titleLabel.text = prefix + content.title
 
         if (content is DecoratorPage)
-            titleLabel.textProperty().bind(content.titleProperty)
+            titleLabel.textProperty().bind(content.titleProperty())
     }
 
     var category: String? = null
@@ -418,6 +418,7 @@ class Decorator @JvmOverloads constructor(private val primaryStage: Stage, priva
         return dialog
     }
 
+    @JvmOverloads
     fun startWizard(wizardProvider: WizardProvider, category: String? = null) {
         this.category = category
         wizardController.provider = wizardProvider

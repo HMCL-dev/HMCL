@@ -41,8 +41,7 @@ class InstallTypePage(private val controller: WizardController): StackPane(), Wi
         settings.remove(INSTALL_TYPE)
     }
 
-    override val title: String
-        get() = "Select an operation"
+    override fun getTitle() = "Select an operation"
 
     companion object {
         const val INSTALL_TYPE: String = "INSTALL_TYPE"

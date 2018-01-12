@@ -31,11 +31,11 @@ import org.jackhuang.hmcl.ui.wizard.WizardProvider
 import org.jackhuang.hmcl.util.task
 import java.io.File
 
-class DownloadWizardProvider(): WizardProvider() {
+class DownloadWizardProvider(): WizardProvider {
     lateinit var profile: Profile
 
     override fun start(settings: MutableMap<String, Any>) {
-        profile = Settings.selectedProfile
+        profile = Settings.INSTANCE.selectedProfile
         settings[PROFILE] = profile
     }
 

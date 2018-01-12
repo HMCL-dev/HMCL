@@ -76,7 +76,7 @@ class AccountItem(i: Int, val account: Account, group: ToggleGroup) : StackPane(
         icon.translateYProperty().bind(Bindings.createDoubleBinding(Callable { header.boundsInParent.height - icon.height / 2 - 32.0 }, header.boundsInParentProperty(), icon.heightProperty()))
 
         chkSelected.properties["account"] = account
-        chkSelected.isSelected = Settings.selectedAccount == account
+        chkSelected.isSelected = Settings.INSTANCE.selectedAccount == account
         lblUser.text = account.username
         lblType.text = accountType(account)
 

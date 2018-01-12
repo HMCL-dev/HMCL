@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui
 import com.jfoenix.controls.JFXButton
 import com.jfoenix.controls.JFXTextField
 import javafx.beans.property.SimpleStringProperty
+import javafx.beans.property.StringProperty
 import javafx.fxml.FXML
 import javafx.scene.layout.StackPane
 import org.jackhuang.hmcl.i18n
@@ -34,8 +35,11 @@ import java.io.File
  * @param profile null if creating a new profile.
  */
 class ProfilePage(private val profile: Profile?): StackPane(), DecoratorPage {
-    override val titleProperty = SimpleStringProperty(this, "title",
+    private val titleProperty = SimpleStringProperty(this, "title",
             if (profile == null) i18n("ui.newProfileWindow.title") else i18n("ui.label.profile") + " - " + profile.name)
+
+    override fun titleProperty() = titleProperty
+
     private val locationProperty = SimpleStringProperty(this, "location",
             profile?.gameDir?.absolutePath ?: "")
     @FXML lateinit var txtProfileName: JFXTextField
@@ -61,7 +65,7 @@ class ProfilePage(private val profile: Profile?): StackPane(), DecoratorPage {
 
     fun onDelete() {
         if (profile != null) {
-            Settings.deleteProfile(profile)
+            Settings.INSTANCE.deleteProfile(profile)
             Controllers.navigate(null)
         }
     }
@@ -75,10 +79,10 @@ class ProfilePage(private val profile: Profile?): StackPane(), DecoratorPage {
             if (locationProperty.get().isNullOrBlank()) {
                 gameDir.onExplore()
             }
-            Settings.putProfile(Profile(txtProfileName.text, File(locationProperty.get())))
+            Settings.INSTANCE.putProfile(Profile(txtProfileName.text, File(locationProperty.get())))
         }
 
-        Settings.onProfileLoading()
+        Settings.INSTANCE.onProfileLoading()
         Controllers.navigate(null)
     }
 }

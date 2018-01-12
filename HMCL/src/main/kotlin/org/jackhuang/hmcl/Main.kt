@@ -97,6 +97,6 @@ class Main : Application() {
             Schedulers.shutdown()
         }
 
-        val RESOURCE_BUNDLE = Settings.locale.resourceBundle
+        val RESOURCE_BUNDLE = Settings.INSTANCE.locale.resourceBundle
     }
 }

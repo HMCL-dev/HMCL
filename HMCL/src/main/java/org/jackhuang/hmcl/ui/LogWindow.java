@@ -50,11 +50,11 @@ import org.w3c.dom.Node;
  */
 public final class LogWindow extends Stage {
 
-    private final ReadOnlyIntegerWrapper fatalProperty = new ReadOnlyIntegerWrapper(0);
-    private final ReadOnlyIntegerWrapper errorProperty = new ReadOnlyIntegerWrapper(0);
-    private final ReadOnlyIntegerWrapper warnProperty = new ReadOnlyIntegerWrapper(0);
-    private final ReadOnlyIntegerWrapper infoProperty = new ReadOnlyIntegerWrapper(0);
-    private final ReadOnlyIntegerWrapper debugProperty = new ReadOnlyIntegerWrapper(0);
+    private final ReadOnlyIntegerWrapper fatal = new ReadOnlyIntegerWrapper(0);
+    private final ReadOnlyIntegerWrapper error = new ReadOnlyIntegerWrapper(0);
+    private final ReadOnlyIntegerWrapper warn = new ReadOnlyIntegerWrapper(0);
+    private final ReadOnlyIntegerWrapper info = new ReadOnlyIntegerWrapper(0);
+    private final ReadOnlyIntegerWrapper debug = new ReadOnlyIntegerWrapper(0);
     private final LogWindowImpl impl = new LogWindowImpl();
     private final CountDownLatch latch = new CountDownLatch(1);
     public final EventManager<Event> onDone = new EventManager<>();
@@ -75,43 +75,43 @@ public final class LogWindow extends Stage {
     }
 
     public ReadOnlyIntegerProperty fatalProperty() {
-        return fatalProperty.getReadOnlyProperty();
+        return fatal.getReadOnlyProperty();
     }
 
     public int getFatal() {
-        return fatalProperty.get();
+        return fatal.get();
     }
 
     public ReadOnlyIntegerProperty errorProperty() {
-        return errorProperty.getReadOnlyProperty();
+        return error.getReadOnlyProperty();
     }
 
     public int getError() {
-        return errorProperty.get();
+        return error.get();
     }
 
     public ReadOnlyIntegerProperty warnProperty() {
-        return warnProperty.getReadOnlyProperty();
+        return warn.getReadOnlyProperty();
     }
 
     public int getWarn() {
-        return warnProperty.get();
+        return warn.get();
     }
 
     public ReadOnlyIntegerProperty infoProperty() {
-        return infoProperty.getReadOnlyProperty();
+        return info.getReadOnlyProperty();
     }
 
     public int getInfo() {
-        return infoProperty.get();
+        return info.get();
     }
 
     public ReadOnlyIntegerProperty debugProperty() {
-        return debugProperty.getReadOnlyProperty();
+        return debug.getReadOnlyProperty();
     }
 
     public int getDebug() {
-        return debugProperty.get();
+        return debug.get();
     }
 
     public void logLine(String line, Log4jLevel level) {
@@ -125,45 +125,45 @@ public final class LogWindow extends Stage {
 
         switch (level) {
             case FATAL:
-                fatalProperty.set(fatalProperty.get() + 1);
+                fatal.set(fatal.get() + 1);
                 break;
             case ERROR:
-                errorProperty.set(errorProperty.get() + 1);
+                error.set(error.get() + 1);
                 break;
             case WARN:
-                warnProperty.set(warnProperty.get() + 1);
+                warn.set(warn.get() + 1);
                 break;
             case INFO:
-                infoProperty.set(infoProperty.get() + 1);
+                info.set(info.get() + 1);
                 break;
             case DEBUG:
-                debugProperty.set(debugProperty.get() + 1);
+                debug.set(debug.get() + 1);
                 break;
         }
     }
 
-    public class LogWindowImpl extends StackPane {
+    private class LogWindowImpl extends StackPane {
 
         @FXML
-        public WebView webView;
+        private WebView webView;
         @FXML
-        public ToggleButton btnFatals;
+        private ToggleButton btnFatals;
         @FXML
-        public ToggleButton btnErrors;
+        private ToggleButton btnErrors;
         @FXML
-        public ToggleButton btnWarns;
+        private ToggleButton btnWarns;
         @FXML
-        public ToggleButton btnInfos;
+        private ToggleButton btnInfos;
         @FXML
-        public ToggleButton btnDebugs;
+        private ToggleButton btnDebugs;
         @FXML
-        public ComboBox<String> cboLines;
+        private ComboBox<String> cboLines;
 
         WebEngine engine;
         Node body;
         Document document;
 
-        public LogWindowImpl() {
+        LogWindowImpl() {
             FXUtilsKt.loadFXML(this, "/assets/fxml/log.fxml");
 
             engine = webView.getEngine();
@@ -194,11 +194,11 @@ public final class LogWindow extends Stage {
             if (!flag)
                 cboLines.getSelectionModel().select(0);
 
-            btnFatals.textProperty().bind(Bindings.createStringBinding(() -> Integer.toString(fatalProperty.get()) + " fatals", fatalProperty));
-            btnErrors.textProperty().bind(Bindings.createStringBinding(() -> Integer.toString(errorProperty.get()) + " errors", errorProperty));
-            btnWarns.textProperty().bind(Bindings.createStringBinding(() -> Integer.toString(warnProperty.get()) + " warns", warnProperty));
-            btnInfos.textProperty().bind(Bindings.createStringBinding(() -> Integer.toString(infoProperty.get()) + " infos", infoProperty));
-            btnDebugs.textProperty().bind(Bindings.createStringBinding(() -> Integer.toString(debugProperty.get()) + " debugs", debugProperty));
+            btnFatals.textProperty().bind(Bindings.createStringBinding(() -> Integer.toString(fatal.get()) + " fatals", fatal));
+            btnErrors.textProperty().bind(Bindings.createStringBinding(() -> Integer.toString(error.get()) + " errors", error));
+            btnWarns.textProperty().bind(Bindings.createStringBinding(() -> Integer.toString(warn.get()) + " warns", warn));
+            btnInfos.textProperty().bind(Bindings.createStringBinding(() -> Integer.toString(info.get()) + " infos", info));
+            btnDebugs.textProperty().bind(Bindings.createStringBinding(() -> Integer.toString(debug.get()) + " debugs", debug));
 
             btnFatals.selectedProperty().addListener(o -> specificChanged());
             btnErrors.selectedProperty().addListener(o -> specificChanged());

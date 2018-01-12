@@ -117,6 +117,10 @@ public final class ReflectionHelper {
         }
     }
 
+    public static Object construct(Class<?> clazz, Object... args) {
+        return call(clazz, "new", null, args);
+    }
+
     public static Object call(Object obj, String name, Object... args) {
         return call(obj.getClass(), name, obj, args);
     }
@@ -136,12 +140,7 @@ public final class ReflectionHelper {
     }
 
     public static boolean isInstance(Class<?> superClass, Object obj) {
-        if (superClass.isInstance(obj))
-            return true;
-        else if (PRIMITIVES.get(superClass.getName()) == obj.getClass())
-            return true;
-        else
-            return false;
+        return superClass.isInstance(obj) || PRIMITIVES.get(superClass.getName()) == obj.getClass();
     }
 
     public static Optional<Method> forMethod(Class<?> cls, String name, Object... args) {

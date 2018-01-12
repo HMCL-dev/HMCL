@@ -57,7 +57,7 @@ class YggdrasilAccountLoginPane(private val oldAccount: YggdrasilAccount, privat
         taskResult("login") {
             try {
                 val account = YggdrasilAccountFactory.INSTANCE.fromUsername(username, password)
-                account.logIn(HMCLMultiCharacterSelector.INSTANCE, Settings.proxy)
+                account.logIn(HMCLMultiCharacterSelector.INSTANCE, Settings.INSTANCE.proxy)
             } catch (e: Exception) {
                 e
             }

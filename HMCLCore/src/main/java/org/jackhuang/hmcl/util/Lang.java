@@ -256,6 +256,14 @@ public final class Lang {
         }
     }
 
+    public static Integer toIntOrNull(String string) {
+        try {
+            return Integer.parseInt(string);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     public static <T> T nonNull(T... t) {
         for (T a : t) if (a != null) return a;
         return null;

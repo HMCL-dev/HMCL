@@ -35,7 +35,8 @@ import org.jackhuang.hmcl.ui.export.ExportWizardProvider
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage
 
 class VersionPage : StackPane(), DecoratorPage {
-    override val titleProperty: StringProperty = SimpleStringProperty(this, "title", null)
+    private val titleProperty: StringProperty = SimpleStringProperty(this, "title", null)
+    override fun titleProperty() = titleProperty
 
     @FXML lateinit var versionSettingsController: VersionSettingsController
     @FXML lateinit var modTab: Tab

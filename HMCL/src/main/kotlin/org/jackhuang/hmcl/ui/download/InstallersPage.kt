@@ -70,8 +70,7 @@ class InstallersPage(private val controller: WizardController, private val repos
         }
     }
 
-    override val title: String
-        get() = "Choose a game version"
+    override fun getTitle() = "Choose a game version"
 
     override fun onNavigate(settings: MutableMap<String, Any>) {
         lblGameVersion.text = "Current Game Version: ${controller.settings["game"]}"

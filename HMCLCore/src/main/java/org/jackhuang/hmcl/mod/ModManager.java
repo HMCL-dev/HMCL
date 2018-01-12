@@ -43,7 +43,8 @@ public final class ModManager {
         Optional.ofNullable(modsDirectory.listFiles()).map(Arrays::stream).ifPresent(files -> files.forEach(modFile -> {
             if (modFile.isDirectory() && VersionNumber.parseVersion(modFile.getName()) != null)
                 Optional.ofNullable(modFile.listFiles()).map(Arrays::stream).ifPresent(x -> x.forEach(puter));
-            puter.accept(modFile);
+            else
+                puter.accept(modFile);
         }));
         return modCache.get(id);
     }

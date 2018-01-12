@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
@@ -58,7 +57,7 @@ public abstract class Task {
 
     /**
      * True if requires all {@link #getDependents} finishing successfully.
-     *
+     * <p>
      * **Note** if this field is set false, you are not supposed to invoke [run]
      *
      * @defaultValue true
@@ -69,7 +68,7 @@ public abstract class Task {
 
     /**
      * True if requires all {@link #getDependencies} finishing successfully.
-     *
+     * <p>
      * **Note** if this field is set false, you are not supposed to invoke [run]
      *
      * @defaultValue false
@@ -77,7 +76,7 @@ public abstract class Task {
     public boolean isRelyingOnDependencies() {
         return true;
     }
-    
+
     private String name = getClass().toString();
 
     public String getName() {
@@ -99,8 +98,8 @@ public abstract class Task {
     }
 
     /**
-     * @see Thread#isInterrupted
      * @throws InterruptedException if current thread is interrupted
+     * @see Thread#isInterrupted
      */
     public abstract void execute() throws Exception;
 
@@ -128,10 +127,10 @@ public abstract class Task {
 
     private long lastTime = Long.MIN_VALUE;
     private final AtomicReference<Double> progressUpdate = new AtomicReference<>();
-    private final ReadOnlyDoubleWrapper progressProperty = new ReadOnlyDoubleWrapper(this, "progress", 0);
+    private final ReadOnlyDoubleWrapper progress = new ReadOnlyDoubleWrapper(this, "progress", 0);
 
-    public ReadOnlyDoubleProperty getProgressProperty() {
-        return progressProperty.getReadOnlyProperty();
+    public ReadOnlyDoubleProperty progressProperty() {
+        return progress.getReadOnlyProperty();
     }
 
     protected void updateProgress(int progress, int total) {
@@ -149,18 +148,18 @@ public abstract class Task {
     }
 
     protected void updateProgressImmediately(double progress) {
-        Properties.updateAsync(progressProperty, progress, progressUpdate);
+        Properties.updateAsync(this.progress, progress, progressUpdate);
     }
 
     private final AtomicReference<String> messageUpdate = new AtomicReference<>();
-    private final ReadOnlyStringWrapper messageProperty = new ReadOnlyStringWrapper(this, "message", null);
+    private final ReadOnlyStringWrapper message = new ReadOnlyStringWrapper(this, "message", null);
 
-    public final ReadOnlyStringProperty getMessageProperty() {
-        return messageProperty.getReadOnlyProperty();
+    public final ReadOnlyStringProperty messageProperty() {
+        return message.getReadOnlyProperty();
     }
 
     protected final void updateMessage(String newMessage) {
-        Properties.updateAsync(messageProperty, newMessage, messageUpdate);
+        Properties.updateAsync(message, newMessage, messageUpdate);
     }
 
     public final void run() throws Exception {
@@ -173,11 +172,11 @@ public abstract class Task {
     }
 
     private void doSubTask(Task task) throws Exception {
-        messageProperty.bind(task.messageProperty);
-        progressProperty.bind(task.progressProperty);
+        message.bind(task.message);
+        progress.bind(task.progress);
         task.run();
-        messageProperty.unbind();
-        progressProperty.unbind();
+        message.unbind();
+        progress.unbind();
     }
 
     public final TaskExecutor executor() {
@@ -226,6 +225,11 @@ public abstract class Task {
 
     public final Task with(Function<AutoTypingMap<String>, Task> b) {
         return new CoupleTask<>(this, b, false);
+    }
+
+    public static Task empty() {
+        return of(s -> {
+        });
     }
 
     public static Task of(ExceptionalRunnable<?> runnable) {

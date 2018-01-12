@@ -36,7 +36,8 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage
 import org.jackhuang.hmcl.util.onInvalidated
 
 class ModpackPage(private val controller: WizardController): StackPane(), WizardPage {
-    override val title: String = i18n("modpack.task.install")
+    private val title: String = i18n("modpack.task.install")
+    override fun getTitle() = title
 
     @FXML lateinit var borderPane: Region
     @FXML lateinit var lblName: Label

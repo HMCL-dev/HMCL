@@ -44,6 +44,8 @@ import javafx.util.Duration
 import org.jackhuang.hmcl.Main
 import org.jackhuang.hmcl.util.*
 import org.jackhuang.hmcl.util.Logging.LOG
+import org.jackhuang.hmcl.util.ReflectionHelper.call
+import org.jackhuang.hmcl.util.ReflectionHelper.construct
 import java.io.File
 import java.io.IOException
 import java.util.logging.Level
@@ -178,7 +180,7 @@ fun unbindEnum(comboBox: JFXComboBox<*>) {
  * return value of `interpolate()` is `endValue` only when the
  * input `fraction` is 1.0, and `startValue` otherwise.
  */
-val SINE: Interpolator = object : Interpolator() {
+@JvmField val SINE: Interpolator = object : Interpolator() {
     override fun curve(t: Double): Double {
         return Math.sin(t * Math.PI / 2)
     }
@@ -234,9 +236,8 @@ fun inputDialog(title: String, contentText: String, headerText: String? = null, 
 
 fun Node.installTooltip(openDelay: Double = 1000.0, visibleDelay: Double = 5000.0, closeDelay: Double = 200.0, tooltip: Tooltip) {
     try {
-        Class.forName("javafx.scene.control.Tooltip\$TooltipBehavior")
-                .construct(Duration(openDelay), Duration(visibleDelay), Duration(closeDelay), false)!!
-                .call("install", this, tooltip)
+        call(construct(Class.forName("javafx.scene.control.Tooltip\$TooltipBehavior"), Duration(openDelay), Duration(visibleDelay), Duration(closeDelay), false),
+                "install", this, tooltip);
     } catch (e: Throwable) {
         LOG.log(Level.SEVERE, "Cannot install tooltip by reflection", e)
         Tooltip.install(this, tooltip)

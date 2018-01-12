@@ -47,7 +47,7 @@ object Controllers {
         decorator.showPage(null)
         leftPaneController = LeftPaneController(decorator.leftPane)
 
-        Settings.onProfileLoading()
+        Settings.INSTANCE.onProfileLoading()
         task { JavaVersion.initialize() }.start()
 
         decorator.isCustomMaximize = false

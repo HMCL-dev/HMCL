@@ -19,10 +19,10 @@ package org.jackhuang.hmcl.ui
 
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Paint
-import org.jackhuang.hmcl.ProfileChangedEvent
-import org.jackhuang.hmcl.ProfileLoadingEvent
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount
 import org.jackhuang.hmcl.event.EventBus
+import org.jackhuang.hmcl.event.ProfileChangedEvent
+import org.jackhuang.hmcl.event.ProfileLoadingEvent
 import org.jackhuang.hmcl.game.AccountHelper
 import org.jackhuang.hmcl.i18n
 import org.jackhuang.hmcl.setting.Settings
@@ -65,29 +65,27 @@ class LeftPaneController(private val leftPane: AdvancedListBox) {
             Controllers.decorator.showPage(ProfilePage(null))
         }
 
-        Settings.selectedAccountProperty.onChangeAndOperate {
+        Settings.INSTANCE.selectedAccountProperty().onChangeAndOperate {
             if (it == null) {
-                accountItem.lblVersionName.text = "mojang@mojang.com"
-                accountItem.lblGameVersion.text = "Yggdrasil"
+                accountItem.setVersionName("mojang@mojang.com")
+                accountItem.setGameVersion("Yggdrasil")
             } else {
-                accountItem.lblVersionName.text = it.username
-                accountItem.lblGameVersion.text = accountType(it)
+                accountItem.setVersionName(it.username)
+                accountItem.setGameVersion(accountType(it))
             }
             if (it is YggdrasilAccount) {
-                accountItem.imageView.image = AccountHelper.getSkin(it, 4.0)
-                accountItem.imageView.viewport = AccountHelper.getViewport(4.0)
+                accountItem.setImage(AccountHelper.getSkin(it, 4.0), AccountHelper.getViewport(4.0))
             } else {
-                accountItem.imageView.image = DEFAULT_ICON
-                accountItem.imageView.viewport = null
+                accountItem.setImage(DEFAULT_ICON, null)
             }
         }
 
-        if (Settings.getAccounts().isEmpty())
+        if (Settings.INSTANCE.getAccounts().isEmpty())
             Controllers.navigate(AccountsPage())
     }
 
     fun onProfileChanged(event: ProfileChangedEvent) {
-        val profile = event.value
+        val profile = event.profile
 
         profilePane.children
                 .filter { it is RipplerContainer && it.properties["profile"] is Pair<*, *> }
@@ -96,7 +94,7 @@ class LeftPaneController(private val leftPane: AdvancedListBox) {
 
     fun onProfilesLoading() {
         val list = LinkedList<RipplerContainer>()
-        Settings.getProfiles().forEach { profile ->
+        Settings.INSTANCE.profiles.forEach { profile ->
             val item = VersionListItem(profile.name)
             val ripplerContainer = RipplerContainer(item)
             item.onSettingsButtonClicked {
@@ -107,7 +105,7 @@ class LeftPaneController(private val leftPane: AdvancedListBox) {
                 // clean selected property
                 profilePane.children.forEach { if (it is RipplerContainer) it.selected = false }
                 ripplerContainer.selected = true
-                Settings.selectedProfile = profile
+                Settings.INSTANCE.selectedProfile = profile
             }
             ripplerContainer.properties["profile"] = profile.name to item
             ripplerContainer.maxWidthProperty().bind(leftPane.widthProperty())

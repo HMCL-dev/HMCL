@@ -38,7 +38,9 @@ import org.jackhuang.hmcl.ui.wizard.DecoratorPage
 import org.jackhuang.hmcl.util.onChange
 
 class SettingsPage : StackPane(), DecoratorPage {
-    override val titleProperty: StringProperty = SimpleStringProperty(this, "title", i18n("launcher.title.launcher"))
+    private val titleProperty: StringProperty = SimpleStringProperty(this, "title", i18n("launcher.title.launcher"))
+
+    override fun titleProperty() = titleProperty
 
     @FXML lateinit var txtProxyHost: JFXTextField
     @FXML lateinit var txtProxyPort: JFXTextField
@@ -59,56 +61,56 @@ class SettingsPage : StackPane(), DecoratorPage {
         cboLanguage.limitWidth(400.0)
         cboDownloadSource.limitWidth(400.0)
 
-        txtProxyHost.text = Settings.proxyHost
-        txtProxyHost.textProperty().onChange { Settings.proxyHost = it }
+        txtProxyHost.text = Settings.INSTANCE.proxyHost
+        txtProxyHost.textProperty().onChange { Settings.INSTANCE.proxyHost = it }
 
-        txtProxyPort.text = Settings.proxyPort
-        txtProxyPort.textProperty().onChange { Settings.proxyPort = it }
+        txtProxyPort.text = Settings.INSTANCE.proxyPort
+        txtProxyPort.textProperty().onChange { Settings.INSTANCE.proxyPort = it }
 
-        txtProxyUsername.text = Settings.proxyUser
-        txtProxyUsername.textProperty().onChange { Settings.proxyUser = it }
+        txtProxyUsername.text = Settings.INSTANCE.proxyUser
+        txtProxyUsername.textProperty().onChange { Settings.INSTANCE.proxyUser = it }
 
-        txtProxyPassword.text = Settings.proxyPass
-        txtProxyPassword.textProperty().onChange { Settings.proxyPass = it }
+        txtProxyPassword.text = Settings.INSTANCE.proxyPass
+        txtProxyPassword.textProperty().onChange { Settings.INSTANCE.proxyPass = it }
 
-        cboDownloadSource.selectionModel.select(DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(Settings.downloadProvider))
+        cboDownloadSource.selectionModel.select(DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(Settings.INSTANCE.downloadProvider))
         cboDownloadSource.selectionModel.selectedIndexProperty().onChange {
-            Settings.downloadProvider = DownloadProviders.getDownloadProvider(it)
+            Settings.INSTANCE.downloadProvider = DownloadProviders.getDownloadProvider(it)
         }
 
-        cboFont.selectionModel.select(Settings.font.family)
+        cboFont.selectionModel.select(Settings.INSTANCE.font.family)
         cboFont.valueProperty().onChange {
-            val font = Font.font(it, Settings.font.size)
-            Settings.font = font
-            lblDisplay.style = "-fx-font: ${Settings.font.size} \"${font.family}\";"
+            val font = Font.font(it, Settings.INSTANCE.font.size)
+            Settings.INSTANCE.font = font
+            lblDisplay.style = "-fx-font: ${Settings.INSTANCE.font.size} \"${font.family}\";"
         }
-        txtFontSize.text = Settings.font.size.toString()
+        txtFontSize.text = Settings.INSTANCE.font.size.toString()
         txtFontSize.validators += Validator { it.toDoubleOrNull() != null }
         txtFontSize.textProperty().onChange {
             if (txtFontSize.validate()) {
-                val font = Font.font(Settings.font.family, it!!.toDouble())
-                Settings.font = font
-                lblDisplay.style = "-fx-font: ${font.size} \"${Settings.font.family}\";"
+                val font = Font.font(Settings.INSTANCE.font.family, it!!.toDouble())
+                Settings.INSTANCE.font = font
+                lblDisplay.style = "-fx-font: ${font.size} \"${Settings.INSTANCE.font.family}\";"
             }
         }
-        lblDisplay.style = "-fx-font: ${Settings.font.size} \"${Settings.font.family}\";"
+        lblDisplay.style = "-fx-font: ${Settings.INSTANCE.font.size} \"${Settings.INSTANCE.font.family}\";"
 
         val list = FXCollections.observableArrayList<Label>()
         for (locale in Locales.LOCALES) {
-            list += Label(locale.getName(Settings.locale.resourceBundle))
+            list += Label(locale.getName(Settings.INSTANCE.locale.resourceBundle))
         }
         cboLanguage.items = list
-        cboLanguage.selectionModel.select(Locales.LOCALES.indexOf(Settings.locale))
+        cboLanguage.selectionModel.select(Locales.LOCALES.indexOf(Settings.INSTANCE.locale))
         cboLanguage.selectionModel.selectedIndexProperty().onChange {
-            Settings.locale = Locales.getLocale(it)
+            Settings.INSTANCE.locale = Locales.getLocale(it)
         }
 
-        cboProxyType.selectionModel.select(Proxies.PROXIES.indexOf(Settings.proxyType))
+        cboProxyType.selectionModel.select(Proxies.PROXIES.indexOf(Settings.INSTANCE.proxyType))
         cboProxyType.selectionModel.selectedIndexProperty().onChange {
-            Settings.proxyType = Proxies.getProxyType(it)
+            Settings.INSTANCE.proxyType = Proxies.getProxyType(it)
         }
 
-        fileCommonLocation.setProperty(Settings.commonPathProperty)
+        fileCommonLocation.setProperty(Settings.INSTANCE.commonPathProperty())
     }
 
 
