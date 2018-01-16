@@ -31,7 +31,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
-import org.jackhuang.hmcl.MainKt;
+import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.game.LauncherHelper;
@@ -61,8 +61,8 @@ public final class LogWindow extends Stage {
 
     public LogWindow() {
         setScene(new Scene(impl, 800, 480));
-        getScene().getStylesheets().addAll(FXUtilsKt.getStylesheets());
-        setTitle(MainKt.i18n("logwindow.title"));
+        getScene().getStylesheets().addAll(FXUtils.STYLESHEETS);
+        setTitle(Main.i18n("logwindow.title"));
         getIcons().add(new Image("/assets/img/icon.png"));
     }
 
@@ -164,7 +164,7 @@ public final class LogWindow extends Stage {
         Document document;
 
         LogWindowImpl() {
-            FXUtilsKt.loadFXML(this, "/assets/fxml/log.fxml");
+            FXUtils.loadFXML(this, "/assets/fxml/log.fxml");
 
             engine = webView.getEngine();
             engine.loadContent(Lang.ignoringException(() -> IOUtils.readFullyAsString(getClass().getResourceAsStream("/assets/log-window-content.html")))

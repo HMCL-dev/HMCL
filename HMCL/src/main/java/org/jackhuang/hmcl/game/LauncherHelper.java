@@ -66,31 +66,31 @@ public final class LauncherHelper {
         Version version = repository.getVersion(selectedVersion);
         VersionSetting setting = profile.getVersionSetting(selectedVersion);
 
-        Controllers.INSTANCE.dialog(launchingStepsPane);
-        TaskExecutor executor = Task.of(v -> emitStatus(LoadingState.DEPENDENCIES), Schedulers.javafx())
+        Controllers.dialog(launchingStepsPane);
+        TaskExecutor executor = Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES))
                 .then(dependencyManager.checkGameCompletionAsync(version))
-                .then(Task.of(v -> emitStatus(LoadingState.MODS), Schedulers.javafx()))
+                .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.MODS)))
                 .then(new CurseCompletionTask(dependencyManager, selectedVersion))
-                .then(Task.of(v -> emitStatus(LoadingState.LOGIN), Schedulers.javafx()))
-                .then(Task.of(v -> {
+                .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGIN)))
+                .then(Task.of(variables -> {
                     try {
-                        v.set("account", account.logIn(HMCLMultiCharacterSelector.INSTANCE, Settings.INSTANCE.getProxy()));
+                        variables.set("account", account.logIn(HMCLMultiCharacterSelector.INSTANCE, Settings.INSTANCE.getProxy()));
                     } catch (AuthenticationException e) {
-                        v.set("account", DialogController.INSTANCE.logIn(account));
-                        JFXUtilities.runInFX(() -> Controllers.INSTANCE.dialog(launchingStepsPane));
+                        variables.set("account", DialogController.logIn(account));
+                        JFXUtilities.runInFX(() -> Controllers.dialog(launchingStepsPane));
                     }
                 }))
-                .then(Task.of(v -> emitStatus(LoadingState.LAUNCHING), Schedulers.javafx()))
-                .then(Task.of(v -> {
-                    v.set("launcher", new HMCLGameLauncher(
-                            repository, selectedVersion, v.get("account"), setting.toLaunchOptions(profile.getGameDir()), new HMCLProcessListener(v.get("account"), setting)
+                .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LAUNCHING)))
+                .then(Task.of(variables -> {
+                    variables.set("launcher", new HMCLGameLauncher(
+                            repository, selectedVersion, variables.get("account"), setting.toLaunchOptions(profile.getGameDir()), new HMCLProcessListener(variables.get("account"), setting)
                     ));
                 }))
-                .then(v -> v.<DefaultLauncher>get("launcher").launchAsync())
-                .then(Task.of(v -> {
-                    PROCESSES.add(v.get(DefaultLauncher.LAUNCH_ASYNC_ID));
+                .then(variables -> variables.<DefaultLauncher>get("launcher").launchAsync())
+                .then(Task.of(variables -> {
+                    PROCESSES.add(variables.get(DefaultLauncher.LAUNCH_ASYNC_ID));
                     if (setting.getLauncherVisibility() == LauncherVisibility.CLOSE)
-                        Main.Companion.stop();
+                        Main.stopApplication();
                 }))
                 .executor();
 
@@ -106,7 +106,7 @@ public final class LauncherHelper {
 
             @Override
             public void onTerminate() {
-                Platform.runLater(Controllers.INSTANCE::closeDialog);
+                Platform.runLater(Controllers::closeDialog);
             }
         });
 
@@ -122,7 +122,7 @@ public final class LauncherHelper {
 
     public void emitStatus(LoadingState state) {
         if (state == LoadingState.DONE)
-            Controllers.INSTANCE.closeDialog();
+            Controllers.closeDialog();
 
         launchingStepsPane.setCurrentState(state.toString());
         launchingStepsPane.setSteps((state.ordinal() + 1) + " / " + LoadingState.values().length);
@@ -131,7 +131,7 @@ public final class LauncherHelper {
     private void checkExit(LauncherVisibility v) {
         switch (v) {
             case HIDE_AND_REOPEN:
-                Platform.runLater(Controllers.INSTANCE.getStage()::show);
+                Platform.runLater(Controllers.getStage()::show);
                 break;
             case KEEP:
                 // No operations here
@@ -143,7 +143,7 @@ public final class LauncherHelper {
                     // Shut down the platform when user closed log window.
                     Platform.setImplicitExit(true);
                     // If we use Main.stop(), log window will be halt immediately.
-                    Main.Companion.stopWithoutJavaFXPlatform();
+                    Main.stopWithoutPlatform();
                 });
                 break;
         }
@@ -215,7 +215,7 @@ public final class LauncherHelper {
                 switch (visibility) {
                     case HIDE_AND_REOPEN:
                         Platform.runLater(() -> {
-                            Controllers.INSTANCE.getStage().hide();
+                            Controllers.getStage().hide();
                             emitStatus(LoadingState.DONE);
                         });
                         break;
@@ -226,7 +226,7 @@ public final class LauncherHelper {
                         break;
                     case HIDE:
                         Platform.runLater(() -> {
-                            Controllers.INSTANCE.getStage().close();
+                            Controllers.getStage().close();
                             emitStatus(LoadingState.DONE);
                         });
                         break;

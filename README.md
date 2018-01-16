@@ -7,50 +7,76 @@ HMCL is a Minecraft launcher which supports Mod management, game customizing, au
 
 ## Contribution
 If you want to submit a pull request, there're some requirements:
-* IDE: Netbeans 8.1
-* Compiler: Java 1.8 and libraries only supports Java 1.7(because of retrolambda).
+* IDE: Intellij IDEA.
+* Compiler: Java 1.8.
 * Do NOT modify `gradle` files.
 
-## Code
-* package `HMCLCore/org.jackhuang.hmcl.util`: HMCL development utilities.
-* package `HMCL/org.jackhuang.hmcl`: HMCL UI core.
-* package `HMCLCore/org.jackhuang.hmcl.core`: HMCL game launcher core.
-* package `HMCLAPI(HMCL)/org.jackhuang.hmcl.api`: HMCL API, see API section.
-* Folder `HMCLCore/src/main/resources/org/jackhuang/hmcl/lang` contains language files.
+## HMCLCore
+Now HMCLCore is independent and you can use HMCLCore as a library to launch your game.
 
-## Pay Attention
-* When you do decide to modify this app, please and you MUST delete `HMCL/org.jackhuang.hmcl.util.CrashReporter`, or errors your code cause will be sent to my server.
-* package `org.jackhuang.hmcl.util.logging`: repackaged Apache Log4j, Apache License 2.0.
-* package `com.google.gson`: Apache License 2.0
-* package `org.jackhuang.hmcl.laf.ui`: contains some NimbusLAF's code belonging to Sun Microsystems under LGPL.
+### GameRepository
+Create a game repository `repository` to manage a minecraft installation. Like this.
+```java
+DefaultGameRepository repository = new DefaultGameRepository(new File(".minecraft").getAbsoluteFile());
+```
 
-## API
-HMCLAPI is based on Event bus. There are all events below.
-* org.jackhuang.hmcl.api.event
- - OutOfDateEvent - you can cancel checking new versions and upgrading by this event.
-* org.jackhuang.hmcl.api.event.config
- - AuthenticatorChangedEvent
- - DownloadTypeChangedEvent
- - ThemeChangedEvent
-* org.jackhuang.hmcl.api.event.launch
- - LaunchEvent
- - LaunchSucceededEvent
- - LaunchingStateChangedEvent
- - ProcessingLaunchOptionsEvent
- - ProcessingLoginResultEvent
-* org.jackhuang.hmcl.api.event.process
- - JVMLaunchFailedEvent
- - JavaProcessExitedAbnormallyEvent
- - JavaProcessStartingEvent
- - JavaProcessStoppedEvent
-* org.jackhuang.hmcl.api.event.version
- - LoadedOneVersionEvent
- - RefreshedVersionsEvent
- - RefreshingVersionsEvent
+You should put where your minecraft installation is to the only argument of the constructor of `DefaultGameRepository`.
 
-You can also add tabs to root window or add authenticators through IPlugin.
+### Launching
+Now you can launch game by constructing a `DefaultLauncher`.
+```java
+DefaultLauncher launcher = new DefaultLauncher(
+        repository, // GameRepository
+        "test", // Your minecraft version name
+        OfflineAccountFactory.INSTANCE.fromUsername("player007").logIn(MultiCharacterSelector.DEFAULT), // account
+        // or YggdrasilAccountFactory.INSTANCE.fromUsername(username, password).logIn
+        new LaunchOptions.Builder()
+        		.setGameDir(repository.getBaseDirectory())
+        		.setMaxMemory(...)
+        		.setJava(...)
+        		.setJavaArgs(...)
+        		.setMinecraftArgs(...)
+        		.setHeight(...)
+        		.setWidth(...)
+        		...
+        		.create(), 
+        new ProcessListener() { // listening the process state.
+            @Override
+            public void onLog(String log, Log4jLevel level) { // new console log
+                System.out.println(log);
+            }
+            
+            @Override
+            public void onExit(int exitCode, ExitType exitType) { // process exited
+                System.out.println("Process exited then exit code " + exitCode);
+            }
+        },
+        false // true if launcher process exits, listening thread exit too.
+);
+```
+Now you can simply call `launcher.launch()` to launch the game.
+If you want the command line, just call `launcher.getRawCommandLine`. Also, `StringUtils.makeCommand` might be useful.
 
-### Remember
-* A valid plugin will have a main class that implements `org.jackhuang.hmcl.api.IPlugin`. HMCL will search all jar files in `plugins` folder and load classes that implements IPlugin.
-* If you want to debug, use option: `--plugin=<Your IPlugin Class Name>` and add your jar to classpath.
-* You'd better only access `org.jackhuang.hmcl.api.*`, and other classes may change in different versions.
+### Downloading
+HMCLCore just owns a simple way to download a new game.
+```java
+DefaultDependencyManager dependency = new DefaultDependencyManager(repository, MojangDownloadProvider.INSTANCE, proxy);
+```
+`repository` is your `GameRepository`. `MojangDownloadProvider.INSTANCE` means that we download files from mojang servers. If you want BMCLAPI, `BMCLAPIDownloadProvider.INSTANCE` is just for you. `proxy` is `java.net.Proxy`, if you have a proxy, put it here, or `Proxy.NO_PROXY`.
+
+Now `GameBuilder` can build a game.
+```
+Task gameBuildingTask = dependency.gameBuilder()
+                .name("test")
+                .gameVersion("1.12") // Minecraft version
+                .version("forge", "14.21.1.2426") // Forge version
+                .version("liteloader", "1.12-SNAPSHOT-4") // LiteLoader version
+                .version("optifine", "HD_U_C4") // OptiFine version
+                .buildAsync()
+```
+
+Nowadays HMCLCore only supports Forge, LiteLoader and OptiFine auto-installing.
+`buildAsync` will return a `Task`, you can call `Task.executor()::start` or simply `Task::start` to start this task. If you want to monitor the execution of tasks, you should see `TaskExecutor` and `Task::executor`.
+
+## HMCL
+JavaFX version of HMCL does not support old APIs.

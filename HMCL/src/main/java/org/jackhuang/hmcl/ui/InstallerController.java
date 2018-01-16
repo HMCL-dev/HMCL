@@ -43,7 +43,7 @@ public class InstallerController {
     private String optiFine;
 
     public void initialize() {
-        FXUtilsKt.smoothScrolling(scrollPane);
+        FXUtils.smoothScrolling(scrollPane);
     }
 
     public void loadVersion(Profile profile, String versionId) {
@@ -59,8 +59,8 @@ public class InstallerController {
                 LinkedList<Library> newList = new LinkedList<>(version.getLibraries());
                 newList.remove(library);
                 new VersionJsonSaveTask(profile.getRepository(), version.setLibraries(newList))
-                        .with(Task.of(e -> profile.getRepository().refreshVersions()))
-                        .with(Task.of(e -> loadVersion(this.profile, this.versionId)))
+                        .with(Task.of(profile.getRepository()::refreshVersions))
+                        .with(Task.of(() -> loadVersion(this.profile, this.versionId)))
                         .start();
             };
 
@@ -85,6 +85,6 @@ public class InstallerController {
         // TODO: if minecraftVersion returns null.
         if (gameVersion == null) return;
 
-        Controllers.INSTANCE.getDecorator().startWizard(new InstallerWizardProvider(profile, gameVersion, version, forge, liteLoader, optiFine));
+        Controllers.getDecorator().startWizard(new InstallerWizardProvider(profile, gameVersion, version, forge, liteLoader, optiFine));
     }
 }

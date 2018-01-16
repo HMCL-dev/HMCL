@@ -24,7 +24,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.ui.FXUtilsKt;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.Lang;
@@ -55,7 +55,7 @@ class AdditionalInstallersPage extends StackPane implements WizardPage {
         this.repository = repository;
         this.downloadProvider = downloadProvider;
 
-        FXUtilsKt.loadFXML(this, "/assets/fxml/download/additional-installers.fxml");
+        FXUtils.loadFXML(this, "/assets/fxml/download/additional-installers.fxml");
 
         lblGameVersion.setText(provider.getGameVersion());
         lblVersionName.setText(provider.getVersion().getId());

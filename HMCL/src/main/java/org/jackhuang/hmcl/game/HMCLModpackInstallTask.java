@@ -26,32 +26,28 @@ import org.jackhuang.hmcl.util.CompressingUtils;
 import org.jackhuang.hmcl.util.Constants;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
 public final class HMCLModpackInstallTask extends Task {
     private final File zipFile;
-    private final String version;
+    private final String id;
     private final HMCLGameRepository repository;
     private final DefaultDependencyManager dependency;
     private final List<Task> dependencies = new LinkedList<>();
     private final List<Task> dependents = new LinkedList<>();
 
-    public HMCLModpackInstallTask(Profile profile, File zipFile, Modpack modpack, String id) throws IOException {
+    public HMCLModpackInstallTask(Profile profile, File zipFile, Modpack modpack, String id) {
         dependency = profile.getDependency();
         repository = profile.getRepository();
         this.zipFile = zipFile;
-        this.version = id;
+        this.id = id;
 
         if (repository.hasVersion(id))
             throw new IllegalArgumentException("Version " + id + " already exists");
 
-        String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
-        Version version = Constants.GSON.fromJson(json, Version.class).setJar(null);
         dependents.add(dependency.gameBuilder().name(id).gameVersion(modpack.getGameVersion()).buildAsync());
-        dependencies.add(new VersionJsonSaveTask(repository, version));
 
         onDone().register(event -> {
             if (event.isFailed()) repository.removeVersionFromDisk(id);
@@ -70,7 +66,11 @@ public final class HMCLModpackInstallTask extends Task {
 
     @Override
     public void execute() throws Exception {
-        CompressingUtils.unzip(zipFile, repository.getRunDirectory(version),
+        String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
+        Version version = Constants.GSON.fromJson(json, Version.class).setJar(null);
+        dependencies.add(new VersionJsonSaveTask(repository, version));
+
+        CompressingUtils.unzip(zipFile, repository.getRunDirectory(id),
                 "minecraft/", it -> !Objects.equals(it, "minecraft/pack.json"), false);
     }
 }

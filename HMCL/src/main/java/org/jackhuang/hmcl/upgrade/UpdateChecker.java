@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.upgrade;
 
 import com.google.gson.JsonSyntaxException;
-import org.jackhuang.hmcl.MainKt;
+import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.OutOfDateEvent;
@@ -77,7 +77,7 @@ public final class UpdateChecker {
                 if (value == null) {
                     Logging.LOG.warning("Failed to check update...");
                     if (showMessage)
-                        MessageBox.show(MainKt.i18n("update.failed"));
+                        MessageBox.show(Main.i18n("update.failed"));
                 } else if (base.compareTo(value) < 0)
                     outOfDate = true;
                 if (outOfDate)

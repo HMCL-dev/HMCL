@@ -32,6 +32,12 @@ public final class Validator extends ValidatorBase {
         this.validator = validator;
     }
 
+    public Validator(String message, Predicate<String> validator) {
+        this(validator);
+
+        setMessage(message);
+    }
+
     @Override
     protected void eval() {
         if (this.srcControl.get() instanceof TextInputControl) {

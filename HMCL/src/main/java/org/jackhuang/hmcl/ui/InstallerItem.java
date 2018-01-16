@@ -38,7 +38,7 @@ public class InstallerItem extends BorderPane {
 
     public InstallerItem(String artifact, String version, Consumer<InstallerItem> deleteCallback) {
         this.deleteCallback = deleteCallback;
-        FXUtilsKt.loadFXML(this, "/assets/fxml/version/installer-item.fxml");
+        FXUtils.loadFXML(this, "/assets/fxml/version/installer-item.fxml");
 
         setStyle("-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;");
         JFXDepthManager.setDepth(this, 1);

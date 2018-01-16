@@ -26,7 +26,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.ui.FXUtilsKt;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 public final class TransitionHandler implements AnimationHandler {
     private final StackPane view;
@@ -91,7 +91,7 @@ public final class TransitionHandler implements AnimationHandler {
             WritableImage image;
             if (content != null && content instanceof Parent) {
                 view.getChildren().setAll();
-                image = FXUtilsKt.takeSnapshot((Parent) content, view.getWidth(), view.getHeight());
+                image = FXUtils.takeSnapshot((Parent) content, view.getWidth(), view.getHeight());
                 view.getChildren().setAll(content);
             } else
                 image = view.snapshot(new SnapshotParameters(), new WritableImage((int) view.getWidth(), (int) view.getHeight()));

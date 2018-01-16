@@ -21,7 +21,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.ui.FXUtilsKt;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 /**
  * @author huangyuhui
@@ -36,7 +36,7 @@ public final class VersionsPageItem extends StackPane {
     public VersionsPageItem(RemoteVersion<?> remoteVersion) {
         this.remoteVersion = remoteVersion;
 
-        FXUtilsKt.loadFXML(this, "/assets/fxml/download/versions-list-item.fxml");
+        FXUtils.loadFXML(this, "/assets/fxml/download/versions-list-item.fxml");
         lblSelfVersion.setText(remoteVersion.getSelfVersion());
         lblGameVersion.setText(remoteVersion.getGameVersion());
     }

@@ -39,7 +39,7 @@ import java.util.zip.GZIPInputStream;
 
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.Main;
-import org.jackhuang.hmcl.MainKt;
+import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -100,24 +100,24 @@ public class AppDataUpgrader extends IUpgrader {
         if (!(ver instanceof IntVersionNumber))
             return;
         IntVersionNumber version = (IntVersionNumber) ver;
-        checker.requestDownloadLink().then(Task.of(v -> {
-            Map<String, String> map = v.get(UpdateChecker.REQUEST_DOWNLOAD_LINK_ID);
+        checker.requestDownloadLink().then(Task.of(variables -> {
+            Map<String, String> map = variables.get(UpdateChecker.REQUEST_DOWNLOAD_LINK_ID);
 
-            if (MessageBox.confirm(MainKt.i18n("update.newest_version") + version.get(0) + "." + version.get(1) + "." + version.get(2) + "\n"
-                            + MainKt.i18n("update.should_open_link"),
+            if (MessageBox.confirm(Main.i18n("update.newest_version") + version.get(0) + "." + version.get(1) + "." + version.get(2) + "\n"
+                            + Main.i18n("update.should_open_link"),
                     MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                 if (map != null && map.containsKey("jar") && !StringUtils.isBlank(map.get("jar")))
                     try {
                         String hash = null;
                         if (map.containsKey("jarsha1"))
                             hash = map.get("jarsha1");
-                        Controllers.INSTANCE.dialog(MainKt.i18n("ui.message.downloading"));
+                        Controllers.dialog(Main.i18n("ui.message.downloading"));
                         if (new AppDataUpgraderJarTask(NetworkUtils.toURL(map.get("jar")), version.toString(), hash).test()) {
                             new ProcessBuilder(JavaVersion.fromCurrentEnvironment().getBinary().getAbsolutePath(), "-jar", AppDataUpgraderJarTask.getSelf(version.toString()).getAbsolutePath())
                                     .directory(new File("").getAbsoluteFile()).start();
                             System.exit(0);
                         }
-                        Controllers.INSTANCE.closeDialog();
+                        Controllers.closeDialog();
                     } catch (IOException ex) {
                         Logging.LOG.log(Level.SEVERE, "Failed to create upgrader", ex);
                     }
@@ -126,13 +126,13 @@ public class AppDataUpgrader extends IUpgrader {
                         String hash = null;
                         if (map.containsKey("packsha1"))
                             hash = map.get("packsha1");
-                        Controllers.INSTANCE.dialog(MainKt.i18n("ui.message.downloading"));
+                        Controllers.dialog(Main.i18n("ui.message.downloading"));
                         if (new AppDataUpgraderPackGzTask(NetworkUtils.toURL(map.get("pack")), version.toString(), hash).test()) {
                             new ProcessBuilder(JavaVersion.fromCurrentEnvironment().getBinary().getAbsolutePath(), "-jar", AppDataUpgraderPackGzTask.getSelf(version.toString()).getAbsolutePath())
                                     .directory(new File("").getAbsoluteFile()).start();
                             System.exit(0);
                         }
-                        Controllers.INSTANCE.closeDialog();
+                        Controllers.closeDialog();
                     } catch (IOException ex) {
                         Logging.LOG.log(Level.SEVERE, "Failed to create upgrader", ex);
                     }
@@ -150,7 +150,7 @@ public class AppDataUpgrader extends IUpgrader {
                     } catch (URISyntaxException | IOException e) {
                         Logging.LOG.log(Level.SEVERE, "Failed to browse uri: " + url, e);
                         OperatingSystem.setClipboard(url);
-                        MessageBox.show(MainKt.i18n("update.no_browser"));
+                        MessageBox.show(Main.i18n("update.no_browser"));
                     }
                 }
         })).start();

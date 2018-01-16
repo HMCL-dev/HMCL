@@ -130,7 +130,7 @@ public class Settings {
         else {
             Logging.LOG.config("No settings file here, may be first loading.");
             if (!c.getConfigurations().containsKey(HOME_PROFILE))
-                c.getConfigurations().put(HOME_PROFILE, new Profile(HOME_PROFILE, Main.getMinecraftDirectory()));
+                c.getConfigurations().put(HOME_PROFILE, new Profile(HOME_PROFILE, Main.MINECRAFT_DIRECTORY));
         }
         return c;
     }

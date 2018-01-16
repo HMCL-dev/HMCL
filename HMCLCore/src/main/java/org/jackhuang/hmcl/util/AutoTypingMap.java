@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -36,6 +37,10 @@ public final class AutoTypingMap<K> {
 
     public <V> V get(K key) {
         return (V) impl.get(key);
+    }
+
+    public <V> Optional<V> getOptional(K key) {
+        return Optional.ofNullable(get(key));
     }
 
     public void set(K key, Object value) {

@@ -71,12 +71,12 @@ public final class Lang {
         }
     }
 
-    public static <T, R, E extends Exception> Function<T, R> hideException(ExceptionalFunction<T, R, E> function) {
+    public static <T, R, E extends Exception> Function<T, R> hideFunction(ExceptionalFunction<T, R, E> function) {
         return r -> invoke(function, r);
     }
 
-    public static <T, R, E extends Exception> Function<T, R> liftException(ExceptionalFunction<T, R, E> function) throws E {
-        return hideException(function);
+    public static <T, R, E extends Exception> Function<T, R> liftFunction(ExceptionalFunction<T, R, E> function) throws E {
+        return hideFunction(function);
     }
 
     /**
@@ -105,6 +105,33 @@ public final class Lang {
 
     public static <T, E extends Exception> Supplier<T> liftException(ExceptionalSupplier<T, E> supplier) throws E {
         return hideException(supplier);
+    }
+
+    /**
+     * This method will call a method without checked exceptions
+     * by treating the compiler.
+     *
+     * If this method throws a checked exception,
+     * it will still abort the application because of the exception.
+     *
+     * @param <T> type of result.
+     * @param consumer your method.
+     * @return the result of the method to invoke.
+     */
+    public static <T, E extends Exception> void invokeConsumer(ExceptionalConsumer<T, E> consumer, T t) {
+        try {
+            consumer.accept(t);
+        } catch (Exception e) {
+            throwable(e);
+        }
+    }
+
+    public static <T, E extends Exception> Consumer<T> hideConsumer(ExceptionalConsumer<T, E> consumer) {
+        return it -> invokeConsumer(consumer, it);
+    }
+
+    public static <T, E extends Exception> Consumer<T> liftConsumer(ExceptionalConsumer<T, E> consumer) throws E {
+        return hideConsumer(consumer);
     }
 
     public static <E extends Exception> boolean test(ExceptionalSupplier<Boolean, E> r) {
@@ -248,17 +275,25 @@ public final class Lang {
         return () -> asIterator(enumeration);
     }
 
-    public static int parseInt(String string, int defaultValue) {
+    public static int parseInt(Object string, int defaultValue) {
         try {
-            return Integer.parseInt(string);
+            return Integer.parseInt(string.toString());
         } catch (NumberFormatException e) {
             return defaultValue;
         }
     }
 
-    public static Integer toIntOrNull(String string) {
+    public static Integer toIntOrNull(Object string) {
         try {
-            return Integer.parseInt(string);
+            return Integer.parseInt(string.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    public static Double toDoubleOrNull(Object string) {
+        try {
+            return Double.parseDouble(string.toString());
         } catch (NumberFormatException e) {
             return null;
         }
@@ -267,5 +302,10 @@ public final class Lang {
     public static <T> T nonNull(T... t) {
         for (T a : t) if (a != null) return a;
         return null;
+    }
+
+    public static <T> T apply(T t, Consumer<T> consumer) {
+        consumer.accept(t);
+        return t;
     }
 }

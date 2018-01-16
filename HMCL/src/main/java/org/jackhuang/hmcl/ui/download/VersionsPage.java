@@ -26,7 +26,7 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.TaskExecutor;
-import org.jackhuang.hmcl.ui.FXUtilsKt;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionHandler;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
@@ -59,7 +59,7 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
 
         this.versionList = downloadProvider.getVersionListById(libraryId);
 
-        FXUtilsKt.loadFXML(this, "/assets/fxml/download/versions.fxml");
+        FXUtils.loadFXML(this, "/assets/fxml/download/versions.fxml");
         getChildren().setAll(spinner);
         list.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
             controller.getSettings().put(libraryId, newValue.getRemoteVersion().getSelfVersion());
@@ -70,7 +70,7 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
 
     @Override
     public void refresh() {
-        executor = versionList.refreshAsync(downloadProvider).subscribe(Schedulers.javafx(), v -> {
+        executor = versionList.refreshAsync(downloadProvider).subscribe(Schedulers.javafx(), () -> {
             versionList.getVersions(gameVersion).stream()
                     .sorted(RemoteVersion.RemoteVersionComparator.INSTANCE)
                     .forEach(version -> {

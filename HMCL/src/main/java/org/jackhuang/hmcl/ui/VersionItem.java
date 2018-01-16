@@ -55,16 +55,16 @@ public final class VersionItem extends StackPane {
     private ImageView iconView;
 
     public VersionItem() {
-        FXUtilsKt.loadFXML(this, "/assets/fxml/version-item.fxml");
-        FXUtilsKt.limitWidth(this, 160);
-        FXUtilsKt.limitHeight(this, 156);
+        FXUtils.loadFXML(this, "/assets/fxml/version-item.fxml");
+        FXUtils.limitWidth(this, 160);
+        FXUtils.limitHeight(this, 156);
         setEffect(new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.26), 5.0, 0.12, -1.0, 1.0));
         btnSettings.setGraphic(SVG.gear("black", 15, 15));
         btnDelete.setGraphic(SVG.delete("black", 15, 15));
         btnLaunch.setGraphic(SVG.launch("black", 15, 15));
 
         icon.translateYProperty().bind(Bindings.createDoubleBinding(() -> header.getBoundsInParent().getHeight() - icon.getHeight() / 2 - 16, header.boundsInParentProperty(), icon.heightProperty()));
-        FXUtilsKt.limitSize(iconView, 32, 32);
+        FXUtils.limitSize(iconView, 32, 32);
     }
 
     public void setVersionName(String versionName) {

@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
-import org.jackhuang.hmcl.MainKt;
+import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.util.Charsets;
@@ -53,7 +53,7 @@ public class NewFileUpgrader extends IUpgrader {
         URL url = requestDownloadLink();
         if (url == null) return;
         File newf = new File(url.getFile());
-        Controllers.INSTANCE.dialog(MainKt.i18n("ui.message.downloading"));
+        Controllers.dialog(Main.i18n("ui.message.downloading"));
         if (new FileDownloadTask(url, newf).test()) {
             try {
                 new ProcessBuilder(newf.getCanonicalPath(), "--removeOldLauncher", getRealPath())
@@ -64,7 +64,7 @@ public class NewFileUpgrader extends IUpgrader {
             }
             System.exit(0);
         }
-        Controllers.INSTANCE.closeDialog();
+        Controllers.closeDialog();
     }
 
     private static String getRealPath() {

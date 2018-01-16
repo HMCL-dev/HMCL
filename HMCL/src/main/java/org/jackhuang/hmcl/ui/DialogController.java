@@ -29,9 +29,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class DialogController {
-    public static final DialogController INSTANCE = new DialogController();
-
-    private DialogController() {}
 
     public static AuthInfo logIn(Account account) throws Exception {
         if (account instanceof YggdrasilAccount) {
@@ -41,14 +38,12 @@ public final class DialogController {
                 YggdrasilAccountLoginPane pane = new YggdrasilAccountLoginPane((YggdrasilAccount) account, it -> {
                         res.set(it);
                         latch.countDown();
-                        Controllers.INSTANCE.closeDialog();
-                        return Unit.INSTANCE;
+                        Controllers.closeDialog();
                 }, () -> {
                         latch.countDown();
-                        Controllers.INSTANCE.closeDialog();
-                        return Unit.INSTANCE;
+                        Controllers.closeDialog();
                 });
-                pane.dialog = Controllers.INSTANCE.dialog(pane);
+                pane.setDialog(Controllers.dialog(pane));
             });
             latch.await();
             return Optional.ofNullable(res.get()).orElseThrow(SilentException::new);

@@ -61,7 +61,7 @@ public class FileItem extends BorderPane {
     public void onExplore() {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.titleProperty().bind(titleProperty());
-        File selectedDir = chooser.showDialog(Controllers.INSTANCE.getStage());
+        File selectedDir = chooser.showDialog(Controllers.getStage());
         if (selectedDir != null)
             property.setValue(selectedDir.getAbsolutePath());
         chooser.titleProperty().unbind();

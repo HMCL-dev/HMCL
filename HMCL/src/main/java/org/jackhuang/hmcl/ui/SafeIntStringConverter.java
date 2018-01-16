@@ -26,6 +26,11 @@ import java.util.Optional;
  * @author huangyuhui
  */
 public final class SafeIntStringConverter extends StringConverter<Integer> {
+    public static final SafeIntStringConverter INSTANCE = new SafeIntStringConverter();
+
+    private SafeIntStringConverter() {
+    }
+
     @Override
     public Integer fromString(String string) {
         return Optional.ofNullable(string).map(Lang::toIntOrNull).orElse(null);

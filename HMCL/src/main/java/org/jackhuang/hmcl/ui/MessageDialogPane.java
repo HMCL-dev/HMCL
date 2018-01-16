@@ -36,7 +36,7 @@ public final class MessageDialogPane extends StackPane {
         this.text = text;
         this.dialog = dialog;
 
-        FXUtilsKt.loadFXML(this, "/assets/fxml/message-dialog.fxml");
+        FXUtils.loadFXML(this, "/assets/fxml/message-dialog.fxml");
         content.setText(text);
         acceptButton.setOnMouseClicked(e -> dialog.close());
     }

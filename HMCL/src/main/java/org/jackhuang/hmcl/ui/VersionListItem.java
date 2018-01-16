@@ -40,21 +40,21 @@ public final class VersionListItem extends StackPane {
     }
 
     public VersionListItem(String versionName, String gameVersion) {
-        FXUtilsKt.loadFXML(this, "/assets/fxml/version-list-item.fxml");
+        FXUtils.loadFXML(this, "/assets/fxml/version-list-item.fxml");
 
         lblVersionName.setText(versionName);
         lblGameVersion.setText(gameVersion);
 
-        FXUtilsKt.limitSize(imageView, 32, 32);
-        FXUtilsKt.limitWidth(imageViewContainer, 32);
-        FXUtilsKt.limitHeight(imageViewContainer, 32);
+        FXUtils.limitSize(imageView, 32, 32);
+        FXUtils.limitWidth(imageViewContainer, 32);
+        FXUtils.limitHeight(imageViewContainer, 32);
     }
 
     public void onSettings() {
         handler.run();
     }
 
-    public void onSettingsButtonClicked(Runnable handler) {
+    public void setOnSettingsButtonClicked(Runnable handler) {
         this.handler = handler;
     }
 

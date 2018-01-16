@@ -183,9 +183,9 @@ public abstract class Task {
         return new TaskExecutor(this);
     }
 
-    public final TaskExecutor executor(TaskListener taskListener) {
+    public final TaskExecutor executor(Function<TaskExecutor, TaskListener> taskListener) {
         TaskExecutor executor = new TaskExecutor(this);
-        executor.setTaskListener(taskListener);
+        executor.setTaskListener(taskListener.apply(executor));
         return executor;
     }
 
@@ -204,10 +204,18 @@ public abstract class Task {
     }
 
     public final TaskExecutor subscribe(Scheduler scheduler, ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
-        return subscribe(of(closure, scheduler));
+        return subscribe(of(scheduler, closure));
+    }
+
+    public final TaskExecutor subscribe(Scheduler scheduler, ExceptionalRunnable<?> closure) {
+        return subscribe(of(scheduler, i -> closure.run()));
     }
 
     public final TaskExecutor subscribe(ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
+        return subscribe(of(closure));
+    }
+
+    public final TaskExecutor subscribe(ExceptionalRunnable<?> closure) {
         return subscribe(of(closure));
     }
 
@@ -237,11 +245,15 @@ public abstract class Task {
     }
 
     public static Task of(ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
-        return of(closure, Schedulers.defaultScheduler());
+        return of(Schedulers.defaultScheduler(), closure);
     }
 
-    public static Task of(ExceptionalConsumer<AutoTypingMap<String>, ?> closure, Scheduler scheduler) {
+    public static Task of(Scheduler scheduler, ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
         return new SimpleTask(closure, scheduler);
+    }
+
+    public static Task of(Scheduler scheduler, ExceptionalRunnable<?> closure) {
+        return new SimpleTask(i -> closure.run(), scheduler);
     }
 
     public static <V> TaskResult<V> ofResult(String id, Callable<V> callable) {

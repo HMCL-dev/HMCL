@@ -89,9 +89,7 @@ public final class InstallerWizardProvider implements WizardProvider {
         if (settings.containsKey("optifine"))
             ret = ret.with(profile.getDependency().installLibraryAsync(gameVersion, version, "optifine", (String) settings.get("optifine")));
 
-        return ret.with(Task.of(v -> {
-            profile.getRepository().refreshVersions();
-        }));
+        return ret.with(Task.of(profile.getRepository()::refreshVersions));
     }
 
     @Override

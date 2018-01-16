@@ -31,10 +31,10 @@ public class LaunchingStepsPane extends StackPane {
     private Label lblSteps;
 
     public LaunchingStepsPane() {
-        FXUtilsKt.loadFXML(this, "/assets/fxml/launching-steps.fxml");
+        FXUtils.loadFXML(this, "/assets/fxml/launching-steps.fxml");
 
-        FXUtilsKt.limitHeight(this, 200);
-        FXUtilsKt.limitWidth(this, 400);
+        FXUtils.limitHeight(this, 200);
+        FXUtils.limitWidth(this, 400);
     }
 
     public void setCurrentState(String currentState) {

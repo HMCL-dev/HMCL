@@ -32,6 +32,11 @@ public class NumberValidator extends ValidatorBase {
         this.nullable = nullable;
     }
 
+    public NumberValidator(String message, boolean nullable) {
+        super(message);
+        this.nullable = nullable;
+    }
+
     @Override
     protected void eval() {
         if (srcControl.get() instanceof TextInputControl) {
@@ -43,7 +48,7 @@ public class NumberValidator extends ValidatorBase {
         TextInputControl textField = ((TextInputControl) srcControl.get());
 
         if (StringUtils.isBlank(textField.getText()))
-            hasErrors.set(false);
+            hasErrors.set(nullable);
         else
             try {
                 Integer.parseInt(textField.getText());

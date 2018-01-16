@@ -26,11 +26,11 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.MainKt;
+import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtilsKt;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 
@@ -55,8 +55,8 @@ public final class ModpackInfoPage extends StackPane implements WizardPage {
 
     public ModpackInfoPage(WizardController controller, String version) {
         this.controller = controller;
-        FXUtilsKt.loadFXML(this, "/assets/fxml/modpack/info.fxml");
-        FXUtilsKt.smoothScrolling(scroll);
+        FXUtils.loadFXML(this, "/assets/fxml/modpack/info.fxml");
+        FXUtils.smoothScrolling(scroll);
         txtModpackName.setText(version);
         txtModpackName.textProperty().addListener(e -> checkValidation());
         txtModpackAuthor.textProperty().addListener(e -> checkValidation());
@@ -71,11 +71,11 @@ public final class ModpackInfoPage extends StackPane implements WizardPage {
 
     public void onNext() {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(MainKt.i18n("modpack.wizard.step.initialization.save"));
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(MainKt.i18n("modpack"), "*.zip"));
-        File file = fileChooser.showSaveDialog(Controllers.INSTANCE.getStage());
+        fileChooser.setTitle(Main.i18n("modpack.wizard.step.initialization.save"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(Main.i18n("modpack"), "*.zip"));
+        File file = fileChooser.showSaveDialog(Controllers.getStage());
         if (file == null) {
-            Controllers.INSTANCE.navigate(null);
+            Controllers.navigate(null);
             return;
         }
         controller.getSettings().put(MODPACK_NAME, txtModpackName.getText());
@@ -99,7 +99,7 @@ public final class ModpackInfoPage extends StackPane implements WizardPage {
 
     @Override
     public String getTitle() {
-        return MainKt.i18n("modpack.wizard.step.1.title");
+        return Main.i18n("modpack.wizard.step.1.title");
     }
 
     public static final String MODPACK_NAME = "modpack.name";

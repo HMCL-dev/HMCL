@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.task.Scheduler;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.DialogController;
-import org.jackhuang.hmcl.ui.FXUtilsKt;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.File;
@@ -80,9 +80,9 @@ public final class AccountHelper {
     }
 
     public static Image getSkin(YggdrasilAccount account, double scaleRatio) {
-        if (account.getSelectedProfile() == null) return FXUtilsKt.DEFAULT_ICON;
+        if (account.getSelectedProfile() == null) return FXUtils.DEFAULT_ICON;
         String name = account.getSelectedProfile().getName();
-        if (name == null) return FXUtilsKt.DEFAULT_ICON;
+        if (name == null) return FXUtils.DEFAULT_ICON;
         File file = getSkinFile(name);
         if (file.exists()) {
             Image original = new Image("file:" + file.getAbsolutePath());
@@ -91,7 +91,7 @@ public final class AccountHelper {
                     original.getHeight() * scaleRatio,
                     false, false);
         }
-        return FXUtilsKt.DEFAULT_ICON;
+        return FXUtils.DEFAULT_ICON;
     }
 
     public static Rectangle2D getViewport(double scaleRatio) {
@@ -128,7 +128,7 @@ public final class AccountHelper {
         @Override
         public void execute() throws Exception {
             if (account.canLogIn() && (account.getSelectedProfile() == null || refresh))
-                DialogController.INSTANCE.logIn(account);
+                DialogController.logIn(account);
 
             GameProfile profile = account.getSelectedProfile();
             if (profile == null) return;

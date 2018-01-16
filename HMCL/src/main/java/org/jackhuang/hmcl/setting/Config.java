@@ -34,7 +34,7 @@ public final class Config {
     private String backgroundImage = null;
 
     @SerializedName("commonpath")
-    private String commonDirectory = Main.getMinecraftDirectory().getAbsolutePath();
+    private String commonDirectory = Main.MINECRAFT_DIRECTORY.getAbsolutePath();
 
     @SerializedName("proxyType")
     private int proxyType = 0;

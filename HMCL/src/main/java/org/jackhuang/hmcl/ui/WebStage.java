@@ -27,7 +27,7 @@ public class WebStage extends Stage {
 
     public WebStage() {
         setScene(new Scene(webView, 800, 480));
-        getScene().getStylesheets().addAll(FXUtilsKt.getStylesheets());
+        getScene().getStylesheets().addAll(FXUtils.STYLESHEETS);
         getIcons().add(new Image("/assets/img/icon.png"));
     }
 

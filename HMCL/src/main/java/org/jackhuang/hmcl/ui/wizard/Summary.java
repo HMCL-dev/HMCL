@@ -29,7 +29,7 @@ public final class Summary {
     private final Object result;
 
     public Summary(String[] items, Object result) {
-        JFXListView view = new JFXListView<String>();
+        JFXListView<String> view = new JFXListView<>();
         view.getItems().addAll(items);
 
         this.component = view;

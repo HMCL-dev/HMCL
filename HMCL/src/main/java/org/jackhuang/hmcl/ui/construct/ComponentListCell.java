@@ -28,7 +28,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.ui.FXUtilsKt;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
 /**
@@ -100,7 +100,7 @@ public class ComponentListCell extends StackPane {
 
             VBox container = new VBox();
             container.setStyle("-fx-padding: 8 0 0 0;");
-            FXUtilsKt.limitHeight(container, 0);
+            FXUtils.limitHeight(container, 0);
             Rectangle clipRect = new Rectangle();
             clipRect.widthProperty().bind(container.widthProperty());
             clipRect.heightProperty().bind(container.heightProperty());
@@ -129,8 +129,8 @@ public class ComponentListCell extends StackPane {
                 animatedHeight = newAnimatedHeight;
 
                 expandAnimation = new Timeline(new KeyFrame(new Duration(320.0),
-                        new KeyValue(container.minHeightProperty(), contentHeight, FXUtilsKt.SINE),
-                        new KeyValue(container.maxHeightProperty(), contentHeight, FXUtilsKt.SINE)
+                        new KeyValue(container.minHeightProperty(), contentHeight, FXUtils.SINE),
+                        new KeyValue(container.maxHeightProperty(), contentHeight, FXUtils.SINE)
                 ));
 
                 if (!isExpanded()) {
