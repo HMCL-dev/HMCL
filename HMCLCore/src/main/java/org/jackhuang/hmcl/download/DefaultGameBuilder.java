@@ -17,18 +17,14 @@
  */
 package org.jackhuang.hmcl.download;
 
-import java.util.function.Function;
-import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
-import org.jackhuang.hmcl.download.game.GameDownloadTask;
-import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.download.game.GameLoggingDownloadTask;
-import org.jackhuang.hmcl.download.game.VersionJsonDownloadTask;
-import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
+import org.jackhuang.hmcl.download.game.*;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.ParallelTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.AutoTypingMap;
 import org.jackhuang.hmcl.util.Constants;
+
+import java.util.function.Function;
 
 /**
  *

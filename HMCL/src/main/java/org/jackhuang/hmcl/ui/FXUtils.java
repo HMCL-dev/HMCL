@@ -42,7 +42,6 @@ import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Main;
-import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.OperatingSystem;

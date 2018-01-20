@@ -36,6 +36,8 @@ import org.jackhuang.hmcl.util.Lang;
 import java.io.File;
 import java.util.Map;
 
+import static org.jackhuang.hmcl.Main.i18n;
+
 public final class DownloadWizardProvider implements WizardProvider {
     private Profile profile;
 
@@ -114,7 +116,7 @@ public final class DownloadWizardProvider implements WizardProvider {
                 int subStep = Lang.parseInt(settings.get(InstallTypePage.INSTALL_TYPE), -1);
                 switch (subStep) {
                     case 0:
-                        return new VersionsPage(controller, "", provider, "game", () -> controller.onNext(new InstallersPage(controller, profile.getRepository(), provider)));
+                        return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.game")), "", provider, "game", () -> controller.onNext(new InstallersPage(controller, profile.getRepository(), provider)));
                     case 1:
                         return new ModpackPage(controller);
                     default:

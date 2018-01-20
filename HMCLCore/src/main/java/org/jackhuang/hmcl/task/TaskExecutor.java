@@ -17,6 +17,11 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.jackhuang.hmcl.util.AutoTypingMap;
+import org.jackhuang.hmcl.util.ExceptionalRunnable;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Logging;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,10 +32,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
-import org.jackhuang.hmcl.util.AutoTypingMap;
-import org.jackhuang.hmcl.util.ExceptionalRunnable;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Logging;
 
 /**
  *
@@ -210,7 +211,7 @@ public final class TaskExecutor {
         }
 
         @Override
-        public void run() throws Exception {
+        public void run() {
             try {
                 Thread.currentThread().setName(task.getName());
                 if (!executeTask(task))

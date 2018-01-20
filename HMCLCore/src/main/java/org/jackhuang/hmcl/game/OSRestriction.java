@@ -17,9 +17,10 @@
  */
 package org.jackhuang.hmcl.game;
 
-import java.util.regex.Pattern;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.OperatingSystem;
+
+import java.util.regex.Pattern;
 
 /**
  *
@@ -70,8 +71,7 @@ public final class OSRestriction {
                 return false;
 
         if (arch != null)
-            if (Lang.test(() -> !Pattern.compile(arch).matcher(OperatingSystem.SYSTEM_ARCHITECTURE).matches()))
-                return false;
+            return !Lang.test(() -> !Pattern.compile(arch).matcher(OperatingSystem.SYSTEM_ARCHITECTURE).matches());
 
         return true;
     }

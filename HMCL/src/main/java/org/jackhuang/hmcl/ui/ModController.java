@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.JFXSpinner;
 import com.jfoenix.controls.JFXTabPane;
 import javafx.application.Platform;
-import javafx.beans.value.WeakChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.TransferMode;
@@ -33,7 +32,6 @@ import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.FileUtils;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
 
 import java.io.File;

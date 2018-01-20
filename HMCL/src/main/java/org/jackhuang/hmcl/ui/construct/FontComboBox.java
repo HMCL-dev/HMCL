@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXComboBox;
 import javafx.beans.NamedArg;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.scene.control.ListCell;
 import javafx.scene.text.Font;
 

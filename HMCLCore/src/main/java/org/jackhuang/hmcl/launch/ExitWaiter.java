@@ -17,10 +17,6 @@
  */
 package org.jackhuang.hmcl.launch;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.JVMLaunchFailedEvent;
 import org.jackhuang.hmcl.event.ProcessExitedAbnormallyEvent;
@@ -28,6 +24,11 @@ import org.jackhuang.hmcl.event.ProcessStoppedEvent;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.ManagedProcess;
 import org.jackhuang.hmcl.util.StringUtils;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 /**
  *

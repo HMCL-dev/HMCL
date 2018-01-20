@@ -17,9 +17,10 @@
  */
 package org.jackhuang.hmcl.util;
 
+import javafx.scene.paint.Color;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javafx.scene.paint.Color;
 
 /**
  *
@@ -37,7 +38,7 @@ public enum Log4jLevel {
     private final int level;
     private final Color color;
 
-    private Log4jLevel(int level, Color color) {
+    Log4jLevel(int level, Color color) {
         this.level = level;
         this.color = color;
     }
@@ -123,7 +124,7 @@ public enum Log4jLevel {
     }
 
     public static boolean isError(Log4jLevel a) {
-        return a == null ? false : a.lessOrEqual(Log4jLevel.ERROR);
+        return a != null && a.lessOrEqual(Log4jLevel.ERROR);
     }
 
     public static Log4jLevel mergeLevel(Log4jLevel a, Log4jLevel b) {

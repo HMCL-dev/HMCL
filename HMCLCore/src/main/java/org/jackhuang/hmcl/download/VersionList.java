@@ -17,13 +17,10 @@
  */
 package org.jackhuang.hmcl.download;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.TreeSet;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.SimpleMultimap;
+
+import java.util.*;
 
 /**
  * The remote version list.

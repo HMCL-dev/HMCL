@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import java.util.concurrent.CountDownLatch;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
@@ -43,6 +42,8 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+
+import java.util.concurrent.CountDownLatch;
 
 /**
  *

@@ -17,11 +17,12 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.util.Immutable;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
-import org.jackhuang.hmcl.util.Immutable;
 
 /**
  *

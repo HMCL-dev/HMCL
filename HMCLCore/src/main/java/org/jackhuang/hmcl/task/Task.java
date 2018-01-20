@@ -17,20 +17,21 @@
  */
 package org.jackhuang.hmcl.task;
 
+import javafx.beans.property.ReadOnlyDoubleProperty;
+import javafx.beans.property.ReadOnlyDoubleWrapper;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.util.AutoTypingMap;
+import org.jackhuang.hmcl.util.ExceptionalConsumer;
+import org.jackhuang.hmcl.util.ExceptionalRunnable;
+import org.jackhuang.hmcl.util.Properties;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.beans.property.ReadOnlyDoubleWrapper;
-import javafx.beans.property.ReadOnlyStringProperty;
-import javafx.beans.property.ReadOnlyStringWrapper;
-import org.jackhuang.hmcl.util.AutoTypingMap;
-import org.jackhuang.hmcl.event.EventManager;
-import org.jackhuang.hmcl.util.ExceptionalConsumer;
-import org.jackhuang.hmcl.util.ExceptionalRunnable;
-import org.jackhuang.hmcl.util.Properties;
 
 /**
  * Disposable task.

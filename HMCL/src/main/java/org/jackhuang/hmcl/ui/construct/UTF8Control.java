@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import kotlin.jvm.Throws;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -35,7 +33,7 @@ public final class UTF8Control extends ResourceBundle.Control {
 
     @Override
     public ResourceBundle newBundle(String baseName, Locale locale, String format, ClassLoader loader, boolean reload)
-    throws IllegalAccessException, InstantiationException, IOException {
+    throws IOException {
         // The below is a copy of the default implementation.
         String bundleName = toBundleName(baseName, locale);
         String resourceName = toResourceName(bundleName, "properties");

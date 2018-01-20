@@ -17,8 +17,9 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.util.concurrent.atomic.AtomicReference;
 import javafx.beans.property.Property;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *

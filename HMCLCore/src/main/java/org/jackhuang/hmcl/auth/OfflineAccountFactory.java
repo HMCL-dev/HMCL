@@ -17,8 +17,9 @@
  */
 package org.jackhuang.hmcl.auth;
 
-import java.util.Map;
 import org.jackhuang.hmcl.util.DigestUtils;
+
+import java.util.Map;
 
 /**
  *

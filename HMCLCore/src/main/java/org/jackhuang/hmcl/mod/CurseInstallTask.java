@@ -17,15 +17,16 @@
  */
 package org.jackhuang.hmcl.mod;
 
-import java.io.File;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.CompressingUtils;
+
+import java.io.File;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Install a downloaded CurseForge modpack.

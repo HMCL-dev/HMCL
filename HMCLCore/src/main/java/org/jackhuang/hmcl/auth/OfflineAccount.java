@@ -17,12 +17,13 @@
  */
 package org.jackhuang.hmcl.auth;
 
-import java.net.Proxy;
-import java.util.Map;
-import java.util.Objects;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
+
+import java.net.Proxy;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  *

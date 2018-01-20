@@ -17,13 +17,7 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
+import com.google.gson.*;
 import org.jackhuang.hmcl.util.Immutable;
 
 import java.lang.reflect.Type;

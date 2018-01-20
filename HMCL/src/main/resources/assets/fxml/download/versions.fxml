@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import com.jfoenix.controls.JFXListView?>
-<?import javafx.scene.layout.StackPane?>
 <?import com.jfoenix.controls.JFXSpinner?>
+<?import javafx.scene.layout.StackPane?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane"

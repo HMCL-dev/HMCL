@@ -52,7 +52,7 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
         this.profile = profile;
 
         title = new SimpleStringProperty(this, "title",
-                profile == null ? Main.i18n("ui.newProfileWindow.title") : Main.i18n("ui.label.profile") + " - " + profile.getName());
+                profile == null ? Main.i18n("ui.newProfileWindow.title") : Main.i18n("profile") + " - " + profile.getName());
         location = new SimpleStringProperty(this, "location",
                 Optional.ofNullable(profile).map(Profile::getGameDir).map(File::getAbsolutePath).orElse(""));
 

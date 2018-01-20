@@ -17,10 +17,6 @@
  */
 package org.jackhuang.hmcl.mod;
 
-import java.io.File;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
@@ -33,6 +29,11 @@ import org.jackhuang.hmcl.util.CompressingUtils;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.IOUtils;
 import org.jackhuang.hmcl.util.Lang;
+
+import java.io.File;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  *

@@ -19,18 +19,19 @@ package org.jackhuang.hmcl.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import java.awt.EventQueue;
+import org.jackhuang.hmcl.game.Argument;
+import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.RuledArgument;
+import org.jackhuang.hmcl.game.StringArgument;
+import org.jackhuang.hmcl.task.Schedulers;
+
+import java.awt.*;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 import java.util.function.Consumer;
-import org.jackhuang.hmcl.game.Argument;
-import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.RuledArgument;
-import org.jackhuang.hmcl.game.StringArgument;
-import org.jackhuang.hmcl.task.Schedulers;
 
 /**
  * Constants.

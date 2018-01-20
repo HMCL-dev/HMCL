@@ -17,10 +17,6 @@
  */
 package org.jackhuang.hmcl.download.forge;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
@@ -30,6 +26,11 @@ import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.NetworkUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.VersionNumber;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -54,7 +55,7 @@ public final class ForgeVersionList extends VersionList<Void> {
             }
 
             @Override
-            public void execute() throws Exception {
+            public void execute() {
                 ForgeVersionRoot root = Constants.GSON.fromJson(task.getResult(), ForgeVersionRoot.class);
                 if (root == null)
                     return;

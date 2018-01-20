@@ -19,11 +19,12 @@ package org.jackhuang.hmcl.download.game;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import java.util.Date;
 import org.jackhuang.hmcl.game.ReleaseType;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.Validation;
+
+import java.util.Date;
 
 /**
  *

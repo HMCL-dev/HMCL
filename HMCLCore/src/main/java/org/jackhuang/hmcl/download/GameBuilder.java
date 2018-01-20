@@ -17,10 +17,11 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.task.Task;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.jackhuang.hmcl.task.Task;
 
 /**
  * The builder which provide a task to build Minecraft environment.

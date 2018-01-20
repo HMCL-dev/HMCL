@@ -17,23 +17,17 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
-import java.io.File;
-import java.lang.reflect.Type;
-import java.util.Optional;
+import com.google.gson.*;
 import javafx.beans.InvalidationListener;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.ImmediateObjectProperty;
 import org.jackhuang.hmcl.util.ImmediateStringProperty;
+
+import java.io.File;
+import java.lang.reflect.Type;
+import java.util.Optional;
 
 /**
  *

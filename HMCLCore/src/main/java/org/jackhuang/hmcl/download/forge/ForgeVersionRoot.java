@@ -18,9 +18,10 @@
 package org.jackhuang.hmcl.download.forge;
 
 import com.google.gson.JsonParseException;
-import java.util.Map;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Validation;
+
+import java.util.Map;
 
 /**
  *

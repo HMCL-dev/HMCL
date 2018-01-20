@@ -17,25 +17,19 @@
  */
 package org.jackhuang.hmcl.download.optifine;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.game.Argument;
-import org.jackhuang.hmcl.game.Arguments;
-import org.jackhuang.hmcl.game.LibrariesDownloadInfo;
-import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.LibraryDownloadInfo;
-import org.jackhuang.hmcl.game.StringArgument;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.Lang;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * <b>Note</b>: OptiFine should be installed in the end.
@@ -97,7 +91,7 @@ public final class OptiFineInstallTask extends TaskResult<Version> {
     }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
         Library library = new Library(
                 "net.optifine", "optifine", remoteVersion, null, null,
                 new LibrariesDownloadInfo(new LibraryDownloadInfo(

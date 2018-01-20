@@ -17,10 +17,11 @@
  */
 package org.jackhuang.hmcl.mod;
 
-import java.io.File;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.ImmediateBooleanProperty;
 import org.jackhuang.hmcl.util.StringUtils;
+
+import java.io.File;
 
 /**
  *

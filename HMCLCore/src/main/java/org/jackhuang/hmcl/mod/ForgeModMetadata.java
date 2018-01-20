@@ -20,16 +20,16 @@ package org.jackhuang.hmcl.mod;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.IOUtils;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
 
 /**
  *

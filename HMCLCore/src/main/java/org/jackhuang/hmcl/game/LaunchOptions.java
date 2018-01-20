@@ -17,9 +17,10 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.util.JavaVersion;
+
 import java.io.File;
 import java.io.Serializable;
-import org.jackhuang.hmcl.util.JavaVersion;
 
 /**
  *

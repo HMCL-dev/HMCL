@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.task;
 
-import java.util.function.Consumer;
 import org.jackhuang.hmcl.util.AutoTypingMap;
 import org.jackhuang.hmcl.util.ExceptionalConsumer;
 

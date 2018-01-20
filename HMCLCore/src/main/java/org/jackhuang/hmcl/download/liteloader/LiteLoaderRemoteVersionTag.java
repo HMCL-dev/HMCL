@@ -17,9 +17,10 @@
  */
 package org.jackhuang.hmcl.download.liteloader;
 
+import org.jackhuang.hmcl.game.Library;
+
 import java.util.Collection;
 import java.util.Collections;
-import org.jackhuang.hmcl.game.Library;
 
 /**
  *

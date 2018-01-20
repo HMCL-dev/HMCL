@@ -2,7 +2,6 @@ import java.security.MessageDigest
 import java.util.jar.JarFile
 import java.util.jar.Pack200
 import java.util.zip.GZIPOutputStream
-import java.io.File
 
 if (!hasProperty('mainClass')) {
     ext.mainClass = 'org.jackhuang.hmcl.Main'
@@ -61,7 +60,7 @@ jar {
 
         def messageDigest = MessageDigest.getInstance("SHA1")
         archivePath.eachByte 1024 * 1024, { byte[] buf, int bytesRead ->
-            messageDigest.update(buf, 0, bytesRead);
+            messageDigest.update(buf, 0, bytesRead)
         }
         def sha1Hex = new BigInteger(1, messageDigest.digest()).toString(16).padLeft(40, '0')
         def fileEx = new File(project.buildDir, "libs/" + archivePath.getName() + ".sha1")
@@ -90,11 +89,11 @@ task makeExecutable(dependsOn: jar) doLast {
     int read
     def bytes = new byte[8192]
     while((read = is.read(bytes)) != -1)
-        fos.write(bytes, 0, read);
+        fos.write(bytes, 0, read)
     is.close()
     is = new FileInputStream(makeExecutableoutjar)
     while((read = is.read(bytes)) != -1)
-        fos.write(bytes, 0, read);
+        fos.write(bytes, 0, read)
     is.close()
     fos.close()
 
@@ -115,7 +114,7 @@ task makePackGZ(dependsOn: jar) doLast {
 
     def messageDigest = MessageDigest.getInstance("SHA1")
     loc.eachByte 1024 * 1024, { byte[] buf, int bytesRead ->
-        messageDigest.update(buf, 0, bytesRead);
+        messageDigest.update(buf, 0, bytesRead)
     }
     def sha1Hex = new BigInteger(1, messageDigest.digest()).toString(16).padLeft(40, '0')
     def fileEx = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".pack.gz.sha1")
@@ -160,5 +159,4 @@ task combineMETA_INF(type: Jar) {
 }
 
 build.dependsOn makeExecutable
-//build.dependsOn makePackGZ
-//Kotlin classes will be ignored by Pack200 due to class unrecognized attribute
+build.dependsOn makePackGZ

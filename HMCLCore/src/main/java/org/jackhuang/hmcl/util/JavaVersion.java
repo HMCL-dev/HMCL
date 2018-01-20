@@ -17,16 +17,8 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -210,7 +202,7 @@ public final class JavaVersion implements Serializable {
         return res;
     }
 
-    private static List<JavaVersion> queryWindows() throws IOException, InterruptedException {
+    private static List<JavaVersion> queryWindows() {
         LinkedList<JavaVersion> res = new LinkedList<>();
         Lang.ignoringException(() -> res.addAll(queryRegisterKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\")));
         Lang.ignoringException(() -> res.addAll(queryRegisterKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\")));

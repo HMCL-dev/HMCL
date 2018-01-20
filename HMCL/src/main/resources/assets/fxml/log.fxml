@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.*?>
-
 <?import com.jfoenix.controls.JFXButton?>
-<?import javafx.scene.web.WebView?>
-<?import javafx.scene.control.Label?>
 <?import com.jfoenix.controls.JFXComboBox?>
 <?import javafx.collections.FXCollections?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.web.WebView?>
 <?import java.lang.String?>
-<?import javafx.scene.control.ToggleButton?>
-<?import javafx.scene.control.ToggleGroup?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane"

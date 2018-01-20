@@ -17,13 +17,6 @@
  */
 package org.jackhuang.hmcl.download.optifine;
 
-import java.io.ByteArrayInputStream;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
@@ -33,6 +26,14 @@ import org.jackhuang.hmcl.util.NetworkUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.ByteArrayInputStream;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *

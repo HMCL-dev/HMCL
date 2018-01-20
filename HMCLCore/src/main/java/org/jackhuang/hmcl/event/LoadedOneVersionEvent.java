@@ -19,8 +19,6 @@ package org.jackhuang.hmcl.event;
 
 import org.jackhuang.hmcl.game.Version;
 
-import java.util.EventObject;
-
 /**
  * This event gets fired when a minecraft version has been loaded.
  * <br>

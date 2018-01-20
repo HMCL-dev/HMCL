@@ -17,9 +17,10 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.util.VersionNumber;
+
 import java.util.Comparator;
 import java.util.Objects;
-import org.jackhuang.hmcl.util.VersionNumber;
 
 /**
  * The remote version.

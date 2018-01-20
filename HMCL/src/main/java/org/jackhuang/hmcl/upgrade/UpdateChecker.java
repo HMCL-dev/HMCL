@@ -111,7 +111,7 @@ public final class UpdateChecker {
     public synchronized TaskResult<Map<String, String>> requestDownloadLink() {
         return new TaskResult<Map<String, String>>() {
             @Override
-            public void execute() throws Exception {
+            public void execute() {
                 if (download_link == null)
                     try {
                         download_link = Constants.GSON.<Map<String, String>>fromJson(NetworkUtils.doGet(NetworkUtils.toURL("http://huangyuhui.duapp.com/update_link.php?type=" + type)), Map.class);

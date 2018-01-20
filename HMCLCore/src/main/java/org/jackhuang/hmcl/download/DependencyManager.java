@@ -17,10 +17,11 @@
  */
 package org.jackhuang.hmcl.download;
 
-import java.net.Proxy;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
+
+import java.net.Proxy;
 
 /**
  * Do everything that will connect to Internet.

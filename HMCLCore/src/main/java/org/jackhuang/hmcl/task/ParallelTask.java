@@ -40,7 +40,7 @@ public final class ParallelTask extends Task {
     }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
     }
 
     @Override

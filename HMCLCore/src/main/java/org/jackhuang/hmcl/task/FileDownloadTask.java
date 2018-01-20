@@ -17,6 +17,10 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.event.FailedEvent;
+import org.jackhuang.hmcl.util.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,13 +31,6 @@ import java.net.Proxy;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.util.logging.Level;
-import org.jackhuang.hmcl.event.EventManager;
-import org.jackhuang.hmcl.event.FailedEvent;
-import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.FileUtils;
-import org.jackhuang.hmcl.util.IOUtils;
-import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.NetworkUtils;
 
 /**
  * A task that can download a file online.

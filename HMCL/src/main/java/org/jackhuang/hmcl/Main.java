@@ -73,6 +73,10 @@ public final class Main extends Application {
         }
     }
 
+    public static String i18n(String key, Object... formatArgs) {
+        return String.format(i18n(key), formatArgs);
+    }
+
     public static File getWorkingDirectory(String folder) {
         String home = System.getProperty("user.home", ".");
         switch (OperatingSystem.CURRENT_OS) {

@@ -80,16 +80,16 @@ public final class VersionPage extends StackPane implements DecoratorPage {
         browsePopup = new JFXPopup(browseList);
         managementPopup = new JFXPopup(managementList);
 
-        FXUtils.installTooltip(btnBrowseMenu, 0, 5000, 0, new Tooltip(Main.i18n("settings.explore")));
-        FXUtils.installTooltip(btnManagementMenu, 0, 5000, 0, new Tooltip(Main.i18n("settings.manage")));
-        FXUtils.installTooltip(btnExport, 0, 5000, 0, new Tooltip(Main.i18n("settings.save")));
+        FXUtils.installTooltip(btnBrowseMenu, 0, 5000, 0, new Tooltip(Main.i18n("game_settings.exploration")));
+        FXUtils.installTooltip(btnManagementMenu, 0, 5000, 0, new Tooltip(Main.i18n("game_settings.management")));
+        FXUtils.installTooltip(btnExport, 0, 5000, 0, new Tooltip(Main.i18n("modpack.task.save")));
     }
 
     public void load(String id, Profile profile) {
         this.version = id;
         this.profile = profile;
 
-        title.set(Main.i18n("launcher.title.game") + " - " + id);
+        title.set(Main.i18n("game_settings") + " - " + id);
 
         versionSettingsController.loadVersionSetting(profile, id, profile.getVersionSetting(id));
         modController.setParentTab(tabPane);
@@ -100,13 +100,11 @@ public final class VersionPage extends StackPane implements DecoratorPage {
 
     public void onBrowseMenu() {
         browseList.getSelectionModel().select(-1);
-        ;
         browsePopup.show(btnBrowseMenu, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, -12, 15);
     }
 
     public void onManagementMenu() {
         managementList.getSelectionModel().select(-1);
-        ;
         managementPopup.show(btnManagementMenu, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, -12, 15);
     }
 

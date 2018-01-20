@@ -41,6 +41,7 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
     private final DownloadProvider downloadProvider;
     private final String libraryId;
     private final Runnable callback;
+    private final String title;
 
     @FXML
     private JFXListView<VersionsPageItem> list;
@@ -50,8 +51,9 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
     private final VersionList<?> versionList;
     private TaskExecutor executor;
 
-    public VersionsPage(WizardController controller, String gameVersion, DownloadProvider downloadProvider, String libraryId, Runnable callback) {
+    public VersionsPage(WizardController controller, String title, String gameVersion, DownloadProvider downloadProvider, String libraryId, Runnable callback) {
         this.controller = controller;
+        this.title = title;
         this.gameVersion = gameVersion;
         this.downloadProvider = downloadProvider;
         this.libraryId = libraryId;
@@ -83,7 +85,7 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
 
     @Override
     public String getTitle() {
-        return "Choose a game version";
+        return title;
     }
 
     @Override

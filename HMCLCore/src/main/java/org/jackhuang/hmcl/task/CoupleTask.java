@@ -17,12 +17,13 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.jackhuang.hmcl.util.AutoTypingMap;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
-import org.jackhuang.hmcl.util.AutoTypingMap;
 
 /**
  * A task that combines two tasks and make sure [pred] runs before succ.
@@ -50,7 +51,7 @@ final class CoupleTask<P extends Task> extends Task {
     }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
         Task task = succ.apply(getVariables());
         if (task != null)
             dependencies.add(task);

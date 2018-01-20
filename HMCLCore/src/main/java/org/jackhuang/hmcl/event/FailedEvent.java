@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.event;
 
-import java.util.EventObject;
-
 /**
  *
  * @author huang

@@ -18,9 +18,10 @@
 package org.jackhuang.hmcl.download.game;
 
 import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.util.Immutable;
+
 import java.util.Collections;
 import java.util.List;
-import org.jackhuang.hmcl.util.Immutable;
 
 /**
  *

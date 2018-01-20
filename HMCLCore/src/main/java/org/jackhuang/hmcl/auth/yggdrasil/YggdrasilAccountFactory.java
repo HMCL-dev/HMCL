@@ -17,13 +17,15 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
+import org.jackhuang.hmcl.auth.AccountFactory;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.UUIDTypeAdapter;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.jackhuang.hmcl.auth.AccountFactory;
-import org.jackhuang.hmcl.util.Lang;
+
 import static org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount.*;
-import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
 /**
  *

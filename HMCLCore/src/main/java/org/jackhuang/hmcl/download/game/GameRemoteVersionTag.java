@@ -17,9 +17,10 @@
  */
 package org.jackhuang.hmcl.download.game;
 
-import java.util.Date;
 import org.jackhuang.hmcl.game.ReleaseType;
 import org.jackhuang.hmcl.util.Immutable;
+
+import java.util.Date;
 
 /**
  *

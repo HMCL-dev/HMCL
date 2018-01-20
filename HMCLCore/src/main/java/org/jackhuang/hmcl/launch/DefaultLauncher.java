@@ -17,32 +17,15 @@
  */
 package org.jackhuang.hmcl.launch;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import org.jackhuang.hmcl.auth.AuthInfo;
+import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.task.TaskResult;
+import org.jackhuang.hmcl.util.*;
+
+import java.io.*;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.game.Argument;
-import org.jackhuang.hmcl.game.Arguments;
-import org.jackhuang.hmcl.game.DownloadType;
-import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.game.LaunchOptions;
-import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.LoggingInfo;
-import org.jackhuang.hmcl.task.TaskResult;
-import org.jackhuang.hmcl.util.CompressingUtils;
-import org.jackhuang.hmcl.util.FileUtils;
-import org.jackhuang.hmcl.util.JavaVersion;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Log4jLevel;
-import org.jackhuang.hmcl.util.ManagedProcess;
-import org.jackhuang.hmcl.util.OperatingSystem;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
 
 /**
  *

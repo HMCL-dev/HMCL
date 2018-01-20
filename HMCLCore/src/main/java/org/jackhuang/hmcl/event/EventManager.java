@@ -17,12 +17,11 @@
  */
 package org.jackhuang.hmcl.event;
 
+import org.jackhuang.hmcl.util.SimpleMultimap;
+
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.function.Consumer;
-import org.jackhuang.hmcl.task.Scheduler;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.SimpleMultimap;
 
 /**
  *

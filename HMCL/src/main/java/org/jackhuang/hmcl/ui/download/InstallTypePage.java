@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.download;
 import com.jfoenix.controls.JFXListView;
 import javafx.fxml.FXML;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
@@ -48,7 +49,7 @@ public final class InstallTypePage extends StackPane implements WizardPage {
 
     @Override
     public String getTitle() {
-        return "Select an operation";
+        return Main.i18n("install.select");
     }
 
     public static final String INSTALL_TYPE = "INSTALL_TYPE";

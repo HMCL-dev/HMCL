@@ -17,15 +17,9 @@
  */
 package org.jackhuang.hmcl.download.liteloader;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.LibrariesDownloadInfo;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.LibraryDownloadInfo;
@@ -33,6 +27,11 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.Lang;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Note: LiteLoader must be installed after Forge.
@@ -89,7 +88,7 @@ public final class LiteLoaderInstallTask extends TaskResult<Version> {
     }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
         Library library = new Library(
                 "com.mumfrey", "liteloader", remote.getSelfVersion(), null,
                 "http://dl.liteloader.com/versions/",

@@ -46,7 +46,7 @@ import java.util.List;
 
 public final class MainPage extends StackPane implements DecoratorPage {
 
-    private final StringProperty title = new SimpleStringProperty(this, "title", Main.i18n("launcher.title.main"));
+    private final StringProperty title = new SimpleStringProperty(this, "title", Main.i18n("main_page"));
 
     @FXML
     private JFXButton btnRefresh;
@@ -64,7 +64,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         EventBus.EVENT_BUS.channel(ProfileLoadingEvent.class).register(this::onProfilesLoading);
         EventBus.EVENT_BUS.channel(ProfileChangedEvent.class).register(this::onProfileChanged);
 
-        btnAdd.setOnMouseClicked(e -> Controllers.getDecorator().startWizard(new DownloadWizardProvider(), "Install New Game"));
+        btnAdd.setOnMouseClicked(e -> Controllers.getDecorator().startWizard(new DownloadWizardProvider(), Main.i18n("install")));
         btnRefresh.setOnMouseClicked(e -> Settings.INSTANCE.getSelectedProfile().getRepository().refreshVersions());
     }
 

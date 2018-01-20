@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.event;
 
-import java.util.EventObject;
 import org.jackhuang.hmcl.util.ManagedProcess;
 
 /**

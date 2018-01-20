@@ -17,10 +17,11 @@
  */
 package org.jackhuang.hmcl.download.optifine;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.NetworkUtils;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *

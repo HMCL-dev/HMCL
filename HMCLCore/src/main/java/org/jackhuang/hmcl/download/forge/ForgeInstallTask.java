@@ -17,17 +17,6 @@
  */
 package org.jackhuang.hmcl.download.forge;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
@@ -42,6 +31,14 @@ import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.IOUtils;
 import org.jackhuang.hmcl.util.NetworkUtils;
+
+import java.io.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  *

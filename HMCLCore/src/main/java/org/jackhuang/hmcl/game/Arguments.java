@@ -18,15 +18,12 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.annotations.SerializedName;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.OperatingSystem;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  *

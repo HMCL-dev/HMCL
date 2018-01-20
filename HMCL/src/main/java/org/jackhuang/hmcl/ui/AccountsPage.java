@@ -147,7 +147,7 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
                 dialog.close();
                 loadAccounts();
             } else if (account instanceof InvalidCredentialsException) {
-                lblCreationWarning.setText(Main.i18n("login.wrong_password"));
+                lblCreationWarning.setText(Main.i18n("account.failed.wrong_password"));
             } else if (account instanceof Exception) {
                 lblCreationWarning.setText(((Exception) account).getLocalizedMessage());
             }
@@ -173,8 +173,8 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
     }
 
     public static String accountType(Account account) {
-        if (account instanceof OfflineAccount) return Main.i18n("login.methods.offline");
-        else if (account instanceof YggdrasilAccount) return Main.i18n("login.methods.yggdrasil");
-        else throw new Error(Main.i18n("login.methods.no_method") + ": " + account);
+        if (account instanceof OfflineAccount) return Main.i18n("account.methods.offline");
+        else if (account instanceof YggdrasilAccount) return Main.i18n("account.methods.yggdrasil");
+        else throw new Error(Main.i18n("account.methods.no_method") + ": " + account);
     }
 }

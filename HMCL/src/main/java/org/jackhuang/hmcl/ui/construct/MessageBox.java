@@ -21,8 +21,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextInputDialog;
 import org.jackhuang.hmcl.Main;
-import javax.swing.UIManager;
 
+import javax.swing.*;
 import java.util.Optional;
 
 public final class MessageBox {

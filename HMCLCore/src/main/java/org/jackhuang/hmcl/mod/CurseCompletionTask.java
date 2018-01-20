@@ -17,6 +17,12 @@
  */
 package org.jackhuang.hmcl.mod;
 
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.game.GameRepository;
+import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.*;
+
 import java.io.File;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -24,16 +30,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.FileUtils;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.NetworkUtils;
-import org.jackhuang.hmcl.util.StringUtils;
 
 /**
  * Complete the CurseForge version.

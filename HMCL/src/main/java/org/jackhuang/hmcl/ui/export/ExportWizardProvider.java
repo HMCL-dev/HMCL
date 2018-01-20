@@ -18,14 +18,11 @@
 package org.jackhuang.hmcl.ui.export;
 
 import javafx.scene.Node;
-import kotlin.Suppress;
 import org.jackhuang.hmcl.game.HMCLModpackExportTask;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;

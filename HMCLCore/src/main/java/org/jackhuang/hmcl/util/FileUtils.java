@@ -17,12 +17,7 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -253,9 +248,7 @@ public final class FileUtils {
     public static boolean makeFile(File file) {
         if (!makeDirectory(file.getAbsoluteFile().getParentFile()))
             return false;
-        if (!file.exists() && !Lang.test(file::createNewFile))
-            return false;
-        return true;
+        return file.exists() || Lang.test(file::createNewFile);
     }
 
     public static List<File> listFilesByExtension(File file, String extension) {

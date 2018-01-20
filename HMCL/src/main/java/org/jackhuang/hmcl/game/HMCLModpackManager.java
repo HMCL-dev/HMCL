@@ -19,16 +19,14 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.task.TaskResult;
-import org.jackhuang.hmcl.util.*;
-import sun.rmi.runtime.Log;
+import org.jackhuang.hmcl.util.CompressingUtils;
+import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author huangyuhui

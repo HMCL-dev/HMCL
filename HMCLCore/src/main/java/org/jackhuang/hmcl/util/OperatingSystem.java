@@ -17,12 +17,13 @@
  */
 package org.jackhuang.hmcl.util;
 
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
 import java.util.Locale;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
 
 /**
  * Represents the operating system.
@@ -49,7 +50,7 @@ public enum OperatingSystem {
 
     private final String checkedName;
 
-    private OperatingSystem(String checkedName) {
+    OperatingSystem(String checkedName) {
         this.checkedName = checkedName;
     }
 

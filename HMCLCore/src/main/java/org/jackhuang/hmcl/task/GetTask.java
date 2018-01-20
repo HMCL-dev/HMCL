@@ -17,6 +17,11 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.jackhuang.hmcl.util.Charsets;
+import org.jackhuang.hmcl.util.IOUtils;
+import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.NetworkUtils;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,10 +30,6 @@ import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
-import org.jackhuang.hmcl.util.Charsets;
-import org.jackhuang.hmcl.util.IOUtils;
-import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.NetworkUtils;
 
 /**
  *

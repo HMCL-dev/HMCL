@@ -17,17 +17,12 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
+import com.google.gson.*;
+import org.jackhuang.hmcl.util.Immutable;
+
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
-import org.jackhuang.hmcl.util.Immutable;
 
 /**
  *
@@ -45,7 +40,7 @@ public interface Argument extends Cloneable {
      */
     List<String> toString(Map<String, String> keys, Map<String, Boolean> features);
 
-    public static class Serializer implements JsonDeserializer<Argument>, JsonSerializer<Argument> {
+    class Serializer implements JsonDeserializer<Argument>, JsonSerializer<Argument> {
 
         public static final Serializer INSTANCE = new Serializer();
 

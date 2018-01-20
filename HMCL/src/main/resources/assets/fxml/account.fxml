@@ -1,19 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-
-<?import com.jfoenix.controls.JFXMasonryPane?>
-<?import com.jfoenix.controls.JFXButton?>
-<?import com.jfoenix.controls.JFXDialogLayout?>
-<?import com.jfoenix.controls.JFXDialog?>
-<?import com.jfoenix.controls.JFXPasswordField?>
-<?import com.jfoenix.controls.JFXTextField?>
-<?import com.jfoenix.controls.JFXComboBox?>
-<?import javafx.collections.FXCollections?>
-<?import java.lang.String?>
+<?import com.jfoenix.controls.*?>
 <?import com.jfoenix.validation.RequiredFieldValidator?>
-<?import com.jfoenix.controls.JFXProgressBar?>
+<?import javafx.collections.FXCollections?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.*?>
+<?import java.lang.String?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
@@ -54,13 +47,13 @@
 
                         <JFXTextField fx:id="txtUsername" promptText="Username" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2">
                             <validators>
-                                <RequiredFieldValidator message="Input Required!">
+                                <RequiredFieldValidator message="%input.not_empty">
                                 </RequiredFieldValidator>
                             </validators>
                         </JFXTextField>
                         <JFXPasswordField fx:id="txtPassword" promptText="%ui.label.password" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2">
                             <validators>
-                                <RequiredFieldValidator message="Input Required!">
+                                <RequiredFieldValidator message="%input.not_empty">
                                 </RequiredFieldValidator>
                             </validators>
                         </JFXPasswordField>

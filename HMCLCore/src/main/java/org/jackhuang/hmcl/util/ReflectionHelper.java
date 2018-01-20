@@ -17,18 +17,15 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.lang.reflect.AccessibleObject;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Executable;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import sun.misc.Unsafe;
+
+import java.lang.reflect.*;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
-import sun.misc.Unsafe;
 
 /**
  *

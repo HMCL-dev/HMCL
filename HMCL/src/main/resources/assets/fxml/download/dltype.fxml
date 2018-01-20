@@ -11,7 +11,7 @@
     <JFXListView fx:id="list" styleClass="jfx-list-view" maxWidth="300" maxHeight="100">
         <BorderPane mouseTransparent="true">
             <left>
-                <Label>Install New Game</Label>
+                <Label text="%install.new_game" />
             </left>
             <right>
                 <fx:include source="/assets/svg/arrow-right.fxml"/>
@@ -19,7 +19,7 @@
         </BorderPane>
         <BorderPane mouseTransparent="true">
             <left>
-                <Label>Install Modpack (CurseForge supported)</Label>
+                <Label text="%install.modpack" />
             </left>
             <right>
                 <fx:include source="/assets/svg/arrow-right.fxml"/>

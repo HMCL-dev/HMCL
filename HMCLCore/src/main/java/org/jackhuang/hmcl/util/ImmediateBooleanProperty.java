@@ -17,11 +17,12 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.util.Objects;
-import java.util.function.Consumer;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+
+import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  *

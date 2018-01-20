@@ -20,15 +20,18 @@ package org.jackhuang.hmcl.auth.yggdrasil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
-import java.io.IOException;
-import java.net.Proxy;
-import java.net.URL;
-import java.util.*;
-
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.util.NetworkUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
+
+import java.io.IOException;
+import java.net.Proxy;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  *

@@ -17,21 +17,18 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.function.BiFunction;
-import java.util.function.Predicate;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 
+import java.io.*;
+import java.util.function.BiFunction;
+import java.util.function.Predicate;
+
 /**
- * 文件压缩/解压类
+ * Utilities of compressing
  *
  * @author huangyuhui
  */
@@ -43,8 +40,8 @@ public final class CompressingUtils {
     /**
      * Compress the given directory to a zip file.
      *
-     * @param src the source directory or a file.
-     * @param destZip the location of dest zip file.
+     * @param sourceDir the source directory or a file.
+     * @param zipFile the location of dest zip file.
      * @param pathNameCallback callback(pathName, isDirectory) returns your modified pathName
      * @throws IOException
      */
@@ -72,7 +69,7 @@ public final class CompressingUtils {
     private static void zipFile(File src, String basePath,
             ZipArchiveOutputStream zos, BiFunction<String, Boolean, String> pathNameCallback) throws IOException {
         File[] files = src.isDirectory() ? src.listFiles() : new File[] { src };
-        String pathName;//存相对路径(相对于待压缩的根目录)
+        String pathName;// the relative path (relative to the root directory to be compressed)
         byte[] buf = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
         for (File file : files)
             if (file.isDirectory()) {
@@ -183,7 +180,7 @@ public final class CompressingUtils {
                         File dir = new File(strtemp);
                         dir.mkdirs();
                     } else {
-                        //建目录
+                        // create directories
                         String strsubdir = gbkPath;
                         for (int i = 0; i < strsubdir.length(); i++)
                             if (strsubdir.substring(i, i + 1).equalsIgnoreCase("/")) {
@@ -224,7 +221,7 @@ public final class CompressingUtils {
      * Read the text content of a file in zip.
      *
      * @param file the zip file
-     * @param location the location of the text in zip file, something like A/B/C/D.txt
+     * @param name the location of the text in zip file, something like A/B/C/D.txt
      * @return the content of given file.
      */
     public static String readTextZipEntryQuietly(File file, String name) {

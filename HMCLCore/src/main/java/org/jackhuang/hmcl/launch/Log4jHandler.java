@@ -17,12 +17,6 @@
  */
 package org.jackhuang.hmcl.launch;
 
-import java.io.*;
-import java.util.Date;
-import java.util.Optional;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Lang;
@@ -34,6 +28,16 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.helpers.XMLReaderFactory;
+
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.util.Date;
+import java.util.Optional;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 
 /**
  * This class is to parse log4j classic XML layout logging,
@@ -106,7 +110,7 @@ final class Log4jHandler extends Thread {
         private boolean readingMessage = false;
 
         @Override
-        public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+        public void startElement(String uri, String localName, String qName, Attributes attributes) {
             switch (localName) {
                 case "log4j_Event":
                     message = new StringBuilder();
@@ -131,7 +135,7 @@ final class Log4jHandler extends Thread {
         }
 
         @Override
-        public void endElement(String uri, String localName, String qName) throws SAXException {
+        public void endElement(String uri, String localName, String qName) {
             switch (localName) {
                 case "log4j_Event":
                     callback.accept("[" + date + "] [" + thread + "/" + level.name() + "] [" + logger + "] " + message.toString(), level);
@@ -143,7 +147,7 @@ final class Log4jHandler extends Thread {
         }
 
         @Override
-        public void characters(char[] ch, int start, int length) throws SAXException {
+        public void characters(char[] ch, int start, int length) {
             String line = new String(ch, start, length);
             if (line.trim().isEmpty())
                 return;

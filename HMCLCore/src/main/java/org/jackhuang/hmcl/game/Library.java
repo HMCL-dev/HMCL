@@ -17,24 +17,16 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
+import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.OperatingSystem;
+import org.jackhuang.hmcl.util.Platform;
+
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.OperatingSystem;
-import org.jackhuang.hmcl.util.Platform;
 
 /**
  * A class that describes a Minecraft dependency.

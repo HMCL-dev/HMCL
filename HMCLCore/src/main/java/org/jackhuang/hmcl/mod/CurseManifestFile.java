@@ -19,10 +19,11 @@ package org.jackhuang.hmcl.mod;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import java.net.URL;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.NetworkUtils;
 import org.jackhuang.hmcl.util.Validation;
+
+import java.net.URL;
 
 /**
  *

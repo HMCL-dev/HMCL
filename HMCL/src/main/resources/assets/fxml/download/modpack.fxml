@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXTextField?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-
-<?import com.jfoenix.controls.JFXTextField?>
-<?import com.jfoenix.controls.JFXButton?>
 <?import org.jackhuang.hmcl.ui.construct.ComponentList?>
-<?import javafx.geometry.Insets?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">

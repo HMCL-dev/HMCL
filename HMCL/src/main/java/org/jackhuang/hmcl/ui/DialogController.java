@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.concurrency.JFXUtilities;
-import kotlin.Unit;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;

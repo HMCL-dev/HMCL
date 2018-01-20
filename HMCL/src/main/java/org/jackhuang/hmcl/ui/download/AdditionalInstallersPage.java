@@ -31,6 +31,8 @@ import org.jackhuang.hmcl.util.Lang;
 
 import java.util.Map;
 
+import static org.jackhuang.hmcl.Main.i18n;
+
 class AdditionalInstallersPage extends StackPane implements WizardPage {
     private final InstallerWizardProvider provider;
     private final WizardController controller;
@@ -62,17 +64,17 @@ class AdditionalInstallersPage extends StackPane implements WizardPage {
 
         btnForge.setOnMouseClicked(e -> {
             controller.getSettings().put(INSTALLER_TYPE, 0);
-            controller.onNext(new VersionsPage(controller, provider.getGameVersion(), downloadProvider, "forge", () -> { controller.onPrev(false); }));
+            controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.forge")), provider.getGameVersion(), downloadProvider, "forge", () -> { controller.onPrev(false); }));
         });
 
         btnLiteLoader.setOnMouseClicked(e -> {
             controller.getSettings().put(INSTALLER_TYPE, 1);
-            controller.onNext(new VersionsPage(controller, provider.getGameVersion(), downloadProvider, "liteloader", () -> { controller.onPrev(false); }));
+            controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.liteloader")), provider.getGameVersion(), downloadProvider, "liteloader", () -> { controller.onPrev(false); }));
         });
 
         btnOptiFine.setOnMouseClicked(e -> {
             controller.getSettings().put(INSTALLER_TYPE, 2);
-            controller.onNext(new VersionsPage(controller, provider.getGameVersion(), downloadProvider, "optifine", () -> { controller.onPrev(false); }));
+            controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.optifine")), provider.getGameVersion(), downloadProvider, "optifine", () -> { controller.onPrev(false); }));
         });
     }
 

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.*?>
-
-<?import com.jfoenix.controls.JFXTreeView?>
 <?import com.jfoenix.controls.JFXButton?>
-<?import javafx.geometry.Insets?>
+<?import com.jfoenix.controls.JFXTreeView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">

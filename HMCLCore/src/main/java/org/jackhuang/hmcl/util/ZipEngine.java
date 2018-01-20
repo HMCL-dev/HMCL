@@ -49,23 +49,23 @@ public class ZipEngine implements Closeable {
     }
 
     /**
-     * 功能：把 sourceDir 目录下的所有文件进行 zip 格式的压缩，保存为指定 zip 文件
+     * Compress all the files in sourceDir
      *
-     * @param sourceDir 源文件夹
+     * @param sourceDir the directory to be compressed.
      * @param pathNameCallback callback(pathName, isDirectory) returns your
      * modified pathName
      *
-     * @throws java.io.IOException 压缩失败或无法读取
+     * @throws java.io.IOException if unable to compress or read files.
      */
     public void putDirectory(File sourceDir, BiFunction<String, Boolean, String> pathNameCallback) throws IOException {
         putDirectoryImpl(sourceDir, sourceDir.isDirectory() ? sourceDir.getPath() : sourceDir.getParent(), pathNameCallback);
     }
 
     /**
-     * 将文件压缩成zip文件
+     * Compress all the files in sourceDir
      *
-     * @param source zip文件路径
-     * @param basePath 待压缩文件根目录
+     * @param source the file in basePath to be compressed
+     * @param basePath the root directory to be compressed.
      * @param pathNameCallback callback(pathName, isDirectory) returns your
      * modified pathName, null if you dont want this file zipped
      */
@@ -78,7 +78,7 @@ public class ZipEngine implements Closeable {
 
         if (files == null)
             return;
-        String pathName;//存相对路径(相对于待压缩的根目录)
+        String pathName; // the relative path (relative to basePath)
         for (File file : files)
             if (file.isDirectory()) {
                 pathName = file.getPath().substring(basePath.length() + 1)

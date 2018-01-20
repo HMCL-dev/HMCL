@@ -45,17 +45,17 @@ public final class LeftPaneController {
     public LeftPaneController(AdvancedListBox leftPane) {
         this.leftPane = leftPane;
 
-        leftPane.startCategory("ACCOUNTS")
+        leftPane.startCategory(Main.i18n("account").toUpperCase())
                 .add(Lang.apply(new RipplerContainer(accountItem), rippler -> {
                     rippler.setOnMouseClicked(e -> Controllers.navigate(new AccountsPage()));
                     accountItem.setOnSettingsButtonClicked(() -> Controllers.navigate(new AccountsPage()));
                 }))
-                .startCategory("LAUNCHER")
-                .add(Lang.apply(new IconedItem(SVG.gear("black", 20, 20), Main.i18n("launcher.title.launcher")), iconedItem -> {
+                .startCategory(Main.i18n("launcher").toUpperCase())
+                .add(Lang.apply(new IconedItem(SVG.gear("black", 20, 20), Main.i18n("launcher_settings")), iconedItem -> {
                     iconedItem.prefWidthProperty().bind(leftPane.widthProperty());
                     iconedItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
                 }))
-                .startCategory(Main.i18n("ui.label.profile"))
+                .startCategory(Main.i18n("profile"))
                 .add(profilePane);
 
         EventBus.EVENT_BUS.channel(ProfileLoadingEvent.class).register(this::onProfilesLoading);

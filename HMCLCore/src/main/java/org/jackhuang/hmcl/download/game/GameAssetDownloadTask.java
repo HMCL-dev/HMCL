@@ -17,15 +17,7 @@
  */
 package org.jackhuang.hmcl.download.game;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
-import org.jackhuang.hmcl.game.AssetIndexInfo;
 import org.jackhuang.hmcl.game.AssetObject;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -34,6 +26,14 @@ import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.NetworkUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
 
 /**
  *
@@ -71,7 +71,7 @@ public final class GameAssetDownloadTask extends Task {
     }
     
     @Override
-    public void execute() throws Exception {
+    public void execute() {
         int size = refreshTask.getResult().size();
         for (Map.Entry<File, AssetObject> entry : refreshTask.getResult()) {
             File file = entry.getKey();

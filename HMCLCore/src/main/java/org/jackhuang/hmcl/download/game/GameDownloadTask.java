@@ -17,14 +17,15 @@
  */
 package org.jackhuang.hmcl.download.game;
 
-import java.io.File;
-import java.util.LinkedList;
-import java.util.List;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.NetworkUtils;
+
+import java.io.File;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  *
@@ -46,7 +47,7 @@ public final class GameDownloadTask extends Task {
     }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
         File jar = dependencyManager.getGameRepository().getVersionJar(version);
         
         dependencies.add(new FileDownloadTask(

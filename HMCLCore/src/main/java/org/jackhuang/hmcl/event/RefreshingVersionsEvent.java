@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.event;
 
-import java.util.EventObject;
-
 /**
  * This event gets fired when loading versions in a .minecraft folder.
  * <br>

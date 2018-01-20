@@ -17,16 +17,15 @@
  */
 package org.jackhuang.hmcl.mod;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipFile;
+import org.jackhuang.hmcl.util.StringUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 import java.util.Properties;
-
-import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
 
 /**
  *

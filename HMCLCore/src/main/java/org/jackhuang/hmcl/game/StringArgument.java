@@ -17,12 +17,13 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.util.Immutable;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.jackhuang.hmcl.util.Immutable;
 
 /**
  *

@@ -18,11 +18,12 @@
 package org.jackhuang.hmcl.mod;
 
 import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.util.Immutable;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.util.Immutable;
 
 /**
  *

@@ -19,17 +19,16 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.logging.Level;
-
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.FileUtils;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.logging.Level;
 
 /**
  * An implementation of classic Minecraft game repository.
@@ -279,7 +278,7 @@ public class DefaultGameRepository implements GameRepository {
             return assetsDir;
 
         String assetIndexContent = FileUtils.readText(indexFile);
-        AssetIndex index = (AssetIndex) Constants.GSON.fromJson(assetIndexContent, AssetIndex.class);
+        AssetIndex index = Constants.GSON.fromJson(assetIndexContent, AssetIndex.class);
 
         if (index == null)
             return assetsDir;

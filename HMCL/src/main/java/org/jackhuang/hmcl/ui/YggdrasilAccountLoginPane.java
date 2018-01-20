@@ -77,7 +77,7 @@ public class YggdrasilAccountLoginPane extends StackPane {
                 success.accept(((AuthInfo) account));
                 dialog.close();
             } else if (account instanceof InvalidCredentialsException) {
-                lblCreationWarning.setText(Main.i18n("login.wrong_password"));
+                lblCreationWarning.setText(Main.i18n("account.failed.wrong_password"));
             } else if (account instanceof Exception) {
                 lblCreationWarning.setText(account.getClass().toString() + ": " + ((Exception) account).getLocalizedMessage());
             }

@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.download.game;
 
-import java.util.Collection;
-import java.util.Collections;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
@@ -27,6 +25,9 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.NetworkUtils;
 import org.jackhuang.hmcl.util.VersionNumber;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  *
@@ -49,7 +50,7 @@ public final class GameVersionList extends VersionList<GameRemoteVersionTag> {
             }
 
             @Override
-            public void execute() throws Exception {
+            public void execute() {
                 versions.clear();
 
                 GameRemoteVersions root = Constants.GSON.fromJson(task.getResult(), GameRemoteVersions.class);

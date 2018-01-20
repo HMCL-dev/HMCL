@@ -91,7 +91,7 @@ public final class Hex {
 
     public Object decode(Object object) throws Exception {
         try {
-            char[] charArray = (object instanceof String) ? ((String) object).toCharArray() : (char[]) (char[]) object;
+            char[] charArray = (object instanceof String) ? ((String) object).toCharArray() : (char[]) object;
             return decodeHex(charArray);
         } catch (ClassCastException e) {
             throw new Exception(e.getMessage(), e);
@@ -105,7 +105,7 @@ public final class Hex {
     public Object encode(Object object)
             throws Exception {
         try {
-            byte[] byteArray = (object instanceof String) ? ((String) object).getBytes(getCharset()) : (byte[]) (byte[]) object;
+            byte[] byteArray = (object instanceof String) ? ((String) object).getBytes(getCharset()) : (byte[]) object;
 
             return encodeHex(byteArray);
         } catch (ClassCastException e) {

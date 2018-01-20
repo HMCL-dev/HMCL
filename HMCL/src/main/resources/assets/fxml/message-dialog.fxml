@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-
 <?import com.jfoenix.controls.JFXButton?>
 <?import com.jfoenix.controls.JFXDialogLayout?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.StackPane?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">

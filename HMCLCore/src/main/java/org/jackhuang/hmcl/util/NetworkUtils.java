@@ -17,6 +17,10 @@
  */
 package org.jackhuang.hmcl.util;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -25,15 +29,11 @@ import java.net.Proxy;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.X509TrustManager;
+
 import static org.jackhuang.hmcl.util.StringUtils.*;
 
 /**
@@ -47,11 +47,11 @@ public final class NetworkUtils {
 
     private static final X509TrustManager XTM = new X509TrustManager() {
         @Override
-        public void checkClientTrusted(X509Certificate[] xcs, String string) throws CertificateException {
+        public void checkClientTrusted(X509Certificate[] xcs, String string) {
         }
 
         @Override
-        public void checkServerTrusted(X509Certificate[] xcs, String string) throws CertificateException {
+        public void checkServerTrusted(X509Certificate[] xcs, String string) {
         }
 
         @Override

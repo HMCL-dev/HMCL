@@ -17,10 +17,6 @@
  */
 package org.jackhuang.hmcl.download.game;
 
-import java.io.File;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
 import org.jackhuang.hmcl.download.DependencyManager;
 import org.jackhuang.hmcl.game.DownloadType;
 import org.jackhuang.hmcl.game.LoggingInfo;
@@ -28,6 +24,11 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.NetworkUtils;
+
+import java.io.File;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * This task is to download log4j configuration file provided in minecraft.json.
@@ -57,7 +58,7 @@ public final class GameLoggingDownloadTask extends Task {
     }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
         if (version.getLogging() == null || !version.getLogging().containsKey(DownloadType.CLIENT))
             return;
 

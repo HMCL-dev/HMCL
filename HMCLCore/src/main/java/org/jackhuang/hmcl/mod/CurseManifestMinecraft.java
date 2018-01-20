@@ -19,12 +19,13 @@ package org.jackhuang.hmcl.mod;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.Validation;
+
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  *

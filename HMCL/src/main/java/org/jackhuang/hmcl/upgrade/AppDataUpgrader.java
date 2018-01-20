@@ -18,15 +18,19 @@
 package org.jackhuang.hmcl.upgrade;
 
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.construct.MessageBox;
+import org.jackhuang.hmcl.util.*;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.Proxy;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.net.*;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -36,15 +40,6 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
 import java.util.logging.Level;
 import java.util.zip.GZIPInputStream;
-
-import com.google.gson.reflect.TypeToken;
-import org.jackhuang.hmcl.Main;
-import org.jackhuang.hmcl.Main;
-import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.construct.MessageBox;
-import org.jackhuang.hmcl.util.*;
 
 /**
  *

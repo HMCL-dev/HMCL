@@ -18,7 +18,10 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXButton;
-import javafx.animation.*;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Pos;

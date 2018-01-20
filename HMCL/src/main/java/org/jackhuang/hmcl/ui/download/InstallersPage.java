@@ -78,49 +78,49 @@ public class InstallersPage extends StackPane implements WizardPage {
 
         String gameVersion = (String) controller.getSettings().get("game");
         Validator hasVersion = new Validator(s -> !repository.hasVersion(s) && StringUtils.isNotBlank(s));
-        hasVersion.setMessage(Main.i18n("version.already_exists"));
+        hasVersion.setMessage(Main.i18n("install.new_game.already_exists"));
         txtName.getValidators().add(hasVersion);
         txtName.textProperty().addListener(e -> btnInstall.setDisable(!txtName.validate()));
         txtName.setText(gameVersion);
 
         btnForge.setOnMouseClicked(e -> {
             controller.getSettings().put(INSTALLER_TYPE, 0);
-            controller.onNext(new VersionsPage(controller, gameVersion, downloadProvider, "forge", () -> controller.onPrev(false)));
+            controller.onNext(new VersionsPage(controller, Main.i18n("install.installer.choose", Main.i18n("install.installer.forge")), gameVersion, downloadProvider, "forge", () -> controller.onPrev(false)));
         });
 
         btnLiteLoader.setOnMouseClicked(e -> {
             controller.getSettings().put(INSTALLER_TYPE, 1);
-            controller.onNext(new VersionsPage(controller, gameVersion, downloadProvider, "liteloader", () -> controller.onPrev(false)));
+            controller.onNext(new VersionsPage(controller, Main.i18n("install.installer.choose", Main.i18n("install.installer.liteloader")), gameVersion, downloadProvider, "liteloader", () -> controller.onPrev(false)));
         });
 
         btnOptiFine.setOnMouseClicked(e -> {
             controller.getSettings().put(INSTALLER_TYPE, 2);
-            controller.onNext(new VersionsPage(controller, gameVersion, downloadProvider, "optifine", () -> controller.onPrev(false)));
+            controller.onNext(new VersionsPage(controller, Main.i18n("install.installer.choose", Main.i18n("install.installer.optifine")), gameVersion, downloadProvider, "optifine", () -> controller.onPrev(false)));
         });
     }
 
     @Override
     public String getTitle() {
-        return "Choose a game version";
+        return Main.i18n("install.new_game");
     }
 
     @Override
     public void onNavigate(Map<String, Object> settings) {
-        lblGameVersion.setText("Current Game Version: " + controller.getSettings().get("game"));
+        lblGameVersion.setText(Main.i18n("install.new_game.current_game_version") + ": " + controller.getSettings().get("game"));
         if (controller.getSettings().containsKey("forge"))
-            lblForge.setText("Forge Version: " + controller.getSettings().get("forge"));
+            lblForge.setText(Main.i18n("install.installer.version", Main.i18n("install.installer.forge")) + ": " + controller.getSettings().get("forge"));
         else
-            lblForge.setText("Forge not installed");
+            lblForge.setText(Main.i18n("install.installer.not_installed", Main.i18n("install.installer.forge")));
 
         if (controller.getSettings().containsKey("liteloader"))
-            lblLiteLoader.setText("LiteLoader Version: " + controller.getSettings().get("liteloader"));
+            lblLiteLoader.setText(Main.i18n("install.installer.version", Main.i18n("install.installer.liteloader")) + ": " + controller.getSettings().get("liteloader"));
         else
-            lblLiteLoader.setText("LiteLoader not installed");
+            lblLiteLoader.setText(Main.i18n("install.installer.not_installed", Main.i18n("install.installer.liteloader")));
 
         if (controller.getSettings().containsKey("optifine"))
-            lblOptiFine.setText("OptiFine Version: " + controller.getSettings().get("optifine"));
+            lblOptiFine.setText(Main.i18n("install.installer.version", Main.i18n("install.installer.optifine")) + ": " + controller.getSettings().get("optifine"));
         else
-            lblOptiFine.setText("OptiFine not installed");
+            lblOptiFine.setText(Main.i18n("install.installer.not_installed", Main.i18n("install.installer.optifine")));
     }
 
     @Override

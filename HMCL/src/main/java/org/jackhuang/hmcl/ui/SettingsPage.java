@@ -39,7 +39,7 @@ import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
 
 public final class SettingsPage extends StackPane implements DecoratorPage {
-    private final StringProperty title = new SimpleStringProperty(this, "title", Main.i18n("launcher.title.launcher"));
+    private final StringProperty title = new SimpleStringProperty(this, "title", Main.i18n("launcher_settings"));
 
     @FXML
     private JFXTextField txtProxyHost;

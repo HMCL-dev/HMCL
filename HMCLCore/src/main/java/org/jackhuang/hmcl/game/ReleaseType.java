@@ -31,7 +31,7 @@ public enum ReleaseType {
 
     private final String id;
 
-    private ReleaseType(String id) {
+    ReleaseType(String id) {
         this.id = id;
     }
 

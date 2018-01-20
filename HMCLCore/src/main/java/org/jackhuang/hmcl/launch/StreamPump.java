@@ -17,14 +17,15 @@
  */
 package org.jackhuang.hmcl.launch;
 
+import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.Logging;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.function.Consumer;
 import java.util.logging.Level;
-import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.Logging;
 
 /**
  * Pump the given input stream.

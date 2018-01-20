@@ -38,10 +38,10 @@
                     </right>
                 </BorderPane>
 
-                <MultiFileItem fx:id="javaItem" title="%settings.java_dir" chooserTitle="%settings.choose_javapath"
+                <MultiFileItem fx:id="javaItem" title="%game_settings.java_directory" chooserTitle="%settings.choose_javapath"
                                hasSubtitle="true" customText="%settings.custom" />
 
-                <MultiFileItem fx:id="gameDirItem" title="%settings.game_directory" chooserTitle="%settings.choose_gamedir"
+                <MultiFileItem fx:id="gameDirItem" title="%profile.instance_directory" chooserTitle="%settings.choose_gamedir"
                                hasSubtitle="true" customText="%settings.custom" />
 
                 <BorderPane> <!-- Max Memory -->
@@ -76,7 +76,7 @@
 
                 <BorderPane> <!-- Dimension -->
                     <left>
-                        <Label text="%settings.dimension" BorderPane.alignment="CENTER_LEFT"/>
+                        <Label text="%game_settings.dimension" BorderPane.alignment="CENTER_LEFT"/>
                     </left>
                     <right>
                         <BorderPane>
@@ -88,7 +88,7 @@
                                 </HBox>
                             </left>
                             <right>
-                                <JFXCheckBox fx:id="chkFullscreen" text="%settings.fullscreen" alignment="CENTER"
+                                <JFXCheckBox fx:id="chkFullscreen" text="%game_settings.fullscreen" alignment="CENTER"
                                              BorderPane.alignment="CENTER">
                                     <BorderPane.margin>
                                         <Insets right="7"/>
@@ -121,7 +121,7 @@
                 <fx:define>
                     <Insets fx:id="insets" bottom="8"/>
                 </fx:define>
-                <JFXTextField labelFloat="true" promptText="%advancedsettings.Minecraft_arguments"
+                <JFXTextField labelFloat="true" promptText="%advancedsettings.minecraft_arguments"
                               styleClass="fit-width" fx:id="txtGameArgs" StackPane.margin="$insets"/>
                 <JFXTextField labelFloat="true" promptText="%advancedsettings.java_permanent_generation_space"
                               styleClass="fit-width" fx:id="txtMetaspace" StackPane.margin="$insets"/>

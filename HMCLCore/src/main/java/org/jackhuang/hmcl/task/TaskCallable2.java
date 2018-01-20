@@ -17,8 +17,9 @@
  */
 package org.jackhuang.hmcl.task;
 
-import java.util.function.Function;
 import org.jackhuang.hmcl.util.AutoTypingMap;
+
+import java.util.function.Function;
 
 /**
  *

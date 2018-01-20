@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.download;
 
-import java.net.Proxy;
 import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
@@ -29,6 +28,8 @@ import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.ParallelTask;
 import org.jackhuang.hmcl.task.Task;
+
+import java.net.Proxy;
 
 /**
  * Note: This class has no state.

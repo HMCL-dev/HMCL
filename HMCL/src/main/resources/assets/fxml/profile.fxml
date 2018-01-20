@@ -19,7 +19,7 @@
                 <BorderPane> <!-- Name -->
                     <left>
                         <VBox>
-                            <Label text="%ui.label.profile" BorderPane.alignment="CENTER_LEFT"/>
+                            <Label text="%profile" BorderPane.alignment="CENTER_LEFT"/>
                         </VBox>
                     </left>
                     <right>
@@ -31,7 +31,7 @@
                     </right>
                 </BorderPane>
 
-                <FileItem fx:id="gameDir" name="%settings.game_directory" title="%settings.choose_gamedir"/>
+                <FileItem fx:id="gameDir" name="%profile.instance_directory" title="%settings.choose_gamedir"/>
             </ComponentList>
 
         </VBox>

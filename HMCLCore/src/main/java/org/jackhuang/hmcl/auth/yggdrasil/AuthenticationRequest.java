@@ -5,9 +5,10 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
-import java.util.Map;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
+
+import java.util.Map;
 
 /**
  *

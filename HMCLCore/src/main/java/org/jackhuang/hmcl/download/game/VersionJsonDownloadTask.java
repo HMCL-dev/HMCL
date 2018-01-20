@@ -17,16 +17,17 @@
  */
 package org.jackhuang.hmcl.download.game;
 
-import java.net.Proxy;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.NetworkUtils;
+
+import java.net.Proxy;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  *
@@ -59,7 +60,7 @@ public final class VersionJsonDownloadTask extends Task {
     }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
         RemoteVersion<?> remoteVersion = gameVersionList.getVersions(gameVersion).stream().findFirst()
                 .orElseThrow(() -> new IllegalStateException("Cannot find specific version " + gameVersion + " in remote repository"));
         String jsonURL = dependencyManager.getDownloadProvider().injectURL(remoteVersion.getUrl());

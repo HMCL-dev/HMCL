@@ -5,14 +5,7 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -75,7 +68,7 @@ public final class Lang {
         return r -> invoke(function, r);
     }
 
-    public static <T, R, E extends Exception> Function<T, R> liftFunction(ExceptionalFunction<T, R, E> function) throws E {
+    public static <T, R, E extends Exception> Function<T, R> liftFunction(ExceptionalFunction<T, R, E> function) {
         return hideFunction(function);
     }
 
@@ -103,7 +96,7 @@ public final class Lang {
         return () -> invoke(supplier);
     }
 
-    public static <T, E extends Exception> Supplier<T> liftException(ExceptionalSupplier<T, E> supplier) throws E {
+    public static <T, E extends Exception> Supplier<T> liftException(ExceptionalSupplier<T, E> supplier) {
         return hideException(supplier);
     }
 
@@ -130,7 +123,7 @@ public final class Lang {
         return it -> invokeConsumer(consumer, it);
     }
 
-    public static <T, E extends Exception> Consumer<T> liftConsumer(ExceptionalConsumer<T, E> consumer) throws E {
+    public static <T, E extends Exception> Consumer<T> liftConsumer(ExceptionalConsumer<T, E> consumer) {
         return hideConsumer(consumer);
     }
 
@@ -163,7 +156,7 @@ public final class Lang {
         return () -> invoke(r);
     }
 
-    public static <E extends Exception> Runnable liftException(ExceptionalRunnable<E> r) throws E {
+    public static <E extends Exception> Runnable liftException(ExceptionalRunnable<E> r) {
         return hideException(r);
     }
 
@@ -197,7 +190,7 @@ public final class Lang {
 
     public static <V> Optional<V> convert(Object o, Class<V> clazz) {
         if (o == null || !ReflectionHelper.isInstance(clazz, o))
-            return Optional.<V>empty();
+            return Optional.empty();
         else
             return Optional.of((V) o);
     }
