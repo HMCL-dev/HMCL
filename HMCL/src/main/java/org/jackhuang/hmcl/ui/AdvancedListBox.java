@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Pane;
@@ -51,7 +52,29 @@ public class AdvancedListBox extends ScrollPane {
         return this;
     }
 
+    public AdvancedListBox remove(Node child) {
+        if (child instanceof Pane)
+            container.getChildren().remove(child);
+        else {
+            StackPane pane = null;
+            for (Node node : container.getChildren())
+                if (node instanceof StackPane) {
+                    ObservableList<Node> list = ((StackPane) node).getChildren();
+                    if (list.size() == 1 && list.get(0) == child)
+                        pane = (StackPane) node;
+                }
+            if (pane == null)
+                throw new Error();
+            container.getChildren().remove(pane);
+        }
+        return this;
+    }
+
     public AdvancedListBox startCategory(String category) {
         return add(new ClassTitle(category));
+    }
+
+    public void setSpacing(double spacing) {
+        container.setSpacing(spacing);
     }
 }

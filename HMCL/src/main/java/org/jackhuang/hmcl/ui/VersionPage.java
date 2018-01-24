@@ -82,7 +82,7 @@ public final class VersionPage extends StackPane implements DecoratorPage {
 
         FXUtils.installTooltip(btnBrowseMenu, 0, 5000, 0, new Tooltip(Main.i18n("game_settings.exploration")));
         FXUtils.installTooltip(btnManagementMenu, 0, 5000, 0, new Tooltip(Main.i18n("game_settings.management")));
-        FXUtils.installTooltip(btnExport, 0, 5000, 0, new Tooltip(Main.i18n("modpack.task.save")));
+        FXUtils.installTooltip(btnExport, 0, 5000, 0, new Tooltip(Main.i18n("modpack.export")));
     }
 
     public void load(String id, Profile profile) {
@@ -106,6 +106,12 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     public void onManagementMenu() {
         managementList.getSelectionModel().select(-1);
         managementPopup.show(btnManagementMenu, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, -12, 15);
+    }
+
+    public void onDelete() {
+        profile.getRepository().removeVersionFromDisk(version);
+        profile.getRepository().refreshVersions();
+        Controllers.navigate(null);
     }
 
     public void onExport() {
@@ -145,7 +151,7 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     public void onManagement() {
         switch (managementList.getSelectionModel().getSelectedIndex()) {
             case 0: // rename a version
-                Optional<String> res = FXUtils.inputDialog("Input", Main.i18n("versions.manage.rename.message"), null, version);
+                Optional<String> res = FXUtils.inputDialog("Input", Main.i18n("version.manage.rename.message"), null, version);
                 if (res.isPresent()) {
                     if (profile.getRepository().renameVersion(version, res.get())) {
                         profile.getRepository().refreshVersions();
@@ -154,7 +160,7 @@ public final class VersionPage extends StackPane implements DecoratorPage {
                 }
                 break;
             case 1: // remove a version
-                if (FXUtils.alert(Alert.AlertType.CONFIRMATION, "Confirm", Main.i18n("versions.manage.remove.confirm") + version)) {
+                if (FXUtils.alert(Alert.AlertType.CONFIRMATION, "Confirm", Main.i18n("version.manage.remove.confirm") + version)) {
                     if (profile.getRepository().removeVersionFromDisk(version)) {
                         profile.getRepository().refreshVersions();
                         Controllers.navigate(null);

@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.ui.construct.TaskListPane;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.util.Map;
@@ -91,45 +92,9 @@ public interface AbstractWizardDisplayer extends WizardDisplayer {
 
     @Override
     default void handleTask(Map<String, Object> settings, Task task) {
-        VBox vbox = new VBox();
-        JFXProgressBar progressBar = new JFXProgressBar();
-        Label label = new Label();
-        progressBar.setMaxHeight(10);
-        vbox.getChildren().addAll(progressBar, label);
-
-        StackPane root = new StackPane();
-        root.getChildren().add(vbox);
-        navigateTo(root, Navigation.NavigationDirection.FINISH);
-
-        AtomicInteger finishedTasks = new AtomicInteger(0);
-
-        TaskExecutor executor = task.with(Task.of(Schedulers.javafx(), this::navigateToSuccess)).executor(e -> new TaskListener() {
-            @Override
-            public void onReady(Task task) {
-                Platform.runLater(() -> progressBar.setProgress(finishedTasks.get() * 1.0 / e.getRunningTasks()));
-            }
-
-            @Override
-            public void onFinished(Task task) {
-                Platform.runLater(() -> {
-                    label.setText(task.getName());
-                    progressBar.setProgress(finishedTasks.incrementAndGet() * 1.0 / e.getRunningTasks());
-                });
-            }
-
-            @Override
-            public void onFailed(Task task, Throwable throwable) {
-                Platform.runLater(() -> {
-                    label.setText(task.getName());
-                    progressBar.setProgress(finishedTasks.incrementAndGet() * 1.0 / e.getRunningTasks());
-                });
-            }
-
-            @Override
-            public void onTerminate() {
-                Platform.runLater(AbstractWizardDisplayer.this::navigateToSuccess);
-            }
-        });
+        TaskExecutor executor = task.with(Task.of(Schedulers.javafx(), this::navigateToSuccess)).executor();
+        TaskListPane pane = new TaskListPane(executor, () -> Platform.runLater(AbstractWizardDisplayer.this::navigateToSuccess));
+        navigateTo(pane, Navigation.NavigationDirection.FINISH);
         getCancelQueue().add(executor);
         executor.start();
     }

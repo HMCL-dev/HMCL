@@ -23,6 +23,12 @@
         </JFXTabPane>
 
         <HBox alignment="TOP_RIGHT" style="-fx-padding: 3px;" pickOnBounds="false">
+            <JFXButton fx:id="btnDelete" maxHeight="28.0" minHeight="28.0" onMouseClicked="#onDelete"
+                       styleClass="toggle-icon3" ripplerFill="white">
+                <graphic>
+                    <fx:include source="/assets/svg/delete-black.fxml"/>
+                </graphic>
+            </JFXButton>
             <JFXButton fx:id="btnExport" maxHeight="28.0" minHeight="28.0" onMouseClicked="#onExport"
                        styleClass="toggle-icon3" ripplerFill="white">
                 <graphic>
@@ -57,9 +63,9 @@
 
     <JFXListView fx:id="managementList" styleClass="option-list-view" onMouseClicked="#onManagement"
                  maxWidth="300.0" minWidth="300.0">
-        <Label text="%versions.manage.rename"/>
-        <Label text="%versions.manage.remove"/>
-        <Label text="%versions.manage.redownload_assets_index"/>
-        <Label text="%versions.manage.remove_libraries"/>
+        <Label text="%version.manage.rename"/>
+        <Label text="%version.manage.remove"/>
+        <Label text="%version.manage.redownload_assets_index"/>
+        <Label text="%version.manage.remove_libraries"/>
     </JFXListView>
 </fx:root>

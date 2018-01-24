@@ -6,6 +6,7 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.control.Tooltip?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane" pickOnBounds="false">
@@ -28,12 +29,26 @@
             <BorderPane>
                 <left>
                     <HBox spacing="8">
-                        <JFXButton fx:id="btnSettings" styleClass="toggle-icon4" maxWidth="30" maxHeight="30" minWidth="30" minHeight="30" prefWidth="30" prefHeight="30" />
-                        <JFXButton fx:id="btnDelete" styleClass="toggle-icon4" maxWidth="30" maxHeight="30" minWidth="30" minHeight="30" prefWidth="30" prefHeight="30" />
+                        <JFXButton fx:id="btnSettings" styleClass="toggle-icon4" maxWidth="30" maxHeight="30" minWidth="30" minHeight="30" prefWidth="30" prefHeight="30">
+                            <tooltip>
+                                <Tooltip text="%version.manage.settings" />
+                            </tooltip>
+                        </JFXButton>
                     </HBox>
                 </left>
                 <right>
-                    <JFXButton fx:id="btnLaunch" styleClass="toggle-icon4" maxWidth="30" maxHeight="30" minHeight="30" minWidth="30" prefWidth="30" prefHeight="30" />
+                    <HBox spacing="8">
+                        <JFXButton fx:id="btnScript" styleClass="toggle-icon4" maxWidth="30" maxHeight="30" minWidth="30" minHeight="30" prefWidth="30" prefHeight="30">
+                            <tooltip>
+                                <Tooltip text="%version.launch_script" />
+                            </tooltip>
+                        </JFXButton>
+                        <JFXButton fx:id="btnLaunch" styleClass="toggle-icon4" maxWidth="30" maxHeight="30" minHeight="30" minWidth="30" prefWidth="30" prefHeight="30">
+                            <tooltip>
+                                <Tooltip text="%version.launch" />
+                            </tooltip>
+                        </JFXButton>
+                    </HBox>
                 </right>
             </BorderPane>
 

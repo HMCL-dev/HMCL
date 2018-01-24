@@ -88,6 +88,8 @@ public class FileDownloadTask extends Task {
         this.hash = hash;
         this.retry = retry;
         this.proxy = proxy;
+
+        setName(file.getName());
     }
 
     private void closeFiles() {
@@ -99,6 +101,10 @@ public class FileDownloadTask extends Task {
 
     public EventManager<FailedEvent<URL>> getOnFailed() {
         return onFailed;
+    }
+
+    public URL getUrl() {
+        return url;
     }
 
     @Override

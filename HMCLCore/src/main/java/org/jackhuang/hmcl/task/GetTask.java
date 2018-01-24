@@ -65,6 +65,8 @@ public final class GetTask extends TaskResult<String> {
         this.retry = retry;
         this.proxy = proxy;
         this.id = id;
+
+        setName(url.toString());
     }
 
     @Override

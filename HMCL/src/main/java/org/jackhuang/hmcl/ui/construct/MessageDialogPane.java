@@ -15,38 +15,30 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.task;
+package org.jackhuang.hmcl.ui.construct;
 
-import java.util.Arrays;
-import java.util.Collection;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDialog;
+import javafx.fxml.FXML;
+import javafx.scene.control.Label;
+import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.ui.FXUtils;
 
-/**
- * The tasks that provides a way to execute tasks parallelly.
- * Fails when some of {@link #tasks} failed.
- *
- * @author huangyuhui
- */
-public final class ParallelTask extends Task {
+public final class MessageDialogPane extends StackPane {
+    private final String text;
+    private final JFXDialog dialog;
 
-    private final Task[] tasks;
+    @FXML
+    private JFXButton acceptButton;
+    @FXML
+    private Label content;
 
-    /**
-     * Constructor.
-     *
-     * @param tasks the tasks that can be executed parallelly.
-     */
-    public ParallelTask(Task... tasks) {
-        this.tasks = tasks;
-        setSignificance(TaskSignificance.MINOR);
+    public MessageDialogPane(String text, JFXDialog dialog) {
+        this.text = text;
+        this.dialog = dialog;
+
+        FXUtils.loadFXML(this, "/assets/fxml/message-dialog.fxml");
+        content.setText(text);
+        acceptButton.setOnMouseClicked(e -> dialog.close());
     }
-
-    @Override
-    public void execute() {
-    }
-
-    @Override
-    public Collection<Task> getDependents() {
-        return Arrays.asList(tasks);
-    }
-
 }

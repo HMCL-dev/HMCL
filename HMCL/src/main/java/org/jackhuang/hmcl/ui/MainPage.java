@@ -76,11 +76,16 @@ public final class MainPage extends StackPane implements DecoratorPage {
             if (Settings.INSTANCE.getSelectedAccount() == null)
                 Controllers.dialog(Main.i18n("login.no_Player007"));
             else
-                LauncherHelper.INSTANCE.launch(version);
+                LauncherHelper.INSTANCE.launch(version, null);
         });
-        item.setOnDeleteButtonClicked(e -> {
-            profile.getRepository().removeVersionFromDisk(version);
-            Platform.runLater(this::loadVersions);
+        item.setOnScriptButtonClicked(e -> {
+            if (Settings.INSTANCE.getSelectedAccount() == null)
+                Controllers.dialog(Main.i18n("login.no_Player007"));
+            else {
+                Controllers.inputDialog(Main.i18n("mainwindow.enter_script_name"), file -> {
+                    LauncherHelper.INSTANCE.launch(version, file);
+                });
+            }
         });
         item.setOnSettingsButtonClicked(e -> {
             Controllers.getDecorator().showPage(Controllers.getVersionPage());

@@ -22,13 +22,11 @@ import org.jackhuang.hmcl.util.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -40,7 +38,7 @@ import java.util.logging.Level;
 public final class TaskExecutor {
 
     private final Task firstTask;
-    private TaskListener taskListener = TaskListener.DefaultTaskListener.INSTANCE;
+    private List<TaskListener> taskListeners = new LinkedList<>();
     private boolean canceled = false;
     private Exception lastException;
     private final AtomicInteger totTask = new AtomicInteger(0);
@@ -52,15 +50,8 @@ public final class TaskExecutor {
         this.firstTask = task;
     }
 
-    public TaskListener getTaskListener() {
-        return taskListener;
-    }
-
-    public void setTaskListener(TaskListener taskListener) {
-        if (taskListener == null)
-            this.taskListener = TaskListener.DefaultTaskListener.INSTANCE;
-        else
-            this.taskListener = taskListener;
+    public void addTaskListener(TaskListener taskListener) {
+        taskListeners.add(taskListener);
     }
 
     public boolean isCanceled() {
@@ -78,7 +69,10 @@ public final class TaskExecutor {
     public void start() {
         workerQueue.add(scheduler.schedule(() -> {
             if (!executeTasks(Collections.singleton(firstTask)))
-                taskListener.onTerminate();
+                taskListeners.forEach(it -> {
+                    it.onTerminate();
+                    it.onTerminate(variables);
+                });
         }));
     }
 
@@ -86,7 +80,10 @@ public final class TaskExecutor {
         AtomicBoolean flag = new AtomicBoolean(true);
         Future<?> future = scheduler.schedule(() -> {
             if (!executeTasks(Collections.singleton(firstTask))) {
-                taskListener.onTerminate();
+                taskListeners.forEach(it -> {
+                    it.onTerminate();
+                    it.onTerminate(variables);
+                });
                 flag.set(false);
             }
         });
@@ -108,7 +105,7 @@ public final class TaskExecutor {
         }
     }
 
-    private boolean executeTasks(Collection<Task> tasks) {
+    private boolean executeTasks(Collection<Task> tasks) throws InterruptedException {
         if (tasks.isEmpty())
             return true;
 
@@ -119,38 +116,35 @@ public final class TaskExecutor {
             if (canceled)
                 return false;
             Invoker invoker = new Invoker(task, latch, success);
-            Future<?> future = task.getScheduler().schedule(invoker);
-            if (future != null)
-                workerQueue.add(future);
+            try {
+                Future<?> future = task.getScheduler().schedule(invoker);
+                if (future != null)
+                    workerQueue.add(future);
+            } catch (RejectedExecutionException e) {
+                throw new InterruptedException();
+            }
         }
 
         if (canceled)
             return false;
 
-        try {
-            latch.await();
-            return success.get() && !canceled;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            // Once interrupted, we are aborting the subscription.
-            // and operations fail.
-            return false;
-        }
+        latch.await();
+        return success.get() && !canceled;
     }
 
     private boolean executeTask(Task task) {
         if (canceled)
             return false;
 
-        if (!task.isHidden())
+        if (task.getSignificance().shouldLog())
             Logging.LOG.log(Level.FINE, "Executing task: {0}", task.getName());
 
-        taskListener.onReady(task);
+        taskListeners.forEach(it -> it.onReady(task));
 
-        boolean doDependentsSucceeded = executeTasks(task.getDependents());
         boolean flag = false;
 
         try {
+            boolean doDependentsSucceeded = executeTasks(task.getDependents());
             if (!doDependentsSucceeded && task.isRelyingOnDependents() || canceled)
                 throw new SilentException();
 
@@ -166,27 +160,29 @@ public final class TaskExecutor {
                 throw new IllegalStateException("Subtasks failed for " + task.getName());
 
             flag = true;
-            if (!task.isHidden()) {
+            if (task.getSignificance().shouldLog()) {
                 Logging.LOG.log(Level.FINER, "Task finished: {0}", task.getName());
 
                 task.onDone().fireEvent(new TaskEvent(this, task, false));
-                taskListener.onFinished(task);
+                taskListeners.forEach(it -> it.onFinished(task));
             }
         } catch (InterruptedException e) {
-            if (!task.isHidden()) {
+            if (task.getSignificance().shouldLog()) {
                 lastException = e;
                 Logging.LOG.log(Level.FINE, "Task aborted: " + task.getName(), e);
                 task.onDone().fireEvent(new TaskEvent(this, task, true));
-                taskListener.onFailed(task, e);
+                taskListeners.forEach(it -> it.onFailed(task, e));
             }
         } catch (SilentException e) {
             // do nothing
+        } catch (RejectedExecutionException e) {
+            return false;
         } catch (Exception e) {
-            if (!task.isHidden()) {
+            if (task.getSignificance().shouldLog()) {
                 lastException = e;
                 Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
                 task.onDone().fireEvent(new TaskEvent(this, task, true));
-                taskListener.onFailed(task, e);
+                taskListeners.forEach(it -> it.onFailed(task, e));
             }
         } finally {
             task.setVariables(null);

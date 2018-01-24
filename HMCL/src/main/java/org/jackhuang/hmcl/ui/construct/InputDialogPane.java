@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -15,29 +15,41 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui;
+package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
+import com.jfoenix.controls.JFXTextField;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.ui.FXUtils;
 
-public final class MessageDialogPane extends StackPane {
+import java.util.function.Consumer;
+
+public class InputDialogPane extends StackPane {
     private final String text;
     private final JFXDialog dialog;
 
     @FXML
     private JFXButton acceptButton;
     @FXML
+    private JFXButton cancelButton;
+    @FXML
+    private JFXTextField textField;
+    @FXML
     private Label content;
 
-    public MessageDialogPane(String text, JFXDialog dialog) {
+    public InputDialogPane(String text, JFXDialog dialog, Consumer<String> onResult) {
         this.text = text;
         this.dialog = dialog;
 
-        FXUtils.loadFXML(this, "/assets/fxml/message-dialog.fxml");
+        FXUtils.loadFXML(this, "/assets/fxml/input-dialog.fxml");
         content.setText(text);
-        acceptButton.setOnMouseClicked(e -> dialog.close());
+        cancelButton.setOnMouseClicked(e -> dialog.close());
+        acceptButton.setOnMouseClicked(e -> {
+            onResult.accept(textField.getText());
+            dialog.close();
+        });
     }
 }

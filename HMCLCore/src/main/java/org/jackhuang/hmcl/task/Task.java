@@ -22,10 +22,7 @@ import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import org.jackhuang.hmcl.event.EventManager;
-import org.jackhuang.hmcl.util.AutoTypingMap;
-import org.jackhuang.hmcl.util.ExceptionalConsumer;
-import org.jackhuang.hmcl.util.ExceptionalRunnable;
-import org.jackhuang.hmcl.util.Properties;
+import org.jackhuang.hmcl.util.*;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -42,11 +39,17 @@ public abstract class Task {
 
     private final EventManager<TaskEvent> onDone = new EventManager<>();
 
+    private TaskSignificance significance = TaskSignificance.MAJOR;
+
     /**
      * True if not logging when executing this task.
      */
-    public boolean isHidden() {
-        return false;
+    public final TaskSignificance getSignificance() {
+        return significance;
+    }
+
+    public void setSignificance(TaskSignificance significance) {
+        this.significance = significance;
     }
 
     /**
@@ -139,10 +142,10 @@ public abstract class Task {
     }
 
     protected void updateProgress(double progress) {
-        if (progress > 1.0)
+        if (progress < 0 || progress > 1.0)
             throw new IllegalArgumentException("Progress is must between 0 and 1.");
         long now = System.currentTimeMillis();
-        if (now - lastTime >= getProgressInterval()) {
+        if (lastTime == Long.MIN_VALUE || now - lastTime >= getProgressInterval()) {
             updateProgressImmediately(progress);
             lastTime = now;
         }
@@ -186,7 +189,7 @@ public abstract class Task {
 
     public final TaskExecutor executor(Function<TaskExecutor, TaskListener> taskListener) {
         TaskExecutor executor = new TaskExecutor(this);
-        executor.setTaskListener(taskListener.apply(executor));
+        executor.addTaskListener(taskListener.apply(executor));
         return executor;
     }
 
@@ -224,7 +227,7 @@ public abstract class Task {
         return then(s -> b);
     }
 
-    public final Task then(Function<AutoTypingMap<String>, Task> b) {
+    public final Task then(ExceptionalFunction<AutoTypingMap<String>, Task, ?> b) {
         return new CoupleTask<>(this, b, true);
     }
 
@@ -232,7 +235,7 @@ public abstract class Task {
         return with(s -> b);
     }
 
-    public final Task with(Function<AutoTypingMap<String>, Task> b) {
+    public final Task with(ExceptionalFunction<AutoTypingMap<String>, Task, ?> b) {
         return new CoupleTask<>(this, b, false);
     }
 
@@ -263,5 +266,19 @@ public abstract class Task {
 
     public static <V> TaskResult<V> ofResult(String id, Function<AutoTypingMap<String>, V> closure) {
         return new TaskCallable2<>(id, closure);
+    }
+
+    public enum TaskSignificance {
+        MAJOR,
+        MODERATE,
+        MINOR;
+
+        public boolean shouldLog() {
+            return this != MINOR;
+        }
+
+        public boolean shouldShow() {
+            return this == MAJOR;
+        }
     }
 }

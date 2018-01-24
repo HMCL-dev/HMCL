@@ -103,7 +103,7 @@ public class WizardController implements Navigation {
         if (result instanceof DeferredWizardResult) displayer.handleDeferredWizardResult(settings, ((DeferredWizardResult) result));
         else if (result instanceof Summary) displayer.navigateTo(((Summary) result).getComponent(), NavigationDirection.NEXT);
         else if (result instanceof Task) displayer.handleTask(settings, ((Task) result));
-        else throw new IllegalStateException("Unrecognized wizard result: " + result);
+        else if (result != null) throw new IllegalStateException("Unrecognized wizard result: " + result);
     }
 
     @Override

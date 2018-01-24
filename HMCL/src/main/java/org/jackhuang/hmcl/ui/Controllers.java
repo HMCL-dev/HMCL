@@ -26,7 +26,11 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.construct.InputDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.util.JavaVersion;
+
+import java.util.function.Consumer;
 
 public final class Controllers {
 
@@ -101,6 +105,10 @@ public final class Controllers {
 
     public static void dialog(String text) {
         dialog(new MessageDialogPane(text, decorator.getDialog()));
+    }
+
+    public static void inputDialog(String text, Consumer<String> onResult) {
+        dialog(new InputDialogPane(text, decorator.getDialog(), onResult));
     }
 
     public static void closeDialog() {

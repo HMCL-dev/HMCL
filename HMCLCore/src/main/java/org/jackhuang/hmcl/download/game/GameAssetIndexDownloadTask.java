@@ -50,6 +50,7 @@ public final class GameAssetIndexDownloadTask extends Task {
     public GameAssetIndexDownloadTask(AbstractDependencyManager dependencyManager, Version version) {
         this.dependencyManager = dependencyManager;
         this.version = version;
+        setSignificance(TaskSignificance.MODERATE);
     }
 
     @Override

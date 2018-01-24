@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.jackhuang.hmcl.util.AutoTypingMap;
+
 import java.util.EventListener;
 
 /**
@@ -35,6 +37,9 @@ public abstract class TaskListener implements EventListener {
     }
 
     public void onTerminate() {
+    }
+
+    public void onTerminate(AutoTypingMap<String> variables) {
     }
 
     public static class DefaultTaskListener extends TaskListener {

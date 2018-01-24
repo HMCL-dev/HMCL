@@ -39,11 +39,11 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.ui.LaunchingStepsPane;
 import org.jackhuang.hmcl.ui.LogWindow;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Log4jLevel;
-import org.jackhuang.hmcl.util.ManagedProcess;
-import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.ui.construct.MessageBox;
+import org.jackhuang.hmcl.util.*;
 
+import java.io.*;
+import java.nio.Buffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -55,7 +55,7 @@ public final class LauncherHelper {
     private final LaunchingStepsPane launchingStepsPane = new LaunchingStepsPane();
     public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
 
-    public void launch(String selectedVersion) {
+    public void launch(String selectedVersion, String launcherName) {
         Profile profile = Settings.INSTANCE.getSelectedProfile();
         GameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
@@ -86,16 +86,26 @@ public final class LauncherHelper {
                             repository, selectedVersion, variables.get("account"), setting.toLaunchOptions(profile.getGameDir()), new HMCLProcessListener(variables.get("account"), setting)
                     ));
                 }))
-                .then(variables -> variables.<DefaultLauncher>get("launcher").launchAsync())
+                .then(variables -> {
+                    if (launcherName == null) {
+                        return variables.<DefaultLauncher>get("launcher").launchAsync();
+                    } else {
+                        variables.set("script", variables.<DefaultLauncher>get("launcher").makeLaunchScript(launcherName));
+                        return null;
+                    }
+                })
                 .then(Task.of(variables -> {
-                    PROCESSES.add(variables.get(DefaultLauncher.LAUNCH_ASYNC_ID));
-                    if (setting.getLauncherVisibility() == LauncherVisibility.CLOSE)
-                        Main.stopApplication();
+                    if (launcherName == null) {
+                        PROCESSES.add(variables.get(DefaultLauncher.LAUNCH_ASYNC_ID));
+                        if (setting.getLauncherVisibility() == LauncherVisibility.CLOSE)
+                            Main.stopApplication();
+                    }
                 }))
                 .executor();
 
-        executor.setTaskListener(new TaskListener() {
+        executor.addTaskListener(new TaskListener() {
             AtomicInteger finished = new AtomicInteger(0);
+
             @Override
             public void onFinished(Task task) {
                 finished.incrementAndGet();
@@ -105,12 +115,41 @@ public final class LauncherHelper {
             }
 
             @Override
-            public void onTerminate() {
-                Platform.runLater(Controllers::closeDialog);
+            public void onTerminate(AutoTypingMap<String> variables) {
+                Platform.runLater(() -> {
+                    Controllers.closeDialog();
+
+                    if (variables.containsKey("script")) {
+                        Controllers.dialog(Main.i18n("version.launch_script.success", variables.<File>get("script").getAbsolutePath()));
+                    }
+                });
             }
         });
 
         executor.start();
+    }
+
+    private void checkGameState(VersionSetting setting) throws InterruptedException {
+        JavaVersion java = setting.getJavaVersion();
+        if (java == null) {
+            // TODO
+            return;
+        }
+
+        if (java.getParsedVersion() < JavaVersion.JAVA_8) {
+            MessageBox.show(Main.i18n("launch.advice.newer_java"));
+        }
+        if (java.getPlatform() == org.jackhuang.hmcl.util.Platform.BIT_32 &&
+                org.jackhuang.hmcl.util.Platform.IS_64_BIT) {
+            MessageBox.show(Main.i18n("launch.advice.different_platform"));
+        }
+        if (java.getPlatform() == org.jackhuang.hmcl.util.Platform.BIT_32 &&
+                setting.getMaxMemory() > 1.5 * 1024) {
+            MessageBox.show(Main.i18n("launch.advice.too_large_memory_for_32bit"));
+        }
+        if (OperatingSystem.TOTAL_MEMORY > 0 && OperatingSystem.TOTAL_MEMORY < setting.getMaxMemory()) {
+            MessageBox.show(Main.i18n("launch.advice.not_enough_space"));
+        }
     }
 
     public static void stopManagedProcesses() {

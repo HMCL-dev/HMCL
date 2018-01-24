@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.util.AutoTypingMap;
+import org.jackhuang.hmcl.util.ExceptionalFunction;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -35,7 +36,7 @@ final class CoupleTask<P extends Task> extends Task {
     private final boolean relyingOnDependents;
     private final Collection<Task> dependents;
     private final List<Task> dependencies = new LinkedList<>();
-    private final Function<AutoTypingMap<String>, Task> succ;
+    private final ExceptionalFunction<AutoTypingMap<String>, Task, ?> succ;
 
     /**
      * A task that combines two tasks and make sure pred runs before succ.
@@ -44,22 +45,19 @@ final class CoupleTask<P extends Task> extends Task {
      * @param succ a callback that returns the task runs after pred, succ will be executed asynchronously. You can do something that relies on the result of pred.
      * @param relyingOnDependents true if this task chain will be broken when task pred fails.
      */
-    public CoupleTask(P pred, Function<AutoTypingMap<String>, Task> succ, boolean relyingOnDependents) {
+    public CoupleTask(P pred, ExceptionalFunction<AutoTypingMap<String>, Task, ?> succ, boolean relyingOnDependents) {
         this.dependents = Collections.singleton(pred);
         this.succ = succ;
         this.relyingOnDependents = relyingOnDependents;
+
+        setSignificance(TaskSignificance.MODERATE);
     }
 
     @Override
-    public void execute() {
+    public void execute() throws Exception {
         Task task = succ.apply(getVariables());
         if (task != null)
             dependencies.add(task);
-    }
-
-    @Override
-    public boolean isHidden() {
-        return true;
     }
 
     @Override

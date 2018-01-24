@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.task.ParallelTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.AutoTypingMap;
 import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.ExceptionalFunction;
 
 import java.util.function.Function;
 
@@ -63,7 +64,7 @@ public class DefaultGameBuilder extends GameBuilder {
         });
     }
 
-    private Function<AutoTypingMap<String>, Task> libraryTaskHelper(String gameVersion, String libraryId) {
+    private ExceptionalFunction<AutoTypingMap<String>, Task, ?> libraryTaskHelper(String gameVersion, String libraryId) {
         return variables -> dependencyManager.installLibraryAsync(gameVersion, variables.get("version"), libraryId, toolVersions.get(libraryId));
     }
 

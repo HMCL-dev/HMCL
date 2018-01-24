@@ -39,6 +39,8 @@ public final class GameDownloadTask extends Task {
     public GameDownloadTask(DefaultDependencyManager dependencyManager, Version version) {
         this.dependencyManager = dependencyManager;
         this.version = version;
+
+        setSignificance(TaskSignificance.MODERATE);
     }
 
     @Override

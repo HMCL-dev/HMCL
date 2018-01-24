@@ -46,6 +46,12 @@ public final class VersionSetting {
         this.global = global;
     }
 
+    private final ImmediateBooleanProperty usesGlobalProperty = new ImmediateBooleanProperty(this, "usesGlobal", false);
+
+    public ImmediateBooleanProperty usesGlobalProperty() {
+        return usesGlobalProperty;
+    }
+
     /**
      * HMCL Version Settings have been divided into 2 parts.
      * 1. Global settings.
@@ -54,12 +60,6 @@ public final class VersionSetting {
      *
      * Defaults false because if one version uses global first, custom version file will not be generated.
      */
-    private final ImmediateBooleanProperty usesGlobalProperty = new ImmediateBooleanProperty(this, "usesGlobal", false);
-
-    public ImmediateBooleanProperty usesGlobalProperty() {
-        return usesGlobalProperty;
-    }
-
     public boolean isUsesGlobal() {
         return usesGlobalProperty.get();
     }
@@ -70,15 +70,15 @@ public final class VersionSetting {
 
     // java
 
-    /**
-     * Java version or null if user customizes java directory.
-     */
     private final ImmediateStringProperty javaProperty = new ImmediateStringProperty(this, "java", "");
 
     public ImmediateStringProperty javaProperty() {
         return javaProperty;
     }
 
+    /**
+     * Java version or null if user customizes java directory.
+     */
     public String getJava() {
         return javaProperty.get();
     }
@@ -87,15 +87,15 @@ public final class VersionSetting {
         javaProperty.set(java);
     }
 
-    /**
-     * User customized java directory or null if user uses system Java.
-     */
     private final ImmediateStringProperty javaDirProperty = new ImmediateStringProperty(this, "javaDir", "");
 
     public ImmediateStringProperty javaDirProperty() {
         return javaDirProperty;
     }
 
+    /**
+     * User customized java directory or null if user uses system Java.
+     */
     public String getJavaDir() {
         return javaDirProperty.get();
     }
@@ -104,15 +104,15 @@ public final class VersionSetting {
         javaDirProperty.set(javaDir);
     }
 
-    /**
-     * The command to launch java, i.e. optirun.
-     */
     private final ImmediateStringProperty wrapperProperty = new ImmediateStringProperty(this, "wrapper", "");
 
     public ImmediateStringProperty wrapperProperty() {
         return wrapperProperty;
     }
 
+    /**
+     * The command to launch java, i.e. optirun.
+     */
     public String getWrapper() {
         return wrapperProperty.get();
     }
@@ -121,15 +121,15 @@ public final class VersionSetting {
         wrapperProperty.set(wrapper);
     }
 
-    /**
-     * The permanent generation size of JVM garbage collection.
-     */
     private final ImmediateStringProperty permSizeProperty = new ImmediateStringProperty(this, "permSize", "");
 
     public ImmediateStringProperty permSizeProperty() {
         return permSizeProperty;
     }
 
+    /**
+     * The permanent generation size of JVM garbage collection.
+     */
     public String getPermSize() {
         return permSizeProperty.get();
     }
@@ -138,15 +138,15 @@ public final class VersionSetting {
         permSizeProperty.set(permSize);
     }
 
-    /**
-     * The maximum memory that JVM can allocate for heap.
-     */
     private final ImmediateIntegerProperty maxMemoryProperty = new ImmediateIntegerProperty(this, "maxMemory", (int) OperatingSystem.SUGGESTED_MEMORY);
 
     public ImmediateIntegerProperty maxMemoryProperty() {
         return maxMemoryProperty;
     }
 
+    /**
+     * The maximum memory/MB that JVM can allocate for heap.
+     */
     public int getMaxMemory() {
         return maxMemoryProperty.get();
     }
@@ -172,16 +172,16 @@ public final class VersionSetting {
         minMemoryProperty.set(minMemory);
     }
 
-    /**
-     * The command that will be executed before launching the Minecraft.
-     * Operating system relevant.
-     */
     private final ImmediateStringProperty preLaunchCommandProperty = new ImmediateStringProperty(this, "precalledCommand", "");
 
     public ImmediateStringProperty preLaunchCommandProperty() {
         return preLaunchCommandProperty;
     }
 
+    /**
+     * The command that will be executed before launching the Minecraft.
+     * Operating system relevant.
+     */
     public String getPreLaunchCommand() {
         return preLaunchCommandProperty.get();
     }
@@ -192,15 +192,15 @@ public final class VersionSetting {
 
     // options
 
-    /**
-     * The user customized arguments passed to JVM.
-     */
     private final ImmediateStringProperty javaArgsProperty = new ImmediateStringProperty(this, "javaArgs", "");
 
     public ImmediateStringProperty javaArgsProperty() {
         return javaArgsProperty;
     }
 
+    /**
+     * The user customized arguments passed to JVM.
+     */
     public String getJavaArgs() {
         return javaArgsProperty.get();
     }
@@ -209,16 +209,15 @@ public final class VersionSetting {
         javaArgsProperty.set(javaArgs);
     }
 
-
-    /**
-     * The user customized arguments passed to Minecraft.
-     */
     private final ImmediateStringProperty minecraftArgsProperty = new ImmediateStringProperty(this, "minecraftArgs", "");
 
     public ImmediateStringProperty minecraftArgsProperty() {
         return minecraftArgsProperty;
     }
 
+    /**
+     * The user customized arguments passed to Minecraft.
+     */
     public String getMinecraftArgs() {
         return minecraftArgsProperty.get();
     }
@@ -227,15 +226,15 @@ public final class VersionSetting {
         minecraftArgsProperty.set(minecraftArgs);
     }
 
-    /**
-     * True if disallow HMCL use default JVM arguments.
-     */
     private final ImmediateBooleanProperty noJVMArgsProperty = new ImmediateBooleanProperty(this, "noJVMArgs", false);
 
     public ImmediateBooleanProperty noJVMArgsProperty() {
         return noJVMArgsProperty;
     }
 
+    /**
+     * True if disallow HMCL use default JVM arguments.
+     */
     public boolean isNoJVMArgs() {
         return noJVMArgsProperty.get();
     }
@@ -244,15 +243,15 @@ public final class VersionSetting {
         noJVMArgsProperty.set(noJVMArgs);
     }
 
-    /**
-     * True if HMCL does not check game's completeness.
-     */
     private final ImmediateBooleanProperty notCheckGameProperty = new ImmediateBooleanProperty(this, "notCheckGame", false);
 
     public ImmediateBooleanProperty notCheckGameProperty() {
         return notCheckGameProperty;
     }
 
+    /**
+     * True if HMCL does not check game's completeness.
+     */
     public boolean isNotCheckGame() {
         return notCheckGameProperty.get();
     }
@@ -261,16 +260,15 @@ public final class VersionSetting {
         notCheckGameProperty.set(notCheckGame);
     }
 
-
-    /**
-     * True if HMCL does not find/download libraries in/to common path.
-     */
     private final ImmediateBooleanProperty noCommonProperty = new ImmediateBooleanProperty(this, "noCommon", false);
 
     public ImmediateBooleanProperty noCommonProperty() {
         return noCommonProperty;
     }
 
+    /**
+     * True if HMCL does not find/download libraries in/to common path.
+     */
     public boolean isNoCommon() {
         return noCommonProperty.get();
     }
@@ -279,15 +277,15 @@ public final class VersionSetting {
         noCommonProperty.set(noCommon);
     }
 
-    /**
-     * True if show the logs after game launched.
-     */
     private final ImmediateBooleanProperty showLogsProperty = new ImmediateBooleanProperty(this, "showLogs", false);
 
     public ImmediateBooleanProperty showLogsProperty() {
         return showLogsProperty;
     }
 
+    /**
+     * True if show the logs after game launched.
+     */
     public boolean isShowLogs() {
         return showLogsProperty.get();
     }
@@ -298,17 +296,17 @@ public final class VersionSetting {
 
     // Minecraft settings.
 
-    /**
-     * The server ip that will be entered after Minecraft successfully loaded immediately.
-     *
-     * Format: ip:port or without port.
-     */
     private final ImmediateStringProperty serverIpProperty = new ImmediateStringProperty(this, "serverIp", "");
 
     public ImmediateStringProperty serverIpProperty() {
         return serverIpProperty;
     }
 
+    /**
+     * The server ip that will be entered after Minecraft successfully loaded immediately.
+     *
+     * Format: ip:port or without port.
+     */
     public String getServerIp() {
         return serverIpProperty.get();
     }
@@ -318,15 +316,15 @@ public final class VersionSetting {
     }
 
 
-    /**
-     * True if Minecraft started in fullscreen mode.
-     */
     private final ImmediateBooleanProperty fullscreenProperty = new ImmediateBooleanProperty(this, "fullscreen", false);
 
     public ImmediateBooleanProperty fullscreenProperty() {
         return fullscreenProperty;
     }
 
+    /**
+     * True if Minecraft started in fullscreen mode.
+     */
     public boolean isFullscreen() {
         return fullscreenProperty.get();
     }
@@ -335,19 +333,19 @@ public final class VersionSetting {
         fullscreenProperty.set(fullscreen);
     }
 
-    /**
-     * The width of Minecraft window, defaults 800.
-     *
-     * The field saves int value.
-     * String type prevents unexpected value from causing JsonSyntaxException.
-     * We can only reset this field instead of recreating the whole setting file.
-     */
     private final ImmediateIntegerProperty widthProperty = new ImmediateIntegerProperty(this, "width", 854);
 
     public ImmediateIntegerProperty widthProperty() {
         return widthProperty;
     }
 
+    /**
+     * The width of Minecraft window, defaults 800.
+     *
+     * The field saves int value.
+     * String type prevents unexpected value from JsonParseException.
+     * We can only reset this field instead of recreating the whole setting file.
+     */
     public int getWidth() {
         return widthProperty.get();
     }
@@ -357,19 +355,19 @@ public final class VersionSetting {
     }
 
 
-    /**
-     * The height of Minecraft window, defaults 480.
-     *
-     * The field saves int value.
-     * String type prevents unexpected value from causing JsonSyntaxException.
-     * We can only reset this field instead of recreating the whole setting file.
-     */
     private final ImmediateIntegerProperty heightProperty = new ImmediateIntegerProperty(this, "height", 480);
 
     public ImmediateIntegerProperty heightProperty() {
         return heightProperty;
     }
 
+    /**
+     * The height of Minecraft window, defaults 480.
+     *
+     * The field saves int value.
+     * String type prevents unexpected value from JsonParseException.
+     * We can only reset this field instead of recreating the whole setting file.
+     */
     public int getHeight() {
         return heightProperty.get();
     }

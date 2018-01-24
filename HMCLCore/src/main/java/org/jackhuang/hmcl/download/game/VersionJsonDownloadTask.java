@@ -47,6 +47,8 @@ public final class VersionJsonDownloadTask extends Task {
         
         if (!gameVersionList.isLoaded())
             dependents.add(gameVersionList.refreshAsync(dependencyManager.getDownloadProvider()));
+
+        setSignificance(TaskSignificance.MODERATE);
     }
 
     @Override

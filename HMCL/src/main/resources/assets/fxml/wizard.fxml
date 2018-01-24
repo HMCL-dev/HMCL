@@ -7,6 +7,7 @@
 <?import javafx.scene.layout.*?>
 <fx:root xmlns="http://javafx.com/javafx"
          type="StackPane"
+         style="-fx-background-color: gray;"
          xmlns:fx="http://javafx.com/fxml">
     <VBox>
         <JFXToolbar fx:id="toolbar" styleClass="jfx-tool-bar">
