@@ -24,8 +24,10 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
+import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.ProfileChangedEvent;
@@ -39,6 +41,7 @@ import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.OperatingSystem;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -65,7 +68,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
         EventBus.EVENT_BUS.channel(ProfileChangedEvent.class).register(this::onProfileChanged);
 
         btnAdd.setOnMouseClicked(e -> Controllers.getDecorator().startWizard(new DownloadWizardProvider(), Main.i18n("install")));
-        btnRefresh.setOnMouseClicked(e -> Settings.INSTANCE.getSelectedProfile().getRepository().refreshVersions());
+        FXUtils.installTooltip(btnAdd, 0, 5000, 0, new Tooltip(Main.i18n("install")));
+        btnRefresh.setOnMouseClicked(e -> Settings.INSTANCE.getSelectedProfile().getRepository().refreshVersionsAsync().start());
+        FXUtils.installTooltip(btnRefresh, 0, 5000, 0, new Tooltip(Main.i18n("button.refresh")));
     }
 
     private Node buildNode(Profile profile, String version, String game) {
@@ -82,9 +87,15 @@ public final class MainPage extends StackPane implements DecoratorPage {
             if (Settings.INSTANCE.getSelectedAccount() == null)
                 Controllers.dialog(Main.i18n("login.no_Player007"));
             else {
-                Controllers.inputDialog(Main.i18n("mainwindow.enter_script_name"), file -> {
+                FileChooser chooser = new FileChooser();
+                chooser.setInitialDirectory(profile.getRepository().getRunDirectory(version));
+                chooser.setTitle(Main.i18n("version.launch_script.save"));
+                chooser.getExtensionFilters().add(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
+                        ? new FileChooser.ExtensionFilter(Main.i18n("extension.bat"), "*.bat")
+                        : new FileChooser.ExtensionFilter(Main.i18n("extension.sh"), "*.sh"));
+                File file = chooser.showSaveDialog(Controllers.getStage());
+                if (file != null)
                     LauncherHelper.INSTANCE.launch(version, file);
-                });
             }
         });
         item.setOnSettingsButtonClicked(e -> {

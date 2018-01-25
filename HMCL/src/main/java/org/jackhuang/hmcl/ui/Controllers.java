@@ -99,12 +99,24 @@ public final class Controllers {
         stage.setTitle(Main.TITLE);
     }
 
+    public static Region getDialogContent() {
+        return decorator.getDialog().getContent();
+    }
+
     public static JFXDialog dialog(Region content) {
         return decorator.showDialog(content);
     }
 
     public static void dialog(String text) {
-        dialog(new MessageDialogPane(text, decorator.getDialog()));
+        dialog(text, null);
+    }
+
+    public static void dialog(String text, String title) {
+        dialog(text, title, null);
+    }
+
+    public static void dialog(String text, String title,  Runnable onAccept) {
+        dialog(new MessageDialogPane(text, title, decorator.getDialog(), onAccept));
     }
 
     public static void inputDialog(String text, Consumer<String> onResult) {

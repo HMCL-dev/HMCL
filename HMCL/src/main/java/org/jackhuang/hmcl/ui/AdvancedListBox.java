@@ -77,4 +77,8 @@ public class AdvancedListBox extends ScrollPane {
     public void setSpacing(double spacing) {
         container.setSpacing(spacing);
     }
+
+    public void clear() {
+        container.getChildren().clear();
+    }
 }

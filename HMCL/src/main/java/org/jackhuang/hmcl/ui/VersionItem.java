@@ -22,6 +22,7 @@ import javafx.beans.binding.Bindings;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
@@ -32,6 +33,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import org.jackhuang.hmcl.Main;
 
 import java.util.Optional;
 
@@ -67,6 +69,10 @@ public final class VersionItem extends StackPane {
         btnSettings.setGraphic(SVG.gear("black", 15, 15));
         btnLaunch.setGraphic(SVG.launch("black", 15, 15));
         btnScript.setGraphic(SVG.script("black", 15, 15));
+
+        FXUtils.installTooltip(btnSettings, 0, 5000, 0, new Tooltip(Main.i18n("version.manage.settings")));
+        FXUtils.installTooltip(btnLaunch, 0, 5000, 0, new Tooltip(Main.i18n("version.launch")));
+        FXUtils.installTooltip(btnScript, 0, 5000, 0, new Tooltip(Main.i18n("version.launch_script")));
 
         icon.translateYProperty().bind(Bindings.createDoubleBinding(() -> header.getBoundsInParent().getHeight() - icon.getHeight() / 2 - 16, header.boundsInParentProperty(), icon.heightProperty()));
         FXUtils.limitSize(iconView, 32, 32);

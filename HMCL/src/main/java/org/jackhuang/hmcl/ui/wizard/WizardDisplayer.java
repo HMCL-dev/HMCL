@@ -27,6 +27,5 @@ public interface WizardDisplayer {
     void onEnd();
     void onCancel();
     void navigateTo(Node page, Navigation.NavigationDirection nav);
-    void handleDeferredWizardResult(Map<String, Object> settings, DeferredWizardResult deferredWizardResult);
     void handleTask(Map<String, Object> settings, Task task);
 }

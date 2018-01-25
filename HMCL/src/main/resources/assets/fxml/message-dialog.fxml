@@ -9,7 +9,7 @@
          type="StackPane">
     <JFXDialogLayout>
         <heading>
-            <Label text="%message.info" />
+            <Label fx:id="title" text="%message.info" />
         </heading>
         <body>
             <Label fx:id="content" textAlignment="JUSTIFY" wrapText="true" />

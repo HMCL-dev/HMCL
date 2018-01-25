@@ -47,13 +47,14 @@ import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionHandler;
+import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogWizardDisplayer;
 import org.jackhuang.hmcl.ui.wizard.*;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public final class Decorator extends StackPane implements AbstractWizardDisplayer {
+public final class Decorator extends StackPane implements TaskExecutorDialogWizardDisplayer {
     private static final SVGGlyph minus = Lang.apply(new SVGGlyph(0, "MINUS", "M804.571 420.571v109.714q0 22.857-16 38.857t-38.857 16h-694.857q-22.857 0-38.857-16t-16-38.857v-109.714q0-22.857 16-38.857t38.857-16h694.857q22.857 0 38.857 16t16 38.857z", Color.WHITE),
             glyph -> { glyph.setSize(12, 2); glyph.setTranslateY(4); });
     private static final SVGGlyph resizeMax = Lang.apply(new SVGGlyph(0, "RESIZE_MAX", "M726 810v-596h-428v596h428zM726 44q34 0 59 25t25 59v768q0 34-25 60t-59 26h-428q-34 0-59-26t-25-60v-768q0-34 25-60t59-26z", Color.WHITE),
@@ -421,9 +422,11 @@ public final class Decorator extends StackPane implements AbstractWizardDisplaye
     }
 
     public JFXDialog showDialog(Region content) {
-        dialog.setContent(content);
-        if (!dialogShown)
-            dialog.show();
+        if (dialog.getContent() != content) {
+            dialog.setContent(content);
+            if (!dialogShown)
+                dialog.show();
+        }
         return dialog;
     }
 

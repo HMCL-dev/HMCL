@@ -22,6 +22,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -36,26 +37,31 @@ import static org.jackhuang.hmcl.Main.i18n;
 class AdditionalInstallersPage extends StackPane implements WizardPage {
     private final InstallerWizardProvider provider;
     private final WizardController controller;
-    private final GameRepository repository;
-    private final DownloadProvider downloadProvider;
 
-    @FXML private VBox list;
-    @FXML private JFXButton btnForge;
-    @FXML private JFXButton btnLiteLoader;
-    @FXML private JFXButton btnOptiFine;
-    @FXML private Label lblGameVersion;
-    @FXML private Label lblVersionName;
-    @FXML private Label lblForge;
-    @FXML private Label lblLiteLoader;
+    @FXML
+    private VBox list;
+    @FXML
+    private JFXButton btnForge;
+    @FXML
+    private JFXButton btnLiteLoader;
+    @FXML
+    private JFXButton btnOptiFine;
+    @FXML
+    private Label lblGameVersion;
+    @FXML
+    private Label lblVersionName;
+    @FXML
+    private Label lblForge;
+    @FXML
+    private Label lblLiteLoader;
     @FXML
     private Label lblOptiFine;
-    @FXML private JFXButton btnInstall;
+    @FXML
+    private JFXButton btnInstall;
 
     public AdditionalInstallersPage(InstallerWizardProvider provider, WizardController controller, GameRepository repository, DownloadProvider downloadProvider) {
         this.provider = provider;
         this.controller = controller;
-        this.repository = repository;
-        this.downloadProvider = downloadProvider;
 
         FXUtils.loadFXML(this, "/assets/fxml/download/additional-installers.fxml");
 
@@ -64,55 +70,64 @@ class AdditionalInstallersPage extends StackPane implements WizardPage {
 
         btnForge.setOnMouseClicked(e -> {
             controller.getSettings().put(INSTALLER_TYPE, 0);
-            controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.forge")), provider.getGameVersion(), downloadProvider, "forge", () -> { controller.onPrev(false); }));
+            controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.forge")), provider.getGameVersion(), downloadProvider, "forge", () -> {
+                controller.onPrev(false);
+            }));
         });
 
         btnLiteLoader.setOnMouseClicked(e -> {
             controller.getSettings().put(INSTALLER_TYPE, 1);
-            controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.liteloader")), provider.getGameVersion(), downloadProvider, "liteloader", () -> { controller.onPrev(false); }));
+            controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.liteloader")), provider.getGameVersion(), downloadProvider, "liteloader", () -> {
+                controller.onPrev(false);
+            }));
         });
 
         btnOptiFine.setOnMouseClicked(e -> {
             controller.getSettings().put(INSTALLER_TYPE, 2);
-            controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.optifine")), provider.getGameVersion(), downloadProvider, "optifine", () -> { controller.onPrev(false); }));
+            controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.optifine")), provider.getGameVersion(), downloadProvider, "optifine", () -> {
+                controller.onPrev(false);
+            }));
         });
+
+        btnInstall.setOnMouseClicked(e -> onInstall());
+    }
+
+    private void onInstall() {
+        controller.onFinish();
     }
 
     @Override
     public String getTitle() {
-        return "Choose a game version";
+        return Main.i18n("settings.tabs.installers");
     }
 
     @Override
     public void onNavigate(Map<String, Object> settings) {
-        lblGameVersion.setText("Current Game Version: " + provider.getGameVersion());
+        lblGameVersion.setText(Main.i18n("install.new_game.current_game_version") + ": " + provider.getGameVersion());
         btnForge.setDisable(provider.getForge() != null);
         if (provider.getForge() != null || controller.getSettings().containsKey("forge"))
-            lblForge.setText("Forge Versoin: " + Lang.nonNull(provider.getForge(), controller.getSettings().get("forge")));
+            lblForge.setText(Main.i18n("install.installer.version", Main.i18n("install.installer.forge")) + ": " + Lang.nonNull(provider.getForge(), controller.getSettings().get("forge")));
         else
-            lblForge.setText("Forge not installed");
+            lblForge.setText(Main.i18n("install.installer.not_installed", Main.i18n("install.installer.forge")));
 
         btnLiteLoader.setDisable(provider.getLiteLoader() != null);
         if (provider.getLiteLoader() != null || controller.getSettings().containsKey("liteloader"))
-            lblLiteLoader.setText("LiteLoader Versoin: " + Lang.nonNull(provider.getLiteLoader(), controller.getSettings().get("liteloader")));
+            lblLiteLoader.setText(Main.i18n("install.installer.version", Main.i18n("install.installer.liteloader")) + ": " + Lang.nonNull(provider.getLiteLoader(), controller.getSettings().get("liteloader")));
         else
-            lblLiteLoader.setText("LiteLoader not installed");
+            lblLiteLoader.setText(Main.i18n("install.installer.not_installed", Main.i18n("install.installer.liteloader")));
 
         btnOptiFine.setDisable(provider.getOptiFine() != null);
         if (provider.getOptiFine() != null || controller.getSettings().containsKey("optifine"))
-            lblOptiFine.setText("OptiFine Versoin: " + Lang.nonNull(provider.getOptiFine(), controller.getSettings().get("optifine")));
+            lblOptiFine.setText(Main.i18n("install.installer.version", Main.i18n("install.installer.optifine")) + ": " + Lang.nonNull(provider.getOptiFine(), controller.getSettings().get("optifine")));
         else
-            lblOptiFine.setText("OptiFine not installed");
+            lblOptiFine.setText(Main.i18n("install.installer.not_installed", Main.i18n("install.installer.optifine")));
 
     }
 
-        @Override public void cleanup(Map<String, Object> settings) {
-            settings.remove(INSTALLER_TYPE);
-        }
+    @Override
+    public void cleanup(Map<String, Object> settings) {
+        settings.remove(INSTALLER_TYPE);
+    }
 
-        public void onInstall() {
-        controller.onFinish();
-        }
-
-        public static final String INSTALLER_TYPE = "INSTALLER_TYPE";
+    public static final String INSTALLER_TYPE = "INSTALLER_TYPE";
 }

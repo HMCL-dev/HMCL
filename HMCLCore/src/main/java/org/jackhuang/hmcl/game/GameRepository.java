@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.task.Task;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -68,6 +70,10 @@ public interface GameRepository extends VersionProvider {
      * You'd better execute this method in a new thread.
      */
     void refreshVersions();
+
+    default Task refreshVersionsAsync() {
+        return Task.of(this::refreshVersions);
+    }
 
     /**
      * Gets the root folder of specific version.

@@ -37,13 +37,12 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
-import org.jackhuang.hmcl.ui.LaunchingStepsPane;
+import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.ui.LogWindow;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.util.*;
 
 import java.io.*;
-import java.nio.Buffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -52,10 +51,11 @@ public final class LauncherHelper {
     public static final LauncherHelper INSTANCE = new LauncherHelper();
     private LauncherHelper(){}
 
-    private final LaunchingStepsPane launchingStepsPane = new LaunchingStepsPane();
+    private TaskExecutor executor;
     public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
+    private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(() -> {});
 
-    public void launch(String selectedVersion, String launcherName) {
+    public void launch(String selectedVersion, File scriptFile) {
         Profile profile = Settings.INSTANCE.getSelectedProfile();
         GameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
@@ -67,12 +67,12 @@ public final class LauncherHelper {
         VersionSetting setting = profile.getVersionSetting(selectedVersion);
 
         Controllers.dialog(launchingStepsPane);
-        TaskExecutor executor = Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES))
+        executor = Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES))
                 .then(dependencyManager.checkGameCompletionAsync(version))
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.MODS)))
                 .then(new CurseCompletionTask(dependencyManager, selectedVersion))
-                .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGIN)))
-                .then(Task.of(variables -> {
+                .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN)))
+                .then(Task.of(Main.i18n("account.methods"), variables -> {
                     try {
                         variables.set("account", account.logIn(HMCLMultiCharacterSelector.INSTANCE, Settings.INSTANCE.getProxy()));
                     } catch (AuthenticationException e) {
@@ -87,22 +87,24 @@ public final class LauncherHelper {
                     ));
                 }))
                 .then(variables -> {
-                    if (launcherName == null) {
-                        return variables.<DefaultLauncher>get("launcher").launchAsync();
+                    if (scriptFile == null) {
+                        return variables.<DefaultLauncher>get("launcher").launchAsync().setName("version.launch");
                     } else {
-                        variables.set("script", variables.<DefaultLauncher>get("launcher").makeLaunchScript(launcherName));
-                        return null;
+                        return variables.<DefaultLauncher>get("launcher").makeLaunchScriptAsync(scriptFile).setName("version.launch");
                     }
                 })
                 .then(Task.of(variables -> {
-                    if (launcherName == null) {
+                    if (scriptFile == null) {
                         PROCESSES.add(variables.get(DefaultLauncher.LAUNCH_ASYNC_ID));
                         if (setting.getLauncherVisibility() == LauncherVisibility.CLOSE)
                             Main.stopApplication();
-                    }
+                    } else
+                        Platform.runLater(() ->
+                                Controllers.dialog(Main.i18n("version.launch_script.success", scriptFile.getAbsolutePath())));
                 }))
                 .executor();
 
+        launchingStepsPane.setExecutor(executor);
         executor.addTaskListener(new TaskListener() {
             AtomicInteger finished = new AtomicInteger(0);
 
@@ -111,17 +113,6 @@ public final class LauncherHelper {
                 finished.incrementAndGet();
                 Platform.runLater(() -> {
                     launchingStepsPane.setProgress(1.0 * finished.get() / executor.getRunningTasks());
-                });
-            }
-
-            @Override
-            public void onTerminate(AutoTypingMap<String> variables) {
-                Platform.runLater(() -> {
-                    Controllers.closeDialog();
-
-                    if (variables.containsKey("script")) {
-                        Controllers.dialog(Main.i18n("version.launch_script.success", variables.<File>get("script").getAbsolutePath()));
-                    }
                 });
             }
         });
@@ -163,8 +154,9 @@ public final class LauncherHelper {
         if (state == LoadingState.DONE)
             Controllers.closeDialog();
 
-        launchingStepsPane.setCurrentState(state.toString());
+        launchingStepsPane.setCurrentState(state.getLocalizedMessage());
         launchingStepsPane.setSteps((state.ordinal() + 1) + " / " + LoadingState.values().length);
+        Controllers.dialog(launchingStepsPane);
     }
 
     private void checkExit(LauncherVisibility v) {

@@ -29,15 +29,18 @@ class SimpleTask extends Task {
     private final ExceptionalConsumer<AutoTypingMap<String>, ?> consumer;
     private final Scheduler scheduler;
 
-    public SimpleTask(ExceptionalConsumer<AutoTypingMap<String>, ?> consumer) {
-        this(consumer, Schedulers.defaultScheduler());
+    public SimpleTask(String name, ExceptionalConsumer<AutoTypingMap<String>, ?> consumer) {
+        this(name, consumer, Schedulers.defaultScheduler());
     }
 
-    public SimpleTask(ExceptionalConsumer<AutoTypingMap<String>, ?> consumer, Scheduler scheduler) {
+    public SimpleTask(String name, ExceptionalConsumer<AutoTypingMap<String>, ?> consumer, Scheduler scheduler) {
         this.consumer = consumer;
         this.scheduler = scheduler;
 
-        setName(consumer.toString());
+        if (name == null)
+            setSignificance(TaskSignificance.MINOR);
+        else
+            setName(name);
     }
 
     @Override

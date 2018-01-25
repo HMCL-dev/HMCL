@@ -21,6 +21,7 @@ import com.jfoenix.effects.JFXDepthManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
+import org.jackhuang.hmcl.Main;
 
 import java.util.function.Consumer;
 
@@ -43,7 +44,7 @@ public class InstallerItem extends BorderPane {
         setStyle("-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;");
         JFXDepthManager.setDepth(this, 1);
         lblInstallerArtifact.setText(artifact);
-        lblInstallerVersion.setText(version);
+        lblInstallerVersion.setText(Main.i18n("archive.version") + ": " + version);
     }
 
     public void onDelete() {

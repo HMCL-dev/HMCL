@@ -15,30 +15,70 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui;
+package org.jackhuang.hmcl.ui.construct;
 
+import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXProgressBar;
+import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.construct.TaskListPane;
 
-public class LaunchingStepsPane extends StackPane {
+import java.util.Optional;
+
+public class TaskExecutorDialogPane extends StackPane {
+    private TaskExecutor executor;
+
     @FXML
     private JFXProgressBar pgsTasks;
     @FXML
     private Label lblCurrentState;
     @FXML
     private Label lblSteps;
+    @FXML
+    private JFXButton btnCancel;
+    @FXML
+    private TaskListPane taskListPane;
 
-    public LaunchingStepsPane() {
+    public TaskExecutorDialogPane(Runnable cancel) {
         FXUtils.loadFXML(this, "/assets/fxml/launching-steps.fxml");
 
         FXUtils.limitHeight(this, 200);
         FXUtils.limitWidth(this, 400);
+
+        btnCancel.setOnMouseClicked(e -> {
+            Optional.ofNullable(executor).ifPresent(TaskExecutor::cancel);
+            cancel.run();
+        });
+    }
+
+    public void setExecutor(TaskExecutor executor) {
+        this.executor = executor;
+        taskListPane.setExecutor(executor);
+    }
+
+    public StringProperty currentStateProperty() {
+        return lblCurrentState.textProperty();
+    }
+
+    public String getCurrentState() {
+        return lblCurrentState.getText();
     }
 
     public void setCurrentState(String currentState) {
         lblCurrentState.setText(currentState);
+    }
+
+    public StringProperty stepsProperty() {
+        return lblSteps.textProperty();
+    }
+
+    public String getSteps() {
+        return lblSteps.getText();
     }
 
     public void setSteps(String steps) {
@@ -46,6 +86,9 @@ public class LaunchingStepsPane extends StackPane {
     }
 
     public void setProgress(double progress) {
-        pgsTasks.setProgress(progress);
+        if (progress == Double.MAX_VALUE)
+            pgsTasks.setVisible(false);
+        else
+            pgsTasks.setProgress(progress);
     }
 }

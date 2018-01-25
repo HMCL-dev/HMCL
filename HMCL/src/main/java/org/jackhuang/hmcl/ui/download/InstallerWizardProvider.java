@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
+import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
@@ -78,18 +79,21 @@ public final class InstallerWizardProvider implements WizardProvider {
 
     @Override
     public Object finish(Map<String, Object> settings) {
+        settings.put("success_message", Main.i18n("install.success"));
+        settings.put("failure_message", Main.i18n("install.failed"));
+
         Task ret = Task.empty();
 
         if (settings.containsKey("forge"))
-            ret = ret.with(profile.getDependency().installLibraryAsync(gameVersion, version, "forge", (String) settings.get("forge")));
+            ret = ret.then(profile.getDependency().installLibraryAsync(gameVersion, version, "forge", (String) settings.get("forge")));
 
         if (settings.containsKey("liteloader"))
-            ret = ret.with(profile.getDependency().installLibraryAsync(gameVersion, version, "liteloader", (String) settings.get("liteloader")));
+            ret = ret.then(profile.getDependency().installLibraryAsync(gameVersion, version, "liteloader", (String) settings.get("liteloader")));
 
         if (settings.containsKey("optifine"))
-            ret = ret.with(profile.getDependency().installLibraryAsync(gameVersion, version, "optifine", (String) settings.get("optifine")));
+            ret = ret.then(profile.getDependency().installLibraryAsync(gameVersion, version, "optifine", (String) settings.get("optifine")));
 
-        return ret.with(Task.of(profile.getRepository()::refreshVersions));
+        return ret.then(profile.getRepository().refreshVersionsAsync());
     }
 
     @Override

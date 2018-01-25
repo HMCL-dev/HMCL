@@ -21,7 +21,7 @@ import java.util.concurrent.*;
 
 /**
  *
- * @author huang
+ * @author huangyuhui
  */
 public final class Schedulers {
 
@@ -33,7 +33,10 @@ public final class Schedulers {
     private static synchronized ExecutorService getCachedExecutorService() {
         if (CACHED_EXECUTOR == null)
             CACHED_EXECUTOR = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
-                    60, TimeUnit.SECONDS, new SynchronousQueue<>());
+                    60, TimeUnit.SECONDS, new SynchronousQueue<>(), runnable -> {
+                Thread thread = Executors.defaultThreadFactory().newThread(runnable);
+                return thread;
+            });
 
         return CACHED_EXECUTOR;
     }
@@ -42,8 +45,8 @@ public final class Schedulers {
 
     private static synchronized ExecutorService getIOExecutorService() {
         if (IO_EXECUTOR == null)
-            IO_EXECUTOR = Executors.newFixedThreadPool(6, r -> {
-                Thread thread = Executors.defaultThreadFactory().newThread(r);
+            IO_EXECUTOR = Executors.newFixedThreadPool(6, runnable -> {
+                Thread thread = Executors.defaultThreadFactory().newThread(runnable);
                 thread.setDaemon(true);
                 return thread;
             });
@@ -55,8 +58,8 @@ public final class Schedulers {
 
     private static synchronized ExecutorService getSingleExecutorService() {
         if (SINGLE_EXECUTOR == null)
-            SINGLE_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
-                Thread thread = Executors.defaultThreadFactory().newThread(r);
+            SINGLE_EXECUTOR = Executors.newSingleThreadExecutor(runnable -> {
+                Thread thread = Executors.defaultThreadFactory().newThread(runnable);
                 thread.setDaemon(true);
                 return thread;
             });

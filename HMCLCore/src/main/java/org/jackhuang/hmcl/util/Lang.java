@@ -219,16 +219,21 @@ public final class Lang {
 
     public static <T> List<T> merge(Collection<T> a, Collection<T> b) {
         LinkedList<T> result = new LinkedList<>();
-        result.addAll(a);
-        result.addAll(b);
+        if (a != null)
+            result.addAll(a);
+        if (b != null)
+            result.addAll(b);
         return result;
     }
 
     public static <T> List<T> merge(Collection<T> a, Collection<T> b, Collection<T> c) {
         LinkedList<T> result = new LinkedList<>();
-        result.addAll(a);
-        result.addAll(b);
-        result.addAll(c);
+        if (a != null)
+            result.addAll(a);
+        if (b != null)
+            result.addAll(b);
+        if (c != null)
+            result.addAll(c);
         return result;
     }
 

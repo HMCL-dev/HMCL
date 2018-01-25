@@ -79,6 +79,9 @@ public final class GameAssetRefreshTask extends TaskResult<Collection<Pair<File,
         int progress = 0;
         if (index != null)
             for (AssetObject assetObject : index.getObjects().values()) {
+                if (Thread.interrupted())
+                    throw new InterruptedException();
+
                 res.add(new Pair<>(dependencyManager.getGameRepository().getAssetObject(version.getId(), assetIndexInfo.getId(), assetObject), assetObject));
                 updateProgress(++progress, index.getObjects().size());
             }

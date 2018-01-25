@@ -61,10 +61,9 @@ public abstract class Launcher {
     }
 
     /**
-     * @param file The file path without extension
-     * @return the actual file with extension sh or bat.
+     * @param file the file path.
      */
-    public abstract File makeLaunchScript(String file) throws IOException;
+    public abstract void makeLaunchScript(File file) throws IOException;
 
     public abstract ManagedProcess launch() throws IOException, InterruptedException;
 

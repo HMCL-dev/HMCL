@@ -10,7 +10,7 @@
          type="StackPane">
     <JFXDialogLayout>
         <heading>
-            <Label id="content" />
+            <Label fx:id="content" />
         </heading>
         <body>
             <JFXTextField fx:id="textField" />

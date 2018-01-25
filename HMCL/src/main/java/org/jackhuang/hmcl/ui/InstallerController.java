@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.download.InstallerWizardProvider;
 
@@ -59,8 +60,8 @@ public class InstallerController {
                 LinkedList<Library> newList = new LinkedList<>(version.getLibraries());
                 newList.remove(library);
                 new VersionJsonSaveTask(profile.getRepository(), version.setLibraries(newList))
-                        .with(Task.of(profile.getRepository()::refreshVersions))
-                        .with(Task.of(() -> loadVersion(this.profile, this.versionId)))
+                        .with(profile.getRepository().refreshVersionsAsync())
+                        .with(Task.of(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId)))
                         .start();
             };
 

@@ -71,9 +71,13 @@ public final class GameAssetDownloadTask extends Task {
     }
     
     @Override
-    public void execute() {
+    public void execute() throws Exception {
         int size = refreshTask.getResult().size();
+        int downloaded = 0;
         for (Map.Entry<File, AssetObject> entry : refreshTask.getResult()) {
+            if (Thread.interrupted())
+                throw new InterruptedException();
+
             File file = entry.getKey();
             AssetObject assetObject = entry.getValue();
             String url = dependencyManager.getDownloadProvider().getAssetBaseURL() + assetObject.getLocation();
@@ -84,7 +88,6 @@ public final class GameAssetDownloadTask extends Task {
             if (file.isDirectory())
                 continue;
             boolean flag = true;
-            int downloaded = 0;
             try {
                 // check the checksum of file to ensure that the file is not need to re-download.
                 if (file.exists()) {

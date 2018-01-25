@@ -165,7 +165,7 @@ public final class JavaVersion implements Serializable {
         return JAVAS;
     }
 
-    public static synchronized void initialize() throws IOException, InterruptedException {
+    public static synchronized void initialize() throws IOException {
         if (JAVAS != null)
             throw new IllegalStateException("JavaVersions have already been initialized.");
         HashMap<String, JavaVersion> temp = new HashMap<>();

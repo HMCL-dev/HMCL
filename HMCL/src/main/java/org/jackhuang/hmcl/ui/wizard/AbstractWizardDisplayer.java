@@ -39,61 +39,10 @@ public interface AbstractWizardDisplayer extends WizardDisplayer {
     Queue<Object> getCancelQueue();
 
     @Override
-    default void handleDeferredWizardResult(Map<String, Object> settings, DeferredWizardResult deferredWizardResult) {
-        VBox vbox = new VBox();
-        JFXProgressBar progressBar = new JFXProgressBar();
-        Label label = new Label();
-        progressBar.setMaxHeight(10);
-        vbox.getChildren().addAll(progressBar, label);
-
-        StackPane root = new StackPane();
-        root.getChildren().add(vbox);
-        navigateTo(root, Navigation.NavigationDirection.FINISH);
-
-        getCancelQueue().add(Lang.thread(() -> {
-            deferredWizardResult.start(settings, new ResultProgressHandle() {
-                private boolean running = true;
-
-                @Override
-                public void setProgress(int currentStep, int totalSteps) {
-                    progressBar.setProgress(1.0 * currentStep / totalSteps);
-                }
-
-                @Override
-                public void setProgress(String description, int currentStep, int totalSteps) {
-                    label.setText(description);
-                    progressBar.setProgress(1.0 * currentStep / totalSteps);
-                }
-
-                @Override
-                public void setBusy(String description) {
-                    progressBar.setProgress(JFXProgressBar.INDETERMINATE_PROGRESS);
-                }
-
-                @Override
-                public void finished(Object result) {
-                    running = false;
-                }
-
-                @Override
-                public void failed(String message, boolean canNavigateBack) {
-                    running = false;
-                }
-
-                @Override
-                public boolean isRunning() {
-                    return running;
-                }
-            });
-
-            Platform.runLater(this::navigateToSuccess);
-        }));
-    }
-
-    @Override
     default void handleTask(Map<String, Object> settings, Task task) {
         TaskExecutor executor = task.with(Task.of(Schedulers.javafx(), this::navigateToSuccess)).executor();
-        TaskListPane pane = new TaskListPane(executor, () -> Platform.runLater(AbstractWizardDisplayer.this::navigateToSuccess));
+        TaskListPane pane = new TaskListPane();
+        pane.setExecutor(executor);
         navigateTo(pane, Navigation.NavigationDirection.FINISH);
         getCancelQueue().add(executor);
         executor.start();

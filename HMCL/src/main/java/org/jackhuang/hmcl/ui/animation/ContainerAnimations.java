@@ -31,53 +31,57 @@ public enum ContainerAnimations {
      * A fade between the old and new view
      */
     FADE(c ->
-            Arrays.asList(new KeyFrame(Duration.ZERO, new KeyValue(c.getSnapshot().opacityProperty(), 1.0D, Interpolator.EASE_BOTH)),
-                    new KeyFrame(c.getDuration(), new KeyValue(c.getSnapshot().opacityProperty(), 0.0D, Interpolator.EASE_BOTH)))),
+            Arrays.asList(new KeyFrame(Duration.ZERO,
+                            new KeyValue(c.getPreviousNode().opacityProperty(), 1.0D, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getCurrentNode().opacityProperty(), 0.0D, Interpolator.EASE_BOTH)),
+                    new KeyFrame(c.getDuration(),
+                            new KeyValue(c.getPreviousNode().opacityProperty(), 0.0D, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getCurrentNode().opacityProperty(), 1.0D, Interpolator.EASE_BOTH)))),
     /**
      * A zoom effect
      */
     ZOOM_IN(c ->
             Arrays.asList(new KeyFrame(Duration.ZERO,
-                            new KeyValue(c.getSnapshot().scaleXProperty(), 1, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getSnapshot().scaleYProperty(), 1, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getSnapshot().opacityProperty(), 1.0D, Interpolator.EASE_BOTH)),
+                            new KeyValue(c.getPreviousNode().scaleXProperty(), 1, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().scaleYProperty(), 1, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().opacityProperty(), 1.0D, Interpolator.EASE_BOTH)),
                     new KeyFrame(c.getDuration(),
-                            new KeyValue(c.getSnapshot().scaleXProperty(), 4, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getSnapshot().scaleYProperty(), 4, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getSnapshot().opacityProperty(), 0, Interpolator.EASE_BOTH)))),
+                            new KeyValue(c.getPreviousNode().scaleXProperty(), 4, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().scaleYProperty(), 4, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().opacityProperty(), 0, Interpolator.EASE_BOTH)))),
     /**
      * A zoom effect
      */
     ZOOM_OUT(c ->
             (Arrays.asList(new KeyFrame(Duration.ZERO,
-                            new KeyValue(c.getSnapshot().scaleXProperty(), 1, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getSnapshot().scaleYProperty(), 1, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getSnapshot().opacityProperty(), 1.0D, Interpolator.EASE_BOTH)),
+                            new KeyValue(c.getPreviousNode().scaleXProperty(), 1, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().scaleYProperty(), 1, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().opacityProperty(), 1.0D, Interpolator.EASE_BOTH)),
                     new KeyFrame(c.getDuration(),
-                            new KeyValue(c.getSnapshot().scaleXProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getSnapshot().scaleYProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getSnapshot().opacityProperty(), 0, Interpolator.EASE_BOTH))))),
+                            new KeyValue(c.getPreviousNode().scaleXProperty(), 0, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().scaleYProperty(), 0, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().opacityProperty(), 0, Interpolator.EASE_BOTH))))),
     /**
      * A swipe effect
      */
     SWIPE_LEFT(c ->
             Arrays.asList(new KeyFrame(Duration.ZERO,
-                            new KeyValue(c.getCurrentRoot().translateXProperty(), c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH),
-                            new KeyValue(c.getSnapshot().translateXProperty(), -c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH)),
+                            new KeyValue(c.getCurrentNode().translateXProperty(), c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().translateXProperty(), 0, Interpolator.EASE_BOTH)),
                     new KeyFrame(c.getDuration(),
-                            new KeyValue(c.getCurrentRoot().translateXProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getSnapshot().translateXProperty(), -c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH)))),
+                            new KeyValue(c.getCurrentNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().translateXProperty(), -c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH)))),
 
     /**
      * A swipe effect
      */
     SWIPE_RIGHT(c ->
             Arrays.asList(new KeyFrame(Duration.ZERO,
-                            new KeyValue(c.getCurrentRoot().translateXProperty(), -c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH),
-                            new KeyValue(c.getSnapshot().translateXProperty(), c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH)),
+                            new KeyValue(c.getCurrentNode().translateXProperty(), -c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().translateXProperty(), 0, Interpolator.EASE_BOTH)),
                     new KeyFrame(c.getDuration(),
-                            new KeyValue(c.getCurrentRoot().translateXProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getSnapshot().translateXProperty(), c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH))));
+                            new KeyValue(c.getCurrentNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().translateXProperty(), c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH))));
 
     private AnimationProducer animationProducer;
 

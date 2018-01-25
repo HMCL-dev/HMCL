@@ -44,6 +44,11 @@ public final class Summary {
         this.result = result;
     }
 
+    public Summary(Node component, Object result) {
+        this.component = component;
+        this.result = result;
+    }
+
     /**
      * The component that will display the summary information
      */

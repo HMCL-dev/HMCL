@@ -428,7 +428,7 @@ public class Settings {
     }
 
     private void onProfileChanged() {
-        getSelectedProfile().getRepository().refreshVersions();
+        getSelectedProfile().getRepository().refreshVersionsAsync().start();
         EventBus.EVENT_BUS.fireEvent(new ProfileChangedEvent(SETTINGS, getSelectedProfile()));
     }
 

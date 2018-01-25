@@ -24,6 +24,8 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 
+import java.util.Optional;
+
 public final class MessageDialogPane extends StackPane {
     private final String text;
     private final JFXDialog dialog;
@@ -32,13 +34,22 @@ public final class MessageDialogPane extends StackPane {
     private JFXButton acceptButton;
     @FXML
     private Label content;
+    @FXML
+    private Label title;
 
-    public MessageDialogPane(String text, JFXDialog dialog) {
+    public MessageDialogPane(String text, String title, JFXDialog dialog, Runnable onAccept) {
         this.text = text;
         this.dialog = dialog;
 
         FXUtils.loadFXML(this, "/assets/fxml/message-dialog.fxml");
+
+        if (title != null)
+            this.title.setText(title);
+
         content.setText(text);
-        acceptButton.setOnMouseClicked(e -> dialog.close());
+        acceptButton.setOnMouseClicked(e -> {
+            dialog.close();
+            Optional.ofNullable(onAccept).ifPresent(Runnable::run);
+        });
     }
 }

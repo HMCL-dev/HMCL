@@ -51,6 +51,7 @@ class SchedulerImpl extends Scheduler {
             } finally {
                 latch.countDown();
             }
+            Thread.interrupted(); // clear the `interrupted` flag to prevent from interrupting EventDispatch thread.
         });
 
         return new Future<Void>() {

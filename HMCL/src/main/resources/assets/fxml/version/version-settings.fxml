@@ -19,7 +19,9 @@
 
                 <BorderPane> <!-- Icon -->
                     <left>
-                        <Label text="settings.icon" />
+                        <VBox alignment="CENTER_LEFT">
+                            <Label text="%settings.icon" />
+                        </VBox>
                     </left>
                     <right>
                         <HBox alignment="CENTER_RIGHT" spacing="8">

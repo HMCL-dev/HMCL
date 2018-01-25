@@ -56,7 +56,7 @@
         <bottom>
             <HBox alignment="CENTER">
                 <JFXButton fx:id="btnInstall" onMouseClicked="#onInstall" prefWidth="100" prefHeight="40"
-                           buttonType="RAISED" text="%ui.button.install" styleClass="jfx-button-raised"/>
+                           buttonType="RAISED" text="%button.install" styleClass="jfx-button-raised"/>
             </HBox>
         </bottom>
     </BorderPane>

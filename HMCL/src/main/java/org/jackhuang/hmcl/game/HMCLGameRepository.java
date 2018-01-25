@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
@@ -109,15 +110,13 @@ public class HMCLGameRepository extends DefaultGameRepository {
     @Override
     public void refreshVersions() {
         EventBus.EVENT_BUS.fireEvent(new RefreshingVersionsEvent(this));
-        Schedulers.newThread().schedule(() -> {
-            refreshVersionsImpl();
-            EventBus.EVENT_BUS.fireEvent(new RefreshedVersionsEvent(this));
-        });
+        refreshVersionsImpl();
+        EventBus.EVENT_BUS.fireEvent(new RefreshedVersionsEvent(this));
     }
 
     public void changeDirectory(File newDirectory) {
         setBaseDirectory(newDirectory);
-        refreshVersions();
+        refreshVersionsAsync().start();
     }
 
     private void checkModpack() {

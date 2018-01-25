@@ -24,6 +24,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Toggle;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
@@ -73,6 +74,7 @@ public final class VersionSettingsController {
     @FXML private MultiFileItem javaItem;
     @FXML private MultiFileItem gameDirItem;
     @FXML private JFXToggleButton chkShowLogs;
+    @FXML private JFXButton btnIconSelection;
     @FXML private ImageView iconView;
 
     public void initialize() {
@@ -114,6 +116,8 @@ public final class VersionSettingsController {
                 gameDirItem.createChildren(Main.i18n("advancedsettings.game_dir.default"), EnumGameDirectory.ROOT_FOLDER),
                 gameDirItem.createChildren(Main.i18n("advancedsettings.game_dir.independent"), EnumGameDirectory.VERSION_FOLDER)
         ));
+
+        FXUtils.installTooltip(btnIconSelection, 0, 5000, 0, new Tooltip(Main.i18n("button.edit")));
     }
 
     public void loadVersionSetting(Profile profile, String versionId, VersionSetting versionSetting) {
@@ -245,7 +249,7 @@ public final class VersionSettingsController {
 
     public void onExploreIcon() {
         FileChooser chooser = new FileChooser();
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Image", "*.png"));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(Main.i18n("extension.png"), "*.png"));
         File selectedFile = chooser.showOpenDialog(Controllers.getStage());
         if (selectedFile != null) {
             File iconFile = profile.getRepository().getVersionIcon(versionId);

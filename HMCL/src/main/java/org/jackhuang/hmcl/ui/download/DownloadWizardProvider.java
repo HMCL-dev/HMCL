@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
+import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
@@ -77,7 +78,7 @@ public final class DownloadWizardProvider implements WizardProvider {
         profile.getRepository().markVersionAsModpack(name);
 
         Task finalizeTask = Task.of(() -> {
-            profile.getRepository().refreshVersions();
+            profile.getRepository().refreshVersionsAsync().start();
             VersionSetting vs = profile.specializeVersionSetting(name);
             profile.getRepository().undoMark(name);
             if (vs != null)
@@ -99,6 +100,9 @@ public final class DownloadWizardProvider implements WizardProvider {
 
     @Override
     public Object finish(Map<String, Object> settings) {
+        settings.put("success_message", Main.i18n("install.success"));
+        settings.put("failure_message", Main.i18n("install.failed"));
+
         switch (Lang.parseInt(settings.get(InstallTypePage.INSTALL_TYPE), -1)) {
             case 0: return finishVersionDownloadingAsync(settings);
             case 1: return finishModpackInstallingAsync(settings);

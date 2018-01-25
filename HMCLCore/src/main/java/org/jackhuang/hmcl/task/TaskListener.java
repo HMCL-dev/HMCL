@@ -27,6 +27,9 @@ import java.util.EventListener;
  */
 public abstract class TaskListener implements EventListener {
 
+    public void onStart() {
+    }
+
     public void onReady(Task task) {
     }
 
@@ -40,6 +43,9 @@ public abstract class TaskListener implements EventListener {
     }
 
     public void onTerminate(AutoTypingMap<String> variables) {
+    }
+
+    public void onSucceed() {
     }
 
     public static class DefaultTaskListener extends TaskListener {

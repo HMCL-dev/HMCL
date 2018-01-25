@@ -51,7 +51,7 @@
                                 </RequiredFieldValidator>
                             </validators>
                         </JFXTextField>
-                        <JFXPasswordField fx:id="txtPassword" promptText="%ui.label.password" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2">
+                        <JFXPasswordField fx:id="txtPassword" promptText="%login.password" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2">
                             <validators>
                                 <RequiredFieldValidator message="%input.not_empty">
                                 </RequiredFieldValidator>

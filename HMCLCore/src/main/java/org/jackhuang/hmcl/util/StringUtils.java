@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -60,6 +62,19 @@ public final class StringUtils {
         String str = cmdbuf.toString();
 
         return str;
+    }
+
+    public static String getStackTrace(Throwable throwable) {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        throwable.printStackTrace(new PrintStream(stream));
+        return stream.toString();
+    }
+
+    public static String getStackTrace(StackTraceElement[] elements) {
+        StringBuilder builder = new StringBuilder();
+        for (StackTraceElement element : elements)
+            builder.append("\tat ").append(element).append(OperatingSystem.LINE_SEPARATOR);
+        return builder.toString();
     }
 
     public static boolean isBlank(String str) {

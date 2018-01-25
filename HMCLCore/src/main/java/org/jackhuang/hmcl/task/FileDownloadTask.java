@@ -212,6 +212,7 @@ public class FileDownloadTask extends Task {
                 if (temp != null)
                     temp.delete();
                 Logging.LOG.log(Level.WARNING, "Unable to download file " + currentURL, e);
+                exception = e;
             } finally {
                 closeFiles();
             }

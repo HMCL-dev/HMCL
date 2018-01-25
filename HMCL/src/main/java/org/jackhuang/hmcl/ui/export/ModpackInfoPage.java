@@ -104,7 +104,7 @@ public final class ModpackInfoPage extends StackPane implements WizardPage {
 
     public static final String MODPACK_NAME = "modpack.name";
     public static final String MODPACK_VERSION = "modpack.version";
-    public static final String MODPACK_AUTHOR = "modpack.author";
+    public static final String MODPACK_AUTHOR = "archive.author";
     public static final String MODPACK_DESCRIPTION = "modpack.description";
     public static final String MODPACK_INCLUDE_LAUNCHER = "modpack.include_launcher";
     public static final String MODPACK_FILE = "modpack.file";

@@ -24,6 +24,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.mod.ModInfo;
 
 import java.util.function.Consumer;
@@ -54,7 +55,7 @@ public final class ModItem extends BorderPane {
         setStyle("-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;");
         JFXDepthManager.setDepth(this, 1);
         lblModFileName.setText(info.getFileName());
-        lblModAuthor.setText(info.getName() + ", Version: " + info.getVersion() + ", Game: " + info.getGameVersion() + ", Authors: " + info.getAuthors());
+        lblModAuthor.setText(info.getName() + ", " + Main.i18n("archive.version") + ": " + info.getVersion() + ", " + Main.i18n("archive.game_version") + ": " + info.getGameVersion() + ", " + Main.i18n("archive.author") + ": " + info.getAuthors());
         chkEnabled.setSelected(info.isActive());
         chkEnabled.selectedProperty().addListener((a, b, newValue) -> {
             info.activeProperty().set(newValue);

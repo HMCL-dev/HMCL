@@ -125,8 +125,8 @@ public final class ForgeInstallTask extends TaskResult<Version> {
             
             setResult(installProfile.getVersionInfo()
                     .setInheritsFrom(version.getId())
-                    .resolve(provider)
-                    .setId(version.getId()).setLogging(Collections.EMPTY_MAP));
+                    .resolve(provider).setJar(null)
+                    .setId(version.getId()).setLogging(Collections.emptyMap()));
             
             dependencies.add(new GameLibrariesTask(dependencyManager, installProfile.getVersionInfo()));
         }

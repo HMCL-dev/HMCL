@@ -17,10 +17,22 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.Main;
+
 public enum LoadingState {
-    DEPENDENCIES,
-    MODS,
-    LOGIN,
-    LAUNCHING,
-    DONE
+    DEPENDENCIES("launch.state.dependencies"),
+    MODS("launch.state.modpack"),
+    LOGGING_IN("launch.state.logging_in"),
+    LAUNCHING("launch.state.waiting_launching"),
+    DONE("");
+
+    private final String key;
+
+    LoadingState(String key) {
+        this.key = key;
+    }
+
+    public String getLocalizedMessage() {
+        return Main.i18n(key);
+    }
 }

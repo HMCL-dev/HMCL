@@ -4,13 +4,19 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import com.jfoenix.controls.JFXButton?>
+
+<?import org.jackhuang.hmcl.ui.construct.TaskListPane?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
     <JFXProgressBar fx:id="pgsTasks" StackPane.alignment="TOP_CENTER" />
-    <VBox alignment="CENTER">
+    <VBox alignment="TOP_CENTER" style="-fx-padding: 16px;">
         <Label fx:id="lblCurrentState" style="-fx-font-size: 20px;" />
         <Label fx:id="lblSteps" style="-fx-font-size: 14px;" />
+        <TaskListPane fx:id="taskListPane" />
     </VBox>
-
+    <StackPane pickOnBounds="false" style="-fx-padding: 8px;">
+        <JFXButton StackPane.alignment="BOTTOM_RIGHT" fx:id="btnCancel" text="%button.cancel" />
+    </StackPane>
 </fx:root>

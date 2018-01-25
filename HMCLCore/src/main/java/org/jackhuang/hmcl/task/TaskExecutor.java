@@ -23,10 +23,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -66,17 +63,22 @@ public final class TaskExecutor {
         this.scheduler = Objects.requireNonNull(scheduler);
     }
 
-    public void start() {
+    public TaskExecutor start() {
+        taskListeners.forEach(TaskListener::onStart);
         workerQueue.add(scheduler.schedule(() -> {
-            if (!executeTasks(Collections.singleton(firstTask)))
+            if (executeTasks(Collections.singleton(firstTask)))
+                taskListeners.forEach(TaskListener::onSucceed);
+            else
                 taskListeners.forEach(it -> {
                     it.onTerminate();
                     it.onTerminate(variables);
                 });
         }));
+        return this;
     }
 
     public boolean test() {
+        taskListeners.forEach(TaskListener::onStart);
         AtomicBoolean flag = new AtomicBoolean(true);
         Future<?> future = scheduler.schedule(() -> {
             if (!executeTasks(Collections.singleton(firstTask))) {
@@ -85,7 +87,8 @@ public final class TaskExecutor {
                     it.onTerminate(variables);
                 });
                 flag.set(false);
-            }
+            } else
+                taskListeners.forEach(TaskListener::onSucceed);
         });
         workerQueue.add(future);
         Lang.invoke(() -> future.get());
@@ -128,7 +131,11 @@ public final class TaskExecutor {
         if (canceled)
             return false;
 
-        latch.await();
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            return false;
+        }
         return success.get() && !canceled;
     }
 
@@ -156,8 +163,10 @@ public final class TaskExecutor {
                 variables.set(taskResult.getId(), taskResult.getResult());
             }
 
-            if (!executeTasks(task.getDependencies()) && task.isRelyingOnDependencies())
-                throw new IllegalStateException("Subtasks failed for " + task.getName());
+            if (!executeTasks(task.getDependencies()) && task.isRelyingOnDependencies()) {
+                Logging.LOG.severe("Subtasks failed for " + task.getName());
+                return false;
+            }
 
             flag = true;
             if (task.getSignificance().shouldLog()) {
@@ -169,7 +178,7 @@ public final class TaskExecutor {
         } catch (InterruptedException e) {
             if (task.getSignificance().shouldLog()) {
                 lastException = e;
-                Logging.LOG.log(Level.FINE, "Task aborted: " + task.getName(), e);
+                Logging.LOG.log(Level.FINE, "Task aborted: " + task.getName());
                 task.onDone().fireEvent(new TaskEvent(this, task, true));
                 taskListeners.forEach(it -> it.onFailed(task, e));
             }
@@ -178,12 +187,10 @@ public final class TaskExecutor {
         } catch (RejectedExecutionException e) {
             return false;
         } catch (Exception e) {
-            if (task.getSignificance().shouldLog()) {
-                lastException = e;
-                Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
-                task.onDone().fireEvent(new TaskEvent(this, task, true));
-                taskListeners.forEach(it -> it.onFailed(task, e));
-            }
+            lastException = e;
+            Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
+            task.onDone().fireEvent(new TaskEvent(this, task, true));
+            taskListeners.forEach(it -> it.onFailed(task, e));
         } finally {
             task.setVariables(null);
         }
@@ -209,7 +216,8 @@ public final class TaskExecutor {
         @Override
         public void run() {
             try {
-                Thread.currentThread().setName(task.getName());
+                if (Thread.currentThread().getName().contains("pool"))
+                    Thread.currentThread().setName(task.getName());
                 if (!executeTask(task))
                     success.set(false);
             } finally {

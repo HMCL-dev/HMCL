@@ -34,13 +34,13 @@
                         <RequiredFieldValidator message="%modpack.not_a_valid_name"/>
                     </validators>
                 </JFXTextField>
-                <JFXTextField labelFloat="true" promptText="%modpack.author" fx:id="txtModpackAuthor"
+                <JFXTextField labelFloat="true" promptText="%archive.author" fx:id="txtModpackAuthor"
                               StackPane.margin="$insets">
                     <validators>
                         <RequiredFieldValidator/>
                     </validators>
                 </JFXTextField>
-                <JFXTextField labelFloat="true" promptText="%ui.label.version" fx:id="txtModpackVersion" text="1.0"
+                <JFXTextField labelFloat="true" promptText="%archive.version" fx:id="txtModpackVersion" text="1.0"
                               StackPane.margin="$insets">
                     <validators>
                         <RequiredFieldValidator/>

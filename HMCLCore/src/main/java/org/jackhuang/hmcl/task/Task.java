@@ -87,8 +87,9 @@ public abstract class Task {
         return name;
     }
 
-    public void setName(String name) {
+    public Task setName(String name) {
         this.name = name;
+        return this;
     }
 
     private AutoTypingMap<String> variables = null;
@@ -131,7 +132,7 @@ public abstract class Task {
 
     private long lastTime = Long.MIN_VALUE;
     private final AtomicReference<Double> progressUpdate = new AtomicReference<>();
-    private final ReadOnlyDoubleWrapper progress = new ReadOnlyDoubleWrapper(this, "progress", 0);
+    private final ReadOnlyDoubleWrapper progress = new ReadOnlyDoubleWrapper(this, "progress", -1);
 
     public ReadOnlyDoubleProperty progressProperty() {
         return progress.getReadOnlyProperty();
@@ -244,20 +245,36 @@ public abstract class Task {
         });
     }
 
+    public static Task of(String name, ExceptionalRunnable<?> runnable) {
+        return of(name, s -> runnable.run());
+    }
+
     public static Task of(ExceptionalRunnable<?> runnable) {
         return of(s -> runnable.run());
+    }
+
+    public static Task of(String name, ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
+        return of(name, Schedulers.defaultScheduler(), closure);
     }
 
     public static Task of(ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
         return of(Schedulers.defaultScheduler(), closure);
     }
 
+    public static Task of(String name, Scheduler scheduler, ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
+        return new SimpleTask(name, closure, scheduler);
+    }
+
     public static Task of(Scheduler scheduler, ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
-        return new SimpleTask(closure, scheduler);
+        return of(null, scheduler, closure);
+    }
+
+    public static Task of(String name, Scheduler scheduler, ExceptionalRunnable<?> closure) {
+        return new SimpleTask(name, i -> closure.run(), scheduler);
     }
 
     public static Task of(Scheduler scheduler, ExceptionalRunnable<?> closure) {
-        return new SimpleTask(i -> closure.run(), scheduler);
+        return of(null, scheduler, closure);
     }
 
     public static <V> TaskResult<V> ofResult(String id, Callable<V> callable) {

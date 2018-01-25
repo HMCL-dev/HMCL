@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.launch;
 
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.task.SimpleTaskResult;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.*;
 
@@ -274,23 +276,18 @@ public class DefaultLauncher extends Launcher {
     }
 
     public final TaskResult<ManagedProcess> launchAsync() {
-        return new TaskResult<ManagedProcess>() {
-            @Override
-            public String getId() {
-                return LAUNCH_ASYNC_ID;
-            }
-
-            @Override
-            public void execute() throws Exception {
-                setResult(launch());
-            }
-        };
+        return new SimpleTaskResult<>(LAUNCH_ASYNC_ID, this::launch);
     }
 
     @Override
-    public File makeLaunchScript(String file) throws IOException {
+    public void makeLaunchScript(File scriptFile) throws IOException {
         boolean isWindows = OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS;
-        File scriptFile = new File(file + (isWindows ? ".bat" : ".sh"));
+
+        if (isWindows && !FileUtils.getExtension(scriptFile).equals("bat"))
+            throw new IOException("The extension of " + scriptFile + " is not 'bat' in Windows");
+        else if (!isWindows && !FileUtils.getExtension(scriptFile).equals("sh"))
+            throw new IOException("The extension of " + scriptFile + " is not 'sh' in macOS/Linux");
+
         if (!FileUtils.makeFile(scriptFile))
             throw new IOException("Script file: " + scriptFile + " cannot be created.");
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(scriptFile)))) {
@@ -310,7 +307,10 @@ public class DefaultLauncher extends Launcher {
         }
         if (!scriptFile.setExecutable(true))
             throw new IOException("Cannot make script file '" + scriptFile + "' executable.");
-        return scriptFile;
+    }
+
+    public final Task makeLaunchScriptAsync(File file) {
+        return Task.of(() -> makeLaunchScript(file));
     }
 
     private void startMonitors(ManagedProcess managedProcess) {
@@ -367,4 +367,5 @@ public class DefaultLauncher extends Launcher {
     }
 
     public static final String LAUNCH_ASYNC_ID = "process";
+    public static final String LAUNCH_SCRIPT_ASYNC_ID = "script";
 }

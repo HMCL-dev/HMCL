@@ -23,6 +23,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
@@ -45,22 +46,26 @@ import java.util.Map;
 import java.util.Optional;
 
 public final class TaskListPane extends StackPane {
-    private final TaskExecutor executor;
     private final AdvancedListBox listBox = new AdvancedListBox();
     private final Map<Task, ProgressListNode> nodes = new HashMap<>();
 
-    public TaskListPane(TaskExecutor executor, Runnable onTerminate) {
-        this.executor = executor;
+    public TaskListPane() {
         listBox.setSpacing(0);
 
+        getChildren().setAll(listBox);
+    }
+
+    public void setExecutor(TaskExecutor executor) {
         executor.addTaskListener(new TaskListener() {
+            @Override
+            public void onStart() {
+                Platform.runLater(listBox::clear);
+            }
+
             @Override
             public void onReady(Task task) {
                 if (!task.getSignificance().shouldShow())
                     return;
-                ProgressListNode node = new ProgressListNode(task);
-                nodes.put(task, node);
-                Platform.runLater(() -> listBox.add(node));
 
                 if (task instanceof GameAssetRefreshTask) {
                     task.setName(Main.i18n("assets.download"));
@@ -83,6 +88,11 @@ public final class TaskListPane extends StackPane {
                 } else if (task instanceof HMCLModpackExportTask) {
                     task.setName(Main.i18n("modpack.export"));
                 }
+
+                ProgressListNode node = new ProgressListNode(task);
+                nodes.put(task, node);
+                Platform.runLater(() -> listBox.add(node));
+
             }
 
             @Override
@@ -101,17 +111,10 @@ public final class TaskListPane extends StackPane {
                     return;
                 Platform.runLater(() -> node.setThrowable(throwable));
             }
-
-            @Override
-            public void onTerminate() {
-                Optional.ofNullable(onTerminate).ifPresent(Runnable::run);
-            }
         });
-
-        getChildren().setAll(listBox);
     }
 
-    private static class ProgressListNode extends StackPane {
+    private static class ProgressListNode extends VBox {
         private final JFXProgressBar bar = new JFXProgressBar();
         private final Label title = new Label();
         private final Label state = new Label();
@@ -124,9 +127,8 @@ public final class TaskListPane extends StackPane {
             BorderPane borderPane = new BorderPane();
             borderPane.setLeft(title);
             borderPane.setRight(state);
-            getChildren().addAll(bar, borderPane);
+            getChildren().addAll(borderPane, bar);
 
-            bar.setMinHeight(20);
             bar.minWidthProperty().bind(widthProperty());
             bar.prefWidthProperty().bind(widthProperty());
             bar.maxWidthProperty().bind(widthProperty());

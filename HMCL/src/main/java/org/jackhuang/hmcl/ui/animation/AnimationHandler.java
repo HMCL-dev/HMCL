@@ -22,7 +22,8 @@ import javafx.scene.layout.Pane;
 import javafx.util.Duration;
 
 public interface AnimationHandler {
-    Node getSnapshot();
     Duration getDuration();
     Pane getCurrentRoot();
+    Node getPreviousNode();
+    Node getCurrentNode();
 }

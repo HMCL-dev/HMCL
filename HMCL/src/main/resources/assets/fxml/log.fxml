@@ -52,7 +52,7 @@
             </StackPane>
             <HBox alignment="CENTER_RIGHT" style="-fx-padding: 0 3 0 3;" spacing="3">
                 <JFXButton onMouseClicked="#onTerminateGame" text="%logwindow.terminate_game" />
-                <JFXButton onMouseClicked="#onClear" text="%ui.button.clear" />
+                <JFXButton onMouseClicked="#onClear" text="%button.clear" />
             </HBox>
     </VBox>
 </fx:root>

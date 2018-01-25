@@ -32,22 +32,24 @@ public final class TransitionHandler implements AnimationHandler {
     private final StackPane view;
     private Timeline animation;
     private Duration duration;
-    private final ImageView snapshot;
+    private Node previousNode, currentNode;
 
     /**
-     * @param view A stack pane that contains another control that is [Parent]
+     * @param view A stack pane that contains another control that is {@link Parent}
      */
     public TransitionHandler(StackPane view) {
         this.view = view;
-
-        snapshot = new ImageView();
-        snapshot.setPreserveRatio(true);
-        snapshot.setSmooth(true);
+        currentNode = view.getChildren().stream().findFirst().orElse(null);
     }
 
     @Override
-    public Node getSnapshot() {
-        return snapshot;
+    public Node getPreviousNode() {
+        return previousNode;
+    }
+
+    @Override
+    public Node getCurrentNode() {
+        return currentNode;
     }
 
     @Override
@@ -76,10 +78,7 @@ public final class TransitionHandler implements AnimationHandler {
         Timeline nowAnimation = new Timeline();
         nowAnimation.getKeyFrames().addAll(transition.animate(this));
         nowAnimation.getKeyFrames().add(new KeyFrame(duration, e -> {
-            snapshot.setImage(null);
-            snapshot.setX(0);
-            snapshot.setY(0);
-            snapshot.setVisible(false);
+            view.getChildren().remove(previousNode);
         }));
         nowAnimation.play();
         animation = nowAnimation;
@@ -87,23 +86,16 @@ public final class TransitionHandler implements AnimationHandler {
 
     private void updateContent(Node newView) {
         if (view.getWidth() > 0 && view.getHeight() > 0) {
-            Node content = view.getChildren().stream().findFirst().orElse(null);
-            WritableImage image;
-            if (content != null && content instanceof Parent) {
-                view.getChildren().setAll();
-                image = FXUtils.takeSnapshot((Parent) content, view.getWidth(), view.getHeight());
-                view.getChildren().setAll(content);
-            } else
-                image = view.snapshot(new SnapshotParameters(), new WritableImage((int) view.getWidth(), (int) view.getHeight()));
-            snapshot.setImage(image);
-            snapshot.setFitWidth(view.getWidth());
-            snapshot.setFitHeight(view.getHeight());
+            previousNode = currentNode;
+            if (previousNode == null)
+                previousNode = NULL;
         } else
-            snapshot.setImage(null);
+            previousNode = NULL;
 
-        snapshot.setVisible(true);
-        snapshot.setOpacity(1.0);
-        view.getChildren().setAll(snapshot, newView);
-        snapshot.toFront();
+        currentNode = newView;
+
+        view.getChildren().setAll(previousNode, currentNode);
     }
+
+    private static final StackPane NULL = new StackPane();
 }
