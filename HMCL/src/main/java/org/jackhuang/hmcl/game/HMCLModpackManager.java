@@ -33,10 +33,26 @@ import java.util.List;
  */
 public final class HMCLModpackManager {
 
-    public static final List<String> MODPACK_BLACK_LIST = Arrays.asList("usernamecache.json", "asm", "logs", "backups", "versions", "assets", "usercache.json", "libraries", "crash-reports", "launcher_profiles.json", "NVIDIA", "AMD", "TCNodeTracker", "screenshots", "natives", "native", "$native", "pack.json", "launcher.jar", "minetweaker.log", "launcher.pack.lzma", "hmclmc.log");
-    public static final List<String> MODPACK_SUGGESTED_BLACK_LIST = Arrays.asList("fonts", "saves", "servers.dat", "options.txt", "optionsof.txt", "journeymap", "optionsshaders.txt", "mods/VoxelMods");
+    public static final List<String> MODPACK_BLACK_LIST = Arrays.asList(
+            "usernamecache.json", "usercache.json", // Minecraft
+            "launcher_profiles.json", "launcher.pack.lzma", // Minecraft Launcher
+            "pack.json", "launcher.jar", "hmclmc.log", // HMCL
+            "manifest.json", "minecraftinstance.json", ".curseclient", // Curse
+            "minetweaker.log", // Mods
+            "logs", "versions", "assets", "libraries", "crash-reports", "NVIDIA", "AMD", "screenshots", "natives", "native", "$native", "server-resource-packs", // Minecraft
+            "downloads", // Curse
+            "asm", "backups", "TCNodeTracker", "CustomDISkins", "data" // Mods
+    );
+    public static final List<String> MODPACK_SUGGESTED_BLACK_LIST = Arrays.asList(
+            "fonts", // BetterFonts
+            "saves", "servers.dat", "options.txt", // Minecraft
+            "blueprints" /* BuildCraft */,
+            "optionsof.txt" /* OptiFine */,
+            "journeymap" /* JourneyMap */,
+            "optionsshaders.txt",
+            "mods/VoxelMods");
 
-    public static ModAdviser MODPACK_PREDICATE = (String fileName, boolean isDirectory) -> {
+    public static ModAdviser.ModSuggestion suggestMod(String fileName, boolean isDirectory) {
         if (match(MODPACK_BLACK_LIST, fileName, isDirectory))
             return ModAdviser.ModSuggestion.HIDDEN;
         if (match(MODPACK_SUGGESTED_BLACK_LIST, fileName, isDirectory))

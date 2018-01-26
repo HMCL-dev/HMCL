@@ -43,7 +43,7 @@ public final class CompressingUtils {
      * @param sourceDir the source directory or a file.
      * @param zipFile the location of dest zip file.
      * @param pathNameCallback callback(pathName, isDirectory) returns your modified pathName
-     * @throws IOException
+     * @throws IOException if there is filesystem error.
      */
     public static void zip(File sourceDir, File zipFile, BiFunction<String, Boolean, String> pathNameCallback) throws IOException {
         try (ZipArchiveOutputStream zos = new ZipArchiveOutputStream(new FileOutputStream(zipFile))) {
@@ -71,6 +71,8 @@ public final class CompressingUtils {
         File[] files = src.isDirectory() ? src.listFiles() : new File[] { src };
         String pathName;// the relative path (relative to the root directory to be compressed)
         byte[] buf = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
+
+        if (files == null) return;
         for (File file : files)
             if (file.isDirectory()) {
                 pathName = file.getPath().substring(basePath.length() + 1) + "/";
@@ -152,48 +154,39 @@ public final class CompressingUtils {
      * @param callback will be called for every entry in the zip file, returns false if you dont want this file being uncompressed.
      * @param ignoreExistentFile true if skip all existent files.
      * @param allowStoredEntriesWithDataDescriptor whether the zip stream will try to read STORED entries that use a data descriptor
-     * @throws IOException
+     * @throws IOException if zip file is malformed or filesystem error.
      */
     public static void unzip(File src, File dest, String subDirectory, Predicate<String> callback, boolean ignoreExistentFile, boolean allowStoredEntriesWithDataDescriptor) throws IOException {
         byte[] buf = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
-        dest.mkdirs();
-        try (ZipArchiveInputStream zipFile = new ZipArchiveInputStream(new FileInputStream(src), null, true, allowStoredEntriesWithDataDescriptor)) {
-            if (src.exists()) {
-                String strPath, gbkPath, strtemp;
-                strPath = dest.getAbsolutePath();
-                ArchiveEntry zipEnt;
-                while ((zipEnt = zipFile.getNextEntry()) != null) {
-                    gbkPath = zipEnt.getName();
+        if (!FileUtils.makeDirectory(dest))
+            throw new IOException("Unable to make directory " + dest);
+        try (ZipArchiveInputStream zipStream = new ZipArchiveInputStream(new FileInputStream(src), null, true, allowStoredEntriesWithDataDescriptor)) {
+            ArchiveEntry entry;
+            while ((entry = zipStream.getNextEntry()) != null) {
+                String path = entry.getName();
 
-                    if (!gbkPath.startsWith(subDirectory))
+                if (!path.startsWith(subDirectory))
+                    continue;
+                path = path.substring(subDirectory.length());
+                if (path.startsWith("/") || path.startsWith("\\"))
+                    path = path.substring(1);
+                File entryFile = new File(dest, path);
+
+                if (callback != null)
+                    if (!callback.test(path))
                         continue;
-                    gbkPath = gbkPath.substring(subDirectory.length());
-                    if (gbkPath.startsWith("/") || gbkPath.startsWith("\\"))
-                        gbkPath = gbkPath.substring(1);
-                    strtemp = strPath + File.separator + gbkPath;
 
-                    if (callback != null)
-                        if (!callback.test(gbkPath))
-                            continue;
+                if (entry.isDirectory()) {
+                    if (!FileUtils.makeDirectory(entryFile))
+                        throw new IOException("Unable to make directory: " + entryFile);
+                } else {
+                    if (!FileUtils.makeDirectory(entryFile.getAbsoluteFile().getParentFile()))
+                        throw new IOException("Unable to make parent directory for file " + entryFile);
 
-                    if (zipEnt.isDirectory()) {
-                        File dir = new File(strtemp);
-                        dir.mkdirs();
-                    } else {
-                        // create directories
-                        String strsubdir = gbkPath;
-                        for (int i = 0; i < strsubdir.length(); i++)
-                            if (strsubdir.substring(i, i + 1).equalsIgnoreCase("/")) {
-                                String temp = strPath + File.separator + strsubdir.substring(0, i);
-                                File subdir = new File(temp);
-                                if (!subdir.exists())
-                                    subdir.mkdir();
-                            }
-                        if (ignoreExistentFile && new File(strtemp).exists())
-                            continue;
-                        try (FileOutputStream fos = new FileOutputStream(new File(strtemp))) {
-                            IOUtils.copyTo(zipFile, fos, buf);
-                        }
+                    if (ignoreExistentFile && entryFile.exists())
+                        continue;
+                    try (FileOutputStream fos = new FileOutputStream(entryFile)) {
+                        IOUtils.copyTo(zipStream, fos, buf);
                     }
                 }
             }

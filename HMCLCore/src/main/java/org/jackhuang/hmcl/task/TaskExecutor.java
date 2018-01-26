@@ -108,7 +108,7 @@ public final class TaskExecutor {
         }
     }
 
-    private boolean executeTasks(Collection<Task> tasks) throws InterruptedException {
+    private boolean executeTasks(Collection<? extends Task> tasks) throws InterruptedException {
         if (tasks.isEmpty())
             return true;
 
@@ -140,8 +140,12 @@ public final class TaskExecutor {
     }
 
     private boolean executeTask(Task task) {
-        if (canceled)
+        if (canceled) {
+            task.setState(Task.TaskState.FAILED);
             return false;
+        }
+
+        task.setState(Task.TaskState.RUNNING);
 
         if (task.getSignificance().shouldLog())
             Logging.LOG.log(Level.FINE, "Executing task: {0}", task.getName());
@@ -165,7 +169,7 @@ public final class TaskExecutor {
 
             if (!executeTasks(task.getDependencies()) && task.isRelyingOnDependencies()) {
                 Logging.LOG.severe("Subtasks failed for " + task.getName());
-                return false;
+                throw new SilentException();
             }
 
             flag = true;
@@ -182,10 +186,8 @@ public final class TaskExecutor {
                 task.onDone().fireEvent(new TaskEvent(this, task, true));
                 taskListeners.forEach(it -> it.onFailed(task, e));
             }
-        } catch (SilentException e) {
+        } catch (SilentException | RejectedExecutionException e) {
             // do nothing
-        } catch (RejectedExecutionException e) {
-            return false;
         } catch (Exception e) {
             lastException = e;
             Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
@@ -194,6 +196,7 @@ public final class TaskExecutor {
         } finally {
             task.setVariables(null);
         }
+        task.setState(flag ? Task.TaskState.SUCCEEDED : Task.TaskState.FAILED);
         return flag;
     }
 

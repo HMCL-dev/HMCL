@@ -17,5 +17,57 @@
  */
 package org.jackhuang.hmcl.mod;
 
-public class MinecraftInstanceTask {
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.FileUtils;
+import org.jackhuang.hmcl.util.IOUtils;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.HashMap;
+import java.util.Map;
+
+public final class MinecraftInstanceTask<T> extends Task {
+
+    private final File zipFile;
+    private final String subDirectory;
+    private final File jsonFile;
+    private final T manifest;
+
+    public MinecraftInstanceTask(File zipFile, String subDirectory, T manifest, File jsonFile) {
+        this.zipFile = zipFile;
+        this.subDirectory = subDirectory;
+        this.manifest = manifest;
+        this.jsonFile = jsonFile;
+
+        if (!zipFile.exists())
+            throw new IllegalArgumentException("File " + zipFile + " does not exist. Cannot parse this modpack.");
+    }
+
+    @Override
+    public void execute() throws Exception {
+        Map<String, ModpackConfiguration.FileInformation> overrides = new HashMap<>();
+
+        byte[] buf = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
+        try (ZipArchiveInputStream zip = new ZipArchiveInputStream(new FileInputStream(zipFile), null, true, true)) {
+            ArchiveEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                String path = entry.getName();
+                if (!path.startsWith(subDirectory) || entry.isDirectory())
+                    continue;
+                path = path.substring(subDirectory.length());
+                if (path.startsWith("/") || path.startsWith("\\"))
+                    path = path.substring(1);
+
+                overrides.put(path, new ModpackConfiguration.FileInformation(
+                        path, DigestUtils.sha1Hex(zip)
+                ));
+            }
+        }
+
+        FileUtils.writeText(jsonFile, Constants.GSON.toJson(new ModpackConfiguration<>(manifest, overrides)));
+    }
 }

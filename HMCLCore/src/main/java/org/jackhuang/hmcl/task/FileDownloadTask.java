@@ -107,6 +107,10 @@ public class FileDownloadTask extends Task {
         return url;
     }
 
+    public File getFile() {
+        return file;
+    }
+
     @Override
     public void execute() throws Exception {
         URL currentURL = url;
@@ -189,12 +193,12 @@ public class FileDownloadTask extends Task {
                     Thread.currentThread().interrupt();
                     break;
                 } else {
-                    if (file.exists())
-                        file.delete();
+                    if (file.exists() || !file.delete())
+                        throw new IOException("Unable to delete existent file " + file);
                     if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
-                        throw new IOException("Cannot make parent directory " + file);
+                        throw new IOException("Unable to make parent directory " + file);
                     if (!temp.renameTo(file))
-                        throw new IOException("Cannot move temp file to " + file);
+                        throw new IOException("Unable move temp file to " + file);
                 }
 
                 if (downloaded != contentLength)

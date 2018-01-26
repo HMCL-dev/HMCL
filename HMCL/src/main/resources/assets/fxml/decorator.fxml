@@ -23,7 +23,7 @@
                         <StackPane minWidth="200" maxWidth="200" styleClass="jfx-decorator-content-container">
                             <BorderPane fx:id="leftRootPane">
                                 <center>
-                                    <BorderPane style="-fx-background-color: rgba(244, 244, 244, 0.5);">
+                                    <BorderPane styleClass="gray-background">
                                         <center>
                                             <AdvancedListBox fx:id="leftPane"/>
                                         </center>

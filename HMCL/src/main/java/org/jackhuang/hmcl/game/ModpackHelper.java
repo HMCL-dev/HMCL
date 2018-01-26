@@ -61,7 +61,7 @@ public final class ModpackHelper {
         }
 
         if (c.isOverrideMemory()) {
-            vs.setPermSize(Optional.ofNullable(c.getPermGen()).map(i -> i.toString()).orElse(""));
+            vs.setPermSize(Optional.ofNullable(c.getPermGen()).map(Object::toString).orElse(""));
             if (c.getMaxMemory() != null)
                 vs.setMaxMemory(c.getMaxMemory());
             vs.setMinMemory(c.getMinMemory());

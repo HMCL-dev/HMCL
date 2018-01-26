@@ -32,6 +32,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * Constants.
@@ -86,4 +87,11 @@ public final class Constants {
             .registerTypeAdapterFactory(LowerCaseEnumTypeAdapterFactory.INSTANCE)
             .create();
 
+    public static <T> Predicate<T> truePredicate() {
+        return s -> true;
+    }
+
+    public static <T> Predicate<T> falsePredicate() {
+        return s -> false;
+    }
 }

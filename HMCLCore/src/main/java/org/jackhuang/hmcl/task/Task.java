@@ -52,6 +52,16 @@ public abstract class Task {
         this.significance = significance;
     }
 
+    private TaskState state = TaskState.READY;
+
+    public TaskState getState() {
+        return state;
+    }
+
+    void setState(TaskState state) {
+        this.state = state;
+    }
+
     /**
      * The scheduler that decides how this task runs.
      */
@@ -111,14 +121,14 @@ public abstract class Task {
     /**
      * The collection of sub-tasks that should execute **before** this task running.
      */
-    public Collection<Task> getDependents() {
+    public Collection<? extends Task> getDependents() {
         return Collections.emptySet();
     }
 
     /**
      * The collection of sub-tasks that should execute **after** this task running.
      */
-    public Collection<Task> getDependencies() {
+    public Collection<? extends Task> getDependencies() {
         return Collections.emptySet();
     }
 
@@ -297,5 +307,12 @@ public abstract class Task {
         public boolean shouldShow() {
             return this == MAJOR;
         }
+    }
+
+    public enum TaskState {
+        READY,
+        RUNNING,
+        SUCCEEDED,
+        FAILED
     }
 }

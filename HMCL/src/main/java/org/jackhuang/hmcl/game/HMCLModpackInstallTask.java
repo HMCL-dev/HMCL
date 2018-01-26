@@ -17,41 +17,58 @@
  */
 package org.jackhuang.hmcl.game;
 
+import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DependencyManager;
 import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
-import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.CompressingUtils;
 import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.FileUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
 public final class HMCLModpackInstallTask extends Task {
     private final File zipFile;
-    private final String id;
+    private final String name;
     private final HMCLGameRepository repository;
-    private final DefaultDependencyManager dependency;
+    private final Modpack modpack;
+    private final File run;
     private final List<Task> dependencies = new LinkedList<>();
     private final List<Task> dependents = new LinkedList<>();
 
-    public HMCLModpackInstallTask(Profile profile, File zipFile, Modpack modpack, String id) {
-        dependency = profile.getDependency();
+    public HMCLModpackInstallTask(Profile profile, File zipFile, Modpack modpack, String name) {
+        DependencyManager dependency = profile.getDependency();
         repository = profile.getRepository();
         this.zipFile = zipFile;
-        this.id = id;
+        this.name = name;
+        this.modpack = modpack;
+        this.run = repository.getRunDirectory(name);
 
-        if (repository.hasVersion(id))
-            throw new IllegalArgumentException("Version " + id + " already exists");
+        File json = new File(run, "modpack.json");
+        if (repository.hasVersion(name) && !json.exists())
+            throw new IllegalArgumentException("Version " + name + " already exists");
 
-        dependents.add(dependency.gameBuilder().name(id).gameVersion(modpack.getGameVersion()).buildAsync());
+        dependents.add(dependency.gameBuilder().name(name).gameVersion(modpack.getGameVersion()).buildAsync());
 
         onDone().register(event -> {
-            if (event.isFailed()) repository.removeVersionFromDisk(id);
+            if (event.isFailed()) repository.removeVersionFromDisk(name);
         });
+
+        ModpackConfiguration<Modpack> config = null;
+        try {
+            if (json.exists())
+                config = Constants.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<Modpack>>(){}.getType());
+        } catch (JsonParseException | IOException ignore) {
+        }
+        dependents.add(new ModpackInstallTask<>(zipFile, run, "minecraft/", it -> !Objects.equals(it, "minecraft/pack.json"), config));
     }
 
     @Override
@@ -69,8 +86,6 @@ public final class HMCLModpackInstallTask extends Task {
         String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
         Version version = Constants.GSON.fromJson(json, Version.class).setJar(null);
         dependencies.add(new VersionJsonSaveTask(repository, version));
-
-        CompressingUtils.unzip(zipFile, repository.getRunDirectory(id),
-                "minecraft/", it -> !Objects.equals(it, "minecraft/pack.json"), false);
+        dependencies.add(new MinecraftInstanceTask<>(zipFile, "minecraft/", modpack, new File(run, "modpack.json")));
     }
 }

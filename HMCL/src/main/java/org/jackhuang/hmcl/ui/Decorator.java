@@ -405,6 +405,10 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     private Node nowPage;
 
     public void showPage(Node content) {
+        contentPlaceHolder.getStyleClass().removeAll("gray-background", "white-background");
+        if (content != null)
+            contentPlaceHolder.getStyleClass().add("gray-background");
+
         Node c = content == null ? mainPage : content;
         onEnd();
         if (nowPage instanceof DecoratorPage)
@@ -457,6 +461,8 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
 
     @Override
     public void navigateTo(Node page, Navigation.NavigationDirection nav) {
+        contentPlaceHolder.getStyleClass().removeAll("gray-background", "white-background");
+        contentPlaceHolder.getStyleClass().add("white-background");
         setContent(page, nav.getAnimation().getAnimationProducer());
     }
 

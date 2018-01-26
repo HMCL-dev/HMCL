@@ -983,6 +983,14 @@
     -fx-border-width: 1;
 }
 
+.gray-background {
+    -fx-background-color: rgba(244, 244, 244, 0.5);
+}
+
+.white-background {
+    -fx-background-color: rgba(255, 255, 255);
+}
+
 /*******************************************************************************
 *                                                                              *
 * Tree Table View                                                              *

@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.mod;
 
+import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
@@ -25,12 +27,10 @@ import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.CompressingUtils;
-import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.IOUtils;
-import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -57,14 +57,24 @@ public final class MultiMCModpackInstallTask extends Task {
         this.name = name;
         this.repository = dependencyManager.getGameRepository();
         this.run = repository.getRunDirectory(name);
-        
-        if (repository.hasVersion(name))
+
+        File json = new File(run, "modpack.json");
+        if (repository.hasVersion(name) && !json.exists())
             throw new IllegalArgumentException("Version " + name + " already exists.");
         dependents.add(dependencyManager.gameBuilder().name(name).gameVersion(manifest.getGameVersion()).buildAsync());
         onDone().register(event -> {
             if (event.isFailed())
                 repository.removeVersionFromDisk(name);
         });
+
+        ModpackConfiguration<MultiMCInstanceConfiguration> config = null;
+        try {
+            if (json.exists())
+                config = Constants.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<MultiMCInstanceConfiguration>>(){}.getType());
+        } catch (JsonParseException | IOException ignore) {
+        }
+
+        dependents.add(new ModpackInstallTask<>(zipFile, run, manifest.getName() + "/minecraft/", Constants.truePredicate(), config));
     }
     
     @Override
@@ -80,8 +90,7 @@ public final class MultiMCModpackInstallTask extends Task {
     @Override
     public void execute() throws Exception {
         Version version = Objects.requireNonNull(repository.readVersionJson(name));
-        CompressingUtils.unzip(zipFile, run, manifest.getName() + "/minecraft/", null, false, true);
-        
+
         try (ZipFile zip = new ZipFile(zipFile)) {
             for (ZipArchiveEntry entry : Lang.asIterable(zip.getEntries())) {
                 // ensure that this entry is in folder 'patches' and is a json file.
@@ -99,8 +108,9 @@ public final class MultiMCModpackInstallTask extends Task {
                 }
             }
         }
-        
+
         dependencies.add(new VersionJsonSaveTask(repository, version));
+        dependencies.add(new MinecraftInstanceTask<>(zipFile, manifest.getName() + "/minecraft/", manifest, new File(run, "modpack.json")));
     }
     
 }

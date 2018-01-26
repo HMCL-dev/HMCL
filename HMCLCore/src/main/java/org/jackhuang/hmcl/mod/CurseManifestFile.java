@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.util.NetworkUtils;
 import org.jackhuang.hmcl.util.Validation;
 
 import java.net.URL;
+import java.util.Objects;
 
 /**
  *
@@ -83,5 +84,19 @@ public final class CurseManifestFile implements Validation {
     
     public CurseManifestFile setFileName(String fileName) {
         return new CurseManifestFile(projectID, fileID, fileName, required);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CurseManifestFile that = (CurseManifestFile) o;
+        return projectID == that.projectID &&
+                fileID == that.fileID;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(projectID, fileID);
     }
 }

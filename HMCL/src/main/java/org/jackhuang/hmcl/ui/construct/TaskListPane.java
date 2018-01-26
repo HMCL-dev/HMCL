@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.game.HMCLModpackExportTask;
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
 import org.jackhuang.hmcl.mod.CurseCompletionTask;
 import org.jackhuang.hmcl.mod.CurseInstallTask;
+import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
 import org.jackhuang.hmcl.mod.MultiMCModpackInstallTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
@@ -87,6 +88,8 @@ public final class TaskListPane extends StackPane {
                     task.setName(Main.i18n("modpack.install", Main.i18n("modpack.type.curse")));
                 } else if (task instanceof HMCLModpackExportTask) {
                     task.setName(Main.i18n("modpack.export"));
+                } else if (task instanceof MinecraftInstanceTask) {
+                    task.setName(Main.i18n("modpack.scan"));
                 }
 
                 ProgressListNode node = new ProgressListNode(task);
