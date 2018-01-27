@@ -14,7 +14,9 @@
         <String fx:value="jfx-decorator"/>
         <String fx:value="resize-border"/>
     </styleClass>
-    <BorderPane>
+    <BorderPane
+            maxHeight="519"
+            maxWidth="800">
         <center>
             <StackPane fx:id="drawerWrapper" styleClass="jfx-decorator-drawer">
                 <JFXDialog fx:id="dialog" overlayClose="false" />
