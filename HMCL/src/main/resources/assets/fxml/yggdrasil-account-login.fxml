@@ -15,7 +15,7 @@
         <body>
             <VBox spacing="15" style="-fx-padding: 15 0 0 0;">
                 <Label fx:id="lblUsername" />
-                <JFXPasswordField fx:id="txtPassword" promptText="%login.password" labelFloat="true">
+                <JFXPasswordField fx:id="txtPassword" promptText="%account.password" labelFloat="true">
                     <validators>
                         <RequiredFieldValidator message="Input Required!">
                         </RequiredFieldValidator>

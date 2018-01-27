@@ -26,7 +26,7 @@
         <StackPane>
             <JFXDialogLayout>
                 <heading>
-                    <Label>Create a new account</Label>
+                    <Label text="%account.create" />
                 </heading>
                 <body>
                     <GridPane vgap="15" hgap="15" style="-fx-padding: 15 0 0 0;">
@@ -34,24 +34,17 @@
                             <ColumnConstraints maxWidth="100" />
                             <ColumnConstraints />
                         </columnConstraints>
-                        <Label text="Type" GridPane.halignment="RIGHT" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                        <Label text="%account.methods" GridPane.halignment="RIGHT" GridPane.columnIndex="0" GridPane.rowIndex="0" />
 
-                        <JFXComboBox fx:id="cboType" GridPane.columnIndex="1" GridPane.rowIndex="0">
-                            <items>
-                                <FXCollections fx:factory="observableArrayList">
-                                    <String fx:value="Offline Account"/>
-                                    <String fx:value="Online Account" />
-                                </FXCollections>
-                            </items>
-                        </JFXComboBox>
+                        <JFXComboBox fx:id="cboType" GridPane.columnIndex="1" GridPane.rowIndex="0" />
 
-                        <JFXTextField fx:id="txtUsername" promptText="Username" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2">
+                        <JFXTextField fx:id="txtUsername" promptText="%account.username" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2">
                             <validators>
                                 <RequiredFieldValidator message="%input.not_empty">
                                 </RequiredFieldValidator>
                             </validators>
                         </JFXTextField>
-                        <JFXPasswordField fx:id="txtPassword" promptText="%login.password" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2">
+                        <JFXPasswordField fx:id="txtPassword" promptText="%account.password" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2">
                             <validators>
                                 <RequiredFieldValidator message="%input.not_empty">
                                 </RequiredFieldValidator>

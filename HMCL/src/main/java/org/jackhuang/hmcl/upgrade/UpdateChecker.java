@@ -75,7 +75,7 @@ public final class UpdateChecker {
                 }
 
                 if (value == null) {
-                    Logging.LOG.warning("Failed to check update...");
+                    Logging.LOG.warning("Unable to check update...");
                     if (showMessage)
                         MessageBox.show(Main.i18n("update.failed"));
                 } else if (base.compareTo(value) < 0)

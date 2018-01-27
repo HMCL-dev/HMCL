@@ -106,7 +106,7 @@ public class AppDataUpgrader extends IUpgrader {
                         String hash = null;
                         if (map.containsKey("jarsha1"))
                             hash = map.get("jarsha1");
-                        Controllers.dialog(Main.i18n("ui.message.downloading"));
+                        Controllers.dialog(Main.i18n("message.downloading"));
                         if (new AppDataUpgraderJarTask(NetworkUtils.toURL(map.get("jar")), version.toString(), hash).test()) {
                             new ProcessBuilder(JavaVersion.fromCurrentEnvironment().getBinary().getAbsolutePath(), "-jar", AppDataUpgraderJarTask.getSelf(version.toString()).getAbsolutePath())
                                     .directory(new File("").getAbsoluteFile()).start();
@@ -121,7 +121,7 @@ public class AppDataUpgrader extends IUpgrader {
                         String hash = null;
                         if (map.containsKey("packsha1"))
                             hash = map.get("packsha1");
-                        Controllers.dialog(Main.i18n("ui.message.downloading"));
+                        Controllers.dialog(Main.i18n("message.downloading"));
                         if (new AppDataUpgraderPackGzTask(NetworkUtils.toURL(map.get("pack")), version.toString(), hash).test()) {
                             new ProcessBuilder(JavaVersion.fromCurrentEnvironment().getBinary().getAbsolutePath(), "-jar", AppDataUpgraderPackGzTask.getSelf(version.toString()).getAbsolutePath())
                                     .directory(new File("").getAbsoluteFile()).start();
@@ -132,14 +132,14 @@ public class AppDataUpgrader extends IUpgrader {
                         Logging.LOG.log(Level.SEVERE, "Failed to create upgrader", ex);
                     }
                 else {
-                    String url = URL_PUBLISH;
+                    String url = Main.PUBLISH;
                     if (map != null)
                         if (map.containsKey(OperatingSystem.CURRENT_OS.getCheckedName()))
                             url = map.get(OperatingSystem.CURRENT_OS.getCheckedName());
                         else if (map.containsKey(OperatingSystem.UNKNOWN.getCheckedName()))
                             url = map.get(OperatingSystem.UNKNOWN.getCheckedName());
                     if (url == null)
-                        url = URL_PUBLISH;
+                        url = Main.PUBLISH;
                     try {
                         java.awt.Desktop.getDesktop().browse(new URI(url));
                     } catch (URISyntaxException | IOException e) {
@@ -240,7 +240,4 @@ public class AppDataUpgrader extends IUpgrader {
         }
 
     }
-
-    public static final String URL_PUBLISH = "http://www.mcbbs.net/thread-142335-1-1.html";
-    public static final String URL_CONTACT = "http://huangyuhui.duapp.com/hmcl.php";
 }

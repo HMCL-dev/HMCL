@@ -283,6 +283,7 @@ public final class Lang {
 
     public static Integer toIntOrNull(Object string) {
         try {
+            if (string == null) return null;
             return Integer.parseInt(string.toString());
         } catch (NumberFormatException e) {
             return null;

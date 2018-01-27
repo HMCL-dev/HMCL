@@ -40,7 +40,7 @@ import java.util.Objects;
 public final class LeftPaneController {
     private final AdvancedListBox leftPane;
     private final VBox profilePane = new VBox();
-    private final VersionListItem accountItem = new VersionListItem("No Account", "unknown");
+    private final VersionListItem accountItem = new VersionListItem("", "");
 
     public LeftPaneController(AdvancedListBox leftPane) {
         this.leftPane = leftPane;
@@ -67,8 +67,8 @@ public final class LeftPaneController {
 
         FXUtils.onChangeAndOperate(Settings.INSTANCE.selectedAccountProperty(), it -> {
             if (it == null) {
-                accountItem.setVersionName("mojang@mojang.com");
-                accountItem.setGameVersion("Yggdrasil");
+                accountItem.setVersionName(Main.i18n("account.missing"));
+                accountItem.setGameVersion(Main.i18n("message.unknown"));
             } else {
                 accountItem.setVersionName(it.getUsername());
                 accountItem.setGameVersion(AccountsPage.accountType(it));

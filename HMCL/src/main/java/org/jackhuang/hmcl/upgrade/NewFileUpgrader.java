@@ -51,7 +51,7 @@ public class NewFileUpgrader extends IUpgrader {
         URL url = requestDownloadLink();
         if (url == null) return;
         File newf = new File(url.getFile());
-        Controllers.dialog(Main.i18n("ui.message.downloading"));
+        Controllers.dialog(Main.i18n("message.downloading"));
         if (new FileDownloadTask(url, newf).test()) {
             try {
                 new ProcessBuilder(newf.getCanonicalPath(), "--removeOldLauncher", getRealPath())

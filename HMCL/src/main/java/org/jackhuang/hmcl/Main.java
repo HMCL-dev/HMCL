@@ -23,10 +23,14 @@ import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.upgrade.IUpgrader;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 
@@ -44,8 +48,17 @@ public final class Main extends Application {
     }
 
     public static void main(String[] args) {
-        NetworkUtils.setUserAgentSupplier(() -> "Hello Minecraft! Launcher");
+        Thread.setDefaultUncaughtExceptionHandler(new CrashReporter());
+
+        // NetworkUtils.setUserAgentSupplier(() -> "Hello Minecraft! Launcher");
         Constants.UI_THREAD_SCHEDULER = Constants.JAVAFX_UI_THREAD_SCHEDULER;
+        IUpgrader.NOW_UPGRADER.parseArguments(VersionNumber.asVersion(VERSION), Arrays.asList(args));
+
+        Logging.LOG.info("*** " + TITLE + " ***");
+
+        UPDATE_CHECKER.process(false)
+                .then(Task.of(Controllers::showUpdate))
+                .start();
 
         launch(args);
     }
@@ -99,4 +112,8 @@ public final class Main extends Application {
     public static final String TITLE = NAME + " " + VERSION;
     public static final File APPDATA = getWorkingDirectory("hmcl");
     public static final ResourceBundle RESOURCE_BUNDLE = Settings.INSTANCE.getLocale().getResourceBundle();
+    public static final UpdateChecker UPDATE_CHECKER = new UpdateChecker(VersionNumber.asVersion(VERSION), "hmcl");
+
+    public static final String CONTACT = "http://huangyuhui.duapp.com/hmcl.php";
+    public static final String PUBLISH = "http://www.mcbbs.net/thread-142335-1-1.html";
 }

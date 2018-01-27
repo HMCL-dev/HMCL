@@ -48,7 +48,6 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
@@ -104,13 +103,13 @@ public final class MainPage extends StackPane implements DecoratorPage {
         item.setVersionName(version);
         item.setOnLaunchButtonClicked(e -> {
             if (Settings.INSTANCE.getSelectedAccount() == null)
-                Controllers.dialog(Main.i18n("login.no_Player007"));
+                Controllers.dialog(Main.i18n("login.empty_username"));
             else
                 LauncherHelper.INSTANCE.launch(version, null);
         });
         item.setOnScriptButtonClicked(e -> {
             if (Settings.INSTANCE.getSelectedAccount() == null)
-                Controllers.dialog(Main.i18n("login.no_Player007"));
+                Controllers.dialog(Main.i18n("login.empty_username"));
             else {
                 FileChooser chooser = new FileChooser();
                 chooser.setInitialDirectory(profile.getRepository().getRunDirectory(version));

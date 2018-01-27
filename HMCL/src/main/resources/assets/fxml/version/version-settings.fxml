@@ -103,7 +103,7 @@
 
                 <BorderPane>
                     <left>
-                        <Label text="%mainwindow.show_log"/>
+                        <Label text="%settings.show_log"/>
                     </left>
                     <right>
                         <JFXToggleButton fx:id="chkShowLogs" size="7"/>

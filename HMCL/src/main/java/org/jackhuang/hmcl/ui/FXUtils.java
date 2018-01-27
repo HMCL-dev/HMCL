@@ -48,6 +48,7 @@ import org.jackhuang.hmcl.util.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -200,6 +201,27 @@ public final class FXUtils {
                 } catch (Throwable e) {
                     Logging.LOG.log(Level.SEVERE, "Unable to open " + path + " by java.awt.Desktop.getDesktop()::open", e);
                 }
+        }
+    }
+
+    /**
+     * Open URL by java.awt.Desktop
+     *
+     * @param link null is allowed but will be ignored
+     */
+    public static void openLink(String link) {
+        if (link == null)
+            return;
+        try {
+            java.awt.Desktop.getDesktop().browse(new URI(link));
+        } catch (Throwable e) {
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+                try {
+                    Runtime.getRuntime().exec(new String[] { "/usr/bin/open", link });
+                } catch (IOException ex) {
+                    Logging.LOG.log(Level.WARNING, "Unable to open link: " + link, ex);
+                }
+            Logging.LOG.log(Level.WARNING, "Failed to open link: " + link, e);
         }
     }
 

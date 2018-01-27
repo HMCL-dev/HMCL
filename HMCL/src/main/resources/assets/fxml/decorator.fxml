@@ -29,6 +29,11 @@
                                         </center>
                                         <bottom>
                                             <BorderPane fx:id="menuBottomBar">
+                                                <left>
+                                                    <HBox fx:id="updatePane" visible="false" style="-fx-background-color: red;" alignment="CENTER_LEFT">
+                                                        <Label text="%update.found" style="-fx-text-fill: white; -fx-font-size: 16px;" />
+                                                    </HBox>
+                                                </left>
                                                 <right>
                                                     <JFXButton fx:id="addMenuButton" styleClass="toggle-icon4">
                                                         <graphic>

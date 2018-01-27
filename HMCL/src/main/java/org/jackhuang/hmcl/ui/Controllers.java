@@ -139,4 +139,8 @@ public final class Controllers {
     public static void navigate(Node node) {
         decorator.showPage(node);
     }
+
+    public static void showUpdate() {
+
+    }
 }

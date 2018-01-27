@@ -68,6 +68,7 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
         FXUtils.setValidateWhileTextChanged(txtUsername);
         FXUtils.setValidateWhileTextChanged(txtPassword);
 
+        cboType.getItems().setAll(Main.i18n("account.methods.offline"), Main.i18n("account.methods.yggdrasil"));
         cboType.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> {
             txtPassword.setVisible(newValue.intValue() != 0);
         });
