@@ -41,10 +41,10 @@
                 </BorderPane>
 
                 <MultiFileItem fx:id="javaItem" title="%settings.game.java_directory" chooserTitle="%settings.choose_javapath"
-                               hasSubtitle="true" customText="%settings.custom" />
+                               hasSubtitle="true" customText="%settings.custom" directory="false" />
 
                 <MultiFileItem fx:id="gameDirItem" title="%profile.instance_directory" chooserTitle="%settings.choose_gamedir"
-                               hasSubtitle="true" customText="%settings.custom" />
+                               hasSubtitle="true" customText="%settings.custom" directory="true" />
 
                 <BorderPane> <!-- Max Memory -->
                     <left>

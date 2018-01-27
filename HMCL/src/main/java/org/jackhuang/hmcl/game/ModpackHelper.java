@@ -81,6 +81,30 @@ public final class ModpackHelper {
             throw new UnsupportedModpackException();
     }
 
+    public static Task getInstallTask(Profile profile, File zipFile, String name, Modpack modpack) {
+        profile.getRepository().markVersionAsModpack(name);
+
+        Task finalizeTask = Task.of(() -> {
+            profile.getRepository().refreshVersions();
+            VersionSetting vs = profile.specializeVersionSetting(name);
+            profile.getRepository().undoMark(name);
+            if (vs != null)
+                vs.setGameDirType(EnumGameDirectory.VERSION_FOLDER);
+        });
+
+        if (modpack.getManifest() instanceof CurseManifest)
+            return new CurseInstallTask(profile.getDependency(), zipFile, ((CurseManifest) modpack.getManifest()), name)
+                    .finalized(finalizeTask);
+        else if (modpack.getManifest() instanceof HMCLModpackManifest)
+            return new HMCLModpackInstallTask(profile, zipFile, modpack, name)
+                    .finalized(finalizeTask);
+        else if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
+            return new MultiMCModpackInstallTask(profile.getDependency(), zipFile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name)
+                    .finalized(finalizeTask)
+                    .with(new MultiMCInstallVersionSettingTask(profile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name));
+        else throw new IllegalStateException("Unrecognized modpack: " + modpack);
+    }
+
     public static Task getUpdateTask(Profile profile, File zipFile, String name, ModpackConfiguration configuration) throws UnsupportedModpackException, MismatchedModpackTypeException, IOException {
         Modpack modpack = ModpackHelper.readModpackManifest(zipFile);
 

@@ -137,7 +137,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     TaskExecutor executor = ModpackHelper.getUpdateTask(profile, selectedFile, version, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(version)))
                             .then(Task.of(Schedulers.javafx(), Controllers::closeDialog)).executor();
                     pane.setExecutor(executor);
-                    pane.setCurrentState(Main.i18n("modpack.update"));
+                    pane.setTitle(Main.i18n("modpack.update"));
                     executor.start();
                     Controllers.dialog(pane);
                 } catch (UnsupportedModpackException e) {

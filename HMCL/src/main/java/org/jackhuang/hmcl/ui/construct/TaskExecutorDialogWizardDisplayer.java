@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.wizard.AbstractWizardDisplayer;
-import org.jackhuang.hmcl.util.OperatingSystem;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.Map;
@@ -39,22 +38,22 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
             Controllers.navigate(null);
         });
 
-        pane.setCurrentState(Main.i18n("message.doing"));
+        pane.setTitle(Main.i18n("message.doing"));
         pane.setProgress(Double.MAX_VALUE);
         if (settings.containsKey("title")) {
             Object title = settings.get("title");
             if (title instanceof StringProperty)
-                pane.currentStateProperty().bind((StringProperty) title);
+                pane.titleProperty().bind((StringProperty) title);
             else if (title instanceof String)
-                pane.setCurrentState((String) title);
+                pane.setTitle((String) title);
         }
 
         if (settings.containsKey("subtitle")) {
             Object subtitle = settings.get("subtitle");
             if (subtitle instanceof StringProperty)
-                pane.stepsProperty().bind((StringProperty) subtitle);
+                pane.subtitleProperty().bind((StringProperty) subtitle);
             else if (subtitle instanceof String)
-                pane.setSteps((String) subtitle);
+                pane.setSubtitle((String) subtitle);
         }
 
         JFXUtilities.runInFX(() -> {

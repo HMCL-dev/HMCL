@@ -28,6 +28,7 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -79,7 +80,6 @@ public final class ModpackPage extends StackPane implements WizardPage {
         File selectedFile = chooser.showOpenDialog(Controllers.getStage());
         if (selectedFile == null) Platform.runLater(() -> Controllers.navigate(null));
         else {
-            // TODO: original HMCL modpack support.
             controller.getSettings().put(MODPACK_FILE, selectedFile);
             lblModpackLocation.setText(selectedFile.getAbsolutePath());
             txtModpackName.getValidators().addAll(
@@ -95,8 +95,7 @@ public final class ModpackPage extends StackPane implements WizardPage {
                 lblVersion.setText(manifest.getVersion());
                 lblAuthor.setText(manifest.getAuthor());
                 txtModpackName.setText(manifest.getName() + (StringUtils.isBlank(manifest.getVersion()) ? "" : "-" + manifest.getVersion()));
-            } catch (Exception e) {
-                // TODO
+            } catch (UnsupportedModpackException e) {
                 txtModpackName.setText(Main.i18n("modpack.task.install.error"));
             }
         }

@@ -159,8 +159,8 @@ public final class LauncherHelper {
         if (state == LoadingState.DONE)
             Controllers.closeDialog();
 
-        launchingStepsPane.setCurrentState(state.getLocalizedMessage());
-        launchingStepsPane.setSteps((state.ordinal() + 1) + " / " + LoadingState.values().length);
+        launchingStepsPane.setTitle(state.getLocalizedMessage());
+        launchingStepsPane.setSubtitle((state.ordinal() + 1) + " / " + LoadingState.values().length);
         Controllers.dialog(launchingStepsPane);
     }
 

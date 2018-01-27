@@ -23,10 +23,8 @@ import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.TaskListPane;
 
 import java.util.Optional;
 
@@ -34,18 +32,18 @@ public class TaskExecutorDialogPane extends StackPane {
     private TaskExecutor executor;
 
     @FXML
-    private JFXProgressBar pgsTasks;
+    private JFXProgressBar progressBar;
     @FXML
-    private Label lblCurrentState;
+    private Label lblTitle;
     @FXML
-    private Label lblSteps;
+    private Label lblSubtitle;
     @FXML
     private JFXButton btnCancel;
     @FXML
     private TaskListPane taskListPane;
 
     public TaskExecutorDialogPane(Runnable cancel) {
-        FXUtils.loadFXML(this, "/assets/fxml/launching-steps.fxml");
+        FXUtils.loadFXML(this, "/assets/fxml/task-dialog.fxml");
 
         FXUtils.limitHeight(this, 200);
         FXUtils.limitWidth(this, 400);
@@ -64,34 +62,34 @@ public class TaskExecutorDialogPane extends StackPane {
         taskListPane.setExecutor(executor);
     }
 
-    public StringProperty currentStateProperty() {
-        return lblCurrentState.textProperty();
+    public StringProperty titleProperty() {
+        return lblTitle.textProperty();
     }
 
-    public String getCurrentState() {
-        return lblCurrentState.getText();
+    public String getTitle() {
+        return lblTitle.getText();
     }
 
-    public void setCurrentState(String currentState) {
-        lblCurrentState.setText(currentState);
+    public void setTitle(String currentState) {
+        lblTitle.setText(currentState);
     }
 
-    public StringProperty stepsProperty() {
-        return lblSteps.textProperty();
+    public StringProperty subtitleProperty() {
+        return lblSubtitle.textProperty();
     }
 
-    public String getSteps() {
-        return lblSteps.getText();
+    public String getSubtitle() {
+        return lblSubtitle.getText();
     }
 
-    public void setSteps(String steps) {
-        lblSteps.setText(steps);
+    public void setSubtitle(String subtitle) {
+        lblSubtitle.setText(subtitle);
     }
 
     public void setProgress(double progress) {
         if (progress == Double.MAX_VALUE)
-            pgsTasks.setVisible(false);
+            progressBar.setVisible(false);
         else
-            pgsTasks.setProgress(progress);
+            progressBar.setProgress(progress);
     }
 }

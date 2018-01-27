@@ -57,7 +57,7 @@ public final class Main extends Application {
         Logging.LOG.info("*** " + TITLE + " ***");
 
         UPDATE_CHECKER.process(false)
-                .then(Task.of(Controllers::showUpdate))
+                .then(Task.of(Schedulers.javafx(), Controllers::showUpdate))
                 .start();
 
         launch(args);

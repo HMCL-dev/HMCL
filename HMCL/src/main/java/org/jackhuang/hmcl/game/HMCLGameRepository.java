@@ -49,6 +49,10 @@ public class HMCLGameRepository extends DefaultGameRepository {
         this.profile = profile;
     }
 
+    public Profile getProfile() {
+        return profile;
+    }
+
     private boolean useSelf(String version, String assetId) {
         VersionSetting vs = profile.getVersionSetting(version);
         return new File(getBaseDirectory(), "assets/indexes/" + assetId + ".json").exists() || vs.isNoCommon();
@@ -94,8 +98,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
         super.refreshVersionsImpl();
         versions.keySet().forEach(this::loadVersionSetting);
 
-        checkModpack();
-
         try {
             File file = new File(getBaseDirectory(), "launcher_profiles.json");
             if (!file.exists() && !versions.isEmpty())
@@ -115,26 +117,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
     public void changeDirectory(File newDirectory) {
         setBaseDirectory(newDirectory);
         refreshVersionsAsync().start();
-    }
-
-    private void checkModpack() {
-
-        if (!checkingModpack) {
-            checkingModpack = true;
-            if (getVersionCount() == 0) {
-                File modpack = new File("modpack.zip").getAbsoluteFile();
-                if (modpack.exists()) {
-                    // TODO
-                }
-                /*
-                    SwingUtilities.invokeLater(() -> {
-                        if (TaskWindow.factory().execute(ModpackManager.install(MainFrame.INSTANCE, modpack, this, null)))
-                            refreshVersions();
-                        checkedModpack = true;
-                    });
-                    */
-            }
-        }
     }
 
     private File getVersionSettingFile(String id) {

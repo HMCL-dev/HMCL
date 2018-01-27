@@ -26,9 +26,11 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.construct.InputDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.JavaVersion;
 
 import java.util.function.Consumer;
@@ -132,6 +134,15 @@ public final class Controllers {
         dialog(new InputDialogPane(text, decorator.getDialog(), onResult));
     }
 
+    public static void taskDialog(TaskExecutor executor, String title, String subtitle, Runnable onCancel) {
+        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
+        pane.setTitle(title);
+        pane.setSubtitle(subtitle);
+        pane.setExecutor(executor);
+        executor.start();
+        dialog(pane);
+    }
+
     public static void closeDialog() {
         decorator.getDialog().close();
     }
@@ -141,6 +152,6 @@ public final class Controllers {
     }
 
     public static void showUpdate() {
-
+        getDecorator().showUpdate();
     }
 }

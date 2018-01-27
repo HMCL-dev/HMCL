@@ -20,8 +20,12 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.controls.JFXTextField;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -30,6 +34,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -39,8 +44,10 @@ import java.io.File;
 import java.util.Collection;
 
 public class MultiFileItem extends ComponentList {
-    private final StringProperty customText = new SimpleStringProperty(this, "customText", "Custom");
-    private final StringProperty chooserTitle = new SimpleStringProperty(this, "chooserTitle", "Select a file");
+    private final StringProperty customTitle = new SimpleStringProperty(this, "customTitle", Main.i18n("selector.custom"));
+    private final StringProperty chooserTitle = new SimpleStringProperty(this, "chooserTitle", Main.i18n("selector.choose_file"));
+    private final BooleanProperty directory = new SimpleBooleanProperty(this, "directory", false);
+    private ObservableList<FileChooser.ExtensionFilter> extensionFilters = FXCollections.observableArrayList();
 
     private final ToggleGroup group = new ToggleGroup();
     private final JFXTextField txtCustom = new JFXTextField();
@@ -54,10 +61,23 @@ public class MultiFileItem extends ComponentList {
 
         btnSelect.setGraphic(SVG.folderOpen("black", 15, 15));
         btnSelect.setOnMouseClicked(e -> {
-            // TODO
+            if (isDirectory()) {
+                DirectoryChooser chooser = new DirectoryChooser();
+                chooser.titleProperty().bind(chooserTitle);
+                File dir = chooser.showDialog(Controllers.getStage());
+                if (dir != null)
+                    txtCustom.setText(dir.getAbsolutePath());
+            } else {
+                FileChooser chooser = new FileChooser();
+                chooser.getExtensionFilters().addAll(getExtensionFilters());
+                chooser.titleProperty().bind(chooserTitle);
+                File file = chooser.showOpenDialog(Controllers.getStage());
+                if (file != null)
+                    txtCustom.setText(file.getAbsolutePath());
+            }
         });
 
-        radioCustom.textProperty().bind(customTextProperty());
+        radioCustom.textProperty().bind(customTitleProperty());
         radioCustom.setToggleGroup(group);
         txtCustom.disableProperty().bind(radioCustom.selectedProperty().not());
         btnSelect.disableProperty().bind(radioCustom.selectedProperty().not());
@@ -119,16 +139,16 @@ public class MultiFileItem extends ComponentList {
         return group;
     }
 
-    public String getCustomText() {
-        return customText.get();
+    public String getCustomTitle() {
+        return customTitle.get();
     }
 
-    public StringProperty customTextProperty() {
-        return customText;
+    public StringProperty customTitleProperty() {
+        return customTitle;
     }
 
-    public void setCustomText(String customText) {
-        this.customText.set(customText);
+    public void setCustomTitle(String customTitle) {
+        this.customTitle.set(customTitle);
     }
 
     public String getChooserTitle() {
@@ -151,7 +171,35 @@ public class MultiFileItem extends ComponentList {
         return radioCustom;
     }
 
+    public StringProperty customTextProperty() {
+        return txtCustom.textProperty();
+    }
+
+    public String getCustomText() {
+        return txtCustom.getText();
+    }
+
+    public void setCustomText(String customText) {
+        txtCustom.setText(customText);
+    }
+
     public JFXTextField getTxtCustom() {
         return txtCustom;
+    }
+
+    public boolean isDirectory() {
+        return directory.get();
+    }
+
+    public BooleanProperty directoryProperty() {
+        return directory;
+    }
+
+    public void setDirectory(boolean directory) {
+        this.directory.set(directory);
+    }
+
+    public ObservableList<FileChooser.ExtensionFilter> getExtensionFilters() {
+        return extensionFilters;
     }
 }

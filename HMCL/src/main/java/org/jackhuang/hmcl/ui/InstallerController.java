@@ -83,9 +83,9 @@ public class InstallerController {
     public void onAdd() {
         String gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version));
 
-        // TODO: if minecraftVersion returns null.
-        if (gameVersion == null) return;
-
-        Controllers.getDecorator().startWizard(new InstallerWizardProvider(profile, gameVersion, version, forge, liteLoader, optiFine));
+        if (gameVersion == null)
+            Controllers.dialog("version.cannot_read");
+        else
+            Controllers.getDecorator().startWizard(new InstallerWizardProvider(profile, gameVersion, version, forge, liteLoader, optiFine));
     }
 }

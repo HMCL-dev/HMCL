@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import com.jfoenix.concurrency.JFXUtilities;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.layout.VBox;
@@ -26,14 +27,23 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.ProfileChangedEvent;
 import org.jackhuang.hmcl.event.ProfileLoadingEvent;
+import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.AccountHelper;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.ModpackHelper;
+import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.IconedItem;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 
+import java.io.File;
 import java.util.LinkedList;
 import java.util.Objects;
 
@@ -60,6 +70,7 @@ public final class LeftPaneController {
 
         EventBus.EVENT_BUS.channel(ProfileLoadingEvent.class).register(this::onProfilesLoading);
         EventBus.EVENT_BUS.channel(ProfileChangedEvent.class).register(this::onProfileChanged);
+        EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(this::onRefreshedVersions);
 
         Controllers.getDecorator().getAddMenuButton().setOnMouseClicked(e ->
                 Controllers.getDecorator().showPage(new ProfilePage(null))
@@ -79,12 +90,9 @@ public final class LeftPaneController {
             else
                 accountItem.setImage(FXUtils.DEFAULT_ICON, null);
         });
-
-        if (Settings.INSTANCE.getAccounts().isEmpty())
-            Controllers.navigate(new AccountsPage());
     }
 
-    public void onProfileChanged(ProfileChangedEvent event) {
+    private void onProfileChanged(ProfileChangedEvent event) {
         Profile profile = event.getProfile();
 
         for (Node node : profilePane.getChildren()) {
@@ -94,7 +102,7 @@ public final class LeftPaneController {
         }
     }
 
-    public void onProfilesLoading() {
+    private void onProfilesLoading() {
         LinkedList<RipplerContainer> list = new LinkedList<>();
         for (Profile profile : Settings.INSTANCE.getProfiles()) {
             VersionListItem item = new VersionListItem(profile.getName());
@@ -114,5 +122,42 @@ public final class LeftPaneController {
             list.add(ripplerContainer);
         }
         Platform.runLater(() -> profilePane.getChildren().setAll(list));
+    }
+
+    private boolean checkedModpack = false;
+
+    private void onRefreshedVersions(RefreshedVersionsEvent event) {
+        JFXUtilities.runInFX(() -> {
+            boolean flag = true;
+            HMCLGameRepository repository = (HMCLGameRepository) event.getSource();
+            if (!checkedModpack) {
+                checkedModpack = true;
+
+                if (repository.getVersionCount() == 0) {
+                    File modpackFile = new File("modpack.zip").getAbsoluteFile();
+                    if (modpackFile.exists()) {
+                        try {
+                            Modpack modpack = ModpackHelper.readModpackManifest(modpackFile);
+                            Controllers.taskDialog(ModpackHelper.getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack)
+                                            .with(Task.of(Schedulers.javafx(), () -> {
+                                                Controllers.closeDialog();
+                                                checkAccount();
+                                            })).executor(),
+                                    Main.i18n("modpack.installing"), "", null);
+                            flag = false;
+                        } catch (UnsupportedModpackException ignore) {
+                        }
+                    }
+                }
+            }
+
+            if (flag)
+                checkAccount();
+        });
+    }
+
+    private void checkAccount() {
+        if (Settings.INSTANCE.getAccounts().isEmpty())
+            Controllers.navigate(new AccountsPage());
     }
 }

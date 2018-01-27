@@ -112,6 +112,9 @@ public final class VersionSettingsController {
                 javaItem.loadChildren(variables.<Collection<Node>>get("list"))
         );
 
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+            javaItem.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe", "javaw.exe"));
+
         gameDirItem.loadChildren(Arrays.asList(
                 gameDirItem.createChildren(Main.i18n("settings.advanced.game_dir.default"), EnumGameDirectory.ROOT_FOLDER),
                 gameDirItem.createChildren(Main.i18n("settings.advanced.game_dir.independent"), EnumGameDirectory.VERSION_FOLDER)

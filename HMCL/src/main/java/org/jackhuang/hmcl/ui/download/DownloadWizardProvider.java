@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
 import org.jackhuang.hmcl.game.HMCLModpackManifest;
+import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.game.MultiMCInstallVersionSettingTask;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
@@ -75,27 +76,7 @@ public final class DownloadWizardProvider implements WizardProvider {
         String name = Lang.get(settings, ModpackPage.MODPACK_NAME, String.class, null);
         if (selected == null || modpack == null || name == null) return null;
 
-        profile.getRepository().markVersionAsModpack(name);
-
-        Task finalizeTask = Task.of(() -> {
-            profile.getRepository().refreshVersions();
-            VersionSetting vs = profile.specializeVersionSetting(name);
-            profile.getRepository().undoMark(name);
-            if (vs != null)
-                vs.setGameDirType(EnumGameDirectory.VERSION_FOLDER);
-        });
-
-        if (modpack.getManifest() instanceof CurseManifest)
-            return new CurseInstallTask(profile.getDependency(), selected, ((CurseManifest) modpack.getManifest()), name)
-                    .finalized(finalizeTask);
-        else if (modpack.getManifest() instanceof HMCLModpackManifest)
-            return new HMCLModpackInstallTask(profile, selected, modpack, name)
-                    .finalized(finalizeTask);
-        else if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return new MultiMCModpackInstallTask(profile.getDependency(), selected, ((MultiMCInstanceConfiguration) modpack.getManifest()), name)
-                    .finalized(finalizeTask)
-                    .with(new MultiMCInstallVersionSettingTask(profile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name));
-        else throw new IllegalStateException("Unrecognized modpack: " + modpack);
+        return ModpackHelper.getInstallTask(profile, selected, name, modpack);
     }
 
     @Override

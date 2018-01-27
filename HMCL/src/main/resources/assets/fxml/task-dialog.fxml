@@ -10,10 +10,10 @@
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
-    <JFXProgressBar fx:id="pgsTasks" StackPane.alignment="TOP_CENTER" />
+    <JFXProgressBar fx:id="progressBar" StackPane.alignment="TOP_CENTER" />
     <VBox alignment="TOP_CENTER" style="-fx-padding: 16px;">
-        <Label fx:id="lblCurrentState" style="-fx-font-size: 20px;" />
-        <Label fx:id="lblSteps" style="-fx-font-size: 14px;" />
+        <Label fx:id="lblTitle" style="-fx-font-size: 20px;" />
+        <Label fx:id="lblSubtitle" style="-fx-font-size: 14px;" />
         <TaskListPane fx:id="taskListPane" />
     </VBox>
     <StackPane pickOnBounds="false" style="-fx-padding: 8px;">
