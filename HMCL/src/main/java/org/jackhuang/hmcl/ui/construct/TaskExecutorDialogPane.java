@@ -50,6 +50,9 @@ public class TaskExecutorDialogPane extends StackPane {
         FXUtils.limitHeight(this, 200);
         FXUtils.limitWidth(this, 400);
 
+        if (cancel == null)
+            btnCancel.setDisable(true);
+
         btnCancel.setOnMouseClicked(e -> {
             Optional.ofNullable(executor).ifPresent(TaskExecutor::cancel);
             cancel.run();

@@ -83,9 +83,9 @@ public final class TaskListPane extends StackPane {
                 } else if (task instanceof CurseInstallTask) {
                     task.setName(Main.i18n("modpack.install", Main.i18n("modpack.type.curse")));
                 } else if (task instanceof MultiMCModpackInstallTask) {
-                    task.setName(Main.i18n("modpack.install", Main.i18n("modpack.type.curse")));
+                    task.setName(Main.i18n("modpack.install", Main.i18n("modpack.type.multimc")));
                 } else if (task instanceof HMCLModpackInstallTask) {
-                    task.setName(Main.i18n("modpack.install", Main.i18n("modpack.type.curse")));
+                    task.setName(Main.i18n("modpack.install", Main.i18n("modpack.type.hmcl")));
                 } else if (task instanceof HMCLModpackExportTask) {
                     task.setName(Main.i18n("modpack.export"));
                 } else if (task instanceof MinecraftInstanceTask) {

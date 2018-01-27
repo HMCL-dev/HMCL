@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.InputDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.util.JavaVersion;
 
@@ -112,11 +113,19 @@ public final class Controllers {
     }
 
     public static void dialog(String text, String title) {
-        dialog(text, title, null);
+        dialog(text, title, MessageBox.INFORMATION_MESSAGE);
     }
 
-    public static void dialog(String text, String title,  Runnable onAccept) {
-        dialog(new MessageDialogPane(text, title, decorator.getDialog(), onAccept));
+    public static void dialog(String text, String title, int type) {
+        dialog(text, title, type, null);
+    }
+
+    public static void dialog(String text, String title, int type, Runnable onAccept) {
+        dialog(new MessageDialogPane(text, title, decorator.getDialog(), MessageBox.INFORMATION_MESSAGE, onAccept));
+    }
+
+    public static void confirmDialog(String text, String title, Runnable onAccept, Runnable onCacnel) {
+        dialog(new MessageDialogPane(text, title, decorator.getDialog(), onAccept, onCacnel));
     }
 
     public static void inputDialog(String text, Consumer<String> onResult) {

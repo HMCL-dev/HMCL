@@ -21,50 +21,56 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Validation;
 
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 @Immutable
 public final class ModpackConfiguration<T> implements Validation {
 
     private final T manifest;
-
-    private final Map<String, FileInformation> overrides;
+    private final String type;
+    private final List<FileInformation> overrides;
 
     public ModpackConfiguration() {
-        this(null, Collections.emptyMap());
+        this(null, null, Collections.emptyList());
     }
 
-    public ModpackConfiguration(T manifest, Map<String, FileInformation> overrides) {
+    public ModpackConfiguration(T manifest, String type, List<FileInformation> overrides) {
         this.manifest = manifest;
-        this.overrides = overrides;
+        this.type = type;
+        this.overrides = new ArrayList<>(overrides);
     }
 
     public T getManifest() {
         return manifest;
     }
 
+    public String getType() {
+        return type;
+    }
+
     public ModpackConfiguration<T> setManifest(T manifest) {
-        return new ModpackConfiguration<>(manifest, overrides);
+        return new ModpackConfiguration<>(manifest, type, overrides);
     }
 
-    public ModpackConfiguration<T> setOverrides(Map<String, FileInformation> overrides) {
-        return new ModpackConfiguration<>(manifest, overrides);
+    public ModpackConfiguration<T> setOverrides(List<FileInformation> overrides) {
+        return new ModpackConfiguration<>(manifest, type, overrides);
     }
 
-    public Map<String, FileInformation> getOverrides() {
-        return Collections.unmodifiableMap(overrides);
+    public List<FileInformation> getOverrides() {
+        return Collections.unmodifiableList(overrides);
     }
 
     @Override
     public void validate() throws JsonParseException {
         if (manifest == null)
             throw new JsonParseException("MinecraftInstanceConfiguration missing `manifest`");
+        if (type == null)
+            throw new JsonParseException("MinecraftInstanceConfiguration missing `type`");
     }
 
     @Immutable
     public static class FileInformation implements Validation {
-        private final String location; // relative
+        private final String path; // relative
         private final String hash;
         private final String downloadURL;
 
@@ -72,18 +78,22 @@ public final class ModpackConfiguration<T> implements Validation {
             this(null, null);
         }
 
-        public FileInformation(String location, String hash) {
-            this(location, hash, null);
+        public FileInformation(String path, String hash) {
+            this(path, hash, null);
         }
 
-        public FileInformation(String location, String hash, String downloadURL) {
-            this.location = location;
+        public FileInformation(String path, String hash, String downloadURL) {
+            this.path = path;
             this.hash = hash;
             this.downloadURL = downloadURL;
         }
 
-        public String getLocation() {
-            return location;
+        /**
+         * The relative path to Minecraft run directory
+         * @return
+         */
+        public String getPath() {
+            return path;
         }
 
         public String getDownloadURL() {
@@ -96,8 +106,8 @@ public final class ModpackConfiguration<T> implements Validation {
 
         @Override
         public void validate() throws JsonParseException {
-            if (location == null)
-                throw new JsonParseException("FileInformation missing `location`.");
+            if (path == null)
+                throw new JsonParseException("FileInformation missing `path`.");
             if (hash == null)
                 throw new JsonParseException("FileInformation missing file hash code.");
         }

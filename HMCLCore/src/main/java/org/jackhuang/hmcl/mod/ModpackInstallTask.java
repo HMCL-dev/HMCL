@@ -25,10 +25,7 @@ import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.IOUtils;
 
 import java.io.*;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 public class ModpackInstallTask<T> extends Task {
@@ -36,7 +33,7 @@ public class ModpackInstallTask<T> extends Task {
     private final File modpackFile;
     private final File dest;
     private final String subDirectory;
-    private final Map<String, ModpackConfiguration.FileInformation> overrides;
+    private final List<ModpackConfiguration.FileInformation> overrides;
     private final Predicate<String> callback;
 
     public ModpackInstallTask(File modpackFile, File dest, String subDirectory, Predicate<String> callback, ModpackConfiguration<T> oldConfiguration) {
@@ -46,7 +43,7 @@ public class ModpackInstallTask<T> extends Task {
         this.callback = callback;
 
         if (oldConfiguration == null)
-            overrides = Collections.emptyMap();
+            overrides = Collections.emptyList();
         else
             overrides = oldConfiguration.getOverrides();
     }
@@ -57,6 +54,11 @@ public class ModpackInstallTask<T> extends Task {
         byte[] buf = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
         if (!FileUtils.makeDirectory(dest))
             throw new IOException("Unable to make directory " + dest);
+
+        HashSet<String> files = new HashSet<>();
+        for (ModpackConfiguration.FileInformation file : overrides)
+            files.add(file.getPath());
+
         try (ZipArchiveInputStream zipStream = new ZipArchiveInputStream(new FileInputStream(modpackFile), null, true, true)) {
             ArchiveEntry entry;
             while ((entry = zipStream.getNextEntry()) != null) {
@@ -86,7 +88,7 @@ public class ModpackInstallTask<T> extends Task {
                     IOUtils.copyTo(zipStream, os, buf);
                     byte[] data = os.toByteArray();
 
-                    if (!overrides.containsKey(path) || entryFile.exists()) {
+                    if (files.contains(path) && entryFile.exists()) {
                         String oldHash = DigestUtils.sha1Hex(new FileInputStream(entryFile));
                         String newHash = DigestUtils.sha1Hex(new ByteArrayInputStream(data));
                         if (!oldHash.equals(newHash)) {
@@ -94,15 +96,19 @@ public class ModpackInstallTask<T> extends Task {
                                 IOUtils.copyTo(new ByteArrayInputStream(data), fos, buf);
                             }
                         }
+                    } else if (!files.contains(path)) {
+                        try (FileOutputStream fos = new FileOutputStream(entryFile)) {
+                            IOUtils.copyTo(new ByteArrayInputStream(data), fos, buf);
+                        }
                     }
 
                 }
             }
         }
 
-        for (String path : overrides.keySet()) {
-            File original = new File(dest, path);
-            if (original.exists() && !entries.contains(path))
+        for (ModpackConfiguration.FileInformation file : overrides) {
+            File original = new File(dest, file.getPath());
+            if (original.exists() && !entries.contains(file.getPath()))
                 original.delete();
         }
     }

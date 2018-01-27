@@ -310,4 +310,12 @@ public class DefaultGameRepository implements GameRepository {
         return loaded;
     }
 
+    public File getModpackConfiguration(String version) {
+        return new File(getRunDirectory(version), "modpack.json");
+    }
+
+    public boolean isModpack(String version) {
+        return getModpackConfiguration(version).exists();
+    }
+
 }

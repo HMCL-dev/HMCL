@@ -33,10 +33,7 @@ import org.jackhuang.hmcl.util.Logging;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 
 public class HMCLGameRepository extends DefaultGameRepository {
@@ -192,6 +189,15 @@ public class HMCLGameRepository extends DefaultGameRepository {
         Lang.invoke(() -> FileUtils.writeText(getVersionSettingFile(id), GSON.toJson(versionSettings.get(id))));
     }
 
+    public boolean forbidsVersion(String id) {
+        return FORBIDDEN.contains(id);
+    }
+
+    @Override
+    public File getModpackConfiguration(String version) {
+        return new File(getRunDirectory(version), "modpack.cfg");
+    }
+
     public void markVersionAsModpack(String id) {
         beingModpackVersions.add(id);
     }
@@ -203,6 +209,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting()
             .registerTypeAdapter(VersionSetting.class, VersionSetting.Serializer.INSTANCE)
             .create();
+
+    private static final HashSet<String> FORBIDDEN = new HashSet<>(Arrays.asList("modpack", "minecraftinstance", "manifest"));
 
     private static final String PROFILE = "{\"selectedProfile\": \"(Default)\",\"profiles\": {\"(Default)\": {\"name\": \"(Default)\"}},\"clientToken\": \"88888888-8888-8888-8888-888888888888\"}";
 }

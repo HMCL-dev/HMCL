@@ -114,7 +114,7 @@ public class FileDownloadTask extends Task {
     @Override
     public void execute() throws Exception {
         URL currentURL = url;
-        Logging.LOG.log(Level.FINER, "Downloading {0}, to {1}", new Object[] { currentURL, file });
+        Logging.LOG.log(Level.FINER, "Downloading {0} to {1}", new Object[] { currentURL, file });
         Exception exception = null;
 
         for (int repeat = 0; repeat < retry; repeat++) {
@@ -193,7 +193,7 @@ public class FileDownloadTask extends Task {
                     Thread.currentThread().interrupt();
                     break;
                 } else {
-                    if (file.exists() || !file.delete())
+                    if (file.exists() && !file.delete())
                         throw new IOException("Unable to delete existent file " + file);
                     if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
                         throw new IOException("Unable to make parent directory " + file);

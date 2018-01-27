@@ -82,7 +82,10 @@ public final class ModpackPage extends StackPane implements WizardPage {
             // TODO: original HMCL modpack support.
             controller.getSettings().put(MODPACK_FILE, selectedFile);
             lblModpackLocation.setText(selectedFile.getAbsolutePath());
-            txtModpackName.getValidators().add(new Validator(Main.i18n("version.already_exists"), str -> !profile.getRepository().hasVersion(str) && StringUtils.isNotBlank(str)));
+            txtModpackName.getValidators().addAll(
+                    new Validator(Main.i18n("install.new_game.already_exists"), str -> !profile.getRepository().hasVersion(str) && StringUtils.isNotBlank(str)),
+                    new Validator(Main.i18n("version.forbidden_name"), str -> !profile.getRepository().forbidsVersion(str))
+            );
             txtModpackName.textProperty().addListener(e -> btnInstall.setDisable(!txtModpackName.validate()));
 
             try {

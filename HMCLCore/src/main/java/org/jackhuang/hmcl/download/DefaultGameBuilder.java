@@ -41,6 +41,14 @@ public class DefaultGameBuilder extends GameBuilder {
         this.downloadProvider = dependencyManager.getDownloadProvider();
     }
 
+    public DefaultDependencyManager getDependencyManager() {
+        return dependencyManager;
+    }
+
+    public DownloadProvider getDownloadProvider() {
+        return downloadProvider;
+    }
+
     @Override
     public Task buildAsync() {
         return new VersionJsonDownloadTask(gameVersion, dependencyManager).then(variables -> {
@@ -50,7 +58,7 @@ public class DefaultGameBuilder extends GameBuilder {
             Task result = new ParallelTask(
                     new GameAssetDownloadTask(dependencyManager, version),
                     new GameLoggingDownloadTask(dependencyManager, version),
-                    new GameDownloadTask(dependencyManager, version),
+                    downloadGameAsync(gameVersion, version),
                     new GameLibrariesTask(dependencyManager, version) // Game libraries will be downloaded for multiple times partly, this time is for vanilla libraries.
             ).with(new VersionJsonSaveTask(dependencyManager.getGameRepository(), version)); // using [with] because download failure here are tolerant.
             
@@ -66,6 +74,10 @@ public class DefaultGameBuilder extends GameBuilder {
 
     private ExceptionalFunction<AutoTypingMap<String>, Task, ?> libraryTaskHelper(String gameVersion, String libraryId) {
         return variables -> dependencyManager.installLibraryAsync(gameVersion, variables.get("version"), libraryId, toolVersions.get(libraryId));
+    }
+
+    protected Task downloadGameAsync(String gameVersion, Version version) {
+        return new GameDownloadTask(dependencyManager, version);
     }
 
 }

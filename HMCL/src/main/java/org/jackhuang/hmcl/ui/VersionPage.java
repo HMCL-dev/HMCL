@@ -112,12 +112,12 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     }
 
     public void onDelete() {
-        if (FXUtils.alert(Alert.AlertType.CONFIRMATION, "Confirm", Main.i18n("version.manage.remove.confirm") + version)) {
+        Controllers.confirmDialog(Main.i18n("version.manage.remove.confirm", version), Main.i18n("message.confirm"), () -> {
             if (profile.getRepository().removeVersionFromDisk(version)) {
                 profile.getRepository().refreshVersionsAsync().start();
                 Controllers.navigate(null);
             }
-        }
+        }, null);
     }
 
     public void onExport() {

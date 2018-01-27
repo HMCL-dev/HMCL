@@ -23,11 +23,12 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.FileUtils;
-import org.jackhuang.hmcl.util.IOUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public final class MinecraftInstanceTask<T> extends Task {
@@ -36,12 +37,14 @@ public final class MinecraftInstanceTask<T> extends Task {
     private final String subDirectory;
     private final File jsonFile;
     private final T manifest;
+    private final String type;
 
-    public MinecraftInstanceTask(File zipFile, String subDirectory, T manifest, File jsonFile) {
+    public MinecraftInstanceTask(File zipFile, String subDirectory, T manifest, String type, File jsonFile) {
         this.zipFile = zipFile;
         this.subDirectory = subDirectory;
         this.manifest = manifest;
         this.jsonFile = jsonFile;
+        this.type = type;
 
         if (!zipFile.exists())
             throw new IllegalArgumentException("File " + zipFile + " does not exist. Cannot parse this modpack.");
@@ -49,9 +52,8 @@ public final class MinecraftInstanceTask<T> extends Task {
 
     @Override
     public void execute() throws Exception {
-        Map<String, ModpackConfiguration.FileInformation> overrides = new HashMap<>();
+        List<ModpackConfiguration.FileInformation> overrides = new LinkedList<>();
 
-        byte[] buf = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
         try (ZipArchiveInputStream zip = new ZipArchiveInputStream(new FileInputStream(zipFile), null, true, true)) {
             ArchiveEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
@@ -62,12 +64,10 @@ public final class MinecraftInstanceTask<T> extends Task {
                 if (path.startsWith("/") || path.startsWith("\\"))
                     path = path.substring(1);
 
-                overrides.put(path, new ModpackConfiguration.FileInformation(
-                        path, DigestUtils.sha1Hex(zip)
-                ));
+                overrides.add(new ModpackConfiguration.FileInformation(path, DigestUtils.sha1Hex(zip)));
             }
         }
 
-        FileUtils.writeText(jsonFile, Constants.GSON.toJson(new ModpackConfiguration<>(manifest, overrides)));
+        FileUtils.writeText(jsonFile, Constants.GSON.toJson(new ModpackConfiguration<>(manifest, type, overrides)));
     }
 }

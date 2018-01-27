@@ -17,20 +17,26 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.mod.CurseManifest;
-import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.mod.MultiMCInstanceConfiguration;
+import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
+import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Optional;
 
 public final class ModpackHelper {
     private ModpackHelper() {}
 
-    public static Modpack readModpackManifest(File file) {
+    public static Modpack readModpackManifest(File file) throws UnsupportedModpackException {
         try {
             return CurseManifest.readCurseForgeModpackManifest(file);
         } catch (Exception e) {
@@ -49,7 +55,54 @@ public final class ModpackHelper {
             // ignore it, not a valid MultiMC modpack.
         }
 
-        throw new IllegalArgumentException("Modpack file " + file + " is not supported.");
+        throw new UnsupportedModpackException(file.toString());
+    }
+
+    public static <T> ModpackConfiguration<T> readModpackConfiguration(File file) throws IOException {
+        if (!file.exists())
+            throw new FileNotFoundException(file.getPath());
+        else
+            try {
+                return Constants.GSON.fromJson(FileUtils.readText(file), new TypeToken<ModpackConfiguration<T>>() {
+                }.getType());
+            } catch (JsonParseException e) {
+                throw new IOException("Malformed modpack configuration");
+            }
+    }
+
+    private static String getManifestType(Object manifest) throws UnsupportedModpackException {
+        if (manifest instanceof HMCLModpackManifest)
+            return HMCLModpackInstallTask.MODPACK_TYPE;
+        else if (manifest instanceof MultiMCInstanceConfiguration)
+            return MultiMCModpackInstallTask.MODPACK_TYPE;
+        else if (manifest instanceof CurseManifest)
+            return CurseInstallTask.MODPACK_TYPE;
+        else
+            throw new UnsupportedModpackException();
+    }
+
+    public static Task getUpdateTask(Profile profile, File zipFile, String name, ModpackConfiguration configuration) throws UnsupportedModpackException, MismatchedModpackTypeException, IOException {
+        Modpack modpack = ModpackHelper.readModpackManifest(zipFile);
+
+        switch (configuration.getType()) {
+            case CurseInstallTask.MODPACK_TYPE:
+                if (!(modpack.getManifest() instanceof CurseManifest))
+                    throw new MismatchedModpackTypeException(CurseInstallTask.MODPACK_TYPE, getManifestType(modpack.getManifest()));
+
+                return new CurseInstallTask(profile.getDependency(), zipFile, (CurseManifest) modpack.getManifest(), name);
+            case MultiMCModpackInstallTask.MODPACK_TYPE:
+                if (!(modpack.getManifest() instanceof MultiMCInstanceConfiguration))
+                    throw new MismatchedModpackTypeException(MultiMCModpackInstallTask.MODPACK_TYPE, getManifestType(modpack.getManifest()));
+
+                return new MultiMCModpackInstallTask(profile.getDependency(), zipFile, (MultiMCInstanceConfiguration) modpack.getManifest(), name);
+            case HMCLModpackInstallTask.MODPACK_TYPE:
+                if (!(modpack.getManifest() instanceof HMCLModpackManifest))
+                    throw new MismatchedModpackTypeException(HMCLModpackInstallTask.MODPACK_TYPE, getManifestType(modpack.getManifest()));
+
+                return new HMCLModpackInstallTask(profile, zipFile, modpack, name);
+            default:
+                throw new UnsupportedModpackException();
+        }
     }
 
     public static void toVersionSetting(MultiMCInstanceConfiguration c, VersionSetting vs) {
@@ -88,4 +141,6 @@ public final class ModpackHelper {
                 vs.setHeight(c.getHeight());
         }
     }
+
+
 }

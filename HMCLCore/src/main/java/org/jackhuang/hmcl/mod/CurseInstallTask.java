@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.CompressingUtils;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.FileUtils;
 
@@ -32,7 +31,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.function.Predicate;
 
 /**
  * Install a downloaded CurseForge modpack.
@@ -68,7 +66,7 @@ public final class CurseInstallTask extends Task {
         this.repository = dependencyManager.getGameRepository();
         this.run = repository.getRunDirectory(name);
 
-        File json = new File(run, "modpack.json");
+        File json = repository.getModpackConfiguration(name);
         if (repository.hasVersion(name) && !json.exists())
             throw new IllegalArgumentException("Version " + name + " already exists.");
 
@@ -80,8 +78,13 @@ public final class CurseInstallTask extends Task {
 
         ModpackConfiguration<CurseManifest> config = null;
         try {
-            if (json.exists())
-                config = Constants.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<CurseManifest>>(){}.getType());
+            if (json.exists()) {
+                config = Constants.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<CurseManifest>>() {
+                }.getType());
+
+                if (!MODPACK_TYPE.equals(config.getType()))
+                    throw new IllegalArgumentException("Version " + name + " is not a Curse modpack. Cannot update this version.");
+            }
         } catch (JsonParseException | IOException ignore) {
         }
         this.config = config;
@@ -110,7 +113,8 @@ public final class CurseInstallTask extends Task {
             }
 
         dependencies.add(new CurseCompletionTask(dependencyManager, name));
-        dependencies.add(new MinecraftInstanceTask<>(zipFile, manifest.getOverrides(), false, manifest, new File(run, "modpack.json")));
+        dependencies.add(new MinecraftInstanceTask<>(zipFile, manifest.getOverrides(), manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)));
     }
 
+    public static final String MODPACK_TYPE = "Curse";
 }

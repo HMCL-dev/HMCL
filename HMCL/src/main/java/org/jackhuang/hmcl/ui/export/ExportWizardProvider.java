@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.export;
 
 import javafx.scene.Node;
 import org.jackhuang.hmcl.game.HMCLModpackExportTask;
+import org.jackhuang.hmcl.game.HMCLModpackManager;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -27,8 +28,6 @@ import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
-
-import static org.jackhuang.hmcl.game.HMCLModpackManager.MODPACK_PREDICATE;
 
 public final class ExportWizardProvider implements WizardProvider {
     private final Profile profile;
@@ -60,7 +59,7 @@ public final class ExportWizardProvider implements WizardProvider {
     public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
         switch (step) {
             case 0: return new ModpackInfoPage(controller, version);
-            case 1: return new ModpackFileSelectionPage(controller, profile, version, MODPACK_PREDICATE);
+            case 1: return new ModpackFileSelectionPage(controller, profile, version, HMCLModpackManager::suggestMod);
             default: throw new IllegalArgumentException("step");
         }
     }

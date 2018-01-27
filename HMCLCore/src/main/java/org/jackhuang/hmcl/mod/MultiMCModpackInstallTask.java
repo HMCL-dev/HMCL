@@ -58,7 +58,7 @@ public final class MultiMCModpackInstallTask extends Task {
         this.repository = dependencyManager.getGameRepository();
         this.run = repository.getRunDirectory(name);
 
-        File json = new File(run, "modpack.json");
+        File json = repository.getModpackConfiguration(name);
         if (repository.hasVersion(name) && !json.exists())
             throw new IllegalArgumentException("Version " + name + " already exists.");
         dependents.add(dependencyManager.gameBuilder().name(name).gameVersion(manifest.getGameVersion()).buildAsync());
@@ -69,8 +69,13 @@ public final class MultiMCModpackInstallTask extends Task {
 
         ModpackConfiguration<MultiMCInstanceConfiguration> config = null;
         try {
-            if (json.exists())
-                config = Constants.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<MultiMCInstanceConfiguration>>(){}.getType());
+            if (json.exists()) {
+                config = Constants.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<MultiMCInstanceConfiguration>>() {
+                }.getType());
+
+                if (!MODPACK_TYPE.equals(config.getType()))
+                    throw new IllegalArgumentException("Version " + name + " is not a MultiMC modpack. Cannot update this version.");
+            }
         } catch (JsonParseException | IOException ignore) {
         }
 
@@ -110,7 +115,8 @@ public final class MultiMCModpackInstallTask extends Task {
         }
 
         dependencies.add(new VersionJsonSaveTask(repository, version));
-        dependencies.add(new MinecraftInstanceTask<>(zipFile, manifest.getName() + "/minecraft/", manifest, new File(run, "modpack.json")));
+        dependencies.add(new MinecraftInstanceTask<>(zipFile, manifest.getName() + "/minecraft/", manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)));
     }
-    
+
+    public static final String MODPACK_TYPE = "MultiMC";
 }

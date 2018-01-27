@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -17,35 +17,25 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.mod.MultiMCInstanceConfiguration;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DefaultGameBuilder;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.VersionSetting;
-import org.jackhuang.hmcl.task.Scheduler;
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 
-import java.util.Objects;
-
-public final class MultiMCInstallVersionSettingTask extends Task {
+/**
+ * @author huangyuhui
+ */
+public class HMCLGameBuilder extends DefaultGameBuilder {
     private final Profile profile;
-    private final MultiMCInstanceConfiguration manifest;
-    private final String version;
 
-    public MultiMCInstallVersionSettingTask(Profile profile, MultiMCInstanceConfiguration manifest, String version) {
+    public HMCLGameBuilder(Profile profile) {
+        super(profile.getDependency());
+
         this.profile = profile;
-        this.manifest = manifest;
-        this.version = version;
     }
 
     @Override
-    public Scheduler getScheduler() {
-        return Schedulers.javafx();
-    }
-
-    @Override
-    public void execute() {
-        profile.getRepository().refreshVersions();
-        VersionSetting vs = Objects.requireNonNull(profile.specializeVersionSetting(version));
-        ModpackHelper.toVersionSetting(manifest, vs);
+    protected Task downloadGameAsync(String gameVersion, Version version) {
+        return new HMCLGameDownloadTask(profile, gameVersion, version);
     }
 }

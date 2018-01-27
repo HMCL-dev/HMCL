@@ -49,6 +49,8 @@ public final class VersionItem extends StackPane {
     @FXML
     private JFXButton btnSettings;
     @FXML
+    private JFXButton btnUpdate;
+    @FXML
     private JFXButton btnLaunch;
     @FXML
     private JFXButton btnScript;
@@ -67,10 +69,12 @@ public final class VersionItem extends StackPane {
         FXUtils.limitHeight(this, 156);
         setEffect(new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.26), 5.0, 0.12, -1.0, 1.0));
         btnSettings.setGraphic(SVG.gear("black", 15, 15));
+        btnUpdate.setGraphic(SVG.update("black", 15, 15));
         btnLaunch.setGraphic(SVG.launch("black", 15, 15));
         btnScript.setGraphic(SVG.script("black", 15, 15));
 
-        FXUtils.installTooltip(btnSettings, 0, 5000, 0, new Tooltip(Main.i18n("version.manage.settings")));
+        FXUtils.installTooltip(btnSettings, 0, 5000, 0, new Tooltip(Main.i18n("version.settings")));
+        FXUtils.installTooltip(btnUpdate, 0, 5000, 0, new Tooltip(Main.i18n("version.update")));
         FXUtils.installTooltip(btnLaunch, 0, 5000, 0, new Tooltip(Main.i18n("version.launch")));
         FXUtils.installTooltip(btnScript, 0, 5000, 0, new Tooltip(Main.i18n("version.launch_script")));
 
@@ -82,6 +86,10 @@ public final class VersionItem extends StackPane {
                 if (e.getClickCount() == 2)
                     Optional.ofNullable(launchClickedHandler).ifPresent(h -> h.handle(e));
         });
+    }
+
+    public void setUpdate(boolean update) {
+        btnUpdate.setVisible(update);
     }
 
     public void setVersionName(String versionName) {
@@ -107,5 +115,9 @@ public final class VersionItem extends StackPane {
     public void setOnLaunchButtonClicked(EventHandler<? super MouseEvent> handler) {
         launchClickedHandler = handler;
         btnLaunch.setOnMouseClicked(handler);
+    }
+
+    public void setOnUpdateButtonClicked(EventHandler<? super MouseEvent> handler) {
+        btnUpdate.setOnMouseClicked(handler);
     }
 }

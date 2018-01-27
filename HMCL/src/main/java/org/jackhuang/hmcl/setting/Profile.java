@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.setting;
 import com.google.gson.*;
 import javafx.beans.InvalidationListener;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.game.HMCLDependencyManager;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.ImmediateObjectProperty;
@@ -105,8 +106,8 @@ public final class Profile {
         return modManager;
     }
 
-    public DefaultDependencyManager getDependency() {
-        return new DefaultDependencyManager(repository, Settings.INSTANCE.getDownloadProvider(), Settings.INSTANCE.getProxy());
+    public HMCLDependencyManager getDependency() {
+        return new HMCLDependencyManager(this, Settings.INSTANCE.getDownloadProvider(), Settings.INSTANCE.getProxy());
     }
 
     public VersionSetting getVersionSetting(String id) {

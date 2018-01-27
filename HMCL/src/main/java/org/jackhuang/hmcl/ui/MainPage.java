@@ -35,15 +35,25 @@ import org.jackhuang.hmcl.event.ProfileLoadingEvent;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.game.LauncherHelper;
+import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
+import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.ui.construct.MessageBox;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.OperatingSystem;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -75,6 +85,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private Node buildNode(Profile profile, String version, String game) {
         VersionItem item = new VersionItem();
+        item.setUpdate(profile.getRepository().isModpack(version));
         item.setGameVersion(game);
         item.setVersionName(version);
         item.setOnLaunchButtonClicked(e -> {
@@ -101,6 +112,29 @@ public final class MainPage extends StackPane implements DecoratorPage {
         item.setOnSettingsButtonClicked(e -> {
             Controllers.getDecorator().showPage(Controllers.getVersionPage());
             Controllers.getVersionPage().load(version, profile);
+        });
+        item.setOnUpdateButtonClicked(event -> {
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle(Main.i18n("modpack.choose"));
+            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(Main.i18n("modpack"), "*.zip"));
+            File selectedFile = chooser.showOpenDialog(Controllers.getStage());
+            if (selectedFile != null) {
+                TaskExecutorDialogPane pane = new TaskExecutorDialogPane(null);
+                try {
+                    TaskExecutor executor = ModpackHelper.getUpdateTask(profile, selectedFile, version, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(version)))
+                            .then(Task.of(Schedulers.javafx(), Controllers::closeDialog)).executor();
+                    pane.setExecutor(executor);
+                    pane.setCurrentState(Main.i18n("modpack.update"));
+                    executor.start();
+                    Controllers.dialog(pane);
+                } catch (UnsupportedModpackException e) {
+                    Controllers.dialog(Main.i18n("modpack.unsupported"), Main.i18n("message.error"), MessageBox.ERROR_MESSAGE);
+                } catch (MismatchedModpackTypeException e) {
+                    Controllers.dialog(Main.i18n("modpack.mismatched_type"), Main.i18n("message.error"), MessageBox.ERROR_MESSAGE);
+                } catch (IOException e)  {
+                    Controllers.dialog(Main.i18n("modpack.invalid"), Main.i18n("message.error"), MessageBox.ERROR_MESSAGE);
+                }
+            }
         });
         File iconFile = profile.getRepository().getVersionIcon(version);
         if (iconFile.exists())

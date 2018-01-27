@@ -4,18 +4,25 @@
 <?import com.jfoenix.controls.JFXDialogLayout?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.HBox?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
-    <JFXDialogLayout>
-        <heading>
-            <Label fx:id="title" text="%message.info" />
-        </heading>
-        <body>
-            <Label fx:id="content" textAlignment="JUSTIFY" wrapText="true" />
-        </body>
-        <actions>
-            <JFXButton fx:id="acceptButton" styleClass="dialog-accept" text="%button.ok" />
-        </actions>
-    </JFXDialogLayout>
+    <HBox spacing="8">
+        <Label fx:id="graphic" translateX="34" translateY="34" minWidth="40" maxWidth="40" minHeight="40" maxHeight="40" />
+        <JFXDialogLayout>
+            <heading>
+                <Label fx:id="title" text="%message.info" />
+            </heading>
+            <body>
+                <Label fx:id="content" wrapText="true" />
+            </body>
+            <actions>
+                <HBox fx:id="actions">
+                    <JFXButton fx:id="acceptButton" styleClass="dialog-accept" text="%button.ok" />
+                    <JFXButton fx:id="cancelButton" visible="false" styleClass="dialog-cancel" text="%button.cancel" />
+                </HBox>
+            </actions>
+        </JFXDialogLayout>
+    </HBox>
 </fx:root>

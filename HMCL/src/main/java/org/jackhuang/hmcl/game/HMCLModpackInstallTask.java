@@ -52,7 +52,7 @@ public final class HMCLModpackInstallTask extends Task {
         this.modpack = modpack;
         this.run = repository.getRunDirectory(name);
 
-        File json = new File(run, "modpack.json");
+        File json = repository.getModpackConfiguration(name);
         if (repository.hasVersion(name) && !json.exists())
             throw new IllegalArgumentException("Version " + name + " already exists");
 
@@ -64,8 +64,13 @@ public final class HMCLModpackInstallTask extends Task {
 
         ModpackConfiguration<Modpack> config = null;
         try {
-            if (json.exists())
-                config = Constants.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<Modpack>>(){}.getType());
+            if (json.exists()) {
+                config = Constants.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<Modpack>>() {
+                }.getType());
+
+                if (!MODPACK_TYPE.equals(config.getType()))
+                    throw new IllegalArgumentException("Version " + name + " is not a HMCL modpack. Cannot update this version.");
+            }
         } catch (JsonParseException | IOException ignore) {
         }
         dependents.add(new ModpackInstallTask<>(zipFile, run, "minecraft/", it -> !Objects.equals(it, "minecraft/pack.json"), config));
@@ -86,6 +91,8 @@ public final class HMCLModpackInstallTask extends Task {
         String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
         Version version = Constants.GSON.fromJson(json, Version.class).setJar(null);
         dependencies.add(new VersionJsonSaveTask(repository, version));
-        dependencies.add(new MinecraftInstanceTask<>(zipFile, "minecraft/", modpack, new File(run, "modpack.json")));
+        dependencies.add(new MinecraftInstanceTask<>(zipFile, "minecraft/", modpack, MODPACK_TYPE, repository.getModpackConfiguration(name)));
     }
+
+    public static final String MODPACK_TYPE = "HMCL";
 }

@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 4017  huangyuhui <huanghongxun4008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,8 +21,11 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 
 import java.util.Optional;
 
@@ -33,11 +36,17 @@ public final class MessageDialogPane extends StackPane {
     @FXML
     private JFXButton acceptButton;
     @FXML
+    private JFXButton cancelButton;
+    @FXML
     private Label content;
     @FXML
+    private Label graphic;
+    @FXML
     private Label title;
+    @FXML
+    private HBox actions;
 
-    public MessageDialogPane(String text, String title, JFXDialog dialog, Runnable onAccept) {
+    public MessageDialogPane(String text, String title, JFXDialog dialog, int type, Runnable onAccept) {
         this.text = text;
         this.dialog = dialog;
 
@@ -51,5 +60,39 @@ public final class MessageDialogPane extends StackPane {
             dialog.close();
             Optional.ofNullable(onAccept).ifPresent(Runnable::run);
         });
+
+        actions.getChildren().remove(cancelButton);
+
+        switch (type) {
+            case MessageBox.INFORMATION_MESSAGE:
+                graphic.setGraphic(SVG.info_circle("black", 40, 40));
+                break;
+            case MessageBox.ERROR_MESSAGE:
+                graphic.setGraphic(SVG.close_circle("black", 40, 40));
+                break;
+            case MessageBox.FINE_MESSAGE:
+                graphic.setGraphic(SVG.check_circle("black", 40, 40));
+                break;
+            case MessageBox.WARNING_MESSAGE:
+                graphic.setGraphic(SVG.alert("black", 40, 40));
+                break;
+        }
+    }
+
+    public MessageDialogPane(String text, String title, JFXDialog dialog, Runnable onAccept, Runnable onCancel) {
+        this(text, title, dialog, -1, onAccept);
+
+        cancelButton.setVisible(true);
+        cancelButton.setOnMouseClicked(e -> {
+            dialog.close();
+            Optional.ofNullable(onCancel).ifPresent(Runnable::run);
+        });
+
+        acceptButton.setText(Main.i18n("button.yes"));
+        cancelButton.setText(Main.i18n("button.no"));
+
+        actions.getChildren().add(cancelButton);
+
+        graphic.setGraphic(SVG.help_circle("black", 40, 40));
     }
 }

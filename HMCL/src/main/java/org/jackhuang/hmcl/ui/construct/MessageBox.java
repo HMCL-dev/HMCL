@@ -86,6 +86,10 @@ public final class MessageBox {
      */
     public static final int QUESTION_MESSAGE = 3;
     /**
+     * Message Box Type: Fine
+     */
+    public static final int FINE_MESSAGE = 4;
+    /**
      * Message Box Type: Plain
      */
     public static final int PLAIN_MESSAGE = -1;
