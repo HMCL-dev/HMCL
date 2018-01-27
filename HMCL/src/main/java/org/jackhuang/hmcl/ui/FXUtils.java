@@ -146,10 +146,19 @@ public final class FXUtils {
 
     public static void installTooltip(Node node, double openDelay, double visibleDelay, double closeDelay, Tooltip tooltip) {
         try {
+            // Java 8
             call(construct(Class.forName("javafx.scene.control.Tooltip$TooltipBehavior"), new Duration(openDelay), new Duration(visibleDelay), new Duration(closeDelay), false),
                     "install", node, tooltip);
         } catch (Throwable e) {
-            Logging.LOG.log(Level.SEVERE, "Cannot install tooltip by reflection", e);
+            try {
+                // Java 9
+                call(tooltip, "setShowDelay", new Duration(openDelay));
+                call(tooltip, "setShowDuration", new Duration(visibleDelay));
+                call(tooltip, "setHideDelay", new Duration(closeDelay));
+            } catch (Throwable e2) {
+                e.addSuppressed(e2);
+                Logging.LOG.log(Level.SEVERE, "Cannot install tooltip by reflection", e);
+            }
             Tooltip.install(node, tooltip);
         }
     }
