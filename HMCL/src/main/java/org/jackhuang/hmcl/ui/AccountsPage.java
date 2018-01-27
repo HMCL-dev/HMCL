@@ -46,7 +46,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class AccountsPage extends StackPane implements DecoratorPage {
-    private final StringProperty title = new SimpleStringProperty(this, "title", "Accounts");
+    private final StringProperty title = new SimpleStringProperty(this, "title", Main.i18n("account"));
 
     @FXML
     private ScrollPane scrollPane;
