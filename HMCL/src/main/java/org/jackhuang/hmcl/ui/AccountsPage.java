@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.game.HMCLMultiCharacterSelector;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 
 import java.util.LinkedList;
@@ -74,6 +75,7 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
 
         txtPassword.setOnAction(e -> onCreationAccept());
         txtUsername.setOnAction(e -> onCreationAccept());
+        txtUsername.getValidators().add(new Validator(Main.i18n("input.email"), str -> !txtPassword.isVisible() || str.contains("@")));
 
         FXUtils.onChangeAndOperate(Settings.INSTANCE.selectedAccountProperty(), account -> {
             for (Node node : masonryPane.getChildren())
