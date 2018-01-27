@@ -40,7 +40,7 @@
                     </right>
                 </BorderPane>
 
-                <MultiFileItem fx:id="javaItem" title="%game_settings.java_directory" chooserTitle="%settings.choose_javapath"
+                <MultiFileItem fx:id="javaItem" title="%settings.game.java_directory" chooserTitle="%settings.choose_javapath"
                                hasSubtitle="true" customText="%settings.custom" />
 
                 <MultiFileItem fx:id="gameDirItem" title="%profile.instance_directory" chooserTitle="%settings.choose_gamedir"
@@ -60,16 +60,16 @@
 
                 <BorderPane> <!-- Launcher Visibility -->
                     <left>
-                        <Label text="%advancedsettings.launcher_visible" BorderPane.alignment="CENTER_LEFT"/>
+                        <Label text="%settings.advanced.launcher_visible" BorderPane.alignment="CENTER_LEFT"/>
                     </left>
                     <right>
                         <JFXComboBox fx:id="cboLauncherVisibility" BorderPane.alignment="CENTER_RIGHT">
                             <items>
                                 <FXCollections fx:factory="observableArrayList">
-                                    <Label text="%advancedsettings.launcher_visibility.close"/>
-                                    <Label text="%advancedsettings.launcher_visibility.hide"/>
-                                    <Label text="%advancedsettings.launcher_visibility.keep"/>
-                                    <Label text="%advancedsettings.launcher_visibility.hide_reopen"/>
+                                    <Label text="%settings.advanced.launcher_visibility.close"/>
+                                    <Label text="%settings.advanced.launcher_visibility.hide"/>
+                                    <Label text="%settings.advanced.launcher_visibility.keep"/>
+                                    <Label text="%settings.advanced.launcher_visibility.hide_reopen"/>
                                 </FXCollections>
                             </items>
                         </JFXComboBox>
@@ -78,7 +78,7 @@
 
                 <BorderPane> <!-- Dimension -->
                     <left>
-                        <Label text="%game_settings.dimension" BorderPane.alignment="CENTER_LEFT"/>
+                        <Label text="%settings.game.dimension" BorderPane.alignment="CENTER_LEFT"/>
                     </left>
                     <right>
                         <BorderPane>
@@ -90,7 +90,7 @@
                                 </HBox>
                             </left>
                             <right>
-                                <JFXCheckBox fx:id="chkFullscreen" text="%game_settings.fullscreen" alignment="CENTER"
+                                <JFXCheckBox fx:id="chkFullscreen" text="%settings.game.fullscreen" alignment="CENTER"
                                              BorderPane.alignment="CENTER">
                                     <BorderPane.margin>
                                         <Insets right="7"/>
@@ -111,31 +111,31 @@
                 </BorderPane>
             </ComponentList>
             <HBox alignment="CENTER" style="-fx-padding: 10 0 10 0;">
-                <JFXButton text="%advancedsettings" onMouseClicked="#onShowAdvanced" buttonType="RAISED" styleClass="jfx-button-raised"/>
+                <JFXButton text="%settings.advanced" onMouseClicked="#onShowAdvanced" buttonType="RAISED" styleClass="jfx-button-raised"/>
             </HBox>
             <ComponentList fx:id="advancedSettingsPane" depth="1">
-                <JFXTextField labelFloat="true" promptText="%advancedsettings.jvm_args" styleClass="fit-width"
+                <JFXTextField labelFloat="true" promptText="%settings.advanced.jvm_args" styleClass="fit-width"
                               fx:id="txtJVMArgs">
                     <tooltip>
-                        <Tooltip text="%advancedsettings.java_args_default"/>
+                        <Tooltip text="%settings.advanced.java_args_default"/>
                     </tooltip>
                 </JFXTextField>
                 <fx:define>
                     <Insets fx:id="insets" bottom="8"/>
                 </fx:define>
-                <JFXTextField labelFloat="true" promptText="%advancedsettings.minecraft_arguments"
+                <JFXTextField labelFloat="true" promptText="%settings.advanced.minecraft_arguments"
                               styleClass="fit-width" fx:id="txtGameArgs" StackPane.margin="$insets"/>
-                <JFXTextField labelFloat="true" promptText="%advancedsettings.java_permanent_generation_space"
+                <JFXTextField labelFloat="true" promptText="%settings.advanced.java_permanent_generation_space"
                               styleClass="fit-width" fx:id="txtMetaspace" StackPane.margin="$insets"/>
-                <JFXTextField labelFloat="true" promptText="%advancedsettings.wrapper_launcher" styleClass="fit-width"
+                <JFXTextField labelFloat="true" promptText="%settings.advanced.wrapper_launcher" styleClass="fit-width"
                               fx:id="txtWrapper" StackPane.margin="$insets"/>
-                <JFXTextField labelFloat="true" promptText="%advancedsettings.precall_command" styleClass="fit-width"
+                <JFXTextField labelFloat="true" promptText="%settings.advanced.precall_command" styleClass="fit-width"
                               fx:id="txtPrecallingCommand" StackPane.margin="$insets"/>
-                <JFXTextField labelFloat="true" promptText="%advancedsettings.server_ip" styleClass="fit-width"
+                <JFXTextField labelFloat="true" promptText="%settings.advanced.server_ip" styleClass="fit-width"
                               fx:id="txtServerIP" StackPane.margin="$insets"/>
                 <BorderPane>
                     <left>
-                        <Label text="%advancedsettings.no_jvm_args"/>
+                        <Label text="%settings.advanced.no_jvm_args"/>
                     </left>
                     <right>
                         <JFXToggleButton fx:id="chkNoJVMArgs" size="7"/>
@@ -143,7 +143,7 @@
                 </BorderPane>
                 <BorderPane>
                     <left>
-                        <Label text="%advancedsettings.no_common"/>
+                        <Label text="%settings.advanced.no_common"/>
                     </left>
                     <right>
                         <JFXToggleButton fx:id="chkNoCommon" size="7"/>
@@ -151,7 +151,7 @@
                 </BorderPane>
                 <BorderPane>
                     <left>
-                        <Label text="%advancedsettings.dont_check_game_completeness"/>
+                        <Label text="%settings.advanced.dont_check_game_completeness"/>
                     </left>
                     <right>
                         <JFXToggleButton fx:id="chkNoGameCheck" size="7"/>

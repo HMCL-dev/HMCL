@@ -113,8 +113,8 @@ public final class VersionSettingsController {
         );
 
         gameDirItem.loadChildren(Arrays.asList(
-                gameDirItem.createChildren(Main.i18n("advancedsettings.game_dir.default"), EnumGameDirectory.ROOT_FOLDER),
-                gameDirItem.createChildren(Main.i18n("advancedsettings.game_dir.independent"), EnumGameDirectory.VERSION_FOLDER)
+                gameDirItem.createChildren(Main.i18n("settings.advanced.game_dir.default"), EnumGameDirectory.ROOT_FOLDER),
+                gameDirItem.createChildren(Main.i18n("settings.advanced.game_dir.independent"), EnumGameDirectory.VERSION_FOLDER)
         ));
 
         FXUtils.installTooltip(btnIconSelection, 0, 5000, 0, new Tooltip(Main.i18n("button.edit")));

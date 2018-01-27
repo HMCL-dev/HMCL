@@ -15,9 +15,9 @@
                 fitToHeight="true" fitToWidth="true">
         <VBox fx:id="rootPane" style="-fx-padding: 20;">
             <ComponentList fx:id="settingsPane">
-                <FileItem fx:id="fileCommonLocation" name="%launcher.common_location" title="%launcher.choose_commonpath" tooltip="%launcher_settings.common_path.tooltip" />
+                <FileItem fx:id="fileCommonLocation" name="%launcher.common_location" title="%launcher.choose_commonpath" tooltip="%settings.launcher.common_path.tooltip" />
                 <!--FileItem fx:id="fileBackgroundLocation" name="%launcher.background_location" title="%launcher.choose_bgpath" tooltip="%launcher.background_tooltip" /-->
-                <BorderPane><left><Label text="%launcher_settings.download_source" BorderPane.alignment="CENTER_LEFT" /></left><right><JFXComboBox fx:id="cboDownloadSource">
+                <BorderPane><left><Label text="%settings.launcher.download_source" BorderPane.alignment="CENTER_LEFT" /></left><right><JFXComboBox fx:id="cboDownloadSource">
                     <items>
                         <FXCollections fx:factory="observableArrayList">
                             <Label text="%download.mojang" />
@@ -25,29 +25,29 @@
                         </FXCollections>
                     </items>
                 </JFXComboBox></right></BorderPane>
-                <BorderPane><left><Label text="%launcher_settings.language" BorderPane.alignment="CENTER_LEFT" /></left><right><JFXComboBox fx:id="cboLanguage" /></right></BorderPane>
-                <BorderPane><left><Label text="%launcher_settings.proxy" BorderPane.alignment="CENTER_LEFT" /></left><right><HBox alignment="CENTER_LEFT" spacing="5">
+                <BorderPane><left><Label text="%settings.launcher.language" BorderPane.alignment="CENTER_LEFT" /></left><right><JFXComboBox fx:id="cboLanguage" /></right></BorderPane>
+                <BorderPane><left><Label text="%settings.launcher.proxy" BorderPane.alignment="CENTER_LEFT" /></left><right><HBox alignment="CENTER_LEFT" spacing="5">
                     <JFXComboBox fx:id="cboProxyType">
                         <items>
                             <FXCollections fx:factory="observableArrayList">
-                                <Label text="%launcher_settings.proxy.direct" />
+                                <Label text="%settings.launcher.proxy.direct" />
                                 <Label text="HTTP" />
                                 <Label text="Socks" />
                             </FXCollections>
                         </items>
                     </JFXComboBox>
-                    <Label text="%launcher_settings.proxy.host" />
+                    <Label text="%settings.launcher.proxy.host" />
                     <JFXTextField fx:id="txtProxyHost" maxWidth="50" />
-                    <Label text="%launcher_settings.proxy.port" />
+                    <Label text="%settings.launcher.proxy.port" />
                     <JFXTextField fx:id="txtProxyPort" maxWidth="50" />
-                    <Label text="%launcher_settings.proxy.username" />
+                    <Label text="%settings.launcher.proxy.username" />
                     <JFXTextField fx:id="txtProxyUsername" maxWidth="50" />
-                    <Label text="%launcher_settings.proxy.password" />
+                    <Label text="%settings.launcher.proxy.password" />
                     <JFXTextField fx:id="txtProxyPassword" maxWidth="50" />
                 </HBox></right></BorderPane>
                 <!--BorderPane><left><Label text="%launcher_settings.theme" /></left><right></right></BorderPane-->
                 <VBox spacing="5">
-                    <BorderPane><left><Label text="%launcher_settings.log_font" BorderPane.alignment="CENTER_LEFT" /></left><right><HBox spacing="3"><FontComboBox fontSize="12" enableStyle="false" fx:id="cboFont" /><JFXTextField fx:id="txtFontSize" maxWidth="50" minWidth="50" /></HBox></right></BorderPane>
+                    <BorderPane><left><Label text="%settings.launcher.log_font" BorderPane.alignment="CENTER_LEFT" /></left><right><HBox spacing="3"><FontComboBox fontSize="12" enableStyle="false" fx:id="cboFont" /><JFXTextField fx:id="txtFontSize" maxWidth="50" minWidth="50" /></HBox></right></BorderPane>
                     <Label fx:id="lblDisplay" text="[23:33:33] [Client Thread/INFO] [WaterPower]: Loaded mod WaterPower." />
                 </VBox>
             </ComponentList>

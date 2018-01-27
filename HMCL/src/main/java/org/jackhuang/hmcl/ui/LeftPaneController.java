@@ -51,7 +51,7 @@ public final class LeftPaneController {
                     accountItem.setOnSettingsButtonClicked(() -> Controllers.navigate(new AccountsPage()));
                 }))
                 .startCategory(Main.i18n("launcher").toUpperCase())
-                .add(Lang.apply(new IconedItem(SVG.gear("black", 20, 20), Main.i18n("launcher_settings")), iconedItem -> {
+                .add(Lang.apply(new IconedItem(SVG.gear("black", 20, 20), Main.i18n("settings.launcher")), iconedItem -> {
                     iconedItem.prefWidthProperty().bind(leftPane.widthProperty());
                     iconedItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
                 }))

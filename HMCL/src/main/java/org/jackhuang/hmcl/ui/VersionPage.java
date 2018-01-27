@@ -24,7 +24,6 @@ import com.jfoenix.controls.JFXTabPane;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Tab;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.StackPane;
@@ -36,8 +35,6 @@ import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.FileUtils;
 
 import java.io.File;
-import java.lang.reflect.Proxy;
-import java.util.Optional;
 
 public final class VersionPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", null);
@@ -84,8 +81,8 @@ public final class VersionPage extends StackPane implements DecoratorPage {
         managementPopup = new JFXPopup(managementList);
 
         FXUtils.installTooltip(btnDelete, 0, 5000, 0, new Tooltip(Main.i18n("version.manage.remove")));
-        FXUtils.installTooltip(btnBrowseMenu, 0, 5000, 0, new Tooltip(Main.i18n("game_settings.exploration")));
-        FXUtils.installTooltip(btnManagementMenu, 0, 5000, 0, new Tooltip(Main.i18n("game_settings.management")));
+        FXUtils.installTooltip(btnBrowseMenu, 0, 5000, 0, new Tooltip(Main.i18n("settings.game.exploration")));
+        FXUtils.installTooltip(btnManagementMenu, 0, 5000, 0, new Tooltip(Main.i18n("settings.game.management")));
         FXUtils.installTooltip(btnExport, 0, 5000, 0, new Tooltip(Main.i18n("modpack.export")));
     }
 
@@ -93,7 +90,7 @@ public final class VersionPage extends StackPane implements DecoratorPage {
         this.version = id;
         this.profile = profile;
 
-        title.set(Main.i18n("game_settings") + " - " + id);
+        title.set(Main.i18n("settings.game") + " - " + id);
 
         versionSettingsController.loadVersionSetting(profile, id, profile.getVersionSetting(id));
         modController.setParentTab(tabPane);
