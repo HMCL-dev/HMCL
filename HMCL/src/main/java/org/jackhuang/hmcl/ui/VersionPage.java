@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.FileUtils;
 
 import java.io.File;
+import java.lang.reflect.Proxy;
 import java.util.Optional;
 
 public final class VersionPage extends StackPane implements DecoratorPage {
@@ -112,16 +113,11 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     }
 
     public void onDelete() {
-        Controllers.confirmDialog(Main.i18n("version.manage.remove.confirm", version), Main.i18n("message.confirm"), () -> {
-            if (profile.getRepository().removeVersionFromDisk(version)) {
-                profile.getRepository().refreshVersionsAsync().start();
-                Controllers.navigate(null);
-            }
-        }, null);
+        deleteVersion(profile, version);
     }
 
     public void onExport() {
-        Controllers.getDecorator().startWizard(new ExportWizardProvider(profile, version), Main.i18n("modpack.wizard"));
+        exportVersion(profile, version);
     }
 
     public void onBrowse() {
@@ -157,16 +153,10 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     public void onManagement() {
         switch (managementList.getSelectionModel().getSelectedIndex()) {
             case 0: // rename a version
-                Optional<String> res = FXUtils.inputDialog("Input", Main.i18n("version.manage.rename.message"), null, version);
-                if (res.isPresent()) {
-                    if (profile.getRepository().renameVersion(version, res.get())) {
-                        profile.getRepository().refreshVersionsAsync().start();
-                        Controllers.navigate(null);
-                    }
-                }
+                renameVersion(profile, version);
                 break;
             case 1: // remove a version
-                onDelete();
+                deleteVersion(profile, version);
                 break;
             case 2: // redownload asset index
                 new GameAssetIndexDownloadTask(profile.getDependency(), profile.getRepository().getVersion(version).resolve(profile.getRepository())).start();
@@ -190,5 +180,27 @@ public final class VersionPage extends StackPane implements DecoratorPage {
 
     public void setTitle(String title) {
         this.title.set(title);
+    }
+
+    public static void deleteVersion(Profile profile, String version) {
+        Controllers.confirmDialog(Main.i18n("version.manage.remove.confirm", version), Main.i18n("message.confirm"), () -> {
+            if (profile.getRepository().removeVersionFromDisk(version)) {
+                profile.getRepository().refreshVersionsAsync().start();
+                Controllers.navigate(null);
+            }
+        }, null);
+    }
+
+    public static void renameVersion(Profile profile, String version) {
+        Controllers.inputDialog(Main.i18n("version.manage.rename.message"), res -> {
+            if (profile.getRepository().renameVersion(version, res)) {
+                profile.getRepository().refreshVersionsAsync().start();
+                Controllers.navigate(null);
+            }
+        });
+    }
+
+    public static void exportVersion(Profile profile, String version) {
+        Controllers.getDecorator().startWizard(new ExportWizardProvider(profile, version), Main.i18n("modpack.wizard"));
     }
 }

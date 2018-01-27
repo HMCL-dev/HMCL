@@ -18,7 +18,9 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXMasonryPane;
+import com.jfoenix.controls.JFXPopup;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -26,6 +28,7 @@ import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Main;
@@ -61,6 +64,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private final StringProperty title = new SimpleStringProperty(this, "title", Main.i18n("main_page"));
 
+    private Profile profile;
+    private String rightClickedVersion;
+
     @FXML
     private JFXButton btnRefresh;
 
@@ -70,12 +76,20 @@ public final class MainPage extends StackPane implements DecoratorPage {
     @FXML
     private JFXMasonryPane masonryPane;
 
+    @FXML
+    private JFXListView versionList;
+
+    private JFXPopup versionPopup;
+
     {
         FXUtils.loadFXML(this, "/assets/fxml/main.fxml");
 
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(() -> Platform.runLater(this::loadVersions));
         EventBus.EVENT_BUS.channel(ProfileLoadingEvent.class).register(this::onProfilesLoading);
         EventBus.EVENT_BUS.channel(ProfileChangedEvent.class).register(this::onProfileChanged);
+
+        versionPopup = new JFXPopup(versionList);
+        getChildren().remove(versionList);
 
         btnAdd.setOnMouseClicked(e -> Controllers.getDecorator().startWizard(new DownloadWizardProvider(), Main.i18n("install")));
         FXUtils.installTooltip(btnAdd, 0, 5000, 0, new Tooltip(Main.i18n("install")));
@@ -136,6 +150,13 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 }
             }
         });
+        item.setOnMouseClicked(event -> {
+            if (event.getButton() == MouseButton.SECONDARY) {
+                rightClickedVersion = version;
+                versionList.getSelectionModel().select(-1);
+                versionPopup.show(item, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
+            }
+        });
         File iconFile = profile.getRepository().getVersionIcon(version);
         if (iconFile.exists())
             item.setImage(new Image("file:" + iconFile.getAbsolutePath()));
@@ -155,11 +176,27 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     private void loadVersions(Profile profile) {
+        this.profile = profile;
         List<Node> children = new LinkedList<>();
         for (Version version : profile.getRepository().getVersions()) {
             children.add(buildNode(profile, version.getId(), Lang.nonNull(GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version.getId())), "Unknown")));
         }
         FXUtils.resetChildren(masonryPane, children);
+    }
+
+    public void onVersionManagement() {
+        versionPopup.hide();
+        switch (versionList.getSelectionModel().getSelectedIndex()) {
+            case 0:
+                VersionPage.renameVersion(profile, rightClickedVersion);
+                break;
+            case 1:
+                VersionPage.deleteVersion(profile, rightClickedVersion);
+                break;
+            case 2:
+                VersionPage.exportVersion(profile, rightClickedVersion);
+                break;
+        }
     }
 
     public String getTitle() {

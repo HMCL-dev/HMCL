@@ -69,10 +69,10 @@ public class HMCLGameDownloadTask extends Task {
 
         dependencies.add(new FileDownloadTask(
                 NetworkUtils.toURL(profile.getDependency().getDownloadProvider().injectURL(version.getDownloadInfo().getUrl())),
-                jar,
+                cache,
                 profile.getDependency().getProxy(),
                 version.getDownloadInfo().getSha1()
-        ));
+        ).then(Task.of(v -> FileUtils.copyFile(cache, jar))));
     }
 
 }

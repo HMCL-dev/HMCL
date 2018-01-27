@@ -22,6 +22,7 @@ import com.google.gson.GsonBuilder;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
+import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.setting.VersionSetting;
@@ -63,7 +64,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     public File getRunDirectory(String id) {
-        if (beingModpackVersions.contains(id))
+        if (beingModpackVersions.contains(id) || isModpack(id))
             return getVersionRoot(id);
         else {
             VersionSetting vs = profile.getVersionSetting(id);
@@ -155,7 +156,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (!hasVersion(id))
             return null;
         if (versionSettings.containsKey(id))
-            return versionSettings.get(id);
+            return getVersionSetting(id);
         else
             return initVersionSetting(id, new VersionSetting());
     }
@@ -176,7 +177,10 @@ public class HMCLGameRepository extends DefaultGameRepository {
     public VersionSetting getVersionSetting(String id) {
         if (!versionSettings.containsKey(id))
             loadVersionSetting(id);
-        return versionSettings.get(id);
+        VersionSetting setting = versionSettings.get(id);
+        if (setting != null && isModpack(id))
+            setting.setGameDirType(EnumGameDirectory.VERSION_FOLDER);
+        return setting;
     }
 
     public File getVersionIcon(String id) {
@@ -195,7 +199,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     public File getModpackConfiguration(String version) {
-        return new File(getRunDirectory(version), "modpack.cfg");
+        return new File(getVersionRoot(version), "modpack.cfg");
     }
 
     public void markVersionAsModpack(String id) {

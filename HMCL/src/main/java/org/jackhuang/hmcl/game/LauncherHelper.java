@@ -115,6 +115,11 @@ public final class LauncherHelper {
                     launchingStepsPane.setProgress(1.0 * finished.get() / executor.getRunningTasks());
                 });
             }
+
+            @Override
+            public void onTerminate() {
+                Controllers.closeDialog();
+            }
         });
 
         executor.start();

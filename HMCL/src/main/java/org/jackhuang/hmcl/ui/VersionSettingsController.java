@@ -126,6 +126,8 @@ public final class VersionSettingsController {
         this.profile = profile;
         this.versionId = versionId;
 
+        gameDirItem.setDisable(profile.getRepository().isModpack(versionId));
+
         if (lastVersionSetting != null) {
             lastVersionSetting.widthProperty().unbind();
             lastVersionSetting.heightProperty().unbind();

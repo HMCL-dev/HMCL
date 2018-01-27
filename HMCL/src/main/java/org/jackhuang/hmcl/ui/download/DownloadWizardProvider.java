@@ -78,7 +78,7 @@ public final class DownloadWizardProvider implements WizardProvider {
         profile.getRepository().markVersionAsModpack(name);
 
         Task finalizeTask = Task.of(() -> {
-            profile.getRepository().refreshVersionsAsync().start();
+            profile.getRepository().refreshVersions();
             VersionSetting vs = profile.specializeVersionSetting(name);
             profile.getRepository().undoMark(name);
             if (vs != null)
@@ -87,14 +87,14 @@ public final class DownloadWizardProvider implements WizardProvider {
 
         if (modpack.getManifest() instanceof CurseManifest)
             return new CurseInstallTask(profile.getDependency(), selected, ((CurseManifest) modpack.getManifest()), name)
-                    .with(finalizeTask);
+                    .finalized(finalizeTask);
         else if (modpack.getManifest() instanceof HMCLModpackManifest)
             return new HMCLModpackInstallTask(profile, selected, modpack, name)
-                    .with(finalizeTask);
+                    .finalized(finalizeTask);
         else if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
             return new MultiMCModpackInstallTask(profile.getDependency(), selected, ((MultiMCInstanceConfiguration) modpack.getManifest()), name)
-                    .with(new MultiMCInstallVersionSettingTask(profile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name))
-                    .with(finalizeTask);
+                    .finalized(finalizeTask)
+                    .with(new MultiMCInstallVersionSettingTask(profile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name));
         else throw new IllegalStateException("Unrecognized modpack: " + modpack);
     }
 

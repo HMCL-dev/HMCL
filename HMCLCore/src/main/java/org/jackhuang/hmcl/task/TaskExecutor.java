@@ -159,6 +159,9 @@ public final class TaskExecutor {
             if (!doDependentsSucceeded && task.isRelyingOnDependents() || canceled)
                 throw new SilentException();
 
+            if (doDependentsSucceeded)
+                task.setDependentsSucceeded();
+
             task.setVariables(variables);
             task.execute();
 

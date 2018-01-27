@@ -77,7 +77,7 @@ public final class ModpackPage extends StackPane implements WizardPage {
         chooser.setTitle(Main.i18n("modpack.choose"));
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(Main.i18n("modpack"), "*.zip"));
         File selectedFile = chooser.showOpenDialog(Controllers.getStage());
-        if (selectedFile == null) Platform.runLater(controller::onFinish);
+        if (selectedFile == null) Platform.runLater(() -> Controllers.navigate(null));
         else {
             // TODO: original HMCL modpack support.
             controller.getSettings().put(MODPACK_FILE, selectedFile);

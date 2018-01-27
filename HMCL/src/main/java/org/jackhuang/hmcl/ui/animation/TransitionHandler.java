@@ -92,6 +92,9 @@ public final class TransitionHandler implements AnimationHandler {
         } else
             previousNode = NULL;
 
+        if (previousNode == currentNode)
+            previousNode = NULL;
+
         currentNode = newView;
 
         view.getChildren().setAll(previousNode, currentNode);

@@ -18,7 +18,7 @@
                 <Label fx:id="content" wrapText="true" />
             </body>
             <actions>
-                <HBox fx:id="actions">
+                <HBox fx:id="actions" alignment="CENTER_RIGHT">
                     <JFXButton fx:id="acceptButton" styleClass="dialog-accept" text="%button.ok" />
                     <JFXButton fx:id="cancelButton" visible="false" styleClass="dialog-cancel" text="%button.cancel" />
                 </HBox>

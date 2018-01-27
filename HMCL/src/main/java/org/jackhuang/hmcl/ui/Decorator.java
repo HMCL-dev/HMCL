@@ -426,11 +426,9 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     }
 
     public JFXDialog showDialog(Region content) {
-        if (dialog.getContent() != content) {
-            dialog.setContent(content);
-            if (!dialogShown)
-                dialog.show();
-        }
+        dialog.setContent(content);
+        if (!dialogShown)
+            dialog.show();
         return dialog;
     }
 

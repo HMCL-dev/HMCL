@@ -69,6 +69,16 @@ public abstract class Task {
         return Schedulers.defaultScheduler();
     }
 
+    private boolean dependentsSucceeded = false;
+
+    public boolean isDependentsSucceeded() {
+        return dependentsSucceeded;
+    }
+
+    void setDependentsSucceeded() {
+        dependentsSucceeded = true;
+    }
+
     /**
      * True if requires all {@link #getDependents} finishing successfully.
      * <p>
@@ -239,7 +249,7 @@ public abstract class Task {
     }
 
     public final Task then(ExceptionalFunction<AutoTypingMap<String>, Task, ?> b) {
-        return new CoupleTask<>(this, b, true);
+        return new CoupleTask<>(this, b, true, false);
     }
 
     public final Task with(Task b) {
@@ -247,7 +257,15 @@ public abstract class Task {
     }
 
     public final Task with(ExceptionalFunction<AutoTypingMap<String>, Task, ?> b) {
-        return new CoupleTask<>(this, b, false);
+        return new CoupleTask<>(this, b, false, false);
+    }
+
+    public final Task finalized(Task b) {
+        return finalized(s -> b);
+    }
+
+    public final Task finalized(ExceptionalFunction<AutoTypingMap<String>, Task, ?> b) {
+        return new CoupleTask<>(this, b, false, true);
     }
 
     public static Task empty() {

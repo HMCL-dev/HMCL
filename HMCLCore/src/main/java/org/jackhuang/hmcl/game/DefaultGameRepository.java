@@ -311,7 +311,7 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public File getModpackConfiguration(String version) {
-        return new File(getRunDirectory(version), "modpack.json");
+        return new File(getVersionRoot(version), "modpack.json");
     }
 
     public boolean isModpack(String version) {

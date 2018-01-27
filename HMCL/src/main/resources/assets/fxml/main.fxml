@@ -5,6 +5,8 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import com.jfoenix.controls.JFXListView?>
+<?import javafx.scene.control.Label?>
 <fx:root
         maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
         type="StackPane" pickOnBounds="false"
@@ -28,4 +30,11 @@
         </JFXButton>
     </VBox>
 
+
+    <JFXListView fx:id="versionList" styleClass="option-list-view" onMouseClicked="#onVersionManagement"
+                 maxWidth="150.0" minWidth="150.0">
+        <Label text="%version.manage.rename"/>
+        <Label text="%version.manage.remove"/>
+        <Label text="%modpack.export"/>
+    </JFXListView>
 </fx:root>
