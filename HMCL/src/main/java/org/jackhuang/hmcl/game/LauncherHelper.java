@@ -135,6 +135,11 @@ public final class LauncherHelper {
         if (java.getParsedVersion() < JavaVersion.JAVA_8) {
             MessageBox.show(Main.i18n("launch.advice.newer_java"));
         }
+
+        if (java.getParsedVersion() >= JavaVersion.JAVA_9) {
+
+        }
+
         if (java.getPlatform() == org.jackhuang.hmcl.util.Platform.BIT_32 &&
                 org.jackhuang.hmcl.util.Platform.IS_64_BIT) {
             MessageBox.show(Main.i18n("launch.advice.different_platform"));

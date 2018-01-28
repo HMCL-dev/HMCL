@@ -64,6 +64,8 @@ public final class Profile {
     }
 
     public void setGlobal(VersionSetting global) {
+        if (global == null)
+            global = new VersionSetting();
         globalProperty.set(global);
     }
 
