@@ -154,6 +154,11 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 rightClickedVersion = version;
                 versionList.getSelectionModel().select(-1);
                 versionPopup.show(item, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
+            } else if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
+                if (Settings.INSTANCE.getSelectedAccount() == null)
+                    Controllers.dialog(Main.i18n("login.empty_username"));
+                else
+                    LauncherHelper.INSTANCE.launch(version, null);
             }
         });
         File iconFile = profile.getRepository().getVersionIcon(version);

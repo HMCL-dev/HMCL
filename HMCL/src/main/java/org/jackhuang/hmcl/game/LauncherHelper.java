@@ -31,10 +31,7 @@ import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.setting.VersionSetting;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
-import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
@@ -58,7 +55,6 @@ public final class LauncherHelper {
     public void launch(String selectedVersion, File scriptFile) {
         Profile profile = Settings.INSTANCE.getSelectedProfile();
         GameRepository repository = profile.getRepository();
-        DefaultDependencyManager dependencyManager = profile.getDependency();
         Account account = Settings.INSTANCE.getSelectedAccount();
         if (account == null)
             throw new IllegalStateException("No account");
@@ -66,8 +62,22 @@ public final class LauncherHelper {
         Version version = repository.getVersion(selectedVersion);
         VersionSetting setting = profile.getVersionSetting(selectedVersion);
 
-        Controllers.dialog(launchingStepsPane);
-        executor = Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES))
+        try {
+            checkGameState(profile, setting, version, () -> launch0(selectedVersion, scriptFile));
+        } catch (InterruptedException ignore) {
+        }
+    }
+
+    private void launch0(String selectedVersion, File scriptFile) {
+        Profile profile = Settings.INSTANCE.getSelectedProfile();
+        GameRepository repository = profile.getRepository();
+        DefaultDependencyManager dependencyManager = profile.getDependency();
+        Version version = repository.getVersion(selectedVersion);
+        Account account = Settings.INSTANCE.getSelectedAccount();
+        VersionSetting setting = profile.getVersionSetting(selectedVersion);
+
+        executor = Task.of(Schedulers.javafx(), () -> Controllers.dialog(launchingStepsPane))
+                .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES)))
                 .then(dependencyManager.checkGameCompletionAsync(version))
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.MODS)))
                 .then(new CurseCompletionTask(dependencyManager, selectedVersion))
@@ -125,32 +135,45 @@ public final class LauncherHelper {
         executor.start();
     }
 
-    private void checkGameState(VersionSetting setting) throws InterruptedException {
+    private static void checkGameState(Profile profile, VersionSetting setting, Version version, Runnable onAccept) throws InterruptedException {
+        boolean flag = false;
+
+        VersionNumber gameVersion = VersionNumber.asVersion(GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version)));
         JavaVersion java = setting.getJavaVersion();
         if (java == null) {
-            // TODO
-            return;
+            Controllers.dialog(Main.i18n("launch.wrong_javadir"), Main.i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
+            setting.setJava(null);
+            java = JavaVersion.fromCurrentEnvironment();
+            flag = true;
         }
 
         if (java.getParsedVersion() < JavaVersion.JAVA_8) {
-            MessageBox.show(Main.i18n("launch.advice.newer_java"));
+            Controllers.dialog(Main.i18n("launch.advice.newer_java"), Main.i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
+            flag = true;
         }
 
-        if (java.getParsedVersion() >= JavaVersion.JAVA_9) {
-
+        if (java.getParsedVersion() >= JavaVersion.JAVA_9 && gameVersion.compareTo(VersionNumber.asVersion("1.12.5")) < 0 && version.getMainClass().contains("launchwrapper")) {
+            Controllers.dialog(Main.i18n("launch.advice.java9"), Main.i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
+            flag = true;
         }
 
         if (java.getPlatform() == org.jackhuang.hmcl.util.Platform.BIT_32 &&
                 org.jackhuang.hmcl.util.Platform.IS_64_BIT) {
-            MessageBox.show(Main.i18n("launch.advice.different_platform"));
+            Controllers.dialog(Main.i18n("launch.advice.different_platform"), Main.i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
+            flag = true;
         }
         if (java.getPlatform() == org.jackhuang.hmcl.util.Platform.BIT_32 &&
                 setting.getMaxMemory() > 1.5 * 1024) {
-            MessageBox.show(Main.i18n("launch.advice.too_large_memory_for_32bit"));
+            Controllers.dialog(Main.i18n("launch.advice.too_large_memory_for_32bit"), Main.i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
+            flag = true;
         }
         if (OperatingSystem.TOTAL_MEMORY > 0 && OperatingSystem.TOTAL_MEMORY < setting.getMaxMemory()) {
-            MessageBox.show(Main.i18n("launch.advice.not_enough_space"));
+            Controllers.dialog(Main.i18n("launch.advice.not_enough_space", OperatingSystem.TOTAL_MEMORY), Main.i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
+            flag = true;
         }
+
+        if (!flag)
+            onAccept.run();
     }
 
     public static void stopManagedProcesses() {
