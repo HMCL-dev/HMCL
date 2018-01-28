@@ -131,6 +131,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 initVersionSetting(id, versionSetting);
             } catch (Exception ex) {
                 // If [JsonParseException], [IOException] or [NullPointerException] happens, the json file is malformed and needed to be recreated.
+                initVersionSetting(id, new VersionSetting());
             }
     }
 
