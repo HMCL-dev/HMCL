@@ -93,10 +93,10 @@ public final class Controllers {
 
         scene = new Scene(decorator, 804, 521);
         scene.getStylesheets().addAll(FXUtils.STYLESHEETS);
-        stage.setMinWidth(800);
-        stage.setMaxWidth(800);
-        stage.setMinHeight(480);
-        stage.setMaxHeight(480);
+        stage.setMinWidth(804);
+        stage.setMaxWidth(804);
+        stage.setMinHeight(521);
+        stage.setMaxHeight(521);
 
         stage.getIcons().add(new Image("/assets/img/icon.png"));
         stage.setTitle(Main.TITLE);
