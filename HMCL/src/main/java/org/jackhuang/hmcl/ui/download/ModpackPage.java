@@ -109,13 +109,15 @@ public final class ModpackPage extends StackPane implements WizardPage {
         settings.remove(MODPACK_FILE);
     }
 
-    public void onInstall() {
+    @FXML
+    private void onInstall() {
         if (!txtModpackName.validate()) return;
         controller.getSettings().put(MODPACK_NAME, txtModpackName.getText());
         controller.onFinish();
     }
 
-    public void onDescribe() {
+    @FXML
+    private void onDescribe() {
         if (manifest != null) {
             WebStage stage = new WebStage();
             stage.getWebView().getEngine().loadContent(manifest.getDescription());

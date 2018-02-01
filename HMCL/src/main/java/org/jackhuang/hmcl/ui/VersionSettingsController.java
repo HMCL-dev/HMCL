@@ -77,7 +77,8 @@ public final class VersionSettingsController {
     @FXML private JFXButton btnIconSelection;
     @FXML private ImageView iconView;
 
-    public void initialize() {
+    @FXML
+    private void initialize() {
         lblPhysicalMemory.setText(Main.i18n("settings.physical_memory") + ": " + OperatingSystem.TOTAL_MEMORY + "MB");
 
         FXUtils.smoothScrolling(scroll);
@@ -245,14 +246,16 @@ public final class VersionSettingsController {
         gameDirItem.setSubtitle(profile.getRepository().getRunDirectory(versionId).getAbsolutePath());
     }
 
-    public void onShowAdvanced() {
+    @FXML
+    private void onShowAdvanced() {
         if (!rootPane.getChildren().contains(advancedSettingsPane))
             rootPane.getChildren().add(advancedSettingsPane);
         else
             rootPane.getChildren().remove(advancedSettingsPane);
     }
 
-    public void onExploreIcon() {
+    @FXML
+    private void onExploreIcon() {
         FileChooser chooser = new FileChooser();
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(Main.i18n("extension.png"), "*.png"));
         File selectedFile = chooser.showOpenDialog(Controllers.getStage());

@@ -71,14 +71,16 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
             btnDelete.setVisible(false);
     }
 
-    public void onDelete() {
+    @FXML
+    private void onDelete() {
         if (profile != null) {
             Settings.INSTANCE.deleteProfile(profile);
             Controllers.navigate(null);
         }
     }
 
-    public void onSave() {
+    @FXML
+    private void onSave() {
         if (profile != null) {
             profile.setName(txtProfileName.getText());
             if (StringUtils.isNotBlank(getLocation()))

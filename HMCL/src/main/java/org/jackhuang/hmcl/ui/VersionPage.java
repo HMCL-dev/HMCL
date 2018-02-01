@@ -99,25 +99,30 @@ public final class VersionPage extends StackPane implements DecoratorPage {
         installerController.loadVersion(profile, id);
     }
 
-    public void onBrowseMenu() {
+    @FXML
+    private void onBrowseMenu() {
         browseList.getSelectionModel().select(-1);
         browsePopup.show(btnBrowseMenu, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, -12, 15);
     }
 
-    public void onManagementMenu() {
+    @FXML
+    private void onManagementMenu() {
         managementList.getSelectionModel().select(-1);
         managementPopup.show(btnManagementMenu, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, -12, 15);
     }
 
-    public void onDelete() {
+    @FXML
+    private void onDelete() {
         deleteVersion(profile, version);
     }
 
-    public void onExport() {
+    @FXML
+    private void onExport() {
         exportVersion(profile, version);
     }
 
-    public void onBrowse() {
+    @FXML
+    private void onBrowse() {
         String sub;
         switch (browseList.getSelectionModel().getSelectedIndex()) {
             case 0:
@@ -147,7 +152,8 @@ public final class VersionPage extends StackPane implements DecoratorPage {
         FXUtils.openFolder(new File(profile.getRepository().getRunDirectory(version), sub));
     }
 
-    public void onManagement() {
+    @FXML
+    private void onManagement() {
         switch (managementList.getSelectionModel().getSelectedIndex()) {
             case 0: // rename a version
                 renameVersion(profile, version);

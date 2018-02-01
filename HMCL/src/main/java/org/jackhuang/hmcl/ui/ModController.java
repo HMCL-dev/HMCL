@@ -57,7 +57,8 @@ public final class ModController {
     private ModManager modManager;
     private String versionId;
 
-    public void initialize() {
+    @FXML
+    private void initialize() {
         FXUtils.smoothScrolling(scrollPane);
 
         rootPane.setOnDragOver(event -> {
@@ -135,7 +136,8 @@ public final class ModController {
 
     }
 
-    public void onAdd() {
+    @FXML
+    private void onAdd() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(Main.i18n("mods.choose_mod"));
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(Main.i18n("extension.mod"), "*.jar", "*.zip", "*.litemod"));

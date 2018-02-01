@@ -50,7 +50,8 @@ public final class VersionListItem extends StackPane {
         FXUtils.limitHeight(imageViewContainer, 32);
     }
 
-    public void onSettings() {
+    @FXML
+    private void onSettings() {
         handler.run();
     }
 

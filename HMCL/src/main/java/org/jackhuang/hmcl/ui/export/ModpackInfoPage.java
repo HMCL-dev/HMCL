@@ -69,7 +69,8 @@ public final class ModpackInfoPage extends StackPane implements WizardPage {
         btnNext.setDisable(!txtModpackName.validate() || !txtModpackVersion.validate() || !txtModpackAuthor.validate());
     }
 
-    public void onNext() {
+    @FXML
+    private void onNext() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(Main.i18n("modpack.wizard.step.initialization.save"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(Main.i18n("modpack"), "*.zip"));

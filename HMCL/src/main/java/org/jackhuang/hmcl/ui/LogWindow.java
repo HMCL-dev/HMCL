@@ -143,7 +143,7 @@ public final class LogWindow extends Stage {
         }
     }
 
-    private class LogWindowImpl extends StackPane {
+    public class LogWindowImpl extends StackPane {
 
         @FXML
         private WebView webView;
@@ -225,11 +225,13 @@ public final class LogWindow extends Stage {
             engine.executeScript("specific([" + res + "])");
         }
 
-        public void onTerminateGame() {
+        @FXML
+        private void onTerminateGame() {
             LauncherHelper.stopManagedProcesses();
         }
 
-        public void onClear() {
+        @FXML
+        private void onClear() {
             engine.executeScript("clear()");
         }
     }

@@ -47,7 +47,8 @@ public class InstallerItem extends BorderPane {
         lblInstallerVersion.setText(Main.i18n("archive.version") + ": " + version);
     }
 
-    public void onDelete() {
+    @FXML
+    private void onDelete() {
         deleteCallback.accept(this);
     }
 }

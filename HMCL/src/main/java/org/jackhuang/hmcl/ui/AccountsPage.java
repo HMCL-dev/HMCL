@@ -117,13 +117,15 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
         return item;
     }
 
-    public void addNewAccount() {
+    @FXML
+    private void addNewAccount() {
         txtUsername.setText("");
         txtPassword.setText("");
         dialog.show();
     }
 
-    public void onCreationAccept() {
+    @FXML
+    private void onCreationAccept() {
         int type = cboType.getSelectionModel().getSelectedIndex();
         String username = txtUsername.getText();
         String password = txtPassword.getText();
@@ -158,7 +160,8 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
         });
     }
 
-    public void onCreationCancel() {
+    @FXML
+    private void onCreationCancel() {
         dialog.close();
     }
 

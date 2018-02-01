@@ -43,7 +43,8 @@ public class InstallerController {
     private String liteLoader;
     private String optiFine;
 
-    public void initialize() {
+    @FXML
+    private void initialize() {
         FXUtils.smoothScrolling(scrollPane);
     }
 
@@ -80,7 +81,8 @@ public class InstallerController {
         }
     }
 
-    public void onAdd() {
+    @FXML
+    private void onAdd() {
         String gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version));
 
         if (gameVersion == null)

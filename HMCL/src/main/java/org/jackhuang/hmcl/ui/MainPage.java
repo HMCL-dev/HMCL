@@ -189,7 +189,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.resetChildren(masonryPane, children);
     }
 
-    public void onVersionManagement() {
+    @FXML
+    private void onVersionManagement() {
         versionPopup.hide();
         switch (versionList.getSelectionModel().getSelectedIndex()) {
             case 0:

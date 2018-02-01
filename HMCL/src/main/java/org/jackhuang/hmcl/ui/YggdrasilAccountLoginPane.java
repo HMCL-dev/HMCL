@@ -59,7 +59,8 @@ public class YggdrasilAccountLoginPane extends StackPane {
         txtPassword.setOnAction(e -> onAccept());
     }
 
-    public void onAccept() {
+    @FXML
+    private void onAccept() {
         String username = oldAccount.getUsername();
         String password = txtPassword.getText();
         progressBar.setVisible(true);
@@ -86,7 +87,8 @@ public class YggdrasilAccountLoginPane extends StackPane {
         });
     }
 
-    public void onCancel() {
+    @FXML
+    private void onCancel() {
         failed.run();
         dialog.close();
     }

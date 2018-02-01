@@ -169,7 +169,8 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         FXUtils.setOverflowHidden(drawerWrapper);
     }
 
-    public void onMouseMoved(MouseEvent mouseEvent) {
+    @FXML
+    private void onMouseMoved(MouseEvent mouseEvent) {
         if (!primaryStage.isMaximized() && !primaryStage.isFullScreen() && !maximized) {
             if (!primaryStage.isResizable())
                 updateInitMouseValues(mouseEvent);
@@ -210,11 +211,13 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         }
     }
 
-    public void onMouseReleased() {
+    @FXML
+    private void onMouseReleased() {
         isDragging = false;
     }
 
-    public void onMouseDragged(MouseEvent mouseEvent) {
+    @FXML
+    private void onMouseDragged(MouseEvent mouseEvent) {
         this.isDragging = true;
         if (mouseEvent.isPrimaryButtonDown() && (this.xOffset != -1.0 || this.yOffset != -1.0)) {
             if (!this.primaryStage.isFullScreen() && !mouseEvent.isStillSincePress() && !this.primaryStage.isMaximized() && !this.maximized) {
@@ -278,11 +281,13 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         }
     }
 
-    public void onMin() {
+    @FXML
+    private void onMin() {
         primaryStage.setIconified(true);
     }
 
-    public void onMax() {
+    @FXML
+    private void onMax() {
         if (!max) return;
         if (!this.isCustomMaximize()) {
             this.primaryStage.setMaximized(!this.primaryStage.isMaximized());
@@ -320,7 +325,8 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         }
     }
 
-    public void onClose() {
+    @FXML
+    private void onClose() {
         onCloseButtonAction.get().run();
     }
 
@@ -473,16 +479,19 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         setContent(page, nav.getAnimation().getAnimationProducer());
     }
 
-    public void onRefresh() {
+    @FXML
+    private void onRefresh() {
         ((Refreshable) contentPlaceHolder.getChildren().get(0)).refresh();
     }
 
-    public void onCloseNav() {
+    @FXML
+    private void onCloseNav() {
         wizardController.onCancel();
         showPage(null);
     }
 
-    public void onBack() {
+    @FXML
+    private void onBack() {
         wizardController.onPrev(true);
     }
 

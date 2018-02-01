@@ -96,21 +96,25 @@ public class DefaultWizardDisplayer extends StackPane implements AbstractWizardD
         nowPage = page;
     }
 
-    public void initialize() {
+    @FXML
+    private void initialize() {
         transitionHandler = new TransitionHandler(root);
         wizardController.onStart();
     }
 
-    public void back() {
+    @FXML
+    private void back() {
         wizardController.onPrev(true);
     }
 
-    public void close() {
+    @FXML
+    private void close() {
         wizardController.onCancel();
         Controllers.navigate(null);
     }
 
-    public void refresh() {
+    @FXML
+    private void refresh() {
         ((Refreshable) nowPage).refresh();
     }
 }

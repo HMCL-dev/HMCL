@@ -128,7 +128,8 @@ public class InstallersPage extends StackPane implements WizardPage {
         settings.remove(INSTALLER_TYPE);
     }
 
-    public void onInstall() {
+    @FXML
+    private void onInstall() {
         controller.getSettings().put("name", txtName.getText());
         controller.onFinish();
     }
