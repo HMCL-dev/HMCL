@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.core.launch;
 
 import org.jackhuang.hmcl.api.game.LaunchOptions;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
 import org.jackhuang.hmcl.core.download.DownloadLibraryJob;
 import org.jackhuang.hmcl.api.auth.LoginInfo;

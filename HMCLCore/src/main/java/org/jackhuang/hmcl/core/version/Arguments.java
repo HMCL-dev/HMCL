@@ -73,7 +73,6 @@ public class Arguments {
     
     static {
         List<Argument> jvm = new LinkedList<>();
-        jvm.add(new RuledArgument(Collections.singletonList(new Rules("allow", new OSRestriction("osx"))), Collections.singletonList("-XstartOnFirstThread")));
         jvm.add(new RuledArgument(Collections.singletonList(new Rules("allow", new OSRestriction("windows"))), Collections.singletonList("-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump")));
         jvm.add(new RuledArgument(Collections.singletonList(new Rules("allow", new OSRestriction("windows", "^10\\."))), Arrays.asList("-Dos.name=Windows 10", "-Dos.version=10.0")));
         jvm.add(new StringArgument("-Djava.library.path=${natives_directory}"));

@@ -25,7 +25,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.StringTokenizer;
 import org.jackhuang.hmcl.api.func.Function;
-import org.jackhuang.hmcl.api.func.Predicate;
 
 /**
  *
