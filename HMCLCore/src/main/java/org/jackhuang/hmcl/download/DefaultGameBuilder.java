@@ -53,8 +53,8 @@ public class DefaultGameBuilder extends GameBuilder {
     public Task buildAsync() {
         return new VersionJsonDownloadTask(gameVersion, dependencyManager).then(variables -> {
             Version version = Constants.GSON.fromJson(variables.<String>get(VersionJsonDownloadTask.ID), Version.class);
-            variables.set("version", version);
             version = version.setId(name).setJar(null);
+            variables.set("version", version);
             Task result = new ParallelTask(
                     new GameAssetDownloadTask(dependencyManager, version),
                     new GameLoggingDownloadTask(dependencyManager, version),
