@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
-import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
-import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.download.game.GameLoggingDownloadTask;
-import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
+import org.jackhuang.hmcl.download.game.*;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
@@ -86,12 +83,15 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         switch (libraryId) {
             case "forge":
                 return new ForgeInstallTask(this, gameVersion, version, libraryVersion)
+                        .then(variables -> new LibrariesUniqueTask(variables.get("version")))
                         .then(variables -> new VersionJsonSaveTask(repository, variables.get("version")));
             case "liteloader":
                 return new LiteLoaderInstallTask(this, gameVersion, version, libraryVersion)
+                        .then(variables -> new LibrariesUniqueTask(variables.get("version")))
                         .then(variables -> new VersionJsonSaveTask(repository, variables.get("version")));
             case "optifine":
                 return new OptiFineInstallTask(this, gameVersion, version, libraryVersion)
+                        .then(variables -> new LibrariesUniqueTask(variables.get("version")))
                         .then(variables -> new VersionJsonSaveTask(repository, variables.get("version")));
             default:
                 throw new IllegalArgumentException("Library id " + libraryId + " is unrecognized.");

@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
-import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DependencyManager;
 import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
 import org.jackhuang.hmcl.mod.*;

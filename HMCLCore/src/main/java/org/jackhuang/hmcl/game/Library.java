@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.util.Platform;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -33,7 +34,7 @@ import java.util.Optional;
  *
  * @author huangyuhui
  */
-public class Library {
+public class Library implements Comparable<Library> {
 
     private final String groupId;
     private final String artifactId;
@@ -107,6 +108,10 @@ public class Library {
         return artifactId;
     }
 
+    public String getName() {
+        return groupId + ":" + artifactId + ":" + version;
+    }
+
     public String getVersion() {
         return version;
     }
@@ -137,7 +142,29 @@ public class Library {
 
     @Override
     public String toString() {
-        return "Library[" + groupId + ":" + artifactId + ":" + version + "]";
+        return "Library[" + getName() + "]";
+    }
+
+    @Override
+    public int compareTo(Library o) {
+        if (getName().compareTo(o.getName()) == 0)
+            return Boolean.compare(isNative(), o.isNative());
+        else
+            return getName().compareTo(o.getName());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Library))
+            return false;
+
+        Library other = (Library) obj;
+        return getName().equals(other.getName()) && (isNative() == other.isNative());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getName(), isNative());
     }
 
     public static Library fromName(String name) {
@@ -182,7 +209,7 @@ public class Library {
             if (src == null)
                 return JsonNull.INSTANCE;
             JsonObject obj = new JsonObject();
-            obj.addProperty("name", src.groupId + ":" + src.artifactId + ":" + src.version);
+            obj.addProperty("name", src.getName());
             obj.addProperty("url", src.url);
             obj.add("downloads", context.serialize(src.downloads));
             obj.add("extract", context.serialize(src.extract));
