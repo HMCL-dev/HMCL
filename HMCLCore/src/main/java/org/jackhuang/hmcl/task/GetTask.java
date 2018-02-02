@@ -95,7 +95,9 @@ public final class GetTask extends TaskResult<String> {
                 while ((len = input.read(buf)) != -1) {
                     baos.write(buf, 0, len);
                     read += len;
-                    updateProgress(read, size);
+
+                    if (size >= 0)
+                        updateProgress(read, size);
 
                     if (Thread.currentThread().isInterrupted())
                         return;

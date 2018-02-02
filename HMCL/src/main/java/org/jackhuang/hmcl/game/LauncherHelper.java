@@ -142,9 +142,12 @@ public final class LauncherHelper {
             @Override
             public void onTerminate() {
                 Platform.runLater(() -> {
-                    Controllers.dialog(I18nException.getStackTrace(executor.getLastException()),
-                            scriptFile == null ? Main.i18n("launch.failed") : Main.i18n("version.launch_script.failed"),
-                            MessageBox.ERROR_MESSAGE, Controllers::closeDialog);
+                    if (executor.getLastException() != null)
+                        Controllers.dialog(I18nException.getStackTrace(executor.getLastException()),
+                                scriptFile == null ? Main.i18n("launch.failed") : Main.i18n("version.launch_script.failed"),
+                                MessageBox.ERROR_MESSAGE, Controllers::closeDialog);
+                    else
+                        Controllers.closeDialog();
                 });
             }
         });
