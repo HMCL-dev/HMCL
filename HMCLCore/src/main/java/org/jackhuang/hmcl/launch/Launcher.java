@@ -67,6 +67,4 @@ public abstract class Launcher {
 
     public abstract ManagedProcess launch() throws IOException, InterruptedException;
 
-    public abstract List<String> getRawCommandLine() throws IOException;
-
 }

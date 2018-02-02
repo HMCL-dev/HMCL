@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.*;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -34,9 +35,6 @@ import java.util.stream.Collectors;
  * @author huangyuhui
  */
 public class DefaultLauncher extends Launcher {
-
-    private List<String> rawCommandLine;
-    protected final File nativeFolder;
 
     public DefaultLauncher(GameRepository repository, String versionId, AuthInfo authInfo, LaunchOptions options) {
         this(repository, versionId, authInfo, options, null);
@@ -48,15 +46,9 @@ public class DefaultLauncher extends Launcher {
 
     public DefaultLauncher(GameRepository repository, String versionId, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
         super(repository, versionId, authInfo, options, listener, daemon);
-
-        nativeFolder = repository.getNativeDirectory(versionId);
     }
 
-    @Override
-    public synchronized List<String> getRawCommandLine() throws IOException {
-        if (rawCommandLine != null)
-            return Collections.unmodifiableList(rawCommandLine);
-
+    private List<String> generateCommandLine(File nativeFolder) throws IOException {
         List<String> res = new LinkedList<>();
 
         // Executable
@@ -190,7 +182,7 @@ public class DefaultLauncher extends Launcher {
         if (StringUtils.isNotBlank(options.getMinecraftArgs()))
             res.addAll(StringUtils.tokenize(options.getMinecraftArgs()));
 
-        return rawCommandLine = res.stream()
+        return res.stream()
                 .filter(it -> !getForbiddens().containsKey(it) || !getForbiddens().get(it).get())
                 .collect(Collectors.toList());
     }
@@ -228,11 +220,11 @@ public class DefaultLauncher extends Launcher {
     protected void appendJvmArgs(List<String> result) {
     }
 
-    public void decompressNatives() throws IOException {
+    public void decompressNatives(File destination) throws IOException {
         for (Library library : version.getLibraries())
             if (library.isNative())
                 CompressingUtils.unzip(repository.getLibraryFile(version, library),
-                        nativeFolder,
+                        destination,
                         "",
                         library.getExtract()::shouldExtract,
                         false);
@@ -256,18 +248,20 @@ public class DefaultLauncher extends Launcher {
 
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
+        File nativeFolder = Files.createTempDirectory("minecraft").toFile();
+        List<String> rawCommandLine = generateCommandLine(nativeFolder);
 
         // To guarantee that when failed to generate code, we will not call precalled command
-        ProcessBuilder builder = new ProcessBuilder(getRawCommandLine());
+        ProcessBuilder builder = new ProcessBuilder(rawCommandLine);
 
-        decompressNatives();
+        decompressNatives(nativeFolder);
 
         if (StringUtils.isNotBlank(options.getPrecalledCommand()))
             Runtime.getRuntime().exec(options.getPrecalledCommand()).waitFor();
 
         builder.directory(repository.getRunDirectory(version.getId()))
                 .environment().put("APPDATA", options.getGameDir().getAbsoluteFile().getParent());
-        ManagedProcess p = new ManagedProcess(builder.start(), getRawCommandLine());
+        ManagedProcess p = new ManagedProcess(builder.start(), rawCommandLine);
         if (listener == null)
             startMonitors(p);
         else
@@ -283,12 +277,13 @@ public class DefaultLauncher extends Launcher {
     public void makeLaunchScript(File scriptFile) throws IOException {
         boolean isWindows = OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS;
 
-        decompressNatives();
+        File nativeFolder = repository.getNativeDirectory(versionId);
+        decompressNatives(nativeFolder);
 
         if (isWindows && !FileUtils.getExtension(scriptFile).equals("bat"))
-            throw new IOException("The extension of " + scriptFile + " is not 'bat' in Windows");
+            throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'bat' in Windows");
         else if (!isWindows && !FileUtils.getExtension(scriptFile).equals("sh"))
-            throw new IOException("The extension of " + scriptFile + " is not 'sh' in macOS/Linux");
+            throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'sh' in macOS/Linux");
 
         if (!FileUtils.makeFile(scriptFile))
             throw new IOException("Script file: " + scriptFile + " cannot be created.");
@@ -305,7 +300,7 @@ public class DefaultLauncher extends Launcher {
                 writer.write(options.getPrecalledCommand());
                 writer.newLine();
             }
-            writer.write(StringUtils.makeCommand(getRawCommandLine()));
+            writer.write(StringUtils.makeCommand(generateCommandLine(nativeFolder)));
         }
         if (!scriptFile.setExecutable(true))
             throw new IOException("Cannot make script file '" + scriptFile + "' executable.");
