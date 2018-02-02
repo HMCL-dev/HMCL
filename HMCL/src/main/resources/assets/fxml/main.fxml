@@ -36,5 +36,6 @@
         <Label text="%version.manage.rename"/>
         <Label text="%version.manage.remove"/>
         <Label text="%modpack.export"/>
+        <Label text="%folder.game"/>
     </JFXListView>
 </fx:root>

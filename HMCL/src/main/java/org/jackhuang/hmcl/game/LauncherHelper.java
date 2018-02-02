@@ -235,9 +235,9 @@ public final class LauncherHelper {
     }
 
     class LaunchTask<T> extends TaskResult<T> {
-        private final ExceptionalSupplier<T, ?> supplier;
+        private final ExceptionalSupplier<T, Exception> supplier;
 
-        public LaunchTask(ExceptionalSupplier<T, ?> supplier) {
+        public LaunchTask(ExceptionalSupplier<T, Exception> supplier) {
             this.supplier = supplier;
         }
 

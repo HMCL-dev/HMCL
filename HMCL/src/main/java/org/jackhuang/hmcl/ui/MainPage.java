@@ -202,6 +202,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
             case 2:
                 VersionPage.exportVersion(profile, rightClickedVersion);
                 break;
+            case 3:
+                FXUtils.openFolder(profile.getRepository().getRunDirectory(rightClickedVersion));
+                break;
         }
     }
 
