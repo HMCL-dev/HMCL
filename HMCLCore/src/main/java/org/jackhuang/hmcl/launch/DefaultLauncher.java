@@ -283,6 +283,8 @@ public class DefaultLauncher extends Launcher {
     public void makeLaunchScript(File scriptFile) throws IOException {
         boolean isWindows = OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS;
 
+        decompressNatives();
+
         if (isWindows && !FileUtils.getExtension(scriptFile).equals("bat"))
             throw new IOException("The extension of " + scriptFile + " is not 'bat' in Windows");
         else if (!isWindows && !FileUtils.getExtension(scriptFile).equals("sh"))
