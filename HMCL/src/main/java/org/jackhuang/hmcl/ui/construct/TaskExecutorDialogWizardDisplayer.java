@@ -68,6 +68,8 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
 
                 @Override
                 public void onTerminate() {
+                    if (e.getLastException() == null)
+                        return;
                     String appendix = StringUtils.getStackTrace(e.getLastException());
                     if (settings.containsKey("failure_message") && settings.get("failure_message") instanceof String)
                         JFXUtilities.runInFX(() -> Controllers.dialog(appendix, (String) settings.get("failure_message"), MessageBox.ERROR_MESSAGE, () -> Controllers.navigate(null)));

@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.util.AutoTypingMap;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.ExceptionalFunction;
 
+import java.io.IOException;
 import java.util.function.Function;
 
 /**
@@ -69,6 +70,12 @@ public class DefaultGameBuilder extends GameBuilder {
             if (toolVersions.containsKey("optifine"))
                 result = result.then(libraryTaskHelper(gameVersion, "optifine"));
             return result;
+        }).finalized(new Task() {
+            @Override
+            public void execute() {
+                if (!isDependentsSucceeded())
+                    dependencyManager.getGameRepository().getVersionRoot(name).delete();
+            }
         });
     }
 
