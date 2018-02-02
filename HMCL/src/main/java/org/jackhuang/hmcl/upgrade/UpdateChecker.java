@@ -42,12 +42,10 @@ public final class UpdateChecker {
     private volatile boolean outOfDate = false;
     private VersionNumber base;
     private String versionString;
-    public String type;
     private Map<String, String> download_link = null;
 
-    public UpdateChecker(VersionNumber base, String type) {
+    public UpdateChecker(VersionNumber base) {
         this.base = base;
-        this.type = type;
     }
 
     private VersionNumber value;
@@ -69,8 +67,11 @@ public final class UpdateChecker {
         return new TaskResult<VersionNumber>() {
             @Override
             public void execute() throws Exception {
+                if (Main.VERSION.contains("@"))
+                    return;
+
                 if (value == null) {
-                    versionString = NetworkUtils.doGet(NetworkUtils.toURL("http://huangyuhui.duapp.com/info.php?type=" + type));
+                    versionString = NetworkUtils.doGet(NetworkUtils.toURL("http://huangyuhui.duapp.com/hmcl/update.php?version=" + Main.VERSION));
                     value = VersionNumber.asVersion(versionString);
                 }
 
@@ -114,7 +115,7 @@ public final class UpdateChecker {
             public void execute() {
                 if (download_link == null)
                     try {
-                        download_link = Constants.GSON.<Map<String, String>>fromJson(NetworkUtils.doGet(NetworkUtils.toURL("http://huangyuhui.duapp.com/update_link.php?type=" + type)), Map.class);
+                        download_link = Constants.GSON.<Map<String, String>>fromJson(NetworkUtils.doGet(NetworkUtils.toURL("http://huangyuhui.duapp.com/update_link.php?type=hmcl")), Map.class);
                     } catch (JsonSyntaxException | IOException e) {
                         Logging.LOG.log(Level.SEVERE, "Failed to get update link.", e);
                     }

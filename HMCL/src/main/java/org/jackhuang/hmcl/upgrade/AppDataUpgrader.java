@@ -21,6 +21,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
@@ -95,10 +96,10 @@ public class AppDataUpgrader extends IUpgrader {
         if (!(ver instanceof IntVersionNumber))
             return;
         IntVersionNumber version = (IntVersionNumber) ver;
-        checker.requestDownloadLink().then(Task.of(variables -> {
+        checker.requestDownloadLink().then(Task.of(Schedulers.javafx(), variables -> {
             Map<String, String> map = variables.get(UpdateChecker.REQUEST_DOWNLOAD_LINK_ID);
 
-            if (MessageBox.confirm(Main.i18n("update.newest_version") + version.get(0) + "." + version.get(1) + "." + version.get(2) + "\n"
+            if (MessageBox.confirm(Main.i18n("update.newest_version") + version.toString() + "\n"
                             + Main.i18n("update.should_open_link"),
                     MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                 if (map != null && map.containsKey("jar") && !StringUtils.isBlank(map.get("jar")))

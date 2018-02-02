@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * If a version string formats x.x.x.x, a {@code IntVersionNumber}
@@ -71,5 +72,10 @@ public final class IntVersionNumber extends VersionNumber {
             if (!version.get(i).equals(other.version.get(i)))
                 return false;
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return String.join(".", version.stream().map(Object::toString).collect(Collectors.toList()));
     }
 }

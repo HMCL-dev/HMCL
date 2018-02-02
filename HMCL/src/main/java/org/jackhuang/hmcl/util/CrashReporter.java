@@ -81,14 +81,14 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             builder.append("\n  Content: \n    ");
             builder.append(s).append("\n\n");
             builder.append("-- System Details --\n");
-            builder.append("  Operating System: ").append(OperatingSystem.SYSTEM_VERSION).append("\n");
+            builder.append("  Operating System: ").append(System.getProperty("os.name")).append(' ').append(OperatingSystem.SYSTEM_VERSION).append("\n");
             builder.append("  Java Version: ").append(System.getProperty("java.version")).append(", ").append(System.getProperty("java.vendor")).append("\n");
             builder.append("  Java VM Version: ").append(System.getProperty("java.vm.name")).append(" (").append(System.getProperty("java.vm.info")).append("), ").append(System.getProperty("java.vm.vendor")).append("\n");
             String text = builder.toString();
 
             Logging.LOG.log(Level.SEVERE, text);
 
-            if (checkThrowable(e) && !System.getProperty("java.vm.name").contains("OpenJDK")) {
+            if (checkThrowable(e) && !text.contains("OpenJDK")) {
                 Platform.runLater(() -> new CrashWindow(text).show());
                 if (!Main.UPDATE_CHECKER.isOutOfDate())
                     reportToServer(text, s);
@@ -110,7 +110,9 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             map.put("crash_report", text);
             map.put("version", Main.VERSION);
             try {
-                NetworkUtils.doPost(NetworkUtils.toURL("http://huangyuhui.duapp.com/hmcl/crash.php"), map);
+                String response = NetworkUtils.doPost(NetworkUtils.toURL("http://huangyuhui.duapp.com/hmcl/crash.php"), map);
+                if (StringUtils.isNotBlank(response))
+                    Logging.LOG.log(Level.SEVERE, "Crash server response: " + response);
             } catch (IOException ex) {
                 Logging.LOG.log(Level.SEVERE, "Unable to post HMCL server.", ex);
             }

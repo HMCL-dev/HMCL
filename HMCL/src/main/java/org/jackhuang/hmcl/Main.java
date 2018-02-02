@@ -38,29 +38,42 @@ public final class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        // When launcher visibility is set to "hide and reopen" without Platform.implicitExit = false,
-        // Stage.show() cannot work again because JavaFX Toolkit have already shut down.
-        Platform.setImplicitExit(false);
-        Controllers.initialize(primaryStage);
-        primaryStage.setResizable(false);
-        primaryStage.setScene(Controllers.getScene());
-        primaryStage.show();
+        Thread.currentThread().setUncaughtExceptionHandler(CRASH_REPORTER);
+
+        try {
+            // When launcher visibility is set to "hide and reopen" without Platform.implicitExit = false,
+            // Stage.show() cannot work again because JavaFX Toolkit have already shut down.
+            Platform.setImplicitExit(false);
+            Controllers.initialize(primaryStage);
+            primaryStage.setResizable(false);
+            primaryStage.setScene(Controllers.getScene());
+            primaryStage.show();
+        } catch (Throwable e) {
+            CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
+        }
     }
 
     public static void main(String[] args) {
-        Thread.setDefaultUncaughtExceptionHandler(new CrashReporter());
+        Thread.setDefaultUncaughtExceptionHandler(CRASH_REPORTER);
 
-        // NetworkUtils.setUserAgentSupplier(() -> "Hello Minecraft! Launcher");
-        Constants.UI_THREAD_SCHEDULER = Constants.JAVAFX_UI_THREAD_SCHEDULER;
-        IUpgrader.NOW_UPGRADER.parseArguments(VersionNumber.asVersion(VERSION), Arrays.asList(args));
+        try {
+            // NetworkUtils.setUserAgentSupplier(() -> "Hello Minecraft! Launcher");
+            Constants.UI_THREAD_SCHEDULER = Constants.JAVAFX_UI_THREAD_SCHEDULER;
+            IUpgrader.NOW_UPGRADER.parseArguments(VersionNumber.asVersion(VERSION), Arrays.asList(args));
 
-        Logging.LOG.info("*** " + TITLE + " ***");
+            Logging.LOG.info("*** " + TITLE + " ***");
 
-        UPDATE_CHECKER.process(false)
-                .then(Task.of(Schedulers.javafx(), Controllers::showUpdate))
-                .start();
+            UPDATE_CHECKER.process(false)
+                    .then(Task.of(Schedulers.javafx(), () -> {
+                        if (UPDATE_CHECKER.isOutOfDate())
+                            Controllers.showUpdate();
+                    }))
+                    .start();
 
-        launch(args);
+            launch(args);
+        } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.
+            CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
+        }
     }
 
     public static void stopApplication() {
@@ -112,7 +125,8 @@ public final class Main extends Application {
     public static final String TITLE = NAME + " " + VERSION;
     public static final File APPDATA = getWorkingDirectory("hmcl");
     public static final ResourceBundle RESOURCE_BUNDLE = Settings.INSTANCE.getLocale().getResourceBundle();
-    public static final UpdateChecker UPDATE_CHECKER = new UpdateChecker(VersionNumber.asVersion(VERSION), "hmcl");
+    public static final UpdateChecker UPDATE_CHECKER = new UpdateChecker(VersionNumber.asVersion(VERSION));
+    public static final CrashReporter CRASH_REPORTER = new CrashReporter();
 
     public static final String CONTACT = "http://huangyuhui.duapp.com/hmcl.php";
     public static final String PUBLISH = "http://www.mcbbs.net/thread-142335-1-1.html";
