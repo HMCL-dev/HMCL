@@ -53,10 +53,12 @@ final class CoupleTask<P extends Task> extends Task {
         this.failIfDependentsFail = failIfDependentsFail;
 
         setSignificance(TaskSignificance.MODERATE);
+        setName(succ.toString());
     }
 
     @Override
     public void execute() throws Exception {
+        setName(succ.toString());
         Task task = succ.apply(getVariables());
         if (task != null)
             dependencies.add(task);

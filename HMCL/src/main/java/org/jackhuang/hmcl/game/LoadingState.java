@@ -24,7 +24,7 @@ public enum LoadingState {
     MODS("launch.state.modpack"),
     LOGGING_IN("launch.state.logging_in"),
     LAUNCHING("launch.state.waiting_launching"),
-    DONE("");
+    DONE("launch.state.done");
 
     private final String key;
 

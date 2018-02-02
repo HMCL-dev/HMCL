@@ -233,7 +233,7 @@ public abstract class Task {
     }
 
     public final TaskExecutor subscribe(Scheduler scheduler, ExceptionalRunnable<?> closure) {
-        return subscribe(of(scheduler, i -> closure.run()));
+        return subscribe(of(scheduler, ExceptionalConsumer.fromRunnable(closure)));
     }
 
     public final TaskExecutor subscribe(ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
@@ -245,7 +245,7 @@ public abstract class Task {
     }
 
     public final Task then(Task b) {
-        return then(s -> b);
+        return then(convert(b));
     }
 
     public final Task then(ExceptionalFunction<AutoTypingMap<String>, Task, ?> b) {
@@ -253,15 +253,15 @@ public abstract class Task {
     }
 
     public final Task with(Task b) {
-        return with(s -> b);
+        return with(convert(b));
     }
 
-    public final Task with(ExceptionalFunction<AutoTypingMap<String>, Task, ?> b) {
+    public final <E extends Exception> Task with(ExceptionalFunction<AutoTypingMap<String>, Task, E> b) {
         return new CoupleTask<>(this, b, false, false);
     }
 
     public final Task finalized(Task b) {
-        return finalized(s -> b);
+        return finalized(convert(b));
     }
 
     public final Task finalized(ExceptionalFunction<AutoTypingMap<String>, Task, ?> b) {
@@ -269,16 +269,15 @@ public abstract class Task {
     }
 
     public static Task empty() {
-        return of(s -> {
-        });
+        return of(ExceptionalConsumer.empty());
     }
 
     public static Task of(String name, ExceptionalRunnable<?> runnable) {
-        return of(name, s -> runnable.run());
+        return of(name, ExceptionalConsumer.fromRunnable(runnable));
     }
 
     public static Task of(ExceptionalRunnable<?> runnable) {
-        return of(s -> runnable.run());
+        return of(ExceptionalConsumer.fromRunnable(runnable));
     }
 
     public static Task of(String name, ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
@@ -298,7 +297,7 @@ public abstract class Task {
     }
 
     public static Task of(String name, Scheduler scheduler, ExceptionalRunnable<?> closure) {
-        return new SimpleTask(name, i -> closure.run(), scheduler);
+        return new SimpleTask(name, ExceptionalConsumer.fromRunnable(closure), scheduler);
     }
 
     public static Task of(Scheduler scheduler, ExceptionalRunnable<?> closure) {
@@ -311,6 +310,20 @@ public abstract class Task {
 
     public static <V> TaskResult<V> ofResult(String id, Function<AutoTypingMap<String>, V> closure) {
         return new TaskCallable2<>(id, closure);
+    }
+
+    private static ExceptionalFunction<AutoTypingMap<String>, Task, ?> convert(Task t) {
+        return new ExceptionalFunction<AutoTypingMap<String>, Task, Exception>() {
+            @Override
+            public Task apply(AutoTypingMap<String> autoTypingMap) {
+                return t;
+            }
+
+            @Override
+            public String toString() {
+                return t.getName();
+            }
+        };
     }
 
     public enum TaskSignificance {

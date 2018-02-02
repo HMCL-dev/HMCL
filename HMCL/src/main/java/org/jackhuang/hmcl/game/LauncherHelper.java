@@ -98,9 +98,9 @@ public final class LauncherHelper {
                 }))
                 .then(variables -> {
                     if (scriptFile == null) {
-                        return variables.<DefaultLauncher>get("launcher").launchAsync().setName("version.launch");
+                        return variables.<DefaultLauncher>get("launcher").launchAsync().setName(Main.i18n("version.launch"));
                     } else {
-                        return variables.<DefaultLauncher>get("launcher").makeLaunchScriptAsync(scriptFile).setName("version.launch");
+                        return variables.<DefaultLauncher>get("launcher").makeLaunchScriptAsync(scriptFile).setName(Main.i18n("version.launch"));
                     }
                 })
                 .then(Task.of(variables -> {
@@ -128,7 +128,9 @@ public final class LauncherHelper {
 
             @Override
             public void onTerminate() {
-                Controllers.closeDialog();
+                Platform.runLater(() -> {
+                    Controllers.dialog(StringUtils.getStackTrace(executor.getLastException()), Main.i18n("launch.failed"), MessageBox.ERROR_MESSAGE, Controllers::closeDialog);
+                });
             }
         });
 
