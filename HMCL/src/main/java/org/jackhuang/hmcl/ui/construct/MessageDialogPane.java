@@ -33,6 +33,8 @@ public final class MessageDialogPane extends StackPane {
     private final String text;
     private final JFXDialog dialog;
 
+    private boolean closingDialog = true;
+
     @FXML
     private JFXButton acceptButton;
     @FXML
@@ -57,7 +59,8 @@ public final class MessageDialogPane extends StackPane {
 
         content.setText(text);
         acceptButton.setOnMouseClicked(e -> {
-            dialog.close();
+            if (closingDialog)
+                dialog.close();
             Optional.ofNullable(onAccept).ifPresent(Runnable::run);
         });
 
@@ -84,7 +87,8 @@ public final class MessageDialogPane extends StackPane {
 
         cancelButton.setVisible(true);
         cancelButton.setOnMouseClicked(e -> {
-            dialog.close();
+            if (closingDialog)
+                dialog.close();
             Optional.ofNullable(onCancel).ifPresent(Runnable::run);
         });
 
@@ -94,5 +98,9 @@ public final class MessageDialogPane extends StackPane {
         actions.getChildren().add(cancelButton);
 
         graphic.setGraphic(SVG.help_circle("black", 40, 40));
+    }
+
+    public void disableClosingDialog() {
+        closingDialog = false;
     }
 }

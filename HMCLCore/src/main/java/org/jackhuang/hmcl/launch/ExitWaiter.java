@@ -65,16 +65,15 @@ final class ExitWaiter implements Runnable {
             ProcessListener.ExitType exitType;
 
             // LaunchWrapper will catch the exception logged and will exit normally.
-            if (exitCode != 0 || StringUtils.containsOne(errorLines, "Unable to launch")) {
-                EventBus.EVENT_BUS.fireEvent(new ProcessExitedAbnormallyEvent(this, process));
-                exitType = ProcessListener.ExitType.APPLICATION_ERROR;
-            } else if (exitCode != 0 && StringUtils.containsOne(errorLines,
+            if (exitCode != 0 && StringUtils.containsOne(errorLines,
                     "Could not create the Java Virtual Machine.",
                     "Error occurred during initialization of VM",
-                    "A fatal exception has occurred. Program will exit.",
-                    "Unable to launch")) {
+                    "A fatal exception has occurred. Program will exit.")) {
                 EventBus.EVENT_BUS.fireEvent(new JVMLaunchFailedEvent(this, process));
                 exitType = ProcessListener.ExitType.JVM_ERROR;
+            } else if (exitCode != 0 || StringUtils.containsOne(errorLines, "Unable to launch")) {
+                EventBus.EVENT_BUS.fireEvent(new ProcessExitedAbnormallyEvent(this, process));
+                exitType = ProcessListener.ExitType.APPLICATION_ERROR;
             } else
                 exitType = ProcessListener.ExitType.NORMAL;
 
@@ -82,7 +81,7 @@ final class ExitWaiter implements Runnable {
 
             watcher.accept(exitCode, exitType);
         } catch (InterruptedException e) {
-            watcher.accept(1, ProcessListener.ExitType.NORMAL);
+            watcher.accept(1, ProcessListener.ExitType.INTERRUPTED);
         }
     }
 

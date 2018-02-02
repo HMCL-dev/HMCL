@@ -52,6 +52,7 @@ public interface ProcessListener {
     enum ExitType {
         JVM_ERROR,
         APPLICATION_ERROR,
-        NORMAL
+        NORMAL,
+        INTERRUPTED
     }
 }

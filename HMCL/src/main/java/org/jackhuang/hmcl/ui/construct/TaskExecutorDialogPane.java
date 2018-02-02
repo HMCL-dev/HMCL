@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXProgressBar;
 import javafx.beans.property.StringProperty;
@@ -30,6 +31,7 @@ import java.util.Optional;
 
 public class TaskExecutorDialogPane extends StackPane {
     private TaskExecutor executor;
+    private Runnable onCancel;
 
     @FXML
     private JFXProgressBar progressBar;
@@ -48,12 +50,11 @@ public class TaskExecutorDialogPane extends StackPane {
         FXUtils.limitHeight(this, 200);
         FXUtils.limitWidth(this, 400);
 
-        if (cancel == null)
-            btnCancel.setDisable(true);
+        setCancel(cancel);
 
         btnCancel.setOnMouseClicked(e -> {
             Optional.ofNullable(executor).ifPresent(TaskExecutor::cancel);
-            cancel.run();
+            onCancel.run();
         });
     }
 
@@ -91,5 +92,11 @@ public class TaskExecutorDialogPane extends StackPane {
             progressBar.setVisible(false);
         else
             progressBar.setProgress(progress);
+    }
+
+    public void setCancel(Runnable onCancel) {
+        this.onCancel = onCancel;
+
+        JFXUtilities.runInFX(() -> btnCancel.setDisable(onCancel == null));
     }
 }

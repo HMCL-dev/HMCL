@@ -19,9 +19,6 @@ package org.jackhuang.hmcl.launch;
 
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.task.SimpleTaskResult;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.*;
 
 import java.io.*;
@@ -220,14 +217,18 @@ public class DefaultLauncher extends Launcher {
     protected void appendJvmArgs(List<String> result) {
     }
 
-    public void decompressNatives(File destination) throws IOException {
-        for (Library library : version.getLibraries())
-            if (library.isNative())
-                CompressingUtils.unzip(repository.getLibraryFile(version, library),
-                        destination,
-                        "",
-                        library.getExtract()::shouldExtract,
-                        false);
+    public void decompressNatives(File destination) throws NotDecompressingNativesException {
+        try {
+            for (Library library : version.getLibraries())
+                if (library.isNative())
+                    CompressingUtils.unzip(repository.getLibraryFile(version, library),
+                            destination,
+                            "",
+                            library.getExtract()::shouldExtract,
+                            false);
+        } catch (IOException e) {
+            throw new NotDecompressingNativesException(e);
+        }
     }
 
     protected Map<String, String> getConfigurations() {
@@ -249,28 +250,31 @@ public class DefaultLauncher extends Launcher {
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
         File nativeFolder = Files.createTempDirectory("minecraft").toFile();
-        List<String> rawCommandLine = generateCommandLine(nativeFolder);
 
-        // To guarantee that when failed to generate code, we will not call precalled command
-        ProcessBuilder builder = new ProcessBuilder(rawCommandLine);
+        // To guarantee that when failed to generate launch command line, we will not call pre-launch command
+        List<String> rawCommandLine = generateCommandLine(nativeFolder);
 
         decompressNatives(nativeFolder);
 
         if (StringUtils.isNotBlank(options.getPrecalledCommand()))
             Runtime.getRuntime().exec(options.getPrecalledCommand()).waitFor();
 
-        builder.directory(repository.getRunDirectory(version.getId()))
-                .environment().put("APPDATA", options.getGameDir().getAbsoluteFile().getParent());
-        ManagedProcess p = new ManagedProcess(builder.start(), rawCommandLine);
+        Process process;
+        try {
+            ProcessBuilder builder = new ProcessBuilder(rawCommandLine);
+            builder.directory(repository.getRunDirectory(version.getId()))
+                    .environment().put("APPDATA", options.getGameDir().getAbsoluteFile().getParent());
+            process = builder.start();
+        } catch (IOException e) {
+            throw new ProcessCreationException(e);
+        }
+
+        ManagedProcess p = new ManagedProcess(process, rawCommandLine);
         if (listener == null)
             startMonitors(p);
         else
             startMonitors(p, listener, daemon);
         return p;
-    }
-
-    public final TaskResult<ManagedProcess> launchAsync() {
-        return new SimpleTaskResult<>(LAUNCH_ASYNC_ID, this::launch);
     }
 
     @Override
@@ -303,11 +307,7 @@ public class DefaultLauncher extends Launcher {
             writer.write(StringUtils.makeCommand(generateCommandLine(nativeFolder)));
         }
         if (!scriptFile.setExecutable(true))
-            throw new IOException("Cannot make script file '" + scriptFile + "' executable.");
-    }
-
-    public final Task makeLaunchScriptAsync(File file) {
-        return Task.of(() -> makeLaunchScript(file));
+            throw new PermissionException();
     }
 
     private void startMonitors(ManagedProcess managedProcess) {
@@ -362,7 +362,4 @@ public class DefaultLauncher extends Launcher {
         managedProcess.addRelatedThread(stderr);
         managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), (exitCode, exitType) -> processListener.onExit(exitCode, exitType)), "exit-waiter", isDaemon));
     }
-
-    public static final String LAUNCH_ASYNC_ID = "process";
-    public static final String LAUNCH_SCRIPT_ASYNC_ID = "script";
 }
