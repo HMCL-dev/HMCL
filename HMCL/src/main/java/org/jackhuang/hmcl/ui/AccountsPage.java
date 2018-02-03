@@ -17,33 +17,40 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.*;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.Main;
-import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.auth.OfflineAccount;
-import org.jackhuang.hmcl.auth.OfflineAccountFactory;
-import org.jackhuang.hmcl.auth.yggdrasil.InvalidCredentialsException;
+import org.jackhuang.hmcl.auth.*;
+import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
+import org.jackhuang.hmcl.auth.InvalidCredentialsException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
-import org.jackhuang.hmcl.game.HMCLMultiCharacterSelector;
+import org.jackhuang.hmcl.game.AccountHelper;
+import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.construct.IconedItem;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 public final class AccountsPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", Main.i18n("account"));
@@ -94,8 +101,8 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
         List<Node> children = new LinkedList<>();
         int i = 0;
         ToggleGroup group = new ToggleGroup();
-        for (Map.Entry<String, Account> entry : Settings.INSTANCE.getAccounts().entrySet()) {
-            children.add(buildNode(++i, entry.getValue(), group));
+        for (Account account : Settings.INSTANCE.getAccounts()) {
+            children.add(buildNode(++i, account, group));
         }
         group.selectedToggleProperty().addListener((a, b, newValue) -> {
             if (newValue != null)
@@ -111,7 +118,7 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
     private Node buildNode(int i, Account account, ToggleGroup group) {
         AccountItem item = new AccountItem(i, account, group);
         item.setOnDeleteButtonMouseClicked(e -> {
-            Settings.INSTANCE.deleteAccount(account.getUsername());
+            Settings.INSTANCE.deleteAccount(account);
             Platform.runLater(this::loadAccounts);
         });
         return item;
@@ -140,7 +147,8 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
                     default: throw new Error();
                 }
 
-                account.logIn(HMCLMultiCharacterSelector.INSTANCE, Settings.INSTANCE.getProxy());
+                AuthInfo info = account.logIn(new CharacterSelector(), Settings.INSTANCE.getProxy());
+                Accounts.setCurrentCharacter(account, info.getUsername());
                 return account;
             } catch (Exception e) {
                 return e;
@@ -153,8 +161,18 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
                 loadAccounts();
             } else if (account instanceof InvalidCredentialsException) {
                 lblCreationWarning.setText(Main.i18n("account.failed.wrong_password"));
+            } else if (account instanceof NoCharacterException) {
+                lblCreationWarning.setText(Main.i18n("account.failed.no_charactor"));
+            } else if (account instanceof ServerDisconnectException) {
+                lblCreationWarning.setText(Main.i18n("account.failed.connect_authentication_server"));
+            } else if (account instanceof InvalidTokenException) {
+                lblCreationWarning.setText(Main.i18n("account.failed.invalid_token"));
+            } else if (account instanceof InvalidPasswordException) {
+                lblCreationWarning.setText(Main.i18n("account.failed.invalid_password"));
+            } else if (account instanceof NoSelectedCharacterException) {
+                dialog.close();
             } else if (account instanceof Exception) {
-                lblCreationWarning.setText(((Exception) account).getLocalizedMessage());
+                lblCreationWarning.setText(account.getClass() + ": " + ((Exception) account).getLocalizedMessage());
             }
             progressBar.setVisible(false);
         });
@@ -182,5 +200,77 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
         if (account instanceof OfflineAccount) return Main.i18n("account.methods.offline");
         else if (account instanceof YggdrasilAccount) return Main.i18n("account.methods.yggdrasil");
         else throw new Error(Main.i18n("account.methods.no_method") + ": " + account);
+    }
+
+    class CharacterSelector extends BorderPane implements MultiCharacterSelector {
+        private AdvancedListBox listBox = new AdvancedListBox();
+        private JFXButton cancel = new JFXButton();
+
+        private CountDownLatch latch = new CountDownLatch(1);
+        private GameProfile selectedProfile = null;
+
+        {
+            setStyle("-fx-padding: 8px;");
+
+            cancel.setText(Main.i18n("button.cancel"));
+            StackPane.setAlignment(cancel, Pos.BOTTOM_RIGHT);
+            cancel.setOnMouseClicked(e -> latch.countDown());
+
+            listBox.startCategory(Main.i18n("account.choose"));
+
+            setCenter(listBox);
+
+            HBox hbox = new HBox();
+            hbox.setAlignment(Pos.CENTER_RIGHT);
+            hbox.getChildren().add(cancel);
+            setBottom(hbox);
+        }
+
+        @Override
+        public GameProfile select(Account account, List<GameProfile> names) throws NoSelectedCharacterException {
+            if (!(account instanceof YggdrasilAccount))
+                return MultiCharacterSelector.DEFAULT.select(account, names);
+            YggdrasilAccount yggdrasilAccount = (YggdrasilAccount) account;
+
+            for (GameProfile profile : names) {
+                Image image;
+                try {
+                    image = AccountHelper.getSkinImmediately(yggdrasilAccount, profile, 4, Settings.INSTANCE.getProxy());
+                } catch (Exception e) {
+                    image = FXUtils.DEFAULT_ICON;
+                }
+                ImageView portraitView = new ImageView();
+                portraitView.setSmooth(false);
+                if (image == FXUtils.DEFAULT_ICON)
+                    portraitView.setImage(FXUtils.DEFAULT_ICON);
+                else {
+                    portraitView.setImage(image);
+                    portraitView.setViewport(AccountHelper.getViewport(4));
+                }
+                FXUtils.limitSize(portraitView, 32, 32);
+
+                IconedItem accountItem = new IconedItem(portraitView, profile.getName());
+                accountItem.setOnMouseClicked(e -> {
+                    selectedProfile = profile;
+                    latch.countDown();
+                });
+                listBox.add(accountItem);
+            }
+
+            JFXUtilities.runInFX(() -> Controllers.dialog(this));
+
+            try {
+                latch.await();
+
+                JFXUtilities.runInFX(Controllers::closeDialog);
+
+                if (selectedProfile == null)
+                    throw new NoSelectedCharacterException(account);
+
+                return selectedProfile;
+            } catch (InterruptedException ignore) {
+                throw new NoSelectedCharacterException(account);
+            }
+        }
     }
 }

@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -18,22 +18,18 @@
 package org.jackhuang.hmcl.auth;
 
 /**
- *
- * @author huangyuhui
+ * throws if wrong password.
  */
-public class AuthenticationException extends Exception {
-    public AuthenticationException() {
+public class InvalidPasswordException extends AuthenticationException {
+
+    private Account account;
+
+    public InvalidPasswordException(Account account) {
+        super();
+        this.account = account;
     }
 
-    public AuthenticationException(String message) {
-        super(message);
-    }
-
-    public AuthenticationException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public AuthenticationException(Throwable cause) {
-        super(cause);
+    public Account getAccount() {
+        return account;
     }
 }

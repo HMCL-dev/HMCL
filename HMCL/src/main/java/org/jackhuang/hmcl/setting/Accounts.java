@@ -48,4 +48,25 @@ public final class Accounts {
         else return YGGDRASIL_ACCOUNT_KEY;
     }
 
+    public static void setCurrentCharacter(Account account, String character) {
+        account.getProperties().put("character", character);
+    }
+
+    public static String getCurrentCharacter(Account account) {
+        return Lang.get(account.getProperties(), "character", String.class, null);
+    }
+
+    public static String getCurrentCharacter(Map<Object, Object> storage) {
+        Map properties = Lang.get(storage, "properties", Map.class, null);
+        if (properties == null) return null;
+        return Lang.get(properties, "character", String.class, null);
+    }
+
+    static String getAccountId(Account account) {
+        return getAccountId(account.getUsername(), getCurrentCharacter(account));
+    }
+
+    static String getAccountId(String username, String character) {
+        return username + ":" + character;
+    }
 }

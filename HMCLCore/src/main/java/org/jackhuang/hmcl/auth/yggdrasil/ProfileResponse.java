@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -15,25 +15,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.game;
+package org.jackhuang.hmcl.auth.yggdrasil;
 
-import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.auth.MultiCharacterSelector;
-import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
-import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
+public class ProfileResponse {
+    private final String id;
+    private final String name;
+    private final PropertyMap properties;
 
-import java.util.List;
+    public ProfileResponse() {
+        this("", "", null);
+    }
 
-/**
- * @author huangyuhui
- */
-public final class HMCLMultiCharacterSelector implements MultiCharacterSelector {
-    public static final HMCLMultiCharacterSelector INSTANCE = new HMCLMultiCharacterSelector();
+    public ProfileResponse(String id, String name, PropertyMap properties) {
+        this.id = id;
+        this.name = name;
+        this.properties = properties;
+    }
 
-    private HMCLMultiCharacterSelector() {}
+    public String getId() {
+        return id;
+    }
 
-    @Override
-    public GameProfile select(Account account, List<GameProfile> names) throws NoSelectedCharacterException {
-        return names.stream().findFirst().orElseThrow(() -> new NoSelectedCharacterException(account));
+    public String getName() {
+        return name;
+    }
+
+    public PropertyMap getProperties() {
+        return properties;
     }
 }

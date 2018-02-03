@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.AccountHelper;
+import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 
@@ -53,8 +54,9 @@ public final class AccountItem extends StackPane {
     @FXML private JFXButton btnDelete;
     @FXML private JFXButton btnRefresh;
     @FXML private Label lblUser;
-    @FXML private JFXRadioButton chkSelected;
     @FXML private Label lblType;
+    @FXML private Label lblEmail;
+    @FXML private JFXRadioButton chkSelected;
     @FXML private JFXProgressBar pgsSkin;
     @FXML private ImageView portraitView;
     @FXML private HBox buttonPane;
@@ -82,8 +84,9 @@ public final class AccountItem extends StackPane {
 
         chkSelected.getProperties().put("account", account);
         chkSelected.setSelected(Settings.INSTANCE.getSelectedAccount() == account);
-        lblUser.setText(account.getUsername());
+        lblUser.setText(Accounts.getCurrentCharacter(account));
         lblType.setText(AccountsPage.accountType(account));
+        lblEmail.setText(account.getUsername());
 
         if (account instanceof YggdrasilAccount) {
             btnRefresh.setOnMouseClicked(e -> {

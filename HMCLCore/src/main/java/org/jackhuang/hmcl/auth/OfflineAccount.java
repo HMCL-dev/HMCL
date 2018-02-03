@@ -68,7 +68,7 @@ public class OfflineAccount extends Account {
     }
 
     @Override
-    public Map<Object, Object> toStorage() {
+    public Map<Object, Object> toStorageImpl() {
         return Lang.mapOf(
                 new Pair<>("uuid", uuid),
                 new Pair<>("username", username)

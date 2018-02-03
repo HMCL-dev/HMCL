@@ -22,7 +22,8 @@
                 <center>
                     <VBox style="-fx-padding: 20 20 0 20;">
                         <Label fx:id="lblUser" style="-fx-font-size: 20;" wrapText="true" textAlignment="JUSTIFY" />
-                        <Label fx:id="lblType" style="-fx-font-size: 10;" />
+                        <Label fx:id="lblEmail" style="-fx-font-size: 12;" />
+                        <Label fx:id="lblType" style="-fx-font-size: 12;" />
                     </VBox>
                 </center>
             </BorderPane>

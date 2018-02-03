@@ -15,24 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.auth.yggdrasil;
-
-import org.jackhuang.hmcl.auth.AuthenticationException;
+package org.jackhuang.hmcl.auth;
 
 /**
- *
+ * throws if wrong password or logging fails for too many times.
  * @author huangyuhui
  */
-public class InvalidTokenException extends AuthenticationException {
+public final class InvalidCredentialsException extends AuthenticationException {
 
-    private YggdrasilAccount account;
+    private final Account account;
 
-    public InvalidTokenException(YggdrasilAccount account) {
-        super();
+    public InvalidCredentialsException(Account account) {
         this.account = account;
     }
 
-    public YggdrasilAccount getAccount() {
+    public Account getAccount() {
         return account;
     }
 }

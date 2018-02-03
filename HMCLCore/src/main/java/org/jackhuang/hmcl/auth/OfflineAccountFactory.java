@@ -37,7 +37,7 @@ public class OfflineAccountFactory extends AccountFactory<OfflineAccount> {
     }
 
     @Override
-    public OfflineAccount fromStorage(Map<Object, Object> storage) {
+    public OfflineAccount fromStorageImpl(Map<Object, Object> storage) {
         Object username = storage.get("username");
         if (username == null || !(username instanceof String))
             throw new IllegalStateException("Offline account configuration malformed.");

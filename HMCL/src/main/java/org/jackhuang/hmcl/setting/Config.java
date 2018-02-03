@@ -21,6 +21,7 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.util.JavaVersion;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -67,7 +68,7 @@ public final class Config {
     private Map<String, Profile> configurations = new TreeMap<>();
 
     @SerializedName("accounts")
-    private Map<String, Map<Object, Object>> accounts = new TreeMap<>();
+    private List<Map<Object, Object>> accounts = new LinkedList<>();
 
     @SerializedName("selectedAccount")
     private String selectedAccount = "";
@@ -198,11 +199,11 @@ public final class Config {
         Settings.INSTANCE.save();
     }
 
-    public Map<String, Map<Object, Object>> getAccounts() {
+    public List<Map<Object, Object>> getAccounts() {
         return accounts;
     }
 
-    public void setAccounts(Map<String, Map<Object, Object>> accounts) {
+    public void setAccounts(List<Map<Object, Object>> accounts) {
         this.accounts = accounts;
         Settings.INSTANCE.save();
     }

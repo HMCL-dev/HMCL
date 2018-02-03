@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -17,23 +17,19 @@
  */
 package org.jackhuang.hmcl.auth;
 
-/**
- *
- * @author huangyuhui
- */
-public class AuthenticationException extends Exception {
-    public AuthenticationException() {
+public class ServerDisconnectException extends AuthenticationException {
+    public ServerDisconnectException() {
     }
 
-    public AuthenticationException(String message) {
+    public ServerDisconnectException(String message) {
         super(message);
     }
 
-    public AuthenticationException(String message, Throwable cause) {
+    public ServerDisconnectException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public AuthenticationException(Throwable cause) {
+    public ServerDisconnectException(Throwable cause) {
         super(cause);
     }
 }

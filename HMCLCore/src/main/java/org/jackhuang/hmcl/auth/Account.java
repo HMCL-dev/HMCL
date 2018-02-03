@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.auth;
 
 import java.net.Proxy;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -26,15 +27,48 @@ import java.util.Map;
  */
 public abstract class Account {
 
+    /**
+     * @return the account name (mostly email)
+     */
     public abstract String getUsername();
 
+    /**
+     * log in.
+     * @param selector selects a character
+     * @return the specific player's info.
+     * @throws AuthenticationException if server error occurred.
+     */
     public AuthInfo logIn(MultiCharacterSelector selector) throws AuthenticationException {
         return logIn(selector, Proxy.NO_PROXY);
     }
 
+    /**
+     * log in.
+     * @param selector selects a character
+     * @param proxy by which connect to the server
+     * @return the specific player's info.
+     * @throws AuthenticationException if server error occurred.
+     */
     public abstract AuthInfo logIn(MultiCharacterSelector selector, Proxy proxy) throws AuthenticationException;
 
     public abstract void logOut();
 
-    public abstract Map<Object, Object> toStorage();
+    protected abstract Map<Object, Object> toStorageImpl();
+
+    public final Map<Object, Object> toStorage() {
+        Map<Object, Object> storage = toStorageImpl();
+        if (!getProperties().isEmpty())
+            storage.put("properties", getProperties());
+        return storage;
+    }
+
+    private Map<Object, Object> properties = new HashMap<>();
+
+    /**
+     * To save some necessary extra information here.
+     * @return the property map.
+     */
+    public final Map<Object, Object> getProperties() {
+        return properties;
+    }
 }

@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.auth.*;
+import org.jackhuang.hmcl.util.Charsets;
 import org.jackhuang.hmcl.util.NetworkUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
@@ -28,10 +29,7 @@ import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  *
@@ -63,7 +61,7 @@ public final class YggdrasilAccount extends Account {
         this.password = password;
     }
 
-    public String getUserId() {
+    public String getCurrentCharacterName() {
         return userId;
     }
 
@@ -146,7 +144,7 @@ public final class YggdrasilAccount extends Account {
     }
 
     private void logIn1(URL url, Object input, Proxy proxy) throws AuthenticationException {
-        Response response = makeRequest(url, input, proxy);
+        AuthenticationResponse response = makeRequest(url, input, proxy);
         if (response == null || !clientToken.equals(response.getClientToken()))
             throw new AuthenticationException("Client token changed");
 
@@ -183,13 +181,13 @@ public final class YggdrasilAccount extends Account {
     }
 
     @Override
-    public Map<Object, Object> toStorage() {
+    public Map<Object, Object> toStorageImpl() {
         HashMap<Object, Object> result = new HashMap<>();
 
         result.put(STORAGE_KEY_USER_NAME, getUsername());
         result.put(STORAGE_KEY_CLIENT_TOKEN, getClientToken());
-        if (getUserId() != null)
-            result.put(STORAGE_KEY_USER_ID, getUserId());
+        if (getCurrentCharacterName() != null)
+            result.put(STORAGE_KEY_USER_ID, getCurrentCharacterName());
         if (!userProperties.isEmpty())
             result.put(STORAGE_KEY_USER_PROPERTIES, userProperties.toList());
         GameProfile profile = selectedProfile;
@@ -207,10 +205,10 @@ public final class YggdrasilAccount extends Account {
         return result;
     }
 
-    private Response makeRequest(URL url, Object input, Proxy proxy) throws AuthenticationException {
+    private AuthenticationResponse makeRequest(URL url, Object input, Proxy proxy) throws AuthenticationException {
         try {
             String jsonResult = input == null ? NetworkUtils.doGet(url, proxy) : NetworkUtils.doPost(url, GSON.toJson(input), "application/json", proxy);
-            Response response = GSON.fromJson(jsonResult, Response.class);
+            AuthenticationResponse response = GSON.fromJson(jsonResult, AuthenticationResponse.class);
             if (response == null)
                 return null;
             if (!StringUtils.isBlank(response.getError())) {
@@ -219,12 +217,14 @@ public final class YggdrasilAccount extends Account {
                         throw new InvalidCredentialsException(this);
                     else if (response.getErrorMessage().contains("Invalid token"))
                         throw new InvalidTokenException(this);
+                    else if (response.getErrorMessage().contains("Invalid username or password"))
+                        throw new InvalidPasswordException(this);
                 throw new AuthenticationException(response.getError() + ": " + response.getErrorMessage());
             }
 
             return response;
         } catch (IOException e) {
-            throw new AuthenticationException("Unable to connect to authentication server", e);
+            throw new ServerDisconnectException(e);
         } catch (JsonParseException e) {
             throw new AuthenticationException("Unable to parse server response", e);
         }
@@ -242,12 +242,31 @@ public final class YggdrasilAccount extends Account {
         }
     }
 
+    public ProfileTexture getSkin(GameProfile profile) throws IOException, JsonParseException {
+        if (StringUtils.isBlank(userId))
+            throw new IllegalStateException("Not logged in");
+
+        ProfileResponse response = GSON.fromJson(NetworkUtils.doGet(NetworkUtils.toURL(BASE_PROFILE + UUIDTypeAdapter.fromUUID(profile.getId()))), ProfileResponse.class);
+        if (response.getProperties() == null) return null;
+        Property textureProperty = response.getProperties().get("textures");
+        if (textureProperty == null) return null;
+
+        TextureResponse texture;
+        String json = new String(Base64.getDecoder().decode(textureProperty.getValue()), Charsets.UTF_8);
+        texture = GSON.fromJson(json, TextureResponse.class);
+        if (texture == null || texture.getTextures() == null)
+            return null;
+
+        return texture.getTextures().get(ProfileTexture.Type.SKIN);
+    }
+
     @Override
     public String toString() {
         return "YggdrasilAccount[username=" + getUsername() + "]";
     }
 
-    private static final String BASE_URL = "https://authserver.mojang.com/";
+    private static final String BASE_URL = "http://localhost:8080/authserver/"; //"https://authserver.mojang.com/";
+    private static final String BASE_PROFILE = "http://localhost:8080/sessionserver/session/minecraft/profile/"; //"https://sessionserver.mojang.com/session/minecraft/profile/";
     private static final URL ROUTE_AUTHENTICATE = NetworkUtils.toURL(BASE_URL + "authenticate");
     private static final URL ROUTE_REFRESH = NetworkUtils.toURL(BASE_URL + "refresh");
     private static final URL ROUTE_VALIDATE = NetworkUtils.toURL(BASE_URL + "validate");

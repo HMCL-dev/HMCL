@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import javafx.beans.property.ObjectProperty;
@@ -66,12 +65,12 @@ public class Settings {
     private Map<String, Account> accounts = new HashMap<>();
 
     {
-        for (Map.Entry<String, Map<Object, Object>> entry : SETTINGS.getAccounts().entrySet()) {
-            String name = entry.getKey();
-            Map<Object, Object> settings = entry.getValue();
+        for (Map<Object, Object> settings : SETTINGS.getAccounts()) {
+            String characterName = Accounts.getCurrentCharacter(settings);
             AccountFactory factory = Accounts.ACCOUNT_FACTORY.get(Lang.get(settings, "type", String.class, ""));
-            if (factory == null) {
-                SETTINGS.getAccounts().remove(name);
+            if (factory == null || characterName == null) {
+                // unrecognized account type, so remove it.
+                SETTINGS.getAccounts().remove(settings);
                 continue;
             }
 
@@ -79,17 +78,12 @@ public class Settings {
             try {
                 account = factory.fromStorage(settings);
             } catch (Exception e) {
-                SETTINGS.getAccounts().remove(name);
+                SETTINGS.getAccounts().remove(settings);
                 // storage is malformed, delete.
                 continue;
             }
 
-            if (!Objects.equals(account.getUsername(), name)) {
-                SETTINGS.getAccounts().remove(name);
-                continue;
-            }
-
-            accounts.put(name, account);
+            accounts.put(Accounts.getAccountId(account), account);
         }
 
         save();
@@ -138,12 +132,10 @@ public class Settings {
     public void save() {
         try {
             SETTINGS.getAccounts().clear();
-            for (Map.Entry<String, Account> entry : accounts.entrySet()) {
-                String name = entry.getKey();
-                Account account = entry.getValue();
+            for (Account account : accounts.values()) {
                 Map<Object, Object> storage = account.toStorage();
                 storage.put("type", Accounts.getAccountType(account));
-                SETTINGS.getAccounts().put(name, storage);
+                SETTINGS.getAccounts().add(storage);
             }
 
             FileUtils.writeText(SETTINGS_FILE, GSON.toJson(SETTINGS));
@@ -304,11 +296,11 @@ public class Settings {
      *               ACCOUNTS               *
      ****************************************/
 
-    private final ImmediateObjectProperty<Account> selectedAccount = new ImmediateObjectProperty<Account>(this, "selectedAccount", getAccount(SETTINGS.getSelectedAccount())) {
+    private final ImmediateObjectProperty<Account> selectedAccount = new ImmediateObjectProperty<Account>(this, "selectedAccount", accounts.get(SETTINGS.getSelectedAccount())) {
         @Override
         public Account get() {
             Account a = super.get();
-            if (a == null || !accounts.containsKey(a.getUsername())) {
+            if (a == null || !accounts.containsKey(Accounts.getAccountId(a))) {
                 Account acc = accounts.values().stream().findAny().orElse(null);
                 set(acc);
                 return acc;
@@ -317,7 +309,7 @@ public class Settings {
 
         @Override
         public void set(Account newValue) {
-            if (newValue == null || accounts.containsKey(newValue.getUsername())) {
+            if (newValue == null || accounts.containsKey(Accounts.getAccountId(newValue))) {
                 super.set(newValue);
             }
         }
@@ -326,7 +318,7 @@ public class Settings {
         public void invalidated() {
             super.invalidated();
 
-            SETTINGS.setSelectedAccount(getValue() == null ? "" : getValue().getUsername());
+            SETTINGS.setSelectedAccount(getValue() == null ? "" : Accounts.getAccountId(getValue()));
         }
     };
 
@@ -343,19 +335,25 @@ public class Settings {
     }
 
     public void addAccount(Account account) {
-        accounts.put(account.getUsername(), account);
+        accounts.put(Accounts.getAccountId(account), account);
     }
 
-    public Account getAccount(String name) {
-        return accounts.get(name);
+    public Account getAccount(String name, String character) {
+        return accounts.get(Accounts.getAccountId(name, character));
     }
 
-    public Map<String, Account> getAccounts() {
-        return Collections.unmodifiableMap(accounts);
+    public Collection<Account> getAccounts() {
+        return Collections.unmodifiableCollection(accounts.values());
     }
 
-    public void deleteAccount(String name) {
-        accounts.remove(name);
+    public void deleteAccount(String name, String character) {
+        accounts.remove(Accounts.getAccountId(name, character));
+
+        selectedAccount.get();
+    }
+
+    public void deleteAccount(Account account) {
+        accounts.remove(Accounts.getAccountId(account));
 
         selectedAccount.get();
     }

@@ -45,7 +45,7 @@ public final class YggdrasilAccountFactory extends AccountFactory<YggdrasilAccou
     }
 
     @Override
-    public YggdrasilAccount fromStorage(Map<Object, Object> storage) {
+    public YggdrasilAccount fromStorageImpl(Map<Object, Object> storage) {
         String username = Lang.get(storage, STORAGE_KEY_USER_NAME, String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have key " + STORAGE_KEY_USER_NAME));
 

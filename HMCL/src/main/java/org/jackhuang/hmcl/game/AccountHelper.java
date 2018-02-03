@@ -22,6 +22,7 @@ import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.ProfileTexture;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -33,6 +34,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.Proxy;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -49,12 +51,13 @@ public final class AccountHelper {
     }
 
     public static void loadSkins(Proxy proxy) {
-        for (Account account : Settings.INSTANCE.getAccounts().values()) {
+        for (Account account : Settings.INSTANCE.getAccounts()) {
             if (account instanceof YggdrasilAccount) {
                 new SkinLoadTask((YggdrasilAccount) account, proxy, false).start();
             }
         }
     }
+
     public static Task loadSkinAsync(YggdrasilAccount account) {
         return loadSkinAsync(account, Settings.INSTANCE.getProxy());
     }
@@ -94,6 +97,20 @@ public final class AccountHelper {
         return FXUtils.DEFAULT_ICON;
     }
 
+    public static Image getSkinImmediately(YggdrasilAccount account, GameProfile profile, double scaleRatio, Proxy proxy) throws Exception {
+        String name = profile.getName();
+        File file = getSkinFile(name);
+        downloadSkin(account, profile, true, proxy);
+        if (!file.exists())
+            return FXUtils.DEFAULT_ICON;
+
+        Image original = new Image("file:" + file.getAbsolutePath());
+        return new Image("file:" + file.getAbsolutePath(),
+                original.getWidth() * scaleRatio,
+                original.getHeight() * scaleRatio,
+                false, false);
+    }
+
     public static Rectangle2D getViewport(double scaleRatio) {
         double size = 8.0 * scaleRatio;
         return new Rectangle2D(size, size, size, size);
@@ -130,15 +147,20 @@ public final class AccountHelper {
             if (account.canLogIn() && (account.getSelectedProfile() == null || refresh))
                 DialogController.logIn(account);
 
-            GameProfile profile = account.getSelectedProfile();
-            if (profile == null) return;
-            String name = profile.getName();
-            if (name == null) return;
-            String url = "http://skins.minecraft.net/MinecraftSkins/" + name + ".png";
-            File file = getSkinFile(name);
-            if (!refresh && file.exists())
-                return;
-            dependencies.add(new FileDownloadTask(NetworkUtils.toURL(url), file, proxy));
+            downloadSkin(account, account.getSelectedProfile(), refresh, proxy);
         }
+    }
+
+    private static void downloadSkin(YggdrasilAccount account, GameProfile profile, boolean refresh, Proxy proxy) throws Exception {
+        if (profile == null) return;
+        String name = profile.getName();
+        if (name == null) return;
+        ProfileTexture texture = account.getSkin(profile);
+        if (texture == null) return;
+        String url = texture.getUrl();
+        File file = getSkinFile(name);
+        if (!refresh && file.exists())
+            return;
+        new FileDownloadTask(NetworkUtils.toURL(url), file, proxy).run();
     }
 }

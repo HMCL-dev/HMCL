@@ -20,9 +20,11 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.concurrency.JFXUtilities;
 import javafx.application.Platform;
 import javafx.scene.Node;
+import javafx.scene.image.Image;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Paint;
 import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.ProfileChangedEvent;
@@ -33,6 +35,7 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.UnsupportedModpackException;
+import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -81,13 +84,17 @@ public final class LeftPaneController {
                 accountItem.setVersionName(Main.i18n("account.missing"));
                 accountItem.setGameVersion(Main.i18n("message.unknown"));
             } else {
-                accountItem.setVersionName(it.getUsername());
+                accountItem.setVersionName(Accounts.getCurrentCharacter(it));
                 accountItem.setGameVersion(AccountsPage.accountType(it));
             }
 
-            if (it instanceof YggdrasilAccount)
-                accountItem.setImage(AccountHelper.getSkin((YggdrasilAccount) it, 4), AccountHelper.getViewport(4));
-            else
+            if (it instanceof YggdrasilAccount) {
+                Image image = AccountHelper.getSkin((YggdrasilAccount) it, 4);
+                if (image == FXUtils.DEFAULT_ICON)
+                    accountItem.setImage(FXUtils.DEFAULT_ICON, null);
+                else
+                    accountItem.setImage(image, AccountHelper.getViewport(4));
+            } else
                 accountItem.setImage(FXUtils.DEFAULT_ICON, null);
         });
     }

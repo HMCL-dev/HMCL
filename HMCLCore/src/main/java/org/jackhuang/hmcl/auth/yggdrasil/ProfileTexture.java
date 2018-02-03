@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -15,25 +15,39 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.auth;
+package org.jackhuang.hmcl.auth.yggdrasil;
 
-/**
- *
- * @author huangyuhui
- */
-public class AuthenticationException extends Exception {
-    public AuthenticationException() {
+import org.jackhuang.hmcl.util.Immutable;
+
+import java.util.Map;
+
+@Immutable
+public final class ProfileTexture {
+
+    private final String url;
+    private final Map<String, String> metadata;
+
+    public ProfileTexture() {
+        this(null, null);
     }
 
-    public AuthenticationException(String message) {
-        super(message);
+    public ProfileTexture(String url, Map<String, String> metadata) {
+        this.url = url;
+        this.metadata = metadata;
     }
 
-    public AuthenticationException(String message, Throwable cause) {
-        super(message, cause);
+    public String getUrl() {
+        return url;
     }
 
-    public AuthenticationException(Throwable cause) {
-        super(cause);
+    public String getMetadata(String key) {
+        if (metadata == null)
+            return null;
+        else
+            return metadata.get(key);
+    }
+
+    public enum Type {
+        SKIN, CAPE
     }
 }

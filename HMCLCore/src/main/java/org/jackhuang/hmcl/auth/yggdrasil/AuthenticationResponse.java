@@ -21,7 +21,7 @@ package org.jackhuang.hmcl.auth.yggdrasil;
  *
  * @author huangyuhui
  */
-public final class Response {
+public final class AuthenticationResponse {
 
     private final String accessToken;
     private final String clientToken;
@@ -32,11 +32,11 @@ public final class Response {
     private final String errorMessage;
     private final String cause;
 
-    public Response() {
+    public AuthenticationResponse() {
         this(null, null, null, null, null, null, null, null);
     }
 
-    public Response(String accessToken, String clientToken, GameProfile selectedProfile, GameProfile[] availableProfiles, User user, String error, String errorMessage, String cause) {
+    public AuthenticationResponse(String accessToken, String clientToken, GameProfile selectedProfile, GameProfile[] availableProfiles, User user, String error, String errorMessage, String cause) {
         this.accessToken = accessToken;
         this.clientToken = clientToken;
         this.selectedProfile = selectedProfile;

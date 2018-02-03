@@ -32,8 +32,8 @@ public final class AuthenticationRequest {
     private final String clientToken;
 
     private final Map<String, Object> agent = Lang.mapOf(
-            new Pair("name", "minecraft"),
-            new Pair("version", 1));
+            new Pair<>("name", "minecraft"),
+            new Pair<>("version", 1));
 
     private final boolean requestUser = true;
 

@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.auth;
 
+import org.jackhuang.hmcl.util.Lang;
+
 import java.util.Map;
 
 /**
@@ -31,5 +33,13 @@ public abstract class AccountFactory<T extends Account> {
 
     public abstract T fromUsername(String username, String password);
 
-    public abstract T fromStorage(Map<Object, Object> storage);
+    protected abstract T fromStorageImpl(Map<Object, Object> storage);
+
+    public final T fromStorage(Map<Object, Object> storage) {
+        T account = fromStorageImpl(storage);
+        Map<?, ?> properties = Lang.get(storage, "properties", Map.class, null);
+        if (properties == null) return account;
+        account.getProperties().putAll(properties);
+        return account;
+    }
 }

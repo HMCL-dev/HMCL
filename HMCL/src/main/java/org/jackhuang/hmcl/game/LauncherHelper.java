@@ -23,13 +23,11 @@ import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
+import org.jackhuang.hmcl.auth.SpecificCharacterSelector;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.mod.CurseCompletionTask;
-import org.jackhuang.hmcl.setting.LauncherVisibility;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Settings;
-import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
@@ -86,7 +84,7 @@ public final class LauncherHelper {
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN)))
                 .then(Task.of(Main.i18n("account.methods"), variables -> {
                     try {
-                        variables.set("account", account.logIn(HMCLMultiCharacterSelector.INSTANCE, Settings.INSTANCE.getProxy()));
+                        variables.set("account", account.logIn(new SpecificCharacterSelector(Accounts.getCurrentCharacter(account)), Settings.INSTANCE.getProxy()));
                     } catch (AuthenticationException e) {
                         variables.set("account", DialogController.logIn(account));
                         JFXUtilities.runInFX(() -> Controllers.dialog(launchingStepsPane));
