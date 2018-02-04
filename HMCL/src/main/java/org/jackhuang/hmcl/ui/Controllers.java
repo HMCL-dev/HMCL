@@ -123,7 +123,7 @@ public final class Controllers {
     }
 
     public static void dialog(String text, String title, int type, Runnable onAccept) {
-        dialog(new MessageDialogPane(text, title, decorator.getDialog(), MessageBox.INFORMATION_MESSAGE, onAccept));
+        dialog(new MessageDialogPane(text, title, decorator.getDialog(), type, onAccept));
     }
 
     public static void confirmDialog(String text, String title, Runnable onAccept, Runnable onCacnel) {

@@ -7,16 +7,30 @@
 <?import com.jfoenix.controls.JFXButton?>
 
 <?import org.jackhuang.hmcl.ui.construct.TaskListPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.control.ScrollPane?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
-    <JFXProgressBar fx:id="progressBar" StackPane.alignment="TOP_CENTER" />
-    <VBox alignment="TOP_CENTER" style="-fx-padding: 16px;">
-        <Label fx:id="lblTitle" style="-fx-font-size: 20px;" />
-        <Label fx:id="lblSubtitle" style="-fx-font-size: 14px;" />
-        <TaskListPane fx:id="taskListPane" />
-    </VBox>
-    <StackPane pickOnBounds="false" style="-fx-padding: 8px;">
-        <JFXButton StackPane.alignment="BOTTOM_RIGHT" fx:id="btnCancel" text="%button.cancel" />
-    </StackPane>
+    <BorderPane>
+        <top>
+            <JFXProgressBar fx:id="progressBar" StackPane.alignment="TOP_CENTER" />
+        </top>
+        <center>
+            <VBox alignment="TOP_CENTER" style="-fx-padding: 16px;">
+                <Label fx:id="lblTitle" style="-fx-font-size: 20px;" />
+                <Label fx:id="lblSubtitle" style="-fx-font-size: 14px;" />
+
+                <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">
+                    <TaskListPane fx:id="taskListPane" />
+                </ScrollPane>
+            </VBox>
+        </center>
+        <bottom>
+            <HBox alignment="CENTER_RIGHT" style="-fx-padding: 8px;">
+                <JFXButton fx:id="btnCancel" text="%button.cancel" />
+            </HBox>
+        </bottom>
+    </BorderPane>
 </fx:root>

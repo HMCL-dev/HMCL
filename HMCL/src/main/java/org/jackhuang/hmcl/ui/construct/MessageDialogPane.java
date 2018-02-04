@@ -64,7 +64,7 @@ public final class MessageDialogPane extends StackPane {
             Optional.ofNullable(onAccept).ifPresent(Runnable::run);
         });
 
-        actions.getChildren().remove(cancelButton);
+        //actions.getChildren().remove(cancelButton);
 
         switch (type) {
             case MessageBox.INFORMATION_MESSAGE:
@@ -79,11 +79,14 @@ public final class MessageDialogPane extends StackPane {
             case MessageBox.WARNING_MESSAGE:
                 graphic.setGraphic(SVG.alert("black", 40, 40));
                 break;
+            case MessageBox.QUESTION_MESSAGE:
+                graphic.setGraphic(SVG.help_circle("black", 40, 40));
+                break;
         }
     }
 
     public MessageDialogPane(String text, String title, JFXDialog dialog, Runnable onAccept, Runnable onCancel) {
-        this(text, title, dialog, -1, onAccept);
+        this(text, title, dialog, MessageBox.QUESTION_MESSAGE, onAccept);
 
         cancelButton.setVisible(true);
         cancelButton.setOnMouseClicked(e -> {
@@ -95,9 +98,7 @@ public final class MessageDialogPane extends StackPane {
         acceptButton.setText(Main.i18n("button.yes"));
         cancelButton.setText(Main.i18n("button.no"));
 
-        actions.getChildren().add(cancelButton);
-
-        graphic.setGraphic(SVG.help_circle("black", 40, 40));
+        //actions.getChildren().add(cancelButton);
     }
 
     public void disableClosingDialog() {

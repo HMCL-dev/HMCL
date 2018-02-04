@@ -68,7 +68,7 @@ public final class LeftPaneController {
                     iconedItem.prefWidthProperty().bind(leftPane.widthProperty());
                     iconedItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
                 }))
-                .startCategory(Main.i18n("profile"))
+                .startCategory(Main.i18n("profile").toUpperCase())
                 .add(profilePane);
 
         EventBus.EVENT_BUS.channel(ProfileLoadingEvent.class).register(this::onProfilesLoading);

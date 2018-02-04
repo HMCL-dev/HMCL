@@ -198,11 +198,11 @@ public class FileDownloadTask extends Task {
                     if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
                         throw new IOException("Unable to make parent directory " + file);
                     if (!temp.renameTo(file))
-                        throw new IOException("Unable move temp file to " + file);
+                        throw new IOException("Unable to move temp file from " + temp + " to " + file);
                 }
 
                 if (downloaded != contentLength)
-                    throw new IllegalStateException("Unexptected file size: " + downloaded + ", expected: " + contentLength);
+                    throw new IllegalStateException("Unexpected file size: " + downloaded + ", expected: " + contentLength);
 
                 // Check hash code
                 if (hash != null) {
