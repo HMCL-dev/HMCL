@@ -107,6 +107,8 @@ public final class Controllers {
     }
 
     public static JFXDialog dialog(Region content) {
+        // TODO: temp fix
+        decorator.showDialog(new Region());
         return decorator.showDialog(content);
     }
 
@@ -126,8 +128,8 @@ public final class Controllers {
         dialog(new MessageDialogPane(text, title, decorator.getDialog(), type, onAccept));
     }
 
-    public static void confirmDialog(String text, String title, Runnable onAccept, Runnable onCacnel) {
-        dialog(new MessageDialogPane(text, title, decorator.getDialog(), onAccept, onCacnel));
+    public static void confirmDialog(String text, String title, Runnable onAccept, Runnable onCancel) {
+        dialog(new MessageDialogPane(text, title, decorator.getDialog(), onAccept, onCancel));
     }
 
     public static void inputDialog(String text, Consumer<String> onResult) {

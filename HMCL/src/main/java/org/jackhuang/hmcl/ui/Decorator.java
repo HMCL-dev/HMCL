@@ -149,7 +149,6 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
                 btnMax.fire();
         });
 
-        drawerWrapper.getChildren().remove(dialog);
         dialog.setDialogContainer(drawerWrapper);
         dialog.setOnDialogClosed(e -> dialogShown = false);
         dialog.setOnDialogOpened(e -> dialogShown = true);

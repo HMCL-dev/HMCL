@@ -28,7 +28,7 @@
             </VBox>
         </center>
         <bottom>
-            <HBox alignment="CENTER_RIGHT" style="-fx-padding: 8px;">
+            <HBox alignment="CENTER_RIGHT" style="-fx-padding: 0 8px 8px 0;">
                 <JFXButton fx:id="btnCancel" text="%button.cancel" />
             </HBox>
         </bottom>

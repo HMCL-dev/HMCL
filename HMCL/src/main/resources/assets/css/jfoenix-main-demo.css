@@ -95,6 +95,11 @@
     -fx-padding: 5.0 0.0 5.0 0.0;
 }
 
+.jfx-layout-body {
+    -fx-pref-width: 400px;
+    -fx-wrap-text: true;
+}
+
 .jfx-layout-body .label {
     -fx-font-size: 14.0px;
     -fx-pref-width: 400.0px;

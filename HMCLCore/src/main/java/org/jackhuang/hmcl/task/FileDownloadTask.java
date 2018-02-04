@@ -99,6 +99,11 @@ public class FileDownloadTask extends Task {
         stream = null;
     }
 
+    @Override
+    public Scheduler getScheduler() {
+        return Schedulers.io();
+    }
+
     public EventManager<FailedEvent<URL>> getOnFailed() {
         return onFailed;
     }

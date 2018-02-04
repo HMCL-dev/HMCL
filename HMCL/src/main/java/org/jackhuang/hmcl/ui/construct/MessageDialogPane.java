@@ -30,9 +30,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import java.util.Optional;
 
 public final class MessageDialogPane extends StackPane {
-    private final String text;
-    private final JFXDialog dialog;
-
     private boolean closingDialog = true;
 
     @FXML
@@ -49,9 +46,6 @@ public final class MessageDialogPane extends StackPane {
     private HBox actions;
 
     public MessageDialogPane(String text, String title, JFXDialog dialog, int type, Runnable onAccept) {
-        this.text = text;
-        this.dialog = dialog;
-
         FXUtils.loadFXML(this, "/assets/fxml/message-dialog.fxml");
 
         if (title != null)
@@ -64,7 +58,7 @@ public final class MessageDialogPane extends StackPane {
             Optional.ofNullable(onAccept).ifPresent(Runnable::run);
         });
 
-        //actions.getChildren().remove(cancelButton);
+        actions.getChildren().remove(cancelButton);
 
         switch (type) {
             case MessageBox.INFORMATION_MESSAGE:
@@ -98,7 +92,7 @@ public final class MessageDialogPane extends StackPane {
         acceptButton.setText(Main.i18n("button.yes"));
         cancelButton.setText(Main.i18n("button.no"));
 
-        //actions.getChildren().add(cancelButton);
+        actions.getChildren().add(cancelButton);
     }
 
     public void disableClosingDialog() {

@@ -5,24 +5,28 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import java.lang.String?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
-    <HBox spacing="8">
-        <Label fx:id="graphic" translateX="34" translateY="34" minWidth="40" maxWidth="40" minHeight="40" maxHeight="40" />
-        <JFXDialogLayout>
-            <heading>
+    <HBox spacing="8" styleClass="jfx-dialog-layout">
+        <Label fx:id="graphic" translateX="10" translateY="10" minWidth="40" maxWidth="40" minHeight="40" maxHeight="40" />
+        <VBox HBox.hgrow="ALWAYS">
+            <StackPane>
+                <styleClass>
+                    <String fx:value="jfx-layout-heading" />
+                    <String fx:value="title" />
+                </styleClass>
                 <Label fx:id="title" text="%message.info" />
-            </heading>
-            <body>
+            </StackPane>
+            <StackPane styleClass="jfx-layout-body">
                 <Label fx:id="content" wrapText="true" />
-            </body>
-            <actions>
-                <HBox fx:id="actions" alignment="CENTER_RIGHT">
-                    <JFXButton fx:id="acceptButton" styleClass="dialog-accept" text="%button.ok" />
-                    <JFXButton fx:id="cancelButton" visible="false" styleClass="dialog-cancel" text="%button.cancel" />
-                </HBox>
-            </actions>
-        </JFXDialogLayout>
+            </StackPane>
+            <HBox fx:id="actions" styleClass="jfx-layout-actions">
+                <JFXButton fx:id="acceptButton" styleClass="dialog-accept" text="%button.ok" />
+                <JFXButton fx:id="cancelButton" visible="false" styleClass="dialog-cancel" text="%button.cancel" />
+            </HBox>
+        </VBox>
     </HBox>
 </fx:root>
