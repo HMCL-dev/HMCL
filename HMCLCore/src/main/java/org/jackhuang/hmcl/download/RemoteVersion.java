@@ -27,7 +27,7 @@ import java.util.Objects;
  *
  * @author huangyuhui
  */
-public final class RemoteVersion<T> implements Comparable<RemoteVersion<T>> {
+public class RemoteVersion<T> implements Comparable<RemoteVersion<T>> {
 
     private final String gameVersion;
     private final String selfVersion;

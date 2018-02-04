@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.NetworkUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -30,6 +31,7 @@ import org.w3c.dom.NodeList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.regex.Matcher;
@@ -42,6 +44,8 @@ import java.util.regex.Pattern;
 public final class OptiFineVersionList extends VersionList<Void> {
 
     private static final Pattern PATTERN = Pattern.compile("OptiFine (.*?) ");
+    private static final Pattern LINK_PATTERN = Pattern.compile("\"downloadx\\?f=OptiFine(.*)\"");
+
     public static final OptiFineVersionList INSTANCE = new OptiFineVersionList();
 
     private OptiFineVersionList() {
@@ -89,7 +93,9 @@ public final class OptiFineVersionList extends VersionList<Void> {
                                 gameVersion = matcher.group(1);
                             if (gameVersion == null)
                                 continue;
-                            versions.put(gameVersion, new RemoteVersion<>(gameVersion, version, url, null));
+
+                            String finalURL = url;
+                            versions.put(gameVersion, new OptiFineRemoteVersion(gameVersion, version, Lang.hideException(() -> getLink(finalURL)), null));
                         }
                     }
                 }
@@ -97,4 +103,14 @@ public final class OptiFineVersionList extends VersionList<Void> {
         };
     }
 
+    public static String getLink(String url) throws IOException {
+        String result = null;
+        String content = NetworkUtils.doGet(NetworkUtils.toURL(url));
+        Matcher m = LINK_PATTERN.matcher(content);
+        while (m.find())
+            result = m.group(1);
+        if (result == null)
+            throw new IllegalStateException("Cannot find version in " + content);
+        return "http://optifine.net/downloadx?f=OptiFine" + result;
+    }
 }

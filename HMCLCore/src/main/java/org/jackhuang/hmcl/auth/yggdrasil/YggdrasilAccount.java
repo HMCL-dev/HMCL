@@ -265,8 +265,8 @@ public final class YggdrasilAccount extends Account {
         return "YggdrasilAccount[username=" + getUsername() + "]";
     }
 
-    private static final String BASE_URL = "http://localhost:8080/authserver/"; //"https://authserver.mojang.com/";
-    private static final String BASE_PROFILE = "http://localhost:8080/sessionserver/session/minecraft/profile/"; //"https://sessionserver.mojang.com/session/minecraft/profile/";
+    private static final String BASE_URL = "https://authserver.mojang.com/";
+    private static final String BASE_PROFILE = "https://sessionserver.mojang.com/session/minecraft/profile/";
     private static final URL ROUTE_AUTHENTICATE = NetworkUtils.toURL(BASE_URL + "authenticate");
     private static final URL ROUTE_REFRESH = NetworkUtils.toURL(BASE_URL + "refresh");
     private static final URL ROUTE_VALIDATE = NetworkUtils.toURL(BASE_URL + "validate");

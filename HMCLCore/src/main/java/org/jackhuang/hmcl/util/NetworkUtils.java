@@ -75,20 +75,19 @@ public final class NetworkUtils {
             SSLContext c = SSLContext.getInstance("SSL");
             c.init(null, new X509TrustManager[] { XTM }, new SecureRandom());
             HttpsURLConnection.setDefaultSSLSocketFactory(c.getSocketFactory());
-        } catch (GeneralSecurityException e) {
+        } catch (GeneralSecurityException ignore) {
         }
         HttpsURLConnection.setDefaultHostnameVerifier(HNV);
     }
 
-    private static Supplier<String> userAgentSupplier = () -> RandomUserAgent.randomUserAgent();
+    private static Supplier<String> userAgentSupplier = RandomUserAgent::randomUserAgent;
 
     public static String getUserAgent() {
         return userAgentSupplier.get();
     }
 
     public static void setUserAgentSupplier(Supplier<String> userAgentSupplier) {
-        Objects.requireNonNull(userAgentSupplier);
-        NetworkUtils.userAgentSupplier = userAgentSupplier;
+        NetworkUtils.userAgentSupplier = Objects.requireNonNull(userAgentSupplier);
     }
 
     public static HttpURLConnection createConnection(URL url, Proxy proxy) throws IOException {
@@ -103,7 +102,7 @@ public final class NetworkUtils {
     }
 
     public static String doGet(URL url) throws IOException {
-        return IOUtils.readFullyAsString(url.openConnection().getInputStream());
+        return IOUtils.readFullyAsString(createConnection(url, Proxy.NO_PROXY).getInputStream());
     }
 
     public static String doGet(URL url, Proxy proxy) throws IOException {
