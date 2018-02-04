@@ -62,7 +62,7 @@ public final class GameAssetIndexDownloadTask extends Task {
     public void execute() throws Exception {
         AssetIndexInfo assetIndexInfo = version.getAssetIndex();
         File assetDir = dependencyManager.getGameRepository().getAssetDirectory(version.getId(), assetIndexInfo.getId());
-        if (FileUtils.makeDirectory(assetDir))
+        if (!FileUtils.makeDirectory(assetDir))
             throw new IOException("Cannot create directory: " + assetDir);
         File assetIndexFile = dependencyManager.getGameRepository().getIndexFile(version.getId(), assetIndexInfo.getId());
         dependencies.add(new FileDownloadTask(
