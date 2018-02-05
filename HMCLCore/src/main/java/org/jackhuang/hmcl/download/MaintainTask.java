@@ -68,8 +68,15 @@ public class MaintainTask extends TaskResult<Version> {
             removeTweakClass(args, "forge");
         }
 
+        // Installing Forge will override the Minecraft arguments in json, so LiteLoader and OptiFine Tweaker are being re-added.
+
         if (liteLoader == null) {
             removeTweakClass(args, "liteloader");
+        } else {
+            if (!StringUtils.containsOne(args, "LiteLoaderTweaker")) {
+                args.add("--tweakClass");
+                args.add("com.mumfrey.liteloader.launch.LiteLoaderTweaker");
+            }
         }
 
         if (optiFine == null) {
@@ -88,7 +95,7 @@ public class MaintainTask extends TaskResult<Version> {
             removeTweakClass(args, "optifine");
         }
 
-        setResult(newVersion);
+        setResult(newVersion.setMinecraftArguments(StringUtils.makeCommand(args)));
     }
 
     @Override

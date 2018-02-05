@@ -84,14 +84,17 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             case "forge":
                 return new ForgeInstallTask(this, gameVersion, version, libraryVersion)
                         .then(variables -> new LibrariesUniqueTask(variables.get("version")))
+                        .then(variables -> new MaintainTask(repository, variables.get("version")))
                         .then(variables -> new VersionJsonSaveTask(repository, variables.get("version")));
             case "liteloader":
                 return new LiteLoaderInstallTask(this, gameVersion, version, libraryVersion)
                         .then(variables -> new LibrariesUniqueTask(variables.get("version")))
+                        .then(variables -> new MaintainTask(repository, variables.get("version")))
                         .then(variables -> new VersionJsonSaveTask(repository, variables.get("version")));
             case "optifine":
                 return new OptiFineInstallTask(this, gameVersion, version, libraryVersion)
                         .then(variables -> new LibrariesUniqueTask(variables.get("version")))
+                        .then(variables -> new MaintainTask(repository, variables.get("version")))
                         .then(variables -> new VersionJsonSaveTask(repository, variables.get("version")));
             default:
                 throw new IllegalArgumentException("Library id " + libraryId + " is unrecognized.");
