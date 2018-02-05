@@ -96,11 +96,16 @@ public final class LiteLoaderInstallTask extends TaskResult<Version> {
         );
 
         Version tempVersion = version.setLibraries(Lang.merge(remote.getTag().getLibraries(), Collections.singleton(library)));
+
+        String mcArg = version.getMinecraftArguments().orElse("");
+        if (mcArg.contains("--tweakClass optifine.OptiFineTweaker"))
+            mcArg = mcArg.replace("--tweakClass optifine.OptiFineTweaker", "");
+
         setResult(version
                 .setMainClass("net.minecraft.launchwrapper.Launch")
                 .setLibraries(Lang.merge(tempVersion.getLibraries(), version.getLibraries()))
                 .setLogging(Collections.emptyMap())
-                .setMinecraftArguments(version.getMinecraftArguments().orElse("") + " --tweakClass " + remote.getTag().getTweakClass())
+                .setMinecraftArguments(mcArg + " --tweakClass " + remote.getTag().getTweakClass())
                 //.setArguments(Arguments.addGameArguments(Lang.get(version.getArguments()), "--tweakClass", remote.getTag().getTweakClass()))
         );
 

@@ -293,7 +293,7 @@ public abstract class Task {
     }
 
     public static Task of(Scheduler scheduler, ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
-        return of(null, scheduler, closure);
+        return of(ReflectionHelper.getCaller().toString(), scheduler, closure);
     }
 
     public static Task of(String name, Scheduler scheduler, ExceptionalRunnable<?> closure) {
@@ -301,7 +301,7 @@ public abstract class Task {
     }
 
     public static Task of(Scheduler scheduler, ExceptionalRunnable<?> closure) {
-        return of(null, scheduler, closure);
+        return of(ReflectionHelper.getCaller().toString(), scheduler, closure);
     }
 
     public static <V> TaskResult<V> ofResult(String id, Callable<V> callable) {

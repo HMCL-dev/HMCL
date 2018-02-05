@@ -368,6 +368,7 @@ public final class LauncherHelper {
 
                     logWindow.show();
                     logWindow.onDone.register(() -> {
+                        logWindow.logLine("Commands: " + StringUtils.makeCommand(process.getCommands()), Log4jLevel.INFO);
                         for (Map.Entry<String, Log4jLevel> entry : logs)
                             logWindow.logLine(entry.getKey(), entry.getValue());
                     });

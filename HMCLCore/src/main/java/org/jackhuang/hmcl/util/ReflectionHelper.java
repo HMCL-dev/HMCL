@@ -146,4 +146,14 @@ public final class ReflectionHelper {
                 .filter(s -> checkParameter(s, args))
                 .findFirst();
     }
+
+    public static StackTraceElement getCaller() {
+        StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+        StackTraceElement caller = elements[2];
+        for (int i = 3; i < elements.length; ++i) {
+            if (!caller.getClassName().equals(elements[i].getClassName()))
+                return elements[i];
+        }
+        return caller;
+    }
 }

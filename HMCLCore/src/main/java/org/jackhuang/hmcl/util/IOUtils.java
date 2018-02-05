@@ -36,6 +36,7 @@ public final class IOUtils {
             if (closeable != null)
                 closeable.close();
         } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

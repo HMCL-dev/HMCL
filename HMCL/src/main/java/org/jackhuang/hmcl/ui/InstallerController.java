@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui;
 import javafx.fxml.FXML;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
 import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.game.Library;
@@ -60,7 +61,8 @@ public class InstallerController {
             Consumer<InstallerItem> removeAction = x -> {
                 LinkedList<Library> newList = new LinkedList<>(version.getLibraries());
                 newList.remove(library);
-                new VersionJsonSaveTask(profile.getRepository(), version.setLibraries(newList))
+                new MaintainTask(profile.getRepository(), version.setLibraries(newList))
+                        .then(variables -> new VersionJsonSaveTask(profile.getRepository(), variables.get(MaintainTask.ID)))
                         .with(profile.getRepository().refreshVersionsAsync())
                         .with(Task.of(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId)))
                         .start();

@@ -25,7 +25,16 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.NetworkUtils;
 import org.jackhuang.hmcl.util.VersionNumber;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -76,11 +85,18 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
                     if ("latest".equals(branchName))
                         continue;
 
+                    String version = v.getVersion();
+                    String url = repository.getUrl() + "com/mumfrey/liteloader/" + gameVersion + "/" + v.getFile();
+                    if (snapshot) {
+                        try {
+                            version = version.replace("SNAPSHOT", getLatestSnapshotVersion(repository.getUrl() + "com/mumfrey/liteloader/" + v.getVersion() + "/"));
+                            url = repository.getUrl() + "com/mumfrey/liteloader/" + v.getVersion() + "/liteloader-" + version + "-release.jar";
+                        } catch (Exception ignore) {
+                        }
+                    }
+
                     versions.put(key, new RemoteVersion<>(gameVersion,
-                            v.getVersion().replace("SNAPSHOT", "SNAPSHOT-" + v.getLastSuccessfulBuild()),
-                            snapshot
-                                    ? "http://jenkins.liteloader.com/LiteLoader " + gameVersion + "/lastSuccessfulBuild/artifact/build/libs/liteloader-" + v.getVersion() + "-release.jar"
-                                    : downloadProvider.injectURL(repository.getUrl() + "com/mumfrey/liteloader/" + gameVersion + "/" + v.getFile()),
+                            version, downloadProvider.injectURL(url),
                             new LiteLoaderRemoteVersionTag(v.getTweakClass(), v.getLibraries())
                     ));
                 }
@@ -89,4 +105,15 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
     }
 
     public static final String LITELOADER_LIST = "http://dl.liteloader.com/versions/versions.json";
+
+    private static String getLatestSnapshotVersion(String repo) throws Exception {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document doc = builder.parse(repo + "maven-metadata.xml");
+        Element r = doc.getDocumentElement();
+        Element snapshot = (Element) r.getElementsByTagName("snapshot").item(0);
+        Node timestamp = snapshot.getElementsByTagName("timestamp").item(0);
+        Node buildNumber = snapshot.getElementsByTagName("buildNumber").item(0);
+        return timestamp.getTextContent() + "-" + buildNumber.getTextContent();
+    }
 }
