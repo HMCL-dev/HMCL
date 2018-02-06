@@ -202,8 +202,11 @@ public class FileDownloadTask extends Task {
                         throw new IOException("Unable to delete existent file " + file);
                     if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
                         throw new IOException("Unable to make parent directory " + file);
-                    if (!temp.renameTo(file))
-                        throw new IOException("Unable to move temp file from " + temp + " to " + file);
+                    try {
+                        FileUtils.cutFile(temp, file);
+                    } catch (Exception e) {
+                        throw new IOException("Unable to move temp file from " + temp + " to " + file, e);
+                    }
                 }
 
                 if (downloaded != contentLength)

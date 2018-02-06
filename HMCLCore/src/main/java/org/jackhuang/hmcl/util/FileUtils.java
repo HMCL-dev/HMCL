@@ -236,7 +236,12 @@ public final class FileUtils {
         doCopyFile(srcFile, destFile);
     }
 
-    public static void doCopyFile(File srcFile, File destFile)
+    public static void cutFile(File srcFile, File destFile) throws IOException {
+        copyFile(srcFile, destFile);
+        srcFile.delete();
+    }
+
+    private static void doCopyFile(File srcFile, File destFile)
             throws IOException {
         Files.copy(srcFile.toPath(), destFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
     }
