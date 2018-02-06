@@ -46,9 +46,10 @@ public interface GameRepository extends VersionProvider {
      *
      * @param id the id of version
      * @return the version you want
+     * @throws VersionNotFoundException if no version is id.
      */
     @Override
-    Version getVersion(String id);
+    Version getVersion(String id) throws VersionNotFoundException;
 
     /**
      * How many version are there?
@@ -125,7 +126,7 @@ public interface GameRepository extends VersionProvider {
      * @param version version id
      * @return the minecraft jar
      */
-    default File getVersionJar(String version) {
+    default File getVersionJar(String version) throws VersionNotFoundException {
         return getVersionJar(getVersion(version).resolve(this));
     }
 
@@ -135,8 +136,7 @@ public interface GameRepository extends VersionProvider {
      * @param from The id of original version
      * @param to The new id of the version
      * @throws UnsupportedOperationException if this game repository does not support renaming a version
-     * @throws java.io.IOException if I/O operation fails.
-     * @return true if the operation is done successfully.
+     * @return true if the operation is done successfully, false if version `from` not found, version json is malformed or I/O errors occurred.
      */
     boolean renameVersion(String from, String to);
 
@@ -147,7 +147,6 @@ public interface GameRepository extends VersionProvider {
      *
      * @param version the id of specific version that is relevant to [assetId]
      * @param assetId the asset id, you can find it in [AssetIndexInfo.id] [Version.actualAssetIndex.id]
-     * @throws java.io.IOException if I/O operation fails.
      * @return the actual asset directory
      */
     File getActualAssetDirectory(String version, String assetId);

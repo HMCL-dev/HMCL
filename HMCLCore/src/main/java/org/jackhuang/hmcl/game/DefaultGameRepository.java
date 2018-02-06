@@ -137,7 +137,7 @@ public class DefaultGameRepository implements GameRepository {
 
             FileUtils.writeText(toJson, Constants.GSON.toJson(fromVersion.setId(to)));
             return true;
-        } catch (IOException | JsonSyntaxException | VersionNotFoundException e) {
+        } catch (IOException | JsonParseException | VersionNotFoundException e) {
             return false;
         }
     }
@@ -157,6 +157,8 @@ public class DefaultGameRepository implements GameRepository {
             Version version = new ClassicVersion();
             versions.put(version.getId(), version);
         }
+
+        SimpleVersionProvider provider = new SimpleVersionProvider();
 
         File[] files = new File(getBaseDirectory(), "versions").listFiles();
         if (files != null)
@@ -194,14 +196,24 @@ public class DefaultGameRepository implements GameRepository {
                         try {
                             FileUtils.writeText(json, Constants.GSON.toJson(version));
                         } catch (Exception e) {
-                            Logging.LOG.log(Level.WARNING, "Ignoring version {0} because wrong id {1} is set and cannot correct it.", new Object[] { id, version.getId() });
+                            Logging.LOG.log(Level.WARNING, "Ignoring version {0} because wrong id {1} is set and cannot correct it.", new Object[]{id, version.getId()});
                             continue;
                         }
                     }
 
-                    if (EventBus.EVENT_BUS.fireEvent(new LoadedOneVersionEvent(this, version)) != Event.Result.DENY)
-                        versions.put(id, version);
+                    provider.addVersion(version);
                 }
+
+        for (Version version : provider.getVersionMap().values()) {
+            try {
+                Version resolved = version.resolve(provider);
+
+                if (EventBus.EVENT_BUS.fireEvent(new LoadedOneVersionEvent(this, resolved)) != Event.Result.DENY)
+                    versions.put(version.getId(), version);
+            } catch (VersionNotFoundException e) {
+                Logging.LOG.log(Level.WARNING, "Ignoring version {0} because it inherits from a nonexistent version.");
+            }
+        }
 
         loaded = true;
     }

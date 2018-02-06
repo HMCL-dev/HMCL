@@ -143,11 +143,11 @@ public class Version implements Comparable<Version>, Validation {
     /**
      * Resolve given version
      */
-    public Version resolve(VersionProvider provider) {
+    public Version resolve(VersionProvider provider) throws VersionNotFoundException {
         return resolve(provider, new HashSet<>());
     }
 
-    protected Version resolve(VersionProvider provider, Set<String> resolvedSoFar) {
+    protected Version resolve(VersionProvider provider, Set<String> resolvedSoFar) throws VersionNotFoundException {
         if (inheritsFrom == null)
             return this;
 

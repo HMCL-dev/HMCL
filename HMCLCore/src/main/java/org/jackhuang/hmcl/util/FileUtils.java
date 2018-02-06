@@ -236,7 +236,7 @@ public final class FileUtils {
         doCopyFile(srcFile, destFile);
     }
 
-    public static void cutFile(File srcFile, File destFile) throws IOException {
+    public static void moveFile(File srcFile, File destFile) throws IOException {
         copyFile(srcFile, destFile);
         srcFile.delete();
     }

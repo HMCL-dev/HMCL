@@ -44,4 +44,8 @@ public class SimpleVersionProvider implements VersionProvider {
     public void addVersion(Version version) {
         versionMap.put(version.getId(), version);
     }
+
+    public Map<String, Version> getVersionMap() {
+        return versionMap;
+    }
 }

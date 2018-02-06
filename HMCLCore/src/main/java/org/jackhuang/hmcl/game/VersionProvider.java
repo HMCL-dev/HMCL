@@ -39,5 +39,5 @@ public interface VersionProvider {
      * @param id the id of version
      * @return the version you want
      */
-    Version getVersion(String id);
+    Version getVersion(String id) throws VersionNotFoundException;
 }

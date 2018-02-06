@@ -203,7 +203,7 @@ public class FileDownloadTask extends Task {
                     if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
                         throw new IOException("Unable to make parent directory " + file);
                     try {
-                        FileUtils.cutFile(temp, file);
+                        FileUtils.moveFile(temp, file);
                     } catch (Exception e) {
                         throw new IOException("Unable to move temp file from " + temp + " to " + file, e);
                     }
