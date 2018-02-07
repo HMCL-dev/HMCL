@@ -78,7 +78,12 @@ public final class LauncherHelper {
 
         executor = Task.of(Schedulers.javafx(), () -> Controllers.dialog(launchingStepsPane))
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES)))
-                .then(dependencyManager.checkGameCompletionAsync(version))
+                .then(variables -> {
+                    if (setting.isNotCheckGame())
+                        return null;
+                    else
+                        return dependencyManager.checkGameCompletionAsync(version);
+                })
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.MODS)))
                 .then(new CurseCompletionTask(dependencyManager, selectedVersion))
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN)))
