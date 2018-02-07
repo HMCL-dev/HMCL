@@ -60,7 +60,7 @@ public final class Lang {
             return function.apply(t);
         } catch (Exception e) {
             throwable(e);
-            return null; // won't get to here.
+            throw new Error(); // won't get to here.
         }
     }
 
@@ -88,7 +88,7 @@ public final class Lang {
             return supplier.get();
         } catch (Exception e) {
             throwable(e);
-            return null; // won't get to here.
+            throw new Error(); // won't get to here.
         }
     }
 

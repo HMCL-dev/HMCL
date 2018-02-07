@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.launch;
 
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Log4jLevel;
-import org.jackhuang.hmcl.util.OperatingSystem;
+import org.jackhuang.hmcl.util.*;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -34,10 +31,15 @@ import java.io.InterruptedIOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 /**
  * This class is to parse log4j classic XML layout logging,
@@ -54,6 +56,7 @@ final class Log4jHandler extends Thread {
     private final PipedOutputStream outputStream = new PipedOutputStream();
     private final PipedInputStream inputStream = Lang.invoke(() -> new PipedInputStream(outputStream));
     private final AtomicBoolean interrupted = new AtomicBoolean(false);
+    private final List<String> logs = new LinkedList<>();
 
     public Log4jHandler(BiConsumer<String, Log4jLevel> callback) {
         this.callback = callback;
@@ -73,7 +76,7 @@ final class Log4jHandler extends Thread {
             // Game has been interrupted.
             interrupted.set(true);
         } catch (SAXException | IOException e) {
-            Lang.throwable(e);
+            Logging.LOG.log(Level.WARNING, "An error occurred when reading console lines", e);
         }
     }
 
@@ -83,7 +86,7 @@ final class Log4jHandler extends Thread {
 
         Lang.invoke(() -> Schedulers.newThread().schedule(() -> {
             if (!interrupted.get()) {
-                Lang.invoke(() -> newLine("</output>").get());
+                newLine("</output>").get();
                 outputStream.close();
                 join();
             }
@@ -92,13 +95,22 @@ final class Log4jHandler extends Thread {
 
     public Future<?> newLine(String log) {
         return Schedulers.computation().schedule(() -> {
-            byte[] bytes = (log + OperatingSystem.LINE_SEPARATOR)
-                    .replace("log4j:Event", "log4j_Event")
-                    .replace("log4j:Message", "log4j_Message")
-                    .replace("log4j:Throwable", "log4j_Throwable")
-                    .getBytes();
-            outputStream.write(bytes);
-            outputStream.flush();
+            try {
+                String line = (log + OperatingSystem.LINE_SEPARATOR)
+                        .replace("<![CDATA[", "")
+                        .replace("]]>", "")
+                        .replace("log4j:Event", "log4j_Event")
+                        .replace("<log4j:Message>", "<log4j_Message><![CDATA[")
+                        .replace("</log4j:Message>", "]]></log4j_Message>")
+                        .replace("log4j:Throwable", "log4j_Throwable");
+                logs.add(line);
+                byte[] bytes = line.getBytes(Charsets.UTF_8);
+                outputStream.write(bytes);
+                outputStream.flush();
+            } catch (IOException e) {
+                // Ignoring IOException, including read end dead.
+                Logging.LOG.log(Level.WARNING, "An error occurred when writing console lines", e);
+            }
         });
     }
 

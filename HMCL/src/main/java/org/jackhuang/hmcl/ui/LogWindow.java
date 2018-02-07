@@ -116,9 +116,9 @@ public final class LogWindow extends Stage {
     }
 
     public void logLine(String line, Log4jLevel level) {
-        Element div = impl.engine.getDocument().createElement("div");
+        Element div = impl.document.createElement("div");
         // a <pre> element to prevent multiple spaces and tabs being removed.
-        Element pre = impl.engine.getDocument().createElement("pre");
+        Element pre = impl.document.createElement("pre");
         pre.setTextContent(line);
         div.appendChild(pre);
         impl.body.appendChild(div);
@@ -141,6 +141,10 @@ public final class LogWindow extends Stage {
                 debug.set(debug.get() + 1);
                 break;
         }
+    }
+
+    public void waitForLoaded() throws InterruptedException {
+        latch.await();
     }
 
     public class LogWindowImpl extends StackPane {

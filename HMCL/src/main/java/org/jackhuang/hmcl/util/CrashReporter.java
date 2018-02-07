@@ -36,6 +36,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
     private static final HashMap<String, String> SOURCE = new HashMap<String, String>() {
         {
+            put("javafx.fxml.LoadException", Main.i18n("crash.NoClassDefFound"));
             put("UnsatisfiedLinkError", Main.i18n("crash.user_fault"));
             put("java.lang.NoClassDefFoundError", Main.i18n("crash.NoClassDefFound"));
             put("java.lang.VerifyError", Main.i18n("crash.NoClassDefFound"));
@@ -68,9 +69,13 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
     @Override
     public void uncaughtException(Thread t, Throwable e) {
-        String s = StringUtils.getStackTrace(e);
-        if (!s.contains("org.jackhuang"))
+        String stackTrace = StringUtils.getStackTrace(e);
+        if (!stackTrace.contains("org.jackhuang"))
             return;
+
+        if (THROWABLE_SET.contains(stackTrace))
+            return;
+        THROWABLE_SET.add(stackTrace);
 
         try {
             StringBuilder builder = new StringBuilder();
@@ -79,7 +84,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             builder.append("  Time: ").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())).append("\n");
             builder.append("  Thread: ").append(t.toString()).append("\n");
             builder.append("\n  Content: \n    ");
-            builder.append(s).append("\n\n");
+            builder.append(stackTrace).append("\n\n");
             builder.append("-- System Details --\n");
             builder.append("  Operating System: ").append(System.getProperty("os.name")).append(' ').append(OperatingSystem.SYSTEM_VERSION).append("\n");
             builder.append("  Java Version: ").append(System.getProperty("java.version")).append(", ").append(System.getProperty("java.vendor")).append("\n");
@@ -91,7 +96,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             if (checkThrowable(e) && !text.contains("OpenJDK")) {
                 Platform.runLater(() -> new CrashWindow(text).show());
                 if (!Main.UPDATE_CHECKER.isOutOfDate())
-                    reportToServer(text, s);
+                    reportToServer(text);
             }
         } catch (Throwable ex) {
             Logging.LOG.log(Level.SEVERE, "Unable to caught exception", ex);
@@ -101,10 +106,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
     private static final HashSet<String> THROWABLE_SET = new HashSet<>();
 
-    private void reportToServer(final String text, String stacktrace) {
-        if (THROWABLE_SET.contains(stacktrace) || stacktrace.contains("Font") || stacktrace.contains("InternalError"))
-            return;
-        THROWABLE_SET.add(stacktrace);
+    private void reportToServer(final String text) {
         Thread t = new Thread(() -> {
             HashMap<String, String> map = new HashMap<>();
             map.put("crash_report", text);

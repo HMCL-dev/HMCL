@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.util.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class LauncherHelper {
@@ -282,6 +283,7 @@ public final class LauncherHelper {
         private boolean lwjgl;
         private LogWindow logWindow;
         private final LinkedList<Pair<String, Log4jLevel>> logs;
+        private final CountDownLatch latch = new CountDownLatch(1);
 
         public HMCLProcessListener(AuthInfo authInfo, VersionSetting setting) {
             this.setting = setting;
@@ -307,11 +309,12 @@ public final class LauncherHelper {
                 Platform.runLater(() -> {
                     logWindow = new LogWindow();
                     logWindow.show();
+                    latch.countDown();
                 });
         }
 
         @Override
-        public void onLog(String log, Log4jLevel level) {
+        public synchronized void onLog(String log, Log4jLevel level) {
             String newLog = log;
             for (Map.Entry<String, String> entry : forbiddenTokens.entrySet())
                 newLog = newLog.replace(entry.getKey(), entry.getValue());
@@ -321,13 +324,19 @@ public final class LauncherHelper {
             else
                 System.out.print(log);
 
-            Platform.runLater(() -> {
-                logs.add(new Pair<>(log, level));
-                if (logs.size() > Settings.INSTANCE.getLogLines())
-                    logs.removeFirst();
-                if (logWindow != null)
-                    logWindow.logLine(log, level);
-            });
+            logs.add(new Pair<>(log, level));
+            if (logs.size() > Settings.INSTANCE.getLogLines())
+                logs.removeFirst();
+
+            if (setting.isShowLogs()) {
+                Lang.invoke(() -> {
+                    latch.await();
+                    logWindow.waitForLoaded();
+                });
+
+                Platform.runLater(() -> logWindow.logLine(log, level));
+            }
+
 
             if (!lwjgl && log.contains("LWJGL Version: ")) {
                 lwjgl = true;
