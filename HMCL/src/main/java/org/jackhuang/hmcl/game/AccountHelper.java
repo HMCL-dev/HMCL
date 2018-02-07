@@ -39,6 +39,7 @@ import java.net.Proxy;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 public final class AccountHelper {
     public static final AccountHelper INSTANCE = new AccountHelper();
@@ -155,9 +156,9 @@ public final class AccountHelper {
         if (profile == null) return;
         String name = profile.getName();
         if (name == null) return;
-        ProfileTexture texture = account.getSkin(profile);
-        if (texture == null) return;
-        String url = texture.getUrl();
+        Optional<ProfileTexture> texture = account.getSkin(profile);
+        if (!texture.isPresent()) return;
+        String url = texture.get().getUrl();
         File file = getSkinFile(name);
         if (!refresh && file.exists())
             return;

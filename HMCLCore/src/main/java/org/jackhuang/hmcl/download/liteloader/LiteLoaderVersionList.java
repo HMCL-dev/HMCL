@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  *
@@ -67,11 +68,11 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
                 for (Map.Entry<String, LiteLoaderGameVersions> entry : root.getVersions().entrySet()) {
                     String gameVersion = entry.getKey();
                     LiteLoaderGameVersions liteLoader = entry.getValue();
-                    String gg = VersionNumber.parseVersion(gameVersion);
-                    if (gg == null)
+                    Optional<String> gg = VersionNumber.parseVersion(gameVersion);
+                    if (!gg.isPresent())
                         continue;
-                    doBranch(gg, gameVersion, liteLoader.getRepoitory(), liteLoader.getArtifacts(), false);
-                    doBranch(gg, gameVersion, liteLoader.getRepoitory(), liteLoader.getSnapshots(), true);
+                    doBranch(gg.get(), gameVersion, liteLoader.getRepoitory(), liteLoader.getArtifacts(), false);
+                    doBranch(gg.get(), gameVersion, liteLoader.getRepoitory(), liteLoader.getSnapshots(), true);
                 }
             }
 

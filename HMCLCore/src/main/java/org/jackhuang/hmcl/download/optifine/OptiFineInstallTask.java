@@ -62,10 +62,7 @@ public final class OptiFineInstallTask extends TaskResult<Version> {
 
         if (!optiFineVersionList.isLoaded())
             dependents.add(optiFineVersionList.refreshAsync(dependencyManager.getDownloadProvider())
-                    .then(s -> {
-                        doRemote();
-                        return null;
-                    }));
+                    .then(Task.of(this::doRemote)));
         else
             doRemote();
     }

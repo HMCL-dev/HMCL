@@ -126,6 +126,11 @@ public final class Profile {
         return vs == null || vs.isUsesGlobal();
     }
 
+    /**
+     * Make version use self version settings instead of the global one.
+     * @param id the version id.
+     * @return specialized version setting, null if given version does not exist.
+     */
     public VersionSetting specializeVersionSetting(String id) {
         VersionSetting vs = repository.getVersionSetting(id);
         if (vs == null)

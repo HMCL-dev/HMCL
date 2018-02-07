@@ -24,6 +24,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 
 import java.io.*;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
@@ -217,11 +218,11 @@ public final class CompressingUtils {
      * @param name the location of the text in zip file, something like A/B/C/D.txt
      * @return the content of given file.
      */
-    public static String readTextZipEntryQuietly(File file, String name) {
+    public static Optional<String> readTextZipEntryQuietly(File file, String name) {
         try {
-            return readTextZipEntry(file, name);
+            return Optional.of(readTextZipEntry(file, name));
         } catch (IOException e) {
-            return null;
+            return Optional.empty();
         }
     }
 }

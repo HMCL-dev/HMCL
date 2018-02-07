@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.mod;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
@@ -66,17 +67,17 @@ public final class MultiMCInstanceConfiguration {
         javaPath = p.getProperty("JavaPath");
         jvmArgs = p.getProperty("JvmArgs");
         fullscreen = Boolean.parseBoolean(p.getProperty("LaunchMaximized"));
-        maxMemory = StringUtils.parseInt(p.getProperty("MaxMemAlloc"));
-        minMemory = StringUtils.parseInt(p.getProperty("MinMemAlloc"));
-        height = StringUtils.parseInt(p.getProperty("MinecraftWinHeight"));
-        width = StringUtils.parseInt(p.getProperty("MinecraftWinWidth"));
+        maxMemory = Lang.toIntOrNull(p.getProperty("MaxMemAlloc"));
+        minMemory = Lang.toIntOrNull(p.getProperty("MinMemAlloc"));
+        height = Lang.toIntOrNull(p.getProperty("MinecraftWinHeight"));
+        width = Lang.toIntOrNull(p.getProperty("MinecraftWinWidth"));
         overrideCommands = Boolean.parseBoolean(p.getProperty("OverrideCommands"));
         overrideConsole = Boolean.parseBoolean(p.getProperty("OverrideConsole"));
         overrideJavaArgs = Boolean.parseBoolean(p.getProperty("OverrideJavaArgs"));
         overrideJavaLocation = Boolean.parseBoolean(p.getProperty("OverrideJavaLocation"));
         overrideMemory = Boolean.parseBoolean(p.getProperty("OverrideMemory"));
         overrideWindow = Boolean.parseBoolean(p.getProperty("OverrideWindow"));
-        permGen = StringUtils.parseInt(p.getProperty("PermGen"));
+        permGen = Lang.toIntOrNull(p.getProperty("PermGen"));
         postExitCommand = p.getProperty("PostExitCommand");
         preLaunchCommand = p.getProperty("PreLaunchCommand");
         showConsole = Boolean.parseBoolean(p.getProperty("ShowConsole"));

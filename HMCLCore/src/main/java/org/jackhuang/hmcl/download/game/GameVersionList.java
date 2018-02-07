@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.VersionNumber;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 
 /**
  *
@@ -55,10 +56,10 @@ public final class GameVersionList extends VersionList<GameRemoteVersionTag> {
 
                 GameRemoteVersions root = Constants.GSON.fromJson(task.getResult(), GameRemoteVersions.class);
                 for (GameRemoteVersion remoteVersion : root.getVersions()) {
-                    String gameVersion = VersionNumber.parseVersion(remoteVersion.getGameVersion());
-                    if (gameVersion == null)
+                    Optional<String> gameVersion = VersionNumber.parseVersion(remoteVersion.getGameVersion());
+                    if (!gameVersion.isPresent())
                         continue;
-                    versions.put(gameVersion, new RemoteVersion<>(
+                    versions.put(gameVersion.get(), new RemoteVersion<>(
                             remoteVersion.getGameVersion(),
                             remoteVersion.getGameVersion(),
                             remoteVersion.getUrl(),

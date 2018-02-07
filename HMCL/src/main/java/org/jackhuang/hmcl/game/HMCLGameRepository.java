@@ -135,6 +135,11 @@ public class HMCLGameRepository extends DefaultGameRepository {
             }
     }
 
+    /**
+     * Create new version setting if version id has no version setting.
+     * @param id the version id.
+     * @return new version setting, null if given version does not exist.
+     */
     public VersionSetting createVersionSetting(String id) {
         if (!hasVersion(id))
             return null;

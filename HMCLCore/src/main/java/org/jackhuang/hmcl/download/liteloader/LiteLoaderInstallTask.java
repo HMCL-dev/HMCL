@@ -64,10 +64,7 @@ public final class LiteLoaderInstallTask extends TaskResult<Version> {
 
         if (!liteLoaderVersionList.isLoaded())
             dependents.add(liteLoaderVersionList.refreshAsync(dependencyManager.getDownloadProvider())
-                    .then(s -> {
-                        doRemote();
-                        return null;
-                    }));
+                    .then(Task.of(this::doRemote)));
         else
             doRemote();
     }

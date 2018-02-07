@@ -27,10 +27,7 @@ import org.jackhuang.hmcl.util.NetworkUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.VersionNumber;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  *
@@ -62,8 +59,8 @@ public final class ForgeVersionList extends VersionList<Void> {
                 versions.clear();
 
                 for (Map.Entry<String, int[]> entry : root.getGameVersions().entrySet()) {
-                    String gameVersion = VersionNumber.parseVersion(entry.getKey());
-                    if (gameVersion == null)
+                    Optional<String> gameVersion = VersionNumber.parseVersion(entry.getKey());
+                    if (!gameVersion.isPresent())
                         continue;
                     for (int v : entry.getValue()) {
                         ForgeVersion version = root.getNumber().get(v);
@@ -80,7 +77,7 @@ public final class ForgeVersionList extends VersionList<Void> {
 
                         if (jar == null)
                             continue;
-                        versions.put(gameVersion, new RemoteVersion<>(
+                        versions.put(gameVersion.get(), new RemoteVersion<>(
                                 version.getGameVersion(), version.getVersion(), jar, null
                         ));
                     }

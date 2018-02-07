@@ -144,8 +144,10 @@ public final class YggdrasilAccount extends Account {
     }
 
     private void logIn1(URL url, Object input, Proxy proxy) throws AuthenticationException {
-        AuthenticationResponse response = makeRequest(url, input, proxy);
-        if (response == null || !clientToken.equals(response.getClientToken()))
+        AuthenticationResponse response = makeRequest(url, input, proxy)
+                .orElseThrow(() -> new AuthenticationException("Server response empty"));
+
+        if (!clientToken.equals(response.getClientToken()))
             throw new AuthenticationException("Client token changed");
 
         if (response.getSelectedProfile() != null)
@@ -205,12 +207,12 @@ public final class YggdrasilAccount extends Account {
         return result;
     }
 
-    private AuthenticationResponse makeRequest(URL url, Object input, Proxy proxy) throws AuthenticationException {
+    private Optional<AuthenticationResponse> makeRequest(URL url, Object input, Proxy proxy) throws AuthenticationException {
         try {
             String jsonResult = input == null ? NetworkUtils.doGet(url, proxy) : NetworkUtils.doPost(url, GSON.toJson(input), "application/json", proxy);
             AuthenticationResponse response = GSON.fromJson(jsonResult, AuthenticationResponse.class);
             if (response == null)
-                return null;
+                return Optional.empty();
             if (!StringUtils.isBlank(response.getError())) {
                 if (response.getErrorMessage() != null)
                     if (response.getErrorMessage().contains("Invalid credentials"))
@@ -222,7 +224,7 @@ public final class YggdrasilAccount extends Account {
                 throw new AuthenticationException(response.getError() + ": " + response.getErrorMessage());
             }
 
-            return response;
+            return Optional.of(response);
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         } catch (JsonParseException e) {
@@ -242,22 +244,22 @@ public final class YggdrasilAccount extends Account {
         }
     }
 
-    public ProfileTexture getSkin(GameProfile profile) throws IOException, JsonParseException {
+    public Optional<ProfileTexture> getSkin(GameProfile profile) throws IOException, JsonParseException {
         if (StringUtils.isBlank(userId))
             throw new IllegalStateException("Not logged in");
 
         ProfileResponse response = GSON.fromJson(NetworkUtils.doGet(NetworkUtils.toURL(BASE_PROFILE + UUIDTypeAdapter.fromUUID(profile.getId()))), ProfileResponse.class);
-        if (response.getProperties() == null) return null;
+        if (response.getProperties() == null) return Optional.empty();
         Property textureProperty = response.getProperties().get("textures");
-        if (textureProperty == null) return null;
+        if (textureProperty == null) return Optional.empty();
 
         TextureResponse texture;
         String json = new String(Base64.getDecoder().decode(textureProperty.getValue()), Charsets.UTF_8);
         texture = GSON.fromJson(json, TextureResponse.class);
         if (texture == null || texture.getTextures() == null)
-            return null;
+            return Optional.empty();
 
-        return texture.getTextures().get(ProfileTexture.Type.SKIN);
+        return Optional.ofNullable(texture.getTextures().get(ProfileTexture.Type.SKIN));
     }
 
     @Override

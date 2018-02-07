@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author huangyuhui
@@ -52,14 +53,19 @@ public final class Accounts {
         account.getProperties().put("character", character);
     }
 
-    public static String getCurrentCharacter(Account account) {
-        return Lang.get(account.getProperties(), "character", String.class, null);
+    public static boolean hasCurrentCharacter(Account account) {
+        return Lang.get(account.getProperties(), "character", String.class, null) != null;
     }
 
-    public static String getCurrentCharacter(Map<Object, Object> storage) {
-        Map properties = Lang.get(storage, "properties", Map.class, null);
-        if (properties == null) return null;
-        return Lang.get(properties, "character", String.class, null);
+    public static String getCurrentCharacter(Account account) {
+        return Lang.get(account.getProperties(), "character", String.class)
+                .orElseThrow(() -> new IllegalArgumentException("Account " + account + " has not set current character."));
+    }
+
+    public static Optional<String> getCurrentCharacter(Map<Object, Object> storage) {
+        Optional<Map> properties = Lang.get(storage, "properties", Map.class);
+        if (!properties.isPresent()) return Optional.empty();
+        return Lang.get(properties.get(), "character", String.class);
     }
 
     static String getAccountId(Account account) {

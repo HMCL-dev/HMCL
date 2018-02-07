@@ -123,7 +123,7 @@ public final class CurseManifest {
         if (manifest == null)
             throw new JsonParseException("`manifest.json` not found. Not a valid Curse modpack.");
         return new Modpack(manifest.getName(), manifest.getAuthor(), manifest.getVersion(), manifest.getMinecraft().getGameVersion(),
-                Optional.ofNullable(CompressingUtils.readTextZipEntryQuietly(f, "modlist.html")).orElse( "No description"), manifest);
+                CompressingUtils.readTextZipEntryQuietly(f, "modlist.html").orElse( "No description"), manifest);
     }
 
     public static final String MINECRAFT_MODPACK = "minecraftModpack";

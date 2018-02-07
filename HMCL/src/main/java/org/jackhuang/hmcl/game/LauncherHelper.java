@@ -156,7 +156,7 @@ public final class LauncherHelper {
     private static void checkGameState(Profile profile, VersionSetting setting, Version version, Runnable onAccept) throws InterruptedException {
         boolean flag = false, suggest = true;
 
-        VersionNumber gameVersion = VersionNumber.asVersion(GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version)));
+        VersionNumber gameVersion = VersionNumber.asVersion(GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version)).orElse("Unknown"));
         JavaVersion java = setting.getJavaVersion();
         if (java == null) {
             Controllers.dialog(Main.i18n("launch.wrong_javadir"), Main.i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);

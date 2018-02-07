@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.util.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 
 /**
  * @author huangyuhui
@@ -51,31 +52,31 @@ public final class GameVersion {
         return -1;
     }
 
-    private static String getVersionOfOldMinecraft(ZipFile file, ZipArchiveEntry entry) throws IOException {
+    private static Optional<String> getVersionOfOldMinecraft(ZipFile file, ZipArchiveEntry entry) throws IOException {
         byte[] tmp = IOUtils.readFullyAsByteArray(file.getInputStream(entry));
 
         byte[] bytes = "Minecraft Minecraft ".getBytes(Charsets.US_ASCII);
         int j = matchArray(tmp, bytes);
         if (j < 0)
-            return null;
+            return Optional.empty();
         int i = j + bytes.length;
 
         if ((j = lessThan32(tmp, i)) < 0)
-            return null;
+            return Optional.empty();
 
-        return new String(tmp, i, j - i, Charsets.US_ASCII);
+        return Optional.of(new String(tmp, i, j - i, Charsets.US_ASCII));
     }
 
-    private static String getVersionOfNewMinecraft(ZipFile file, ZipArchiveEntry entry) throws IOException {
+    private static Optional<String> getVersionOfNewMinecraft(ZipFile file, ZipArchiveEntry entry) throws IOException {
         byte[] tmp = IOUtils.readFullyAsByteArray(file.getInputStream(entry));
 
         byte[] str = "-server.txt".getBytes(Charsets.US_ASCII);
         int j = matchArray(tmp, str);
-        if (j < 0) return null;
+        if (j < 0) return Optional.empty();
         int i = j + str.length;
         i += 11;
         j = lessThan32(tmp, i);
-        if (j < 0) return null;
+        if (j < 0) return Optional.empty();
         String result = new String(tmp, i, j - i, Charsets.US_ASCII);
 
         char ch = result.charAt(0);
@@ -83,7 +84,7 @@ public final class GameVersion {
         if (ch < '0' || ch > '9') {
             str = "Can't keep up! Did the system time change, or is the server overloaded?".getBytes(Charsets.US_ASCII);
             j = matchArray(tmp, str);
-            if (j < 0) return null;
+            if (j < 0) return Optional.empty();
             i = -1;
             while (j > 0) {
                 if (tmp[j] >= 48 && tmp[j] <= 57) {
@@ -92,21 +93,21 @@ public final class GameVersion {
                 }
                 j--;
             }
-            if (i == -1) return null;
+            if (i == -1) return Optional.empty();
             int k = i;
             if (tmp[i + 1] >= (int) 'a' && tmp[i + 1] <= (int) 'z')
                 i++;
             while (tmp[k] >= 48 && tmp[k] <= 57 || tmp[k] == (int) '-' || tmp[k] == (int) '.' || tmp[k] >= 97 && tmp[k] <= (int) 'z')
                 k--;
             k++;
-            return new String(tmp, k, i - k + 1, Charsets.US_ASCII);
+            return Optional.of(new String(tmp, k, i - k + 1, Charsets.US_ASCII));
         }
-        return result;
+        return Optional.of(result);
     }
 
-    public static String minecraftVersion(File file) {
+    public static Optional<String> minecraftVersion(File file) {
         if (file == null || !file.exists() || !file.isFile() || !file.canRead())
-            return null;
+            return Optional.empty();
 
         ZipFile f = null;
         try {
@@ -119,9 +120,9 @@ public final class GameVersion {
             ZipArchiveEntry minecraftserver = f.getEntry("net/minecraft/server/MinecraftServer.class");
             if ((main != null) && (minecraftserver != null))
                 return getVersionOfNewMinecraft(f, minecraftserver);
-            return null;
+            return Optional.empty();
         } catch (IOException e) {
-            return null;
+            return Optional.empty();
         } finally {
             IOUtils.closeQuietly(f);
         }

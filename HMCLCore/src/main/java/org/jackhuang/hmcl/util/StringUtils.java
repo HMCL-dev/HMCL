@@ -207,14 +207,4 @@ public final class StringUtils {
 
         return result;
     }
-
-    public static Integer parseInt(String str) {
-        if (str == null)
-            return null;
-        try {
-            return Integer.parseInt(str);
-        } catch (NumberFormatException ex) {
-            return null;
-        }
-    }
 }

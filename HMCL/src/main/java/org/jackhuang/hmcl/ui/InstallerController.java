@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.download.InstallerWizardProvider;
 
 import java.util.LinkedList;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class InstallerController {
@@ -85,11 +86,11 @@ public class InstallerController {
 
     @FXML
     private void onAdd() {
-        String gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version));
+        Optional<String> gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version));
 
-        if (gameVersion == null)
+        if (!gameVersion.isPresent())
             Controllers.dialog("version.cannot_read");
         else
-            Controllers.getDecorator().startWizard(new InstallerWizardProvider(profile, gameVersion, version, forge, liteLoader, optiFine));
+            Controllers.getDecorator().startWizard(new InstallerWizardProvider(profile, gameVersion.get(), version, forge, liteLoader, optiFine));
     }
 }

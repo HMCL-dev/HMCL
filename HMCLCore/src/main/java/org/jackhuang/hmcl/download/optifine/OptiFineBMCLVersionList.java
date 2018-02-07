@@ -66,8 +66,8 @@ public final class OptiFineBMCLVersionList extends VersionList<Void> {
 
                     if (StringUtils.isBlank(element.getGameVersion()))
                         continue;
-                    String gameVersion = VersionNumber.parseVersion(element.getGameVersion());
-                    versions.put(gameVersion, new RemoteVersion<>(gameVersion, version, mirror, null));
+                    VersionNumber.parseVersion(element.getGameVersion())
+                            .ifPresent(gameVersion -> versions.put(gameVersion, new RemoteVersion<>(gameVersion, version, mirror, null)));
                 }
             }
         };

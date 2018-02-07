@@ -66,9 +66,9 @@ public class Settings {
 
     {
         for (Map<Object, Object> settings : SETTINGS.getAccounts()) {
-            String characterName = Accounts.getCurrentCharacter(settings);
+            Optional<String> characterName = Accounts.getCurrentCharacter(settings);
             AccountFactory factory = Accounts.ACCOUNT_FACTORY.get(Lang.get(settings, "type", String.class, ""));
-            if (factory == null || characterName == null) {
+            if (factory == null || !characterName.isPresent()) {
                 // unrecognized account type, so remove it.
                 SETTINGS.getAccounts().remove(settings);
                 continue;

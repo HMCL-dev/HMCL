@@ -488,7 +488,7 @@ public final class VersionSetting {
                 .setJavaArgs(getJavaArgs())
                 .setMaxMemory(getMaxMemory())
                 .setMinMemory(getMinMemory())
-                .setMetaspace(StringUtils.parseInt(getPermSize()))
+                .setMetaspace(Lang.toIntOrNull(getPermSize()))
                 .setWidth(getWidth())
                 .setHeight(getHeight())
                 .setFullscreen(isFullscreen())

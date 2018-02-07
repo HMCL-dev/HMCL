@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.util;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * The formatted version number represents a version string.
@@ -53,6 +55,7 @@ public abstract class VersionNumber implements Comparable<VersionNumber> {
     }
 
     public static VersionNumber asVersion(String version) {
+        Objects.requireNonNull(version);
         try {
             return asIntVersionNumber(version);
         } catch (IllegalArgumentException e) {
@@ -60,13 +63,13 @@ public abstract class VersionNumber implements Comparable<VersionNumber> {
         }
     }
 
-    public static String parseVersion(String str) {
+    public static Optional<String> parseVersion(String str) {
         if (str.chars().anyMatch(it -> it != '.' && (it < '0' || it > '9')) || StringUtils.isBlank(str))
-            return null;
+            return Optional.empty();
         String[] s = str.split("\\.");
         for (String i : s)
             if (StringUtils.isBlank(i))
-                return null;
+                return Optional.empty();
         StringBuilder builder = new StringBuilder();
         int last = s.length - 1;
         for (int i = s.length - 1; i >= 0; --i)
@@ -74,6 +77,6 @@ public abstract class VersionNumber implements Comparable<VersionNumber> {
                 last = i;
         for (int i = 0; i < last; ++i)
             builder.append(s[i]).append(".");
-        return builder.append(s[last]).toString();
+        return Optional.of(builder.append(s[last]).toString());
     }
 }

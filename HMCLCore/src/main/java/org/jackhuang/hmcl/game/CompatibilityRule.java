@@ -19,10 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.util.Immutable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  *
@@ -49,20 +46,20 @@ public final class CompatibilityRule {
         this.features = features;
     }
 
-    public Action getAppliedAction(Map<String, Boolean> supportedFeatures) {
+    public Optional<Action> getAppliedAction(Map<String, Boolean> supportedFeatures) {
         if (os != null && !os.allow())
-            return null;
+            return Optional.empty();
 
         if (features != null)
             for (Map.Entry<String, Boolean> entry : features.entrySet())
                 if (!Objects.equals(supportedFeatures.get(entry.getKey()), entry.getValue()))
-                    return null;
+                    return Optional.empty();
 
-        return action;
+        return Optional.ofNullable(action);
     }
 
     public static boolean appliesToCurrentEnvironment(Collection<CompatibilityRule> rules) {
-        return appliesToCurrentEnvironment(rules, Collections.EMPTY_MAP);
+        return appliesToCurrentEnvironment(rules, Collections.emptyMap());
     }
 
     public static boolean appliesToCurrentEnvironment(Collection<CompatibilityRule> rules, Map<String, Boolean> features) {
@@ -71,9 +68,9 @@ public final class CompatibilityRule {
 
         Action action = Action.DISALLOW;
         for (CompatibilityRule rule : rules) {
-            Action thisAction = rule.getAppliedAction(features);
-            if (thisAction != null)
-                action = thisAction;
+            Optional<Action> thisAction = rule.getAppliedAction(features);
+            if (thisAction.isPresent())
+                action = thisAction.get();
         }
 
         return action == Action.ALLOW;
