@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.controls.JFXTextField;
+import javafx.beans.NamedArg;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -55,8 +56,11 @@ public class MultiFileItem extends ComponentList {
     private final JFXRadioButton radioCustom = new JFXRadioButton();
     private final BorderPane custom = new BorderPane();
     private final VBox pane = new VBox();
+    private final boolean hasCustom;
 
-    {
+    public MultiFileItem(@NamedArg(value = "hasCustom", defaultValue = "true") boolean hasCustom) {
+        this.hasCustom = hasCustom;
+
         BorderPane.setAlignment(txtCustom, Pos.CENTER_RIGHT);
 
         btnSelect.setGraphic(SVG.folderOpen("black", 15, 15));
@@ -92,7 +96,9 @@ public class MultiFileItem extends ComponentList {
 
         pane.setStyle("-fx-padding: 0 0 10 0;");
         pane.setSpacing(8);
-        pane.getChildren().add(custom);
+
+        if (hasCustom)
+            pane.getChildren().add(custom);
         addChildren(pane);
     }
 
@@ -124,7 +130,9 @@ public class MultiFileItem extends ComponentList {
 
     public void loadChildren(Collection<Node> list) {
         pane.getChildren().setAll(list);
-        pane.getChildren().add(custom);
+
+        if (hasCustom)
+            pane.getChildren().add(custom);
     }
 
     public void onExploreJavaDir() {

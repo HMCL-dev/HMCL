@@ -17,6 +17,8 @@
 
             <ComponentList depth="1">
 
+                <MultiFileItem fx:id="globalItem" title="%settings.type" hasSubtitle="true" hasCustom="false" />
+
                 <BorderPane> <!-- Icon -->
                     <left>
                         <VBox alignment="CENTER_LEFT">

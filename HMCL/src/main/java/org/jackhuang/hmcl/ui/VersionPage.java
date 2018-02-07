@@ -92,7 +92,7 @@ public final class VersionPage extends StackPane implements DecoratorPage {
 
         title.set(Main.i18n("settings.game") + " - " + id);
 
-        versionSettingsController.loadVersionSetting(profile, id, profile.getVersionSetting(id));
+        versionSettingsController.loadVersionSetting(profile, id);
         modController.setParentTab(tabPane);
         modTab.setUserData(modController);
         modController.loadMods(profile.getModManager(), id);

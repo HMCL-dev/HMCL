@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.*;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -71,6 +72,7 @@ public final class VersionSettingsController {
     @FXML private JFXToggleButton chkNoJVMArgs;
     @FXML private JFXToggleButton chkNoCommon;
     @FXML private JFXToggleButton chkNoGameCheck;
+    @FXML private MultiFileItem globalItem;
     @FXML private MultiFileItem javaItem;
     @FXML private MultiFileItem gameDirItem;
     @FXML private JFXToggleButton chkShowLogs;
@@ -121,32 +123,41 @@ public final class VersionSettingsController {
                 gameDirItem.createChildren(Main.i18n("settings.advanced.game_dir.independent"), EnumGameDirectory.VERSION_FOLDER)
         ));
 
+        globalItem.loadChildren(Arrays.asList(
+                globalItem.createChildren(Main.i18n("settings.type.global"), true),
+                globalItem.createChildren(Main.i18n("settings.type.special"), false)
+        ));
+
         FXUtils.installTooltip(btnIconSelection, 0, 5000, 0, new Tooltip(Main.i18n("button.edit")));
     }
 
-    public void loadVersionSetting(Profile profile, String versionId, VersionSetting versionSetting) {
+    public void loadVersionSetting(Profile profile, String versionId) {
         rootPane.getChildren().remove(advancedSettingsPane);
 
         this.profile = profile;
         this.versionId = versionId;
 
+        VersionSetting versionSetting = profile.getVersionSetting(versionId);
+
         gameDirItem.setDisable(profile.getRepository().isModpack(versionId));
+        globalItem.setDisable(profile.getRepository().isModpack(versionId));
 
         if (lastVersionSetting != null) {
-            lastVersionSetting.widthProperty().unbind();
-            lastVersionSetting.heightProperty().unbind();
-            lastVersionSetting.maxMemoryProperty().unbind();
-            lastVersionSetting.javaArgsProperty().unbind();
-            lastVersionSetting.minecraftArgsProperty().unbind();
-            lastVersionSetting.permSizeProperty().unbind();
-            lastVersionSetting.wrapperProperty().unbind();
-            lastVersionSetting.preLaunchCommandProperty().unbind();
-            lastVersionSetting.serverIpProperty().unbind();
-            lastVersionSetting.fullscreenProperty().unbind();
-            lastVersionSetting.notCheckGameProperty().unbind();
-            lastVersionSetting.noCommonProperty().unbind();
-            lastVersionSetting.javaDirProperty().unbind();
-            lastVersionSetting.showLogsProperty().unbind();
+            FXUtils.unbindInt(txtWidth, lastVersionSetting.widthProperty());
+            FXUtils.unbindInt(txtHeight, lastVersionSetting.heightProperty());
+            FXUtils.unbindInt(txtMaxMemory, lastVersionSetting.maxMemoryProperty());
+            FXUtils.unbindString(javaItem.getTxtCustom(), lastVersionSetting.javaDirProperty());
+            FXUtils.unbindString(gameDirItem.getTxtCustom(), lastVersionSetting.gameDirProperty());
+            FXUtils.unbindString(txtJVMArgs, lastVersionSetting.javaArgsProperty());
+            FXUtils.unbindString(txtGameArgs, lastVersionSetting.minecraftArgsProperty());
+            FXUtils.unbindString(txtMetaspace, lastVersionSetting.permSizeProperty());
+            FXUtils.unbindString(txtWrapper, lastVersionSetting.wrapperProperty());
+            FXUtils.unbindString(txtPrecallingCommand, lastVersionSetting.preLaunchCommandProperty());
+            FXUtils.unbindString(txtServerIP, lastVersionSetting.serverIpProperty());
+            FXUtils.unbindBoolean(chkFullscreen, lastVersionSetting.fullscreenProperty());
+            FXUtils.unbindBoolean(chkNoGameCheck, lastVersionSetting.notCheckGameProperty());
+            FXUtils.unbindBoolean(chkNoCommon, lastVersionSetting.noCommonProperty());
+            FXUtils.unbindBoolean(chkShowLogs, lastVersionSetting.showLogsProperty());
             FXUtils.unbindEnum(cboLauncherVisibility);
         }
 
@@ -161,11 +172,11 @@ public final class VersionSettingsController {
         FXUtils.bindString(txtWrapper, versionSetting.wrapperProperty());
         FXUtils.bindString(txtPrecallingCommand, versionSetting.preLaunchCommandProperty());
         FXUtils.bindString(txtServerIP, versionSetting.serverIpProperty());
-        FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
         FXUtils.bindBoolean(chkFullscreen, versionSetting.fullscreenProperty());
         FXUtils.bindBoolean(chkNoGameCheck, versionSetting.notCheckGameProperty());
         FXUtils.bindBoolean(chkNoCommon, versionSetting.noCommonProperty());
         FXUtils.bindBoolean(chkShowLogs, versionSetting.showLogsProperty());
+        FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
 
         String javaGroupKey = "java_group.listener";
 
@@ -203,6 +214,28 @@ public final class VersionSettingsController {
         versionSetting.javaDirProperty().setChangedListener(it -> initJavaSubtitle(versionSetting));
         versionSetting.javaProperty().setChangedListener(it -> initJavaSubtitle(versionSetting));
         initJavaSubtitle(versionSetting);
+
+
+        String globalGroupKey = "global_group.listener";
+
+        Lang.get(globalItem.getGroup().getProperties(), globalGroupKey, ChangeListener.class)
+                .ifPresent(globalItem.getGroup().selectedToggleProperty()::removeListener);
+        ChangeListener<Toggle> globalListener = (a, b, newValue) -> {
+            if ((Boolean) newValue.getUserData())
+                profile.globalizeVersionSetting(versionId);
+            else
+                profile.specializeVersionSetting(versionId);
+
+            Platform.runLater(() -> loadVersionSetting(profile, versionId));
+        };
+        if (versionSetting.isUsesGlobal())
+            globalItem.getGroup().getToggles().stream().filter(it -> it.getUserData() == Boolean.TRUE).findFirst().ifPresent(it -> it.setSelected(true));
+        else
+            globalItem.getGroup().getToggles().stream().filter(it -> it.getUserData() == Boolean.FALSE).findFirst().ifPresent(it -> it.setSelected(true));
+        globalItem.getGroup().getProperties().put(globalGroupKey, globalListener);
+        globalItem.getGroup().selectedToggleProperty().addListener(globalListener);
+        versionSetting.usesGlobalProperty().setChangedListener(it -> initUsesGlobalSubtitle(versionSetting));
+        initUsesGlobalSubtitle(versionSetting);
 
         String gameDirKey = "game_dir.listener";
         Lang.get(gameDirItem.getGroup().getProperties(), gameDirKey, ChangeListener.class)
@@ -244,6 +277,10 @@ public final class VersionSettingsController {
 
     private void initGameDirSubtitle(VersionSetting versionSetting) {
         gameDirItem.setSubtitle(profile.getRepository().getRunDirectory(versionId).getAbsolutePath());
+    }
+
+    private void initUsesGlobalSubtitle(VersionSetting versionSetting) {
+        globalItem.setSubtitle(Main.i18n(versionSetting.isUsesGlobal() ? "settings.type.global" : "settings.type.special"));
     }
 
     @FXML

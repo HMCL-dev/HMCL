@@ -234,24 +234,36 @@ public final class FXUtils {
         }
     }
 
-    public static void bindInt(JFXTextField textField, Property<?> property) {
-        textField.textProperty().unbind();
-        textField.textProperty().bindBidirectional((Property<Integer>) property, SafeIntStringConverter.INSTANCE);
+    public static void bindInt(JFXTextField textField, Property<Number> property) {
+        textField.textProperty().bindBidirectional(property, SafeIntStringConverter.INSTANCE);
+    }
+
+    public static void unbindInt(JFXTextField textField, Property<Number> property) {
+        textField.textProperty().unbindBidirectional(property);
     }
 
     public static void bindString(JFXTextField textField, Property<String> property) {
-        textField.textProperty().unbind();
         textField.textProperty().bindBidirectional(property);
     }
 
+    public static void unbindString(JFXTextField textField, Property<String> property) {
+        textField.textProperty().unbindBidirectional(property);
+    }
+
     public static void bindBoolean(JFXToggleButton toggleButton, Property<Boolean> property) {
-        toggleButton.selectedProperty().unbind();
         toggleButton.selectedProperty().bindBidirectional(property);
     }
 
+    public static void unbindBoolean(JFXToggleButton toggleButton, Property<Boolean> property) {
+        toggleButton.selectedProperty().unbindBidirectional(property);
+    }
+
     public static void bindBoolean(JFXCheckBox checkBox, Property<Boolean> property) {
-        checkBox.selectedProperty().unbind();
         checkBox.selectedProperty().bindBidirectional(property);
+    }
+
+    public static void unbindBoolean(JFXCheckBox checkBox, Property<Boolean> property) {
+        checkBox.selectedProperty().unbindBidirectional(property);
     }
 
     public static void bindEnum(JFXComboBox<?> comboBox, Property<? extends Enum> property) {

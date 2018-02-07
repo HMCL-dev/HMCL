@@ -25,19 +25,19 @@ import java.util.Optional;
 /**
  * @author huangyuhui
  */
-public final class SafeIntStringConverter extends StringConverter<Integer> {
+public final class SafeIntStringConverter extends StringConverter<Number> {
     public static final SafeIntStringConverter INSTANCE = new SafeIntStringConverter();
 
     private SafeIntStringConverter() {
     }
 
     @Override
-    public Integer fromString(String string) {
+    public Number fromString(String string) {
         return Optional.ofNullable(string).map(Lang::toIntOrNull).orElse(null);
     }
 
     @Override
-    public String toString(Integer object) {
+    public String toString(Number object) {
         return Optional.ofNullable(object).map(Object::toString).orElse("");
     }
 }
