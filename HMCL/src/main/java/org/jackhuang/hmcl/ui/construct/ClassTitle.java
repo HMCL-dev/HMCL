@@ -15,8 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui;
+package org.jackhuang.hmcl.ui.construct;
 
+import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -27,13 +28,17 @@ import javafx.scene.text.Text;
  * @author huangyuhui
  */
 public class ClassTitle extends StackPane {
-    private final String text;
+    private final Node content;
 
     public ClassTitle(String text) {
-        this.text = text;
+        this(new Text(text));
+    }
+
+    public ClassTitle(Node content) {
+        this.content = content;
 
         VBox vbox = new VBox();
-        vbox.getChildren().addAll(new Text(text));
+        vbox.getChildren().addAll(content);
         Rectangle rectangle = new Rectangle();
         rectangle.widthProperty().bind(vbox.widthProperty());
         rectangle.setHeight(1.0);
@@ -43,7 +48,7 @@ public class ClassTitle extends StackPane {
         getStyleClass().add("class-title");
     }
 
-    public String getText() {
-        return text;
+    public Node getContent() {
+        return content;
     }
 }

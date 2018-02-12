@@ -791,7 +791,31 @@
 }
 
 .toggle-icon4 .jfx-rippler {
-    -jfx-rippler-fill: #0F9D58;
+    -jfx-rippler-fill: rgba(66.0, 133.0, 244.0, 0.29885056614875793);
+    -jfx-mask-type: CIRCLE;
+}
+
+.toggle-icon-tiny {
+    -fx-toggle-icon-tiny-size: 15px;
+    -fx-pref-width: -fx-toggle-icon-tiny-size;
+    -fx-max-width: -fx-toggle-icon-tiny-size;
+    -fx-min-width: -fx-toggle-icon-tiny-size;
+    -fx-pref-height: -fx-toggle-icon-tiny-size;
+    -fx-max-height: -fx-toggle-icon-tiny-size;
+    -fx-min-height: -fx-toggle-icon-tiny-size;
+    -fx-background-radius: 25px;
+    -fx-background-color: transparent;
+    -jfx-toggle-color: rgba(128, 128, 255, 0.2);
+    -jfx-untoggle-color: transparent;
+}
+
+.toggle-icon-tiny .icon {
+    -fx-fill: rgb(204.0, 204.0, 51.0);
+    -fx-padding: 5.0;
+}
+
+.toggle-icon-tiny .jfx-rippler {
+    -jfx-rippler-fill: rgba(66.0, 133.0, 244.0, 0.29885056614875793);
     -jfx-mask-type: CIRCLE;
 }
 

@@ -101,24 +101,28 @@ public final class SVG {
         return createSVGPath("M21,10.12H14.22L16.96,7.3C14.23,4.6 9.81,4.5 7.08,7.2C4.35,9.91 4.35,14.28 7.08,17C9.81,19.7 14.23,19.7 16.96,17C18.32,15.65 19,14.08 19,12.1H21C21,14.08 20.12,16.65 18.36,18.39C14.85,21.87 9.15,21.87 5.64,18.39C2.14,14.92 2.11,9.28 5.62,5.81C9.13,2.34 14.76,2.34 18.27,5.81L21,3V10.12M12.5,8V12.25L16,14.33L15.28,15.54L11,13V8H12.5Z", fill, width, height);
     }
 
-    public static Node close_circle(String fill, double width, double height) {
+    public static Node closeCircle(String fill, double width, double height) {
         return createSVGPath("M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z", fill, width, height);
     }
 
-    public static Node check_circle(String fill, double width, double height) {
+    public static Node checkCircle(String fill, double width, double height) {
         return createSVGPath("M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z", fill, width, height);
     }
 
-    public static Node info_circle(String fill, double width, double height) {
+    public static Node infoCircle(String fill, double width, double height) {
         return createSVGPath("M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z", fill, width, height);
     }
 
-    public static Node help_circle(String fill, double width, double height) {
+    public static Node helpCircle(String fill, double width, double height) {
         return createSVGPath("M15.07,11.25L14.17,12.17C13.45,12.89 13,13.5 13,15H11V14.5C11,13.39 11.45,12.39 12.17,11.67L13.41,10.41C13.78,10.05 14,9.55 14,9C14,7.89 13.1,7 12,7A2,2 0 0,0 10,9H8A4,4 0 0,1 12,5A4,4 0 0,1 16,9C16,9.88 15.64,10.67 15.07,11.25M13,19H11V17H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12C22,6.47 17.5,2 12,2Z", fill, width, height);
     }
 
     public static Node alert(String fill, double width, double height) {
         return createSVGPath("M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z", fill, width, height);
+    }
+
+    public static Node plus(String fill, double width, double height) {
+        return createSVGPath("M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z", fill, width, height);
     }
 
 }

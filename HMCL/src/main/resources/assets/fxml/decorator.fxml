@@ -5,7 +5,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Rectangle?>
-<?import org.jackhuang.hmcl.ui.AdvancedListBox?>
+<?import org.jackhuang.hmcl.ui.construct.AdvancedListBox?>
 <?import java.lang.String?>
 <fx:root xmlns="http://javafx.com/javafx"
          type="StackPane"
@@ -36,13 +36,6 @@
                                                         <Label text="%update.found" style="-fx-text-fill: white; -fx-font-size: 16px;" />
                                                     </HBox>
                                                 </left>
-                                                <right>
-                                                    <JFXButton fx:id="addMenuButton" styleClass="toggle-icon4">
-                                                        <graphic>
-                                                            <fx:include source="/assets/svg/plus-black.fxml"/>
-                                                        </graphic>
-                                                    </JFXButton>
-                                                </right>
                                             </BorderPane>
                                         </bottom>
                                     </BorderPane>

@@ -62,19 +62,19 @@ public final class MessageDialogPane extends StackPane {
 
         switch (type) {
             case MessageBox.INFORMATION_MESSAGE:
-                graphic.setGraphic(SVG.info_circle("black", 40, 40));
+                graphic.setGraphic(SVG.infoCircle("black", 40, 40));
                 break;
             case MessageBox.ERROR_MESSAGE:
-                graphic.setGraphic(SVG.close_circle("black", 40, 40));
+                graphic.setGraphic(SVG.closeCircle("black", 40, 40));
                 break;
             case MessageBox.FINE_MESSAGE:
-                graphic.setGraphic(SVG.check_circle("black", 40, 40));
+                graphic.setGraphic(SVG.checkCircle("black", 40, 40));
                 break;
             case MessageBox.WARNING_MESSAGE:
                 graphic.setGraphic(SVG.alert("black", 40, 40));
                 break;
             case MessageBox.QUESTION_MESSAGE:
-                graphic.setGraphic(SVG.help_circle("black", 40, 40));
+                graphic.setGraphic(SVG.helpCircle("black", 40, 40));
                 break;
         }
     }

@@ -47,6 +47,7 @@ import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionHandler;
+import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogWizardDisplayer;
 import org.jackhuang.hmcl.ui.wizard.*;
 import org.jackhuang.hmcl.util.Lang;
@@ -96,8 +97,6 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     private JFXButton closeNavButton;
     @FXML
     private JFXButton refreshMenuButton;
-    @FXML
-    private JFXButton addMenuButton;
     @FXML
     private Label titleLabel;
     @FXML
@@ -545,10 +544,6 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
 
     public JFXDialog getDialog() {
         return dialog;
-    }
-
-    public JFXButton getAddMenuButton() {
-        return addMenuButton;
     }
 
     public AdvancedListBox getLeftPane() {

@@ -18,13 +18,15 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.concurrency.JFXUtilities;
+import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Paint;
+import javafx.scene.text.Text;
 import org.jackhuang.hmcl.Main;
-import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.ProfileChangedEvent;
@@ -40,9 +42,10 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
+import org.jackhuang.hmcl.ui.construct.ClassTitle;
 import org.jackhuang.hmcl.ui.construct.IconedItem;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 
@@ -68,16 +71,22 @@ public final class LeftPaneController {
                     iconedItem.prefWidthProperty().bind(leftPane.widthProperty());
                     iconedItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
                 }))
-                .startCategory(Main.i18n("profile.title").toUpperCase())
+                .add(new ClassTitle(Lang.apply(new BorderPane(), borderPane -> {
+                    borderPane.setLeft(Lang.apply(new VBox(), vBox -> {
+                        vBox.getChildren().setAll(new Text(Main.i18n("profile.title").toUpperCase()));
+                    }));
+                    JFXButton addProfileButton = new JFXButton();
+                    addProfileButton.setGraphic(SVG.plus("black", 10, 10));
+                    addProfileButton.getStyleClass().add("toggle-icon-tiny");
+                    addProfileButton.setOnMouseClicked(e ->
+                            Controllers.getDecorator().showPage(new ProfilePage(null)));
+                    borderPane.setRight(addProfileButton);
+                })))
                 .add(profilePane);
 
         EventBus.EVENT_BUS.channel(ProfileLoadingEvent.class).register(this::onProfilesLoading);
         EventBus.EVENT_BUS.channel(ProfileChangedEvent.class).register(this::onProfileChanged);
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(this::onRefreshedVersions);
-
-        Controllers.getDecorator().getAddMenuButton().setOnMouseClicked(e ->
-                Controllers.getDecorator().showPage(new ProfilePage(null))
-        );
 
         FXUtils.onChangeAndOperate(Settings.INSTANCE.selectedAccountProperty(), it -> {
             if (it == null) {
