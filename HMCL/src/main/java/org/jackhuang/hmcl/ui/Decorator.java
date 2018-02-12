@@ -120,6 +120,8 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     private JFXButton btnClose;
     @FXML
     private HBox updatePane;
+    @FXML
+    private HBox navLeft;
 
     public Decorator(Stage primaryStage, Node mainPage, String title) {
         this(primaryStage, mainPage, title, true, true);
@@ -388,6 +390,14 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         updatePane.setVisible(true);
     }
 
+    private void showCloseNavButton() {
+        navLeft.getChildren().add(closeNavButton);
+    }
+
+    private void hideCloseNavButton() {
+        navLeft.getChildren().remove(closeNavButton);
+    }
+
     private void setContent(Node content, AnimationProducer animation) {
         animationHandler.setContent(content, animation);
 
@@ -396,13 +406,11 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
             FXUtils.setOverflowHidden((Region) content);
         }
 
-        backNavButton.setDisable(!wizardController.canPrev());
-
         if (content instanceof Refreshable)
             refreshNavButton.setVisible(true);
 
         if (content != mainPage)
-            closeNavButton.setVisible(true);
+            backNavButton.setVisible(true);
 
         String prefix = category == null ? "" : category + " - ";
 
@@ -464,14 +472,14 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     public void onStart() {
         backNavButton.setVisible(true);
         backNavButton.setDisable(false);
-        closeNavButton.setVisible(true);
+        showCloseNavButton();
         refreshNavButton.setVisible(false);
     }
 
     @Override
     public void onEnd() {
         backNavButton.setVisible(false);
-        closeNavButton.setVisible(false);
+        hideCloseNavButton();
         refreshNavButton.setVisible(false);
     }
 
@@ -495,7 +503,10 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
 
     @FXML
     private void onBack() {
-        wizardController.onPrev(true);
+        if (wizardController.canPrev())
+            wizardController.onPrev(true);
+        else
+            onCloseNav();
     }
 
     @Override

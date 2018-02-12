@@ -95,21 +95,25 @@
                                         <fx:include source="/assets/svg/arrow-left.fxml"/>
                                     </graphic>
                                 </JFXButton>
-                                <Label fx:id="titleLabel" style="-fx-text-fill:WHITE; -fx-font-size: 15;"/>
+                                <JFXButton fx:id="closeNavButton" onMouseClicked="#onCloseNav"
+                                           styleClass="jfx-decorator-button" ripplerFill="white">
+                                    <graphic>
+                                        <fx:include source="/assets/svg/close.fxml"/>
+                                    </graphic>
+                                </JFXButton>
                             </HBox>
                         </left>
+                        <center>
+                            <VBox alignment="CENTER_LEFT"> <!-- don't know why label always be centered when using HBox -->
+                                <Label fx:id="titleLabel" style="-fx-text-fill:WHITE; -fx-font-size: 15;"/>
+                            </VBox>
+                        </center>
                         <right>
                             <HBox fx:id="navRight" alignment="CENTER_LEFT">
                                 <JFXButton fx:id="refreshNavButton" onMouseClicked="#onRefresh"
                                            styleClass="jfx-decorator-button" ripplerFill="white">
                                     <graphic>
                                         <fx:include source="/assets/svg/refresh.fxml"/>
-                                    </graphic>
-                                </JFXButton>
-                                <JFXButton fx:id="closeNavButton" onMouseClicked="#onCloseNav"
-                                           styleClass="jfx-decorator-button" ripplerFill="white">
-                                    <graphic>
-                                        <fx:include source="/assets/svg/close.fxml"/>
                                     </graphic>
                                 </JFXButton>
                                 <Rectangle height="${navBar.height}" width="1" fill="gray"/>

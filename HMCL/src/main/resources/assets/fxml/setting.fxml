@@ -50,9 +50,37 @@
                     <BorderPane><left><Label text="%settings.launcher.log_font" BorderPane.alignment="CENTER_LEFT" /></left><right><HBox spacing="3"><FontComboBox fontSize="12" enableStyle="false" fx:id="cboFont" /><JFXTextField fx:id="txtFontSize" maxWidth="50" minWidth="50" /></HBox></right></BorderPane>
                     <Label fx:id="lblDisplay" text="[23:33:33] [Client Thread/INFO] [WaterPower]: Loaded mod WaterPower." />
                 </VBox>
+
+                <StackPane>
+                    <GridPane hgap="20" vgap="10">
+                        <columnConstraints>
+                            <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="-Infinity" />
+                            <ColumnConstraints hgrow="SOMETIMES" maxWidth="Infinity" minWidth="20" />
+                        </columnConstraints>
+                        <rowConstraints>
+                            <RowConstraints minHeight="-Infinity" valignment="TOP" vgrow="SOMETIMES" />
+                            <RowConstraints minHeight="-Infinity" valignment="TOP" vgrow="SOMETIMES" />
+                            <RowConstraints minHeight="-Infinity" valignment="TOP" vgrow="SOMETIMES" />
+                            <RowConstraints minHeight="-Infinity" valignment="TOP" vgrow="SOMETIMES" />
+                            <RowConstraints minHeight="-Infinity" valignment="TOP" vgrow="SOMETIMES" />
+                            <RowConstraints minHeight="-Infinity" valignment="TOP" vgrow="SOMETIMES" />
+                        </rowConstraints>
+                        <Label text="%about.copyright" style="-fx-font-weight: bold;" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                        <Label wrapText="true" text="%about.copyright.statement" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                        <Label text="%about.author" style="-fx-font-weight: bold;" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                        <Label wrapText="true" text="%about.author.statement" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                        <Label text="%about.thanks_to" style="-fx-font-weight: bold;" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                        <Label wrapText="true" text="%about.thanks_to.statement" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                        <Label text="%about.dependency" style="-fx-font-weight: bold;" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                        <Label wrapText="true" text="%about.dependency.statement" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                        <Label text="%about.claim" style="-fx-font-weight: bold;" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                        <Label textAlignment="JUSTIFY" wrapText="true" text="%about.claim.statement" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                        <Label text="%about.open_source" style="-fx-font-weight: bold;" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                        <Label wrapText="true" text="%about.open_source.statement" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                    </GridPane>
+                </StackPane>
             </ComponentList>
 
-            <Label wrapText="true" text="%launcher.about" />
         </VBox>
     </ScrollPane>
 </fx:root>
