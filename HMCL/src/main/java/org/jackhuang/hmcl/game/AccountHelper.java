@@ -84,9 +84,11 @@ public final class AccountHelper {
     }
 
     public static Image getSkin(YggdrasilAccount account, double scaleRatio) {
-        if (account.getSelectedProfile() == null) return FXUtils.DEFAULT_ICON;
+        if (account.getSelectedProfile() == null)
+            return getDefaultSkin(account, scaleRatio);
         String name = account.getSelectedProfile().getName();
-        if (name == null) return FXUtils.DEFAULT_ICON;
+        if (name == null)
+            return getDefaultSkin(account, scaleRatio);
         File file = getSkinFile(name);
         if (file.exists()) {
             Image original = new Image("file:" + file.getAbsolutePath());
@@ -95,7 +97,7 @@ public final class AccountHelper {
                     original.getHeight() * scaleRatio,
                     false, false);
         }
-        return FXUtils.DEFAULT_ICON;
+        return getDefaultSkin(account, scaleRatio);
     }
 
     public static Image getSkinImmediately(YggdrasilAccount account, GameProfile profile, double scaleRatio, Proxy proxy) throws Exception {
@@ -103,13 +105,10 @@ public final class AccountHelper {
         File file = getSkinFile(name);
         downloadSkin(account, profile, true, proxy);
         if (!file.exists())
-            return FXUtils.DEFAULT_ICON;
+            return getDefaultSkin(account, scaleRatio);
 
-        Image original = new Image("file:" + file.getAbsolutePath());
-        return new Image("file:" + file.getAbsolutePath(),
-                original.getWidth() * scaleRatio,
-                original.getHeight() * scaleRatio,
-                false, false);
+        String url = "file:" + file.getAbsolutePath();
+        return scale(url, scaleRatio);
     }
 
     public static Rectangle2D getViewport(double scaleRatio) {
@@ -163,5 +162,32 @@ public final class AccountHelper {
         if (!refresh && file.exists())
             return;
         new FileDownloadTask(NetworkUtils.toURL(url), file, proxy).run();
+    }
+
+    public static Image scale(String url, double scaleRatio) {
+        Image origin = new Image(url);
+        return new Image(url,
+                origin.getWidth() * scaleRatio,
+                origin.getHeight() * scaleRatio,
+                false, false);
+    }
+
+    public static Image getSteveSkin(double scaleRatio) {
+         return scale("/assets/img/steve.png", 4);
+    }
+
+    public static Image getAlexSkin(double scaleRatio) {
+        return scale("/assets/img/alex.png", 4);
+    }
+
+    public static Image getDefaultSkin(Account account, double scaleRatio) {
+        if (account == null)
+            return getSteveSkin(scaleRatio);
+
+        int type = account.getUUID().hashCode() & 1;
+        if (type == 1)
+            return getAlexSkin(scaleRatio);
+        else
+            return getSteveSkin(scaleRatio);
     }
 }

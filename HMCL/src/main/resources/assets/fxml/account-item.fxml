@@ -48,7 +48,6 @@
             <StackPane.margin>
                 <Insets right="12" />
             </StackPane.margin>
-            <Image url="/assets/img/icon.png" />
         </ImageView>
     </StackPane>
 </fx:root>

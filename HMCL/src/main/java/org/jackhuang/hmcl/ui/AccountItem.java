@@ -96,7 +96,8 @@ public final class AccountItem extends StackPane {
             });
             AccountHelper.loadSkinAsync((YggdrasilAccount) account)
                     .subscribe(Schedulers.javafx(), this::loadSkin);
-        }
+        } else
+            loadSkin();
 
         if (account instanceof OfflineAccount) { // Offline Account cannot be refreshed,
             buttonPane.getChildren().remove(btnRefresh);
@@ -104,12 +105,12 @@ public final class AccountItem extends StackPane {
     }
 
     private void loadSkin() {
-        if (!(account instanceof YggdrasilAccount))
-            return;
-
         pgsSkin.setVisible(false);
         portraitView.setViewport(AccountHelper.getViewport(4));
-        portraitView.setImage(AccountHelper.getSkin((YggdrasilAccount) account, 4));
+        if (account instanceof YggdrasilAccount)
+            portraitView.setImage(AccountHelper.getSkin((YggdrasilAccount) account, 4));
+        else
+            portraitView.setImage(AccountHelper.getDefaultSkin(account, 4));
         FXUtils.limitSize(portraitView, 32, 32);
     }
 

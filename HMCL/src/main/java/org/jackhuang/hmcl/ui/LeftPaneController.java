@@ -68,7 +68,7 @@ public final class LeftPaneController {
                     iconedItem.prefWidthProperty().bind(leftPane.widthProperty());
                     iconedItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
                 }))
-                .startCategory(Main.i18n("profile").toUpperCase())
+                .startCategory(Main.i18n("profile.title").toUpperCase())
                 .add(profilePane);
 
         EventBus.EVENT_BUS.channel(ProfileLoadingEvent.class).register(this::onProfilesLoading);
@@ -90,23 +90,22 @@ public final class LeftPaneController {
 
             if (it instanceof YggdrasilAccount) {
                 Image image = AccountHelper.getSkin((YggdrasilAccount) it, 4);
-                if (image == FXUtils.DEFAULT_ICON)
-                    accountItem.setImage(FXUtils.DEFAULT_ICON, null);
-                else
-                    accountItem.setImage(image, AccountHelper.getViewport(4));
+                accountItem.setImage(image, AccountHelper.getViewport(4));
             } else
-                accountItem.setImage(FXUtils.DEFAULT_ICON, null);
+                accountItem.setImage(AccountHelper.getDefaultSkin(it, 4), AccountHelper.getViewport(4));
         });
     }
 
     private void onProfileChanged(ProfileChangedEvent event) {
         Profile profile = event.getProfile();
 
-        for (Node node : profilePane.getChildren()) {
-            if (node instanceof RipplerContainer && node.getProperties().get("profile") instanceof Pair<?, ?>) {
-                ((RipplerContainer) node).setSelected(Objects.equals(((Pair) node.getProperties().get("profile")).getKey(), profile.getName()));
+        Platform.runLater(() -> {
+            for (Node node : profilePane.getChildren()) {
+                if (node instanceof RipplerContainer && node.getProperties().get("profile") instanceof Pair<?, ?>) {
+                    ((RipplerContainer) node).setSelected(Objects.equals(((Pair) node.getProperties().get("profile")).getKey(), profile.getName()));
+                }
             }
-        }
+        });
     }
 
     private void onProfilesLoading() {

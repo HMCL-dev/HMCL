@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.auth;
 import java.net.Proxy;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  *
@@ -31,6 +32,11 @@ public abstract class Account {
      * @return the account name (mostly email)
      */
     public abstract String getUsername();
+
+    /**
+     * @return the UUID
+     */
+    public abstract UUID getUUID();
 
     /**
      * log in.

@@ -150,7 +150,10 @@ public final class Controllers {
     }
 
     public static void navigate(Node node) {
-        decorator.showPage(node);
+        if (decorator.getNowPage() == node)
+            decorator.showPage(null);
+        else
+            decorator.showPage(node);
     }
 
     public static void showUpdate() {

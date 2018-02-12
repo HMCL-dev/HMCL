@@ -244,6 +244,13 @@ public final class YggdrasilAccount extends Account {
         }
     }
 
+    public UUID getUUID() {
+        if (getSelectedProfile() == null)
+            return null;
+        else
+            return getSelectedProfile().getId();
+    }
+
     public Optional<ProfileTexture> getSkin(GameProfile profile) throws IOException, JsonParseException {
         if (StringUtils.isBlank(userId))
             throw new IllegalStateException("Not logged in");

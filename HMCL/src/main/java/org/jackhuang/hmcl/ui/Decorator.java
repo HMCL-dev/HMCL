@@ -418,6 +418,10 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     private String category;
     private Node nowPage;
 
+    public Node getNowPage() {
+        return nowPage;
+    }
+
     public void showPage(Node content) {
         contentPlaceHolder.getStyleClass().removeAll("gray-background", "white-background");
         if (content != null)

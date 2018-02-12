@@ -20,10 +20,12 @@ package org.jackhuang.hmcl.auth;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
 import java.net.Proxy;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  *
@@ -45,8 +47,8 @@ public class OfflineAccount extends Account {
             throw new IllegalArgumentException("Username cannot be blank");
     }
 
-    public String getUuid() {
-        return uuid;
+    public UUID getUUID() {
+        return UUIDTypeAdapter.fromString(uuid);
     }
 
     @Override
