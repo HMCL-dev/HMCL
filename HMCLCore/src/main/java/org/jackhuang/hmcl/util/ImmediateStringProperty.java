@@ -48,10 +48,22 @@ public class ImmediateStringProperty extends SimpleStringProperty {
         super.unbind();
     }
 
-    private Consumer<String> listener = Lang.EMPTY_CONSUMER;
-    private final ChangeListener<String> changeListener = (a, b, newValue) -> listener.accept(newValue);
+    private Consumer<String> consumer = null;
+    private ChangeListener<String> listener = null;
+    private final ChangeListener<String> changeListener = (a, b, newValue) -> {
+        if (consumer != null)
+            consumer.accept(newValue);
+        if (listener != null)
+            listener.changed(a, b, newValue);
+    };
 
-    public void setChangedListener(Consumer<String> listener) {
+    public void setChangedListener(Consumer<String> consumer) {
+        this.consumer = Objects.requireNonNull(consumer);
+        this.listener = null;
+    }
+
+    public void setChangedListener(ChangeListener<String> listener) {
+        this.consumer = null;
         this.listener = Objects.requireNonNull(listener);
     }
 

@@ -41,7 +41,7 @@ public final class Profile {
 
     private final ImmediateObjectProperty<File> gameDirProperty;
 
-    public ImmediateObjectProperty<File> getGameDirProperty() {
+    public ImmediateObjectProperty<File> gameDirProperty() {
         return gameDirProperty;
     }
 
@@ -71,7 +71,7 @@ public final class Profile {
 
     private final ImmediateStringProperty nameProperty;
 
-    public ImmediateStringProperty getNameProperty() {
+    public ImmediateStringProperty nameProperty() {
         return nameProperty;
     }
 

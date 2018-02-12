@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.auth.Account;
@@ -88,11 +89,11 @@ public class Settings {
 
         save();
 
-        if (!getProfileMap().containsKey(DEFAULT_PROFILE))
-            getProfileMap().put(DEFAULT_PROFILE, new Profile());
+        checkProfileMap();
 
         for (Map.Entry<String, Profile> entry2 : getProfileMap().entrySet()) {
             entry2.getValue().setName(entry2.getKey());
+            entry2.getValue().nameProperty().setChangedListener(this::profileNameChanged);
             entry2.getValue().addPropertyChangedListener(e -> {
                 save();
             });
@@ -365,8 +366,10 @@ public class Settings {
     private Profile selectedProfile;
 
     public Profile getSelectedProfile() {
+        checkProfileMap();
+
         if (!hasProfile(SETTINGS.getSelectedProfile())) {
-            SETTINGS.setSelectedProfile(DEFAULT_PROFILE);
+            SETTINGS.setSelectedProfile(getProfileMap().keySet().stream().findFirst().get());
             Schedulers.computation().schedule(this::onProfileChanged);
         }
         return getProfile(SETTINGS.getSelectedProfile());
@@ -380,15 +383,10 @@ public class Settings {
     }
 
     public Profile getProfile(String name) {
-        Profile p = getProfileMap().get(Lang.nonNull(name, DEFAULT_PROFILE));
-        if (p == null)
-            if (getProfileMap().containsKey(DEFAULT_PROFILE))
-                p = getProfileMap().get(DEFAULT_PROFILE);
-            else {
-                p = new Profile();
-                getProfileMap().put(DEFAULT_PROFILE, p);
-            }
-        return p;
+        checkProfileMap();
+
+        Optional<Profile> p = name == null ? getProfileMap().values().stream().findFirst() : Optional.ofNullable(getProfileMap().get(name));
+        return p.orElse(null);
     }
 
     public boolean hasProfile(String name) {
@@ -403,31 +401,37 @@ public class Settings {
         return getProfileMap().values().stream().filter(t -> StringUtils.isNotBlank(t.getName())).collect(Collectors.toList());
     }
 
-    public boolean putProfile(Profile ver) {
-        if (ver == null || StringUtils.isBlank(ver.getName()) || getProfileMap().containsKey(ver.getName()))
-            return false;
+    public void putProfile(Profile ver) {
+        if (StringUtils.isBlank(ver.getName()))
+            throw new IllegalArgumentException("Profile's name is empty");
+
         getProfileMap().put(ver.getName(), ver);
-        return true;
+
+        ver.nameProperty().setChangedListener(this::profileNameChanged);
     }
 
-    public boolean deleteProfile(Profile ver) {
-        return deleteProfile(ver.getName());
+    public void deleteProfile(Profile profile) {
+        deleteProfile(profile.getName());
     }
 
-    public boolean deleteProfile(String ver) {
-        if (Objects.equals(DEFAULT_PROFILE, ver)) {
-            return false;
-        }
-        boolean flag = getProfileMap().remove(ver) != null;
-        if (flag)
-            Schedulers.computation().schedule(this::onProfileLoading);
+    public void deleteProfile(String profileName) {
+        getProfileMap().remove(profileName);
+        checkProfileMap();
+        Schedulers.computation().schedule(this::onProfileLoading);
+    }
 
-        return flag;
+    private void checkProfileMap() {
+        if (getProfileMap().isEmpty())
+            getProfileMap().put(DEFAULT_PROFILE, new Profile(DEFAULT_PROFILE));
     }
 
     private void onProfileChanged() {
         getSelectedProfile().getRepository().refreshVersionsAsync().start();
         EventBus.EVENT_BUS.fireEvent(new ProfileChangedEvent(SETTINGS, getSelectedProfile()));
+    }
+
+    private void profileNameChanged(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
+        getProfileMap().put(newValue, getProfileMap().remove(oldValue));
     }
 
     /**
