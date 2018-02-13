@@ -111,7 +111,9 @@ public final class LeftPaneController {
         Platform.runLater(() -> {
             for (Node node : profilePane.getChildren()) {
                 if (node instanceof RipplerContainer && node.getProperties().get("profile") instanceof Pair<?, ?>) {
-                    ((RipplerContainer) node).setSelected(Objects.equals(((Pair) node.getProperties().get("profile")).getKey(), profile.getName()));
+                    boolean current = Objects.equals(((Pair) node.getProperties().get("profile")).getKey(), profile.getName());
+                    ((RipplerContainer) node).setSelected(current);
+                    ((VersionListItem) ((RipplerContainer) node).getContainer()).setGameVersion(current ? Main.i18n("profile.selected") : "");
                 }
             }
         });
@@ -123,17 +125,7 @@ public final class LeftPaneController {
             VersionListItem item = new VersionListItem(profile.getName());
             RipplerContainer ripplerContainer = new RipplerContainer(item);
             item.setOnSettingsButtonClicked(() -> Controllers.getDecorator().showPage(new ProfilePage(profile)));
-            ripplerContainer.setOnMouseClicked(e -> {
-                // clean selected property
-                for (Node node : profilePane.getChildren())
-                    if (node instanceof RipplerContainer) {
-                        ((RipplerContainer) node).setSelected(false);
-                        ((VersionListItem) ((RipplerContainer) node).getContainer()).setVersionName("");
-                    }
-                ripplerContainer.setSelected(true);
-                item.setVersionName(Main.i18n("profile.selected"));
-                Settings.INSTANCE.setSelectedProfile(profile);
-            });
+            ripplerContainer.setOnMouseClicked(e -> Settings.INSTANCE.setSelectedProfile(profile));
             ripplerContainer.getProperties().put("profile", new Pair<>(profile.getName(), item));
             ripplerContainer.maxWidthProperty().bind(leftPane.widthProperty());
             list.add(ripplerContainer);
