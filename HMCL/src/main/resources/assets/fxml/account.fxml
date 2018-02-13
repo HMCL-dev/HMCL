@@ -15,7 +15,7 @@
         </JFXMasonryPane>
     </ScrollPane>
     <AnchorPane pickOnBounds="false">
-        <JFXButton onMouseClicked="#addNewAccount" AnchorPane.bottomAnchor="16" AnchorPane.rightAnchor="16" buttonType="RAISED" prefWidth="40" prefHeight="40" style="-fx-text-fill:WHITE;-fx-background-color:#5264AE;-fx-font-size:14px;-fx-background-radius: 80px;">
+        <JFXButton onMouseClicked="#addNewAccount" AnchorPane.bottomAnchor="16" AnchorPane.rightAnchor="16" buttonType="RAISED" prefWidth="40" prefHeight="40" styleClass="jfx-button-raised-round">
             <graphic>
                 <fx:include source="/assets/svg/plus.fxml" />
             </graphic>

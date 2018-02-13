@@ -21,13 +21,14 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
+import org.jackhuang.hmcl.setting.Settings;
 
 public class WebStage extends Stage {
     private final WebView webView = new WebView();
 
     public WebStage() {
         setScene(new Scene(webView, 800, 480));
-        getScene().getStylesheets().addAll(FXUtils.STYLESHEETS);
+        getScene().getStylesheets().addAll(Settings.INSTANCE.getTheme().getStylesheets());
         getIcons().add(new Image("/assets/img/icon.png"));
     }
 

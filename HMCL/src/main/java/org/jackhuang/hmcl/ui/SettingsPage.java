@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXTextField;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -77,6 +78,8 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     private ScrollPane scroll;
     @FXML
     private MultiFileItem backgroundItem;
+    @FXML
+    private MultiFileItem themeItem;
 
     {
         FXUtils.loadFXML(this, "/assets/fxml/setting.fxml");
@@ -152,6 +155,20 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         backgroundItem.setToggleSelectedListener(newValue -> {
             Settings.INSTANCE.setBackgroundImageType((EnumBackgroundImage) newValue.getUserData());
         });
+
+        themeItem.loadChildren(Arrays.asList(
+                themeItem.createChildren(Main.i18n("color.blue"), Theme.BLUE),
+                themeItem.createChildren(Main.i18n("color.dark_blue"), Theme.DARK_BLUE),
+                themeItem.createChildren(Main.i18n("color.green"), Theme.GREEN),
+                themeItem.createChildren(Main.i18n("color.orange"), Theme.ORANGE),
+                themeItem.createChildren(Main.i18n("color.purple"), Theme.PURPLE),
+                themeItem.createChildren(Main.i18n("color.red"), Theme.RED)
+        ));
+
+        themeItem.getGroup().getToggles().stream().filter(it -> Settings.INSTANCE.getTheme() == it.getUserData()).findFirst().ifPresent(it -> it.setSelected(true));
+        themeItem.setToggleSelectedListener(newValue -> Settings.INSTANCE.setTheme((Theme) newValue.getUserData()));
+        Settings.INSTANCE.themeProperty().setChangedListenerAndOperate(it ->
+                themeItem.setSubtitle(Main.i18n("color." + it.name().toLowerCase())));
     }
 
     private void initBackgroundItemSubtitle() {

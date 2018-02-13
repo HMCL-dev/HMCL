@@ -132,12 +132,6 @@ public final class FXUtils {
         Lang.invoke(() -> loader.load());
     }
 
-    public static WritableImage takeSnapshot(Parent node, double width, double height) {
-        Scene scene = new Scene(node, width, height);
-        scene.getStylesheets().addAll(STYLESHEETS);
-        return scene.snapshot(null);
-    }
-
     public static void resetChildren(JFXMasonryPane pane, List<Node> children) {
         // Fixes mis-repositioning.
         ReflectionHelper.setFieldContent(JFXMasonryPane.class, pane, "oldBoxes", null);
@@ -324,12 +318,6 @@ public final class FXUtils {
     }
 
     public static final Image DEFAULT_ICON = new Image("/assets/img/icon.png");
-
-    public static final String[] STYLESHEETS = new String[]{
-            FXUtils.class.getResource("/css/jfoenix-fonts.css").toExternalForm(),
-            FXUtils.class.getResource("/css/jfoenix-design.css").toExternalForm(),
-            FXUtils.class.getResource("/assets/css/jfoenix-main-demo.css").toExternalForm()
-    };
 
     public static final Interpolator SINE = new Interpolator() {
         @Override

@@ -1,0 +1,5 @@
+.root {
+    -fx-base-color: #E67E22;
+    -fx-base-check-color: derive(-fx-base-color, 30%);
+    -fx-base-text-fill: black;
+}

@@ -55,6 +55,11 @@ public class ImmediateObjectProperty<T> extends SimpleObjectProperty<T> {
         this.listener = Objects.requireNonNull(listener);
     }
 
+    public void setChangedListenerAndOperate(Consumer<T> listener) {
+        this.listener = Objects.requireNonNull(listener);
+        listener.accept(get());
+    }
+
     public ImmediateObjectProperty(Object bean, String name, T initialValue) {
         super(bean, name, initialValue);
         addListener(changeListener);

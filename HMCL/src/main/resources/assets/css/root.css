@@ -4,8 +4,6 @@
  */
 
 .root {
-    -fx-base-color: #ec407a;
-    -fx-base-check-color: derive(-fx-base-color, 30%);/*#0F9D58;*/
     -fx-font-family: "Roboto";
 }
 
@@ -44,6 +42,14 @@
     -jfx-rippler-fill: -fx-base-check-color;
     -fx-border-color: red;
     -fx-border-width: 1;
+}
+
+.rippler-container:selected .label {
+    -fx-text-fill: -fx-base-text-fill;
+}
+
+.rippler-container= .label {
+    -fx-text-fill: white;
 }
 
 .class-title {

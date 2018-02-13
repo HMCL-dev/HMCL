@@ -134,6 +134,8 @@ public class RipplerContainer extends StackPane {
         };
 
         selectedProperty().addListener(listener);
+        selectedProperty().addListener((a, b, newValue) ->
+                pseudoClassStateChanged(PseudoClass.getPseudoClass("selected"), newValue));
         ripplerFillProperty().addListener(listener);
 
         setShape(Lang.apply(new Rectangle(), rectangle -> {

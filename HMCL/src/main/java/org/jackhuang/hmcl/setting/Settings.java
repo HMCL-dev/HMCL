@@ -408,6 +408,31 @@ public class Settings {
     }
 
     /****************************************
+     *                THEME                 *
+     ****************************************/
+
+    private final ImmediateObjectProperty<Theme> theme = new ImmediateObjectProperty<Theme>(this, "theme", Theme.getTheme(SETTINGS.getTheme()).orElse(Theme.BLUE)) {
+        @Override
+        public void invalidated() {
+            super.invalidated();
+
+            SETTINGS.setTheme(get().name().toLowerCase());
+        }
+    };
+
+    public Theme getTheme() {
+        return theme.get();
+    }
+
+    public void setTheme(Theme theme) {
+        this.theme.set(theme);
+    }
+
+    public ImmediateObjectProperty<Theme> themeProperty() {
+        return theme;
+    }
+
+    /****************************************
      *               PROFILES               *
      ****************************************/
 

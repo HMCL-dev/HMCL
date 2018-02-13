@@ -66,7 +66,9 @@
                     <Label text="%settings.launcher.proxy.password" />
                     <JFXTextField fx:id="txtProxyPassword" maxWidth="50" />
                 </HBox></right></BorderPane>
-                <!--BorderPane><left><Label text="%launcher_settings.theme" /></left><right></right></BorderPane-->
+
+                <MultiFileItem fx:id="themeItem" title="%settings.launcher.theme" hasSubtitle="true" hasCustom="false" />
+
                 <VBox spacing="5">
                     <BorderPane><left><Label text="%settings.launcher.log_font" BorderPane.alignment="CENTER_LEFT" /></left><right><HBox spacing="3"><FontComboBox fontSize="12" enableStyle="false" fx:id="cboFont" /><JFXTextField fx:id="txtFontSize" maxWidth="50" minWidth="50" /></HBox></right></BorderPane>
                     <Label fx:id="lblDisplay" text="[23:33:33] [Client Thread/INFO] [WaterPower]: Loaded mod WaterPower." />
