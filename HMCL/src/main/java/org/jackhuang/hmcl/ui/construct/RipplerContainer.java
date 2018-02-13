@@ -20,14 +20,17 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXRippler;
 import javafx.animation.Transition;
 import javafx.beans.DefaultProperty;
+import javafx.beans.InvalidationListener;
 import javafx.beans.NamedArg;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.css.*;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
@@ -37,10 +40,16 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import org.jackhuang.hmcl.util.Lang;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 @DefaultProperty("container")
 public class RipplerContainer extends StackPane {
+    private static final String DEFAULT_STYLE_CLASS = "rippler-container";
+
     private final ObjectProperty<Node> container = new SimpleObjectProperty<>(this, "container", null);
-    private final ObjectProperty<Paint> ripplerFill = new SimpleObjectProperty<>(this, "ripplerFill", null);
+    private final StyleableObjectProperty<Paint> ripplerFill = new SimpleStyleableObjectProperty<>(StyleableProperties.RIPPLER_FILL,this, "ripplerFill", null);
     private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected", false);
 
     private final StackPane buttonContainer = new StackPane();
@@ -72,7 +81,7 @@ public class RipplerContainer extends StackPane {
     public RipplerContainer(@NamedArg("container") Node container) {
         setContainer(container);
 
-        getStyleClass().add("rippler-container");
+        getStyleClass().add(DEFAULT_STYLE_CLASS);
         buttonContainer.getChildren().add(buttonRippler);
         setOnMousePressed(event -> {
             if (clickedAnimation != null) {
@@ -119,10 +128,13 @@ public class RipplerContainer extends StackPane {
         containerProperty().addListener(o -> updateChildren());
         updateChildren();
 
-        selectedProperty().addListener(o -> {
+        InvalidationListener listener = o -> {
             if (isSelected()) setBackground(new Background(new BackgroundFill(getRipplerFill(), defaultRadii, null)));
             else setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, defaultRadii, null)));
-        });
+        };
+
+        selectedProperty().addListener(listener);
+        ripplerFillProperty().addListener(listener);
 
         setShape(Lang.apply(new Rectangle(), rectangle -> {
             rectangle.widthProperty().bind(widthProperty());
@@ -171,7 +183,7 @@ public class RipplerContainer extends StackPane {
         return ripplerFill.get();
     }
 
-    public ObjectProperty<Paint> ripplerFillProperty() {
+    public StyleableObjectProperty<Paint> ripplerFillProperty() {
         return ripplerFill;
     }
 
@@ -189,5 +201,38 @@ public class RipplerContainer extends StackPane {
 
     public void setSelected(boolean selected) {
         this.selected.set(selected);
+    }
+
+    @Override
+    public List<CssMetaData<? extends Styleable, ?>> getCssMetaData() {
+        return getClassCssMetaData();
+    }
+
+    public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
+        return StyleableProperties.STYLEABLES;
+    }
+
+    private static class StyleableProperties {
+
+        private static final CssMetaData<RipplerContainer, Paint> RIPPLER_FILL = new CssMetaData<RipplerContainer, Paint>("-jfx-rippler-fill", StyleConverter.getPaintConverter(), Color.rgb(0, 200, 255)) {
+            public boolean isSettable(RipplerContainer control) {
+                return control.ripplerFill == null || !control.ripplerFill.isBound();
+            }
+
+            public StyleableProperty<Paint> getStyleableProperty(RipplerContainer control) {
+                return control.ripplerFillProperty();
+            }
+        };
+
+        private static final List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
+
+        private StyleableProperties() {
+        }
+
+        static {
+            List<CssMetaData<? extends Styleable, ?>> styleables = new ArrayList<>(Parent.getClassCssMetaData());
+            Collections.addAll(styleables, RIPPLER_FILL);
+            STYLEABLES = Collections.unmodifiableList(styleables);
+        }
     }
 }

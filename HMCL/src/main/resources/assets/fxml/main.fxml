@@ -16,14 +16,12 @@
         </JFXMasonryPane>
     </ScrollPane>
     <VBox style="-fx-padding: 15;" spacing="15" pickOnBounds="false" alignment="BOTTOM_RIGHT">
-        <JFXButton prefWidth="40" prefHeight="40" buttonType="RAISED" fx:id="btnRefresh"
-                   style="-fx-background-color:#5264AE;-fx-background-radius: 50px;">
+        <JFXButton prefWidth="40" prefHeight="40" buttonType="RAISED" fx:id="btnRefresh" styleClass="jfx-button-raised-round">
             <graphic>
                 <fx:include source="/assets/svg/refresh.fxml" />
             </graphic>
         </JFXButton>
-        <JFXButton prefWidth="40" prefHeight="40" buttonType="RAISED" fx:id="btnAdd"
-                   style="-fx-background-color:#5264AE;-fx-background-radius: 50px;">
+        <JFXButton prefWidth="40" prefHeight="40" buttonType="RAISED" fx:id="btnAdd" styleClass="jfx-button-raised-round">
             <graphic>
                 <fx:include source="/assets/svg/plus.fxml" />
             </graphic>

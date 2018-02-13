@@ -28,6 +28,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
