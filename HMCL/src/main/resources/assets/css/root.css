@@ -76,11 +76,20 @@
 }
 
 .tab-selected-line {
-    -fx-background-color: -fx-base-color;
+    -fx-background-color: derive(-fx-base-color, -30%);
 }
 
 .jfx-tab-pane .jfx-rippler {
     -jfx-rippler-fill: white;
+}
+
+.tab-label {
+    -fx-font-family: "Roboto";
+    -fx-font-size: 16;
+}
+
+.tab-label {
+    -fx-padding: 10 17 10 17;
 }
 
 /*******************************************************************************
@@ -792,11 +801,16 @@
 }
 
 .toggle-icon3 {
-    -fx-pref-width: 5px;
+    -fx-toggle-icon4-size: 35px;
+    -fx-pref-width: -fx-toggle-icon4-size;
+    -fx-max-width: -fx-toggle-icon4-size;
+    -fx-min-width: -fx-toggle-icon4-size;
+    -fx-pref-height: -fx-toggle-icon4-size;
+    -fx-max-height: -fx-toggle-icon4-size;
+    -fx-min-height: -fx-toggle-icon4-size;
     -fx-background-radius: 50px;
-    -fx-pref-height: 5px;
     -fx-background-color: transparent;
-    -jfx-toggle-color: -fx-base-check-color;
+    -jfx-toggle-color: white;
     -jfx-untoggle-color: transparent;
 }
 

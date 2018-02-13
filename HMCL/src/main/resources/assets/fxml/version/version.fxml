@@ -22,27 +22,27 @@
             </Tab>
         </JFXTabPane>
 
-        <HBox alignment="TOP_RIGHT" style="-fx-padding: 3px;" pickOnBounds="false">
-            <JFXButton fx:id="btnDelete" maxHeight="28.0" minHeight="28.0" onMouseClicked="#onDelete"
-                       styleClass="toggle-icon3" ripplerFill="white">
+        <HBox alignment="TOP_RIGHT" style="-fx-padding: 2 2 2 2;" spacing="3" pickOnBounds="false">
+            <JFXButton fx:id="btnDelete" maxHeight="40.0" minHeight="40.0" onMouseClicked="#onDelete"
+                       styleClass="toggle-icon3">
                 <graphic>
                     <fx:include source="/assets/svg/delete-white.fxml"/>
                 </graphic>
             </JFXButton>
-            <JFXButton fx:id="btnExport" maxHeight="28.0" minHeight="28.0" onMouseClicked="#onExport"
-                       styleClass="toggle-icon3" ripplerFill="white">
+            <JFXButton fx:id="btnExport" maxHeight="40.0" minHeight="40.0" onMouseClicked="#onExport"
+                       styleClass="toggle-icon3">
                 <graphic>
                     <fx:include source="/assets/svg/export.fxml"/>
                 </graphic>
             </JFXButton>
-            <JFXButton fx:id="btnBrowseMenu" maxHeight="28.0" minHeight="28.0" onMouseClicked="#onBrowseMenu"
-                       styleClass="toggle-icon3" ripplerFill="white">
+            <JFXButton fx:id="btnBrowseMenu" maxHeight="40.0" minHeight="40.0" onMouseClicked="#onBrowseMenu"
+                       styleClass="toggle-icon3">
                 <graphic>
                     <fx:include source="/assets/svg/folder-open.fxml"/>
                 </graphic>
             </JFXButton>
-            <JFXButton fx:id="btnManagementMenu" maxHeight="28.0" minHeight="28.0" onMouseClicked="#onManagementMenu"
-                       styleClass="toggle-icon3" ripplerFill="white">
+            <JFXButton fx:id="btnManagementMenu" maxHeight="40.0" minHeight="40.0" onMouseClicked="#onManagementMenu"
+                       styleClass="toggle-icon3">
                 <graphic>
                     <fx:include source="/assets/svg/wrench-white.fxml"/>
                 </graphic>

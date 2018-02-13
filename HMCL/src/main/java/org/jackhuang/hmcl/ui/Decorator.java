@@ -168,7 +168,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         if (!min) buttonsContainer.getChildren().remove(btnMin);
         if (!max) buttonsContainer.getChildren().remove(btnMax);
 
-        JFXDepthManager.setDepth(titleContainer, 1);
+        //JFXDepthManager.setDepth(titleContainer, 1);
         titleContainer.addEventHandler(MouseEvent.MOUSE_ENTERED, e -> allowMove = true);
         titleContainer.addEventHandler(MouseEvent.MOUSE_EXITED, e -> {
             if (!isDragging) allowMove = false;
