@@ -139,6 +139,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         FXUtils.installTooltip(btnUpdate, 0, 5000, 0, new Tooltip(Main.i18n("update.tooltip")));
         checkUpdate();
 
+        // background
         backgroundItem.loadChildren(Collections.singletonList(
                 backgroundItem.createChildren(Main.i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
         ));
@@ -156,6 +157,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
             Settings.INSTANCE.setBackgroundImageType((EnumBackgroundImage) newValue.getUserData());
         });
 
+        // theme
         themeItem.loadChildren(Arrays.asList(
                 themeItem.createChildren(Main.i18n("color.blue"), Theme.BLUE),
                 themeItem.createChildren(Main.i18n("color.dark_blue"), Theme.DARK_BLUE),

@@ -24,6 +24,7 @@ import com.jfoenix.controls.JFXHamburger;
 import com.jfoenix.effects.JFXDepthManager;
 import com.jfoenix.svg.SVGGlyph;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -41,6 +42,7 @@ import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -171,6 +173,10 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         titleContainer.addEventHandler(MouseEvent.MOUSE_EXITED, e -> {
             if (!isDragging) allowMove = false;
         });
+        Rectangle rectangle = new Rectangle(0, 0, 0, 0);
+        rectangle.widthProperty().bind(titleContainer.widthProperty());
+        rectangle.heightProperty().bind(Bindings.createDoubleBinding(() -> titleContainer.getHeight() + 100, titleContainer.heightProperty()));
+        titleContainer.setClip(rectangle);
 
         animationHandler = new TransitionHandler(contentPlaceHolder);
 
