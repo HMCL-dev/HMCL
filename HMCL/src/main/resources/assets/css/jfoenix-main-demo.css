@@ -27,6 +27,10 @@
     -fx-text-fill: gray;
 }
 
+.update-label {
+    -fx-text-fill: red;
+}
+
 .radio-button-title-label {
     -fx-font-size: 16.0px;
     -fx-padding: 14.0 0.0 -20.0 0.0;

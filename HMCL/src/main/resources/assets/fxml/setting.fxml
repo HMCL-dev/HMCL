@@ -15,6 +15,23 @@
                 fitToHeight="true" fitToWidth="true">
         <VBox fx:id="rootPane" style="-fx-padding: 20;">
             <ComponentList fx:id="settingsPane">
+
+                <BorderPane> <!-- Update -->
+                    <left>
+                        <VBox>
+                            <Label fx:id="lblUpdate" text="%update" BorderPane.alignment="CENTER_LEFT"/>
+                            <Label fx:id="lblUpdateSub" styleClass="subtitle-label"/>
+                        </VBox>
+                    </left>
+                    <right>
+                        <JFXButton fx:id="btnUpdate" onMouseClicked="#onUpdate" styleClass="toggle-icon4">
+                            <graphic>
+                                <fx:include source="/assets/svg/update.fxml" />
+                            </graphic>
+                        </JFXButton>
+                    </right>
+                </BorderPane>
+
                 <FileItem fx:id="fileCommonLocation" name="%launcher.common_location" title="%launcher.choose_commonpath" tooltip="%settings.launcher.common_path.tooltip" />
                 <!--FileItem fx:id="fileBackgroundLocation" name="%launcher.background_location" title="%launcher.choose_bgpath" tooltip="%launcher.background_tooltip" /-->
                 <BorderPane><left><Label text="%settings.launcher.download_source" BorderPane.alignment="CENTER_LEFT" /></left><right><JFXComboBox fx:id="cboDownloadSource">

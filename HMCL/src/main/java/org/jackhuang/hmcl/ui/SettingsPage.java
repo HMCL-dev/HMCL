@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.SimpleStringProperty;
@@ -25,6 +26,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Main;
@@ -65,12 +68,22 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     private FileItem fileBackgroundLocation;
     @FXML
     private Label lblDisplay;
+    @FXML
+    private Label lblUpdate;
+    @FXML
+    private Label lblUpdateSub;
+    @FXML
+    private JFXButton btnUpdate;
+    @FXML
+    private ScrollPane scroll;
 
     {
         FXUtils.loadFXML(this, "/assets/fxml/setting.fxml");
 
         FXUtils.limitWidth(cboLanguage, 400);
         FXUtils.limitWidth(cboDownloadSource, 400);
+
+        FXUtils.smoothScrolling(scroll);
 
         txtProxyHost.setText(Settings.INSTANCE.getProxyHost());
         txtProxyHost.textProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setProxyHost(newValue));
@@ -118,6 +131,9 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         cboProxyType.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setProxyType(Proxies.getProxyType(newValue.intValue())));
 
         fileCommonLocation.setProperty(Settings.INSTANCE.commonPathProperty());
+
+        FXUtils.installTooltip(btnUpdate, 0, 5000, 0, new Tooltip(Main.i18n("update.tooltip")));
+        checkUpdate();
     }
 
     public String getTitle() {
@@ -131,5 +147,28 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
 
     public void setTitle(String title) {
         this.title.set(title);
+    }
+
+    public void checkUpdate() {
+        btnUpdate.setVisible(Main.UPDATE_CHECKER.isOutOfDate());
+
+        if (Main.UPDATE_CHECKER.isOutOfDate()) {
+            lblUpdateSub.setText(Main.i18n("update.newest_version", Main.UPDATE_CHECKER.getNewVersion().toString()));
+            lblUpdateSub.getStyleClass().setAll("update-label");
+
+            lblUpdate.setText(Main.i18n("update.found"));
+            lblUpdate.getStyleClass().setAll("update-label");
+        } else {
+            lblUpdateSub.setText(Main.i18n("update.latest"));
+            lblUpdateSub.getStyleClass().setAll("subtitle-label");
+
+            lblUpdate.setText(Main.i18n("update"));
+            lblUpdate.getStyleClass().setAll();
+        }
+    }
+
+    @FXML
+    private void onUpdate() {
+        Main.UPDATE_CHECKER.checkOutdate();
     }
 }
