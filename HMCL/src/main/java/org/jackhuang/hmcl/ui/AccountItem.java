@@ -56,6 +56,7 @@ public final class AccountItem extends StackPane {
     @FXML private Label lblUser;
     @FXML private Label lblType;
     @FXML private Label lblEmail;
+    @FXML private Label lblCurrentAccount;
     @FXML private JFXRadioButton chkSelected;
     @FXML private JFXProgressBar pgsSkin;
     @FXML private ImageView portraitView;
@@ -83,7 +84,8 @@ public final class AccountItem extends StackPane {
         icon.translateYProperty().bind(Bindings.createDoubleBinding(() -> header.getBoundsInParent().getHeight() - icon.getHeight() / 2 - 32.0, header.boundsInParentProperty(), icon.heightProperty()));
 
         chkSelected.getProperties().put("account", account);
-        chkSelected.setSelected(Settings.INSTANCE.getSelectedAccount() == account);
+        setSelected(Settings.INSTANCE.getSelectedAccount() == account);
+
         lblUser.setText(Accounts.getCurrentCharacter(account));
         lblType.setText(AccountsPage.accountType(account));
         lblEmail.setText(account.getUsername());
@@ -138,6 +140,7 @@ public final class AccountItem extends StackPane {
     }
 
     public void setSelected(boolean selected) {
+        lblCurrentAccount.setVisible(selected);
         chkSelected.setSelected(selected);
     }
 

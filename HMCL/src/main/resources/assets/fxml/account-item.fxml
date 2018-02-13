@@ -37,7 +37,10 @@
                     </HBox>
                 </left>
                 <right>
-                    <JFXRadioButton fx:id="chkSelected" BorderPane.alignment="CENTER_RIGHT" />
+                    <HBox alignment="CENTER_RIGHT">
+                        <Label fx:id="lblCurrentAccount" text="%account.current" />
+                        <JFXRadioButton fx:id="chkSelected" BorderPane.alignment="CENTER_RIGHT" />
+                    </HBox>
                 </right>
             </BorderPane>
 
