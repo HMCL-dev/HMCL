@@ -545,14 +545,15 @@
 *                                                                              *
 *******************************************************************************/
 
-.jfx-list-cell {
-    -fx-background-insets: 0.0;
-    -fx-text-fill: BLACK;
-}
-
 .jfx-list-cell:odd,
 .jfx-list-cell:even {
     -fx-background-color: WHITE;
+}
+
+.list-cell:selected, .jfx-list-cell:selected {
+    -fx-background-insets: 0.0;
+    -fx-text-fill: BLACK;
+    -fx-background-color: black;
 }
 
 .jfx-list-cell:filled:hover,
@@ -564,9 +565,9 @@
     -jfx-rippler-fill: -fx-base-color;
 }
 
-.jfx-list-cell:odd:selected > .jfx-rippler > StackPane,
-.jfx-list-cell:even:selected > .jfx-rippler > StackPane {
-    -fx-background-color: rgba(0.0, 0.0, 255.0, 0.2);
+.list-cell:odd:selected > .jfx-rippler > StackPane,
+.list-cell:even:selected > .jfx-rippler > StackPane {
+    -fx-background-color: derive(-fx-base-check-color, 30%);
 }
 
 .jfx-list-view {

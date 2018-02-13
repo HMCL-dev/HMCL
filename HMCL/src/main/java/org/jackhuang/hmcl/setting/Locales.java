@@ -32,7 +32,7 @@ public final class Locales {
     /**
      * English
      */
-    public static final SupportedLocale EN = new SupportedLocale(Locale.ENGLISH);
+    public static final SupportedLocale EN = new SupportedLocale(Locale.ROOT);
 
     /**
      * Traditional Chinese

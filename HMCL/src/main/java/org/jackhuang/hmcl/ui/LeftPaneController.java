@@ -126,9 +126,12 @@ public final class LeftPaneController {
             ripplerContainer.setOnMouseClicked(e -> {
                 // clean selected property
                 for (Node node : profilePane.getChildren())
-                    if (node instanceof RipplerContainer)
+                    if (node instanceof RipplerContainer) {
                         ((RipplerContainer) node).setSelected(false);
+                        ((VersionListItem) ((RipplerContainer) node).getContainer()).setVersionName("");
+                    }
                 ripplerContainer.setSelected(true);
+                item.setVersionName(Main.i18n("profile.selected"));
                 Settings.INSTANCE.setSelectedProfile(profile);
             });
             ripplerContainer.getProperties().put("profile", new Pair<>(profile.getName(), item));
