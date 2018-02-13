@@ -54,7 +54,7 @@
 }
 
 .tab-header-background {
-    -fx-background: gray;
+    -fx-background-color: #757de8;
 }
 
 /*******************************************************************************
@@ -1002,8 +1002,6 @@
 }
 
 .jfx-decorator-drawer {
-    -fx-background-image: url("/assets/img/background.jpg");
-    -fx-background-size: cover;
 }
 
 .resize-border {

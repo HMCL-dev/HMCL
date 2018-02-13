@@ -26,7 +26,7 @@
             <JFXButton fx:id="btnDelete" maxHeight="28.0" minHeight="28.0" onMouseClicked="#onDelete"
                        styleClass="toggle-icon3" ripplerFill="white">
                 <graphic>
-                    <fx:include source="/assets/svg/delete-black.fxml"/>
+                    <fx:include source="/assets/svg/delete-white.fxml"/>
                 </graphic>
             </JFXButton>
             <JFXButton fx:id="btnExport" maxHeight="28.0" minHeight="28.0" onMouseClicked="#onExport"
@@ -44,7 +44,7 @@
             <JFXButton fx:id="btnManagementMenu" maxHeight="28.0" minHeight="28.0" onMouseClicked="#onManagementMenu"
                        styleClass="toggle-icon3" ripplerFill="white">
                 <graphic>
-                    <fx:include source="/assets/svg/wrench-black.fxml"/>
+                    <fx:include source="/assets/svg/wrench-white.fxml"/>
                 </graphic>
             </JFXButton>
         </HBox>

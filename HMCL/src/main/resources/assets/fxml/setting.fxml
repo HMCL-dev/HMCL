@@ -7,6 +7,7 @@
 <?import org.jackhuang.hmcl.ui.construct.ComponentList?>
 <?import org.jackhuang.hmcl.ui.construct.FileItem?>
 <?import org.jackhuang.hmcl.ui.construct.FontComboBox?>
+<?import org.jackhuang.hmcl.ui.construct.MultiFileItem?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
@@ -32,8 +33,11 @@
                     </right>
                 </BorderPane>
 
-                <FileItem fx:id="fileCommonLocation" name="%launcher.common_location" title="%launcher.choose_commonpath" tooltip="%settings.launcher.common_path.tooltip" />
-                <!--FileItem fx:id="fileBackgroundLocation" name="%launcher.background_location" title="%launcher.choose_bgpath" tooltip="%launcher.background_tooltip" /-->
+                <FileItem fx:id="fileCommonLocation" name="%launcher.common_directory" title="%launcher.common_directory.choose" tooltip="%settings.launcher.common_path.tooltip" />
+
+                <MultiFileItem fx:id="backgroundItem" title="%launcher.background" chooserTitle="%launcher.background.choose"
+                               hasSubtitle="true" customText="%settings.custom" />
+
                 <BorderPane><left><Label text="%settings.launcher.download_source" BorderPane.alignment="CENTER_LEFT" /></left><right><JFXComboBox fx:id="cboDownloadSource">
                     <items>
                         <FXCollections fx:factory="observableArrayList">

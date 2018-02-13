@@ -19,9 +19,11 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.scene.image.Image;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.auth.Account;
@@ -357,6 +359,52 @@ public class Settings {
         accounts.remove(Accounts.getAccountId(account));
 
         selectedAccount.get();
+    }
+
+    /****************************************
+     *              BACKGROUND              *
+     ****************************************/
+
+    private final ImmediateStringProperty backgroundImage = new ImmediateStringProperty(this, "backgroundImage", SETTINGS.getBackgroundImage()) {
+        @Override
+        public void invalidated() {
+            super.invalidated();
+
+            SETTINGS.setBackgroundImage(get());
+        }
+    };
+
+    public String getBackgroundImage() {
+        return backgroundImage.get();
+    }
+
+    public ImmediateStringProperty backgroundImageProperty() {
+        return backgroundImage;
+    }
+
+    public void setBackgroundImage(String backgroundImage) {
+        this.backgroundImage.set(backgroundImage);
+    }
+
+    private final ImmediateObjectProperty<EnumBackgroundImage> backgroundImageType = new ImmediateObjectProperty<EnumBackgroundImage>(this, "backgroundImageType", EnumBackgroundImage.indexOf(SETTINGS.getBackgroundImageType())) {
+        @Override
+        public void invalidated() {
+            super.invalidated();
+
+            SETTINGS.setBackgroundImageType(get().ordinal());
+        }
+    };
+
+    public EnumBackgroundImage getBackgroundImageType() {
+        return backgroundImageType.get();
+    }
+
+    public ImmediateObjectProperty<EnumBackgroundImage> backgroundImageTypeProperty() {
+        return backgroundImageType;
+    }
+
+    public void setBackgroundImageType(EnumBackgroundImage backgroundImageType) {
+        this.backgroundImageType.set(backgroundImageType);
     }
 
     /****************************************

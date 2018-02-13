@@ -123,7 +123,7 @@ public final class LeftPaneController {
             VersionListItem item = new VersionListItem(profile.getName());
             RipplerContainer ripplerContainer = new RipplerContainer(item);
             item.setOnSettingsButtonClicked(() -> Controllers.getDecorator().showPage(new ProfilePage(profile)));
-            ripplerContainer.setRipplerFill(Paint.valueOf("#89E1F9"));
+            ripplerContainer.setRipplerFill(Paint.valueOf("#757de8"));
             ripplerContainer.setOnMouseClicked(e -> {
                 // clean selected property
                 for (Node node : profilePane.getChildren())

@@ -37,6 +37,7 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
+import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -44,15 +45,23 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.setting.EnumBackgroundImage;
+import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionHandler;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogWizardDisplayer;
 import org.jackhuang.hmcl.ui.wizard.*;
+import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Queue;
+import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public final class Decorator extends StackPane implements TaskExecutorDialogWizardDisplayer {
@@ -167,6 +176,76 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
 
         FXUtils.setOverflowHidden((Pane) lookup("#contentPlaceHolderRoot"));
         FXUtils.setOverflowHidden(drawerWrapper);
+
+        loadBackground();
+    }
+
+    private void loadBackground() {
+        Image background;
+
+        if (Settings.INSTANCE.getBackgroundImageType() == EnumBackgroundImage.DEFAULT)
+            background = searchBackgroundImage(new Image("/assets/img/background.jpg"), "");
+        else
+            background = searchBackgroundImage(new Image("/assets/img/background.jpg"), Settings.INSTANCE.getBackgroundImage());
+
+        drawerWrapper.setBackground(new Background(new BackgroundImage(background, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, new BackgroundSize(800, 480, false, false, true, true))));
+    }
+
+    private static Image searchBackgroundImage(Image def, String customPath) {
+        Random random = new Random();
+        boolean loaded = false;
+        Image background = def;
+
+        // custom path
+        if (StringUtils.isNotBlank(customPath)) {
+            try {
+                background = new Image("file:" + customPath);
+                loaded = true;
+            } catch (IllegalArgumentException ignore) {
+            }
+        }
+
+        // bgskin
+        if (!loaded) {
+            File backgroundImageFile = new File("bg");
+            if (backgroundImageFile.isDirectory()) {
+                File[] backgroundPath = backgroundImageFile.listFiles(file -> StringUtils.containsOne(FileUtils.getExtension(file), "png", "jpg"));
+                if (backgroundPath != null && backgroundPath.length > 0) {
+                    int index = random.nextInt(backgroundPath.length);
+                    try {
+                        background = new Image("file:" + backgroundPath[index].getAbsolutePath());
+                        loaded = true;
+                    } catch (IllegalArgumentException ignore) {
+                    }
+                }
+            }
+        }
+
+        // background.png
+        if (!loaded) {
+            File backgroundImageFile = new File("background.png");
+            if (backgroundImageFile.exists()) {
+                try {
+                    background = new Image("file:" + backgroundImageFile.getAbsolutePath());
+                    loaded = true;
+                } catch (IllegalArgumentException ignore) {
+                }
+            }
+        }
+
+        // background.jpg
+        if (!loaded) {
+            File backgroundImageFile = new File("background.jpg");
+            if (backgroundImageFile.exists()) {
+                try {
+                    background = new Image("file:" + backgroundImageFile.getAbsolutePath());
+                    loaded = true;
+                } catch (IllegalArgumentException ignore) {
+                }
+            }
+        }
+
+        return background;
     }
 
     @FXML

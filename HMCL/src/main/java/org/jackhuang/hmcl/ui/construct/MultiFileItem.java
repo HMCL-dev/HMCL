@@ -30,6 +30,7 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -43,6 +44,7 @@ import org.jackhuang.hmcl.ui.SVG;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.function.Consumer;
 
 public class MultiFileItem extends ComponentList {
     private final StringProperty customTitle = new SimpleStringProperty(this, "customTitle", Main.i18n("selector.custom"));
@@ -57,6 +59,8 @@ public class MultiFileItem extends ComponentList {
     private final BorderPane custom = new BorderPane();
     private final VBox pane = new VBox();
     private final boolean hasCustom;
+
+    private Consumer<Toggle> toggleSelectedListener;
 
     public MultiFileItem(@NamedArg(value = "hasCustom", defaultValue = "true") boolean hasCustom) {
         this.hasCustom = hasCustom;
@@ -100,6 +104,11 @@ public class MultiFileItem extends ComponentList {
         if (hasCustom)
             pane.getChildren().add(custom);
         addChildren(pane);
+
+        group.selectedToggleProperty().addListener((a, b, newValue) -> {
+            if (toggleSelectedListener != null)
+                toggleSelectedListener.accept(newValue);
+        });
     }
 
     public Node createChildren(String title) {
@@ -175,8 +184,12 @@ public class MultiFileItem extends ComponentList {
         radioCustom.setUserData(userData);
     }
 
-    public JFXRadioButton getRadioCustom() {
-        return radioCustom;
+    public boolean isCustomToggle(Toggle toggle) {
+        return radioCustom == toggle;
+    }
+
+    public void setToggleSelectedListener(Consumer<Toggle> consumer) {
+        toggleSelectedListener = consumer;
     }
 
     public StringProperty customTextProperty() {

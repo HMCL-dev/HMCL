@@ -31,6 +31,9 @@ public final class Config {
     @SerializedName("last")
     private String selectedProfile = "";
 
+    @SerializedName("backgroundType")
+    private int backgroundImageType = 0;
+
     @SerializedName("bgpath")
     private String backgroundImage = null;
 
@@ -97,6 +100,15 @@ public final class Config {
 
     public void setBackgroundImage(String backgroundImage) {
         this.backgroundImage = backgroundImage;
+        Settings.INSTANCE.save();
+    }
+
+    public int getBackgroundImageType() {
+        return backgroundImageType;
+    }
+
+    public void setBackgroundImageType(int backgroundImageType) {
+        this.backgroundImageType = backgroundImageType;
         Settings.INSTANCE.save();
     }
 

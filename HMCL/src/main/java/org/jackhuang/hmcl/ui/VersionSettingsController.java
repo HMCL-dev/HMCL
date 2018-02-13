@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.*;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -178,34 +177,24 @@ public final class VersionSettingsController {
         FXUtils.bindBoolean(chkShowLogs, versionSetting.showLogsProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
 
-        String javaGroupKey = "java_group.listener";
-
-        Lang.get(javaItem.getGroup().getProperties(), javaGroupKey, ChangeListener.class)
-                .ifPresent(javaItem.getGroup().selectedToggleProperty()::removeListener);
-
         boolean flag = false;
-        JFXRadioButton defaultToggle = null;
+        Toggle defaultToggle = null;
         for (Toggle toggle : javaItem.getGroup().getToggles()) {
-            if (toggle instanceof JFXRadioButton) {
-                if (toggle.getUserData() == Lang.invoke(versionSetting::getJavaVersion)) {
-                    toggle.setSelected(true);
-                    flag = true;
-                } else if (toggle.getUserData() == JavaVersion.fromCurrentEnvironment()) {
-                    defaultToggle = (JFXRadioButton) toggle;
-                }
+            if (toggle.getUserData() == Lang.invoke(versionSetting::getJavaVersion)) {
+                toggle.setSelected(true);
+                flag = true;
+            } else if (toggle.getUserData() == JavaVersion.fromCurrentEnvironment()) {
+                defaultToggle = toggle;
             }
         }
 
-        ChangeListener<Toggle> listener = (a, b, newValue) -> {
-            if (newValue == javaItem.getRadioCustom()) {
+        javaItem.setToggleSelectedListener(newValue -> {
+            if (javaItem.isCustomToggle(newValue)) {
                 versionSetting.setJava("Custom");
             } else {
                 versionSetting.setJava(((JavaVersion) newValue.getUserData()).getVersion());
             }
-        };
-
-        javaItem.getGroup().getProperties().put(javaGroupKey, listener);
-        javaItem.getGroup().selectedToggleProperty().addListener(listener);
+        });
 
         if (!flag) {
             Optional.ofNullable(defaultToggle).ifPresent(t -> t.setSelected(true));
@@ -215,49 +204,30 @@ public final class VersionSettingsController {
         versionSetting.javaProperty().setChangedListener(it -> initJavaSubtitle(versionSetting));
         initJavaSubtitle(versionSetting);
 
-
-        String globalGroupKey = "global_group.listener";
-
-        Lang.get(globalItem.getGroup().getProperties(), globalGroupKey, ChangeListener.class)
-                .ifPresent(globalItem.getGroup().selectedToggleProperty()::removeListener);
-        ChangeListener<Toggle> globalListener = (a, b, newValue) -> {
+        if (versionSetting.isUsesGlobal())
+            globalItem.getGroup().getToggles().stream().filter(it -> it.getUserData() == Boolean.TRUE).findFirst().ifPresent(it -> it.setSelected(true));
+        else
+            globalItem.getGroup().getToggles().stream().filter(it -> it.getUserData() == Boolean.FALSE).findFirst().ifPresent(it -> it.setSelected(true));
+        globalItem.setToggleSelectedListener(newValue -> {
             if ((Boolean) newValue.getUserData())
                 profile.globalizeVersionSetting(versionId);
             else
                 profile.specializeVersionSetting(versionId);
 
             Platform.runLater(() -> loadVersionSetting(profile, versionId));
-        };
-        if (versionSetting.isUsesGlobal())
-            globalItem.getGroup().getToggles().stream().filter(it -> it.getUserData() == Boolean.TRUE).findFirst().ifPresent(it -> it.setSelected(true));
-        else
-            globalItem.getGroup().getToggles().stream().filter(it -> it.getUserData() == Boolean.FALSE).findFirst().ifPresent(it -> it.setSelected(true));
-        globalItem.getGroup().getProperties().put(globalGroupKey, globalListener);
-        globalItem.getGroup().selectedToggleProperty().addListener(globalListener);
-        versionSetting.usesGlobalProperty().setChangedListener(it -> initUsesGlobalSubtitle(versionSetting));
-        initUsesGlobalSubtitle(versionSetting);
+        });
 
-        String gameDirKey = "game_dir.listener";
-        Lang.get(gameDirItem.getGroup().getProperties(), gameDirKey, ChangeListener.class)
-                .ifPresent(gameDirItem.getGroup().selectedToggleProperty()::removeListener);
+        versionSetting.usesGlobalProperty().setChangedListenerAndOperate(it ->
+                globalItem.setSubtitle(Main.i18n(versionSetting.isUsesGlobal() ? "settings.type.global" : "settings.type.special")));
 
-        for (Toggle toggle : gameDirItem.getGroup().getToggles()) {
-            if (toggle instanceof JFXRadioButton) {
-                if (toggle.getUserData() == versionSetting.getGameDirType()) {
-                    toggle.setSelected(true);
-                    flag = true;
-                }
-            }
-        }
+        gameDirItem.getGroup().getToggles().stream()
+                .filter(it -> it.getUserData() == versionSetting.getGameDirType())
+                .findFirst().ifPresent(toggle -> toggle.setSelected(true));
 
         gameDirItem.setCustomUserData(EnumGameDirectory.CUSTOM);
-
-        ChangeListener<Toggle> gameDirListener = (a, b, newValue) -> {
+        gameDirItem.setToggleSelectedListener(newValue -> {
             versionSetting.setGameDirType((EnumGameDirectory) newValue.getUserData());
-        };
-
-        gameDirItem.getGroup().getProperties().put(gameDirKey, gameDirListener);
-        gameDirItem.getGroup().selectedToggleProperty().addListener(gameDirListener);
+        });
 
         versionSetting.gameDirProperty().setChangedListener(it -> initGameDirSubtitle(versionSetting));
         versionSetting.gameDirTypeProperty().setChangedListener(it -> initGameDirSubtitle(versionSetting));
@@ -277,10 +247,6 @@ public final class VersionSettingsController {
 
     private void initGameDirSubtitle(VersionSetting versionSetting) {
         gameDirItem.setSubtitle(profile.getRepository().getRunDirectory(versionId).getAbsolutePath());
-    }
-
-    private void initUsesGlobalSubtitle(VersionSetting versionSetting) {
-        globalItem.setSubtitle(Main.i18n(versionSetting.isUsesGlobal() ? "settings.type.global" : "settings.type.special"));
     }
 
     @FXML

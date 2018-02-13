@@ -55,6 +55,11 @@ public class ImmediateBooleanProperty extends SimpleBooleanProperty {
         this.listener = Objects.requireNonNull(listener);
     }
 
+    public void setChangedListenerAndOperate(Consumer<Boolean> listener) {
+        this.listener = Objects.requireNonNull(listener);
+        listener.accept(get());
+    }
+
     public ImmediateBooleanProperty(Object bean, String name, boolean initialValue) {
         super(bean, name, initialValue);
         addListener(changeListener);

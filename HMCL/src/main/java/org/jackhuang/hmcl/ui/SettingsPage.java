@@ -31,15 +31,16 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Main;
-import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.Locales;
-import org.jackhuang.hmcl.setting.Proxies;
-import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.construct.FileItem;
 import org.jackhuang.hmcl.ui.construct.FontComboBox;
+import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 public final class SettingsPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", Main.i18n("settings.launcher"));
@@ -65,8 +66,6 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     @FXML
     private FileItem fileCommonLocation;
     @FXML
-    private FileItem fileBackgroundLocation;
-    @FXML
     private Label lblDisplay;
     @FXML
     private Label lblUpdate;
@@ -76,6 +75,8 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     private JFXButton btnUpdate;
     @FXML
     private ScrollPane scroll;
+    @FXML
+    private MultiFileItem backgroundItem;
 
     {
         FXUtils.loadFXML(this, "/assets/fxml/setting.fxml");
@@ -134,6 +135,34 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
 
         FXUtils.installTooltip(btnUpdate, 0, 5000, 0, new Tooltip(Main.i18n("update.tooltip")));
         checkUpdate();
+
+        backgroundItem.loadChildren(Collections.singletonList(
+                backgroundItem.createChildren(Main.i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
+        ));
+
+        FXUtils.bindString(backgroundItem.getTxtCustom(), Settings.INSTANCE.backgroundImageProperty());
+
+        backgroundItem.setCustomUserData(EnumBackgroundImage.CUSTOM);
+        backgroundItem.getGroup().getToggles().stream().filter(it -> it.getUserData() == Settings.INSTANCE.getBackgroundImageType()).findFirst().ifPresent(it -> it.setSelected(true));
+
+        Settings.INSTANCE.backgroundImageProperty().setChangedListener(it -> initBackgroundItemSubtitle());
+        Settings.INSTANCE.backgroundImageTypeProperty().setChangedListener(it -> initBackgroundItemSubtitle());
+        initBackgroundItemSubtitle();
+
+        backgroundItem.setToggleSelectedListener(newValue -> {
+            Settings.INSTANCE.setBackgroundImageType((EnumBackgroundImage) newValue.getUserData());
+        });
+    }
+
+    private void initBackgroundItemSubtitle() {
+        switch (Settings.INSTANCE.getBackgroundImageType()) {
+            case DEFAULT:
+                backgroundItem.setSubtitle(Main.i18n("launcher.background.default"));
+                break;
+            case CUSTOM:
+                backgroundItem.setSubtitle(Settings.INSTANCE.getBackgroundImage());
+                break;
+        }
     }
 
     public String getTitle() {
