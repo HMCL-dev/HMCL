@@ -25,6 +25,7 @@ import javafx.fxml.FXML;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.construct.FileItem;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
@@ -58,7 +59,7 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
 
         FXUtils.loadFXML(this, "/assets/fxml/profile.fxml");
 
-        txtProfileName.setText(Optional.ofNullable(profile).map(Profile::getName).orElse(""));
+        txtProfileName.setText(Optional.ofNullable(profile).map(Profiles::getProfileDisplayName).orElse(""));
         FXUtils.onChangeAndOperate(txtProfileName.textProperty(), it -> {
             btnSave.setDisable(!txtProfileName.validate() || StringUtils.isBlank(getLocation()));
         });

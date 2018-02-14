@@ -17,18 +17,16 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.controls.*;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Main;
@@ -40,6 +38,7 @@ import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
 
+import java.net.Proxy;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -56,8 +55,6 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     private JFXTextField txtProxyPassword;
     @FXML
     private JFXTextField txtFontSize;
-    @FXML
-    private JFXComboBox<?> cboProxyType;
     @FXML
     private JFXComboBox<Label> cboLanguage;
     @FXML
@@ -80,6 +77,20 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     private MultiFileItem backgroundItem;
     @FXML
     private MultiFileItem themeItem;
+    @FXML
+    private JFXRadioButton chkNoProxy;
+    @FXML
+    private JFXRadioButton chkManualProxy;
+    @FXML
+    private JFXRadioButton chkProxyHttp;
+    @FXML
+    private JFXRadioButton chkProxySocks;
+    @FXML
+    private JFXCheckBox chkProxyAuthentication;
+    @FXML
+    private GridPane authPane;
+    @FXML
+    private Pane proxyPane;
 
     {
         FXUtils.loadFXML(this, "/assets/fxml/setting.fxml");
@@ -131,8 +142,37 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         cboLanguage.getSelectionModel().select(Locales.LOCALES.indexOf(Settings.INSTANCE.getLocale()));
         cboLanguage.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setLocale(Locales.getLocale(newValue.intValue())));
 
-        cboProxyType.getSelectionModel().select(Proxies.PROXIES.indexOf(Settings.INSTANCE.getProxyType()));
-        cboProxyType.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setProxyType(Proxies.getProxyType(newValue.intValue())));
+
+        ToggleGroup proxyConfigurationGroup = new ToggleGroup();
+        chkProxyHttp.setUserData(Proxy.Type.HTTP);
+        chkProxyHttp.setToggleGroup(proxyConfigurationGroup);
+        chkProxySocks.setUserData(Proxy.Type.SOCKS);
+        chkProxySocks.setToggleGroup(proxyConfigurationGroup);
+
+        for (Toggle toggle : proxyConfigurationGroup.getToggles())
+            if (toggle.getUserData() == Settings.INSTANCE.getProxyType())
+                toggle.setSelected(true);
+
+        ToggleGroup hasProxyGroup = new ToggleGroup();
+        chkNoProxy.setToggleGroup(hasProxyGroup);
+        chkManualProxy.setToggleGroup(hasProxyGroup);
+        if (!Settings.INSTANCE.hasProxy())
+            chkNoProxy.setSelected(true);
+        else
+            chkManualProxy.setSelected(true);
+        proxyPane.disableProperty().bind(chkNoProxy.selectedProperty());
+
+        hasProxyGroup.selectedToggleProperty().addListener((a, b, newValue) -> {
+            Settings.INSTANCE.setHasProxy(newValue != chkNoProxy);
+        });
+
+        proxyConfigurationGroup.selectedToggleProperty().addListener((a, b, newValue) -> {
+            Settings.INSTANCE.setProxyType((Proxy.Type) newValue.getUserData());
+        });
+
+        chkProxyAuthentication.setSelected(Settings.INSTANCE.hasProxyAuth());
+        chkProxyAuthentication.selectedProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setHasProxyAuth(newValue));
+        authPane.disableProperty().bind(chkProxyAuthentication.selectedProperty().not());
 
         fileCommonLocation.setProperty(Settings.INSTANCE.commonPathProperty());
 

@@ -40,6 +40,12 @@ public final class Config {
     @SerializedName("commonpath")
     private String commonDirectory = Main.MINECRAFT_DIRECTORY.getAbsolutePath();
 
+    @SerializedName("hasProxy")
+    private boolean hasProxy = false;
+
+    @SerializedName("hasProxyAuth")
+    private boolean hasProxyAuth = false;
+
     @SerializedName("proxyType")
     private int proxyType = 0;
 
@@ -118,6 +124,24 @@ public final class Config {
 
     public void setCommonDirectory(String commonDirectory) {
         this.commonDirectory = commonDirectory;
+        Settings.INSTANCE.save();
+    }
+
+    public boolean isHasProxy() {
+        return hasProxy;
+    }
+
+    public void setHasProxy(boolean hasProxy) {
+        this.hasProxy = hasProxy;
+        Settings.INSTANCE.save();
+    }
+
+    public boolean isHasProxyAuth() {
+        return hasProxyAuth;
+    }
+
+    public void setHasProxyAuth(boolean hasProxyAuth) {
+        this.hasProxyAuth = hasProxyAuth;
         Settings.INSTANCE.save();
     }
 

@@ -124,11 +124,6 @@ public class Settings {
             } catch (Exception e) {
                 Logging.LOG.log(Level.WARNING, "Something happened wrongly when load settings.", e);
             }
-        else {
-            Logging.LOG.config("No settings file here, may be first loading.");
-            if (!c.getConfigurations().containsKey(HOME_PROFILE))
-                c.getConfigurations().put(HOME_PROFILE, new Profile(HOME_PROFILE, Main.MINECRAFT_DIRECTORY));
-        }
         return c;
     }
 
@@ -229,22 +224,27 @@ public class Settings {
         SETTINGS.setProxyPass(proxyPass);
     }
 
+    public boolean hasProxy() { return SETTINGS.isHasProxy(); }
+
+    public void setHasProxy(boolean hasProxy) { SETTINGS.setHasProxy(hasProxy); }
+
+    public boolean hasProxyAuth() { return SETTINGS.isHasProxyAuth(); }
+
+    public void setHasProxyAuth(boolean hasProxyAuth) { SETTINGS.setHasProxyAuth(hasProxyAuth); }
+
     private void loadProxy() {
         String host = getProxyHost();
         Integer port = Lang.toIntOrNull(getProxyPort());
-        if (StringUtils.isBlank(host) || port == null)
+        if (!hasProxy() || StringUtils.isBlank(host) || port == null || getProxyType() == Proxy.Type.DIRECT)
             proxy = Proxy.NO_PROXY;
         else {
             System.setProperty("http.proxyHost", getProxyHost());
             System.setProperty("http.proxyPort", getProxyPort());
-            if (getProxyType() == Proxy.Type.DIRECT)
-                proxy = Proxy.NO_PROXY;
-            else
-                proxy = new Proxy(proxyType, new InetSocketAddress(host, port));
+            proxy = new Proxy(proxyType, new InetSocketAddress(host, port));
 
             String user = getProxyUser();
             String pass = getProxyPass();
-            if (StringUtils.isNotBlank(user) && StringUtils.isNotBlank(pass)) {
+            if (hasProxyAuth() && StringUtils.isNotBlank(user) && StringUtils.isNotBlank(pass)) {
                 System.setProperty("http.proxyUser", user);
                 System.setProperty("http.proxyPassword", pass);
 
@@ -463,7 +463,7 @@ public class Settings {
     }
 
     public boolean hasProfile(String name) {
-        return getProfileMap().containsKey(Lang.nonNull(name, DEFAULT_PROFILE));
+        return getProfileMap().containsKey(name);
     }
 
     public Map<String, Profile> getProfileMap() {
@@ -494,8 +494,10 @@ public class Settings {
     }
 
     private void checkProfileMap() {
-        if (getProfileMap().isEmpty())
+        if (getProfileMap().isEmpty()) {
             getProfileMap().put(DEFAULT_PROFILE, new Profile(DEFAULT_PROFILE));
+            getProfileMap().put(HOME_PROFILE, new Profile(HOME_PROFILE, Main.MINECRAFT_DIRECTORY));
+        }
     }
 
     private void onProfileChanged() {

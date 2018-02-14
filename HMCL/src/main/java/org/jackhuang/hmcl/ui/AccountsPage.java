@@ -160,20 +160,10 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
                 Settings.INSTANCE.addAccount((Account) account);
                 dialog.close();
                 loadAccounts();
-            } else if (account instanceof InvalidCredentialsException) {
-                lblCreationWarning.setText(Main.i18n("account.failed.wrong_password"));
-            } else if (account instanceof NoCharacterException) {
-                lblCreationWarning.setText(Main.i18n("account.failed.no_charactor"));
-            } else if (account instanceof ServerDisconnectException) {
-                lblCreationWarning.setText(Main.i18n("account.failed.connect_authentication_server"));
-            } else if (account instanceof InvalidTokenException) {
-                lblCreationWarning.setText(Main.i18n("account.failed.invalid_token"));
-            } else if (account instanceof InvalidPasswordException) {
-                lblCreationWarning.setText(Main.i18n("account.failed.invalid_password"));
             } else if (account instanceof NoSelectedCharacterException) {
                 dialog.close();
             } else if (account instanceof Exception) {
-                lblCreationWarning.setText(account.getClass() + ": " + ((Exception) account).getLocalizedMessage());
+                lblCreationWarning.setText(accountException((Exception) account));
             }
             progressBar.setVisible(false);
         });
@@ -195,6 +185,22 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
 
     public void setTitle(String title) {
         this.title.set(title);
+    }
+
+    public static String accountException(Exception account) {
+        if (account instanceof InvalidCredentialsException) {
+            return Main.i18n("account.failed.invalid_credentials");
+        } else if (account instanceof NoCharacterException) {
+            return Main.i18n("account.failed.no_charactor");
+        } else if (account instanceof ServerDisconnectException) {
+            return Main.i18n("account.failed.connect_authentication_server");
+        } else if (account instanceof InvalidTokenException) {
+            return Main.i18n("account.failed.invalid_token");
+        } else if (account instanceof InvalidPasswordException) {
+            return Main.i18n("account.failed.invalid_password");
+        } else {
+            return account.getClass() + ": " + ((Exception) account).getLocalizedMessage();
+        }
     }
 
     public static String accountType(Account account) {

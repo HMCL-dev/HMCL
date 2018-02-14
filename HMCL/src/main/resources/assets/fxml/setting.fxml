@@ -47,25 +47,57 @@
                     </items>
                 </JFXComboBox></right></BorderPane>
                 <BorderPane><left><Label text="%settings.launcher.language" BorderPane.alignment="CENTER_LEFT" /></left><right><JFXComboBox fx:id="cboLanguage" /></right></BorderPane>
-                <BorderPane><left><Label text="%settings.launcher.proxy" BorderPane.alignment="CENTER_LEFT" /></left><right><HBox alignment="CENTER_LEFT" spacing="5">
-                    <JFXComboBox fx:id="cboProxyType">
-                        <items>
-                            <FXCollections fx:factory="observableArrayList">
-                                <Label text="%settings.launcher.proxy.direct" />
-                                <Label text="HTTP" />
-                                <Label text="Socks" />
-                            </FXCollections>
-                        </items>
-                    </JFXComboBox>
-                    <Label text="%settings.launcher.proxy.host" />
-                    <JFXTextField fx:id="txtProxyHost" maxWidth="50" />
-                    <Label text="%settings.launcher.proxy.port" />
-                    <JFXTextField fx:id="txtProxyPort" maxWidth="50" />
-                    <Label text="%settings.launcher.proxy.username" />
-                    <JFXTextField fx:id="txtProxyUsername" maxWidth="50" />
-                    <Label text="%settings.launcher.proxy.password" />
-                    <JFXTextField fx:id="txtProxyPassword" maxWidth="50" />
-                </HBox></right></BorderPane>
+
+                <ComponentList title="%settings.launcher.proxy"> <!-- proxy -->
+                    <VBox spacing="10">
+                        <JFXRadioButton fx:id="chkNoProxy" text="%settings.launcher.proxy.no_proxy" />
+                        <JFXRadioButton fx:id="chkManualProxy" text="%settings.launcher.proxy.has_proxy" />
+                        <VBox fx:id="proxyPane" style="-fx-padding: 0 0 0 30;">
+                            <HBox>
+                                <JFXRadioButton fx:id="chkProxyHttp" text="%settings.launcher.proxy.http" />
+                                <JFXRadioButton fx:id="chkProxySocks" text="%settings.launcher.proxy.socks" />
+                            </HBox>
+                            <GridPane hgap="20" vgap="10" style="-fx-padding: 0 0 0 15;">
+                                <columnConstraints>
+                                    <ColumnConstraints />
+                                    <ColumnConstraints hgrow="ALWAYS" />
+                                </columnConstraints>
+                                <rowConstraints>
+                                    <RowConstraints />
+                                    <RowConstraints />
+                                </rowConstraints>
+
+                                <Label text="%settings.launcher.proxy.host" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.halignment="RIGHT" />
+                                <JFXTextField fx:id="txtProxyHost" styleClass="fit-width" GridPane.rowIndex="1" GridPane.columnIndex="1" />
+
+                                <Label text="%settings.launcher.proxy.port" GridPane.rowIndex="2" GridPane.columnIndex="0" GridPane.halignment="RIGHT" />
+                                <JFXTextField fx:id="txtProxyPort" styleClass="fit-width" GridPane.rowIndex="2" GridPane.columnIndex="1" />
+
+                            </GridPane>
+
+                            <VBox style="-fx-padding: 15 0 15 5;">
+                                <JFXCheckBox fx:id="chkProxyAuthentication" text="%settings.launcher.proxy.authentication" />
+                            </VBox>
+
+                            <GridPane fx:id="authPane" hgap="20" vgap="10" style="-fx-padding: 0 0 0 15;">
+                                <columnConstraints>
+                                    <ColumnConstraints />
+                                    <ColumnConstraints hgrow="ALWAYS" />
+                                </columnConstraints>
+
+                                <rowConstraints>
+                                    <RowConstraints />
+                                    <RowConstraints />
+                                </rowConstraints>
+
+                                <Label fx:id="" text="%settings.launcher.proxy.username" GridPane.rowIndex="0" GridPane.columnIndex="0" />
+                                <JFXTextField fx:id="txtProxyUsername" styleClass="fit-width" GridPane.rowIndex="0" GridPane.columnIndex="1" />
+                                <Label text="%settings.launcher.proxy.password" GridPane.rowIndex="1" GridPane.columnIndex="0" />
+                                <JFXTextField fx:id="txtProxyPassword" styleClass="fit-width" GridPane.rowIndex="1" GridPane.columnIndex="1" />
+                            </GridPane>
+                        </VBox>
+                    </VBox>
+                </ComponentList>
 
                 <MultiFileItem fx:id="themeItem" title="%settings.launcher.theme" hasSubtitle="true" hasCustom="false" />
 
@@ -88,17 +120,17 @@
                             <RowConstraints minHeight="-Infinity" valignment="TOP" vgrow="SOMETIMES" />
                             <RowConstraints minHeight="-Infinity" valignment="TOP" vgrow="SOMETIMES" />
                         </rowConstraints>
-                        <Label text="%about.copyright" style="-fx-font-weight: bold;" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                        <Label text="%about.copyright" GridPane.columnIndex="0" GridPane.rowIndex="0" />
                         <Label wrapText="true" text="%about.copyright.statement" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-                        <Label text="%about.author" style="-fx-font-weight: bold;" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                        <Label text="%about.author" GridPane.columnIndex="0" GridPane.rowIndex="1" />
                         <Label wrapText="true" text="%about.author.statement" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                        <Label text="%about.thanks_to" style="-fx-font-weight: bold;" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                        <Label text="%about.thanks_to" GridPane.columnIndex="0" GridPane.rowIndex="2" />
                         <Label wrapText="true" text="%about.thanks_to.statement" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                        <Label text="%about.dependency" style="-fx-font-weight: bold;" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                        <Label text="%about.dependency" GridPane.columnIndex="0" GridPane.rowIndex="3" />
                         <Label wrapText="true" text="%about.dependency.statement" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                        <Label text="%about.claim" style="-fx-font-weight: bold;" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                        <Label text="%about.claim" GridPane.columnIndex="0" GridPane.rowIndex="4" />
                         <Label textAlignment="JUSTIFY" wrapText="true" text="%about.claim.statement" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-                        <Label text="%about.open_source" style="-fx-font-weight: bold;" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                        <Label text="%about.open_source" GridPane.columnIndex="0" GridPane.rowIndex="5" />
                         <Label wrapText="true" text="%about.open_source.statement" GridPane.columnIndex="1" GridPane.rowIndex="5" />
                     </GridPane>
                 </StackPane>

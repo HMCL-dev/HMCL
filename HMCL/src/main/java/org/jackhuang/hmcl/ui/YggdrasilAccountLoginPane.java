@@ -24,10 +24,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.Main;
-import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.auth.SpecificCharacterSelector;
-import org.jackhuang.hmcl.auth.InvalidCredentialsException;
+import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.setting.Accounts;
@@ -78,10 +75,10 @@ public class YggdrasilAccountLoginPane extends StackPane {
             if (account instanceof AuthInfo) {
                 success.accept(((AuthInfo) account));
                 dialog.close();
-            } else if (account instanceof InvalidCredentialsException) {
-                lblCreationWarning.setText(Main.i18n("account.failed.wrong_password"));
+            } else if (account instanceof NoSelectedCharacterException) {
+                dialog.close();
             } else if (account instanceof Exception) {
-                lblCreationWarning.setText(account.getClass().toString() + ": " + ((Exception) account).getLocalizedMessage());
+                lblCreationWarning.setText(AccountsPage.accountException((Exception) account));
             }
 
             progressBar.setVisible(false);

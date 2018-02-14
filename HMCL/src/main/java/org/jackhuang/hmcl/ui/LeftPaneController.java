@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -122,7 +123,7 @@ public final class LeftPaneController {
     private void onProfilesLoading() {
         LinkedList<RipplerContainer> list = new LinkedList<>();
         for (Profile profile : Settings.INSTANCE.getProfiles()) {
-            VersionListItem item = new VersionListItem(profile.getName());
+            VersionListItem item = new VersionListItem(Profiles.getProfileDisplayName(profile));
             RipplerContainer ripplerContainer = new RipplerContainer(item);
             item.setOnSettingsButtonClicked(() -> Controllers.getDecorator().showPage(new ProfilePage(profile)));
             ripplerContainer.setOnMouseClicked(e -> Settings.INSTANCE.setSelectedProfile(profile));
