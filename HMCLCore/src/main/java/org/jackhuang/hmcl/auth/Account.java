@@ -57,6 +57,14 @@ public abstract class Account {
      */
     public abstract AuthInfo logIn(MultiCharacterSelector selector, Proxy proxy) throws AuthenticationException;
 
+    public abstract boolean canPlayOffline();
+
+    /**
+     * Play offline.
+     * @return the specific offline player's info.
+     */
+    public abstract AuthInfo playOffline();
+
     public abstract void logOut();
 
     protected abstract Map<Object, Object> toStorageImpl();

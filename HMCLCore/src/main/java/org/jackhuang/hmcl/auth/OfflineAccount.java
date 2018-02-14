@@ -70,6 +70,16 @@ public class OfflineAccount extends Account {
     }
 
     @Override
+    public boolean canPlayOffline() {
+        return false;
+    }
+
+    @Override
+    public AuthInfo playOffline() {
+        throw new IllegalStateException();
+    }
+
+    @Override
     public Map<Object, Object> toStorageImpl() {
         return Lang.mapOf(
                 new Pair<>("uuid", uuid),

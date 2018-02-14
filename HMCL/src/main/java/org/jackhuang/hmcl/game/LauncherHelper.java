@@ -20,10 +20,7 @@ package org.jackhuang.hmcl.game;
 import com.jfoenix.concurrency.JFXUtilities;
 import javafx.application.Platform;
 import org.jackhuang.hmcl.Main;
-import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.auth.AuthenticationException;
-import org.jackhuang.hmcl.auth.SpecificCharacterSelector;
+import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.mod.CurseCompletionTask;
@@ -91,6 +88,11 @@ public final class LauncherHelper {
                 .then(Task.of(Main.i18n("account.methods"), variables -> {
                     try {
                         variables.set("account", account.logIn(new SpecificCharacterSelector(Accounts.getCurrentCharacter(account)), Settings.INSTANCE.getProxy()));
+                    } catch (ServerDisconnectException e) {
+                        if (account.canPlayOffline())
+                            variables.set("account", account.playOffline());
+                        else
+                            throw e;
                     } catch (AuthenticationException e) {
                         variables.set("account", DialogController.logIn(account));
                         JFXUtilities.runInFX(() -> Controllers.dialog(launchingStepsPane));

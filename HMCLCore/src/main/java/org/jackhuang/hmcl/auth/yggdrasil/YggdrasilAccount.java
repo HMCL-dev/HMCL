@@ -172,6 +172,19 @@ public final class YggdrasilAccount extends Account {
     }
 
     @Override
+    public boolean canPlayOffline() {
+        return isLoggedIn() && getSelectedProfile() != null && !canPlayOnline();
+    }
+
+    @Override
+    public AuthInfo playOffline() {
+        if (!canPlayOffline())
+            throw new IllegalStateException("Current account " + this + " cannot play offline.");
+
+        return new AuthInfo(selectedProfile, accessToken, userType, GSON.toJson(userProperties));
+    }
+
+    @Override
     public void logOut() {
         password = null;
         userId = null;
