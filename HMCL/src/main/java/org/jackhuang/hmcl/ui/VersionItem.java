@@ -59,6 +59,8 @@ public final class VersionItem extends StackPane {
     @FXML
     private Label lblGameVersion;
     @FXML
+    private Label lblLibraries;
+    @FXML
     private ImageView iconView;
 
     private EventHandler<? super MouseEvent> launchClickedHandler = null;
@@ -96,6 +98,10 @@ public final class VersionItem extends StackPane {
 
     public void setGameVersion(String gameVersion) {
         lblGameVersion.setText(gameVersion);
+    }
+
+    public void setLibraries(String libraries) {
+        lblLibraries.setText(libraries);
     }
 
     public void setImage(Image image) {

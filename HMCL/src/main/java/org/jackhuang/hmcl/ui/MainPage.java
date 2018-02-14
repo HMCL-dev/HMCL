@@ -32,14 +32,13 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.download.MaintainTask;
+import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.ProfileChangedEvent;
 import org.jackhuang.hmcl.event.ProfileLoadingEvent;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
-import org.jackhuang.hmcl.game.GameVersion;
-import org.jackhuang.hmcl.game.LauncherHelper;
-import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.setting.Profile;
@@ -53,11 +52,13 @@ import org.jackhuang.hmcl.ui.download.DownloadWizardProvider;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.OperatingSystem;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public final class MainPage extends StackPane implements DecoratorPage {
 
@@ -101,6 +102,21 @@ public final class MainPage extends StackPane implements DecoratorPage {
         item.setUpdate(profile.getRepository().isModpack(version));
         item.setGameVersion(game);
         item.setVersionName(version);
+
+        StringBuilder libraries = new StringBuilder();
+        for (Library library : profile.getRepository().getVersion(version).getLibraries()) {
+            if (library.getGroupId().equalsIgnoreCase("net.minecraftforge") && library.getArtifactId().equalsIgnoreCase("forge")) {
+                libraries.append(Main.i18n("install.installer.forge")).append(": ").append(StringUtils.removeSuffix(StringUtils.removePrefix(library.getVersion().replaceAll("(?i)forge", "").replace(game, "").trim(), "-"), "-")).append("\n");
+            }
+            if (library.getGroupId().equalsIgnoreCase("com.mumfrey") && library.getArtifactId().equalsIgnoreCase("liteloader")) {
+                libraries.append(Main.i18n("install.installer.liteloader")).append(": ").append(StringUtils.removeSuffix(StringUtils.removePrefix(library.getVersion().replaceAll("(?i)liteloader", "").replace(game, "").trim(), "-"), "-")).append("\n");
+            }
+            if (library.getGroupId().equalsIgnoreCase("net.optifine") && library.getArtifactId().equalsIgnoreCase("optifine")) {
+                libraries.append(Main.i18n("install.installer.optifine")).append(": ").append(StringUtils.removeSuffix(StringUtils.removePrefix(library.getVersion().replaceAll("(?i)optifine", "").replace(game, "").trim(), "-"), "-")).append("\n");
+            }
+        }
+
+        item.setLibraries(libraries.toString());
         item.setOnLaunchButtonClicked(e -> {
             if (Settings.INSTANCE.getSelectedAccount() == null)
                 Controllers.dialog(Main.i18n("login.empty_username"));

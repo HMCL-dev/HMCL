@@ -21,7 +21,7 @@
                     <VBox style="-fx-padding: 8 8 0 8;">
                         <Label fx:id="lblVersionName" style="-fx-font-size: 15;" textAlignment="JUSTIFY" wrapText="true" />
                         <Label fx:id="lblGameVersion" style="-fx-font-size: 10;" textAlignment="JUSTIFY" wrapText="true" />
-                        <Label fx:id="lblLibraries" style="-fx-font-size: 10;" textAlignment="JUSTIFY" wrapText="true" />
+                        <Label fx:id="lblLibraries" style="-fx-font-size: 10; -fx-text-fill: gray;" textAlignment="JUSTIFY" wrapText="true" />
                     </VBox>
                 </center>
             </BorderPane>
