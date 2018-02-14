@@ -85,28 +85,6 @@ public final class VersionSettingsController {
 
         FXUtils.smoothScrolling(scroll);
 
-        double limitWidth = 300;
-        FXUtils.limitWidth(txtMaxMemory, limitWidth);
-        FXUtils.limitWidth(cboLauncherVisibility, limitWidth);
-
-        double limitHeight = 10;
-        FXUtils.limitHeight(chkNoJVMArgs, limitHeight);
-        FXUtils.limitHeight(chkNoCommon, limitHeight);
-        FXUtils.limitHeight(chkNoGameCheck, limitHeight);
-        FXUtils.limitHeight(chkShowLogs, limitHeight);
-
-        NumberValidator nonnull = new NumberValidator("Must be a number.", false);
-        NumberValidator nullable = new NumberValidator("Must be a number.", true);
-
-        txtWidth.setValidators(nonnull);
-        FXUtils.setValidateWhileTextChanged(txtWidth);
-        txtHeight.setValidators(nonnull);
-        FXUtils.setValidateWhileTextChanged(txtHeight);
-        txtMaxMemory.setValidators(nonnull);
-        FXUtils.setValidateWhileTextChanged(txtMaxMemory);
-        txtMetaspace.setValidators(nullable);
-        FXUtils.setValidateWhileTextChanged(txtMetaspace);
-
         Task.of(variables -> {
             variables.set("list", JavaVersion.getJREs().values().stream().map(javaVersion ->
                     javaItem.createChildren(javaVersion.getVersion(), javaVersion.getBinary().getAbsolutePath(), javaVersion)

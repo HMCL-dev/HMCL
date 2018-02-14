@@ -65,8 +65,6 @@ public final class VersionItem extends StackPane {
 
     public VersionItem() {
         FXUtils.loadFXML(this, "/assets/fxml/version-item.fxml");
-        FXUtils.limitWidth(this, 160);
-        FXUtils.limitHeight(this, 156);
         setEffect(new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.26), 5.0, 0.12, -1.0, 1.0));
         btnSettings.setGraphic(SVG.gear("black", 15, 15));
         btnUpdate.setGraphic(SVG.update("black", 15, 15));

@@ -96,7 +96,7 @@ public class MultiFileItem extends ComponentList {
         right.setSpacing(3);
         right.getChildren().addAll(txtCustom, btnSelect);
         custom.setRight(right);
-        FXUtils.limitHeight(custom, 20);
+        FXUtils.setLimitHeight(custom, 20);
 
         pane.setStyle("-fx-padding: 0 0 10 0;");
         pane.setSpacing(8);
@@ -122,7 +122,7 @@ public class MultiFileItem extends ComponentList {
     public Node createChildren(String title, String subtitle, Object userData) {
         BorderPane pane = new BorderPane();
         pane.setStyle("-fx-padding: 3;");
-        FXUtils.limitHeight(pane, 20);
+        FXUtils.setLimitHeight(pane, 20);
 
         JFXRadioButton left = new JFXRadioButton(title);
         left.setToggleGroup(group);

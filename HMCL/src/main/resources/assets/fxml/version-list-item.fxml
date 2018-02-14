@@ -5,6 +5,7 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
+<?import org.jackhuang.hmcl.ui.FXUtils?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          styleClass="transparent"
@@ -13,10 +14,10 @@
     <BorderPane pickOnBounds="false">
         <left>
             <HBox alignment="CENTER" mouseTransparent="true">
-                <StackPane fx:id="imageViewContainer">
-                <ImageView preserveRatio="true" fx:id="imageView" smooth="false">
-                    <Image url="/assets/img/icon.png" />
-                </ImageView>
+                <StackPane fx:id="imageViewContainer" FXUtils.limitWidth="32" FXUtils.limitHeight="32">
+                    <ImageView preserveRatio="true" fx:id="imageView" smooth="false">
+                        <Image url="/assets/img/icon.png" />
+                    </ImageView>
                 </StackPane>
                 <BorderPane style="-fx-padding: 0 0 0 10;">
                     <top>

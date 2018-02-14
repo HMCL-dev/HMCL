@@ -8,9 +8,10 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
+<?import org.jackhuang.hmcl.ui.FXUtils?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
-         type="StackPane">
+         type="StackPane" FXUtils.limitWidth="160" FXUtils.limitHeight="156">
     <VBox fx:id="content">
         <StackPane fx:id="header" VBox.vgrow="ALWAYS">
             <BorderPane>

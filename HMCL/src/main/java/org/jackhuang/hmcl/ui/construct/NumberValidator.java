@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.validation.base.ValidatorBase;
+import javafx.beans.NamedArg;
 import javafx.scene.control.TextInputControl;
 import org.jackhuang.hmcl.util.StringUtils;
 
@@ -28,11 +29,11 @@ public class NumberValidator extends ValidatorBase {
         this(false);
     }
 
-    public NumberValidator(boolean nullable) {
+    public NumberValidator(@NamedArg("nullable") boolean nullable) {
         this.nullable = nullable;
     }
 
-    public NumberValidator(String message, boolean nullable) {
+    public NumberValidator(@NamedArg("message") String message, @NamedArg("nullable") boolean nullable) {
         super(message);
         this.nullable = nullable;
     }

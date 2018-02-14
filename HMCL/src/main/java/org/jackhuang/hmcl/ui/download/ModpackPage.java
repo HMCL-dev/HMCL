@@ -99,9 +99,6 @@ public final class ModpackPage extends StackPane implements WizardPage {
                 txtModpackName.setText(Main.i18n("modpack.task.install.error"));
             }
         }
-
-        //FXUtils.limitHeight(borderPane, 100.0);
-        FXUtils.limitWidth(borderPane, 500.0);
     }
 
     @Override

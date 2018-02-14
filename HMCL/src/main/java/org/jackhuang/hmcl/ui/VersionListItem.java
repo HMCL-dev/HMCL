@@ -46,8 +46,6 @@ public final class VersionListItem extends StackPane {
         lblGameVersion.setText(gameVersion);
 
         FXUtils.limitSize(imageView, 32, 32);
-        FXUtils.limitWidth(imageViewContainer, 32);
-        FXUtils.limitHeight(imageViewContainer, 32);
     }
 
     @FXML

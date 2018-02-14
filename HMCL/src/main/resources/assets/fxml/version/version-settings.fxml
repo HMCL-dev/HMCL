@@ -9,6 +9,8 @@
 <?import javafx.scene.layout.*?>
 <?import org.jackhuang.hmcl.ui.construct.ComponentList?>
 <?import org.jackhuang.hmcl.ui.construct.MultiFileItem?>
+<?import org.jackhuang.hmcl.ui.construct.NumberValidator?>
+<?import org.jackhuang.hmcl.ui.FXUtils?>
 <StackPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
            fx:controller="org.jackhuang.hmcl.ui.VersionSettingsController">
@@ -56,7 +58,11 @@
                         </VBox>
                     </left>
                     <right>
-                        <JFXTextField fx:id="txtMaxMemory" BorderPane.alignment="CENTER_RIGHT"/>
+                        <JFXTextField fx:id="txtMaxMemory" BorderPane.alignment="CENTER_RIGHT" FXUtils.validateWhileTextChanged="true" FXUtils.limitWidth="300">
+                            <validators>
+                                <NumberValidator message="%input.number" nullable="false" />
+                            </validators>
+                        </JFXTextField>
                     </right>
                 </BorderPane>
 
@@ -65,7 +71,7 @@
                         <Label text="%settings.advanced.launcher_visible" BorderPane.alignment="CENTER_LEFT"/>
                     </left>
                     <right>
-                        <JFXComboBox fx:id="cboLauncherVisibility" BorderPane.alignment="CENTER_RIGHT">
+                        <JFXComboBox fx:id="cboLauncherVisibility" BorderPane.alignment="CENTER_RIGHT" FXUtils.limitWidth="300">
                             <items>
                                 <FXCollections fx:factory="observableArrayList">
                                     <Label text="%settings.advanced.launcher_visibility.close"/>
@@ -86,9 +92,17 @@
                         <BorderPane>
                             <left>
                                 <HBox prefWidth="210" spacing="3" alignment="CENTER" BorderPane.alignment="CENTER">
-                                    <JFXTextField fx:id="txtWidth" promptText="800" prefWidth="100"/>
+                                    <JFXTextField fx:id="txtWidth" promptText="800" prefWidth="100" FXUtils.validateWhileTextChanged="true">
+                                        <validators>
+                                            <NumberValidator message="%input.number" nullable="false" />
+                                        </validators>
+                                    </JFXTextField>
                                     <Label>x</Label>
-                                    <JFXTextField fx:id="txtHeight" promptText="480" prefWidth="100"/>
+                                    <JFXTextField fx:id="txtHeight" promptText="480" prefWidth="100" FXUtils.validateWhileTextChanged="true">
+                                        <validators>
+                                            <NumberValidator message="%input.number" nullable="false" />
+                                        </validators>
+                                    </JFXTextField>
                                 </HBox>
                             </left>
                             <right>
@@ -108,7 +122,7 @@
                         <Label text="%settings.show_log"/>
                     </left>
                     <right>
-                        <JFXToggleButton fx:id="chkShowLogs" size="7"/>
+                        <JFXToggleButton fx:id="chkShowLogs" size="7" FXUtils.limitHeight="10" />
                     </right>
                 </BorderPane>
             </ComponentList>
@@ -128,7 +142,11 @@
                 <JFXTextField labelFloat="true" promptText="%settings.advanced.minecraft_arguments"
                               styleClass="fit-width" fx:id="txtGameArgs" StackPane.margin="$insets"/>
                 <JFXTextField labelFloat="true" promptText="%settings.advanced.java_permanent_generation_space"
-                              styleClass="fit-width" fx:id="txtMetaspace" StackPane.margin="$insets"/>
+                              styleClass="fit-width" fx:id="txtMetaspace" StackPane.margin="$insets" FXUtils.validateWhileTextChanged="true">
+                    <validators>
+                        <NumberValidator message="%input.number" nullable="true" />
+                    </validators>
+                </JFXTextField>
                 <JFXTextField labelFloat="true" promptText="%settings.advanced.wrapper_launcher" styleClass="fit-width"
                               fx:id="txtWrapper" StackPane.margin="$insets"/>
                 <JFXTextField labelFloat="true" promptText="%settings.advanced.precall_command" styleClass="fit-width"
@@ -140,7 +158,7 @@
                         <Label text="%settings.advanced.no_jvm_args"/>
                     </left>
                     <right>
-                        <JFXToggleButton fx:id="chkNoJVMArgs" size="7"/>
+                        <JFXToggleButton fx:id="chkNoJVMArgs" size="7" FXUtils.limitHeight="10" />
                     </right>
                 </BorderPane>
                 <BorderPane>
@@ -148,7 +166,7 @@
                         <Label text="%settings.advanced.no_common"/>
                     </left>
                     <right>
-                        <JFXToggleButton fx:id="chkNoCommon" size="7"/>
+                        <JFXToggleButton fx:id="chkNoCommon" size="7" FXUtils.limitHeight="10" />
                     </right>
                 </BorderPane>
                 <BorderPane>
@@ -156,7 +174,7 @@
                         <Label text="%settings.advanced.dont_check_game_completeness"/>
                     </left>
                     <right>
-                        <JFXToggleButton fx:id="chkNoGameCheck" size="7"/>
+                        <JFXToggleButton fx:id="chkNoGameCheck" size="7" FXUtils.limitHeight="10" />
                     </right>
                 </BorderPane>
             </ComponentList>

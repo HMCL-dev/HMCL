@@ -73,8 +73,6 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
         dialog.setDialogContainer(this);
 
         FXUtils.smoothScrolling(scrollPane);
-        FXUtils.setValidateWhileTextChanged(txtUsername);
-        FXUtils.setValidateWhileTextChanged(txtPassword);
 
         cboType.getItems().setAll(Main.i18n("account.methods.offline"), Main.i18n("account.methods.yggdrasil"));
         cboType.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> {

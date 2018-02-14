@@ -180,9 +180,6 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
 
         animationHandler = new TransitionHandler(contentPlaceHolder);
 
-        FXUtils.setOverflowHidden((Pane) lookup("#contentPlaceHolderRoot"));
-        FXUtils.setOverflowHidden(drawerWrapper);
-
         loadBackground();
     }
 
@@ -487,7 +484,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
 
         if (content instanceof Region) {
             ((Region) content).setMinSize(0, 0);
-            FXUtils.setOverflowHidden((Region) content);
+            FXUtils.setOverflowHidden((Region) content, true);
         }
 
         if (content instanceof Refreshable)

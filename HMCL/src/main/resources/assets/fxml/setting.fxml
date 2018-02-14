@@ -8,6 +8,8 @@
 <?import org.jackhuang.hmcl.ui.construct.FileItem?>
 <?import org.jackhuang.hmcl.ui.construct.FontComboBox?>
 <?import org.jackhuang.hmcl.ui.construct.MultiFileItem?>
+<?import org.jackhuang.hmcl.ui.construct.NumberValidator?>
+<?import org.jackhuang.hmcl.ui.FXUtils?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
@@ -38,7 +40,7 @@
                 <MultiFileItem fx:id="backgroundItem" title="%launcher.background" chooserTitle="%launcher.background.choose"
                                hasSubtitle="true" customText="%settings.custom" />
 
-                <BorderPane><left><Label text="%settings.launcher.download_source" BorderPane.alignment="CENTER_LEFT" /></left><right><JFXComboBox fx:id="cboDownloadSource">
+                <BorderPane><left><Label text="%settings.launcher.download_source" BorderPane.alignment="CENTER_LEFT" /></left><right><JFXComboBox fx:id="cboDownloadSource"  FXUtils.limitWidth="400">
                     <items>
                         <FXCollections fx:factory="observableArrayList">
                             <Label text="%download.mojang" />
@@ -46,7 +48,14 @@
                         </FXCollections>
                     </items>
                 </JFXComboBox></right></BorderPane>
-                <BorderPane><left><Label text="%settings.launcher.language" BorderPane.alignment="CENTER_LEFT" /></left><right><JFXComboBox fx:id="cboLanguage" /></right></BorderPane>
+                <BorderPane>
+                    <left>
+                        <Label text="%settings.launcher.language" BorderPane.alignment="CENTER_LEFT" />
+                    </left>
+                    <right>
+                        <JFXComboBox fx:id="cboLanguage" FXUtils.limitWidth="400" />
+                    </right>
+                </BorderPane>
 
                 <ComponentList title="%settings.launcher.proxy"> <!-- proxy -->
                     <VBox spacing="10">
@@ -71,11 +80,15 @@
                                 <JFXTextField fx:id="txtProxyHost" styleClass="fit-width" GridPane.rowIndex="1" GridPane.columnIndex="1" />
 
                                 <Label text="%settings.launcher.proxy.port" GridPane.rowIndex="2" GridPane.columnIndex="0" GridPane.halignment="RIGHT" />
-                                <JFXTextField fx:id="txtProxyPort" styleClass="fit-width" GridPane.rowIndex="2" GridPane.columnIndex="1" />
+                                <JFXTextField fx:id="txtProxyPort" styleClass="fit-width" GridPane.rowIndex="2" GridPane.columnIndex="1" FXUtils.validateWhileTextChanged="true">
+                                    <validators>
+                                        <NumberValidator message="%input.number" nullable="false" />
+                                    </validators>
+                                </JFXTextField>
 
                             </GridPane>
 
-                            <VBox style="-fx-padding: 15 0 15 5;">
+                            <VBox style="-fx-padding: 20 0 20 5;">
                                 <JFXCheckBox fx:id="chkProxyAuthentication" text="%settings.launcher.proxy.authentication" />
                             </VBox>
 
@@ -93,7 +106,7 @@
                                 <Label fx:id="" text="%settings.launcher.proxy.username" GridPane.rowIndex="0" GridPane.columnIndex="0" />
                                 <JFXTextField fx:id="txtProxyUsername" styleClass="fit-width" GridPane.rowIndex="0" GridPane.columnIndex="1" />
                                 <Label text="%settings.launcher.proxy.password" GridPane.rowIndex="1" GridPane.columnIndex="0" />
-                                <JFXTextField fx:id="txtProxyPassword" styleClass="fit-width" GridPane.rowIndex="1" GridPane.columnIndex="1" />
+                                <JFXPasswordField fx:id="txtProxyPassword" styleClass="fit-width" GridPane.rowIndex="1" GridPane.columnIndex="1" />
                             </GridPane>
                         </VBox>
                     </VBox>

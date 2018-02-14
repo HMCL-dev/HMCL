@@ -10,9 +10,10 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.control.ScrollPane?>
+<?import org.jackhuang.hmcl.ui.FXUtils?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
-         type="StackPane">
+         type="StackPane" FXUtils.limitWidth="400" FXUtils.limitHeight="200">
     <BorderPane>
         <top>
             <JFXProgressBar fx:id="progressBar" StackPane.alignment="TOP_CENTER" />

@@ -7,6 +7,7 @@
 <?import javafx.scene.shape.Rectangle?>
 <?import org.jackhuang.hmcl.ui.construct.AdvancedListBox?>
 <?import java.lang.String?>
+<?import org.jackhuang.hmcl.ui.FXUtils?>
 <fx:root xmlns="http://javafx.com/javafx"
          type="StackPane"
          xmlns:fx="http://javafx.com/fxml">
@@ -18,7 +19,7 @@
             maxHeight="519"
             maxWidth="800">
         <center>
-            <StackPane fx:id="drawerWrapper" styleClass="jfx-decorator-drawer">
+            <StackPane fx:id="drawerWrapper" styleClass="jfx-decorator-drawer" FXUtils.overflowHidden="true">
                 <JFXDialog fx:id="dialog" overlayClose="false" />
                 <BorderPane>
                     <left>
@@ -47,7 +48,7 @@
                         </StackPane>
                     </left>
                     <center>
-                        <StackPane fx:id="contentPlaceHolderRoot" styleClass="jfx-decorator-content-container"
+                        <StackPane fx:id="contentPlaceHolderRoot" styleClass="jfx-decorator-content-container" FXUtils.overflowHidden="true"
                                    VBox.vgrow="ALWAYS">
                             <StackPane fx:id="contentPlaceHolder" styleClass="jfx-decorator-content-container">
                                 <!-- Node -->

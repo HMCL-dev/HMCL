@@ -6,13 +6,14 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import org.jackhuang.hmcl.ui.construct.ComponentList?>
+<?import org.jackhuang.hmcl.ui.FXUtils?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
     <fx:define>
         <Insets fx:id="insets" bottom="12" />
     </fx:define>
-        <VBox fx:id="borderPane" alignment="CENTER">
+        <VBox fx:id="borderPane" alignment="CENTER" FXUtils.limitWidth="500">
             <HBox style="-fx-padding: 0 0 16 5;"><Label text="%modpack.task.install" /></HBox>
             <ComponentList>
                 <BorderPane><left><Label text="%modpack.task.install.will" /></left><right><Label fx:id="lblModpackLocation" /></right></BorderPane>

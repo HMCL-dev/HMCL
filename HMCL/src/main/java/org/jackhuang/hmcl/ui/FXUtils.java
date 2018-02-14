@@ -38,6 +38,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
@@ -45,6 +46,7 @@ import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.OperatingSystem;
+import org.jackhuang.hmcl.util.Pair;
 
 import java.io.File;
 import java.io.IOException;
@@ -92,33 +94,77 @@ public final class FXUtils {
         });
     }
 
-    public static void setValidateWhileTextChanged(JFXTextField field) {
-        field.textProperty().addListener(o -> field.validate());
-        field.validate();
+    public static <T> void addListener(Node node, String key, ObservableValue<T> value, Consumer<T> callback) {
+        ChangeListener<T> listener = (a, b, newValue) -> callback.accept(newValue);
+        node.getProperties().put(key, new Pair<>(callback, listener));
+        value.addListener(listener);
     }
 
-    public static void setValidateWhileTextChanged(JFXPasswordField field) {
-        field.textProperty().addListener(o -> field.validate());
-        field.validate();
+    public static <T> void removeListener(Node node, String key) {
+        if (node.getProperties().get(key) instanceof Pair) {
+            Pair pair = (Pair) node.getProperties().get(key);
+            if (pair.getValue() instanceof ObservableValue && pair.getKey() instanceof ChangeListener) {
+                ((ObservableValue) pair.getValue()).removeListener((ChangeListener) pair.getKey());
+            }
+        }
     }
 
-    public static void setOverflowHidden(Region region) {
-        Rectangle rectangle = new Rectangle();
-        rectangle.widthProperty().bind(region.widthProperty());
-        rectangle.heightProperty().bind(region.heightProperty());
-        region.setClip(rectangle);
+    public static void setValidateWhileTextChanged(Node field, boolean validate) {
+        if (field instanceof JFXTextField) {
+            if (validate) {
+                addListener(field, "FXUtils.validation", ((JFXTextField) field).textProperty(), o -> ((JFXTextField) field).validate());
+            } else {
+                removeListener(field, "FXUtils.validation");
+            }
+            ((JFXTextField) field).validate();
+        } else if (field instanceof JFXPasswordField) {
+            if (validate) {
+                addListener(field, "FXUtils.validation", ((JFXPasswordField) field).textProperty(), o -> ((JFXPasswordField) field).validate());
+            } else {
+                removeListener(field, "FXUtils.validation");
+            }
+            ((JFXPasswordField) field).validate();
+        } else
+            throw new IllegalArgumentException("Only JFXTextField and JFXPasswordField allowed");
     }
 
-    public static void limitWidth(Region region, double width) {
+    public static boolean getValidateWhileTextChanged(Node field) {
+        return field.getProperties().containsKey("FXUtils.validation");
+    }
+
+    public static void setOverflowHidden(Region region, boolean hidden) {
+        if (hidden) {
+            Rectangle rectangle = new Rectangle();
+            rectangle.widthProperty().bind(region.widthProperty());
+            rectangle.heightProperty().bind(region.heightProperty());
+            region.setClip(rectangle);
+        } else {
+            region.setClip(null);
+        }
+    }
+
+    public static boolean getOverflowHidden(Region region) {
+        return region.getClip() != null;
+    }
+
+    public static void setLimitWidth(Region region, double width) {
         region.setMaxWidth(width);
         region.setMinWidth(width);
         region.setPrefWidth(width);
     }
 
-    public static void limitHeight(Region region, double height) {
+    public static double getLimitWidth(Region region) {
+        return region.getMaxWidth();
+    }
+
+    public static void setLimitHeight(Region region, double height) {
         region.setMaxHeight(height);
         region.setMinHeight(height);
         region.setPrefHeight(height);
+    }
+
+    public static double getLimitHeight(Region region) {
+        return region.getMaxHeight();
     }
 
     public static void smoothScrolling(ScrollPane scrollPane) {

@@ -6,7 +6,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.*?>
-<?import java.lang.String?>
+<?import org.jackhuang.hmcl.ui.FXUtils?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
@@ -38,13 +38,13 @@
 
                         <JFXComboBox fx:id="cboType" GridPane.columnIndex="1" GridPane.rowIndex="0" />
 
-                        <JFXTextField fx:id="txtUsername" promptText="%account.username" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2">
+                        <JFXTextField fx:id="txtUsername" promptText="%account.username" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" FXUtils.validateWhileTextChanged="true">
                             <validators>
                                 <RequiredFieldValidator message="%input.not_empty">
                                 </RequiredFieldValidator>
                             </validators>
                         </JFXTextField>
-                        <JFXPasswordField fx:id="txtPassword" promptText="%account.password" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2">
+                        <JFXPasswordField fx:id="txtPassword" promptText="%account.password" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2" FXUtils.validateWhileTextChanged="true">
                             <validators>
                                 <RequiredFieldValidator message="%input.not_empty">
                                 </RequiredFieldValidator>

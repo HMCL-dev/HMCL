@@ -67,9 +67,6 @@ public final class AccountItem extends StackPane {
 
         FXUtils.loadFXML(this, "/assets/fxml/account-item.fxml");
 
-        FXUtils.limitWidth(this, 160);
-        FXUtils.limitHeight(this, 156);
-
         setEffect(new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.26), 5.0, 0.12, -0.5, 1.0));
 
         chkSelected.setToggleGroup(toggleGroup);

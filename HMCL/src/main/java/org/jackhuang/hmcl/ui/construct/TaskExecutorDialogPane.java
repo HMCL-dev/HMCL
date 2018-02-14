@@ -47,9 +47,6 @@ public class TaskExecutorDialogPane extends StackPane {
     public TaskExecutorDialogPane(Runnable cancel) {
         FXUtils.loadFXML(this, "/assets/fxml/task-dialog.fxml");
 
-        FXUtils.limitHeight(this, 200);
-        FXUtils.limitWidth(this, 400);
-
         setCancel(cancel);
 
         btnCancel.setOnMouseClicked(e -> {

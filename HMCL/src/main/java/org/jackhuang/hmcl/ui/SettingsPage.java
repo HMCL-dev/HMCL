@@ -52,7 +52,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     @FXML
     private JFXTextField txtProxyUsername;
     @FXML
-    private JFXTextField txtProxyPassword;
+    private JFXPasswordField txtProxyPassword;
     @FXML
     private JFXTextField txtFontSize;
     @FXML
@@ -94,9 +94,6 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
 
     {
         FXUtils.loadFXML(this, "/assets/fxml/setting.fxml");
-
-        FXUtils.limitWidth(cboLanguage, 400);
-        FXUtils.limitWidth(cboDownloadSource, 400);
 
         FXUtils.smoothScrolling(scroll);
 
