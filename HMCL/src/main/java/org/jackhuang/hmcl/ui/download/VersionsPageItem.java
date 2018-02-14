@@ -19,10 +19,15 @@ package org.jackhuang.hmcl.ui.download;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersionTag;
+import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersionTag;
+import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 /**
@@ -34,6 +39,12 @@ public final class VersionsPageItem extends StackPane {
     private Label lblSelfVersion;
     @FXML
     private Label lblGameVersion;
+    @FXML
+    private ImageView imageView;
+    @FXML
+    private HBox leftPane;
+    @FXML
+    private StackPane imageViewContainer;
 
     public VersionsPageItem(RemoteVersion<?> remoteVersion) {
         this.remoteVersion = remoteVersion;
@@ -45,17 +56,29 @@ public final class VersionsPageItem extends StackPane {
             switch (((GameRemoteVersionTag) remoteVersion.getTag()).getType()) {
                 case RELEASE:
                     lblGameVersion.setText(Main.i18n("version.game.release"));
+                    imageView.setImage(new Image("/assets/img/icon.png", 32, 32, false, true));
                     break;
                 case SNAPSHOT:
                     lblGameVersion.setText(Main.i18n("version.game.snapshot"));
+                    imageView.setImage(new Image("/assets/img/command.png", 32, 32, false, true));
                     break;
                 default:
                     lblGameVersion.setText(Main.i18n("version.game.old"));
+                    imageView.setImage(new Image("/assets/img/grass.png", 32, 32, false, true));
                     break;
             }
-        } else {
+        } else if (remoteVersion.getTag() instanceof LiteLoaderRemoteVersionTag) {
+            imageView.setImage(new Image("/assets/img/chicken.png", 32, 32, false, true));
+            lblGameVersion.setText(remoteVersion.getGameVersion());
+        } else if (remoteVersion instanceof OptiFineRemoteVersion) {
+            // optifine has no icon.
+            lblGameVersion.setText(remoteVersion.getGameVersion());
+        } else { // forge
+            imageView.setImage(new Image("/assets/img/forge.png", 32, 32, false, true));
             lblGameVersion.setText(remoteVersion.getGameVersion());
         }
+
+        leftPane.getChildren().remove(imageViewContainer);
     }
 
     public RemoteVersion<?> getRemoteVersion() {
