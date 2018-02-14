@@ -64,7 +64,7 @@ public final class DownloadWizardProvider implements WizardProvider {
         if (settings.containsKey("optifine"))
             builder.version("optifine", (String) settings.get("optifine"));
 
-        return builder.buildAsync();
+        return builder.buildAsync().finalized((a, b) -> profile.getRepository().refreshVersions());
     }
 
     private Task finishModpackInstallingAsync(Map<String, Object> settings) {

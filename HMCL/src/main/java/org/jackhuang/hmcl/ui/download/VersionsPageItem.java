@@ -20,7 +20,9 @@ package org.jackhuang.hmcl.ui.download;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.game.GameRemoteVersionTag;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 /**
@@ -38,7 +40,22 @@ public final class VersionsPageItem extends StackPane {
 
         FXUtils.loadFXML(this, "/assets/fxml/download/versions-list-item.fxml");
         lblSelfVersion.setText(remoteVersion.getSelfVersion());
-        lblGameVersion.setText(remoteVersion.getGameVersion());
+
+        if (remoteVersion.getTag() instanceof GameRemoteVersionTag) {
+            switch (((GameRemoteVersionTag) remoteVersion.getTag()).getType()) {
+                case RELEASE:
+                    lblGameVersion.setText(Main.i18n("version.game.release"));
+                    break;
+                case SNAPSHOT:
+                    lblGameVersion.setText(Main.i18n("version.game.snapshot"));
+                    break;
+                default:
+                    lblGameVersion.setText(Main.i18n("version.game.old"));
+                    break;
+            }
+        } else {
+            lblGameVersion.setText(remoteVersion.getGameVersion());
+        }
     }
 
     public RemoteVersion<?> getRemoteVersion() {

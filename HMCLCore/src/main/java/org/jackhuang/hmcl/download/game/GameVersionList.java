@@ -56,10 +56,7 @@ public final class GameVersionList extends VersionList<GameRemoteVersionTag> {
 
                 GameRemoteVersions root = Constants.GSON.fromJson(task.getResult(), GameRemoteVersions.class);
                 for (GameRemoteVersion remoteVersion : root.getVersions()) {
-                    Optional<String> gameVersion = VersionNumber.parseVersion(remoteVersion.getGameVersion());
-                    if (!gameVersion.isPresent())
-                        continue;
-                    versions.put(gameVersion.get(), new RemoteVersion<>(
+                    versions.put(remoteVersion.getGameVersion(), new RemoteVersionGame(
                             remoteVersion.getGameVersion(),
                             remoteVersion.getGameVersion(),
                             remoteVersion.getUrl(),
@@ -70,4 +67,14 @@ public final class GameVersionList extends VersionList<GameRemoteVersionTag> {
         };
     }
 
+    private static class RemoteVersionGame extends RemoteVersion<GameRemoteVersionTag> {
+        public RemoteVersionGame(String gameVersion, String selfVersion, String url, GameRemoteVersionTag tag) {
+            super(gameVersion, selfVersion, url, tag);
+        }
+
+        @Override
+        public int compareTo(RemoteVersion<GameRemoteVersionTag> o) {
+            return -getTag().getTime().compareTo(o.getTag().getTime());
+        }
+    }
 }

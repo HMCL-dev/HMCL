@@ -17,17 +17,20 @@
  */
 package org.jackhuang.hmcl.ui.download;
 
+import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXSpinner;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.fxml.FXML;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
-import org.jackhuang.hmcl.task.Scheduler;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.download.game.GameRemoteVersionTag;
+import org.jackhuang.hmcl.download.game.GameVersionList;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -39,6 +42,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class VersionsPage extends StackPane implements WizardPage, Refreshable {
     private final WizardController controller;
@@ -54,6 +58,16 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
     private JFXSpinner spinner;
     @FXML
     private StackPane failedPane;
+    @FXML
+    private JFXCheckBox chkRelease;
+    @FXML
+    private JFXCheckBox chkSnapshot;
+    @FXML
+    private JFXCheckBox chkOld;
+    @FXML
+    private HBox checkPane;
+    @FXML
+    private VBox centrePane;
 
     private final TransitionHandler transitionHandler = new TransitionHandler(this);
     private final VersionList<?> versionList;
@@ -66,10 +80,20 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
         this.downloadProvider = downloadProvider;
         this.libraryId = libraryId;
         this.callback = callback;
-
         this.versionList = downloadProvider.getVersionListById(libraryId);
 
         FXUtils.loadFXML(this, "/assets/fxml/download/versions.fxml");
+
+        if (versionList instanceof GameVersionList) {
+            centrePane.getChildren().setAll(checkPane, list);
+        } else
+            centrePane.getChildren().setAll(list);
+
+        InvalidationListener listener = o -> list.getItems().setAll(loadVersions());
+        chkRelease.selectedProperty().addListener(listener);
+        chkSnapshot.selectedProperty().addListener(listener);
+        chkOld.selectedProperty().addListener(listener);
+
         list.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
             controller.getSettings().put(libraryId, newValue.getRemoteVersion().getSelfVersion());
             callback.run();
@@ -77,18 +101,35 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
         refresh();
     }
 
+    private List<VersionsPageItem> loadVersions() {
+        boolean isGameVersionList = versionList instanceof GameVersionList;
+        return versionList.getVersions(gameVersion).stream()
+                .filter(it -> {
+                    if (isGameVersionList)
+                        switch (((GameRemoteVersionTag) it.getTag()).getType()) {
+                            case RELEASE:
+                                return chkRelease.isSelected();
+                            case SNAPSHOT:
+                                return chkSnapshot.isSelected();
+                            default:
+                                return chkOld.isSelected();
+                        }
+                    else return true;
+                })
+                .sorted()
+                .map(VersionsPageItem::new).collect(Collectors.toList());
+    }
+
     @Override
     public void refresh() {
         getChildren().setAll(spinner);
         executor = versionList.refreshAsync(downloadProvider).finalized((variables, isDependentsSucceeded) -> {
             if (isDependentsSucceeded) {
-                List<VersionsPageItem> items = versionList.getVersions(gameVersion).stream()
-                        .sorted(RemoteVersion.RemoteVersionComparator.INSTANCE)
-                        .map(VersionsPageItem::new).collect(Collectors.toList());
+                List<VersionsPageItem> items = loadVersions();
 
                 Platform.runLater(() -> {
                     list.getItems().setAll(items);
-                    transitionHandler.setContent(list, ContainerAnimations.FADE.getAnimationProducer());
+                    transitionHandler.setContent(centrePane, ContainerAnimations.FADE.getAnimationProducer());
                 });
             } else {
                 Platform.runLater(() -> {
