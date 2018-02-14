@@ -73,6 +73,7 @@ public final class LauncherHelper {
         Version version = repository.getVersion(selectedVersion);
         Account account = Settings.INSTANCE.getSelectedAccount();
         VersionSetting setting = profile.getVersionSetting(selectedVersion);
+        Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
 
         executor = Task.of(Schedulers.javafx(), () -> Controllers.dialog(launchingStepsPane))
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES)))
@@ -103,7 +104,7 @@ public final class LauncherHelper {
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LAUNCHING)))
                 .then(Task.of(variables -> {
                     variables.set("launcher", new HMCLGameLauncher(
-                            repository, selectedVersion, variables.get("account"), setting.toLaunchOptions(profile.getGameDir()), new HMCLProcessListener(variables.get("account"), setting)
+                            repository, selectedVersion, variables.get("account"), setting.toLaunchOptions(profile.getGameDir()), new HMCLProcessListener(variables.get("account"), setting, gameVersion.isPresent())
                     ));
                 }))
                 .then(variables -> {
@@ -286,11 +287,13 @@ public final class LauncherHelper {
         private ManagedProcess process;
         private boolean lwjgl;
         private LogWindow logWindow;
+        private final boolean detectWindow;
         private final LinkedList<Pair<String, Log4jLevel>> logs;
         private final CountDownLatch latch = new CountDownLatch(1);
 
-        public HMCLProcessListener(AuthInfo authInfo, VersionSetting setting) {
+        public HMCLProcessListener(AuthInfo authInfo, VersionSetting setting, boolean detectWindow) {
             this.setting = setting;
+            this.detectWindow = detectWindow;
 
             if (authInfo == null)
                 forbiddenTokens = Collections.emptyMap();
@@ -341,8 +344,7 @@ public final class LauncherHelper {
                 Platform.runLater(() -> logWindow.logLine(log, level));
             }
 
-
-            if (!lwjgl && log.contains("LWJGL Version: ")) {
+            if (!lwjgl && log.contains("LWJGL Version: ") || !detectWindow) {
                 lwjgl = true;
                 switch (visibility) {
                     case HIDE_AND_REOPEN:
