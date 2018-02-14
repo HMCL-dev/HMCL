@@ -87,12 +87,14 @@ public final class LauncherHelper {
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN)))
                 .then(Task.of(Main.i18n("account.methods"), variables -> {
                     try {
-                        variables.set("account", account.logIn(new SpecificCharacterSelector(Accounts.getCurrentCharacter(account)), Settings.INSTANCE.getProxy()));
-                    } catch (ServerDisconnectException e) {
-                        if (account.canPlayOffline())
-                            variables.set("account", account.playOffline());
-                        else
-                            throw e;
+                        try {
+                            variables.set("account", account.logIn(new SpecificCharacterSelector(Accounts.getCurrentCharacter(account)), Settings.INSTANCE.getProxy()));
+                        } catch (ServerDisconnectException e) {
+                            if (account.canPlayOffline())
+                                variables.set("account", account.playOffline());
+                            else
+                                throw e;
+                        }
                     } catch (AuthenticationException e) {
                         variables.set("account", DialogController.logIn(account));
                         JFXUtilities.runInFX(() -> Controllers.dialog(launchingStepsPane));

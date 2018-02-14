@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.ImmediateBooleanProperty;
+import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
@@ -59,11 +60,16 @@ public final class ModInfo implements Comparable<ModInfo> {
         activeProperty = new ImmediateBooleanProperty(this, "active", !DISABLED_EXTENSION.equals(FileUtils.getExtension(file))) {
             @Override
             protected void invalidated() {
-                File f = file.getAbsoluteFile(), newF;
+                File f = ModInfo.this.file.getAbsoluteFile(), newF;
                 if (DISABLED_EXTENSION.equals(FileUtils.getExtension(f)))
                     newF = new File(f.getParentFile(), FileUtils.getNameWithoutExtension(f));
                 else
                     newF = new File(f.getParentFile(), f.getName() + ".disabled");
+
+                if (f.renameTo(newF))
+                    ModInfo.this.file = newF;
+                else
+                    Logging.LOG.severe("Unable to rename file " + f + " to " + newF);
             }
         };
 
