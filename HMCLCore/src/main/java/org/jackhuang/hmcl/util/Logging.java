@@ -40,6 +40,7 @@ public final class Logging {
         try {
             FileHandler fileHandler = new FileHandler("hmcl.log");
             fileHandler.setLevel(Level.FINEST);
+            fileHandler.setFormatter(DefaultFormatter.INSTANCE);
             LOG.addHandler(fileHandler);
         } catch (IOException e) {
             System.err.println("Unable to create hmcl.log, " + e.getMessage());
