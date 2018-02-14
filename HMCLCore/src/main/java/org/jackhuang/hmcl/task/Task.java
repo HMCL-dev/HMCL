@@ -260,12 +260,12 @@ public abstract class Task {
         return new CoupleTask<>(this, b, false, false);
     }
 
-    public final Task finalized(Task b) {
-        return finalized(convert(b));
+    public final Task finalized(FinalizedCallback b) {
+        return finalized(Schedulers.defaultScheduler(), b);
     }
 
-    public final Task finalized(ExceptionalFunction<AutoTypingMap<String>, Task, ?> b) {
-        return new CoupleTask<>(this, b, false, true);
+    public final Task finalized(Scheduler scheduler, FinalizedCallback b) {
+        return new FinalizedTask(this, scheduler, b);
     }
 
     public static Task empty() {

@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.task.FinalizedCallback;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.FileUtils;
@@ -84,13 +85,13 @@ public final class ModpackHelper {
     public static Task getInstallTask(Profile profile, File zipFile, String name, Modpack modpack) {
         profile.getRepository().markVersionAsModpack(name);
 
-        Task finalizeTask = Task.of(() -> {
+        FinalizedCallback finalizeTask = (variables, isDependentsSucceeded) -> {
             profile.getRepository().refreshVersions();
             VersionSetting vs = profile.specializeVersionSetting(name);
             profile.getRepository().undoMark(name);
             if (vs != null)
                 vs.setGameDirType(EnumGameDirectory.VERSION_FOLDER);
-        });
+        };
 
         if (modpack.getManifest() instanceof CurseManifest)
             return new CurseInstallTask(profile.getDependency(), zipFile, ((CurseManifest) modpack.getManifest()), name)

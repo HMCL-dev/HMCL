@@ -62,7 +62,7 @@ public class DefaultGameBuilder extends GameBuilder {
                     downloadGameAsync(gameVersion, version),
                     new GameLibrariesTask(dependencyManager, version) // Game libraries will be downloaded for multiple times partly, this time is for vanilla libraries.
             ).with(new VersionJsonSaveTask(dependencyManager.getGameRepository(), version)); // using [with] because download failure here are tolerant.
-            
+
             if (toolVersions.containsKey("forge"))
                 result = result.then(libraryTaskHelper(gameVersion, "forge"));
             if (toolVersions.containsKey("liteloader"))
@@ -70,12 +70,9 @@ public class DefaultGameBuilder extends GameBuilder {
             if (toolVersions.containsKey("optifine"))
                 result = result.then(libraryTaskHelper(gameVersion, "optifine"));
             return result;
-        }).finalized(new Task() {
-            @Override
-            public void execute() {
-                if (!isDependentsSucceeded())
-                    dependencyManager.getGameRepository().getVersionRoot(name).delete();
-            }
+        }).finalized((variables, isDependentsSucceeded) -> {
+            if (!isDependentsSucceeded)
+                dependencyManager.getGameRepository().getVersionRoot(name).delete();
         });
     }
 

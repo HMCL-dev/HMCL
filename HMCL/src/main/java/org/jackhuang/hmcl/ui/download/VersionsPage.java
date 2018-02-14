@@ -19,12 +19,15 @@ package org.jackhuang.hmcl.ui.download;
 
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXSpinner;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.task.Scheduler;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -33,7 +36,9 @@ import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public final class VersionsPage extends StackPane implements WizardPage, Refreshable {
     private final WizardController controller;
@@ -45,7 +50,10 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
 
     @FXML
     private JFXListView<VersionsPageItem> list;
-    @FXML private JFXSpinner spinner;
+    @FXML
+    private JFXSpinner spinner;
+    @FXML
+    private StackPane failedPane;
 
     private final TransitionHandler transitionHandler = new TransitionHandler(this);
     private final VersionList<?> versionList;
@@ -62,7 +70,6 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
         this.versionList = downloadProvider.getVersionListById(libraryId);
 
         FXUtils.loadFXML(this, "/assets/fxml/download/versions.fxml");
-        getChildren().setAll(spinner);
         list.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
             controller.getSettings().put(libraryId, newValue.getRemoteVersion().getSelfVersion());
             callback.run();
@@ -72,15 +79,23 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
 
     @Override
     public void refresh() {
-        executor = versionList.refreshAsync(downloadProvider).subscribe(Schedulers.javafx(), () -> {
-            versionList.getVersions(gameVersion).stream()
-                    .sorted(RemoteVersion.RemoteVersionComparator.INSTANCE)
-                    .forEach(version -> {
-                        list.getItems().add(new VersionsPageItem(version));
-                    });
+        getChildren().setAll(spinner);
+        executor = versionList.refreshAsync(downloadProvider).finalized((variables, isDependentsSucceeded) -> {
+            if (isDependentsSucceeded) {
+                List<VersionsPageItem> items = versionList.getVersions(gameVersion).stream()
+                        .sorted(RemoteVersion.RemoteVersionComparator.INSTANCE)
+                        .map(VersionsPageItem::new).collect(Collectors.toList());
 
-            transitionHandler.setContent(list, ContainerAnimations.FADE.getAnimationProducer());
-        });
+                Platform.runLater(() -> {
+                    list.getItems().setAll(items);
+                    transitionHandler.setContent(list, ContainerAnimations.FADE.getAnimationProducer());
+                });
+            } else {
+                Platform.runLater(() -> {
+                    transitionHandler.setContent(failedPane, ContainerAnimations.FADE.getAnimationProducer());
+                });
+            }
+        }).executor().start();
     }
 
     @Override
@@ -93,5 +108,10 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
         settings.remove(libraryId);
         if (executor != null)
             executor.cancel();
+    }
+
+    @FXML
+    private void onRefresh() {
+        refresh();
     }
 }

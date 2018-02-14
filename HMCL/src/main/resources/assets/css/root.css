@@ -899,6 +899,7 @@
 .jfx-spinner > .arc {
     -fx-stroke-width: 3.0;
     -fx-fill: transparent;
+    -fx-stroke: -fx-base-color;
 }
 
 .first-spinner {
@@ -955,50 +956,6 @@
 
 .seventh-spinner > .arc {
     -fx-stroke-width: 5.0;
-}
-
-.blue-spinner .arc {
-    -fx-stroke: #4285f4;
-}
-
-.red-spinner .arc {
-    -fx-stroke: #db4437;
-}
-
-.green-spinner .arc {
-    -fx-stroke: #f4b400;
-}
-
-.yellow-spinner .arc {
-    -fx-stroke: -fx-base-check-color;
-}
-
-.materialDesign-purple .arc {
-    -fx-stroke: #ab47bc;
-}
-
-.materialDesign-blue .arc {
-    -fx-stroke: #2962ff;
-}
-
-.materialDesign-cyan .arc {
-    -fx-stroke: #00b8d4;
-}
-
-.materialDesign-green .arc {
-    -fx-stroke: #00c853;
-}
-
-.materialDesign-yellow .arc {
-    -fx-stroke: #ffd600;
-}
-
-.materialDesign-orange .arc {
-    -fx-stroke: #ff6d00;
-}
-
-.materialDesign-red .arc {
-    -fx-stroke: #d50000;
 }
 
 /*******************************************************************************

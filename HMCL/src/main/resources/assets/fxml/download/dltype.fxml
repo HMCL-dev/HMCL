@@ -29,7 +29,7 @@
         </JFXListView>
     </StackPane>
 
-    <HBox alignment="BOTTOM_CENTER" style="-fx-padding: 20;">
+    <HBox alignment="BOTTOM_CENTER" style="-fx-padding: 20;" pickOnBounds="false">
         <Label text="%modpack.introduction" />
     </HBox>
 </fx:root>

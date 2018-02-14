@@ -3,11 +3,15 @@
 <?import com.jfoenix.controls.JFXListView?>
 <?import com.jfoenix.controls.JFXSpinner?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.control.Label?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane"
          prefHeight="400.0" prefWidth="600.0">
-    <JFXSpinner fx:id="spinner" style="-fx-radius:16" styleClass="materialDesign-purple, first-spinner" />
+    <JFXSpinner fx:id="spinner" styleClass="first-spinner" />
     <JFXListView fx:id="list" styleClass="jfx-list-view">
     </JFXListView>
+    <StackPane fx:id="failedPane">
+        <Label onMouseClicked="#onRefresh" style="-fx-text-fill: #0079FF; -fx-font-size: 20;" text="%download.failed.refresh" />
+    </StackPane>
 </fx:root>
