@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXSpinner?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import com.jfoenix.controls.JFXDialog?>
+<?import com.jfoenix.controls.JFXDialogLayout?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import com.jfoenix.controls.JFXTextField?>
+<?import org.jackhuang.hmcl.ui.construct.URLValidator?>
+<?import java.lang.String?>
+<?import com.jfoenix.controls.JFXProgressBar?>
+<fx:root xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         type="StackPane">
+    <JFXSpinner fx:id="spinner" style="-fx-radius:16" styleClass="materialDesign-purple, first-spinner" />
+    <StackPane fx:id="contentPane">
+        <ScrollPane fx:id="scrollPane" fitToWidth="true" fitToHeight="true">
+            <VBox fx:id="listPane" spacing="10" style="-fx-padding: 20 20 70 20;">
+
+            </VBox>
+        </ScrollPane>
+        <VBox style="-fx-padding: 15;" spacing="15" pickOnBounds="false" alignment="BOTTOM_RIGHT">
+            <JFXButton prefWidth="40" prefHeight="40" buttonType="RAISED" onMouseClicked="#onAdd" styleClass="jfx-button-raised-round">
+                <graphic>
+                    <fx:include source="/assets/svg/plus.fxml"/>
+                </graphic>
+            </JFXButton>
+        </VBox>
+    </StackPane>
+
+    <JFXDialog fx:id="dialog">
+        <StackPane>
+            <StackPane fx:id="addServerContainer">
+                <JFXDialogLayout fx:id="addServerPane">
+                    <heading>
+                        <Label text="%account.injector.add" />
+                    </heading>
+                    <body>
+                        <JFXTextField fx:id="txtServerIp" promptText="%account.injector.server_ip" labelFloat="true">
+                            <validators>
+                                <URLValidator message="%input.url">
+                                    <protocols>
+                                        <String fx:value="http" />
+                                        <String fx:value="https" />
+                                    </protocols>
+                                </URLValidator>
+                            </validators>
+                        </JFXTextField>
+                    </body>
+                    <actions>
+                        <Label fx:id="lblCreationWarning" />
+                        <JFXButton onMouseClicked="#onAddCancel" text="%button.ok" styleClass="dialog-cancel" />
+                        <JFXButton fx:id="btnAddNext" onMouseClicked="#onAddNext" text="%wizard.next" styleClass="dialog-accept" />
+                    </actions>
+                </JFXDialogLayout>
+
+                <JFXDialogLayout fx:id="confirmServerPane">
+                    <heading>
+                        <Label text="%account.injector.add" />
+                    </heading>
+                    <body>
+                        <GridPane vgap="15" hgap="15" style="-fx-padding: 15 0 0 0;">
+                            <columnConstraints>
+                                <ColumnConstraints maxWidth="100" />
+                                <ColumnConstraints />
+                            </columnConstraints>
+                            <Label text="%account.injector.server_ip" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                            <Label text="%account.injector.server_name" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+
+                            <Label fx:id="lblServerIp" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                            <Label fx:id="lblServerName" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+                            <Label text="%account.injector.http" style="-fx-text-fill: red;" GridPane.rowIndex="2" GridPane.columnSpan="2" GridPane.columnIndex="0" />
+                        </GridPane>
+                    </body>
+                    <actions>
+                        <JFXButton onMouseClicked="#onAddPrev" text="%wizard.prev" styleClass="dialog-cancel" />
+                        <JFXButton onMouseClicked="#onAddCancel" text="%button.cancel" styleClass="dialog-cancel" />
+                        <JFXButton onMouseClicked="#onAddFinish" text="%wizard.finish" styleClass="dialog-accept" />
+                    </actions>
+                </JFXDialogLayout>
+            </StackPane>
+            <JFXProgressBar fx:id="progressBar" visible="false" StackPane.alignment="TOP_CENTER" />
+        </StackPane>
+    </JFXDialog>
+</fx:root>

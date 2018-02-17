@@ -65,6 +65,11 @@ public class OfflineAccount extends Account {
     }
 
     @Override
+    public AuthInfo logInWithPassword(MultiCharacterSelector selector, String password, Proxy proxy) throws AuthenticationException {
+        return logIn(selector, proxy);
+    }
+
+    @Override
     public void logOut() {
         // Offline account need not log out.
     }

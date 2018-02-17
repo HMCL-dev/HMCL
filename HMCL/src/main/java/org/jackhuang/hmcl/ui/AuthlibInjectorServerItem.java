@@ -18,31 +18,32 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.auth.yggdrasil.AuthlibInjectorServerInfo;
 import org.jackhuang.hmcl.mod.ModInfo;
 
 import java.util.function.Consumer;
 
-public final class  ModItem extends BorderPane {
-    private final Label lblModFileName = new Label();
-    private final Label lblModAuthor = new Label();
-    private final JFXCheckBox chkEnabled = new JFXCheckBox();
+public final class AuthlibInjectorServerItem extends BorderPane {
+    private final AuthlibInjectorServerInfo info;
 
-    public ModItem(ModInfo info, Consumer<ModItem> deleteCallback) {
-        lblModFileName.setStyle("-fx-font-size: 15;");
-        lblModAuthor.setStyle("-fx-font-size: 10;");
-        BorderPane.setAlignment(chkEnabled, Pos.CENTER);
-        setLeft(chkEnabled);
+    private final Label lblServerName = new Label();
+    private final Label lblServerIp = new Label();
+
+    public AuthlibInjectorServerItem(AuthlibInjectorServerInfo info, Consumer<AuthlibInjectorServerItem> deleteCallback) {
+        this.info = info;
+
+        lblServerName.setStyle("-fx-font-size: 15;");
+        lblServerIp.setStyle("-fx-font-size: 10;");
 
         VBox center = new VBox();
         BorderPane.setAlignment(center, Pos.CENTER);
-        center.getChildren().addAll(lblModFileName, lblModAuthor);
+        center.getChildren().addAll(lblServerName, lblServerIp);
         setCenter(center);
 
         JFXButton right = new JFXButton();
@@ -54,11 +55,11 @@ public final class  ModItem extends BorderPane {
 
         setStyle("-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;");
         JFXDepthManager.setDepth(this, 1);
-        lblModFileName.setText(info.getFileName());
-        lblModAuthor.setText(info.getName() + ", " + Main.i18n("archive.version") + ": " + info.getVersion() + ", " + Main.i18n("archive.game_version") + ": " + info.getGameVersion() + ", " + Main.i18n("archive.author") + ": " + info.getAuthors());
-        chkEnabled.setSelected(info.isActive());
-        chkEnabled.selectedProperty().addListener((a, b, newValue) -> {
-            info.activeProperty().set(newValue);
-        });
+        lblServerName.setText(info.getServerName());
+        lblServerIp.setText(info.getServerIp());
+    }
+
+    public AuthlibInjectorServerInfo getInfo() {
+        return info;
     }
 }

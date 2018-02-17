@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.MultiCharacterSelector;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
@@ -35,7 +36,7 @@ public final class DialogController {
             CountDownLatch latch = new CountDownLatch(1);
             AtomicReference<AuthInfo> res = new AtomicReference<>(null);
             JFXUtilities.runInFX(() -> {
-                YggdrasilAccountLoginPane pane = new YggdrasilAccountLoginPane((YggdrasilAccount) account, it -> {
+                AccountLoginPane pane = new AccountLoginPane(account, it -> {
                         res.set(it);
                         latch.countDown();
                         Controllers.closeDialog();

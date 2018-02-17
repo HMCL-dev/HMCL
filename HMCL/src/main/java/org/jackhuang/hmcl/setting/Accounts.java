@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
@@ -24,12 +25,12 @@ import org.jackhuang.hmcl.auth.OfflineAccount;
 import org.jackhuang.hmcl.auth.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.util.FileUtils;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -48,6 +49,8 @@ public final class Accounts {
             new Pair<>(YGGDRASIL_ACCOUNT_KEY, new YggdrasilAccountFactory()),
             new Pair<>(AUTHLIB_INJECTOR_ACCOUNT_KEY, new AuthlibInjectorAccountFactory(Accounts::downloadAuthlibInjector))
     );
+
+    private static final Map<String, String> AUTHLIB_INJECTOR_SERVER_NAMES = new HashMap<>();
 
     public static String getAccountType(Account account) {
         if (account instanceof OfflineAccount) return OFFLINE_ACCOUNT_KEY;
@@ -87,11 +90,29 @@ public final class Accounts {
         AuthlibInjectorBuildInfo buildInfo = AuthlibInjectorBuildInfo.requestBuildInfo();
         File jar = new File(Main.HMCL_DIRECTORY, "authlib-injector.jar");
         File local = new File(Main.HMCL_DIRECTORY, "authlib-injector.txt");
-        int buildNumber = Integer.parseInt(FileUtils.readText(local));
+        int buildNumber = 0;
+        try {
+            buildNumber = Integer.parseInt(FileUtils.readText(local));
+        } catch (IOException | NumberFormatException ignore) {
+        }
         if (buildNumber < buildInfo.getBuildNumber()) {
             new FileDownloadTask(new URL(buildInfo.getUrl()), jar).run();
             FileUtils.writeText(local, String.valueOf(buildInfo.getBuildNumber()));
         }
         return jar.getAbsolutePath();
+    }
+
+    public static String getAuthlibInjectorServerName(String serverIp) {
+        if (AUTHLIB_INJECTOR_SERVER_NAMES.containsKey(serverIp))
+            return AUTHLIB_INJECTOR_SERVER_NAMES.get(serverIp);
+        else {
+            try {
+                AuthlibInjectorServerResponse response = Constants.GSON.fromJson(NetworkUtils.doGet(NetworkUtils.toURL(serverIp)), AuthlibInjectorServerResponse.class);
+                AUTHLIB_INJECTOR_SERVER_NAMES.put(serverIp, response.getMeta().getServerName());
+                return response.getMeta().getServerName();
+            } catch (JsonParseException | IOException | NullPointerException e) {
+                return null;
+            }
+        }
     }
 }

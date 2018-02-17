@@ -29,13 +29,7 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         // Authlib Injector recommends launchers to pre-fetch the server basic information before launched the game to save time.
         GetTask getTask = new GetTask(NetworkUtils.toURL(serverBaseURL));
         AtomicBoolean flag = new AtomicBoolean(true);
-        Thread thread = Lang.thread(() -> {
-            try {
-                getTask.run();
-            } catch (Exception ignore) {
-                flag.set(false);
-            }
-        });
+        Thread thread = Lang.thread(() -> flag.set(getTask.test()));
 
         AuthInfo info = super.logIn(selector, proxy);
         try {
@@ -46,6 +40,29 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
 
             if (flag.get())
                 arguments = Arguments.addJVMArguments(arguments, "-Dorg.to2mbn.authlibinjector.config.prefetched=" + getTask.getResult());
+
+            return info.setArguments(arguments);
+        } catch (Exception e) {
+            throw new AuthenticationException("Unable to get authlib injector jar path", e);
+        }
+    }
+
+    @Override
+    public AuthInfo logInWithPassword(MultiCharacterSelector selector, String password, Proxy proxy) throws AuthenticationException {
+        // Authlib Injector recommends launchers to pre-fetch the server basic information before launched the game to save time.
+        GetTask getTask = new GetTask(NetworkUtils.toURL(serverBaseURL));
+        AtomicBoolean flag = new AtomicBoolean(true);
+        Thread thread = Lang.thread(() -> flag.set(getTask.test()));
+
+        AuthInfo info = super.logInWithPassword(selector, password, proxy);
+        try {
+            thread.join();
+
+            String arg = "-javaagent:" + injectorJarPath.get() + "=" + serverBaseURL;
+            Arguments arguments = Arguments.addJVMArguments(null, arg);
+
+            //if (flag.get())
+            //    arguments = Arguments.addJVMArguments(arguments, "-Dorg.to2mbn.authlibinjector.config.prefetched=" + getTask.getResult());
 
             return info.setArguments(arguments);
         } catch (Exception e) {

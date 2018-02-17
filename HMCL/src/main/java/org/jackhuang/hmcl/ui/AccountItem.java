@@ -36,11 +36,13 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.OfflineAccount;
+import org.jackhuang.hmcl.auth.yggdrasil.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.AccountHelper;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 
 public final class AccountItem extends StackPane {
 
@@ -56,6 +58,7 @@ public final class AccountItem extends StackPane {
     @FXML private Label lblUser;
     @FXML private Label lblType;
     @FXML private Label lblEmail;
+    @FXML private Label lblServer;
     @FXML private Label lblCurrentAccount;
     @FXML private JFXRadioButton chkSelected;
     @FXML private JFXProgressBar pgsSkin;
@@ -73,12 +76,8 @@ public final class AccountItem extends StackPane {
         btnDelete.setGraphic(SVG.delete("black", 15, 15));
         btnRefresh.setGraphic(SVG.refresh("black", 15, 15));
 
-        // create content
-        String headerColor = getDefaultColor(i % 12);
-        header.setStyle("-fx-background-radius: 2 2 0 0; -fx-background-color: " + headerColor);
-
         // create image view
-        icon.translateYProperty().bind(Bindings.createDoubleBinding(() -> header.getBoundsInParent().getHeight() - icon.getHeight() / 2 - 32.0, header.boundsInParentProperty(), icon.heightProperty()));
+        icon.translateYProperty().bind(Bindings.createDoubleBinding(() -> header.getBoundsInParent().getHeight() - icon.getHeight() / 2 - 16, header.boundsInParentProperty(), icon.heightProperty()));
 
         chkSelected.getProperties().put("account", account);
         setSelected(Settings.INSTANCE.getSelectedAccount() == account);
@@ -86,6 +85,13 @@ public final class AccountItem extends StackPane {
         lblUser.setText(Accounts.getCurrentCharacter(account));
         lblType.setText(AccountsPage.accountType(account));
         lblEmail.setText(account.getUsername());
+
+        if (account instanceof AuthlibInjectorAccount) {
+            Task.ofResult("serverName", () -> Accounts.getAuthlibInjectorServerName(((AuthlibInjectorAccount) account).getServerBaseURL()))
+                    .subscribe(Schedulers.javafx(), variables -> {
+                        lblServer.setText(variables.get("serverName"));
+                    });
+        }
 
         if (account instanceof YggdrasilAccount) {
             btnRefresh.setOnMouseClicked(e -> {
@@ -111,25 +117,6 @@ public final class AccountItem extends StackPane {
         else
             portraitView.setImage(AccountHelper.getDefaultSkin(account, 4));
         FXUtils.limitSize(portraitView, 32, 32);
-    }
-
-    private String getDefaultColor(int i) {
-        switch (i) {
-            case 0: return "#8F3F7E";
-            case 1: return "#B5305F";
-            case 2: return "#CE584A";
-            case 3: return "#DB8D5C";
-            case 4: return "#DA854E";
-            case 5: return "#E9AB44";
-            case 6: return "#FEE435";
-            case 7: return "#99C286";
-            case 8: return "#01A05E";
-            case 9: return "#4A8895";
-            case 10: return "#16669B";
-            case 11: return "#2F65A5";
-            case 12: return "#4E6A9C";
-            default: return "#FFFFFF";
-        }
     }
 
     public Account getAccount() {

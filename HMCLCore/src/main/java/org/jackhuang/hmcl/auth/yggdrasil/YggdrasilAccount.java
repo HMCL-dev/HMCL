@@ -132,22 +132,45 @@ public class YggdrasilAccount extends Account {
         }
     }
 
+    @Override
+    public AuthInfo logInWithPassword(MultiCharacterSelector selector, String password, Proxy proxy) throws AuthenticationException {
+        logInWithPassword0(password, proxy);
+        if (!isLoggedIn())
+            throw new AuthenticationException("Wrong password for account " + username);
+
+        if (selectedProfile == null) {
+            if (profiles == null || profiles.length <= 0)
+                throw new NoCharacterException(this);
+
+            selectedProfile = selector.select(this, Arrays.asList(profiles));
+        }
+        return new AuthInfo(selectedProfile, accessToken, userType, GSON.toJson(userProperties));
+    }
+
     private void logIn0(Proxy proxy) throws AuthenticationException {
         if (StringUtils.isNotBlank(accessToken)) {
-            if (StringUtils.isBlank(userId))
-                if (StringUtils.isNotBlank(username))
-                    userId = username;
-                else
-                    throw new AuthenticationException("Invalid uuid and username");
-            if (checkTokenValidity(proxy)) {
-                isOnline = true;
-                return;
-            }
-            logIn1(routeRefresh, new RefreshRequest(accessToken, clientToken), proxy);
+            logInWithToken(proxy);
         } else if (StringUtils.isNotBlank(password))
-            logIn1(routeAuthenticate, new AuthenticationRequest(username, password, clientToken), proxy);
+            logInWithPassword0(password, proxy);
         else
             throw new AuthenticationException("Password cannot be blank");
+    }
+
+    private void logInWithToken(Proxy proxy) throws AuthenticationException {
+        if (StringUtils.isBlank(userId))
+            if (StringUtils.isNotBlank(username))
+                userId = username;
+            else
+                throw new AuthenticationException("Invalid uuid and username");
+        if (checkTokenValidity(proxy)) {
+            isOnline = true;
+            return;
+        }
+        logIn1(routeRefresh, new RefreshRequest(accessToken, clientToken), proxy);
+    }
+
+    public void logInWithPassword0(String password, Proxy proxy) throws AuthenticationException {
+        logIn1(routeAuthenticate, new AuthenticationRequest(username, password, clientToken), proxy);
     }
 
     private void logIn1(URL url, Object input, Proxy proxy) throws AuthenticationException {

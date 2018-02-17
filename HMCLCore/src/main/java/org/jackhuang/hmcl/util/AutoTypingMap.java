@@ -35,15 +35,15 @@ public final class AutoTypingMap<K> {
         this.impl = impl;
     }
 
-    public <V> V get(K key) {
+    public synchronized <V> V get(K key) {
         return (V) impl.get(key);
     }
 
-    public <V> Optional<V> getOptional(K key) {
+    public synchronized  <V> Optional<V> getOptional(K key) {
         return Optional.ofNullable(get(key));
     }
 
-    public void set(K key, Object value) {
+    public synchronized void set(K key, Object value) {
         if (value != null)
             impl.put(key, value);
     }

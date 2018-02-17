@@ -42,6 +42,7 @@ public final class Controllers {
     private static MainPage mainPage = new MainPage();
     private static SettingsPage settingsPage = null;
     private static VersionPage versionPage = null;
+    private static AuthlibInjectorServersPage serversPage = null;
     private static LeftPaneController leftPaneController;
     private static Decorator decorator;
 
@@ -65,6 +66,13 @@ public final class Controllers {
         if (versionPage == null)
             versionPage = new VersionPage();
         return versionPage;
+    }
+
+    // FXThread
+    public static AuthlibInjectorServersPage getServersPage() {
+        if (serversPage == null)
+            serversPage = new AuthlibInjectorServersPage();
+        return serversPage;
     }
 
     public static Decorator getDecorator() {

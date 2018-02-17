@@ -93,7 +93,7 @@ public final class NetworkUtils {
 
     public static HttpURLConnection createConnection(URL url, Proxy proxy) throws IOException {
         initHttps();
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
         connection.setDoInput(true);
         connection.setUseCaches(false);
         connection.setConnectTimeout(15000);

@@ -138,10 +138,16 @@ public class DefaultLauncher extends Launcher {
         configuration.put("${assets_root}", gameAssets.getAbsolutePath());
 
         res.addAll(Arguments.parseArguments(version.getArguments().map(Arguments::getJvm).orElseGet(this::getDefaultJVMArguments), configuration));
+        if (authInfo.getArguments() != null && authInfo.getArguments().getJvm() != null && !authInfo.getArguments().getJvm().isEmpty())
+            res.addAll(Arguments.parseArguments(authInfo.getArguments().getJvm(), configuration));
+
         res.add(version.getMainClass());
 
         Map<String, Boolean> features = getFeatures();
         res.addAll(Arguments.parseArguments(version.getArguments().map(Arguments::getGame).orElseGet(this::getDefaultGameArguments), configuration, features));
+        if (authInfo.getArguments() != null && authInfo.getArguments().getGame() != null && !authInfo.getArguments().getGame().isEmpty())
+            res.addAll(Arguments.parseArguments(authInfo.getArguments().getGame(), configuration, features));
+
         res.addAll(Arguments.parseStringArguments(version.getMinecraftArguments().map(StringUtils::tokenize).orElseGet(LinkedList::new), configuration));
 
         // Optional Minecraft arguments

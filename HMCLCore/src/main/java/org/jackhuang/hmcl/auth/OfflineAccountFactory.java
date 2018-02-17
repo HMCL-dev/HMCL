@@ -32,7 +32,7 @@ public class OfflineAccountFactory extends AccountFactory<OfflineAccount> {
     }
 
     @Override
-    public OfflineAccount fromUsername(String username, String password) {
+    public OfflineAccount fromUsername(String username, String password, Object additionalData) {
         return new OfflineAccount(username, getUUIDFromUserName(username));
     }
 

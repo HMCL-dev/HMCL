@@ -13,21 +13,16 @@
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane" FXUtils.limitWidth="160" FXUtils.limitHeight="156">
     <VBox fx:id="content">
-        <StackPane fx:id="header" VBox.vgrow="ALWAYS">
-            <BorderPane>
-                <top>
-                    <HBox alignment="CENTER_RIGHT">
-                        <JFXProgressBar fx:id="pgsSkin" visible="false" />
-                    </HBox>
-                </top>
-                <center>
-                    <VBox style="-fx-padding: 20 20 0 20;">
-                        <Label fx:id="lblUser" style="-fx-font-size: 20;" wrapText="true" textAlignment="JUSTIFY" />
-                        <Label fx:id="lblEmail" style="-fx-font-size: 12;" />
-                        <Label fx:id="lblType" style="-fx-font-size: 12;" />
-                    </VBox>
-                </center>
-            </BorderPane>
+        <StackPane fx:id="header" VBox.vgrow="ALWAYS" style="-fx-background-radius: 2 2 0 0; -fx-background-color: rgb(255,255,255,0.87); -fx-padding: 8;">
+            <HBox StackPane.alignment="TOP_CENTER" alignment="CENTER_RIGHT">
+                <JFXProgressBar fx:id="pgsSkin" visible="false" />
+            </HBox>
+            <VBox style="-fx-padding: 8 8 0 8;">
+                <Label fx:id="lblUser" style="-fx-font-size: 15;" wrapText="true" textAlignment="JUSTIFY" />
+                <Label fx:id="lblEmail" style="-fx-font-size: 11; -fx-text-fill: gray;" />
+                <Label fx:id="lblServer" style="-fx-font-size: 11; -fx-text-fill: gray;" />
+                <Label fx:id="lblType" style="-fx-font-size: 11; -fx-text-fill: gray;" />
+            </VBox>
         </StackPane>
         <StackPane fx:id="body" style="-fx-background-radius: 0 0 2 2; -fx-background-color: rgb(255,255,255,0.87); -fx-padding: 8;" minHeight="40">
             <BorderPane>

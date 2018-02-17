@@ -19,15 +19,11 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.Main;
-import org.jackhuang.hmcl.auth.yggdrasil.AuthlibInjectorBuildInfo;
 import org.jackhuang.hmcl.util.JavaVersion;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
-public final class Config {
+final class Config {
 
     @SerializedName("last")
     private String selectedProfile = "";
@@ -92,8 +88,8 @@ public final class Config {
     @SerializedName("logLines")
     private int logLines = 100;
 
-    @SerializedName("authlibInjectorServerURL")
-    private String authlibInjectorServerURL = AuthlibInjectorBuildInfo.UPDATE_URL;
+    @SerializedName("authlibInjectorServerURLs")
+    private Set<String> authlibInjectorServerURLs = new HashSet<>();
 
     public String getSelectedProfile() {
         return selectedProfile;
@@ -283,17 +279,12 @@ public final class Config {
         this.logLines = logLines;
     }
 
-    public String getAuthlibInjectorServerURL() {
-        return authlibInjectorServerURL;
+    public Set<String> getAuthlibInjectorServerURLs() {
+        return authlibInjectorServerURLs;
     }
 
-    /**
-     * Will not invoke Settings.INSTANCE.save()
-     * @param authlibInjectorServerURL new server url.
-     */
-    public void setAuthlibInjectorServerURL(String authlibInjectorServerURL) {
-        this.authlibInjectorServerURL = authlibInjectorServerURL;
-        // Do not invoke Settings.INSTANCE.save()
-        // Because we want users set it theirself.
+    public void setAuthlibInjectorServerURLs(Set<String> authlibInjectorServerURLs) {
+        this.authlibInjectorServerURLs = authlibInjectorServerURLs;
+        Settings.INSTANCE.save();
     }
 }

@@ -192,6 +192,7 @@ public final class TaskExecutor {
             // do nothing
         } catch (Exception e) {
             lastException = e;
+            variables.set("lastException", e);
             Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
             task.onDone().fireEvent(new TaskEvent(this, task, true));
             taskListeners.forEach(it -> it.onFailed(task, e));

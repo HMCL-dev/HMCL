@@ -7,6 +7,8 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.*?>
 <?import org.jackhuang.hmcl.ui.FXUtils?>
+<?import javafx.scene.control.Hyperlink?>
+<?import java.lang.String?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
@@ -31,20 +33,28 @@
                 <body>
                     <GridPane vgap="15" hgap="15" style="-fx-padding: 15 0 0 0;">
                         <columnConstraints>
-                            <ColumnConstraints maxWidth="100" />
+                            <ColumnConstraints maxWidth="70" minWidth="70"/>
                             <ColumnConstraints />
+                            <ColumnConstraints minWidth="140" />
                         </columnConstraints>
+
                         <Label text="%account.methods" GridPane.halignment="RIGHT" GridPane.columnIndex="0" GridPane.rowIndex="0" />
 
-                        <JFXComboBox fx:id="cboType" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                        <JFXComboBox fx:id="cboType" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="2" />
 
-                        <JFXTextField fx:id="txtUsername" promptText="%account.username" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" FXUtils.validateWhileTextChanged="true">
+                        <Label fx:id="lblAddInjectorServer" text="%account.injector.server" GridPane.halignment="RIGHT" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+
+                        <JFXComboBox fx:id="cboServers" maxHeight="25" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+                        <Hyperlink fx:id="linkAddInjectorServer" text="%account.injector.add" onMouseClicked="#onAddInjecterServer" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+
+                        <JFXTextField fx:id="txtUsername" promptText="%account.username" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="3" FXUtils.validateWhileTextChanged="true">
                             <validators>
                                 <RequiredFieldValidator message="%input.not_empty">
                                 </RequiredFieldValidator>
                             </validators>
                         </JFXTextField>
-                        <JFXPasswordField fx:id="txtPassword" promptText="%account.password" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2" FXUtils.validateWhileTextChanged="true">
+                        <JFXPasswordField fx:id="txtPassword" promptText="%account.password" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.columnSpan="3" FXUtils.validateWhileTextChanged="true">
                             <validators>
                                 <RequiredFieldValidator message="%input.not_empty">
                                 </RequiredFieldValidator>

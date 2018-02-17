@@ -45,7 +45,7 @@ public final class AccountHelper {
     public static final AccountHelper INSTANCE = new AccountHelper();
     private AccountHelper() {}
 
-    public static final File SKIN_DIR = new File(Main.APPDATA, "skins");
+    public static final File SKIN_DIR = new File(Main.HMCL_DIRECTORY, "skins");
 
     public static void loadSkins() {
         loadSkins(Proxy.NO_PROXY);

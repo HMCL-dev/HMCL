@@ -61,7 +61,7 @@
             <bottom>
             <HBox alignment="CENTER_RIGHT">
                 <JFXButton fx:id="btnNext" onMouseClicked="#onNext" prefWidth="100" prefHeight="40" buttonType="RAISED"
-                           text="%wizard.next_>" styleClass="jfx-button-raised"/>
+                           text="%wizard.next" styleClass="jfx-button-raised"/>
             </HBox>
             </bottom>
         </BorderPane>

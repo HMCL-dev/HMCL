@@ -23,7 +23,6 @@ import com.jfoenix.controls.JFXProgressBar;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
@@ -34,8 +33,8 @@ import org.jackhuang.hmcl.task.Task;
 
 import java.util.function.Consumer;
 
-public class YggdrasilAccountLoginPane extends StackPane {
-    private final YggdrasilAccount oldAccount;
+public class AccountLoginPane extends StackPane {
+    private final Account oldAccount;
     private final Consumer<AuthInfo> success;
     private final Runnable failed;
 
@@ -46,12 +45,12 @@ public class YggdrasilAccountLoginPane extends StackPane {
     @FXML private JFXProgressBar progressBar;
     private JFXDialog dialog;
 
-    public YggdrasilAccountLoginPane(YggdrasilAccount oldAccount, Consumer<AuthInfo> success, Runnable failed) {
+    public AccountLoginPane(Account oldAccount, Consumer<AuthInfo> success, Runnable failed) {
         this.oldAccount = oldAccount;
         this.success = success;
         this.failed = failed;
 
-        FXUtils.loadFXML(this, "/assets/fxml/yggdrasil-account-login.fxml");
+        FXUtils.loadFXML(this, "/assets/fxml/account-login.fxml");
 
         lblUsername.setText(oldAccount.getUsername());
         txtPassword.setOnAction(e -> onAccept());
@@ -59,14 +58,12 @@ public class YggdrasilAccountLoginPane extends StackPane {
 
     @FXML
     private void onAccept() {
-        String username = oldAccount.getUsername();
         String password = txtPassword.getText();
         progressBar.setVisible(true);
         lblCreationWarning.setText("");
         Task.ofResult("login", () -> {
             try {
-                Account account = YggdrasilAccountFactory.INSTANCE.fromUsername(username, password);
-                return account.logIn(new SpecificCharacterSelector(Accounts.getCurrentCharacter(oldAccount)), Settings.INSTANCE.getProxy());
+                return oldAccount.logInWithPassword(new SpecificCharacterSelector(Accounts.getCurrentCharacter(oldAccount)), password, Settings.INSTANCE.getProxy());
             } catch (Exception e) {
                 return e;
             }

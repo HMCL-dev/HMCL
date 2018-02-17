@@ -25,20 +25,17 @@ import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.util.Callback;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.auth.*;
-import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.*;
 import org.jackhuang.hmcl.auth.InvalidCredentialsException;
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.game.AccountHelper;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Settings;
@@ -48,10 +45,14 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.IconedItem;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.ReflectionHelper;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 
 public final class AccountsPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", Main.i18n("account"));
@@ -64,7 +65,10 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
     @FXML private JFXPasswordField txtPassword;
     @FXML private Label lblCreationWarning;
     @FXML private JFXComboBox<String> cboType;
+    @FXML private JFXComboBox<TwoLineListItem> cboServers;
     @FXML private JFXProgressBar progressBar;
+    @FXML private Label lblAddInjectorServer;
+    @FXML private Hyperlink linkAddInjectorServer;
 
     {
         FXUtils.loadFXML(this, "/assets/fxml/account.fxml");
@@ -74,11 +78,18 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
 
         FXUtils.smoothScrolling(scrollPane);
 
-        cboType.getItems().setAll(Main.i18n("account.methods.offline"), Main.i18n("account.methods.yggdrasil"));
+        cboType.getItems().setAll(Main.i18n("account.methods.offline"), Main.i18n("account.methods.yggdrasil"), Main.i18n("account.methods.authlib_injector"));
         cboType.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> {
             txtPassword.setVisible(newValue.intValue() != 0);
+            cboServers.setVisible(newValue.intValue() == 2);
+            linkAddInjectorServer.setVisible(newValue.intValue() == 2);
+            lblAddInjectorServer.setVisible(newValue.intValue() == 2);
         });
         cboType.getSelectionModel().select(0);
+
+        // These two lines can eliminate black, don't know why.
+        cboServers.getItems().setAll(new TwoLineListItem("", ""));
+        cboServers.getSelectionModel().select(0);
 
         txtPassword.setOnAction(e -> onCreationAccept());
         txtUsername.setOnAction(e -> onCreationAccept());
@@ -91,6 +102,7 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
         });
 
         loadAccounts();
+        loadServers();
 
         if (Settings.INSTANCE.getAccounts().isEmpty())
             addNewAccount();
@@ -114,6 +126,17 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
         });
     }
 
+    public void loadServers() {
+        Task.ofResult("list", () -> Settings.INSTANCE.getAuthlibInjectorServerURLs().parallelStream()
+                .map(serverURL -> new TwoLineListItem(Accounts.getAuthlibInjectorServerName(serverURL), serverURL))
+                .collect(Collectors.toList()))
+                .subscribe(Task.of(Schedulers.javafx(), variables -> {
+                    cboServers.getItems().setAll(variables.<Collection<TwoLineListItem>>get("list"));
+                    if (!cboServers.getItems().isEmpty())
+                        cboServers.getSelectionModel().select(0);
+                }));
+    }
+
     private Node buildNode(int i, Account account, ToggleGroup group) {
         AccountItem item = new AccountItem(i, account, group);
         item.setOnDeleteButtonMouseClicked(e -> {
@@ -131,6 +154,11 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
     }
 
     @FXML
+    private void onAddInjecterServer() {
+        Controllers.navigate(Controllers.getServersPage());
+    }
+
+    @FXML
     private void onCreationAccept() {
         int type = cboType.getSelectionModel().getSelectedIndex();
         String username = txtUsername.getText();
@@ -141,8 +169,9 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
             try {
                 Account account;
                 switch (type) {
-                    case 0: account = OfflineAccountFactory.INSTANCE.fromUsername(username); break;
-                    case 1: account = YggdrasilAccountFactory.INSTANCE.fromUsername(username, password); break;
+                    case 0: account = Accounts.ACCOUNT_FACTORY.get(Accounts.OFFLINE_ACCOUNT_KEY).fromUsername(username); break;
+                    case 1: account = Accounts.ACCOUNT_FACTORY.get(Accounts.YGGDRASIL_ACCOUNT_KEY).fromUsername(username, password); break;
+                    case 2: account = Accounts.ACCOUNT_FACTORY.get(Accounts.AUTHLIB_INJECTOR_ACCOUNT_KEY).fromUsername(username, password, cboServers.getSelectionModel().getSelectedItem().getSubtitle()); break;
                     default: throw new Error();
                 }
 
@@ -203,6 +232,7 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
 
     public static String accountType(Account account) {
         if (account instanceof OfflineAccount) return Main.i18n("account.methods.offline");
+        else if (account instanceof AuthlibInjectorAccount) return Main.i18n("account.methods.authlib_injector");
         else if (account instanceof YggdrasilAccount) return Main.i18n("account.methods.yggdrasil");
         else throw new Error(Main.i18n("account.methods.no_method") + ": " + account);
     }

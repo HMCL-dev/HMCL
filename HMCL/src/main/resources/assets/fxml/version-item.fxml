@@ -12,19 +12,11 @@
          type="StackPane" pickOnBounds="false" FXUtils.limitWidth="160" FXUtils.limitHeight="156">
     <VBox fx:id="content" pickOnBounds="false">
         <StackPane fx:id="header" VBox.vgrow="ALWAYS" pickOnBounds="false" style="-fx-background-radius: 2 2 0 0; -fx-background-color: rgb(255,255,255,0.87); -fx-padding: 8;">
-            <BorderPane>
-                <top>
-                    <HBox alignment="CENTER_RIGHT">
-                    </HBox>
-                </top>
-                <center>
-                    <VBox style="-fx-padding: 8 8 0 8;">
-                        <Label fx:id="lblVersionName" style="-fx-font-size: 15;" textAlignment="JUSTIFY" wrapText="true" />
-                        <Label fx:id="lblGameVersion" style="-fx-font-size: 10;" textAlignment="JUSTIFY" wrapText="true" />
-                        <Label fx:id="lblLibraries" style="-fx-font-size: 10; -fx-text-fill: gray;" textAlignment="JUSTIFY" wrapText="true" />
-                    </VBox>
-                </center>
-            </BorderPane>
+            <VBox style="-fx-padding: 8 8 0 8;">
+                <Label fx:id="lblVersionName" style="-fx-font-size: 15;" textAlignment="JUSTIFY" wrapText="true" />
+                <Label fx:id="lblGameVersion" style="-fx-font-size: 11;" textAlignment="JUSTIFY" wrapText="true" />
+                <Label fx:id="lblLibraries" style="-fx-font-size: 11; -fx-text-fill: gray;" textAlignment="JUSTIFY" wrapText="true" />
+            </VBox>
         </StackPane>
         <StackPane fx:id="body" style="-fx-background-radius: 0 0 2 2; -fx-background-color: rgb(255,255,255,0.87); -fx-padding: 8;" minHeight="40" pickOnBounds="false">
             <BorderPane>

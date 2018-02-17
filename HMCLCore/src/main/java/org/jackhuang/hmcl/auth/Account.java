@@ -57,6 +57,12 @@ public abstract class Account {
      */
     public abstract AuthInfo logIn(MultiCharacterSelector selector, Proxy proxy) throws AuthenticationException;
 
+    public AuthInfo logInWithPassword(MultiCharacterSelector selector, String password) throws AuthenticationException {
+        return logInWithPassword(selector, password, Proxy.NO_PROXY);
+    }
+
+    public abstract AuthInfo logInWithPassword(MultiCharacterSelector selector, String password, Proxy proxy) throws AuthenticationException;
+
     public abstract boolean canPlayOffline();
 
     /**

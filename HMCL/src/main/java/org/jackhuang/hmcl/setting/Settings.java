@@ -28,6 +28,7 @@ import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
+import org.jackhuang.hmcl.auth.yggdrasil.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.AuthlibInjectorBuildInfo;
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
 import org.jackhuang.hmcl.download.DownloadProvider;
@@ -87,9 +88,11 @@ public class Settings {
             accounts.put(Accounts.getAccountId(account), account);
         }
 
-        save();
-
+        checkAuthlibInjectorServerURLs();
+        checkAuthlibInjectorAccounts();
         checkProfileMap();
+
+        save();
 
         for (Map.Entry<String, Profile> entry2 : getProfileMap().entrySet()) {
             entry2.getValue().setName(entry2.getKey());
@@ -104,13 +107,6 @@ public class Settings {
         });
 
         loadProxy();
-
-        try {
-            new URL(SETTINGS.getAuthlibInjectorServerURL());
-        } catch (MalformedURLException ex) {
-            Logging.LOG.log(Level.SEVERE, "Authlib injector server URL is malformed, using official update url.", ex);
-            SETTINGS.setAuthlibInjectorServerURL(AuthlibInjectorBuildInfo.UPDATE_URL);
-        }
     }
 
     private Config initSettings() {
@@ -280,8 +276,39 @@ public class Settings {
         SETTINGS.setLogLines(logLines);
     }
 
-    public String getAuthlibInjectorServerURL() {
-        return SETTINGS.getAuthlibInjectorServerURL();
+    public Set<String> getAuthlibInjectorServerURLs() {
+        return SETTINGS.getAuthlibInjectorServerURLs();
+    }
+
+    public void removeAuthlibInjectorServerURL(String serverURL) {
+        checkAuthlibInjectorServerURLs();
+
+        SETTINGS.getAuthlibInjectorServerURLs().remove(serverURL);
+
+        checkAuthlibInjectorAccounts();
+        save();
+    }
+
+    public void addAuthlibInjectorServerURL(String serverURL) {
+        checkAuthlibInjectorServerURLs();
+
+        SETTINGS.getAuthlibInjectorServerURLs().add(serverURL);
+        save();
+    }
+
+    private void checkAuthlibInjectorServerURLs() {
+        if (SETTINGS.getAuthlibInjectorServerURLs() == null)
+            SETTINGS.setAuthlibInjectorServerURLs(new HashSet<>());
+    }
+
+    private void checkAuthlibInjectorAccounts() {
+        for (Account account : getAccounts()) {
+            if (account instanceof AuthlibInjectorAccount) {
+                AuthlibInjectorAccount injectorAccount = (AuthlibInjectorAccount) account;
+                if (!SETTINGS.getAuthlibInjectorServerURLs().contains(injectorAccount.getServerBaseURL()))
+                    deleteAccount(account);
+            }
+        }
     }
 
     public DownloadProvider getDownloadProvider() {
@@ -490,6 +517,8 @@ public class Settings {
         getProfileMap().put(ver.getName(), ver);
 
         ver.nameProperty().setChangedListener(this::profileNameChanged);
+
+        save();
     }
 
     public void deleteProfile(Profile profile) {
