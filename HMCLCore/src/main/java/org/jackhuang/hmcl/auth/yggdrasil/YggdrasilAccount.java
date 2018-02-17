@@ -298,10 +298,17 @@ public class YggdrasilAccount extends Account {
         if (StringUtils.isBlank(userId))
             throw new IllegalStateException("Not logged in");
 
-        ProfileResponse response = GSON.fromJson(NetworkUtils.doGet(NetworkUtils.toURL(baseProfile + UUIDTypeAdapter.fromUUID(profile.getId()))), ProfileResponse.class);
-        if (response.getProperties() == null) return Optional.empty();
-        Property textureProperty = response.getProperties().get("textures");
-        if (textureProperty == null) return Optional.empty();
+        Property textureProperty;
+
+        if (getUserProperties().containsKey("textures"))
+            textureProperty = getUserProperties().get("textures");
+        else {
+            ProfileResponse response = GSON.fromJson(NetworkUtils.doGet(NetworkUtils.toURL(baseProfile + UUIDTypeAdapter.fromUUID(profile.getId()))), ProfileResponse.class);
+            if (response.getProperties() == null) return Optional.empty();
+            textureProperty = response.getProperties().get("textures");
+            if (textureProperty == null) return Optional.empty();
+            getUserProperties().putAll(response.getProperties());
+        }
 
         TextureResponse texture;
         String json = new String(Base64.getDecoder().decode(textureProperty.getValue()), Charsets.UTF_8);
