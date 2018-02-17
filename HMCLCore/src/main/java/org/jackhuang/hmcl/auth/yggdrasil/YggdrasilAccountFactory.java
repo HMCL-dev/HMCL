@@ -31,15 +31,23 @@ import static org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount.*;
  *
  * @author huangyuhui
  */
-public final class YggdrasilAccountFactory extends AccountFactory<YggdrasilAccount> {
-    public static final YggdrasilAccountFactory INSTANCE = new YggdrasilAccountFactory();
+public class YggdrasilAccountFactory extends AccountFactory<YggdrasilAccount> {
 
-    private YggdrasilAccountFactory() {
+    private final String baseAuthServer;
+    private final String baseSessionServer;
+
+    public YggdrasilAccountFactory() {
+        this(MOJANG_AUTH_SERVER, MOJANG_SESSION_SERVER);
+    }
+
+    public YggdrasilAccountFactory(String baseAuthServer, String baseSessionServer) {
+        this.baseAuthServer = baseAuthServer;
+        this.baseSessionServer = baseSessionServer;
     }
 
     @Override
-    public YggdrasilAccount fromUsername(String username, String password) {
-        YggdrasilAccount account = new YggdrasilAccount(username);
+    public YggdrasilAccount fromUsername(String username, String password, Object additionalData) {
+        YggdrasilAccount account = new YggdrasilAccount(MOJANG_AUTH_SERVER, MOJANG_SESSION_SERVER, username);
         account.setPassword(password);
         return account;
     }
@@ -49,7 +57,7 @@ public final class YggdrasilAccountFactory extends AccountFactory<YggdrasilAccou
         String username = Lang.get(storage, STORAGE_KEY_USER_NAME, String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have key " + STORAGE_KEY_USER_NAME));
 
-        YggdrasilAccount account = new YggdrasilAccount(username);
+        YggdrasilAccount account = new YggdrasilAccount(baseAuthServer, baseSessionServer, username);
         account.setUserId(Lang.get(storage, STORAGE_KEY_USER_ID, String.class, username));
         account.setAccessToken(Lang.get(storage, STORAGE_KEY_ACCESS_TOKEN, String.class, null));
         account.setClientToken(Lang.get(storage, STORAGE_KEY_CLIENT_TOKEN, String.class)
@@ -69,4 +77,6 @@ public final class YggdrasilAccountFactory extends AccountFactory<YggdrasilAccou
         return account;
     }
 
+    private static final String MOJANG_AUTH_SERVER = "https://authserver.mojang.com/";
+    private static final String MOJANG_SESSION_SERVER = "https://sessionserver.mojang.com/";
 }

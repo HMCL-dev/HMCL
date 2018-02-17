@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.auth.yggdrasil.AuthlibInjectorBuildInfo;
 import org.jackhuang.hmcl.util.JavaVersion;
 
 import java.util.LinkedList;
@@ -90,6 +91,9 @@ public final class Config {
 
     @SerializedName("logLines")
     private int logLines = 100;
+
+    @SerializedName("authlibInjectorServerURL")
+    private String authlibInjectorServerURL = AuthlibInjectorBuildInfo.UPDATE_URL;
 
     public String getSelectedProfile() {
         return selectedProfile;
@@ -277,5 +281,19 @@ public final class Config {
 
     public void setLogLines(int logLines) {
         this.logLines = logLines;
+    }
+
+    public String getAuthlibInjectorServerURL() {
+        return authlibInjectorServerURL;
+    }
+
+    /**
+     * Will not invoke Settings.INSTANCE.save()
+     * @param authlibInjectorServerURL new server url.
+     */
+    public void setAuthlibInjectorServerURL(String authlibInjectorServerURL) {
+        this.authlibInjectorServerURL = authlibInjectorServerURL;
+        // Do not invoke Settings.INSTANCE.save()
+        // Because we want users set it theirself.
     }
 }

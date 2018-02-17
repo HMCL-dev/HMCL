@@ -17,15 +17,19 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.OfflineAccount;
 import org.jackhuang.hmcl.auth.OfflineAccountFactory;
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
+import org.jackhuang.hmcl.auth.yggdrasil.*;
+import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 
+import java.io.File;
+import java.net.URL;
 import java.util.Map;
 import java.util.Optional;
 
@@ -37,14 +41,17 @@ public final class Accounts {
 
     public static final String OFFLINE_ACCOUNT_KEY = "offline";
     public static final String YGGDRASIL_ACCOUNT_KEY = "yggdrasil";
+    public static final String AUTHLIB_INJECTOR_ACCOUNT_KEY = "authlibInjector";
 
     public static final Map<String, AccountFactory<?>> ACCOUNT_FACTORY = Lang.mapOf(
             new Pair<>(OFFLINE_ACCOUNT_KEY, OfflineAccountFactory.INSTANCE),
-            new Pair<>(YGGDRASIL_ACCOUNT_KEY, YggdrasilAccountFactory.INSTANCE)
+            new Pair<>(YGGDRASIL_ACCOUNT_KEY, new YggdrasilAccountFactory()),
+            new Pair<>(AUTHLIB_INJECTOR_ACCOUNT_KEY, new AuthlibInjectorAccountFactory(Accounts::downloadAuthlibInjector))
     );
 
     public static String getAccountType(Account account) {
         if (account instanceof OfflineAccount) return OFFLINE_ACCOUNT_KEY;
+        else if (account instanceof AuthlibInjectorAccount) return AUTHLIB_INJECTOR_ACCOUNT_KEY;
         else if (account instanceof YggdrasilAccount) return YGGDRASIL_ACCOUNT_KEY;
         else return YGGDRASIL_ACCOUNT_KEY;
     }
@@ -74,5 +81,17 @@ public final class Accounts {
 
     static String getAccountId(String username, String character) {
         return username + ":" + character;
+    }
+
+    private static String downloadAuthlibInjector() throws Exception {
+        AuthlibInjectorBuildInfo buildInfo = AuthlibInjectorBuildInfo.requestBuildInfo();
+        File jar = new File(Main.HMCL_DIRECTORY, "authlib-injector.jar");
+        File local = new File(Main.HMCL_DIRECTORY, "authlib-injector.txt");
+        int buildNumber = Integer.parseInt(FileUtils.readText(local));
+        if (buildNumber < buildInfo.getBuildNumber()) {
+            new FileDownloadTask(new URL(buildInfo.getUrl()), jar).run();
+            FileUtils.writeText(local, String.valueOf(buildInfo.getBuildNumber()));
+        }
+        return jar.getAbsolutePath();
     }
 }

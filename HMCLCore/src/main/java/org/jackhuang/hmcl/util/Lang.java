@@ -5,6 +5,8 @@
  */
 package org.jackhuang.hmcl.util;
 
+import com.google.gson.JsonParseException;
+
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -21,6 +23,16 @@ public final class Lang {
 
     public static final Consumer EMPTY_CONSUMER = a -> {
     };
+
+    public static <T> T requireJsonNonNull(T obj) throws JsonParseException {
+        return requireJsonNonNull(obj, "Json object cannot be null.");
+    }
+
+    public static <T> T requireJsonNonNull(T obj, String message) throws JsonParseException {
+        if (obj == null)
+            throw new JsonParseException(message);
+        return obj;
+    }
 
     public static <K, V> Map<K, V> mapOf(Pair<K, V>... pairs) {
         HashMap<K, V> map = new HashMap<>();

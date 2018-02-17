@@ -73,7 +73,7 @@ public final class DateTypeAdapter implements JsonSerializer<Date>, JsonDeserial
                         cleaned = cleaned.substring(0, 22) + cleaned.substring(23);
                         return ISO_8601_FORMAT.parse(cleaned);
                     } catch (Exception e) {
-                        throw new JsonSyntaxException("Invalid date: " + string, e);
+                        throw new JsonParseException("Invalid date: " + string, e);
                     }
                 }
             }

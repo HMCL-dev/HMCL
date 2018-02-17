@@ -66,6 +66,18 @@ public final class Arguments {
             return new Arguments(Lang.merge(arguments.getGame(), list), arguments.getJvm());
     }
 
+    public static Arguments addJVMArguments(Arguments arguments, String... jvmArguments) {
+        return addJVMArguments(arguments, Arrays.asList(jvmArguments));
+    }
+
+    public static Arguments addJVMArguments(Arguments arguments, List<String> jvmArguments) {
+        List<Argument> list = jvmArguments.stream().map(StringArgument::new).collect(Collectors.toList());
+        if (arguments == null)
+            return new Arguments(null, list);
+        else
+            return new Arguments(arguments.getGame(), Lang.merge(arguments.getJvm(), list));
+    }
+
     public static Arguments merge(Arguments a, Arguments b) {
         if (a == null)
             return b;

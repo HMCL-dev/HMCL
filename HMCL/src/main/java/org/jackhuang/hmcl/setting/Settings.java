@@ -28,6 +28,7 @@ import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
+import org.jackhuang.hmcl.auth.yggdrasil.AuthlibInjectorBuildInfo;
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.MojangDownloadProvider;
@@ -39,10 +40,7 @@ import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.Authenticator;
-import java.net.InetSocketAddress;
-import java.net.PasswordAuthentication;
-import java.net.Proxy;
+import java.net.*;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -106,6 +104,13 @@ public class Settings {
         });
 
         loadProxy();
+
+        try {
+            new URL(SETTINGS.getAuthlibInjectorServerURL());
+        } catch (MalformedURLException ex) {
+            Logging.LOG.log(Level.SEVERE, "Authlib injector server URL is malformed, using official update url.", ex);
+            SETTINGS.setAuthlibInjectorServerURL(AuthlibInjectorBuildInfo.UPDATE_URL);
+        }
     }
 
     private Config initSettings() {
@@ -273,6 +278,10 @@ public class Settings {
 
     public void setLogLines(int logLines) {
         SETTINGS.setLogLines(logLines);
+    }
+
+    public String getAuthlibInjectorServerURL() {
+        return SETTINGS.getAuthlibInjectorServerURL();
     }
 
     public DownloadProvider getDownloadProvider() {

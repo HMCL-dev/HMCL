@@ -18,12 +18,15 @@
 package org.jackhuang.hmcl.auth;
 
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
+import org.jackhuang.hmcl.game.Arguments;
+import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
 /**
  *
  * @author huangyuhui
  */
+@Immutable
 public final class AuthInfo {
 
     private final String username;
@@ -32,6 +35,7 @@ public final class AuthInfo {
     private final UserType userType;
     private final String userProperties;
     private final String userPropertyMap;
+    private final Arguments arguments;
 
     public AuthInfo(String username, String userId, String authToken) {
         this(username, userId, authToken, UserType.LEGACY);
@@ -46,12 +50,17 @@ public final class AuthInfo {
     }
 
     public AuthInfo(String username, String userId, String authToken, UserType userType, String userProperties, String userPropertyMap) {
+        this(username, userId, authToken, userType, userProperties, userPropertyMap, null);
+    }
+
+    public AuthInfo(String username, String userId, String authToken, UserType userType, String userProperties, String userPropertyMap, Arguments arguments) {
         this.username = username;
         this.userId = userId;
         this.authToken = authToken;
         this.userType = userType;
         this.userProperties = userProperties;
         this.userPropertyMap = userPropertyMap;
+        this.arguments = arguments;
     }
 
     public AuthInfo(GameProfile profile, String authToken, UserType userType, String userProperties) {
@@ -92,5 +101,13 @@ public final class AuthInfo {
      */
     public String getUserPropertyMap() {
         return userPropertyMap;
+    }
+
+    public Arguments getArguments() {
+        return arguments;
+    }
+
+    public AuthInfo setArguments(Arguments arguments) {
+        return new AuthInfo(username, userId, authToken, userType, userProperties, userPropertyMap, arguments);
     }
 }

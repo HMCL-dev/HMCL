@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.util.CompressingUtils;
 import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
@@ -81,13 +82,9 @@ public final class HMCLModpackManager {
      */
     public static Modpack readHMCLModpackManifest(File file) throws IOException, JsonParseException {
         String manifestJson = CompressingUtils.readTextZipEntry(file, "modpack.json");
-        Modpack manifest = Constants.GSON.fromJson(manifestJson, Modpack.class);
-        if (manifest == null)
-            throw new JsonParseException("`modpack.json` not found. " + file + " is not a valid HMCL modpack.");
+        Modpack manifest = Lang.requireJsonNonNull(Constants.GSON.fromJson(manifestJson, Modpack.class));
         String gameJson = CompressingUtils.readTextZipEntry(file, "minecraft/pack.json");
-        Version game = Constants.GSON.fromJson(gameJson, Version.class);
-        if (game == null)
-            throw new JsonParseException("`minecraft/pack.json` not found. " + file + " iot a valid HMCL modpack.");
+        Version game = Lang.requireJsonNonNull(Constants.GSON.fromJson(gameJson, Version.class));
         if (game.getJar() == null)
             if (StringUtils.isBlank(manifest.getVersion()))
                 throw new JsonParseException("Cannot recognize the game version of modpack " + file + ".");

@@ -154,7 +154,7 @@ public class AppDataUpgrader extends IUpgrader {
 
     public static class AppDataUpgraderPackGzTask extends Task {
 
-        public static final File BASE_FOLDER = Main.getWorkingDirectory("hmcl");
+        public static final File BASE_FOLDER = Main.HMCL_DIRECTORY;
         public static final File HMCL_VER_FILE = new File(BASE_FOLDER, "hmclver.json");
 
         public static File getSelf(String ver) {

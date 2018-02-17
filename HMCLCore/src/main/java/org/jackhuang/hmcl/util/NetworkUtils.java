@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
 import java.security.GeneralSecurityException;
@@ -186,5 +187,14 @@ public final class NetworkUtils {
 
     public static URL toURL(String str) {
         return Lang.invoke(() -> new URL(str));
+    }
+
+    public static boolean isURL(String str) {
+        try {
+            new URL(str);
+            return true;
+        } catch (MalformedURLException e) {
+            return false;
+        }
     }
 }

@@ -28,10 +28,14 @@ import java.util.Map;
 public abstract class AccountFactory<T extends Account> {
 
     public final T fromUsername(String username) {
-        return fromUsername(username, "");
+        return fromUsername(username, "", null);
     }
 
-    public abstract T fromUsername(String username, String password);
+    public final T fromUsername(String username, String password) {
+        return fromUsername(username, password, null);
+    }
+
+    public abstract T fromUsername(String username, String password, Object additionalData);
 
     protected abstract T fromStorageImpl(Map<Object, Object> storage);
 

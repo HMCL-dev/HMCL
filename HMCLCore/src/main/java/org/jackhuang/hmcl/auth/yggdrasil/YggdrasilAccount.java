@@ -35,7 +35,7 @@ import java.util.*;
  *
  * @author huang
  */
-public final class YggdrasilAccount extends Account {
+public class YggdrasilAccount extends Account {
 
     private final String username;
     private String password;
@@ -48,8 +48,15 @@ public final class YggdrasilAccount extends Account {
     private GameProfile[] profiles;
     private UserType userType = UserType.LEGACY;
 
-    public YggdrasilAccount(String username) {
+    public YggdrasilAccount(String baseAuthServer, String baseSessionServer, String username) {
+        this.baseAuthServer = baseAuthServer;
+        this.baseSessionServer = baseSessionServer;
+        this.baseProfile = baseSessionServer + "session/minecraft/profile/";
         this.username = username;
+
+        this.routeAuthenticate = NetworkUtils.toURL(baseAuthServer + "authenticate");
+        this.routeRefresh = NetworkUtils.toURL(baseAuthServer + "refresh");
+        this.routeValidate = NetworkUtils.toURL(baseAuthServer + "validate");
     }
 
     @Override
@@ -136,9 +143,9 @@ public final class YggdrasilAccount extends Account {
                 isOnline = true;
                 return;
             }
-            logIn1(ROUTE_REFRESH, new RefreshRequest(accessToken, clientToken), proxy);
+            logIn1(routeRefresh, new RefreshRequest(accessToken, clientToken), proxy);
         } else if (StringUtils.isNotBlank(password))
-            logIn1(ROUTE_AUTHENTICATE, new AuthenticationRequest(username, password, clientToken), proxy);
+            logIn1(routeAuthenticate, new AuthenticationRequest(username, password, clientToken), proxy);
         else
             throw new AuthenticationException("Password cannot be blank");
     }
@@ -250,7 +257,7 @@ public final class YggdrasilAccount extends Account {
             return false;
 
         try {
-            makeRequest(ROUTE_VALIDATE, new ValidateRequest(accessToken, clientToken), proxy);
+            makeRequest(routeValidate, new ValidateRequest(accessToken, clientToken), proxy);
             return true;
         } catch (AuthenticationException e) {
             return false;
@@ -268,7 +275,7 @@ public final class YggdrasilAccount extends Account {
         if (StringUtils.isBlank(userId))
             throw new IllegalStateException("Not logged in");
 
-        ProfileResponse response = GSON.fromJson(NetworkUtils.doGet(NetworkUtils.toURL(BASE_PROFILE + UUIDTypeAdapter.fromUUID(profile.getId()))), ProfileResponse.class);
+        ProfileResponse response = GSON.fromJson(NetworkUtils.doGet(NetworkUtils.toURL(baseProfile + UUIDTypeAdapter.fromUUID(profile.getId()))), ProfileResponse.class);
         if (response.getProperties() == null) return Optional.empty();
         Property textureProperty = response.getProperties().get("textures");
         if (textureProperty == null) return Optional.empty();
@@ -287,11 +294,12 @@ public final class YggdrasilAccount extends Account {
         return "YggdrasilAccount[username=" + getUsername() + "]";
     }
 
-    private static final String BASE_URL = "https://authserver.mojang.com/";
-    private static final String BASE_PROFILE = "https://sessionserver.mojang.com/session/minecraft/profile/";
-    private static final URL ROUTE_AUTHENTICATE = NetworkUtils.toURL(BASE_URL + "authenticate");
-    private static final URL ROUTE_REFRESH = NetworkUtils.toURL(BASE_URL + "refresh");
-    private static final URL ROUTE_VALIDATE = NetworkUtils.toURL(BASE_URL + "validate");
+    private final String baseAuthServer;
+    private final String baseSessionServer;
+    private final String baseProfile;
+    private final URL routeAuthenticate;
+    private final URL routeRefresh;
+    private final URL routeValidate;
 
     static final String STORAGE_KEY_ACCESS_TOKEN = "accessToken";
     static final String STORAGE_KEY_PROFILE_NAME = "displayName";

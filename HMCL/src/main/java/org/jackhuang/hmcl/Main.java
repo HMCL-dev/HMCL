@@ -121,11 +121,11 @@ public final class Main extends Application {
     }
 
     public static final File MINECRAFT_DIRECTORY = getWorkingDirectory("minecraft");
+    public static final File HMCL_DIRECTORY = getWorkingDirectory("hmcl");
 
     public static final String VERSION = "@HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING@";
     public static final String NAME = "HMCL";
     public static final String TITLE = NAME + " " + VERSION;
-    public static final File APPDATA = getWorkingDirectory("hmcl");
     public static final ResourceBundle RESOURCE_BUNDLE = Settings.INSTANCE.getLocale().getResourceBundle();
     public static final UpdateChecker UPDATE_CHECKER = new UpdateChecker(VersionNumber.asVersion(VERSION));
     public static final CrashReporter CRASH_REPORTER = new CrashReporter();
