@@ -18,6 +18,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionHandler;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
+import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -31,6 +32,7 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
     @FXML private Label lblServerIp;
     @FXML private Label lblServerName;
     @FXML private Label lblCreationWarning;
+    @FXML private Label lblServerWarning;
     @FXML private VBox listPane;
     @FXML private JFXTextField txtServerIp;
     @FXML private JFXDialogLayout addServerPane;
@@ -100,10 +102,11 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
 
     @FXML
     private void onAddNext() {
+        String serverIp = txtServerIp.getText();
         progressBar.setVisible(true);
         addServerPane.setDisable(true);
 
-        Task.ofResult("serverName", () -> Objects.requireNonNull(Accounts.getAuthlibInjectorServerName(txtServerIp.getText())))
+        Task.ofResult("serverName", () -> Objects.requireNonNull(Accounts.getAuthlibInjectorServerName(serverIp)))
                 .finalized(Schedulers.javafx(), (variables, isDependentsSucceeded) -> {
                     progressBar.setVisible(false);
                     addServerPane.setDisable(false);
@@ -111,6 +114,8 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
                     if (isDependentsSucceeded) {
                         lblServerName.setText(variables.get("serverName"));
                         lblServerIp.setText(txtServerIp.getText());
+
+                        lblServerWarning.setVisible("http".equals(NetworkUtils.toURL(serverIp).getProtocol()));
 
                         transitionHandler.setContent(confirmServerPane, ContainerAnimations.SWIPE_LEFT.getAnimationProducer());
                     } else

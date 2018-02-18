@@ -45,7 +45,7 @@
                     </body>
                     <actions>
                         <Label fx:id="lblCreationWarning" />
-                        <JFXButton onMouseClicked="#onAddCancel" text="%button.ok" styleClass="dialog-cancel" />
+                        <JFXButton onMouseClicked="#onAddCancel" text="%button.cancel" styleClass="dialog-cancel" />
                         <JFXButton fx:id="btnAddNext" onMouseClicked="#onAddNext" text="%wizard.next" styleClass="dialog-accept" />
                     </actions>
                 </JFXDialogLayout>
@@ -66,7 +66,7 @@
                             <Label fx:id="lblServerIp" GridPane.columnIndex="1" GridPane.rowIndex="0" />
                             <Label fx:id="lblServerName" GridPane.columnIndex="1" GridPane.rowIndex="1" />
 
-                            <Label text="%account.injector.http" style="-fx-text-fill: red;" GridPane.rowIndex="2" GridPane.columnSpan="2" GridPane.columnIndex="0" />
+                            <Label fx:id="lblServerWarning" text="%account.injector.http" style="-fx-text-fill: red;" GridPane.rowIndex="2" GridPane.columnSpan="2" GridPane.columnIndex="0" />
                         </GridPane>
                     </body>
                     <actions>
