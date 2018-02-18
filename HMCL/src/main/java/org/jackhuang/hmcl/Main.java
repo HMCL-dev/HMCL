@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.util.*;
 import java.io.File;
 import java.util.Arrays;
 import java.util.ResourceBundle;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 public final class Main extends Application {
@@ -89,6 +90,10 @@ public final class Main extends Application {
 
             Logging.LOG.info("Shutting down executor services.");
             Schedulers.shutdown();
+
+            Controllers.shutdown();
+
+            Lang.executeDelayed(OperatingSystem::forceGC, TimeUnit.SECONDS, 5, true);
         });
     }
 

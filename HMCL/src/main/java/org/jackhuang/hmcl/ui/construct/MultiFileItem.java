@@ -32,6 +32,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -50,6 +51,7 @@ public class MultiFileItem extends ComponentList {
     private final StringProperty customTitle = new SimpleStringProperty(this, "customTitle", Main.i18n("selector.custom"));
     private final StringProperty chooserTitle = new SimpleStringProperty(this, "chooserTitle", Main.i18n("selector.choose_file"));
     private final BooleanProperty directory = new SimpleBooleanProperty(this, "directory", false);
+    private final SimpleStringProperty tooltip = new SimpleStringProperty(this, "tooltip");
     private ObservableList<FileChooser.ExtensionFilter> extensionFilters = FXCollections.observableArrayList();
 
     private final ToggleGroup group = new ToggleGroup();
@@ -109,6 +111,10 @@ public class MultiFileItem extends ComponentList {
             if (toggleSelectedListener != null)
                 toggleSelectedListener.accept(newValue);
         });
+
+        Tooltip tip = new Tooltip();
+        tip.textProperty().bind(tooltipProperty());
+        Tooltip.install(this, tip);
     }
 
     public Node createChildren(String title) {
@@ -222,5 +228,17 @@ public class MultiFileItem extends ComponentList {
 
     public ObservableList<FileChooser.ExtensionFilter> getExtensionFilters() {
         return extensionFilters;
+    }
+
+    public String getTooltip() {
+        return tooltip.get();
+    }
+
+    public StringProperty tooltipProperty() {
+        return tooltip;
+    }
+
+    public void setTooltip(String tooltip) {
+        this.tooltip.set(tooltip);
     }
 }

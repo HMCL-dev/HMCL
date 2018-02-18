@@ -66,13 +66,8 @@ public final class TaskExecutor {
     public TaskExecutor start() {
         taskListeners.forEach(TaskListener::onStart);
         workerQueue.add(scheduler.schedule(() -> {
-            if (executeTasks(Collections.singleton(firstTask)))
-                taskListeners.forEach(TaskListener::onSucceed);
-            else
-                taskListeners.forEach(it -> {
-                    it.onTerminate();
-                    it.onTerminate(variables);
-                });
+            boolean flag = executeTasks(Collections.singleton(firstTask));
+            taskListeners.forEach(it -> it.onStop(flag, this));
         }));
         return this;
     }
@@ -81,14 +76,8 @@ public final class TaskExecutor {
         taskListeners.forEach(TaskListener::onStart);
         AtomicBoolean flag = new AtomicBoolean(true);
         Future<?> future = scheduler.schedule(() -> {
-            if (!executeTasks(Collections.singleton(firstTask))) {
-                taskListeners.forEach(it -> {
-                    it.onTerminate();
-                    it.onTerminate(variables);
-                });
-                flag.set(false);
-            } else
-                taskListeners.forEach(TaskListener::onSucceed);
+            flag.set(executeTasks(Collections.singleton(firstTask)));
+            taskListeners.forEach(it -> it.onStop(flag.get(), this));
         });
         workerQueue.add(future);
         Lang.invoke(() -> future.get());
@@ -205,6 +194,10 @@ public final class TaskExecutor {
 
     public int getRunningTasks() {
         return totTask.get();
+    }
+
+    public AutoTypingMap<String> getVariables() {
+        return variables;
     }
 
     private class Invoker implements ExceptionalRunnable<Exception> {

@@ -39,16 +39,12 @@ public abstract class TaskListener implements EventListener {
     public void onFailed(Task task, Throwable throwable) {
     }
 
-    public void onTerminate() {
-    }
-
-    public void onTerminate(AutoTypingMap<String> variables) {
-    }
-
-    public void onSucceed() {
+    public void onStop(boolean success, TaskExecutor executor) {
     }
 
     public static class DefaultTaskListener extends TaskListener {
+        private DefaultTaskListener() {
+        }
 
         public static final DefaultTaskListener INSTANCE = new DefaultTaskListener();
     }

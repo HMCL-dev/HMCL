@@ -166,7 +166,7 @@ public class YggdrasilAccount extends Account {
             isOnline = true;
             return;
         }
-        logIn1(routeRefresh, new RefreshRequest(accessToken, clientToken), proxy);
+        logIn1(routeRefresh, new RefreshRequest(accessToken, clientToken, getSelectedProfile()), proxy);
     }
 
     public void logInWithPassword0(String password, Proxy proxy) throws AuthenticationException {

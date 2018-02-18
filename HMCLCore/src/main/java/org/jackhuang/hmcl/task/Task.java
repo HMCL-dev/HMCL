@@ -208,9 +208,9 @@ public abstract class Task {
         return new TaskExecutor(this);
     }
 
-    public final TaskExecutor executor(Function<TaskExecutor, TaskListener> taskListener) {
+    public final TaskExecutor executor(TaskListener taskListener) {
         TaskExecutor executor = new TaskExecutor(this);
-        executor.addTaskListener(taskListener.apply(executor));
+        executor.addTaskListener(taskListener);
         return executor;
     }
 

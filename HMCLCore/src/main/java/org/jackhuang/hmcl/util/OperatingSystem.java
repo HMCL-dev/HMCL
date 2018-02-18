@@ -122,4 +122,10 @@ public enum OperatingSystem {
         c.putString(string);
         Clipboard.getSystemClipboard().setContent(c);
     }
+
+    public static void forceGC() {
+        System.gc();
+        System.runFinalization();
+        System.gc();
+    }
 }

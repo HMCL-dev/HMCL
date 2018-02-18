@@ -39,7 +39,7 @@ public final class Controllers {
 
     private static Scene scene;
     private static Stage stage;
-    private static MainPage mainPage = new MainPage();
+    private static MainPage mainPage = null;
     private static SettingsPage settingsPage = null;
     private static VersionPage versionPage = null;
     private static AuthlibInjectorServersPage serversPage = null;
@@ -75,11 +75,14 @@ public final class Controllers {
         return serversPage;
     }
 
+    // FXThread
     public static Decorator getDecorator() {
         return decorator;
     }
 
     public static MainPage getMainPage() {
+        if (mainPage == null)
+            mainPage = new MainPage();
         return mainPage;
     }
 
@@ -90,7 +93,7 @@ public final class Controllers {
     public static void initialize(Stage stage) {
         Controllers.stage = stage;
 
-        decorator = new Decorator(stage, mainPage, Main.TITLE, false, true);
+        decorator = new Decorator(stage, getMainPage(), Main.TITLE, false, true);
         decorator.showPage(null);
         leftPaneController = new LeftPaneController(decorator.getLeftPane());
 
@@ -166,5 +169,15 @@ public final class Controllers {
 
     public static void showUpdate() {
         getDecorator().showUpdate();
+    }
+
+    public static void shutdown() {
+        mainPage = null;
+        settingsPage = null;
+        versionPage = null;
+        serversPage = null;
+        decorator = null;
+        stage = null;
+        scene = null;
     }
 }

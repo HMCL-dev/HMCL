@@ -8,6 +8,7 @@ package org.jackhuang.hmcl.util;
 import com.google.gson.JsonParseException;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -247,6 +248,17 @@ public final class Lang {
         if (c != null)
             result.addAll(c);
         return result;
+    }
+
+    public static void executeDelayed(Runnable runnable, TimeUnit timeUnit, long timeout, boolean isDaemon) {
+        thread(() -> {
+            try {
+                timeUnit.sleep(timeout);
+                runnable.run();
+            } catch (InterruptedException ignore) {
+            }
+
+        }, null, isDaemon);
     }
 
     public static Thread thread(Runnable runnable) {

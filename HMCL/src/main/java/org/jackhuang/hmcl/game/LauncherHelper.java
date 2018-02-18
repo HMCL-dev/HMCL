@@ -143,21 +143,26 @@ public final class LauncherHelper {
             @Override
             public void onFinished(Task task) {
                 finished.incrementAndGet();
-                Platform.runLater(() -> {
-                    launchingStepsPane.setProgress(1.0 * finished.get() / executor.getRunningTasks());
-                });
+                int runningTasks = executor.getRunningTasks();
+                Platform.runLater(() -> launchingStepsPane.setProgress(1.0 * finished.get() / runningTasks));
             }
 
             @Override
-            public void onTerminate() {
-                Platform.runLater(() -> {
-                    if (executor.getLastException() != null)
-                        Controllers.dialog(I18nException.getStackTrace(executor.getLastException()),
-                                scriptFile == null ? Main.i18n("launch.failed") : Main.i18n("version.launch_script.failed"),
-                                MessageBox.ERROR_MESSAGE, Controllers::closeDialog);
-                    else
-                        Controllers.closeDialog();
-                });
+            public void onStop(boolean success, TaskExecutor executor) {
+                if (success) {
+                    Controllers.closeDialog();
+                } else {
+                    Platform.runLater(() -> {
+                        if (executor.getLastException() != null)
+                            Controllers.dialog(I18nException.getStackTrace(executor.getLastException()),
+                                    scriptFile == null ? Main.i18n("launch.failed") : Main.i18n("version.launch_script.failed"),
+                                    MessageBox.ERROR_MESSAGE, Controllers::closeDialog);
+                        else
+                            Controllers.closeDialog();
+                    });
+                }
+
+                LauncherHelper.this.executor = null;
             }
         });
 
@@ -217,8 +222,6 @@ public final class LauncherHelper {
     }
 
     public void emitStatus(LoadingState state) {
-        if (state == LoadingState.DONE)
-            Controllers.closeDialog();
 
         launchingStepsPane.setTitle(state.getLocalizedMessage());
         launchingStepsPane.setSubtitle((state.ordinal() + 1) + " / " + LoadingState.values().length);

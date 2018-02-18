@@ -40,7 +40,7 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
             Arguments arguments = Arguments.addJVMArguments(null, arg);
 
             if (flag.get())
-                arguments = Arguments.addJVMArguments(arguments, "-Dorg.to2mbn.authlibinjector.config.prefetched=" + getTask.getResult());
+                arguments = Arguments.addJVMArguments(arguments, "-Dorg.to2mbn.authlibinjector.config.prefetched=" + new String(Base64.getEncoder().encode(getTask.getResult().getBytes())));
 
             return info.setArguments(arguments);
         } catch (Exception e) {
