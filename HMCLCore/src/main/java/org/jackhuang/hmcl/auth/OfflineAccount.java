@@ -47,6 +47,7 @@ public class OfflineAccount extends Account {
             throw new IllegalArgumentException("Username cannot be blank");
     }
 
+    @Override
     public UUID getUUID() {
         return UUIDTypeAdapter.fromString(uuid);
     }

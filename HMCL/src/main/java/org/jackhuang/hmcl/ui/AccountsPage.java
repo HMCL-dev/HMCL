@@ -214,19 +214,19 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
         this.title.set(title);
     }
 
-    public static String accountException(Exception account) {
-        if (account instanceof InvalidCredentialsException) {
+    public static String accountException(Exception exception) {
+        if (exception instanceof InvalidCredentialsException) {
             return Main.i18n("account.failed.invalid_credentials");
-        } else if (account instanceof NoCharacterException) {
+        } else if (exception instanceof NoCharacterException) {
             return Main.i18n("account.failed.no_charactor");
-        } else if (account instanceof ServerDisconnectException) {
+        } else if (exception instanceof ServerDisconnectException) {
             return Main.i18n("account.failed.connect_authentication_server");
-        } else if (account instanceof InvalidTokenException) {
+        } else if (exception instanceof InvalidTokenException) {
             return Main.i18n("account.failed.invalid_token");
-        } else if (account instanceof InvalidPasswordException) {
+        } else if (exception instanceof InvalidPasswordException) {
             return Main.i18n("account.failed.invalid_password");
         } else {
-            return account.getClass() + ": " + ((Exception) account).getLocalizedMessage();
+            return exception.getClass() + ": " + exception.getLocalizedMessage();
         }
     }
 

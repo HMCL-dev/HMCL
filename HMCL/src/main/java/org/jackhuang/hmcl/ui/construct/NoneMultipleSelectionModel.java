@@ -21,13 +21,9 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.MultipleSelectionModel;
 
-public final class NoneMultipleSelectionModel<T> extends MultipleSelectionModel<T> {
-    private static final NoneMultipleSelectionModel INSTANCE = new NoneMultipleSelectionModel();
-    private NoneMultipleSelectionModel() {}
+public class NoneMultipleSelectionModel<T> extends MultipleSelectionModel<T> {
 
-    @SuppressWarnings("unchecked")
-    public static <T> NoneMultipleSelectionModel<T> getInstance() {
-        return (NoneMultipleSelectionModel<T>) INSTANCE;
+	public NoneMultipleSelectionModel() {
     }
 
     @Override
