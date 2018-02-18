@@ -5,8 +5,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import com.google.gson.JsonParseException;
-
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -20,16 +18,6 @@ import java.util.function.Supplier;
 public final class Lang {
 
     private Lang() {
-    }
-
-    public static <T> T requireJsonNonNull(T obj) throws JsonParseException {
-        return requireJsonNonNull(obj, "Json object cannot be null.");
-    }
-
-    public static <T> T requireJsonNonNull(T obj, String message) throws JsonParseException {
-        if (obj == null)
-            throw new JsonParseException(message);
-        return obj;
     }
 
     @SafeVarargs

@@ -1,9 +1,8 @@
 package org.jackhuang.hmcl.auth.yggdrasil;
 
 import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.JsonUtils;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.IOException;
@@ -36,7 +35,7 @@ public final class AuthlibInjectorBuildInfo {
     }
 
     public static AuthlibInjectorBuildInfo requestBuildInfo(String updateUrl) throws IOException, JsonParseException {
-        return Lang.requireJsonNonNull(Constants.GSON.fromJson(NetworkUtils.doGet(NetworkUtils.toURL(updateUrl)), AuthlibInjectorBuildInfo.class));
+        return JsonUtils.fromNonNullJson(NetworkUtils.doGet(NetworkUtils.toURL(updateUrl)), AuthlibInjectorBuildInfo.class);
     }
 
     public static final String UPDATE_URL = "https://authlib-injector.to2mbn.org/api/buildInfo";
