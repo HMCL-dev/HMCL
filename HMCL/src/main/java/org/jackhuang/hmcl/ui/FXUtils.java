@@ -94,20 +94,37 @@ public final class FXUtils {
         });
     }
 
-    public static <T> void addListener(Node node, String key, ObservableValue<T> value, Consumer<T> callback) {
-        ChangeListener<T> listener = (a, b, newValue) -> callback.accept(newValue);
-        node.getProperties().put(key, new Pair<>(callback, listener));
-        value.addListener(listener);
-    }
+	private static class ListenerPair<T> {
+		ObservableValue<T> value;
+		ChangeListener<? super T> listener;
 
-    public static <T> void removeListener(Node node, String key) {
-        if (node.getProperties().get(key) instanceof Pair) {
-            Pair pair = (Pair) node.getProperties().get(key);
-            if (pair.getValue() instanceof ObservableValue && pair.getKey() instanceof ChangeListener) {
-                ((ObservableValue) pair.getValue()).removeListener((ChangeListener) pair.getKey());
-            }
-        }
-    }
+		ListenerPair(ObservableValue<T> value, ChangeListener<? super T> listener) {
+			this.value = value;
+			this.listener = listener;
+		}
+
+		void bind() {
+			value.addListener(listener);
+		}
+
+		void unbind() {
+			value.removeListener(listener);
+		}
+	}
+
+	public static <T> void addListener(Node node, String key, ObservableValue<T> value, Consumer<? super T> callback) {
+		ListenerPair<T> pair = new ListenerPair<>(value, (a, b, newValue) -> callback.accept(newValue));
+		node.getProperties().put(key, pair);
+		pair.bind();
+	}
+
+	public static void removeListener(Node node, String key) {
+		Lang.convert(node.getProperties().get(key), ListenerPair.class)
+				.ifPresent(info -> {
+					info.unbind();
+					node.getProperties().remove(key);
+				});
+	}
 
     public static void setValidateWhileTextChanged(Node field, boolean validate) {
         if (field instanceof JFXTextField) {
