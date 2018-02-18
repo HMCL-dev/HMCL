@@ -30,11 +30,9 @@ import org.jackhuang.hmcl.task.Scheduler;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.DialogController;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.Proxy;
 import java.util.Collection;
 import java.util.LinkedList;

@@ -2,13 +2,9 @@
 
 <?import com.jfoenix.controls.*?>
 <?import com.jfoenix.validation.RequiredFieldValidator?>
-<?import javafx.collections.FXCollections?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import org.jackhuang.hmcl.ui.FXUtils?>
-<?import javafx.scene.control.Hyperlink?>
-<?import java.lang.String?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">

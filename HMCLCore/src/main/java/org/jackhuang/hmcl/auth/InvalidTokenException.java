@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.auth;
 
-import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 
 /**

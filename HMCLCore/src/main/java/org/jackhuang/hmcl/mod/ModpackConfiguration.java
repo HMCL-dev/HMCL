@@ -21,7 +21,9 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Validation;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Immutable
 public final class ModpackConfiguration<T> implements Validation {

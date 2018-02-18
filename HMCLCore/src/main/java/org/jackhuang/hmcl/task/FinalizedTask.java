@@ -17,13 +17,8 @@
  */
 package org.jackhuang.hmcl.task;
 
-import org.jackhuang.hmcl.util.AutoTypingMap;
-import org.jackhuang.hmcl.util.ExceptionalFunction;
-
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * A task that combines two tasks and make sure [pred] runs before succ.

@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * A task that combines two tasks and make sure [pred] runs before succ.

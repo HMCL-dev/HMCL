@@ -26,10 +26,8 @@ import org.jackhuang.hmcl.util.FileUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 public final class MinecraftInstanceTask<T> extends Task {
 

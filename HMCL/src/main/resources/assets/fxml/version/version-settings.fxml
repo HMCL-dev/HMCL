@@ -7,10 +7,8 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
-<?import org.jackhuang.hmcl.ui.construct.ComponentList?>
-<?import org.jackhuang.hmcl.ui.construct.MultiFileItem?>
-<?import org.jackhuang.hmcl.ui.construct.NumberValidator?>
-<?import org.jackhuang.hmcl.ui.FXUtils?>
+<?import org.jackhuang.hmcl.ui.construct.*?>
+<?import org.jackhuang.hmcl.ui.*?>
 <StackPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
            fx:controller="org.jackhuang.hmcl.ui.VersionSettingsController">

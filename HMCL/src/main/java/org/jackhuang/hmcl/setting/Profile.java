@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
 import javafx.beans.InvalidationListener;
-import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.HMCLDependencyManager;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;

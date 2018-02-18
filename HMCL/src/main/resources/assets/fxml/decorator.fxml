@@ -6,8 +6,8 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Rectangle?>
 <?import org.jackhuang.hmcl.ui.construct.AdvancedListBox?>
-<?import java.lang.String?>
 <?import org.jackhuang.hmcl.ui.FXUtils?>
+<?import java.lang.String?>
 <fx:root xmlns="http://javafx.com/javafx"
          type="StackPane"
          xmlns:fx="http://javafx.com/fxml">

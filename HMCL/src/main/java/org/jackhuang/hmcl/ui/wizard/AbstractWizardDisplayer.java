@@ -17,21 +17,14 @@
  */
 package org.jackhuang.hmcl.ui.wizard;
 
-import com.jfoenix.controls.JFXProgressBar;
-import javafx.application.Platform;
 import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
-import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.construct.TaskListPane;
-import org.jackhuang.hmcl.util.Lang;
 
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public interface AbstractWizardDisplayer extends WizardDisplayer {
     WizardController getWizardController();

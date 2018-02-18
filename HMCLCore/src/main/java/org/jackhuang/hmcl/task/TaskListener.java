@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.task;
 
-import org.jackhuang.hmcl.util.AutoTypingMap;
-
 import java.util.EventListener;
 
 /**

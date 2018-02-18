@@ -28,7 +28,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
@@ -38,7 +37,6 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
-import org.jackhuang.hmcl.ui.construct.NumberValidator;
 import org.jackhuang.hmcl.util.*;
 
 import java.io.File;

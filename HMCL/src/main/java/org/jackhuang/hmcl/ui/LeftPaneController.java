@@ -24,7 +24,6 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Paint;
 import javafx.scene.text.Text;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;

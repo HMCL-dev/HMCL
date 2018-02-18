@@ -23,9 +23,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.auth.yggdrasil.AuthlibInjectorServerInfo;
-import org.jackhuang.hmcl.mod.ModInfo;
 
 import java.util.function.Consumer;
 

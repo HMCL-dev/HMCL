@@ -4,11 +4,7 @@
 <?import javafx.collections.FXCollections?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import org.jackhuang.hmcl.ui.construct.ComponentList?>
-<?import org.jackhuang.hmcl.ui.construct.FileItem?>
-<?import org.jackhuang.hmcl.ui.construct.FontComboBox?>
-<?import org.jackhuang.hmcl.ui.construct.MultiFileItem?>
-<?import org.jackhuang.hmcl.ui.construct.NumberValidator?>
+<?import org.jackhuang.hmcl.ui.construct.*?>
 <?import org.jackhuang.hmcl.ui.FXUtils?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"

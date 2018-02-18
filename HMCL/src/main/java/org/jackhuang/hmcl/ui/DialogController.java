@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.MultiCharacterSelector;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
