@@ -39,8 +39,8 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<YggdrasilAccou
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have key " + STORAGE_KEY_SERVER_BASE_URL));
 
         AuthlibInjectorAccount account = new AuthlibInjectorAccount(injectorJarPathSupplier, serverBaseURL, username);
-        account.setUserId(Lang.get(storage, STORAGE_KEY_USER_ID, String.class, username));
-        account.setAccessToken(Lang.get(storage, STORAGE_KEY_ACCESS_TOKEN, String.class, null));
+        account.setUserId(Lang.get(storage, STORAGE_KEY_USER_ID, String.class).orElse(username));
+        account.setAccessToken(Lang.get(storage, STORAGE_KEY_ACCESS_TOKEN, String.class).orElse(null));
         account.setClientToken(Lang.get(storage, STORAGE_KEY_CLIENT_TOKEN, String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have key " + STORAGE_KEY_CLIENT_TOKEN)));
 

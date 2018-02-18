@@ -58,8 +58,8 @@ public class YggdrasilAccountFactory extends AccountFactory<YggdrasilAccount> {
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have key " + STORAGE_KEY_USER_NAME));
 
         YggdrasilAccount account = new YggdrasilAccount(baseAuthServer, baseSessionServer, username);
-        account.setUserId(Lang.get(storage, STORAGE_KEY_USER_ID, String.class, username));
-        account.setAccessToken(Lang.get(storage, STORAGE_KEY_ACCESS_TOKEN, String.class, null));
+        account.setUserId(Lang.get(storage, STORAGE_KEY_USER_ID, String.class).orElse(username));
+        account.setAccessToken(Lang.get(storage, STORAGE_KEY_ACCESS_TOKEN, String.class).orElse(null));
         account.setClientToken(Lang.get(storage, STORAGE_KEY_CLIENT_TOKEN, String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have key " + STORAGE_KEY_CLIENT_TOKEN)));
 

@@ -41,7 +41,7 @@ public abstract class AccountFactory<T extends Account> {
 
     public final T fromStorage(Map<Object, Object> storage) {
         T account = fromStorageImpl(storage);
-        Map<?, ?> properties = Lang.get(storage, "properties", Map.class, null);
+        Map<?, ?> properties = Lang.get(storage, "properties", Map.class).orElse(null);
         if (properties == null) return account;
         account.getProperties().putAll(properties);
         return account;

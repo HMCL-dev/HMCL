@@ -20,6 +20,13 @@ public final class Lang {
     private Lang() {
     }
 
+    /**
+     * Construct a mutable map by given key-value pairs.
+     * @param pairs entries in the new map
+     * @param <K> the type of keys
+     * @param <V> the type of values
+     * @return the map which contains data in {@code pairs}.
+     */
     @SafeVarargs
     public static <K, V> Map<K, V> mapOf(Pair<K, V>... pairs) {
         HashMap<K, V> map = new HashMap<>();
@@ -38,7 +45,8 @@ public final class Lang {
         return value;
     }
 
-    public static <E extends Throwable> void throwable(Throwable exception) throws E {
+    @SuppressWarnings("unchecked")
+    private static <E extends Throwable> void throwable(Throwable exception) throws E {
         throw (E) exception;
     }
 
@@ -108,7 +116,6 @@ public final class Lang {
      *
      * @param <T> type of result.
      * @param consumer your method.
-     * @return the result of the method to invoke.
      */
     public static <T, E extends Exception> void invokeConsumer(ExceptionalConsumer<T, E> consumer, T t) {
         try {
@@ -175,7 +182,7 @@ public final class Lang {
     public static <T> T ignoringException(ExceptionalSupplier<T, ?> supplier, T defaultValue) {
         try {
             return supplier.get();
-        } catch (Exception e) {
+        } catch (Exception ignore) {
             return defaultValue;
         }
     }
@@ -183,24 +190,32 @@ public final class Lang {
     public static void ignoringException(ExceptionalRunnable<?> runnable) {
         try {
             runnable.run();
-        } catch (Exception e) {
+        } catch (Exception ignore) {
         }
     }
 
-    public static <V> Optional<V> convert(Object o, Class<V> clazz) {
-        if (o == null || !ReflectionHelper.isInstance(clazz, o))
+    /**
+     * Cast {@code obj} to V dynamically.
+     * @param obj the object reference to be cast.
+     * @param clazz the class reference of {@code V}.
+     * @param <V> the type that {@code obj} is being cast to.
+     * @return {@code obj} in the type of {@code V}.
+     */
+    @SuppressWarnings("unchecked")
+    public static <V> Optional<V> cast(Object obj, Class<V> clazz) {
+        if (obj == null || !ReflectionHelper.isInstance(clazz, obj))
             return Optional.empty();
         else
-            return Optional.of((V) o);
+            return Optional.of((V) obj);
     }
 
-    public static <V> V convert(Object o, Class<V> clazz, V defaultValue) {
-        if (o == null || !ReflectionHelper.isInstance(clazz, o))
-            return defaultValue;
-        else
-            return (V) o;
-    }
-
+    /**
+     * Get the element at the specific position {@code index} in {@code list}.
+     *
+     * @param index the index of element to be return
+     * @param <V> the type of elements in {@code list}
+     * @return the element at the specific position, null if index is out of bound.
+     */
     public static <V> Optional<V> get(List<V> list, int index) {
         if (index < 0 || index >= list.size())
             return Optional.empty();
@@ -208,14 +223,28 @@ public final class Lang {
             return Optional.ofNullable(list.get(index));
     }
 
+    /**
+     * Get the value to which the specific key is mapped,
+     * or {@code null} if {@code map} has no mapping for the key
+     * or the value is not in the type of {@code clazz}.
+     *
+     * @param map the map
+     * @param key the key for finding the associate value.
+     * @param <V> the type of values in {@code map}
+     * @return the value to which the specific key is mapped, or {@code null} if {@code map} has no mapping for the key or the type is not correct.
+     */
     public static <V> Optional<V> get(Map<?, ?> map, Object key, Class<V> clazz) {
-        return convert(map.get(key), clazz);
+        return cast(map.get(key), clazz);
     }
 
-    public static <V> V get(Map<?, ?> map, Object key, Class<V> clazz, V defaultValue) {
-        return convert(map.get(key), clazz, defaultValue);
-    }
-
+    /**
+     * Join two collections into one list.
+     *
+     * @param a one collection, to be joined.
+     * @param b another collection to be joined.
+     * @param <T> the super type of elements in {@code a} and {@code b}
+     * @return the joint collection
+     */
     public static <T> List<T> merge(Collection<? extends T> a, Collection<? extends T> b) {
         List<T> result = new ArrayList<>();
         if (a != null)
@@ -236,14 +265,32 @@ public final class Lang {
         }, null, isDaemon);
     }
 
+    /**
+     * Start a thread invoking {@code runnable} immediately.
+     * @param runnable code to run.
+     * @return the reference of the started thread
+     */
     public static Thread thread(Runnable runnable) {
         return thread(runnable, null);
     }
 
+    /**
+     * Start a thread invoking {@code runnable} immediately.
+     * @param runnable code to run
+     * @param name the name of thread
+     * @return the reference of the started thread
+     */
     public static Thread thread(Runnable runnable, String name) {
         return thread(runnable, name, false);
     }
 
+    /**
+     * Start a thread invoking {@code runnable} immediately.
+     * @param runnable code to run
+     * @param name the name of thread
+     * @param isDaemon true if thread will be terminated when only daemon threads are running.
+     * @return the reference of the started thread
+     */
     public static Thread thread(Runnable runnable, String name, boolean isDaemon) {
         Thread thread = new Thread(runnable);
         if (isDaemon)
@@ -297,6 +344,12 @@ public final class Lang {
         }
     }
 
+    /**
+     * Find the first non-null reference in given list.
+     * @param t nullable references list.
+     * @param <T> the type of nullable references
+     * @return the first non-null reference.
+     */
     @SafeVarargs
     public static <T> T nonNull(T... t) {
         for (T a : t) if (a != null) return a;

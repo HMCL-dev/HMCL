@@ -66,9 +66,9 @@ public final class DownloadWizardProvider implements WizardProvider {
         if (!settings.containsKey(ModpackPage.MODPACK_FILE))
             return null;
 
-        File selected = Lang.get(settings, ModpackPage.MODPACK_FILE, File.class, null);
-        Modpack modpack = Lang.get(settings, ModpackPage.MODPACK_CURSEFORGE_MANIFEST, Modpack.class, null);
-        String name = Lang.get(settings, ModpackPage.MODPACK_NAME, String.class, null);
+        File selected = Lang.get(settings, ModpackPage.MODPACK_FILE, File.class).orElse(null);
+        Modpack modpack = Lang.get(settings, ModpackPage.MODPACK_CURSEFORGE_MANIFEST, Modpack.class).orElse(null);
+        String name = Lang.get(settings, ModpackPage.MODPACK_NAME, String.class).orElse(null);
         if (selected == null || modpack == null || name == null) return null;
 
         return ModpackHelper.getInstallTask(profile, selected, name, modpack);

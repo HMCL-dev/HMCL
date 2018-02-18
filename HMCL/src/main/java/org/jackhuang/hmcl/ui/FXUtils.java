@@ -114,7 +114,7 @@ public final class FXUtils {
     }
 
     public static void removeListener(Node node, String key) {
-        Lang.convert(node.getProperties().get(key), ListenerPair.class)
+        Lang.cast(node.getProperties().get(key), ListenerPair.class)
                 .ifPresent(info -> {
                     info.unbind();
                     node.getProperties().remove(key);
@@ -329,7 +329,7 @@ public final class FXUtils {
     }
 
     public static void unbindEnum(JFXComboBox<?> comboBox) {
-        ChangeListener listener = Lang.get(comboBox.getProperties(), "listener", ChangeListener.class, null);
+        ChangeListener listener = Lang.get(comboBox.getProperties(), "listener", ChangeListener.class).orElse(null);
         if (listener == null) return;
         comboBox.getSelectionModel().selectedIndexProperty().removeListener(listener);
     }

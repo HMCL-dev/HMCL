@@ -64,7 +64,7 @@ public final class Accounts {
     }
 
     public static boolean hasCurrentCharacter(Account account) {
-        return Lang.get(account.getProperties(), "character", String.class, null) != null;
+        return Lang.get(account.getProperties(), "character", String.class).isPresent();
     }
 
     public static String getCurrentCharacter(Account account) {
