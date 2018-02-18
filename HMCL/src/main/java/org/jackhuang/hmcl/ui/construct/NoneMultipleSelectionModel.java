@@ -23,7 +23,7 @@ import javafx.scene.control.MultipleSelectionModel;
 
 public class NoneMultipleSelectionModel<T> extends MultipleSelectionModel<T> {
 
-	public NoneMultipleSelectionModel() {
+    public NoneMultipleSelectionModel() {
     }
 
     @Override

@@ -72,10 +72,10 @@ public final class Accounts {
                 .orElseThrow(() -> new IllegalArgumentException("Account " + account + " has not set current character."));
     }
 
-	public static Optional<String> getCurrentCharacter(Map<Object, Object> storage) {
-		return Lang.get(storage, "properties", Map.class)
-				.flatMap(properties -> Lang.get(properties, "character", String.class));
-	}
+    public static Optional<String> getCurrentCharacter(Map<Object, Object> storage) {
+        return Lang.get(storage, "properties", Map.class)
+                .flatMap(properties -> Lang.get(properties, "character", String.class));
+    }
 
     static String getAccountId(Account account) {
         return getAccountId(account.getUsername(), getCurrentCharacter(account));

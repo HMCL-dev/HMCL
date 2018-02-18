@@ -94,37 +94,37 @@ public final class FXUtils {
         });
     }
 
-	private static class ListenerPair<T> {
-		ObservableValue<T> value;
-		ChangeListener<? super T> listener;
+    private static class ListenerPair<T> {
+        ObservableValue<T> value;
+        ChangeListener<? super T> listener;
 
-		ListenerPair(ObservableValue<T> value, ChangeListener<? super T> listener) {
-			this.value = value;
-			this.listener = listener;
-		}
+        ListenerPair(ObservableValue<T> value, ChangeListener<? super T> listener) {
+            this.value = value;
+            this.listener = listener;
+        }
 
-		void bind() {
-			value.addListener(listener);
-		}
+        void bind() {
+            value.addListener(listener);
+        }
 
-		void unbind() {
-			value.removeListener(listener);
-		}
-	}
+        void unbind() {
+            value.removeListener(listener);
+        }
+    }
 
-	public static <T> void addListener(Node node, String key, ObservableValue<T> value, Consumer<? super T> callback) {
-		ListenerPair<T> pair = new ListenerPair<>(value, (a, b, newValue) -> callback.accept(newValue));
-		node.getProperties().put(key, pair);
-		pair.bind();
-	}
+    public static <T> void addListener(Node node, String key, ObservableValue<T> value, Consumer<? super T> callback) {
+        ListenerPair<T> pair = new ListenerPair<>(value, (a, b, newValue) -> callback.accept(newValue));
+        node.getProperties().put(key, pair);
+        pair.bind();
+    }
 
-	public static void removeListener(Node node, String key) {
-		Lang.convert(node.getProperties().get(key), ListenerPair.class)
-				.ifPresent(info -> {
-					info.unbind();
-					node.getProperties().remove(key);
-				});
-	}
+    public static void removeListener(Node node, String key) {
+        Lang.convert(node.getProperties().get(key), ListenerPair.class)
+                .ifPresent(info -> {
+                    info.unbind();
+                    node.getProperties().remove(key);
+                });
+    }
 
     public static void setValidateWhileTextChanged(Node field, boolean validate) {
         if (field instanceof JFXTextField) {

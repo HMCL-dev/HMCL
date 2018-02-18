@@ -44,11 +44,11 @@ public final class ExportWizardProvider implements WizardProvider {
 
     @Override
     public Object finish(Map<String, Object> settings) {
-		@SuppressWarnings("unchecked")
-		List<String> whitelist = (List<String>) settings.get(ModpackFileSelectionPage.MODPACK_FILE_SELECTION);
+        @SuppressWarnings("unchecked")
+        List<String> whitelist = (List<String>) settings.get(ModpackFileSelectionPage.MODPACK_FILE_SELECTION);
 
-		return new HMCLModpackExportTask(profile.getRepository(), version, whitelist,
-				new Modpack(
+        return new HMCLModpackExportTask(profile.getRepository(), version, whitelist,
+                new Modpack(
                         (String) settings.get(ModpackInfoPage.MODPACK_NAME),
                         (String) settings.get(ModpackInfoPage.MODPACK_AUTHOR),
                         (String) settings.get(ModpackInfoPage.MODPACK_VERSION),
