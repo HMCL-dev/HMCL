@@ -300,14 +300,14 @@ public class YggdrasilAccount extends Account {
 
         Property textureProperty;
 
-        if (getUserProperties().containsKey("textures"))
-            textureProperty = getUserProperties().get("textures");
+        if (profile.getProperties().containsKey("textures"))
+            textureProperty = profile.getProperties().get("textures");
         else {
             ProfileResponse response = GSON.fromJson(NetworkUtils.doGet(NetworkUtils.toURL(baseProfile + UUIDTypeAdapter.fromUUID(profile.getId()))), ProfileResponse.class);
             if (response.getProperties() == null) return Optional.empty();
             textureProperty = response.getProperties().get("textures");
             if (textureProperty == null) return Optional.empty();
-            getUserProperties().putAll(response.getProperties());
+            profile.getProperties().putAll(response.getProperties());
         }
 
         TextureResponse texture;
