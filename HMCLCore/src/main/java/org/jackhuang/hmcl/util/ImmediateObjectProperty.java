@@ -48,7 +48,7 @@ public class ImmediateObjectProperty<T> extends SimpleObjectProperty<T> {
         super.unbind();
     }
 
-    private Consumer<T> listener = Lang.EMPTY_CONSUMER;
+    private Consumer<T> listener = Constants.emptyConsumer();
     private final ChangeListener<T> changeListener = (a, b, newValue) -> listener.accept(newValue);
 
     public void setChangedListener(Consumer<T> listener) {

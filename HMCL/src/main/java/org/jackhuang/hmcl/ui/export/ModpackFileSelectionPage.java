@@ -62,7 +62,7 @@ public final class ModpackFileSelectionPage extends StackPane implements WizardP
         FXUtils.loadFXML(this, "/assets/fxml/modpack/selection.fxml");
         rootNode = getTreeItem(profile.getRepository().getRunDirectory(version), "minecraft");
         treeView.setRoot(rootNode);
-        treeView.setSelectionModel(NoneMultipleSelectionModel.getInstance());
+        treeView.setSelectionModel(new NoneMultipleSelectionModel<>());
     }
 
     private CheckBoxTreeItem<String> getTreeItem(File file, String basePath) {

@@ -198,7 +198,7 @@ public class DefaultLauncher extends Launcher {
     }
 
     private final Map<String, Supplier<Boolean>> forbiddens = Lang.mapOf(
-            new Pair<>("-Xincgc", () -> options.getJava().getParsedVersion() >= JavaVersion.JAVA_9)
+            new Pair<String, Supplier<Boolean>>("-Xincgc", () -> options.getJava().getParsedVersion() >= JavaVersion.JAVA_9)
     );
 
     protected Map<String, Supplier<Boolean>> getForbiddens() {

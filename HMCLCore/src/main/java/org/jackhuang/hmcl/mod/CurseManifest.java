@@ -20,15 +20,13 @@ package org.jackhuang.hmcl.mod;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.CompressingUtils;
-import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.JsonUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  *
@@ -120,7 +118,7 @@ public final class CurseManifest {
      */
     public static Modpack readCurseForgeModpackManifest(File f) throws IOException, JsonParseException {
         String json = CompressingUtils.readTextZipEntry(f, "manifest.json");
-        CurseManifest manifest = Lang.requireJsonNonNull(Constants.GSON.fromJson(json, CurseManifest.class));
+        CurseManifest manifest = JsonUtils.fromNonNullJson(json, CurseManifest.class);
         return new Modpack(manifest.getName(), manifest.getAuthor(), manifest.getVersion(), manifest.getMinecraft().getGameVersion(),
                 CompressingUtils.readTextZipEntryQuietly(f, "modlist.html").orElse( "No description"), manifest);
     }

@@ -73,9 +73,8 @@ public final class Accounts {
     }
 
     public static Optional<String> getCurrentCharacter(Map<Object, Object> storage) {
-        Optional<Map> properties = Lang.get(storage, "properties", Map.class);
-        if (!properties.isPresent()) return Optional.empty();
-        return Lang.get(properties.get(), "character", String.class);
+        return Lang.get(storage, "properties", Map.class)
+                .flatMap(properties -> Lang.get(properties, "character", String.class));
     }
 
     static String getAccountId(Account account) {

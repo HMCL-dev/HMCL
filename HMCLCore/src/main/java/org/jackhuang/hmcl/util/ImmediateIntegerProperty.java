@@ -48,7 +48,7 @@ public class ImmediateIntegerProperty extends SimpleIntegerProperty {
         super.unbind();
     }
 
-    private Consumer<Integer> listener = Lang.EMPTY_CONSUMER;
+    private Consumer<Integer> listener = Constants.emptyConsumer();
     private final ChangeListener<Number> changeListener = (a, b, newValue) -> listener.accept(newValue.intValue());
 
     public void setChangedListener(Consumer<Integer> listener) {

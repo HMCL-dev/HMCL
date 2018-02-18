@@ -5,8 +5,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import com.google.gson.JsonParseException;
-
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -22,19 +20,7 @@ public final class Lang {
     private Lang() {
     }
 
-    public static final Consumer EMPTY_CONSUMER = a -> {
-    };
-
-    public static <T> T requireJsonNonNull(T obj) throws JsonParseException {
-        return requireJsonNonNull(obj, "Json object cannot be null.");
-    }
-
-    public static <T> T requireJsonNonNull(T obj, String message) throws JsonParseException {
-        if (obj == null)
-            throw new JsonParseException(message);
-        return obj;
-    }
-
+    @SafeVarargs
     public static <K, V> Map<K, V> mapOf(Pair<K, V>... pairs) {
         HashMap<K, V> map = new HashMap<>();
         for (Pair<K, V> pair : pairs)
@@ -42,14 +28,14 @@ public final class Lang {
         return map;
     }
 
-    public static <K, V> V getOrPut(Map<K, V> map, K key, Supplier<V> defaultValue) {
+    public static <K, V> V computeIfAbsent(Map<K, V> map, K key, Supplier<V> computingFunction) {
         V value = map.get(key);
         if (value == null) {
-            V answer = defaultValue.get();
-            map.put(key, answer);
-            return answer;
-        } else
-            return value;
+            V newValue = computingFunction.get();
+            map.put(key, newValue);
+            return newValue;
+        }
+        return value;
     }
 
     public static <E extends Throwable> void throwable(Throwable exception) throws E {
@@ -230,23 +216,12 @@ public final class Lang {
         return convert(map.get(key), clazz, defaultValue);
     }
 
-    public static <T> List<T> merge(Collection<T> a, Collection<T> b) {
-        LinkedList<T> result = new LinkedList<>();
+    public static <T> List<T> merge(Collection<? extends T> a, Collection<? extends T> b) {
+        List<T> result = new ArrayList<>();
         if (a != null)
             result.addAll(a);
         if (b != null)
             result.addAll(b);
-        return result;
-    }
-
-    public static <T> List<T> merge(Collection<T> a, Collection<T> b, Collection<T> c) {
-        LinkedList<T> result = new LinkedList<>();
-        if (a != null)
-            result.addAll(a);
-        if (b != null)
-            result.addAll(b);
-        if (c != null)
-            result.addAll(c);
         return result;
     }
 
@@ -322,6 +297,7 @@ public final class Lang {
         }
     }
 
+    @SafeVarargs
     public static <T> T nonNull(T... t) {
         for (T a : t) if (a != null) return a;
         return null;

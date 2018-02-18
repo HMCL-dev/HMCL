@@ -52,14 +52,14 @@ public final class ReflectionHelper {
         }
 
         PRIMITIVES = Lang.mapOf(
-                new Pair("byte", Byte.class),
-                new Pair("short", Short.class),
-                new Pair("int", Integer.class),
-                new Pair("long", Long.class),
-                new Pair("char", Character.class),
-                new Pair("float", Float.class),
-                new Pair("double", Double.class),
-                new Pair("boolean", Boolean.class)
+                new Pair<>("byte", Byte.class),
+                new Pair<>("short", Short.class),
+                new Pair<>("int", Integer.class),
+                new Pair<>("long", Long.class),
+                new Pair<>("char", Character.class),
+                new Pair<>("float", Float.class),
+                new Pair<>("double", Double.class),
+                new Pair<>("boolean", Boolean.class)
         );
     }
 

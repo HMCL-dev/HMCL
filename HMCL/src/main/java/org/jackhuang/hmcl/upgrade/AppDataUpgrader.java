@@ -56,7 +56,7 @@ public class AppDataUpgrader extends IUpgrader {
                 al.add("--noupdate");
                 AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
                     new URLClassLoader(new URL[]{jar.toURI().toURL()},
-                            URLClassLoader.getSystemClassLoader().getParent()).loadClass(mainClass)
+                            ClassLoader.getSystemClassLoader().getParent()).loadClass(mainClass)
                             .getMethod("main", String[].class).invoke(null, new Object[]{al.toArray(new String[0])});
                     return null;
                 });

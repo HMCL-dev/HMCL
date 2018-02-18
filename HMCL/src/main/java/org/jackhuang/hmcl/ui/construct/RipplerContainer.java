@@ -217,10 +217,12 @@ public class RipplerContainer extends StackPane {
     private static class StyleableProperties {
 
         private static final CssMetaData<RipplerContainer, Paint> RIPPLER_FILL = new CssMetaData<RipplerContainer, Paint>("-jfx-rippler-fill", StyleConverter.getPaintConverter(), Color.rgb(0, 200, 255)) {
+            @Override
             public boolean isSettable(RipplerContainer control) {
                 return control.ripplerFill == null || !control.ripplerFill.isBound();
             }
 
+            @Override
             public StyleableProperty<Paint> getStyleableProperty(RipplerContainer control) {
                 return control.ripplerFillProperty();
             }
@@ -232,7 +234,7 @@ public class RipplerContainer extends StackPane {
         }
 
         static {
-            List<CssMetaData<? extends Styleable, ?>> styleables = new ArrayList<>(Parent.getClassCssMetaData());
+            List<CssMetaData<? extends Styleable, ?>> styleables = new ArrayList<>(Node.getClassCssMetaData());
             Collections.addAll(styleables, RIPPLER_FILL);
             STYLEABLES = Collections.unmodifiableList(styleables);
         }

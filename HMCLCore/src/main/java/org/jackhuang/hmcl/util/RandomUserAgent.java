@@ -3,6 +3,9 @@ package org.jackhuang.hmcl.util;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Optifine has blocked Java's useragent, so we have to make up one.
+ */
 public class RandomUserAgent {
 
     private static final HashMap<String, String[]> uaMap = new HashMap<>();

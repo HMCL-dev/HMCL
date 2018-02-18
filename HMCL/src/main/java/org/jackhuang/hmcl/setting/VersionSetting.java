@@ -138,7 +138,7 @@ public final class VersionSetting {
         permSizeProperty.set(permSize);
     }
 
-    private final ImmediateIntegerProperty maxMemoryProperty = new ImmediateIntegerProperty(this, "maxMemory", (int) OperatingSystem.SUGGESTED_MEMORY);
+    private final ImmediateIntegerProperty maxMemoryProperty = new ImmediateIntegerProperty(this, "maxMemory", OperatingSystem.SUGGESTED_MEMORY);
 
     public ImmediateIntegerProperty maxMemoryProperty() {
         return maxMemoryProperty;

@@ -106,7 +106,7 @@ public final class ModpackHelper {
         else throw new IllegalStateException("Unrecognized modpack: " + modpack);
     }
 
-    public static Task getUpdateTask(Profile profile, File zipFile, String name, ModpackConfiguration configuration) throws UnsupportedModpackException, MismatchedModpackTypeException, IOException {
+    public static Task getUpdateTask(Profile profile, File zipFile, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, MismatchedModpackTypeException, IOException {
         Modpack modpack = ModpackHelper.readModpackManifest(zipFile);
 
         switch (configuration.getType()) {
