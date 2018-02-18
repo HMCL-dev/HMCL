@@ -28,14 +28,14 @@ public final class Lang {
         return map;
     }
 
-    public static <K, V> V getOrPut(Map<K, V> map, K key, Supplier<V> defaultValue) {
+    public static <K, V> V computeIfAbsent(Map<K, V> map, K key, Supplier<V> computingFunction) {
         V value = map.get(key);
         if (value == null) {
-            V answer = defaultValue.get();
-            map.put(key, answer);
-            return answer;
-        } else
-            return value;
+            V newValue = computingFunction.get();
+            map.put(key, newValue);
+            return newValue;
+        }
+        return value;
     }
 
     public static <E extends Throwable> void throwable(Throwable exception) throws E {

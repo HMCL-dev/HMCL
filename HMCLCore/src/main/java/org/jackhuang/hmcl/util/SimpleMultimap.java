@@ -62,7 +62,7 @@ public final class SimpleMultimap<K, V> {
     }
 
     public Collection<V> get(K key) {
-        return Lang.getOrPut(map, key, valuer);
+        return Lang.computeIfAbsent(map, key, valuer);
     }
 
     public void put(K key, V value) {
