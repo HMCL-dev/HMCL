@@ -48,7 +48,7 @@ public class ImmediateBooleanProperty extends SimpleBooleanProperty {
         super.unbind();
     }
 
-    private Consumer<Boolean> listener = Lang.emptyConsumer();
+    private Consumer<Boolean> listener = Constants.emptyConsumer();
     private final ChangeListener<Boolean> changeListener = (a, b, newValue) -> listener.accept(newValue);
 
     public void setChangedListener(Consumer<Boolean> listener) {

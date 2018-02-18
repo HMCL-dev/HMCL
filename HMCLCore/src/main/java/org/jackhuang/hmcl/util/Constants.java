@@ -94,4 +94,8 @@ public final class Constants {
     public static <T> Predicate<T> falsePredicate() {
         return s -> false;
     }
+
+    public static <T> Consumer<T> emptyConsumer() {
+        return x -> {};
+    }
 }

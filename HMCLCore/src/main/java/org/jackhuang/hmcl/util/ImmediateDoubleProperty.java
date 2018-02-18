@@ -49,7 +49,7 @@ public class ImmediateDoubleProperty extends SimpleDoubleProperty {
         super.unbind();
     }
 
-    private Consumer<Double> listener = Lang.emptyConsumer();
+    private Consumer<Double> listener = Constants.emptyConsumer();
     private final ChangeListener<Number> changeListener = (a, b, newValue) -> listener.accept(newValue.doubleValue());
 
     public void setChangedListener(Consumer<Double> listener) {

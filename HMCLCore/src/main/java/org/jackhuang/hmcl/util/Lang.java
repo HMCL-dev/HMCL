@@ -22,10 +22,6 @@ public final class Lang {
     private Lang() {
     }
 
-    public static <T> Consumer<T> emptyConsumer() {
-        return x -> {};
-    }
-
     public static <T> T requireJsonNonNull(T obj) throws JsonParseException {
         return requireJsonNonNull(obj, "Json object cannot be null.");
     }
