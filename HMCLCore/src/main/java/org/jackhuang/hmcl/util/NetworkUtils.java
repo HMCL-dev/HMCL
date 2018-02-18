@@ -17,10 +17,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -28,9 +24,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
-import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -46,41 +39,6 @@ public final class NetworkUtils {
     private NetworkUtils() {
     }
 
-    private static final X509TrustManager XTM = new X509TrustManager() {
-        @Override
-        public void checkClientTrusted(X509Certificate[] xcs, String string) {
-        }
-
-        @Override
-        public void checkServerTrusted(X509Certificate[] xcs, String string) {
-        }
-
-        @Override
-        public X509Certificate[] getAcceptedIssuers() {
-            return new X509Certificate[0];
-        }
-    };
-
-    private static final HostnameVerifier HNV = (a, b) -> true;
-
-    private static volatile boolean initHttps = false;
-
-    private static synchronized void initHttps() {
-        if (initHttps)
-            return;
-
-        initHttps = true;
-
-        System.setProperty("https.protocols", "SSLv3,TLSv1");
-        try {
-            SSLContext c = SSLContext.getInstance("SSL");
-            c.init(null, new X509TrustManager[] { XTM }, new SecureRandom());
-            HttpsURLConnection.setDefaultSSLSocketFactory(c.getSocketFactory());
-        } catch (GeneralSecurityException ignore) {
-        }
-        HttpsURLConnection.setDefaultHostnameVerifier(HNV);
-    }
-
     private static Supplier<String> userAgentSupplier = RandomUserAgent::randomUserAgent;
 
     public static String getUserAgent() {
@@ -92,7 +50,6 @@ public final class NetworkUtils {
     }
 
     public static HttpURLConnection createConnection(URL url, Proxy proxy) throws IOException {
-        initHttps();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
         connection.setDoInput(true);
         connection.setUseCaches(false);
