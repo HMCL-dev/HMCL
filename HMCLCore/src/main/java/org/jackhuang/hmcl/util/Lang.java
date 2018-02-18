@@ -36,6 +36,7 @@ public final class Lang {
         return obj;
     }
 
+    @SafeVarargs
     public static <K, V> Map<K, V> mapOf(Pair<K, V>... pairs) {
         HashMap<K, V> map = new HashMap<>();
         for (Pair<K, V> pair : pairs)
@@ -323,6 +324,7 @@ public final class Lang {
         }
     }
 
+    @SafeVarargs
     public static <T> T nonNull(T... t) {
         for (T a : t) if (a != null) return a;
         return null;
