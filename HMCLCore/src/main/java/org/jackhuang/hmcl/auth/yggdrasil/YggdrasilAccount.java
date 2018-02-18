@@ -320,6 +320,13 @@ public class YggdrasilAccount extends Account {
     }
 
     @Override
+    public void clearCache() {
+        Optional.ofNullable(getSelectedProfile())
+                .map(GameProfile::getProperties)
+                .ifPresent(it -> it.remove("texture"));
+    }
+
+    @Override
     public String toString() {
         return "YggdrasilAccount[username=" + getUsername() + "]";
     }

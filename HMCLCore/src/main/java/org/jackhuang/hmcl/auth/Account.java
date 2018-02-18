@@ -91,4 +91,6 @@ public abstract class Account {
     public final Map<Object, Object> getProperties() {
         return properties;
     }
+
+    public abstract void clearCache();
 }

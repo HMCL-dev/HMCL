@@ -94,6 +94,11 @@ public class OfflineAccount extends Account {
     }
 
     @Override
+    public void clearCache() {
+        // Nothing to clear.
+    }
+
+    @Override
     public String toString() {
         return "OfflineAccount[username=" + username + ", uuid=" + uuid + "]";
     }

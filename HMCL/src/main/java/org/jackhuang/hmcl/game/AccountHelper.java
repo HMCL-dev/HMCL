@@ -150,6 +150,8 @@ public final class AccountHelper {
     }
 
     private static void downloadSkin(YggdrasilAccount account, GameProfile profile, boolean refresh, Proxy proxy) throws Exception {
+        account.clearCache();
+
         if (profile == null) return;
         String name = profile.getName();
         if (name == null) return;
