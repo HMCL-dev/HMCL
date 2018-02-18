@@ -10,6 +10,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.net.Proxy;
+import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -61,8 +62,8 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
             String arg = "-javaagent:" + injectorJarPath.get() + "=" + serverBaseURL;
             Arguments arguments = Arguments.addJVMArguments(null, arg);
 
-            //if (flag.get())
-            //    arguments = Arguments.addJVMArguments(arguments, "-Dorg.to2mbn.authlibinjector.config.prefetched=" + getTask.getResult());
+            if (flag.get())
+                arguments = Arguments.addJVMArguments(arguments, "-Dorg.to2mbn.authlibinjector.config.prefetched=" + new String(Base64.getEncoder().encode(getTask.getResult().getBytes())));
 
             return info.setArguments(arguments);
         } catch (Exception e) {
