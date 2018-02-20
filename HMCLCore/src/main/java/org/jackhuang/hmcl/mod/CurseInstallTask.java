@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -109,7 +109,8 @@ public final class CurseInstallTask extends Task {
                 File oldFile = new File(run, "mods/" + oldCurseManifestFile.getFileName());
                 if (!oldFile.exists()) continue;
                 if (manifest.getFiles().stream().noneMatch(oldCurseManifestFile::equals))
-                    oldFile.delete();
+                    if (!oldFile.delete())
+                        throw new IOException("Unable to delete mod file " + oldFile);
             }
 
         dependencies.add(new CurseCompletionTask(dependencyManager, name));

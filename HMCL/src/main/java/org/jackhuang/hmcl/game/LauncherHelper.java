@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -108,7 +108,7 @@ public final class LauncherHelper {
                     ));
                 }))
                 .then(variables -> {
-                    DefaultLauncher launcher = variables.<DefaultLauncher>get("launcher");
+                    DefaultLauncher launcher = variables.get("launcher");
                     if (scriptFile == null) {
                         return new LaunchTask<>(launcher::launch).setName(Main.i18n("version.launch"));
                     } else {
@@ -138,7 +138,7 @@ public final class LauncherHelper {
 
         launchingStepsPane.setExecutor(executor);
         executor.addTaskListener(new TaskListener() {
-            AtomicInteger finished = new AtomicInteger(0);
+            final AtomicInteger finished = new AtomicInteger(0);
 
             @Override
             public void onFinished(Task task) {

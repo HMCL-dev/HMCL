@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -97,14 +97,10 @@ public class Settings {
         for (Map.Entry<String, Profile> entry2 : getProfileMap().entrySet()) {
             entry2.getValue().setName(entry2.getKey());
             entry2.getValue().nameProperty().setChangedListener(this::profileNameChanged);
-            entry2.getValue().addPropertyChangedListener(e -> {
-                save();
-            });
+            entry2.getValue().addPropertyChangedListener(e -> save());
         }
 
-        Lang.ignoringException(() -> {
-            Runtime.getRuntime().addShutdownHook(new Thread(this::save));
-        });
+        Lang.ignoringException(() -> Runtime.getRuntime().addShutdownHook(new Thread(this::save)));
 
         loadProxy();
     }

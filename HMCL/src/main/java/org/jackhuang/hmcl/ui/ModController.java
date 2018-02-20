@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -127,13 +127,12 @@ public final class ModController {
                 });
                 variables.set("list", list);
             }
-        }).subscribe(Schedulers.javafx(), variables -> {
+        }).finalized(Schedulers.javafx(), variables -> {
             FXUtils.onWeakChangeAndOperate(parentTab.getSelectionModel().selectedItemProperty(), newValue -> {
                 if (newValue != null && newValue.getUserData() == ModController.this)
                     modPane.getChildren().setAll(variables.<List<ModItem>>get("list"));
             });
-        });
-
+        }, null).start();
     }
 
     @FXML
@@ -144,7 +143,12 @@ public final class ModController {
         File res = chooser.showOpenDialog(Controllers.getStage());
         if (res == null) return;
         Task.of(() -> modManager.addMod(versionId, res))
-                .subscribe(Task.of(Schedulers.javafx(), () -> loadMods(modManager, versionId)));
+                .finalized(Schedulers.javafx(), (variables, isDependentsSucceeded) -> {
+                    if (isDependentsSucceeded)
+                        loadMods(modManager, versionId);
+                    else
+                        Controllers.dialog("mods.failed");
+                }).start();
     }
 
     public void setParentTab(JFXTabPane parentTab) {

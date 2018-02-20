@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,6 +40,10 @@ public final class ForgeVersionRoot implements Validation {
     private final Map<String, Integer> promos;
     private final Map<Integer, ForgeVersion> number;
 
+    /**
+     * No-arg constructor for Gson.
+     */
+    @SuppressWarnings("unused")
     public ForgeVersionRoot() {
         this(null, null, null, null, null, null, null, null, null);
     }

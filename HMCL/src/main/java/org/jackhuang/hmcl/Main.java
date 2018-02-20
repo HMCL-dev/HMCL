@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.upgrade.AppDataUpgrader;
 import org.jackhuang.hmcl.upgrade.IUpgrader;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
@@ -60,7 +61,7 @@ public final class Main extends Application {
         try {
             // NetworkUtils.setUserAgentSupplier(() -> "Hello Minecraft! Launcher");
             Constants.UI_THREAD_SCHEDULER = Constants.JAVAFX_UI_THREAD_SCHEDULER;
-            IUpgrader.NOW_UPGRADER.parseArguments(VersionNumber.asVersion(VERSION), Arrays.asList(args));
+            UPGRADER.parseArguments(VersionNumber.asVersion(VERSION), Arrays.asList(args));
 
             Logging.LOG.info("*** " + TITLE + " ***");
 
@@ -133,6 +134,7 @@ public final class Main extends Application {
     public static final String TITLE = NAME + " " + VERSION;
     public static final ResourceBundle RESOURCE_BUNDLE = Settings.INSTANCE.getLocale().getResourceBundle();
     public static final UpdateChecker UPDATE_CHECKER = new UpdateChecker(VersionNumber.asVersion(VERSION));
+    public static final IUpgrader UPGRADER = new AppDataUpgrader();
     public static final CrashReporter CRASH_REPORTER = new CrashReporter();
 
     public static final String CONTACT = "http://huangyuhui.duapp.com/hmcl.php";

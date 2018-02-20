@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,10 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
@@ -158,13 +161,11 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
             chkManualProxy.setSelected(true);
         proxyPane.disableProperty().bind(chkNoProxy.selectedProperty());
 
-        hasProxyGroup.selectedToggleProperty().addListener((a, b, newValue) -> {
-            Settings.INSTANCE.setHasProxy(newValue != chkNoProxy);
-        });
+        hasProxyGroup.selectedToggleProperty().addListener((a, b, newValue) ->
+                Settings.INSTANCE.setHasProxy(newValue != chkNoProxy));
 
-        proxyConfigurationGroup.selectedToggleProperty().addListener((a, b, newValue) -> {
-            Settings.INSTANCE.setProxyType((Proxy.Type) newValue.getUserData());
-        });
+        proxyConfigurationGroup.selectedToggleProperty().addListener((a, b, newValue) ->
+                Settings.INSTANCE.setProxyType((Proxy.Type) newValue.getUserData()));
 
         chkProxyAuthentication.setSelected(Settings.INSTANCE.hasProxyAuth());
         chkProxyAuthentication.selectedProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setHasProxyAuth(newValue));
@@ -172,7 +173,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
 
         fileCommonLocation.setProperty(Settings.INSTANCE.commonPathProperty());
 
-        FXUtils.installTooltip(btnUpdate, 0, 5000, 0, new Tooltip(Main.i18n("update.tooltip")));
+        FXUtils.installTooltip(btnUpdate, Main.i18n("update.tooltip"));
         checkUpdate();
 
         // background
@@ -189,9 +190,8 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         Settings.INSTANCE.backgroundImageTypeProperty().setChangedListener(it -> initBackgroundItemSubtitle());
         initBackgroundItemSubtitle();
 
-        backgroundItem.setToggleSelectedListener(newValue -> {
-            Settings.INSTANCE.setBackgroundImageType((EnumBackgroundImage) newValue.getUserData());
-        });
+        backgroundItem.setToggleSelectedListener(newValue ->
+                Settings.INSTANCE.setBackgroundImageType((EnumBackgroundImage) newValue.getUserData()));
 
         // theme
         themeItem.loadChildren(Arrays.asList(

@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ class TaskCallable2<V> extends TaskResult<V> {
     }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
         setResult(callable.apply(getVariables()));
     }
 }

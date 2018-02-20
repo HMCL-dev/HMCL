@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,39 +21,37 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.geometry.Pos;
-import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.mod.ModInfo;
 
 import java.util.function.Consumer;
 
-public final class  ModItem extends BorderPane {
-    private final TwoLineListItem modItem = new TwoLineListItem();
-    private final JFXCheckBox chkEnabled = new JFXCheckBox();
+public final class ModItem extends BorderPane {
 
     public ModItem(ModInfo info, Consumer<ModItem> deleteCallback) {
+        JFXCheckBox chkEnabled = new JFXCheckBox();
         BorderPane.setAlignment(chkEnabled, Pos.CENTER);
         setLeft(chkEnabled);
 
+        TwoLineListItem modItem = new TwoLineListItem();
         BorderPane.setAlignment(modItem, Pos.CENTER);
         setCenter(modItem);
 
-        JFXButton right = new JFXButton();
-        right.setOnMouseClicked(e -> deleteCallback.accept(this));
-        right.getStyleClass().add("toggle-icon4");
-        BorderPane.setAlignment(right, Pos.CENTER);
-        right.setGraphic(SVG.close("black", 15, 15));
-        setRight(right);
+        JFXButton btnRemove = new JFXButton();
+        FXUtils.installTooltip(btnRemove, Main.i18n("mods.remove"));
+        btnRemove.setOnMouseClicked(e -> deleteCallback.accept(this));
+        btnRemove.getStyleClass().add("toggle-icon4");
+        BorderPane.setAlignment(btnRemove, Pos.CENTER);
+        btnRemove.setGraphic(SVG.close("black", 15, 15));
+        setRight(btnRemove);
 
         setStyle("-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;");
         JFXDepthManager.setDepth(this, 1);
         modItem.setTitle(info.getFileName());
         modItem.setSubtitle(info.getName() + ", " + Main.i18n("archive.version") + ": " + info.getVersion() + ", " + Main.i18n("archive.game_version") + ": " + info.getGameVersion() + ", " + Main.i18n("archive.author") + ": " + info.getAuthors());
         chkEnabled.setSelected(info.isActive());
-        chkEnabled.selectedProperty().addListener((a, b, newValue) -> {
-            info.activeProperty().set(newValue);
-        });
+        chkEnabled.selectedProperty().addListener((a, b, newValue) ->
+                info.activeProperty().set(newValue));
     }
 }

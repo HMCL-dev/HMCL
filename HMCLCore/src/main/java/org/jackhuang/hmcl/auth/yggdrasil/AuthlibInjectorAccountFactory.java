@@ -9,7 +9,6 @@ import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.auth.yggdrasil.AuthlibInjectorAccount.STORAGE_KEY_SERVER_BASE_URL;
 import static org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount.*;

@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ import javafx.scene.control.TextInputControl;
 import org.jackhuang.hmcl.util.StringUtils;
 
 public class NumberValidator extends ValidatorBase {
-    private boolean nullable;
+    private final boolean nullable;
 
     public NumberValidator() {
         this(false);

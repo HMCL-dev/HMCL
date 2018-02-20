@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,20 +48,32 @@ public class ImmediateObjectProperty<T> extends SimpleObjectProperty<T> {
         super.unbind();
     }
 
-    private Consumer<T> listener = Constants.emptyConsumer();
-    private final ChangeListener<T> changeListener = (a, b, newValue) -> listener.accept(newValue);
+    private Consumer<T> consumer = null;
+    private ChangeListener<T> listener = null;
 
-    public void setChangedListener(Consumer<T> listener) {
+    public void setChangedListener(Consumer<T> consumer) {
+        this.consumer = Objects.requireNonNull(consumer);
+        this.listener = null;
+    }
+
+    public void setChangedListener(ChangeListener<T> listener) {
+        this.consumer = null;
         this.listener = Objects.requireNonNull(listener);
     }
 
     public void setChangedListenerAndOperate(Consumer<T> listener) {
-        this.listener = Objects.requireNonNull(listener);
+        setChangedListener(listener);
         listener.accept(get());
     }
 
     public ImmediateObjectProperty(Object bean, String name, T initialValue) {
         super(bean, name, initialValue);
+        ChangeListener<T> changeListener = (a, b, newValue) -> {
+            if (consumer != null)
+                consumer.accept(newValue);
+            if (listener != null)
+                listener.changed(a, b, newValue);
+        };
         addListener(changeListener);
     }
 }

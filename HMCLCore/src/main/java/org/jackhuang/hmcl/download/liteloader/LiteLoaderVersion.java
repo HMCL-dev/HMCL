@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,8 +37,12 @@ public final class LiteLoaderVersion {
     private final int lastSuccessfulBuild;
     private final Collection<Library> libraries;
 
+    /**
+     * No-arg constructor for Gson.
+     */
+    @SuppressWarnings("unused")
     public LiteLoaderVersion() {
-        this("", "", "", "", "", 0, Collections.EMPTY_SET);
+        this("", "", "", "", "", 0, Collections.emptySet());
     }
 
     public LiteLoaderVersion(String tweakClass, String file, String version, String md5, String timestamp, int lastSuccessfulBuild, Collection<Library> libraries) {

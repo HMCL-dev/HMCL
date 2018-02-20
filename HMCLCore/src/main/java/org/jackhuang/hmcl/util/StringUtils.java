@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,9 +59,8 @@ public final class StringUtils {
             else
                 cmdbuf.append(s);
         }
-        String str = cmdbuf.toString();
 
-        return str;
+        return cmdbuf.toString();
     }
 
     public static String getStackTrace(Throwable throwable) {

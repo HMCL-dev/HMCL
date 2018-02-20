@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,12 +34,10 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 /**
  * This class is to parse log4j classic XML layout logging,
@@ -62,7 +60,7 @@ final class Log4jHandler extends Thread {
         this.callback = callback;
         newLine("<output>");
 
-        reader = Lang.invoke(() -> XMLReaderFactory.createXMLReader());
+        reader = Lang.invoke((ExceptionalSupplier<XMLReader, SAXException>) XMLReaderFactory::createXMLReader);
         reader.setContentHandler(new Log4jHandlerImpl());
     }
 

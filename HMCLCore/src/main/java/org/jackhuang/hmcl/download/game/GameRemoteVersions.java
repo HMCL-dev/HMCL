@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +36,10 @@ public final class GameRemoteVersions {
     @SerializedName("latest")
     private final GameRemoteLatestVersions latest;
 
+    /**
+     * No-arg constructor for Gson.
+     */
+    @SuppressWarnings("unused")
     public GameRemoteVersions() {
         this(Collections.emptyList(), null);
     }

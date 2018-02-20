@@ -12,6 +12,7 @@ public class ToStringBuilder {
     public ToStringBuilder append(String name, Object content) {
         if (!first)
             stringBuilder.append(", ");
+        first = false;
         stringBuilder.append(name).append('=').append(content.toString());
         return this;
     }

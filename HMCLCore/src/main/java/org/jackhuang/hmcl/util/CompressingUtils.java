@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft!.
- * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@ public final class CompressingUtils {
      * @param basePath the file directory to be compressed, if [src] is a file, this is the parent directory of [src]
      * @param zos the [ZipOutputStream] of dest zip file.
      * @param pathNameCallback callback(pathName, isDirectory) returns your modified pathName, null if you dont want this file zipped
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     private static void zipFile(File src, String basePath,
             ZipArchiveOutputStream zos, BiFunction<String, Boolean, String> pathNameCallback) throws IOException {
@@ -101,7 +101,7 @@ public final class CompressingUtils {
      *
      * @param src the input zip file.
      * @param dest the dest directory.
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public static void unzip(File src, File dest) throws IOException {
         unzip(src, dest, "");
@@ -113,7 +113,7 @@ public final class CompressingUtils {
      * @param src the input zip file.
      * @param dest the dest directory.
      * @param subDirectory the subdirectory of the zip file to be decompressed.
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public static void unzip(File src, File dest, String subDirectory) throws IOException {
         unzip(src, dest, subDirectory, null);
@@ -126,7 +126,7 @@ public final class CompressingUtils {
      * @param dest the dest directory.
      * @param subDirectory the subdirectory of the zip file to be decompressed.
      * @param callback will be called for every entry in the zip file, returns false if you dont want this file being uncompressed.
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public static void unzip(File src, File dest, String subDirectory, Predicate<String> callback) throws IOException {
         unzip(src, dest, subDirectory, callback, true);
@@ -140,7 +140,7 @@ public final class CompressingUtils {
      * @param subDirectory the subdirectory of the zip file to be decompressed.
      * @param callback will be called for every entry in the zip file, returns false if you dont want this file being uncompressed.
      * @param ignoreExistentFile true if skip all existent files.
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public static void unzip(File src, File dest, String subDirectory, Predicate<String> callback, boolean ignoreExistentFile) throws IOException {
         unzip(src, dest, subDirectory, callback, ignoreExistentFile, false);

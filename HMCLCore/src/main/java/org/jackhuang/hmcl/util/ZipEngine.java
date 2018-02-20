@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,9 +29,9 @@ import java.util.zip.ZipOutputStream;
  *
  * @author huangyuhui
  */
-public class ZipEngine implements Closeable {
+public final class ZipEngine implements Closeable {
 
-    byte[] buf = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
+    private final byte[] buf = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
     ZipOutputStream zos;
 
     public ZipEngine(File f) throws IOException {
@@ -122,7 +122,7 @@ public class ZipEngine implements Closeable {
         putStream(new ByteArrayInputStream(text.getBytes(encoding)), pathName);
     }
 
-    protected HashSet<String> names = new HashSet<>();
+    private final HashSet<String> names = new HashSet<>();
 
     public void put(ZipEntry entry) throws IOException {
         if (names.add(entry.getName()))

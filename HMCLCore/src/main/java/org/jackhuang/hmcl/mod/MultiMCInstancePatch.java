@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@ public final class MultiMCInstancePatch {
     private final List<Library> libraries;
 
     public MultiMCInstancePatch() {
-        this("", "", "", "", "", Collections.EMPTY_LIST, Collections.EMPTY_LIST);
+        this("", "", "", "", "", Collections.emptyList(), Collections.emptyList());
     }
 
     public MultiMCInstancePatch(String name, String version, String gameVersion, String mainClass, String fileId, List<String> tweakers, List<Library> libraries) {

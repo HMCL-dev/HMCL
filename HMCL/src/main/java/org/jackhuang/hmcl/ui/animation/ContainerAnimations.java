@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright c 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright c 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -83,7 +83,7 @@ public enum ContainerAnimations {
                             new KeyValue(c.getCurrentNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
                             new KeyValue(c.getPreviousNode().translateXProperty(), c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH))));
 
-    private AnimationProducer animationProducer;
+    private final AnimationProducer animationProducer;
 
     ContainerAnimations(AnimationProducer animationProducer) {
         this.animationProducer = animationProducer;

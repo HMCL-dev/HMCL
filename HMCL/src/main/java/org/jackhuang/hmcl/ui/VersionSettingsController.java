@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Toggle;
-import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
@@ -83,11 +82,9 @@ public final class VersionSettingsController {
 
         FXUtils.smoothScrolling(scroll);
 
-        Task.of(variables -> {
-            variables.set("list", JavaVersion.getJREs().values().stream().map(javaVersion ->
-                    javaItem.createChildren(javaVersion.getVersion(), javaVersion.getBinary().getAbsolutePath(), javaVersion)
-            ).collect(Collectors.toList()));
-        }).subscribe(Schedulers.javafx(), variables ->
+        Task.of(variables -> variables.set("list", JavaVersion.getJREs().values().stream().map(javaVersion ->
+                javaItem.createChildren(javaVersion.getVersion(), javaVersion.getBinary().getAbsolutePath(), javaVersion)
+        ).collect(Collectors.toList()))).subscribe(Schedulers.javafx(), variables ->
                 javaItem.loadChildren(variables.<Collection<Node>>get("list"))
         );
 
@@ -104,7 +101,7 @@ public final class VersionSettingsController {
                 globalItem.createChildren(Main.i18n("settings.type.special"), false)
         ));
 
-        FXUtils.installTooltip(btnIconSelection, 0, 5000, 0, new Tooltip(Main.i18n("button.edit")));
+        FXUtils.installTooltip(btnIconSelection, Main.i18n("button.edit"));
     }
 
     public void loadVersionSetting(Profile profile, String versionId) {
@@ -202,9 +199,7 @@ public final class VersionSettingsController {
                 .findFirst().ifPresent(toggle -> toggle.setSelected(true));
 
         gameDirItem.setCustomUserData(EnumGameDirectory.CUSTOM);
-        gameDirItem.setToggleSelectedListener(newValue -> {
-            versionSetting.setGameDirType((EnumGameDirectory) newValue.getUserData());
-        });
+        gameDirItem.setToggleSelectedListener(newValue -> versionSetting.setGameDirType((EnumGameDirectory) newValue.getUserData()));
 
         versionSetting.gameDirProperty().setChangedListener(it -> initGameDirSubtitle(versionSetting));
         versionSetting.gameDirTypeProperty().setChangedListener(it -> initGameDirSubtitle(versionSetting));

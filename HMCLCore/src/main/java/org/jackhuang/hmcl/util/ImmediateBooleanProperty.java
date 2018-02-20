@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,20 +48,32 @@ public class ImmediateBooleanProperty extends SimpleBooleanProperty {
         super.unbind();
     }
 
-    private Consumer<Boolean> listener = Constants.emptyConsumer();
-    private final ChangeListener<Boolean> changeListener = (a, b, newValue) -> listener.accept(newValue);
+    private Consumer<Boolean> consumer = null;
+    private ChangeListener<Boolean> listener = null;
 
-    public void setChangedListener(Consumer<Boolean> listener) {
+    public void setChangedListener(Consumer<Boolean> consumer) {
+        this.consumer = Objects.requireNonNull(consumer);
+        this.listener = null;
+    }
+
+    public void setChangedListener(ChangeListener<Boolean> listener) {
+        this.consumer = null;
         this.listener = Objects.requireNonNull(listener);
     }
 
     public void setChangedListenerAndOperate(Consumer<Boolean> listener) {
-        this.listener = Objects.requireNonNull(listener);
+        setChangedListener(listener);
         listener.accept(get());
     }
 
     public ImmediateBooleanProperty(Object bean, String name, boolean initialValue) {
         super(bean, name, initialValue);
+        ChangeListener<Boolean> changeListener = (a, b, newValue) -> {
+            if (consumer != null)
+                consumer.accept(newValue);
+            if (listener != null)
+                listener.changed(a, b, newValue);
+        };
         addListener(changeListener);
     }
 }

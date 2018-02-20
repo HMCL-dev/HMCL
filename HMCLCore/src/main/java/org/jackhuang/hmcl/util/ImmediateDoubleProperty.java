@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,15 +49,32 @@ public class ImmediateDoubleProperty extends SimpleDoubleProperty {
         super.unbind();
     }
 
-    private Consumer<Double> listener = Constants.emptyConsumer();
-    private final ChangeListener<Number> changeListener = (a, b, newValue) -> listener.accept(newValue.doubleValue());
+    private Consumer<Double> consumer = null;
+    private ChangeListener<Number> listener = null;
 
-    public void setChangedListener(Consumer<Double> listener) {
+    public void setChangedListener(Consumer<Double> consumer) {
+        this.consumer = Objects.requireNonNull(consumer);
+        this.listener = null;
+    }
+
+    public void setChangedListener(ChangeListener<Number> listener) {
+        this.consumer = null;
         this.listener = Objects.requireNonNull(listener);
+    }
+
+    public void setChangedListenerAndOperate(Consumer<Double> listener) {
+        setChangedListener(listener);
+        listener.accept(get());
     }
 
     public ImmediateDoubleProperty(Object bean, String name, double initialValue) {
         super(bean, name, initialValue);
+        ChangeListener<Number> changeListener = (a, b, newValue) -> {
+            if (consumer != null)
+                consumer.accept(newValue.doubleValue());
+            if (listener != null)
+                listener.changed(a, b, newValue);
+        };
         addListener(changeListener);
     }
 }

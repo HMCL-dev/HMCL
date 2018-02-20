@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,20 +34,19 @@ import org.jackhuang.hmcl.Main;
  */
 public class CrashWindow extends Stage {
 
-    private Label lblCrash = new Label();
-    private Button btnContact = new Button();
-    private TextArea textArea = new TextArea();
-
     public CrashWindow(String text) {
+        Label lblCrash = new Label();
         if (Main.UPDATE_CHECKER.isOutOfDate())
             lblCrash.setText(Main.i18n("launcher.crash_out_dated"));
         else
             lblCrash.setText(Main.i18n("launcher.crash"));
         lblCrash.setWrapText(true);
 
+        TextArea textArea = new TextArea();
         textArea.setText(text);
         textArea.setEditable(false);
 
+        Button btnContact = new Button();
         btnContact.setText(Main.i18n("launcher.contact"));
         btnContact.setOnMouseClicked(event -> FXUtils.openLink(Main.CONTACT));
         HBox box = new HBox();
@@ -68,9 +67,7 @@ public class CrashWindow extends Stage {
         getIcons().add(new Image("/assets/img/icon.png"));
         setTitle(Main.i18n("message.error"));
 
-        setOnCloseRequest(e -> {
-            System.exit(1);
-        });
+        setOnCloseRequest(e -> System.exit(1));
     }
 
 }

@@ -1,6 +1,7 @@
 package org.jackhuang.hmcl.ui;
 
-import javafx.beans.property.*;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.css.*;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -9,8 +10,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.util.Pair;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -91,14 +91,13 @@ public class RuledArgument implements Argument {
         @Override
         public RuledArgument deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             JsonObject obj = json.getAsJsonObject();
-            RuledArgument a = new RuledArgument(
+            return new RuledArgument(
                     context.deserialize(obj.get("rules"), new TypeToken<List<CompatibilityRule>>() {
                     }.getType()),
                     obj.get("value").isJsonPrimitive()
                     ? Collections.singletonList(obj.get("value").getAsString())
                     : context.deserialize(obj.get("value"), new TypeToken<List<String>>() {
                     }.getType()));
-            return a;
         }
 
     }

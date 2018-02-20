@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ public final class ModManager {
         this.repository = repository;
     }
 
-    public Collection<ModInfo> refreshMods(String id) {
+    public void refreshMods(String id) {
         modCache.removeKey(id);
         File modsDirectory = new File(repository.getRunDirectory(id), "mods");
         Consumer<File> puter = modFile -> Lang.ignoringException(() -> modCache.put(id, ModInfo.fromFile(modFile)));
@@ -46,7 +46,6 @@ public final class ModManager {
             else
                 puter.accept(modFile);
         }));
-        return modCache.get(id);
     }
 
     public Collection<ModInfo> getMods(String id) {

@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -83,8 +83,6 @@ public abstract class Task {
      * True if requires all {@link #getDependents} finishing successfully.
      * <p>
      * **Note** if this field is set false, you are not supposed to invoke [run]
-     *
-     * @defaultValue true
      */
     public boolean isRelyingOnDependents() {
         return true;
@@ -94,8 +92,6 @@ public abstract class Task {
      * True if requires all {@link #getDependencies} finishing successfully.
      * <p>
      * **Note** if this field is set false, you are not supposed to invoke [run]
-     *
-     * @defaultValue false
      */
     public boolean isRelyingOnDependencies() {
         return true;
@@ -222,26 +218,24 @@ public abstract class Task {
         return executor().test();
     }
 
-    public final TaskExecutor subscribe(Task subscriber) {
-        TaskExecutor executor = new TaskExecutor(with(subscriber));
-        executor.start();
-        return executor;
+    public final void subscribe(Task subscriber) {
+        new TaskExecutor(then(subscriber)).start();
     }
 
-    public final TaskExecutor subscribe(Scheduler scheduler, ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
-        return subscribe(of(scheduler, closure));
+    public final void subscribe(Scheduler scheduler, ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
+        subscribe(of(scheduler, closure));
     }
 
-    public final TaskExecutor subscribe(Scheduler scheduler, ExceptionalRunnable<?> closure) {
-        return subscribe(of(scheduler, ExceptionalConsumer.fromRunnable(closure)));
+    public final void subscribe(Scheduler scheduler, ExceptionalRunnable<?> closure) {
+        subscribe(of(scheduler, ExceptionalConsumer.fromRunnable(closure)));
     }
 
-    public final TaskExecutor subscribe(ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
-        return subscribe(of(closure));
+    public final void subscribe(ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
+        subscribe(of(closure));
     }
 
-    public final TaskExecutor subscribe(ExceptionalRunnable<?> closure) {
-        return subscribe(of(closure));
+    public final void subscribe(ExceptionalRunnable<?> closure) {
+        subscribe(of(closure));
     }
 
     public final Task then(Task b) {
@@ -266,6 +260,19 @@ public abstract class Task {
 
     public final Task finalized(Scheduler scheduler, FinalizedCallback b) {
         return new FinalizedTask(this, scheduler, b);
+    }
+
+    public final <T extends Exception, K extends Exception> Task finalized(Scheduler scheduler, ExceptionalConsumer<AutoTypingMap<String>, T> success, ExceptionalConsumer<Exception, K> failure) {
+        return finalized(scheduler, (variables, isDependentsSucceeded) -> {
+            if (isDependentsSucceeded) {
+                if (success != null)
+                    success.accept(variables);
+            }
+            else {
+                if (failure != null)
+                    failure.accept(variables.get(TaskExecutor.LAST_EXCEPION_ID));
+            }
+        });
     }
 
     public static Task empty() {

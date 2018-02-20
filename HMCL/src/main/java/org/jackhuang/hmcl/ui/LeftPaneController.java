@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,7 +47,6 @@ import org.jackhuang.hmcl.ui.construct.ClassTitle;
 import org.jackhuang.hmcl.ui.construct.IconedItem;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Pair;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -72,9 +71,7 @@ public final class LeftPaneController {
                     iconedItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
                 }))
                 .add(new ClassTitle(Lang.apply(new BorderPane(), borderPane -> {
-                    borderPane.setLeft(Lang.apply(new VBox(), vBox -> {
-                        vBox.getChildren().setAll(new Text(Main.i18n("profile.title").toUpperCase()));
-                    }));
+                    borderPane.setLeft(Lang.apply(new VBox(), vBox -> vBox.getChildren().setAll(new Text(Main.i18n("profile.title").toUpperCase()))));
                     JFXButton addProfileButton = new JFXButton();
                     addProfileButton.setGraphic(SVG.plus("black", 10, 10));
                     addProfileButton.getStyleClass().add("toggle-icon-tiny");

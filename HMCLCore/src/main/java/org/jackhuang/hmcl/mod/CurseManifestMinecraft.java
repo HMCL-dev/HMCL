@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ public final class CurseManifestMinecraft implements Validation {
 
     public CurseManifestMinecraft() {
         this.gameVersion = "";
-        this.modLoaders = Collections.EMPTY_LIST;
+        this.modLoaders = Collections.emptyList();
     }
 
     public CurseManifestMinecraft(String gameVersion, List<CurseManifestModLoader> modLoaders) {

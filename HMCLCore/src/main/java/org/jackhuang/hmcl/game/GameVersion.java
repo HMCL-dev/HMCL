@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -117,9 +117,9 @@ public final class GameVersion {
             if (minecraft != null)
                 return getVersionOfOldMinecraft(f, minecraft);
             ZipArchiveEntry main = f.getEntry("net/minecraft/client/main/Main.class");
-            ZipArchiveEntry minecraftserver = f.getEntry("net/minecraft/server/MinecraftServer.class");
-            if ((main != null) && (minecraftserver != null))
-                return getVersionOfNewMinecraft(f, minecraftserver);
+            ZipArchiveEntry minecraftServer = f.getEntry("net/minecraft/server/MinecraftServer.class");
+            if ((main != null) && (minecraftServer != null))
+                return getVersionOfNewMinecraft(f, minecraftServer);
             return Optional.empty();
         } catch (IOException e) {
             return Optional.empty();

@@ -43,7 +43,7 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
     @FXML private JFXProgressBar progressBar;
     @FXML private JFXButton btnAddNext;
 
-    private TransitionHandler transitionHandler;
+    private final TransitionHandler transitionHandler;
 
     {
         FXUtils.loadFXML(this, "/assets/fxml/authlib-injector-servers.fxml");
@@ -53,9 +53,8 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
         getChildren().remove(dialog);
         dialog.setDialogContainer(this);
 
-        txtServerIp.textProperty().addListener((a, b, newValue) -> {
-            btnAddNext.setDisable(!txtServerIp.validate());
-        });
+        txtServerIp.textProperty().addListener((a, b, newValue) ->
+                btnAddNext.setDisable(!txtServerIp.validate()));
 
         loading();
     }

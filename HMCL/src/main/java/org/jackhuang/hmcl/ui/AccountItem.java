@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -88,9 +88,7 @@ public final class AccountItem extends StackPane {
 
         if (account instanceof AuthlibInjectorAccount) {
             Task.ofResult("serverName", () -> Accounts.getAuthlibInjectorServerName(((AuthlibInjectorAccount) account).getServerBaseURL()))
-                    .subscribe(Schedulers.javafx(), variables -> {
-                        lblServer.setText(variables.get("serverName"));
-                    });
+                    .subscribe(Schedulers.javafx(), variables -> lblServer.setText(variables.get("serverName")));
         }
 
         if (account instanceof YggdrasilAccount) {

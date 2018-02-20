@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ public class MultiFileItem extends ComponentList {
     private final StringProperty chooserTitle = new SimpleStringProperty(this, "chooserTitle", Main.i18n("selector.choose_file"));
     private final BooleanProperty directory = new SimpleBooleanProperty(this, "directory", false);
     private final SimpleStringProperty tooltip = new SimpleStringProperty(this, "tooltip");
-    private ObservableList<FileChooser.ExtensionFilter> extensionFilters = FXCollections.observableArrayList();
+    private final ObservableList<FileChooser.ExtensionFilter> extensionFilters = FXCollections.observableArrayList();
 
     private final ToggleGroup group = new ToggleGroup();
     private final JFXTextField txtCustom = new JFXTextField();

@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,12 +27,14 @@ public final class EventBus {
 
     private final HashMap<Class<?>, EventManager<?>> events = new HashMap<>();
 
+    @SuppressWarnings("unchecked")
     public <T extends Event> EventManager<T> channel(Class<T> clazz) {
         if (!events.containsKey(clazz))
             events.put(clazz, new EventManager<>());
         return (EventManager<T>) events.get(clazz);
     }
 
+    @SuppressWarnings("unchecked")
     public Event.Result fireEvent(Event obj) {
         return channel((Class<Event>) obj.getClass()).fireEvent(obj);
     }

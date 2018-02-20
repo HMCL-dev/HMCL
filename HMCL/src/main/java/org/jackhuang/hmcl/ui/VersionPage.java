@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,6 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Tab;
-import javafx.scene.control.Tooltip;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
@@ -66,8 +65,8 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     @FXML
     private JFXTabPane tabPane;
 
-    private JFXPopup browsePopup;
-    private JFXPopup managementPopup;
+    private final JFXPopup browsePopup;
+    private final JFXPopup managementPopup;
 
     private Profile profile;
     private String version;
@@ -80,10 +79,10 @@ public final class VersionPage extends StackPane implements DecoratorPage {
         browsePopup = new JFXPopup(browseList);
         managementPopup = new JFXPopup(managementList);
 
-        FXUtils.installTooltip(btnDelete, 0, 5000, 0, new Tooltip(Main.i18n("version.manage.remove")));
-        FXUtils.installTooltip(btnBrowseMenu, 0, 5000, 0, new Tooltip(Main.i18n("settings.game.exploration")));
-        FXUtils.installTooltip(btnManagementMenu, 0, 5000, 0, new Tooltip(Main.i18n("settings.game.management")));
-        FXUtils.installTooltip(btnExport, 0, 5000, 0, new Tooltip(Main.i18n("modpack.export")));
+        FXUtils.installTooltip(btnDelete, Main.i18n("version.manage.remove"));
+        FXUtils.installTooltip(btnBrowseMenu, Main.i18n("settings.game.exploration"));
+        FXUtils.installTooltip(btnManagementMenu, Main.i18n("settings.game.management"));
+        FXUtils.installTooltip(btnExport, Main.i18n("modpack.export"));
     }
 
     public void load(String id, Profile profile) {

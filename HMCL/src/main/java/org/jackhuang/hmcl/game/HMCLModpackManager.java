@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ public final class HMCLModpackManager {
             return ModAdviser.ModSuggestion.NORMAL;
         else
             return ModAdviser.ModSuggestion.SUGGESTED;
-    };
+    }
 
     private static boolean match(List<String> l, String fileName, boolean isDirectory) {
         for (String s : l)

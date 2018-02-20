@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
  */
 public class InvalidTokenException extends AuthenticationException {
 
-    private YggdrasilAccount account;
+    private final YggdrasilAccount account;
 
     public InvalidTokenException(YggdrasilAccount account) {
         super();

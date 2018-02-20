@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,12 +50,6 @@ public class ImmediateStringProperty extends SimpleStringProperty {
 
     private Consumer<String> consumer = null;
     private ChangeListener<String> listener = null;
-    private final ChangeListener<String> changeListener = (a, b, newValue) -> {
-        if (consumer != null)
-            consumer.accept(newValue);
-        if (listener != null)
-            listener.changed(a, b, newValue);
-    };
 
     public void setChangedListener(Consumer<String> consumer) {
         this.consumer = Objects.requireNonNull(consumer);
@@ -69,6 +63,12 @@ public class ImmediateStringProperty extends SimpleStringProperty {
 
     public ImmediateStringProperty(Object bean, String name, String initialValue) {
         super(bean, name, initialValue);
+        ChangeListener<String> changeListener = (a, b, newValue) -> {
+            if (consumer != null)
+                consumer.accept(newValue);
+            if (listener != null)
+                listener.changed(a, b, newValue);
+        };
         addListener(changeListener);
     }
 }

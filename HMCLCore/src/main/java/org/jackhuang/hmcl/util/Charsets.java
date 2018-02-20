@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft!.
- * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

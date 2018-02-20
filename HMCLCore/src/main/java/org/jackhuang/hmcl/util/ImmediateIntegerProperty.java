@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,15 +48,32 @@ public class ImmediateIntegerProperty extends SimpleIntegerProperty {
         super.unbind();
     }
 
-    private Consumer<Integer> listener = Constants.emptyConsumer();
-    private final ChangeListener<Number> changeListener = (a, b, newValue) -> listener.accept(newValue.intValue());
+    private Consumer<Integer> consumer = null;
+    private ChangeListener<Number> listener = null;
 
-    public void setChangedListener(Consumer<Integer> listener) {
+    public void setChangedListener(Consumer<Integer> consumer) {
+        this.consumer = Objects.requireNonNull(consumer);
+        this.listener = null;
+    }
+
+    public void setChangedListener(ChangeListener<Number> listener) {
+        this.consumer = null;
         this.listener = Objects.requireNonNull(listener);
+    }
+
+    public void setChangedListenerAndOperate(Consumer<Integer> listener) {
+        setChangedListener(listener);
+        listener.accept(get());
     }
 
     public ImmediateIntegerProperty(Object bean, String name, int initialValue) {
         super(bean, name, initialValue);
+        ChangeListener<Number> changeListener = (a, b, newValue) -> {
+            if (consumer != null)
+                consumer.accept(newValue.intValue());
+            if (listener != null)
+                listener.changed(a, b, newValue);
+        };
         addListener(changeListener);
     }
 }

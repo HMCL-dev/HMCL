@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,7 +53,7 @@ public class FileItem extends BorderPane {
         right.setGraphic(SVG.pencil("black", 15, 15));
         right.getStyleClass().add("toggle-icon4");
         right.setOnMouseClicked(e -> onExplore());
-        FXUtils.installTooltip(right, 0, 5000, 0, new Tooltip(Main.i18n("button.edit")));
+        FXUtils.installTooltip(right, Main.i18n("button.edit"));
         setRight(right);
 
         Tooltip tip = new Tooltip();

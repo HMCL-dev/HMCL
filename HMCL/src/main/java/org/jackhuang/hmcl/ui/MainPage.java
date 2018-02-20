@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
-import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.StackPane;
@@ -75,7 +74,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     @FXML
     private JFXListView versionList;
 
-    private JFXPopup versionPopup;
+    private final JFXPopup versionPopup;
 
     {
         FXUtils.loadFXML(this, "/assets/fxml/main.fxml");
@@ -88,9 +87,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
         getChildren().remove(versionList);
 
         btnAdd.setOnMouseClicked(e -> Controllers.getDecorator().startWizard(new DownloadWizardProvider(), Main.i18n("install")));
-        FXUtils.installTooltip(btnAdd, 0, 5000, 0, new Tooltip(Main.i18n("install")));
+        FXUtils.installTooltip(btnAdd, Main.i18n("install"));
         btnRefresh.setOnMouseClicked(e -> Settings.INSTANCE.getSelectedProfile().getRepository().refreshVersionsAsync().start());
-        FXUtils.installTooltip(btnRefresh, 0, 5000, 0, new Tooltip(Main.i18n("button.refresh")));
+        FXUtils.installTooltip(btnRefresh, Main.i18n("button.refresh"));
     }
 
     private Node buildNode(Profile profile, String version, String game) {

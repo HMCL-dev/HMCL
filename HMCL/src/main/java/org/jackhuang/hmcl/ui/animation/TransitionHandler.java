@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -73,9 +73,7 @@ public final class TransitionHandler implements AnimationHandler {
 
         Timeline nowAnimation = new Timeline();
         nowAnimation.getKeyFrames().addAll(transition.animate(this));
-        nowAnimation.getKeyFrames().add(new KeyFrame(duration, e -> {
-            view.getChildren().remove(previousNode);
-        }));
+        nowAnimation.getKeyFrames().add(new KeyFrame(duration, e -> view.getChildren().remove(previousNode)));
         nowAnimation.play();
         animation = nowAnimation;
     }

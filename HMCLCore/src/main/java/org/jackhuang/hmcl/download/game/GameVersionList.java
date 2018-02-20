@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,11 +24,9 @@ import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.NetworkUtils;
-import org.jackhuang.hmcl.util.VersionNumber;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Optional;
 
 /**
  *

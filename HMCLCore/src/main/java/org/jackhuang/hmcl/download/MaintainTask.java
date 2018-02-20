@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,17 +17,13 @@
  */
 package org.jackhuang.hmcl.download;
 
-import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 public class MaintainTask extends TaskResult<Version> {
@@ -47,7 +43,7 @@ public class MaintainTask extends TaskResult<Version> {
     }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
         Version newVersion = version;
         Library forge = null, liteLoader = null, optiFine = null;
         List<String> args = new ArrayList<>(StringUtils.tokenize(newVersion.getMinecraftArguments().orElse("")));

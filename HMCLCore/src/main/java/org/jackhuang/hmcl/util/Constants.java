@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,9 +54,7 @@ public final class Constants {
 
     public static final SimpleDateFormat DEFAULT_DATE_FORMAT = new SimpleDateFormat("HH:mm:ss");
 
-    public static Consumer<Runnable> UI_THREAD_SCHEDULER = s -> {
-        Schedulers.computation().schedule(s::run);
-    };
+    public static Consumer<Runnable> UI_THREAD_SCHEDULER = s -> Schedulers.computation().schedule(s::run);
     
     public static final Consumer<Runnable> SWING_UI_THREAD_SCHEDULER = s -> {
         if (EventQueue.isDispatchThread())

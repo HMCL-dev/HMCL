@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -214,7 +214,7 @@ public final class FileUtils {
     public static void copyFileQuietly(File srcFile, File destFile) {
         try {
             copyFile(srcFile, destFile);
-        } catch (IOException ex) {
+        } catch (IOException ignore) {
         }
     }
 
@@ -251,9 +251,7 @@ public final class FileUtils {
     }
 
     public static boolean makeFile(File file) {
-        if (!makeDirectory(file.getAbsoluteFile().getParentFile()))
-            return false;
-        return file.exists() || Lang.test(file::createNewFile);
+        return makeDirectory(file.getAbsoluteFile().getParentFile()) && (file.exists() || Lang.test(file::createNewFile));
     }
 
     public static List<File> listFilesByExtension(File file, String extension) {

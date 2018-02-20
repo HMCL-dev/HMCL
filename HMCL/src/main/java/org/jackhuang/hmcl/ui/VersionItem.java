@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@ import javafx.beans.binding.Bindings;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import javafx.scene.control.Tooltip;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
@@ -73,10 +72,10 @@ public final class VersionItem extends StackPane {
         btnLaunch.setGraphic(SVG.launch("black", 15, 15));
         btnScript.setGraphic(SVG.script("black", 15, 15));
 
-        FXUtils.installTooltip(btnSettings, 0, 5000, 0, new Tooltip(Main.i18n("version.settings")));
-        FXUtils.installTooltip(btnUpdate, 0, 5000, 0, new Tooltip(Main.i18n("version.update")));
-        FXUtils.installTooltip(btnLaunch, 0, 5000, 0, new Tooltip(Main.i18n("version.launch")));
-        FXUtils.installTooltip(btnScript, 0, 5000, 0, new Tooltip(Main.i18n("version.launch_script")));
+        FXUtils.installTooltip(btnSettings, Main.i18n("version.settings"));
+        FXUtils.installTooltip(btnUpdate, Main.i18n("version.update"));
+        FXUtils.installTooltip(btnLaunch, Main.i18n("version.launch"));
+        FXUtils.installTooltip(btnScript, Main.i18n("version.launch_script"));
 
         icon.translateYProperty().bind(Bindings.createDoubleBinding(() -> header.getBoundsInParent().getHeight() - icon.getHeight() / 2 - 16, header.boundsInParentProperty(), icon.heightProperty()));
         FXUtils.limitSize(iconView, 32, 32);

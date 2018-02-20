@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2013  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -70,9 +70,7 @@ public final class LogWindow extends Stage {
     public LogWindow(String text) {
         this();
 
-        onDone.register(() -> {
-            logLine(text, Log4jLevel.INFO);
-        });
+        onDone.register(() -> logLine(text, Log4jLevel.INFO));
     }
 
     public ReadOnlyIntegerProperty fatalProperty() {
@@ -164,7 +162,7 @@ public final class LogWindow extends Stage {
         @FXML
         private ComboBox<String> cboLines;
 
-        WebEngine engine;
+        final WebEngine engine;
         Node body;
         Document document;
 

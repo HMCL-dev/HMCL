@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -169,7 +169,6 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
         progressBar.setVisible(true);
         lblCreationWarning.setText("");
         Task.ofResult("create_account", () -> {
-            try {
                 Account account;
                 switch (type) {
                     case 0: account = Accounts.ACCOUNT_FACTORY.get(Accounts.OFFLINE_ACCOUNT_KEY).fromUsername(username); break;
@@ -181,22 +180,19 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
                 AuthInfo info = account.logIn(new CharacterSelector(), Settings.INSTANCE.getProxy());
                 Accounts.setCurrentCharacter(account, info.getUsername());
                 return account;
-            } catch (Exception e) {
-                return e;
-            }
-        }).subscribe(Schedulers.javafx(), variables -> {
-            Object account = variables.get("create_account");
-            if (account instanceof Account) {
-                Settings.INSTANCE.addAccount((Account) account);
+        }).finalized(Schedulers.javafx(), variables -> {
+            Settings.INSTANCE.addAccount(variables.get("create_account"));
+            dialog.close();
+            loadAccounts();
+            progressBar.setVisible(false);
+        }, exception -> {
+            if (exception instanceof NoSelectedCharacterException) {
                 dialog.close();
-                loadAccounts();
-            } else if (account instanceof NoSelectedCharacterException) {
-                dialog.close();
-            } else if (account instanceof Exception) {
-                lblCreationWarning.setText(accountException((Exception) account));
+            } else {
+                lblCreationWarning.setText(accountException(exception));
             }
             progressBar.setVisible(false);
-        });
+        }).start();
     }
 
     @FXML
@@ -241,10 +237,10 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
     }
 
     private static class CharacterSelector extends BorderPane implements MultiCharacterSelector {
-        private AdvancedListBox listBox = new AdvancedListBox();
-        private JFXButton cancel = new JFXButton();
+        private final AdvancedListBox listBox = new AdvancedListBox();
+        private final JFXButton cancel = new JFXButton();
 
-        private CountDownLatch latch = new CountDownLatch(1);
+        private final CountDownLatch latch = new CountDownLatch(1);
         private GameProfile selectedProfile = null;
 
         {

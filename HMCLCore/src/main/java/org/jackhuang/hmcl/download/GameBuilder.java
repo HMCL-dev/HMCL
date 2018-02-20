@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ public abstract class GameBuilder {
 
     protected String name = "";
     protected String gameVersion = "";
-    protected Map<String, String> toolVersions = new HashMap<>();
+    protected final Map<String, String> toolVersions = new HashMap<>();
 
     public String getName() {
         return name;

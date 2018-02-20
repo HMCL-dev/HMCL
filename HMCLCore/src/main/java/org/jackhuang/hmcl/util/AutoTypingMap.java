@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,7 +35,18 @@ public final class AutoTypingMap<K> {
         this.impl = impl;
     }
 
-    public synchronized <V> V get(K key) {
+    /**
+     * Get the value associated with given {@code key} in the mapping.
+     *
+     * Be careful of the return type {@code <V>}, as you must ensure that {@code <V>} is correct
+     *
+     * @param key the key that the value associated with
+     * @param <V> the type of value which you must ensure type correction
+     * @return the value associated with given {@code key}
+     * @throws ClassCastException if the return type {@code <V>} is incorrect.
+     */
+    @SuppressWarnings("unchecked")
+    public synchronized <V> V get(K key) throws ClassCastException {
         return (V) impl.get(key);
     }
 

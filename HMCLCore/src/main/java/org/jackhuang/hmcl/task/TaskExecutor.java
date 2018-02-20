@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.task;
 
-import org.jackhuang.hmcl.util.AutoTypingMap;
-import org.jackhuang.hmcl.util.ExceptionalRunnable;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -38,7 +35,7 @@ import java.util.logging.Level;
 public final class TaskExecutor {
 
     private final Task firstTask;
-    private List<TaskListener> taskListeners = new LinkedList<>();
+    private final List<TaskListener> taskListeners = new LinkedList<>();
     private boolean canceled = false;
     private Exception lastException;
     private final AtomicInteger totTask = new AtomicInteger(0);
@@ -83,7 +80,7 @@ public final class TaskExecutor {
             taskListeners.forEach(it -> it.onStop(flag.get(), this));
         });
         workerQueue.add(future);
-        Lang.invoke(() -> future.get());
+        Lang.invoke((ExceptionalSupplier<?, Exception>) future::get);
         return flag.get();
     }
 
@@ -184,7 +181,7 @@ public final class TaskExecutor {
             // do nothing
         } catch (Exception e) {
             lastException = e;
-            variables.set("lastException", e);
+            variables.set(LAST_EXCEPION_ID, e);
             Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
             task.onDone().fireEvent(new TaskEvent(this, task, true));
             taskListeners.forEach(it -> it.onFailed(task, e));
@@ -228,4 +225,6 @@ public final class TaskExecutor {
         }
 
     }
+
+    public static final String LAST_EXCEPION_ID = "lastException";
 }

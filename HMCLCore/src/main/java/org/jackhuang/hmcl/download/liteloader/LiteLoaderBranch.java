@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +38,10 @@ public final class LiteLoaderBranch {
     @SerializedName("com.mumfrey:liteloader")
     private final Map<String, LiteLoaderVersion> liteLoader;
 
+    /**
+     * No-arg constructor for Gson.
+     */
+    @SuppressWarnings("unused")
     public LiteLoaderBranch() {
         this(Collections.emptySet(), Collections.emptyMap());
     }

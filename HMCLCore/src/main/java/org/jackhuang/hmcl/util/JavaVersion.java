@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -179,7 +179,7 @@ public final class JavaVersion implements Serializable {
                 javaVersions = queryMacintosh();
                 break;
             default:
-                javaVersions = Collections.EMPTY_LIST;
+                javaVersions = Collections.emptyList();
                 break;
         }
         for (JavaVersion v : javaVersions)

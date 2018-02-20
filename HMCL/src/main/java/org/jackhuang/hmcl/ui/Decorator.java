@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -85,7 +85,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     private double xOffset, yOffset, newX, newY, initX, initY;
     private boolean allowMove, isDragging, dialogShown, maximized;
     private BoundingBox originalBox, maximizedBox;
-    private TransitionHandler animationHandler;
+    private final TransitionHandler animationHandler;
 
     @FXML
     private StackPane contentPlaceHolder;
@@ -205,7 +205,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
             }
         }
 
-        // bgskin
+        // images in ./bg
         if (!loaded) {
             File backgroundImageFile = new File("bg");
             if (backgroundImageFile.isDirectory()) {
@@ -302,52 +302,52 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
             if (!this.primaryStage.isFullScreen() && !mouseEvent.isStillSincePress() && !this.primaryStage.isMaximized() && !this.maximized) {
                 this.newX = mouseEvent.getScreenX();
                 this.newY = mouseEvent.getScreenY();
-                double deltax = this.newX - this.initX;
-                double deltay = this.newY - this.initY;
+                double deltaX = this.newX - this.initX;
+                double deltaY = this.newY - this.initY;
                 Cursor cursor = this.getCursor();
                 if (Cursor.E_RESIZE == cursor) {
-                    this.setStageWidth(this.primaryStage.getWidth() + deltax);
+                    this.setStageWidth(this.primaryStage.getWidth() + deltaX);
                     mouseEvent.consume();
                 } else if (Cursor.NE_RESIZE == cursor) {
-                    if (this.setStageHeight(this.primaryStage.getHeight() - deltay)) {
-                        this.primaryStage.setY(this.primaryStage.getY() + deltay);
+                    if (this.setStageHeight(this.primaryStage.getHeight() - deltaY)) {
+                        this.primaryStage.setY(this.primaryStage.getY() + deltaY);
                     }
 
-                    this.setStageWidth(this.primaryStage.getWidth() + deltax);
+                    this.setStageWidth(this.primaryStage.getWidth() + deltaX);
                     mouseEvent.consume();
                 } else if (Cursor.SE_RESIZE == cursor) {
-                    this.setStageWidth(this.primaryStage.getWidth() + deltax);
-                    this.setStageHeight(this.primaryStage.getHeight() + deltay);
+                    this.setStageWidth(this.primaryStage.getWidth() + deltaX);
+                    this.setStageHeight(this.primaryStage.getHeight() + deltaY);
                     mouseEvent.consume();
                 } else if (Cursor.S_RESIZE == cursor) {
-                    this.setStageHeight(this.primaryStage.getHeight() + deltay);
+                    this.setStageHeight(this.primaryStage.getHeight() + deltaY);
                     mouseEvent.consume();
                 } else if (Cursor.W_RESIZE == cursor) {
-                    if (this.setStageWidth(this.primaryStage.getWidth() - deltax)) {
-                        this.primaryStage.setX(this.primaryStage.getX() + deltax);
+                    if (this.setStageWidth(this.primaryStage.getWidth() - deltaX)) {
+                        this.primaryStage.setX(this.primaryStage.getX() + deltaX);
                     }
 
                     mouseEvent.consume();
                 } else if (Cursor.SW_RESIZE == cursor) {
-                    if (this.setStageWidth(this.primaryStage.getWidth() - deltax)) {
-                        this.primaryStage.setX(this.primaryStage.getX() + deltax);
+                    if (this.setStageWidth(this.primaryStage.getWidth() - deltaX)) {
+                        this.primaryStage.setX(this.primaryStage.getX() + deltaX);
                     }
 
-                    this.setStageHeight(this.primaryStage.getHeight() + deltay);
+                    this.setStageHeight(this.primaryStage.getHeight() + deltaY);
                     mouseEvent.consume();
                 } else if (Cursor.NW_RESIZE == cursor) {
-                    if (this.setStageWidth(this.primaryStage.getWidth() - deltax)) {
-                        this.primaryStage.setX(this.primaryStage.getX() + deltax);
+                    if (this.setStageWidth(this.primaryStage.getWidth() - deltaX)) {
+                        this.primaryStage.setX(this.primaryStage.getX() + deltaX);
                     }
 
-                    if (this.setStageHeight(this.primaryStage.getHeight() - deltay)) {
-                        this.primaryStage.setY(this.primaryStage.getY() + deltay);
+                    if (this.setStageHeight(this.primaryStage.getHeight() - deltaY)) {
+                        this.primaryStage.setY(this.primaryStage.getY() + deltaY);
                     }
 
                     mouseEvent.consume();
                 } else if (Cursor.N_RESIZE == cursor) {
-                    if (this.setStageHeight(this.primaryStage.getHeight() - deltay)) {
-                        this.primaryStage.setY(this.primaryStage.getY() + deltay);
+                    if (this.setStageHeight(this.primaryStage.getHeight() - deltaY)) {
+                        this.primaryStage.setY(this.primaryStage.getY() + deltaY);
                     }
 
                     mouseEvent.consume();

@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,8 @@ import java.util.Collection;
 /**
  * Supports operations on versioning.
  *
- * Note that game repository will not do any tasks that connect to Internet, if do, see {@link org.jackhuang.hmcl.download.DependencyManager}
+ * Note that game repository will not do any operations which need connection with Internet, if do,
+ * see {@link org.jackhuang.hmcl.download.DependencyManager}
  *
  * @author huangyuhui
  */
@@ -94,8 +95,8 @@ public interface GameRepository extends VersionProvider {
      * Get the library file in disk.
      * This method allows versions and libraries that are not loaded by this game repository.
      *
-     * @param version versionversion
-     * @param lib the library, [Version.libraries]
+     * @param version the reference of game version
+     * @param lib the library, {@link Version#getLibraries()}
      * @return the library file
      */
     File getLibraryFile(Version version, Library lib);
@@ -104,8 +105,9 @@ public interface GameRepository extends VersionProvider {
      * Get the directory that native libraries will be unzipped to.
      *
      * You'd better return a unique directory.
-     * Or if it returns a temporary directory, [org.jackhuang.hmcl.launch.Launcher.makeLaunchScript] will fail.
-     * If you do want to return a temporary directory, make [org.jackhuang.hmcl.launch.Launcher.makeLaunchScript] always fail([UnsupportedOperationException]) and not to use it.
+     * Or if it returns a temporary directory, {@link org.jackhuang.hmcl.launch.Launcher#makeLaunchScript} will fail.
+     * If you do want to return a temporary directory, make {@link org.jackhuang.hmcl.launch.Launcher#makeLaunchScript}
+     * always fail({@code UnsupportedOperationException}) and not to use it.
      *
      * @param id version id
      * @return the native directory
@@ -145,8 +147,8 @@ public interface GameRepository extends VersionProvider {
      * Will reconstruct assets or do some blocking tasks if necessary.
      * You'd better create a new thread to invoke this method.
      *
-     * @param version the id of specific version that is relevant to [assetId]
-     * @param assetId the asset id, you can find it in [AssetIndexInfo.id] [Version.actualAssetIndex.id]
+     * @param version the id of specific version that is relevant to {@code assetId}
+     * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
      * @return the actual asset directory
      */
     File getActualAssetDirectory(String version, String assetId);
@@ -154,8 +156,8 @@ public interface GameRepository extends VersionProvider {
     /**
      * Get the asset directory according to the asset id.
      *
-     * @param version the id of specific version that is relevant to [assetId]
-     * @param assetId the asset id, you can find it in [AssetIndexInfo.id] [Version.actualAssetIndex.id]
+     * @param version the id of specific version that is relevant to {@code assetId}
+     * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
      * @return the asset directory
      */
     File getAssetDirectory(String version, String assetId);
@@ -163,9 +165,9 @@ public interface GameRepository extends VersionProvider {
     /**
      * Get the file that given asset object refers to
      *
-     * @param version the id of specific version that is relevant to [assetId]
-     * @param assetId the asset id, you can find it in [AssetIndexInfo.id] [Version.actualAssetIndex.id]
-     * @param name the asset object name, you can find it in [AssetIndex.objects.keys]
+     * @param version the id of specific version that is relevant to {@code assetId}
+     * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
+     * @param name the asset object name, you can find it in keys of {@link AssetIndex#getObjects()}
      * @throws java.io.IOException if I/O operation fails.
      * @return the file that given asset object refers to
      */
@@ -174,9 +176,9 @@ public interface GameRepository extends VersionProvider {
     /**
      * Get the file that given asset object refers to
      *
-     * @param version the id of specific version that is relevant to [assetId]
-     * @param assetId the asset id, you can find it in [AssetIndexInfo.id] [Version.actualAssetIndex.id]
-     * @param obj the asset object, you can find it in [AssetIndex.objects]
+     * @param version the id of specific version that is relevant to {@code assetId}
+     * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
+     * @param obj the asset object, you can find it in {@link AssetIndex#getObjects()}
      * @return the file that given asset object refers to
      */
     File getAssetObject(String version, String assetId, AssetObject obj);
@@ -184,8 +186,8 @@ public interface GameRepository extends VersionProvider {
     /**
      * Get asset index that assetId represents
      *
-     * @param version the id of specific version that is relevant to [assetId]
-     * @param assetId the asset id, you can find it in [AssetIndexInfo.id] [Version.actualAssetIndex.id]
+     * @param version the id of specific version that is relevant to {@code assetId}
+     * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
      * @return the asset index
      */
     AssetIndex getAssetIndex(String version, String assetId) throws IOException;
@@ -193,16 +195,16 @@ public interface GameRepository extends VersionProvider {
     /**
      * Get the asset_index.json which includes asset objects information.
      *
-     * @param version the id of specific version that is relevant to [assetId]
-     * @param assetId the asset id, you can find it in [AssetIndexInfo.id] [Version.actualAssetIndex.id]
+     * @param version the id of specific version that is relevant to {@code assetId}
+     * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
      */
     File getIndexFile(String version, String assetId);
 
     /**
      * Get logging object
      *
-     * @param version the id of specific version that is relevant to [assetId]
-     * @param assetId the asset id, you can find it in [AssetIndexInfo.id] [Version.assets]
+     * @param version the id of specific version that is relevant to {@code assetId}
+     * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
      * @param loggingInfo the logging info
      * @return the file that loggingInfo refers to
      */

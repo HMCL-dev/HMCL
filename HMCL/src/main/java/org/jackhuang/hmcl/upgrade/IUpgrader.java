@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,8 +27,6 @@ import java.util.List;
  */
 public abstract class IUpgrader {
 
-    public static final IUpgrader NOW_UPGRADER = new AppDataUpgrader();
-
     /**
      * Paring arguments to decide on whether the upgrade is needed.
      *
@@ -42,8 +40,6 @@ public abstract class IUpgrader {
      *
      * @param checker Should be VersionChecker
      * @param version the newest version
-     *
-     * @return should return true
      */
     public abstract void download(UpdateChecker checker, VersionNumber version);
 }

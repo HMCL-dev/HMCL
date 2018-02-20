@@ -92,7 +92,7 @@ public final class ModpackConfiguration<T> implements Validation {
 
         /**
          * The relative path to Minecraft run directory
-         * @return
+         * @return the relative path to Minecraft run directory.
          */
         public String getPath() {
             return path;

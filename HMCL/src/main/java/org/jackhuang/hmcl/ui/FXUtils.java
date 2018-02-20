@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +30,10 @@ import javafx.beans.value.WeakChangeListener;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.ListView;
+import javafx.scene.control.ScrollBar;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -39,6 +42,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.util.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.OperatingSystem;
@@ -47,7 +51,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
@@ -90,8 +93,8 @@ public final class FXUtils {
     }
 
     private static class ListenerPair<T> {
-        ObservableValue<T> value;
-        ChangeListener<? super T> listener;
+        private final ObservableValue<T> value;
+        private final ChangeListener<? super T> listener;
 
         ListenerPair(ObservableValue<T> value, ChangeListener<? super T> listener) {
             this.value = value;
@@ -187,13 +190,17 @@ public final class FXUtils {
         FXMLLoader loader = new FXMLLoader(node.getClass().getResource(absolutePath), Main.RESOURCE_BUNDLE);
         loader.setRoot(node);
         loader.setController(node);
-        Lang.invoke(() -> loader.load());
+        Lang.invoke((ExceptionalSupplier<Object, IOException>) loader::load);
     }
 
     public static void resetChildren(JFXMasonryPane pane, List<Node> children) {
         // Fixes mis-repositioning.
         ReflectionHelper.setFieldContent(JFXMasonryPane.class, pane, "oldBoxes", null);
         pane.getChildren().setAll(children);
+    }
+
+    public static void installTooltip(Node node, String tooltip) {
+        installTooltip(node, 0, 5000, 0, new Tooltip(tooltip));
     }
 
     public static void installTooltip(Node node, double openDelay, double visibleDelay, double closeDelay, Tooltip tooltip) {
@@ -213,35 +220,6 @@ public final class FXUtils {
             }
             Tooltip.install(node, tooltip);
         }
-    }
-
-    public static boolean alert(Alert.AlertType type, String title, String contentText) {
-        return alert(type, title, contentText, null);
-    }
-
-    public static boolean alert(Alert.AlertType type, String title, String contentText, String headerText) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(headerText);
-        alert.setContentText(contentText);
-        Optional<ButtonType> result = alert.showAndWait();
-        return result.isPresent() && result.get() == ButtonType.OK;
-    }
-
-    public static Optional<String> inputDialog(String title, String contentText) {
-        return inputDialog(title, contentText, null);
-    }
-
-    public static Optional<String> inputDialog(String title, String contentText, String headerText) {
-        return inputDialog(title, contentText, headerText, "");
-    }
-
-    public static Optional<String> inputDialog(String title, String contentText, String headerText, String defaultValue) {
-        TextInputDialog dialog = new TextInputDialog(defaultValue);
-        dialog.setTitle(title);
-        dialog.setHeaderText(headerText);
-        dialog.setContentText(contentText);
-        return dialog.showAndWait();
     }
 
     public static void openFolder(File file) {
@@ -328,9 +306,8 @@ public final class FXUtils {
     @SuppressWarnings("unchecked")
     public static void bindEnum(JFXComboBox<?> comboBox, Property<? extends Enum> property) {
         unbindEnum(comboBox);
-        ChangeListener<Number> listener = (a, b, newValue) -> {
-            ((Property) property).setValue(property.getValue().getClass().getEnumConstants()[newValue.intValue()]);
-        };
+        ChangeListener<Number> listener = (a, b, newValue) ->
+                ((Property) property).setValue(property.getValue().getClass().getEnumConstants()[newValue.intValue()]);
         comboBox.getSelectionModel().select(property.getValue().ordinal());
         comboBox.getProperties().put("FXUtils.bindEnum.listener", listener);
         comboBox.getSelectionModel().selectedIndexProperty().addListener(listener);

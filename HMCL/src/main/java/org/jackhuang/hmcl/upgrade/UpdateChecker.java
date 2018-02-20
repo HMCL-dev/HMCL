@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ import java.util.logging.Level;
 public final class UpdateChecker {
 
     private volatile boolean outOfDate = false;
-    private VersionNumber base;
+    private final VersionNumber base;
     private String versionString;
     private Map<String, String> download_link = null;
 
@@ -134,7 +134,7 @@ public final class UpdateChecker {
     public void checkOutdate() {
         if (outOfDate)
             if (EventBus.EVENT_BUS.fireEvent(new OutOfDateEvent(this, getNewVersion())) != Event.Result.DENY) {
-                IUpgrader.NOW_UPGRADER.download(this, getNewVersion());
+                Main.UPGRADER.download(this, getNewVersion());
             }
     }
 }
