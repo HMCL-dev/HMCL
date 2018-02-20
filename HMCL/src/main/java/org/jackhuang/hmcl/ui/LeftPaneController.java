@@ -110,8 +110,8 @@ public final class LeftPaneController {
 
         Platform.runLater(() -> {
             for (Node node : profilePane.getChildren()) {
-                if (node instanceof RipplerContainer && node.getProperties().get("profile") instanceof Pair<?, ?>) {
-                    boolean current = Objects.equals(((Pair) node.getProperties().get("profile")).getKey(), profile.getName());
+                if (node instanceof RipplerContainer && node.getProperties().get("profile") instanceof String) {
+                    boolean current = Objects.equals(node.getProperties().get("profile"), profile.getName());
                     ((RipplerContainer) node).setSelected(current);
                     ((VersionListItem) ((RipplerContainer) node).getContainer()).setGameVersion(current ? Main.i18n("profile.selected") : "");
                 }
@@ -126,7 +126,7 @@ public final class LeftPaneController {
             RipplerContainer ripplerContainer = new RipplerContainer(item);
             item.setOnSettingsButtonClicked(() -> Controllers.getDecorator().showPage(new ProfilePage(profile)));
             ripplerContainer.setOnMouseClicked(e -> Settings.INSTANCE.setSelectedProfile(profile));
-            ripplerContainer.getProperties().put("profile", new Pair<>(profile.getName(), item));
+            ripplerContainer.getProperties().put("profile", profile.getName());
             ripplerContainer.maxWidthProperty().bind(leftPane.widthProperty());
             list.add(ripplerContainer);
         }

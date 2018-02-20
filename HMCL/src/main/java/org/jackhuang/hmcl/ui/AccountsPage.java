@@ -65,6 +65,7 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
     @FXML private JFXTextField txtUsername;
     @FXML private JFXPasswordField txtPassword;
     @FXML private Label lblCreationWarning;
+    @FXML private Label lblPassword;
     @FXML private JFXComboBox<String> cboType;
     @FXML private JFXComboBox<TwoLineListItem> cboServers;
     @FXML private JFXProgressBar progressBar;
@@ -82,6 +83,7 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
         cboType.getItems().setAll(Main.i18n("account.methods.offline"), Main.i18n("account.methods.yggdrasil"), Main.i18n("account.methods.authlib_injector"));
         cboType.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> {
             txtPassword.setVisible(newValue.intValue() != 0);
+            lblPassword.setVisible(newValue.intValue() != 0);
             cboServers.setVisible(newValue.intValue() == 2);
             linkAddInjectorServer.setVisible(newValue.intValue() == 2);
             lblAddInjectorServer.setVisible(newValue.intValue() == 2);
@@ -238,7 +240,7 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
         else throw new Error(Main.i18n("account.methods.no_method") + ": " + account);
     }
 
-    class CharacterSelector extends BorderPane implements MultiCharacterSelector {
+    private static class CharacterSelector extends BorderPane implements MultiCharacterSelector {
         private AdvancedListBox listBox = new AdvancedListBox();
         private JFXButton cancel = new JFXButton();
 

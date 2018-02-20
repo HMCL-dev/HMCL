@@ -249,7 +249,7 @@ public final class LauncherHelper {
         }
     }
 
-    class LaunchTask<T> extends TaskResult<T> {
+    private static class LaunchTask<T> extends TaskResult<T> {
         private final ExceptionalSupplier<T, Exception> supplier;
 
         public LaunchTask(ExceptionalSupplier<T, Exception> supplier) {

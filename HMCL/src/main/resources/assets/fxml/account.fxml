@@ -44,13 +44,18 @@
 
                         <Hyperlink fx:id="linkAddInjectorServer" text="%account.injector.add" onMouseClicked="#onAddInjecterServer" GridPane.columnIndex="2" GridPane.rowIndex="1" />
 
-                        <JFXTextField fx:id="txtUsername" promptText="%account.username" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="3" FXUtils.validateWhileTextChanged="true">
+                        <Label text="%account.username" GridPane.rowIndex="2" GridPane.columnIndex="0" />
+
+                        <JFXTextField fx:id="txtUsername" GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.columnSpan="2" FXUtils.validateWhileTextChanged="true">
                             <validators>
                                 <RequiredFieldValidator message="%input.not_empty">
                                 </RequiredFieldValidator>
                             </validators>
                         </JFXTextField>
-                        <JFXPasswordField fx:id="txtPassword" promptText="%account.password" labelFloat="true" GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.columnSpan="3" FXUtils.validateWhileTextChanged="true">
+
+                        <Label fx:id="lblPassword" text="%account.password" GridPane.rowIndex="3" GridPane.columnIndex="0" />
+
+                        <JFXPasswordField fx:id="txtPassword" GridPane.columnIndex="1" GridPane.rowIndex="3" GridPane.columnSpan="2" FXUtils.validateWhileTextChanged="true">
                             <validators>
                                 <RequiredFieldValidator message="%input.not_empty">
                                 </RequiredFieldValidator>
