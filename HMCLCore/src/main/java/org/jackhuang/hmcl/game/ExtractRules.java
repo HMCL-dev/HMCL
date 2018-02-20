@@ -32,7 +32,7 @@ public final class ExtractRules {
     private final List<String> exclude;
 
     public ExtractRules() {
-        this.exclude = Collections.EMPTY_LIST;
+        this.exclude = Collections.emptyList();
     }
 
     public ExtractRules(List<String> exclude) {
@@ -44,7 +44,7 @@ public final class ExtractRules {
     }
 
     public boolean shouldExtract(String path) {
-        return exclude.stream().noneMatch(it -> path.startsWith(it));
+        return exclude.stream().noneMatch(path::startsWith);
     }
 
 }

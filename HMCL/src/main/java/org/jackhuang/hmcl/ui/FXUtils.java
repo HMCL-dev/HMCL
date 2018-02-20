@@ -318,18 +318,33 @@ public final class FXUtils {
         checkBox.selectedProperty().unbindBidirectional(property);
     }
 
+    /**
+     * Bind combo box selection with given enum property bidirectionally.
+     * You should <b>only and always</b> use {@code bindEnum} as well as {@code unbindEnum} at the same time.
+     * @param comboBox the combo box being bound with {@code property}.
+     * @param property the property being bound with {@code combo box}.
+     * @see #unbindEnum(JFXComboBox)
+     */
+    @SuppressWarnings("unchecked")
     public static void bindEnum(JFXComboBox<?> comboBox, Property<? extends Enum> property) {
         unbindEnum(comboBox);
         ChangeListener<Number> listener = (a, b, newValue) -> {
             ((Property) property).setValue(property.getValue().getClass().getEnumConstants()[newValue.intValue()]);
         };
         comboBox.getSelectionModel().select(property.getValue().ordinal());
-        comboBox.getProperties().put("listener", listener);
+        comboBox.getProperties().put("FXUtils.bindEnum.listener", listener);
         comboBox.getSelectionModel().selectedIndexProperty().addListener(listener);
     }
 
+    /**
+     * Unbind combo box selection with given enum property bidirectionally.
+     * You should <b>only and always</b> use {@code bindEnum} as well as {@code unbindEnum} at the same time.
+     * @param comboBox the combo box being bound with the property which can be inferred by {@code bindEnum}.
+     * @see #bindEnum(JFXComboBox, Property)
+     */
+    @SuppressWarnings("unchecked")
     public static void unbindEnum(JFXComboBox<?> comboBox) {
-        ChangeListener listener = Lang.get(comboBox.getProperties(), "listener", ChangeListener.class).orElse(null);
+        ChangeListener listener = Lang.get(comboBox.getProperties(), "FXUtils.bindEnum.listener", ChangeListener.class).orElse(null);
         if (listener == null) return;
         comboBox.getSelectionModel().selectedIndexProperty().removeListener(listener);
     }

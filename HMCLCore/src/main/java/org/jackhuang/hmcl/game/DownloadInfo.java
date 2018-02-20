@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.Validation;
 
 /**
@@ -65,6 +66,11 @@ public class DownloadInfo implements Validation {
 
     public int getSize() {
         return size;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this).append("url", url).append("sha1", sha1).append("size", size).toString();
     }
 
     @Override

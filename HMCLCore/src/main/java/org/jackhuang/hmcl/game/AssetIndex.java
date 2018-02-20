@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.util.ToStringBuilder;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -52,4 +53,8 @@ public final class AssetIndex {
         return Collections.unmodifiableMap(objects);
     }
 
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this).append("virtual", virtual).append("objects", objects).toString();
+    }
 }

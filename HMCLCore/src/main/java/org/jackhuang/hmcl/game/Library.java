@@ -22,6 +22,7 @@ import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.OperatingSystem;
 import org.jackhuang.hmcl.util.Platform;
+import org.jackhuang.hmcl.util.ToStringBuilder;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -142,7 +143,7 @@ public class Library implements Comparable<Library> {
 
     @Override
     public String toString() {
-        return "Library[" + getName() + "]";
+        return new ToStringBuilder(this).append("name", getName()).toString();
     }
 
     @Override
