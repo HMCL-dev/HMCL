@@ -46,12 +46,16 @@ public final class ModController {
     @FXML
     private ScrollPane scrollPane;
 
-    @FXML private StackPane rootPane;
+    @FXML
+    private StackPane rootPane;
 
-    @FXML private VBox modPane;
+    @FXML
+    private VBox modPane;
 
-    @FXML private StackPane contentPane;
-    @FXML private JFXSpinner spinner;
+    @FXML
+    private StackPane contentPane;
+    @FXML
+    private JFXSpinner spinner;
 
     private JFXTabPane parentTab;
     private ModManager modManager;
@@ -141,10 +145,10 @@ public final class ModController {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(Main.i18n("mods.choose_mod"));
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(Main.i18n("extension.mod"), "*.jar", "*.zip", "*.litemod"));
-        File res = chooser.showOpenDialog(Controllers.getStage());
-        if (res == null) return;
-        Task.of(() -> modManager.addMod(versionId, res))
-                .subscribe(Task.of(Schedulers.javafx(), () -> loadMods(modManager, versionId)));
+        List<File> list = chooser.showOpenMultipleDialog(Controllers.getStage());
+        if (list == null || list.isEmpty()) return;
+        for (File res : list)
+            Task.of(() -> modManager.addMod(versionId, res)).subscribe(Task.of(Schedulers.javafx(), () -> loadMods(modManager, versionId)));
     }
 
     public void setParentTab(JFXTabPane parentTab) {
