@@ -164,7 +164,7 @@ public final class ModController {
                 prompt.add(Main.i18n("mods.add.success", String.join(", ", succeeded)));
             if (!failed.isEmpty())
                 prompt.add(Main.i18n("mods.add.failed", String.join(", ", failed)));
-            Controllers.dialog(String.join("\n",  prompt), Main.i18n("mods.add"));
+            Controllers.dialog(String.join("\n", prompt), Main.i18n("mods.add"));
             loadMods(modManager, versionId);
         })).start();
     }
