@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
@@ -108,7 +110,7 @@ public class YggdrasilAccount extends Account {
         GameProfile profile = session.getSelectedProfile();
 
         return new AuthInfo(profile.getName(), UUIDTypeAdapter.fromUUID(profile.getId()), session.getAccessToken(), profile.getUserType(),
-                YggdrasilService.GSON.toJson(Optional.ofNullable(session.getUser()).map(User::getProperties).orElseGet(PropertyMap::new)));
+                new GsonBuilder().registerTypeAdapter(PropertyMap.class, PropertyMap.LegacySerializer.INSTANCE).create().toJson(Optional.ofNullable(session.getUser()).map(User::getProperties).orElseGet(PropertyMap::new)));
     }
 
     @Override
@@ -167,7 +169,7 @@ public class YggdrasilAccount extends Account {
         Optional.ofNullable(session)
                 .map(YggdrasilSession::getSelectedProfile)
                 .map(GameProfile::getProperties)
-                .ifPresent(it -> it.remove("texture"));
+                .ifPresent(it -> it.remove("textures"));
     }
 
     @Override

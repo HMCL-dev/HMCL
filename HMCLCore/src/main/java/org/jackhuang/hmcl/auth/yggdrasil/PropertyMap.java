@@ -66,4 +66,20 @@ public final class PropertyMap extends HashMap<String, String> {
             return result;
         }
     }
+
+    public static class LegacySerializer
+            implements JsonSerializer<PropertyMap> {
+        public static final LegacySerializer INSTANCE = new LegacySerializer();
+
+        @Override
+        public JsonElement serialize(PropertyMap src, Type typeOfSrc, JsonSerializationContext context) {
+            JsonObject result = new JsonObject();
+            for (PropertyMap.Entry<String, String> entry : src.entrySet()) {
+                JsonArray values = new JsonArray();
+                values.add(new JsonPrimitive(entry.getValue()));
+                result.add(entry.getKey(), values);
+            }
+            return result;
+        }
+    }
 }
