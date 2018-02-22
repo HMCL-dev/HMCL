@@ -72,7 +72,7 @@ public final class GameVersionList extends VersionList<GameRemoteVersionTag> {
 
         @Override
         public int compareTo(RemoteVersion<GameRemoteVersionTag> o) {
-            return -getTag().getTime().compareTo(o.getTag().getTime());
+            return o.getTag().getTime().compareTo(getTag().getTime());
         }
     }
 }

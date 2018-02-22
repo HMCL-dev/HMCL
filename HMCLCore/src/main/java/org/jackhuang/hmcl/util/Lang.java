@@ -47,6 +47,11 @@ public final class Lang {
         return map;
     }
 
+    @SafeVarargs
+    public static <T> List<T> immutableListOf(T... elements) {
+        return Collections.unmodifiableList(Arrays.asList(elements));
+    }
+
     public static <K, V> V computeIfAbsent(Map<K, V> map, K key, Supplier<V> computingFunction) {
         V value = map.get(key);
         if (value == null) {

@@ -29,7 +29,7 @@ import java.util.List;
 public final class Proxies {
     private Proxies() {}
 
-    public static final List<Proxy.Type> PROXIES = Arrays.asList(Proxy.Type.DIRECT, Proxy.Type.HTTP, Proxy.Type.SOCKS);
+    public static final List<Proxy.Type> PROXIES = Lang.immutableListOf(Proxy.Type.DIRECT, Proxy.Type.HTTP, Proxy.Type.SOCKS);
 
     public static Proxy.Type getProxyType(int index) {
         return Lang.get(PROXIES, index).orElse(null);

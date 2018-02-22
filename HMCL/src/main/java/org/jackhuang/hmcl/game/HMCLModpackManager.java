@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.util.CompressingUtils;
 import org.jackhuang.hmcl.util.JsonUtils;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
@@ -33,7 +34,7 @@ import java.util.List;
  */
 public final class HMCLModpackManager {
 
-    public static final List<String> MODPACK_BLACK_LIST = Arrays.asList(
+    public static final List<String> MODPACK_BLACK_LIST = Lang.immutableListOf(
             "usernamecache.json", "usercache.json", // Minecraft
             "launcher_profiles.json", "launcher.pack.lzma", // Minecraft Launcher
             "pack.json", "launcher.jar", "hmclmc.log", // HMCL
@@ -43,7 +44,7 @@ public final class HMCLModpackManager {
             "downloads", // Curse
             "asm", "backups", "TCNodeTracker", "CustomDISkins", "data" // Mods
     );
-    public static final List<String> MODPACK_SUGGESTED_BLACK_LIST = Arrays.asList(
+    public static final List<String> MODPACK_SUGGESTED_BLACK_LIST = Lang.immutableListOf(
             "fonts", // BetterFonts
             "saves", "servers.dat", "options.txt", // Minecraft
             "blueprints" /* BuildCraft */,

@@ -28,7 +28,7 @@ import java.util.List;
 public final class DownloadProviders {
     private DownloadProviders() {}
 
-    public static List<DownloadProvider> DOWNLOAD_PROVIDERS = Arrays.asList(MojangDownloadProvider.INSTANCE, BMCLAPIDownloadProvider.INSTANCE);
+    public static final List<DownloadProvider> DOWNLOAD_PROVIDERS = Lang.immutableListOf(MojangDownloadProvider.INSTANCE, BMCLAPIDownloadProvider.INSTANCE);
 
     public static DownloadProvider getDownloadProvider(int index) {
         return Lang.get(DOWNLOAD_PROVIDERS, index).orElse(MojangDownloadProvider.INSTANCE);

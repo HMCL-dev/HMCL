@@ -52,8 +52,6 @@ public final class Constants {
     public static final String DEFAULT_VERSION_DOWNLOAD_URL = "http://s3.amazonaws.com/Minecraft.Download/versions/";
     public static final String DEFAULT_INDEX_URL = "http://s3.amazonaws.com/Minecraft.Download/indexes/";
 
-    public static final SimpleDateFormat DEFAULT_DATE_FORMAT = new SimpleDateFormat("HH:mm:ss");
-
     public static Consumer<Runnable> UI_THREAD_SCHEDULER = s -> Schedulers.computation().schedule(s::run);
     
     public static final Consumer<Runnable> SWING_UI_THREAD_SCHEDULER = s -> {

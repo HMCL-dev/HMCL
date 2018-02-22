@@ -221,10 +221,8 @@ public final class LauncherHelper {
     }
 
     public static void stopManagedProcesses() {
-        synchronized (PROCESSES) {
-            while (!PROCESSES.isEmpty())
-                Optional.ofNullable(PROCESSES.poll()).ifPresent(ManagedProcess::stop);
-        }
+        while (!PROCESSES.isEmpty())
+            Optional.ofNullable(PROCESSES.poll()).ifPresent(ManagedProcess::stop);
     }
 
     public void emitStatus(LoadingState state) {

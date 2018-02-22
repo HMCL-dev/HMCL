@@ -137,6 +137,8 @@ public final class MessageBox {
             case OK_CANCEL_OPTION:
                 alert.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
                 break;
+            default:
+                throw new IllegalArgumentException("Unrecognized message box option " + option);
         }
         Optional<ButtonType> buttonType = alert.showAndWait();
         if (!buttonType.isPresent()) return CLOSED_OPTION;

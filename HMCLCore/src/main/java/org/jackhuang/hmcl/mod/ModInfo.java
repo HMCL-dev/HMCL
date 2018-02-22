@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
+import java.util.Objects;
 
 /**
  *
@@ -123,6 +124,16 @@ public final class ModInfo implements Comparable<ModInfo> {
     @Override
     public int compareTo(ModInfo o) {
         return getFileName().compareTo(o.getFileName());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof ModInfo && Objects.equals(getFileName(), ((ModInfo) obj).getFileName());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getFileName());
     }
 
     public static boolean isFileMod(File file) {

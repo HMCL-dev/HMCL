@@ -77,6 +77,6 @@ public class RemoteVersion<T> implements Comparable<RemoteVersion<T>> {
     @Override
     public int compareTo(RemoteVersion<T> o) {
         // newer versions are smaller than older versions
-        return -VersionNumber.asVersion(selfVersion).compareTo(VersionNumber.asVersion(o.selfVersion));
+        return VersionNumber.asVersion(o.selfVersion).compareTo(VersionNumber.asVersion(selfVersion));
     }
 }

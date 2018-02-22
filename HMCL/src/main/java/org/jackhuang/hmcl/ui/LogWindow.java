@@ -138,6 +138,9 @@ public final class LogWindow extends Stage {
             case DEBUG:
                 debug.set(debug.get() + 1);
                 break;
+            default:
+                // ignore
+                break;
         }
     }
 

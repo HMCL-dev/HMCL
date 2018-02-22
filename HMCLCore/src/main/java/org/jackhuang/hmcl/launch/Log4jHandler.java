@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -114,6 +115,8 @@ final class Log4jHandler extends Thread {
 
     private class Log4jHandlerImpl extends DefaultHandler {
 
+        private final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+
         private String date = "", thread = "", logger = "";
         private StringBuilder message;
         private Log4jLevel level;
@@ -124,8 +127,8 @@ final class Log4jHandler extends Thread {
             switch (localName) {
                 case "log4j_Event":
                     message = new StringBuilder();
-                    Date d = new Date(Long.valueOf(attributes.getValue("timestamp")));
-                    date = Constants.DEFAULT_DATE_FORMAT.format(d);
+                    Date d = new Date(Long.parseLong(attributes.getValue("timestamp")));
+                    date = format.format(d);
                     try {
                         level = Log4jLevel.valueOf(attributes.getValue("level"));
                     } catch (IllegalArgumentException e) {

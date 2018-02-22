@@ -76,6 +76,8 @@ public final class MessageDialogPane extends StackPane {
             case MessageBox.QUESTION_MESSAGE:
                 graphic.setGraphic(SVG.helpCircle("black", 40, 40));
                 break;
+            default:
+                throw new IllegalArgumentException("Unrecognized message box message type " + type);
         }
     }
 

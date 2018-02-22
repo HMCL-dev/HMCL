@@ -126,10 +126,7 @@ public class FileDownloadTask extends Task {
             if (repeat > 0) {
                 FailedEvent<URL> event = new FailedEvent<>(this, repeat, currentURL);
                 onFailed.fireEvent(event);
-                if (!currentURL.equals(event.getNewResult())) {
-                    Logging.LOG.log(Level.FINE, "Switch from {0} to {1}", new Object[] { currentURL, event.getNewResult() });
-                    currentURL = event.getNewResult();
-                }
+                currentURL = event.getNewResult();
             }
             if (Thread.interrupted()) {
                 Thread.currentThread().interrupt();

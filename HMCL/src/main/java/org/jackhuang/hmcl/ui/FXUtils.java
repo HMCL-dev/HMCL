@@ -42,10 +42,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Main;
-import org.jackhuang.hmcl.util.ExceptionalSupplier;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.OperatingSystem;
+import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -223,7 +220,11 @@ public final class FXUtils {
     }
 
     public static void openFolder(File file) {
-        file.mkdirs();
+        if (!FileUtils.makeDirectory(file)) {
+            Logging.LOG.log(Level.SEVERE, "Unable to make directory " + file);
+            return;
+        }
+
         String path = file.getAbsolutePath();
 
         switch (OperatingSystem.CURRENT_OS) {

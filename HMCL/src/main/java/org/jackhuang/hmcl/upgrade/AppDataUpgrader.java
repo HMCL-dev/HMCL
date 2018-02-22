@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.Main;
@@ -84,10 +85,10 @@ public class AppDataUpgrader extends IUpgrader {
                         }
                     }
                 }
-            } catch (JsonSyntaxException ex) {
+            } catch (JsonParseException ex) {
                 f.delete();
             } catch (IOException | PrivilegedActionException t) {
-                Logging.LOG.log(Level.SEVERE, "Failed to execute newer version application", t);
+                Logging.LOG.log(Level.SEVERE, "Unable to execute newer version application", t);
             }
     }
 

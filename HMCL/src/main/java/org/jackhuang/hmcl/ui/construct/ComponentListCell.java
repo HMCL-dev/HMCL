@@ -41,7 +41,6 @@ public class ComponentListCell extends StackPane {
     private final Node content;
     private Animation expandAnimation;
     private Rectangle clipRect;
-    private double animatedHeight;
     private final BooleanProperty expanded = new SimpleBooleanProperty(this, "expanded", false);
 
     public ComponentListCell(Node content) {
@@ -129,18 +128,13 @@ public class ComponentListCell extends StackPane {
                     updateClip(newHeight);
                 }
 
-                animatedHeight = newAnimatedHeight;
-
                 expandAnimation = new Timeline(new KeyFrame(new Duration(320.0),
                         new KeyValue(container.minHeightProperty(), contentHeight, FXUtils.SINE),
                         new KeyValue(container.maxHeightProperty(), contentHeight, FXUtils.SINE)
                 ));
 
                 if (!isExpanded()) {
-                    expandAnimation.setOnFinished(e2 -> {
-                        updateClip(newHeight);
-                        animatedHeight = 0.0;
-                    });
+                    expandAnimation.setOnFinished(e2 -> updateClip(newHeight));
                 }
 
                 expandAnimation.play();

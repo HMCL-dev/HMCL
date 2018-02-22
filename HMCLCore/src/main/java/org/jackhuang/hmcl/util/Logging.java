@@ -21,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.*;
 
@@ -55,10 +56,11 @@ public final class Logging {
     static final class DefaultFormatter extends Formatter {
 
         static final DefaultFormatter INSTANCE = new DefaultFormatter();
+        private final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
 
         @Override
         public String format(LogRecord record) {
-            String date = Constants.DEFAULT_DATE_FORMAT.format(new Date(record.getMillis()));
+            String date = format.format(new Date(record.getMillis()));
             String log = String.format("[%s] [%s.%s/%s] %s%n",
                     date, record.getSourceClassName(), record.getSourceMethodName(),
                     record.getLevel().getName(), MessageFormat.format(record.getMessage(), record.getParameters())

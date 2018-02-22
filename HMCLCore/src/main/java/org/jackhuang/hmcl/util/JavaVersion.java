@@ -107,14 +107,14 @@ public final class JavaVersion implements Serializable {
         try {
             Process process = new ProcessBuilder(actualFile.getAbsolutePath(), "-version").start();
             process.waitFor();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                Matcher m = REGEX.matcher(line);
-                if (m.find())
-                    version = m.group("version");
-                if (line.contains("64-Bit"))
-                    platform = Platform.BIT_64;
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                for (String line; (line = reader.readLine()) != null; ) {
+                    Matcher m = REGEX.matcher(line);
+                    if (m.find())
+                        version = m.group("version");
+                    if (line.contains("64-Bit"))
+                        platform = Platform.BIT_64;
+                }
             }
         } catch (InterruptedException e) {
             throw new IOException("Interrupted scanning the java version.", e);
@@ -217,11 +217,11 @@ public final class JavaVersion implements Serializable {
         Process process = Runtime.getRuntime().exec(cmd);
         process.waitFor();
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line;
-        while ((line = reader.readLine()) != null)
-            if (line.startsWith(location) && !line.equals(location))
-                res.add(line);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            for (String line; (line = reader.readLine()) != null; )
+                if (line.startsWith(location) && !line.equals(location))
+                    res.add(line);
+        }
         return res;
     }
 
@@ -241,22 +241,22 @@ public final class JavaVersion implements Serializable {
         Process process = Runtime.getRuntime().exec(cmd);
         process.waitFor();
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line;
-        while ((line = reader.readLine()) != null)
-            if (StringUtils.isNotBlank(line)) {
-                if (last && line.trim().startsWith(name)) {
-                    int begins = line.indexOf(name);
-                    if (begins > 0) {
-                        String s2 = line.substring(begins + name.length());
-                        begins = s2.indexOf("REG_SZ");
-                        if (begins > 0)
-                            return s2.substring(begins + "REG_SZ".length()).trim();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            for (String line; (line = reader.readLine()) != null; )
+                if (StringUtils.isNotBlank(line)) {
+                    if (last && line.trim().startsWith(name)) {
+                        int begins = line.indexOf(name);
+                        if (begins > 0) {
+                            String s2 = line.substring(begins + name.length());
+                            begins = s2.indexOf("REG_SZ");
+                            if (begins > 0)
+                                return s2.substring(begins + "REG_SZ".length()).trim();
+                        }
                     }
+                    if (location.equals(line.trim()))
+                        last = true;
                 }
-                if (location.equals(line.trim()))
-                    last = true;
-            }
+        }
         return null;
     }
 }

@@ -19,10 +19,7 @@ package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.util.ExceptionalRunnable;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -84,8 +81,9 @@ class SchedulerImpl extends Scheduler {
             }
 
             @Override
-            public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException {
-                latch.await(timeout, unit);
+            public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                if (!latch.await(timeout, unit))
+                    throw new TimeoutException();
                 return getImpl();
             }
         };

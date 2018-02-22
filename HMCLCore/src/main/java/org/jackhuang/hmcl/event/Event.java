@@ -17,16 +17,47 @@
  */
 package org.jackhuang.hmcl.event;
 
-import java.util.EventObject;
+import java.util.Objects;
 
 /**
  *
  * @author huangyuhui
  */
-public class Event extends EventObject {
+public class Event {
 
+    /**
+     * The object on which the Event initially occurred.
+     */
+    protected transient Object  source;
+
+    /**
+     * Constructs a prototypical Event.
+     *
+     * @param source The object on which the Event initially occurred.
+     * @throws  NullPointerException  if source is null.
+     */
     public Event(Object source) {
-        super(source);
+        Objects.requireNonNull(source);
+
+        this.source = source;
+    }
+
+    /**
+     * The object on which the Event initially occurred.
+     *
+     * @return The object on which the Event initially occurred.
+     */
+    public Object getSource() {
+        return source;
+    }
+
+    /**
+     * Returns a String representation of this Event.
+     *
+     * @return  A a String representation of this Event.
+     */
+    public String toString() {
+        return getClass().getName() + "[source=" + source + "]";
     }
 
     private boolean canceled;

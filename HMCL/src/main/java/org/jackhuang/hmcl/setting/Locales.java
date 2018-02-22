@@ -54,7 +54,7 @@ public final class Locales {
      */
     public static final SupportedLocale RU = new SupportedLocale(new Locale("ru"));
 
-    public static final List<SupportedLocale> LOCALES = Arrays.asList(DEFAULT, EN, ZH_CN);
+    public static final List<SupportedLocale> LOCALES = Lang.immutableListOf(DEFAULT, EN, ZH_CN);
 
     public static SupportedLocale getLocale(int index) {
         return Lang.get(LOCALES, index).orElse(DEFAULT);
