@@ -103,7 +103,7 @@ public final class Controllers {
         decorator.setCustomMaximize(false);
 
         scene = new Scene(decorator, 804, 521);
-        scene.getStylesheets().addAll(Settings.INSTANCE.getTheme().getStylesheets());
+        scene.getStylesheets().setAll(Settings.INSTANCE.getTheme().getStylesheets());
         stage.setMinWidth(804);
         stage.setMaxWidth(804);
         stage.setMinHeight(521);

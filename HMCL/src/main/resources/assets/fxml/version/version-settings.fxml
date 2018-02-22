@@ -19,28 +19,9 @@
 
                 <MultiFileItem fx:id="globalItem" title="%settings.type" hasSubtitle="true" hasCustom="false" />
 
-                <BorderPane> <!-- Icon -->
-                    <left>
-                        <VBox alignment="CENTER_LEFT">
-                            <Label text="%settings.icon" />
-                        </VBox>
-                    </left>
-                    <right>
-                        <HBox alignment="CENTER_RIGHT" spacing="8">
-                            <ImageView fx:id="iconView" smooth="false" preserveRatio="true">
-                                <StackPane.margin>
-                                    <Insets right="12"/>
-                                </StackPane.margin>
-                                <Image url="/assets/img/icon.png"/>
-                            </ImageView>
-                            <JFXButton fx:id="btnIconSelection" onMouseClicked="#onExploreIcon" styleClass="toggle-icon4">
-                                <graphic>
-                                    <fx:include source="/assets/svg/pencil.fxml" />
-                                </graphic>
-                            </JFXButton>
-                        </HBox>
-                    </right>
-                </BorderPane>
+                <ImagePickerItem fx:id="iconPickerItem" title="%settings.icon" onSelectButtonClicked="#onExploreIcon">
+                    <Image url="/assets/img/icon.png"/>
+                </ImagePickerItem>
 
                 <MultiFileItem fx:id="javaItem" title="%settings.game.java_directory" chooserTitle="%settings.game.java_directory.choose"
                                hasSubtitle="true" customText="%settings.custom" directory="false" />

@@ -25,7 +25,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Toggle;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Main;
@@ -35,6 +34,7 @@ import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.ImagePickerItem;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.util.*;
 
@@ -73,8 +73,7 @@ public final class VersionSettingsController {
     @FXML private MultiFileItem javaItem;
     @FXML private MultiFileItem gameDirItem;
     @FXML private JFXToggleButton chkShowLogs;
-    @FXML private JFXButton btnIconSelection;
-    @FXML private ImageView iconView;
+    @FXML private ImagePickerItem iconPickerItem;
 
     @FXML
     private void initialize() {
@@ -100,8 +99,6 @@ public final class VersionSettingsController {
                 globalItem.createChildren(Main.i18n("settings.type.global"), true),
                 globalItem.createChildren(Main.i18n("settings.type.special"), false)
         ));
-
-        FXUtils.installTooltip(btnIconSelection, Main.i18n("button.edit"));
     }
 
     public void loadVersionSetting(Profile profile, String versionId) {
@@ -248,9 +245,9 @@ public final class VersionSettingsController {
     private void loadIcon() {
         File iconFile = profile.getRepository().getVersionIcon(versionId);
         if (iconFile.exists())
-            iconView.setImage(new Image("file:" + iconFile.getAbsolutePath()));
+            iconPickerItem.setImage(new Image("file:" + iconFile.getAbsolutePath()));
         else
-            iconView.setImage(FXUtils.DEFAULT_ICON);
-        FXUtils.limitSize(iconView, 32, 32);
+            iconPickerItem.setImage(FXUtils.DEFAULT_ICON);
+        FXUtils.limitSize(iconPickerItem.getImageView(), 32, 32);
     }
 }

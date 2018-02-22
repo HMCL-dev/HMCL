@@ -448,7 +448,7 @@ public class Settings {
         public void invalidated() {
             super.invalidated();
 
-            SETTINGS.setTheme(get().name().toLowerCase());
+            SETTINGS.setTheme(get().getName().toLowerCase());
         }
     };
 

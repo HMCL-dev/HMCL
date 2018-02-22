@@ -30,19 +30,18 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.setting.*;
-import org.jackhuang.hmcl.ui.construct.FileItem;
-import org.jackhuang.hmcl.ui.construct.FontComboBox;
-import org.jackhuang.hmcl.ui.construct.MultiFileItem;
-import org.jackhuang.hmcl.ui.construct.Validator;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.net.Proxy;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Set;
 
 public final class SettingsPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", Main.i18n("settings.launcher"));
@@ -78,7 +77,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     @FXML
     private MultiFileItem backgroundItem;
     @FXML
-    private MultiFileItem themeItem;
+    private MultiColorItem themeItem;
     @FXML
     private JFXRadioButton chkNoProxy;
     @FXML
@@ -203,10 +202,29 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
                 themeItem.createChildren(Main.i18n("color.red"), Theme.RED)
         ));
 
-        themeItem.getGroup().getToggles().stream().filter(it -> Settings.INSTANCE.getTheme() == it.getUserData()).findFirst().ifPresent(it -> it.setSelected(true));
-        themeItem.setToggleSelectedListener(newValue -> Settings.INSTANCE.setTheme((Theme) newValue.getUserData()));
-        Settings.INSTANCE.themeProperty().setChangedListenerAndOperate(it ->
-                themeItem.setSubtitle(Main.i18n("color." + it.name().toLowerCase())));
+        if (Settings.INSTANCE.getTheme().isCustom())
+            themeItem.setColor(Color.web(Settings.INSTANCE.getTheme().getColor()));
+
+        themeItem.setToggleSelectedListener(newValue -> {
+            if (newValue.getUserData() != null) {
+                Settings.INSTANCE.setTheme((Theme) newValue.getUserData());
+                themeItem.setOnColorPickerChanged(null);
+            } else {
+                themeItem.setOnColorPickerChanged(color ->
+                        Settings.INSTANCE.setTheme(Theme.custom(Theme.getColorDisplayName(color))));
+            }
+        });
+
+        themeItem.getGroup().getToggles().stream().filter(it -> Settings.INSTANCE.getTheme() == it.getUserData() || Settings.INSTANCE.getTheme().isCustom() && themeItem.isCustomToggle(it)).findFirst().ifPresent(it -> it.setSelected(true));
+
+        Settings.INSTANCE.themeProperty().setChangedListenerAndOperate(it -> {
+            if (it.getName().startsWith("#") || it.getName().startsWith("0x"))
+                themeItem.setSubtitle(it.getName());
+            else
+                themeItem.setSubtitle(Main.i18n("color." + it.getName().toLowerCase()));
+
+            Controllers.getScene().getStylesheets().setAll(it.getStylesheets());
+        });
     }
 
     private void initBackgroundItemSubtitle() {
