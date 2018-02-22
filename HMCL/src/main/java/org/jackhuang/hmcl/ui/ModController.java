@@ -140,15 +140,33 @@ public final class ModController {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(Main.i18n("mods.choose_mod"));
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(Main.i18n("extension.mod"), "*.jar", "*.zip", "*.litemod"));
-        File res = chooser.showOpenDialog(Controllers.getStage());
+        List<File> res = chooser.showOpenMultipleDialog(Controllers.getStage());
+
+        // It's guaranteed that succeeded and failed are thread safe here.
+        List<String> succeeded = new LinkedList<>();
+        List<String> failed = new LinkedList<>();
         if (res == null) return;
-        Task.of(() -> modManager.addMod(versionId, res))
-                .finalized(Schedulers.javafx(), (variables, isDependentsSucceeded) -> {
-                    if (isDependentsSucceeded)
-                        loadMods(modManager, versionId);
-                    else
-                        Controllers.dialog("mods.failed");
-                }).start();
+        Task.of(variables -> {
+            for (File file : res) {
+                try {
+                    modManager.addMod(versionId, file);
+                    succeeded.add(file.getName());
+                } catch (Exception e) {
+                    Logging.LOG.log(Level.WARNING, "Unable to add mod " + file, e);
+                    failed.add(file.getName());
+
+                    // Actually addMod will not throw exceptions because FileChooser has already filtered files.
+                }
+            }
+        }).with(Task.of(Schedulers.javafx(), variables -> {
+            List<String> prompt = new LinkedList<>();
+            if (!succeeded.isEmpty())
+                prompt.add(Main.i18n("mods.add.success", String.join(", ", succeeded)));
+            if (!failed.isEmpty())
+                prompt.add(Main.i18n("mods.add.failed", String.join(", ", failed)));
+            Controllers.dialog(String.join("\n",  prompt), Main.i18n("mods.add"));
+            loadMods(modManager, versionId);
+        })).start();
     }
 
     public void setParentTab(JFXTabPane parentTab) {
