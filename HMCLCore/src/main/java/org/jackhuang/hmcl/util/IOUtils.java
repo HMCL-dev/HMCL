@@ -58,8 +58,8 @@ public final class IOUtils {
         return readFully(stream).toString();
     }
 
-    public static String readFullyAsString(InputStream stream, Charset charset) {
-        return Lang.invoke(() -> readFully(stream).toString(charset.name()));
+    public static String readFullyAsString(InputStream stream, Charset charset) throws IOException {
+        return readFully(stream).toString(charset.name());
     }
 
     public static void copyTo(InputStream src, OutputStream dest) throws IOException {

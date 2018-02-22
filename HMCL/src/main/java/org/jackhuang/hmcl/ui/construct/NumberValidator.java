@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.NamedArg;
 import javafx.scene.control.TextInputControl;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 
 public class NumberValidator extends ValidatorBase {
@@ -51,11 +52,6 @@ public class NumberValidator extends ValidatorBase {
         if (StringUtils.isBlank(textField.getText()))
             hasErrors.set(!nullable);
         else
-            try {
-                Integer.parseInt(textField.getText());
-                hasErrors.set(false);
-            } catch (NumberFormatException e) {
-                hasErrors.set(true);
-            }
+            hasErrors.set(Lang.toIntOrNull(textField.getText()) == null);
     }
 }

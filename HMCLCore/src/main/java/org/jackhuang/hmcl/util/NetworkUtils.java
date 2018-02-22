@@ -85,10 +85,10 @@ public final class NetworkUtils {
         return doPost(u, post, contentType, Proxy.NO_PROXY);
     }
 
-    public static String doPost(URL u, String post, String contentType, Proxy proxy) throws IOException {
+    public static String doPost(URL url, String post, String contentType, Proxy proxy) throws IOException {
         byte[] bytes = post.getBytes(Charsets.UTF_8);
 
-        HttpURLConnection con = createConnection(u, proxy);
+        HttpURLConnection con = createConnection(url, proxy);
         con.setRequestMethod("POST");
         con.setDoOutput(true);
         con.setRequestProperty("Content-Type", contentType + "; charset=utf-8");

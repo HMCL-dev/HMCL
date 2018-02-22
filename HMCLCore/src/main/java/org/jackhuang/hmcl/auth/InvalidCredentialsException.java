@@ -22,14 +22,4 @@ package org.jackhuang.hmcl.auth;
  * @author huangyuhui
  */
 public final class InvalidCredentialsException extends AuthenticationException {
-
-    private final Account account;
-
-    public InvalidCredentialsException(Account account) {
-        this.account = account;
-    }
-
-    public Account getAccount() {
-        return account;
-    }
 }

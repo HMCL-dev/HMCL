@@ -22,7 +22,7 @@ import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
-import org.jackhuang.hmcl.auth.yggdrasil.ProfileTexture;
+import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -82,12 +82,9 @@ public final class AccountHelper {
     }
 
     public static Image getSkin(YggdrasilAccount account, double scaleRatio) {
-        if (account.getSelectedProfile() == null)
+        if (account.getCharacter() == null)
             return getDefaultSkin(account, scaleRatio);
-        String name = account.getSelectedProfile().getName();
-        if (name == null)
-            return getDefaultSkin(account, scaleRatio);
-        File file = getSkinFile(name);
+        File file = getSkinFile(account.getCharacter());
         if (file.exists()) {
             Image original = new Image("file:" + file.getAbsolutePath());
             return new Image("file:" + file.getAbsolutePath(),
@@ -142,23 +139,33 @@ public final class AccountHelper {
 
         @Override
         public void execute() throws Exception {
-            if (account.canLogIn() && (account.getSelectedProfile() == null || refresh))
+            if (!account.isLoggedIn() && (account.getCharacter() == null || refresh))
                 DialogController.logIn(account);
 
-            downloadSkin(account, account.getSelectedProfile(), refresh, proxy);
+            downloadSkin(account, refresh, proxy);
         }
     }
 
     private static void downloadSkin(YggdrasilAccount account, GameProfile profile, boolean refresh, Proxy proxy) throws Exception {
         account.clearCache();
 
-        if (profile == null) return;
-        String name = profile.getName();
-        if (name == null) return;
-        Optional<ProfileTexture> texture = account.getSkin(profile);
+        Optional<Texture> texture = account.getSkin(profile);
         if (!texture.isPresent()) return;
         String url = texture.get().getUrl();
-        File file = getSkinFile(name);
+        File file = getSkinFile(profile.getName());
+        if (!refresh && file.exists())
+            return;
+        new FileDownloadTask(NetworkUtils.toURL(url), file, proxy).run();
+    }
+
+    private static void downloadSkin(YggdrasilAccount account, boolean refresh, Proxy proxy) throws Exception {
+        account.clearCache();
+
+        if (account.getCharacter() == null) return;
+        Optional<Texture> texture = account.getSkin();
+        if (!texture.isPresent()) return;
+        String url = texture.get().getUrl();
+        File file = getSkinFile(account.getCharacter());
         if (!refresh && file.exists())
             return;
         new FileDownloadTask(NetworkUtils.toURL(url), file, proxy).run();

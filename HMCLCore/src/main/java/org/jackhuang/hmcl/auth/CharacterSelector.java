@@ -25,7 +25,7 @@ import java.util.List;
  * This interface is for your application to open a GUI for user to choose the character
  * when a having-multi-character yggdrasil account is being logging in..
  */
-public interface MultiCharacterSelector {
+public interface CharacterSelector {
 
     /**
      * Select one of {@code names} GameProfiles to login.
@@ -35,5 +35,5 @@ public interface MultiCharacterSelector {
      */
     GameProfile select(Account account, List<GameProfile> names) throws NoSelectedCharacterException;
 
-    MultiCharacterSelector DEFAULT = (account, names) -> names.stream().findFirst().orElseThrow(() -> new NoSelectedCharacterException(account));
+    CharacterSelector DEFAULT = (account, names) -> names.stream().findFirst().orElseThrow(() -> new NoSelectedCharacterException(account));
 }

@@ -15,23 +15,37 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.auth.yggdrasil;
+package org.jackhuang.hmcl.auth.authlibinjector;
 
-public class Property {
+public class AuthlibInjectorServerResponse {
 
-    private final String name;
-    private final String value;
+    private final Meta meta;
 
-    public Property(String name, String value) {
-        this.name = name;
-        this.value = value;
+    public AuthlibInjectorServerResponse() {
+        this(new Meta());
     }
 
-    public String getName() {
-        return name;
+    public AuthlibInjectorServerResponse(Meta meta) {
+        this.meta = meta;
     }
 
-    public String getValue() {
-        return value;
+    public Meta getMeta() {
+        return meta;
+    }
+
+    public static class Meta {
+        private final String serverName;
+
+        public Meta() {
+            this("");
+        }
+
+        public Meta(String serverName) {
+            this.serverName = serverName;
+        }
+
+        public String getServerName() {
+            return serverName;
+        }
     }
 }

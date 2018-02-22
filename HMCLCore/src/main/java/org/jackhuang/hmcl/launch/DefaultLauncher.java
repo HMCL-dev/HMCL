@@ -240,8 +240,8 @@ public class DefaultLauncher extends Launcher {
     protected Map<String, String> getConfigurations() {
         return Lang.mapOf(
                 new Pair<>("${auth_player_name}", authInfo.getUsername()),
-                new Pair<>("${auth_session}", authInfo.getAuthToken()),
-                new Pair<>("${auth_access_token}", authInfo.getAuthToken()),
+                new Pair<>("${auth_session}", authInfo.getAccessToken()),
+                new Pair<>("${auth_access_token}", authInfo.getAccessToken()),
                 new Pair<>("${auth_uuid}", authInfo.getUserId()),
                 new Pair<>("${version_name}", Optional.ofNullable(options.getVersionName()).orElse(version.getId())),
                 new Pair<>("${profile_name}", Optional.ofNullable(options.getProfileName()).orElse("Minecraft")),
@@ -262,8 +262,8 @@ public class DefaultLauncher extends Launcher {
 
         decompressNatives(nativeFolder);
 
-        if (StringUtils.isNotBlank(options.getPrecalledCommand()))
-            Runtime.getRuntime().exec(options.getPrecalledCommand()).waitFor();
+        if (StringUtils.isNotBlank(options.getPreLaunchCommand()))
+            Runtime.getRuntime().exec(options.getPreLaunchCommand()).waitFor();
 
         Process process;
         try {
@@ -306,8 +306,8 @@ public class DefaultLauncher extends Launcher {
                 writer.write("cd /D %APPDATA%");
                 writer.newLine();
             }
-            if (StringUtils.isNotBlank(options.getPrecalledCommand())) {
-                writer.write(options.getPrecalledCommand());
+            if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
+                writer.write(options.getPreLaunchCommand());
                 writer.newLine();
             }
             writer.write(StringUtils.makeCommand(generateCommandLine(nativeFolder)));

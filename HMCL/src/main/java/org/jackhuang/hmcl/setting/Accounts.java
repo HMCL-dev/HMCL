@@ -21,9 +21,15 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
-import org.jackhuang.hmcl.auth.OfflineAccount;
-import org.jackhuang.hmcl.auth.OfflineAccountFactory;
-import org.jackhuang.hmcl.auth.yggdrasil.*;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccountFactory;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorBuildInfo;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServerResponse;
+import org.jackhuang.hmcl.auth.offline.OfflineAccount;
+import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
+import org.jackhuang.hmcl.auth.yggdrasil.MojangYggdrasilProvider;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.util.*;
 
@@ -32,7 +38,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * @author huangyuhui
@@ -46,7 +51,7 @@ public final class Accounts {
 
     public static final Map<String, AccountFactory<?>> ACCOUNT_FACTORY = Lang.mapOf(
             new Pair<>(OFFLINE_ACCOUNT_KEY, OfflineAccountFactory.INSTANCE),
-            new Pair<>(YGGDRASIL_ACCOUNT_KEY, new YggdrasilAccountFactory()),
+            new Pair<>(YGGDRASIL_ACCOUNT_KEY, new YggdrasilAccountFactory(MojangYggdrasilProvider.INSTANCE)),
             new Pair<>(AUTHLIB_INJECTOR_ACCOUNT_KEY, new AuthlibInjectorAccountFactory(Accounts::downloadAuthlibInjector))
     );
 
@@ -59,26 +64,8 @@ public final class Accounts {
         else return YGGDRASIL_ACCOUNT_KEY;
     }
 
-    public static void setCurrentCharacter(Account account, String character) {
-        account.getProperties().put("character", character);
-    }
-
-    public static boolean hasCurrentCharacter(Account account) {
-        return Lang.get(account.getProperties(), "character", String.class).isPresent();
-    }
-
-    public static String getCurrentCharacter(Account account) {
-        return Lang.get(account.getProperties(), "character", String.class)
-                .orElseThrow(() -> new IllegalArgumentException("Account " + account + " has not set current character."));
-    }
-
-    public static Optional<String> getCurrentCharacter(Map<Object, Object> storage) {
-        return Lang.get(storage, "properties", Map.class)
-                .flatMap(properties -> Lang.get(properties, "character", String.class));
-    }
-
     static String getAccountId(Account account) {
-        return getAccountId(account.getUsername(), getCurrentCharacter(account));
+        return getAccountId(account.getUsername(), account.getCharacter());
     }
 
     static String getAccountId(String username, String character) {

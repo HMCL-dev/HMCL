@@ -15,14 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.auth;
+package org.jackhuang.hmcl.auth.offline;
 
+import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.AuthInfo;
+import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
-import java.net.Proxy;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -58,7 +60,12 @@ public class OfflineAccount extends Account {
     }
 
     @Override
-    public AuthInfo logIn(MultiCharacterSelector selector, Proxy proxy) throws AuthenticationException {
+    public String getCharacter() {
+        return username;
+    }
+
+    @Override
+    public AuthInfo logIn() throws AuthenticationException {
         if (StringUtils.isBlank(username) || StringUtils.isBlank(uuid))
             throw new AuthenticationException("Username cannot be empty");
 
@@ -66,8 +73,8 @@ public class OfflineAccount extends Account {
     }
 
     @Override
-    public AuthInfo logInWithPassword(MultiCharacterSelector selector, String password, Proxy proxy) throws AuthenticationException {
-        return logIn(selector, proxy);
+    public AuthInfo logInWithPassword(String password) throws AuthenticationException {
+        return logIn();
     }
 
     @Override
@@ -86,7 +93,7 @@ public class OfflineAccount extends Account {
     }
 
     @Override
-    public Map<Object, Object> toStorageImpl() {
+    public Map<Object, Object> toStorage() {
         return Lang.mapOf(
                 new Pair<>("uuid", uuid),
                 new Pair<>("username", username)

@@ -17,10 +17,8 @@
  */
 package org.jackhuang.hmcl.auth;
 
-import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
 /**
  *
@@ -31,40 +29,30 @@ public final class AuthInfo {
 
     private final String username;
     private final String userId;
-    private final String authToken;
+    private final String accessToken;
     private final UserType userType;
     private final String userProperties;
-    private final String userPropertyMap;
     private final Arguments arguments;
 
-    public AuthInfo(String username, String userId, String authToken) {
-        this(username, userId, authToken, UserType.LEGACY);
+    public AuthInfo(String username, String userId, String accessToken) {
+        this(username, userId, accessToken, UserType.LEGACY);
     }
 
-    public AuthInfo(String username, String userId, String authToken, UserType userType) {
-        this(username, userId, authToken, userType, "{}");
+    public AuthInfo(String username, String userId, String accessToken, UserType userType) {
+        this(username, userId, accessToken, userType, "{}");
     }
 
-    public AuthInfo(String username, String userId, String authToken, UserType userType, String userProperties) {
-        this(username, userId, authToken, userType, userProperties, "{}");
+    public AuthInfo(String username, String userId, String accessToken, UserType userType, String userProperties) {
+        this(username, userId, accessToken, userType, userProperties, null);
     }
 
-    public AuthInfo(String username, String userId, String authToken, UserType userType, String userProperties, String userPropertyMap) {
-        this(username, userId, authToken, userType, userProperties, userPropertyMap, null);
-    }
-
-    public AuthInfo(String username, String userId, String authToken, UserType userType, String userProperties, String userPropertyMap, Arguments arguments) {
+    public AuthInfo(String username, String userId, String accessToken, UserType userType, String userProperties, Arguments arguments) {
         this.username = username;
         this.userId = userId;
-        this.authToken = authToken;
+        this.accessToken = accessToken;
         this.userType = userType;
         this.userProperties = userProperties;
-        this.userPropertyMap = userPropertyMap;
         this.arguments = arguments;
-    }
-
-    public AuthInfo(GameProfile profile, String authToken, UserType userType, String userProperties) {
-        this(profile.getName(), UUIDTypeAdapter.fromUUID(profile.getId()), authToken, userType, userProperties);
     }
 
     public String getUsername() {
@@ -75,8 +63,8 @@ public final class AuthInfo {
         return userId;
     }
 
-    public String getAuthToken() {
-        return authToken;
+    public String getAccessToken() {
+        return accessToken;
     }
 
     public UserType getUserType() {
@@ -93,21 +81,11 @@ public final class AuthInfo {
         return userProperties;
     }
 
-    /**
-     * Properties of this user.
-     * Don't know the difference between user properties and user property map.
-     *
-     * @return the user property map in JSON.
-     */
-    public String getUserPropertyMap() {
-        return userPropertyMap;
-    }
-
     public Arguments getArguments() {
         return arguments;
     }
 
     public AuthInfo setArguments(Arguments arguments) {
-        return new AuthInfo(username, userId, authToken, userType, userProperties, userPropertyMap, arguments);
+        return new AuthInfo(username, userId, accessToken, userType, userProperties, arguments);
     }
 }

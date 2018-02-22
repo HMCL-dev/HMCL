@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.auth.yggdrasil;
+package org.jackhuang.hmcl.auth.authlibinjector;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.Immutable;

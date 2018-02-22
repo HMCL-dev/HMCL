@@ -27,13 +27,13 @@ import java.util.UUID;
 public final class TextureResponse {
     private final UUID profileId;
     private final String profileName;
-    private final Map<ProfileTexture.Type, ProfileTexture> textures;
+    private final Map<TextureType, Texture> textures;
 
     public TextureResponse() {
         this(UUID.randomUUID(), "", Collections.emptyMap());
     }
 
-    public TextureResponse(UUID profileId, String profileName, Map<ProfileTexture.Type, ProfileTexture> textures) {
+    public TextureResponse(UUID profileId, String profileName, Map<TextureType, Texture> textures) {
         this.profileId = profileId;
         this.profileName = profileName;
         this.textures = textures;
@@ -47,7 +47,7 @@ public final class TextureResponse {
         return profileName;
     }
 
-    public Map<ProfileTexture.Type, ProfileTexture> getTextures() {
+    public Map<TextureType, Texture> getTextures() {
         return textures == null ? null : Collections.unmodifiableMap(textures);
     }
 }

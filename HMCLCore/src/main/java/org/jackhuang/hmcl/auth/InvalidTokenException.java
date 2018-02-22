@@ -17,22 +17,9 @@
  */
 package org.jackhuang.hmcl.auth;
 
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
-
 /**
  *
  * @author huangyuhui
  */
 public class InvalidTokenException extends AuthenticationException {
-
-    private final YggdrasilAccount account;
-
-    public InvalidTokenException(YggdrasilAccount account) {
-        super();
-        this.account = account;
-    }
-
-    public YggdrasilAccount getAccount() {
-        return account;
-    }
 }

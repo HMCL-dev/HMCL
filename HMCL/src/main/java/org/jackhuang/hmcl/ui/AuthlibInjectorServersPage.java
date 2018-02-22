@@ -10,7 +10,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Main;
-import org.jackhuang.hmcl.auth.yggdrasil.AuthlibInjectorServerInfo;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServerInfo;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;

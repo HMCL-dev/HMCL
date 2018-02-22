@@ -17,46 +17,34 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.auth.*;
-import org.jackhuang.hmcl.util.Charsets;
-import org.jackhuang.hmcl.util.NetworkUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
-import java.io.IOException;
-import java.net.Proxy;
-import java.net.URL;
 import java.util.*;
 
 /**
  *
- * @author huang
+ * @author huangyuhui
  */
 public class YggdrasilAccount extends Account {
 
     private final String username;
-    private String password;
-    private String userId;
-    private String accessToken = null;
-    private String clientToken = randomToken();
+    private final YggdrasilService service;
     private boolean isOnline = false;
-    private PropertyMap userProperties = new PropertyMap();
-    private GameProfile selectedProfile = null;
-    private GameProfile[] profiles;
-    private UserType userType = UserType.LEGACY;
+    private YggdrasilSession session;
+    private final String clientToken;
+    private String character;
 
-    public YggdrasilAccount(String baseAuthServer, String baseSessionServer, String username) {
-        this.baseAuthServer = baseAuthServer;
-        this.baseSessionServer = baseSessionServer;
-        this.baseProfile = baseSessionServer + "session/minecraft/profile/";
+    protected YggdrasilAccount(YggdrasilService service, String username, String clientToken, String character, YggdrasilSession session) {
+        this.service = service;
         this.username = username;
+        this.session = session;
+        this.clientToken = clientToken;
+        this.character = character;
 
-        this.routeAuthenticate = NetworkUtils.toURL(baseAuthServer + "authenticate");
-        this.routeRefresh = NetworkUtils.toURL(baseAuthServer + "refresh");
-        this.routeValidate = NetworkUtils.toURL(baseAuthServer + "validate");
+        if (session == null || session.getSelectedProfile() == null || StringUtils.isBlank(session.getAccessToken()))
+            this.session = null;
     }
 
     @Override
@@ -64,146 +52,68 @@ public class YggdrasilAccount extends Account {
         return username;
     }
 
-    void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getCurrentCharacterName() {
-        return userId;
-    }
-
-    void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    void setAccessToken(String accessToken) {
-        this.accessToken = accessToken;
-    }
-
-    String getClientToken() {
-        return clientToken;
-    }
-
-    void setClientToken(String clientToken) {
-        this.clientToken = clientToken;
-    }
-
-    PropertyMap getUserProperties() {
-        return userProperties;
-    }
-
-    public GameProfile getSelectedProfile() {
-        return selectedProfile;
-    }
-
-    void setSelectedProfile(GameProfile selectedProfile) {
-        this.selectedProfile = selectedProfile;
+    @Override
+    public String getCharacter() {
+        return session.getSelectedProfile().getName();
     }
 
     public boolean isLoggedIn() {
-        return StringUtils.isNotBlank(accessToken);
+        return session != null && StringUtils.isNotBlank(session.getAccessToken());
     }
 
     public boolean canPlayOnline() {
-        return isLoggedIn() && selectedProfile != null && isOnline;
-    }
-
-    public boolean canLogIn() {
-        return !canPlayOnline() && StringUtils.isNotBlank(username)
-                && (StringUtils.isNotBlank(password) || StringUtils.isNotBlank(accessToken));
+        return isLoggedIn() && session.getSelectedProfile() != null && isOnline;
     }
 
     @Override
-    public AuthInfo logIn(MultiCharacterSelector selector, Proxy proxy) throws AuthenticationException {
-        if (canPlayOnline())
-            return new AuthInfo(selectedProfile, accessToken, userType, GSON.toJson(userProperties));
-        else {
-            logIn0(proxy);
-            if (!isLoggedIn())
-                throw new AuthenticationException("Wrong password for account " + username);
-
-            if (selectedProfile == null) {
-                if (profiles == null || profiles.length <= 0)
-                    throw new NoCharacterException(this);
-
-                selectedProfile = selector.select(this, Arrays.asList(profiles));
-            }
-            return new AuthInfo(selectedProfile, accessToken, userType, GSON.toJson(userProperties));
+    public AuthInfo logIn() throws AuthenticationException {
+        if (!canPlayOnline()) {
+            logInWithToken();
+            selectProfile(new SpecificCharacterSelector(character));
         }
+        return toAuthInfo();
     }
 
     @Override
-    public AuthInfo logInWithPassword(MultiCharacterSelector selector, String password, Proxy proxy) throws AuthenticationException {
-        logInWithPassword0(password, proxy);
-        if (!isLoggedIn())
-            throw new AuthenticationException("Wrong password for account " + username);
+    public final AuthInfo logInWithPassword(String password) throws AuthenticationException {
+        return logInWithPassword(password, new SpecificCharacterSelector(character));
+    }
 
-        if (selectedProfile == null) {
-            if (profiles == null || profiles.length <= 0)
+    protected AuthInfo logInWithPassword(String password, CharacterSelector selector) throws AuthenticationException {
+        session = service.authenticate(username, password, clientToken);
+        selectProfile(selector);
+        return toAuthInfo();
+    }
+
+    private void selectProfile(CharacterSelector selector) throws AuthenticationException {
+        if (session.getSelectedProfile() == null) {
+            if (session.getAvailableProfiles() == null || session.getAvailableProfiles().length <= 0)
                 throw new NoCharacterException(this);
 
-            selectedProfile = selector.select(this, Arrays.asList(profiles));
+            session.setSelectedProfile(selector.select(this, Arrays.asList(session.getAvailableProfiles())));
         }
-        return new AuthInfo(selectedProfile, accessToken, userType, GSON.toJson(userProperties));
+
+        character = session.getSelectedProfile().getName();
     }
 
-    private void logIn0(Proxy proxy) throws AuthenticationException {
-        if (StringUtils.isNotBlank(accessToken)) {
-            logInWithToken(proxy);
-        } else if (StringUtils.isNotBlank(password))
-            logInWithPassword0(password, proxy);
-        else
-            throw new AuthenticationException("Password cannot be blank");
-    }
-
-    private void logInWithToken(Proxy proxy) throws AuthenticationException {
-        if (StringUtils.isBlank(userId))
-            if (StringUtils.isNotBlank(username))
-                userId = username;
-            else
-                throw new AuthenticationException("Invalid uuid and username");
-        if (checkTokenValidity(proxy)) {
+    private void logInWithToken() throws AuthenticationException {
+        if (service.validate(session.getAccessToken(), clientToken)) {
             isOnline = true;
             return;
         }
-        logIn1(routeRefresh, new RefreshRequest(accessToken, clientToken, getSelectedProfile()), proxy);
+        session = service.refresh(session.getAccessToken(), clientToken);
     }
 
-    public void logInWithPassword0(String password, Proxy proxy) throws AuthenticationException {
-        logIn1(routeAuthenticate, new AuthenticationRequest(username, password, clientToken), proxy);
-    }
+    private AuthInfo toAuthInfo() {
+        GameProfile profile = session.getSelectedProfile();
 
-    private void logIn1(URL url, Object input, Proxy proxy) throws AuthenticationException {
-        AuthenticationResponse response = makeRequest(url, input, proxy)
-                .orElseThrow(() -> new AuthenticationException("Server response empty"));
-
-        if (!clientToken.equals(response.getClientToken()))
-            throw new AuthenticationException("Client token changed");
-
-        if (response.getSelectedProfile() != null)
-            userType = UserType.fromLegacy(response.getSelectedProfile().isLegacy());
-        else if (response.getAvailableProfiles() != null && response.getAvailableProfiles().length > 0)
-            userType = UserType.fromLegacy(response.getAvailableProfiles()[0].isLegacy());
-
-        User user = response.getUser();
-        if (user == null || user.getId() == null)
-            userId = null;
-        else
-            userId = user.getId();
-
-        isOnline = true;
-        profiles = response.getAvailableProfiles();
-        selectedProfile = response.getSelectedProfile();
-        userProperties.clear();
-        accessToken = response.getAccessToken();
-
-        if (user != null && user.getProperties() != null)
-            userProperties.putAll(user.getProperties());
+        return new AuthInfo(profile.getName(), UUIDTypeAdapter.fromUUID(profile.getId()), session.getAccessToken(), profile.getUserType(),
+                YggdrasilService.GSON.toJson(Optional.ofNullable(session.getUser()).map(User::getProperties).orElseGet(PropertyMap::new)));
     }
 
     @Override
     public boolean canPlayOffline() {
-        return isLoggedIn() && getSelectedProfile() != null && !canPlayOnline();
+        return isLoggedIn() && session.getSelectedProfile() != null && !canPlayOnline();
     }
 
     @Override
@@ -211,117 +121,51 @@ public class YggdrasilAccount extends Account {
         if (!canPlayOffline())
             throw new IllegalStateException("Current account " + this + " cannot play offline.");
 
-        return new AuthInfo(selectedProfile, accessToken, userType, GSON.toJson(userProperties));
+        return toAuthInfo();
     }
 
     @Override
     public void logOut() {
-        password = null;
-        userId = null;
-        accessToken = null;
         isOnline = false;
-        userProperties.clear();
-        profiles = null;
-        selectedProfile = null;
+        session = null;
     }
 
     @Override
-    public Map<Object, Object> toStorageImpl() {
-        HashMap<Object, Object> result = new HashMap<>();
+    public Map<Object, Object> toStorage() {
+        HashMap<Object, Object> storage = new HashMap<>();
 
-        result.put(STORAGE_KEY_USER_NAME, getUsername());
-        result.put(STORAGE_KEY_CLIENT_TOKEN, getClientToken());
-        if (getCurrentCharacterName() != null)
-            result.put(STORAGE_KEY_USER_ID, getCurrentCharacterName());
-        if (!userProperties.isEmpty())
-            result.put(STORAGE_KEY_USER_PROPERTIES, userProperties.toList());
-        GameProfile profile = selectedProfile;
-        if (profile != null && profile.getName() != null && profile.getId() != null) {
-            result.put(STORAGE_KEY_PROFILE_NAME, profile.getName());
-            result.put(STORAGE_KEY_PROFILE_ID, profile.getId());
+        storage.put("username", getUsername());
+        storage.put("clientToken", clientToken);
+        storage.put("character", character);
+        if (session != null)
+            storage.putAll(session.toStorage());
 
-            if (!profile.getProperties().isEmpty())
-                result.put(STORAGE_KEY_PROFILE_PROPERTIES, profile.getProperties().toList());
-        }
-
-        if (StringUtils.isNotBlank(accessToken))
-            result.put(STORAGE_KEY_ACCESS_TOKEN, accessToken);
-
-        return result;
-    }
-
-    private Optional<AuthenticationResponse> makeRequest(URL url, Object input, Proxy proxy) throws AuthenticationException {
-        try {
-            String jsonResult = input == null ? NetworkUtils.doGet(url, proxy) : NetworkUtils.doPost(url, GSON.toJson(input), "application/json", proxy);
-            AuthenticationResponse response = GSON.fromJson(jsonResult, AuthenticationResponse.class);
-            if (response == null)
-                return Optional.empty();
-            if (!StringUtils.isBlank(response.getError())) {
-                if (response.getErrorMessage() != null)
-                    if (response.getErrorMessage().contains("Invalid credentials"))
-                        throw new InvalidCredentialsException(this);
-                    else if (response.getErrorMessage().contains("Invalid token"))
-                        throw new InvalidTokenException(this);
-                    else if (response.getErrorMessage().contains("Invalid username or password"))
-                        throw new InvalidPasswordException(this);
-                throw new AuthenticationException(response.getError() + ": " + response.getErrorMessage());
-            }
-
-            return Optional.of(response);
-        } catch (IOException e) {
-            throw new ServerDisconnectException(e);
-        } catch (JsonParseException e) {
-            throw new AuthenticationException("Unable to parse server response", e);
-        }
-    }
-
-    private boolean checkTokenValidity(Proxy proxy) {
-        if (accessToken == null)
-            return false;
-
-        try {
-            makeRequest(routeValidate, new ValidateRequest(accessToken, clientToken), proxy);
-            return true;
-        } catch (AuthenticationException e) {
-            return false;
-        }
+        return storage;
     }
 
     public UUID getUUID() {
-        if (getSelectedProfile() == null)
+        if (session == null)
             return null;
         else
-            return getSelectedProfile().getId();
+            return session.getSelectedProfile().getId();
     }
 
-    public Optional<ProfileTexture> getSkin(GameProfile profile) throws IOException, JsonParseException {
-        if (StringUtils.isBlank(userId))
-            throw new IllegalStateException("Not logged in");
+    public Optional<Texture> getSkin() throws AuthenticationException {
+        return getSkin(session.getSelectedProfile());
+    }
 
-        Property textureProperty;
-
-        if (profile.getProperties().containsKey("textures"))
-            textureProperty = profile.getProperties().get("textures");
-        else {
-            ProfileResponse response = GSON.fromJson(NetworkUtils.doGet(NetworkUtils.toURL(baseProfile + UUIDTypeAdapter.fromUUID(profile.getId()))), ProfileResponse.class);
-            if (response.getProperties() == null) return Optional.empty();
-            textureProperty = response.getProperties().get("textures");
-            if (textureProperty == null) return Optional.empty();
-            profile.getProperties().putAll(response.getProperties());
+    public Optional<Texture> getSkin(GameProfile profile) throws AuthenticationException {
+        if (!service.getTextures(profile).isPresent()) {
+            session.setAvailableProfile(profile = service.getCompleteGameProfile(profile.getId()));
         }
 
-        TextureResponse texture;
-        String json = new String(Base64.getDecoder().decode(textureProperty.getValue()), Charsets.UTF_8);
-        texture = GSON.fromJson(json, TextureResponse.class);
-        if (texture == null || texture.getTextures() == null)
-            return Optional.empty();
-
-        return Optional.ofNullable(texture.getTextures().get(ProfileTexture.Type.SKIN));
+        return service.getTextures(profile).map(map -> map.get(TextureType.SKIN));
     }
 
     @Override
     public void clearCache() {
-        Optional.ofNullable(getSelectedProfile())
+        Optional.ofNullable(session)
+                .map(YggdrasilSession::getSelectedProfile)
                 .map(GameProfile::getProperties)
                 .ifPresent(it -> it.remove("texture"));
     }
@@ -330,31 +174,5 @@ public class YggdrasilAccount extends Account {
     public String toString() {
         return "YggdrasilAccount[username=" + getUsername() + "]";
     }
-
-    private final String baseAuthServer;
-    private final String baseSessionServer;
-    private final String baseProfile;
-    private final URL routeAuthenticate;
-    private final URL routeRefresh;
-    private final URL routeValidate;
-
-    static final String STORAGE_KEY_ACCESS_TOKEN = "accessToken";
-    static final String STORAGE_KEY_PROFILE_NAME = "displayName";
-    static final String STORAGE_KEY_PROFILE_ID = "uuid";
-    static final String STORAGE_KEY_PROFILE_PROPERTIES = "profileProperties";
-    static final String STORAGE_KEY_USER_NAME = "username";
-    static final String STORAGE_KEY_USER_ID = "userid";
-    static final String STORAGE_KEY_USER_PROPERTIES = "userProperties";
-    static final String STORAGE_KEY_CLIENT_TOKEN = "clientToken";
-
-    public static String randomToken() {
-        return UUIDTypeAdapter.fromUUID(UUID.randomUUID());
-    }
-
-    private static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(GameProfile.class, GameProfile.Serializer.INSTANCE)
-            .registerTypeAdapter(PropertyMap.class, PropertyMap.Serializer.INSTANCE)
-            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
-            .create();
 
 }

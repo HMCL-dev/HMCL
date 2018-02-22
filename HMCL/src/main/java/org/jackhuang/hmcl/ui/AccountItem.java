@@ -35,8 +35,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.auth.OfflineAccount;
-import org.jackhuang.hmcl.auth.yggdrasil.AuthlibInjectorAccount;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
+import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.AccountHelper;
 import org.jackhuang.hmcl.setting.Accounts;
@@ -82,7 +82,7 @@ public final class AccountItem extends StackPane {
         chkSelected.getProperties().put("account", account);
         setSelected(Settings.INSTANCE.getSelectedAccount() == account);
 
-        lblUser.setText(Accounts.getCurrentCharacter(account));
+        lblUser.setText(account.getCharacter());
         lblType.setText(AccountsPage.accountType(account));
         lblEmail.setText(account.getUsername());
 

@@ -15,18 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.auth.yggdrasil;
+package org.jackhuang.hmcl.auth.authlibinjector;
 
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
-import org.jackhuang.hmcl.auth.MultiCharacterSelector;
+import org.jackhuang.hmcl.auth.CharacterSelector;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.util.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
-import java.net.Proxy;
 import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -35,21 +37,30 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
     private final String serverBaseURL;
     private final ExceptionalSupplier<String, ?> injectorJarPath;
 
-    public AuthlibInjectorAccount(ExceptionalSupplier<String, ?> injectorJarPath, String serverBaseURL, String username) {
-        super(serverBaseURL + "authserver/", serverBaseURL + "sessionserver/", username);
+    protected AuthlibInjectorAccount(YggdrasilService service, String serverBaseURL, ExceptionalSupplier<String, ?> injectorJarPath, String username, String clientToken, String character, YggdrasilSession session) {
+        super(service, username, clientToken, character, session);
 
         this.injectorJarPath = injectorJarPath;
         this.serverBaseURL = serverBaseURL;
     }
 
     @Override
-    public AuthInfo logIn(MultiCharacterSelector selector, Proxy proxy) throws AuthenticationException {
+    public AuthInfo logIn() throws AuthenticationException {
+        return inject(super::logIn);
+    }
+
+    @Override
+    protected AuthInfo logInWithPassword(String password, CharacterSelector selector) throws AuthenticationException {
+        return inject(() -> super.logInWithPassword(password, selector));
+    }
+
+    private AuthInfo inject(ExceptionalSupplier<AuthInfo, AuthenticationException> supplier) throws AuthenticationException {
         // Authlib Injector recommends launchers to pre-fetch the server basic information before launched the game to save time.
         GetTask getTask = new GetTask(NetworkUtils.toURL(serverBaseURL));
         AtomicBoolean flag = new AtomicBoolean(true);
         Thread thread = Lang.thread(() -> flag.set(getTask.test()));
 
-        AuthInfo info = super.logIn(selector, proxy);
+        AuthInfo info = supplier.get();
         try {
             thread.join();
 
@@ -66,32 +77,9 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
     }
 
     @Override
-    public AuthInfo logInWithPassword(MultiCharacterSelector selector, String password, Proxy proxy) throws AuthenticationException {
-        // Authlib Injector recommends launchers to pre-fetch the server basic information before launched the game to save time.
-        GetTask getTask = new GetTask(NetworkUtils.toURL(serverBaseURL));
-        AtomicBoolean flag = new AtomicBoolean(true);
-        Thread thread = Lang.thread(() -> flag.set(getTask.test()));
-
-        AuthInfo info = super.logInWithPassword(selector, password, proxy);
-        try {
-            thread.join();
-
-            String arg = "-javaagent:" + injectorJarPath.get() + "=" + serverBaseURL;
-            Arguments arguments = Arguments.addJVMArguments(null, arg);
-
-            if (flag.get())
-                arguments = Arguments.addJVMArguments(arguments, "-Dorg.to2mbn.authlibinjector.config.prefetched=" + new String(Base64.getEncoder().encode(getTask.getResult().getBytes())));
-
-            return info.setArguments(arguments);
-        } catch (Exception e) {
-            throw new AuthenticationException("Unable to get authlib injector jar path", e);
-        }
-    }
-
-    @Override
-    public Map<Object, Object> toStorageImpl() {
-        Map<Object, Object> map = super.toStorageImpl();
-        map.put(STORAGE_KEY_SERVER_BASE_URL, serverBaseURL);
+    public Map<Object, Object> toStorage() {
+        Map<Object, Object> map = super.toStorage();
+        map.put("serverBaseURL", serverBaseURL);
         return map;
     }
 
@@ -99,5 +87,4 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         return serverBaseURL;
     }
 
-    public static final String STORAGE_KEY_SERVER_BASE_URL = "serverBaseURL";
 }

@@ -26,7 +26,7 @@ import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
-import org.jackhuang.hmcl.auth.yggdrasil.AuthlibInjectorAccount;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.MojangDownloadProvider;
@@ -67,21 +67,23 @@ public class Settings {
     private Map<String, Account> accounts = new HashMap<>();
 
     {
-        for (Map<Object, Object> settings : SETTINGS.getAccounts()) {
-            Optional<String> characterName = Accounts.getCurrentCharacter(settings);
+        loadProxy();
+
+        for (Iterator<Map<Object, Object>> iterator = SETTINGS.getAccounts().iterator(); iterator.hasNext(); ) {
+            Map<Object, Object> settings = iterator.next();
             AccountFactory<?> factory = Accounts.ACCOUNT_FACTORY.get(Lang.get(settings, "type", String.class).orElse(""));
-            if (factory == null || !characterName.isPresent()) {
+            if (factory == null) {
                 // unrecognized account type, so remove it.
-                SETTINGS.getAccounts().remove(settings);
+                iterator.remove();
                 continue;
             }
 
             Account account;
             try {
-                account = factory.fromStorage(settings);
+                account = factory.fromStorage(settings, getProxy());
             } catch (Exception e) {
-                SETTINGS.getAccounts().remove(settings);
                 // storage is malformed, delete.
+                iterator.remove();
                 continue;
             }
 
@@ -101,8 +103,6 @@ public class Settings {
         }
 
         Lang.ignoringException(() -> Runtime.getRuntime().addShutdownHook(new Thread(this::save)));
-
-        loadProxy();
     }
 
     private Config initSettings() {
@@ -467,8 +467,6 @@ public class Settings {
     /****************************************
      *               PROFILES               *
      ****************************************/
-
-    private Profile selectedProfile;
 
     public Profile getSelectedProfile() {
         checkProfileMap();

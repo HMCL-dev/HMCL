@@ -36,7 +36,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.auth.*;
-import org.jackhuang.hmcl.auth.yggdrasil.AuthlibInjectorAccount;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
+import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.AccountHelper;
@@ -52,6 +53,7 @@ import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
@@ -153,6 +155,7 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
     private void addNewAccount() {
         txtUsername.setText("");
         txtPassword.setText("");
+        lblCreationWarning.setText("");
         dialog.show();
     }
 
@@ -166,20 +169,19 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
         int type = cboType.getSelectionModel().getSelectedIndex();
         String username = txtUsername.getText();
         String password = txtPassword.getText();
+        String apiRoot = Optional.ofNullable(cboServers.getSelectionModel().getSelectedItem()).map(TwoLineListItem::getSubtitle).orElse(null);
         progressBar.setVisible(true);
         lblCreationWarning.setText("");
         Task.ofResult("create_account", () -> {
-                Account account;
+                AccountFactory<?> factory;
                 switch (type) {
-                    case 0: account = Accounts.ACCOUNT_FACTORY.get(Accounts.OFFLINE_ACCOUNT_KEY).fromUsername(username); break;
-                    case 1: account = Accounts.ACCOUNT_FACTORY.get(Accounts.YGGDRASIL_ACCOUNT_KEY).fromUsername(username, password); break;
-                    case 2: account = Accounts.ACCOUNT_FACTORY.get(Accounts.AUTHLIB_INJECTOR_ACCOUNT_KEY).fromUsername(username, password, cboServers.getSelectionModel().getSelectedItem().getSubtitle()); break;
+                    case 0: factory = Accounts.ACCOUNT_FACTORY.get(Accounts.OFFLINE_ACCOUNT_KEY); break;
+                    case 1: factory = Accounts.ACCOUNT_FACTORY.get(Accounts.YGGDRASIL_ACCOUNT_KEY); break;
+                    case 2: factory = Accounts.ACCOUNT_FACTORY.get(Accounts.AUTHLIB_INJECTOR_ACCOUNT_KEY); break;
                     default: throw new Error();
                 }
 
-                AuthInfo info = account.logIn(new CharacterSelector(), Settings.INSTANCE.getProxy());
-                Accounts.setCurrentCharacter(account, info.getUsername());
-                return account;
+                return factory.create(new Selector(), username, password, apiRoot, Settings.INSTANCE.getProxy());
         }).finalized(Schedulers.javafx(), variables -> {
             Settings.INSTANCE.addAccount(variables.get("create_account"));
             dialog.close();
@@ -236,7 +238,7 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
         else throw new Error(Main.i18n("account.methods.no_method") + ": " + account);
     }
 
-    private static class CharacterSelector extends BorderPane implements MultiCharacterSelector {
+    private static class Selector extends BorderPane implements CharacterSelector {
         private final AdvancedListBox listBox = new AdvancedListBox();
         private final JFXButton cancel = new JFXButton();
 
@@ -263,7 +265,7 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
         @Override
         public GameProfile select(Account account, List<GameProfile> names) throws NoSelectedCharacterException {
             if (!(account instanceof YggdrasilAccount))
-                return MultiCharacterSelector.DEFAULT.select(account, names);
+                return CharacterSelector.DEFAULT.select(account, names);
             YggdrasilAccount yggdrasilAccount = (YggdrasilAccount) account;
 
             for (GameProfile profile : names) {

@@ -21,30 +21,26 @@ package org.jackhuang.hmcl.auth.yggdrasil;
  *
  * @author huangyuhui
  */
-public final class AuthenticationResponse {
+final class AuthenticationResponse extends ErrorResponse {
 
     private final String accessToken;
     private final String clientToken;
     private final GameProfile selectedProfile;
     private final GameProfile[] availableProfiles;
     private final User user;
-    private final String error;
-    private final String errorMessage;
-    private final String cause;
 
     public AuthenticationResponse() {
         this(null, null, null, null, null, null, null, null);
     }
 
     public AuthenticationResponse(String accessToken, String clientToken, GameProfile selectedProfile, GameProfile[] availableProfiles, User user, String error, String errorMessage, String cause) {
+        super(error, errorMessage, cause);
+
         this.accessToken = accessToken;
         this.clientToken = clientToken;
         this.selectedProfile = selectedProfile;
         this.availableProfiles = availableProfiles;
         this.user = user;
-        this.error = error;
-        this.errorMessage = errorMessage;
-        this.cause = cause;
     }
 
     public String getAccessToken() {
@@ -65,18 +61,6 @@ public final class AuthenticationResponse {
 
     public User getUser() {
         return user;
-    }
-
-    public String getError() {
-        return error;
-    }
-
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-
-    public String getCause() {
-        return cause;
     }
 
 }

@@ -15,32 +15,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.auth.yggdrasil;
+package org.jackhuang.hmcl.auth.authlibinjector;
 
-public class ProfileResponse {
-    private final String id;
-    private final String name;
-    private final PropertyMap properties;
+public class AuthlibInjectorServerInfo {
+    private final String serverIp;
+    private final String serverName;
 
-    public ProfileResponse() {
-        this("", "", null);
+    public AuthlibInjectorServerInfo(String serverIp, String serverName) {
+        this.serverIp = serverIp;
+        this.serverName = serverName;
     }
 
-    public ProfileResponse(String id, String name, PropertyMap properties) {
-        this.id = id;
-        this.name = name;
-        this.properties = properties;
+    public String getServerIp() {
+        return serverIp;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public PropertyMap getProperties() {
-        return properties;
+    public String getServerName() {
+        return serverName;
     }
 }

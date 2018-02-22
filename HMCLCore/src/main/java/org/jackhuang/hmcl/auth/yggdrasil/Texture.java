@@ -17,35 +17,33 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
-public class AuthlibInjectorServerResponse {
+import org.jackhuang.hmcl.util.Immutable;
 
-    private final Meta meta;
+import java.util.Map;
 
-    public AuthlibInjectorServerResponse() {
-        this(new Meta());
+@Immutable
+public final class Texture {
+
+    private final String url;
+    private final Map<String, String> metadata;
+
+    public Texture() {
+        this(null, null);
     }
 
-    public AuthlibInjectorServerResponse(Meta meta) {
-        this.meta = meta;
+    public Texture(String url, Map<String, String> metadata) {
+        this.url = url;
+        this.metadata = metadata;
     }
 
-    public Meta getMeta() {
-        return meta;
+    public String getUrl() {
+        return url;
     }
 
-    public static class Meta {
-        private final String serverName;
-
-        public Meta() {
-            this("");
-        }
-
-        public Meta(String serverName) {
-            this.serverName = serverName;
-        }
-
-        public String getServerName() {
-            return serverName;
-        }
+    public String getMetadata(String key) {
+        if (metadata == null)
+            return null;
+        else
+            return metadata.get(key);
     }
 }

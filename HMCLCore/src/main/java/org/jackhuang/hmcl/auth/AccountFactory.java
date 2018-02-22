@@ -17,8 +17,7 @@
  */
 package org.jackhuang.hmcl.auth;
 
-import org.jackhuang.hmcl.util.Lang;
-
+import java.net.Proxy;
 import java.util.Map;
 
 /**
@@ -27,23 +26,7 @@ import java.util.Map;
  */
 public abstract class AccountFactory<T extends Account> {
 
-    public final T fromUsername(String username) {
-        return fromUsername(username, "", null);
-    }
+    public abstract T create(CharacterSelector selector, String username, String password, Object additionalData, Proxy proxy) throws AuthenticationException;
 
-    public final T fromUsername(String username, String password) {
-        return fromUsername(username, password, null);
-    }
-
-    public abstract T fromUsername(String username, String password, Object additionalData);
-
-    protected abstract T fromStorageImpl(Map<Object, Object> storage);
-
-    public final T fromStorage(Map<Object, Object> storage) {
-        T account = fromStorageImpl(storage);
-        Map<?, ?> properties = Lang.get(storage, "properties", Map.class).orElse(null);
-        if (properties == null) return account;
-        account.getProperties().putAll(properties);
-        return account;
-    }
+    public abstract T fromStorage(Map<Object, Object> storage, Proxy proxy);
 }

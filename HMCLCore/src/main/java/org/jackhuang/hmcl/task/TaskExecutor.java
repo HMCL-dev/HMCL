@@ -20,10 +20,7 @@ package org.jackhuang.hmcl.task;
 import org.jackhuang.hmcl.util.*;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -109,7 +106,7 @@ public final class TaskExecutor {
                 return false;
             Invoker invoker = new Invoker(task, latch, success);
             try {
-                Future<?> future = task.getScheduler().schedule(invoker);
+                Future<?> future = scheduler.schedule(invoker);
                 if (future != null)
                     workerQueue.add(future);
             } catch (RejectedExecutionException e) {
@@ -152,7 +149,12 @@ public final class TaskExecutor {
                 task.setDependentsSucceeded();
 
             task.setVariables(variables);
-            task.execute();
+
+            try {
+                task.getScheduler().schedule(task::execute).get();
+            } catch (ExecutionException e) {
+                throw (Exception) e.getCause();
+            }
 
             if (task instanceof TaskResult<?>) {
                 TaskResult<?> taskResult = (TaskResult<?>) task;
@@ -181,7 +183,7 @@ public final class TaskExecutor {
             // do nothing
         } catch (Exception e) {
             lastException = e;
-            variables.set(LAST_EXCEPION_ID, e);
+            variables.set(LAST_EXCEPTION_ID, e);
             Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
             task.onDone().fireEvent(new TaskEvent(this, task, true));
             taskListeners.forEach(it -> it.onFailed(task, e));
@@ -226,5 +228,5 @@ public final class TaskExecutor {
 
     }
 
-    public static final String LAST_EXCEPION_ID = "lastException";
+    public static final String LAST_EXCEPTION_ID = "lastException";
 }

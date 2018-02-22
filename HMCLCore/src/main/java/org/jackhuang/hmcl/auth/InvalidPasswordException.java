@@ -21,15 +21,4 @@ package org.jackhuang.hmcl.auth;
  * throws if wrong password.
  */
 public class InvalidPasswordException extends AuthenticationException {
-
-    private final Account account;
-
-    public InvalidPasswordException(Account account) {
-        super();
-        this.account = account;
-    }
-
-    public Account getAccount() {
-        return account;
-    }
 }

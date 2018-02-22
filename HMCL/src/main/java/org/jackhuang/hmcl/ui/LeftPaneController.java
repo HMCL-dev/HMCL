@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.UnsupportedModpackException;
-import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Settings;
@@ -90,7 +89,7 @@ public final class LeftPaneController {
                 accountItem.setVersionName(Main.i18n("account.missing"));
                 accountItem.setGameVersion(Main.i18n("message.unknown"));
             } else {
-                accountItem.setVersionName(Accounts.getCurrentCharacter(it));
+                accountItem.setVersionName(it.getCharacter());
                 accountItem.setGameVersion(AccountsPage.accountType(it));
             }
 

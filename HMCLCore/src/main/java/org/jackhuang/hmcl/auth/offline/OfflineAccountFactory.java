@@ -15,10 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.auth;
+package org.jackhuang.hmcl.auth.offline;
 
+import org.jackhuang.hmcl.auth.AccountFactory;
+import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.Lang;
 
+import java.net.Proxy;
 import java.util.Map;
 
 /**
@@ -32,21 +36,18 @@ public class OfflineAccountFactory extends AccountFactory<OfflineAccount> {
     }
 
     @Override
-    public OfflineAccount fromUsername(String username, String password, Object additionalData) {
+    public OfflineAccount create(CharacterSelector selector, String username, String password, Object additionalData, Proxy proxy) {
         return new OfflineAccount(username, getUUIDFromUserName(username));
     }
 
     @Override
-    public OfflineAccount fromStorageImpl(Map<Object, Object> storage) {
-        Object username = storage.get("username");
-        if (username == null || !(username instanceof String))
-            throw new IllegalStateException("Offline account configuration malformed.");
+    public OfflineAccount fromStorage(Map<Object, Object> storage, Proxy proxy) {
+        String username = Lang.get(storage, "username", String.class)
+                .orElseThrow(() -> new IllegalStateException("Offline account configuration malformed."));
+        String uuid = Lang.get(storage, "uuid", String.class)
+                .orElse(getUUIDFromUserName(username));
 
-        Object uuid = storage.get("uuid");
-        if (uuid == null || !(uuid instanceof String))
-            uuid = getUUIDFromUserName((String) username);
-
-        return new OfflineAccount((String) username, (String) uuid);
+        return new OfflineAccount(username, uuid);
     }
 
     private static String getUUIDFromUserName(String username) {

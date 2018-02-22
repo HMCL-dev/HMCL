@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.auth.yggdrasil;
 
 import com.google.gson.*;
+import org.jackhuang.hmcl.auth.UserType;
 import org.jackhuang.hmcl.util.Immutable;
 
 import java.lang.reflect.Type;
@@ -40,7 +41,11 @@ public final class GameProfile {
     }
 
     public GameProfile(UUID id, String name) {
-        this(id, name, new PropertyMap(), false);
+        this(id, name, new PropertyMap());
+    }
+
+    public GameProfile(UUID id, String name, PropertyMap properties) {
+        this(id, name, properties, false);
     }
 
     public GameProfile(UUID id, String name, PropertyMap properties, boolean legacy) {
@@ -64,6 +69,10 @@ public final class GameProfile {
 
     public boolean isLegacy() {
         return legacy;
+    }
+
+    public UserType getUserType() {
+        return UserType.fromLegacy(isLegacy());
     }
 
     public static class Serializer implements JsonSerializer<GameProfile>, JsonDeserializer<GameProfile> {

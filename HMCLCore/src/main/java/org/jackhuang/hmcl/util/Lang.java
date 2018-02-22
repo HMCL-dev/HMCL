@@ -87,7 +87,7 @@ public final class Lang {
         return r -> invoke(function, r);
     }
 
-    public static <T, R, E extends Exception> Function<T, R> liftFunction(ExceptionalFunction<T, R, E> function) {
+    public static <T, R, E extends Exception> Function<T, R> liftFunction(ExceptionalFunction<T, R, E> function) throws E {
         return hideFunction(function);
     }
 
@@ -115,7 +115,7 @@ public final class Lang {
         return () -> invoke(supplier);
     }
 
-    public static <T, E extends Exception> Supplier<T> liftException(ExceptionalSupplier<T, E> supplier) {
+    public static <T, E extends Exception> Supplier<T> liftException(ExceptionalSupplier<T, E> supplier) throws E {
         return hideException(supplier);
     }
 
@@ -141,7 +141,7 @@ public final class Lang {
         return it -> invokeConsumer(consumer, it);
     }
 
-    public static <T, E extends Exception> Consumer<T> liftConsumer(ExceptionalConsumer<T, E> consumer) {
+    public static <T, E extends Exception> Consumer<T> liftConsumer(ExceptionalConsumer<T, E> consumer) throws E {
         return hideConsumer(consumer);
     }
 

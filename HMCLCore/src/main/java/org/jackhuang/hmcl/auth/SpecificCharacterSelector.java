@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * Select character by name.
  */
-public class SpecificCharacterSelector implements MultiCharacterSelector {
+public class SpecificCharacterSelector implements CharacterSelector {
     private final String id;
 
     /**

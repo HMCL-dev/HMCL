@@ -270,7 +270,7 @@ public abstract class Task {
             }
             else {
                 if (failure != null)
-                    failure.accept(variables.get(TaskExecutor.LAST_EXCEPION_ID));
+                    failure.accept(variables.get(TaskExecutor.LAST_EXCEPTION_ID));
             }
         });
     }

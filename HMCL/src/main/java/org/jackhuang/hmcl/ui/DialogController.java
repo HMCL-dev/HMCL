@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.concurrency.JFXUtilities;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.auth.MultiCharacterSelector;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.task.SilentException;
 
@@ -48,6 +47,6 @@ public final class DialogController {
             latch.await();
             return Optional.ofNullable(res.get()).orElseThrow(SilentException::new);
         }
-        return account.logIn(MultiCharacterSelector.DEFAULT);
+        return account.logIn();
     }
 }

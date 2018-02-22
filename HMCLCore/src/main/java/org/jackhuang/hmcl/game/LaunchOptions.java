@@ -47,7 +47,7 @@ public class LaunchOptions implements Serializable {
     private String proxyUser;
     private String proxyPass;
     private boolean noGeneratedJVMArgs;
-    private String precalledCommand;
+    private String preLaunchCommand;
 
     /**
      * The game directory
@@ -188,8 +188,8 @@ public class LaunchOptions implements Serializable {
     /**
      * Called command line before launching the game.
      */
-    public String getPrecalledCommand() {
-        return precalledCommand;
+    public String getPreLaunchCommand() {
+        return preLaunchCommand;
     }
 
     public static class Builder {
@@ -296,7 +296,7 @@ public class LaunchOptions implements Serializable {
         }
 
         public Builder setPrecalledCommand(String precalledCommand) {
-            options.precalledCommand = precalledCommand;
+            options.preLaunchCommand = precalledCommand;
             return this;
         }
 

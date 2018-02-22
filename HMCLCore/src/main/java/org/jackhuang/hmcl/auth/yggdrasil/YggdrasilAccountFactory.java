@@ -18,14 +18,15 @@
 package org.jackhuang.hmcl.auth.yggdrasil;
 
 import org.jackhuang.hmcl.auth.AccountFactory;
+import org.jackhuang.hmcl.auth.AuthenticationException;
+import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
-import java.util.List;
+import java.net.Proxy;
 import java.util.Map;
-import java.util.Optional;
-
-import static org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount.*;
+import java.util.Objects;
+import java.util.UUID;
 
 /**
  *
@@ -33,50 +34,40 @@ import static org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount.*;
  */
 public class YggdrasilAccountFactory extends AccountFactory<YggdrasilAccount> {
 
-    private final String baseAuthServer;
-    private final String baseSessionServer;
+    private final YggdrasilProvider provider;
 
-    public YggdrasilAccountFactory() {
-        this(MOJANG_AUTH_SERVER, MOJANG_SESSION_SERVER);
-    }
-
-    public YggdrasilAccountFactory(String baseAuthServer, String baseSessionServer) {
-        this.baseAuthServer = baseAuthServer;
-        this.baseSessionServer = baseSessionServer;
+    public YggdrasilAccountFactory(YggdrasilProvider provider) {
+        this.provider = provider;
     }
 
     @Override
-    public YggdrasilAccount fromUsername(String username, String password, Object additionalData) {
-        YggdrasilAccount account = new YggdrasilAccount(MOJANG_AUTH_SERVER, MOJANG_SESSION_SERVER, username);
-        account.setPassword(password);
+    public YggdrasilAccount create(CharacterSelector selector, String username, String password, Object additionalData, Proxy proxy) throws AuthenticationException {
+        Objects.requireNonNull(selector);
+        Objects.requireNonNull(username);
+        Objects.requireNonNull(password);
+        Objects.requireNonNull(proxy);
+
+        YggdrasilAccount account = new YggdrasilAccount(new YggdrasilService(provider, proxy), username, UUIDTypeAdapter.fromUUID(UUID.randomUUID()), null, null);
+        account.logInWithPassword(password, selector);
         return account;
     }
 
     @Override
-    public YggdrasilAccount fromStorageImpl(Map<Object, Object> storage) {
-        String username = Lang.get(storage, STORAGE_KEY_USER_NAME, String.class)
-                .orElseThrow(() -> new IllegalArgumentException("storage does not have key " + STORAGE_KEY_USER_NAME));
+    public YggdrasilAccount fromStorage(Map<Object, Object> storage, Proxy proxy) {
+        Objects.requireNonNull(storage);
+        Objects.requireNonNull(proxy);
 
-        YggdrasilAccount account = new YggdrasilAccount(baseAuthServer, baseSessionServer, username);
-        account.setUserId(Lang.get(storage, STORAGE_KEY_USER_ID, String.class).orElse(username));
-        account.setAccessToken(Lang.get(storage, STORAGE_KEY_ACCESS_TOKEN, String.class).orElse(null));
-        account.setClientToken(Lang.get(storage, STORAGE_KEY_CLIENT_TOKEN, String.class)
-                .orElseThrow(() -> new IllegalArgumentException("storage does not have key " + STORAGE_KEY_CLIENT_TOKEN)));
+        String username = Lang.get(storage, "username", String.class)
+                .orElseThrow(() -> new IllegalArgumentException("storage does not have username"));
+        String clientToken = Lang.get(storage, "clientToken", String.class)
+                .orElseThrow(() -> new IllegalArgumentException("storage does not have client token."));
+        String character = Lang.get(storage, "clientToken", String.class)
+                .orElseThrow(() -> new IllegalArgumentException("storage does not have selected character name."));
 
-        Lang.get(storage, STORAGE_KEY_USER_PROPERTIES, List.class)
-                .ifPresent(account.getUserProperties()::fromList);
-        Optional<String> profileId = Lang.get(storage, STORAGE_KEY_PROFILE_ID, String.class);
-        Optional<String> profileName = Lang.get(storage, STORAGE_KEY_PROFILE_NAME, String.class);
-        GameProfile profile = null;
-        if (profileId.isPresent() && profileName.isPresent()) {
-            profile = new GameProfile(UUIDTypeAdapter.fromString(profileId.get()), profileName.get());
-            Lang.get(storage, STORAGE_KEY_PROFILE_PROPERTIES, List.class)
-                    .ifPresent(profile.getProperties()::fromList);
-        }
-        account.setSelectedProfile(profile);
-        return account;
+        return new YggdrasilAccount(new YggdrasilService(provider, proxy), username, clientToken, character, YggdrasilSession.fromStorage(storage));
     }
 
-    private static final String MOJANG_AUTH_SERVER = "https://authserver.mojang.com/";
-    private static final String MOJANG_SESSION_SERVER = "https://sessionserver.mojang.com/";
+    public static String randomToken() {
+        return UUIDTypeAdapter.fromUUID(UUID.randomUUID());
+    }
 }

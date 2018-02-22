@@ -18,10 +18,10 @@
 package org.jackhuang.hmcl.auth;
 
 /**
- * This exception gets threw when a monitor of {@link MultiCharacterSelector} cannot select a
+ * This exception gets threw when a monitor of {@link CharacterSelector} cannot select a
  * valid character.
  *
- * @see org.jackhuang.hmcl.auth.MultiCharacterSelector
+ * @see CharacterSelector
  * @author huangyuhui
  */
 public final class NoSelectedCharacterException extends AuthenticationException {
