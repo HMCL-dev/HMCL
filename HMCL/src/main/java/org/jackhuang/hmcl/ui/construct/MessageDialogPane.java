@@ -24,6 +24,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
@@ -62,19 +63,19 @@ public final class MessageDialogPane extends StackPane {
 
         switch (type) {
             case MessageBox.INFORMATION_MESSAGE:
-                graphic.setGraphic(SVG.infoCircle("black", 40, 40));
+                graphic.setGraphic(SVG.infoCircle(Theme.blackFillBinding(), 40, 40));
                 break;
             case MessageBox.ERROR_MESSAGE:
-                graphic.setGraphic(SVG.closeCircle("black", 40, 40));
+                graphic.setGraphic(SVG.closeCircle(Theme.blackFillBinding(), 40, 40));
                 break;
             case MessageBox.FINE_MESSAGE:
-                graphic.setGraphic(SVG.checkCircle("black", 40, 40));
+                graphic.setGraphic(SVG.checkCircle(Theme.blackFillBinding(), 40, 40));
                 break;
             case MessageBox.WARNING_MESSAGE:
-                graphic.setGraphic(SVG.alert("black", 40, 40));
+                graphic.setGraphic(SVG.alert(Theme.blackFillBinding(), 40, 40));
                 break;
             case MessageBox.QUESTION_MESSAGE:
-                graphic.setGraphic(SVG.helpCircle("black", 40, 40));
+                graphic.setGraphic(SVG.helpCircle(Theme.blackFillBinding(), 40, 40));
                 break;
             default:
                 throw new IllegalArgumentException("Unrecognized message box message type " + type);

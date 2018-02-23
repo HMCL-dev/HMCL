@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
@@ -65,14 +66,14 @@ public final class LeftPaneController {
                     accountItem.setOnSettingsButtonClicked(() -> Controllers.navigate(new AccountsPage()));
                 }))
                 .startCategory(Main.i18n("launcher").toUpperCase())
-                .add(Lang.apply(new IconedItem(SVG.gear("black", 20, 20), Main.i18n("settings.launcher")), iconedItem -> {
+                .add(Lang.apply(new IconedItem(SVG.gear(Theme.blackFillBinding(), 20, 20), Main.i18n("settings.launcher")), iconedItem -> {
                     iconedItem.prefWidthProperty().bind(leftPane.widthProperty());
                     iconedItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
                 }))
                 .add(new ClassTitle(Lang.apply(new BorderPane(), borderPane -> {
                     borderPane.setLeft(Lang.apply(new VBox(), vBox -> vBox.getChildren().setAll(new Text(Main.i18n("profile.title").toUpperCase()))));
                     JFXButton addProfileButton = new JFXButton();
-                    addProfileButton.setGraphic(SVG.plus("black", 10, 10));
+                    addProfileButton.setGraphic(SVG.plus(Theme.blackFillBinding(), 10, 10));
                     addProfileButton.getStyleClass().add("toggle-icon-tiny");
                     addProfileButton.setOnMouseClicked(e ->
                             Controllers.getDecorator().showPage(new ProfilePage(null)));

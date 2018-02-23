@@ -154,7 +154,7 @@ public class Version implements Comparable<Version>, Validation {
      * Resolve given version
      */
     public Version resolve(VersionProvider provider) throws VersionNotFoundException {
-        return resolve(provider, new HashSet<>()).setResolved(true);
+        return resolve(provider, new HashSet<>()).setResolved();
     }
 
     protected Version resolve(VersionProvider provider, Set<String> resolvedSoFar) throws VersionNotFoundException {
@@ -189,8 +189,8 @@ public class Version implements Comparable<Version>, Validation {
                 Math.max(minimumLauncherVersion, parent.minimumLauncherVersion));
     }
 
-    public Version setResolved(boolean resolved) {
-        return new Version(resolved, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion);
+    private Version setResolved() {
+        return new Version(true, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion);
     }
 
     public Version setId(String id) {

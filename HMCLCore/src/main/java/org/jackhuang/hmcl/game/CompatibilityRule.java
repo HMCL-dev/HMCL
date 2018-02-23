@@ -63,7 +63,7 @@ public final class CompatibilityRule {
     }
 
     public static boolean appliesToCurrentEnvironment(Collection<CompatibilityRule> rules, Map<String, Boolean> features) {
-        if (rules == null)
+        if (rules == null || rules.isEmpty())
             return true;
 
         Action action = Action.DISALLOW;

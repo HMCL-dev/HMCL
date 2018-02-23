@@ -208,7 +208,8 @@ public class DefaultGameRepository implements GameRepository {
             try {
                 Version resolved = version.resolve(provider);
 
-                if (EventBus.EVENT_BUS.fireEvent(new LoadedOneVersionEvent(this, resolved)) != Event.Result.DENY)
+                if (resolved.appliesToCurrentEnvironment() &&
+                        EventBus.EVENT_BUS.fireEvent(new LoadedOneVersionEvent(this, resolved)) != Event.Result.DENY)
                     versions.put(version.getId(), version);
             } catch (VersionNotFoundException e) {
                 Logging.LOG.log(Level.WARNING, "Ignoring version {0} because it inherits from a nonexistent version.", version.getId());

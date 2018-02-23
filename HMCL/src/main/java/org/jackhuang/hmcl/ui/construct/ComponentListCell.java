@@ -31,6 +31,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
@@ -77,7 +78,7 @@ public class ComponentListCell extends StackPane {
             StackPane groupNode = new StackPane();
             groupNode.getStyleClass().add("options-list-item-header");
 
-            Node expandIcon = SVG.expand("black", 10, 10);
+            Node expandIcon = SVG.expand(Theme.blackFillBinding(), 10, 10);
             JFXButton expandButton = new JFXButton();
             expandButton.setGraphic(expandIcon);
             expandButton.getStyleClass().add("options-list-item-expand-button");

@@ -39,6 +39,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -69,7 +70,7 @@ public class MultiFileItem extends ComponentList {
 
         BorderPane.setAlignment(txtCustom, Pos.CENTER_RIGHT);
 
-        btnSelect.setGraphic(SVG.folderOpen("black", 15, 15));
+        btnSelect.setGraphic(SVG.folderOpen(Theme.blackFillBinding(), 15, 15));
         btnSelect.setOnMouseClicked(e -> {
             if (isDirectory()) {
                 DirectoryChooser chooser = new DirectoryChooser();

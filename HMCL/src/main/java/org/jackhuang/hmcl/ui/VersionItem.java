@@ -33,6 +33,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.setting.Theme;
 
 import java.util.Optional;
 
@@ -67,10 +68,10 @@ public final class VersionItem extends StackPane {
     public VersionItem() {
         FXUtils.loadFXML(this, "/assets/fxml/version-item.fxml");
         setEffect(new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.26), 5.0, 0.12, -1.0, 1.0));
-        btnSettings.setGraphic(SVG.gear("black", 15, 15));
-        btnUpdate.setGraphic(SVG.update("black", 15, 15));
-        btnLaunch.setGraphic(SVG.launch("black", 15, 15));
-        btnScript.setGraphic(SVG.script("black", 15, 15));
+        btnSettings.setGraphic(SVG.gear(Theme.blackFillBinding(), 15, 15));
+        btnUpdate.setGraphic(SVG.update(Theme.blackFillBinding(), 15, 15));
+        btnLaunch.setGraphic(SVG.launch(Theme.blackFillBinding(), 15, 15));
+        btnScript.setGraphic(SVG.script(Theme.blackFillBinding(), 15, 15));
 
         FXUtils.installTooltip(btnSettings, Main.i18n("version.settings"));
         FXUtils.installTooltip(btnUpdate, Main.i18n("version.update"));

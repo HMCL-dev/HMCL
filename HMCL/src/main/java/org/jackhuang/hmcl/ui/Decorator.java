@@ -48,6 +48,7 @@ import javafx.stage.StageStyle;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionHandler;
@@ -149,6 +150,15 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         btnClose.setGraphic(close);
         btnMin.setGraphic(minus);
         btnMax.setGraphic(resizeMax);
+
+        close.fillProperty().bind(Theme.foregroundFillBinding());
+        minus.fillProperty().bind(Theme.foregroundFillBinding());
+        resizeMax.fillProperty().bind(Theme.foregroundFillBinding());
+        resizeMin.fillProperty().bind(Theme.foregroundFillBinding());
+
+        refreshNavButton.setGraphic(SVG.refresh(Theme.foregroundFillBinding(), 15, 15));
+        closeNavButton.setGraphic(SVG.close(Theme.foregroundFillBinding(), 15, 15));
+        backNavButton.setGraphic(SVG.back(Theme.foregroundFillBinding(), 15, 15));
 
         lblTitle.setText(title);
 

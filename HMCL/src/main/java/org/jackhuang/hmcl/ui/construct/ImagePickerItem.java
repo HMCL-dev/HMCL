@@ -16,6 +16,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
@@ -36,7 +37,7 @@ public final class ImagePickerItem extends BorderPane {
         imageView.setPreserveRatio(true);
 
         selectButton = new JFXButton();
-        selectButton.setGraphic(SVG.pencil("black", 15, 15));
+        selectButton.setGraphic(SVG.pencil(Theme.blackFillBinding(), 15, 15));
         selectButton.onMouseClickedProperty().bind(onSelectButtonClicked);
         selectButton.getStyleClass().add("toggle-icon4");
 

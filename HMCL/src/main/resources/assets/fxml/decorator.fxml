@@ -68,7 +68,7 @@
                     <BorderPane minWidth="200" maxWidth="200" fx:id="titleWrapper">
                         <center>
                             <Label fx:id="lblTitle" BorderPane.alignment="CENTER" mouseTransparent="true"
-                                   style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 15px;">
+                                   style="-fx-background-color: transparent; -fx-text-fill: -fx-base-text-fill; -fx-font-size: 15px;">
                                 <BorderPane.margin>
                                     <Insets left="3" />
                                 </BorderPane.margin>
@@ -84,32 +84,20 @@
                         <left>
                             <HBox fx:id="navLeft" alignment="CENTER_LEFT" style="-fx-padding: 0 5 0 5;">
                                 <JFXButton fx:id="backNavButton" onMouseClicked="#onBack"
-                                           styleClass="jfx-decorator-button" ripplerFill="white">
-                                    <graphic>
-                                        <fx:include source="/assets/svg/arrow-left.fxml"/>
-                                    </graphic>
-                                </JFXButton>
+                                           styleClass="jfx-decorator-button" ripplerFill="white" />
                                 <JFXButton fx:id="closeNavButton" onMouseClicked="#onCloseNav"
-                                           styleClass="jfx-decorator-button" ripplerFill="white">
-                                    <graphic>
-                                        <fx:include source="/assets/svg/close.fxml"/>
-                                    </graphic>
-                                </JFXButton>
+                                           styleClass="jfx-decorator-button" ripplerFill="white" />
                             </HBox>
                         </left>
                         <center>
                             <VBox alignment="CENTER_LEFT"> <!-- don't know why label always be centered when using HBox -->
-                                <Label fx:id="titleLabel" style="-fx-text-fill:WHITE; -fx-font-size: 15;"/>
+                                <Label fx:id="titleLabel" style="-fx-text-fill: -fx-base-text-fill; -fx-font-size: 15;"/>
                             </VBox>
                         </center>
                         <right>
                             <HBox fx:id="navRight" alignment="CENTER_LEFT">
                                 <JFXButton fx:id="refreshNavButton" onMouseClicked="#onRefresh"
-                                           styleClass="jfx-decorator-button" ripplerFill="white">
-                                    <graphic>
-                                        <fx:include source="/assets/svg/refresh.fxml"/>
-                                    </graphic>
-                                </JFXButton>
+                                           styleClass="jfx-decorator-button" ripplerFill="white" />
                                 <Rectangle height="${navBar.height}" width="1" fill="gray"/>
                             </HBox>
                         </right>

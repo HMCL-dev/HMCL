@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.ObjectBinding;
 import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.IOUtils;
@@ -57,12 +59,22 @@ public class Theme {
         return name.startsWith("#");
     }
 
+    public boolean isLight() {
+        return Color.web(color).grayscale().getRed() >= 0.5;
+    }
+
+    public Color getForegroundColor() {
+        return isLight() ? Color.BLACK : Color.WHITE;
+    }
+
     public String[] getStylesheets() {
         String name = isCustom() ? BLUE.getName() : this.name;
         String css = Theme.class.getResource("/assets/css/" + name + ".css").toExternalForm();
         try {
             File temp = File.createTempFile("hmcl", ".css");
-            FileUtils.writeText(temp, IOUtils.readFullyAsString(Theme.class.getResourceAsStream("/assets/css/custom.css")).replace("%base-color%", color));
+            FileUtils.writeText(temp, IOUtils.readFullyAsString(Theme.class.getResourceAsStream("/assets/css/custom.css"))
+                    .replace("%base-color%", color)
+                    .replace("%font-color%", getColorDisplayName(getForegroundColor())));
             css = temp.toURI().toString();
         } catch (IOException e) {
             Logging.LOG.log(Level.SEVERE, "Unable to create theme stylesheet", e);
@@ -104,5 +116,15 @@ public class Theme {
         return c != null ? String.format("#%02x%02x%02x", Math.round(c.getRed() * 255.0D), Math.round(c.getGreen() * 255.0D), Math.round(c.getBlue() * 255.0D)).toUpperCase() : null;
     }
 
+    public static ObjectBinding<Color> foregroundFillBinding() {
+        return Bindings.createObjectBinding(() -> Settings.INSTANCE.getTheme().getForegroundColor(), Settings.INSTANCE.themeProperty());
+    }
 
+    public static ObjectBinding<Color> blackFillBinding() {
+        return Bindings.createObjectBinding(() -> Color.BLACK);
+    }
+
+    public static ObjectBinding<Color> whiteFillBinding() {
+        return Bindings.createObjectBinding(() -> Color.WHITE);
+    }
 }

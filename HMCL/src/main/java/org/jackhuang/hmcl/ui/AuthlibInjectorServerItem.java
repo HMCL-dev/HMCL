@@ -24,6 +24,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServerInfo;
+import org.jackhuang.hmcl.setting.Theme;
 
 import java.util.function.Consumer;
 
@@ -48,7 +49,7 @@ public final class AuthlibInjectorServerItem extends BorderPane {
         right.setOnMouseClicked(e -> deleteCallback.accept(this));
         right.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(right, Pos.CENTER);
-        right.setGraphic(SVG.close("black", 15, 15));
+        right.setGraphic(SVG.close(Theme.blackFillBinding(), 15, 15));
         setRight(right);
 
         setStyle("-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;");

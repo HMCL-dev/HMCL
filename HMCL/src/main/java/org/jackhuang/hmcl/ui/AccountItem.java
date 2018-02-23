@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.AccountHelper;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 
@@ -73,8 +74,8 @@ public final class AccountItem extends StackPane {
         setEffect(new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.26), 5.0, 0.12, -0.5, 1.0));
 
         chkSelected.setToggleGroup(toggleGroup);
-        btnDelete.setGraphic(SVG.delete("black", 15, 15));
-        btnRefresh.setGraphic(SVG.refresh("black", 15, 15));
+        btnDelete.setGraphic(SVG.delete(Theme.blackFillBinding(), 15, 15));
+        btnRefresh.setGraphic(SVG.refresh(Theme.blackFillBinding(), 15, 15));
 
         // create image view
         icon.translateYProperty().bind(Bindings.createDoubleBinding(() -> header.getBoundsInParent().getHeight() - icon.getHeight() / 2 - 16, header.boundsInParentProperty(), icon.heightProperty()));
