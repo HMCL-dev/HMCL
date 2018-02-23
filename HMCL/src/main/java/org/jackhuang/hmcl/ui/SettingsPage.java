@@ -218,7 +218,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         themeItem.getGroup().getToggles().stream().filter(it -> Settings.INSTANCE.getTheme() == it.getUserData() || Settings.INSTANCE.getTheme().isCustom() && themeItem.isCustomToggle(it)).findFirst().ifPresent(it -> it.setSelected(true));
 
         Settings.INSTANCE.themeProperty().setChangedListenerAndOperate(it -> {
-            if (it.getName().startsWith("#") || it.getName().startsWith("0x"))
+            if (it.isCustom())
                 themeItem.setSubtitle(it.getName());
             else
                 themeItem.setSubtitle(Main.i18n("color." + it.getName().toLowerCase()));

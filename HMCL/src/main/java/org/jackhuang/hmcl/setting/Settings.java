@@ -27,9 +27,7 @@ import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
-import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.MojangDownloadProvider;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.ProfileChangedEvent;
 import org.jackhuang.hmcl.event.ProfileLoadingEvent;
@@ -272,6 +270,10 @@ public class Settings {
         SETTINGS.setLogLines(logLines);
     }
 
+    /****************************************
+     *           AUTHLIB INJECTORS          *
+     ****************************************/
+
     public Set<String> getAuthlibInjectorServerURLs() {
         return SETTINGS.getAuthlibInjectorServerURLs();
     }
@@ -307,24 +309,19 @@ public class Settings {
         }
     }
 
+    /****************************************
+     *        DOWNLOAD PROVIDERS            *
+     ****************************************/
+
     public DownloadProvider getDownloadProvider() {
-        switch (SETTINGS.getDownloadType()) {
-            case 0:
-                return MojangDownloadProvider.INSTANCE;
-            case 1:
-                return BMCLAPIDownloadProvider.INSTANCE;
-            default:
-                return MojangDownloadProvider.INSTANCE;
-        }
+        return DownloadProviders.getDownloadProvider(SETTINGS.getDownloadType());
     }
 
     public void setDownloadProvider(DownloadProvider downloadProvider) {
-        if (downloadProvider == MojangDownloadProvider.INSTANCE)
-            SETTINGS.setDownloadType(0);
-        else if (downloadProvider == BMCLAPIDownloadProvider.INSTANCE)
-            SETTINGS.setDownloadType(1);
-        else
+        int index = DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(downloadProvider);
+        if (index == -1)
             throw new IllegalArgumentException("Unknown download provider: " + downloadProvider);
+        SETTINGS.setDownloadType(index);
     }
 
     /****************************************

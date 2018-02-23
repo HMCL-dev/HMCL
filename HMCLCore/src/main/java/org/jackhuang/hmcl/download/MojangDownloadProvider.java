@@ -26,11 +26,12 @@ import org.jackhuang.hmcl.download.optifine.OptiFineVersionList;
  * @see <a href="http://wiki.vg">http://wiki,vg</a>
  * @author huangyuhui
  */
-public final class MojangDownloadProvider implements DownloadProvider {
+public class MojangDownloadProvider implements DownloadProvider {
 
-    public static final MojangDownloadProvider INSTANCE = new MojangDownloadProvider();
+    private boolean isChina;
 
-    private MojangDownloadProvider() {
+    public MojangDownloadProvider(boolean isChina) {
+        this.isChina = isChina;
     }
 
     @Override
@@ -76,9 +77,16 @@ public final class MojangDownloadProvider implements DownloadProvider {
 
     @Override
     public String injectURL(String baseURL) {
-        if (baseURL.contains("net/minecraftforge/forge"))
-            return baseURL;
+        if (baseURL == null)
+            return null;
+        else if (baseURL.contains("scala-swing") || baseURL.contains("scala-xml") || baseURL.contains("scala-parser-combinators"))
+            return baseURL.replace("http://files.minecraftforge.net/maven", "http://ftb.cursecdn.com/FTB2/maven/");
+        else if (baseURL.contains("typesafe") || baseURL.contains("scala"))
+            if (isChina)
+                return baseURL.replace("http://files.minecraftforge.net/maven", "http://maven.aliyun.com/nexus/content/groups/public");
+            else
+                return baseURL.replace("http://files.minecraftforge.net/maven", "http://repo1.maven.org/maven2");
         else
-            return baseURL.replace("http://files.minecraftforge.net/maven", "http://ftb.cursecdn.com/FTB2/maven");
+            return baseURL;
     }
 }

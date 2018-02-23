@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
+import org.jackhuang.hmcl.download.CurseCDNDownloadProvider;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.MojangDownloadProvider;
 import org.jackhuang.hmcl.util.Lang;
@@ -28,9 +29,9 @@ import java.util.List;
 public final class DownloadProviders {
     private DownloadProviders() {}
 
-    public static final List<DownloadProvider> DOWNLOAD_PROVIDERS = Lang.immutableListOf(MojangDownloadProvider.INSTANCE, BMCLAPIDownloadProvider.INSTANCE);
+    public static final List<DownloadProvider> DOWNLOAD_PROVIDERS = Lang.immutableListOf(new MojangDownloadProvider(Settings.INSTANCE.getLocale() == Locales.ZH_CN), BMCLAPIDownloadProvider.INSTANCE, CurseCDNDownloadProvider.INSTANCE);
 
     public static DownloadProvider getDownloadProvider(int index) {
-        return Lang.get(DOWNLOAD_PROVIDERS, index).orElse(MojangDownloadProvider.INSTANCE);
+        return Lang.get(DOWNLOAD_PROVIDERS, index).orElse(DOWNLOAD_PROVIDERS.get(0));
     }
 }
