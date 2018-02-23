@@ -48,7 +48,7 @@ public final class GameLibrariesTask extends Task {
      */
     public GameLibrariesTask(AbstractDependencyManager dependencyManager, Version version) {
         this.dependencyManager = dependencyManager;
-        this.version = version;
+        this.version = version.requireResolved();
         setSignificance(TaskSignificance.MODERATE);
     }
 

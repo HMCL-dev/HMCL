@@ -29,7 +29,7 @@ import java.util.Date;
 public class ClassicVersion extends Version {
 
     public ClassicVersion() {
-        super("Classic", "${auth_player_name} ${auth_session} --workDir ${game_directory}",
+        super(true, "Classic", "${auth_player_name} ${auth_session} --workDir ${game_directory}",
                 null, "net.minecraft.client.Minecraft", null, null, null, null,
                 Arrays.asList(new ClassicLibrary("lwjgl"), new ClassicLibrary("jinput"), new ClassicLibrary("lwjgl_util")),
                 null, null, null, ReleaseType.UNKNOWN, new Date(), new Date(), 0);

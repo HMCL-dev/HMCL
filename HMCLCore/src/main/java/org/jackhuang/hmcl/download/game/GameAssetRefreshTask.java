@@ -54,7 +54,7 @@ public final class GameAssetRefreshTask extends TaskResult<Collection<Pair<File,
      */
     public GameAssetRefreshTask(AbstractDependencyManager dependencyManager, Version version) {
         this.dependencyManager = dependencyManager;
-        this.version = version;
+        this.version = version.requireResolved();
         this.assetIndexInfo = version.getAssetIndex();
         this.assetIndexFile = dependencyManager.getGameRepository().getIndexFile(version.getId(), assetIndexInfo.getId());
 

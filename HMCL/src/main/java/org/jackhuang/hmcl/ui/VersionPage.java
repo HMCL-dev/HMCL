@@ -161,7 +161,7 @@ public final class VersionPage extends StackPane implements DecoratorPage {
                 deleteVersion(profile, version);
                 break;
             case 2: // redownload asset index
-                new GameAssetIndexDownloadTask(profile.getDependency(), profile.getRepository().getVersion(version).resolve(profile.getRepository())).start();
+                new GameAssetIndexDownloadTask(profile.getDependency(), profile.getRepository().getResolvedVersion(version)).start();
                 break;
             case 3: // delete libraries
                 FileUtils.deleteDirectoryQuietly(new File(profile.getRepository().getBaseDirectory(), "libraries"));

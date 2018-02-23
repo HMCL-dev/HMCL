@@ -44,7 +44,7 @@ public final class VersionJsonSaveTask extends Task {
      */
     public VersionJsonSaveTask(DefaultGameRepository repository, Version version) {
         this.repository = repository;
-        this.version = version;
+        this.version = version.requireResolved();
 
         setSignificance(TaskSignificance.MODERATE);
     }

@@ -47,7 +47,10 @@ public class Version implements Comparable<Version>, Validation {
     private final Date releaseTime;
     private final int minimumLauncherVersion;
 
-    public Version(String id, String minecraftArguments, Arguments arguments, String mainClass, String inheritsFrom, String jar, AssetIndexInfo assetIndex, String assets, List<Library> libraries, List<CompatibilityRule> compatibilityRules, Map<DownloadType, DownloadInfo> downloads, Map<DownloadType, LoggingInfo> logging, ReleaseType type, Date time, Date releaseTime, int minimumLauncherVersion) {
+    private transient final boolean resolved;
+
+    public Version(boolean resolved, String id, String minecraftArguments, Arguments arguments, String mainClass, String inheritsFrom, String jar, AssetIndexInfo assetIndex, String assets, List<Library> libraries, List<CompatibilityRule> compatibilityRules, Map<DownloadType, DownloadInfo> downloads, Map<DownloadType, LoggingInfo> logging, ReleaseType type, Date time, Date releaseTime, int minimumLauncherVersion) {
+        this.resolved = resolved;
         this.id = id;
         this.minecraftArguments = minecraftArguments;
         this.arguments = arguments;
@@ -140,11 +143,18 @@ public class Version implements Comparable<Version>, Validation {
         return false;
     }
 
+    public Version requireResolved() {
+        if (!resolved)
+            throw new RuntimeException("Version not resolved");
+
+        return this;
+    }
+
     /**
      * Resolve given version
      */
     public Version resolve(VersionProvider provider) throws VersionNotFoundException {
-        return resolve(provider, new HashSet<>());
+        return resolve(provider, new HashSet<>()).setResolved(true);
     }
 
     protected Version resolve(VersionProvider provider, Set<String> resolvedSoFar) throws VersionNotFoundException {
@@ -159,7 +169,9 @@ public class Version implements Comparable<Version>, Validation {
 
         // It is supposed to auto install an version in getVersion.
         Version parent = provider.getVersion(inheritsFrom).resolve(provider, resolvedSoFar);
-        return new Version(id,
+        return new Version(
+                true,
+                id,
                 minecraftArguments == null ? parent.minecraftArguments : minecraftArguments,
                 Arguments.merge(parent.arguments, arguments),
                 mainClass == null ? parent.mainClass : mainClass,
@@ -177,36 +189,40 @@ public class Version implements Comparable<Version>, Validation {
                 Math.max(minimumLauncherVersion, parent.minimumLauncherVersion));
     }
 
+    public Version setResolved(boolean resolved) {
+        return new Version(resolved, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion);
+    }
+
     public Version setId(String id) {
-        return new Version(id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion);
+        return new Version(resolved, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion);
     }
 
     public Version setMinecraftArguments(String minecraftArguments) {
-        return new Version(id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion);
+        return new Version(resolved, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion);
     }
 
     public Version setArguments(Arguments arguments) {
-        return new Version(id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion);
+        return new Version(resolved, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion);
     }
 
     public Version setMainClass(String mainClass) {
-        return new Version(id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion);
+        return new Version(resolved, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion);
     }
 
     public Version setInheritsFrom(String inheritsFrom) {
-        return new Version(id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion);
+        return new Version(resolved, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion);
     }
 
     public Version setJar(String jar) {
-        return new Version(id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion);
+        return new Version(resolved, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion);
     }
 
     public Version setLibraries(List<Library> libraries) {
-        return new Version(id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion);
+        return new Version(resolved, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion);
     }
 
     public Version setLogging(Map<DownloadType, LoggingInfo> logging) {
-        return new Version(id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion);
+        return new Version(resolved, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion);
     }
 
     @Override

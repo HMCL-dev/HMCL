@@ -52,6 +52,10 @@ public interface GameRepository extends VersionProvider {
     @Override
     Version getVersion(String id) throws VersionNotFoundException;
 
+    default Version getResolvedVersion(String id) throws VersionNotFoundException {
+        return getVersion(id).resolve(this);
+    }
+
     /**
      * How many version are there?
      */

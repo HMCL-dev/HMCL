@@ -56,7 +56,7 @@ public abstract class Launcher {
         this.listener = listener;
         this.daemon = daemon;
 
-        version = repository.getVersion(versionId).resolve(repository);
+        version = repository.getResolvedVersion(versionId);
     }
 
     /**

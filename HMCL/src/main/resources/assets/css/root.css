@@ -4,7 +4,8 @@
  */
 
 .root {
-    -fx-font-family: "微软雅黑", "Microsoft YaHei", "Roboto";
+    -fx-base-font-family: "微软雅黑", "Microsoft YaHei", "Roboto";
+    -fx-font-family: -fx-base-font-family;
 }
 
 .disabled Label {
@@ -129,7 +130,7 @@
 
 .jfx-layout-heading {
     -fx-font-size: 20.0px;
-    -fx-font-weight: BOLD;
+    -fx-font-family: -fx-base-font-family;
     -fx-alignment: center-left;
     -fx-padding: 5.0 0.0 5.0 0.0;
 }
@@ -152,12 +153,12 @@
 
 .dialog-accept {
     -fx-text-fill: #03A9F4;
-    -fx-font-weight: BOLD;
+    -fx-font-family: -fx-base-font-family;
     -fx-padding: 0.7em 0.8em;
 }
 
 .dialog-cancel {
-    -fx-font-weight: BOLD;
+    -fx-font-family: -fx-base-font-family;
     -fx-padding: 0.7em 0.8em;
 }
 

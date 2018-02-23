@@ -53,7 +53,7 @@ public class InstallerController {
     public void loadVersion(Profile profile, String versionId) {
         this.profile = profile;
         this.versionId = versionId;
-        this.version = profile.getRepository().getVersion(versionId).resolve(profile.getRepository());
+        this.version = profile.getRepository().getResolvedVersion(versionId);
 
         contentPane.getChildren().clear();
         forge = liteLoader = optiFine = null;

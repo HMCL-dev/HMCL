@@ -77,7 +77,7 @@ public final class LauncherHelper {
         Profile profile = Settings.INSTANCE.getSelectedProfile();
         GameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
-        Version version = repository.getVersion(selectedVersion).resolve(repository);
+        Version version = repository.getResolvedVersion(selectedVersion);
         Account account = Settings.INSTANCE.getSelectedAccount();
         VersionSetting setting = profile.getVersionSetting(selectedVersion);
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
@@ -156,9 +156,7 @@ public final class LauncherHelper {
 
             @Override
             public void onStop(boolean success, TaskExecutor executor) {
-                if (success) {
-                    Controllers.closeDialog();
-                } else {
+                if (!success) {
                     Platform.runLater(() -> {
                         if (executor.getLastException() != null)
                             Controllers.dialog(I18nException.getStackTrace(executor.getLastException()),
