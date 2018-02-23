@@ -62,7 +62,7 @@ public class InstallerController {
             Consumer<InstallerItem> removeAction = x -> {
                 LinkedList<Library> newList = new LinkedList<>(version.getLibraries());
                 newList.remove(library);
-                new MaintainTask(profile.getRepository(), version.setLibraries(newList))
+                new MaintainTask(version.setLibraries(newList))
                         .then(variables -> new VersionJsonSaveTask(profile.getRepository(), variables.get(MaintainTask.ID)))
                         .with(profile.getRepository().refreshVersionsAsync())
                         .with(Task.of(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId)))

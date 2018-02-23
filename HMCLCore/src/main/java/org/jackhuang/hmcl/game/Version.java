@@ -167,7 +167,7 @@ public class Version implements Comparable<Version>, Validation {
                 jar == null ? parent.jar : jar,
                 assetIndex == null ? parent.assetIndex : assetIndex,
                 assets == null ? parent.assets : assets,
-                Lang.merge(parent.libraries, this.libraries),
+                Lang.merge(this.libraries, parent.libraries),
                 Lang.merge(parent.compatibilityRules, this.compatibilityRules),
                 downloads == null ? parent.downloads : downloads,
                 logging == null ? parent.logging : logging,

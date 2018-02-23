@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.mod.CurseCompletionTask;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
@@ -76,7 +77,7 @@ public final class LauncherHelper {
         Profile profile = Settings.INSTANCE.getSelectedProfile();
         GameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
-        Version version = repository.getVersion(selectedVersion);
+        Version version = repository.getVersion(selectedVersion).resolve(repository);
         Account account = Settings.INSTANCE.getSelectedAccount();
         VersionSetting setting = profile.getVersionSetting(selectedVersion);
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));

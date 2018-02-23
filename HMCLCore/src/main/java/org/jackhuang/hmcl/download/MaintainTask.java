@@ -28,16 +28,14 @@ import java.util.List;
 
 public class MaintainTask extends TaskResult<Version> {
 
-    private final GameRepository repository;
     private final Version version;
     private final String id;
 
-    public MaintainTask(GameRepository repository, Version version) {
-        this(repository, version, ID);
+    public MaintainTask(Version version) {
+        this(version, ID);
     }
 
-    public MaintainTask(GameRepository repository, Version version, String id) {
-        this.repository = repository;
+    public MaintainTask(Version version, String id) {
         this.version = version;
         this.id = id;
     }
