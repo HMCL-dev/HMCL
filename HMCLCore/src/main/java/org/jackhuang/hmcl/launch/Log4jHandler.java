@@ -56,6 +56,7 @@ final class Log4jHandler extends Thread {
     private final PipedInputStream inputStream = Lang.invoke(() -> new PipedInputStream(outputStream));
     private final AtomicBoolean interrupted = new AtomicBoolean(false);
     private final List<String> logs = new LinkedList<>();
+    private boolean broken = false;
 
     public Log4jHandler(BiConsumer<String, Log4jLevel> callback) {
         this.callback = callback;
@@ -95,20 +96,28 @@ final class Log4jHandler extends Thread {
     public Future<?> newLine(String log) {
         return Schedulers.computation().schedule(() -> {
             try {
-                String line = (log + OperatingSystem.LINE_SEPARATOR)
+                String line = log
                         .replace("<![CDATA[", "")
                         .replace("]]>", "")
-                        .replace("log4j:Event", "log4j_Event")
-                        .replace("<log4j:Message>", "<log4j_Message><![CDATA[")
-                        .replace("</log4j:Message>", "]]></log4j_Message>")
-                        .replace("log4j:Throwable", "log4j_Throwable");
+                        .replace("log4j:", "log4j_")
+                        .replace("<log4j_Message>", "<log4j_Message><![CDATA[")
+                        .replace("</log4j_Message>", "]]></log4j_Message>")
+                        .replace("<log4j_Throwable>", "<log4j_Throwable><![CDATA[")
+                        .replace("</log4j_Throwable>", "]]></log4j_Throwable>");
                 logs.add(line);
-                byte[] bytes = line.getBytes(Charsets.UTF_8);
+                if (broken)
+                    System.out.println(line);
+
+                byte[] bytes = (line + OperatingSystem.LINE_SEPARATOR).getBytes(Charsets.UTF_8);
                 outputStream.write(bytes);
                 outputStream.flush();
             } catch (IOException e) {
                 // Ignoring IOException, including read end dead.
-                Logging.LOG.log(Level.WARNING, "An error occurred when writing console lines", e);
+                if (!broken) {
+                    Logging.LOG.log(Level.WARNING, "An error occurred when writing console lines", e);
+                    logs.forEach(System.out::println);
+                    broken = true;
+                }
             }
         });
     }

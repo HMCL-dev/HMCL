@@ -79,14 +79,14 @@ public class MojangDownloadProvider implements DownloadProvider {
     public String injectURL(String baseURL) {
         if (baseURL == null)
             return null;
-        else if (baseURL.contains("scala-swing") || baseURL.contains("scala-xml") || baseURL.contains("scala-parser-combinators"))
-            return baseURL.replace("http://files.minecraftforge.net/maven", "http://ftb.cursecdn.com/FTB2/maven/");
-        else if (baseURL.contains("typesafe") || baseURL.contains("scala"))
+        //else if (baseURL.contains("scala-swing") || baseURL.contains("scala-xml") || baseURL.contains("scala-parser-combinators"))
+        //    return baseURL.replace("http://files.minecraftforge.net/maven", "http://ftb.cursecdn.com/FTB2/maven");
+        /*else if (baseURL.contains("typesafe") || baseURL.contains("scala"))
             if (isChina)
                 return baseURL.replace("http://files.minecraftforge.net/maven", "http://maven.aliyun.com/nexus/content/groups/public");
             else
                 return baseURL.replace("http://files.minecraftforge.net/maven", "http://repo1.maven.org/maven2");
-        else
+        */else
             return baseURL;
     }
 }
