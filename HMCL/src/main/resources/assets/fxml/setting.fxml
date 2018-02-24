@@ -108,7 +108,14 @@
                     </VBox>
                 </ComponentList>
 
-                <MultiColorItem fx:id="themeItem" title="%settings.launcher.theme" hasSubtitle="true" />
+                <BorderPane>
+                    <left>
+                        <Label text="%settings.launcher.theme" BorderPane.alignment="CENTER_LEFT" />
+                    </left>
+                    <right>
+                        <StackPane fx:id="themeColorPickerContainer" minHeight="30" />
+                    </right>
+                </BorderPane>
 
                 <VBox spacing="5">
                     <BorderPane><left><Label text="%settings.launcher.log_font" BorderPane.alignment="CENTER_LEFT" /></left><right><HBox spacing="3"><FontComboBox fontSize="12" enableStyle="false" fx:id="cboFont" /><JFXTextField fx:id="txtFontSize" maxWidth="50" minWidth="50" /></HBox></right></BorderPane>

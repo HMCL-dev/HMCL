@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.*;
+import com.jfoenix.effects.JFXDepthManager;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -41,7 +43,7 @@ import org.jackhuang.hmcl.util.Lang;
 import java.net.Proxy;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class SettingsPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", Main.i18n("settings.launcher"));
@@ -77,7 +79,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     @FXML
     private MultiFileItem backgroundItem;
     @FXML
-    private MultiColorItem themeItem;
+    private StackPane themeColorPickerContainer;
     @FXML
     private JFXRadioButton chkNoProxy;
     @FXML
@@ -193,38 +195,17 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
                 Settings.INSTANCE.setBackgroundImageType((EnumBackgroundImage) newValue.getUserData()));
 
         // theme
-        themeItem.loadChildren(Arrays.asList(
-                themeItem.createChildren(Main.i18n("color.blue"), Theme.BLUE),
-                themeItem.createChildren(Main.i18n("color.dark_blue"), Theme.DARK_BLUE),
-                themeItem.createChildren(Main.i18n("color.green"), Theme.GREEN),
-                themeItem.createChildren(Main.i18n("color.orange"), Theme.ORANGE),
-                themeItem.createChildren(Main.i18n("color.purple"), Theme.PURPLE),
-                themeItem.createChildren(Main.i18n("color.red"), Theme.RED)
-        ));
-
-        if (Settings.INSTANCE.getTheme().isCustom())
-            themeItem.setColor(Color.web(Settings.INSTANCE.getTheme().getColor()));
-
-        themeItem.setToggleSelectedListener(newValue -> {
-            if (newValue.getUserData() != null) {
-                Settings.INSTANCE.setTheme((Theme) newValue.getUserData());
-                themeItem.setOnColorPickerChanged(null);
-            } else {
-                themeItem.setOnColorPickerChanged(color ->
-                        Settings.INSTANCE.setTheme(Theme.custom(Theme.getColorDisplayName(color))));
-            }
+        JFXColorPicker picker = new JFXColorPicker(Color.web(Settings.INSTANCE.getTheme().getColor()), null);
+        picker.setCustomColorText(Main.i18n("color.custom"));
+        picker.setRecentColorsText(Main.i18n("color.recent"));
+        picker.getCustomColors().setAll(Arrays.stream(Theme.VALUES).map(Theme::getColor).map(Color::web).collect(Collectors.toList()));
+        picker.setOnAction(e -> {
+            Theme theme = Theme.custom(Theme.getColorDisplayName(picker.getValue()));
+            Settings.INSTANCE.setTheme(theme);
+            Controllers.getScene().getStylesheets().setAll(theme.getStylesheets());
         });
-
-        themeItem.getGroup().getToggles().stream().filter(it -> Settings.INSTANCE.getTheme() == it.getUserData() || Settings.INSTANCE.getTheme().isCustom() && themeItem.isCustomToggle(it)).findFirst().ifPresent(it -> it.setSelected(true));
-
-        Settings.INSTANCE.themeProperty().setChangedListenerAndOperate(it -> {
-            if (it.isCustom())
-                themeItem.setSubtitle(it.getName());
-            else
-                themeItem.setSubtitle(Main.i18n("color." + it.getName().toLowerCase()));
-
-            Controllers.getScene().getStylesheets().setAll(it.getStylesheets());
-        });
+        themeColorPickerContainer.getChildren().setAll(picker);
+        Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
     }
 
     private void initBackgroundItemSubtitle() {
