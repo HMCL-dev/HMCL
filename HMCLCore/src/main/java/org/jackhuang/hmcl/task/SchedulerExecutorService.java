@@ -36,7 +36,10 @@ class SchedulerExecutorService extends Scheduler {
 
     @Override
     public Future<?> schedule(ExceptionalRunnable<?> block) {
-        return executorService.submit(block.toCallable());
+        if (executorService.isShutdown() || executorService.isTerminated())
+            return Schedulers.NONE.schedule(block);
+        else
+            return executorService.submit(block.toCallable());
     }
 
 }
