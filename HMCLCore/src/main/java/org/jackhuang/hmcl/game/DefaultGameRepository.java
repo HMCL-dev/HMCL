@@ -38,7 +38,7 @@ import java.util.logging.Level;
 public class DefaultGameRepository implements GameRepository {
 
     private File baseDirectory;
-    protected final Map<String, Version> versions = new TreeMap<>();
+    protected Map<String, Version> versions;
     protected boolean loaded = false;
 
     public DefaultGameRepository(File baseDirectory) {
@@ -151,7 +151,7 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     protected void refreshVersionsImpl() {
-        versions.clear();
+        Map<String, Version> versions = new TreeMap<>();
 
         if (ClassicVersion.hasClassicVersion(getBaseDirectory())) {
             Version version = new ClassicVersion();
@@ -172,7 +172,10 @@ public class DefaultGameRepository implements GameRepository {
                     if (!json.exists()) {
                         List<File> jsons = FileUtils.listFilesByExtension(dir, "json");
                         if (jsons.size() == 1)
-                            jsons.get(0).renameTo(json);
+                            if (!jsons.get(0).renameTo(json)) {
+                                Logging.LOG.warning("Cannot rename json file " + jsons.get(0) + " to " + json + ", ignoring version " + id);
+                                continue;
+                            }
                     }
 
                     Version version;
@@ -216,6 +219,7 @@ public class DefaultGameRepository implements GameRepository {
             }
         }
 
+        this.versions = versions;
         loaded = true;
     }
 

@@ -193,8 +193,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private void loadVersions(Profile profile) {
         this.profile = profile;
         List<Node> children = new LinkedList<>();
-        List<Version> versions = new LinkedList<>(profile.getRepository().getVersions());
-        for (Version version : versions) {
+        for (Version version : profile.getRepository().getVersions()) {
             children.add(buildNode(profile, version.getId(), GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version.getId())).orElse("Unknown")));
         }
         FXUtils.resetChildren(masonryPane, children);
