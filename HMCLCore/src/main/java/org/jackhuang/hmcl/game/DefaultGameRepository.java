@@ -143,6 +143,8 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public boolean removeVersionFromDisk(String id) {
+        if (!versions.containsKey(id))
+            return true;
         File file = getVersionRoot(id);
         if (!file.exists())
             return true;

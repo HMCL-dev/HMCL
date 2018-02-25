@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.download.game.*;
+import org.jackhuang.hmcl.game.SimpleVersionProvider;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.ParallelTask;
 import org.jackhuang.hmcl.task.Task;
@@ -51,7 +52,7 @@ public class DefaultGameBuilder extends GameBuilder {
     public Task buildAsync() {
         return new VersionJsonDownloadTask(gameVersion, dependencyManager).then(variables -> {
             Version version = Constants.GSON.fromJson(variables.<String>get(VersionJsonDownloadTask.ID), Version.class);
-            version = version.setId(name).setJar(null);
+            version = version.setId(name).setJar(null).resolve(new SimpleVersionProvider());
             variables.set("version", version);
             Task result = new ParallelTask(
                     new GameAssetDownloadTask(dependencyManager, version),
