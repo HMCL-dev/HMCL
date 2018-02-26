@@ -80,8 +80,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.loadFXML(this, "/assets/fxml/main.fxml");
 
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(() -> Platform.runLater(this::loadVersions));
-        EventBus.EVENT_BUS.channel(ProfileLoadingEvent.class).register(this::onProfilesLoading);
-        EventBus.EVENT_BUS.channel(ProfileChangedEvent.class).register(this::onProfileChanged);
 
         versionPopup = new JFXPopup(versionList);
         getChildren().remove(versionList);
@@ -176,14 +174,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
         if (iconFile.exists())
             item.setImage(new Image("file:" + iconFile.getAbsolutePath()));
         return item;
-    }
-
-    public void onProfilesLoading() {
-        // TODO: Profiles
-    }
-
-    public void onProfileChanged(ProfileChangedEvent event) {
-        Platform.runLater(() -> loadVersions(event.getProfile()));
     }
 
     private void loadVersions() {
