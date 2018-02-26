@@ -48,6 +48,7 @@ public class Library implements Comparable<Library> {
     private final boolean lateload;
     private final Map<OperatingSystem, String> natives;
     private final List<CompatibilityRule> rules;
+    private final List<String> checksums;
 
     private final String path;
 
@@ -60,10 +61,10 @@ public class Library implements Comparable<Library> {
     }
 
     public Library(String groupId, String artifactId, String version, String classifier, String url, LibrariesDownloadInfo downloads, boolean lateload) {
-        this(groupId, artifactId, version, classifier, url, downloads, lateload, null, null, null);
+        this(groupId, artifactId, version, classifier, url, downloads, lateload, null, null, null, null);
     }
 
-    public Library(String groupId, String artifactId, String version, String classifier, String url, LibrariesDownloadInfo downloads, boolean lateload, ExtractRules extract, Map<OperatingSystem, String> natives, List<CompatibilityRule> rules) {
+    public Library(String groupId, String artifactId, String version, String classifier, String url, LibrariesDownloadInfo downloads, boolean lateload, List<String> checksums, ExtractRules extract, Map<OperatingSystem, String> natives, List<CompatibilityRule> rules) {
         this.groupId = groupId;
         this.artifactId = artifactId;
         this.version = version;
@@ -80,6 +81,7 @@ public class Library implements Comparable<Library> {
         this.lateload = lateload;
         this.natives = natives;
         this.rules = rules;
+        this.checksums = checksums;
 
         LibraryDownloadInfo temp = null;
         if (downloads != null)
@@ -141,6 +143,10 @@ public class Library implements Comparable<Library> {
         return lateload;
     }
 
+    public List<String> getChecksums() {
+        return checksums;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this).append("name", getName()).toString();
@@ -169,15 +175,15 @@ public class Library implements Comparable<Library> {
     }
 
     public static Library fromName(String name) {
-        return fromName(name, null, null, null, null, null);
+        return fromName(name, null, null, null, null, null, null);
     }
 
-    public static Library fromName(String name, String url, LibrariesDownloadInfo downloads, ExtractRules extract, Map<OperatingSystem, String> natives, List<CompatibilityRule> rules) {
+    public static Library fromName(String name, String url, LibrariesDownloadInfo downloads, List<String> checksums, ExtractRules extract, Map<OperatingSystem, String> natives, List<CompatibilityRule> rules) {
         String[] arr = name.split(":", 4);
         if (arr.length != 3 && arr.length != 4)
             throw new IllegalArgumentException("Library name is malformed. Correct example: group:artifact:version(:classifier).");
 
-        return new Library(arr[0].replace("\\", "/"), arr[1], arr[2], arr.length >= 4 ? arr[3] : null, url, downloads, false, extract, natives, rules);
+        return new Library(arr[0].replace("\\", "/"), arr[1], arr[2], arr.length >= 4 ? arr[3] : null, url, downloads, false, checksums, extract, natives, rules);
     }
 
     public static class Serializer implements JsonDeserializer<Library>, JsonSerializer<Library> {
@@ -198,6 +204,8 @@ public class Library implements Comparable<Library> {
                     jsonObject.get("name").getAsString(),
                     jsonObject.has("url") ? jsonObject.get("url").getAsString() : null,
                     context.deserialize(jsonObject.get("downloads"), LibrariesDownloadInfo.class),
+                    context.deserialize(jsonObject.get("checksums"), new TypeToken<List<String>>() {
+                    }.getType()),
                     context.deserialize(jsonObject.get("extract"), ExtractRules.class),
                     context.deserialize(jsonObject.get("natives"), new TypeToken<Map<OperatingSystem, String>>() {
                     }.getType()),

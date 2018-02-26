@@ -153,7 +153,10 @@ public final class TaskExecutor {
             try {
                 task.getScheduler().schedule(task::execute).get();
             } catch (ExecutionException e) {
-                throw (Exception) e.getCause();
+                if (e.getCause() instanceof Exception)
+                    throw (Exception) e.getCause();
+                else
+                    throw e;
             }
 
             if (task instanceof TaskResult<?>) {

@@ -40,7 +40,7 @@ public class ClassicVersion extends Version {
         public ClassicLibrary(String name) {
             super("", "", "", null, null,
                     new LibrariesDownloadInfo(new LibraryDownloadInfo("bin/" + name + ".jar"), null),
-                    false, null, null, null);
+                    false, null, null, null, null);
         }
     }
 
