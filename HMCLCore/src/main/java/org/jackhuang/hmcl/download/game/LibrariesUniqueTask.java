@@ -56,8 +56,16 @@ public class LibrariesUniqueTask extends TaskResult<Version> {
                     multimap.removeKey(id);
                     versionMap.put(id, number);
                     multimap.put(id, library);
-                } else if (number.compareTo(otherNumber) == 0) {
-                    multimap.put(id, library);
+                } else if (number.compareTo(otherNumber) == 0) { // same library id.
+                    boolean flag = false;
+                    // prevent from duplicated libraries
+                    for (Library otherLibrary : multimap.get(id))
+                        if (library.equals(otherLibrary)) {
+                            flag = true;
+                            break;
+                        }
+                    if (!flag)
+                        multimap.put(id, library);
                 }
             } else {
                 versionMap.put(id, number);

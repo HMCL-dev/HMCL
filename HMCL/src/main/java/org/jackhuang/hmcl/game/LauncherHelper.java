@@ -62,7 +62,7 @@ public final class LauncherHelper {
         if (account == null)
             throw new IllegalStateException("No account");
 
-        Version version = repository.getVersion(selectedVersion);
+        Version version = repository.getResolvedVersion(selectedVersion);
         VersionSetting setting = profile.getVersionSetting(selectedVersion);
 
         Platform.runLater(() -> {
