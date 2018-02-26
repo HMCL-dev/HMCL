@@ -143,13 +143,6 @@ public class Version implements Comparable<Version>, Validation {
         return false;
     }
 
-    public Version requireResolved() {
-        if (!resolved)
-            throw new RuntimeException("Version not resolved");
-
-        return this;
-    }
-
     /**
      * Resolve given version
      */

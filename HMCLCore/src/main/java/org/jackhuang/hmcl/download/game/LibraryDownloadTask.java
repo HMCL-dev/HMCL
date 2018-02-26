@@ -24,22 +24,32 @@ public final class LibraryDownloadTask extends Task {
     private final File xzFile;
     private final Library library;
 
+    private boolean downloaded = false;
+
     public LibraryDownloadTask(AbstractDependencyManager dependencyManager, File file, Library library) {
+        if (library.is("net.minecraftforge", "forge"))
+            library = library.setClassifier("universal");
+
+        this.library = library;
+
         String url = dependencyManager.getDownloadProvider().injectURL(library.getDownload().getUrl());
         jar = file;
-        this.library = library;
+
         xzFile = new File(file.getAbsoluteFile().getParentFile(), file.getName() + ".pack.xz");
 
         xzTask = new FileDownloadTask(NetworkUtils.toURL(url + ".pack.xz"),
                 xzFile, dependencyManager.getProxy(), null, 1);
+        xzTask.setSignificance(TaskSignificance.MINOR);
 
-        task = new FileDownloadTask(NetworkUtils.toURL(url + ".pack.xz"),
+        setSignificance(TaskSignificance.MODERATE);
+
+        task = new FileDownloadTask(NetworkUtils.toURL(url),
                 file, dependencyManager.getProxy(), library.getDownload().getSha1());
     }
 
     @Override
     public Collection<? extends Task> getDependents() {
-        return Collections.singleton(xzTask);
+        return library.getChecksums() != null ? Collections.singleton(xzTask) : Collections.emptySet();
     }
 
     @Override
@@ -48,22 +58,19 @@ public final class LibraryDownloadTask extends Task {
     }
 
     @Override
-    public Scheduler getScheduler() {
-        return Schedulers.io();
-    }
-
-    @Override
     public void execute() throws Exception {
-        if (isDependentsSucceeded()) {
+        if (isDependentsSucceeded() && library.getChecksums() != null) {
             unpackLibrary(jar, FileUtils.readBytes(xzFile));
             if (!checksumValid(jar, library.getChecksums()))
                 throw new IOException("Checksum failed for " + library);
+
+            downloaded = true;
         }
     }
 
     @Override
     public Collection<? extends Task> getDependencies() {
-        return isDependentsSucceeded() ? Collections.emptySet() : Collections.singleton(task);
+        return downloaded ? Collections.emptySet() : Collections.singleton(task);
     }
 
     private static boolean checksumValid(File libPath, List<String> checksums) {

@@ -220,7 +220,6 @@ public class FileDownloadTask extends Task {
             } catch (IOException | IllegalStateException e) {
                 if (temp != null)
                     temp.delete();
-                Logging.LOG.log(Level.WARNING, "Unable to download file " + currentURL, e);
                 exception = e;
             } finally {
                 closeFiles();
@@ -228,7 +227,7 @@ public class FileDownloadTask extends Task {
         }
 
         if (exception != null)
-            throw exception;
+            throw new IOException("Unable to download file " + currentURL, exception);
     }
 
 }

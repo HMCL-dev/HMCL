@@ -131,7 +131,7 @@ public final class TaskExecutor {
             return false;
         }
 
-        task.setState(Task.TaskState.RUNNING);
+        task.setState(Task.TaskState.READY);
 
         if (task.getSignificance().shouldLog())
             Logging.LOG.log(Level.FINE, "Executing task: {0}", task.getName());
@@ -150,6 +150,9 @@ public final class TaskExecutor {
 
             task.setVariables(variables);
 
+            task.setState(Task.TaskState.RUNNING);
+
+            taskListeners.forEach(it -> it.onRunning(task));
             try {
                 task.getScheduler().schedule(task::execute).get();
             } catch (ExecutionException e) {
@@ -157,6 +160,8 @@ public final class TaskExecutor {
                     throw (Exception) e.getCause();
                 else
                     throw e;
+            } finally {
+                task.setState(Task.TaskState.EXECUTED);
             }
 
             if (task instanceof TaskResult<?>) {
@@ -172,22 +177,24 @@ public final class TaskExecutor {
             flag = true;
             if (task.getSignificance().shouldLog()) {
                 Logging.LOG.log(Level.FINER, "Task finished: {0}", task.getName());
-
-                task.onDone().fireEvent(new TaskEvent(this, task, false));
-                taskListeners.forEach(it -> it.onFinished(task));
             }
+
+            task.onDone().fireEvent(new TaskEvent(this, task, false));
+            taskListeners.forEach(it -> it.onFinished(task));
         } catch (InterruptedException e) {
             if (task.getSignificance().shouldLog()) {
                 Logging.LOG.log(Level.FINE, "Task aborted: " + task.getName());
-                task.onDone().fireEvent(new TaskEvent(this, task, true));
-                taskListeners.forEach(it -> it.onFailed(task, e));
             }
+            task.onDone().fireEvent(new TaskEvent(this, task, true));
+            taskListeners.forEach(it -> it.onFailed(task, e));
         } catch (SilentException | RejectedExecutionException e) {
             // do nothing
         } catch (Exception e) {
             lastException = e;
             variables.set(LAST_EXCEPTION_ID, e);
-            Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
+            if (task.getSignificance().shouldLog()) {
+                Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
+            }
             task.onDone().fireEvent(new TaskEvent(this, task, true));
             taskListeners.forEach(it -> it.onFailed(task, e));
         } finally {

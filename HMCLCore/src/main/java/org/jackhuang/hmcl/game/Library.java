@@ -147,6 +147,10 @@ public class Library implements Comparable<Library> {
         return checksums;
     }
 
+    public boolean is(String groupId, String artifactId) {
+        return this.groupId.equals(groupId) && this.artifactId.equals(artifactId);
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this).append("name", getName()).toString();
@@ -172,6 +176,10 @@ public class Library implements Comparable<Library> {
     @Override
     public int hashCode() {
         return Objects.hash(getName(), isNative());
+    }
+
+    public Library setClassifier(String classifier) {
+        return new Library(groupId, artifactId, version, classifier, url, downloads, lateload, checksums, extract, natives, rules);
     }
 
     public static Library fromName(String name) {

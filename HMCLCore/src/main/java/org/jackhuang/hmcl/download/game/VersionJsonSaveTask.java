@@ -40,11 +40,11 @@ public final class VersionJsonSaveTask extends Task {
      * Constructor.
      *
      * @param repository the game repository
-     * @param version the **resolved** version
+     * @param version the game version
      */
     public VersionJsonSaveTask(DefaultGameRepository repository, Version version) {
         this.repository = repository;
-        this.version = version.requireResolved();
+        this.version = version;
 
         setSignificance(TaskSignificance.MODERATE);
     }

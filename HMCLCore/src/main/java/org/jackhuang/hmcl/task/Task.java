@@ -133,6 +133,7 @@ public abstract class Task {
 
     /**
      * The collection of sub-tasks that should execute **after** this task running.
+     * Will not be executed if execution fails.
      */
     public Collection<? extends Task> getDependencies() {
         return Collections.emptySet();
@@ -350,6 +351,7 @@ public abstract class Task {
     public enum TaskState {
         READY,
         RUNNING,
+        EXECUTED,
         SUCCEEDED,
         FAILED
     }

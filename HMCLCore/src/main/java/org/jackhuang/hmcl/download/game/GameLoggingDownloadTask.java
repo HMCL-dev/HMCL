@@ -49,7 +49,7 @@ public final class GameLoggingDownloadTask extends Task {
      */
     public GameLoggingDownloadTask(DependencyManager dependencyManager, Version version) {
         this.dependencyManager = dependencyManager;
-        this.version = version.requireResolved();
+        this.version = version;
         setSignificance(TaskSignificance.MODERATE);
     }
 

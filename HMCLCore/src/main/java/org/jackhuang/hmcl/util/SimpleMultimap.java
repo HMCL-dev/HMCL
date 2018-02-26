@@ -74,9 +74,15 @@ public final class SimpleMultimap<K, V> {
         return map.remove(key);
     }
 
-    public void removeValue(V value) {
+    public boolean removeValue(V value) {
+        boolean flag = false;
         for (Collection<V> c : map.values())
-            c.remove(value);
+            flag |= c.remove(value);
+        return flag;
+    }
+
+    public boolean removeValue(K key, V value) {
+        return get(key).remove(value);
     }
 
     public void clear() {

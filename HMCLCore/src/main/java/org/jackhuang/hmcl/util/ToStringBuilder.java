@@ -13,7 +13,7 @@ public class ToStringBuilder {
         if (!first)
             stringBuilder.append(", ");
         first = false;
-        stringBuilder.append(name).append('=').append(content.toString());
+        stringBuilder.append(name).append('=').append(content);
         return this;
     }
 

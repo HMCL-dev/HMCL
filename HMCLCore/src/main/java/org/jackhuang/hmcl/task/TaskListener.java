@@ -31,6 +31,9 @@ public abstract class TaskListener implements EventListener {
     public void onReady(Task task) {
     }
 
+    public void onRunning(Task task) {
+    }
+
     public void onFinished(Task task) {
     }
 

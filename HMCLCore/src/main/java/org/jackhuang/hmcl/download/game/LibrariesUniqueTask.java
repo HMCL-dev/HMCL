@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.download.game;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.TaskResult;
+import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.SimpleMultimap;
 import org.jackhuang.hmcl.util.VersionNumber;
 
@@ -49,6 +50,7 @@ public class LibrariesUniqueTask extends TaskResult<Version> {
         for (Library library : libraries) {
             String id = library.getGroupId() + ":" + library.getArtifactId();
             VersionNumber number = VersionNumber.asVersion(library.getVersion());
+            String serialized = Constants.GSON.toJson(library);
 
             if (versionMap.containsKey(id)) {
                 VersionNumber otherNumber = versionMap.get(id);
@@ -61,8 +63,15 @@ public class LibrariesUniqueTask extends TaskResult<Version> {
                     // prevent from duplicated libraries
                     for (Library otherLibrary : multimap.get(id))
                         if (library.equals(otherLibrary)) {
-                            flag = true;
-                            break;
+                            String otherSerialized = Constants.GSON.toJson(otherLibrary);
+                            // A trick, the library that has more information is better, which can be
+                            // considered whose serialized JSON text will be longer.
+                            if (serialized.length() <= otherSerialized.length()) {
+                                flag = true;
+                                break;
+                            } else {
+                                multimap.removeValue(id, otherLibrary);
+                            }
                         }
                     if (!flag)
                         multimap.put(id, library);

@@ -31,10 +31,7 @@ import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.HMCLModpackExportTask;
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
-import org.jackhuang.hmcl.mod.CurseCompletionTask;
-import org.jackhuang.hmcl.mod.CurseInstallTask;
-import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
-import org.jackhuang.hmcl.mod.MultiMCModpackInstallTask;
+import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
@@ -60,7 +57,7 @@ public final class TaskListPane extends StackPane {
             }
 
             @Override
-            public void onReady(Task task) {
+            public void onRunning(Task task) {
                 if (!task.getSignificance().shouldShow())
                     return;
 
@@ -76,6 +73,8 @@ public final class TaskListPane extends StackPane {
                     task.setName(Main.i18n("install.installer.install", Main.i18n("install.installer.optifine")));
                 } else if (task instanceof CurseCompletionTask) {
                     task.setName(Main.i18n("modpack.type.curse.completion"));
+                } else if (task instanceof ModpackInstallTask) {
+                    task.setName(Main.i18n("modpack.installing"));
                 } else if (task instanceof CurseInstallTask) {
                     task.setName(Main.i18n("modpack.install", Main.i18n("modpack.type.curse")));
                 } else if (task instanceof MultiMCModpackInstallTask) {

@@ -55,7 +55,7 @@ public final class GameAssetDownloadTask extends Task {
      */
     public GameAssetDownloadTask(AbstractDependencyManager dependencyManager, Version version) {
         this.dependencyManager = dependencyManager;
-        this.version = version.requireResolved();
+        this.version = version;
         this.refreshTask = new GameAssetRefreshTask(dependencyManager, version);
         this.dependents.add(refreshTask);
     }
