@@ -51,15 +51,16 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
      */
     public ProfilePage(Profile profile) {
         this.profile = profile;
+        String profileDisplayName = Optional.ofNullable(profile).map(Profiles::getProfileDisplayName).orElse("");
 
         title = new SimpleStringProperty(this, "title",
-                profile == null ? Main.i18n("profile.new") : Main.i18n("profile") + " - " + profile.getName());
+                profile == null ? Main.i18n("profile.new") : Main.i18n("profile") + " - " + profileDisplayName);
         location = new SimpleStringProperty(this, "location",
                 Optional.ofNullable(profile).map(Profile::getGameDir).map(File::getAbsolutePath).orElse(""));
 
         FXUtils.loadFXML(this, "/assets/fxml/profile.fxml");
 
-        txtProfileName.setText(Optional.ofNullable(profile).map(Profiles::getProfileDisplayName).orElse(""));
+        txtProfileName.setText(profileDisplayName);
         FXUtils.onChangeAndOperate(txtProfileName.textProperty(), it -> {
             btnSave.setDisable(!txtProfileName.validate() || StringUtils.isBlank(getLocation()));
         });

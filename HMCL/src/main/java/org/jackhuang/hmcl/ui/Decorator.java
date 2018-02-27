@@ -487,6 +487,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     }
 
     private void setContent(Node content, AnimationProducer animation) {
+        isWizardPageNow = false;
         animationHandler.setContent(content, animation);
 
         if (content instanceof Region) {
@@ -510,6 +511,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
 
     private String category;
     private Node nowPage;
+    private boolean isWizardPageNow;
 
     public Node getNowPage() {
         return nowPage;
@@ -573,6 +575,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         contentPlaceHolder.getStyleClass().removeAll("gray-background", "white-background");
         contentPlaceHolder.getStyleClass().add("white-background");
         setContent(page, nav.getAnimation().getAnimationProducer());
+        isWizardPageNow = true;
     }
 
     @FXML
@@ -588,7 +591,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
 
     @FXML
     private void onBack() {
-        if (wizardController.canPrev())
+        if (isWizardPageNow && wizardController.canPrev())
             wizardController.onPrev(true);
         else
             onCloseNav();
