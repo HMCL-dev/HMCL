@@ -17,11 +17,11 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXMasonryPane;
 import com.jfoenix.controls.JFXPopup;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
@@ -33,7 +33,6 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.ProfileChangedEvent;
-import org.jackhuang.hmcl.event.ProfileLoadingEvent;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
@@ -79,7 +78,11 @@ public final class MainPage extends StackPane implements DecoratorPage {
     {
         FXUtils.loadFXML(this, "/assets/fxml/main.fxml");
 
-        EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(() -> Platform.runLater(this::loadVersions));
+        EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(event -> {
+            if (event.getSource() == profile.getRepository())
+                loadVersions((HMCLGameRepository) event.getSource());
+        });
+        EventBus.EVENT_BUS.channel(ProfileChangedEvent.class).register(event -> this.profile = event.getProfile());
 
         versionPopup = new JFXPopup(versionList);
         getChildren().remove(versionList);
@@ -90,14 +93,14 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.installTooltip(btnRefresh, Main.i18n("button.refresh"));
     }
 
-    private Node buildNode(Profile profile, String version, String game) {
+    private Node buildNode(HMCLGameRepository repository, String version, String game) {
         VersionItem item = new VersionItem();
-        item.setUpdate(profile.getRepository().isModpack(version));
+        item.setUpdate(repository.isModpack(version));
         item.setGameVersion(game);
         item.setVersionName(version);
 
         StringBuilder libraries = new StringBuilder();
-        for (Library library : profile.getRepository().getVersion(version).getLibraries()) {
+        for (Library library : repository.getVersion(version).getLibraries()) {
             if (library.getGroupId().equalsIgnoreCase("net.minecraftforge") && library.getArtifactId().equalsIgnoreCase("forge")) {
                 libraries.append(Main.i18n("install.installer.forge")).append(": ").append(StringUtils.removeSuffix(StringUtils.removePrefix(library.getVersion().replaceAll("(?i)forge", "").replace(game, "").trim(), "-"), "-")).append("\n");
             }
@@ -176,17 +179,12 @@ public final class MainPage extends StackPane implements DecoratorPage {
         return item;
     }
 
-    private void loadVersions() {
-        loadVersions(Settings.INSTANCE.getSelectedProfile());
-    }
-
-    private void loadVersions(Profile profile) {
-        this.profile = profile;
+    private void loadVersions(HMCLGameRepository repository) {
         List<Node> children = new LinkedList<>();
-        for (Version version : profile.getRepository().getVersions()) {
-            children.add(buildNode(profile, version.getId(), GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version.getId())).orElse("Unknown")));
+        for (Version version : repository.getVersions()) {
+            children.add(buildNode(repository, version.getId(), GameVersion.minecraftVersion(repository.getVersionJar(version.getId())).orElse("Unknown")));
         }
-        FXUtils.resetChildren(masonryPane, children);
+        JFXUtilities.runInFX(() -> FXUtils.resetChildren(masonryPane, children));
     }
 
     @FXML

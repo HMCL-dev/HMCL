@@ -530,8 +530,8 @@ public class Settings {
     }
 
     private void onProfileChanged() {
-        getSelectedProfile().getRepository().refreshVersionsAsync().subscribe(() ->
-                EventBus.EVENT_BUS.fireEvent(new ProfileChangedEvent(SETTINGS, getSelectedProfile())));
+        EventBus.EVENT_BUS.fireEvent(new ProfileChangedEvent(SETTINGS, getSelectedProfile()));
+        getSelectedProfile().getRepository().refreshVersionsAsync().start();
     }
 
     private void profileNameChanged(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
