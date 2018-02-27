@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class VersionsPage extends StackPane implements WizardPage, Refreshable {
@@ -93,6 +94,8 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
         chkOld.selectedProperty().addListener(listener);
 
         list.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
+            if (newValue == null)
+                return;
             controller.getSettings().put(libraryId, newValue.getRemoteVersion().getSelfVersion());
             callback.run();
         });
@@ -114,6 +117,7 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
                         }
                     else return true;
                 })
+                .filter(Objects::nonNull)
                 .sorted()
                 .map(VersionsPageItem::new).collect(Collectors.toList());
     }

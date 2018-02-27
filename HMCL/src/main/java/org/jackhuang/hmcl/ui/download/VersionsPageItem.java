@@ -30,6 +30,8 @@ import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersionTag;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.ui.FXUtils;
 
+import java.util.Objects;
+
 /**
  * @author huangyuhui
  */
@@ -47,7 +49,7 @@ public final class VersionsPageItem extends StackPane {
     private StackPane imageViewContainer;
 
     public VersionsPageItem(RemoteVersion<?> remoteVersion) {
-        this.remoteVersion = remoteVersion;
+        this.remoteVersion = Objects.requireNonNull(remoteVersion);
 
         FXUtils.loadFXML(this, "/assets/fxml/download/versions-list-item.fxml");
         lblSelfVersion.setText(remoteVersion.getSelfVersion());
