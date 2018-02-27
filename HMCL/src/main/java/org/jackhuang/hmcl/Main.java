@@ -87,6 +87,8 @@ public final class Main extends Application {
 
     public static void stopWithoutPlatform() {
         JFXUtilities.runInFX(() -> {
+            if (Controllers.getStage() == null)
+                return;
             Controllers.getStage().close();
 
             Logging.LOG.info("Shutting down executor services.");
