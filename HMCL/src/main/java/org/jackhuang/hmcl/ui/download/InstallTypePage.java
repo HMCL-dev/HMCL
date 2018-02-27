@@ -37,6 +37,8 @@ public final class InstallTypePage extends StackPane implements WizardPage {
 
         FXUtils.loadFXML(this, "/assets/fxml/download/dltype.fxml");
         list.setOnMouseClicked(e -> {
+            if (list.getSelectionModel().getSelectedIndex() < 0)
+                return;
             controller.getSettings().put(INSTALL_TYPE, list.getSelectionModel().getSelectedIndex());
             controller.onNext();
         });
