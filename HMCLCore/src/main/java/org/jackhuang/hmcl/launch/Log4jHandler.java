@@ -71,7 +71,8 @@ final class Log4jHandler extends Thread {
         setName("log4j-handler");
 
         try {
-            reader.parse(new InputSource(inputStream));
+            InputSource inputSource = new InputSource(inputStream);
+            reader.parse(inputSource);
         } catch (InterruptedIOException e) {
             // Game has been interrupted.
             interrupted.set(true);
@@ -108,7 +109,7 @@ final class Log4jHandler extends Thread {
                 if (broken)
                     System.out.println(line);
 
-                byte[] bytes = (line + OperatingSystem.LINE_SEPARATOR).getBytes(Charsets.UTF_8);
+                byte[] bytes = (line + OperatingSystem.LINE_SEPARATOR).getBytes(Constants.SYSTEM_CHARSET);
                 outputStream.write(bytes);
                 outputStream.flush();
             } catch (IOException e) {

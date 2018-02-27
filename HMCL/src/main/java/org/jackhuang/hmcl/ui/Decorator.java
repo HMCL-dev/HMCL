@@ -494,11 +494,8 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
             FXUtils.setOverflowHidden((Region) content, true);
         }
 
-        if (content instanceof Refreshable)
-            refreshNavButton.setVisible(true);
-
-        if (content != mainPage)
-            backNavButton.setVisible(true);
+        refreshNavButton.setVisible(content instanceof Refreshable);
+        backNavButton.setVisible(content != mainPage);
 
         String prefix = category == null ? "" : category + " - ";
 
