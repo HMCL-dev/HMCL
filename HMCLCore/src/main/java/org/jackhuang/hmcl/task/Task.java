@@ -244,7 +244,7 @@ public abstract class Task {
     }
 
     public final Task then(ExceptionalFunction<AutoTypingMap<String>, Task, ?> b) {
-        return new CoupleTask<>(this, b, true, false);
+        return new CoupleTask<>(this, b, true);
     }
 
     public final Task with(Task b) {
@@ -252,7 +252,7 @@ public abstract class Task {
     }
 
     public final <E extends Exception> Task with(ExceptionalFunction<AutoTypingMap<String>, Task, E> b) {
-        return new CoupleTask<>(this, b, false, false);
+        return new CoupleTask<>(this, b, false);
     }
 
     public final Task finalized(FinalizedCallback b) {
@@ -310,6 +310,10 @@ public abstract class Task {
 
     public static Task of(Scheduler scheduler, ExceptionalRunnable<?> closure) {
         return of(ReflectionHelper.getCaller().toString(), scheduler, closure);
+    }
+
+    public static Task ofThen(ExceptionalFunction<AutoTypingMap<String>, Task, ?> b) {
+        return new CoupleTask<>(null, b, true);
     }
 
     public static <V> TaskResult<V> ofResult(String id, Callable<V> callable) {

@@ -19,9 +19,7 @@ package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.task.Task;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * The builder which provide a task to build Minecraft environment.
@@ -33,6 +31,7 @@ public abstract class GameBuilder {
     protected String name = "";
     protected String gameVersion = "";
     protected final Map<String, String> toolVersions = new HashMap<>();
+    protected final Set<RemoteVersion<?>> remoteVersions = new HashSet<>();
 
     public String getName() {
         return name;
@@ -62,6 +61,11 @@ public abstract class GameBuilder {
             gameVersion(version);
         else
             toolVersions.put(id, version);
+        return this;
+    }
+
+    public GameBuilder version(RemoteVersion<?> remoteVersion) {
+        remoteVersions.add(remoteVersion);
         return this;
     }
 

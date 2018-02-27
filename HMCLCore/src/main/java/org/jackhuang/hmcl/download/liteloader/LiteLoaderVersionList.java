@@ -58,17 +58,23 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
 
             @Override
             public void execute() {
-                LiteLoaderVersionsRoot root = Constants.GSON.fromJson(task.getResult(), LiteLoaderVersionsRoot.class);
-                versions.clear();
+                lock.writeLock().lock();
 
-                for (Map.Entry<String, LiteLoaderGameVersions> entry : root.getVersions().entrySet()) {
-                    String gameVersion = entry.getKey();
-                    LiteLoaderGameVersions liteLoader = entry.getValue();
-                    Optional<String> gg = VersionNumber.parseVersion(gameVersion);
-                    if (!gg.isPresent())
-                        continue;
-                    doBranch(gg.get(), gameVersion, liteLoader.getRepoitory(), liteLoader.getArtifacts(), false);
-                    doBranch(gg.get(), gameVersion, liteLoader.getRepoitory(), liteLoader.getSnapshots(), true);
+                try {
+                    LiteLoaderVersionsRoot root = Constants.GSON.fromJson(task.getResult(), LiteLoaderVersionsRoot.class);
+                    versions.clear();
+
+                    for (Map.Entry<String, LiteLoaderGameVersions> entry : root.getVersions().entrySet()) {
+                        String gameVersion = entry.getKey();
+                        LiteLoaderGameVersions liteLoader = entry.getValue();
+                        Optional<String> gg = VersionNumber.parseVersion(gameVersion);
+                        if (!gg.isPresent())
+                            continue;
+                        doBranch(gg.get(), gameVersion, liteLoader.getRepoitory(), liteLoader.getArtifacts(), false);
+                        doBranch(gg.get(), gameVersion, liteLoader.getRepoitory(), liteLoader.getSnapshots(), true);
+                    }
+                } finally {
+                    lock.writeLock().unlock();
                 }
             }
 
@@ -92,9 +98,9 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
                         }
                     }
 
-                    versions.put(key, new RemoteVersion<>(gameVersion,
+                    versions.put(key, new LiteLoaderRemoteVersion(gameVersion,
                             version, downloadProvider.injectURL(url),
-                            new LiteLoaderRemoteVersionTag(v.getTweakClass(), v.getLibraries())
+                            v.getTweakClass(), v.getLibraries()
                     ));
                 }
             }

@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.VersionNumber;
 
 import java.util.Objects;
@@ -72,6 +73,15 @@ public class RemoteVersion<T> implements Comparable<RemoteVersion<T>> {
     @Override
     public int hashCode() {
         return selfVersion.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("selfVersion", selfVersion)
+                .append("gameVersion", gameVersion)
+                .append("tag", tag)
+                .toString();
     }
 
     @Override

@@ -18,9 +18,12 @@
 package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
+import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.*;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
+import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
+import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.ParallelTask;
@@ -80,25 +83,31 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
     @Override
     public Task installLibraryAsync(String gameVersion, Version version, String libraryId, String libraryVersion) {
-        switch (libraryId) {
-            case "forge":
-                return new ForgeInstallTask(this, gameVersion, version, libraryVersion)
-                        .then(variables -> new LibrariesUniqueTask(variables.get("version")))
-                        .then(variables -> new MaintainTask(variables.get("version")))
-                        .then(variables -> new VersionJsonSaveTask(repository, variables.get("version")));
-            case "liteloader":
-                return new LiteLoaderInstallTask(this, gameVersion, version, libraryVersion)
-                        .then(variables -> new LibrariesUniqueTask(variables.get("version")))
-                        .then(variables -> new MaintainTask(variables.get("version")))
-                        .then(variables -> new VersionJsonSaveTask(repository, variables.get("version")));
-            case "optifine":
-                return new OptiFineInstallTask(this, gameVersion, version, libraryVersion)
-                        .then(variables -> new LibrariesUniqueTask(variables.get("version")))
-                        .then(variables -> new MaintainTask(variables.get("version")))
-                        .then(variables -> new VersionJsonSaveTask(repository, variables.get("version")));
-            default:
-                throw new IllegalArgumentException("Library id " + libraryId + " is unrecognized.");
-        }
+        VersionList<?> versionList = getVersionList(libraryId);
+        return versionList.loadAsync(getDownloadProvider())
+                .then(variables -> installLibraryAsync(version, versionList.getVersion(gameVersion, libraryVersion)
+                        .orElseThrow(() -> new IllegalStateException("Remote library " + libraryId + " has no version " + libraryVersion))));
+    }
+
+    @Override
+    public Task installLibraryAsync(Version version, RemoteVersion<?> libraryVersion) {
+        if (libraryVersion instanceof ForgeRemoteVersion)
+            return new ForgeInstallTask(this, version, (ForgeRemoteVersion) libraryVersion)
+                    .then(variables -> new LibrariesUniqueTask(variables.get("version")))
+                    .then(variables -> new MaintainTask(variables.get("version")))
+                    .then(variables -> new VersionJsonSaveTask(repository, variables.get("version")));
+        else if (libraryVersion instanceof LiteLoaderRemoteVersion)
+            return new LiteLoaderInstallTask(this, version, (LiteLoaderRemoteVersion) libraryVersion)
+                    .then(variables -> new LibrariesUniqueTask(variables.get("version")))
+                    .then(variables -> new MaintainTask(variables.get("version")))
+                    .then(variables -> new VersionJsonSaveTask(repository, variables.get("version")));
+        else if (libraryVersion instanceof OptiFineRemoteVersion)
+            return new OptiFineInstallTask(this, version, (OptiFineRemoteVersion) libraryVersion)
+                    .then(variables -> new LibrariesUniqueTask(variables.get("version")))
+                    .then(variables -> new MaintainTask(variables.get("version")))
+                    .then(variables -> new VersionJsonSaveTask(repository, variables.get("version")));
+        else
+            throw new IllegalArgumentException("Remote library " + libraryVersion + " is unrecognized.");
     }
 
 }

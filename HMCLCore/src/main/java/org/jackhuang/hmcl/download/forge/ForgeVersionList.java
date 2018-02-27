@@ -53,34 +53,40 @@ public final class ForgeVersionList extends VersionList<Void> {
 
             @Override
             public void execute() {
-                ForgeVersionRoot root = Constants.GSON.fromJson(task.getResult(), ForgeVersionRoot.class);
-                if (root == null)
-                    return;
-                versions.clear();
+                lock.writeLock().lock();
 
-                for (Map.Entry<String, int[]> entry : root.getGameVersions().entrySet()) {
-                    Optional<String> gameVersion = VersionNumber.parseVersion(entry.getKey());
-                    if (!gameVersion.isPresent())
-                        continue;
-                    for (int v : entry.getValue()) {
-                        ForgeVersion version = root.getNumber().get(v);
-                        if (version == null)
-                            continue;
-                        String jar = null;
-                        for (String[] file : version.getFiles())
-                            if (file.length > 1 && "installer".equals(file[1])) {
-                                String classifier = version.getGameVersion() + "-" + version.getVersion()
-                                        + (StringUtils.isNotBlank(version.getBranch()) ? "-" + version.getBranch() : "");
-                                String fileName = root.getArtifact() + "-" + classifier + "-" + file[1] + "." + file[0];
-                                jar = downloadProvider.injectURL(root.getWebPath() + classifier + "/" + fileName);
-                            }
+                try {
+                    ForgeVersionRoot root = Constants.GSON.fromJson(task.getResult(), ForgeVersionRoot.class);
+                    if (root == null)
+                        return;
+                    versions.clear();
 
-                        if (jar == null)
+                    for (Map.Entry<String, int[]> entry : root.getGameVersions().entrySet()) {
+                        Optional<String> gameVersion = VersionNumber.parseVersion(entry.getKey());
+                        if (!gameVersion.isPresent())
                             continue;
-                        versions.put(gameVersion.get(), new RemoteVersion<>(
-                                version.getGameVersion(), version.getVersion(), jar, null
-                        ));
+                        for (int v : entry.getValue()) {
+                            ForgeVersion version = root.getNumber().get(v);
+                            if (version == null)
+                                continue;
+                            String jar = null;
+                            for (String[] file : version.getFiles())
+                                if (file.length > 1 && "installer".equals(file[1])) {
+                                    String classifier = version.getGameVersion() + "-" + version.getVersion()
+                                            + (StringUtils.isNotBlank(version.getBranch()) ? "-" + version.getBranch() : "");
+                                    String fileName = root.getArtifact() + "-" + classifier + "-" + file[1] + "." + file[0];
+                                    jar = downloadProvider.injectURL(root.getWebPath() + classifier + "/" + fileName);
+                                }
+
+                            if (jar == null)
+                                continue;
+                            versions.put(gameVersion.get(), new ForgeRemoteVersion(
+                                    version.getGameVersion(), version.getVersion(), jar
+                            ));
+                        }
                     }
+                } finally {
+                    lock.writeLock().unlock();
                 }
             }
 

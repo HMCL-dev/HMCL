@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,23 +15,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.download.optifine;
+package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.RemoteVersion;
 
-import java.util.function.Supplier;
-
-public class OptiFineRemoteVersion extends RemoteVersion<Void> {
-    private final Supplier<String> url;
-
-    public OptiFineRemoteVersion(String gameVersion, String selfVersion, Supplier<String> url) {
-        super(gameVersion, selfVersion, "", null);
-
-        this.url = url;
-    }
-
-    @Override
-    public String getUrl() {
-        return url.get();
+public class ForgeRemoteVersion extends RemoteVersion<Void> {
+    /**
+     * Constructor.
+     *
+     * @param gameVersion the Minecraft version that this remote version suits.
+     * @param selfVersion the version string of the remote version.
+     * @param url         the installer or universal jar URL.
+     */
+    public ForgeRemoteVersion(String gameVersion, String selfVersion, String url) {
+        super(gameVersion, selfVersion, url, null);
     }
 }

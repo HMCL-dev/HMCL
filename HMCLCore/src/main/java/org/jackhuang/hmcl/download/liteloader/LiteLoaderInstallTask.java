@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.download.liteloader;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.LibrariesDownloadInfo;
 import org.jackhuang.hmcl.game.Library;
@@ -41,32 +40,15 @@ import java.util.List;
 public final class LiteLoaderInstallTask extends TaskResult<Version> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final String gameVersion;
     private final Version version;
-    private final String remoteVersion;
-    private final LiteLoaderVersionList liteLoaderVersionList;
-    private RemoteVersion<LiteLoaderRemoteVersionTag> remote;
+    private LiteLoaderRemoteVersion remote;
     private final List<Task> dependents = new LinkedList<>();
     private final List<Task> dependencies = new LinkedList<>();
 
-    private void doRemote() {
-        remote = liteLoaderVersionList.getVersion(gameVersion, remoteVersion)
-                .orElseThrow(() -> new IllegalArgumentException("Remote LiteLoader version " + gameVersion + ", " + remoteVersion + " not found"));
-    }
-
-    public LiteLoaderInstallTask(DefaultDependencyManager dependencyManager, String gameVersion, Version version, String remoteVersion) {
+    public LiteLoaderInstallTask(DefaultDependencyManager dependencyManager, Version version, LiteLoaderRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
-        this.gameVersion = gameVersion;
         this.version = version;
-        this.remoteVersion = remoteVersion;
-
-        liteLoaderVersionList = (LiteLoaderVersionList) dependencyManager.getVersionList("liteloader");
-
-        if (!liteLoaderVersionList.isLoaded())
-            dependents.add(liteLoaderVersionList.refreshAsync(dependencyManager.getDownloadProvider())
-                    .then(Task.of(this::doRemote)));
-        else
-            doRemote();
+        this.remote = remoteVersion;
     }
 
     @Override

@@ -61,48 +61,54 @@ public final class OptiFineVersionList extends VersionList<Void> {
 
             @Override
             public void execute() throws Exception {
-                versions.clear();
+                lock.writeLock().lock();
 
-                String html = task.getResult().replace("&nbsp;", " ").replace("&gt;", ">").replace("&lt;", "<").replace("<br>", "<br />");
+                try {
+                    versions.clear();
 
-                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                DocumentBuilder db = factory.newDocumentBuilder();
-                Document doc = db.parse(new ByteArrayInputStream(html.getBytes("UTF-8")));
-                Element r = doc.getDocumentElement();
-                NodeList tables = r.getElementsByTagName("table");
-                for (int i = 0; i < tables.getLength(); i++) {
-                    Element e = (Element) tables.item(i);
-                    if ("downloadTable".equals(e.getAttribute("class"))) {
-                        NodeList tr = e.getElementsByTagName("tr");
-                        for (int k = 0; k < tr.getLength(); k++) {
-                            NodeList downloadLine = ((Element) tr.item(k)).getElementsByTagName("td");
-                            String url = null, version = null, gameVersion = null;
-                            for (int j = 0; j < downloadLine.getLength(); j++) {
-                                Element td = (Element) downloadLine.item(j);
-                                if (td.getAttribute("class") != null && td.getAttribute("class").startsWith("downloadLineMirror"))
-                                    url = ((Element) td.getElementsByTagName("a").item(0)).getAttribute("href");
-                                if (td.getAttribute("class") != null && td.getAttribute("class").startsWith("downloadLineFile"))
-                                    version = td.getTextContent();
+                    String html = task.getResult().replace("&nbsp;", " ").replace("&gt;", ">").replace("&lt;", "<").replace("<br>", "<br />");
+
+                    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                    DocumentBuilder db = factory.newDocumentBuilder();
+                    Document doc = db.parse(new ByteArrayInputStream(html.getBytes("UTF-8")));
+                    Element r = doc.getDocumentElement();
+                    NodeList tables = r.getElementsByTagName("table");
+                    for (int i = 0; i < tables.getLength(); i++) {
+                        Element e = (Element) tables.item(i);
+                        if ("downloadTable".equals(e.getAttribute("class"))) {
+                            NodeList tr = e.getElementsByTagName("tr");
+                            for (int k = 0; k < tr.getLength(); k++) {
+                                NodeList downloadLine = ((Element) tr.item(k)).getElementsByTagName("td");
+                                String url = null, version = null, gameVersion = null;
+                                for (int j = 0; j < downloadLine.getLength(); j++) {
+                                    Element td = (Element) downloadLine.item(j);
+                                    if (td.getAttribute("class") != null && td.getAttribute("class").startsWith("downloadLineMirror"))
+                                        url = ((Element) td.getElementsByTagName("a").item(0)).getAttribute("href");
+                                    if (td.getAttribute("class") != null && td.getAttribute("class").startsWith("downloadLineFile"))
+                                        version = td.getTextContent();
+                                }
+                                if (version == null || url == null)
+                                    continue;
+
+                                Matcher matcher = PATTERN.matcher(version);
+                                while (matcher.find())
+                                    gameVersion = matcher.group(1);
+                                if (gameVersion == null)
+                                    continue;
+
+                                String finalURL = url;
+                                versions.put(gameVersion, new OptiFineRemoteVersion(gameVersion, version, Lang.hideException(() -> getLink(finalURL))));
                             }
-                            if (version == null || url == null)
-                                continue;
-
-                            Matcher matcher = PATTERN.matcher(version);
-                            while (matcher.find())
-                                gameVersion = matcher.group(1);
-                            if (gameVersion == null)
-                                continue;
-
-                            String finalURL = url;
-                            versions.put(gameVersion, new OptiFineRemoteVersion(gameVersion, version, Lang.hideException(() -> getLink(finalURL)), null));
                         }
                     }
+                } finally {
+                    lock.writeLock().unlock();
                 }
             }
         };
     }
 
-    public static String getLink(String url) throws IOException {
+    private static String getLink(String url) throws IOException {
         String result = null;
         String content = NetworkUtils.doGet(NetworkUtils.toURL(url));
         Matcher m = LINK_PATTERN.matcher(content);

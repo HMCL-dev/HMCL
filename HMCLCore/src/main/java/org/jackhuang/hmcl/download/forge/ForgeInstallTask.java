@@ -18,8 +18,6 @@
 package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.SimpleVersionProvider;
@@ -47,34 +45,22 @@ import java.util.zip.ZipFile;
 public final class ForgeInstallTask extends TaskResult<Version> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final String gameVersion;
     private final Version version;
-    private final String remoteVersion;
-    private final VersionList<?> forgeVersionList;
     private final File installer = new File("forge-installer.jar").getAbsoluteFile();
-    private RemoteVersion<?> remote;
+    private ForgeRemoteVersion remote;
     private final List<Task> dependents = new LinkedList<>();
     private final List<Task> dependencies = new LinkedList<>();
 
     private Task downloadFileTask() {
-        remote = forgeVersionList.getVersion(gameVersion, remoteVersion)
-                .orElseThrow(() -> new IllegalArgumentException("Remote forge version " + gameVersion + ", " + remoteVersion + " not found"));
         return new FileDownloadTask(NetworkUtils.toURL(remote.getUrl()), installer);
     }
 
-    public ForgeInstallTask(DefaultDependencyManager dependencyManager, String gameVersion, Version version, String remoteVersion) {
+    public ForgeInstallTask(DefaultDependencyManager dependencyManager, Version version, ForgeRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
-        this.gameVersion = gameVersion;
         this.version = version;
-        this.remoteVersion = remoteVersion;
+        this.remote = remoteVersion;
 
-        forgeVersionList = dependencyManager.getVersionList("forge");
-
-        if (!forgeVersionList.isLoaded())
-            dependents.add(forgeVersionList.refreshAsync(dependencyManager.getDownloadProvider())
-                    .then(s -> downloadFileTask()));
-        else
-            dependents.add(downloadFileTask());
+        dependents.add(downloadFileTask());
     }
 
     @Override

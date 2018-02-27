@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.SimpleMultimap;
 
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * The remote version list.
@@ -45,15 +46,36 @@ public abstract class VersionList<T> {
         return !versions.isEmpty();
     }
 
+    protected final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+
     /**
      * @param downloadProvider DownloadProvider
      * @return the task to reload the remote version list.
      */
     public abstract Task refreshAsync(DownloadProvider downloadProvider);
 
+    public Task loadAsync(DownloadProvider downloadProvider) {
+        return Task.ofThen(variables -> {
+            lock.readLock().lock();
+            boolean loaded;
+
+            try {
+                loaded = isLoaded();
+            } finally {
+                lock.readLock().unlock();
+            }
+            return loaded ? null : refreshAsync(downloadProvider);
+        });
+    }
+
     private Collection<RemoteVersion<T>> getVersionsImpl(String gameVersion) {
-        Collection<RemoteVersion<T>> ans = versions.get(gameVersion);
-        return ans.isEmpty() ? versions.values() : ans;
+        lock.readLock().lock();
+        try {
+            Collection<RemoteVersion<T>> ans = versions.get(gameVersion);
+            return ans.isEmpty() ? versions.values() : ans;
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     /**
@@ -74,10 +96,15 @@ public abstract class VersionList<T> {
      * @return the specific remote version, null if it is not found.
      */
     public final Optional<RemoteVersion<T>> getVersion(String gameVersion, String remoteVersion) {
-        RemoteVersion<T> result = null;
-        for (RemoteVersion<T> it : versions.get(gameVersion))
-            if (remoteVersion.equals(it.getSelfVersion()))
-                result = it;
-        return Optional.ofNullable(result);
+        lock.readLock().lock();
+        try {
+            RemoteVersion<T> result = null;
+            for (RemoteVersion<T> it : versions.get(gameVersion))
+                if (remoteVersion.equals(it.getSelfVersion()))
+                    result = it;
+            return Optional.ofNullable(result);
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 }

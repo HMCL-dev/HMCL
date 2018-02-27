@@ -96,7 +96,7 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
         list.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
             if (newValue == null)
                 return;
-            controller.getSettings().put(libraryId, newValue.getRemoteVersion().getSelfVersion());
+            controller.getSettings().put(libraryId, newValue.getRemoteVersion());
             callback.run();
         });
         refresh();

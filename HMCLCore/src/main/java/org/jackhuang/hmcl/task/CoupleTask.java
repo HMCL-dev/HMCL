@@ -33,7 +33,6 @@ import java.util.List;
 final class CoupleTask<P extends Task> extends Task {
 
     private final boolean relyingOnDependents;
-    private final boolean failIfDependentsFail;
     private final Collection<Task> dependents;
     private final List<Task> dependencies = new LinkedList<>();
     private final ExceptionalFunction<AutoTypingMap<String>, Task, ?> succ;
@@ -45,11 +44,10 @@ final class CoupleTask<P extends Task> extends Task {
      * @param succ a callback that returns the task runs after pred, succ will be executed asynchronously. You can do something that relies on the result of pred.
      * @param relyingOnDependents true if this task chain will be broken when task pred fails.
      */
-    public CoupleTask(P pred, ExceptionalFunction<AutoTypingMap<String>, Task, ?> succ, boolean relyingOnDependents, boolean failIfDependentsFail) {
-        this.dependents = Collections.singleton(pred);
+    public CoupleTask(P pred, ExceptionalFunction<AutoTypingMap<String>, Task, ?> succ, boolean relyingOnDependents) {
+        this.dependents = pred == null ? Collections.emptySet() : Collections.singleton(pred);
         this.succ = succ;
         this.relyingOnDependents = relyingOnDependents;
-        this.failIfDependentsFail = failIfDependentsFail;
 
         setSignificance(TaskSignificance.MODERATE);
         setName(succ.toString());
@@ -61,9 +59,6 @@ final class CoupleTask<P extends Task> extends Task {
         Task task = succ.apply(getVariables());
         if (task != null)
             dependencies.add(task);
-
-        if (failIfDependentsFail && !isDependentsSucceeded())
-            throw new SilentException();
     }
 
     @Override

@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.download;
 import javafx.scene.Node;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
+import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Task;
@@ -85,13 +86,13 @@ public final class InstallerWizardProvider implements WizardProvider {
         Task ret = Task.empty();
 
         if (settings.containsKey("forge"))
-            ret = ret.then(profile.getDependency().installLibraryAsync(gameVersion, version, "forge", (String) settings.get("forge")));
+            ret = ret.then(profile.getDependency().installLibraryAsync(version, (RemoteVersion<?>) settings.get("forge")));
 
         if (settings.containsKey("liteloader"))
-            ret = ret.then(profile.getDependency().installLibraryAsync(gameVersion, version, "liteloader", (String) settings.get("liteloader")));
+            ret = ret.then(profile.getDependency().installLibraryAsync(version, (RemoteVersion<?>) settings.get("liteloader")));
 
         if (settings.containsKey("optifine"))
-            ret = ret.then(profile.getDependency().installLibraryAsync(gameVersion, version, "optifine", (String) settings.get("optifine")));
+            ret = ret.then(profile.getDependency().installLibraryAsync(version, (RemoteVersion<?>) settings.get("optifine")));
 
         return ret.then(profile.getRepository().refreshVersionsAsync());
     }

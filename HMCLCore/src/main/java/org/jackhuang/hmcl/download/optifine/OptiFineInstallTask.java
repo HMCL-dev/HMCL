@@ -18,8 +18,6 @@
 package org.jackhuang.hmcl.download.optifine;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
@@ -39,32 +37,15 @@ import java.util.List;
 public final class OptiFineInstallTask extends TaskResult<Version> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final String gameVersion;
     private final Version version;
-    private final String remoteVersion;
-    private final VersionList<?> optiFineVersionList;
-    private RemoteVersion<?> remote;
+    private OptiFineRemoteVersion remote;
     private final List<Task> dependents = new LinkedList<>();
     private final List<Task> dependencies = new LinkedList<>();
 
-    private void doRemote() {
-        remote = optiFineVersionList.getVersion(gameVersion, remoteVersion)
-                .orElseThrow(() -> new IllegalArgumentException("Remote OptiFine version " + gameVersion + ", " + remoteVersion + " not found"));
-    }
-
-    public OptiFineInstallTask(DefaultDependencyManager dependencyManager, String gameVersion, Version version, String remoteVersion) {
+    public OptiFineInstallTask(DefaultDependencyManager dependencyManager, Version version, OptiFineRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
-        this.gameVersion = gameVersion;
         this.version = version;
-        this.remoteVersion = remoteVersion;
-
-        optiFineVersionList = dependencyManager.getVersionList("optifine");
-
-        if (!optiFineVersionList.isLoaded())
-            dependents.add(optiFineVersionList.refreshAsync(dependencyManager.getDownloadProvider())
-                    .then(Task.of(this::doRemote)));
-        else
-            doRemote();
+        this.remote = remoteVersion;
     }
 
     @Override
@@ -89,6 +70,8 @@ public final class OptiFineInstallTask extends TaskResult<Version> {
 
     @Override
     public void execute() {
+        String remoteVersion = remote.getSelfVersion();
+
         Library library = new Library(
                 "net.optifine", "optifine", remoteVersion, null, null,
                 new LibrariesDownloadInfo(new LibraryDownloadInfo(

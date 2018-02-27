@@ -50,16 +50,22 @@ public final class GameVersionList extends VersionList<GameRemoteVersionTag> {
 
             @Override
             public void execute() {
-                versions.clear();
+                lock.writeLock().lock();
 
-                GameRemoteVersions root = Constants.GSON.fromJson(task.getResult(), GameRemoteVersions.class);
-                for (GameRemoteVersion remoteVersion : root.getVersions()) {
-                    versions.put(remoteVersion.getGameVersion(), new RemoteVersionGame(
-                            remoteVersion.getGameVersion(),
-                            remoteVersion.getGameVersion(),
-                            remoteVersion.getUrl(),
-                            new GameRemoteVersionTag(remoteVersion.getType(), remoteVersion.getReleaseTime()))
-                    );
+                try {
+                    versions.clear();
+
+                    GameRemoteVersions root = Constants.GSON.fromJson(task.getResult(), GameRemoteVersions.class);
+                    for (GameRemoteVersion remoteVersion : root.getVersions()) {
+                        versions.put(remoteVersion.getGameVersion(), new RemoteVersionGame(
+                                remoteVersion.getGameVersion(),
+                                remoteVersion.getGameVersion(),
+                                remoteVersion.getUrl(),
+                                new GameRemoteVersionTag(remoteVersion.getType(), remoteVersion.getReleaseTime()))
+                        );
+                    }
+                } finally {
+                    lock.writeLock().unlock();
                 }
             }
         };

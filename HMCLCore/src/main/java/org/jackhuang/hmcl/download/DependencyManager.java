@@ -67,6 +67,16 @@ public interface DependencyManager {
     Task installLibraryAsync(String gameVersion, Version version, String libraryId, String libraryVersion);
 
     /**
+     * Install a library to a version.
+     * **Note**: Installing a library may change the version.json.
+     *
+     * @param version the version.json.\
+     * @param libraryVersion the remote version of being installed library.
+     * @return the task to install the specific library.
+     */
+    Task installLibraryAsync(Version version, RemoteVersion<?> libraryVersion);
+
+    /**
      * Get registered version list.
      *
      * @param id the id of version list. i.e. game, forge, liteloader, optifine
