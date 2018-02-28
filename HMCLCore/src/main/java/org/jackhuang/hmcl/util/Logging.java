@@ -32,6 +32,7 @@ import java.util.logging.*;
 public final class Logging {
 
     public static final Logger LOG;
+    private static final ByteArrayOutputStream OUTPUT_STREAM = new ByteArrayOutputStream();
 
     static {
         LOG = Logger.getLogger("HMCL");
@@ -51,6 +52,20 @@ public final class Logging {
         consoleHandler.setLevel(Level.FINER);
         consoleHandler.setFormatter(DefaultFormatter.INSTANCE);
         LOG.addHandler(consoleHandler);
+
+        StreamHandler streamHandler = new StreamHandler(OUTPUT_STREAM, DefaultFormatter.INSTANCE) {
+            @Override
+            public synchronized void publish(LogRecord record) {
+                super.publish(record);
+                flush();
+            }
+        };
+        streamHandler.setLevel(Level.FINEST);
+        LOG.addHandler(streamHandler);
+    }
+
+    public static String getLogs() {
+        return OUTPUT_STREAM.toString();
     }
 
     static final class DefaultFormatter extends Formatter {

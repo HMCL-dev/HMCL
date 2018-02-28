@@ -111,6 +111,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             HashMap<String, String> map = new HashMap<>();
             map.put("crash_report", text);
             map.put("version", Launcher.VERSION);
+            map.put("log", Logging.getLogs());
             try {
                 String response = NetworkUtils.doPost(NetworkUtils.toURL("http://huangyuhui.duapp.com/hmcl/crash.php"), map);
                 if (StringUtils.isNotBlank(response))
