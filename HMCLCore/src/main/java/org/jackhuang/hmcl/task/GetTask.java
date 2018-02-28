@@ -84,7 +84,7 @@ public final class GetTask extends TaskResult<String> {
         Exception exception = null;
         for (int time = 0; time < retry; ++time) {
             if (time > 0)
-                Logging.LOG.log(Level.WARNING, "Failed to download, repeat times: {0}", time);
+                Logging.LOG.log(Level.WARNING, "Failed to download, repeat times: " + time);
             try {
                 updateProgress(0);
                 HttpURLConnection conn = NetworkUtils.createConnection(url, proxy);

@@ -63,7 +63,7 @@ public final class Logging {
             String date = format.format(new Date(record.getMillis()));
             String log = String.format("[%s] [%s.%s/%s] %s%n",
                     date, record.getSourceClassName(), record.getSourceMethodName(),
-                    record.getLevel().getName(), MessageFormat.format(record.getMessage(), record.getParameters())
+                    record.getLevel().getName(), record.getMessage()
             );
             ByteArrayOutputStream builder = new ByteArrayOutputStream();
             if (record.getThrown() != null)

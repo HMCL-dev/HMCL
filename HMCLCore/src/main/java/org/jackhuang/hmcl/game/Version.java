@@ -156,7 +156,7 @@ public class Version implements Comparable<Version>, Validation {
 
         // To maximize the compatibility.
         if (!resolvedSoFar.add(id)) {
-            Logging.LOG.log(Level.WARNING, "Found circular dependency versions: {0}", resolvedSoFar);
+            Logging.LOG.log(Level.WARNING, "Found circular dependency versions: " + resolvedSoFar);
             return this;
         }
 
@@ -231,6 +231,11 @@ public class Version implements Comparable<Version>, Validation {
     @Override
     public int compareTo(Version o) {
         return id.compareTo(o.id);
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this).append("id", id).toString();
     }
 
     @Override

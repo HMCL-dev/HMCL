@@ -134,7 +134,7 @@ public final class TaskExecutor {
         task.setState(Task.TaskState.READY);
 
         if (task.getSignificance().shouldLog())
-            Logging.LOG.log(Level.FINE, "Executing task: {0}", task.getName());
+            Logging.LOG.log(Level.FINE, "Executing task: " + task.getName());
 
         taskListeners.forEach(it -> it.onReady(task));
 
@@ -176,7 +176,7 @@ public final class TaskExecutor {
 
             flag = true;
             if (task.getSignificance().shouldLog()) {
-                Logging.LOG.log(Level.FINER, "Task finished: {0}", task.getName());
+                Logging.LOG.log(Level.FINER, "Task finished: " + task.getName());
             }
 
             task.onDone().fireEvent(new TaskEvent(this, task, false));

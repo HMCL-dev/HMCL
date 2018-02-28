@@ -82,7 +82,7 @@ public final class GameAssetDownloadTask extends Task {
             AssetObject assetObject = entry.getValue();
             String url = dependencyManager.getDownloadProvider().getAssetBaseURL() + assetObject.getLocation();
             if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile())) {
-                Logging.LOG.log(Level.SEVERE, "Unable to create new file {0}, because parent directory cannot be created", file);
+                Logging.LOG.log(Level.SEVERE, "Unable to create new file " + file + ", because parent directory cannot be created");
                 continue;
             }
             if (file.isDirectory())

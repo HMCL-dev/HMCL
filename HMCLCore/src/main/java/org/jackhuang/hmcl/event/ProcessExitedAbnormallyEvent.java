@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.event;
 
 import org.jackhuang.hmcl.util.ManagedProcess;
+import org.jackhuang.hmcl.util.ToStringBuilder;
 
 /**
  * This event gets fired when a JavaProcess exited abnormally and the exit code is not zero.
@@ -43,5 +44,13 @@ public final class ProcessExitedAbnormallyEvent extends Event {
 
     public ManagedProcess getProcess() {
         return process;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("source", source)
+                .append("process", process)
+                .toString();
     }
 }

@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.event;
 
 import org.jackhuang.hmcl.util.ManagedProcess;
+import org.jackhuang.hmcl.util.ToStringBuilder;
 
 /**
  * This event gets fired when we launch the JVM and it got crashed.
@@ -43,5 +44,13 @@ public class JVMLaunchFailedEvent extends Event {
 
     public ManagedProcess getProcess() {
         return process;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("source", source)
+                .append("process", process)
+                .toString();
     }
 }

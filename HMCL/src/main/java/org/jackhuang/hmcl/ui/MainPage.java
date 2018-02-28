@@ -202,8 +202,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
             children.add(buildNode(repository, version, GameVersion.minecraftVersion(repository.getVersionJar(version.getId())).orElse("Unknown")));
         }
         JFXUtilities.runInFX(() -> {
-            contentPane.getChildren().setAll(masonryPane);
-            FXUtils.resetChildren(masonryPane, children);
+            if (profile == repository.getProfile()) {
+                contentPane.getChildren().setAll(masonryPane);
+                FXUtils.resetChildren(masonryPane, children);
+            }
         });
     }
 

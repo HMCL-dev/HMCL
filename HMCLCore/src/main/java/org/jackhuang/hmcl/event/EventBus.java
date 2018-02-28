@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.event;
 
+import org.jackhuang.hmcl.util.Logging;
+
 import java.util.HashMap;
 
 /**
@@ -36,6 +38,8 @@ public final class EventBus {
 
     @SuppressWarnings("unchecked")
     public Event.Result fireEvent(Event obj) {
+        Logging.LOG.info(obj + " gets fired");
+
         return channel((Class<Event>) obj.getClass()).fireEvent(obj);
     }
 

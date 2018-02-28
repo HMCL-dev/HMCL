@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -17,26 +17,43 @@
  */
 package org.jackhuang.hmcl.event;
 
+import org.jackhuang.hmcl.util.ToStringBuilder;
+
 /**
- * This event gets fired when loading versions in a .minecraft folder.
+ * This event gets fired when a minecraft version is being removed.
  * <br>
  * This event is fired on the {@link org.jackhuang.hmcl.event.EventBus#EVENT_BUS}
  *
  * @author huangyuhui
  */
-public final class RefreshingVersionsEvent extends Event {
+public class RemoveVersionEvent extends Event {
+
+    private final String version;
 
     /**
-     * Constructor.
      *
      * @param source {@link org.jackhuang.hmcl.game.GameRepository}
+     * @param version the version id.
      */
-    public RefreshingVersionsEvent(Object source) {
+    public RemoveVersionEvent(Object source, String version) {
         super(source);
+        this.version = version;
+    }
+
+    public String getVersion() {
+        return version;
     }
 
     @Override
     public boolean hasResult() {
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("source", source)
+                .append("version", version)
+                .toString();
     }
 }

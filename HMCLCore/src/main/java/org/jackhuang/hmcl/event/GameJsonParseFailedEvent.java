@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.event;
 
+import org.jackhuang.hmcl.util.ToStringBuilder;
+
 import java.io.File;
 
 /**
@@ -48,5 +50,14 @@ public final class GameJsonParseFailedEvent extends Event {
 
     public String getVersion() {
         return version;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("source", source)
+                .append("jsonFile", jsonFile)
+                .append("version", version)
+                .toString();
     }
 }
