@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
@@ -93,5 +92,5 @@ public final class ForgeVersionList extends VersionList<Void> {
         };
     }
 
-    public static final String FORGE_LIST = "http://files.minecraftforge.net/maven/net/minecraftforge/forge/json";
+    public static final String FORGE_LIST = "https://files.minecraftforge.net/maven/net/minecraftforge/forge/json";
 }

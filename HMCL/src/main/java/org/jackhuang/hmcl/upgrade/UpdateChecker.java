@@ -71,7 +71,7 @@ public final class UpdateChecker {
                     return;
 
                 if (value == null) {
-                    versionString = NetworkUtils.doGet(NetworkUtils.toURL("http://huangyuhui.duapp.com/hmcl/update.php?version=" + Main.VERSION));
+                    versionString = NetworkUtils.doGet(NetworkUtils.toURL("https://huangyuhui.duapp.com/hmcl/update.php?version=" + Main.VERSION));
                     value = VersionNumber.asVersion(versionString);
                 }
 
@@ -115,7 +115,7 @@ public final class UpdateChecker {
             public void execute() {
                 if (download_link == null)
                     try {
-                        download_link = Constants.GSON.<Map<String, String>>fromJson(NetworkUtils.doGet(NetworkUtils.toURL("http://huangyuhui.duapp.com/update_link.php?type=hmcl")), Map.class);
+                        download_link = Constants.GSON.<Map<String, String>>fromJson(NetworkUtils.doGet(NetworkUtils.toURL("https://huangyuhui.duapp.com/update_link.php?type=hmcl")), Map.class);
                     } catch (JsonSyntaxException | IOException e) {
                         Logging.LOG.log(Level.SEVERE, "Failed to get update link.", e);
                     }

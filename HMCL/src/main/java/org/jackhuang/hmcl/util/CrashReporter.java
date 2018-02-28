@@ -112,7 +112,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             map.put("crash_report", text);
             map.put("version", Main.VERSION);
             try {
-                String response = NetworkUtils.doPost(NetworkUtils.toURL("http://huangyuhui.duapp.com/hmcl/crash.php"), map);
+                String response = NetworkUtils.doPost(NetworkUtils.toURL("https://huangyuhui.duapp.com/hmcl/crash.php"), map);
                 if (StringUtils.isNotBlank(response))
                     Logging.LOG.log(Level.SEVERE, "Crash server response: " + response);
             } catch (IOException ex) {
