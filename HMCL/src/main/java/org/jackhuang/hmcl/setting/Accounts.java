@@ -88,17 +88,13 @@ public final class Accounts {
         return jar.getAbsolutePath();
     }
 
-    public static String getAuthlibInjectorServerName(String serverIp) {
+    public static String getAuthlibInjectorServerName(String serverIp) throws Exception {
         if (AUTHLIB_INJECTOR_SERVER_NAMES.containsKey(serverIp))
             return AUTHLIB_INJECTOR_SERVER_NAMES.get(serverIp);
         else {
-            try {
-                AuthlibInjectorServerResponse response = Constants.GSON.fromJson(NetworkUtils.doGet(NetworkUtils.toURL(serverIp)), AuthlibInjectorServerResponse.class);
-                AUTHLIB_INJECTOR_SERVER_NAMES.put(serverIp, response.getMeta().getServerName());
-                return response.getMeta().getServerName();
-            } catch (JsonParseException | IOException | NullPointerException e) {
-                return null;
-            }
+            AuthlibInjectorServerResponse response = Constants.GSON.fromJson(NetworkUtils.doGet(NetworkUtils.toURL(serverIp)), AuthlibInjectorServerResponse.class);
+            AUTHLIB_INJECTOR_SERVER_NAMES.put(serverIp, response.getMeta().getServerName());
+            return response.getMeta().getServerName();
         }
     }
 }

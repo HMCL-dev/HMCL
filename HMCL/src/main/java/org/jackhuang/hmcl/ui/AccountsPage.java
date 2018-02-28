@@ -49,13 +49,16 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.IconedItem;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
+import org.jackhuang.hmcl.util.Logging;
 
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class AccountsPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", Main.i18n("account"));
@@ -133,7 +136,14 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
 
     public void loadServers() {
         Task.ofResult("list", () -> Settings.INSTANCE.getAuthlibInjectorServerURLs().parallelStream()
-                .map(serverURL -> new TwoLineListItem(Accounts.getAuthlibInjectorServerName(serverURL), serverURL))
+                .flatMap(serverURL -> {
+                    try {
+                        return Stream.of(new TwoLineListItem(Accounts.getAuthlibInjectorServerName(serverURL), serverURL));
+                    } catch (Exception e) {
+                        Logging.LOG.log(Level.WARNING, "Authlib-injector server root " + serverURL + " cannot be recognized.", e);
+                        return Stream.empty();
+                    }
+                })
                 .collect(Collectors.toList()))
                 .subscribe(Task.of(Schedulers.javafx(), variables -> {
                     cboServers.getItems().setAll(variables.<Collection<TwoLineListItem>>get("list"));
