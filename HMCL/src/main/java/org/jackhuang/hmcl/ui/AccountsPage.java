@@ -34,7 +34,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
@@ -61,7 +61,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class AccountsPage extends StackPane implements DecoratorPage {
-    private final StringProperty title = new SimpleStringProperty(this, "title", Main.i18n("account"));
+    private final StringProperty title = new SimpleStringProperty(this, "title", Launcher.i18n("account"));
 
     @FXML
     private ScrollPane scrollPane;
@@ -85,7 +85,7 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
 
         FXUtils.smoothScrolling(scrollPane);
 
-        cboType.getItems().setAll(Main.i18n("account.methods.offline"), Main.i18n("account.methods.yggdrasil"), Main.i18n("account.methods.authlib_injector"));
+        cboType.getItems().setAll(Launcher.i18n("account.methods.offline"), Launcher.i18n("account.methods.yggdrasil"), Launcher.i18n("account.methods.authlib_injector"));
         cboType.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> {
             txtPassword.setVisible(newValue.intValue() != 0);
             lblPassword.setVisible(newValue.intValue() != 0);
@@ -101,7 +101,7 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
 
         txtPassword.setOnAction(e -> onCreationAccept());
         txtUsername.setOnAction(e -> onCreationAccept());
-        txtUsername.getValidators().add(new Validator(Main.i18n("input.email"), str -> !txtPassword.isVisible() || str.contains("@")));
+        txtUsername.getValidators().add(new Validator(Launcher.i18n("input.email"), str -> !txtPassword.isVisible() || str.contains("@")));
 
         FXUtils.onChangeAndOperate(Settings.INSTANCE.selectedAccountProperty(), account -> {
             for (Node node : masonryPane.getChildren())
@@ -227,25 +227,25 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
 
     public static String accountException(Exception exception) {
         if (exception instanceof InvalidCredentialsException) {
-            return Main.i18n("account.failed.invalid_credentials");
+            return Launcher.i18n("account.failed.invalid_credentials");
         } else if (exception instanceof NoCharacterException) {
-            return Main.i18n("account.failed.no_charactor");
+            return Launcher.i18n("account.failed.no_charactor");
         } else if (exception instanceof ServerDisconnectException) {
-            return Main.i18n("account.failed.connect_authentication_server");
+            return Launcher.i18n("account.failed.connect_authentication_server");
         } else if (exception instanceof InvalidTokenException) {
-            return Main.i18n("account.failed.invalid_token");
+            return Launcher.i18n("account.failed.invalid_token");
         } else if (exception instanceof InvalidPasswordException) {
-            return Main.i18n("account.failed.invalid_password");
+            return Launcher.i18n("account.failed.invalid_password");
         } else {
             return exception.getClass() + ": " + exception.getLocalizedMessage();
         }
     }
 
     public static String accountType(Account account) {
-        if (account instanceof OfflineAccount) return Main.i18n("account.methods.offline");
-        else if (account instanceof AuthlibInjectorAccount) return Main.i18n("account.methods.authlib_injector");
-        else if (account instanceof YggdrasilAccount) return Main.i18n("account.methods.yggdrasil");
-        else throw new Error(Main.i18n("account.methods.no_method") + ": " + account);
+        if (account instanceof OfflineAccount) return Launcher.i18n("account.methods.offline");
+        else if (account instanceof AuthlibInjectorAccount) return Launcher.i18n("account.methods.authlib_injector");
+        else if (account instanceof YggdrasilAccount) return Launcher.i18n("account.methods.yggdrasil");
+        else throw new Error(Launcher.i18n("account.methods.no_method") + ": " + account);
     }
 
     private static class Selector extends BorderPane implements CharacterSelector {
@@ -258,11 +258,11 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
         {
             setStyle("-fx-padding: 8px;");
 
-            cancel.setText(Main.i18n("button.cancel"));
+            cancel.setText(Launcher.i18n("button.cancel"));
             StackPane.setAlignment(cancel, Pos.BOTTOM_RIGHT);
             cancel.setOnMouseClicked(e -> latch.countDown());
 
-            listBox.startCategory(Main.i18n("account.choose"));
+            listBox.startCategory(Launcher.i18n("account.choose"));
 
             setCenter(listBox);
 

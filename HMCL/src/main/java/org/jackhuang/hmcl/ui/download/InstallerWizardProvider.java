@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.Version;
@@ -80,8 +80,8 @@ public final class InstallerWizardProvider implements WizardProvider {
 
     @Override
     public Object finish(Map<String, Object> settings) {
-        settings.put("success_message", Main.i18n("install.success"));
-        settings.put("failure_message", Main.i18n("install.failed"));
+        settings.put("success_message", Launcher.i18n("install.success"));
+        settings.put("failure_message", Launcher.i18n("install.failed"));
 
         Task ret = Task.empty();
 

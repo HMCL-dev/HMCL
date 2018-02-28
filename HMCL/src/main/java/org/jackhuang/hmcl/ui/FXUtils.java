@@ -41,7 +41,7 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
@@ -184,7 +184,7 @@ public final class FXUtils {
     }
 
     public static void loadFXML(Node node, String absolutePath) {
-        FXMLLoader loader = new FXMLLoader(node.getClass().getResource(absolutePath), Main.RESOURCE_BUNDLE);
+        FXMLLoader loader = new FXMLLoader(node.getClass().getResource(absolutePath), Launcher.RESOURCE_BUNDLE);
         loader.setRoot(node);
         loader.setController(node);
         Lang.invoke((ExceptionalSupplier<Object, IOException>) loader::load);

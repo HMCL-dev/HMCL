@@ -23,7 +23,7 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -93,7 +93,7 @@ public final class Controllers {
     public static void initialize(Stage stage) {
         Controllers.stage = stage;
 
-        decorator = new Decorator(stage, getMainPage(), Main.TITLE, false, true);
+        decorator = new Decorator(stage, getMainPage(), Launcher.TITLE, false, true);
         decorator.showPage(null);
         leftPaneController = new LeftPaneController(decorator.getLeftPane());
 
@@ -110,7 +110,7 @@ public final class Controllers {
         stage.setMaxHeight(521);
 
         stage.getIcons().add(new Image("/assets/img/icon.png"));
-        stage.setTitle(Main.TITLE);
+        stage.setTitle(Launcher.TITLE);
     }
 
     public static Region getDialogContent() {

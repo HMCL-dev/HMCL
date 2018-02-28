@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.task.Schedulers;
 import java.awt.*;
 import java.io.File;
 import java.nio.charset.Charset;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 import java.util.function.Consumer;

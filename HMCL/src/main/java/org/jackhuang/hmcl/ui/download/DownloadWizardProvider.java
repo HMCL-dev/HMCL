@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.RemoteVersion;
@@ -34,7 +34,7 @@ import org.jackhuang.hmcl.util.Lang;
 import java.io.File;
 import java.util.Map;
 
-import static org.jackhuang.hmcl.Main.i18n;
+import static org.jackhuang.hmcl.Launcher.i18n;
 
 public final class DownloadWizardProvider implements WizardProvider {
     private Profile profile;
@@ -77,8 +77,8 @@ public final class DownloadWizardProvider implements WizardProvider {
 
     @Override
     public Object finish(Map<String, Object> settings) {
-        settings.put("success_message", Main.i18n("install.success"));
-        settings.put("failure_message", Main.i18n("install.failed"));
+        settings.put("success_message", Launcher.i18n("install.success"));
+        settings.put("failure_message", Launcher.i18n("install.failed"));
 
         switch (Lang.parseInt(settings.get(InstallTypePage.INSTALL_TYPE), -1)) {
             case 0: return finishVersionDownloadingAsync(settings);

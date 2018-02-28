@@ -23,7 +23,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -92,8 +92,8 @@ public final class MessageDialogPane extends StackPane {
             Optional.ofNullable(onCancel).ifPresent(Runnable::run);
         });
 
-        acceptButton.setText(Main.i18n("button.yes"));
-        cancelButton.setText(Main.i18n("button.no"));
+        acceptButton.setText(Launcher.i18n("button.yes"));
+        cancelButton.setText(Launcher.i18n("button.no"));
 
         actions.getChildren().add(cancelButton);
     }

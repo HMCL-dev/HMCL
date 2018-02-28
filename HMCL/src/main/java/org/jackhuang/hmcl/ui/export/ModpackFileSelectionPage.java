@@ -25,7 +25,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TreeItem;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.game.ModAdviser;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -147,23 +147,23 @@ public final class ModpackFileSelectionPage extends StackPane implements WizardP
 
     @Override
     public String getTitle() {
-        return Main.i18n("modpack.wizard.step.2.title");
+        return Launcher.i18n("modpack.wizard.step.2.title");
     }
 
     public static final String MODPACK_FILE_SELECTION = "modpack.accepted";
     private static final Map<String, String> TRANSLATION = Lang.mapOf(
-            new Pair<>("minecraft/servers.dat", Main.i18n("modpack.files.servers_dat")),
-            new Pair<>("minecraft/saves", Main.i18n("modpack.files.saves")),
-            new Pair<>("minecraft/mods", Main.i18n("modpack.files.mods")),
-            new Pair<>("minecraft/config", Main.i18n("modpack.files.config")),
-            new Pair<>("minecraft/liteconfig", Main.i18n("modpack.files.liteconfig")),
-            new Pair<>("minecraft/resourcepacks", Main.i18n("modpack.files.resourcepacks")),
-            new Pair<>("minecraft/resources", Main.i18n("modpack.files.resourcepacks")),
-            new Pair<>("minecraft/options.txt", Main.i18n("modpack.files.options_txt")),
-            new Pair<>("minecraft/optionsshaders.txt", Main.i18n("modpack.files.optionsshaders_txt")),
-            new Pair<>("minecraft/mods/VoxelMods", Main.i18n("modpack.files.mods.voxelmods")),
-            new Pair<>("minecraft/dumps", Main.i18n("modpack.files.dumps")),
-            new Pair<>("minecraft/blueprints", Main.i18n("modpack.files.blueprints")),
-            new Pair<>("minecraft/scripts", Main.i18n("modpack.files.scripts"))
+            new Pair<>("minecraft/servers.dat", Launcher.i18n("modpack.files.servers_dat")),
+            new Pair<>("minecraft/saves", Launcher.i18n("modpack.files.saves")),
+            new Pair<>("minecraft/mods", Launcher.i18n("modpack.files.mods")),
+            new Pair<>("minecraft/config", Launcher.i18n("modpack.files.config")),
+            new Pair<>("minecraft/liteconfig", Launcher.i18n("modpack.files.liteconfig")),
+            new Pair<>("minecraft/resourcepacks", Launcher.i18n("modpack.files.resourcepacks")),
+            new Pair<>("minecraft/resources", Launcher.i18n("modpack.files.resourcepacks")),
+            new Pair<>("minecraft/options.txt", Launcher.i18n("modpack.files.options_txt")),
+            new Pair<>("minecraft/optionsshaders.txt", Launcher.i18n("modpack.files.optionsshaders_txt")),
+            new Pair<>("minecraft/mods/VoxelMods", Launcher.i18n("modpack.files.mods.voxelmods")),
+            new Pair<>("minecraft/dumps", Launcher.i18n("modpack.files.dumps")),
+            new Pair<>("minecraft/blueprints", Launcher.i18n("modpack.files.blueprints")),
+            new Pair<>("minecraft/scripts", Launcher.i18n("modpack.files.scripts"))
     );
 }

@@ -27,10 +27,11 @@ import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.ProfileChangedEvent;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
+import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.UnsupportedModpackException;
@@ -54,7 +55,7 @@ import java.util.List;
 
 public final class MainPage extends StackPane implements DecoratorPage {
 
-    private final StringProperty title = new SimpleStringProperty(this, "title", Main.i18n("main_page"));
+    private final StringProperty title = new SimpleStringProperty(this, "title", Launcher.i18n("main_page"));
 
     private Profile profile;
     private String rightClickedVersion;
@@ -84,18 +85,21 @@ public final class MainPage extends StackPane implements DecoratorPage {
             if (event.getSource() == profile.getRepository())
                 loadVersions((HMCLGameRepository) event.getSource());
         });
+        EventBus.EVENT_BUS.channel(RefreshingVersionsEvent.class).register(event -> {
+            if (event.getSource() == profile.getRepository())
+                JFXUtilities.runInFXAndWait(this::loadingVersions);
+        });
         EventBus.EVENT_BUS.channel(ProfileChangedEvent.class).register(event -> {
-            JFXUtilities.runInFXAndWait(this::loadingVersions);
             this.profile = event.getProfile();
         });
 
         versionPopup = new JFXPopup(versionList);
         getChildren().remove(versionList);
 
-        btnAdd.setOnMouseClicked(e -> Controllers.getDecorator().startWizard(new DownloadWizardProvider(), Main.i18n("install")));
-        FXUtils.installTooltip(btnAdd, Main.i18n("install"));
+        btnAdd.setOnMouseClicked(e -> Controllers.getDecorator().startWizard(new DownloadWizardProvider(), Launcher.i18n("install")));
+        FXUtils.installTooltip(btnAdd, Launcher.i18n("install"));
         btnRefresh.setOnMouseClicked(e -> Settings.INSTANCE.getSelectedProfile().getRepository().refreshVersionsAsync().start());
-        FXUtils.installTooltip(btnRefresh, Main.i18n("button.refresh"));
+        FXUtils.installTooltip(btnRefresh, Launcher.i18n("button.refresh"));
     }
 
     private Node buildNode(HMCLGameRepository repository, Version version, String game) {
@@ -109,33 +113,33 @@ public final class MainPage extends StackPane implements DecoratorPage {
         StringBuilder libraries = new StringBuilder();
         for (Library library : version.getLibraries()) {
             if (library.getGroupId().equalsIgnoreCase("net.minecraftforge") && library.getArtifactId().equalsIgnoreCase("forge")) {
-                libraries.append(Main.i18n("install.installer.forge")).append(": ").append(StringUtils.removeSuffix(StringUtils.removePrefix(library.getVersion().replaceAll("(?i)forge", "").replace(game, "").trim(), "-"), "-")).append("\n");
+                libraries.append(Launcher.i18n("install.installer.forge")).append(": ").append(StringUtils.removeSuffix(StringUtils.removePrefix(library.getVersion().replaceAll("(?i)forge", "").replace(game, "").trim(), "-"), "-")).append("\n");
             }
             if (library.getGroupId().equalsIgnoreCase("com.mumfrey") && library.getArtifactId().equalsIgnoreCase("liteloader")) {
-                libraries.append(Main.i18n("install.installer.liteloader")).append(": ").append(StringUtils.removeSuffix(StringUtils.removePrefix(library.getVersion().replaceAll("(?i)liteloader", "").replace(game, "").trim(), "-"), "-")).append("\n");
+                libraries.append(Launcher.i18n("install.installer.liteloader")).append(": ").append(StringUtils.removeSuffix(StringUtils.removePrefix(library.getVersion().replaceAll("(?i)liteloader", "").replace(game, "").trim(), "-"), "-")).append("\n");
             }
             if (library.getGroupId().equalsIgnoreCase("net.optifine") && library.getArtifactId().equalsIgnoreCase("optifine")) {
-                libraries.append(Main.i18n("install.installer.optifine")).append(": ").append(StringUtils.removeSuffix(StringUtils.removePrefix(library.getVersion().replaceAll("(?i)optifine", "").replace(game, "").trim(), "-"), "-")).append("\n");
+                libraries.append(Launcher.i18n("install.installer.optifine")).append(": ").append(StringUtils.removeSuffix(StringUtils.removePrefix(library.getVersion().replaceAll("(?i)optifine", "").replace(game, "").trim(), "-"), "-")).append("\n");
             }
         }
 
         item.setLibraries(libraries.toString());
         item.setOnLaunchButtonClicked(e -> {
             if (Settings.INSTANCE.getSelectedAccount() == null)
-                Controllers.dialog(Main.i18n("login.empty_username"));
+                Controllers.dialog(Launcher.i18n("login.empty_username"));
             else
                 LauncherHelper.INSTANCE.launch(profile, Settings.INSTANCE.getSelectedAccount(), id, null);
         });
         item.setOnScriptButtonClicked(e -> {
             if (Settings.INSTANCE.getSelectedAccount() == null)
-                Controllers.dialog(Main.i18n("login.empty_username"));
+                Controllers.dialog(Launcher.i18n("login.empty_username"));
             else {
                 FileChooser chooser = new FileChooser();
                 chooser.setInitialDirectory(repository.getRunDirectory(id));
-                chooser.setTitle(Main.i18n("version.launch_script.save"));
+                chooser.setTitle(Launcher.i18n("version.launch_script.save"));
                 chooser.getExtensionFilters().add(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
-                        ? new FileChooser.ExtensionFilter(Main.i18n("extension.bat"), "*.bat")
-                        : new FileChooser.ExtensionFilter(Main.i18n("extension.sh"), "*.sh"));
+                        ? new FileChooser.ExtensionFilter(Launcher.i18n("extension.bat"), "*.bat")
+                        : new FileChooser.ExtensionFilter(Launcher.i18n("extension.sh"), "*.sh"));
                 File file = chooser.showSaveDialog(Controllers.getStage());
                 if (file != null)
                     LauncherHelper.INSTANCE.launch(profile, Settings.INSTANCE.getSelectedAccount(), id, file);
@@ -147,8 +151,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
         });
         item.setOnUpdateButtonClicked(event -> {
             FileChooser chooser = new FileChooser();
-            chooser.setTitle(Main.i18n("modpack.choose"));
-            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(Main.i18n("modpack"), "*.zip"));
+            chooser.setTitle(Launcher.i18n("modpack.choose"));
+            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(Launcher.i18n("modpack"), "*.zip"));
             File selectedFile = chooser.showOpenDialog(Controllers.getStage());
             if (selectedFile != null) {
                 TaskExecutorDialogPane pane = new TaskExecutorDialogPane(null);
@@ -156,15 +160,15 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     TaskExecutor executor = ModpackHelper.getUpdateTask(profile, selectedFile, id, ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(id)))
                             .then(Task.of(Schedulers.javafx(), Controllers::closeDialog)).executor();
                     pane.setExecutor(executor);
-                    pane.setTitle(Main.i18n("modpack.update"));
+                    pane.setTitle(Launcher.i18n("modpack.update"));
                     executor.start();
                     Controllers.dialog(pane);
                 } catch (UnsupportedModpackException e) {
-                    Controllers.dialog(Main.i18n("modpack.unsupported"), Main.i18n("message.error"), MessageBox.ERROR_MESSAGE);
+                    Controllers.dialog(Launcher.i18n("modpack.unsupported"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE);
                 } catch (MismatchedModpackTypeException e) {
-                    Controllers.dialog(Main.i18n("modpack.mismatched_type"), Main.i18n("message.error"), MessageBox.ERROR_MESSAGE);
+                    Controllers.dialog(Launcher.i18n("modpack.mismatched_type"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE);
                 } catch (IOException e)  {
-                    Controllers.dialog(Main.i18n("modpack.invalid"), Main.i18n("message.error"), MessageBox.ERROR_MESSAGE);
+                    Controllers.dialog(Launcher.i18n("modpack.invalid"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE);
                 }
             }
         });
@@ -176,7 +180,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 versionPopup.show(item, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
             } else if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
                 if (Settings.INSTANCE.getSelectedAccount() == null)
-                    Controllers.dialog(Main.i18n("login.empty_username"));
+                    Controllers.dialog(Launcher.i18n("login.empty_username"));
                 else
                     LauncherHelper.INSTANCE.launch(profile, Settings.INSTANCE.getSelectedAccount(), id, null);
             }

@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 
 public enum LoadingState {
     DEPENDENCIES("launch.state.dependencies"),
@@ -33,6 +33,6 @@ public enum LoadingState {
     }
 
     public String getLocalizedMessage() {
-        return Main.i18n(key);
+        return Launcher.i18n(key);
     }
 }

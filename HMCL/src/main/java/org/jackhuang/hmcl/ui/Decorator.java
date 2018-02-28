@@ -45,7 +45,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.setting.Theme;
@@ -74,7 +74,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     private static final SVGGlyph close = Lang.apply(new SVGGlyph(0, "CLOSE", "M810 274l-238 238 238 238-60 60-238-238-238 238-60-60 238-238-238-238 60-60 238 238 238-238z", Color.WHITE),
             glyph -> { glyph.setPrefSize(12, 12); glyph.setSize(12, 12); });
 
-    private final ObjectProperty<Runnable> onCloseButtonAction = new SimpleObjectProperty<>(Main::stopApplication);
+    private final ObjectProperty<Runnable> onCloseButtonAction = new SimpleObjectProperty<>(Launcher::stopApplication);
     private final BooleanProperty customMaximize = new SimpleBooleanProperty(false);
 
     private final Stage primaryStage;
@@ -144,7 +144,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         FXUtils.loadFXML(this, "/assets/fxml/decorator.fxml");
 
         updatePane.setCursor(Cursor.HAND);
-        updatePane.setOnMouseClicked(event -> Main.UPDATE_CHECKER.checkOutdate());
+        updatePane.setOnMouseClicked(event -> Launcher.UPDATE_CHECKER.checkOutdate());
 
         primaryStage.initStyle(StageStyle.UNDECORATED);
         btnClose.setGraphic(close);

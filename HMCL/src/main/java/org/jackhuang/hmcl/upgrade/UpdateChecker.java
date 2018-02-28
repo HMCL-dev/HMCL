@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.upgrade;
 
 import com.google.gson.JsonSyntaxException;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.OutOfDateEvent;
@@ -67,18 +67,18 @@ public final class UpdateChecker {
         return new TaskResult<VersionNumber>() {
             @Override
             public void execute() throws Exception {
-                if (Main.VERSION.contains("@"))
+                if (Launcher.VERSION.contains("@"))
                     return;
 
                 if (value == null) {
-                    versionString = NetworkUtils.doGet(NetworkUtils.toURL("http://huangyuhui.duapp.com/hmcl/update.php?version=" + Main.VERSION));
+                    versionString = NetworkUtils.doGet(NetworkUtils.toURL("http://huangyuhui.duapp.com/hmcl/update.php?version=" + Launcher.VERSION));
                     value = VersionNumber.asVersion(versionString);
                 }
 
                 if (value == null) {
                     Logging.LOG.warning("Unable to check update...");
                     if (showMessage)
-                        MessageBox.show(Main.i18n("update.failed"));
+                        MessageBox.show(Launcher.i18n("update.failed"));
                 } else if (base.compareTo(value) < 0)
                     outOfDate = true;
                 if (outOfDate)
@@ -134,7 +134,7 @@ public final class UpdateChecker {
     public void checkOutdate() {
         if (outOfDate)
             if (EventBus.EVENT_BUS.fireEvent(new OutOfDateEvent(this, getNewVersion())) != Event.Result.DENY) {
-                Main.UPGRADER.download(this, getNewVersion());
+                Launcher.UPGRADER.download(this, getNewVersion());
             }
     }
 }

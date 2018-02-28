@@ -25,7 +25,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.ProfileChangedEvent;
@@ -60,18 +60,18 @@ public final class LeftPaneController {
     public LeftPaneController(AdvancedListBox leftPane) {
         this.leftPane = leftPane;
 
-        leftPane.startCategory(Main.i18n("account").toUpperCase())
+        leftPane.startCategory(Launcher.i18n("account").toUpperCase())
                 .add(Lang.apply(new RipplerContainer(accountItem), rippler -> {
                     rippler.setOnMouseClicked(e -> Controllers.navigate(new AccountsPage()));
                     accountItem.setOnSettingsButtonClicked(() -> Controllers.navigate(new AccountsPage()));
                 }))
-                .startCategory(Main.i18n("launcher").toUpperCase())
-                .add(Lang.apply(new IconedItem(SVG.gear(Theme.blackFillBinding(), 20, 20), Main.i18n("settings.launcher")), iconedItem -> {
+                .startCategory(Launcher.i18n("launcher").toUpperCase())
+                .add(Lang.apply(new IconedItem(SVG.gear(Theme.blackFillBinding(), 20, 20), Launcher.i18n("settings.launcher")), iconedItem -> {
                     iconedItem.prefWidthProperty().bind(leftPane.widthProperty());
                     iconedItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
                 }))
                 .add(new ClassTitle(Lang.apply(new BorderPane(), borderPane -> {
-                    borderPane.setLeft(Lang.apply(new VBox(), vBox -> vBox.getChildren().setAll(new Text(Main.i18n("profile.title").toUpperCase()))));
+                    borderPane.setLeft(Lang.apply(new VBox(), vBox -> vBox.getChildren().setAll(new Text(Launcher.i18n("profile.title").toUpperCase()))));
                     JFXButton addProfileButton = new JFXButton();
                     addProfileButton.setGraphic(SVG.plus(Theme.blackFillBinding(), 10, 10));
                     addProfileButton.getStyleClass().add("toggle-icon-tiny");
@@ -87,8 +87,8 @@ public final class LeftPaneController {
 
         FXUtils.onChangeAndOperate(Settings.INSTANCE.selectedAccountProperty(), it -> {
             if (it == null) {
-                accountItem.setVersionName(Main.i18n("account.missing"));
-                accountItem.setGameVersion(Main.i18n("message.unknown"));
+                accountItem.setVersionName(Launcher.i18n("account.missing"));
+                accountItem.setGameVersion(Launcher.i18n("message.unknown"));
             } else {
                 accountItem.setVersionName(it.getCharacter());
                 accountItem.setGameVersion(AccountsPage.accountType(it));
@@ -110,7 +110,7 @@ public final class LeftPaneController {
                 if (node instanceof RipplerContainer && node.getProperties().get("profile") instanceof String) {
                     boolean current = Objects.equals(node.getProperties().get("profile"), profile.getName());
                     ((RipplerContainer) node).setSelected(current);
-                    ((VersionListItem) ((RipplerContainer) node).getContainer()).setGameVersion(current ? Main.i18n("profile.selected") : "");
+                    ((VersionListItem) ((RipplerContainer) node).getContainer()).setGameVersion(current ? Launcher.i18n("profile.selected") : "");
                 }
             }
         });
@@ -149,7 +149,7 @@ public final class LeftPaneController {
                                                 Controllers.closeDialog();
                                                 checkAccount();
                                             })).executor(),
-                                    Main.i18n("modpack.installing"), "", null);
+                                    Launcher.i18n("modpack.installing"), "", null);
                             flag = false;
                         } catch (UnsupportedModpackException ignore) {
                         }

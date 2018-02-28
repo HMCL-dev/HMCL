@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.util;
 
 import javafx.application.Platform;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.ui.CrashWindow;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 
@@ -36,15 +36,15 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
     private static final HashMap<String, String> SOURCE = new HashMap<String, String>() {
         {
-            put("javafx.fxml.LoadException", Main.i18n("crash.NoClassDefFound"));
-            put("UnsatisfiedLinkError", Main.i18n("crash.user_fault"));
-            put("java.lang.NoClassDefFoundError", Main.i18n("crash.NoClassDefFound"));
-            put("java.lang.VerifyError", Main.i18n("crash.NoClassDefFound"));
-            put("java.lang.NoSuchMethodError", Main.i18n("crash.NoClassDefFound"));
-            put("java.lang.IncompatibleClassChangeError", Main.i18n("crash.NoClassDefFound"));
-            put("java.lang.ClassFormatError", Main.i18n("crash.NoClassDefFound"));
+            put("javafx.fxml.LoadException", Launcher.i18n("crash.NoClassDefFound"));
+            put("UnsatisfiedLinkError", Launcher.i18n("crash.user_fault"));
+            put("java.lang.NoClassDefFoundError", Launcher.i18n("crash.NoClassDefFound"));
+            put("java.lang.VerifyError", Launcher.i18n("crash.NoClassDefFound"));
+            put("java.lang.NoSuchMethodError", Launcher.i18n("crash.NoClassDefFound"));
+            put("java.lang.IncompatibleClassChangeError", Launcher.i18n("crash.NoClassDefFound"));
+            put("java.lang.ClassFormatError", Launcher.i18n("crash.NoClassDefFound"));
             put("java.lang.OutOfMemoryError", "FUCKING MEMORY LIMIT!");
-            put("Trampoline", Main.i18n("launcher.update_java"));
+            put("Trampoline", Launcher.i18n("launcher.update_java"));
             put("NoSuchAlgorithmException", "Has your operating system been installed completely or is a ghost system?");
         }
     };
@@ -80,7 +80,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         try {
             StringBuilder builder = new StringBuilder();
             builder.append("---- Hello Minecraft! Crash Report ----\n");
-            builder.append("  Version: " + Main.VERSION + "\n");
+            builder.append("  Version: " + Launcher.VERSION + "\n");
             builder.append("  Time: ").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())).append("\n");
             builder.append("  Thread: ").append(t.toString()).append("\n");
             builder.append("\n  Content: \n    ");
@@ -95,7 +95,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
             if (checkThrowable(e) && !text.contains("OpenJDK")) {
                 Platform.runLater(() -> new CrashWindow(text).show());
-                if (!Main.UPDATE_CHECKER.isOutOfDate())
+                if (!Launcher.UPDATE_CHECKER.isOutOfDate())
                     reportToServer(text);
             }
         } catch (Throwable ex) {
@@ -110,7 +110,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         Thread t = new Thread(() -> {
             HashMap<String, String> map = new HashMap<>();
             map.put("crash_report", text);
-            map.put("version", Main.VERSION);
+            map.put("version", Launcher.VERSION);
             try {
                 String response = NetworkUtils.doPost(NetworkUtils.toURL("http://huangyuhui.duapp.com/hmcl/crash.php"), map);
                 if (StringUtils.isNotBlank(response))

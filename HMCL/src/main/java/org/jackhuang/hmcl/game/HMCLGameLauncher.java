@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
@@ -45,7 +45,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     protected void appendJvmArgs(List<String> result) {
         super.appendJvmArgs(result);
 
-        result.add("-Dminecraft.launcher.version=" + Main.VERSION);
-        result.add("-Dminecraft.launcher.brand=" + Main.NAME);
+        result.add("-Dminecraft.launcher.version=" + Launcher.VERSION);
+        result.add("-Dminecraft.launcher.brand=" + Launcher.NAME);
     }
 }

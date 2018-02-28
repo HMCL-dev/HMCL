@@ -26,7 +26,7 @@ import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
@@ -79,17 +79,17 @@ public final class VersionPage extends StackPane implements DecoratorPage {
         browsePopup = new JFXPopup(browseList);
         managementPopup = new JFXPopup(managementList);
 
-        FXUtils.installTooltip(btnDelete, Main.i18n("version.manage.remove"));
-        FXUtils.installTooltip(btnBrowseMenu, Main.i18n("settings.game.exploration"));
-        FXUtils.installTooltip(btnManagementMenu, Main.i18n("settings.game.management"));
-        FXUtils.installTooltip(btnExport, Main.i18n("modpack.export"));
+        FXUtils.installTooltip(btnDelete, Launcher.i18n("version.manage.remove"));
+        FXUtils.installTooltip(btnBrowseMenu, Launcher.i18n("settings.game.exploration"));
+        FXUtils.installTooltip(btnManagementMenu, Launcher.i18n("settings.game.management"));
+        FXUtils.installTooltip(btnExport, Launcher.i18n("modpack.export"));
     }
 
     public void load(String id, Profile profile) {
         this.version = id;
         this.profile = profile;
 
-        title.set(Main.i18n("settings.game") + " - " + id);
+        title.set(Launcher.i18n("settings.game") + " - " + id);
 
         versionSettingsController.loadVersionSetting(profile, id);
         modController.setParentTab(tabPane);
@@ -185,7 +185,7 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     }
 
     public static void deleteVersion(Profile profile, String version) {
-        Controllers.confirmDialog(Main.i18n("version.manage.remove.confirm", version), Main.i18n("message.confirm"), () -> {
+        Controllers.confirmDialog(Launcher.i18n("version.manage.remove.confirm", version), Launcher.i18n("message.confirm"), () -> {
             if (profile.getRepository().removeVersionFromDisk(version)) {
                 profile.getRepository().refreshVersionsAsync().start();
                 Controllers.navigate(null);
@@ -194,7 +194,7 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     }
 
     public static void renameVersion(Profile profile, String version) {
-        Controllers.inputDialog(Main.i18n("version.manage.rename.message"), res -> {
+        Controllers.inputDialog(Launcher.i18n("version.manage.rename.message"), res -> {
             if (profile.getRepository().renameVersion(version, res)) {
                 profile.getRepository().refreshVersionsAsync().start();
                 Controllers.navigate(null);
@@ -203,6 +203,6 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     }
 
     public static void exportVersion(Profile profile, String version) {
-        Controllers.getDecorator().startWizard(new ExportWizardProvider(profile, version), Main.i18n("modpack.wizard"));
+        Controllers.getDecorator().startWizard(new ExportWizardProvider(profile, version), Launcher.i18n("modpack.wizard"));
     }
 }

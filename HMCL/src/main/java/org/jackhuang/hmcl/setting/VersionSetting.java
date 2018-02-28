@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
 import javafx.beans.InvalidationListener;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.util.*;
 
@@ -482,8 +482,8 @@ public final class VersionSetting {
         return new LaunchOptions.Builder()
                 .setGameDir(gameDir)
                 .setJava(javaVersion)
-                .setVersionName(Main.TITLE)
-                .setProfileName(Main.TITLE)
+                .setVersionName(Launcher.TITLE)
+                .setProfileName(Launcher.TITLE)
                 .setMinecraftArgs(getMinecraftArgs())
                 .setJavaArgs(getJavaArgs())
                 .setMaxMemory(getMaxMemory())

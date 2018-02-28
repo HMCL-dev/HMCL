@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
@@ -43,7 +43,7 @@ public final class AccountHelper {
     public static final AccountHelper INSTANCE = new AccountHelper();
     private AccountHelper() {}
 
-    public static final File SKIN_DIR = new File(Main.HMCL_DIRECTORY, "skins");
+    public static final File SKIN_DIR = new File(Launcher.HMCL_DIRECTORY, "skins");
 
     public static void loadSkins() {
         loadSkins(Proxy.NO_PROXY);

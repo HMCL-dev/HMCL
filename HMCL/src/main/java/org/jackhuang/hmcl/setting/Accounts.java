@@ -17,8 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
@@ -74,8 +73,8 @@ public final class Accounts {
 
     private static String downloadAuthlibInjector() throws Exception {
         AuthlibInjectorBuildInfo buildInfo = AuthlibInjectorBuildInfo.requestBuildInfo();
-        File jar = new File(Main.HMCL_DIRECTORY, "authlib-injector.jar");
-        File local = new File(Main.HMCL_DIRECTORY, "authlib-injector.txt");
+        File jar = new File(Launcher.HMCL_DIRECTORY, "authlib-injector.jar");
+        File local = new File(Launcher.HMCL_DIRECTORY, "authlib-injector.txt");
         int buildNumber = 0;
         try {
             buildNumber = Integer.parseInt(FileUtils.readText(local));

@@ -23,7 +23,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.text.Font;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
@@ -525,7 +525,7 @@ public class Settings {
     private void checkProfileMap() {
         if (getProfileMap().isEmpty()) {
             getProfileMap().put(DEFAULT_PROFILE, new Profile(DEFAULT_PROFILE));
-            getProfileMap().put(HOME_PROFILE, new Profile(HOME_PROFILE, Main.MINECRAFT_DIRECTORY));
+            getProfileMap().put(HOME_PROFILE, new Profile(HOME_PROFILE, Launcher.MINECRAFT_DIRECTORY));
         }
     }
 

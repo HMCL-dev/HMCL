@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
-import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.util.StringUtils;

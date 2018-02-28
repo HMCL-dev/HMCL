@@ -20,9 +20,7 @@ package org.jackhuang.hmcl.download.game;
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.File;
 import java.util.LinkedList;
