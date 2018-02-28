@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.concurrency.JFXUtilities;
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXMasonryPane;
-import com.jfoenix.controls.JFXPopup;
+import com.jfoenix.controls.*;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
@@ -51,6 +48,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -60,16 +58,18 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private Profile profile;
     private String rightClickedVersion;
+    private HMCLGameRepository rightClickedRepository;
 
     @FXML
     private JFXButton btnRefresh;
-
+    @FXML
+    private StackPane contentPane;
     @FXML
     private JFXButton btnAdd;
-
+    @FXML
+    private JFXSpinner spinner;
     @FXML
     private JFXMasonryPane masonryPane;
-
     @FXML
     private JFXListView versionList;
 
@@ -78,11 +78,16 @@ public final class MainPage extends StackPane implements DecoratorPage {
     {
         FXUtils.loadFXML(this, "/assets/fxml/main.fxml");
 
+        loadingVersions();
+
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(event -> {
             if (event.getSource() == profile.getRepository())
                 loadVersions((HMCLGameRepository) event.getSource());
         });
-        EventBus.EVENT_BUS.channel(ProfileChangedEvent.class).register(event -> this.profile = event.getProfile());
+        EventBus.EVENT_BUS.channel(ProfileChangedEvent.class).register(event -> {
+            JFXUtilities.runInFXAndWait(this::loadingVersions);
+            this.profile = event.getProfile();
+        });
 
         versionPopup = new JFXPopup(versionList);
         getChildren().remove(versionList);
@@ -94,6 +99,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     private Node buildNode(HMCLGameRepository repository, Version version, String game) {
+        Profile profile = repository.getProfile();
         String id = version.getId();
         VersionItem item = new VersionItem();
         item.setUpdate(repository.isModpack(id));
@@ -118,7 +124,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             if (Settings.INSTANCE.getSelectedAccount() == null)
                 Controllers.dialog(Main.i18n("login.empty_username"));
             else
-                LauncherHelper.INSTANCE.launch(id, null);
+                LauncherHelper.INSTANCE.launch(profile, Settings.INSTANCE.getSelectedAccount(), id, null);
         });
         item.setOnScriptButtonClicked(e -> {
             if (Settings.INSTANCE.getSelectedAccount() == null)
@@ -132,7 +138,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                         : new FileChooser.ExtensionFilter(Main.i18n("extension.sh"), "*.sh"));
                 File file = chooser.showSaveDialog(Controllers.getStage());
                 if (file != null)
-                    LauncherHelper.INSTANCE.launch(id, file);
+                    LauncherHelper.INSTANCE.launch(profile, Settings.INSTANCE.getSelectedAccount(), id, file);
             }
         });
         item.setOnSettingsButtonClicked(e -> {
@@ -165,13 +171,14 @@ public final class MainPage extends StackPane implements DecoratorPage {
         item.setOnMouseClicked(event -> {
             if (event.getButton() == MouseButton.SECONDARY) {
                 rightClickedVersion = id;
+                rightClickedRepository = repository;
                 versionList.getSelectionModel().select(-1);
                 versionPopup.show(item, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
             } else if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
                 if (Settings.INSTANCE.getSelectedAccount() == null)
                     Controllers.dialog(Main.i18n("login.empty_username"));
                 else
-                    LauncherHelper.INSTANCE.launch(id, null);
+                    LauncherHelper.INSTANCE.launch(profile, Settings.INSTANCE.getSelectedAccount(), id, null);
             }
         });
         File iconFile = repository.getVersionIcon(id);
@@ -180,12 +187,20 @@ public final class MainPage extends StackPane implements DecoratorPage {
         return item;
     }
 
+    private void loadingVersions() {
+        contentPane.getChildren().setAll(spinner);
+        FXUtils.resetChildren(masonryPane, Collections.emptyList());
+    }
+
     private void loadVersions(HMCLGameRepository repository) {
         List<Node> children = new LinkedList<>();
         for (Version version : repository.getVersions()) {
             children.add(buildNode(repository, version, GameVersion.minecraftVersion(repository.getVersionJar(version.getId())).orElse("Unknown")));
         }
-        JFXUtilities.runInFX(() -> FXUtils.resetChildren(masonryPane, children));
+        JFXUtilities.runInFX(() -> {
+            contentPane.getChildren().setAll(masonryPane);
+            FXUtils.resetChildren(masonryPane, children);
+        });
     }
 
     @FXML
@@ -193,16 +208,16 @@ public final class MainPage extends StackPane implements DecoratorPage {
         versionPopup.hide();
         switch (versionList.getSelectionModel().getSelectedIndex()) {
             case 0:
-                VersionPage.renameVersion(profile, rightClickedVersion);
+                VersionPage.renameVersion(rightClickedRepository.getProfile(), rightClickedVersion);
                 break;
             case 1:
-                VersionPage.deleteVersion(profile, rightClickedVersion);
+                VersionPage.deleteVersion(rightClickedRepository.getProfile(), rightClickedVersion);
                 break;
             case 2:
-                VersionPage.exportVersion(profile, rightClickedVersion);
+                VersionPage.exportVersion(rightClickedRepository.getProfile(), rightClickedVersion);
                 break;
             case 3:
-                FXUtils.openFolder(profile.getRepository().getRunDirectory(rightClickedVersion));
+                FXUtils.openFolder(rightClickedRepository.getRunDirectory(rightClickedVersion));
                 break;
             default:
                 throw new Error();

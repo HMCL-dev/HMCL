@@ -6,14 +6,18 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import com.jfoenix.controls.JFXSpinner?>
 <fx:root
         maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
         type="StackPane" pickOnBounds="false"
         xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1">
-    <ScrollPane fitToHeight="true" fitToWidth="true" fx:id="scrollPane" hbarPolicy="NEVER">
-        <JFXMasonryPane fx:id="masonryPane" HSpacing="3" VSpacing="3" cellWidth="182" cellHeight="160">
-        </JFXMasonryPane>
-    </ScrollPane>
+    <StackPane fx:id="contentPane">
+        <JFXSpinner fx:id="spinner" styleClass="first-spinner" />
+        <ScrollPane fitToHeight="true" fitToWidth="true" fx:id="scrollPane" hbarPolicy="NEVER">
+            <JFXMasonryPane fx:id="masonryPane" HSpacing="3" VSpacing="3" cellWidth="182" cellHeight="160">
+            </JFXMasonryPane>
+        </ScrollPane>
+    </StackPane>
     <VBox style="-fx-padding: 15;" spacing="15" pickOnBounds="false" alignment="BOTTOM_RIGHT">
         <JFXButton prefWidth="40" prefHeight="40" buttonType="RAISED" fx:id="btnRefresh" styleClass="jfx-button-raised-round">
             <graphic>

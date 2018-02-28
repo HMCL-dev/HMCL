@@ -55,30 +55,27 @@ public final class LauncherHelper {
     public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
     private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(() -> {});
 
-    public void launch(String selectedVersion, File scriptFile) {
-        Profile profile = Settings.INSTANCE.getSelectedProfile();
-        GameRepository repository = profile.getRepository();
-        Account account = Settings.INSTANCE.getSelectedAccount();
+    public void launch(Profile profile, Account account, String selectedVersion, File scriptFile) {
         if (account == null)
-            throw new IllegalStateException("No account");
+            throw new IllegalArgumentException("No account");
+
+        GameRepository repository = profile.getRepository();
 
         Version version = repository.getResolvedVersion(selectedVersion);
         VersionSetting setting = profile.getVersionSetting(selectedVersion);
 
         Platform.runLater(() -> {
             try {
-                checkGameState(profile, setting, version, () -> Schedulers.newThread().schedule(() -> launch0(selectedVersion, scriptFile)));
+                checkGameState(profile, setting, version, () -> Schedulers.newThread().schedule(() -> launch0(profile, account, selectedVersion, scriptFile)));
             } catch (InterruptedException ignore) {
             }
         });
     }
 
-    private void launch0(String selectedVersion, File scriptFile) {
-        Profile profile = Settings.INSTANCE.getSelectedProfile();
+    private void launch0(Profile profile, Account account, String selectedVersion, File scriptFile) {
         GameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
         Version version = repository.getResolvedVersion(selectedVersion);
-        Account account = Settings.INSTANCE.getSelectedAccount();
         VersionSetting setting = profile.getVersionSetting(selectedVersion);
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
 
