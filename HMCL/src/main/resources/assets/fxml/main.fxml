@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import com.jfoenix.controls.JFXButton?>
-<?import com.jfoenix.controls.JFXListView?>
 <?import com.jfoenix.controls.JFXMasonryPane?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.StackPane?>
@@ -30,13 +29,4 @@
             </graphic>
         </JFXButton>
     </VBox>
-
-
-    <JFXListView fx:id="versionList" styleClass="option-list-view" onMouseClicked="#onVersionManagement"
-                 maxWidth="150.0" minWidth="150.0">
-        <Label text="%version.manage.rename"/>
-        <Label text="%version.manage.remove"/>
-        <Label text="%modpack.export"/>
-        <Label text="%folder.game"/>
-    </JFXListView>
 </fx:root>

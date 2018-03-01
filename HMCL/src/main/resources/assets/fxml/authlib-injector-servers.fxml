@@ -32,7 +32,7 @@
                         <Label text="%account.injector.add" />
                     </heading>
                     <body>
-                        <JFXTextField fx:id="txtServerIp" promptText="%account.injector.server_ip" labelFloat="true">
+                        <JFXTextField fx:id="txtServerIp" promptText="%account.injector.server_ip">
                             <validators>
                                 <URLValidator message="%input.url">
                                 </URLValidator>

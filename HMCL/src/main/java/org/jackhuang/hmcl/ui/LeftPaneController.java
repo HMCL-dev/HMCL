@@ -19,27 +19,26 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXPopup;
 import javafx.application.Platform;
 import javafx.scene.Node;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
 import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
+import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.ProfileChangedEvent;
-import org.jackhuang.hmcl.event.ProfileLoadingEvent;
-import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
+import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.game.AccountHelper;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.UnsupportedModpackException;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.Settings;
-import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
@@ -55,50 +54,53 @@ import java.util.Objects;
 public final class LeftPaneController {
     private final AdvancedListBox leftPane;
     private final VBox profilePane = new VBox();
-    private final VersionListItem accountItem = new VersionListItem("", "");
+    private final VBox accountPane = new VBox();
+    private final VersionListItem missingAccountItem = new VersionListItem(Launcher.i18n("account.missing"), Launcher.i18n("message.unknown"));
 
     public LeftPaneController(AdvancedListBox leftPane) {
         this.leftPane = leftPane;
 
-        leftPane.startCategory(Launcher.i18n("account").toUpperCase())
-                .add(Lang.apply(new RipplerContainer(accountItem), rippler -> {
-                    rippler.setOnMouseClicked(e -> Controllers.navigate(new AccountsPage()));
-                    accountItem.setOnSettingsButtonClicked(() -> Controllers.navigate(new AccountsPage()));
-                }))
+        leftPane
+                .add(new ClassTitle(Launcher.i18n("account").toUpperCase(), Lang.apply(new JFXButton(), button -> {
+                    button.setGraphic(SVG.plus(Theme.blackFillBinding(), 10, 10));
+                    button.getStyleClass().add("toggle-icon-tiny");
+                    button.setOnMouseClicked(e -> addNewAccount());
+                })))
+                .add(accountPane)
                 .startCategory(Launcher.i18n("launcher").toUpperCase())
                 .add(Lang.apply(new IconedItem(SVG.gear(Theme.blackFillBinding(), 20, 20), Launcher.i18n("settings.launcher")), iconedItem -> {
                     iconedItem.prefWidthProperty().bind(leftPane.widthProperty());
                     iconedItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
                 }))
-                .add(new ClassTitle(Lang.apply(new BorderPane(), borderPane -> {
-                    borderPane.setLeft(Lang.apply(new VBox(), vBox -> vBox.getChildren().setAll(new Text(Launcher.i18n("profile.title").toUpperCase()))));
-                    JFXButton addProfileButton = new JFXButton();
-                    addProfileButton.setGraphic(SVG.plus(Theme.blackFillBinding(), 10, 10));
-                    addProfileButton.getStyleClass().add("toggle-icon-tiny");
-                    addProfileButton.setOnMouseClicked(e ->
+                .add(new ClassTitle(Launcher.i18n("profile.title").toUpperCase(), Lang.apply(new JFXButton(), button -> {
+                    button.setGraphic(SVG.plus(Theme.blackFillBinding(), 10, 10));
+                    button.getStyleClass().add("toggle-icon-tiny");
+                    button.setOnMouseClicked(e ->
                             Controllers.getDecorator().showPage(new ProfilePage(null)));
-                    borderPane.setRight(addProfileButton);
                 })))
                 .add(profilePane);
 
+        EventBus.EVENT_BUS.channel(AccountLoadingEvent.class).register(this::onAccountsLoading);
         EventBus.EVENT_BUS.channel(ProfileLoadingEvent.class).register(this::onProfilesLoading);
         EventBus.EVENT_BUS.channel(ProfileChangedEvent.class).register(this::onProfileChanged);
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(this::onRefreshedVersions);
 
-        FXUtils.onChangeAndOperate(Settings.INSTANCE.selectedAccountProperty(), it -> {
-            if (it == null) {
-                accountItem.setVersionName(Launcher.i18n("account.missing"));
-                accountItem.setGameVersion(Launcher.i18n("message.unknown"));
-            } else {
-                accountItem.setVersionName(it.getCharacter());
-                accountItem.setGameVersion(AccountsPage.accountType(it));
-            }
+        FXUtils.onChangeAndOperate(Settings.INSTANCE.selectedAccountProperty(), this::onSelectedAccountChanged);
+        onAccountsLoading();
+    }
 
-            if (it instanceof YggdrasilAccount) {
-                Image image = AccountHelper.getSkin((YggdrasilAccount) it, 4);
-                accountItem.setImage(image, AccountHelper.getViewport(4));
-            } else
-                accountItem.setImage(AccountHelper.getDefaultSkin(it, 4), AccountHelper.getViewport(4));
+    private void addNewAccount() {
+        Controllers.dialog(new AddAccountPane(Controllers::closeDialog));
+    }
+
+    private void onSelectedAccountChanged(Account newAccount) {
+        Platform.runLater(() -> {
+            for (Node node : accountPane.getChildren()) {
+                if (node instanceof RipplerContainer && node.getProperties().get("account") instanceof Account) {
+                    boolean current = Objects.equals(node.getProperties().get("account"), newAccount);
+                    ((RipplerContainer) node).setSelected(current);
+                }
+            }
         });
     }
 
@@ -128,6 +130,73 @@ public final class LeftPaneController {
             list.add(ripplerContainer);
         }
         Platform.runLater(() -> profilePane.getChildren().setAll(list));
+    }
+
+    private static String accountType(Account account) {
+        if (account instanceof OfflineAccount) return Launcher.i18n("account.methods.offline");
+        else if (account instanceof YggdrasilAccount) return account.getUsername();
+        else throw new Error(Launcher.i18n("account.methods.no_method") + ": " + account);
+    }
+
+    private void onAccountsLoading() {
+        LinkedList<RipplerContainer> list = new LinkedList<>();
+        Account selectedAccount = Settings.INSTANCE.getSelectedAccount();
+        for (Account account : Settings.INSTANCE.getAccounts()) {
+            VersionListItem item = new VersionListItem(account.getCharacter(), accountType(account));
+            RipplerContainer ripplerContainer = new RipplerContainer(item);
+            item.setOnSettingsButtonClicked(() -> Controllers.getDecorator().showPage(new AccountPage(account)));
+            ripplerContainer.setOnMouseClicked(e -> {
+                if (e.getButton() == MouseButton.PRIMARY)
+                    Settings.INSTANCE.setSelectedAccount(account);
+                else if (e.getButton() == MouseButton.SECONDARY) {
+                    JFXListView<String> listView = new JFXListView<>();
+                    JFXPopup popup = new JFXPopup(listView);
+                    listView.getStyleClass().add("option-list-view");
+                    listView.getItems().add(Launcher.i18n("button.delete"));
+                    if (account instanceof YggdrasilAccount)
+                        listView.getItems().add(Launcher.i18n("button.refresh"));
+                    listView.setOnMouseClicked(e2 ->{
+                        popup.hide();
+                        switch (listView.getSelectionModel().getSelectedIndex()) {
+                            case 0:
+                                Settings.INSTANCE.deleteAccount(account);
+                                break;
+                            case 1:
+                                if (account instanceof YggdrasilAccount)
+                                    AccountHelper.refreshSkinAsync((YggdrasilAccount) account).start();
+                                break;
+                            default:
+                                throw new Error();
+                        }});
+                    popup.show(item, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, e.getX(), e.getY());
+                }
+            });
+            ripplerContainer.getProperties().put("account", account);
+            ripplerContainer.maxWidthProperty().bind(leftPane.widthProperty());
+
+            if (account instanceof YggdrasilAccount) {
+                Image image = AccountHelper.getSkin((YggdrasilAccount) account, 4);
+                item.setImage(image, AccountHelper.getViewport(4));
+            } else
+                item.setImage(AccountHelper.getDefaultSkin(account, 4), AccountHelper.getViewport(4));
+
+            if (account instanceof AuthlibInjectorAccount)
+                Accounts.getAuthlibInjectorServerNameAsync((AuthlibInjectorAccount) account)
+                    .subscribe(Schedulers.javafx(), variables -> FXUtils.installTooltip(ripplerContainer, 500, 5000, 0, new Tooltip(variables.get("serverName"))));
+
+            if (selectedAccount == account)
+                ripplerContainer.setSelected(true);
+
+            list.add(ripplerContainer);
+        }
+
+        if (Settings.INSTANCE.getAccounts().isEmpty()) {
+            RipplerContainer container = new RipplerContainer(missingAccountItem);
+            missingAccountItem.setOnSettingsButtonClicked(this::addNewAccount);
+            list.add(container);
+        }
+
+        Platform.runLater(() -> accountPane.getChildren().setAll(list));
     }
 
     private boolean checkedModpack = false;
@@ -162,8 +231,8 @@ public final class LeftPaneController {
         });
     }
 
-    private void checkAccount() {
+    public void checkAccount() {
         if (Settings.INSTANCE.getAccounts().isEmpty())
-            Controllers.navigate(new AccountsPage());
+            addNewAccount();
     }
 }

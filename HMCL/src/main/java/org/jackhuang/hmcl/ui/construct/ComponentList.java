@@ -60,7 +60,12 @@ public class ComponentList extends StackPane {
             child.getStyleClass().add("options-list-item-ahead");
         else
             child.getStyleClass().add("options-list-item");
+        child.getProperties().put("node", node);
         vbox.getChildren().add(child);
+    }
+
+    public void removeChildren(Node node) {
+        vbox.getChildren().removeIf(node1 -> node1.getProperties().get("node") == node);
     }
 
     public String getTitle() {

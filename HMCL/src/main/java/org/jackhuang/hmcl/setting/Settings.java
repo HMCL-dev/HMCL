@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.event.AccountLoadingEvent;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.ProfileChangedEvent;
 import org.jackhuang.hmcl.event.ProfileLoadingEvent;
@@ -368,6 +369,7 @@ public class Settings {
 
     public void addAccount(Account account) {
         accounts.put(Accounts.getAccountId(account), account);
+        onAccountLoading();
     }
 
     public Account getAccount(String name, String character) {
@@ -381,12 +383,14 @@ public class Settings {
     public void deleteAccount(String name, String character) {
         accounts.remove(Accounts.getAccountId(name, character));
 
+        onAccountLoading();
         selectedAccount.get();
     }
 
     public void deleteAccount(Account account) {
         accounts.remove(Accounts.getAccountId(account));
 
+        onAccountLoading();
         selectedAccount.get();
     }
 
@@ -506,6 +510,7 @@ public class Settings {
             throw new IllegalArgumentException("Profile's name is empty");
 
         getProfileMap().put(ver.getName(), ver);
+        Schedulers.computation().schedule(this::onProfileLoading);
 
         ver.nameProperty().setChangedListener(this::profileNameChanged);
 
@@ -545,5 +550,9 @@ public class Settings {
     public void onProfileLoading() {
         EventBus.EVENT_BUS.fireEvent(new ProfileLoadingEvent(SETTINGS));
         onProfileChanged();
+    }
+
+    public void onAccountLoading() {
+        EventBus.EVENT_BUS.fireEvent(new AccountLoadingEvent(SETTINGS));
     }
 }

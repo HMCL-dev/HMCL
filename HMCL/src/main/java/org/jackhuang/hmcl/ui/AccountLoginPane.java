@@ -73,7 +73,7 @@ public class AccountLoginPane extends StackPane {
             } else if (account instanceof NoSelectedCharacterException) {
                 dialog.close();
             } else if (account instanceof Exception) {
-                lblCreationWarning.setText(AccountsPage.accountException((Exception) account));
+                lblCreationWarning.setText(AddAccountPane.accountException((Exception) account));
             }
 
             progressBar.setVisible(false);

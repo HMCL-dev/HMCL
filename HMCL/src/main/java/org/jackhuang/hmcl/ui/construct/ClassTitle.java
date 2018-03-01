@@ -18,11 +18,13 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.scene.Node;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
+import org.jackhuang.hmcl.util.Lang;
 
 /**
  * @author huangyuhui
@@ -46,6 +48,13 @@ public class ClassTitle extends StackPane {
         vbox.getChildren().add(rectangle);
         getChildren().setAll(vbox);
         getStyleClass().add("class-title");
+    }
+
+    public ClassTitle(String text, Node rightNode) {
+        this(Lang.apply(new BorderPane(), borderPane -> {
+            borderPane.setLeft(Lang.apply(new VBox(), vBox -> vBox.getChildren().setAll(new Text(text))));
+            borderPane.setRight(rightNode);
+        }));
     }
 
     public Node getContent() {

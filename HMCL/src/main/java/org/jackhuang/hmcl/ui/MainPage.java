@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.OperatingSystem;
 import org.jackhuang.hmcl.util.StringUtils;
 
@@ -58,8 +59,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", Launcher.i18n("main_page"));
 
     private Profile profile;
-    private String rightClickedVersion;
-    private HMCLGameRepository rightClickedRepository;
 
     @FXML
     private JFXButton btnRefresh;
@@ -71,10 +70,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private JFXSpinner spinner;
     @FXML
     private JFXMasonryPane masonryPane;
-    @FXML
-    private JFXListView versionList;
-
-    private final JFXPopup versionPopup;
 
     {
         FXUtils.loadFXML(this, "/assets/fxml/main.fxml");
@@ -92,9 +87,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
         EventBus.EVENT_BUS.channel(ProfileChangedEvent.class).register(event -> {
             this.profile = event.getProfile();
         });
-
-        versionPopup = new JFXPopup(versionList);
-        getChildren().remove(versionList);
 
         btnAdd.setOnMouseClicked(e -> Controllers.getDecorator().startWizard(new DownloadWizardProvider(), Launcher.i18n("install")));
         FXUtils.installTooltip(btnAdd, Launcher.i18n("install"));
@@ -126,7 +118,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         item.setLibraries(libraries.toString());
         item.setOnLaunchButtonClicked(e -> {
             if (Settings.INSTANCE.getSelectedAccount() == null)
-                Controllers.dialog(Launcher.i18n("login.empty_username"));
+                Controllers.getLeftPaneController().checkAccount();
             else
                 LauncherHelper.INSTANCE.launch(profile, Settings.INSTANCE.getSelectedAccount(), id, null);
         });
@@ -174,9 +166,34 @@ public final class MainPage extends StackPane implements DecoratorPage {
         });
         item.setOnMouseClicked(event -> {
             if (event.getButton() == MouseButton.SECONDARY) {
-                rightClickedVersion = id;
-                rightClickedRepository = repository;
-                versionList.getSelectionModel().select(-1);
+                JFXListView<String> versionList = new JFXListView<>();
+                JFXPopup versionPopup = new JFXPopup(versionList);
+                versionList.getStyleClass().add("option-list-view");
+                FXUtils.setLimitWidth(versionList, 150);
+                versionList.getItems().setAll(Lang.immutableListOf(
+                        Launcher.i18n("version.manage.rename"),
+                        Launcher.i18n("version.manage.remove"),
+                        Launcher.i18n("modpack.export"),
+                        Launcher.i18n("folder.game")
+                ));
+                versionList.setOnMouseClicked(e ->{
+                    versionPopup.hide();
+                    switch (versionList.getSelectionModel().getSelectedIndex()) {
+                        case 0:
+                            VersionPage.renameVersion(profile, id);
+                            break;
+                        case 1:
+                            VersionPage.deleteVersion(profile, id);
+                            break;
+                        case 2:
+                            VersionPage.exportVersion(profile, id);
+                            break;
+                        case 3:
+                            FXUtils.openFolder(repository.getRunDirectory(id));
+                            break;
+                        default:
+                            throw new Error();
+                    }});
                 versionPopup.show(item, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
             } else if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
                 if (Settings.INSTANCE.getSelectedAccount() == null)
@@ -207,27 +224,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 FXUtils.resetChildren(masonryPane, children);
             }
         });
-    }
-
-    @FXML
-    private void onVersionManagement() {
-        versionPopup.hide();
-        switch (versionList.getSelectionModel().getSelectedIndex()) {
-            case 0:
-                VersionPage.renameVersion(rightClickedRepository.getProfile(), rightClickedVersion);
-                break;
-            case 1:
-                VersionPage.deleteVersion(rightClickedRepository.getProfile(), rightClickedVersion);
-                break;
-            case 2:
-                VersionPage.exportVersion(rightClickedRepository.getProfile(), rightClickedVersion);
-                break;
-            case 3:
-                FXUtils.openFolder(rightClickedRepository.getRunDirectory(rightClickedVersion));
-                break;
-            default:
-                throw new Error();
-        }
     }
 
     public String getTitle() {

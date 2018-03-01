@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.*?>
+<?import com.jfoenix.validation.RequiredFieldValidator?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.jackhuang.hmcl.ui.FXUtils?>
+<fx:root xmlns:fx="http://javafx.com/fxml"
+         xmlns="http://javafx.com/javafx"
+         type="StackPane">
+    <JFXDialogLayout fx:id="layout">
+        <heading>
+            <Label text="%account.create"/>
+        </heading>
+        <body>
+            <GridPane vgap="15" hgap="15" style="-fx-padding: 15 0 0 0;">
+                <columnConstraints>
+                    <ColumnConstraints maxWidth="70" minWidth="70"/>
+                    <ColumnConstraints/>
+                    <ColumnConstraints minWidth="140"/>
+                </columnConstraints>
+
+                <Label text="%account.methods" GridPane.halignment="RIGHT" GridPane.columnIndex="0"
+                       GridPane.rowIndex="0"/>
+
+                <JFXComboBox fx:id="cboType" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="2"/>
+
+                <Label fx:id="lblAddInjectorServer" text="%account.injector.server" GridPane.halignment="RIGHT"
+                       GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+
+                <JFXComboBox fx:id="cboServers" maxHeight="25" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+                <Hyperlink fx:id="linkAddInjectorServer" text="%account.injector.add"
+                           onMouseClicked="#onAddInjecterServer" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+
+                <Label text="%account.username" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+
+                <JFXTextField fx:id="txtUsername" GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.columnSpan="2"
+                              FXUtils.validateWhileTextChanged="true">
+                    <validators>
+                        <RequiredFieldValidator message="%input.not_empty">
+                        </RequiredFieldValidator>
+                    </validators>
+                </JFXTextField>
+
+                <Label fx:id="lblPassword" text="%account.password" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+
+                <JFXPasswordField fx:id="txtPassword" GridPane.columnIndex="1" GridPane.rowIndex="3"
+                                  GridPane.columnSpan="2" FXUtils.validateWhileTextChanged="true">
+                    <validators>
+                        <RequiredFieldValidator message="%input.not_empty">
+                        </RequiredFieldValidator>
+                    </validators>
+                </JFXPasswordField>
+            </GridPane>
+        </body>
+        <actions>
+            <Label fx:id="lblCreationWarning"/>
+            <JFXButton onMouseClicked="#onCreationAccept" text="%button.ok" styleClass="dialog-accept"/>
+            <JFXButton onMouseClicked="#onCreationCancel" text="%button.cancel" styleClass="dialog-cancel"/>
+        </actions>
+    </JFXDialogLayout>
+    <JFXProgressBar fx:id="progressBar" visible="false" StackPane.alignment="TOP_CENTER"/>
+</fx:root>
