@@ -26,20 +26,9 @@
                         <StackPane minWidth="200" maxWidth="200" styleClass="jfx-decorator-content-container">
                             <BorderPane fx:id="leftRootPane">
                                 <center>
-                                    <BorderPane styleClass="gray-background">
-                                        <center>
-                                            <AdvancedListBox fx:id="leftPane"/>
-                                        </center>
-                                        <bottom>
-                                            <BorderPane fx:id="menuBottomBar">
-                                                <left>
-                                                    <HBox fx:id="updatePane" visible="false" style="-fx-background-color: red;" alignment="CENTER_LEFT">
-                                                        <Label text="%update.found" style="-fx-text-fill: white; -fx-font-size: 16px;" />
-                                                    </HBox>
-                                                </left>
-                                            </BorderPane>
-                                        </bottom>
-                                    </BorderPane>
+                                    <StackPane styleClass="gray-background">
+                                        <AdvancedListBox fx:id="leftPane"/>
+                                    </StackPane>
                                 </center>
                                 <right>
                                     <Rectangle height="${leftRootPane.height}" width="1" fill="gray"/>

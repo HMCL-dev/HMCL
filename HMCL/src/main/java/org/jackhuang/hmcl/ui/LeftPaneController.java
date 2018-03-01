@@ -27,6 +27,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
@@ -55,10 +56,16 @@ public final class LeftPaneController {
     private final AdvancedListBox leftPane;
     private final VBox profilePane = new VBox();
     private final VBox accountPane = new VBox();
+    private final IconedItem launcherSettingsItem;
     private final VersionListItem missingAccountItem = new VersionListItem(Launcher.i18n("account.missing"), Launcher.i18n("message.unknown"));
 
     public LeftPaneController(AdvancedListBox leftPane) {
         this.leftPane = leftPane;
+
+        this.launcherSettingsItem = Lang.apply(new IconedItem(SVG.gear(Theme.blackFillBinding(), 20, 20), Launcher.i18n("settings.launcher")), iconedItem -> {
+            iconedItem.prefWidthProperty().bind(leftPane.widthProperty());
+            iconedItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
+        });
 
         leftPane
                 .add(new ClassTitle(Launcher.i18n("account").toUpperCase(), Lang.apply(new JFXButton(), button -> {
@@ -68,10 +75,7 @@ public final class LeftPaneController {
                 })))
                 .add(accountPane)
                 .startCategory(Launcher.i18n("launcher").toUpperCase())
-                .add(Lang.apply(new IconedItem(SVG.gear(Theme.blackFillBinding(), 20, 20), Launcher.i18n("settings.launcher")), iconedItem -> {
-                    iconedItem.prefWidthProperty().bind(leftPane.widthProperty());
-                    iconedItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
-                }))
+                .add(launcherSettingsItem)
                 .add(new ClassTitle(Launcher.i18n("profile.title").toUpperCase(), Lang.apply(new JFXButton(), button -> {
                     button.setGraphic(SVG.plus(Theme.blackFillBinding(), 10, 10));
                     button.getStyleClass().add("toggle-icon-tiny");
@@ -197,6 +201,11 @@ public final class LeftPaneController {
         }
 
         Platform.runLater(() -> accountPane.getChildren().setAll(list));
+    }
+
+    public void showUpdate() {
+        launcherSettingsItem.setText(Launcher.i18n("update.found"));
+        launcherSettingsItem.setTextFill(Color.RED);
     }
 
     private boolean checkedModpack = false;

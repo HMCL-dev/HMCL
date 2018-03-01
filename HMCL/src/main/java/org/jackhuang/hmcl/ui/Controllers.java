@@ -168,7 +168,7 @@ public final class Controllers {
     }
 
     public static void showUpdate() {
-        getDecorator().showUpdate();
+        getLeftPaneController().showUpdate();
     }
 
     public static void shutdown() {

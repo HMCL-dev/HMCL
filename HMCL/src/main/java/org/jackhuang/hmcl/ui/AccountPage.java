@@ -64,7 +64,7 @@ public class AccountPage extends StackPane implements DecoratorPage {
         FXUtils.loadFXML(this, "/assets/fxml/account.fxml");
 
         if (account instanceof AuthlibInjectorAccount) {
-            Task.ofResult("serverName", () -> Accounts.getAuthlibInjectorServerName(((AuthlibInjectorAccount) account).getServerBaseURL()))
+            Accounts.getAuthlibInjectorServerNameAsync((AuthlibInjectorAccount) account)
                     .subscribe(Schedulers.javafx(), variables -> lblServer.setText(variables.get("serverName")));
         } else {
             componentList.removeChildren(paneServer);

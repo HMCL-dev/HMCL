@@ -127,8 +127,6 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     @FXML
     private JFXButton btnClose;
     @FXML
-    private HBox updatePane;
-    @FXML
     private HBox navLeft;
 
     public Decorator(Stage primaryStage, Node mainPage, String title) {
@@ -142,9 +140,6 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         this.min = min;
 
         FXUtils.loadFXML(this, "/assets/fxml/decorator.fxml");
-
-        updatePane.setCursor(Cursor.HAND);
-        updatePane.setOnMouseClicked(event -> Launcher.UPDATE_CHECKER.checkOutdate());
 
         primaryStage.initStyle(StageStyle.UNDECORATED);
         btnClose.setGraphic(close);
@@ -472,10 +467,6 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         if (this.maximized != maximized) {
             Platform.runLater(btnMax::fire);
         }
-    }
-
-    public void showUpdate() {
-        updatePane.setVisible(true);
     }
 
     private void showCloseNavButton() {
