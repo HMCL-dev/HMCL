@@ -45,6 +45,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             put("java.lang.ClassFormatError", Launcher.i18n("crash.NoClassDefFound"));
             put("java.lang.OutOfMemoryError", "FUCKING MEMORY LIMIT!");
             put("Trampoline", Launcher.i18n("launcher.update_java"));
+            put("com.sun.javafx.css.StyleManager.findMatchingStyles", Launcher.i18n("launcher.update_java"));
             put("NoSuchAlgorithmException", "Has your operating system been installed completely or is a ghost system?");
         }
     };

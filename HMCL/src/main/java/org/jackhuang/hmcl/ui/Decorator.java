@@ -74,7 +74,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     private static final SVGGlyph close = Lang.apply(new SVGGlyph(0, "CLOSE", "M810 274l-238 238 238 238-60 60-238-238-238 238-60-60 238-238-238-238 60-60 238 238 238-238z", Color.WHITE),
             glyph -> { glyph.setPrefSize(12, 12); glyph.setSize(12, 12); });
 
-    private final ObjectProperty<Runnable> onCloseButtonAction = new SimpleObjectProperty<>(Launcher::stopApplication);
+    private final ObjectProperty<Runnable> onCloseButtonAction;
     private final BooleanProperty customMaximize = new SimpleBooleanProperty(false);
 
     private final Stage primaryStage;
@@ -140,6 +140,8 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         this.min = min;
 
         FXUtils.loadFXML(this, "/assets/fxml/decorator.fxml");
+
+        onCloseButtonAction = new SimpleObjectProperty<>(this, "onCloseButtonAction", primaryStage::close);
 
         primaryStage.initStyle(StageStyle.UNDECORATED);
         btnClose.setGraphic(close);

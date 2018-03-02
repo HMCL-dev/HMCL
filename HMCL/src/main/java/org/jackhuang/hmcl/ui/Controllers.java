@@ -93,6 +93,8 @@ public final class Controllers {
     public static void initialize(Stage stage) {
         Controllers.stage = stage;
 
+        stage.setOnCloseRequest(e -> Launcher.stopApplication());
+
         decorator = new Decorator(stage, getMainPage(), Launcher.TITLE, false, true);
         decorator.showPage(null);
         leftPaneController = new LeftPaneController(decorator.getLeftPane());

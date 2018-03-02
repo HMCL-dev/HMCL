@@ -86,6 +86,8 @@ public final class Launcher extends Application {
     }
 
     public static void stopWithoutPlatform() {
+        Logging.LOG.info("Stopping application without JavaFX Toolkit");
+
         JFXUtilities.runInFX(() -> {
             if (Controllers.getStage() == null)
                 return;
