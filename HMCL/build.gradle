@@ -1,3 +1,6 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+import proguard.gradle.ProGuardTask
+
 import java.security.MessageDigest
 import java.util.jar.JarFile
 import java.util.jar.Pack200
@@ -17,9 +20,7 @@ def versionroot = System.getenv("VERSION_ROOT")
 if (versionroot == null)
     versionroot = "3.0"
 
-String mavenGroupId = 'HMCL'
 String mavenVersion = versionroot + '.' + buildnumber
-String bundleName = "Hello Minecraft! Launcher"
 version = mavenVersion
 
 dependencies {
@@ -30,7 +31,7 @@ dependencies {
 task generateSources(type: Sync) {
     from 'src/main/java'
     into "$buildDir/generated-src"
-    filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [
+    filter(ReplaceTokens, tokens: [
             'HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING': mavenVersion
     ])
 }
@@ -122,7 +123,7 @@ task makePackGZ(dependsOn: jar) doLast {
     fileEx.append sha1Hex
 }
 
-task proguard(type: proguard.gradle.ProGuardTask, dependsOn: jar) {
+task proguard(type: ProGuardTask, dependsOn: jar) {
     ext {
         def re = jar.classifier
         injar = jar.archivePath

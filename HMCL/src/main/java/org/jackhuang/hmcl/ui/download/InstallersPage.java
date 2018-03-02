@@ -37,8 +37,6 @@ import java.util.Map;
 
 public class InstallersPage extends StackPane implements WizardPage {
     private final WizardController controller;
-    private final GameRepository repository;
-    private final DownloadProvider downloadProvider;
 
     @FXML
     private VBox list;
@@ -72,8 +70,6 @@ public class InstallersPage extends StackPane implements WizardPage {
 
     public InstallersPage(WizardController controller, GameRepository repository, DownloadProvider downloadProvider) {
         this.controller = controller;
-        this.repository = repository;
-        this.downloadProvider = downloadProvider;
 
         FXUtils.loadFXML(this, "/assets/fxml/download/installers.fxml");
 

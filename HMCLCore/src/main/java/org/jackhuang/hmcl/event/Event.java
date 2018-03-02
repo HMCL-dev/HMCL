@@ -30,7 +30,7 @@ public class Event {
     /**
      * The object on which the Event initially occurred.
      */
-    protected transient Object source;
+    protected final transient Object source;
 
     /**
      * Constructs a prototypical Event.

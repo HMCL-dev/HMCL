@@ -42,7 +42,6 @@ public final class HMCLModpackInstallTask extends Task {
     private final String name;
     private final HMCLGameRepository repository;
     private final Modpack modpack;
-    private final File run;
     private final List<Task> dependencies = new LinkedList<>();
     private final List<Task> dependents = new LinkedList<>();
 
@@ -52,8 +51,8 @@ public final class HMCLModpackInstallTask extends Task {
         this.zipFile = zipFile;
         this.name = name;
         this.modpack = modpack;
-        this.run = repository.getRunDirectory(name);
 
+        File run = repository.getRunDirectory(name);
         File json = repository.getModpackConfiguration(name);
         if (repository.hasVersion(name) && !json.exists())
             throw new IllegalArgumentException("Version " + name + " already exists");

@@ -35,9 +35,7 @@ public final class Schedulers {
     private static synchronized ExecutorService getCachedExecutorService() {
         if (CACHED_EXECUTOR == null)
             CACHED_EXECUTOR = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
-                    60, TimeUnit.SECONDS, new SynchronousQueue<>(), runnable -> {
-                return Executors.defaultThreadFactory().newThread(runnable);
-            });
+                    60, TimeUnit.SECONDS, new SynchronousQueue<>(), Executors.defaultThreadFactory());
 
         return CACHED_EXECUTOR;
     }

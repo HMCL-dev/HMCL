@@ -28,12 +28,10 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import java.util.Map;
 
 public final class InstallTypePage extends StackPane implements WizardPage {
-    private final WizardController controller;
 
     @FXML private JFXListView<Object> list;
 
     public InstallTypePage(WizardController controller) {
-        this.controller = controller;
 
         FXUtils.loadFXML(this, "/assets/fxml/download/dltype.fxml");
         list.setOnMouseClicked(e -> {

@@ -17,9 +17,9 @@
  */
 package org.jackhuang.hmcl;
 
-import org.apache.commons.compress.utils.Charsets;
 import org.jackhuang.hmcl.util.Logging;
-import javax.swing.JOptionPane;
+
+import javax.swing.*;
 import java.io.File;
 
 public final class Main {

@@ -63,7 +63,7 @@ public class Settings {
 
     private final Config SETTINGS = initSettings();
 
-    private Map<String, Account> accounts = new HashMap<>();
+    private final Map<String, Account> accounts = new HashMap<>();
 
     {
         loadProxy();
@@ -473,7 +473,7 @@ public class Settings {
         checkProfileMap();
 
         if (!hasProfile(SETTINGS.getSelectedProfile())) {
-            SETTINGS.setSelectedProfile(getProfileMap().keySet().stream().findFirst().get());
+            getProfileMap().keySet().stream().findFirst().ifPresent(SETTINGS::setSelectedProfile);
             Schedulers.computation().schedule(this::onProfileChanged);
         }
         return getProfile(SETTINGS.getSelectedProfile());

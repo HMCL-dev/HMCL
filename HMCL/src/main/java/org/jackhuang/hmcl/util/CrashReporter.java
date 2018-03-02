@@ -79,18 +79,16 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         THROWABLE_SET.add(stackTrace);
 
         try {
-            StringBuilder builder = new StringBuilder();
-            builder.append("---- Hello Minecraft! Crash Report ----\n");
-            builder.append("  Version: " + Launcher.VERSION + "\n");
-            builder.append("  Time: ").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())).append("\n");
-            builder.append("  Thread: ").append(t.toString()).append("\n");
-            builder.append("\n  Content: \n    ");
-            builder.append(stackTrace).append("\n\n");
-            builder.append("-- System Details --\n");
-            builder.append("  Operating System: ").append(System.getProperty("os.name")).append(' ').append(OperatingSystem.SYSTEM_VERSION).append("\n");
-            builder.append("  Java Version: ").append(System.getProperty("java.version")).append(", ").append(System.getProperty("java.vendor")).append("\n");
-            builder.append("  Java VM Version: ").append(System.getProperty("java.vm.name")).append(" (").append(System.getProperty("java.vm.info")).append("), ").append(System.getProperty("java.vm.vendor")).append("\n");
-            String text = builder.toString();
+            String text = "---- Hello Minecraft! Crash Report ----\n" +
+                    "  Version: " + Launcher.VERSION + "\n" +
+                    "  Time: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + "\n" +
+                    "  Thread: " + t.toString() + "\n" +
+                    "\n  Content: \n    " +
+                    stackTrace + "\n\n" +
+                    "-- System Details --\n" +
+                    "  Operating System: " + System.getProperty("os.name") + ' ' + OperatingSystem.SYSTEM_VERSION + "\n" +
+                    "  Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor") + "\n" +
+                    "  Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor") + "\n";
 
             Logging.LOG.log(Level.SEVERE, text);
 

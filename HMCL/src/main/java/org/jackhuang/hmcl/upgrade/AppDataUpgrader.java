@@ -176,7 +176,7 @@ public class AppDataUpgrader extends IUpgrader {
 
         @Override
         public Collection<Task> getDependents() {
-            return Arrays.asList(new FileDownloadTask(downloadLink, tempFile, Proxy.NO_PROXY, hash));
+            return Collections.singleton(new FileDownloadTask(downloadLink, tempFile, Proxy.NO_PROXY, hash));
         }
 
         @Override
