@@ -78,7 +78,7 @@ public final class LauncherHelper {
         VersionSetting setting = profile.getVersionSetting(selectedVersion);
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
 
-        executor = Task.of(Schedulers.javafx(), () -> Controllers.dialog(launchingStepsPane))
+        TaskExecutor executor = this.executor = Task.of(Schedulers.javafx(), () -> Controllers.dialog(launchingStepsPane))
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES)))
                 .then(variables -> {
                     if (setting.isNotCheckGame())
