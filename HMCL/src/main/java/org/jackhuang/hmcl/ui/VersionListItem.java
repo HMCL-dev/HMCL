@@ -17,11 +17,14 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import com.jfoenix.controls.JFXButton;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 
 public final class VersionListItem extends StackPane {
@@ -33,7 +36,7 @@ public final class VersionListItem extends StackPane {
     private Label lblGameVersion;
     @FXML
     private ImageView imageView;
-    private Runnable handler;
+    @FXML private JFXButton btnSettings;
 
     public VersionListItem(String versionName) {
         this(versionName, "");
@@ -48,13 +51,8 @@ public final class VersionListItem extends StackPane {
         FXUtils.limitSize(imageView, 32, 32);
     }
 
-    @FXML
-    private void onSettings() {
-        handler.run();
-    }
-
-    public void setOnSettingsButtonClicked(Runnable handler) {
-        this.handler = handler;
+    public void setOnSettingsButtonClicked(EventHandler<? super MouseEvent> handler) {
+        btnSettings.setOnMouseClicked(handler);
     }
 
     public void setVersionName(String versionName) {

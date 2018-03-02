@@ -1,82 +1,80 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import com.jfoenix.controls.*?>
-<?import com.jfoenix.validation.RequiredFieldValidator?>
+<?import com.jfoenix.controls.JFXButton?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import org.jackhuang.hmcl.ui.construct.FileItem?>
 <?import org.jackhuang.hmcl.ui.construct.ComponentList?>
-<fx:root xmlns="http://javafx.com/javafx"
-         xmlns:fx="http://javafx.com/fxml"
+<fx:root xmlns:fx="http://javafx.com/fxml"
+         xmlns="http://javafx.com/javafx"
          type="StackPane">
-    <ScrollPane fx:id="scroll" fitToHeight="true" fitToWidth="true">
-        <VBox fx:id="rootPane" style="-fx-padding: 20;">
+    <VBox fx:id="rootPane">
 
-            <ComponentList fx:id="componentList" depth="1">
+        <ComponentList fx:id="componentList" depth="1">
 
-                <BorderPane> <!-- Name -->
-                    <left>
-                        <VBox>
-                            <Label text="%account.methods" BorderPane.alignment="CENTER_LEFT"/>
-                        </VBox>
-                    </left>
-                    <right>
-                        <VBox>
-                            <Label fx:id="lblType" BorderPane.alignment="CENTER_LEFT"/>
-                        </VBox>
-                    </right>
-                </BorderPane>
+            <BorderPane> <!-- Name -->
+                <left>
+                    <VBox>
+                        <Label text="%account.methods" BorderPane.alignment="CENTER_LEFT"/>
+                    </VBox>
+                </left>
+                <right>
+                    <VBox>
+                        <Label fx:id="lblType" BorderPane.alignment="CENTER_LEFT"/>
+                    </VBox>
+                </right>
+            </BorderPane>
 
-                <BorderPane> <!-- Name -->
-                    <left>
-                        <VBox>
-                            <Label text="%account.character" BorderPane.alignment="CENTER_LEFT"/>
-                        </VBox>
-                    </left>
-                    <right>
-                        <VBox>
-                            <Label fx:id="lblCharacter" BorderPane.alignment="CENTER_LEFT"/>
-                        </VBox>
-                    </right>
-                </BorderPane>
+            <BorderPane> <!-- Name -->
+                <left>
+                    <VBox>
+                        <Label text="%account.character" BorderPane.alignment="CENTER_LEFT"/>
+                    </VBox>
+                </left>
+                <right>
+                    <VBox>
+                        <Label fx:id="lblCharacter" BorderPane.alignment="CENTER_LEFT"/>
+                    </VBox>
+                </right>
+            </BorderPane>
 
-                <BorderPane> <!-- Name -->
-                    <left>
-                        <VBox>
-                            <Label text="%account.email" BorderPane.alignment="CENTER_LEFT"/>
-                        </VBox>
-                    </left>
-                    <right>
-                        <VBox>
-                            <Label fx:id="lblEmail" BorderPane.alignment="CENTER_LEFT"/>
-                        </VBox>
-                    </right>
-                </BorderPane>
+            <BorderPane fx:id="paneEmail"> <!-- Name -->
+                <left>
+                    <VBox>
+                        <Label text="%account.email" BorderPane.alignment="CENTER_LEFT"/>
+                    </VBox>
+                </left>
+                <right>
+                    <VBox>
+                        <Label fx:id="lblEmail" BorderPane.alignment="CENTER_LEFT"/>
+                    </VBox>
+                </right>
+            </BorderPane>
 
-                <BorderPane fx:id="paneServer"> <!-- Name -->
-                    <left>
-                        <VBox>
-                            <Label text="%account.injector.server" BorderPane.alignment="CENTER_LEFT"/>
-                        </VBox>
-                    </left>
-                    <right>
-                        <VBox>
-                            <Label fx:id="lblServer" BorderPane.alignment="CENTER_LEFT"/>
-                        </VBox>
-                    </right>
-                </BorderPane>
-            </ComponentList>
+            <BorderPane fx:id="paneServer"> <!-- Name -->
+                <left>
+                    <VBox>
+                        <Label text="%account.injector.server" BorderPane.alignment="CENTER_LEFT"/>
+                    </VBox>
+                </left>
+                <right>
+                    <VBox>
+                        <Label fx:id="lblServer" BorderPane.alignment="CENTER_LEFT"/>
+                    </VBox>
+                </right>
+            </BorderPane>
+        </ComponentList>
 
-        </VBox>
-    </ScrollPane>
-    <BorderPane pickOnBounds="false" style="-fx-padding: 20;">
+    </VBox>
+    <BorderPane pickOnBounds="false" style="-fx-padding: 4;">
         <left>
-            <JFXButton BorderPane.alignment="BOTTOM_LEFT" fx:id="btnDelete" onMouseClicked="#onDelete" prefWidth="100" prefHeight="40"
-                       buttonType="RAISED" text="%button.delete" styleClass="jfx-button-raised" />
+            <JFXButton BorderPane.alignment="BOTTOM_LEFT" fx:id="btnDelete" onMouseClicked="#onDelete"
+                       styleClass="toggle-icon4" maxWidth="30" maxHeight="30" minWidth="30" minHeight="30"
+                       prefWidth="30" prefHeight="30"/>
         </left>
         <right>
-            <JFXButton BorderPane.alignment="BOTTOM_RIGHT" fx:id="btnRefresh" prefWidth="100" prefHeight="40"
-                       buttonType="RAISED" text="%button.refresh" styleClass="jfx-button-raised"/>
+            <JFXButton BorderPane.alignment="BOTTOM_RIGHT" fx:id="btnRefresh" onMouseClicked="#onRefresh"
+                       styleClass="toggle-icon4" maxWidth="30" maxHeight="30" minWidth="30" minHeight="30"
+                       prefWidth="30" prefHeight="30"/>
         </right>
     </BorderPane>
 </fx:root>

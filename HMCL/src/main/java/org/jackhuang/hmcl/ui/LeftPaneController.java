@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
 import javafx.application.Platform;
 import javafx.scene.Node;
@@ -127,7 +126,7 @@ public final class LeftPaneController {
         for (Profile profile : Settings.INSTANCE.getProfiles()) {
             VersionListItem item = new VersionListItem(Profiles.getProfileDisplayName(profile));
             RipplerContainer ripplerContainer = new RipplerContainer(item);
-            item.setOnSettingsButtonClicked(() -> Controllers.getDecorator().showPage(new ProfilePage(profile)));
+            item.setOnSettingsButtonClicked(e -> Controllers.getDecorator().showPage(new ProfilePage(profile)));
             ripplerContainer.setOnMouseClicked(e -> Settings.INSTANCE.setSelectedProfile(profile));
             ripplerContainer.getProperties().put("profile", profile.getName());
             ripplerContainer.maxWidthProperty().bind(leftPane.widthProperty());
@@ -148,32 +147,14 @@ public final class LeftPaneController {
         for (Account account : Settings.INSTANCE.getAccounts()) {
             VersionListItem item = new VersionListItem(account.getCharacter(), accountType(account));
             RipplerContainer ripplerContainer = new RipplerContainer(item);
-            item.setOnSettingsButtonClicked(() -> Controllers.getDecorator().showPage(new AccountPage(account)));
+            item.setOnSettingsButtonClicked(e -> {
+                AccountPage accountPage = new AccountPage(account);
+                JFXPopup popup = new JFXPopup(accountPage);
+                popup.show((Node) e.getSource(), JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, e.getX(), e.getY());
+            });
             ripplerContainer.setOnMouseClicked(e -> {
                 if (e.getButton() == MouseButton.PRIMARY)
                     Settings.INSTANCE.setSelectedAccount(account);
-                else if (e.getButton() == MouseButton.SECONDARY) {
-                    JFXListView<String> listView = new JFXListView<>();
-                    JFXPopup popup = new JFXPopup(listView);
-                    listView.getStyleClass().add("option-list-view");
-                    listView.getItems().add(Launcher.i18n("button.delete"));
-                    if (account instanceof YggdrasilAccount)
-                        listView.getItems().add(Launcher.i18n("button.refresh"));
-                    listView.setOnMouseClicked(e2 ->{
-                        popup.hide();
-                        switch (listView.getSelectionModel().getSelectedIndex()) {
-                            case 0:
-                                Settings.INSTANCE.deleteAccount(account);
-                                break;
-                            case 1:
-                                if (account instanceof YggdrasilAccount)
-                                    AccountHelper.refreshSkinAsync((YggdrasilAccount) account).start();
-                                break;
-                            default:
-                                throw new Error();
-                        }});
-                    popup.show(item, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, e.getX(), e.getY());
-                }
             });
             ripplerContainer.getProperties().put("account", account);
             ripplerContainer.maxWidthProperty().bind(leftPane.widthProperty());
@@ -196,7 +177,8 @@ public final class LeftPaneController {
 
         if (Settings.INSTANCE.getAccounts().isEmpty()) {
             RipplerContainer container = new RipplerContainer(missingAccountItem);
-            missingAccountItem.setOnSettingsButtonClicked(this::addNewAccount);
+            missingAccountItem.setOnSettingsButtonClicked(e -> addNewAccount());
+            container.setOnMouseClicked(e -> addNewAccount());
             list.add(container);
         }
 

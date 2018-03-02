@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.AccountHelper;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
@@ -53,7 +54,11 @@ public class AccountPage extends StackPane implements DecoratorPage {
     @FXML
     private BorderPane paneServer;
     @FXML
+    private BorderPane paneEmail;
+    @FXML
     private ComponentList componentList;
+    @FXML
+    private JFXButton btnDelete;
     @FXML
     private JFXButton btnRefresh;
 
@@ -63,30 +68,41 @@ public class AccountPage extends StackPane implements DecoratorPage {
 
         FXUtils.loadFXML(this, "/assets/fxml/account.fxml");
 
+        FXUtils.setLimitWidth(this, 300);
         if (account instanceof AuthlibInjectorAccount) {
             Accounts.getAuthlibInjectorServerNameAsync((AuthlibInjectorAccount) account)
                     .subscribe(Schedulers.javafx(), variables -> lblServer.setText(variables.get("serverName")));
+            FXUtils.setLimitHeight(this, 182);
         } else {
             componentList.removeChildren(paneServer);
+
+            if (account instanceof OfflineAccount) {
+                componentList.removeChildren(paneEmail);
+                FXUtils.setLimitHeight(this, 110);
+            } else
+                FXUtils.setLimitHeight(this, 145);
         }
+
+        btnDelete.setGraphic(SVG.delete(Theme.blackFillBinding(), 15, 15));
+        btnRefresh.setGraphic(SVG.refresh(Theme.blackFillBinding(), 15, 15));
 
         lblCharacter.setText(account.getCharacter());
         lblType.setText(AddAccountPane.accountType(account));
         lblEmail.setText(account.getUsername());
 
-        btnRefresh.setDisable(account instanceof OfflineAccount);
-
-        if (account instanceof YggdrasilAccount) {
-            btnRefresh.setOnMouseClicked(e -> {
-                AccountHelper.refreshSkinAsync((YggdrasilAccount) account).start();
-            });
-        }
+        btnRefresh.setVisible(account instanceof YggdrasilAccount);
     }
 
     @FXML
     private void onDelete() {
         Settings.INSTANCE.deleteAccount(account);
         Controllers.navigate(null);
+    }
+
+    @FXML
+    private void onRefresh() {
+        if (account instanceof YggdrasilAccount)
+            AccountHelper.refreshSkinAsync((YggdrasilAccount) account).start();
     }
 
     public String getTitle() {
