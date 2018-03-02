@@ -356,7 +356,8 @@ public final class LauncherHelper {
                         });
                         break;
                     case CLOSE:
-                        throw new Error("Never come to here");
+                        // Never come to here.
+                        break;
                     case KEEP:
                         // No operations here
                         break;

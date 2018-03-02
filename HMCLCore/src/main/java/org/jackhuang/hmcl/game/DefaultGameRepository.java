@@ -62,7 +62,7 @@ public class DefaultGameRepository implements GameRepository {
     @Override
     public Version getVersion(String id) {
         if (!hasVersion(id))
-            throw new VersionNotFoundException("Version '" + id + "' does not exist.");
+            throw new VersionNotFoundException("Version '" + id + "' does not exist in " + versions.keySet() + ".");
         return versions.get(id);
     }
 

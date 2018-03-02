@@ -209,7 +209,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     private void loadingVersions() {
-        contentPane.getChildren().setAll(spinner);
+        getChildren().setAll(spinner);
         FXUtils.resetChildren(masonryPane, Collections.emptyList());
     }
 
@@ -220,7 +220,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         }
         JFXUtilities.runInFX(() -> {
             if (profile == repository.getProfile()) {
-                contentPane.getChildren().setAll(masonryPane);
+                getChildren().setAll(contentPane);
                 FXUtils.resetChildren(masonryPane, children);
             }
         });
