@@ -45,6 +45,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.setting.Theme;
@@ -140,7 +141,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
 
         FXUtils.loadFXML(this, "/assets/fxml/decorator.fxml");
 
-        onCloseButtonAction = new SimpleObjectProperty<>(this, "onCloseButtonAction", primaryStage::close);
+        onCloseButtonAction = new SimpleObjectProperty<>(this, "onCloseButtonAction", Launcher::stopApplication);
 
         primaryStage.initStyle(StageStyle.UNDECORATED);
         btnClose.setGraphic(close);

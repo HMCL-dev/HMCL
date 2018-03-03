@@ -535,7 +535,7 @@ public class Settings {
     }
 
     private void onProfileChanged() {
-        EventBus.EVENT_BUS.fireEvent(new ProfileChangedEvent(SETTINGS, getSelectedProfile()));
+        EventBus.EVENT_BUS.fireEvent(new ProfileChangedEvent(this, getSelectedProfile()));
         getSelectedProfile().getRepository().refreshVersionsAsync().start();
     }
 
@@ -548,11 +548,11 @@ public class Settings {
      * Invoked by loading GUI phase.
      */
     public void onProfileLoading() {
-        EventBus.EVENT_BUS.fireEvent(new ProfileLoadingEvent(SETTINGS));
+        EventBus.EVENT_BUS.fireEvent(new ProfileLoadingEvent(this, getProfiles()));
         onProfileChanged();
     }
 
     public void onAccountLoading() {
-        EventBus.EVENT_BUS.fireEvent(new AccountLoadingEvent(SETTINGS));
+        EventBus.EVENT_BUS.fireEvent(new AccountLoadingEvent(this, getAccounts()));
     }
 }

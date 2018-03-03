@@ -17,6 +17,12 @@
  */
 package org.jackhuang.hmcl.event;
 
+import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.util.ToStringBuilder;
+
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * This event gets fired when loading profiles.
  * <br>
@@ -26,14 +32,29 @@ package org.jackhuang.hmcl.event;
  */
 public class ProfileLoadingEvent extends Event {
 
+    private final Collection<Profile> profiles;
+
     /**
      * Constructor.
      *
      * @param source {@link org.jackhuang.hmcl.setting.Settings}
      */
-    public ProfileLoadingEvent(Object source) {
+    public ProfileLoadingEvent(Object source, Collection<Profile> profiles) {
         super(source);
+
+        this.profiles = Collections.unmodifiableCollection(profiles);
     }
 
+    public Collection<Profile> getProfiles() {
+        return profiles;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("source", source)
+                .append("profiles", profiles)
+                .toString();
+    }
 }
 

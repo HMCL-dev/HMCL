@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.event;
 
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.util.ToStringBuilder;
 
 /**
  * This event gets fired when the selected profile changed.
@@ -44,4 +45,11 @@ public final class ProfileChangedEvent extends Event {
         return profile;
     }
 
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("source", source)
+                .append("profile", profile)
+                .toString();
+    }
 }

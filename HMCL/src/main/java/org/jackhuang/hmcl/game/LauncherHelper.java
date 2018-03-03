@@ -50,7 +50,6 @@ public final class LauncherHelper {
     public static final LauncherHelper INSTANCE = new LauncherHelper();
     private LauncherHelper(){}
 
-    private TaskExecutor executor;
     public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
     private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(() -> {});
 
@@ -78,7 +77,7 @@ public final class LauncherHelper {
         VersionSetting setting = profile.getVersionSetting(selectedVersion);
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
 
-        TaskExecutor executor = this.executor = Task.of(Schedulers.javafx(), () -> Controllers.dialog(launchingStepsPane))
+        TaskExecutor executor = Task.of(Schedulers.javafx(), () -> Controllers.dialog(launchingStepsPane))
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES)))
                 .then(variables -> {
                     if (setting.isNotCheckGame())
@@ -162,8 +161,7 @@ public final class LauncherHelper {
                             Controllers.closeDialog();
                     });
                 }
-
-                LauncherHelper.this.executor = null;
+                launchingStepsPane.setExecutor(null);
             }
         });
 

@@ -37,6 +37,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
     private static final HashMap<String, String> SOURCE = new HashMap<String, String>() {
         {
             put("javafx.fxml.LoadException", Launcher.i18n("crash.NoClassDefFound"));
+            put("Location is not set", Launcher.i18n("crash.NoClassDefFound"));
             put("UnsatisfiedLinkError", Launcher.i18n("crash.user_fault"));
             put("java.lang.NoClassDefFoundError", Launcher.i18n("crash.NoClassDefFound"));
             put("java.lang.VerifyError", Launcher.i18n("crash.NoClassDefFound"));

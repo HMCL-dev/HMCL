@@ -17,6 +17,13 @@
  */
 package org.jackhuang.hmcl.event;
 
+import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.util.ToStringBuilder;
+
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * This event gets fired when loading accounts.
  * <br>
@@ -26,14 +33,29 @@ package org.jackhuang.hmcl.event;
  */
 public class AccountLoadingEvent extends Event {
 
+    private final Collection<Account> accounts;
+
     /**
      * Constructor.
      *
      * @param source {@link org.jackhuang.hmcl.setting.Settings}
      */
-    public AccountLoadingEvent(Object source) {
+    public AccountLoadingEvent(Object source, Collection<Account> accounts) {
         super(source);
+        this.accounts = Collections.unmodifiableCollection(accounts);
     }
 
+
+    public Collection<Account> getAccounts() {
+        return accounts;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("source", source)
+                .append("accounts", accounts)
+                .toString();
+    }
 }
 

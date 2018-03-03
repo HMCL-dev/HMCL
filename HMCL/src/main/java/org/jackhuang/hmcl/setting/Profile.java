@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.ImmediateObjectProperty;
 import org.jackhuang.hmcl.util.ImmediateStringProperty;
+import org.jackhuang.hmcl.util.ToStringBuilder;
 
 import java.io.File;
 import java.lang.reflect.Type;
@@ -144,6 +145,14 @@ public final class Profile {
         VersionSetting vs = repository.getVersionSetting(id);
         if (vs != null)
             vs.setUsesGlobal(true);
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("gameDir", getGameDir())
+                .append("name", getName())
+                .toString();
     }
 
     public void addPropertyChangedListener(InvalidationListener listener) {
