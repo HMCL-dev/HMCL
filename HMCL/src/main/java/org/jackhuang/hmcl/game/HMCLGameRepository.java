@@ -173,10 +173,20 @@ public class HMCLGameRepository extends DefaultGameRepository {
         return new File(getVersionRoot(id), "icon.png");
     }
 
-    public void saveVersionSetting(String id) {
+    public boolean saveVersionSetting(String id) {
         if (!versionSettings.containsKey(id))
-            return;
-        Lang.invoke(() -> FileUtils.writeText(getVersionSettingFile(id), GSON.toJson(versionSettings.get(id))));
+            return false;
+        File file = getVersionSettingFile(id);
+        if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
+            return false;
+
+        try {
+            FileUtils.writeText(file, GSON.toJson(versionSettings.get(id)));
+            return true;
+        } catch (IOException e) {
+            Logging.LOG.log(Level.SEVERE, "Unable to save version setting of " + id, e);
+            return false;
+        }
     }
 
     public boolean forbidsVersion(String id) {
