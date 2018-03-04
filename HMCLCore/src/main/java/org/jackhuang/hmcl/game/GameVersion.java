@@ -116,7 +116,7 @@ public final class GameVersion {
                     .getEntry("net/minecraft/client/Minecraft.class");
             if (minecraft != null)
                 return getVersionOfOldMinecraft(f, minecraft);
-            ZipArchiveEntry main = f.getEntry("net/minecraft/client/main/Launcher.class");
+            ZipArchiveEntry main = f.getEntry("net/minecraft/client/main/Main.class");
             ZipArchiveEntry minecraftServer = f.getEntry("net/minecraft/server/MinecraftServer.class");
             if ((main != null) && (minecraftServer != null))
                 return getVersionOfNewMinecraft(f, minecraftServer);
