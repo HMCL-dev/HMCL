@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXDialog;
 import javafx.scene.Node;
 import javafx.scene.Scene;

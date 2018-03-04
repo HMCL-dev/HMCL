@@ -18,7 +18,7 @@ if (buildnumber == null)
 
 def versionroot = System.getenv("VERSION_ROOT")
 if (versionroot == null)
-    versionroot = "3.0"
+    versionroot = "3.1"
 
 String mavenVersion = versionroot + '.' + buildnumber
 version = mavenVersion

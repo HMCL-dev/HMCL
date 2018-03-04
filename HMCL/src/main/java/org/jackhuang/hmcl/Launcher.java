@@ -49,6 +49,14 @@ public final class Launcher extends Application {
             Controllers.initialize(primaryStage);
             primaryStage.setResizable(false);
             primaryStage.setScene(Controllers.getScene());
+
+            UPDATE_CHECKER.process(false)
+                    .then(Task.of(Schedulers.javafx(), () -> {
+                        if (UPDATE_CHECKER.isOutOfDate())
+                            Controllers.showUpdate();
+                    }))
+                    .start();
+
             primaryStage.show();
         } catch (Throwable e) {
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
@@ -64,13 +72,6 @@ public final class Launcher extends Application {
             UPGRADER.parseArguments(VersionNumber.asVersion(VERSION), Arrays.asList(args));
 
             Logging.LOG.info("*** " + TITLE + " ***");
-
-            UPDATE_CHECKER.process(false)
-                    .then(Task.of(Schedulers.javafx(), () -> {
-                        if (UPDATE_CHECKER.isOutOfDate())
-                            Controllers.showUpdate();
-                    }))
-                    .start();
 
             launch(args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.

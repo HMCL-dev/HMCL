@@ -43,11 +43,14 @@ public final class IntVersionNumber extends VersionNumber {
         if (!(o instanceof IntVersionNumber))
             return 0;
         IntVersionNumber other = (IntVersionNumber) o;
-        int len = Math.min(this.version.size(), other.version.size());
-        for (int i = 0; i < len; ++i)
-            if (!version.get(i).equals(other.version.get(i)))
-                return version.get(i).compareTo(other.version.get(i));
-        return Integer.compare(this.version.size(), other.version.size());
+        int len = Math.max(this.version.size(), other.version.size());
+        for (int i = 0; i < len; ++i) {
+            int thisInt = Lang.get(this.version, i).orElse(0);
+            int otherInt = Lang.get(other.version, i).orElse(0);
+            if (thisInt != otherInt)
+                return Integer.compare(thisInt, otherInt);
+        }
+        return 0;
     }
 
     @Override
