@@ -35,6 +35,9 @@ public final class Logging {
 
     static {
         LOG = Logger.getLogger("HMCL");
+    }
+
+    public static void start() {
         LOG.setLevel(Level.FINER);
         LOG.setUseParentHandlers(false);
 
@@ -61,6 +64,11 @@ public final class Logging {
         };
         streamHandler.setLevel(Level.FINEST);
         LOG.addHandler(streamHandler);
+    }
+
+    public static void stop() {
+        for (Handler handler : LOG.getHandlers())
+            LOG.removeHandler(handler);
     }
 
     public static String getLogs() {

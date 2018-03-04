@@ -26,9 +26,8 @@ public final class Main {
 
     public static void main(String[] args) {
         String currentDirectory = new File("").getAbsolutePath();
-        Logging.LOG.info("Current directory: " + currentDirectory);
         if (currentDirectory.contains("!")) {
-            Logging.LOG.severe("Exclamation mark(!) is not allowed in the path where HMCL is in. Forcibly exit.");
+            System.err.println("Exclamation mark(!) is not allowed in the path where HMCL is in. Forcibly exit.");
 
             // No Chinese translation because both Swing and JavaFX cannot render Chinese character properly when exclamation mark exists in the path.
             String message = "Exclamation mark(!) is not allowed in the path where HMCL is in.\nThe path is " + currentDirectory;

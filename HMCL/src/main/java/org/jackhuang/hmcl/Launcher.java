@@ -67,6 +67,8 @@ public final class Launcher extends Application {
         Thread.setDefaultUncaughtExceptionHandler(CRASH_REPORTER);
 
         try {
+            Logging.start();
+
             // NetworkUtils.setUserAgentSupplier(() -> "Hello Minecraft! Launcher");
             Constants.UI_THREAD_SCHEDULER = Constants.JAVAFX_UI_THREAD_SCHEDULER;
             UPGRADER.parseArguments(VersionNumber.asVersion(VERSION), Arrays.asList(args));
@@ -134,7 +136,7 @@ public final class Launcher extends Application {
     public static final File MINECRAFT_DIRECTORY = getWorkingDirectory("minecraft");
     public static final File HMCL_DIRECTORY = getWorkingDirectory("hmcl");
 
-    public static final String VERSION = "@HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING@";
+    public static final String VERSION = "2.9";
     public static final String NAME = "HMCL";
     public static final String TITLE = NAME + " " + VERSION;
     public static final ResourceBundle RESOURCE_BUNDLE = Settings.INSTANCE.getLocale().getResourceBundle();

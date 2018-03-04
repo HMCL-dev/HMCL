@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.upgrade;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
+import com.jfoenix.concurrency.JFXUtilities;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -54,12 +55,19 @@ public class AppDataUpgrader extends IUpgrader {
             if (mainClass != null) {
                 ArrayList<String> al = new ArrayList<>(args);
                 al.add("--noupdate");
-                AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
-                    new URLClassLoader(new URL[]{jar.toURI().toURL()},
-                            ClassLoader.getSystemClassLoader().getParent()).loadClass(mainClass)
-                            .getMethod("main", String[].class).invoke(null, new Object[]{al.toArray(new String[0])});
-                    return null;
-                });
+                ClassLoader pre = Thread.currentThread().getContextClassLoader();
+                try {
+                    AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
+                        Logging.stop();
+                        ClassLoader now = new URLClassLoader(new URL[]{jar.toURI().toURL()}, ClassLoader.getSystemClassLoader().getParent());
+                        Thread.currentThread().setContextClassLoader(now);
+                        now.loadClass(mainClass).getMethod("main", String[].class).invoke(null, new Object[]{al.toArray(new String[0])});
+                        return null;
+                    });
+                } finally {
+                    Logging.start();
+                    Thread.currentThread().setContextClassLoader(pre);
+                }
                 return true;
             }
         }
@@ -96,10 +104,10 @@ public class AppDataUpgrader extends IUpgrader {
         if (!(ver instanceof IntVersionNumber))
             return;
         IntVersionNumber version = (IntVersionNumber) ver;
-        checker.requestDownloadLink().then(Task.of(Schedulers.javafx(), variables -> {
+        checker.requestDownloadLink().then(Task.of(variables -> {
             Map<String, String> map = variables.get(UpdateChecker.REQUEST_DOWNLOAD_LINK_ID);
 
-            if (MessageBox.confirm(Launcher.i18n("update.newest_version") + version.toString() + "\n"
+            if (MessageBox.confirm(Launcher.i18n("update.newest_version", version.toString()) + "\n"
                             + Launcher.i18n("update.should_open_link"),
                     MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
                 if (map != null && map.containsKey("jar") && !StringUtils.isBlank(map.get("jar")))
@@ -122,7 +130,7 @@ public class AppDataUpgrader extends IUpgrader {
                         String hash = null;
                         if (map.containsKey("packsha1"))
                             hash = map.get("packsha1");
-                        Controllers.dialog(Launcher.i18n("message.downloading"));
+                        JFXUtilities.runInFX(() -> Controllers.dialog(Launcher.i18n("message.downloading")));
                         if (new AppDataUpgraderPackGzTask(NetworkUtils.toURL(map.get("pack")), version.toString(), hash).test()) {
                             new ProcessBuilder(JavaVersion.fromCurrentEnvironment().getBinary().getAbsolutePath(), "-jar", AppDataUpgraderPackGzTask.getSelf(version.toString()).getAbsolutePath())
                                     .directory(new File("").getAbsoluteFile()).start();
