@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui;
 import javafx.fxml.FXML;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
 import org.jackhuang.hmcl.game.GameVersion;
@@ -89,7 +90,7 @@ public class InstallerController {
         Optional<String> gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version));
 
         if (!gameVersion.isPresent())
-            Controllers.dialog("version.cannot_read");
+            Controllers.dialog(Launcher.i18n("version.cannot_read"));
         else
             Controllers.getDecorator().startWizard(new InstallerWizardProvider(profile, gameVersion.get(), version, forge, liteLoader, optiFine));
     }

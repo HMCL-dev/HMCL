@@ -100,7 +100,6 @@ public final class LauncherHelper {
                         }
                     } catch (AuthenticationException e) {
                         variables.set("account", DialogController.logIn(account));
-                        JFXUtilities.runInFX(() -> Controllers.dialog(launchingStepsPane));
                     }
                 }))
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LAUNCHING)))
@@ -132,8 +131,10 @@ public final class LauncherHelper {
                                 Controllers.closeDialog();
                             });
                     } else
-                        Platform.runLater(() ->
-                                Controllers.dialog(Launcher.i18n("version.launch_script.success", scriptFile.getAbsolutePath())));
+                        Platform.runLater(() -> {
+                            Controllers.closeDialog();
+                            Controllers.dialog(Launcher.i18n("version.launch_script.success", scriptFile.getAbsolutePath()));
+                        });
 
                 }))
                 .executor();
@@ -153,12 +154,11 @@ public final class LauncherHelper {
             public void onStop(boolean success, TaskExecutor executor) {
                 if (!success) {
                     Platform.runLater(() -> {
+                        Controllers.closeDialog();
                         if (executor.getLastException() != null)
                             Controllers.dialog(I18nException.getStackTrace(executor.getLastException()),
                                     scriptFile == null ? Launcher.i18n("launch.failed") : Launcher.i18n("version.launch_script.failed"),
                                     MessageBox.ERROR_MESSAGE, Controllers::closeDialog);
-                        else
-                            Controllers.closeDialog();
                     });
                 }
                 launchingStepsPane.setExecutor(null);
@@ -180,28 +180,28 @@ public final class LauncherHelper {
             flag = true;
         }
 
-        if (java.getParsedVersion() < JavaVersion.JAVA_8) {
+        if (!flag && java.getParsedVersion() < JavaVersion.JAVA_8) {
             Controllers.dialog(Launcher.i18n("launch.advice.newer_java"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
             flag = true;
         }
 
-        if (java.getParsedVersion() >= JavaVersion.JAVA_9 && gameVersion.compareTo(VersionNumber.asVersion("1.12.5")) < 0 && version.getMainClass().contains("launchwrapper")) {
+        if (!flag && java.getParsedVersion() >= JavaVersion.JAVA_9 && gameVersion.compareTo(VersionNumber.asVersion("1.12.5")) < 0 && version.getMainClass().contains("launchwrapper")) {
             Controllers.dialog(Launcher.i18n("launch.advice.java9"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
             suggest = false;
             flag = true;
         }
 
-        if (java.getPlatform() == org.jackhuang.hmcl.util.Platform.BIT_32 &&
+        if (!flag && java.getPlatform() == org.jackhuang.hmcl.util.Platform.BIT_32 &&
                 org.jackhuang.hmcl.util.Platform.IS_64_BIT) {
             Controllers.dialog(Launcher.i18n("launch.advice.different_platform"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
             flag = true;
         }
-        if (java.getPlatform() == org.jackhuang.hmcl.util.Platform.BIT_32 &&
+        if (!flag && java.getPlatform() == org.jackhuang.hmcl.util.Platform.BIT_32 &&
                 setting.getMaxMemory() > 1.5 * 1024) {
             Controllers.dialog(Launcher.i18n("launch.advice.too_large_memory_for_32bit"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
             flag = true;
         }
-        if (OperatingSystem.TOTAL_MEMORY > 0 && OperatingSystem.TOTAL_MEMORY < setting.getMaxMemory()) {
+        if (!flag && OperatingSystem.TOTAL_MEMORY > 0 && OperatingSystem.TOTAL_MEMORY < setting.getMaxMemory()) {
             Controllers.dialog(Launcher.i18n("launch.advice.not_enough_space", OperatingSystem.TOTAL_MEMORY), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
             flag = true;
         }
@@ -219,10 +219,8 @@ public final class LauncherHelper {
     }
 
     public void emitStatus(LoadingState state) {
-
         launchingStepsPane.setTitle(state.getLocalizedMessage());
         launchingStepsPane.setSubtitle((state.ordinal() + 1) + " / " + LoadingState.values().length);
-        Controllers.dialog(launchingStepsPane);
     }
 
     private void checkExit(LauncherVisibility v) {

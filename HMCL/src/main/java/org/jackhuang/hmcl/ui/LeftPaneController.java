@@ -208,7 +208,7 @@ public final class LeftPaneController {
                                             .with(Task.of(Schedulers.javafx(), () -> {
                                                 Controllers.closeDialog();
                                                 checkAccount();
-                                            })).executor(),
+                                            })).executor(true),
                                     Launcher.i18n("modpack.installing"), "", null);
                             flag = false;
                         } catch (UnsupportedModpackException ignore) {

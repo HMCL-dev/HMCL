@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.util.*;
@@ -130,13 +131,15 @@ public class AppDataUpgrader extends IUpgrader {
                         String hash = null;
                         if (map.containsKey("packsha1"))
                             hash = map.get("packsha1");
-                        JFXUtilities.runInFX(() -> Controllers.dialog(Launcher.i18n("message.downloading")));
-                        if (new AppDataUpgraderPackGzTask(NetworkUtils.toURL(map.get("pack")), version.toString(), hash).test()) {
+                        Task task = new AppDataUpgraderPackGzTask(NetworkUtils.toURL(map.get("pack")), version.toString(), hash);
+                        TaskExecutor executor = task.executor();
+                        JFXUtilities.runInFX(() -> Controllers.taskDialog(executor, Launcher.i18n("message.downloading"), "", null));
+                        if (executor.test()) {
                             new ProcessBuilder(JavaVersion.fromCurrentEnvironment().getBinary().getAbsolutePath(), "-jar", AppDataUpgraderPackGzTask.getSelf(version.toString()).getAbsolutePath())
                                     .directory(new File("").getAbsoluteFile()).start();
                             System.exit(0);
                         }
-                        Controllers.closeDialog();
+                        JFXUtilities.runInFX(Controllers::closeDialog);
                     } catch (IOException ex) {
                         Logging.LOG.log(Level.SEVERE, "Failed to create upgrader", ex);
                     }
@@ -147,8 +150,6 @@ public class AppDataUpgrader extends IUpgrader {
                             url = map.get(OperatingSystem.CURRENT_OS.getCheckedName());
                         else if (map.containsKey(OperatingSystem.UNKNOWN.getCheckedName()))
                             url = map.get(OperatingSystem.UNKNOWN.getCheckedName());
-                    if (url == null)
-                        url = Launcher.PUBLISH;
                     try {
                         java.awt.Desktop.getDesktop().browse(new URI(url));
                     } catch (URISyntaxException | IOException e) {

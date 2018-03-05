@@ -205,6 +205,13 @@ public abstract class Task {
         return new TaskExecutor(this);
     }
 
+    public final TaskExecutor executor(boolean start) {
+        TaskExecutor executor = new TaskExecutor(this);
+        if (start)
+            executor.start();
+        return executor;
+    }
+
     public final TaskExecutor executor(TaskListener taskListener) {
         TaskExecutor executor = new TaskExecutor(this);
         executor.addTaskListener(taskListener);

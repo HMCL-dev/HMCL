@@ -147,19 +147,18 @@ public final class MainPage extends StackPane implements DecoratorPage {
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(Launcher.i18n("modpack"), "*.zip"));
             File selectedFile = chooser.showOpenDialog(Controllers.getStage());
             if (selectedFile != null) {
-                TaskExecutorDialogPane pane = new TaskExecutorDialogPane(null);
                 try {
                     TaskExecutor executor = ModpackHelper.getUpdateTask(profile, selectedFile, id, ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(id)))
-                            .then(Task.of(Schedulers.javafx(), Controllers::closeDialog)).executor();
-                    pane.setExecutor(executor);
-                    pane.setTitle(Launcher.i18n("modpack.update"));
-                    executor.start();
-                    Controllers.dialog(pane);
+                            .then(Task.of(Schedulers.javafx(), Controllers::closeDialog)).executor(true);
+                    Controllers.taskDialog(executor, Launcher.i18n("modpack.update"), "", null);
                 } catch (UnsupportedModpackException e) {
+                    Controllers.closeDialog();
                     Controllers.dialog(Launcher.i18n("modpack.unsupported"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE);
                 } catch (MismatchedModpackTypeException e) {
+                    Controllers.closeDialog();
                     Controllers.dialog(Launcher.i18n("modpack.mismatched_type"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE);
                 } catch (IOException e)  {
+                    Controllers.closeDialog();
                     Controllers.dialog(Launcher.i18n("modpack.invalid"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE);
                 }
             }
