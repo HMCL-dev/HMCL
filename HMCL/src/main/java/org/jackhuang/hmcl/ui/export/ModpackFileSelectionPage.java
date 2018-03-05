@@ -66,6 +66,9 @@ public final class ModpackFileSelectionPage extends StackPane implements WizardP
     }
 
     private CheckBoxTreeItem<String> getTreeItem(File file, String basePath) {
+        if (!file.exists())
+            return null;
+
         ModAdviser.ModSuggestion state = ModAdviser.ModSuggestion.SUGGESTED;
         if (basePath.length() > "minecraft/".length()) {
             state = adviser.advise(StringUtils.substringAfter(basePath, "minecraft/") + (file.isDirectory() ? "/" : ""), file.isDirectory());

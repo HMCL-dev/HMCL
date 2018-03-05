@@ -127,7 +127,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 Controllers.dialog(Launcher.i18n("login.empty_username"));
             else {
                 FileChooser chooser = new FileChooser();
-                chooser.setInitialDirectory(repository.getRunDirectory(id));
+                if (repository.getRunDirectory(id).isDirectory())
+                    chooser.setInitialDirectory(repository.getRunDirectory(id));
                 chooser.setTitle(Launcher.i18n("version.launch_script.save"));
                 chooser.getExtensionFilters().add(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
                         ? new FileChooser.ExtensionFilter(Launcher.i18n("extension.bat"), "*.bat")
