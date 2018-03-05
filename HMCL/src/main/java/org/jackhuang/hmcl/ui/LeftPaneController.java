@@ -148,7 +148,7 @@ public final class LeftPaneController {
             VersionListItem item = new VersionListItem(account.getCharacter(), accountType(account));
             RipplerContainer ripplerContainer = new RipplerContainer(item);
             item.setOnSettingsButtonClicked(e -> {
-                AccountPage accountPage = new AccountPage(account);
+                AccountPage accountPage = new AccountPage(account, item);
                 JFXPopup popup = new JFXPopup(accountPage);
                 accountPage.setOnDelete(popup::hide);
                 popup.show((Node) e.getSource(), JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, e.getX(), e.getY());

@@ -18,12 +18,14 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXProgressBar;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.Launcher;
@@ -44,7 +46,7 @@ import java.util.Optional;
 public class AccountPage extends StackPane implements DecoratorPage {
     private final StringProperty title;
     private final ObjectProperty<Runnable> onDelete = new SimpleObjectProperty<>(this, "onDelete");
-
+    private final VersionListItem item;
     private final Account account;
 
     @FXML
@@ -65,9 +67,13 @@ public class AccountPage extends StackPane implements DecoratorPage {
     private JFXButton btnDelete;
     @FXML
     private JFXButton btnRefresh;
+    @FXML
+    private JFXProgressBar progressBar;
 
-    public AccountPage(Account account) {
+    public AccountPage(Account account, VersionListItem item) {
         this.account = account;
+        this.item = item;
+
         title = new SimpleStringProperty(this, "title", Launcher.i18n("account") + " - " + account.getCharacter());
 
         FXUtils.loadFXML(this, "/assets/fxml/account.fxml");
@@ -105,8 +111,18 @@ public class AccountPage extends StackPane implements DecoratorPage {
 
     @FXML
     private void onRefresh() {
-        if (account instanceof YggdrasilAccount)
-            AccountHelper.refreshSkinAsync((YggdrasilAccount) account).start();
+        if (account instanceof YggdrasilAccount) {
+            progressBar.setVisible(true);
+            AccountHelper.refreshSkinAsync((YggdrasilAccount) account)
+                    .finalized(Schedulers.javafx(), (variables, isDependentsSucceeded) -> {
+                        progressBar.setVisible(false);
+
+                        if (isDependentsSucceeded) {
+                            Image image = AccountHelper.getSkin((YggdrasilAccount) account, 4);
+                            item.setImage(image, AccountHelper.getViewport(4));
+                        }
+                    }).start();
+        }
     }
 
     public String getTitle() {

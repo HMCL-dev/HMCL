@@ -37,11 +37,7 @@ public final class DialogController {
                 AccountLoginPane pane = new AccountLoginPane(account, it -> {
                         res.set(it);
                         latch.countDown();
-                        Controllers.closeDialog();
-                }, () -> {
-                        latch.countDown();
-                        Controllers.closeDialog();
-                });
+                }, latch::countDown);
                 pane.setDialog(Controllers.dialog(pane));
             });
             latch.await();
