@@ -92,5 +92,5 @@ public final class ForgeVersionList extends VersionList<Void> {
         };
     }
 
-    public static final String FORGE_LIST = "http://files.minecraftforge.net/maven/net/minecraftforge/forge/json";
+    public static final String FORGE_LIST = "https://files.minecraftforge.net/maven/net/minecraftforge/forge/json";
 }

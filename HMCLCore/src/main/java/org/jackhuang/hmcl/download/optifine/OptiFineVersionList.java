@@ -52,7 +52,7 @@ public final class OptiFineVersionList extends VersionList<Void> {
 
     @Override
     public Task refreshAsync(DownloadProvider downloadProvider) {
-        GetTask task = new GetTask(NetworkUtils.toURL("http://optifine.net/downloads"));
+        GetTask task = new GetTask(NetworkUtils.toURL("https://optifine.net/downloads"));
         return new Task() {
             @Override
             public Collection<Task> getDependents() {
@@ -116,6 +116,6 @@ public final class OptiFineVersionList extends VersionList<Void> {
             result = m.group(1);
         if (result == null)
             throw new IllegalStateException("Cannot find version in " + content);
-        return "http://optifine.net/downloadx?f=OptiFine" + result;
+        return "https://optifine.net/downloadx?f=OptiFine" + result;
     }
 }

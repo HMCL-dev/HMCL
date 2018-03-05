@@ -26,6 +26,6 @@ public class CurseCDNDownloadProvider extends MojangDownloadProvider {
 
     @Override
     public String injectURL(String baseURL) {
-        return baseURL == null ? null : baseURL.replace("http://files.minecraftforge.net/maven", "http://ftb.cursecdn.com/FTB2/maven");
+        return baseURL == null ? null : baseURL.replaceFirst("https?://files\\.minecraftforge\\.net/maven", "https://ftb.cursecdn.com/FTB2/maven");
     }
 }

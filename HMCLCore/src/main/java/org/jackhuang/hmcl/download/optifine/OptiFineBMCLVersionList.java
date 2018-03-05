@@ -42,7 +42,7 @@ public final class OptiFineBMCLVersionList extends VersionList<Void> {
 
     @Override
     public Task refreshAsync(DownloadProvider downloadProvider) {
-        GetTask task = new GetTask(NetworkUtils.toURL("http://bmclapi.bangbang93.com/optifine/versionlist"));
+        GetTask task = new GetTask(NetworkUtils.toURL("https://bmclapi.bangbang93.com/optifine/versionlist"));
         return new Task() {
             @Override
             public Collection<Task> getDependents() {
@@ -59,7 +59,7 @@ public final class OptiFineBMCLVersionList extends VersionList<Void> {
                     String version = element.getType();
                     if (version == null)
                         continue;
-                    String mirror = "http://bmclapi2.bangbang93.com/optifine/" + element.getGameVersion() + "/" + element.getType() + "/" + element.getPatch();
+                    String mirror = "https://bmclapi2.bangbang93.com/optifine/" + element.getGameVersion() + "/" + element.getType() + "/" + element.getPatch();
                     if (!duplicates.add(mirror))
                         continue;
 

@@ -46,17 +46,17 @@ public class MojangDownloadProvider implements DownloadProvider {
 
     @Override
     public String getVersionBaseURL() {
-        return "http://s3.amazonaws.com/Minecraft.Download/versions/";
+        return "https://s3.amazonaws.com/Minecraft.Download/versions/";
     }
 
     @Override
     public String getAssetIndexBaseURL() {
-        return "http://s3.amazonaws.com/Minecraft.Download/indexes/";
+        return "https://s3.amazonaws.com/Minecraft.Download/indexes/";
     }
 
     @Override
     public String getAssetBaseURL() {
-        return "http://resources.download.minecraft.net/";
+        return "https://resources.download.minecraft.net/";
     }
 
     @Override
@@ -80,12 +80,12 @@ public class MojangDownloadProvider implements DownloadProvider {
         if (baseURL == null)
             return null;
         //else if (baseURL.contains("scala-swing") || baseURL.contains("scala-xml") || baseURL.contains("scala-parser-combinators"))
-        //    return baseURL.replace("http://files.minecraftforge.net/maven", "http://ftb.cursecdn.com/FTB2/maven");
+        //    return baseURL.replaceFirst("https?://files\\.minecraftforge\\.net/maven", "https://bmclapi2.bangbang93.com/maven");
         /*else if (baseURL.contains("typesafe") || baseURL.contains("scala"))
             if (isChina)
-                return baseURL.replace("http://files.minecraftforge.net/maven", "http://maven.aliyun.com/nexus/content/groups/public");
+                return baseURL.replaceFirst("https?://files\\.minecraftforge\\.net/maven", "http://maven.aliyun.com/nexus/content/groups/public");
             else
-                return baseURL.replace("http://files.minecraftforge.net/maven", "http://repo1.maven.org/maven2");
+                return baseURL.replaceFirst("https?://files\\.minecraftforge\\.net/maven", "https://repo1.maven.org/maven2");
         */else
             return baseURL;
     }
