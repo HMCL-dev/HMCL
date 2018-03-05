@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.setting;
 import org.jackhuang.hmcl.ui.construct.UTF8Control;
 import org.jackhuang.hmcl.util.Lang;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;

@@ -5,17 +5,15 @@ import com.jfoenix.controls.JFXRadioButton;
 import javafx.beans.NamedArg;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.Collection;
@@ -23,8 +21,8 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public class MultiColorItem extends ComponentList {
-    private final StringProperty customTitle = new SimpleStringProperty(this, "customTitle", Main.i18n("selector.custom"));
-    private final StringProperty chooserTitle = new SimpleStringProperty(this, "chooserTitle", Main.i18n("selector.choose_file"));
+    private final StringProperty customTitle = new SimpleStringProperty(this, "customTitle", Launcher.i18n("selector.custom"));
+    private final StringProperty chooserTitle = new SimpleStringProperty(this, "chooserTitle", Launcher.i18n("selector.choose_file"));
 
     private final ToggleGroup group = new ToggleGroup();
     private final JFXColorPicker colorPicker = new JFXColorPicker();

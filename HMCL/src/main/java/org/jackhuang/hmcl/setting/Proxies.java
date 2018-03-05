@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.setting;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.net.Proxy;
-import java.util.Arrays;
 import java.util.List;
 
 /**

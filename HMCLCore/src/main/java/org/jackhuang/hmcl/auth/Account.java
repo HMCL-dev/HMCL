@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.auth;
 
+import org.jackhuang.hmcl.util.ToStringBuilder;
+
 import java.util.Map;
 import java.util.UUID;
 
@@ -64,4 +66,13 @@ public abstract class Account {
     public abstract Map<Object, Object> toStorage();
 
     public abstract void clearCache();
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("username", getUsername())
+                .append("character", getCharacter())
+                .append("uuid", getUUID())
+                .toString();
+    }
 }

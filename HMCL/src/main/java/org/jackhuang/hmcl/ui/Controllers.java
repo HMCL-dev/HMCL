@@ -17,13 +17,14 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXDialog;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -32,6 +33,7 @@ import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.JavaVersion;
+import org.jackhuang.hmcl.util.Lang;
 
 import java.util.function.Consumer;
 
@@ -93,7 +95,9 @@ public final class Controllers {
     public static void initialize(Stage stage) {
         Controllers.stage = stage;
 
-        decorator = new Decorator(stage, getMainPage(), Main.TITLE, false, true);
+        stage.setOnCloseRequest(e -> Launcher.stopApplication());
+
+        decorator = new Decorator(stage, getMainPage(), Launcher.TITLE, false, true);
         decorator.showPage(null);
         leftPaneController = new LeftPaneController(decorator.getLeftPane());
 
@@ -110,7 +114,7 @@ public final class Controllers {
         stage.setMaxHeight(521);
 
         stage.getIcons().add(new Image("/assets/img/icon.png"));
-        stage.setTitle(Main.TITLE);
+        stage.setTitle(Launcher.TITLE);
     }
 
     public static Region getDialogContent() {
@@ -119,7 +123,7 @@ public final class Controllers {
 
     public static JFXDialog dialog(Region content) {
         // TODO: temp fix
-        decorator.showDialog(new Region());
+        decorator.showDialog(Lang.apply(new Region(), region -> region.getProperties().put("controllers", true)));
         return decorator.showDialog(content);
     }
 
@@ -147,12 +151,15 @@ public final class Controllers {
         dialog(new InputDialogPane(text, decorator.getDialog(), onResult));
     }
 
+    public static void taskDialog(TaskExecutor executor, String title, String subtitle) {
+        taskDialog(executor, title, subtitle, null);
+    }
+
     public static void taskDialog(TaskExecutor executor, String title, String subtitle, Runnable onCancel) {
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
         pane.setTitle(title);
         pane.setSubtitle(subtitle);
         pane.setExecutor(executor);
-        executor.start();
         dialog(pane);
     }
 
@@ -168,7 +175,7 @@ public final class Controllers {
     }
 
     public static void showUpdate() {
-        getDecorator().showUpdate();
+        getLeftPaneController().showUpdate();
     }
 
     public static void shutdown() {

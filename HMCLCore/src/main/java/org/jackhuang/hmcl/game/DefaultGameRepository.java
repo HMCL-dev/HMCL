@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.ToStringBuilder;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,7 +62,7 @@ public class DefaultGameRepository implements GameRepository {
     @Override
     public Version getVersion(String id) {
         if (!hasVersion(id))
-            throw new VersionNotFoundException("Version '" + id + "' does not exist.");
+            throw new VersionNotFoundException("Version '" + id + "' does not exist in " + versions.keySet() + ".");
         return versions.get(id);
     }
 
@@ -116,6 +117,9 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public boolean renameVersion(String from, String to) {
+        if (EventBus.EVENT_BUS.fireEvent(new RenameVersionEvent(this, from, to)) == Event.Result.DENY)
+            return false;
+
         try {
             Version fromVersion = getVersion(from);
             File fromDir = getVersionRoot(from);
@@ -145,6 +149,8 @@ public class DefaultGameRepository implements GameRepository {
     public boolean removeVersionFromDisk(String id) {
         if (!versions.containsKey(id))
             return true;
+        if (EventBus.EVENT_BUS.fireEvent(new RemoveVersionEvent(this, id)) == Event.Result.DENY)
+            return false;
         File file = getVersionRoot(id);
         if (!file.exists())
             return true;
@@ -201,7 +207,7 @@ public class DefaultGameRepository implements GameRepository {
                         try {
                             FileUtils.writeText(json, Constants.GSON.toJson(version));
                         } catch (Exception e) {
-                            Logging.LOG.log(Level.WARNING, "Ignoring version {0} because wrong id {1} is set and cannot correct it.", new Object[]{id, version.getId()});
+                            Logging.LOG.log(Level.WARNING, "Ignoring version " + id + " because wrong id " + version.getId() + " is set and cannot correct it.");
                             continue;
                         }
                     }
@@ -217,7 +223,7 @@ public class DefaultGameRepository implements GameRepository {
                         EventBus.EVENT_BUS.fireEvent(new LoadedOneVersionEvent(this, resolved)) != Event.Result.DENY)
                     versions.put(version.getId(), version);
             } catch (VersionNotFoundException e) {
-                Logging.LOG.log(Level.WARNING, "Ignoring version {0} because it inherits from a nonexistent version.", version.getId());
+                Logging.LOG.log(Level.WARNING, "Ignoring version " + version.getId() + " because it inherits from a nonexistent version.");
             }
         }
 
@@ -227,7 +233,9 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public void refreshVersions() {
-        EventBus.EVENT_BUS.fireEvent(new RefreshingVersionsEvent(this));
+        if (EventBus.EVENT_BUS.fireEvent(new RefreshingVersionsEvent(this)) == Event.Result.DENY)
+            return;
+
         Schedulers.newThread().schedule(() -> {
             refreshVersionsImpl();
             EventBus.EVENT_BUS.fireEvent(new RefreshedVersionsEvent(this));
@@ -337,4 +345,11 @@ public class DefaultGameRepository implements GameRepository {
         return getModpackConfiguration(version).exists();
     }
 
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("versions", versions == null ? null : versions.keySet())
+                .append("baseDirectory", baseDirectory)
+                .toString();
+    }
 }

@@ -40,13 +40,11 @@ public abstract class VersionNumber implements Comparable<VersionNumber> {
             throw new IllegalArgumentException("The version " + version + " is malformed, only dots and digits are allowed.");
 
         String[] s = version.split("\\.");
-        int last = s.length - 1;
-        for (int i = s.length - 1; i >= 0; --i)
-            if (Integer.parseInt(s[i]) == 0)
-                last = i;
-        ArrayList<Integer> versions = new ArrayList<>(last + 1);
-        for (int i = 0; i <= last; ++i)
-            versions.add(Integer.parseInt(s[i]));
+        ArrayList<Integer> versions = new ArrayList<>(s.length);
+        for (String value : s) versions.add(Integer.parseInt(value));
+        while (!versions.isEmpty() && versions.get(versions.size() - 1) == 0)
+            versions.remove(versions.size() - 1);
+
         return new IntVersionNumber(Collections.unmodifiableList(versions));
     }
 

@@ -39,7 +39,7 @@ public final class LibrariesDownloadInfo {
 
     public LibrariesDownloadInfo(LibraryDownloadInfo artifact, Map<String, LibraryDownloadInfo> classifiers) {
         this.artifact = artifact;
-        this.classifiers = new HashMap<>(classifiers);
+        this.classifiers = classifiers == null ? null : new HashMap<>(classifiers);
     }
 
     public LibraryDownloadInfo getArtifact() {

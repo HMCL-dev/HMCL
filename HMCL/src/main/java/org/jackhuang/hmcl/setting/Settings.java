@@ -23,11 +23,12 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.text.Font;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.event.AccountLoadingEvent;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.ProfileChangedEvent;
 import org.jackhuang.hmcl.event.ProfileLoadingEvent;
@@ -62,7 +63,7 @@ public class Settings {
 
     private final Config SETTINGS = initSettings();
 
-    private Map<String, Account> accounts = new HashMap<>();
+    private final Map<String, Account> accounts = new HashMap<>();
 
     {
         loadProxy();
@@ -368,6 +369,7 @@ public class Settings {
 
     public void addAccount(Account account) {
         accounts.put(Accounts.getAccountId(account), account);
+        onAccountLoading();
     }
 
     public Account getAccount(String name, String character) {
@@ -381,12 +383,14 @@ public class Settings {
     public void deleteAccount(String name, String character) {
         accounts.remove(Accounts.getAccountId(name, character));
 
+        onAccountLoading();
         selectedAccount.get();
     }
 
     public void deleteAccount(Account account) {
         accounts.remove(Accounts.getAccountId(account));
 
+        onAccountLoading();
         selectedAccount.get();
     }
 
@@ -469,7 +473,7 @@ public class Settings {
         checkProfileMap();
 
         if (!hasProfile(SETTINGS.getSelectedProfile())) {
-            SETTINGS.setSelectedProfile(getProfileMap().keySet().stream().findFirst().get());
+            getProfileMap().keySet().stream().findFirst().ifPresent(SETTINGS::setSelectedProfile);
             Schedulers.computation().schedule(this::onProfileChanged);
         }
         return getProfile(SETTINGS.getSelectedProfile());
@@ -506,6 +510,7 @@ public class Settings {
             throw new IllegalArgumentException("Profile's name is empty");
 
         getProfileMap().put(ver.getName(), ver);
+        Schedulers.computation().schedule(this::onProfileLoading);
 
         ver.nameProperty().setChangedListener(this::profileNameChanged);
 
@@ -525,12 +530,12 @@ public class Settings {
     private void checkProfileMap() {
         if (getProfileMap().isEmpty()) {
             getProfileMap().put(DEFAULT_PROFILE, new Profile(DEFAULT_PROFILE));
-            getProfileMap().put(HOME_PROFILE, new Profile(HOME_PROFILE, Main.MINECRAFT_DIRECTORY));
+            getProfileMap().put(HOME_PROFILE, new Profile(HOME_PROFILE, Launcher.MINECRAFT_DIRECTORY));
         }
     }
 
     private void onProfileChanged() {
-        EventBus.EVENT_BUS.fireEvent(new ProfileChangedEvent(SETTINGS, getSelectedProfile()));
+        EventBus.EVENT_BUS.fireEvent(new ProfileChangedEvent(this, getSelectedProfile()));
         getSelectedProfile().getRepository().refreshVersionsAsync().start();
     }
 
@@ -543,7 +548,11 @@ public class Settings {
      * Invoked by loading GUI phase.
      */
     public void onProfileLoading() {
-        EventBus.EVENT_BUS.fireEvent(new ProfileLoadingEvent(SETTINGS));
+        EventBus.EVENT_BUS.fireEvent(new ProfileLoadingEvent(this, getProfiles()));
         onProfileChanged();
+    }
+
+    public void onAccountLoading() {
+        EventBus.EVENT_BUS.fireEvent(new AccountLoadingEvent(this, getAccounts()));
     }
 }

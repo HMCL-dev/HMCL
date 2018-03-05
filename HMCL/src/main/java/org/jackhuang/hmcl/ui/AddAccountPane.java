@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,22 +19,17 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.*;
-import javafx.application.Platform;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
@@ -48,22 +43,18 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.IconedItem;
 import org.jackhuang.hmcl.ui.construct.Validator;
-import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
+import org.jackhuang.hmcl.util.Logging;
 
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public final class AccountsPage extends StackPane implements DecoratorPage {
-    private final StringProperty title = new SimpleStringProperty(this, "title", Main.i18n("account"));
+public class AddAccountPane extends StackPane {
 
-    @FXML
-    private ScrollPane scrollPane;
-    @FXML private JFXMasonryPane masonryPane;
-    @FXML private JFXDialog dialog;
     @FXML private JFXTextField txtUsername;
     @FXML private JFXPasswordField txtPassword;
     @FXML private Label lblCreationWarning;
@@ -73,16 +64,17 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
     @FXML private JFXProgressBar progressBar;
     @FXML private Label lblAddInjectorServer;
     @FXML private Hyperlink linkAddInjectorServer;
+    @FXML private JFXDialogLayout layout;
+    private final Runnable finalization;
 
-    {
-        FXUtils.loadFXML(this, "/assets/fxml/account.fxml");
+    public AddAccountPane(Runnable finalization) {
+        this.finalization = finalization;
 
-        getChildren().remove(dialog);
-        dialog.setDialogContainer(this);
+        FXUtils.loadFXML(this, "/assets/fxml/account-add.fxml");
 
-        FXUtils.smoothScrolling(scrollPane);
+        loadServers();
 
-        cboType.getItems().setAll(Main.i18n("account.methods.offline"), Main.i18n("account.methods.yggdrasil"), Main.i18n("account.methods.authlib_injector"));
+        cboType.getItems().setAll(Launcher.i18n("account.methods.offline"), Launcher.i18n("account.methods.yggdrasil"), Launcher.i18n("account.methods.authlib_injector"));
         cboType.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> {
             txtPassword.setVisible(newValue.intValue() != 0);
             lblPassword.setVisible(newValue.intValue() != 0);
@@ -98,70 +90,26 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
 
         txtPassword.setOnAction(e -> onCreationAccept());
         txtUsername.setOnAction(e -> onCreationAccept());
-        txtUsername.getValidators().add(new Validator(Main.i18n("input.email"), str -> !txtPassword.isVisible() || str.contains("@")));
+        txtUsername.getValidators().add(new Validator(Launcher.i18n("input.email"), str -> !txtPassword.isVisible() || str.contains("@")));
 
-        FXUtils.onChangeAndOperate(Settings.INSTANCE.selectedAccountProperty(), account -> {
-            for (Node node : masonryPane.getChildren())
-                if (node instanceof AccountItem)
-                    ((AccountItem) node).setSelected(account == ((AccountItem) node).getAccount());
-        });
-
-        loadAccounts();
-        loadServers();
-
-        if (Settings.INSTANCE.getAccounts().isEmpty())
-            addNewAccount();
     }
 
-    public void loadAccounts() {
-        List<Node> children = new LinkedList<>();
-        int i = 0;
-        ToggleGroup group = new ToggleGroup();
-        for (Account account : Settings.INSTANCE.getAccounts()) {
-            children.add(buildNode(++i, account, group));
-        }
-        group.selectedToggleProperty().addListener((a, b, newValue) -> {
-            if (newValue != null)
-                Settings.INSTANCE.setSelectedAccount((Account) newValue.getProperties().get("account"));
-        });
-        FXUtils.resetChildren(masonryPane, children);
-        Platform.runLater(() -> {
-            masonryPane.requestLayout();
-            scrollPane.requestLayout();
-        });
-    }
-
-    public void loadServers() {
+    private void loadServers() {
         Task.ofResult("list", () -> Settings.INSTANCE.getAuthlibInjectorServerURLs().parallelStream()
-                .map(serverURL -> new TwoLineListItem(Accounts.getAuthlibInjectorServerName(serverURL), serverURL))
+                .flatMap(serverURL -> {
+                    try {
+                        return Stream.of(new TwoLineListItem(Accounts.getAuthlibInjectorServerName(serverURL), serverURL));
+                    } catch (Exception e) {
+                        Logging.LOG.log(Level.WARNING, "Authlib-injector server root " + serverURL + " cannot be recognized.", e);
+                        return Stream.empty();
+                    }
+                })
                 .collect(Collectors.toList()))
                 .subscribe(Task.of(Schedulers.javafx(), variables -> {
                     cboServers.getItems().setAll(variables.<Collection<TwoLineListItem>>get("list"));
                     if (!cboServers.getItems().isEmpty())
                         cboServers.getSelectionModel().select(0);
                 }));
-    }
-
-    private Node buildNode(int i, Account account, ToggleGroup group) {
-        AccountItem item = new AccountItem(i, account, group);
-        item.setOnDeleteButtonMouseClicked(e -> {
-            Settings.INSTANCE.deleteAccount(account);
-            Platform.runLater(this::loadAccounts);
-        });
-        return item;
-    }
-
-    @FXML
-    private void addNewAccount() {
-        txtUsername.setText("");
-        txtPassword.setText("");
-        lblCreationWarning.setText("");
-        dialog.show();
-    }
-
-    @FXML
-    private void onAddInjecterServer() {
-        Controllers.navigate(Controllers.getServersPage());
     }
 
     @FXML
@@ -173,23 +121,22 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
         progressBar.setVisible(true);
         lblCreationWarning.setText("");
         Task.ofResult("create_account", () -> {
-                AccountFactory<?> factory;
-                switch (type) {
-                    case 0: factory = Accounts.ACCOUNT_FACTORY.get(Accounts.OFFLINE_ACCOUNT_KEY); break;
-                    case 1: factory = Accounts.ACCOUNT_FACTORY.get(Accounts.YGGDRASIL_ACCOUNT_KEY); break;
-                    case 2: factory = Accounts.ACCOUNT_FACTORY.get(Accounts.AUTHLIB_INJECTOR_ACCOUNT_KEY); break;
-                    default: throw new Error();
-                }
+            AccountFactory<?> factory;
+            switch (type) {
+                case 0: factory = Accounts.ACCOUNT_FACTORY.get(Accounts.OFFLINE_ACCOUNT_KEY); break;
+                case 1: factory = Accounts.ACCOUNT_FACTORY.get(Accounts.YGGDRASIL_ACCOUNT_KEY); break;
+                case 2: factory = Accounts.ACCOUNT_FACTORY.get(Accounts.AUTHLIB_INJECTOR_ACCOUNT_KEY); break;
+                default: throw new Error();
+            }
 
-                return factory.create(new Selector(), username, password, apiRoot, Settings.INSTANCE.getProxy());
+            return factory.create(new Selector(), username, password, apiRoot, Settings.INSTANCE.getProxy());
         }).finalized(Schedulers.javafx(), variables -> {
             Settings.INSTANCE.addAccount(variables.get("create_account"));
-            dialog.close();
-            loadAccounts();
             progressBar.setVisible(false);
+            finalization.run();
         }, exception -> {
             if (exception instanceof NoSelectedCharacterException) {
-                dialog.close();
+                finalization.run();
             } else {
                 lblCreationWarning.setText(accountException(exception));
             }
@@ -199,46 +146,24 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
 
     @FXML
     private void onCreationCancel() {
-        dialog.close();
+        finalization.run();
     }
 
-    public String getTitle() {
-        return title.get();
+    @FXML
+    private void onAddInjecterServer() {
+        finalization.run();
+        Controllers.navigate(Controllers.getServersPage());
     }
 
-    @Override
-    public StringProperty titleProperty() {
-        return title;
+    private void showSelector(Node node) {
+        getChildren().setAll(node);
     }
 
-    public void setTitle(String title) {
-        this.title.set(title);
+    private void closeSelector() {
+        getChildren().setAll(layout);
     }
 
-    public static String accountException(Exception exception) {
-        if (exception instanceof InvalidCredentialsException) {
-            return Main.i18n("account.failed.invalid_credentials");
-        } else if (exception instanceof NoCharacterException) {
-            return Main.i18n("account.failed.no_charactor");
-        } else if (exception instanceof ServerDisconnectException) {
-            return Main.i18n("account.failed.connect_authentication_server");
-        } else if (exception instanceof InvalidTokenException) {
-            return Main.i18n("account.failed.invalid_token");
-        } else if (exception instanceof InvalidPasswordException) {
-            return Main.i18n("account.failed.invalid_password");
-        } else {
-            return exception.getClass() + ": " + exception.getLocalizedMessage();
-        }
-    }
-
-    public static String accountType(Account account) {
-        if (account instanceof OfflineAccount) return Main.i18n("account.methods.offline");
-        else if (account instanceof AuthlibInjectorAccount) return Main.i18n("account.methods.authlib_injector");
-        else if (account instanceof YggdrasilAccount) return Main.i18n("account.methods.yggdrasil");
-        else throw new Error(Main.i18n("account.methods.no_method") + ": " + account);
-    }
-
-    private static class Selector extends BorderPane implements CharacterSelector {
+    private class Selector extends BorderPane implements CharacterSelector {
         private final AdvancedListBox listBox = new AdvancedListBox();
         private final JFXButton cancel = new JFXButton();
 
@@ -248,11 +173,11 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
         {
             setStyle("-fx-padding: 8px;");
 
-            cancel.setText(Main.i18n("button.cancel"));
+            cancel.setText(Launcher.i18n("button.cancel"));
             StackPane.setAlignment(cancel, Pos.BOTTOM_RIGHT);
             cancel.setOnMouseClicked(e -> latch.countDown());
 
-            listBox.startCategory(Main.i18n("account.choose"));
+            listBox.startCategory(Launcher.i18n("account.choose"));
 
             setCenter(listBox);
 
@@ -293,20 +218,43 @@ public final class AccountsPage extends StackPane implements DecoratorPage {
                 listBox.add(accountItem);
             }
 
-            JFXUtilities.runInFX(() -> Controllers.dialog(this));
+            JFXUtilities.runInFX(() -> showSelector(this));
 
             try {
                 latch.await();
 
-                JFXUtilities.runInFX(Controllers::closeDialog);
-
                 if (selectedProfile == null)
                     throw new NoSelectedCharacterException(account);
+
+                JFXUtilities.runInFX(AddAccountPane.this::closeSelector);
 
                 return selectedProfile;
             } catch (InterruptedException ignore) {
                 throw new NoSelectedCharacterException(account);
             }
         }
+    }
+
+    public static String accountException(Exception exception) {
+        if (exception instanceof InvalidCredentialsException) {
+            return Launcher.i18n("account.failed.invalid_credentials");
+        } else if (exception instanceof NoCharacterException) {
+            return Launcher.i18n("account.failed.no_charactor");
+        } else if (exception instanceof ServerDisconnectException) {
+            return Launcher.i18n("account.failed.connect_authentication_server");
+        } else if (exception instanceof InvalidTokenException) {
+            return Launcher.i18n("account.failed.invalid_token");
+        } else if (exception instanceof InvalidPasswordException) {
+            return Launcher.i18n("account.failed.invalid_password");
+        } else {
+            return exception.getClass() + ": " + exception.getLocalizedMessage();
+        }
+    }
+
+    public static String accountType(Account account) {
+        if (account instanceof OfflineAccount) return Launcher.i18n("account.methods.offline");
+        else if (account instanceof AuthlibInjectorAccount) return Launcher.i18n("account.methods.authlib_injector");
+        else if (account instanceof YggdrasilAccount) return Launcher.i18n("account.methods.yggdrasil");
+        else throw new Error(Launcher.i18n("account.methods.no_method") + ": " + account);
     }
 }

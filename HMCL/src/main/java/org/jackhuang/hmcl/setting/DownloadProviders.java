@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.MojangDownloadProvider;
 import org.jackhuang.hmcl.util.Lang;
 
-import java.util.Arrays;
 import java.util.List;
 
 public final class DownloadProviders {

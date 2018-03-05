@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -17,39 +17,45 @@
  */
 package org.jackhuang.hmcl.event;
 
+import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 
+import java.util.Collection;
+import java.util.Collections;
+
 /**
- * This event gets fired when the selected profile changed.
+ * This event gets fired when loading accounts.
  * <br>
  * This event is fired on the {@link org.jackhuang.hmcl.event.EventBus#EVENT_BUS}
+ *
  * @author huangyuhui
  */
-public final class ProfileChangedEvent extends Event {
-    private final Profile profile;
+public class AccountLoadingEvent extends Event {
+
+    private final Collection<Account> accounts;
 
     /**
      * Constructor.
      *
      * @param source {@link org.jackhuang.hmcl.setting.Settings}
-     * @param profile the new profile.
      */
-    public ProfileChangedEvent(Object source, Profile profile) {
+    public AccountLoadingEvent(Object source, Collection<Account> accounts) {
         super(source);
-
-        this.profile = profile;
+        this.accounts = Collections.unmodifiableCollection(accounts);
     }
 
-    public Profile getProfile() {
-        return profile;
+
+    public Collection<Account> getAccounts() {
+        return accounts;
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
                 .append("source", source)
-                .append("profile", profile)
+                .append("accounts", accounts)
                 .toString();
     }
 }
+

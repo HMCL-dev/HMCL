@@ -44,23 +44,20 @@ import java.util.Objects;
  */
 public final class MultiMCModpackInstallTask extends Task {
 
-    private final DefaultDependencyManager dependencyManager;
     private final File zipFile;
     private final MultiMCInstanceConfiguration manifest;
     private final String name;
-    private final File run;
     private final DefaultGameRepository repository;
     private final List<Task> dependencies = new LinkedList<>();
     private final List<Task> dependents = new LinkedList<>();
     
     public MultiMCModpackInstallTask(DefaultDependencyManager dependencyManager, File zipFile, MultiMCInstanceConfiguration manifest, String name) {
-        this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.manifest = manifest;
         this.name = name;
         this.repository = dependencyManager.getGameRepository();
-        this.run = repository.getRunDirectory(name);
 
+        File run = repository.getRunDirectory(name);
         File json = repository.getModpackConfiguration(name);
         if (repository.hasVersion(name) && !json.exists())
             throw new IllegalArgumentException("Version " + name + " already exists.");

@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.event;
 
+import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.VersionNumber;
 
 /**
@@ -42,4 +43,11 @@ public final class OutOfDateEvent extends Event {
         return true;
     }
 
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("source", getSource())
+                .append("version", getVersion())
+                .toString();
+    }
 }

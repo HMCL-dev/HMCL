@@ -17,8 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
@@ -31,6 +30,8 @@ import org.jackhuang.hmcl.auth.yggdrasil.MojangYggdrasilProvider;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
@@ -74,8 +75,8 @@ public final class Accounts {
 
     private static String downloadAuthlibInjector() throws Exception {
         AuthlibInjectorBuildInfo buildInfo = AuthlibInjectorBuildInfo.requestBuildInfo();
-        File jar = new File(Main.HMCL_DIRECTORY, "authlib-injector.jar");
-        File local = new File(Main.HMCL_DIRECTORY, "authlib-injector.txt");
+        File jar = new File(Launcher.HMCL_DIRECTORY, "authlib-injector.jar");
+        File local = new File(Launcher.HMCL_DIRECTORY, "authlib-injector.txt");
         int buildNumber = 0;
         try {
             buildNumber = Integer.parseInt(FileUtils.readText(local));
@@ -88,17 +89,17 @@ public final class Accounts {
         return jar.getAbsolutePath();
     }
 
-    public static String getAuthlibInjectorServerName(String serverIp) {
+    public static String getAuthlibInjectorServerName(String serverIp) throws Exception {
         if (AUTHLIB_INJECTOR_SERVER_NAMES.containsKey(serverIp))
             return AUTHLIB_INJECTOR_SERVER_NAMES.get(serverIp);
         else {
-            try {
-                AuthlibInjectorServerResponse response = Constants.GSON.fromJson(NetworkUtils.doGet(NetworkUtils.toURL(serverIp)), AuthlibInjectorServerResponse.class);
-                AUTHLIB_INJECTOR_SERVER_NAMES.put(serverIp, response.getMeta().getServerName());
-                return response.getMeta().getServerName();
-            } catch (JsonParseException | IOException | NullPointerException e) {
-                return null;
-            }
+            AuthlibInjectorServerResponse response = Constants.GSON.fromJson(NetworkUtils.doGet(NetworkUtils.toURL(serverIp)), AuthlibInjectorServerResponse.class);
+            AUTHLIB_INJECTOR_SERVER_NAMES.put(serverIp, response.getMeta().getServerName());
+            return response.getMeta().getServerName();
         }
+    }
+
+    public static TaskResult<String> getAuthlibInjectorServerNameAsync(AuthlibInjectorAccount account) {
+        return Task.ofResult("serverName", () -> Accounts.getAuthlibInjectorServerName(account.getServerBaseURL()));
     }
 }

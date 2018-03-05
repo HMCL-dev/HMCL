@@ -27,7 +27,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 
 /**
  * @author huangyuhui
@@ -36,10 +36,10 @@ public class CrashWindow extends Stage {
 
     public CrashWindow(String text) {
         Label lblCrash = new Label();
-        if (Main.UPDATE_CHECKER.isOutOfDate())
-            lblCrash.setText(Main.i18n("launcher.crash_out_dated"));
+        if (Launcher.UPDATE_CHECKER.isOutOfDate())
+            lblCrash.setText(Launcher.i18n("launcher.crash_out_dated"));
         else
-            lblCrash.setText(Main.i18n("launcher.crash"));
+            lblCrash.setText(Launcher.i18n("launcher.crash"));
         lblCrash.setWrapText(true);
 
         TextArea textArea = new TextArea();
@@ -47,8 +47,8 @@ public class CrashWindow extends Stage {
         textArea.setEditable(false);
 
         Button btnContact = new Button();
-        btnContact.setText(Main.i18n("launcher.contact"));
-        btnContact.setOnMouseClicked(event -> FXUtils.openLink(Main.CONTACT));
+        btnContact.setText(Launcher.i18n("launcher.contact"));
+        btnContact.setOnMouseClicked(event -> FXUtils.openLink(Launcher.CONTACT));
         HBox box = new HBox();
         box.setStyle("-fx-padding: 8px;");
         box.getChildren().add(btnContact);
@@ -65,7 +65,7 @@ public class CrashWindow extends Stage {
         Scene scene = new Scene(pane, 800, 480);
         setScene(scene);
         getIcons().add(new Image("/assets/img/icon.png"));
-        setTitle(Main.i18n("message.error"));
+        setTitle(Launcher.i18n("message.error"));
 
         setOnCloseRequest(e -> System.exit(1));
     }

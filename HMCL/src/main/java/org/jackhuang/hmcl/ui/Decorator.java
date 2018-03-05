@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXDrawer;
@@ -45,7 +46,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.setting.Theme;
@@ -53,6 +54,7 @@ import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionHandler;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
+import org.jackhuang.hmcl.ui.construct.StackContainerPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogWizardDisplayer;
 import org.jackhuang.hmcl.ui.wizard.*;
 import org.jackhuang.hmcl.util.FileUtils;
@@ -74,7 +76,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     private static final SVGGlyph close = Lang.apply(new SVGGlyph(0, "CLOSE", "M810 274l-238 238 238 238-60 60-238-238-238 238-60-60 238-238-238-238 60-60 238 238 238-238z", Color.WHITE),
             glyph -> { glyph.setPrefSize(12, 12); glyph.setSize(12, 12); });
 
-    private final ObjectProperty<Runnable> onCloseButtonAction = new SimpleObjectProperty<>(Main::stopApplication);
+    private final ObjectProperty<Runnable> onCloseButtonAction;
     private final BooleanProperty customMaximize = new SimpleBooleanProperty(false);
 
     private final Stage primaryStage;
@@ -82,11 +84,13 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     private final boolean max, min;
     private final WizardController wizardController = new WizardController(this);
     private final Queue<Object> cancelQueue = new ConcurrentLinkedQueue<>();
+    private final JFXDialog dialog;
 
     private double xOffset, yOffset, newX, newY, initX, initY;
-    private boolean allowMove, isDragging, dialogShown, maximized;
+    private boolean allowMove, isDragging, maximized;
     private BoundingBox originalBox, maximizedBox;
     private final TransitionHandler animationHandler;
+    private final StackContainerPane dialogPane = new StackContainerPane();
 
     @FXML
     private StackPane contentPlaceHolder;
@@ -119,15 +123,11 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     @FXML
     private JFXHamburger titleBurger;
     @FXML
-    private JFXDialog dialog;
-    @FXML
     private JFXButton btnMin;
     @FXML
     private JFXButton btnMax;
     @FXML
     private JFXButton btnClose;
-    @FXML
-    private HBox updatePane;
     @FXML
     private HBox navLeft;
 
@@ -143,8 +143,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
 
         FXUtils.loadFXML(this, "/assets/fxml/decorator.fxml");
 
-        updatePane.setCursor(Cursor.HAND);
-        updatePane.setOnMouseClicked(event -> Main.UPDATE_CHECKER.checkOutdate());
+        onCloseButtonAction = new SimpleObjectProperty<>(this, "onCloseButtonAction", Launcher::stopApplication);
 
         primaryStage.initStyle(StageStyle.UNDECORATED);
         btnClose.setGraphic(close);
@@ -168,9 +167,21 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
                 btnMax.fire();
         });
 
+        dialog = new JFXDialog() {
+            @Override
+            public void close() {
+                dialogPane.pop();
+                if (dialogPane.getChildren().isEmpty())
+                    Platform.runLater(() -> {
+                        if (dialogPane.getChildren().isEmpty())
+                            super.close();
+                    });
+            }
+        };
+        dialog.setOverlayClose(false);
+        drawerWrapper.getChildren().add(0, dialog);
         dialog.setDialogContainer(drawerWrapper);
-        dialog.setOnDialogClosed(e -> dialogShown = false);
-        dialog.setOnDialogOpened(e -> dialogShown = true);
+        dialog.setContent(dialogPane);
 
         if (!min) buttonsContainer.getChildren().remove(btnMin);
         if (!max) buttonsContainer.getChildren().remove(btnMax);
@@ -474,10 +485,6 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         }
     }
 
-    public void showUpdate() {
-        updatePane.setVisible(true);
-    }
-
     private void showCloseNavButton() {
         navLeft.getChildren().add(closeNavButton);
     }
@@ -538,10 +545,10 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         }
     }
 
-    public JFXDialog showDialog(Region content) {
-        dialog.setContent(content);
-        if (!dialogShown)
+    public JFXDialog showDialog(Node node) {
+        if (dialogPane.isEmpty())
             dialog.show();
+        dialogPane.push(node);
         return dialog;
     }
 

@@ -70,10 +70,10 @@ public final class ZipEngine implements Closeable {
      * modified pathName, null if you dont want this file zipped
      */
     private void putDirectoryImpl(File source, String basePath, BiFunction<String, Boolean, String> pathNameCallback) throws IOException {
-        File[] files;
+        File[] files = null;
         if (source.isDirectory())
             files = source.listFiles();
-        else
+        else if (source.isFile())
             files = new File[] { source };
 
         if (files == null)

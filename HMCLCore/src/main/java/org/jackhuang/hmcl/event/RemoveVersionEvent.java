@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -17,39 +17,43 @@
  */
 package org.jackhuang.hmcl.event;
 
-import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 
 /**
- * This event gets fired when the selected profile changed.
+ * This event gets fired when a minecraft version is being removed.
  * <br>
  * This event is fired on the {@link org.jackhuang.hmcl.event.EventBus#EVENT_BUS}
+ *
  * @author huangyuhui
  */
-public final class ProfileChangedEvent extends Event {
-    private final Profile profile;
+public class RemoveVersionEvent extends Event {
+
+    private final String version;
 
     /**
-     * Constructor.
      *
-     * @param source {@link org.jackhuang.hmcl.setting.Settings}
-     * @param profile the new profile.
+     * @param source {@link org.jackhuang.hmcl.game.GameRepository}
+     * @param version the version id.
      */
-    public ProfileChangedEvent(Object source, Profile profile) {
+    public RemoveVersionEvent(Object source, String version) {
         super(source);
-
-        this.profile = profile;
+        this.version = version;
     }
 
-    public Profile getProfile() {
-        return profile;
+    public String getVersion() {
+        return version;
+    }
+
+    @Override
+    public boolean hasResult() {
+        return true;
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
                 .append("source", source)
-                .append("profile", profile)
+                .append("version", version)
                 .toString();
     }
 }

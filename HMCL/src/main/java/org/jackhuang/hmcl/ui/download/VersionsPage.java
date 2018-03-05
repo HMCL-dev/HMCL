@@ -44,11 +44,9 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class VersionsPage extends StackPane implements WizardPage, Refreshable {
-    private final WizardController controller;
     private final String gameVersion;
     private final DownloadProvider downloadProvider;
     private final String libraryId;
-    private final Runnable callback;
     private final String title;
 
     @FXML
@@ -73,12 +71,10 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
     private TaskExecutor executor;
 
     public VersionsPage(WizardController controller, String title, String gameVersion, DownloadProvider downloadProvider, String libraryId, Runnable callback) {
-        this.controller = controller;
         this.title = title;
         this.gameVersion = gameVersion;
         this.downloadProvider = downloadProvider;
         this.libraryId = libraryId;
-        this.callback = callback;
         this.versionList = downloadProvider.getVersionListById(libraryId);
 
         FXUtils.loadFXML(this, "/assets/fxml/download/versions.fxml");
@@ -93,10 +89,10 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
         chkSnapshot.selectedProperty().addListener(listener);
         chkOld.selectedProperty().addListener(listener);
 
-        list.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
-            if (newValue == null)
+        list.setOnMouseClicked(e -> {
+            if (list.getSelectionModel().getSelectedIndex() < 0)
                 return;
-            controller.getSettings().put(libraryId, newValue.getRemoteVersion());
+            controller.getSettings().put(libraryId, list.getSelectionModel().getSelectedItem().getRemoteVersion());
             callback.run();
         });
         refresh();

@@ -23,7 +23,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Settings;
@@ -54,7 +54,7 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
         String profileDisplayName = Optional.ofNullable(profile).map(Profiles::getProfileDisplayName).orElse("");
 
         title = new SimpleStringProperty(this, "title",
-                profile == null ? Main.i18n("profile.new") : Main.i18n("profile") + " - " + profileDisplayName);
+                profile == null ? Launcher.i18n("profile.new") : Launcher.i18n("profile") + " - " + profileDisplayName);
         location = new SimpleStringProperty(this, "location",
                 Optional.ofNullable(profile).map(Profile::getGameDir).map(File::getAbsolutePath).orElse(""));
 

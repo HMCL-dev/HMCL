@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.download.game.*;
-import org.jackhuang.hmcl.game.SimpleVersionProvider;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.ParallelTask;
 import org.jackhuang.hmcl.task.Task;

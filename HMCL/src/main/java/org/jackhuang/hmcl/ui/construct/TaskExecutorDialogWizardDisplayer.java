@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import javafx.beans.property.StringProperty;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
@@ -38,7 +38,7 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
             Controllers.navigate(null);
         });
 
-        pane.setTitle(Main.i18n("message.doing"));
+        pane.setTitle(Launcher.i18n("message.doing"));
         pane.setProgress(Double.MAX_VALUE);
         if (settings.containsKey("title")) {
             Object title = settings.get("title");
@@ -64,7 +64,7 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
                         if (settings.containsKey("success_message") && settings.get("success_message") instanceof String)
                             JFXUtilities.runInFX(() -> Controllers.dialog((String) settings.get("success_message"), null, MessageBox.FINE_MESSAGE, () -> Controllers.navigate(null)));
                         else if (!settings.containsKey("forbid_success_message"))
-                            JFXUtilities.runInFX(() -> Controllers.dialog(Main.i18n("message.success"), null, MessageBox.FINE_MESSAGE, () -> Controllers.navigate(null)));
+                            JFXUtilities.runInFX(() -> Controllers.dialog(Launcher.i18n("message.success"), null, MessageBox.FINE_MESSAGE, () -> Controllers.navigate(null)));
                     } else {
                         if (executor.getLastException() == null)
                             return;
@@ -72,7 +72,7 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
                         if (settings.containsKey("failure_message") && settings.get("failure_message") instanceof String)
                             JFXUtilities.runInFX(() -> Controllers.dialog(appendix, (String) settings.get("failure_message"), MessageBox.ERROR_MESSAGE, () -> Controllers.navigate(null)));
                         else if (!settings.containsKey("forbid_failure_message"))
-                            JFXUtilities.runInFX(() -> Controllers.dialog(appendix, Main.i18n("wizard.failed"), MessageBox.ERROR_MESSAGE, () -> Controllers.navigate(null)));
+                            JFXUtilities.runInFX(() -> Controllers.dialog(appendix, Launcher.i18n("wizard.failed"), MessageBox.ERROR_MESSAGE, () -> Controllers.navigate(null)));
                     }
                 }
             });

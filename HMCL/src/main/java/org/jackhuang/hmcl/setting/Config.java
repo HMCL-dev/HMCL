@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.util.JavaVersion;
 
 import java.util.*;
@@ -35,7 +35,7 @@ final class Config {
     private String backgroundImage = null;
 
     @SerializedName("commonpath")
-    private String commonDirectory = Main.MINECRAFT_DIRECTORY.getAbsolutePath();
+    private String commonDirectory = Launcher.MINECRAFT_DIRECTORY.getAbsolutePath();
 
     @SerializedName("hasProxy")
     private boolean hasProxy = false;

@@ -31,7 +31,7 @@
         </left>
         <right>
             <HBox alignment="CENTER" pickOnBounds="false">
-                <JFXButton fx:id="btnSettings" maxWidth="40" minWidth="40" prefWidth="40" styleClass="toggle-icon4" onMouseClicked="#onSettings">
+                <JFXButton fx:id="btnSettings" maxWidth="40" minWidth="40" prefWidth="40" styleClass="toggle-icon4">
                     <graphic>
                         <fx:include source="/assets/svg/gear.fxml" />
                     </graphic>

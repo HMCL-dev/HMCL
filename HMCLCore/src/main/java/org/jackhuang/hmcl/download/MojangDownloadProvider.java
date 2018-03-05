@@ -28,7 +28,7 @@ import org.jackhuang.hmcl.download.optifine.OptiFineVersionList;
  */
 public class MojangDownloadProvider implements DownloadProvider {
 
-    private boolean isChina;
+    private final boolean isChina;
 
     public MojangDownloadProvider(boolean isChina) {
         this.isChina = isChina;

@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
- * 
+ * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -15,24 +15,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.game;
+package org.jackhuang.hmcl.ui.construct;
 
-import org.jackhuang.hmcl.Launcher;
+import javafx.scene.Node;
+import javafx.scene.layout.StackPane;
 
-public enum LoadingState {
-    DEPENDENCIES("launch.state.dependencies"),
-    MODS("launch.state.modpack"),
-    LOGGING_IN("launch.state.logging_in"),
-    LAUNCHING("launch.state.waiting_launching"),
-    DONE("launch.state.done");
+import java.util.Stack;
 
-    private final String key;
+public class StackContainerPane extends StackPane {
+    private final Stack<Node> stack = new Stack<>();
 
-    LoadingState(String key) {
-        this.key = key;
+    public void push(Node node) {
+        if (node.getProperties().containsKey("controllers"))
+            stack.push(node);
+        getChildren().setAll(node);
     }
 
-    public String getLocalizedMessage() {
-        return Launcher.i18n(key);
+    public void pop() {
+        stack.pop();
+        if (stack.isEmpty())
+            getChildren().setAll();
+        else
+            getChildren().setAll(stack.peek());
+    }
+
+    public boolean isEmpty() {
+        return stack.isEmpty();
     }
 }

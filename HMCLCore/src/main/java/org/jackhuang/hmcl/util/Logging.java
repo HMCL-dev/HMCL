@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.util;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.*;
@@ -32,9 +31,13 @@ import java.util.logging.*;
 public final class Logging {
 
     public static final Logger LOG;
+    private static final ByteArrayOutputStream OUTPUT_STREAM = new ByteArrayOutputStream();
 
     static {
         LOG = Logger.getLogger("HMCL");
+    }
+
+    public static void start() {
         LOG.setLevel(Level.FINER);
         LOG.setUseParentHandlers(false);
 
@@ -51,6 +54,25 @@ public final class Logging {
         consoleHandler.setLevel(Level.FINER);
         consoleHandler.setFormatter(DefaultFormatter.INSTANCE);
         LOG.addHandler(consoleHandler);
+
+        StreamHandler streamHandler = new StreamHandler(OUTPUT_STREAM, DefaultFormatter.INSTANCE) {
+            @Override
+            public synchronized void publish(LogRecord record) {
+                super.publish(record);
+                flush();
+            }
+        };
+        streamHandler.setLevel(Level.FINEST);
+        LOG.addHandler(streamHandler);
+    }
+
+    public static void stop() {
+        for (Handler handler : LOG.getHandlers())
+            LOG.removeHandler(handler);
+    }
+
+    public static String getLogs() {
+        return OUTPUT_STREAM.toString();
     }
 
     static final class DefaultFormatter extends Formatter {
@@ -63,7 +85,7 @@ public final class Logging {
             String date = format.format(new Date(record.getMillis()));
             String log = String.format("[%s] [%s.%s/%s] %s%n",
                     date, record.getSourceClassName(), record.getSourceMethodName(),
-                    record.getLevel().getName(), MessageFormat.format(record.getMessage(), record.getParameters())
+                    record.getLevel().getName(), record.getMessage()
             );
             ByteArrayOutputStream builder = new ByteArrayOutputStream();
             if (record.getThrown() != null)

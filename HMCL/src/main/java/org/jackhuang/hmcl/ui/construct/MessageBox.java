@@ -17,10 +17,12 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import com.jfoenix.concurrency.JFXUtilities;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextInputDialog;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 import javax.swing.*;
 import java.util.Optional;
@@ -29,7 +31,7 @@ public final class MessageBox {
     private MessageBox() {
     }
 
-    private static final String TITLE = Main.i18n("message.info");
+    private static final String TITLE = Launcher.i18n("message.info");
 
     /**
      * User Operation: Yes
@@ -123,30 +125,32 @@ public final class MessageBox {
     }
 
     public static int confirm(String message, String title, int option) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(title);
-        alert.setContentText(message);
-        switch (option) {
-            case YES_NO_OPTION:
-                alert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO);
-                break;
-            case YES_NO_CANCEL_OPTION:
-                alert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
-                break;
-            case OK_CANCEL_OPTION:
-                alert.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
-                break;
-            default:
-                throw new IllegalArgumentException("Unrecognized message box option " + option);
-        }
-        Optional<ButtonType> buttonType = alert.showAndWait();
-        if (!buttonType.isPresent()) return CLOSED_OPTION;
-        else if (buttonType.get() == ButtonType.OK) return OK_OPTION;
-        else if (buttonType.get() == ButtonType.YES) return YES_OPTION;
-        else if (buttonType.get() == ButtonType.NO) return NO_OPTION;
-        else if (buttonType.get() == ButtonType.CANCEL) return CANCEL_OPTION;
-        else throw new IllegalStateException("Unrecognized button type:" + buttonType.get());
+        return FXUtils.runInUIThread(() -> {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle(title);
+            alert.setHeaderText(title);
+            alert.setContentText(message);
+            switch (option) {
+                case YES_NO_OPTION:
+                    alert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO);
+                    break;
+                case YES_NO_CANCEL_OPTION:
+                    alert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
+                    break;
+                case OK_CANCEL_OPTION:
+                    alert.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unrecognized message box option " + option);
+            }
+            Optional<ButtonType> buttonType = alert.showAndWait();
+            if (!buttonType.isPresent()) return CLOSED_OPTION;
+            else if (buttonType.get() == ButtonType.OK) return OK_OPTION;
+            else if (buttonType.get() == ButtonType.YES) return YES_OPTION;
+            else if (buttonType.get() == ButtonType.NO) return NO_OPTION;
+            else if (buttonType.get() == ButtonType.CANCEL) return CANCEL_OPTION;
+            else throw new IllegalStateException("Unexpected button type:" + buttonType.get());
+        });
     }
 
     public static Optional<String> input(String message) {

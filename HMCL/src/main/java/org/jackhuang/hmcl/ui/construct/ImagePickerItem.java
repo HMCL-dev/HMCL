@@ -15,7 +15,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -41,7 +41,7 @@ public final class ImagePickerItem extends BorderPane {
         selectButton.onMouseClickedProperty().bind(onSelectButtonClicked);
         selectButton.getStyleClass().add("toggle-icon4");
 
-        FXUtils.installTooltip(selectButton, Main.i18n("button.edit"));
+        FXUtils.installTooltip(selectButton, Launcher.i18n("button.edit"));
 
         HBox hBox = new HBox();
         hBox.getChildren().setAll(imageView, selectButton);

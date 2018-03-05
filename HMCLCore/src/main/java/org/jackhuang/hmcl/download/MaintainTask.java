@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.download;
 
-import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.TaskResult;

@@ -119,7 +119,7 @@ public class FileDownloadTask extends Task {
     @Override
     public void execute() throws Exception {
         URL currentURL = url;
-        Logging.LOG.log(Level.FINER, "Downloading {0} to {1}", new Object[] { currentURL, file });
+        Logging.LOG.log(Level.FINER, "Downloading " + currentURL + " to " + file);
         Exception exception = null;
 
         for (int repeat = 0; repeat < retry; repeat++) {

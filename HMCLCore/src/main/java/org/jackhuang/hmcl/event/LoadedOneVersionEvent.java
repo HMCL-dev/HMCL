@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.event;
 
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.util.ToStringBuilder;
 
 /**
  * This event gets fired when a minecraft version has been loaded.
@@ -47,5 +48,13 @@ public final class LoadedOneVersionEvent extends Event {
     @Override
     public boolean hasResult() {
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("source", source)
+                .append("version", version)
+                .toString();
     }
 }

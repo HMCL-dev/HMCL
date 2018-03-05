@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.event;
 
+import org.jackhuang.hmcl.util.ToStringBuilder;
+
 import java.util.Objects;
 
 /**
@@ -28,13 +30,13 @@ public class Event {
     /**
      * The object on which the Event initially occurred.
      */
-    protected transient Object  source;
+    protected final transient Object source;
 
     /**
      * Constructs a prototypical Event.
      *
      * @param source The object on which the Event initially occurred.
-     * @throws  NullPointerException  if source is null.
+     * @throws NullPointerException if source is null.
      */
     public Event(Object source) {
         Objects.requireNonNull(source);
@@ -54,10 +56,10 @@ public class Event {
     /**
      * Returns a String representation of this Event.
      *
-     * @return  A a String representation of this Event.
+     * @return A a String representation of this Event.
      */
     public String toString() {
-        return getClass().getName() + "[source=" + source + "]";
+        return new ToStringBuilder(this).append("source", source).toString();
     }
 
     private boolean canceled;
@@ -72,7 +74,6 @@ public class Event {
     }
 
     /**
-     *
      * @param canceled new value
      * @throws UnsupportedOperationException if trying to cancel a non-cancelable event.
      */

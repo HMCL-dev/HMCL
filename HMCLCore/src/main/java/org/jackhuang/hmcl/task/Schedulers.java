@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.Logging;
 
 import java.util.concurrent.*;
 
@@ -35,9 +36,7 @@ public final class Schedulers {
     private static synchronized ExecutorService getCachedExecutorService() {
         if (CACHED_EXECUTOR == null)
             CACHED_EXECUTOR = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
-                    60, TimeUnit.SECONDS, new SynchronousQueue<>(), runnable -> {
-                return Executors.defaultThreadFactory().newThread(runnable);
-            });
+                    60, TimeUnit.SECONDS, new SynchronousQueue<>(), Executors.defaultThreadFactory());
 
         return CACHED_EXECUTOR;
     }
@@ -117,6 +116,8 @@ public final class Schedulers {
     static final Scheduler NONE = new SchedulerImpl(Constants.emptyConsumer());
 
     public static synchronized void shutdown() {
+        Logging.LOG.info("Shutting down executor services.");
+
         if (CACHED_EXECUTOR != null)
             CACHED_EXECUTOR.shutdown();
 

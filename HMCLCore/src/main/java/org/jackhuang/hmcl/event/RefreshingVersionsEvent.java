@@ -35,4 +35,8 @@ public final class RefreshingVersionsEvent extends Event {
         super(source);
     }
 
+    @Override
+    public boolean hasResult() {
+        return true;
+    }
 }

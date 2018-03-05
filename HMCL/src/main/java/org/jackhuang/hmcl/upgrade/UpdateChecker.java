@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.upgrade;
 
 import com.google.gson.JsonSyntaxException;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.OutOfDateEvent;
@@ -67,18 +67,18 @@ public final class UpdateChecker {
         return new TaskResult<VersionNumber>() {
             @Override
             public void execute() throws Exception {
-                if (Main.VERSION.contains("@"))
+                if (Launcher.VERSION.contains("@"))
                     return;
 
                 if (value == null) {
-                    versionString = NetworkUtils.doGet(NetworkUtils.toURL("https://huangyuhui.duapp.com/hmcl/update.php?version=" + Main.VERSION));
+                    versionString = NetworkUtils.doGet(NetworkUtils.toURL("https://huangyuhui.duapp.com/hmcl/update.php?version=" + Launcher.VERSION));
                     value = VersionNumber.asVersion(versionString);
                 }
 
                 if (value == null) {
                     Logging.LOG.warning("Unable to check update...");
                     if (showMessage)
-                        MessageBox.show(Main.i18n("update.failed"));
+                        MessageBox.show(Launcher.i18n("update.failed"));
                 } else if (base.compareTo(value) < 0)
                     outOfDate = true;
                 if (outOfDate)
@@ -115,7 +115,7 @@ public final class UpdateChecker {
             public void execute() {
                 if (download_link == null)
                     try {
-                        download_link = Constants.GSON.<Map<String, String>>fromJson(NetworkUtils.doGet(NetworkUtils.toURL("https://huangyuhui.duapp.com/update_link.php?type=hmcl")), Map.class);
+                        download_link = Constants.GSON.<Map<String, String>>fromJson(NetworkUtils.doGet(NetworkUtils.toURL("https://huangyuhui.duapp.com/hmcl/update_link.php")), Map.class);
                     } catch (JsonSyntaxException | IOException e) {
                         Logging.LOG.log(Level.SEVERE, "Failed to get update link.", e);
                     }
@@ -134,7 +134,7 @@ public final class UpdateChecker {
     public void checkOutdate() {
         if (outOfDate)
             if (EventBus.EVENT_BUS.fireEvent(new OutOfDateEvent(this, getNewVersion())) != Event.Result.DENY) {
-                Main.UPGRADER.download(this, getNewVersion());
+                Launcher.UPGRADER.download(this, getNewVersion());
             }
     }
 }

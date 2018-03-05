@@ -47,7 +47,7 @@ public final class ForgeInstallTask extends TaskResult<Version> {
     private final DefaultDependencyManager dependencyManager;
     private final Version version;
     private final File installer = new File("forge-installer.jar").getAbsoluteFile();
-    private ForgeRemoteVersion remote;
+    private final ForgeRemoteVersion remote;
     private final List<Task> dependents = new LinkedList<>();
     private final List<Task> dependencies = new LinkedList<>();
 

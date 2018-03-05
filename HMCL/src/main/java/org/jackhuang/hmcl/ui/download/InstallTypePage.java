@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.ui.download;
 import com.jfoenix.controls.JFXListView;
 import javafx.fxml.FXML;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
@@ -28,12 +28,10 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import java.util.Map;
 
 public final class InstallTypePage extends StackPane implements WizardPage {
-    private final WizardController controller;
 
     @FXML private JFXListView<Object> list;
 
     public InstallTypePage(WizardController controller) {
-        this.controller = controller;
 
         FXUtils.loadFXML(this, "/assets/fxml/download/dltype.fxml");
         list.setOnMouseClicked(e -> {
@@ -51,7 +49,7 @@ public final class InstallTypePage extends StackPane implements WizardPage {
 
     @Override
     public String getTitle() {
-        return Main.i18n("install.select");
+        return Launcher.i18n("install.select");
     }
 
     public static final String INSTALL_TYPE = "INSTALL_TYPE";

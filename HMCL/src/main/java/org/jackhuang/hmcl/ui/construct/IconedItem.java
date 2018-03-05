@@ -21,26 +21,32 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Paint;
 
 public class IconedItem extends RipplerContainer {
-    private final Node icon;
-    private final String text;
 
     public IconedItem(Node icon, String text) {
         super(createHBox(icon, text));
-        this.icon = icon;
-        this.text = text;
     }
 
     private static HBox createHBox(Node icon, String text) {
         HBox hBox = new HBox();
         icon.setMouseTransparent(true);
         Label textLabel = new Label(text);
+        textLabel.setId("label");
         textLabel.setAlignment(Pos.CENTER);
         textLabel.setMouseTransparent(true);
         hBox.getChildren().addAll(icon, textLabel);
         hBox.setStyle("-fx-padding: 10 16 10 16; -fx-spacing: 10; -fx-font-size: 14;");
         hBox.setAlignment(Pos.CENTER_LEFT);
         return hBox;
+    }
+
+    public void setText(String text) {
+        ((Label) lookup("#label")).setText(text);
+    }
+
+    public void setTextFill(Paint paint) {
+        ((Label) lookup("#label")).setTextFill(paint);
     }
 }

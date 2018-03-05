@@ -23,6 +23,7 @@ import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.property.Property;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -41,14 +42,17 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.ReflectionHelper.call;
@@ -184,7 +188,7 @@ public final class FXUtils {
     }
 
     public static void loadFXML(Node node, String absolutePath) {
-        FXMLLoader loader = new FXMLLoader(node.getClass().getResource(absolutePath), Main.RESOURCE_BUNDLE);
+        FXMLLoader loader = new FXMLLoader(node.getClass().getResource(absolutePath), Launcher.RESOURCE_BUNDLE);
         loader.setRoot(node);
         loader.setController(node);
         Lang.invoke((ExceptionalSupplier<Object, IOException>) loader::load);
@@ -366,6 +370,31 @@ public final class FXUtils {
             }));
             timeline.setCycleCount(Animation.INDEFINITE);
         });
+    }
+
+    public static <T> T runInUIThread(Supplier<T> supplier) {
+        if (javafx.application.Platform.isFxApplicationThread()) {
+            return supplier.get();
+        } else {
+            CountDownLatch doneLatch = new CountDownLatch(1);
+            AtomicReference<T> reference = new AtomicReference<>();
+            Platform.runLater(() -> {
+                try {
+                    reference.set(supplier.get());
+                } finally {
+                    doneLatch.countDown();
+                }
+
+            });
+
+            try {
+                doneLatch.await();
+            } catch (InterruptedException var3) {
+                Thread.currentThread().interrupt();
+            }
+
+            return reference.get();
+        }
     }
 
     public static final Image DEFAULT_ICON = new Image("/assets/img/icon.png");

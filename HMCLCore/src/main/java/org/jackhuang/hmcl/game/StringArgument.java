@@ -45,7 +45,7 @@ public final class StringArgument implements Argument {
     @Override
     public List<String> toString(Map<String, String> keys, Map<String, Boolean> features) {
         String res = argument;
-        Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
+        Pattern pattern = Pattern.compile("\\$\\{(.*?)}");
         Matcher m = pattern.matcher(argument);
         while (m.find()) {
             String entry = m.group();

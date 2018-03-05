@@ -38,7 +38,7 @@ public final class OptiFineInstallTask extends TaskResult<Version> {
 
     private final DefaultDependencyManager dependencyManager;
     private final Version version;
-    private OptiFineRemoteVersion remote;
+    private final OptiFineRemoteVersion remote;
     private final List<Task> dependents = new LinkedList<>();
     private final List<Task> dependencies = new LinkedList<>();
 

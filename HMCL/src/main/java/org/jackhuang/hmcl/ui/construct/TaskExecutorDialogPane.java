@@ -57,7 +57,9 @@ public class TaskExecutorDialogPane extends StackPane {
 
     public void setExecutor(TaskExecutor executor) {
         this.executor = executor;
-        taskListPane.setExecutor(executor);
+
+        if (executor != null)
+            taskListPane.setExecutor(executor);
     }
 
     public StringProperty titleProperty() {

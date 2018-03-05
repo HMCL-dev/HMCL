@@ -1,75 +1,82 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import com.jfoenix.controls.*?>
-<?import com.jfoenix.validation.RequiredFieldValidator?>
+<?import com.jfoenix.controls.JFXButton?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import org.jackhuang.hmcl.ui.FXUtils?>
-<fx:root xmlns="http://javafx.com/javafx"
-         xmlns:fx="http://javafx.com/fxml"
+<?import org.jackhuang.hmcl.ui.construct.ComponentList?>
+<?import com.jfoenix.controls.JFXProgressBar?>
+<fx:root xmlns:fx="http://javafx.com/fxml"
+         xmlns="http://javafx.com/javafx"
          type="StackPane">
-    <ScrollPane fitToHeight="true" fitToWidth="true" fx:id="scrollPane" hbarPolicy="NEVER">
-        <JFXMasonryPane fx:id="masonryPane" HSpacing="3" VSpacing="3" cellWidth="182" cellHeight="160">
-        </JFXMasonryPane>
-    </ScrollPane>
-    <AnchorPane pickOnBounds="false">
-        <JFXButton onMouseClicked="#addNewAccount" AnchorPane.bottomAnchor="16" AnchorPane.rightAnchor="16" buttonType="RAISED" prefWidth="40" prefHeight="40" styleClass="jfx-button-raised-round">
-            <graphic>
-                <fx:include source="/assets/svg/plus.fxml" />
-            </graphic>
-        </JFXButton>
-    </AnchorPane>
+    <VBox fx:id="rootPane">
 
-    <JFXDialog fx:id="dialog">
-        <StackPane>
-            <JFXDialogLayout>
-                <heading>
-                    <Label text="%account.create" />
-                </heading>
-                <body>
-                    <GridPane vgap="15" hgap="15" style="-fx-padding: 15 0 0 0;">
-                        <columnConstraints>
-                            <ColumnConstraints maxWidth="70" minWidth="70"/>
-                            <ColumnConstraints />
-                            <ColumnConstraints minWidth="140" />
-                        </columnConstraints>
+        <ComponentList fx:id="componentList" depth="1">
 
-                        <Label text="%account.methods" GridPane.halignment="RIGHT" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+            <BorderPane> <!-- Name -->
+                <left>
+                    <VBox>
+                        <Label text="%account.methods" BorderPane.alignment="CENTER_LEFT"/>
+                    </VBox>
+                </left>
+                <right>
+                    <VBox>
+                        <Label fx:id="lblType" BorderPane.alignment="CENTER_LEFT"/>
+                    </VBox>
+                </right>
+            </BorderPane>
 
-                        <JFXComboBox fx:id="cboType" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="2" />
+            <BorderPane> <!-- Name -->
+                <left>
+                    <VBox>
+                        <Label text="%account.character" BorderPane.alignment="CENTER_LEFT"/>
+                    </VBox>
+                </left>
+                <right>
+                    <VBox>
+                        <Label fx:id="lblCharacter" BorderPane.alignment="CENTER_LEFT"/>
+                    </VBox>
+                </right>
+            </BorderPane>
 
-                        <Label fx:id="lblAddInjectorServer" text="%account.injector.server" GridPane.halignment="RIGHT" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+            <BorderPane fx:id="paneEmail"> <!-- Name -->
+                <left>
+                    <VBox>
+                        <Label text="%account.email" BorderPane.alignment="CENTER_LEFT"/>
+                    </VBox>
+                </left>
+                <right>
+                    <VBox>
+                        <Label fx:id="lblEmail" BorderPane.alignment="CENTER_LEFT"/>
+                    </VBox>
+                </right>
+            </BorderPane>
 
-                        <JFXComboBox fx:id="cboServers" maxHeight="25" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <BorderPane fx:id="paneServer"> <!-- Name -->
+                <left>
+                    <VBox>
+                        <Label text="%account.injector.server" BorderPane.alignment="CENTER_LEFT"/>
+                    </VBox>
+                </left>
+                <right>
+                    <VBox>
+                        <Label fx:id="lblServer" BorderPane.alignment="CENTER_LEFT"/>
+                    </VBox>
+                </right>
+            </BorderPane>
+        </ComponentList>
 
-                        <Hyperlink fx:id="linkAddInjectorServer" text="%account.injector.add" onMouseClicked="#onAddInjecterServer" GridPane.columnIndex="2" GridPane.rowIndex="1" />
-
-                        <Label text="%account.username" GridPane.rowIndex="2" GridPane.columnIndex="0" />
-
-                        <JFXTextField fx:id="txtUsername" GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.columnSpan="2" FXUtils.validateWhileTextChanged="true">
-                            <validators>
-                                <RequiredFieldValidator message="%input.not_empty">
-                                </RequiredFieldValidator>
-                            </validators>
-                        </JFXTextField>
-
-                        <Label fx:id="lblPassword" text="%account.password" GridPane.rowIndex="3" GridPane.columnIndex="0" />
-
-                        <JFXPasswordField fx:id="txtPassword" GridPane.columnIndex="1" GridPane.rowIndex="3" GridPane.columnSpan="2" FXUtils.validateWhileTextChanged="true">
-                            <validators>
-                                <RequiredFieldValidator message="%input.not_empty">
-                                </RequiredFieldValidator>
-                            </validators>
-                        </JFXPasswordField>
-                    </GridPane>
-                </body>
-                <actions>
-                    <Label fx:id="lblCreationWarning" />
-                    <JFXButton onMouseClicked="#onCreationAccept" text="%button.ok" styleClass="dialog-accept" />
-                    <JFXButton onMouseClicked="#onCreationCancel" text="%button.cancel" styleClass="dialog-cancel" />
-                </actions>
-            </JFXDialogLayout>
-            <JFXProgressBar fx:id="progressBar" visible="false" StackPane.alignment="TOP_CENTER" />
-        </StackPane>
-    </JFXDialog>
+    </VBox>
+    <BorderPane pickOnBounds="false" style="-fx-padding: 4;">
+        <left>
+            <JFXButton BorderPane.alignment="BOTTOM_LEFT" fx:id="btnDelete" onMouseClicked="#onDelete"
+                       styleClass="toggle-icon4" maxWidth="30" maxHeight="30" minWidth="30" minHeight="30"
+                       prefWidth="30" prefHeight="30"/>
+        </left>
+        <right>
+            <JFXButton BorderPane.alignment="BOTTOM_RIGHT" fx:id="btnRefresh" onMouseClicked="#onRefresh"
+                       styleClass="toggle-icon4" maxWidth="30" maxHeight="30" minWidth="30" minHeight="30"
+                       prefWidth="30" prefHeight="30"/>
+        </right>
+    </BorderPane>
+    <JFXProgressBar fx:id="progressBar" StackPane.alignment="TOP_CENTER" visible="false" />
 </fx:root>

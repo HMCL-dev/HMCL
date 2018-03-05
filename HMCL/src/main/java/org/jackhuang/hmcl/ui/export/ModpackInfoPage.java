@@ -26,7 +26,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -72,8 +72,8 @@ public final class ModpackInfoPage extends StackPane implements WizardPage {
     @FXML
     private void onNext() {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(Main.i18n("modpack.wizard.step.initialization.save"));
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(Main.i18n("modpack"), "*.zip"));
+        fileChooser.setTitle(Launcher.i18n("modpack.wizard.step.initialization.save"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(Launcher.i18n("modpack"), "*.zip"));
         File file = fileChooser.showSaveDialog(Controllers.getStage());
         if (file == null) {
             Controllers.navigate(null);
@@ -100,7 +100,7 @@ public final class ModpackInfoPage extends StackPane implements WizardPage {
 
     @Override
     public String getTitle() {
-        return Main.i18n("modpack.wizard.step.1.title");
+        return Launcher.i18n("modpack.wizard.step.1.title");
     }
 
     public static final String MODPACK_NAME = "modpack.name";

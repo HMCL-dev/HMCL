@@ -17,16 +17,16 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXSpinner;
 import com.jfoenix.controls.JFXTabPane;
-import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.mod.ModInfo;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -93,7 +93,7 @@ public final class ModController {
         this.versionId = versionId;
         Task.of(variables -> {
             synchronized (ModController.this) {
-                Platform.runLater(() -> {
+                JFXUtilities.runInFX(() -> {
                     rootPane.getChildren().remove(contentPane);
                     spinner.setVisible(true);
                 });
@@ -121,25 +121,24 @@ public final class ModController {
                     list.add(item);
                 }
 
-                Platform.runLater(() -> {
-                    rootPane.getChildren().add(contentPane);
-                    spinner.setVisible(false);
-                });
                 variables.set("list", list);
             }
-        }).finalized(Schedulers.javafx(), variables -> {
-            FXUtils.onWeakChangeAndOperate(parentTab.getSelectionModel().selectedItemProperty(), newValue -> {
-                if (newValue != null && newValue.getUserData() == ModController.this)
-                    modPane.getChildren().setAll(variables.<List<ModItem>>get("list"));
-            });
-        }, null).start();
+        }).finalized(Schedulers.javafx(), (variables, isDependentsSucceeded) -> {
+            rootPane.getChildren().add(contentPane);
+            spinner.setVisible(false);
+            if (isDependentsSucceeded)
+                FXUtils.onWeakChangeAndOperate(parentTab.getSelectionModel().selectedItemProperty(), newValue -> {
+                    if (newValue != null && newValue.getUserData() == ModController.this)
+                        modPane.getChildren().setAll(variables.<List<ModItem>>get("list"));
+                });
+        }).start();
     }
 
     @FXML
     private void onAdd() {
         FileChooser chooser = new FileChooser();
-        chooser.setTitle(Main.i18n("mods.choose_mod"));
-        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(Main.i18n("extension.mod"), "*.jar", "*.zip", "*.litemod"));
+        chooser.setTitle(Launcher.i18n("mods.choose_mod"));
+        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(Launcher.i18n("extension.mod"), "*.jar", "*.zip", "*.litemod"));
         List<File> res = chooser.showOpenMultipleDialog(Controllers.getStage());
 
         // It's guaranteed that succeeded and failed are thread safe here.
@@ -161,10 +160,10 @@ public final class ModController {
         }).with(Task.of(Schedulers.javafx(), variables -> {
             List<String> prompt = new LinkedList<>();
             if (!succeeded.isEmpty())
-                prompt.add(Main.i18n("mods.add.success", String.join(", ", succeeded)));
+                prompt.add(Launcher.i18n("mods.add.success", String.join(", ", succeeded)));
             if (!failed.isEmpty())
-                prompt.add(Main.i18n("mods.add.failed", String.join(", ", failed)));
-            Controllers.dialog(String.join("\n", prompt), Main.i18n("mods.add"));
+                prompt.add(Launcher.i18n("mods.add.failed", String.join(", ", failed)));
+            Controllers.dialog(String.join("\n", prompt), Launcher.i18n("mods.add"));
             loadMods(modManager, versionId);
         })).start();
     }
