@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.Logging;
 
 import java.util.concurrent.*;
 
@@ -115,6 +116,8 @@ public final class Schedulers {
     static final Scheduler NONE = new SchedulerImpl(Constants.emptyConsumer());
 
     public static synchronized void shutdown() {
+        Logging.LOG.info("Shutting down executor services.");
+
         if (CACHED_EXECUTOR != null)
             CACHED_EXECUTOR.shutdown();
 

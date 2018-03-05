@@ -82,25 +82,28 @@ public final class Launcher extends Application {
     }
 
     public static void stopApplication() {
-        JFXUtilities.runInFX(() -> {
-            stopWithoutPlatform();
-            Platform.exit();
-        });
-    }
-
-    public static void stopWithoutPlatform() {
-        Logging.LOG.info("Stopping application without JavaFX Toolkit");
+        Logging.LOG.info("Stopping application.\n" + StringUtils.getStackTrace(Thread.currentThread().getStackTrace()));
 
         JFXUtilities.runInFX(() -> {
             if (Controllers.getStage() == null)
                 return;
             Controllers.getStage().close();
-
-            Logging.LOG.info("Shutting down executor services.");
             Schedulers.shutdown();
-
             Controllers.shutdown();
+            Platform.exit();
+            Lang.executeDelayed(OperatingSystem::forceGC, TimeUnit.SECONDS, 5, true);
+        });
+    }
 
+    public static void stopWithoutPlatform() {
+        Logging.LOG.info("Stopping application without JavaFX Toolkit.\n" + StringUtils.getStackTrace(Thread.currentThread().getStackTrace()));
+
+        JFXUtilities.runInFX(() -> {
+            if (Controllers.getStage() == null)
+                return;
+            Controllers.getStage().close();
+            Schedulers.shutdown();
+            Controllers.shutdown();
             Lang.executeDelayed(OperatingSystem::forceGC, TimeUnit.SECONDS, 5, true);
         });
     }
