@@ -150,6 +150,7 @@ public final class LeftPaneController {
             item.setOnSettingsButtonClicked(e -> {
                 AccountPage accountPage = new AccountPage(account);
                 JFXPopup popup = new JFXPopup(accountPage);
+                accountPage.setOnDelete(popup::hide);
                 popup.show((Node) e.getSource(), JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, e.getX(), e.getY());
             });
             ripplerContainer.setOnMouseClicked(e -> {

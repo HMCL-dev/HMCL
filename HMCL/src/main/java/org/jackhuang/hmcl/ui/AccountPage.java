@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
@@ -37,8 +39,11 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 
+import java.util.Optional;
+
 public class AccountPage extends StackPane implements DecoratorPage {
     private final StringProperty title;
+    private final ObjectProperty<Runnable> onDelete = new SimpleObjectProperty<>(this, "onDelete");
 
     private final Account account;
 
@@ -95,7 +100,7 @@ public class AccountPage extends StackPane implements DecoratorPage {
     @FXML
     private void onDelete() {
         Settings.INSTANCE.deleteAccount(account);
-        Controllers.navigate(null);
+        Optional.ofNullable(onDelete.get()).ifPresent(Runnable::run);
     }
 
     @FXML
@@ -115,5 +120,17 @@ public class AccountPage extends StackPane implements DecoratorPage {
 
     public void setTitle(String title) {
         this.title.set(title);
+    }
+
+    public Runnable getOnDelete() {
+        return onDelete.get();
+    }
+
+    public ObjectProperty<Runnable> onDeleteProperty() {
+        return onDelete;
+    }
+
+    public void setOnDelete(Runnable onDelete) {
+        this.onDelete.set(onDelete);
     }
 }
