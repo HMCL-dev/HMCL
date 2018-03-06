@@ -199,7 +199,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             FXUtils.openFolder(repository.getRunDirectory(id));
                             break;
                         default:
-                            throw new Error();
+                            break;
                     }});
                 versionPopup.show(item, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
             } else if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
