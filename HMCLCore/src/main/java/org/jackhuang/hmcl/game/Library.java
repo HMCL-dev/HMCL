@@ -45,7 +45,6 @@ public class Library implements Comparable<Library> {
     private final LibrariesDownloadInfo downloads;
     private final LibraryDownloadInfo download;
     private final ExtractRules extract;
-    private final boolean lateload;
     private final Map<OperatingSystem, String> natives;
     private final List<CompatibilityRule> rules;
     private final List<String> checksums;
@@ -55,16 +54,12 @@ public class Library implements Comparable<Library> {
     public Library(String groupId, String artifactId, String version) {
         this(groupId, artifactId, version, null, null, null);
     }
-    
+
     public Library(String groupId, String artifactId, String version, String classifier, String url, LibrariesDownloadInfo downloads) {
-        this(groupId, artifactId, version, classifier, url, downloads, false);
+        this(groupId, artifactId, version, classifier, url, downloads, null, null, null, null);
     }
 
-    public Library(String groupId, String artifactId, String version, String classifier, String url, LibrariesDownloadInfo downloads, boolean lateload) {
-        this(groupId, artifactId, version, classifier, url, downloads, lateload, null, null, null, null);
-    }
-
-    public Library(String groupId, String artifactId, String version, String classifier, String url, LibrariesDownloadInfo downloads, boolean lateload, List<String> checksums, ExtractRules extract, Map<OperatingSystem, String> natives, List<CompatibilityRule> rules) {
+    public Library(String groupId, String artifactId, String version, String classifier, String url, LibrariesDownloadInfo downloads, List<String> checksums, ExtractRules extract, Map<OperatingSystem, String> natives, List<CompatibilityRule> rules) {
         this.groupId = groupId;
         this.artifactId = artifactId;
         this.version = version;
@@ -78,7 +73,6 @@ public class Library implements Comparable<Library> {
         this.url = url;
         this.downloads = downloads;
         this.extract = extract;
-        this.lateload = lateload;
         this.natives = natives;
         this.rules = rules;
         this.checksums = checksums;
@@ -139,10 +133,6 @@ public class Library implements Comparable<Library> {
         return download;
     }
 
-    public boolean isLateload() {
-        return lateload;
-    }
-
     public List<String> getChecksums() {
         return checksums;
     }
@@ -179,7 +169,7 @@ public class Library implements Comparable<Library> {
     }
 
     public Library setClassifier(String classifier) {
-        return new Library(groupId, artifactId, version, classifier, url, downloads, lateload, checksums, extract, natives, rules);
+        return new Library(groupId, artifactId, version, classifier, url, downloads, checksums, extract, natives, rules);
     }
 
     public static Library fromName(String name) {
@@ -191,7 +181,7 @@ public class Library implements Comparable<Library> {
         if (arr.length != 3 && arr.length != 4)
             throw new IllegalArgumentException("Library name is malformed. Correct example: group:artifact:version(:classifier).");
 
-        return new Library(arr[0].replace("\\", "/"), arr[1], arr[2], arr.length >= 4 ? arr[3] : null, url, downloads, false, checksums, extract, natives, rules);
+        return new Library(arr[0].replace("\\", "/"), arr[1], arr[2], arr.length >= 4 ? arr[3] : null, url, downloads, checksums, extract, natives, rules);
     }
 
     public static class Serializer implements JsonDeserializer<Library>, JsonSerializer<Library> {

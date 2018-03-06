@@ -110,29 +110,23 @@ public class DefaultLauncher extends Launcher {
             res.add("-Dfml.ignorePatchDiscrepancies=true");
         }
 
-        LinkedList<File> lateload = new LinkedList<>();
-        StringBuilder classpath = new StringBuilder();
+        LinkedList<String> classpath = new LinkedList<>();
         for (Library library : version.getLibraries())
             if (library.appliesToCurrentEnvironment() && !library.isNative()) {
                 File f = repository.getLibraryFile(version, library);
                 if (f.exists() && f.isFile())
-                    if (library.isLateload())
-                        lateload.add(f);
-                    else
-                        classpath.append(f.getAbsolutePath()).append(OperatingSystem.PATH_SEPARATOR);
+                    classpath.add(f.getAbsolutePath());
             }
-        for (File library : lateload)
-            classpath.append(library.getAbsolutePath()).append(OperatingSystem.PATH_SEPARATOR);
 
         File jar = repository.getVersionJar(version);
         if (!jar.exists() || !jar.isFile())
             throw new IOException("Minecraft jar does not exist");
-        classpath.append(jar.getAbsolutePath());
+        classpath.add(jar.getAbsolutePath());
 
         // Provided Minecraft arguments
         File gameAssets = repository.getActualAssetDirectory(version.getId(), version.getAssetIndex().getId());
         Map<String, String> configuration = getConfigurations();
-        configuration.put("${classpath}", classpath.toString());
+        configuration.put("${classpath}", String.join(OperatingSystem.PATH_SEPARATOR, classpath));
         configuration.put("${natives_directory}", nativeFolder.getAbsolutePath());
         configuration.put("${game_assets}", gameAssets.getAbsolutePath());
         configuration.put("${assets_root}", gameAssets.getAbsolutePath());

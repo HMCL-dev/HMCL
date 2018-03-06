@@ -41,9 +41,12 @@ public class MaintainTask extends TaskResult<Version> {
 
     @Override
     public void execute() {
-        Version newVersion = version;
+        setResult(maintain(version));
+    }
+
+    public static Version maintain(Version version) {
         Library forge = null, liteLoader = null, optiFine = null;
-        List<String> args = new ArrayList<>(StringUtils.tokenize(newVersion.getMinecraftArguments().orElse("")));
+        List<String> args = new ArrayList<>(StringUtils.tokenize(version.getMinecraftArguments().orElse("")));
 
         for (Library library : version.getLibraries()) {
             if (library.getGroupId().equalsIgnoreCase("net.minecraftforge") && library.getArtifactId().equalsIgnoreCase("forge"))
@@ -84,11 +87,13 @@ public class MaintainTask extends TaskResult<Version> {
         }
 
         if ((liteLoader != null || forge != null) && optiFine != null) {
-            // If forge or LiteLoader installed, OptiFine Tweaker will cause crash.
+            // If forge or LiteLoader installed, OptiFine Forge Tweaker is needed.
             removeTweakClass(args, "optifine");
+            args.add("--tweakClass");
+            args.add("optifine.OptiFineForgeTweaker");
         }
 
-        setResult(newVersion.setMinecraftArguments(StringUtils.makeCommand(args)));
+        return version.setMinecraftArguments(StringUtils.makeCommand(args));
     }
 
     @Override

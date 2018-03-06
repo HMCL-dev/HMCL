@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.mod.CurseCompletionTask;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
@@ -73,7 +74,7 @@ public final class LauncherHelper {
     private void launch0(Profile profile, Account account, String selectedVersion, File scriptFile) {
         GameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
-        Version version = repository.getResolvedVersion(selectedVersion);
+        Version version = MaintainTask.maintain(repository.getResolvedVersion(selectedVersion));
         VersionSetting setting = profile.getVersionSetting(selectedVersion);
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
 
@@ -219,6 +220,9 @@ public final class LauncherHelper {
     }
 
     public void emitStatus(LoadingState state) {
+        if (state == LoadingState.DONE)
+            Controllers.closeDialog();
+
         launchingStepsPane.setTitle(state.getLocalizedMessage());
         launchingStepsPane.setSubtitle((state.ordinal() + 1) + " / " + LoadingState.values().length);
     }

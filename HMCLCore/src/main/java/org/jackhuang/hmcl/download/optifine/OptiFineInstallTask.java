@@ -70,13 +70,13 @@ public final class OptiFineInstallTask extends TaskResult<Version> {
 
     @Override
     public void execute() {
-        String remoteVersion = remote.getSelfVersion();
+        String remoteVersion = remote.getGameVersion() + "-" + remote.getSelfVersion();
 
         Library library = new Library(
                 "net.optifine", "optifine", remoteVersion, null, null,
                 new LibrariesDownloadInfo(new LibraryDownloadInfo(
                         "net/optifine/optifine/" + remoteVersion + "/optifine-" + remoteVersion + ".jar",
-                        remote.getUrl())), true
+                        remote.getUrl()))
         );
 
         List<Library> libraries = new LinkedList<>();
@@ -99,6 +99,8 @@ public final class OptiFineInstallTask extends TaskResult<Version> {
         String minecraftArguments = version.getMinecraftArguments().orElse("");
         if (!hasFMLTweaker)
             minecraftArguments = minecraftArguments + " --tweakClass optifine.OptiFineTweaker";
+        else
+            minecraftArguments = minecraftArguments + " --tweakClass optifine.OptiFineForgeTweaker";
 
         if (version.getMainClass() == null || !version.getMainClass().startsWith("net.minecraft.launchwrapper."))
             libraries.add(0, new Library("net.minecraft", "launchwrapper", "1.12"));

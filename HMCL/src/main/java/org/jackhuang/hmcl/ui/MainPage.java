@@ -54,6 +54,9 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
+import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
+
 public final class MainPage extends StackPane implements DecoratorPage {
 
     private final StringProperty title = new SimpleStringProperty(this, "title", Launcher.i18n("main_page"));
@@ -94,6 +97,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.installTooltip(btnRefresh, Launcher.i18n("button.refresh"));
     }
 
+    private String modifyVersion(String gameVersion, String version) {
+        return removeSuffix(removePrefix(removeSuffix(removePrefix(version.replace(gameVersion, "").trim(), "-"), "-"), "_"), "_");
+    }
+
     private Node buildNode(HMCLGameRepository repository, Version version, String game) {
         Profile profile = repository.getProfile();
         String id = version.getId();
@@ -105,13 +112,13 @@ public final class MainPage extends StackPane implements DecoratorPage {
         StringBuilder libraries = new StringBuilder();
         for (Library library : version.getLibraries()) {
             if (library.getGroupId().equalsIgnoreCase("net.minecraftforge") && library.getArtifactId().equalsIgnoreCase("forge")) {
-                libraries.append(Launcher.i18n("install.installer.forge")).append(": ").append(StringUtils.removeSuffix(StringUtils.removePrefix(library.getVersion().replaceAll("(?i)forge", "").replace(game, "").trim(), "-"), "-")).append("\n");
+                libraries.append(Launcher.i18n("install.installer.forge")).append(": ").append(modifyVersion(game, library.getVersion().replaceAll("(?i)forge", ""))).append("\n");
             }
             if (library.getGroupId().equalsIgnoreCase("com.mumfrey") && library.getArtifactId().equalsIgnoreCase("liteloader")) {
-                libraries.append(Launcher.i18n("install.installer.liteloader")).append(": ").append(StringUtils.removeSuffix(StringUtils.removePrefix(library.getVersion().replaceAll("(?i)liteloader", "").replace(game, "").trim(), "-"), "-")).append("\n");
+                libraries.append(Launcher.i18n("install.installer.liteloader")).append(": ").append(modifyVersion(game, library.getVersion().replaceAll("(?i)liteloader", ""))).append("\n");
             }
             if (library.getGroupId().equalsIgnoreCase("net.optifine") && library.getArtifactId().equalsIgnoreCase("optifine")) {
-                libraries.append(Launcher.i18n("install.installer.optifine")).append(": ").append(StringUtils.removeSuffix(StringUtils.removePrefix(library.getVersion().replaceAll("(?i)optifine", "").replace(game, "").trim(), "-"), "-")).append("\n");
+                libraries.append(Launcher.i18n("install.installer.optifine")).append(": ").append(modifyVersion(game, library.getVersion().replaceAll("(?i)optifine", ""))).append("\n");
             }
         }
 

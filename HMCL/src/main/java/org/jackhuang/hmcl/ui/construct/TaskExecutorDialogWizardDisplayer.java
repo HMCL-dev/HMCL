@@ -60,20 +60,24 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
             TaskExecutor executor = task.executor(new TaskListener() {
                 @Override
                 public void onStop(boolean success, TaskExecutor executor) {
-                    if (success) {
-                        if (settings.containsKey("success_message") && settings.get("success_message") instanceof String)
-                            JFXUtilities.runInFX(() -> Controllers.dialog((String) settings.get("success_message"), null, MessageBox.FINE_MESSAGE, () -> Controllers.navigate(null)));
-                        else if (!settings.containsKey("forbid_success_message"))
-                            JFXUtilities.runInFX(() -> Controllers.dialog(Launcher.i18n("message.success"), null, MessageBox.FINE_MESSAGE, () -> Controllers.navigate(null)));
-                    } else {
-                        if (executor.getLastException() == null)
-                            return;
-                        String appendix = StringUtils.getStackTrace(executor.getLastException());
-                        if (settings.containsKey("failure_message") && settings.get("failure_message") instanceof String)
-                            JFXUtilities.runInFX(() -> Controllers.dialog(appendix, (String) settings.get("failure_message"), MessageBox.ERROR_MESSAGE, () -> Controllers.navigate(null)));
-                        else if (!settings.containsKey("forbid_failure_message"))
-                            JFXUtilities.runInFX(() -> Controllers.dialog(appendix, Launcher.i18n("wizard.failed"), MessageBox.ERROR_MESSAGE, () -> Controllers.navigate(null)));
-                    }
+                    JFXUtilities.runInFX(() -> {
+                        Controllers.closeDialog();
+                        if (success) {
+                            if (settings.containsKey("success_message") && settings.get("success_message") instanceof String)
+                                Controllers.dialog((String) settings.get("success_message"), null, MessageBox.FINE_MESSAGE, () -> Controllers.navigate(null));
+                            else if (!settings.containsKey("forbid_success_message"))
+                                Controllers.dialog(Launcher.i18n("message.success"), null, MessageBox.FINE_MESSAGE, () -> Controllers.navigate(null));
+                        } else {
+                            if (executor.getLastException() == null)
+                                return;
+                            String appendix = StringUtils.getStackTrace(executor.getLastException());
+                            if (settings.containsKey("failure_message") && settings.get("failure_message") instanceof String)
+                                Controllers.dialog(appendix, (String) settings.get("failure_message"), MessageBox.ERROR_MESSAGE, () -> Controllers.navigate(null));
+                            else if (!settings.containsKey("forbid_failure_message"))
+                                Controllers.dialog(appendix, Launcher.i18n("wizard.failed"), MessageBox.ERROR_MESSAGE, () -> Controllers.navigate(null));
+                        }
+
+                    });
                 }
             });
             pane.setExecutor(executor);
