@@ -26,7 +26,7 @@ public class StackContainerPane extends StackPane {
     private final Stack<Node> stack = new Stack<>();
 
     public void push(Node node) {
-        if (node.getProperties().containsKey("controllers"))
+        if (!node.getProperties().containsKey("controllers"))
             stack.push(node);
         getChildren().setAll(node);
     }
