@@ -28,7 +28,7 @@ import java.util.List;
 public final class DownloadProviders {
     private DownloadProviders() {}
 
-    public static final List<DownloadProvider> DOWNLOAD_PROVIDERS = Lang.immutableListOf(new MojangDownloadProvider(Settings.INSTANCE.getLocale() == Locales.ZH_CN), BMCLAPIDownloadProvider.INSTANCE, CurseCDNDownloadProvider.INSTANCE);
+    public static final List<DownloadProvider> DOWNLOAD_PROVIDERS = Lang.immutableListOf(new MojangDownloadProvider(), BMCLAPIDownloadProvider.INSTANCE, CurseCDNDownloadProvider.INSTANCE);
 
     public static DownloadProvider getDownloadProvider(int index) {
         return Lang.get(DOWNLOAD_PROVIDERS, index).orElse(DOWNLOAD_PROVIDERS.get(0));

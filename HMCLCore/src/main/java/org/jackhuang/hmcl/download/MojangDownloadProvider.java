@@ -28,12 +28,6 @@ import org.jackhuang.hmcl.download.optifine.OptiFineVersionList;
  */
 public class MojangDownloadProvider implements DownloadProvider {
 
-    private final boolean isChina;
-
-    public MojangDownloadProvider(boolean isChina) {
-        this.isChina = isChina;
-    }
-
     @Override
     public String getLibraryBaseURL() {
         return "https://libraries.minecraft.net/";
@@ -77,16 +71,6 @@ public class MojangDownloadProvider implements DownloadProvider {
 
     @Override
     public String injectURL(String baseURL) {
-        if (baseURL == null)
-            return null;
-        //else if (baseURL.contains("scala-swing") || baseURL.contains("scala-xml") || baseURL.contains("scala-parser-combinators"))
-        //    return baseURL.replaceFirst("https?://files\\.minecraftforge\\.net/maven", "https://bmclapi2.bangbang93.com/maven");
-        /*else if (baseURL.contains("typesafe") || baseURL.contains("scala"))
-            if (isChina)
-                return baseURL.replaceFirst("https?://files\\.minecraftforge\\.net/maven", "http://maven.aliyun.com/nexus/content/groups/public");
-            else
-                return baseURL.replaceFirst("https?://files\\.minecraftforge\\.net/maven", "https://repo1.maven.org/maven2");
-        */else
             return baseURL;
     }
 }

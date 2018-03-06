@@ -28,8 +28,16 @@ Now you can launch game by constructing a `DefaultLauncher`.
 DefaultLauncher launcher = new DefaultLauncher(
         repository, // GameRepository
         "test", // Your minecraft version name
-        OfflineAccountFactory.INSTANCE.fromUsername("player007").logIn(MultiCharacterSelector.DEFAULT), // account
-        // or YggdrasilAccountFactory.INSTANCE.fromUsername(username, password).logIn
+        new AccountBuilder.Builder()
+                .setUsername("playerId")
+                .setProxy(Proxy.NO_PROXY) // Optional
+                .create(OfflineAccountFactory.INSTANCE)
+                .logIn(), // account
+        // or new AccountBuilder.Builder()
+        //            .setUsername("someone@xxx.com")
+        //            .setPassword("123")
+        //            .create(YggdrasilAccountFactory.INSTANCE)
+        //            .logIn()
         new LaunchOptions.Builder()
         		.setGameDir(repository.getBaseDirectory())
         		.setMaxMemory(...)
@@ -51,7 +59,7 @@ DefaultLauncher launcher = new DefaultLauncher(
                 System.out.println("Process exited then exit code " + exitCode);
             }
         },
-        false // true if launcher process exits, listening thread exit too.
+        false // true if launcher process exits, listening threads exit too.
 );
 ```
 Now you can simply call `launcher.launch()` to launch the game.

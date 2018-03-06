@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.download.forge.ForgeVersionList;
 import org.jackhuang.hmcl.download.game.GameVersionList;
+import org.jackhuang.hmcl.download.liteloader.LiteLoaderBMCLVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
 
@@ -35,27 +36,27 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
 
     @Override
     public String getLibraryBaseURL() {
-        return "https://bmclapi2.bangbang93.com/libraries/";
+        return "http://bmclapi2.bangbang93.com/libraries/";
     }
 
     @Override
     public String getVersionListURL() {
-        return "https://bmclapi2.bangbang93.com/mc/game/version_manifest.json";
+        return "http://bmclapi2.bangbang93.com/mc/game/version_manifest.json";
     }
 
     @Override
     public String getVersionBaseURL() {
-        return "https://bmclapi2.bangbang93.com/versions/";
+        return "http://bmclapi2.bangbang93.com/versions/";
     }
 
     @Override
     public String getAssetIndexBaseURL() {
-        return "https://bmclapi2.bangbang93.com/indexes/";
+        return "http://bmclapi2.bangbang93.com/indexes/";
     }
 
     @Override
     public String getAssetBaseURL() {
-        return "https://bmclapi2.bangbang93.com/assets/";
+        return "http://bmclapi2.bangbang93.com/assets/";
     }
 
     @Override
@@ -66,7 +67,7 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
             case "forge":
                 return ForgeVersionList.INSTANCE;
             case "liteloader":
-                return LiteLoaderVersionList.INSTANCE;
+                return LiteLoaderBMCLVersionList.INSTANCE;
             case "optifine":
                 return OptiFineBMCLVersionList.INSTANCE;
             default:
@@ -77,12 +78,12 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
     @Override
     public String injectURL(String baseURL) {
         return baseURL
-                .replace("https://launchermeta.mojang.com", "https://bmclapi2.bangbang93.com")
-                .replace("https://launcher.mojang.com", "https://bmclapi2.bangbang93.com")
-                .replace("https://libraries.minecraft.net", "https://bmclapi2.bangbang93.com/libraries")
-                .replaceFirst("https?://files\\.minecraftforge\\.net/maven", "https://bmclapi2.bangbang93.com/maven")
-                .replace("http://dl.liteloader.com/versions/versions.json", "https://bmclapi2.bangbang93.com/maven/com/mumfrey/liteloader/versions.json")
-                .replace("http://dl.liteloader.com/versions", "https://bmclapi2.bangbang93.com/maven");
+                .replace("https://launchermeta.mojang.com", "http://bmclapi2.bangbang93.com")
+                .replace("https://launcher.mojang.com", "http://bmclapi2.bangbang93.com")
+                .replace("https://libraries.minecraft.net", "http://bmclapi2.bangbang93.com/libraries")
+                .replaceFirst("https?://files\\.minecraftforge\\.net/maven", "http://bmclapi2.bangbang93.com/maven")
+                .replace("http://dl.liteloader.com/versions/versions.json", "http://bmclapi2.bangbang93.com/maven/com/mumfrey/liteloader/versions.json")
+                .replace("http://dl.liteloader.com/versions", "http://bmclapi2.bangbang93.com/maven");
     }
 
 }

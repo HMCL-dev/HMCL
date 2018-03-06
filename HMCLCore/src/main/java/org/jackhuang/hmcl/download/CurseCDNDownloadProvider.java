@@ -20,10 +20,6 @@ package org.jackhuang.hmcl.download;
 public class CurseCDNDownloadProvider extends MojangDownloadProvider {
     public static final CurseCDNDownloadProvider INSTANCE = new CurseCDNDownloadProvider();
 
-    protected CurseCDNDownloadProvider() {
-        super(false);
-    }
-
     @Override
     public String injectURL(String baseURL) {
         return baseURL == null ? null : baseURL.replaceFirst("https?://files\\.minecraftforge\\.net/maven", "https://ftb.cursecdn.com/FTB2/maven");
