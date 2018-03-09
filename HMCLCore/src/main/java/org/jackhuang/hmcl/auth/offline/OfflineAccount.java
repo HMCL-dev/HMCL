@@ -20,10 +20,7 @@ package org.jackhuang.hmcl.auth.offline;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.*;
 
 import java.util.Map;
 import java.util.Objects;
@@ -66,7 +63,7 @@ public class OfflineAccount extends Account {
 
     @Override
     public AuthInfo logIn() throws AuthenticationException {
-        if (StringUtils.isBlank(username) || StringUtils.isBlank(uuid))
+        if (StringUtils.isBlank(username))
             throw new AuthenticationException("Username cannot be empty");
 
         return new AuthInfo(username, uuid, uuid);
@@ -107,6 +104,9 @@ public class OfflineAccount extends Account {
 
     @Override
     public String toString() {
-        return "OfflineAccount[username=" + username + ", uuid=" + uuid + "]";
+        return new ToStringBuilder(this)
+                .append("username", username)
+                .append("uuid", uuid)
+                .toString();
     }
 }
