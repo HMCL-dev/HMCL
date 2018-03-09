@@ -67,6 +67,7 @@ public class AddAccountPane extends StackPane {
     @FXML private Label lblAddInjectorServer;
     @FXML private Hyperlink linkAddInjectorServer;
     @FXML private JFXDialogLayout layout;
+    @FXML private JFXButton btnAccept;
     private final Consumer<Region> finalization;
 
     public AddAccountPane(Consumer<Region> finalization) {
@@ -83,6 +84,7 @@ public class AddAccountPane extends StackPane {
             cboServers.setVisible(newValue.intValue() == 2);
             linkAddInjectorServer.setVisible(newValue.intValue() == 2);
             lblAddInjectorServer.setVisible(newValue.intValue() == 2);
+            validateAcceptButton();
         });
         cboType.getSelectionModel().select(0);
 
@@ -94,6 +96,12 @@ public class AddAccountPane extends StackPane {
         txtUsername.setOnAction(e -> onCreationAccept());
         txtUsername.getValidators().add(new Validator(Launcher.i18n("input.email"), str -> !txtPassword.isVisible() || str.contains("@")));
 
+        txtUsername.textProperty().addListener(it -> validateAcceptButton());
+        txtPassword.textProperty().addListener(it -> validateAcceptButton());
+    }
+
+    private void validateAcceptButton() {
+        btnAccept.setDisable(!txtUsername.validate() || (cboType.getSelectionModel().getSelectedIndex() != 0 && !txtPassword.validate()));
     }
 
     private void loadServers() {

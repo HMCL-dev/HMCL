@@ -56,7 +56,7 @@
         </body>
         <actions>
             <Label fx:id="lblCreationWarning"/>
-            <JFXButton onMouseClicked="#onCreationAccept" text="%button.ok" styleClass="dialog-accept"/>
+            <JFXButton fx:id="btnAccept" onMouseClicked="#onCreationAccept" text="%button.ok" styleClass="dialog-accept"/>
             <JFXButton onMouseClicked="#onCreationCancel" text="%button.cancel" styleClass="dialog-cancel"/>
         </actions>
     </JFXDialogLayout>

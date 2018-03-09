@@ -50,7 +50,7 @@ public class OfflineAccountFactory extends AccountFactory<OfflineAccount> {
                 .orElseThrow(() -> new IllegalStateException("Offline account configuration malformed."));
         String uuid = Lang.get(storage, "uuid", String.class)
                 .orElse(getUUIDFromUserName(username));
-        
+
         // Check if the uuid is vaild
         UUIDTypeAdapter.fromString(uuid);
 
