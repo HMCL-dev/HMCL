@@ -28,6 +28,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
@@ -49,6 +50,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -65,9 +67,9 @@ public class AddAccountPane extends StackPane {
     @FXML private Label lblAddInjectorServer;
     @FXML private Hyperlink linkAddInjectorServer;
     @FXML private JFXDialogLayout layout;
-    private final Runnable finalization;
+    private final Consumer<Region> finalization;
 
-    public AddAccountPane(Runnable finalization) {
+    public AddAccountPane(Consumer<Region> finalization) {
         this.finalization = finalization;
 
         FXUtils.loadFXML(this, "/assets/fxml/account-add.fxml");
@@ -133,10 +135,10 @@ public class AddAccountPane extends StackPane {
         }).finalized(Schedulers.javafx(), variables -> {
             Settings.INSTANCE.addAccount(variables.get("create_account"));
             progressBar.setVisible(false);
-            finalization.run();
+            finalization.accept(this);
         }, exception -> {
             if (exception instanceof NoSelectedCharacterException) {
-                finalization.run();
+                finalization.accept(this);
             } else {
                 lblCreationWarning.setText(accountException(exception));
             }
@@ -146,12 +148,12 @@ public class AddAccountPane extends StackPane {
 
     @FXML
     private void onCreationCancel() {
-        finalization.run();
+        finalization.accept(this);
     }
 
     @FXML
     private void onAddInjecterServer() {
-        finalization.run();
+        finalization.accept(this);
         Controllers.navigate(Controllers.getServersPage());
     }
 

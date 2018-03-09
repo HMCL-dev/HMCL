@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import javafx.application.Platform;
+import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
@@ -46,13 +47,14 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 public final class LauncherHelper {
     public static final LauncherHelper INSTANCE = new LauncherHelper();
     private LauncherHelper(){}
 
     public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
-    private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(() -> {});
+    private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(it -> {});
 
     public void launch(Profile profile, Account account, String selectedVersion, File scriptFile) {
         if (account == null)
@@ -65,7 +67,10 @@ public final class LauncherHelper {
 
         Platform.runLater(() -> {
             try {
-                checkGameState(profile, setting, version, () -> Schedulers.newThread().schedule(() -> launch0(profile, account, selectedVersion, scriptFile)));
+                checkGameState(profile, setting, version, () -> {
+                    Controllers.dialog(launchingStepsPane);
+                    Schedulers.newThread().schedule(() -> launch0(profile, account, selectedVersion, scriptFile));
+                });
             } catch (InterruptedException ignore) {
             }
         });
@@ -78,8 +83,7 @@ public final class LauncherHelper {
         VersionSetting setting = profile.getVersionSetting(selectedVersion);
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
 
-        TaskExecutor executor = Task.of(Schedulers.javafx(), () -> Controllers.dialog(launchingStepsPane))
-                .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES)))
+        TaskExecutor executor = Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES))
                 .then(variables -> {
                     if (setting.isNotCheckGame())
                         return null;
@@ -127,13 +131,13 @@ public final class LauncherHelper {
                         if (setting.getLauncherVisibility() == LauncherVisibility.CLOSE)
                             Launcher.stopApplication();
                         else
-                            launchingStepsPane.setCancel(() -> {
+                            launchingStepsPane.setCancel(it -> {
                                 process.stop();
-                                Controllers.closeDialog();
+                                Controllers.closeDialog(it);
                             });
                     } else
                         Platform.runLater(() -> {
-                            Controllers.closeDialog();
+                            Controllers.closeDialog(launchingStepsPane);
                             Controllers.dialog(Launcher.i18n("version.launch_script.success", scriptFile.getAbsolutePath()));
                         });
 
@@ -155,11 +159,11 @@ public final class LauncherHelper {
             public void onStop(boolean success, TaskExecutor executor) {
                 if (!success) {
                     Platform.runLater(() -> {
-                        Controllers.closeDialog();
+                        Controllers.closeDialog(launchingStepsPane);
                         if (executor.getLastException() != null)
                             Controllers.dialog(I18nException.getStackTrace(executor.getLastException()),
                                     scriptFile == null ? Launcher.i18n("launch.failed") : Launcher.i18n("version.launch_script.failed"),
-                                    MessageBox.ERROR_MESSAGE, Controllers::closeDialog);
+                                    MessageBox.ERROR_MESSAGE);
                     });
                 }
                 launchingStepsPane.setExecutor(null);
@@ -170,7 +174,7 @@ public final class LauncherHelper {
     }
 
     private static void checkGameState(Profile profile, VersionSetting setting, Version version, Runnable onAccept) throws InterruptedException {
-        boolean flag = false, suggest = true;
+        boolean flag = false;
 
         VersionNumber gameVersion = VersionNumber.asVersion(GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version)).orElse("Unknown"));
         JavaVersion java = setting.getJavaVersion();
@@ -188,7 +192,6 @@ public final class LauncherHelper {
 
         if (!flag && java.getParsedVersion() >= JavaVersion.JAVA_9 && gameVersion.compareTo(VersionNumber.asVersion("1.12.5")) < 0 && version.getMainClass().contains("launchwrapper")) {
             Controllers.dialog(Launcher.i18n("launch.advice.java9"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
-            suggest = false;
             flag = true;
         }
 
@@ -207,10 +210,7 @@ public final class LauncherHelper {
             flag = true;
         }
 
-        if (flag) {
-            if (suggest && Controllers.getDialogContent() instanceof MessageDialogPane)
-                ((MessageDialogPane) Controllers.getDialogContent()).disableClosingDialog();
-        } else
+        if (!flag)
             onAccept.run();
     }
 
@@ -221,7 +221,7 @@ public final class LauncherHelper {
 
     public void emitStatus(LoadingState state) {
         if (state == LoadingState.DONE)
-            Controllers.closeDialog();
+            Controllers.closeDialog(launchingStepsPane);
 
         launchingStepsPane.setTitle(state.getLocalizedMessage());
         launchingStepsPane.setSubtitle((state.ordinal() + 1) + " / " + LoadingState.values().length);
@@ -359,7 +359,9 @@ public final class LauncherHelper {
                         // Never come to here.
                         break;
                     case KEEP:
-                        // No operations here
+                        Platform.runLater(() -> {
+                            emitStatus(LoadingState.DONE);
+                        });
                         break;
                     case HIDE:
                         Platform.runLater(() -> {

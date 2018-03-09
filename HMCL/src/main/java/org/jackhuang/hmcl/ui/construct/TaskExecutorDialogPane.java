@@ -23,15 +23,17 @@ import com.jfoenix.controls.JFXProgressBar;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class TaskExecutorDialogPane extends StackPane {
     private TaskExecutor executor;
-    private Runnable onCancel;
+    private Consumer<Region> onCancel;
 
     @FXML
     private JFXProgressBar progressBar;
@@ -44,14 +46,14 @@ public class TaskExecutorDialogPane extends StackPane {
     @FXML
     private TaskListPane taskListPane;
 
-    public TaskExecutorDialogPane(Runnable cancel) {
+    public TaskExecutorDialogPane(Consumer<Region> cancel) {
         FXUtils.loadFXML(this, "/assets/fxml/task-dialog.fxml");
 
         setCancel(cancel);
 
         btnCancel.setOnMouseClicked(e -> {
             Optional.ofNullable(executor).ifPresent(TaskExecutor::cancel);
-            onCancel.run();
+            onCancel.accept(this);
         });
     }
 
@@ -93,7 +95,7 @@ public class TaskExecutorDialogPane extends StackPane {
             progressBar.setProgress(progress);
     }
 
-    public void setCancel(Runnable onCancel) {
+    public void setCancel(Consumer<Region> onCancel) {
         this.onCancel = onCancel;
 
         JFXUtilities.runInFX(() -> btnCancel.setDisable(onCancel == null));

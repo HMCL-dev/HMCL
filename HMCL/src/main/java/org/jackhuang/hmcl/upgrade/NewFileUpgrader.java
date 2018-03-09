@@ -17,8 +17,12 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
+import com.jfoenix.concurrency.JFXUtilities;
+import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.util.Charsets;
 import org.jackhuang.hmcl.util.Logging;
@@ -28,6 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 
 /**
@@ -52,7 +57,11 @@ public class NewFileUpgrader extends IUpgrader {
         if (url == null) return;
         File newf = new File(url.getFile());
         Controllers.dialog(Launcher.i18n("message.downloading"));
-        if (new FileDownloadTask(url, newf).test()) {
+        Task task = new FileDownloadTask(url, newf);
+        TaskExecutor executor = task.executor();
+        AtomicReference<Region> region = new AtomicReference<>();
+        JFXUtilities.runInFX(() -> region.set(Controllers.taskDialog(executor, Launcher.i18n("message.downloading"), "", null)));
+        if (executor.test()) {
             try {
                 new ProcessBuilder(newf.getCanonicalPath(), "--removeOldLauncher", getRealPath())
                         .directory(new File("").getAbsoluteFile())
@@ -62,7 +71,7 @@ public class NewFileUpgrader extends IUpgrader {
             }
             System.exit(0);
         }
-        Controllers.closeDialog();
+        JFXUtilities.runInFX(() -> Controllers.closeDialog(region.get()));
     }
 
     private static String getRealPath() {

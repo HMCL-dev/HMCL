@@ -25,6 +25,7 @@ import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Launcher;
@@ -53,6 +54,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
 import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
@@ -155,18 +157,20 @@ public final class MainPage extends StackPane implements DecoratorPage {
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(Launcher.i18n("modpack"), "*.zip"));
             File selectedFile = chooser.showOpenDialog(Controllers.getStage());
             if (selectedFile != null) {
+                AtomicReference<Region> region = new AtomicReference<>();
                 try {
                     TaskExecutor executor = ModpackHelper.getUpdateTask(profile, selectedFile, id, ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(id)))
-                            .then(Task.of(Schedulers.javafx(), Controllers::closeDialog)).executor(true);
-                    Controllers.taskDialog(executor, Launcher.i18n("modpack.update"), "", null);
+                            .then(Task.of(Schedulers.javafx(), () -> Controllers.closeDialog(region.get()))).executor();
+                    region.set(Controllers.taskDialog(executor, Launcher.i18n("modpack.update"), ""));
+                    executor.start();
                 } catch (UnsupportedModpackException e) {
-                    Controllers.closeDialog();
+                    Controllers.closeDialog(region.get());
                     Controllers.dialog(Launcher.i18n("modpack.unsupported"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE);
                 } catch (MismatchedModpackTypeException e) {
-                    Controllers.closeDialog();
+                    Controllers.closeDialog(region.get());
                     Controllers.dialog(Launcher.i18n("modpack.mismatched_type"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE);
                 } catch (IOException e)  {
-                    Controllers.closeDialog();
+                    Controllers.closeDialog(region.get());
                     Controllers.dialog(Launcher.i18n("modpack.invalid"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE);
                 }
             }

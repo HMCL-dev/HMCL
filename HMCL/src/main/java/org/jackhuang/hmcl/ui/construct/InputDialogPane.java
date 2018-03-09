@@ -22,14 +22,13 @@ import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXTextField;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.function.Consumer;
 
 public class InputDialogPane extends StackPane {
-    private final String text;
-    private final JFXDialog dialog;
 
     @FXML
     private JFXButton acceptButton;
@@ -40,16 +39,13 @@ public class InputDialogPane extends StackPane {
     @FXML
     private Label content;
 
-    public InputDialogPane(String text, JFXDialog dialog, Consumer<String> onResult) {
-        this.text = text;
-        this.dialog = dialog;
-
+    public InputDialogPane(String text, Consumer<Region> closeConsumer, Consumer<String> onResult) {
         FXUtils.loadFXML(this, "/assets/fxml/input-dialog.fxml");
         content.setText(text);
-        cancelButton.setOnMouseClicked(e -> dialog.close());
+        cancelButton.setOnMouseClicked(e -> closeConsumer.accept(this));
         acceptButton.setOnMouseClicked(e -> {
             onResult.accept(textField.getText());
-            dialog.close();
+            closeConsumer.accept(this);
         });
     }
 }

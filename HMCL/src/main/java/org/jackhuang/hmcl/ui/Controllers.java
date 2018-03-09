@@ -117,14 +117,8 @@ public final class Controllers {
         stage.setTitle(Launcher.TITLE);
     }
 
-    public static Region getDialogContent() {
-        return decorator.getDialog().getContent();
-    }
-
-    public static JFXDialog dialog(Region content) {
-        // TODO: temp fix
-        decorator.showDialog(Lang.apply(new Region(), region -> region.getProperties().put("controllers", true)));
-        return decorator.showDialog(content);
+    public static void dialog(Region content) {
+        decorator.showDialog(content);
     }
 
     public static void dialog(String text) {
@@ -140,31 +134,33 @@ public final class Controllers {
     }
 
     public static void dialog(String text, String title, int type, Runnable onAccept) {
-        dialog(new MessageDialogPane(text, title, decorator.getDialog(), type, onAccept));
+        dialog(new MessageDialogPane(text, title, Controllers::closeDialog, type, onAccept));
     }
 
     public static void confirmDialog(String text, String title, Runnable onAccept, Runnable onCancel) {
-        dialog(new MessageDialogPane(text, title, decorator.getDialog(), onAccept, onCancel));
+        dialog(new MessageDialogPane(text, title, Controllers::closeDialog, onAccept, onCancel));
     }
 
     public static void inputDialog(String text, Consumer<String> onResult) {
-        dialog(new InputDialogPane(text, decorator.getDialog(), onResult));
+        dialog(new InputDialogPane(text, Controllers::closeDialog, onResult));
     }
 
-    public static void taskDialog(TaskExecutor executor, String title, String subtitle) {
-        taskDialog(executor, title, subtitle, null);
+    public static Region taskDialog(TaskExecutor executor, String title, String subtitle) {
+        return taskDialog(executor, title, subtitle, null);
     }
 
-    public static void taskDialog(TaskExecutor executor, String title, String subtitle, Runnable onCancel) {
+    public static Region taskDialog(TaskExecutor executor, String title, String subtitle, Consumer<Region> onCancel) {
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
         pane.setTitle(title);
         pane.setSubtitle(subtitle);
         pane.setExecutor(executor);
         dialog(pane);
+        return pane;
     }
 
-    public static void closeDialog() {
-        decorator.getDialog().close();
+    public static void closeDialog(Region content) {
+
+        decorator.closeDialog(content);
     }
 
     public static void navigate(Node node) {

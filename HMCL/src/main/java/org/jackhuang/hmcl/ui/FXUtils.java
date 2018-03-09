@@ -62,6 +62,13 @@ public final class FXUtils {
     private FXUtils() {
     }
 
+    public static void checkFxUserThread() {
+        if (!Platform.isFxApplicationThread()) {
+            throw new IllegalStateException("Not on FX application thread; currentThread = "
+                    + Thread.currentThread().getName());
+        }
+    }
+
     public static <T> void onChange(ObservableValue<T> value, Consumer<T> consumer) {
         value.addListener((a, b, c) -> consumer.accept(c));
     }

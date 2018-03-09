@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.util.Logging;
 
 import java.util.Stack;
 
@@ -26,17 +27,20 @@ public class StackContainerPane extends StackPane {
     private final Stack<Node> stack = new Stack<>();
 
     public void push(Node node) {
-        if (!node.getProperties().containsKey("controllers"))
-            stack.push(node);
+        stack.push(node);
         getChildren().setAll(node);
+
+        Logging.LOG.info(this + " " + stack);
     }
 
-    public void pop() {
-        stack.pop();
+    public void pop(Node node) {
+        boolean flag = stack.remove(node);
         if (stack.isEmpty())
             getChildren().setAll();
         else
             getChildren().setAll(stack.peek());
+
+        Logging.LOG.info(this + " " + stack + ", removed: " + flag + ", object: " + node);
     }
 
     public boolean isEmpty() {

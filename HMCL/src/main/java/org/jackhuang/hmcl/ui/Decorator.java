@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXDrawer;
@@ -167,17 +166,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
                 btnMax.fire();
         });
 
-        dialog = new JFXDialog() {
-            @Override
-            public void close() {
-                dialogPane.pop();
-                if (dialogPane.getChildren().isEmpty())
-                    Platform.runLater(() -> {
-                        if (dialogPane.getChildren().isEmpty())
-                            super.close();
-                    });
-            }
-        };
+        dialog = new JFXDialog();
         dialog.setOverlayClose(false);
         drawerWrapper.getChildren().add(0, dialog);
         dialog.setDialogContainer(drawerWrapper);
@@ -525,6 +514,8 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     }
 
     public void showPage(Node content) {
+        FXUtils.checkFxUserThread();
+
         contentPlaceHolder.getStyleClass().removeAll("gray-background", "white-background");
         if (content != null)
             contentPlaceHolder.getStyleClass().add("gray-background");
@@ -545,11 +536,23 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         }
     }
 
-    public JFXDialog showDialog(Node node) {
+    public void showDialog(Node node) {
+        FXUtils.checkFxUserThread();
+
         if (dialogPane.isEmpty())
             dialog.show();
         dialogPane.push(node);
-        return dialog;
+    }
+
+    public void closeDialog(Node node) {
+        FXUtils.checkFxUserThread();
+
+        dialogPane.pop(node);
+        if (dialogPane.getChildren().isEmpty())
+            Platform.runLater(() -> {
+                if (dialogPane.getChildren().isEmpty())
+                    dialog.close();
+            });
     }
 
     public void startWizard(WizardProvider wizardProvider) {
@@ -557,6 +560,8 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     }
 
     public void startWizard(WizardProvider wizardProvider, String category) {
+        FXUtils.checkFxUserThread();
+
         this.category = category;
         wizardController.setProvider(wizardProvider);
         wizardController.onStart();
@@ -636,10 +641,6 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     @Override
     public WizardController getWizardController() {
         return wizardController;
-    }
-
-    public JFXDialog getDialog() {
-        return dialog;
     }
 
     public AdvancedListBox getLeftPane() {

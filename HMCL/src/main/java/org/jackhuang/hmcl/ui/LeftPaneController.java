@@ -25,6 +25,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.Launcher;
@@ -41,6 +42,7 @@ import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.ClassTitle;
 import org.jackhuang.hmcl.ui.construct.IconedItem;
@@ -50,6 +52,7 @@ import org.jackhuang.hmcl.util.Lang;
 import java.io.File;
 import java.util.LinkedList;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 public final class LeftPaneController {
     private final AdvancedListBox leftPane;
@@ -204,13 +207,15 @@ public final class LeftPaneController {
                     File modpackFile = new File("modpack.zip").getAbsoluteFile();
                     if (modpackFile.exists()) {
                         try {
+                            AtomicReference<Region> region = new AtomicReference<>();
                             Modpack modpack = ModpackHelper.readModpackManifest(modpackFile);
-                            Controllers.taskDialog(ModpackHelper.getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack)
-                                            .with(Task.of(Schedulers.javafx(), () -> {
-                                                Controllers.closeDialog();
-                                                checkAccount();
-                                            })).executor(true),
-                                    Launcher.i18n("modpack.installing"), "", null);
+                            TaskExecutor executor = ModpackHelper.getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack)
+                                    .with(Task.of(Schedulers.javafx(), () -> {
+                                        Controllers.closeDialog(region.get());
+                                        checkAccount();
+                                    })).executor();
+                            region.set(Controllers.taskDialog(executor, Launcher.i18n("modpack.installing"), ""));
+                            executor.start();
                             flag = false;
                         } catch (UnsupportedModpackException ignore) {
                         }

@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.upgrade;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import com.jfoenix.concurrency.JFXUtilities;
+import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -38,6 +39,7 @@ import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
@@ -116,13 +118,16 @@ public class AppDataUpgrader extends IUpgrader {
                         String hash = null;
                         if (map.containsKey("jarsha1"))
                             hash = map.get("jarsha1");
-                        Controllers.dialog(Launcher.i18n("message.downloading"));
-                        if (new AppDataUpgraderJarTask(NetworkUtils.toURL(map.get("jar")), version.toString(), hash).test()) {
+                        Task task = new AppDataUpgraderJarTask(NetworkUtils.toURL(map.get("jar")), version.toString(), hash);
+                        TaskExecutor executor = task.executor();
+                        AtomicReference<Region> region = new AtomicReference<>();
+                        JFXUtilities.runInFX(() -> region.set(Controllers.taskDialog(executor, Launcher.i18n("message.downloading"), "", null)));
+                        if (executor.test()) {
                             new ProcessBuilder(JavaVersion.fromCurrentEnvironment().getBinary().getAbsolutePath(), "-jar", AppDataUpgraderJarTask.getSelf(version.toString()).getAbsolutePath())
                                     .directory(new File("").getAbsoluteFile()).start();
                             System.exit(0);
                         }
-                        Controllers.closeDialog();
+                        JFXUtilities.runInFX(() -> Controllers.closeDialog(region.get()));
                     } catch (IOException ex) {
                         Logging.LOG.log(Level.SEVERE, "Failed to create upgrader", ex);
                     }
@@ -133,13 +138,14 @@ public class AppDataUpgrader extends IUpgrader {
                             hash = map.get("packsha1");
                         Task task = new AppDataUpgraderPackGzTask(NetworkUtils.toURL(map.get("pack")), version.toString(), hash);
                         TaskExecutor executor = task.executor();
-                        JFXUtilities.runInFX(() -> Controllers.taskDialog(executor, Launcher.i18n("message.downloading"), "", null));
+                        AtomicReference<Region> region = new AtomicReference<>();
+                        JFXUtilities.runInFX(() -> region.set(Controllers.taskDialog(executor, Launcher.i18n("message.downloading"), "", null)));
                         if (executor.test()) {
                             new ProcessBuilder(JavaVersion.fromCurrentEnvironment().getBinary().getAbsolutePath(), "-jar", AppDataUpgraderPackGzTask.getSelf(version.toString()).getAbsolutePath())
                                     .directory(new File("").getAbsoluteFile()).start();
                             System.exit(0);
                         }
-                        JFXUtilities.runInFX(Controllers::closeDialog);
+                        JFXUtilities.runInFX(() -> Controllers.closeDialog(region.get()));
                     } catch (IOException ex) {
                         Logging.LOG.log(Level.SEVERE, "Failed to create upgrader", ex);
                     }
