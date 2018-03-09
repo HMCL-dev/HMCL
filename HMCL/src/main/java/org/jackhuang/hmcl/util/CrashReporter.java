@@ -42,6 +42,8 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             put("java.lang.NoClassDefFoundError", Launcher.i18n("crash.NoClassDefFound"));
             put("java.lang.VerifyError", Launcher.i18n("crash.NoClassDefFound"));
             put("java.lang.NoSuchMethodError", Launcher.i18n("crash.NoClassDefFound"));
+            put("java.lang.NoSuchFieldError", Launcher.i18n("crash.NoClassDefFound"));
+            put("netscape.javascript.JSException", Launcher.i18n("crash.NoClassDefFound"));
             put("java.lang.IncompatibleClassChangeError", Launcher.i18n("crash.NoClassDefFound"));
             put("java.lang.ClassFormatError", Launcher.i18n("crash.NoClassDefFound"));
             put("java.lang.OutOfMemoryError", "FUCKING MEMORY LIMIT!");

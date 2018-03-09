@@ -191,14 +191,17 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     }
 
     private void loadBackground() {
-        Image background;
+        try {
+            Image background;
 
-        if (Settings.INSTANCE.getBackgroundImageType() == EnumBackgroundImage.DEFAULT)
-            background = searchBackgroundImage(new Image("/assets/img/background.jpg"), "");
-        else
-            background = searchBackgroundImage(new Image("/assets/img/background.jpg"), Settings.INSTANCE.getBackgroundImage());
+            if (Settings.INSTANCE.getBackgroundImageType() == EnumBackgroundImage.DEFAULT)
+                background = searchBackgroundImage(new Image("/assets/img/background.jpg"), "");
+            else
+                background = searchBackgroundImage(new Image("/assets/img/background.jpg"), Settings.INSTANCE.getBackgroundImage());
 
-        drawerWrapper.setBackground(new Background(new BackgroundImage(background, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, new BackgroundSize(800, 480, false, false, true, true))));
+            drawerWrapper.setBackground(new Background(new BackgroundImage(background, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, new BackgroundSize(800, 480, false, false, true, true))));
+        } catch (IllegalArgumentException ignore) {
+        }
     }
 
     private static Image searchBackgroundImage(Image def, String customPath) {
