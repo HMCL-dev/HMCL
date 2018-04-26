@@ -18,14 +18,23 @@
 package org.jackhuang.hmcl.ui.export;
 
 import javafx.scene.Node;
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.game.HMCLModpackExportTask;
 import org.jackhuang.hmcl.game.HMCLModpackManager;
 import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.setting.Config;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.ZipEngine;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -46,16 +55,73 @@ public final class ExportWizardProvider implements WizardProvider {
     public Object finish(Map<String, Object> settings) {
         @SuppressWarnings("unchecked")
         List<String> whitelist = (List<String>) settings.get(ModpackFileSelectionPage.MODPACK_FILE_SELECTION);
+        List<File> launcherJar = Launcher.getCurrentJarFiles();
+        boolean includeLauncher = (Boolean) settings.get(ModpackInfoPage.MODPACK_INCLUDE_LAUNCHER) && launcherJar != null;
 
-        return new HMCLModpackExportTask(profile.getRepository(), version, whitelist,
-                new Modpack(
-                        (String) settings.get(ModpackInfoPage.MODPACK_NAME),
-                        (String) settings.get(ModpackInfoPage.MODPACK_AUTHOR),
-                        (String) settings.get(ModpackInfoPage.MODPACK_VERSION),
-                        null,
-                        (String) settings.get(ModpackInfoPage.MODPACK_DESCRIPTION),
-                        null
-                ), (File) settings.get(ModpackInfoPage.MODPACK_FILE));
+        return new Task() {
+            Task dependency = null;
+
+            @Override
+            public void execute() throws Exception {
+                File modpackFile = (File) settings.get(ModpackInfoPage.MODPACK_FILE);
+                File tempModpack = includeLauncher ? Files.createTempFile("hmcl", ".zip").toFile() : modpackFile;
+
+                dependency = new HMCLModpackExportTask(profile.getRepository(), version, whitelist,
+                        new Modpack(
+                                (String) settings.get(ModpackInfoPage.MODPACK_NAME),
+                                (String) settings.get(ModpackInfoPage.MODPACK_AUTHOR),
+                                (String) settings.get(ModpackInfoPage.MODPACK_VERSION),
+                                null,
+                                (String) settings.get(ModpackInfoPage.MODPACK_DESCRIPTION),
+                                null
+                        ), tempModpack);
+
+                if (includeLauncher) {
+                    dependency = dependency.then(Task.of(() -> {
+                        boolean flag = true;
+
+                        try (ZipEngine zip = new ZipEngine(modpackFile)) {
+                            Config config = Settings.INSTANCE.getRawConfig();
+
+                            config.setHasProxy(false);
+                            config.setSelectedProfile("");
+                            config.setCommonDirectory(null);
+                            config.setFontFamily("Consolas");
+                            config.setFontSize(12);
+                            config.setJava(null);
+                            config.setLocalization(null);
+                            config.setAccounts(null);
+                            config.setSelectedAccount("");
+                            config.setLogLines(100);
+                            config.setConfigurations(null);
+
+                            zip.putTextFile(Settings.GSON.toJson(config), Settings.SETTINGS_FILE_NAME);
+                            zip.putFile(tempModpack, "modpack.zip");
+
+                            File bg = new File("bg").getAbsoluteFile();
+                            if (bg.isDirectory())
+                                zip.putDirectory(bg);
+
+                            File background_png = new File("background.png").getAbsoluteFile();
+                            if (background_png.isFile())
+                                zip.putFile(background_png, "background.png");
+
+                            File background_jpg = new File("background.jpg").getAbsoluteFile();
+                            if (background_jpg.isFile())
+                                zip.putFile(background_jpg, "background.jpg");
+
+                            for (File jar : launcherJar)
+                                zip.putFile(jar, jar.getName());
+                        }
+                    }));
+                }
+            }
+
+            @Override
+            public Collection<? extends Task> getDependencies() {
+                return Collections.singleton(dependency);
+            }
+        };
     }
 
     @Override

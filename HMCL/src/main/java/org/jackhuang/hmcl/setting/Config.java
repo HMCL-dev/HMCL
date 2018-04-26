@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.util.JavaVersion;
 
 import java.util.*;
 
-final class Config {
+public final class Config implements Cloneable {
 
     @SerializedName("last")
     private String selectedProfile = "";
@@ -97,7 +97,6 @@ final class Config {
 
     public void setSelectedProfile(String selectedProfile) {
         this.selectedProfile = selectedProfile;
-        Settings.INSTANCE.save();
     }
 
     public String getBackgroundImage() {
@@ -106,7 +105,6 @@ final class Config {
 
     public void setBackgroundImage(String backgroundImage) {
         this.backgroundImage = backgroundImage;
-        Settings.INSTANCE.save();
     }
 
     public int getBackgroundImageType() {
@@ -115,7 +113,6 @@ final class Config {
 
     public void setBackgroundImageType(int backgroundImageType) {
         this.backgroundImageType = backgroundImageType;
-        Settings.INSTANCE.save();
     }
 
     public String getCommonDirectory() {
@@ -124,7 +121,6 @@ final class Config {
 
     public void setCommonDirectory(String commonDirectory) {
         this.commonDirectory = commonDirectory;
-        Settings.INSTANCE.save();
     }
 
     public boolean isHasProxy() {
@@ -133,7 +129,6 @@ final class Config {
 
     public void setHasProxy(boolean hasProxy) {
         this.hasProxy = hasProxy;
-        Settings.INSTANCE.save();
     }
 
     public boolean isHasProxyAuth() {
@@ -142,7 +137,6 @@ final class Config {
 
     public void setHasProxyAuth(boolean hasProxyAuth) {
         this.hasProxyAuth = hasProxyAuth;
-        Settings.INSTANCE.save();
     }
 
     public int getProxyType() {
@@ -151,7 +145,6 @@ final class Config {
 
     public void setProxyType(int proxyType) {
         this.proxyType = proxyType;
-        Settings.INSTANCE.save();
     }
 
     public String getProxyHost() {
@@ -160,7 +153,6 @@ final class Config {
 
     public void setProxyHost(String proxyHost) {
         this.proxyHost = proxyHost;
-        Settings.INSTANCE.save();
     }
 
     public String getProxyPort() {
@@ -169,7 +161,6 @@ final class Config {
 
     public void setProxyPort(String proxyPort) {
         this.proxyPort = proxyPort;
-        Settings.INSTANCE.save();
     }
 
     public String getProxyUser() {
@@ -178,7 +169,6 @@ final class Config {
 
     public void setProxyUser(String proxyUser) {
         this.proxyUser = proxyUser;
-        Settings.INSTANCE.save();
     }
 
     public String getProxyPass() {
@@ -187,7 +177,6 @@ final class Config {
 
     public void setProxyPass(String proxyPass) {
         this.proxyPass = proxyPass;
-        Settings.INSTANCE.save();
     }
 
     public String getTheme() {
@@ -196,7 +185,6 @@ final class Config {
 
     public void setTheme(String theme) {
         this.theme = theme;
-        Settings.INSTANCE.save();
     }
 
     public List<JavaVersion> getJava() {
@@ -205,7 +193,6 @@ final class Config {
 
     public void setJava(List<JavaVersion> java) {
         this.java = java;
-        Settings.INSTANCE.save();
     }
 
     public String getLocalization() {
@@ -214,7 +201,6 @@ final class Config {
 
     public void setLocalization(String localization) {
         this.localization = localization;
-        Settings.INSTANCE.save();
     }
 
     public int getDownloadType() {
@@ -223,7 +209,6 @@ final class Config {
 
     public void setDownloadType(int downloadType) {
         this.downloadType = downloadType;
-        Settings.INSTANCE.save();
     }
 
     public Map<String, Profile> getConfigurations() {
@@ -232,7 +217,6 @@ final class Config {
 
     public void setConfigurations(Map<String, Profile> configurations) {
         this.configurations = configurations;
-        Settings.INSTANCE.save();
     }
 
     public List<Map<Object, Object>> getAccounts() {
@@ -241,7 +225,6 @@ final class Config {
 
     public void setAccounts(List<Map<Object, Object>> accounts) {
         this.accounts = accounts;
-        Settings.INSTANCE.save();
     }
 
     public String getSelectedAccount() {
@@ -250,7 +233,6 @@ final class Config {
 
     public void setSelectedAccount(String selectedAccount) {
         this.selectedAccount = selectedAccount;
-        Settings.INSTANCE.save();
     }
 
     public String getFontFamily() {
@@ -259,7 +241,6 @@ final class Config {
 
     public void setFontFamily(String fontFamily) {
         this.fontFamily = fontFamily;
-        Settings.INSTANCE.save();
     }
 
     public double getFontSize() {
@@ -268,7 +249,6 @@ final class Config {
 
     public void setFontSize(double fontSize) {
         this.fontSize = fontSize;
-        Settings.INSTANCE.save();
     }
 
     public int getLogLines() {
@@ -285,6 +265,9 @@ final class Config {
 
     public void setAuthlibInjectorServerURLs(Set<String> authlibInjectorServerURLs) {
         this.authlibInjectorServerURLs = authlibInjectorServerURLs;
-        Settings.INSTANCE.save();
+    }
+
+    public Config clone() {
+        return Settings.GSON.fromJson(Settings.GSON.toJson(this), Config.class);
     }
 }

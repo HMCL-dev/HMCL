@@ -31,7 +31,13 @@ import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -121,6 +127,25 @@ public final class Launcher extends Application {
             default:
                 return new File(home, folder + "/");
         }
+    }
+
+    public static List<File> getCurrentJarFiles() {
+        List<File> result = new LinkedList<>();
+        if (Launcher.class.getClassLoader() instanceof URLClassLoader) {
+            URL[] urls = ((URLClassLoader) Launcher.class.getClassLoader()).getURLs();
+            for (URL u : urls)
+                try {
+                    File f = new File(u.toURI());
+                    if (f.isFile() && (f.getName().endsWith(".exe") || f.getName().endsWith(".jar")))
+                        result.add(f);
+                } catch (URISyntaxException e) {
+                    return null;
+                }
+        }
+        if (result.isEmpty())
+            return null;
+        else
+            return result;
     }
 
     public static String i18n(String key) {

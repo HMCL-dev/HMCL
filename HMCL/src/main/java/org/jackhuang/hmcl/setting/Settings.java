@@ -55,7 +55,8 @@ public class Settings {
     public static final String DEFAULT_PROFILE = "Default";
     public static final String HOME_PROFILE = "Home";
 
-    public static final File SETTINGS_FILE = new File("hmcl.json").getAbsoluteFile();
+    public static final String SETTINGS_FILE_NAME = "hmcl.json";
+    public static final File SETTINGS_FILE = new File(SETTINGS_FILE_NAME).getAbsoluteFile();
 
     public static final Settings INSTANCE = new Settings();
 
@@ -144,6 +145,7 @@ public class Settings {
             super.invalidated();
 
             SETTINGS.setCommonDirectory(get());
+            save();
         }
     };
 
@@ -168,6 +170,7 @@ public class Settings {
     public void setLocale(Locales.SupportedLocale locale) {
         this.locale = locale;
         SETTINGS.setLocalization(Locales.getNameByLocale(locale));
+        save();
     }
 
     private Proxy proxy = Proxy.NO_PROXY;
@@ -185,6 +188,7 @@ public class Settings {
     public void setProxyType(Proxy.Type proxyType) {
         this.proxyType = proxyType;
         SETTINGS.setProxyType(Proxies.PROXIES.indexOf(proxyType));
+        save();
         loadProxy();
     }
 
@@ -194,6 +198,7 @@ public class Settings {
 
     public void setProxyHost(String proxyHost) {
         SETTINGS.setProxyHost(proxyHost);
+        save();
     }
 
     public String getProxyPort() {
@@ -202,6 +207,7 @@ public class Settings {
 
     public void setProxyPort(String proxyPort) {
         SETTINGS.setProxyPort(proxyPort);
+        save();
     }
 
     public String getProxyUser() {
@@ -210,6 +216,7 @@ public class Settings {
 
     public void setProxyUser(String proxyUser) {
         SETTINGS.setProxyUser(proxyUser);
+        save();
     }
 
     public String getProxyPass() {
@@ -218,15 +225,22 @@ public class Settings {
 
     public void setProxyPass(String proxyPass) {
         SETTINGS.setProxyPass(proxyPass);
+        save();
     }
 
     public boolean hasProxy() { return SETTINGS.isHasProxy(); }
 
-    public void setHasProxy(boolean hasProxy) { SETTINGS.setHasProxy(hasProxy); }
+    public void setHasProxy(boolean hasProxy) {
+        SETTINGS.setHasProxy(hasProxy);
+        save();
+    }
 
     public boolean hasProxyAuth() { return SETTINGS.isHasProxyAuth(); }
 
-    public void setHasProxyAuth(boolean hasProxyAuth) { SETTINGS.setHasProxyAuth(hasProxyAuth); }
+    public void setHasProxyAuth(boolean hasProxyAuth) {
+        SETTINGS.setHasProxyAuth(hasProxyAuth);
+        save();
+    }
 
     private void loadProxy() {
         String host = getProxyHost();
@@ -261,6 +275,7 @@ public class Settings {
     public void setFont(Font font) {
         SETTINGS.setFontFamily(font.getFamily());
         SETTINGS.setFontSize(font.getSize());
+        save();
     }
 
     public int getLogLines() {
@@ -269,6 +284,7 @@ public class Settings {
 
     public void setLogLines(int logLines) {
         SETTINGS.setLogLines(logLines);
+        save();
     }
 
     /****************************************
@@ -296,8 +312,10 @@ public class Settings {
     }
 
     private void checkAuthlibInjectorServerURLs() {
-        if (SETTINGS.getAuthlibInjectorServerURLs() == null)
+        if (SETTINGS.getAuthlibInjectorServerURLs() == null) {
             SETTINGS.setAuthlibInjectorServerURLs(new HashSet<>());
+            save();
+        }
     }
 
     private void checkAuthlibInjectorAccounts() {
@@ -323,6 +341,7 @@ public class Settings {
         if (index == -1)
             throw new IllegalArgumentException("Unknown download provider: " + downloadProvider);
         SETTINGS.setDownloadType(index);
+        save();
     }
 
     /****************************************
@@ -352,6 +371,7 @@ public class Settings {
             super.invalidated();
 
             SETTINGS.setSelectedAccount(getValue() == null ? "" : Accounts.getAccountId(getValue()));
+            save();
         }
     };
 
@@ -404,6 +424,7 @@ public class Settings {
             super.invalidated();
 
             SETTINGS.setBackgroundImage(get());
+            save();
         }
     };
 
@@ -425,6 +446,7 @@ public class Settings {
             super.invalidated();
 
             SETTINGS.setBackgroundImageType(get().ordinal());
+            save();
         }
     };
 
@@ -450,6 +472,7 @@ public class Settings {
             super.invalidated();
 
             SETTINGS.setTheme(get().getName().toLowerCase());
+            save();
         }
     };
 
@@ -473,7 +496,10 @@ public class Settings {
         checkProfileMap();
 
         if (!hasProfile(SETTINGS.getSelectedProfile())) {
-            getProfileMap().keySet().stream().findFirst().ifPresent(SETTINGS::setSelectedProfile);
+            getProfileMap().keySet().stream().findFirst().ifPresent(selectedProfile -> {
+                SETTINGS.setSelectedProfile(selectedProfile);
+                save();
+            });
             Schedulers.computation().schedule(this::onProfileChanged);
         }
         return getProfile(SETTINGS.getSelectedProfile());
@@ -482,6 +508,7 @@ public class Settings {
     public void setSelectedProfile(Profile selectedProfile) {
         if (hasProfile(selectedProfile.getName()) && !Objects.equals(selectedProfile.getName(), SETTINGS.getSelectedProfile())) {
             SETTINGS.setSelectedProfile(selectedProfile.getName());
+            save();
             Schedulers.computation().schedule(this::onProfileChanged);
         }
     }
@@ -554,5 +581,9 @@ public class Settings {
 
     public void onAccountLoading() {
         EventBus.EVENT_BUS.fireEvent(new AccountLoadingEvent(this, getAccounts()));
+    }
+
+    public Config getRawConfig() {
+        return SETTINGS.clone();
     }
 }

@@ -33,8 +33,10 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.FileUtils;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -45,12 +47,16 @@ public final class ModpackInfoPage extends StackPane implements WizardPage {
     @FXML
     private JFXTextField txtModpackName;
     @FXML
-    private JFXTextField txtModpackAuthor;@FXML
-    private JFXTextField txtModpackVersion;@FXML
+    private JFXTextField txtModpackAuthor;
+    @FXML
+    private JFXTextField txtModpackVersion;
+    @FXML
     private JFXTextArea txtModpackDescription;
     @FXML
-    private JFXToggleButton chkIncludeLauncher;@FXML
-    private JFXButton btnNext;@FXML
+    private JFXToggleButton chkIncludeLauncher;
+    @FXML
+    private JFXButton btnNext;
+    @FXML
     private ScrollPane scroll;
 
     public ModpackInfoPage(WizardController controller, String version) {
@@ -63,6 +69,10 @@ public final class ModpackInfoPage extends StackPane implements WizardPage {
         txtModpackVersion.textProperty().addListener(e -> checkValidation());
         txtModpackAuthor.setText(Optional.ofNullable(Settings.INSTANCE.getSelectedAccount()).map(Account::getUsername).orElse(""));
         lblVersionName.setText(version);
+
+        List<File> launcherJar = Launcher.getCurrentJarFiles();
+        if (launcherJar == null)
+            chkIncludeLauncher.setDisable(true);
     }
 
     private void checkValidation() {
