@@ -195,10 +195,10 @@ public final class LeftPaneController {
     }
 
     private boolean checkedModpack = false;
+    private static boolean showNewAccount = true;
 
     private void onRefreshedVersions(RefreshedVersionsEvent event) {
         JFXUtilities.runInFX(() -> {
-            boolean flag = true;
             HMCLGameRepository repository = (HMCLGameRepository) event.getSource();
             if (!checkedModpack) {
                 checkedModpack = true;
@@ -216,15 +216,17 @@ public final class LeftPaneController {
                                     })).executor();
                             region.set(Controllers.taskDialog(executor, Launcher.i18n("modpack.installing"), ""));
                             executor.start();
-                            flag = false;
+                            showNewAccount = false;
                         } catch (UnsupportedModpackException ignore) {
                         }
                     }
                 }
             }
 
-            if (flag)
+            if (showNewAccount) {
+                showNewAccount = false;
                 checkAccount();
+            }
         });
     }
 

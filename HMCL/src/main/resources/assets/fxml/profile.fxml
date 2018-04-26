@@ -31,7 +31,7 @@
                     </right>
                 </BorderPane>
 
-                <FileItem fx:id="gameDir" name="%profile.instance_directory" title="%settings.choose_gamedir"/>
+                <FileItem fx:id="gameDir" name="%profile.instance_directory" title="%profile.instance_directory.choose"/>
             </ComponentList>
 
         </VBox>
