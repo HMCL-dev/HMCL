@@ -137,6 +137,10 @@ public class Library implements Comparable<Library> {
         return checksums;
     }
 
+    public List<CompatibilityRule> getRules() {
+        return rules;
+    }
+
     public boolean is(String groupId, String artifactId) {
         return this.groupId.equals(groupId) && this.artifactId.equals(artifactId);
     }

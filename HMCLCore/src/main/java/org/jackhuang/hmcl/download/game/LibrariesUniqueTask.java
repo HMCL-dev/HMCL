@@ -17,10 +17,12 @@
  */
 package org.jackhuang.hmcl.download.game;
 
+import org.jackhuang.hmcl.game.CompatibilityRule;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.Platform;
 import org.jackhuang.hmcl.util.SimpleMultimap;
 import org.jackhuang.hmcl.util.VersionNumber;
 
@@ -44,7 +46,6 @@ public class LibrariesUniqueTask extends TaskResult<Version> {
     public void execute() {
         List<Library> libraries = new ArrayList<>(version.getLibraries());
 
-        Map<String, VersionNumber> versionMap = new HashMap<>();
         SimpleMultimap<String, Library> multimap = new SimpleMultimap<String, Library>(HashMap::new, LinkedList::new);
 
         for (Library library : libraries) {
@@ -52,32 +53,36 @@ public class LibrariesUniqueTask extends TaskResult<Version> {
             VersionNumber number = VersionNumber.asVersion(library.getVersion());
             String serialized = Constants.GSON.toJson(library);
 
-            if (versionMap.containsKey(id)) {
-                VersionNumber otherNumber = versionMap.get(id);
-                if (number.compareTo(otherNumber) > 0) {
-                    multimap.removeKey(id);
-                    versionMap.put(id, number);
-                    multimap.put(id, library);
-                } else if (number.compareTo(otherNumber) == 0) { // same library id.
-                    boolean flag = false;
-                    // prevent from duplicated libraries
-                    for (Library otherLibrary : multimap.get(id))
-                        if (library.equals(otherLibrary)) {
-                            String otherSerialized = Constants.GSON.toJson(otherLibrary);
-                            // A trick, the library that has more information is better, which can be
-                            // considered whose serialized JSON text will be longer.
-                            if (serialized.length() <= otherSerialized.length()) {
-                                flag = true;
-                                break;
-                            } else {
-                                multimap.removeValue(id, otherLibrary);
+            if (multimap.containsKey(id)) {
+                boolean hasEqualRule = false;
+                for (Library otherLibrary : multimap.get(id)) {
+                    VersionNumber otherNumber = VersionNumber.asVersion(otherLibrary.getVersion());
+                    if (CompatibilityRule.equals(library.getRules(), otherLibrary.getRules())) { // rules equal, ignore older version.
+                        hasEqualRule = true;
+                        if (number.compareTo(otherNumber) > 0) { // if this library is newer
+                            multimap.removeValue(otherLibrary);
+                            multimap.put(id, library);
+                            break;
+                        } else if (number.compareTo(otherNumber) == 0) { // same library id.
+                            // prevent from duplicated libraries
+                            if (library.equals(otherLibrary)) {
+                                String otherSerialized = Constants.GSON.toJson(otherLibrary);
+                                // A trick, the library that has more information is better, which can be
+                                // considered whose serialized JSON text will be longer.
+                                if (serialized.length() > otherSerialized.length()) {
+                                    multimap.removeValue(id, otherLibrary);
+                                    multimap.put(id, library);
+                                    break;
+                                }
                             }
                         }
-                    if (!flag)
-                        multimap.put(id, library);
+                    }
+                }
+
+                if (!hasEqualRule) {
+                    multimap.put(id, library);
                 }
             } else {
-                versionMap.put(id, number);
                 multimap.put(id, library);
             }
         }
