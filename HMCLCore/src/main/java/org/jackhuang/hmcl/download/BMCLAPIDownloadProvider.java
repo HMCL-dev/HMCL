@@ -36,27 +36,27 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
 
     @Override
     public String getLibraryBaseURL() {
-        return "http://bmclapi2.bangbang93.com/libraries/";
+        return "https://bmclapi2.bangbang93.com/libraries/";
     }
 
     @Override
     public String getVersionListURL() {
-        return "http://bmclapi2.bangbang93.com/mc/game/version_manifest.json";
+        return "https://bmclapi2.bangbang93.com/mc/game/version_manifest.json";
     }
 
     @Override
     public String getVersionBaseURL() {
-        return "http://bmclapi2.bangbang93.com/versions/";
+        return "https://bmclapi2.bangbang93.com/versions/";
     }
 
     @Override
     public String getAssetIndexBaseURL() {
-        return "http://bmclapi2.bangbang93.com/indexes/";
+        return "https://bmclapi2.bangbang93.com/indexes/";
     }
 
     @Override
     public String getAssetBaseURL() {
-        return "http://bmclapi2.bangbang93.com/assets/";
+        return "https://bmclapi2.bangbang93.com/assets/";
     }
 
     @Override
@@ -78,12 +78,12 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
     @Override
     public String injectURL(String baseURL) {
         return baseURL
-                .replace("https://launchermeta.mojang.com", "http://bmclapi2.bangbang93.com")
-                .replace("https://launcher.mojang.com", "http://bmclapi2.bangbang93.com")
-                .replace("https://libraries.minecraft.net", "http://bmclapi2.bangbang93.com/libraries")
-                .replaceFirst("https?://files\\.minecraftforge\\.net/maven", "http://bmclapi2.bangbang93.com/maven")
-                .replace("http://dl.liteloader.com/versions/versions.json", "http://bmclapi2.bangbang93.com/maven/com/mumfrey/liteloader/versions.json")
-                .replace("http://dl.liteloader.com/versions", "http://bmclapi2.bangbang93.com/maven");
+                .replace("https://launchermeta.mojang.com", "https://bmclapi2.bangbang93.com")
+                .replace("https://launcher.mojang.com", "https://bmclapi2.bangbang93.com")
+                .replace("https://libraries.minecraft.net", "https://bmclapi2.bangbang93.com/libraries")
+                .replaceFirst("https?://files\\.minecraftforge\\.net/maven", "https://bmclapi2.bangbang93.com/maven")
+                .replace("http://dl.liteloader.com/versions/versions.json", "https://bmclapi2.bangbang93.com/maven/com/mumfrey/liteloader/versions.json")
+                .replace("http://dl.liteloader.com/versions", "https://bmclapi2.bangbang93.com/maven");
     }
 
 }

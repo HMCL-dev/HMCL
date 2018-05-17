@@ -295,7 +295,7 @@ public class DefaultLauncher extends Launcher {
             if (isWindows) {
                 writer.write("@echo off");
                 writer.newLine();
-                writer.write("set APPDATA=" + options.getGameDir().getParent());
+                writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
                 writer.newLine();
                 writer.write("cd /D %APPDATA%");
                 writer.newLine();
