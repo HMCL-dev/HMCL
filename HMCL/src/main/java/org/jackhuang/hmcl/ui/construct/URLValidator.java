@@ -17,10 +17,6 @@ public class URLValidator extends ValidatorBase {
         super();
     }
 
-    public URLValidator(@NamedArg("message") String message) {
-        super(message);
-    }
-
     public ObservableList<String> getProtocols() {
         return protocols;
     }
