@@ -17,6 +17,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionHandler;
+import org.jackhuang.hmcl.ui.construct.URLValidator;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.NetworkUtils;
@@ -45,6 +46,9 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
     @FXML private JFXProgressBar progressBar;
     @FXML private JFXButton btnAddNext;
 
+    @FXML private URLValidator validatorURL;
+    @FXML private URLValidator validatorHttp;
+
     private final TransitionHandler transitionHandler;
 
     {
@@ -54,6 +58,9 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
 
         getChildren().remove(dialog);
         dialog.setDialogContainer(this);
+
+        validatorURL.setMessage(Launcher.i18n("input.url"));
+        validatorHttp.setMessage(Launcher.i18n("input.url.http"));
 
         txtServerIp.textProperty().addListener((a, b, newValue) ->
                 btnAddNext.setDisable(!txtServerIp.validate()));

@@ -34,9 +34,9 @@
                     <body>
                         <JFXTextField fx:id="txtServerIp" promptText="%account.injector.server_ip">
                             <validators>
-                                <URLValidator message="%input.url">
+                                <URLValidator fx:id="validatorURL">
                                 </URLValidator>
-                                <URLValidator message="%input.url.http">
+                                <URLValidator fx:id="validatorHttp">
                                     <protocols>
                                         <String fx:value="http" />
                                         <String fx:value="https" />
