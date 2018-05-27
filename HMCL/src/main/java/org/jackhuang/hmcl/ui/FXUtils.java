@@ -47,6 +47,8 @@ import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -54,9 +56,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
-
-import static org.jackhuang.hmcl.util.ReflectionHelper.call;
-import static org.jackhuang.hmcl.util.ReflectionHelper.construct;
 
 public final class FXUtils {
     private FXUtils() {
@@ -214,17 +213,22 @@ public final class FXUtils {
     public static void installTooltip(Node node, double openDelay, double visibleDelay, double closeDelay, Tooltip tooltip) {
         try {
             // Java 8
-            call(construct(Class.forName("javafx.scene.control.Tooltip$TooltipBehavior"), new Duration(openDelay), new Duration(visibleDelay), new Duration(closeDelay), false),
-                    "install", node, tooltip);
-        } catch (Throwable e) {
+            Class<?> behaviorClass = Class.forName("javafx.scene.control.Tooltip$TooltipBehavior");
+            Constructor<?> behaviorConstructor = behaviorClass.getDeclaredConstructor(Duration.class, Duration.class, Duration.class, boolean.class);
+            behaviorConstructor.setAccessible(true);
+            Object behavior = behaviorConstructor.newInstance(new Duration(openDelay), new Duration(visibleDelay), new Duration(closeDelay), false);
+            Method installMethod = behaviorClass.getDeclaredMethod("install", Node.class, Tooltip.class);
+            installMethod.setAccessible(true);
+            installMethod.invoke(behavior, node, tooltip);
+        } catch (ReflectiveOperationException e) {
             try {
                 // Java 9
-                call(tooltip, "setShowDelay", new Duration(openDelay));
-                call(tooltip, "setShowDuration", new Duration(visibleDelay));
-                call(tooltip, "setHideDelay", new Duration(closeDelay));
-            } catch (Throwable e2) {
+                Tooltip.class.getMethod("setShowDelay", Duration.class).invoke(tooltip, new Duration(openDelay));
+                Tooltip.class.getMethod("setShowDuration", Duration.class).invoke(tooltip, new Duration(visibleDelay));
+                Tooltip.class.getMethod("setHideDelay", Duration.class).invoke(tooltip, new Duration(closeDelay));
+            } catch (ReflectiveOperationException e2) {
                 e.addSuppressed(e2);
-                Logging.LOG.log(Level.SEVERE, "Cannot install tooltip by reflection", e);
+                Logging.LOG.log(Level.SEVERE, "Cannot install tooltip", e);
             }
             Tooltip.install(node, tooltip);
         }
