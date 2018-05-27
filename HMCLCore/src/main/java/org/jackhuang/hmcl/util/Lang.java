@@ -218,12 +218,12 @@ public final class Lang {
      * @param <V> the type that {@code obj} is being cast to.
      * @return {@code obj} in the type of {@code V}.
      */
-    @SuppressWarnings("unchecked")
-    public static <V> Optional<V> cast(Object obj, Class<V> clazz) {
-        if (obj == null || !ReflectionHelper.isInstance(clazz, obj))
+    public static <V> Optional<V> tryCast(Object obj, Class<V> clazz) {
+        if (clazz.isInstance(obj)) {
+            return Optional.of(clazz.cast(obj));
+        } else {
             return Optional.empty();
-        else
-            return Optional.of((V) obj);
+        }
     }
 
     /**
@@ -238,20 +238,6 @@ public final class Lang {
             return Optional.empty();
         else
             return Optional.ofNullable(list.get(index));
-    }
-
-    /**
-     * Get the value to which the specific key is mapped,
-     * or {@code null} if {@code map} has no mapping for the key
-     * or the value is not in the type of {@code clazz}.
-     *
-     * @param map the map
-     * @param key the key for finding the associate value.
-     * @param <V> the type of values in {@code map}
-     * @return the value to which the specific key is mapped, or {@code null} if {@code map} has no mapping for the key or the type is not correct.
-     */
-    public static <V> Optional<V> get(Map<?, ?> map, Object key, Class<V> clazz) {
-        return cast(map.get(key), clazz);
     }
 
     /**

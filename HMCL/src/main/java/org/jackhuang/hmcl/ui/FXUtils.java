@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.adapters.ReflectionHelper;
 import com.jfoenix.controls.*;
+
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
@@ -42,6 +43,7 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
+
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.util.*;
 
@@ -56,6 +58,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
+
+import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 public final class FXUtils {
     private FXUtils() {
@@ -124,7 +128,7 @@ public final class FXUtils {
     }
 
     public static void removeListener(Node node, String key) {
-        Lang.cast(node.getProperties().get(key), ListenerPair.class)
+        tryCast(node.getProperties().get(key), ListenerPair.class)
                 .ifPresent(info -> {
                     info.unbind();
                     node.getProperties().remove(key);
@@ -337,7 +341,7 @@ public final class FXUtils {
      */
     @SuppressWarnings("unchecked")
     public static void unbindEnum(JFXComboBox<?> comboBox) {
-        ChangeListener listener = Lang.get(comboBox.getProperties(), "FXUtils.bindEnum.listener", ChangeListener.class).orElse(null);
+        ChangeListener listener = tryCast(comboBox.getProperties().get("FXUtils.bindEnum.listener"), ChangeListener.class).orElse(null);
         if (listener == null) return;
         comboBox.getSelectionModel().selectedIndexProperty().removeListener(listener);
     }

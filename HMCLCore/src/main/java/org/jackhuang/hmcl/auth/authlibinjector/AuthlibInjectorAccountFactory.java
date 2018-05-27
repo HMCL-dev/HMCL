@@ -6,7 +6,6 @@ import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
 import org.jackhuang.hmcl.util.ExceptionalSupplier;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.NetworkUtils;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
@@ -14,6 +13,8 @@ import java.net.Proxy;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+
+import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjectorAccount> {
     private final ExceptionalSupplier<String, ?> injectorJarPathSupplier;
@@ -43,13 +44,13 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
         Objects.requireNonNull(storage);
         Objects.requireNonNull(proxy);
 
-        String username = Lang.get(storage, "username", String.class)
+        String username = tryCast(storage.get("username"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have username"));
-        String clientToken = Lang.get(storage, "clientToken", String.class)
+        String clientToken = tryCast(storage.get("clientToken"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have client token."));
-        String character = Lang.get(storage, "clientToken", String.class)
+        String character = tryCast(storage.get("clientToken"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have selected character name."));
-        String apiRoot = Lang.get(storage, "serverBaseURL", String.class)
+        String apiRoot = tryCast(storage.get("serverBaseURL"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have API root."));
 
         return new AuthlibInjectorAccount(new YggdrasilService(new AuthlibInjectorProvider(apiRoot), proxy),

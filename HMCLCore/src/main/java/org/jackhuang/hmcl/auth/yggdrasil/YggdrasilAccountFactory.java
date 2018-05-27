@@ -20,13 +20,14 @@ package org.jackhuang.hmcl.auth.yggdrasil;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CharacterSelector;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
 import java.net.Proxy;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+
+import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 /**
  *
@@ -57,11 +58,11 @@ public class YggdrasilAccountFactory extends AccountFactory<YggdrasilAccount> {
         Objects.requireNonNull(storage);
         Objects.requireNonNull(proxy);
 
-        String username = Lang.get(storage, "username", String.class)
+        String username = tryCast(storage.get("username"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have username"));
-        String clientToken = Lang.get(storage, "clientToken", String.class)
+        String clientToken = tryCast(storage.get("clientToken"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have client token."));
-        String character = Lang.get(storage, "clientToken", String.class)
+        String character = tryCast(storage.get("clientToken"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have selected character name."));
 
         return new YggdrasilAccount(new YggdrasilService(provider, proxy), username, clientToken, character, YggdrasilSession.fromStorage(storage));

@@ -17,32 +17,11 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.util.Map;
-
 /**
  *
  * @author huangyuhui
  */
 public final class ReflectionHelper {
-
-    private static final Map<String, Class<?>> PRIMITIVES;
-
-    static {
-        PRIMITIVES = Lang.mapOf(
-                new Pair<>("byte", Byte.class),
-                new Pair<>("short", Short.class),
-                new Pair<>("int", Integer.class),
-                new Pair<>("long", Long.class),
-                new Pair<>("char", Character.class),
-                new Pair<>("float", Float.class),
-                new Pair<>("double", Double.class),
-                new Pair<>("boolean", Boolean.class)
-        );
-    }
-
-    public static boolean isInstance(Class<?> superClass, Object obj) {
-        return superClass.isInstance(obj) || PRIMITIVES.get(superClass.getName()) == obj.getClass();
-    }
 
     public static StackTraceElement getCaller() {
         StackTraceElement[] elements = Thread.currentThread().getStackTrace();

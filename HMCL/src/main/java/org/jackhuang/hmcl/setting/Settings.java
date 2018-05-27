@@ -45,6 +45,8 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.util.Lang.tryCast;
+
 public class Settings {
     public static final Gson GSON = new GsonBuilder()
             .registerTypeAdapter(VersionSetting.class, VersionSetting.Serializer.INSTANCE)
@@ -71,7 +73,7 @@ public class Settings {
 
         for (Iterator<Map<Object, Object>> iterator = SETTINGS.getAccounts().iterator(); iterator.hasNext(); ) {
             Map<Object, Object> settings = iterator.next();
-            AccountFactory<?> factory = Accounts.ACCOUNT_FACTORY.get(Lang.get(settings, "type", String.class).orElse(""));
+            AccountFactory<?> factory = Accounts.ACCOUNT_FACTORY.get(tryCast(settings.get("type"), String.class).orElse(""));
             if (factory == null) {
                 // unrecognized account type, so remove it.
                 iterator.remove();
