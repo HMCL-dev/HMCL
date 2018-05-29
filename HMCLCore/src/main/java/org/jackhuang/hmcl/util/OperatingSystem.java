@@ -24,6 +24,11 @@ import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
 import java.util.Locale;
+import java.util.Optional;
+
+import javax.management.JMException;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 /**
  * Represents the operating system.
@@ -103,11 +108,9 @@ public enum OperatingSystem {
         else
             CURRENT_OS = UNKNOWN;
 
-        Object bytes = ReflectionHelper.call(ManagementFactory.getOperatingSystemMXBean(), "getTotalPhysicalMemorySize");
-        if (bytes instanceof Long)
-            TOTAL_MEMORY = (int) (((Long) bytes) / 1024 / 1024);
-        else
-            TOTAL_MEMORY = 1024;
+        TOTAL_MEMORY = getTotalPhysicalMemorySize()
+                .map(bytes -> (int) (bytes / 1024 / 1024))
+                .orElse(1024);
 
         SUGGESTED_MEMORY = (int) (Math.round(1.0 * TOTAL_MEMORY / 4.0 / 128.0) * 128);
 
@@ -115,6 +118,19 @@ public enum OperatingSystem {
         if (arch == null)
             arch = System.getProperty("os.arch");
         SYSTEM_ARCHITECTURE = arch;
+    }
+
+    private static Optional<Long> getTotalPhysicalMemorySize() {
+        MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+        try {
+            Object attribute = mBeanServer.getAttribute(new ObjectName("java.lang", "type", "OperatingSystem"), "TotalPhysicalMemorySize");
+            if (attribute instanceof Long) {
+                return Optional.of((Long) attribute);
+            }
+        } catch (JMException e) {
+            return Optional.empty();
+        }
+        return Optional.empty();
     }
 
     public static void setClipboard(String string) {

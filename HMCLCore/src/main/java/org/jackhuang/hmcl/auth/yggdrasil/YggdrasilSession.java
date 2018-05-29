@@ -1,11 +1,12 @@
 package org.jackhuang.hmcl.auth.yggdrasil;
 
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 public class YggdrasilSession {
 
@@ -54,20 +55,20 @@ public class YggdrasilSession {
     }
 
     public static YggdrasilSession fromStorage(Map<?, ?> storage) {
-        Optional<String> profileId = Lang.get(storage, "uuid", String.class);
-        Optional<String> profileName = Lang.get(storage, "displayName", String.class);
+        Optional<String> profileId = tryCast(storage.get("uuid"), String.class);
+        Optional<String> profileName = tryCast(storage.get("displayName"), String.class);
         GameProfile profile = null;
         if (profileId.isPresent() && profileName.isPresent()) {
             profile = new GameProfile(UUIDTypeAdapter.fromString(profileId.get()), profileName.get(),
-                    Lang.get(storage, "profileProperties", Map.class).map(PropertyMap::fromMap).orElseGet(PropertyMap::new));
+                    tryCast(storage.get("profileProperties"), Map.class).map(PropertyMap::fromMap).orElseGet(PropertyMap::new));
         }
 
         return new YggdrasilSession(
-                Lang.get(storage, "accessToken", String.class).orElse(null),
+                tryCast(storage.get("accessToken"), String.class).orElse(null),
                 profile,
                 null,
-                Lang.get(storage, "userid", String.class)
-                        .map(userId -> new User(userId, Lang.get(storage, "userProperties", Map.class).map(PropertyMap::fromMap).orElse(null)))
+                tryCast(storage.get("userid"), String.class)
+                        .map(userId -> new User(userId, tryCast(storage.get("userProperties"), Map.class).map(PropertyMap::fromMap).orElse(null)))
                         .orElse(null)
         );
     }

@@ -35,6 +35,7 @@ import java.io.File;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.Launcher.i18n;
+import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 public final class DownloadWizardProvider implements WizardProvider {
     private Profile profile;
@@ -67,9 +68,9 @@ public final class DownloadWizardProvider implements WizardProvider {
         if (!settings.containsKey(ModpackPage.MODPACK_FILE))
             return null;
 
-        File selected = Lang.get(settings, ModpackPage.MODPACK_FILE, File.class).orElse(null);
-        Modpack modpack = Lang.get(settings, ModpackPage.MODPACK_CURSEFORGE_MANIFEST, Modpack.class).orElse(null);
-        String name = Lang.get(settings, ModpackPage.MODPACK_NAME, String.class).orElse(null);
+        File selected = tryCast(settings.get(ModpackPage.MODPACK_FILE), File.class).orElse(null);
+        Modpack modpack = tryCast(settings.get(ModpackPage.MODPACK_CURSEFORGE_MANIFEST), Modpack.class).orElse(null);
+        String name = tryCast(settings.get(ModpackPage.MODPACK_NAME), String.class).orElse(null);
         if (selected == null || modpack == null || name == null) return null;
 
         return ModpackHelper.getInstallTask(profile, selected, name, modpack);

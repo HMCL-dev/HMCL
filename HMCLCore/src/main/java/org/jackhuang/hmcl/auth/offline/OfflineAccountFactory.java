@@ -20,14 +20,12 @@ package org.jackhuang.hmcl.auth.offline;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
 import java.net.Proxy;
 import java.util.Map;
-import java.util.UUID;
-import java.util.logging.Level;
+
+import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 /**
  *
@@ -46,9 +44,9 @@ public class OfflineAccountFactory extends AccountFactory<OfflineAccount> {
 
     @Override
     public OfflineAccount fromStorage(Map<Object, Object> storage, Proxy proxy) {
-        String username = Lang.get(storage, "username", String.class)
+        String username = tryCast(storage.get("username"), String.class)
                 .orElseThrow(() -> new IllegalStateException("Offline account configuration malformed."));
-        String uuid = Lang.get(storage, "uuid", String.class)
+        String uuid = tryCast(storage.get("uuid"), String.class)
                 .orElse(getUUIDFromUserName(username));
 
         // Check if the uuid is vaild
