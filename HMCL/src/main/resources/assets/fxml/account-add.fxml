@@ -25,13 +25,13 @@
 
                 <JFXComboBox fx:id="cboType" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="2"/>
 
-                <Label fx:id="lblAddInjectorServer" text="%account.injector.server" GridPane.halignment="RIGHT"
+                <Label fx:id="lblInjectorServer" text="%account.injector.server" GridPane.halignment="RIGHT"
                        GridPane.columnIndex="0" GridPane.rowIndex="1"/>
 
                 <JFXComboBox fx:id="cboServers" maxHeight="25" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
 
-                <Hyperlink fx:id="linkAddInjectorServer" text="%account.injector.add"
-                           onMouseClicked="#onAddInjecterServer" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                <Hyperlink fx:id="linkManageInjectorServers" text="%account.injector.manage"
+                           onMouseClicked="#onManageInjecterServers" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
 
                 <Label text="%account.username" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
 
