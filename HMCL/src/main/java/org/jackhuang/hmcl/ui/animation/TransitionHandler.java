@@ -22,6 +22,7 @@ import javafx.animation.Timeline;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
 public final class TransitionHandler implements AnimationHandler {
@@ -36,6 +37,12 @@ public final class TransitionHandler implements AnimationHandler {
     public TransitionHandler(StackPane view) {
         this.view = view;
         currentNode = view.getChildren().stream().findFirst().orElse(null);
+
+        // prevent content overflow
+        Rectangle clip = new Rectangle();
+        clip.widthProperty().bind(view.widthProperty());
+        clip.heightProperty().bind(view.heightProperty());
+        view.setClip(clip);
     }
 
     @Override
