@@ -83,9 +83,11 @@ public final class AccountHelper {
     }
 
     public static Image getSkin(YggdrasilAccount account, double scaleRatio) {
-        if (account.getCharacter() == null)
-            return getDefaultSkin(account, scaleRatio);
-        File file = getSkinFile(account.getUUID());
+        UUID uuid = account.getUUID();
+        if (uuid == null)
+            return getSteveSkin(scaleRatio);
+
+        File file = getSkinFile(uuid);
         if (file.exists()) {
             Image original = new Image("file:" + file.getAbsolutePath());
             return new Image("file:" + file.getAbsolutePath(),
@@ -93,14 +95,14 @@ public final class AccountHelper {
                     original.getHeight() * scaleRatio,
                     false, false);
         }
-        return getDefaultSkin(account, scaleRatio);
+        return getDefaultSkin(uuid, scaleRatio);
     }
 
     public static Image getSkinImmediately(YggdrasilAccount account, GameProfile profile, double scaleRatio, Proxy proxy) throws Exception {
         File file = getSkinFile(profile.getId());
         downloadSkin(account, profile, true, proxy);
         if (!file.exists())
-            return getDefaultSkin(account, scaleRatio);
+            return getDefaultSkin(profile.getId(), scaleRatio);
 
         String url = "file:" + file.getAbsolutePath();
         return scale(url, scaleRatio);
@@ -187,11 +189,8 @@ public final class AccountHelper {
         return scale("/assets/img/alex.png", 4);
     }
 
-    public static Image getDefaultSkin(Account account, double scaleRatio) {
-        if (account == null)
-            return getSteveSkin(scaleRatio);
-
-        int type = account.getUUID().hashCode() & 1;
+    public static Image getDefaultSkin(UUID uuid, double scaleRatio) {
+        int type = uuid.hashCode() & 1;
         if (type == 1)
             return getAlexSkin(scaleRatio);
         else

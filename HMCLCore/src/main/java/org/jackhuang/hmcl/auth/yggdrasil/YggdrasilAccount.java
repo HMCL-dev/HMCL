@@ -145,7 +145,7 @@ public class YggdrasilAccount extends Account {
     }
 
     public UUID getUUID() {
-        if (session == null)
+        if (session == null || session.getSelectedProfile() == null)
             return null;
         else
             return session.getSelectedProfile().getId();

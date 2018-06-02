@@ -208,6 +208,7 @@ public class AddAccountPane extends StackPane {
                 try {
                     image = AccountHelper.getSkinImmediately(yggdrasilAccount, profile, 4, Settings.INSTANCE.getProxy());
                 } catch (Exception e) {
+                    Logging.LOG.log(Level.WARNING, "Failed to get skin for " + profile.getName(), e);
                     image = FXUtils.DEFAULT_ICON;
                 }
                 ImageView portraitView = new ImageView();
