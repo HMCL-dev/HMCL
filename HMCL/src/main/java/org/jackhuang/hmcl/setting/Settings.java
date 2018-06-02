@@ -42,6 +42,7 @@ import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -62,13 +63,11 @@ public class Settings {
 
     public static final Settings INSTANCE = new Settings();
 
-    private Settings() {}
-
     private final Config SETTINGS = initSettings();
 
-    private final Map<String, Account> accounts = new HashMap<>();
+    private final Map<String, Account> accounts = new ConcurrentHashMap<>();
 
-    {
+    private Settings() {
         loadProxy();
 
         for (Iterator<Map<Object, Object>> iterator = SETTINGS.getAccounts().iterator(); iterator.hasNext(); ) {
