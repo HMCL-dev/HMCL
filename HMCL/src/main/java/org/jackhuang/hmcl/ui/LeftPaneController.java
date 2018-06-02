@@ -167,7 +167,7 @@ public final class LeftPaneController {
                 Image image = AccountHelper.getSkin((YggdrasilAccount) account, 4);
                 item.setImage(image, AccountHelper.getViewport(4));
             } else
-                item.setImage(AccountHelper.getDefaultSkin(account, 4), AccountHelper.getViewport(4));
+                item.setImage(AccountHelper.getDefaultSkin(account.getUUID(), 4), AccountHelper.getViewport(4));
 
             if (account instanceof AuthlibInjectorAccount)
                 Accounts.getAuthlibInjectorServerNameAsync((AuthlibInjectorAccount) account)

@@ -64,8 +64,8 @@ public class AddAccountPane extends StackPane {
     @FXML private JFXComboBox<String> cboType;
     @FXML private JFXComboBox<TwoLineListItem> cboServers;
     @FXML private JFXProgressBar progressBar;
-    @FXML private Label lblAddInjectorServer;
-    @FXML private Hyperlink linkAddInjectorServer;
+    @FXML private Label lblInjectorServer;
+    @FXML private Hyperlink linkManageInjectorServers;
     @FXML private JFXDialogLayout layout;
     @FXML private JFXButton btnAccept;
     private final Consumer<Region> finalization;
@@ -82,8 +82,8 @@ public class AddAccountPane extends StackPane {
             txtPassword.setVisible(newValue.intValue() != 0);
             lblPassword.setVisible(newValue.intValue() != 0);
             cboServers.setVisible(newValue.intValue() == 2);
-            linkAddInjectorServer.setVisible(newValue.intValue() == 2);
-            lblAddInjectorServer.setVisible(newValue.intValue() == 2);
+            linkManageInjectorServers.setVisible(newValue.intValue() == 2);
+            lblInjectorServer.setVisible(newValue.intValue() == 2);
             validateAcceptButton();
         });
         cboType.getSelectionModel().select(0);
@@ -160,7 +160,7 @@ public class AddAccountPane extends StackPane {
     }
 
     @FXML
-    private void onAddInjecterServer() {
+    private void onManageInjecterServers() {
         finalization.accept(this);
         Controllers.navigate(Controllers.getServersPage());
     }
@@ -208,6 +208,7 @@ public class AddAccountPane extends StackPane {
                 try {
                     image = AccountHelper.getSkinImmediately(yggdrasilAccount, profile, 4, Settings.INSTANCE.getProxy());
                 } catch (Exception e) {
+                    Logging.LOG.log(Level.WARNING, "Failed to get skin for " + profile.getName(), e);
                     image = FXUtils.DEFAULT_ICON;
                 }
                 ImageView portraitView = new ImageView();
