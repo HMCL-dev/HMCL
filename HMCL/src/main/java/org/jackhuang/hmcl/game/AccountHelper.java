@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Optional;
 
 public final class AccountHelper {
-    public static final AccountHelper INSTANCE = new AccountHelper();
+
     private AccountHelper() {}
 
     public static final File SKIN_DIR = new File(Launcher.HMCL_DIRECTORY, "skins");
