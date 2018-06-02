@@ -38,6 +38,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public final class AccountHelper {
 
@@ -73,8 +74,8 @@ public final class AccountHelper {
         return new SkinLoadTask(account, proxy, true);
     }
 
-    private static File getSkinFile(String name) {
-        return new File(SKIN_DIR, name + ".png");
+    private static File getSkinFile(UUID uuid) {
+        return new File(SKIN_DIR, uuid + ".png");
     }
 
     public static Image getSkin(YggdrasilAccount account) {
@@ -84,7 +85,7 @@ public final class AccountHelper {
     public static Image getSkin(YggdrasilAccount account, double scaleRatio) {
         if (account.getCharacter() == null)
             return getDefaultSkin(account, scaleRatio);
-        File file = getSkinFile(account.getCharacter());
+        File file = getSkinFile(account.getUUID());
         if (file.exists()) {
             Image original = new Image("file:" + file.getAbsolutePath());
             return new Image("file:" + file.getAbsolutePath(),
@@ -96,8 +97,7 @@ public final class AccountHelper {
     }
 
     public static Image getSkinImmediately(YggdrasilAccount account, GameProfile profile, double scaleRatio, Proxy proxy) throws Exception {
-        String name = profile.getName();
-        File file = getSkinFile(name);
+        File file = getSkinFile(profile.getId());
         downloadSkin(account, profile, true, proxy);
         if (!file.exists())
             return getDefaultSkin(account, scaleRatio);
@@ -152,7 +152,7 @@ public final class AccountHelper {
         Optional<Texture> texture = account.getSkin(profile);
         if (!texture.isPresent()) return;
         String url = texture.get().getUrl();
-        File file = getSkinFile(profile.getName());
+        File file = getSkinFile(profile.getId());
         if (!refresh && file.exists())
             return;
         new FileDownloadTask(NetworkUtils.toURL(url), file, proxy).run();
@@ -165,7 +165,7 @@ public final class AccountHelper {
         Optional<Texture> texture = account.getSkin();
         if (!texture.isPresent()) return;
         String url = texture.get().getUrl();
-        File file = getSkinFile(account.getCharacter());
+        File file = getSkinFile(account.getUUID());
         if (!refresh && file.exists())
             return;
         new FileDownloadTask(NetworkUtils.toURL(url), file, proxy).run();
