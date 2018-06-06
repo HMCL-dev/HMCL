@@ -172,6 +172,12 @@ public class DefaultGameRepository implements GameRepository {
         if (files != null)
             for (File dir : files)
                 if (dir.isDirectory()) {
+                    if (Thread.interrupted()) {
+                        this.versions = new HashMap<>();
+                        loaded = false;
+                        return;
+                    }
+
                     String id = dir.getName();
                     File json = new File(dir, id + ".json");
 

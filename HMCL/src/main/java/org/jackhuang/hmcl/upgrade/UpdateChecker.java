@@ -22,6 +22,8 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.OutOfDateEvent;
+import org.jackhuang.hmcl.task.GetTask;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.util.Constants;
@@ -30,6 +32,8 @@ import org.jackhuang.hmcl.util.NetworkUtils;
 import org.jackhuang.hmcl.util.VersionNumber;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -65,13 +69,20 @@ public final class UpdateChecker {
      */
     public TaskResult<VersionNumber> process(final boolean showMessage) {
         return new TaskResult<VersionNumber>() {
+            GetTask http = new GetTask(NetworkUtils.toURL("https://huangyuhui.duapp.com/hmcl/update.php?version=" + Launcher.VERSION));
+
+            @Override
+            public Collection<? extends Task> getDependents() {
+                return value == null ? Collections.singleton(http) : Collections.emptyList();
+            }
+
             @Override
             public void execute() throws Exception {
                 if (Launcher.VERSION.contains("@"))
                     return;
 
                 if (value == null) {
-                    versionString = NetworkUtils.doGet(NetworkUtils.toURL("https://huangyuhui.duapp.com/hmcl/update.php?version=" + Launcher.VERSION));
+                    versionString = http.getResult();
                     value = VersionNumber.asVersion(versionString);
                 }
 

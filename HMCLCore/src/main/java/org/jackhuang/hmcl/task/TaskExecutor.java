@@ -89,8 +89,10 @@ public final class TaskExecutor {
 
         while (!workerQueue.isEmpty()) {
             Future<?> future = workerQueue.poll();
-            if (future != null)
+            if (future != null) {
                 future.cancel(true);
+                System.out.println("Canceled " + future);
+            }
         }
     }
 

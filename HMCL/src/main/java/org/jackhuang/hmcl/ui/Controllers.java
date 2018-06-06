@@ -171,6 +171,8 @@ public final class Controllers {
     }
 
     public static void showUpdate() {
+        if (stage == null) // shut down
+            return;
         getLeftPaneController().showUpdate();
     }
 
