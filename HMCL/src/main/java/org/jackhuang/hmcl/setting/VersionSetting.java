@@ -26,7 +26,9 @@ import org.jackhuang.hmcl.util.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -85,6 +87,20 @@ public final class VersionSetting {
 
     public void setJava(String java) {
         javaProperty.set(java);
+    }
+
+    private final ImmediateStringProperty defaultJavaPathProperty = new ImmediateStringProperty(this, "defaultJavaPath", "");
+
+    /**
+     * Path to Java executable, or null if user customizes java directory.
+     * It's used to determine which JRE to use when multiple JREs match the selected Java version.
+     */
+    public String getDefaultJavaPath() {
+        return defaultJavaPathProperty.get();
+    }
+
+    public void setDefaultJavaPath(String defaultJavaPath) {
+        defaultJavaPathProperty.set(defaultJavaPath);
     }
 
     private final ImmediateStringProperty javaDirProperty = new ImmediateStringProperty(this, "javaDir", "");
@@ -444,12 +460,18 @@ public final class VersionSetting {
                 return null; // Custom Java Directory not found,
             }
         } else if (StringUtils.isNotBlank(getJava())) {
-            JavaVersion c = JavaVersion.getJREs().get(getJava());
-            if (c == null) {
+            List<JavaVersion> matchedJava = JavaVersion.getJREs().stream()
+                    .filter(java -> java.getVersion().equals(getJava()))
+                    .collect(Collectors.toList());
+            if (matchedJava.isEmpty()) {
                 setJava("Default");
                 return JavaVersion.fromCurrentEnvironment();
-            } else
-                return c;
+            } else {
+                return matchedJava.stream()
+                        .filter(java -> java.getBinary().toString().equals(getDefaultJavaPath()))
+                        .findFirst()
+                        .orElse(matchedJava.get(0));
+            }
         } else throw new Error();
     }
 
@@ -535,6 +557,7 @@ public final class VersionSetting {
             obj.addProperty("gameDir", src.getGameDir());
             obj.addProperty("launcherVisibility", src.getLauncherVisibility().ordinal());
             obj.addProperty("gameDirType", src.getGameDirType().ordinal());
+            obj.addProperty("defaultJavaPath", src.getDefaultJavaPath());
 
             return obj;
         }
@@ -571,6 +594,7 @@ public final class VersionSetting {
             vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setLauncherVisibility(LauncherVisibility.values()[Optional.ofNullable(obj.get("launcherVisibility")).map(JsonElement::getAsInt).orElse(1)]);
             vs.setGameDirType(EnumGameDirectory.values()[Optional.ofNullable(obj.get("gameDirType")).map(JsonElement::getAsInt).orElse(0)]);
+            vs.setDefaultJavaPath(Optional.ofNullable(obj.get("defaultJavaPath")).map(JsonElement::getAsString).orElse(null));
 
             return vs;
         }
