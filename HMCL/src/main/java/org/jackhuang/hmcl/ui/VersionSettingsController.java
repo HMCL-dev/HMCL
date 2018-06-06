@@ -23,7 +23,6 @@ import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.controls.JFXToggleButton;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Toggle;
@@ -44,7 +43,7 @@ import org.jackhuang.hmcl.util.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -84,11 +83,14 @@ public final class VersionSettingsController {
 
         FXUtils.smoothScrolling(scroll);
 
-        Task.of(variables -> variables.set("list", JavaVersion.getJREs().stream().map(javaVersion ->
-                javaItem.createChildren(javaVersion.getVersion(), javaVersion.getBinary().getAbsolutePath(), javaVersion)
-        ).collect(Collectors.toList()))).subscribe(Schedulers.javafx(), variables ->
-                javaItem.loadChildren(variables.<Collection<Node>>get("list"))
-        );
+        Task.of(variables -> variables.set("list", JavaVersion.getJREs()))
+                .subscribe(Schedulers.javafx(), variables -> {
+                    javaItem.loadChildren(
+                            (variables.<List<JavaVersion>>get("list")).stream()
+                                    .map(javaVersion -> javaItem.createChildren(javaVersion.getVersion(), javaVersion.getBinary().getAbsolutePath(), javaVersion))
+                                    .collect(Collectors.toList()));
+                    initializeSelectedJava();
+                });
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             javaItem.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe", "javaw.exe"));
@@ -151,17 +153,6 @@ public final class VersionSettingsController {
         FXUtils.bindBoolean(chkShowLogs, versionSetting.showLogsProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
 
-        boolean flag = false;
-        Toggle defaultToggle = null;
-        for (Toggle toggle : javaItem.getGroup().getToggles()) {
-            if (toggle.getUserData() == Lang.invoke(versionSetting::getJavaVersion)) {
-                toggle.setSelected(true);
-                flag = true;
-            } else if (toggle.getUserData() == JavaVersion.fromCurrentEnvironment()) {
-                defaultToggle = toggle;
-            }
-        }
-
         javaItem.setToggleSelectedListener(newValue -> {
             if (javaItem.isCustomToggle(newValue)) {
                 versionSetting.setJava("Custom");
@@ -172,10 +163,6 @@ public final class VersionSettingsController {
                 versionSetting.setDefaultJavaPath(java.getBinary().toString());
             }
         });
-
-        if (!flag) {
-            Optional.ofNullable(defaultToggle).ifPresent(t -> t.setSelected(true));
-        }
 
         versionSetting.javaDirProperty().setChangedListener(it -> initJavaSubtitle(versionSetting));
         versionSetting.javaProperty().setChangedListener(it -> initJavaSubtitle(versionSetting));
@@ -210,7 +197,31 @@ public final class VersionSettingsController {
 
         lastVersionSetting = versionSetting;
 
+        initializeSelectedJava();
+
         loadIcon();
+    }
+
+    private void initializeSelectedJava() {
+        if (lastVersionSetting == null
+                || !JavaVersion.getJREsImmediately().isPresent() /* JREs are still being loaded */) {
+            return;
+        }
+
+        boolean flag = false;
+        Toggle defaultToggle = null;
+        for (Toggle toggle : javaItem.getGroup().getToggles()) {
+            if (toggle.getUserData() == Lang.invoke(lastVersionSetting::getJavaVersion)) {
+                toggle.setSelected(true);
+                flag = true;
+            } else if (toggle.getUserData() == JavaVersion.fromCurrentEnvironment()) {
+                defaultToggle = toggle;
+            }
+        }
+
+        if (!flag) {
+            Optional.ofNullable(defaultToggle).ifPresent(t -> t.setSelected(true));
+        }
     }
 
     private void initJavaSubtitle(VersionSetting versionSetting) {

@@ -165,6 +165,10 @@ public final class JavaVersion implements Serializable {
     private static List<JavaVersion> JAVAS;
     private static final CountDownLatch LATCH = new CountDownLatch(1);
 
+    public static Optional<List<JavaVersion>> getJREsImmediately() {
+        return Optional.ofNullable(JAVAS);
+    }
+
     public static List<JavaVersion> getJREs() throws InterruptedException {
         if (JAVAS != null)
             return JAVAS;
@@ -190,6 +194,19 @@ public final class JavaVersion implements Serializable {
                 javaVersions = Collections.emptyList();
                 break;
         }
+
+        boolean isCurrentJavaIncluded = false;
+        for (int i = 0; i < javaVersions.size(); i++) {
+            if (THIS_JAVA.getBinary().equals(javaVersions.get(i).getBinary())) {
+                javaVersions.set(i, THIS_JAVA);
+                isCurrentJavaIncluded = true;
+                break;
+            }
+        }
+        if (!isCurrentJavaIncluded) {
+            javaVersions.add(THIS_JAVA);
+        }
+
         JAVAS = Collections.unmodifiableList(javaVersions);
         LATCH.countDown();
     }
