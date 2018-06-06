@@ -84,7 +84,7 @@ public final class VersionSettingsController {
 
         FXUtils.smoothScrolling(scroll);
 
-        Task.of(variables -> variables.set("list", JavaVersion.getJREs().values().stream().map(javaVersion ->
+        Task.of(variables -> variables.set("list", JavaVersion.getJREs().stream().map(javaVersion ->
                 javaItem.createChildren(javaVersion.getVersion(), javaVersion.getBinary().getAbsolutePath(), javaVersion)
         ).collect(Collectors.toList()))).subscribe(Schedulers.javafx(), variables ->
                 javaItem.loadChildren(variables.<Collection<Node>>get("list"))
@@ -165,8 +165,11 @@ public final class VersionSettingsController {
         javaItem.setToggleSelectedListener(newValue -> {
             if (javaItem.isCustomToggle(newValue)) {
                 versionSetting.setJava("Custom");
+                versionSetting.setDefaultJavaPath(null);
             } else {
-                versionSetting.setJava(((JavaVersion) newValue.getUserData()).getVersion());
+                JavaVersion java = (JavaVersion) newValue.getUserData();
+                versionSetting.setJava(java.getVersion());
+                versionSetting.setDefaultJavaPath(java.getBinary().toString());
             }
         });
 

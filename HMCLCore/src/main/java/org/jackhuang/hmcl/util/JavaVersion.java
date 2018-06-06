@@ -162,10 +162,10 @@ public final class JavaVersion implements Serializable {
             Platform.PLATFORM
     );
 
-    private static Map<String, JavaVersion> JAVAS;
+    private static List<JavaVersion> JAVAS;
     private static final CountDownLatch LATCH = new CountDownLatch(1);
 
-    public static Map<String, JavaVersion> getJREs() throws InterruptedException {
+    public static List<JavaVersion> getJREs() throws InterruptedException {
         if (JAVAS != null)
             return JAVAS;
         LATCH.await();
@@ -175,8 +175,6 @@ public final class JavaVersion implements Serializable {
     public static synchronized void initialize() throws IOException {
         if (JAVAS != null)
             throw new IllegalStateException("JavaVersions have already been initialized.");
-        HashMap<String, JavaVersion> temp = new HashMap<>();
-        temp.put(THIS_JAVA.getVersion(), THIS_JAVA);
         List<JavaVersion> javaVersions;
         switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS:
@@ -192,9 +190,7 @@ public final class JavaVersion implements Serializable {
                 javaVersions = Collections.emptyList();
                 break;
         }
-        for (JavaVersion v : javaVersions)
-            temp.put(v.getVersion(), v);
-        JAVAS = Collections.unmodifiableMap(temp);
+        JAVAS = Collections.unmodifiableList(javaVersions);
         LATCH.countDown();
     }
 

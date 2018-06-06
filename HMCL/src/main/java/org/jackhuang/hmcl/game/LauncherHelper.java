@@ -181,6 +181,7 @@ public final class LauncherHelper {
         if (java == null) {
             Controllers.dialog(Launcher.i18n("launch.wrong_javadir"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
             setting.setJava(null);
+            setting.setDefaultJavaPath(null);
             java = JavaVersion.fromCurrentEnvironment();
             flag = true;
         }
