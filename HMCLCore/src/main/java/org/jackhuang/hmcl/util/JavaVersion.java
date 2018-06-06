@@ -165,6 +165,10 @@ public final class JavaVersion implements Serializable {
     private static List<JavaVersion> JAVAS;
     private static final CountDownLatch LATCH = new CountDownLatch(1);
 
+    public static Optional<List<JavaVersion>> getJREsImmediately() {
+        return Optional.ofNullable(JAVAS);
+    }
+
     public static List<JavaVersion> getJREs() throws InterruptedException {
         if (JAVAS != null)
             return JAVAS;
