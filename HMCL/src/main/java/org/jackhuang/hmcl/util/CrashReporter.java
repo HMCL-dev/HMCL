@@ -95,7 +95,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
             Logging.LOG.log(Level.SEVERE, text);
 
-            if (checkThrowable(e) && !text.contains("OpenJDK")) {
+            if (checkThrowable(e)) {
                 Platform.runLater(() -> new CrashWindow(text).show());
                 if (!Launcher.UPDATE_CHECKER.isOutOfDate())
                     reportToServer(text);
