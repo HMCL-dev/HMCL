@@ -17,24 +17,42 @@
  */
 package org.jackhuang.hmcl;
 
-import org.jackhuang.hmcl.util.Logging;
-
-import javax.swing.*;
 import java.io.File;
+
+import javax.swing.JOptionPane;
 
 public final class Main {
 
     public static void main(String[] args) {
+        checkJavaFX();
+        checkDirectoryPath();
+        Launcher.main(args);
+    }
+
+    private static void checkDirectoryPath() {
         String currentDirectory = new File("").getAbsolutePath();
         if (currentDirectory.contains("!")) {
-            System.err.println("Exclamation mark(!) is not allowed in the path where HMCL is in. Forcibly exit.");
-
             // No Chinese translation because both Swing and JavaFX cannot render Chinese character properly when exclamation mark exists in the path.
-            String message = "Exclamation mark(!) is not allowed in the path where HMCL is in.\nThe path is " + currentDirectory;
-            JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
-            System.exit(1);
-        } else
-            Launcher.main(args);
+            showErrorAndExit("Exclamation mark(!) is not allowed in the path where HMCL is in.\n"
+                    + "The path is " + currentDirectory);
+        }
+    }
+
+    private static void checkJavaFX() {
+        try {
+            Class.forName("javafx.application.Application");
+        } catch (ClassNotFoundException e) {
+            showErrorAndExit("JavaFX is missing.\n"
+                    + "If you are using Java 11 or above, please downgrade to Java 8 or 10.\n"
+                    + "If you are using OpenJDK, please ensure OpenJFX is included.");
+        }
+    }
+
+    private static void showErrorAndExit(String message) {
+        System.err.println(message);
+        System.err.println("A fatal error has occurred, forcibly exiting.");
+        JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
+        System.exit(1);
     }
 
 }
