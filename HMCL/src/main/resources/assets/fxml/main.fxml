@@ -12,7 +12,7 @@
         xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1">
     <JFXSpinner fx:id="spinner" styleClass="first-spinner" />
     <StackPane fx:id="contentPane">
-        <ScrollPane fitToHeight="true" fitToWidth="true" fx:id="scrollPane" hbarPolicy="NEVER">
+        <ScrollPane fitToWidth="true" fx:id="scrollPane" hbarPolicy="NEVER">
             <JFXMasonryPane fx:id="masonryPane" HSpacing="3" VSpacing="3" cellWidth="182" cellHeight="160">
             </JFXMasonryPane>
         </ScrollPane>

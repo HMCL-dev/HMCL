@@ -204,12 +204,6 @@ public final class FXUtils {
         Lang.invoke((ExceptionalSupplier<Object, IOException>) loader::load);
     }
 
-    public static void resetChildren(JFXMasonryPane pane, List<Node> children) {
-        // Fixes mis-repositioning.
-        ReflectionHelper.setFieldContent(JFXMasonryPane.class, pane, "oldBoxes", null);
-        pane.getChildren().setAll(children);
-    }
-
     public static void installTooltip(Node node, String tooltip) {
         installTooltip(node, 0, 5000, 0, new Tooltip(tooltip));
     }

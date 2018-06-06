@@ -23,6 +23,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Region;
@@ -75,6 +76,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private JFXSpinner spinner;
     @FXML
     private JFXMasonryPane masonryPane;
+    @FXML
+    private ScrollPane scrollPane;
 
     {
         FXUtils.loadFXML(this, "/assets/fxml/main.fxml");
@@ -221,7 +224,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private void loadingVersions() {
         getChildren().setAll(spinner);
-        FXUtils.resetChildren(masonryPane, Collections.emptyList());
+        masonryPane.getChildren().clear();
     }
 
     private void loadVersions(HMCLGameRepository repository) {
@@ -231,8 +234,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
         }
         JFXUtilities.runInFX(() -> {
             if (profile == repository.getProfile()) {
+                masonryPane.getChildren().setAll(children);
                 getChildren().setAll(contentPane);
-                FXUtils.resetChildren(masonryPane, children);
             }
         });
     }
