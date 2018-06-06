@@ -18,10 +18,17 @@
 package org.jackhuang.hmcl.util;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Represents a Java installation.
@@ -69,7 +76,7 @@ public final class JavaVersion implements Serializable {
         return version;
     }
 
-    private static final Pattern REGEX = Pattern.compile("java version \"(?<version>(.*?))\"");
+    private static final Pattern REGEX = Pattern.compile("version \"(?<version>(.*?))\"");
 
     public static final int UNKNOWN = -1;
     public static final int JAVA_5 = 50;
@@ -175,6 +182,9 @@ public final class JavaVersion implements Serializable {
             case WINDOWS:
                 javaVersions = queryWindows();
                 break;
+            case LINUX:
+                javaVersions = queryLinux();
+                break;
             case OSX:
                 javaVersions = queryMacintosh();
                 break;
@@ -186,6 +196,27 @@ public final class JavaVersion implements Serializable {
             temp.put(v.getVersion(), v);
         JAVAS = Collections.unmodifiableMap(temp);
         LATCH.countDown();
+    }
+
+    private static List<JavaVersion> queryLinux() throws IOException {
+        Path jvmDir = Paths.get("/usr/lib/jvm");
+        if (Files.isDirectory(jvmDir)) {
+            return Files.list(jvmDir)
+                    .filter(dir -> Files.isDirectory(dir, LinkOption.NOFOLLOW_LINKS))
+                    .map(dir -> dir.resolve("bin/java"))
+                    .filter(Files::isExecutable)
+                    .flatMap(executable -> {
+                        try {
+                            return Stream.of(fromExecutable(executable.toFile()));
+                        } catch (IOException e) {
+                            Logging.LOG.log(Level.WARNING, "Couldn't determine java " + executable, e);
+                            return Stream.empty();
+                        }
+                    })
+                    .collect(Collectors.toList());
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     private static List<JavaVersion> queryMacintosh() throws IOException {
