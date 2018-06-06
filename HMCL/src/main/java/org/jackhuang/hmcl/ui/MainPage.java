@@ -43,18 +43,16 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
-import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.OperatingSystem;
-import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
@@ -106,28 +104,31 @@ public final class MainPage extends StackPane implements DecoratorPage {
         return removeSuffix(removePrefix(removeSuffix(removePrefix(version.replace(gameVersion, "").trim(), "-"), "-"), "_"), "_");
     }
 
-    private Node buildNode(HMCLGameRepository repository, Version version, String game) {
+    private Node buildNode(HMCLGameRepository repository, Version version, Callable<String> gameCallable) {
         Profile profile = repository.getProfile();
         String id = version.getId();
         VersionItem item = new VersionItem();
         item.setUpdate(repository.isModpack(id));
-        item.setGameVersion(game);
+        Task.ofResult("game", gameCallable).subscribe(Schedulers.javafx(), vars -> {
+            String game = vars.get("game");
+            item.setGameVersion(game);
+
+            StringBuilder libraries = new StringBuilder();
+            for (Library library : version.getLibraries()) {
+                if (library.getGroupId().equalsIgnoreCase("net.minecraftforge") && library.getArtifactId().equalsIgnoreCase("forge")) {
+                    libraries.append(Launcher.i18n("install.installer.forge")).append(": ").append(modifyVersion(game, library.getVersion().replaceAll("(?i)forge", ""))).append("\n");
+                }
+                if (library.getGroupId().equalsIgnoreCase("com.mumfrey") && library.getArtifactId().equalsIgnoreCase("liteloader")) {
+                    libraries.append(Launcher.i18n("install.installer.liteloader")).append(": ").append(modifyVersion(game, library.getVersion().replaceAll("(?i)liteloader", ""))).append("\n");
+                }
+                if (library.getGroupId().equalsIgnoreCase("net.optifine") && library.getArtifactId().equalsIgnoreCase("optifine")) {
+                    libraries.append(Launcher.i18n("install.installer.optifine")).append(": ").append(modifyVersion(game, library.getVersion().replaceAll("(?i)optifine", ""))).append("\n");
+                }
+            }
+
+            item.setLibraries(libraries.toString());
+        });
         item.setVersionName(id);
-
-        StringBuilder libraries = new StringBuilder();
-        for (Library library : version.getLibraries()) {
-            if (library.getGroupId().equalsIgnoreCase("net.minecraftforge") && library.getArtifactId().equalsIgnoreCase("forge")) {
-                libraries.append(Launcher.i18n("install.installer.forge")).append(": ").append(modifyVersion(game, library.getVersion().replaceAll("(?i)forge", ""))).append("\n");
-            }
-            if (library.getGroupId().equalsIgnoreCase("com.mumfrey") && library.getArtifactId().equalsIgnoreCase("liteloader")) {
-                libraries.append(Launcher.i18n("install.installer.liteloader")).append(": ").append(modifyVersion(game, library.getVersion().replaceAll("(?i)liteloader", ""))).append("\n");
-            }
-            if (library.getGroupId().equalsIgnoreCase("net.optifine") && library.getArtifactId().equalsIgnoreCase("optifine")) {
-                libraries.append(Launcher.i18n("install.installer.optifine")).append(": ").append(modifyVersion(game, library.getVersion().replaceAll("(?i)optifine", ""))).append("\n");
-            }
-        }
-
-        item.setLibraries(libraries.toString());
         item.setOnLaunchButtonClicked(e -> {
             if (Settings.INSTANCE.getSelectedAccount() == null)
                 Controllers.getLeftPaneController().checkAccount();
@@ -230,7 +231,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private void loadVersions(HMCLGameRepository repository) {
         List<Node> children = new LinkedList<>();
         for (Version version : repository.getVersions()) {
-            children.add(buildNode(repository, version, GameVersion.minecraftVersion(repository.getVersionJar(version.getId())).orElse("Unknown")));
+            children.add(buildNode(repository, version, () -> GameVersion.minecraftVersion(repository.getVersionJar(version.getId())).orElse("Unknown")));
         }
         JFXUtilities.runInFX(() -> {
             if (profile == repository.getProfile()) {
