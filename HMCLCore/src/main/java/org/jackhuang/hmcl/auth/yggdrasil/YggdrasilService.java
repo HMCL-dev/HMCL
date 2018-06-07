@@ -11,6 +11,8 @@ import java.net.Proxy;
 import java.net.URL;
 import java.util.*;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 public class YggdrasilService {
 
     private final YggdrasilProvider provider;
@@ -99,7 +101,7 @@ public class YggdrasilService {
 
         return Optional.ofNullable(profile.getProperties())
                 .map(properties -> properties.get("textures"))
-                .map(encodedTextures -> new String(Base64.getDecoder().decode(encodedTextures), Charsets.UTF_8))
+                .map(encodedTextures -> new String(Base64.getDecoder().decode(encodedTextures), UTF_8))
                 .map(Lang.liftFunction(textures -> fromJson(textures, TextureResponse.class)))
                 .map(TextureResponse::getTextures);
     }

@@ -22,6 +22,8 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  *
  * @author huangyuhui
@@ -80,7 +82,7 @@ public final class DigestUtils {
     }
 
     public static byte[] md2(String data) {
-        return md2(data.getBytes(Charsets.UTF_8));
+        return md2(data.getBytes(UTF_8));
     }
 
     public static String md2Hex(byte[] data) {
@@ -106,7 +108,7 @@ public final class DigestUtils {
     }
 
     public static byte[] md5(String data) {
-        return md5(data.getBytes(Charsets.UTF_8));
+        return md5(data.getBytes(UTF_8));
     }
 
     public static String md5Hex(byte[] data) {
@@ -132,7 +134,7 @@ public final class DigestUtils {
     }
 
     public static byte[] sha1(String data) {
-        return sha1(data.getBytes(Charsets.UTF_8));
+        return sha1(data.getBytes(UTF_8));
     }
 
     public static String sha1Hex(byte[] data) {
@@ -158,7 +160,7 @@ public final class DigestUtils {
     }
 
     public static byte[] sha256(String data) {
-        return sha256(data.getBytes(Charsets.UTF_8));
+        return sha256(data.getBytes(UTF_8));
     }
 
     public static String sha256Hex(byte[] data) {
@@ -184,7 +186,7 @@ public final class DigestUtils {
     }
 
     public static byte[] sha384(String data) {
-        return sha384(data.getBytes(Charsets.UTF_8));
+        return sha384(data.getBytes(UTF_8));
     }
 
     public static String sha384Hex(byte[] data) {
@@ -210,7 +212,7 @@ public final class DigestUtils {
     }
 
     public static byte[] sha512(String data) {
-        return sha512(data.getBytes(Charsets.UTF_8));
+        return sha512(data.getBytes(UTF_8));
     }
 
     public static String sha512Hex(byte[] data) {
@@ -245,7 +247,7 @@ public final class DigestUtils {
     }
 
     public static MessageDigest updateDigest(MessageDigest messageDigest, String valueToDigest) {
-        messageDigest.update(valueToDigest.getBytes(Charsets.UTF_8));
+        messageDigest.update(valueToDigest.getBytes(UTF_8));
         return messageDigest;
     }
 }

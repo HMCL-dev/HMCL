@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.util.Charsets;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.VersionNumber;
 
@@ -34,6 +33,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  *
@@ -79,7 +80,7 @@ public class NewFileUpgrader extends IUpgrader {
         File file = new File(realPath);
         realPath = file.getAbsolutePath();
         try {
-            realPath = java.net.URLDecoder.decode(realPath, Charsets.DEFAULT_CHARSET.name());
+            realPath = java.net.URLDecoder.decode(realPath, UTF_8.name());
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.task;
 
-import org.jackhuang.hmcl.util.Charsets;
 import org.jackhuang.hmcl.util.IOUtils;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.NetworkUtils;
@@ -30,6 +29,8 @@ import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  *
@@ -52,7 +53,7 @@ public final class GetTask extends TaskResult<String> {
     }
 
     public GetTask(URL url, Proxy proxy, String id) {
-        this(url, proxy, id, Charsets.DEFAULT_CHARSET);
+        this(url, proxy, id, UTF_8);
     }
 
     public GetTask(URL url, Proxy proxy, String id, Charset charset) {
