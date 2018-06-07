@@ -27,7 +27,6 @@ import java.util.UUID;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
-import org.jackhuang.hmcl.auth.UserType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
@@ -72,7 +71,7 @@ public class OfflineAccount extends Account {
         if (StringUtils.isBlank(username))
             throw new AuthenticationException("Username cannot be empty");
 
-        return new AuthInfo(username, uuid, UUIDTypeAdapter.fromUUID(UUID.randomUUID()), UserType.MOJANG, "{}");
+        return new AuthInfo(username, uuid, UUIDTypeAdapter.fromUUID(UUID.randomUUID()), "{}");
     }
 
     @Override

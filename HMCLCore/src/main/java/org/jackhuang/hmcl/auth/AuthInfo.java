@@ -32,19 +32,17 @@ public final class AuthInfo {
     private final String username;
     private final UUID uuid;
     private final String accessToken;
-    private final UserType userType;
     private final String userProperties;
     private final Arguments arguments;
 
-    public AuthInfo(String username, UUID uuid, String accessToken, UserType userType, String userProperties) {
-        this(username, uuid, accessToken, userType, userProperties, null);
+    public AuthInfo(String username, UUID uuid, String accessToken, String userProperties) {
+        this(username, uuid, accessToken, userProperties, null);
     }
 
-    public AuthInfo(String username, UUID uuid, String accessToken, UserType userType, String userProperties, Arguments arguments) {
+    public AuthInfo(String username, UUID uuid, String accessToken, String userProperties, Arguments arguments) {
         this.username = username;
         this.uuid = uuid;
         this.accessToken = accessToken;
-        this.userType = userType;
         this.userProperties = userProperties;
         this.arguments = arguments;
     }
@@ -59,10 +57,6 @@ public final class AuthInfo {
 
     public String getAccessToken() {
         return accessToken;
-    }
-
-    public UserType getUserType() {
-        return userType;
     }
 
     /**
@@ -83,6 +77,6 @@ public final class AuthInfo {
     }
 
     public AuthInfo withArguments(Arguments arguments) {
-        return new AuthInfo(username, uuid, accessToken, userType, userProperties, arguments);
+        return new AuthInfo(username, uuid, accessToken, userProperties, arguments);
     }
 }

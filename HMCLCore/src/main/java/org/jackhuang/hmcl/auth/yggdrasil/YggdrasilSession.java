@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.auth.UserType;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
 import com.google.gson.Gson;
@@ -88,7 +87,7 @@ public class YggdrasilSession {
         if (user == null)
             throw new IllegalStateException("No user is specified");
 
-        return new AuthInfo(selectedProfile.getName(), selectedProfile.getId(), accessToken, UserType.MOJANG,
+        return new AuthInfo(selectedProfile.getName(), selectedProfile.getId(), accessToken,
                 Optional.ofNullable(user.getProperties()).map(GSON_PROPERTIES::toJson).orElse("{}"));
     }
 
