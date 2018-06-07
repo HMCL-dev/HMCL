@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.auth.offline;
 
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Pair.pair;
+
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
@@ -91,9 +94,9 @@ public class OfflineAccount extends Account {
 
     @Override
     public Map<Object, Object> toStorage() {
-        return Lang.mapOf(
-                new Pair<>("uuid", uuid),
-                new Pair<>("username", username)
+        return mapOf(
+                pair("uuid", uuid),
+                pair("username", username)
         );
     }
 

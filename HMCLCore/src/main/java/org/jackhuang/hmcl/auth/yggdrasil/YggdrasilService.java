@@ -1,5 +1,8 @@
 package org.jackhuang.hmcl.auth.yggdrasil;
 
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Pair.pair;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
@@ -33,9 +36,9 @@ public class YggdrasilService {
         Objects.requireNonNull(clientToken);
 
         Map<String, Object> request = new HashMap<>();
-        request.put("agent", Lang.mapOf(
-                new Pair<>("name", "Minecraft"),
-                new Pair<>("version", 1)
+        request.put("agent", mapOf(
+                pair("name", "Minecraft"),
+                pair("version", 1)
         ));
         request.put("username", username);
         request.put("password", password);

@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Pair.pair;
+
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
@@ -50,10 +53,10 @@ public final class Accounts {
     public static final String YGGDRASIL_ACCOUNT_KEY = "yggdrasil";
     public static final String AUTHLIB_INJECTOR_ACCOUNT_KEY = "authlibInjector";
 
-    public static final Map<String, AccountFactory<?>> ACCOUNT_FACTORY = Lang.mapOf(
-            new Pair<>(OFFLINE_ACCOUNT_KEY, OfflineAccountFactory.INSTANCE),
-            new Pair<>(YGGDRASIL_ACCOUNT_KEY, new YggdrasilAccountFactory(MojangYggdrasilProvider.INSTANCE)),
-            new Pair<>(AUTHLIB_INJECTOR_ACCOUNT_KEY, new AuthlibInjectorAccountFactory(Accounts::downloadAuthlibInjector))
+    public static final Map<String, AccountFactory<?>> ACCOUNT_FACTORY = mapOf(
+            pair(OFFLINE_ACCOUNT_KEY, OfflineAccountFactory.INSTANCE),
+            pair(YGGDRASIL_ACCOUNT_KEY, new YggdrasilAccountFactory(MojangYggdrasilProvider.INSTANCE)),
+            pair(AUTHLIB_INJECTOR_ACCOUNT_KEY, new AuthlibInjectorAccountFactory(Accounts::downloadAuthlibInjector))
     );
 
     private static final Map<String, String> AUTHLIB_INJECTOR_SERVER_NAMES = new HashMap<>();
