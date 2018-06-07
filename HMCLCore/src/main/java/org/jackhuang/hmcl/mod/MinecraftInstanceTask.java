@@ -29,7 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
-import static org.jackhuang.hmcl.util.Hex.encodeHexString;
+import static org.jackhuang.hmcl.util.Hex.encodeHex;
 
 public final class MinecraftInstanceTask<T> extends Task {
 
@@ -64,7 +64,7 @@ public final class MinecraftInstanceTask<T> extends Task {
                 if (path.startsWith("/") || path.startsWith("\\"))
                     path = path.substring(1);
 
-                overrides.add(new ModpackConfiguration.FileInformation(path, encodeHexString(digest("SHA-1", zip))));
+                overrides.add(new ModpackConfiguration.FileInformation(path, encodeHex(digest("SHA-1", zip))));
             }
         }
 

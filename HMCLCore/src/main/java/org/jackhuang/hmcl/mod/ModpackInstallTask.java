@@ -31,7 +31,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
-import static org.jackhuang.hmcl.util.Hex.encodeHexString;
+import static org.jackhuang.hmcl.util.Hex.encodeHex;
 
 public class ModpackInstallTask<T> extends Task {
 
@@ -94,8 +94,8 @@ public class ModpackInstallTask<T> extends Task {
                     byte[] data = os.toByteArray();
 
                     if (files.contains(path) && entryFile.exists()) {
-                        String oldHash = encodeHexString(digest("SHA-1", new FileInputStream(entryFile)));
-                        String newHash = encodeHexString(digest("SHA-1", new ByteArrayInputStream(data)));
+                        String oldHash = encodeHex(digest("SHA-1", new FileInputStream(entryFile)));
+                        String newHash = encodeHex(digest("SHA-1", new ByteArrayInputStream(data)));
                         if (!oldHash.equals(newHash)) {
                             try (FileOutputStream fos = new FileOutputStream(entryFile)) {
                                 IOUtils.copyTo(new ByteArrayInputStream(data), fos, buf);

@@ -25,7 +25,7 @@ import java.net.Proxy;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
-import static org.jackhuang.hmcl.util.Hex.encodeHexString;
+import static org.jackhuang.hmcl.util.Hex.encodeHex;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 /**
@@ -57,7 +57,7 @@ public class OfflineAccountFactory extends AccountFactory<OfflineAccount> {
     }
 
     private static String getUUIDFromUserName(String username) {
-        return encodeHexString(digest("MD5", username));
+        return encodeHex(digest("MD5", username));
     }
 
 }

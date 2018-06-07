@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
-import static org.jackhuang.hmcl.util.Hex.encodeHexString;
+import static org.jackhuang.hmcl.util.Hex.encodeHex;
 
 /**
  *
@@ -93,7 +93,7 @@ public final class GameAssetDownloadTask extends Task {
             try {
                 // check the checksum of file to ensure that the file is not need to re-download.
                 if (file.exists()) {
-                    String sha1 = encodeHexString(digest("SHA-1", FileUtils.readBytes(file)));
+                    String sha1 = encodeHex(digest("SHA-1", FileUtils.readBytes(file)));
                     if (sha1.equals(assetObject.getHash())) {
                         ++downloaded;
                         Logging.LOG.finest("File $file has been downloaded successfully, skipped downloading");
