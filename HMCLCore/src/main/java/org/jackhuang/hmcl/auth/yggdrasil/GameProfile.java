@@ -63,6 +63,9 @@ public final class GameProfile {
         return name;
     }
 
+    /**
+     * @return nullable
+     */
     public PropertyMap getProperties() {
         return properties;
     }

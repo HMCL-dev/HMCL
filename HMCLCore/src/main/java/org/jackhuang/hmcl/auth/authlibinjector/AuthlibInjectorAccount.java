@@ -39,8 +39,8 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
     private final String serverBaseURL;
     private final ExceptionalSupplier<String, ?> injectorJarPath;
 
-    protected AuthlibInjectorAccount(YggdrasilService service, String serverBaseURL, ExceptionalSupplier<String, ?> injectorJarPath, String username, String clientToken, String character, YggdrasilSession session) {
-        super(service, username, clientToken, character, session);
+    protected AuthlibInjectorAccount(YggdrasilService service, String serverBaseURL, ExceptionalSupplier<String, ?> injectorJarPath, String username, String character, YggdrasilSession session) {
+        super(service, username, character, session);
 
         this.injectorJarPath = injectorJarPath;
         this.serverBaseURL = serverBaseURL;
@@ -72,7 +72,7 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
             if (flag.get())
                 arguments = Arguments.addJVMArguments(arguments, "-Dorg.to2mbn.authlibinjector.config.prefetched=" + new String(Base64.getEncoder().encode(getTask.getResult().getBytes()), UTF_8));
 
-            return info.setArguments(arguments);
+            return info.withArguments(arguments);
         } catch (Exception e) {
             throw new AuthenticationException("Unable to get authlib injector jar path", e);
         }

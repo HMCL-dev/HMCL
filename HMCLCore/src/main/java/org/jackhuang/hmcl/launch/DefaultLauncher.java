@@ -239,7 +239,7 @@ public class DefaultLauncher extends Launcher {
                 pair("${auth_player_name}", authInfo.getUsername()),
                 pair("${auth_session}", authInfo.getAccessToken()),
                 pair("${auth_access_token}", authInfo.getAccessToken()),
-                pair("${auth_uuid}", authInfo.getUserId()),
+                pair("${auth_uuid}", UUIDTypeAdapter.fromUUID(authInfo.getUUID())),
                 pair("${version_name}", Optional.ofNullable(options.getVersionName()).orElse(version.getId())),
                 pair("${profile_name}", Optional.ofNullable(options.getProfileName()).orElse("Minecraft")),
                 pair("${version_type}", version.getType().getId()),

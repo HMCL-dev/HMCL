@@ -61,8 +61,6 @@ public abstract class Account {
      */
     public abstract AuthInfo playOffline();
 
-    public abstract void logOut();
-
     public abstract Map<Object, Object> toStorage();
 
     public abstract void clearCache();
