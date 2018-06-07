@@ -19,12 +19,13 @@ package org.jackhuang.hmcl.game;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.jackhuang.hmcl.util.Charsets;
 import org.jackhuang.hmcl.util.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
+
+import static java.nio.charset.StandardCharsets.US_ASCII;
 
 /**
  * @author huangyuhui
@@ -55,7 +56,7 @@ public final class GameVersion {
     private static Optional<String> getVersionOfOldMinecraft(ZipFile file, ZipArchiveEntry entry) throws IOException {
         byte[] tmp = IOUtils.readFullyAsByteArray(file.getInputStream(entry));
 
-        byte[] bytes = "Minecraft Minecraft ".getBytes(Charsets.US_ASCII);
+        byte[] bytes = "Minecraft Minecraft ".getBytes(US_ASCII);
         int j = matchArray(tmp, bytes);
         if (j < 0)
             return Optional.empty();
@@ -64,25 +65,25 @@ public final class GameVersion {
         if ((j = lessThan32(tmp, i)) < 0)
             return Optional.empty();
 
-        return Optional.of(new String(tmp, i, j - i, Charsets.US_ASCII));
+        return Optional.of(new String(tmp, i, j - i, US_ASCII));
     }
 
     private static Optional<String> getVersionOfNewMinecraft(ZipFile file, ZipArchiveEntry entry) throws IOException {
         byte[] tmp = IOUtils.readFullyAsByteArray(file.getInputStream(entry));
 
-        byte[] str = "-server.txt".getBytes(Charsets.US_ASCII);
+        byte[] str = "-server.txt".getBytes(US_ASCII);
         int j = matchArray(tmp, str);
         if (j < 0) return Optional.empty();
         int i = j + str.length;
         i += 11;
         j = lessThan32(tmp, i);
         if (j < 0) return Optional.empty();
-        String result = new String(tmp, i, j - i, Charsets.US_ASCII);
+        String result = new String(tmp, i, j - i, US_ASCII);
 
         char ch = result.charAt(0);
         // 1.8.1+
         if (ch < '0' || ch > '9') {
-            str = "Can't keep up! Did the system time change, or is the server overloaded?".getBytes(Charsets.US_ASCII);
+            str = "Can't keep up! Did the system time change, or is the server overloaded?".getBytes(US_ASCII);
             j = matchArray(tmp, str);
             if (j < 0) return Optional.empty();
             i = -1;
@@ -100,7 +101,7 @@ public final class GameVersion {
             while (tmp[k] >= 48 && tmp[k] <= 57 || tmp[k] == (int) '-' || tmp[k] == (int) '.' || tmp[k] >= 97 && tmp[k] <= (int) 'z')
                 k--;
             k++;
-            return Optional.of(new String(tmp, k, i - k + 1, Charsets.US_ASCII));
+            return Optional.of(new String(tmp, k, i - k + 1, US_ASCII));
         }
         return Optional.of(result);
     }

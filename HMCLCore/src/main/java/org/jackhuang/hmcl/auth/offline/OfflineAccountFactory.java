@@ -19,12 +19,13 @@ package org.jackhuang.hmcl.auth.offline;
 
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.CharacterSelector;
-import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
 import java.net.Proxy;
 import java.util.Map;
 
+import static org.jackhuang.hmcl.util.DigestUtils.digest;
+import static org.jackhuang.hmcl.util.Hex.encodeHex;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 /**
@@ -56,7 +57,7 @@ public class OfflineAccountFactory extends AccountFactory<OfflineAccount> {
     }
 
     private static String getUUIDFromUserName(String username) {
-        return DigestUtils.md5Hex(username);
+        return encodeHex(digest("MD5", username));
     }
 
 }

@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.task.GetTask;
-import org.jackhuang.hmcl.util.Charsets;
 import org.jackhuang.hmcl.util.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.NetworkUtils;
@@ -33,6 +32,8 @@ import org.jackhuang.hmcl.util.NetworkUtils;
 import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class AuthlibInjectorAccount extends YggdrasilAccount {
     private final String serverBaseURL;
@@ -69,7 +70,7 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
             Arguments arguments = Arguments.addJVMArguments(null, arg);
 
             if (flag.get())
-                arguments = Arguments.addJVMArguments(arguments, "-Dorg.to2mbn.authlibinjector.config.prefetched=" + new String(Base64.getEncoder().encode(getTask.getResult().getBytes()), Charsets.UTF_8));
+                arguments = Arguments.addJVMArguments(arguments, "-Dorg.to2mbn.authlibinjector.config.prefetched=" + new String(Base64.getEncoder().encode(getTask.getResult().getBytes()), UTF_8));
 
             return info.setArguments(arguments);
         } catch (Exception e) {

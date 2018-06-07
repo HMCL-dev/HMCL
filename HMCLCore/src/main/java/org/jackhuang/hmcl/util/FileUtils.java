@@ -26,6 +26,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  *
  * @author huang
@@ -44,7 +46,7 @@ public final class FileUtils {
     }
 
     public static String readText(File file) throws IOException {
-        return readText(file, Charsets.DEFAULT_CHARSET);
+        return readText(file, UTF_8);
     }
 
     public static String readText(File file, Charset charset) throws IOException {
@@ -60,7 +62,7 @@ public final class FileUtils {
     }
 
     public static void writeText(File file, String text) throws IOException {
-        writeText(file, text, Charsets.DEFAULT_CHARSET);
+        writeText(file, text, UTF_8);
     }
 
     public static void writeText(File file, String text, Charset charset) throws IOException {

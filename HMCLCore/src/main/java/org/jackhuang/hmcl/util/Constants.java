@@ -43,8 +43,6 @@ public final class Constants {
     private Constants() {
     }
 
-    public static final String DEFAULT_ENCODING = "UTF-8";
-    public static final Charset DEFAULT_CHARSET = Charsets.UTF_8;
     public static final Charset SYSTEM_CHARSET = Charset.forName(OperatingSystem.ENCODING);
 
     public static final String DEFAULT_LIBRARY_URL = "https://libraries.minecraft.net/";

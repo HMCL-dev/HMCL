@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.StringUtils.*;
 
 /**
@@ -86,7 +87,7 @@ public final class NetworkUtils {
     }
 
     public static String doPost(URL url, String post, String contentType, Proxy proxy) throws IOException {
-        byte[] bytes = post.getBytes(Charsets.UTF_8);
+        byte[] bytes = post.getBytes(UTF_8);
 
         HttpURLConnection con = createConnection(url, proxy);
         con.setRequestMethod("POST");
@@ -108,12 +109,12 @@ public final class NetworkUtils {
         InputStream is = null;
         try {
             is = con.getInputStream();
-            return IOUtils.readFullyAsString(is, Charsets.UTF_8);
+            return IOUtils.readFullyAsString(is, UTF_8);
         } catch (IOException e) {
             IOUtils.closeQuietly(is);
             is = con.getErrorStream();
             if (is != null)
-                return IOUtils.readFullyAsString(is, Charsets.UTF_8);
+                return IOUtils.readFullyAsString(is, UTF_8);
             throw e;
         } finally {
             IOUtils.closeQuietly(is);
