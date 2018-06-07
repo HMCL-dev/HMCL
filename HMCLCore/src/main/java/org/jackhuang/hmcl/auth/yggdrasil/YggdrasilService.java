@@ -120,8 +120,7 @@ public class YggdrasilService {
     public Optional<GameProfile> getCompleteGameProfile(UUID uuid) throws AuthenticationException {
         Objects.requireNonNull(uuid);
 
-        return Optional.ofNullable(fromJson(request(provider.getProfilePropertiesURL(uuid), null), ProfileResponse.class))
-                .map(response -> new GameProfile(response.id, response.name, response.properties));
+        return Optional.ofNullable(fromJson(request(provider.getProfilePropertiesURL(uuid), null), GameProfile.class));
     }
 
     public Optional<Map<TextureType, Texture>> getTextures(GameProfile profile) throws AuthenticationException {
@@ -191,12 +190,6 @@ public class YggdrasilService {
         }
     }
 
-    private class ProfileResponse {
-        public UUID id;
-        public String name;
-        public PropertyMap properties;
-    }
-
     private class TextureResponse {
         public Map<TextureType, Texture> textures;
     }
@@ -216,7 +209,6 @@ public class YggdrasilService {
     }
 
     private static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(GameProfile.class, GameProfile.Serializer.INSTANCE)
             .registerTypeAdapter(PropertyMap.class, PropertyMap.Serializer.INSTANCE)
             .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
             .create();

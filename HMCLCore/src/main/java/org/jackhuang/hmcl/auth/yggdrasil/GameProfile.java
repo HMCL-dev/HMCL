@@ -17,10 +17,8 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
-import com.google.gson.*;
 import org.jackhuang.hmcl.util.Immutable;
 
-import java.lang.reflect.Type;
 import java.util.UUID;
 
 /**
@@ -61,36 +59,6 @@ public final class GameProfile {
      */
     public PropertyMap getProperties() {
         return properties;
-    }
-
-    public static class Serializer implements JsonSerializer<GameProfile>, JsonDeserializer<GameProfile> {
-
-        public static final Serializer INSTANCE = new Serializer();
-
-        private Serializer() {
-        }
-
-        @Override
-        public JsonElement serialize(GameProfile src, Type type, JsonSerializationContext context) {
-            JsonObject result = new JsonObject();
-            if (src.getId() != null)
-                result.add("id", context.serialize(src.getId()));
-            if (src.getName() != null)
-                result.addProperty("name", src.getName());
-            return result;
-        }
-
-        @Override
-        public GameProfile deserialize(JsonElement je, Type type, JsonDeserializationContext context) throws JsonParseException {
-            if (!(je instanceof JsonObject))
-                throw new JsonParseException("The json element is not a JsonObject.");
-
-            JsonObject json = (JsonObject) je;
-
-            UUID id = json.has("id") ? context.deserialize(json.get("id"), UUID.class) : null;
-            String name = json.has("name") ? json.getAsJsonPrimitive("name").getAsString() : null;
-            return new GameProfile(id, name);
-        }
     }
 
 }
