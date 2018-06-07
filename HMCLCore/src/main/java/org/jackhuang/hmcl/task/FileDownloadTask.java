@@ -32,6 +32,8 @@ import java.net.URL;
 import java.security.MessageDigest;
 import java.util.logging.Level;
 
+import static org.jackhuang.hmcl.util.DigestUtils.getDigest;
+
 /**
  * A task that can download a file online.
  *
@@ -154,7 +156,7 @@ public class FileDownloadTask extends Task {
                 temp = FileUtils.createTempFile();
                 rFile = new RandomAccessFile(temp, "rw");
 
-                MessageDigest digest = DigestUtils.getSha1Digest();
+                MessageDigest digest = getDigest("SHA-1");
 
                 stream = con.getInputStream();
                 int lastDownloaded = 0, downloaded = 0;

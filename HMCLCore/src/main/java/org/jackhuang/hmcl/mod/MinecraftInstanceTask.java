@@ -21,13 +21,15 @@ import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.FileUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.LinkedList;
 import java.util.List;
+
+import static org.jackhuang.hmcl.util.DigestUtils.digest;
+import static org.jackhuang.hmcl.util.Hex.encodeHexString;
 
 public final class MinecraftInstanceTask<T> extends Task {
 
@@ -62,7 +64,7 @@ public final class MinecraftInstanceTask<T> extends Task {
                 if (path.startsWith("/") || path.startsWith("\\"))
                     path = path.substring(1);
 
-                overrides.add(new ModpackConfiguration.FileInformation(path, DigestUtils.sha1Hex(zip)));
+                overrides.add(new ModpackConfiguration.FileInformation(path, encodeHexString(digest("SHA-1", zip))));
             }
         }
 

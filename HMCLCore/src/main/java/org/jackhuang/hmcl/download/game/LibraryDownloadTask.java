@@ -7,6 +7,9 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.*;
 
+import static org.jackhuang.hmcl.util.DigestUtils.digest;
+import static org.jackhuang.hmcl.util.Hex.encodeHexString;
+
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -77,7 +80,7 @@ public final class LibraryDownloadTask extends Task {
                 return true;
             }
             byte[] fileData = FileUtils.readBytes(libPath);
-            boolean valid = checksums.contains(DigestUtils.sha1Hex(fileData));
+            boolean valid = checksums.contains(encodeHexString(digest("SHA-1", fileData)));
             if ((!valid) && (libPath.getName().endsWith(".jar"))) {
             }
             return validateJar(fileData, checksums);
@@ -98,7 +101,7 @@ public final class LibraryDownloadTask extends Task {
                 hashes = new String(eData, Charset.forName("UTF-8")).split("\n");
             }
             if (!entry.isDirectory()) {
-                files.put(entry.getName(), DigestUtils.sha1Hex(eData));
+                files.put(entry.getName(), encodeHexString(digest("SHA-1", eData)));
             }
             entry = jar.getNextJarEntry();
         }

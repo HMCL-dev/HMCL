@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.game.AssetObject;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.NetworkUtils;
@@ -34,6 +33,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+
+import static org.jackhuang.hmcl.util.DigestUtils.digest;
+import static org.jackhuang.hmcl.util.Hex.encodeHexString;
 
 /**
  *
@@ -91,7 +93,7 @@ public final class GameAssetDownloadTask extends Task {
             try {
                 // check the checksum of file to ensure that the file is not need to re-download.
                 if (file.exists()) {
-                    String sha1 = DigestUtils.sha1Hex(FileUtils.readBytes(file));
+                    String sha1 = encodeHexString(digest("SHA-1", FileUtils.readBytes(file)));
                     if (sha1.equals(assetObject.getHash())) {
                         ++downloaded;
                         Logging.LOG.finest("File $file has been downloaded successfully, skipped downloading");
