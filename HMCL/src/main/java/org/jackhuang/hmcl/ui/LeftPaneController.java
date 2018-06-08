@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
+import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.game.AccountHelper;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -50,6 +51,7 @@ import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
@@ -60,6 +62,7 @@ public final class LeftPaneController {
     private final VBox accountPane = new VBox();
     private final IconedItem launcherSettingsItem;
     private final VersionListItem missingAccountItem = new VersionListItem(Launcher.i18n("account.missing"), Launcher.i18n("message.unknown"));
+    private final HashMap<Account, VersionListItem> items = new HashMap<>();
 
     public LeftPaneController(AdvancedListBox leftPane) {
         this.leftPane = leftPane;
@@ -86,6 +89,7 @@ public final class LeftPaneController {
                 })))
                 .add(profilePane);
 
+        EventBus.EVENT_BUS.channel(AccountAddedEvent.class).register(this::onAccountAdd);
         EventBus.EVENT_BUS.channel(AccountLoadingEvent.class).register(this::onAccountsLoading);
         EventBus.EVENT_BUS.channel(ProfileLoadingEvent.class).register(this::onProfilesLoading);
         EventBus.EVENT_BUS.channel(ProfileChangedEvent.class).register(this::onProfileChanged);
@@ -144,11 +148,24 @@ public final class LeftPaneController {
         else throw new Error(Launcher.i18n("account.methods.no_method") + ": " + account);
     }
 
+    private void onAccountAdd(AccountAddedEvent event) {
+        Account account = event.getAccount();
+        VersionListItem item = items.get(account);
+        if (account instanceof YggdrasilAccount)
+            AccountHelper.refreshSkinAsync((YggdrasilAccount) account)
+                    .subscribe(Schedulers.javafx(), () -> {
+                        Image image = AccountHelper.getSkin((YggdrasilAccount) account, 4);
+                        item.setImage(image, AccountHelper.getViewport(4));
+                    });
+    }
+
     private void onAccountsLoading() {
         LinkedList<RipplerContainer> list = new LinkedList<>();
+        items.clear();
         Account selectedAccount = Settings.INSTANCE.getSelectedAccount();
         for (Account account : Settings.INSTANCE.getAccounts()) {
             VersionListItem item = new VersionListItem(account.getCharacter(), accountType(account));
+            items.put(account, item);
             RipplerContainer ripplerContainer = new RipplerContainer(item);
             item.setOnSettingsButtonClicked(e -> {
                 AccountPage accountPage = new AccountPage(account, item);

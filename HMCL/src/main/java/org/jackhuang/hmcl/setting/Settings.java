@@ -28,10 +28,7 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.event.AccountLoadingEvent;
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.ProfileChangedEvent;
-import org.jackhuang.hmcl.event.ProfileLoadingEvent;
+import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.*;
 
@@ -391,6 +388,8 @@ public class Settings {
     public void addAccount(Account account) {
         accounts.put(Accounts.getAccountId(account), account);
         onAccountLoading();
+
+        EventBus.EVENT_BUS.fireEvent(new AccountAddedEvent(this, account));
     }
 
     public Account getAccount(String name, String character) {
