@@ -60,7 +60,7 @@ public class YggdrasilAccountFactory extends AccountFactory<YggdrasilAccount> {
 
         String username = tryCast(storage.get("username"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have username"));
-        String character = tryCast(storage.get("clientToken"), String.class)
+        String character = tryCast(storage.get("character"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have selected character name."));
 
         return new YggdrasilAccount(new YggdrasilService(provider, proxy), username, character, YggdrasilSession.fromStorage(storage));
