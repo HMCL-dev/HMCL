@@ -21,6 +21,8 @@ import com.jfoenix.controls.JFXButton;
 import javafx.beans.binding.Bindings;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
@@ -28,10 +30,9 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.TextAlignment;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.setting.Theme;
 
@@ -65,8 +66,107 @@ public final class VersionItem extends StackPane {
 
     private EventHandler<? super MouseEvent> launchClickedHandler = null;
 
+    private void initializeComponents() {
+        setPickOnBounds(false);
+        FXUtils.setLimitWidth(this, 160);
+        FXUtils.setLimitHeight(this, 156);
+
+        content = new VBox();
+        {
+            header = new StackPane();
+            VBox.setVgrow(header, Priority.ALWAYS);
+            header.setPickOnBounds(false);
+            header.setPadding(new Insets(8));
+            header.setStyle("-fx-background-radius: 2 2 0 0; -fx-background-color: rgb(255,255,255,0.87);");
+            {
+                VBox headerContent = new VBox();
+                headerContent.setPadding(new Insets(8, 8, 0, 8));
+                {
+                    lblVersionName = new Label();
+                    lblVersionName.setStyle("-fx-font-size: 15;");
+                    lblVersionName.setTextAlignment(TextAlignment.JUSTIFY);
+                    lblVersionName.setWrapText(true);
+                    headerContent.getChildren().add(lblVersionName);
+
+                    lblGameVersion = new Label();
+                    lblGameVersion.setStyle("-fx-font-size: 11;");
+                    lblGameVersion.setTextAlignment(TextAlignment.JUSTIFY);
+                    lblGameVersion.setWrapText(true);
+                    headerContent.getChildren().add(lblGameVersion);
+
+                    lblLibraries = new Label();
+                    lblLibraries.setStyle("-fx-font-size: 10; -fx-text-fill: gray;");
+                    lblLibraries.setTextAlignment(TextAlignment.JUSTIFY);
+                    lblLibraries.setWrapText(true);
+                    headerContent.getChildren().add(lblLibraries);
+                }
+                header.getChildren().add(headerContent);
+            }
+            content.getChildren().add(header);
+
+            body = new StackPane();
+            body.setStyle("-fx-background-radius: 0 0 2 2; -fx-background-color: rgb(255,255,255,0.87); -fx-padding: 8;");
+            body.setMinHeight(40);
+            body.setPickOnBounds(false);
+            {
+                BorderPane bodyContent = new BorderPane();
+                {
+                    HBox hbox = new HBox();
+                    hbox.setSpacing(8);
+                    {
+                        btnSettings = new JFXButton();
+                        btnSettings.getStyleClass().add("toggle-icon4");
+                        FXUtils.setLimitWidth(btnSettings, 30);
+                        FXUtils.setLimitHeight(btnSettings, 30);
+                        hbox.getChildren().add(btnSettings);
+
+                        btnUpdate = new JFXButton();
+                        btnUpdate.getStyleClass().add("toggle-icon4");
+                        FXUtils.setLimitWidth(btnUpdate, 30);
+                        FXUtils.setLimitHeight(btnUpdate, 30);
+                        hbox.getChildren().add(btnUpdate);
+                    }
+                    bodyContent.setLeft(hbox);
+                }
+                {
+                    HBox hbox = new HBox();
+                    hbox.setSpacing(8);
+                    {
+                        btnScript = new JFXButton();
+                        btnScript.getStyleClass().add("toggle-icon4");
+                        FXUtils.setLimitWidth(btnScript, 30);
+                        FXUtils.setLimitHeight(btnScript, 30);
+                        hbox.getChildren().add(btnScript);
+
+                        btnLaunch = new JFXButton();
+                        btnLaunch.getStyleClass().add("toggle-icon4");
+                        FXUtils.setLimitWidth(btnLaunch, 30);
+                        FXUtils.setLimitHeight(btnLaunch, 30);
+                        hbox.getChildren().add(btnLaunch);
+                    }
+                    bodyContent.setRight(hbox);
+                }
+                body.getChildren().setAll(bodyContent);
+            }
+            content.getChildren().add(body);
+        }
+        getChildren().add(content);
+
+        icon = new StackPane();
+        StackPane.setAlignment(icon, Pos.TOP_RIGHT);
+        icon.setPickOnBounds(false);
+        {
+            iconView = new ImageView();
+            StackPane.setAlignment(iconView, Pos.CENTER_RIGHT);
+            StackPane.setMargin(iconView, new Insets(0, 12, 0, 0));
+            iconView.setImage(new Image("/assets/img/icon.png"));
+            icon.getChildren().add(iconView);
+        }
+        getChildren().add(icon);
+    }
+
     public VersionItem() {
-        FXUtils.loadFXML(this, "/assets/fxml/version-item.fxml");
+        initializeComponents();
         setEffect(new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.26), 5.0, 0.12, -1.0, 1.0));
         btnSettings.setGraphic(SVG.gear(Theme.blackFillBinding(), 15, 15));
         btnUpdate.setGraphic(SVG.update(Theme.blackFillBinding(), 15, 15));

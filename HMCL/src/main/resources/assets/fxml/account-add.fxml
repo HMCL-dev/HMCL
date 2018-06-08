@@ -56,9 +56,11 @@
         </body>
         <actions>
             <Label fx:id="lblCreationWarning"/>
-            <JFXButton fx:id="btnAccept" onMouseClicked="#onCreationAccept" text="%button.ok" styleClass="dialog-accept"/>
+            <StackPane fx:id="acceptPane">
+                <JFXButton fx:id="btnAccept" onMouseClicked="#onCreationAccept" text="%button.ok" styleClass="dialog-accept"/>
+                <JFXSpinner fx:id="spinnerAccept" styleClass="small-spinner" />
+            </StackPane>
             <JFXButton onMouseClicked="#onCreationCancel" text="%button.cancel" styleClass="dialog-cancel"/>
         </actions>
     </JFXDialogLayout>
-    <JFXProgressBar fx:id="progressBar" visible="false" StackPane.alignment="TOP_CENTER"/>
 </fx:root>

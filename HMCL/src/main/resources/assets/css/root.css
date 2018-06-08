@@ -911,6 +911,14 @@
     -fx-stroke-width: 5.0;
 }
 
+.small-spinner {
+    -jfx-radius: 10;
+}
+
+.small-spinner > .arc {
+    -fx-stroke-width: 3.0;
+}
+
 .second-spinner {
     -jfx-radius: 30;
 }

@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
 /**
  * An implementation of classic Minecraft game repository.
@@ -170,56 +171,49 @@ public class DefaultGameRepository implements GameRepository {
 
         File[] files = new File(getBaseDirectory(), "versions").listFiles();
         if (files != null)
-            for (File dir : files)
-                if (dir.isDirectory()) {
-                    if (Thread.interrupted()) {
-                        this.versions = new HashMap<>();
-                        loaded = false;
-                        return;
-                    }
+            Arrays.stream(files).parallel().filter(File::isDirectory).flatMap(dir -> {
+                String id = dir.getName();
+                File json = new File(dir, id + ".json");
 
-                    String id = dir.getName();
-                    File json = new File(dir, id + ".json");
+                // If user renamed the json file by mistake or created the json file in a wrong name,
+                // we will find the only json and rename it to correct name.
+                if (!json.exists()) {
+                    List<File> jsons = FileUtils.listFilesByExtension(dir, "json");
+                    if (jsons.size() == 1)
+                        if (!jsons.get(0).renameTo(json)) {
+                            Logging.LOG.warning("Cannot rename json file " + jsons.get(0) + " to " + json + ", ignoring version " + id);
+                            return Stream.empty();
+                        }
+                }
 
-                    // If user renamed the json file by mistake or created the json file in a wrong name,
-                    // we will find the only json and rename it to correct name.
-                    if (!json.exists()) {
-                        List<File> jsons = FileUtils.listFilesByExtension(dir, "json");
-                        if (jsons.size() == 1)
-                            if (!jsons.get(0).renameTo(json)) {
-                                Logging.LOG.warning("Cannot rename json file " + jsons.get(0) + " to " + json + ", ignoring version " + id);
-                                continue;
-                            }
-                    }
+                Version version;
+                try {
+                    version = Objects.requireNonNull(readVersionJson(json));
+                } catch (Exception e) {
+                    // JsonSyntaxException or IOException or NullPointerException(!!)
+                    if (EventBus.EVENT_BUS.fireEvent(new GameJsonParseFailedEvent(this, json, id)) != Event.Result.ALLOW)
+                        return Stream.empty();
 
-                    Version version;
                     try {
                         version = Objects.requireNonNull(readVersionJson(json));
-                    } catch (Exception e) {
-                        // JsonSyntaxException or IOException or NullPointerException(!!)
-                        if (EventBus.EVENT_BUS.fireEvent(new GameJsonParseFailedEvent(this, json, id)) != Event.Result.ALLOW)
-                            continue;
-
-                        try {
-                            version = Objects.requireNonNull(readVersionJson(json));
-                        } catch (Exception e2) {
-                            Logging.LOG.log(Level.SEVERE, "User corrected version json is still malformed");
-                            continue;
-                        }
+                    } catch (Exception e2) {
+                        Logging.LOG.log(Level.SEVERE, "User corrected version json is still malformed");
+                        return Stream.empty();
                     }
-
-                    if (!id.equals(version.getId())) {
-                        version = version.setId(id);
-                        try {
-                            FileUtils.writeText(json, Constants.GSON.toJson(version));
-                        } catch (Exception e) {
-                            Logging.LOG.log(Level.WARNING, "Ignoring version " + id + " because wrong id " + version.getId() + " is set and cannot correct it.");
-                            continue;
-                        }
-                    }
-
-                    provider.addVersion(version);
                 }
+
+                if (!id.equals(version.getId())) {
+                    version = version.setId(id);
+                    try {
+                        FileUtils.writeText(json, Constants.GSON.toJson(version));
+                    } catch (Exception e) {
+                        Logging.LOG.log(Level.WARNING, "Ignoring version " + id + " because wrong id " + version.getId() + " is set and cannot correct it.");
+                        return Stream.empty();
+                    }
+                }
+
+                return Stream.of(version);
+            }).forEachOrdered(provider::addVersion);
 
         for (Version version : provider.getVersionMap().values()) {
             try {

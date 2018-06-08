@@ -50,10 +50,11 @@ import org.jackhuang.hmcl.util.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
 import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
@@ -88,7 +89,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
         });
         EventBus.EVENT_BUS.channel(RefreshingVersionsEvent.class).register(event -> {
             if (event.getSource() == profile.getRepository())
-                JFXUtilities.runInFXAndWait(this::loadingVersions);
+                // This will occupy 0.5s. Too slow!
+                JFXUtilities.runInFX(this::loadingVersions);
         });
         EventBus.EVENT_BUS.channel(ProfileChangedEvent.class).register(event -> {
             this.profile = event.getProfile();
@@ -173,7 +175,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 } catch (MismatchedModpackTypeException e) {
                     Controllers.closeDialog(region.get());
                     Controllers.dialog(Launcher.i18n("modpack.mismatched_type"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE);
-                } catch (IOException e)  {
+                } catch (IOException e) {
                     Controllers.closeDialog(region.get());
                     Controllers.dialog(Launcher.i18n("modpack.invalid"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE);
                 }
@@ -191,7 +193,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                         Launcher.i18n("modpack.export"),
                         Launcher.i18n("folder.game")
                 ));
-                versionList.setOnMouseClicked(e ->{
+                versionList.setOnMouseClicked(e -> {
                     versionPopup.hide();
                     switch (versionList.getSelectionModel().getSelectedIndex()) {
                         case 0:
@@ -208,7 +210,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             break;
                         default:
                             break;
-                    }});
+                    }
+                });
                 versionPopup.show(item, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
             } else if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
                 if (Settings.INSTANCE.getSelectedAccount() == null)
@@ -229,10 +232,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     private void loadVersions(HMCLGameRepository repository) {
-        List<Node> children = new LinkedList<>();
-        for (Version version : repository.getVersions()) {
-            children.add(buildNode(repository, version, () -> GameVersion.minecraftVersion(repository.getVersionJar(version.getId())).orElse("Unknown")));
-        }
+        List<Node> children = repository.getVersions().parallelStream()
+                .map(version -> buildNode(repository, version, () -> GameVersion.minecraftVersion(repository.getVersionJar(version.getId())).orElse("Unknown")))
+                .collect(Collectors.toList());
         JFXUtilities.runInFX(() -> {
             if (profile == repository.getProfile()) {
                 masonryPane.getChildren().setAll(children);

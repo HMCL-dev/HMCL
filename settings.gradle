@@ -1,4 +1,4 @@
-rootProject.name = 'HMCLKotlin'
+rootProject.name = 'HMCL3'
 include 'HMCL'
 include 'HMCLCore'
 

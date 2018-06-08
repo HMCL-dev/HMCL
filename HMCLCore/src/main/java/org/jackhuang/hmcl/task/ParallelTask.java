@@ -28,7 +28,7 @@ import java.util.Collection;
  */
 public final class ParallelTask extends Task {
 
-    private final Task[] tasks;
+    private final Collection<Task> tasks;
 
     /**
      * Constructor.
@@ -36,6 +36,11 @@ public final class ParallelTask extends Task {
      * @param tasks the tasks that can be executed parallelly.
      */
     public ParallelTask(Task... tasks) {
+        this.tasks = Arrays.asList(tasks);
+        setSignificance(TaskSignificance.MINOR);
+    }
+
+    public ParallelTask(Collection<Task> tasks) {
         this.tasks = tasks;
         setSignificance(TaskSignificance.MINOR);
     }
@@ -46,7 +51,7 @@ public final class ParallelTask extends Task {
 
     @Override
     public Collection<Task> getDependents() {
-        return Arrays.asList(tasks);
+        return tasks;
     }
 
 }
