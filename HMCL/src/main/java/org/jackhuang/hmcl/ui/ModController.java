@@ -37,9 +37,11 @@ import org.jackhuang.hmcl.util.Logging;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class ModController {
@@ -68,21 +70,22 @@ public final class ModController {
         });
 
         rootPane.setOnDragDropped(event -> {
-            List<File> mods = event.getDragboard().getFiles();
-            Stream<File> stream = null;
-            if (mods != null)
-                stream = mods.stream()
-                        .filter(it -> Arrays.asList("jar", "zip", "litemod").contains(FileUtils.getExtension(it)));
-            if (stream != null && stream.findAny().isPresent()) {
-                stream.forEach(it -> {
-                    try {
-                        modManager.addMod(versionId, it);
-                    } catch (IOException | IllegalArgumentException e) {
-                        Logging.LOG.log(Level.WARNING, "Unable to parse mod file " + it, e);
-                    }
-                });
-                loadMods(modManager, versionId);
-                event.setDropCompleted(true);
+            List<File> files = event.getDragboard().getFiles();
+            if (files != null) {
+                Collection<File> mods = files.stream()
+                        .filter(it -> Arrays.asList("jar", "zip", "litemod").contains(FileUtils.getExtension(it)))
+                        .collect(Collectors.toList());
+                if (!mods.isEmpty()) {
+                    mods.forEach(it -> {
+                        try {
+                            modManager.addMod(versionId, it);
+                        } catch (IOException | IllegalArgumentException e) {
+                            Logging.LOG.log(Level.WARNING, "Unable to parse mod file " + it, e);
+                        }
+                    });
+                    loadMods(modManager, versionId);
+                    event.setDropCompleted(true);
+                }
             }
             event.consume();
         });
