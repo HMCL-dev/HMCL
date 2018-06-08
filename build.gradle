@@ -50,6 +50,7 @@ allprojects {
         compile "com.google.code.gson:gson:2.8.2"
         compile "org.apache.commons:commons-compress:1.15"
         compile "org.tukaani:xz:1.2"
+        compile "org.hildan.fxgson:fx-gson:3.1.0"
         testCompile group: 'junit', name: 'junit', version: '4.12'
     }
 
