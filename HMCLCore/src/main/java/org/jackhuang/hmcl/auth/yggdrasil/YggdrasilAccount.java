@@ -103,16 +103,11 @@ public class YggdrasilAccount extends Account {
     }
 
     @Override
-    public boolean canPlayOffline() {
-        return isLoggedIn() && session.getSelectedProfile() != null && !canPlayOnline();
-    }
+    public Optional<AuthInfo> playOffline() {
+        if (isLoggedIn() && session.getSelectedProfile() != null && !canPlayOnline())
+            return Optional.of(session.toAuthInfo());
 
-    @Override
-    public AuthInfo playOffline() {
-        if (!canPlayOffline())
-            throw new IllegalStateException("Current account " + this + " cannot play offline.");
-
-        return session.toAuthInfo();
+        return Optional.empty();
     }
 
     @Override

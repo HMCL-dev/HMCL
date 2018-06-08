@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.auth;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -56,13 +57,11 @@ public abstract class Account {
      */
     public abstract AuthInfo logInWithPassword(String password) throws AuthenticationException;
 
-    public abstract boolean canPlayOffline();
-
     /**
      * Play offline.
      * @return the specific offline player's info.
      */
-    public abstract AuthInfo playOffline();
+    public abstract Optional<AuthInfo> playOffline();
 
     public abstract Map<Object, Object> toStorage();
 

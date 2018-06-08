@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -80,13 +81,8 @@ public class OfflineAccount extends Account {
     }
 
     @Override
-    public boolean canPlayOffline() {
-        return false;
-    }
-
-    @Override
-    public AuthInfo playOffline() {
-        throw new IllegalStateException();
+    public Optional<AuthInfo> playOffline() {
+        return Optional.empty();
     }
 
     @Override
