@@ -24,13 +24,7 @@ package org.jackhuang.hmcl.download;
  */
 public interface DownloadProvider {
 
-    String getLibraryBaseURL();
-
     String getVersionListURL();
-
-    String getVersionBaseURL();
-
-    String getAssetIndexBaseURL();
 
     String getAssetBaseURL();
 

@@ -34,23 +34,8 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public String getLibraryBaseURL() {
-        return "https://bmclapi2.bangbang93.com/libraries/";
-    }
-
-    @Override
     public String getVersionListURL() {
         return "https://bmclapi2.bangbang93.com/mc/game/version_manifest.json";
-    }
-
-    @Override
-    public String getVersionBaseURL() {
-        return "https://bmclapi2.bangbang93.com/versions/";
-    }
-
-    @Override
-    public String getAssetIndexBaseURL() {
-        return "https://bmclapi2.bangbang93.com/indexes/";
     }
 
     @Override
