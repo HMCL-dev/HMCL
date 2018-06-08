@@ -22,7 +22,15 @@ import com.google.gson.GsonBuilder;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
+import javafx.collections.ObservableSet;
 import javafx.scene.text.Font;
+
+import org.hildan.fxgson.creators.ObservableListCreator;
+import org.hildan.fxgson.creators.ObservableMapCreator;
+import org.hildan.fxgson.creators.ObservableSetCreator;
+import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
@@ -50,7 +58,12 @@ public class Settings {
             .registerTypeAdapter(VersionSetting.class, VersionSetting.Serializer.INSTANCE)
             .registerTypeAdapter(Profile.class, Profile.Serializer.INSTANCE)
             .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
-            .setPrettyPrinting().create();
+            .registerTypeAdapter(ObservableList.class, new ObservableListCreator())
+            .registerTypeAdapter(ObservableSet.class, new ObservableSetCreator())
+            .registerTypeAdapter(ObservableMap.class, new ObservableMapCreator())
+            .registerTypeAdapterFactory(new JavaFxPropertyTypeAdapterFactory(true, true))
+            .setPrettyPrinting()
+            .create();
 
     public static final String DEFAULT_PROFILE = "Default";
     public static final String HOME_PROFILE = "Home";
@@ -67,7 +80,7 @@ public class Settings {
     private Settings() {
         loadProxy();
 
-        for (Iterator<Map<Object, Object>> iterator = SETTINGS.getAccounts().iterator(); iterator.hasNext(); ) {
+        for (Iterator<Map<Object, Object>> iterator = SETTINGS.accounts.iterator(); iterator.hasNext();) {
             Map<Object, Object> settings = iterator.next();
             AccountFactory<?> factory = Accounts.ACCOUNT_FACTORY.get(tryCast(settings.get("type"), String.class).orElse(""));
             if (factory == null) {
@@ -88,7 +101,6 @@ public class Settings {
             accounts.put(Accounts.getAccountId(account), account);
         }
 
-        checkAuthlibInjectorServerURLs();
         checkAuthlibInjectorAccounts();
         checkProfileMap();
 
@@ -124,11 +136,11 @@ public class Settings {
 
     public void save() {
         try {
-            SETTINGS.getAccounts().clear();
+            SETTINGS.accounts.clear();
             for (Account account : accounts.values()) {
                 Map<Object, Object> storage = account.toStorage();
                 storage.put("type", Accounts.getAccountType(account));
-                SETTINGS.getAccounts().add(storage);
+                SETTINGS.accounts.add(storage);
             }
 
             FileUtils.writeText(SETTINGS_FILE, GSON.toJson(SETTINGS));
@@ -137,12 +149,12 @@ public class Settings {
         }
     }
 
-    private final StringProperty commonPath = new ImmediateStringProperty(this, "commonPath", SETTINGS.getCommonDirectory()) {
+    private final StringProperty commonPath = new ImmediateStringProperty(this, "commonPath", SETTINGS.commonDirectory.get()) {
         @Override
         public void invalidated() {
             super.invalidated();
 
-            SETTINGS.setCommonDirectory(get());
+            SETTINGS.commonDirectory.set(get());
             save();
         }
     };
@@ -159,7 +171,7 @@ public class Settings {
         this.commonPath.set(commonPath);
     }
 
-    private Locales.SupportedLocale locale = Locales.getLocaleByName(SETTINGS.getLocalization());
+    private Locales.SupportedLocale locale = Locales.getLocaleByName(SETTINGS.localization.get());
 
     public Locales.SupportedLocale getLocale() {
         return locale;
@@ -167,7 +179,7 @@ public class Settings {
 
     public void setLocale(Locales.SupportedLocale locale) {
         this.locale = locale;
-        SETTINGS.setLocalization(Locales.getNameByLocale(locale));
+        SETTINGS.localization.set(Locales.getNameByLocale(locale));
         save();
     }
 
@@ -177,7 +189,7 @@ public class Settings {
         return proxy;
     }
 
-    private Proxy.Type proxyType = Proxies.getProxyType(SETTINGS.getProxyType());
+    private Proxy.Type proxyType = Proxies.getProxyType(SETTINGS.proxyType.get());
 
     public Proxy.Type getProxyType() {
         return proxyType;
@@ -185,58 +197,62 @@ public class Settings {
 
     public void setProxyType(Proxy.Type proxyType) {
         this.proxyType = proxyType;
-        SETTINGS.setProxyType(Proxies.PROXIES.indexOf(proxyType));
+        SETTINGS.proxyType.set(Proxies.PROXIES.indexOf(proxyType));
         save();
         loadProxy();
     }
 
     public String getProxyHost() {
-        return SETTINGS.getProxyHost();
+        return SETTINGS.proxyHost.get();
     }
 
     public void setProxyHost(String proxyHost) {
-        SETTINGS.setProxyHost(proxyHost);
+        SETTINGS.proxyHost.set(proxyHost);
         save();
     }
 
     public String getProxyPort() {
-        return SETTINGS.getProxyPort();
+        return SETTINGS.proxyPort.get();
     }
 
     public void setProxyPort(String proxyPort) {
-        SETTINGS.setProxyPort(proxyPort);
+        SETTINGS.proxyPort.set(proxyPort);
         save();
     }
 
     public String getProxyUser() {
-        return SETTINGS.getProxyUser();
+        return SETTINGS.proxyUser.get();
     }
 
     public void setProxyUser(String proxyUser) {
-        SETTINGS.setProxyUser(proxyUser);
+        SETTINGS.proxyUser.set(proxyUser);
         save();
     }
 
     public String getProxyPass() {
-        return SETTINGS.getProxyPass();
+        return SETTINGS.proxyPass.get();
     }
 
     public void setProxyPass(String proxyPass) {
-        SETTINGS.setProxyPass(proxyPass);
+        SETTINGS.proxyPass.set(proxyPass);
         save();
     }
 
-    public boolean hasProxy() { return SETTINGS.isHasProxy(); }
+    public boolean hasProxy() {
+        return SETTINGS.hasProxy.get();
+    }
 
     public void setHasProxy(boolean hasProxy) {
-        SETTINGS.setHasProxy(hasProxy);
+        SETTINGS.hasProxy.set(hasProxy);
         save();
     }
 
-    public boolean hasProxyAuth() { return SETTINGS.isHasProxyAuth(); }
+    public boolean hasProxyAuth() {
+        return SETTINGS.hasProxyAuth.get();
+    }
 
     public void setHasProxyAuth(boolean hasProxyAuth) {
-        SETTINGS.setHasProxyAuth(hasProxyAuth);
+        SETTINGS.hasProxyAuth.set(hasProxyAuth);
         save();
     }
 
@@ -267,21 +283,21 @@ public class Settings {
     }
 
     public Font getFont() {
-        return Font.font(SETTINGS.getFontFamily(), SETTINGS.getFontSize());
+        return Font.font(SETTINGS.fontFamily.get(), SETTINGS.fontSize.get());
     }
 
     public void setFont(Font font) {
-        SETTINGS.setFontFamily(font.getFamily());
-        SETTINGS.setFontSize(font.getSize());
+        SETTINGS.fontFamily.set(font.getFamily());
+        SETTINGS.fontSize.set(font.getSize());
         save();
     }
 
     public int getLogLines() {
-        return Math.max(SETTINGS.getLogLines(), 100);
+        return Math.max(SETTINGS.logLines.get(), 100);
     }
 
     public void setLogLines(int logLines) {
-        SETTINGS.setLogLines(logLines);
+        SETTINGS.logLines.set(logLines);
         save();
     }
 
@@ -290,37 +306,26 @@ public class Settings {
      ****************************************/
 
     public Set<String> getAuthlibInjectorServerURLs() {
-        return SETTINGS.getAuthlibInjectorServerURLs();
+        return SETTINGS.authlibInjectorServerURLs;
     }
 
     public void removeAuthlibInjectorServerURL(String serverURL) {
-        checkAuthlibInjectorServerURLs();
-
-        SETTINGS.getAuthlibInjectorServerURLs().remove(serverURL);
+        SETTINGS.authlibInjectorServerURLs.remove(serverURL);
 
         checkAuthlibInjectorAccounts();
         save();
     }
 
     public void addAuthlibInjectorServerURL(String serverURL) {
-        checkAuthlibInjectorServerURLs();
-
-        SETTINGS.getAuthlibInjectorServerURLs().add(serverURL);
+        SETTINGS.authlibInjectorServerURLs.add(serverURL);
         save();
-    }
-
-    private void checkAuthlibInjectorServerURLs() {
-        if (SETTINGS.getAuthlibInjectorServerURLs() == null) {
-            SETTINGS.setAuthlibInjectorServerURLs(new HashSet<>());
-            save();
-        }
     }
 
     private void checkAuthlibInjectorAccounts() {
         for (Account account : getAccounts()) {
             if (account instanceof AuthlibInjectorAccount) {
                 AuthlibInjectorAccount injectorAccount = (AuthlibInjectorAccount) account;
-                if (!SETTINGS.getAuthlibInjectorServerURLs().contains(injectorAccount.getServerBaseURL()))
+                if (!SETTINGS.authlibInjectorServerURLs.contains(injectorAccount.getServerBaseURL()))
                     deleteAccount(account);
             }
         }
@@ -331,14 +336,14 @@ public class Settings {
      ****************************************/
 
     public DownloadProvider getDownloadProvider() {
-        return DownloadProviders.getDownloadProvider(SETTINGS.getDownloadType());
+        return DownloadProviders.getDownloadProvider(SETTINGS.downloadType.get());
     }
 
     public void setDownloadProvider(DownloadProvider downloadProvider) {
         int index = DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(downloadProvider);
         if (index == -1)
             throw new IllegalArgumentException("Unknown download provider: " + downloadProvider);
-        SETTINGS.setDownloadType(index);
+        SETTINGS.downloadType.set(index);
         save();
     }
 
@@ -346,7 +351,7 @@ public class Settings {
      *               ACCOUNTS               *
      ****************************************/
 
-    private final ImmediateObjectProperty<Account> selectedAccount = new ImmediateObjectProperty<Account>(this, "selectedAccount", accounts.get(SETTINGS.getSelectedAccount())) {
+    private final ImmediateObjectProperty<Account> selectedAccount = new ImmediateObjectProperty<Account>(this, "selectedAccount", accounts.get(SETTINGS.selectedAccount.get())) {
         @Override
         public Account get() {
             Account a = super.get();
@@ -368,7 +373,7 @@ public class Settings {
         public void invalidated() {
             super.invalidated();
 
-            SETTINGS.setSelectedAccount(getValue() == null ? "" : Accounts.getAccountId(getValue()));
+            SETTINGS.selectedAccount.set(getValue() == null ? "" : Accounts.getAccountId(getValue()));
             save();
         }
     };
@@ -418,12 +423,12 @@ public class Settings {
      *              BACKGROUND              *
      ****************************************/
 
-    private final ImmediateStringProperty backgroundImage = new ImmediateStringProperty(this, "backgroundImage", SETTINGS.getBackgroundImage()) {
+    private final ImmediateStringProperty backgroundImage = new ImmediateStringProperty(this, "backgroundImage", SETTINGS.backgroundImage.get()) {
         @Override
         public void invalidated() {
             super.invalidated();
 
-            SETTINGS.setBackgroundImage(get());
+            SETTINGS.backgroundImage.set(get());
             save();
         }
     };
@@ -440,12 +445,12 @@ public class Settings {
         this.backgroundImage.set(backgroundImage);
     }
 
-    private final ImmediateObjectProperty<EnumBackgroundImage> backgroundImageType = new ImmediateObjectProperty<EnumBackgroundImage>(this, "backgroundImageType", EnumBackgroundImage.indexOf(SETTINGS.getBackgroundImageType())) {
+    private final ImmediateObjectProperty<EnumBackgroundImage> backgroundImageType = new ImmediateObjectProperty<EnumBackgroundImage>(this, "backgroundImageType", EnumBackgroundImage.indexOf(SETTINGS.backgroundImageType.get())) {
         @Override
         public void invalidated() {
             super.invalidated();
 
-            SETTINGS.setBackgroundImageType(get().ordinal());
+            SETTINGS.backgroundImageType.set(get().ordinal());
             save();
         }
     };
@@ -466,12 +471,12 @@ public class Settings {
      *                THEME                 *
      ****************************************/
 
-    private final ImmediateObjectProperty<Theme> theme = new ImmediateObjectProperty<Theme>(this, "theme", Theme.getTheme(SETTINGS.getTheme()).orElse(Theme.BLUE)) {
+    private final ImmediateObjectProperty<Theme> theme = new ImmediateObjectProperty<Theme>(this, "theme", Theme.getTheme(SETTINGS.theme.get()).orElse(Theme.BLUE)) {
         @Override
         public void invalidated() {
             super.invalidated();
 
-            SETTINGS.setTheme(get().getName().toLowerCase());
+            SETTINGS.theme.set(get().getName().toLowerCase());
             save();
         }
     };
@@ -495,19 +500,19 @@ public class Settings {
     public Profile getSelectedProfile() {
         checkProfileMap();
 
-        if (!hasProfile(SETTINGS.getSelectedProfile())) {
+        if (!hasProfile(SETTINGS.selectedProfile.get())) {
             getProfileMap().keySet().stream().findFirst().ifPresent(selectedProfile -> {
-                SETTINGS.setSelectedProfile(selectedProfile);
+                SETTINGS.selectedProfile.set(selectedProfile);
                 save();
             });
             Schedulers.computation().schedule(this::onProfileChanged);
         }
-        return getProfile(SETTINGS.getSelectedProfile());
+        return getProfile(SETTINGS.selectedProfile.get());
     }
 
     public void setSelectedProfile(Profile selectedProfile) {
-        if (hasProfile(selectedProfile.getName()) && !Objects.equals(selectedProfile.getName(), SETTINGS.getSelectedProfile())) {
-            SETTINGS.setSelectedProfile(selectedProfile.getName());
+        if (hasProfile(selectedProfile.getName()) && !Objects.equals(selectedProfile.getName(), SETTINGS.selectedProfile.get())) {
+            SETTINGS.selectedProfile.set(selectedProfile.getName());
             save();
             Schedulers.computation().schedule(this::onProfileChanged);
         }
@@ -525,7 +530,7 @@ public class Settings {
     }
 
     public Map<String, Profile> getProfileMap() {
-        return SETTINGS.getConfigurations();
+        return SETTINGS.configurations;
     }
 
     public Collection<Profile> getProfiles() {

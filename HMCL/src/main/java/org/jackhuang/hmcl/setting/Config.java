@@ -17,256 +17,92 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.Launcher;
-import org.jackhuang.hmcl.util.JavaVersion;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.TreeMap;
 
-import java.util.*;
+import org.jackhuang.hmcl.Launcher;
+import com.google.gson.annotations.SerializedName;
+
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
+import javafx.collections.ObservableSet;
 
 public final class Config implements Cloneable {
 
     @SerializedName("last")
-    private String selectedProfile = "";
+    public final StringProperty selectedProfile = new SimpleStringProperty("");
 
     @SerializedName("backgroundType")
-    private int backgroundImageType = 0;
+    public final IntegerProperty backgroundImageType = new SimpleIntegerProperty(0);
 
     @SerializedName("bgpath")
-    private String backgroundImage = null;
+    public final StringProperty backgroundImage = new SimpleStringProperty();
 
     @SerializedName("commonpath")
-    private String commonDirectory = Launcher.MINECRAFT_DIRECTORY.getAbsolutePath();
+    public final StringProperty commonDirectory = new SimpleStringProperty(Launcher.MINECRAFT_DIRECTORY.getAbsolutePath());
 
     @SerializedName("hasProxy")
-    private boolean hasProxy = false;
+    public final BooleanProperty hasProxy = new SimpleBooleanProperty();
 
     @SerializedName("hasProxyAuth")
-    private boolean hasProxyAuth = false;
+    public final BooleanProperty hasProxyAuth = new SimpleBooleanProperty();
 
     @SerializedName("proxyType")
-    private int proxyType = 0;
+    public final IntegerProperty proxyType = new SimpleIntegerProperty();
 
     @SerializedName("proxyHost")
-    private String proxyHost = null;
+    public final StringProperty proxyHost = new SimpleStringProperty();
 
     @SerializedName("proxyPort")
-    private String proxyPort = null;
+    public final StringProperty proxyPort = new SimpleStringProperty();
 
     @SerializedName("proxyUserName")
-    private String proxyUser = null;
+    public final StringProperty proxyUser = new SimpleStringProperty();
 
     @SerializedName("proxyPassword")
-    private String proxyPass = null;
+    public final StringProperty proxyPass = new SimpleStringProperty();
 
     @SerializedName("theme")
-    private String theme = null;
-
-    @SerializedName("java")
-    private List<JavaVersion> java = null;
+    public final StringProperty theme = new SimpleStringProperty();
 
     @SerializedName("localization")
-    private String localization;
+    public final StringProperty localization = new SimpleStringProperty();
 
     @SerializedName("downloadtype")
-    private int downloadType = 0;
+    public final IntegerProperty downloadType = new SimpleIntegerProperty();
 
     @SerializedName("configurations")
-    private Map<String, Profile> configurations = new TreeMap<>();
+    public final ObservableMap<String, Profile> configurations = FXCollections.observableMap(new TreeMap<>());
 
     @SerializedName("accounts")
-    private List<Map<Object, Object>> accounts = new LinkedList<>();
+    public final ObservableList<Map<Object, Object>> accounts = FXCollections.observableArrayList();
 
     @SerializedName("selectedAccount")
-    private String selectedAccount = "";
+    public final StringProperty selectedAccount = new SimpleStringProperty("");
 
     @SerializedName("fontFamily")
-    private String fontFamily = "Consolas";
+    public final StringProperty fontFamily = new SimpleStringProperty("Consolas");
 
     @SerializedName("fontSize")
-    private double fontSize = 12;
+    public final DoubleProperty fontSize = new SimpleDoubleProperty(12);
 
     @SerializedName("logLines")
-    private int logLines = 100;
+    public final IntegerProperty logLines = new SimpleIntegerProperty(100);
 
     @SerializedName("authlibInjectorServerURLs")
-    private Set<String> authlibInjectorServerURLs = new HashSet<>();
+    public final ObservableSet<String> authlibInjectorServerURLs = FXCollections.observableSet(new HashSet<>());
 
-    public String getSelectedProfile() {
-        return selectedProfile;
-    }
-
-    public void setSelectedProfile(String selectedProfile) {
-        this.selectedProfile = selectedProfile;
-    }
-
-    public String getBackgroundImage() {
-        return backgroundImage;
-    }
-
-    public void setBackgroundImage(String backgroundImage) {
-        this.backgroundImage = backgroundImage;
-    }
-
-    public int getBackgroundImageType() {
-        return backgroundImageType;
-    }
-
-    public void setBackgroundImageType(int backgroundImageType) {
-        this.backgroundImageType = backgroundImageType;
-    }
-
-    public String getCommonDirectory() {
-        return commonDirectory;
-    }
-
-    public void setCommonDirectory(String commonDirectory) {
-        this.commonDirectory = commonDirectory;
-    }
-
-    public boolean isHasProxy() {
-        return hasProxy;
-    }
-
-    public void setHasProxy(boolean hasProxy) {
-        this.hasProxy = hasProxy;
-    }
-
-    public boolean isHasProxyAuth() {
-        return hasProxyAuth;
-    }
-
-    public void setHasProxyAuth(boolean hasProxyAuth) {
-        this.hasProxyAuth = hasProxyAuth;
-    }
-
-    public int getProxyType() {
-        return proxyType;
-    }
-
-    public void setProxyType(int proxyType) {
-        this.proxyType = proxyType;
-    }
-
-    public String getProxyHost() {
-        return proxyHost;
-    }
-
-    public void setProxyHost(String proxyHost) {
-        this.proxyHost = proxyHost;
-    }
-
-    public String getProxyPort() {
-        return proxyPort;
-    }
-
-    public void setProxyPort(String proxyPort) {
-        this.proxyPort = proxyPort;
-    }
-
-    public String getProxyUser() {
-        return proxyUser;
-    }
-
-    public void setProxyUser(String proxyUser) {
-        this.proxyUser = proxyUser;
-    }
-
-    public String getProxyPass() {
-        return proxyPass;
-    }
-
-    public void setProxyPass(String proxyPass) {
-        this.proxyPass = proxyPass;
-    }
-
-    public String getTheme() {
-        return theme;
-    }
-
-    public void setTheme(String theme) {
-        this.theme = theme;
-    }
-
-    public List<JavaVersion> getJava() {
-        return java;
-    }
-
-    public void setJava(List<JavaVersion> java) {
-        this.java = java;
-    }
-
-    public String getLocalization() {
-        return localization;
-    }
-
-    public void setLocalization(String localization) {
-        this.localization = localization;
-    }
-
-    public int getDownloadType() {
-        return downloadType;
-    }
-
-    public void setDownloadType(int downloadType) {
-        this.downloadType = downloadType;
-    }
-
-    public Map<String, Profile> getConfigurations() {
-        return configurations;
-    }
-
-    public void setConfigurations(Map<String, Profile> configurations) {
-        this.configurations = configurations;
-    }
-
-    public List<Map<Object, Object>> getAccounts() {
-        return accounts;
-    }
-
-    public void setAccounts(List<Map<Object, Object>> accounts) {
-        this.accounts = accounts;
-    }
-
-    public String getSelectedAccount() {
-        return selectedAccount;
-    }
-
-    public void setSelectedAccount(String selectedAccount) {
-        this.selectedAccount = selectedAccount;
-    }
-
-    public String getFontFamily() {
-        return fontFamily;
-    }
-
-    public void setFontFamily(String fontFamily) {
-        this.fontFamily = fontFamily;
-    }
-
-    public double getFontSize() {
-        return fontSize;
-    }
-
-    public void setFontSize(double fontSize) {
-        this.fontSize = fontSize;
-    }
-
-    public int getLogLines() {
-        return logLines;
-    }
-
-    public void setLogLines(int logLines) {
-        this.logLines = logLines;
-    }
-
-    public Set<String> getAuthlibInjectorServerURLs() {
-        return authlibInjectorServerURLs;
-    }
-
-    public void setAuthlibInjectorServerURLs(Set<String> authlibInjectorServerURLs) {
-        this.authlibInjectorServerURLs = authlibInjectorServerURLs;
-    }
-
+    @Override
     public Config clone() {
         return Settings.GSON.fromJson(Settings.GSON.toJson(this), Config.class);
     }
