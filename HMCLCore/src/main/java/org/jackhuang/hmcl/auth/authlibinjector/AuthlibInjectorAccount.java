@@ -66,11 +66,10 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         try {
             thread.join();
 
-            String arg = "-javaagent:" + injectorJarPath.get() + "=" + serverBaseURL;
-            Arguments arguments = Arguments.addJVMArguments(null, arg);
+            Arguments arguments = new Arguments().addJVMArguments("-javaagent:" + injectorJarPath.get() + "=" + serverBaseURL);
 
             if (flag.get())
-                arguments = Arguments.addJVMArguments(arguments, "-Dorg.to2mbn.authlibinjector.config.prefetched=" + new String(Base64.getEncoder().encode(getTask.getResult().getBytes()), UTF_8));
+                arguments = arguments.addJVMArguments("-Dorg.to2mbn.authlibinjector.config.prefetched=" + new String(Base64.getEncoder().encode(getTask.getResult().getBytes()), UTF_8));
 
             return info.withArguments(arguments);
         } catch (Exception e) {

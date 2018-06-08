@@ -54,28 +54,22 @@ public final class Arguments {
         return jvm == null ? Collections.emptyList() : Collections.unmodifiableList(jvm);
     }
 
-    public static Arguments addGameArguments(Arguments arguments, String... gameArguments) {
-        return addGameArguments(arguments, Arrays.asList(gameArguments));
+    public Arguments addGameArguments(String... gameArguments) {
+        return addGameArguments(Arrays.asList(gameArguments));
     }
 
-    public static Arguments addGameArguments(Arguments arguments, List<String> gameArguments) {
+    public Arguments addGameArguments(List<String> gameArguments) {
         List<Argument> list = gameArguments.stream().map(StringArgument::new).collect(Collectors.toList());
-        if (arguments == null)
-            return new Arguments(list, null);
-        else
-            return new Arguments(Lang.merge(arguments.getGame(), list), arguments.getJvm());
+        return new Arguments(Lang.merge(getGame(), list), getJvm());
     }
 
-    public static Arguments addJVMArguments(Arguments arguments, String... jvmArguments) {
-        return addJVMArguments(arguments, Arrays.asList(jvmArguments));
+    public Arguments addJVMArguments(String... jvmArguments) {
+        return addJVMArguments(Arrays.asList(jvmArguments));
     }
 
-    public static Arguments addJVMArguments(Arguments arguments, List<String> jvmArguments) {
+    public Arguments addJVMArguments(List<String> jvmArguments) {
         List<Argument> list = jvmArguments.stream().map(StringArgument::new).collect(Collectors.toList());
-        if (arguments == null)
-            return new Arguments(null, list);
-        else
-            return new Arguments(arguments.getGame(), Lang.merge(arguments.getJvm(), list));
+        return new Arguments(getGame(), Lang.merge(getJvm(), list));
     }
 
     public static Arguments merge(Arguments a, Arguments b) {
