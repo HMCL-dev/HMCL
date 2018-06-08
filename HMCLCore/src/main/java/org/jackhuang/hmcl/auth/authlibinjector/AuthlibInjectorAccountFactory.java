@@ -42,14 +42,14 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
         Objects.requireNonNull(storage);
         Objects.requireNonNull(proxy);
 
+        YggdrasilSession session = YggdrasilSession.fromStorage(storage);
+
         String username = tryCast(storage.get("username"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have username"));
-        String character = tryCast(storage.get("character"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("storage does not have selected character name."));
         String apiRoot = tryCast(storage.get("serverBaseURL"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have API root."));
 
         return new AuthlibInjectorAccount(new YggdrasilService(new AuthlibInjectorProvider(apiRoot), proxy),
-                apiRoot, injectorJarPathSupplier, username, character, YggdrasilSession.fromStorage(storage));
+                apiRoot, injectorJarPathSupplier, username, session.getSelectedProfile().getId(), session);
     }
 }

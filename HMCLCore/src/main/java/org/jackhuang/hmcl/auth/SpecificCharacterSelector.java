@@ -20,23 +20,24 @@ package org.jackhuang.hmcl.auth;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Select character by name.
  */
 public class SpecificCharacterSelector implements CharacterSelector {
-    private final String id;
+    private UUID uuid;
 
     /**
      * Constructor.
-     * @param id character's name.
+     * @param uuid character's uuid.
      */
-    public SpecificCharacterSelector(String id) {
-        this.id = id;
+    public SpecificCharacterSelector(UUID uuid) {
+        this.uuid = uuid;
     }
 
     @Override
     public GameProfile select(Account account, List<GameProfile> names) throws NoSelectedCharacterException {
-        return names.stream().filter(profile -> profile.getName().equals(id)).findAny().orElseThrow(() -> new NoSelectedCharacterException(account));
+        return names.stream().filter(profile -> profile.getId().equals(uuid)).findAny().orElseThrow(() -> new NoSelectedCharacterException(account));
     }
 }
