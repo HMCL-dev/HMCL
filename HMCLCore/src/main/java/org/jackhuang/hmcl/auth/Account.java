@@ -29,28 +29,31 @@ import java.util.UUID;
 public abstract class Account {
 
     /**
-     * @return the account name (mostly email)
+     * @return the name of the account who owns the character
      */
     public abstract String getUsername();
 
     /**
-     *
      * @return the character name
      */
     public abstract String getCharacter();
 
     /**
-     * @return the UUID
+     * @return the character UUID
      */
     public abstract UUID getUUID();
 
     /**
-     * log in.
-     * @return the specific player's info.
-     * @throws AuthenticationException if server error occurred.
+     * Login with stored credentials.
+     *
+     * @throws ServerDisconnectException if an network error has occurred, in which case password login won't be tried.
+     * @throws AuthenticationException if an error has occurred. If it's not a {@link ServerDisconnectException}, password login will be tried.
      */
-    public abstract AuthInfo logIn() throws AuthenticationException;
+    public abstract AuthInfo logIn() throws ServerDisconnectException, AuthenticationException;
 
+    /**
+     * Login with specified password.
+     */
     public abstract AuthInfo logInWithPassword(String password) throws AuthenticationException;
 
     public abstract boolean canPlayOffline();
