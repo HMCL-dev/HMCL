@@ -109,7 +109,7 @@ public final class MultiMCModpackInstallTask extends Task {
                     version = version
                             .setLibraries(Lang.merge(version.getLibraries(), patch.getLibraries()))
                             .setMainClass(patch.getMainClass())
-                            .setArguments(Arguments.addGameArguments(version.getArguments().orElse(null), newArguments));
+                            .setArguments(version.getArguments().orElseGet(Arguments::new).addGameArguments(newArguments));
                 }
             }
         }

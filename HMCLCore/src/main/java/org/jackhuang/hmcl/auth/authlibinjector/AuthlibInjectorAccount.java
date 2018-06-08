@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.util.Base64;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -39,8 +40,8 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
     private final String serverBaseURL;
     private final ExceptionalSupplier<String, ?> injectorJarPath;
 
-    protected AuthlibInjectorAccount(YggdrasilService service, String serverBaseURL, ExceptionalSupplier<String, ?> injectorJarPath, String username, String character, YggdrasilSession session) {
-        super(service, username, character, session);
+    protected AuthlibInjectorAccount(YggdrasilService service, String serverBaseURL, ExceptionalSupplier<String, ?> injectorJarPath, String username, UUID characterUUID, YggdrasilSession session) {
+        super(service, username, characterUUID, session);
 
         this.injectorJarPath = injectorJarPath;
         this.serverBaseURL = serverBaseURL;
@@ -66,11 +67,10 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         try {
             thread.join();
 
-            String arg = "-javaagent:" + injectorJarPath.get() + "=" + serverBaseURL;
-            Arguments arguments = Arguments.addJVMArguments(null, arg);
+            Arguments arguments = new Arguments().addJVMArguments("-javaagent:" + injectorJarPath.get() + "=" + serverBaseURL);
 
             if (flag.get())
-                arguments = Arguments.addJVMArguments(arguments, "-Dorg.to2mbn.authlibinjector.config.prefetched=" + new String(Base64.getEncoder().encode(getTask.getResult().getBytes()), UTF_8));
+                arguments = arguments.addJVMArguments("-Dorg.to2mbn.authlibinjector.config.prefetched=" + new String(Base64.getEncoder().encode(getTask.getResult().getBytes()), UTF_8));
 
             return info.withArguments(arguments);
         } catch (Exception e) {

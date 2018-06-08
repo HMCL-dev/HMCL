@@ -58,12 +58,12 @@ public class YggdrasilAccountFactory extends AccountFactory<YggdrasilAccount> {
         Objects.requireNonNull(storage);
         Objects.requireNonNull(proxy);
 
+        YggdrasilSession session = YggdrasilSession.fromStorage(storage);
+
         String username = tryCast(storage.get("username"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have username"));
-        String character = tryCast(storage.get("character"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("storage does not have selected character name."));
 
-        return new YggdrasilAccount(new YggdrasilService(provider, proxy), username, character, YggdrasilSession.fromStorage(storage));
+        return new YggdrasilAccount(new YggdrasilService(provider, proxy), username, session.getSelectedProfile().getId(), session);
     }
 
     public static String randomToken() {

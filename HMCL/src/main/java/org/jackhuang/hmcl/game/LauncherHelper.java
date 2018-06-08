@@ -97,10 +97,8 @@ public final class LauncherHelper {
                         try {
                             variables.set("account", account.logIn());
                         } catch (ServerDisconnectException e) {
-                            if (account.canPlayOffline())
-                                variables.set("account", account.playOffline());
-                            else
-                                throw e;
+                            variables.set("account",
+                                    account.playOffline().orElseThrow(() -> e));
                         }
                     } catch (AuthenticationException e) {
                         variables.set("account", DialogController.logIn(account));

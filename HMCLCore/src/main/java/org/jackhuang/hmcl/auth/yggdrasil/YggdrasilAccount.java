@@ -33,13 +33,13 @@ public class YggdrasilAccount extends Account {
     private final YggdrasilService service;
     private boolean isOnline = false;
     private YggdrasilSession session;
-    private String character;
+    private UUID characterUUID;
 
-    protected YggdrasilAccount(YggdrasilService service, String username, String character, YggdrasilSession session) {
+    protected YggdrasilAccount(YggdrasilService service, String username, UUID characterUUID, YggdrasilSession session) {
         this.service = service;
         this.username = username;
         this.session = session;
-        this.character = character;
+        this.characterUUID = characterUUID;
 
         if (session == null || session.getSelectedProfile() == null || StringUtils.isBlank(session.getAccessToken()))
             this.session = null;
@@ -67,14 +67,14 @@ public class YggdrasilAccount extends Account {
     public AuthInfo logIn() throws AuthenticationException {
         if (!canPlayOnline()) {
             logInWithToken();
-            selectProfile(new SpecificCharacterSelector(character));
+            selectProfile(new SpecificCharacterSelector(characterUUID));
         }
         return session.toAuthInfo();
     }
 
     @Override
     public final AuthInfo logInWithPassword(String password) throws AuthenticationException {
-        return logInWithPassword(password, new SpecificCharacterSelector(character));
+        return logInWithPassword(password, new SpecificCharacterSelector(characterUUID));
     }
 
     protected AuthInfo logInWithPassword(String password, CharacterSelector selector) throws AuthenticationException {
@@ -91,7 +91,7 @@ public class YggdrasilAccount extends Account {
             session = service.refresh(session.getAccessToken(), session.getClientToken(), selector.select(this, Arrays.asList(session.getAvailableProfiles())));
         }
 
-        character = session.getSelectedProfile().getName();
+        characterUUID = session.getSelectedProfile().getId();
     }
 
     private void logInWithToken() throws AuthenticationException {
@@ -103,27 +103,21 @@ public class YggdrasilAccount extends Account {
     }
 
     @Override
-    public boolean canPlayOffline() {
-        return isLoggedIn() && session.getSelectedProfile() != null && !canPlayOnline();
-    }
+    public Optional<AuthInfo> playOffline() {
+        if (isLoggedIn() && session.getSelectedProfile() != null && !canPlayOnline())
+            return Optional.of(session.toAuthInfo());
 
-    @Override
-    public AuthInfo playOffline() {
-        if (!canPlayOffline())
-            throw new IllegalStateException("Current account " + this + " cannot play offline.");
-
-        return session.toAuthInfo();
+        return Optional.empty();
     }
 
     @Override
     public Map<Object, Object> toStorage() {
+        if (session == null)
+            throw new IllegalStateException("No session is specified");
+
         HashMap<Object, Object> storage = new HashMap<>();
-
         storage.put("username", getUsername());
-        storage.put("character", character);
-        if (session != null)
-            storage.putAll(session.toStorage());
-
+        storage.putAll(session.toStorage());
         return storage;
     }
 
