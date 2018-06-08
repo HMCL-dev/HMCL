@@ -17,9 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.export;
 
-import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Pair.pair;
-
 import com.jfoenix.controls.JFXTreeView;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
@@ -43,6 +40,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
  * @author huangyuhui

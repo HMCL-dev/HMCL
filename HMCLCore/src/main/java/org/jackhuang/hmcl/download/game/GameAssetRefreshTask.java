@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.download.game;
 
-import static org.jackhuang.hmcl.util.Pair.pair;
-
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.game.AssetIndex;
 import org.jackhuang.hmcl.game.AssetIndexInfo;
@@ -34,6 +32,8 @@ import java.io.File;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
  * This task is to extract all asset objects described in asset index json.

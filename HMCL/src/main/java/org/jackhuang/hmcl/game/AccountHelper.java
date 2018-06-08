@@ -34,11 +34,7 @@ import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.File;
 import java.net.Proxy;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public final class AccountHelper {
 

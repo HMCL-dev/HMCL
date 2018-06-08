@@ -22,11 +22,13 @@ import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.Platform;
 import org.jackhuang.hmcl.util.SimpleMultimap;
 import org.jackhuang.hmcl.util.VersionNumber;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class LibrariesUniqueTask extends TaskResult<Version> {

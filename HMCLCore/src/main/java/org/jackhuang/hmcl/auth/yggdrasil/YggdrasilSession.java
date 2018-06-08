@@ -1,18 +1,17 @@
 package org.jackhuang.hmcl.auth.yggdrasil;
 
-import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Lang.tryCast;
-import static org.jackhuang.hmcl.util.Pair.pair;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.jackhuang.hmcl.auth.AuthInfo;
+import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.util.UUIDTypeAdapter;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Lang.tryCast;
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class YggdrasilSession {
 

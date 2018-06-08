@@ -1,33 +1,22 @@
 package org.jackhuang.hmcl.auth.yggdrasil;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.jackhuang.hmcl.util.Lang.liftFunction;
-import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Pair.pair;
-
-import java.io.IOException;
-import java.net.Proxy;
-import java.net.URL;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.jackhuang.hmcl.auth.AuthenticationException;
-import org.jackhuang.hmcl.auth.InvalidCredentialsException;
-import org.jackhuang.hmcl.auth.InvalidPasswordException;
-import org.jackhuang.hmcl.auth.InvalidTokenException;
-import org.jackhuang.hmcl.auth.ServerDisconnectException;
-import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.util.NetworkUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
+import java.io.IOException;
+import java.net.Proxy;
+import java.net.URL;
+import java.util.*;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.jackhuang.hmcl.util.Lang.liftFunction;
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class YggdrasilService {
 

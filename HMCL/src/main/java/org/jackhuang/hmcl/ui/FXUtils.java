@@ -17,9 +17,7 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.adapters.ReflectionHelper;
 import com.jfoenix.controls.*;
-
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
@@ -43,7 +41,6 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
-
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.util.*;
 
@@ -52,7 +49,6 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;

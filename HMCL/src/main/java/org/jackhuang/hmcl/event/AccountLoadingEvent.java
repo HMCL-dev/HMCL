@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.event;
 
 import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 
 import java.util.Collection;

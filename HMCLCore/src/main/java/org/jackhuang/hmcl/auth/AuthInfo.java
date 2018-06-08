@@ -17,10 +17,10 @@
  */
 package org.jackhuang.hmcl.auth;
 
-import java.util.UUID;
-
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.util.Immutable;
+
+import java.util.UUID;
 
 /**
  *

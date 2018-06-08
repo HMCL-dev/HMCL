@@ -1,7 +1,6 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.validation.base.ValidatorBase;
-import javafx.beans.NamedArg;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TextInputControl;

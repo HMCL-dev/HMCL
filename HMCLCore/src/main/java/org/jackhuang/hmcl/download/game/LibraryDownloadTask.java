@@ -5,10 +5,10 @@ import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.*;
-
-import static org.jackhuang.hmcl.util.DigestUtils.digest;
-import static org.jackhuang.hmcl.util.Hex.encodeHex;
+import org.jackhuang.hmcl.util.FileUtils;
+import org.jackhuang.hmcl.util.IOUtils;
+import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -17,6 +17,9 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
+
+import static org.jackhuang.hmcl.util.DigestUtils.digest;
+import static org.jackhuang.hmcl.util.Hex.encodeHex;
 
 public final class LibraryDownloadTask extends Task {
     private final FileDownloadTask xzTask;

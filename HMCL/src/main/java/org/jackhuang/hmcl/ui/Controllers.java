@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.concurrency.JFXUtilities;
-import com.jfoenix.controls.JFXDialog;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -33,7 +31,6 @@ import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.JavaVersion;
-import org.jackhuang.hmcl.util.Lang;
 
 import java.util.function.Consumer;
 

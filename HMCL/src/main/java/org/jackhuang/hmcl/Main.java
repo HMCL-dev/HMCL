@@ -17,9 +17,8 @@
  */
 package org.jackhuang.hmcl;
 
+import javax.swing.*;
 import java.io.File;
-
-import javax.swing.JOptionPane;
 
 public final class Main {
 

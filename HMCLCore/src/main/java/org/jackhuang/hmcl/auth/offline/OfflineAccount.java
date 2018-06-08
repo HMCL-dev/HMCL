@@ -17,19 +17,19 @@
  */
 package org.jackhuang.hmcl.auth.offline;
 
-import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Pair.pair;
-
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
-
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
+
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
  *
