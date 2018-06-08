@@ -41,6 +41,8 @@ import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.TransitionHandler;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.IconedItem;
 import org.jackhuang.hmcl.ui.construct.Validator;
@@ -63,17 +65,22 @@ public class AddAccountPane extends StackPane {
     @FXML private Label lblPassword;
     @FXML private JFXComboBox<String> cboType;
     @FXML private JFXComboBox<TwoLineListItem> cboServers;
-    @FXML private JFXProgressBar progressBar;
     @FXML private Label lblInjectorServer;
     @FXML private Hyperlink linkManageInjectorServers;
     @FXML private JFXDialogLayout layout;
     @FXML private JFXButton btnAccept;
+    @FXML private StackPane acceptPane;
+    @FXML private JFXSpinner spinnerAccept;
     private final Consumer<Region> finalization;
+    private final TransitionHandler transitionHandler;
 
     public AddAccountPane(Consumer<Region> finalization) {
         this.finalization = finalization;
 
         FXUtils.loadFXML(this, "/assets/fxml/account-add.fxml");
+
+        transitionHandler = new TransitionHandler(acceptPane);
+        acceptPane.getChildren().setAll(btnAccept);
 
         loadServers();
 
@@ -122,13 +129,21 @@ public class AddAccountPane extends StackPane {
                 }));
     }
 
+    private void showSpinner() {
+        transitionHandler.setContent(spinnerAccept, ContainerAnimations.FADE.getAnimationProducer());
+    }
+
+    private void hideSpinner() {
+        transitionHandler.setContent(btnAccept, ContainerAnimations.FADE.getAnimationProducer());
+    }
+
     @FXML
     private void onCreationAccept() {
         int type = cboType.getSelectionModel().getSelectedIndex();
         String username = txtUsername.getText();
         String password = txtPassword.getText();
         String apiRoot = Optional.ofNullable(cboServers.getSelectionModel().getSelectedItem()).map(TwoLineListItem::getSubtitle).orElse(null);
-        progressBar.setVisible(true);
+        showSpinner();
         lblCreationWarning.setText("");
         Task.ofResult("create_account", () -> {
             AccountFactory<?> factory;
@@ -142,7 +157,7 @@ public class AddAccountPane extends StackPane {
             return factory.create(new Selector(), username, password, apiRoot, Settings.INSTANCE.getProxy());
         }).finalized(Schedulers.javafx(), variables -> {
             Settings.INSTANCE.addAccount(variables.get("create_account"));
-            progressBar.setVisible(false);
+            hideSpinner();
             finalization.accept(this);
         }, exception -> {
             if (exception instanceof NoSelectedCharacterException) {
@@ -150,7 +165,7 @@ public class AddAccountPane extends StackPane {
             } else {
                 lblCreationWarning.setText(accountException(exception));
             }
-            progressBar.setVisible(false);
+            hideSpinner();
         }).start();
     }
 
