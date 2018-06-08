@@ -109,7 +109,13 @@ public final class LauncherHelper {
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LAUNCHING)))
                 .then(Task.of(variables -> {
                     variables.set("launcher", new HMCLGameLauncher(
-                            repository, selectedVersion, variables.get("account"), setting.toLaunchOptions(profile.getGameDir()), new HMCLProcessListener(variables.get("account"), setting, gameVersion.isPresent())
+                            repository,
+                            selectedVersion,
+                            variables.get("account"),
+                            setting.toLaunchOptions(profile.getGameDir()),
+                            setting.getLauncherVisibility() == LauncherVisibility.CLOSE
+                                    ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
+                                    : new HMCLProcessListener(variables.get("account"), setting, gameVersion.isPresent())
                     ));
                 }))
                 .then(variables -> {

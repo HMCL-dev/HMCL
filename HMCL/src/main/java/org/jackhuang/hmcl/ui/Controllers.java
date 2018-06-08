@@ -115,7 +115,8 @@ public final class Controllers {
     }
 
     public static void dialog(Region content) {
-        decorator.showDialog(content);
+        if (decorator != null)
+            decorator.showDialog(content);
     }
 
     public static void dialog(String text) {

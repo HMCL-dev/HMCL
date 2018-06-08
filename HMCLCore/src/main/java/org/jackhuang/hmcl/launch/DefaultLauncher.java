@@ -273,9 +273,7 @@ public class DefaultLauncher extends Launcher {
         }
 
         ManagedProcess p = new ManagedProcess(process, rawCommandLine);
-        if (listener == null)
-            startMonitors(p);
-        else
+        if (listener != null)
             startMonitors(p, listener, daemon);
         return p;
     }
@@ -311,11 +309,6 @@ public class DefaultLauncher extends Launcher {
         }
         if (!scriptFile.setExecutable(true))
             throw new PermissionException();
-    }
-
-    private void startMonitors(ManagedProcess managedProcess) {
-        managedProcess.addRelatedThread(Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream()), "stdout-pump", true));
-        managedProcess.addRelatedThread(Lang.thread(new StreamPump(managedProcess.getProcess().getErrorStream()), "stderr-pump", true));
     }
 
     private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener) {
