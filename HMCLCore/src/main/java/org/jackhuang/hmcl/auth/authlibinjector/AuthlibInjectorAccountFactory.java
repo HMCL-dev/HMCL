@@ -7,12 +7,10 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
 import org.jackhuang.hmcl.util.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.NetworkUtils;
-import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
 import java.net.Proxy;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 
@@ -34,7 +32,7 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
             throw new IllegalArgumentException("Additional data should be server base url string for authlib injector accounts.");
 
         AuthlibInjectorAccount account = new AuthlibInjectorAccount(new YggdrasilService(new AuthlibInjectorProvider((String) serverBaseURL), proxy),
-                (String) serverBaseURL, injectorJarPathSupplier, username, UUIDTypeAdapter.fromUUID(UUID.randomUUID()), null, null);
+                (String) serverBaseURL, injectorJarPathSupplier, username, null, null);
         account.logInWithPassword(password, selector);
         return account;
     }
@@ -46,14 +44,12 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
 
         String username = tryCast(storage.get("username"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have username"));
-        String clientToken = tryCast(storage.get("clientToken"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("storage does not have client token."));
         String character = tryCast(storage.get("clientToken"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have selected character name."));
         String apiRoot = tryCast(storage.get("serverBaseURL"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have API root."));
 
         return new AuthlibInjectorAccount(new YggdrasilService(new AuthlibInjectorProvider(apiRoot), proxy),
-                apiRoot, injectorJarPathSupplier, username, clientToken, character, YggdrasilSession.fromStorage(storage));
+                apiRoot, injectorJarPathSupplier, username, character, YggdrasilSession.fromStorage(storage));
     }
 }

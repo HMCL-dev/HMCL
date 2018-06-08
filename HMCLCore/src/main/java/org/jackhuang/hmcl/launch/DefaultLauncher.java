@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.launch;
 
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Pair.pair;
+
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.*;
@@ -191,8 +194,8 @@ public class DefaultLauncher extends Launcher {
         );
     }
 
-    private final Map<String, Supplier<Boolean>> forbiddens = Lang.mapOf(
-            new Pair<String, Supplier<Boolean>>("-Xincgc", () -> options.getJava().getParsedVersion() >= JavaVersion.JAVA_9)
+    private final Map<String, Supplier<Boolean>> forbiddens = mapOf(
+            pair("-Xincgc", () -> options.getJava().getParsedVersion() >= JavaVersion.JAVA_9)
     );
 
     protected Map<String, Supplier<Boolean>> getForbiddens() {
@@ -232,18 +235,18 @@ public class DefaultLauncher extends Launcher {
     }
 
     protected Map<String, String> getConfigurations() {
-        return Lang.mapOf(
-                new Pair<>("${auth_player_name}", authInfo.getUsername()),
-                new Pair<>("${auth_session}", authInfo.getAccessToken()),
-                new Pair<>("${auth_access_token}", authInfo.getAccessToken()),
-                new Pair<>("${auth_uuid}", authInfo.getUserId()),
-                new Pair<>("${version_name}", Optional.ofNullable(options.getVersionName()).orElse(version.getId())),
-                new Pair<>("${profile_name}", Optional.ofNullable(options.getProfileName()).orElse("Minecraft")),
-                new Pair<>("${version_type}", version.getType().getId()),
-                new Pair<>("${game_directory}", repository.getRunDirectory(version.getId()).getAbsolutePath()),
-                new Pair<>("${user_type}", authInfo.getUserType().toString().toLowerCase()),
-                new Pair<>("${assets_index_name}", version.getAssetIndex().getId()),
-                new Pair<>("${user_properties}", authInfo.getUserProperties())
+        return mapOf(
+                pair("${auth_player_name}", authInfo.getUsername()),
+                pair("${auth_session}", authInfo.getAccessToken()),
+                pair("${auth_access_token}", authInfo.getAccessToken()),
+                pair("${auth_uuid}", UUIDTypeAdapter.fromUUID(authInfo.getUUID())),
+                pair("${version_name}", Optional.ofNullable(options.getVersionName()).orElse(version.getId())),
+                pair("${profile_name}", Optional.ofNullable(options.getProfileName()).orElse("Minecraft")),
+                pair("${version_type}", version.getType().getId()),
+                pair("${game_directory}", repository.getRunDirectory(version.getId()).getAbsolutePath()),
+                pair("${user_type}", "mojang"),
+                pair("${assets_index_name}", version.getAssetIndex().getId()),
+                pair("${user_properties}", authInfo.getUserProperties())
         );
     }
 

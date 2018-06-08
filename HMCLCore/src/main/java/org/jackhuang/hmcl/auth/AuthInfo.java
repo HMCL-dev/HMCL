@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.auth;
 
+import java.util.UUID;
+
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.util.Immutable;
 
@@ -28,29 +30,19 @@ import org.jackhuang.hmcl.util.Immutable;
 public final class AuthInfo {
 
     private final String username;
-    private final String userId;
+    private final UUID uuid;
     private final String accessToken;
-    private final UserType userType;
     private final String userProperties;
     private final Arguments arguments;
 
-    public AuthInfo(String username, String userId, String accessToken) {
-        this(username, userId, accessToken, UserType.LEGACY);
+    public AuthInfo(String username, UUID uuid, String accessToken, String userProperties) {
+        this(username, uuid, accessToken, userProperties, null);
     }
 
-    public AuthInfo(String username, String userId, String accessToken, UserType userType) {
-        this(username, userId, accessToken, userType, "{}");
-    }
-
-    public AuthInfo(String username, String userId, String accessToken, UserType userType, String userProperties) {
-        this(username, userId, accessToken, userType, userProperties, null);
-    }
-
-    public AuthInfo(String username, String userId, String accessToken, UserType userType, String userProperties, Arguments arguments) {
+    public AuthInfo(String username, UUID uuid, String accessToken, String userProperties, Arguments arguments) {
         this.username = username;
-        this.userId = userId;
+        this.uuid = uuid;
         this.accessToken = accessToken;
-        this.userType = userType;
         this.userProperties = userProperties;
         this.arguments = arguments;
     }
@@ -59,16 +51,12 @@ public final class AuthInfo {
         return username;
     }
 
-    public String getUserId() {
-        return userId;
+    public UUID getUUID() {
+        return uuid;
     }
 
     public String getAccessToken() {
         return accessToken;
-    }
-
-    public UserType getUserType() {
-        return userType;
     }
 
     /**
@@ -81,11 +69,14 @@ public final class AuthInfo {
         return userProperties;
     }
 
+    /**
+     * @return null if no argument is specified
+     */
     public Arguments getArguments() {
         return arguments;
     }
 
-    public AuthInfo setArguments(Arguments arguments) {
-        return new AuthInfo(username, userId, accessToken, userType, userProperties, arguments);
+    public AuthInfo withArguments(Arguments arguments) {
+        return new AuthInfo(username, uuid, accessToken, userProperties, arguments);
     }
 }

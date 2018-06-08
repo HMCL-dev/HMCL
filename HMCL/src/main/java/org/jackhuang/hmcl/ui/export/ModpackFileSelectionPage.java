@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.ui.export;
 
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Pair.pair;
+
 import com.jfoenix.controls.JFXTreeView;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
@@ -33,8 +36,6 @@ import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.FileUtils;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
@@ -154,19 +155,19 @@ public final class ModpackFileSelectionPage extends StackPane implements WizardP
     }
 
     public static final String MODPACK_FILE_SELECTION = "modpack.accepted";
-    private static final Map<String, String> TRANSLATION = Lang.mapOf(
-            new Pair<>("minecraft/servers.dat", Launcher.i18n("modpack.files.servers_dat")),
-            new Pair<>("minecraft/saves", Launcher.i18n("modpack.files.saves")),
-            new Pair<>("minecraft/mods", Launcher.i18n("modpack.files.mods")),
-            new Pair<>("minecraft/config", Launcher.i18n("modpack.files.config")),
-            new Pair<>("minecraft/liteconfig", Launcher.i18n("modpack.files.liteconfig")),
-            new Pair<>("minecraft/resourcepacks", Launcher.i18n("modpack.files.resourcepacks")),
-            new Pair<>("minecraft/resources", Launcher.i18n("modpack.files.resourcepacks")),
-            new Pair<>("minecraft/options.txt", Launcher.i18n("modpack.files.options_txt")),
-            new Pair<>("minecraft/optionsshaders.txt", Launcher.i18n("modpack.files.optionsshaders_txt")),
-            new Pair<>("minecraft/mods/VoxelMods", Launcher.i18n("modpack.files.mods.voxelmods")),
-            new Pair<>("minecraft/dumps", Launcher.i18n("modpack.files.dumps")),
-            new Pair<>("minecraft/blueprints", Launcher.i18n("modpack.files.blueprints")),
-            new Pair<>("minecraft/scripts", Launcher.i18n("modpack.files.scripts"))
+    private static final Map<String, String> TRANSLATION = mapOf(
+            pair("minecraft/servers.dat", Launcher.i18n("modpack.files.servers_dat")),
+            pair("minecraft/saves", Launcher.i18n("modpack.files.saves")),
+            pair("minecraft/mods", Launcher.i18n("modpack.files.mods")),
+            pair("minecraft/config", Launcher.i18n("modpack.files.config")),
+            pair("minecraft/liteconfig", Launcher.i18n("modpack.files.liteconfig")),
+            pair("minecraft/resourcepacks", Launcher.i18n("modpack.files.resourcepacks")),
+            pair("minecraft/resources", Launcher.i18n("modpack.files.resourcepacks")),
+            pair("minecraft/options.txt", Launcher.i18n("modpack.files.options_txt")),
+            pair("minecraft/optionsshaders.txt", Launcher.i18n("modpack.files.optionsshaders_txt")),
+            pair("minecraft/mods/VoxelMods", Launcher.i18n("modpack.files.mods.voxelmods")),
+            pair("minecraft/dumps", Launcher.i18n("modpack.files.dumps")),
+            pair("minecraft/blueprints", Launcher.i18n("modpack.files.blueprints")),
+            pair("minecraft/scripts", Launcher.i18n("modpack.files.scripts"))
     );
 }

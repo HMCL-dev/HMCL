@@ -23,9 +23,9 @@ import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
 import java.net.Proxy;
 import java.util.Map;
+import java.util.UUID;
 
-import static org.jackhuang.hmcl.util.DigestUtils.digest;
-import static org.jackhuang.hmcl.util.Hex.encodeHex;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 /**
@@ -47,17 +47,15 @@ public class OfflineAccountFactory extends AccountFactory<OfflineAccount> {
     public OfflineAccount fromStorage(Map<Object, Object> storage, Proxy proxy) {
         String username = tryCast(storage.get("username"), String.class)
                 .orElseThrow(() -> new IllegalStateException("Offline account configuration malformed."));
-        String uuid = tryCast(storage.get("uuid"), String.class)
+        UUID uuid = tryCast(storage.get("uuid"), String.class)
+                .map(UUIDTypeAdapter::fromString)
                 .orElse(getUUIDFromUserName(username));
-
-        // Check if the uuid is vaild
-        UUIDTypeAdapter.fromString(uuid);
 
         return new OfflineAccount(username, uuid);
     }
 
-    private static String getUUIDFromUserName(String username) {
-        return encodeHex(digest("MD5", username));
+    private static UUID getUUIDFromUserName(String username) {
+        return UUID.nameUUIDFromBytes(("OfflinePlayer:" + username).getBytes(UTF_8));
     }
 
 }

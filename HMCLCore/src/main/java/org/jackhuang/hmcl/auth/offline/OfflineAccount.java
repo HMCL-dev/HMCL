@@ -17,14 +17,19 @@
  */
 package org.jackhuang.hmcl.auth.offline;
 
-import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.auth.AuthenticationException;
-import org.jackhuang.hmcl.util.*;
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+
+import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.AuthInfo;
+import org.jackhuang.hmcl.auth.AuthenticationException;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
 /**
  *
@@ -33,9 +38,9 @@ import java.util.UUID;
 public class OfflineAccount extends Account {
 
     private final String username;
-    private final String uuid;
+    private final UUID uuid;
 
-    OfflineAccount(String username, String uuid) {
+    OfflineAccount(String username, UUID uuid) {
         Objects.requireNonNull(username);
         Objects.requireNonNull(uuid);
 
@@ -48,7 +53,7 @@ public class OfflineAccount extends Account {
 
     @Override
     public UUID getUUID() {
-        return UUIDTypeAdapter.fromString(uuid);
+        return uuid;
     }
 
     @Override
@@ -66,17 +71,12 @@ public class OfflineAccount extends Account {
         if (StringUtils.isBlank(username))
             throw new AuthenticationException("Username cannot be empty");
 
-        return new AuthInfo(username, uuid, uuid);
+        return new AuthInfo(username, uuid, UUIDTypeAdapter.fromUUID(UUID.randomUUID()), "{}");
     }
 
     @Override
     public AuthInfo logInWithPassword(String password) throws AuthenticationException {
         return logIn();
-    }
-
-    @Override
-    public void logOut() {
-        // Offline account need not log out.
     }
 
     @Override
@@ -91,9 +91,9 @@ public class OfflineAccount extends Account {
 
     @Override
     public Map<Object, Object> toStorage() {
-        return Lang.mapOf(
-                new Pair<>("uuid", uuid),
-                new Pair<>("username", username)
+        return mapOf(
+                pair("uuid", UUIDTypeAdapter.fromUUID(uuid)),
+                pair("username", username)
         );
     }
 

@@ -17,9 +17,10 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.jfoenix.concurrency.JFXUtilities;
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Pair.pair;
+
 import javafx.application.Platform;
-import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
@@ -38,7 +39,6 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.ui.LogWindow;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
 
@@ -47,7 +47,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 
 public final class LauncherHelper {
     public static final LauncherHelper INSTANCE = new LauncherHelper();
@@ -301,10 +300,10 @@ public final class LauncherHelper {
             if (authInfo == null)
                 forbiddenTokens = Collections.emptyMap();
             else
-                forbiddenTokens = Lang.mapOf(
-                        new Pair<>(authInfo.getAccessToken(), "<access token>"),
-                        new Pair<>(authInfo.getUserId(), "<uuid>"),
-                        new Pair<>(authInfo.getUsername(), "<player>")
+                forbiddenTokens = mapOf(
+                        pair(authInfo.getAccessToken(), "<access token>"),
+                        pair(UUIDTypeAdapter.fromUUID(authInfo.getUUID()), "<uuid>"),
+                        pair(authInfo.getUsername(), "<player>")
                 );
 
             visibility = setting.getLauncherVisibility();
@@ -334,7 +333,7 @@ public final class LauncherHelper {
             else
                 System.out.print(log);
 
-            logs.add(new Pair<>(log, level));
+            logs.add(pair(log, level));
             if (logs.size() > Settings.INSTANCE.getLogLines())
                 logs.removeFirst();
 

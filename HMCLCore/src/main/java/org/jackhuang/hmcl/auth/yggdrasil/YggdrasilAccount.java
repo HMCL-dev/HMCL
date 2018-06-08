@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
-import com.google.gson.GsonBuilder;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
@@ -34,14 +33,12 @@ public class YggdrasilAccount extends Account {
     private final YggdrasilService service;
     private boolean isOnline = false;
     private YggdrasilSession session;
-    private final String clientToken;
     private String character;
 
-    protected YggdrasilAccount(YggdrasilService service, String username, String clientToken, String character, YggdrasilSession session) {
+    protected YggdrasilAccount(YggdrasilService service, String username, String character, YggdrasilSession session) {
         this.service = service;
         this.username = username;
         this.session = session;
-        this.clientToken = clientToken;
         this.character = character;
 
         if (session == null || session.getSelectedProfile() == null || StringUtils.isBlank(session.getAccessToken()))
@@ -72,7 +69,7 @@ public class YggdrasilAccount extends Account {
             logInWithToken();
             selectProfile(new SpecificCharacterSelector(character));
         }
-        return toAuthInfo();
+        return session.toAuthInfo();
     }
 
     @Override
@@ -81,9 +78,9 @@ public class YggdrasilAccount extends Account {
     }
 
     protected AuthInfo logInWithPassword(String password, CharacterSelector selector) throws AuthenticationException {
-        session = service.authenticate(username, password, clientToken);
+        session = service.authenticate(username, password, UUIDTypeAdapter.fromUUID(UUID.randomUUID()));
         selectProfile(selector);
-        return toAuthInfo();
+        return session.toAuthInfo();
     }
 
     private void selectProfile(CharacterSelector selector) throws AuthenticationException {
@@ -91,25 +88,18 @@ public class YggdrasilAccount extends Account {
             if (session.getAvailableProfiles() == null || session.getAvailableProfiles().length <= 0)
                 throw new NoCharacterException(this);
 
-            session.setSelectedProfile(selector.select(this, Arrays.asList(session.getAvailableProfiles())));
+            session = service.refresh(session.getAccessToken(), session.getClientToken(), selector.select(this, Arrays.asList(session.getAvailableProfiles())));
         }
 
         character = session.getSelectedProfile().getName();
     }
 
     private void logInWithToken() throws AuthenticationException {
-        if (service.validate(session.getAccessToken(), clientToken)) {
+        if (service.validate(session.getAccessToken(), session.getClientToken())) {
             isOnline = true;
             return;
         }
-        session = service.refresh(session.getAccessToken(), clientToken);
-    }
-
-    private AuthInfo toAuthInfo() {
-        GameProfile profile = session.getSelectedProfile();
-
-        return new AuthInfo(profile.getName(), UUIDTypeAdapter.fromUUID(profile.getId()), session.getAccessToken(), profile.getUserType(),
-                new GsonBuilder().registerTypeAdapter(PropertyMap.class, PropertyMap.LegacySerializer.INSTANCE).create().toJson(Optional.ofNullable(session.getUser()).map(User::getProperties).orElseGet(PropertyMap::new)));
+        session = service.refresh(session.getAccessToken(), session.getClientToken(), null);
     }
 
     @Override
@@ -122,13 +112,7 @@ public class YggdrasilAccount extends Account {
         if (!canPlayOffline())
             throw new IllegalStateException("Current account " + this + " cannot play offline.");
 
-        return toAuthInfo();
-    }
-
-    @Override
-    public void logOut() {
-        isOnline = false;
-        session = null;
+        return session.toAuthInfo();
     }
 
     @Override
@@ -136,7 +120,6 @@ public class YggdrasilAccount extends Account {
         HashMap<Object, Object> storage = new HashMap<>();
 
         storage.put("username", getUsername());
-        storage.put("clientToken", clientToken);
         storage.put("character", character);
         if (session != null)
             storage.putAll(session.toStorage());
@@ -144,6 +127,7 @@ public class YggdrasilAccount extends Account {
         return storage;
     }
 
+    @Override
     public UUID getUUID() {
         if (session == null || session.getSelectedProfile() == null)
             return null;
@@ -157,7 +141,7 @@ public class YggdrasilAccount extends Account {
 
     public Optional<Texture> getSkin(GameProfile profile) throws AuthenticationException {
         if (!service.getTextures(profile).isPresent()) {
-            session.setAvailableProfile(profile = service.getCompleteGameProfile(profile.getId()));
+            profile = service.getCompleteGameProfile(profile.getId()).orElse(profile);
         }
 
         return service.getTextures(profile).map(map -> map.get(TextureType.SKIN));

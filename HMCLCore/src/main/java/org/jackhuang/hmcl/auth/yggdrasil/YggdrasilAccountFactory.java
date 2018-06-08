@@ -48,7 +48,7 @@ public class YggdrasilAccountFactory extends AccountFactory<YggdrasilAccount> {
         Objects.requireNonNull(password);
         Objects.requireNonNull(proxy);
 
-        YggdrasilAccount account = new YggdrasilAccount(new YggdrasilService(provider, proxy), username, UUIDTypeAdapter.fromUUID(UUID.randomUUID()), null, null);
+        YggdrasilAccount account = new YggdrasilAccount(new YggdrasilService(provider, proxy), username, null, null);
         account.logInWithPassword(password, selector);
         return account;
     }
@@ -60,12 +60,10 @@ public class YggdrasilAccountFactory extends AccountFactory<YggdrasilAccount> {
 
         String username = tryCast(storage.get("username"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have username"));
-        String clientToken = tryCast(storage.get("clientToken"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("storage does not have client token."));
         String character = tryCast(storage.get("clientToken"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have selected character name."));
 
-        return new YggdrasilAccount(new YggdrasilService(provider, proxy), username, clientToken, character, YggdrasilSession.fromStorage(storage));
+        return new YggdrasilAccount(new YggdrasilService(provider, proxy), username, character, YggdrasilSession.fromStorage(storage));
     }
 
     public static String randomToken() {

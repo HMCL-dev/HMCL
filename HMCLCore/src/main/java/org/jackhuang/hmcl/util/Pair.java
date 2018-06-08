@@ -26,9 +26,14 @@ import java.util.Objects;
  */
 public class Pair<K, V> implements Map.Entry<K, V> {
 
+    public static <K, V> Pair<K, V> pair(K key, V value) {
+        return new Pair<>(key, value);
+    }
+
     private K key;
     private V value;
 
+    @Deprecated
     public Pair(K key, V value) {
         this.key = key;
         this.value = value;

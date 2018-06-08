@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.download.game;
 
+import static org.jackhuang.hmcl.util.Pair.pair;
+
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.game.AssetIndex;
 import org.jackhuang.hmcl.game.AssetIndexInfo;
@@ -82,7 +84,7 @@ public final class GameAssetRefreshTask extends TaskResult<Collection<Pair<File,
                 if (Thread.interrupted())
                     throw new InterruptedException();
 
-                res.add(new Pair<>(dependencyManager.getGameRepository().getAssetObject(version.getId(), assetIndexInfo.getId(), assetObject), assetObject));
+            res.add(pair(dependencyManager.getGameRepository().getAssetObject(version.getId(), assetIndexInfo.getId(), assetObject), assetObject));
                 updateProgress(++progress, index.getObjects().size());
             }
         setResult(res);

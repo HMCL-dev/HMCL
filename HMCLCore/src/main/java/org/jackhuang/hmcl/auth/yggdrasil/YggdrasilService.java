@@ -1,17 +1,33 @@
 package org.jackhuang.hmcl.auth.yggdrasil;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.auth.*;
-import org.jackhuang.hmcl.util.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.jackhuang.hmcl.util.Lang.liftFunction;
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.URL;
-import java.util.*;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import org.jackhuang.hmcl.auth.AuthenticationException;
+import org.jackhuang.hmcl.auth.InvalidCredentialsException;
+import org.jackhuang.hmcl.auth.InvalidPasswordException;
+import org.jackhuang.hmcl.auth.InvalidTokenException;
+import org.jackhuang.hmcl.auth.ServerDisconnectException;
+import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
+import org.jackhuang.hmcl.util.NetworkUtils;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.UUIDTypeAdapter;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
 
 public class YggdrasilService {
 
@@ -33,23 +49,39 @@ public class YggdrasilService {
         Objects.requireNonNull(clientToken);
 
         Map<String, Object> request = new HashMap<>();
-        request.put("agent", Lang.mapOf(
-                new Pair<>("name", "Minecraft"),
-                new Pair<>("version", 1)
+        request.put("agent", mapOf(
+                pair("name", "Minecraft"),
+                pair("version", 1)
         ));
         request.put("username", username);
         request.put("password", password);
         request.put("clientToken", clientToken);
         request.put("requestUser", true);
 
-        return handle(request(provider.getAuthenticationURL(), request), clientToken);
+        return handleAuthenticationResponse(request(provider.getAuthenticationURL(), request), clientToken);
     }
 
-    public YggdrasilSession refresh(String accessToken, String clientToken) throws AuthenticationException {
+    private Map<String, Object> createRequestWithCredentials(String accessToken, String clientToken) {
+        Map<String, Object> request = new HashMap<>();
+        request.put("accessToken", accessToken);
+        request.put("clientToken", clientToken);
+        return request;
+    }
+
+    public YggdrasilSession refresh(String accessToken, String clientToken, GameProfile characterToSelect) throws AuthenticationException {
         Objects.requireNonNull(accessToken);
         Objects.requireNonNull(clientToken);
 
-        return handle(request(provider.getRefreshmentURL(), new RefreshRequest(accessToken, clientToken)), clientToken);
+        Map<String, Object> request = createRequestWithCredentials(accessToken, clientToken);
+        request.put("requestUser", true);
+
+        if (characterToSelect != null) {
+            request.put("selectedProfile", mapOf(
+                    pair("id", characterToSelect.getId()),
+                    pair("name", characterToSelect.getName())));
+        }
+
+        return handleAuthenticationResponse(request(provider.getRefreshmentURL(), request), clientToken);
     }
 
     public boolean validate(String accessToken) throws AuthenticationException {
@@ -60,7 +92,7 @@ public class YggdrasilService {
         Objects.requireNonNull(accessToken);
 
         try {
-            requireEmpty(request(provider.getValidationURL(), new RefreshRequest(accessToken, clientToken)));
+            requireEmpty(request(provider.getValidationURL(), createRequestWithCredentials(accessToken, clientToken)));
             return true;
         } catch (InvalidCredentialsException | InvalidTokenException e) {
             return false;
@@ -74,7 +106,7 @@ public class YggdrasilService {
     public void invalidate(String accessToken, String clientToken) throws AuthenticationException {
         Objects.requireNonNull(accessToken);
 
-        requireEmpty(request(provider.getInvalidationURL(), GSON.toJson(new RefreshRequest(accessToken, clientToken))));
+        requireEmpty(request(provider.getInvalidationURL(), createRequestWithCredentials(accessToken, clientToken)));
     }
 
     /**
@@ -82,49 +114,33 @@ public class YggdrasilService {
      *
      * Game profile provided from authentication is not complete (no skin data in properties).
      *
-     * @param userId the userId that the character corresponding to.
-     * @return the complete game profile(filled with more properties), null if character corresponding to {@code userId} does not exist.
-     * @throws AuthenticationException if an I/O error occurred or server response malformed.
+     * @param uuid the uuid that the character corresponding to.
+     * @return the complete game profile(filled with more properties)
      */
-    public GameProfile getCompleteGameProfile(UUID userId) throws AuthenticationException {
-        Objects.requireNonNull(userId);
+    public Optional<GameProfile> getCompleteGameProfile(UUID uuid) throws AuthenticationException {
+        Objects.requireNonNull(uuid);
 
-        ProfileResponse response = fromJson(request(provider.getProfilePropertiesURL(userId), null), ProfileResponse.class);
-        if (response == null)
-            return null;
-
-        return new GameProfile(response.getId(), response.getName(), response.getProperties());
+        return Optional.ofNullable(fromJson(request(provider.getProfilePropertiesURL(uuid), null), GameProfile.class));
     }
 
     public Optional<Map<TextureType, Texture>> getTextures(GameProfile profile) throws AuthenticationException {
         Objects.requireNonNull(profile);
 
         return Optional.ofNullable(profile.getProperties())
-                .map(properties -> properties.get("textures"))
+                .flatMap(properties -> Optional.ofNullable(properties.get("textures")))
                 .map(encodedTextures -> new String(Base64.getDecoder().decode(encodedTextures), UTF_8))
-                .map(Lang.liftFunction(textures -> fromJson(textures, TextureResponse.class)))
-                .map(TextureResponse::getTextures);
+                .map(liftFunction(textures -> fromJson(textures, TextureResponse.class)))
+                .flatMap(response -> Optional.ofNullable(response.textures));
     }
 
-    private String request(URL url, Object input) throws AuthenticationException {
-        try {
-            if (input == null)
-                return NetworkUtils.doGet(url, proxy);
-            else
-                return NetworkUtils.doPost(url, input instanceof String ? (String) input : GSON.toJson(input), "application/json");
-        } catch (IOException e) {
-            throw new ServerDisconnectException(e);
-        }
-    }
-
-    private static YggdrasilSession handle(String responseText, String clientToken) throws AuthenticationException {
+    private static YggdrasilSession handleAuthenticationResponse(String responseText, String clientToken) throws AuthenticationException {
         AuthenticationResponse response = fromJson(responseText, AuthenticationResponse.class);
         handleErrorMessage(response);
 
-        if (!clientToken.equals(response.getClientToken()))
-            throw new AuthenticationException("Client token changed from " + response.getClientToken() + " to " + clientToken);
+        if (!clientToken.equals(response.clientToken))
+            throw new AuthenticationException("Client token changed from " + clientToken + " to " + response.clientToken);
 
-        return new YggdrasilSession(response.getAccessToken(), response.getSelectedProfile(), response.getAvailableProfiles(), response.getUser());
+        return new YggdrasilSession(response.clientToken, response.accessToken, response.selectedProfile, response.availableProfiles, response.user);
     }
 
     private static void requireEmpty(String response) throws AuthenticationException {
@@ -139,15 +155,30 @@ public class YggdrasilService {
     }
 
     private static void handleErrorMessage(ErrorResponse response) throws AuthenticationException {
-        if (!StringUtils.isBlank(response.getError())) {
-            if (response.getErrorMessage() != null)
-                if (response.getErrorMessage().contains("Invalid credentials"))
+        if (!StringUtils.isBlank(response.error)) {
+            if (response.errorMessage != null && "ForbiddenOperationException".equals(response.error)) {
+                if (response.errorMessage.contains("Invalid credentials"))
                     throw new InvalidCredentialsException();
-                else if (response.getErrorMessage().contains("Invalid token"))
+
+                else if (response.errorMessage.contains("Invalid token"))
                     throw new InvalidTokenException();
-                else if (response.getErrorMessage().contains("Invalid username or password"))
+
+                else if (response.errorMessage.contains("Invalid username or password"))
                     throw new InvalidPasswordException();
-            throw new RemoteAuthenticationException(response.getError(), response.getErrorMessage(), response.getCause());
+            }
+
+            throw new RemoteAuthenticationException(response.error, response.errorMessage, response.cause);
+        }
+    }
+
+    private String request(URL url, Object payload) throws AuthenticationException {
+        try {
+            if (payload == null)
+                return NetworkUtils.doGet(url, proxy);
+            else
+                return NetworkUtils.doPost(url, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
+        } catch (IOException e) {
+            throw new ServerDisconnectException(e);
         }
     }
 
@@ -159,77 +190,27 @@ public class YggdrasilService {
         }
     }
 
-    static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(GameProfile.class, GameProfile.Serializer.INSTANCE)
+    private class TextureResponse {
+        public Map<TextureType, Texture> textures;
+    }
+
+    private class AuthenticationResponse extends ErrorResponse {
+        public String accessToken;
+        public String clientToken;
+        public GameProfile selectedProfile;
+        public GameProfile[] availableProfiles;
+        public User user;
+    }
+
+    private class ErrorResponse {
+        public String error;
+        public String errorMessage;
+        public String cause;
+    }
+
+    private static final Gson GSON = new GsonBuilder()
             .registerTypeAdapter(PropertyMap.class, PropertyMap.Serializer.INSTANCE)
             .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
             .create();
 
-    private static final class RefreshRequest {
-
-        private final String accessToken;
-        private final String clientToken;
-        private final GameProfile selectedProfile;
-        private final boolean requestUser;
-
-        public RefreshRequest(String accessToken, String clientToken) {
-            this(accessToken, clientToken, null);
-        }
-
-        public RefreshRequest(String accessToken, String clientToken, GameProfile selectedProfile) {
-            this(accessToken, clientToken, selectedProfile, true);
-        }
-
-        public RefreshRequest(String accessToken, String clientToken, GameProfile selectedProfile, boolean requestUser) {
-            this.accessToken = accessToken;
-            this.clientToken = clientToken;
-            this.selectedProfile = selectedProfile;
-            this.requestUser = requestUser;
-        }
-
-        public String getAccessToken() {
-            return accessToken;
-        }
-
-        public String getClientToken() {
-            return clientToken;
-        }
-
-        public GameProfile getSelectedProfile() {
-            return selectedProfile;
-        }
-
-        public boolean isRequestUser() {
-            return requestUser;
-        }
-
-    }
-
-    private static final class ProfileResponse {
-        private final UUID id;
-        private final String name;
-        private final PropertyMap properties;
-
-        public ProfileResponse() {
-            this(UUID.randomUUID(), "", null);
-        }
-
-        public ProfileResponse(UUID id, String name, PropertyMap properties) {
-            this.id = id;
-            this.name = name;
-            this.properties = properties;
-        }
-
-        public UUID getId() {
-            return id;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public PropertyMap getProperties() {
-            return properties;
-        }
-    }
 }
