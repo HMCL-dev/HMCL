@@ -497,6 +497,7 @@ public final class VersionSetting {
         gameDirTypeProperty.addListener(listener);
         gameDirProperty.addListener(listener);
         launcherVisibilityProperty.addListener(listener);
+        defaultJavaPathProperty.addListener(listener);
     }
 
     public LaunchOptions toLaunchOptions(File gameDir) throws InterruptedException {
