@@ -44,7 +44,7 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
 
         String username = tryCast(storage.get("username"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have username"));
-        String character = tryCast(storage.get("clientToken"), String.class)
+        String character = tryCast(storage.get("character"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have selected character name."));
         String apiRoot = tryCast(storage.get("serverBaseURL"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have API root."));
