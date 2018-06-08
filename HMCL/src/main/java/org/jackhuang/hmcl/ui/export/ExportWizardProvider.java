@@ -82,17 +82,16 @@ public final class ExportWizardProvider implements WizardProvider {
                         try (ZipEngine zip = new ZipEngine(modpackFile)) {
                             Config config = Settings.INSTANCE.getRawConfig();
 
-                            config.setHasProxy(false);
-                            config.setSelectedProfile("");
-                            config.setCommonDirectory(null);
-                            config.setFontFamily("Consolas");
-                            config.setFontSize(12);
-                            config.setJava(null);
-                            config.setLocalization(null);
-                            config.setAccounts(null);
-                            config.setSelectedAccount("");
-                            config.setLogLines(100);
-                            config.setConfigurations(null);
+                            config.hasProxy.set(false);
+                            config.selectedProfile.set("");
+                            config.commonDirectory.set(null);
+                            config.fontFamily.set("Consolas");
+                            config.fontSize.set(12);
+                            config.localization.set(null);
+                            config.accounts.clear();
+                            config.selectedAccount.set("");
+                            config.logLines.set(100);
+                            config.configurations.clear();
 
                             zip.putTextFile(Settings.GSON.toJson(config), Settings.SETTINGS_FILE_NAME);
                             zip.putFile(tempModpack, "modpack.zip");
