@@ -155,8 +155,26 @@ public class DefaultGameRepository implements GameRepository {
         File file = getVersionRoot(id);
         if (!file.exists())
             return true;
+        // test if no file in this version directory is occupied.
+        File removedFile = new File(file.getAbsoluteFile().getParentFile(), file.getName() + "_removed");
+        if (!file.renameTo(removedFile))
+            return false;
+
+        // remove json files first to ensure HMCL will not recognize this folder as a valid version.
+        List<File> jsons = FileUtils.listFilesByExtension(removedFile, "json");
+        jsons.forEach(f -> {
+            if (!f.delete())
+                Logging.LOG.warning("Unable to delete file " + f);
+        });
+
         versions.remove(id);
-        return FileUtils.deleteDirectoryQuietly(file);
+        // remove the version from version list regardless of whether the directory was removed successfully or not.
+        try {
+            FileUtils.deleteDirectory(removedFile);
+        } catch (IOException e) {
+            Logging.LOG.log(Level.WARNING, "Unable to remove version folder: " + file, e);
+        }
+        return true;
     }
 
     protected void refreshVersionsImpl() {
