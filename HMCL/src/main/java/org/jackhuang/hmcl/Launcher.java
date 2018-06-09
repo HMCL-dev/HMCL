@@ -71,7 +71,7 @@ public final class Launcher extends Application {
     public static void main(String[] args) {
         Thread.setDefaultUncaughtExceptionHandler(CRASH_REPORTER);
 
-        if (!LOG_DIRECTORY.mkdirs())
+        if (!FileUtils.makeDirectory(LOG_DIRECTORY))
             System.out.println("Unable to create log directory " + LOG_DIRECTORY + ", log files cannot be generated.");
 
         try {
@@ -160,6 +160,7 @@ public final class Launcher extends Application {
     public static final IUpgrader UPGRADER = new AppDataUpgrader();
     public static final CrashReporter CRASH_REPORTER = new CrashReporter();
 
-    public static final String CONTACT = "http://huangyuhui.duapp.com/hmcl.php";
+    public static final String UPDATE_SERVER = "http://47.101.47.110";
+    public static final String CONTACT = UPDATE_SERVER + "/hmcl.php";
     public static final String PUBLISH = "http://www.mcbbs.net/thread-142335-1-1.html";
 }

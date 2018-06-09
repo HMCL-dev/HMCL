@@ -33,10 +33,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.*;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarFile;
@@ -51,29 +49,24 @@ import java.util.zip.GZIPInputStream;
  */
 public class AppDataUpgrader extends IUpgrader {
 
-    private boolean launchNewerVersion(List<String> args, File jar) throws IOException, PrivilegedActionException {
+    private void launchNewerVersion(List<String> args, File jar) throws IOException, ClassNotFoundException, NoSuchMethodException, SecurityException, InvocationTargetException, IllegalAccessException {
         try (JarFile jarFile = new JarFile(jar)) {
             String mainClass = jarFile.getManifest().getMainAttributes().getValue("Main-Class");
-            if (mainClass != null) {
-                ArrayList<String> al = new ArrayList<>(args);
-                al.add("--noupdate");
-                ClassLoader pre = Thread.currentThread().getContextClassLoader();
-                try {
-                    AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
-                        Logging.stop();
-                        ClassLoader now = new URLClassLoader(new URL[]{jar.toURI().toURL()}, ClassLoader.getSystemClassLoader().getParent());
-                        Thread.currentThread().setContextClassLoader(now);
-                        now.loadClass(mainClass).getMethod("main", String[].class).invoke(null, new Object[]{al.toArray(new String[0])});
-                        return null;
-                    });
-                } finally {
-                    Logging.start(Launcher.LOG_DIRECTORY);
-                    Thread.currentThread().setContextClassLoader(pre);
-                }
-                return true;
+            if (mainClass == null)
+                throw new ClassNotFoundException("Main-Class not found in manifest");
+            ArrayList<String> al = new ArrayList<>(args);
+            al.add("--noupdate");
+            ClassLoader pre = Thread.currentThread().getContextClassLoader();
+            try {
+                Logging.stop();
+                ClassLoader now = new URLClassLoader(new URL[]{jar.toURI().toURL()}, ClassLoader.getSystemClassLoader().getParent());
+                Thread.currentThread().setContextClassLoader(now);
+                now.loadClass(mainClass).getMethod("main", String[].class).invoke(null, new Object[]{al.toArray(new String[0])});
+            } finally {
+                Logging.start(Launcher.LOG_DIRECTORY);
+                Thread.currentThread().setContextClassLoader(pre);
             }
         }
-        return false;
     }
 
     @Override
@@ -89,15 +82,18 @@ public class AppDataUpgrader extends IUpgrader {
                         String j = m.get("loc");
                         if (j != null) {
                             File jar = new File(j);
-                            if (jar.exists() && launchNewerVersion(args, jar))
+                            if (jar.exists()) {
+                                launchNewerVersion(args, jar);
                                 System.exit(0);
+                            }
                         }
                     }
                 }
             } catch (JsonParseException ex) {
                 f.delete();
-            } catch (IOException | PrivilegedActionException t) {
+            } catch (IOException | NoSuchMethodException | SecurityException | InvocationTargetException | IllegalAccessException | ClassNotFoundException t) {
                 Logging.LOG.log(Level.SEVERE, "Unable to execute newer version application", t);
+                AppDataUpgraderPackGzTask.HMCL_VER_FILE.delete(); // delete version json, let HMCL re-download the newer version.
             }
     }
 
@@ -109,60 +105,57 @@ public class AppDataUpgrader extends IUpgrader {
         checker.requestDownloadLink().then(Task.of(variables -> {
             Map<String, String> map = variables.get(UpdateChecker.REQUEST_DOWNLOAD_LINK_ID);
 
-            if (MessageBox.confirm(Launcher.i18n("update.newest_version", version.toString()) + "\n"
-                            + Launcher.i18n("update.should_open_link"),
-                    MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                if (map != null && map.containsKey("jar") && !StringUtils.isBlank(map.get("jar")))
-                    try {
-                        String hash = null;
-                        if (map.containsKey("jarsha1"))
-                            hash = map.get("jarsha1");
-                        Task task = new AppDataUpgraderJarTask(NetworkUtils.toURL(map.get("jar")), version.toString(), hash);
-                        TaskExecutor executor = task.executor();
-                        AtomicReference<Region> region = new AtomicReference<>();
-                        JFXUtilities.runInFX(() -> region.set(Controllers.taskDialog(executor, Launcher.i18n("message.downloading"), "", null)));
-                        if (executor.test()) {
-                            new ProcessBuilder(JavaVersion.fromCurrentEnvironment().getBinary().getAbsolutePath(), "-jar", AppDataUpgraderJarTask.getSelf(version.toString()).getAbsolutePath())
-                                    .directory(new File("").getAbsoluteFile()).start();
-                            System.exit(0);
-                        }
-                        JFXUtilities.runInFX(() -> Controllers.closeDialog(region.get()));
-                    } catch (IOException ex) {
-                        Logging.LOG.log(Level.SEVERE, "Failed to create upgrader", ex);
+            if (map != null && map.containsKey("jar") && !StringUtils.isBlank(map.get("jar")))
+                try {
+                    String hash = null;
+                    if (map.containsKey("jarsha1"))
+                        hash = map.get("jarsha1");
+                    Task task = new AppDataUpgraderJarTask(NetworkUtils.toURL(map.get("jar")), version.toString(), hash);
+                    TaskExecutor executor = task.executor();
+                    AtomicReference<Region> region = new AtomicReference<>();
+                    JFXUtilities.runInFX(() -> region.set(Controllers.taskDialog(executor, Launcher.i18n("message.downloading"), "", null)));
+                    if (executor.test()) {
+                        new ProcessBuilder(JavaVersion.fromCurrentEnvironment().getBinary().getAbsolutePath(), "-jar", AppDataUpgraderJarTask.getSelf(version.toString()).getAbsolutePath())
+                                .directory(new File("").getAbsoluteFile()).start();
+                        System.exit(0);
                     }
-                else if (map != null && map.containsKey("pack") && !StringUtils.isBlank(map.get("pack")))
-                    try {
-                        String hash = null;
-                        if (map.containsKey("packsha1"))
-                            hash = map.get("packsha1");
-                        Task task = new AppDataUpgraderPackGzTask(NetworkUtils.toURL(map.get("pack")), version.toString(), hash);
-                        TaskExecutor executor = task.executor();
-                        AtomicReference<Region> region = new AtomicReference<>();
-                        JFXUtilities.runInFX(() -> region.set(Controllers.taskDialog(executor, Launcher.i18n("message.downloading"), "", null)));
-                        if (executor.test()) {
-                            new ProcessBuilder(JavaVersion.fromCurrentEnvironment().getBinary().getAbsolutePath(), "-jar", AppDataUpgraderPackGzTask.getSelf(version.toString()).getAbsolutePath())
-                                    .directory(new File("").getAbsoluteFile()).start();
-                            System.exit(0);
-                        }
-                        JFXUtilities.runInFX(() -> Controllers.closeDialog(region.get()));
-                    } catch (IOException ex) {
-                        Logging.LOG.log(Level.SEVERE, "Failed to create upgrader", ex);
-                    }
-                else {
-                    String url = Launcher.PUBLISH;
-                    if (map != null)
-                        if (map.containsKey(OperatingSystem.CURRENT_OS.getCheckedName()))
-                            url = map.get(OperatingSystem.CURRENT_OS.getCheckedName());
-                        else if (map.containsKey(OperatingSystem.UNKNOWN.getCheckedName()))
-                            url = map.get(OperatingSystem.UNKNOWN.getCheckedName());
-                    try {
-                        java.awt.Desktop.getDesktop().browse(new URI(url));
-                    } catch (URISyntaxException | IOException e) {
-                        Logging.LOG.log(Level.SEVERE, "Failed to browse uri: " + url, e);
-                        OperatingSystem.setClipboard(url);
-                        MessageBox.show(Launcher.i18n("update.no_browser"));
-                    }
+                    JFXUtilities.runInFX(() -> Controllers.closeDialog(region.get()));
+                } catch (IOException ex) {
+                    Logging.LOG.log(Level.SEVERE, "Failed to create upgrader", ex);
                 }
+            else if (map != null && map.containsKey("pack") && !StringUtils.isBlank(map.get("pack")))
+                try {
+                    String hash = null;
+                    if (map.containsKey("packsha1"))
+                        hash = map.get("packsha1");
+                    Task task = new AppDataUpgraderPackGzTask(NetworkUtils.toURL(map.get("pack")), version.toString(), hash);
+                    TaskExecutor executor = task.executor();
+                    AtomicReference<Region> region = new AtomicReference<>();
+                    JFXUtilities.runInFX(() -> region.set(Controllers.taskDialog(executor, Launcher.i18n("message.downloading"), "", null)));
+                    if (executor.test()) {
+                        new ProcessBuilder(JavaVersion.fromCurrentEnvironment().getBinary().getAbsolutePath(), "-jar", AppDataUpgraderPackGzTask.getSelf(version.toString()).getAbsolutePath())
+                                .directory(new File("").getAbsoluteFile()).start();
+                        System.exit(0);
+                    }
+                    JFXUtilities.runInFX(() -> Controllers.closeDialog(region.get()));
+                } catch (IOException ex) {
+                    Logging.LOG.log(Level.SEVERE, "Failed to create upgrader", ex);
+                }
+            else {
+                String url = Launcher.PUBLISH;
+                if (map != null)
+                    if (map.containsKey(OperatingSystem.CURRENT_OS.getCheckedName()))
+                        url = map.get(OperatingSystem.CURRENT_OS.getCheckedName());
+                    else if (map.containsKey(OperatingSystem.UNKNOWN.getCheckedName()))
+                        url = map.get(OperatingSystem.UNKNOWN.getCheckedName());
+                try {
+                    java.awt.Desktop.getDesktop().browse(new URI(url));
+                } catch (URISyntaxException | IOException e) {
+                    Logging.LOG.log(Level.SEVERE, "Failed to browse uri: " + url, e);
+                    OperatingSystem.setClipboard(url);
+                    MessageBox.show(Launcher.i18n("update.no_browser"));
+                }
+            }
         })).start();
     }
 
@@ -200,7 +193,7 @@ public class AppDataUpgrader extends IUpgrader {
             if (!FileUtils.makeDirectory(f.getParentFile()))
                 throw new IOException("Failed to make directories: " + f.getParent());
 
-            for (int i = 0; f.exists(); i++)
+            for (int i = 0; f.exists() && !f.delete(); i++)
                 f = new File(BASE_FOLDER, "HMCL-" + newestVersion + (i > 0 ? "-" + i : "") + ".jar");
             if (!f.createNewFile())
                 throw new IOException("Failed to create new file: " + f);

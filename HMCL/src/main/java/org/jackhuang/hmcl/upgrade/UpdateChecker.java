@@ -69,7 +69,7 @@ public final class UpdateChecker {
      */
     public TaskResult<VersionNumber> process(final boolean showMessage) {
         return new TaskResult<VersionNumber>() {
-            GetTask http = new GetTask(NetworkUtils.toURL("https://huangyuhui.duapp.com/hmcl/update.php?version=" + Launcher.VERSION));
+            GetTask http = new GetTask(NetworkUtils.toURL(Launcher.UPDATE_SERVER + "/hmcl/update.php?version=" + Launcher.VERSION));
 
             @Override
             public Collection<? extends Task> getDependents() {
@@ -126,7 +126,7 @@ public final class UpdateChecker {
             public void execute() {
                 if (download_link == null)
                     try {
-                        download_link = Constants.GSON.<Map<String, String>>fromJson(NetworkUtils.doGet(NetworkUtils.toURL("https://huangyuhui.duapp.com/hmcl/update_link.php")), Map.class);
+                        download_link = Constants.GSON.<Map<String, String>>fromJson(NetworkUtils.doGet(NetworkUtils.toURL(Launcher.UPDATE_SERVER + "/hmcl/update_link.php")), Map.class);
                     } catch (JsonSyntaxException | IOException e) {
                         Logging.LOG.log(Level.SEVERE, "Failed to get update link.", e);
                     }
