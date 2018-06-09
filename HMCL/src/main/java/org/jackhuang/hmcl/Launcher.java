@@ -71,8 +71,11 @@ public final class Launcher extends Application {
     public static void main(String[] args) {
         Thread.setDefaultUncaughtExceptionHandler(CRASH_REPORTER);
 
+        if (!LOG_DIRECTORY.mkdirs())
+            System.out.println("Unable to create log directory " + LOG_DIRECTORY + ", log files cannot be generated.");
+
         try {
-            Logging.start();
+            Logging.start(LOG_DIRECTORY);
 
             // NetworkUtils.setUserAgentSupplier(() -> "Hello Minecraft! Launcher");
             Constants.UI_THREAD_SCHEDULER = Constants.JAVAFX_UI_THREAD_SCHEDULER;
@@ -113,21 +116,6 @@ public final class Launcher extends Application {
         });
     }
 
-    public static File getWorkingDirectory(String folder) {
-        String home = System.getProperty("user.home", ".");
-        switch (OperatingSystem.CURRENT_OS) {
-            case LINUX:
-                return new File(home, "." + folder + "/");
-            case WINDOWS:
-                String appdata = System.getenv("APPDATA");
-                return new File(Lang.nonNull(appdata, home), "." + folder + "/");
-            case OSX:
-                return new File(home, "Library/Application Support/" + folder);
-            default:
-                return new File(home, folder + "/");
-        }
-    }
-
     public static List<File> getCurrentJarFiles() {
         List<File> result = new LinkedList<>();
         if (Launcher.class.getClassLoader() instanceof URLClassLoader) {
@@ -160,8 +148,9 @@ public final class Launcher extends Application {
         return String.format(i18n(key), formatArgs);
     }
 
-    public static final File MINECRAFT_DIRECTORY = getWorkingDirectory("minecraft");
-    public static final File HMCL_DIRECTORY = getWorkingDirectory("hmcl");
+    public static final File MINECRAFT_DIRECTORY = OperatingSystem.getWorkingDirectory("minecraft");
+    public static final File HMCL_DIRECTORY = OperatingSystem.getWorkingDirectory("hmcl");
+    public static final File LOG_DIRECTORY = new File(Launcher.HMCL_DIRECTORY, "logs");
 
     public static final String VERSION = "@HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING@";
     public static final String NAME = "HMCL";

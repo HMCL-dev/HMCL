@@ -143,4 +143,19 @@ public enum OperatingSystem {
         System.runFinalization();
         System.gc();
     }
+
+    public static File getWorkingDirectory(String folder) {
+        String home = System.getProperty("user.home", ".");
+        switch (OperatingSystem.CURRENT_OS) {
+            case LINUX:
+                return new File(home, "." + folder + "/");
+            case WINDOWS:
+                String appdata = System.getenv("APPDATA");
+                return new File(Lang.nonNull(appdata, home), "." + folder + "/");
+            case OSX:
+                return new File(home, "Library/Application Support/" + folder);
+            default:
+                return new File(home, folder + "/");
+        }
+    }
 }

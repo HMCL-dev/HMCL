@@ -67,7 +67,7 @@ public class AppDataUpgrader extends IUpgrader {
                         return null;
                     });
                 } finally {
-                    Logging.start();
+                    Logging.start(Launcher.LOG_DIRECTORY);
                     Thread.currentThread().setContextClassLoader(pre);
                 }
                 return true;
@@ -218,7 +218,7 @@ public class AppDataUpgrader extends IUpgrader {
 
     public static class AppDataUpgraderJarTask extends Task {
 
-        public static final File BASE_FOLDER = Launcher.getWorkingDirectory("hmcl");
+        public static final File BASE_FOLDER = OperatingSystem.getWorkingDirectory("hmcl");
         public static final File HMCL_VER_FILE = new File(BASE_FOLDER, "hmclver.json");
 
         public static File getSelf(String ver) {
