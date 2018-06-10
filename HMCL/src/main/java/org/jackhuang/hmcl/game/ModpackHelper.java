@@ -59,12 +59,12 @@ public final class ModpackHelper {
         throw new UnsupportedModpackException(file.toString());
     }
 
-    public static <T> ModpackConfiguration<T> readModpackConfiguration(File file) throws IOException {
+    public static ModpackConfiguration<?> readModpackConfiguration(File file) throws IOException {
         if (!file.exists())
             throw new FileNotFoundException(file.getPath());
         else
             try {
-                return Constants.GSON.fromJson(FileUtils.readText(file), new TypeToken<ModpackConfiguration<T>>() {
+                return Constants.GSON.fromJson(FileUtils.readText(file), new TypeToken<ModpackConfiguration<?>>() {
                 }.getType());
             } catch (JsonParseException e) {
                 throw new IOException("Malformed modpack configuration");

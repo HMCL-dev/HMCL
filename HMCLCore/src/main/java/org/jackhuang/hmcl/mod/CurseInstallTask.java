@@ -113,7 +113,10 @@ public final class CurseInstallTask extends Task {
                         throw new IOException("Unable to delete mod file " + oldFile);
             }
 
-        dependencies.add(new CurseCompletionTask(dependencyManager, name));
+        File root = repository.getVersionRoot(name);
+        FileUtils.writeText(new File(root, "manifest.json"), Constants.GSON.toJson(manifest));
+
+        dependencies.add(new CurseCompletionTask(dependencyManager, name, manifest));
         dependencies.add(new MinecraftInstanceTask<>(zipFile, manifest.getOverrides(), manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)));
     }
 

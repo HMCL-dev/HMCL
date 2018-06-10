@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.mod.CurseCompletionTask;
+import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Settings;
@@ -76,7 +77,7 @@ public final class LauncherHelper {
     }
 
     private void launch0(Profile profile, Account account, String selectedVersion, File scriptFile) {
-        GameRepository repository = profile.getRepository();
+        HMCLGameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
         Version version = MaintainTask.maintain(repository.getResolvedVersion(selectedVersion));
         VersionSetting setting = profile.getVersionSetting(selectedVersion);
@@ -90,7 +91,13 @@ public final class LauncherHelper {
                         return dependencyManager.checkGameCompletionAsync(version);
                 })
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.MODS)))
-                .then(new CurseCompletionTask(dependencyManager, selectedVersion))
+                .then(var -> {
+                    ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
+                    if ("Curse".equals(configuration.getType()))
+                        return new CurseCompletionTask(dependencyManager, selectedVersion);
+                    else
+                        return null;
+                })
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN)))
                 .then(Task.of(Launcher.i18n("account.methods"), variables -> {
                     try {

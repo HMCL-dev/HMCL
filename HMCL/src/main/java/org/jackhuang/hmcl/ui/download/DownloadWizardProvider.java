@@ -69,7 +69,7 @@ public final class DownloadWizardProvider implements WizardProvider {
             return null;
 
         File selected = tryCast(settings.get(ModpackPage.MODPACK_FILE), File.class).orElse(null);
-        Modpack modpack = tryCast(settings.get(ModpackPage.MODPACK_CURSEFORGE_MANIFEST), Modpack.class).orElse(null);
+        Modpack modpack = tryCast(settings.get(ModpackPage.MODPACK_MANIFEST), Modpack.class).orElse(null);
         String name = tryCast(settings.get(ModpackPage.MODPACK_NAME), String.class).orElse(null);
         if (selected == null || modpack == null || name == null) return null;
 

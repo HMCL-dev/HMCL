@@ -90,7 +90,7 @@ public final class ModpackPage extends StackPane implements WizardPage {
 
             try {
                 manifest = ModpackHelper.readModpackManifest(selectedFile);
-                controller.getSettings().put(MODPACK_CURSEFORGE_MANIFEST, manifest);
+                controller.getSettings().put(MODPACK_MANIFEST, manifest);
                 lblName.setText(manifest.getName());
                 lblVersion.setText(manifest.getVersion());
                 lblAuthor.setText(manifest.getAuthor());
@@ -130,5 +130,5 @@ public final class ModpackPage extends StackPane implements WizardPage {
 
     public static final String MODPACK_FILE = "MODPACK_FILE";
     public static final String MODPACK_NAME = "MODPACK_NAME";
-    public static final String MODPACK_CURSEFORGE_MANIFEST = "CURSEFORGE_MANIFEST";
+    public static final String MODPACK_MANIFEST = "MODPACK_MANIFEST";
 }
