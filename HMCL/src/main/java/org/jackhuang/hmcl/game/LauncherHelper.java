@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
@@ -92,11 +93,15 @@ public final class LauncherHelper {
                 })
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.MODS)))
                 .then(var -> {
-                    ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
-                    if ("Curse".equals(configuration.getType()))
-                        return new CurseCompletionTask(dependencyManager, selectedVersion);
-                    else
+                    try {
+                        ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
+                        if ("Curse".equals(configuration.getType()))
+                            return new CurseCompletionTask(dependencyManager, selectedVersion);
+                        else
+                            return null;
+                    } catch (IOException e) {
                         return null;
+                    }
                 })
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN)))
                 .then(Task.of(Launcher.i18n("account.methods"), variables -> {
