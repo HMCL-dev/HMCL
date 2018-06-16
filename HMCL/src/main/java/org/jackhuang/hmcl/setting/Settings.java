@@ -74,10 +74,9 @@ public class Settings {
     public static final String SETTINGS_FILE_NAME = "hmcl.json";
     public static final File SETTINGS_FILE = new File(SETTINGS_FILE_NAME).getAbsoluteFile();
 
-    public static final Settings INSTANCE = new Settings();
+    public static final Config SETTINGS = initSettings();
 
-    // TODO: another way to access this property aside from Settings.INSTANCE.SETTINGS
-    public final Config SETTINGS = initSettings();
+    public static final Settings INSTANCE = new Settings();
 
     private final Map<String, Account> accounts = new ConcurrentHashMap<>();
 
@@ -122,7 +121,7 @@ public class Settings {
         Lang.ignoringException(() -> Runtime.getRuntime().addShutdownHook(new Thread(this::save)));
     }
 
-    private Config initSettings() {
+    private static Config initSettings() {
         Config c = new Config();
         if (SETTINGS_FILE.exists())
             try {
