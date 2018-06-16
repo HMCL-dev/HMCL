@@ -31,6 +31,7 @@ import javafx.beans.value.WeakChangeListener;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
@@ -40,7 +41,10 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
+import javafx.util.Callback;
 import javafx.util.Duration;
+import javafx.util.StringConverter;
+
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.util.*;
 
@@ -52,6 +56,7 @@ import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 
@@ -404,6 +409,33 @@ public final class FXUtils {
 
             return reference.get();
         }
+    }
+
+    public static <T> StringConverter<T> stringConverter(Function<T, String> func) {
+        return new StringConverter<T>() {
+
+            @Override
+            public String toString(T object) {
+                return object == null ? "" : func.apply(object);
+            }
+
+            @Override
+            public T fromString(String string) {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
+    public static <T> Callback<ListView<T>, ListCell<T>> jfxListCellFactory(Function<T, Node> graphicBuilder) {
+        return view -> new JFXListCell<T>() {
+            @Override
+            public void updateItem(T item, boolean empty) {
+                super.updateItem(item, empty);
+                if (!empty) {
+                    setGraphic(graphicBuilder.apply(item));
+                }
+            }
+        };
     }
 
     public static final Interpolator SINE = new Interpolator() {

@@ -33,6 +33,7 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
@@ -49,7 +50,8 @@ import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Logging;
 
-import static java.util.stream.Collectors.toList;
+import static org.jackhuang.hmcl.ui.FXUtils.jfxListCellFactory;
+import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 
 import java.util.List;
 import java.util.Optional;
@@ -64,7 +66,7 @@ public class AddAccountPane extends StackPane {
     @FXML private Label lblCreationWarning;
     @FXML private Label lblPassword;
     @FXML private JFXComboBox<String> cboType;
-    @FXML private JFXComboBox<TwoLineListItem> cboServers;
+    @FXML private JFXComboBox<AuthlibInjectorServer> cboServers;
     @FXML private Label lblInjectorServer;
     @FXML private Hyperlink linkManageInjectorServers;
     @FXML private JFXDialogLayout layout;
@@ -82,7 +84,13 @@ public class AddAccountPane extends StackPane {
         transitionHandler = new TransitionHandler(acceptPane);
         acceptPane.getChildren().setAll(btnAccept);
 
-        loadServers();
+        cboServers.setCellFactory(jfxListCellFactory(server -> new TwoLineListItem(server.getName(), server.getUrl())));
+        cboServers.setConverter(stringConverter(AuthlibInjectorServer::getName));
+        cboServers.setItems(Settings.INSTANCE.SETTINGS.authlibInjectorServers);
+
+        // workaround: otherwise the combox will be black
+        if (!cboServers.getItems().isEmpty())
+            cboServers.getSelectionModel().select(0);
 
         cboType.getItems().setAll(Launcher.i18n("account.methods.offline"), Launcher.i18n("account.methods.yggdrasil"), Launcher.i18n("account.methods.authlib_injector"));
         cboType.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> {
@@ -107,15 +115,6 @@ public class AddAccountPane extends StackPane {
         btnAccept.setDisable(!txtUsername.validate() || (cboType.getSelectionModel().getSelectedIndex() != 0 && !txtPassword.validate()));
     }
 
-    private void loadServers() {
-        cboServers.getItems().setAll(
-                Settings.INSTANCE.SETTINGS.authlibInjectorServers.stream()
-                        .map(server -> new TwoLineListItem(server.getName(), server.getUrl()))
-                        .collect(toList()));
-        if (!cboServers.getItems().isEmpty())
-            cboServers.getSelectionModel().select(0);
-    }
-
     private void showSpinner() {
         transitionHandler.setContent(spinnerAccept, ContainerAnimations.FADE.getAnimationProducer());
     }
@@ -129,7 +128,7 @@ public class AddAccountPane extends StackPane {
         int type = cboType.getSelectionModel().getSelectedIndex();
         String username = txtUsername.getText();
         String password = txtPassword.getText();
-        String apiRoot = Optional.ofNullable(cboServers.getSelectionModel().getSelectedItem()).map(TwoLineListItem::getSubtitle).orElse(null);
+        String apiRoot = Optional.ofNullable(cboServers.getSelectionModel().getSelectedItem()).map(AuthlibInjectorServer::getUrl).orElse(null);
         showSpinner();
         lblCreationWarning.setText("");
         Task.ofResult("create_account", () -> {
