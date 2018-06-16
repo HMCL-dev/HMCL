@@ -76,6 +76,8 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
     private void onAdd() {
         transitionHandler.setContent(addServerPane, ContainerAnimations.NONE.getAnimationProducer());
         txtServerUrl.setText("");
+        txtServerUrl.resetValidation();
+        lblCreationWarning.setText("");
         addServerPane.setDisable(false);
         progressBar.setVisible(false);
         dialog.show();
