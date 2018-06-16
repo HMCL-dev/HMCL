@@ -52,6 +52,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class Settings {
     public static final Gson GSON = new GsonBuilder()
@@ -84,7 +85,7 @@ public class Settings {
             Map<Object, Object> settings = iterator.next();
             AccountFactory<?> factory = Accounts.ACCOUNT_FACTORY.get(tryCast(settings.get("type"), String.class).orElse(""));
             if (factory == null) {
-                // unrecognized account type, so remove it.
+                LOG.warning("Unrecognized account type, removing: " + settings);
                 iterator.remove();
                 continue;
             }
@@ -93,7 +94,7 @@ public class Settings {
             try {
                 account = factory.fromStorage(settings, getProxy());
             } catch (Exception e) {
-                // storage is malformed, delete.
+                LOG.log(Level.WARNING, "Malformed account storage, removing: " + settings, e);
                 iterator.remove();
                 continue;
             }
