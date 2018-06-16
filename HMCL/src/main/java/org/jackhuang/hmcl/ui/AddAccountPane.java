@@ -46,6 +46,7 @@ import org.jackhuang.hmcl.ui.animation.TransitionHandler;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.IconedItem;
 import org.jackhuang.hmcl.ui.construct.Validator;
+import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Logging;
 
 import java.util.Collection;
@@ -224,13 +225,13 @@ public class AddAccountPane extends StackPane {
                     image = AccountHelper.getSkinImmediately(yggdrasilAccount, profile, 4, Settings.INSTANCE.getProxy());
                 } catch (Exception e) {
                     Logging.LOG.log(Level.WARNING, "Failed to get skin for " + profile.getName(), e);
-                    image = FXUtils.DEFAULT_ICON;
+                    image = null;
                 }
                 ImageView portraitView = new ImageView();
                 portraitView.setSmooth(false);
-                if (image == FXUtils.DEFAULT_ICON)
-                    portraitView.setImage(FXUtils.DEFAULT_ICON);
-                else {
+                if (image == null) {
+                    portraitView.setImage(Constants.DEFAULT_ICON.get());
+                } else {
                     portraitView.setImage(image);
                     portraitView.setViewport(AccountHelper.getViewport(4));
                 }

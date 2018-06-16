@@ -34,7 +34,6 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
@@ -401,8 +400,6 @@ public final class FXUtils {
             return reference.get();
         }
     }
-
-    public static final Image DEFAULT_ICON = new Image("/assets/img/icon.png");
 
     public static final Interpolator SINE = new Interpolator() {
         @Override
