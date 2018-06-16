@@ -36,7 +36,6 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
     @FXML private JFXDialogLayout confirmServerPane;
     @FXML private JFXDialog dialog;
     @FXML private StackPane contentPane;
-    @FXML private JFXSpinner spinner;
     @FXML private JFXProgressBar progressBar;
     @FXML private JFXButton btnAddNext;
 
@@ -55,33 +54,22 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
         txtServerIp.textProperty().addListener((a, b, newValue) ->
                 btnAddNext.setDisable(!txtServerIp.validate()));
 
-        loading();
+        reload();
     }
 
     private void removeServer(AuthlibInjectorServerItem item) {
         Settings.INSTANCE.SETTINGS.authlibInjectorServers.remove(item.getInfo());
-        loading();
+        reload();
     }
 
-    private void loading() {
-        getChildren().remove(contentPane);
-        spinner.setVisible(true);
-
+    private void reload() {
         listPane.getChildren().setAll(
-        Settings.INSTANCE.SETTINGS.authlibInjectorServers.stream()
+                Settings.INSTANCE.SETTINGS.authlibInjectorServers.stream()
                         .map(server -> new AuthlibInjectorServerItem(server, this::removeServer))
                         .collect(toList()));
-
-        // TODO: remove spinner
-        loadingCompleted();
-    }
-
-    private void loadingCompleted() {
-        getChildren().add(contentPane);
-        spinner.setVisible(false);
-
-        if (Settings.INSTANCE.SETTINGS.authlibInjectorServers.isEmpty())
+        if (Settings.INSTANCE.SETTINGS.authlibInjectorServers.isEmpty()) {
             onAdd();
+        }
     }
 
     @FXML
@@ -135,7 +123,7 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
         if (!Settings.INSTANCE.SETTINGS.authlibInjectorServers.contains(serverBeingAdded)) {
             Settings.INSTANCE.SETTINGS.authlibInjectorServers.add(serverBeingAdded);
         }
-        loading();
+        reload();
         dialog.close();
     }
 

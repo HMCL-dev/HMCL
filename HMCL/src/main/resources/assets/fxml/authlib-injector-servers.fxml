@@ -8,7 +8,6 @@
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
-    <JFXSpinner fx:id="spinner" style="-fx-radius:16" styleClass="materialDesign-purple, first-spinner" />
     <StackPane fx:id="contentPane">
         <ScrollPane fx:id="scrollPane" fitToWidth="true" fitToHeight="true">
             <VBox fx:id="listPane" spacing="10" style="-fx-padding: 20 20 70 20;">
