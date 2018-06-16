@@ -33,4 +33,19 @@ public class AuthlibInjectorServerInfo {
     public String getServerName() {
         return serverName;
     }
+
+    @Override
+    public int hashCode() {
+        return serverIp.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this)
+            return true;
+        if (!(obj instanceof AuthlibInjectorServerInfo))
+            return false;
+        AuthlibInjectorServerInfo another = (AuthlibInjectorServerInfo) obj;
+        return this.serverIp.equals(another.serverIp);
+    }
 }

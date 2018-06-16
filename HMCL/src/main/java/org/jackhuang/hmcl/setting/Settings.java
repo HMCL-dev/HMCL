@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
@@ -35,6 +36,7 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServerInfo;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -51,6 +53,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
+import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
@@ -71,7 +76,8 @@ public class Settings {
 
     public static final Settings INSTANCE = new Settings();
 
-    private final Config SETTINGS = initSettings();
+    // TODO: another way to access this property aside from Settings.INSTANCE.SETTINGS
+    public final Config SETTINGS = initSettings();
 
     private final Map<String, Account> accounts = new ConcurrentHashMap<>();
 
@@ -99,7 +105,10 @@ public class Settings {
             accounts.put(Accounts.getAccountId(account), account);
         }
 
-        checkAuthlibInjectorAccounts();
+        migrateAuthlibInjectorServers();
+
+        SETTINGS.authlibInjectorServers.addListener(onInvalidating(this::removeDanglingAuthlibInjectorAccounts));
+
         checkProfileMap();
 
         save();
@@ -303,30 +312,50 @@ public class Settings {
      *           AUTHLIB INJECTORS          *
      ****************************************/
 
-    public Set<String> getAuthlibInjectorServerURLs() {
-        return SETTINGS.authlibInjectorServerURLs;
+    private Set<String> getAuthlibInjectorServerUrls() {
+        return SETTINGS.authlibInjectorServers.stream()
+                .map(AuthlibInjectorServerInfo::getServerIp)
+                .collect(toSet());
     }
 
-    public void removeAuthlibInjectorServerURL(String serverURL) {
-        SETTINGS.authlibInjectorServerURLs.remove(serverURL);
-
-        checkAuthlibInjectorAccounts();
-        save();
+    /**
+     * The {@code serverBaseURL} specified in {@link AuthlibInjectorAccount} may not have an associated
+     * {@link AuthlibInjectorServerInfo} in {@link Config#authlibInjectorServers},
+     * which usually happens when migrating data from an older version.
+     * This method adds the missing servers to {@link Config#authlibInjectorServers}.
+     */
+    private void migrateAuthlibInjectorServers() {
+        Set<String> existentServerUrls = getAuthlibInjectorServerUrls();
+        accounts.values().stream()
+                .filter(AuthlibInjectorAccount.class::isInstance)
+                .map(it -> ((AuthlibInjectorAccount) it).getServerBaseURL())
+                .distinct()
+                .filter(it -> !existentServerUrls.contains(it))
+                .forEach(url -> {
+                    String serverName;
+                    try {
+                        serverName = Accounts.getAuthlibInjectorServerName(url);
+                        Logging.LOG.info("Migrated authlib injector server [" + url + "], name=[" + serverName + "]");
+                    } catch (Exception e) {
+                        serverName = url;
+                        Logging.LOG.log(Level.WARNING, "Failed to migrate authlib injector server [" + url + "]", e);
+                    }
+                    SETTINGS.authlibInjectorServers.add(new AuthlibInjectorServerInfo(url, serverName));
+                });
     }
 
-    public void addAuthlibInjectorServerURL(String serverURL) {
-        SETTINGS.authlibInjectorServerURLs.add(serverURL);
-        save();
-    }
-
-    private void checkAuthlibInjectorAccounts() {
-        for (Account account : getAccounts()) {
-            if (account instanceof AuthlibInjectorAccount) {
-                AuthlibInjectorAccount injectorAccount = (AuthlibInjectorAccount) account;
-                if (!SETTINGS.authlibInjectorServerURLs.contains(injectorAccount.getServerBaseURL()))
-                    deleteAccount(account);
-            }
-        }
+    /**
+     * After an {@link AuthlibInjectorServerInfo} is removed, the associated accounts should also be removed.
+     * This method performs a check and removes the dangling accounts.
+     * Don't call this before {@link #migrateAuthlibInjectorServers()} is called, otherwise old data would be lost.
+     */
+    private void removeDanglingAuthlibInjectorAccounts() {
+        Set<String> currentServerUrls = getAuthlibInjectorServerUrls();
+        accounts.values().stream()
+                .filter(AuthlibInjectorAccount.class::isInstance)
+                .filter(it -> !currentServerUrls.contains(((AuthlibInjectorAccount) it).getServerBaseURL()))
+                .collect(toList())
+                .forEach(this::deleteAccount);
     }
 
     /****************************************

@@ -4,7 +4,6 @@ import com.jfoenix.controls.*;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.StackPane;
@@ -18,13 +17,9 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionHandler;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
-import java.util.Collection;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import static java.util.stream.Collectors.toList;
 
 public class AuthlibInjectorServersPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", Launcher.i18n("account.injector.server"));
@@ -64,7 +59,7 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
     }
 
     private void removeServer(AuthlibInjectorServerItem item) {
-        Settings.INSTANCE.removeAuthlibInjectorServerURL(item.getInfo().getServerIp());
+        Settings.INSTANCE.SETTINGS.authlibInjectorServers.remove(item.getInfo());
         loading();
     }
 
@@ -72,27 +67,20 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
         getChildren().remove(contentPane);
         spinner.setVisible(true);
 
-        Task.ofResult("list", () -> Settings.INSTANCE.getAuthlibInjectorServerURLs().parallelStream()
-                .flatMap(serverURL -> {
-                    try {
-                        return Stream.of(new AuthlibInjectorServerItem(new AuthlibInjectorServerInfo(serverURL, Accounts.getAuthlibInjectorServerName(serverURL)), this::removeServer));
-                    } catch (Exception e) {
-                        Logging.LOG.log(Level.WARNING, "Authlib-injector server root " + serverURL + " cannot be recognized.", e);
-                        return Stream.empty();
-                    }
-                })
-                .collect(Collectors.toList()))
-                .subscribe(Task.of(Schedulers.javafx(), variables -> {
-                    listPane.getChildren().setAll(variables.<Collection<? extends Node>>get("list"));
-                    loadingCompleted();
-                }));
+        listPane.getChildren().setAll(
+        Settings.INSTANCE.SETTINGS.authlibInjectorServers.stream()
+                        .map(server -> new AuthlibInjectorServerItem(server, this::removeServer))
+                        .collect(toList()));
+
+        // TODO: remove spinner
+        loadingCompleted();
     }
 
     private void loadingCompleted() {
         getChildren().add(contentPane);
         spinner.setVisible(false);
 
-        if (Settings.INSTANCE.getAuthlibInjectorServerURLs().isEmpty())
+        if (Settings.INSTANCE.SETTINGS.authlibInjectorServers.isEmpty())
             onAdd();
     }
 
@@ -144,7 +132,9 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
 
     @FXML
     private void onAddFinish() {
-        Settings.INSTANCE.addAuthlibInjectorServerURL(serverBeingAdded.getServerIp());
+        if (!Settings.INSTANCE.SETTINGS.authlibInjectorServers.contains(serverBeingAdded)) {
+            Settings.INSTANCE.SETTINGS.authlibInjectorServers.add(serverBeingAdded);
+        }
         loading();
         dialog.close();
     }

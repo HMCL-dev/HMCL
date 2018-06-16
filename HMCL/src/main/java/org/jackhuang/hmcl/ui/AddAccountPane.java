@@ -49,14 +49,13 @@ import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Logging;
 
-import java.util.Collection;
+import static java.util.stream.Collectors.toList;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class AddAccountPane extends StackPane {
 
@@ -96,10 +95,6 @@ public class AddAccountPane extends StackPane {
         });
         cboType.getSelectionModel().select(0);
 
-        // These two lines can eliminate black, don't know why.
-        cboServers.getItems().setAll(new TwoLineListItem("", ""));
-        cboServers.getSelectionModel().select(0);
-
         txtPassword.setOnAction(e -> onCreationAccept());
         txtUsername.setOnAction(e -> onCreationAccept());
         txtUsername.getValidators().add(new Validator(Launcher.i18n("input.email"), str -> !txtPassword.isVisible() || str.contains("@")));
@@ -113,21 +108,12 @@ public class AddAccountPane extends StackPane {
     }
 
     private void loadServers() {
-        Task.ofResult("list", () -> Settings.INSTANCE.getAuthlibInjectorServerURLs().parallelStream()
-                .flatMap(serverURL -> {
-                    try {
-                        return Stream.of(new TwoLineListItem(Accounts.getAuthlibInjectorServerName(serverURL), serverURL));
-                    } catch (Exception e) {
-                        Logging.LOG.log(Level.WARNING, "Authlib-injector server root " + serverURL + " cannot be recognized.", e);
-                        return Stream.empty();
-                    }
-                })
-                .collect(Collectors.toList()))
-                .subscribe(Task.of(Schedulers.javafx(), variables -> {
-                    cboServers.getItems().setAll(variables.<Collection<TwoLineListItem>>get("list"));
-                    if (!cboServers.getItems().isEmpty())
-                        cboServers.getSelectionModel().select(0);
-                }));
+        cboServers.getItems().setAll(
+                Settings.INSTANCE.SETTINGS.authlibInjectorServers.stream()
+                        .map(server -> new TwoLineListItem(server.getServerName(), server.getServerIp()))
+                        .collect(toList()));
+        if (!cboServers.getItems().isEmpty())
+            cboServers.getSelectionModel().select(0);
     }
 
     private void showSpinner() {

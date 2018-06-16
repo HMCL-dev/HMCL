@@ -17,11 +17,12 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeMap;
 
 import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServerInfo;
+
 import com.google.gson.annotations.SerializedName;
 
 import javafx.beans.property.BooleanProperty;
@@ -35,7 +36,6 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
-import javafx.collections.ObservableSet;
 
 public final class Config implements Cloneable {
 
@@ -99,8 +99,7 @@ public final class Config implements Cloneable {
     @SerializedName("logLines")
     public final IntegerProperty logLines = new SimpleIntegerProperty(100);
 
-    @SerializedName("authlibInjectorServerURLs")
-    public final ObservableSet<String> authlibInjectorServerURLs = FXCollections.observableSet(new HashSet<>());
+    public final ObservableList<AuthlibInjectorServerInfo> authlibInjectorServers = FXCollections.observableArrayList();
 
     @Override
     public Config clone() {

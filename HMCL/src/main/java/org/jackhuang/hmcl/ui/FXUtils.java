@@ -23,6 +23,7 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.Property;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -65,6 +66,10 @@ public final class FXUtils {
             throw new IllegalStateException("Not on FX application thread; currentThread = "
                     + Thread.currentThread().getName());
         }
+    }
+
+    public static InvalidationListener onInvalidating(Runnable action) {
+        return arg -> action.run();
     }
 
     public static <T> void onChange(ObservableValue<T> value, Consumer<T> consumer) {
