@@ -54,7 +54,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -309,22 +308,15 @@ public class Settings {
      *           AUTHLIB INJECTORS          *
      ****************************************/
 
-    private Set<String> getAuthlibInjectorServerUrls() {
-        return SETTINGS.authlibInjectorServers.stream()
-                .map(AuthlibInjectorServer::getUrl)
-                .collect(toSet());
-    }
-
     /**
      * After an {@link AuthlibInjectorServer} is removed, the associated accounts should also be removed.
      * This method performs a check and removes the dangling accounts.
      * Don't call this before {@link #migrateAuthlibInjectorServers()} is called, otherwise old data would be lost.
      */
     private void removeDanglingAuthlibInjectorAccounts() {
-        Set<String> currentServerUrls = getAuthlibInjectorServerUrls();
         accounts.values().stream()
                 .filter(AuthlibInjectorAccount.class::isInstance)
-                .filter(it -> !currentServerUrls.contains(((AuthlibInjectorAccount) it).getServerBaseURL()))
+                .filter(it -> !SETTINGS.authlibInjectorServers.contains(((AuthlibInjectorAccount) it).getServer()))
                 .collect(toList())
                 .forEach(this::deleteAccount);
     }

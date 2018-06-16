@@ -40,7 +40,7 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
         AuthlibInjectorServer server = serverLookup.apply((String) apiRoot);
 
         AuthlibInjectorAccount account = new AuthlibInjectorAccount(new YggdrasilService(new AuthlibInjectorProvider(server.getUrl()), proxy),
-                server.getUrl(), injectorJarPathSupplier, username, null, null);
+                server, injectorJarPathSupplier, username, null, null);
         account.logInWithPassword(password, selector);
         return account;
     }
@@ -60,6 +60,6 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
         AuthlibInjectorServer server = serverLookup.apply(apiRoot);
 
         return new AuthlibInjectorAccount(new YggdrasilService(new AuthlibInjectorProvider(server.getUrl()), proxy),
-                server.getUrl(), injectorJarPathSupplier, username, session.getSelectedProfile().getId(), session);
+                server, injectorJarPathSupplier, username, session.getSelectedProfile().getId(), session);
     }
 }

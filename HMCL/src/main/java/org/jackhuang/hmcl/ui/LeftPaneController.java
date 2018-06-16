@@ -186,9 +186,9 @@ public final class LeftPaneController {
             } else
                 item.setImage(AccountHelper.getDefaultSkin(account.getUUID(), 4), AccountHelper.getViewport(4));
 
-            if (account instanceof AuthlibInjectorAccount)
-                Accounts.getAuthlibInjectorServerNameAsync((AuthlibInjectorAccount) account)
-                    .subscribe(Schedulers.javafx(), variables -> FXUtils.installTooltip(ripplerContainer, 500, 5000, 0, new Tooltip(variables.get("serverName"))));
+            if (account instanceof AuthlibInjectorAccount) {
+                FXUtils.installTooltip(ripplerContainer, 500, 5000, 0, new Tooltip(((AuthlibInjectorAccount) account).getServer().getName()));
+            }
 
             if (selectedAccount == account)
                 ripplerContainer.setSelected(true);

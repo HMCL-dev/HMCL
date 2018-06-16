@@ -31,8 +31,6 @@ import org.jackhuang.hmcl.auth.yggdrasil.MojangYggdrasilProvider;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.NetworkUtils;
@@ -105,11 +103,6 @@ public final class Accounts {
             AUTHLIB_INJECTOR_SERVER_NAMES.put(serverIp, response.getMeta().getServerName());
             return response.getMeta().getServerName();
         }
-    }
-
-    @Deprecated
-    public static TaskResult<String> getAuthlibInjectorServerNameAsync(AuthlibInjectorAccount account) {
-        return Task.ofResult("serverName", () -> Accounts.getAuthlibInjectorServerName(account.getServerBaseURL()));
     }
 
     private static AuthlibInjectorServer getOrCreateAuthlibInjectorServer(String url) {

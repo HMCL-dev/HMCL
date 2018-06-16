@@ -37,14 +37,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class AuthlibInjectorAccount extends YggdrasilAccount {
-    private final String serverBaseURL;
+    private final AuthlibInjectorServer server;
     private final ExceptionalSupplier<String, ?> injectorJarPath;
 
-    protected AuthlibInjectorAccount(YggdrasilService service, String serverBaseURL, ExceptionalSupplier<String, ?> injectorJarPath, String username, UUID characterUUID, YggdrasilSession session) {
+    protected AuthlibInjectorAccount(YggdrasilService service, AuthlibInjectorServer server, ExceptionalSupplier<String, ?> injectorJarPath, String username, UUID characterUUID, YggdrasilSession session) {
         super(service, username, characterUUID, session);
 
         this.injectorJarPath = injectorJarPath;
-        this.serverBaseURL = serverBaseURL;
+        this.server = server;
     }
 
     @Override
@@ -59,7 +59,7 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
 
     private AuthInfo inject(ExceptionalSupplier<AuthInfo, AuthenticationException> supplier) throws AuthenticationException {
         // Authlib Injector recommends launchers to pre-fetch the server basic information before launched the game to save time.
-        GetTask getTask = new GetTask(NetworkUtils.toURL(serverBaseURL));
+        GetTask getTask = new GetTask(NetworkUtils.toURL(server.getUrl()));
         AtomicBoolean flag = new AtomicBoolean(true);
         Thread thread = Lang.thread(() -> flag.set(getTask.test()));
 
@@ -67,7 +67,7 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         try {
             thread.join();
 
-            Arguments arguments = new Arguments().addJVMArguments("-javaagent:" + injectorJarPath.get() + "=" + serverBaseURL);
+            Arguments arguments = new Arguments().addJVMArguments("-javaagent:" + injectorJarPath.get() + "=" + server.getUrl());
 
             if (flag.get())
                 arguments = arguments.addJVMArguments("-Dorg.to2mbn.authlibinjector.config.prefetched=" + new String(Base64.getEncoder().encode(getTask.getResult().getBytes()), UTF_8));
@@ -81,12 +81,12 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
     @Override
     public Map<Object, Object> toStorage() {
         Map<Object, Object> map = super.toStorage();
-        map.put("serverBaseURL", serverBaseURL);
+        map.put("serverBaseURL", server.getUrl());
         return map;
     }
 
-    public String getServerBaseURL() {
-        return serverBaseURL;
+    public AuthlibInjectorServer getServer() {
+        return server;
     }
 
 }
