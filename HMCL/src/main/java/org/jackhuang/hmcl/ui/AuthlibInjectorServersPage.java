@@ -9,7 +9,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Launcher;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServerInfo;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -26,12 +26,12 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
 
     @FXML private ScrollPane scrollPane;
     @FXML private StackPane addServerContainer;
-    @FXML private Label lblServerIp;
+    @FXML private Label lblServerUrl;
     @FXML private Label lblServerName;
     @FXML private Label lblCreationWarning;
     @FXML private Label lblServerWarning;
     @FXML private VBox listPane;
-    @FXML private JFXTextField txtServerIp;
+    @FXML private JFXTextField txtServerUrl;
     @FXML private JFXDialogLayout addServerPane;
     @FXML private JFXDialogLayout confirmServerPane;
     @FXML private JFXDialog dialog;
@@ -41,7 +41,7 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
 
     private final TransitionHandler transitionHandler;
 
-    private AuthlibInjectorServerInfo serverBeingAdded;
+    private AuthlibInjectorServer serverBeingAdded;
 
     {
         FXUtils.loadFXML(this, "/assets/fxml/authlib-injector-servers.fxml");
@@ -51,14 +51,14 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
         getChildren().remove(dialog);
         dialog.setDialogContainer(this);
 
-        txtServerIp.textProperty().addListener((a, b, newValue) ->
-                btnAddNext.setDisable(!txtServerIp.validate()));
+        txtServerUrl.textProperty().addListener((a, b, newValue) ->
+                btnAddNext.setDisable(!txtServerUrl.validate()));
 
         reload();
     }
 
     private void removeServer(AuthlibInjectorServerItem item) {
-        Settings.INSTANCE.SETTINGS.authlibInjectorServers.remove(item.getInfo());
+        Settings.INSTANCE.SETTINGS.authlibInjectorServers.remove(item.getServer());
         reload();
     }
 
@@ -75,7 +75,7 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
     @FXML
     private void onAdd() {
         transitionHandler.setContent(addServerPane, ContainerAnimations.NONE.getAnimationProducer());
-        txtServerIp.setText("");
+        txtServerUrl.setText("");
         addServerPane.setDisable(false);
         progressBar.setVisible(false);
         dialog.show();
@@ -88,22 +88,22 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
 
     @FXML
     private void onAddNext() {
-        String url = fixInputUrl(txtServerIp.getText());
+        String url = fixInputUrl(txtServerUrl.getText());
 
         progressBar.setVisible(true);
         addServerPane.setDisable(true);
 
         Task.of(() -> {
-            serverBeingAdded = new AuthlibInjectorServerInfo(url, Accounts.getAuthlibInjectorServerName(url));
+            serverBeingAdded = new AuthlibInjectorServer(url, Accounts.getAuthlibInjectorServerName(url));
         }).finalized(Schedulers.javafx(), (variables, isDependentsSucceeded) -> {
             progressBar.setVisible(false);
             addServerPane.setDisable(false);
 
             if (isDependentsSucceeded) {
-                lblServerName.setText(serverBeingAdded.getServerName());
-                lblServerIp.setText(serverBeingAdded.getServerIp());
+                lblServerName.setText(serverBeingAdded.getName());
+                lblServerUrl.setText(serverBeingAdded.getUrl());
 
-                lblServerWarning.setVisible("http".equals(NetworkUtils.toURL(serverBeingAdded.getServerIp()).getProtocol()));
+                lblServerWarning.setVisible("http".equals(NetworkUtils.toURL(serverBeingAdded.getUrl()).getProtocol()));
 
                 transitionHandler.setContent(confirmServerPane, ContainerAnimations.SWIPE_LEFT.getAnimationProducer());
             } else {

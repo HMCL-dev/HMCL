@@ -36,7 +36,7 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServerInfo;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -314,13 +314,13 @@ public class Settings {
 
     private Set<String> getAuthlibInjectorServerUrls() {
         return SETTINGS.authlibInjectorServers.stream()
-                .map(AuthlibInjectorServerInfo::getServerIp)
+                .map(AuthlibInjectorServer::getUrl)
                 .collect(toSet());
     }
 
     /**
      * The {@code serverBaseURL} specified in {@link AuthlibInjectorAccount} may not have an associated
-     * {@link AuthlibInjectorServerInfo} in {@link Config#authlibInjectorServers},
+     * {@link AuthlibInjectorServer} in {@link Config#authlibInjectorServers},
      * which usually happens when migrating data from an older version.
      * This method adds the missing servers to {@link Config#authlibInjectorServers}.
      */
@@ -340,12 +340,12 @@ public class Settings {
                         serverName = url;
                         Logging.LOG.log(Level.WARNING, "Failed to migrate authlib injector server [" + url + "]", e);
                     }
-                    SETTINGS.authlibInjectorServers.add(new AuthlibInjectorServerInfo(url, serverName));
+                    SETTINGS.authlibInjectorServers.add(new AuthlibInjectorServer(url, serverName));
                 });
     }
 
     /**
-     * After an {@link AuthlibInjectorServerInfo} is removed, the associated accounts should also be removed.
+     * After an {@link AuthlibInjectorServer} is removed, the associated accounts should also be removed.
      * This method performs a check and removes the dangling accounts.
      * Don't call this before {@link #migrateAuthlibInjectorServers()} is called, otherwise old data would be lost.
      */

@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.jackhuang.hmcl.Launcher;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServerInfo;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -99,7 +99,7 @@ public final class Config implements Cloneable {
     @SerializedName("logLines")
     public final IntegerProperty logLines = new SimpleIntegerProperty(100);
 
-    public final ObservableList<AuthlibInjectorServerInfo> authlibInjectorServers = FXCollections.observableArrayList();
+    public final ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList();
 
     @Override
     public Config clone() {

@@ -110,7 +110,7 @@ public class AddAccountPane extends StackPane {
     private void loadServers() {
         cboServers.getItems().setAll(
                 Settings.INSTANCE.SETTINGS.authlibInjectorServers.stream()
-                        .map(server -> new TwoLineListItem(server.getServerName(), server.getServerIp()))
+                        .map(server -> new TwoLineListItem(server.getName(), server.getUrl()))
                         .collect(toList()));
         if (!cboServers.getItems().isEmpty())
             cboServers.getSelectionModel().select(0);
