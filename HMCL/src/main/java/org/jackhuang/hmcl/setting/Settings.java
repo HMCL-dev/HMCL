@@ -66,9 +66,6 @@ public class Settings {
             .setPrettyPrinting()
             .create();
 
-    public static final String DEFAULT_PROFILE = "Default";
-    public static final String HOME_PROFILE = "Home";
-
     public static final String SETTINGS_FILE_NAME = "hmcl.json";
     public static final File SETTINGS_FILE = new File(SETTINGS_FILE_NAME).getAbsoluteFile();
 
@@ -562,8 +559,8 @@ public class Settings {
 
     private void checkProfileMap() {
         if (getProfileMap().isEmpty()) {
-            getProfileMap().put(DEFAULT_PROFILE, new Profile(DEFAULT_PROFILE));
-            getProfileMap().put(HOME_PROFILE, new Profile(HOME_PROFILE, Launcher.MINECRAFT_DIRECTORY));
+            getProfileMap().put(Profiles.DEFAULT_PROFILE, new Profile(Profiles.DEFAULT_PROFILE));
+            getProfileMap().put(Profiles.HOME_PROFILE, new Profile(Profiles.HOME_PROFILE, Launcher.MINECRAFT_DIRECTORY));
         }
     }
 

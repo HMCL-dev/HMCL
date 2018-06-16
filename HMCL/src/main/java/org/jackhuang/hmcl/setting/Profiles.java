@@ -20,14 +20,18 @@ package org.jackhuang.hmcl.setting;
 import org.jackhuang.hmcl.Launcher;
 
 public final class Profiles {
+
+    public static final String DEFAULT_PROFILE = "Default";
+    public static final String HOME_PROFILE = "Home";
+
     private Profiles() {
     }
 
     public static String getProfileDisplayName(Profile profile) {
         switch (profile.getName()) {
-            case Settings.DEFAULT_PROFILE:
+            case Profiles.DEFAULT_PROFILE:
                 return Launcher.i18n("profile.default");
-            case Settings.HOME_PROFILE:
+            case Profiles.HOME_PROFILE:
                 return Launcher.i18n("profile.home");
             default:
                 return profile.getName();
