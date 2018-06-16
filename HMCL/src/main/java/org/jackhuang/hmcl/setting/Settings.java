@@ -104,8 +104,6 @@ public class Settings {
             accounts.put(Accounts.getAccountId(account), account);
         }
 
-        migrateAuthlibInjectorServers();
-
         SETTINGS.authlibInjectorServers.addListener(onInvalidating(this::removeDanglingAuthlibInjectorAccounts));
 
         checkProfileMap();
@@ -315,32 +313,6 @@ public class Settings {
         return SETTINGS.authlibInjectorServers.stream()
                 .map(AuthlibInjectorServer::getUrl)
                 .collect(toSet());
-    }
-
-    /**
-     * The {@code serverBaseURL} specified in {@link AuthlibInjectorAccount} may not have an associated
-     * {@link AuthlibInjectorServer} in {@link Config#authlibInjectorServers},
-     * which usually happens when migrating data from an older version.
-     * This method adds the missing servers to {@link Config#authlibInjectorServers}.
-     */
-    private void migrateAuthlibInjectorServers() {
-        Set<String> existentServerUrls = getAuthlibInjectorServerUrls();
-        accounts.values().stream()
-                .filter(AuthlibInjectorAccount.class::isInstance)
-                .map(it -> ((AuthlibInjectorAccount) it).getServerBaseURL())
-                .distinct()
-                .filter(it -> !existentServerUrls.contains(it))
-                .forEach(url -> {
-                    String serverName;
-                    try {
-                        serverName = Accounts.getAuthlibInjectorServerName(url);
-                        Logging.LOG.info("Migrated authlib injector server [" + url + "], name=[" + serverName + "]");
-                    } catch (Exception e) {
-                        serverName = url;
-                        Logging.LOG.log(Level.WARNING, "Failed to migrate authlib injector server [" + url + "]", e);
-                    }
-                    SETTINGS.authlibInjectorServers.add(new AuthlibInjectorServer(url, serverName));
-                });
     }
 
     /**
