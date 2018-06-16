@@ -47,6 +47,8 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
 
     private final TransitionHandler transitionHandler;
 
+    private AuthlibInjectorServerInfo serverBeingAdded;
+
     {
         FXUtils.loadFXML(this, "/assets/fxml/authlib-injector-servers.fxml");
         FXUtils.smoothScrolling(scrollPane);
@@ -110,26 +112,28 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
 
     @FXML
     private void onAddNext() {
-        String serverIp = txtServerIp.getText();
+        String url = fixInputUrl(txtServerIp.getText());
+
         progressBar.setVisible(true);
         addServerPane.setDisable(true);
 
-        Task.ofResult("serverName", () -> Accounts.getAuthlibInjectorServerName(serverIp))
-                .finalized(Schedulers.javafx(), (variables, isDependentsSucceeded) -> {
-                    progressBar.setVisible(false);
-                    addServerPane.setDisable(false);
+        Task.of(() -> {
+            serverBeingAdded = new AuthlibInjectorServerInfo(url, Accounts.getAuthlibInjectorServerName(url));
+        }).finalized(Schedulers.javafx(), (variables, isDependentsSucceeded) -> {
+            progressBar.setVisible(false);
+            addServerPane.setDisable(false);
 
-                    if (isDependentsSucceeded) {
-                        lblServerName.setText(variables.get("serverName"));
-                        lblServerIp.setText(txtServerIp.getText());
+            if (isDependentsSucceeded) {
+                lblServerName.setText(serverBeingAdded.getServerName());
+                lblServerIp.setText(serverBeingAdded.getServerIp());
 
-                        lblServerWarning.setVisible("http".equals(NetworkUtils.toURL(serverIp).getProtocol()));
+                lblServerWarning.setVisible("http".equals(NetworkUtils.toURL(serverBeingAdded.getServerIp()).getProtocol()));
 
-                        transitionHandler.setContent(confirmServerPane, ContainerAnimations.SWIPE_LEFT.getAnimationProducer());
-                    } else
-                        lblCreationWarning.setText(variables.<Exception>get("lastException").getLocalizedMessage());
-                }).start();
-
+                transitionHandler.setContent(confirmServerPane, ContainerAnimations.SWIPE_LEFT.getAnimationProducer());
+            } else {
+                lblCreationWarning.setText(variables.<Exception>get("lastException").getLocalizedMessage());
+            }
+        }).start();
 
     }
 
@@ -140,10 +144,7 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
 
     @FXML
     private void onAddFinish() {
-        String ip = txtServerIp.getText();
-        if (!ip.endsWith("/"))
-            ip += "/";
-        Settings.INSTANCE.addAuthlibInjectorServerURL(ip);
+        Settings.INSTANCE.addAuthlibInjectorServerURL(serverBeingAdded.getServerIp());
         loading();
         dialog.close();
     }
@@ -159,5 +160,12 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
 
     public void setTitle(String title) {
         this.title.set(title);
+    }
+
+    private String fixInputUrl(String url) {
+        if (!url.endsWith("/")) {
+            url += "/";
+        }
+        return url;
     }
 }
