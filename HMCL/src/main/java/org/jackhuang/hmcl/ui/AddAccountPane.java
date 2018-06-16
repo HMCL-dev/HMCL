@@ -144,7 +144,7 @@ public class AddAccountPane extends StackPane {
                 factory = Accounts.ACCOUNT_FACTORY.get(Accounts.AUTHLIB_INJECTOR_ACCOUNT_KEY);
                 Optional<AuthlibInjectorServer> server = Optional.ofNullable(cboServers.getSelectionModel().getSelectedItem());
                 if (server.isPresent()) {
-                    addtionalData = server.get().getUrl();
+                    addtionalData = server.get();
                 } else {
                     lblCreationWarning.setText(Launcher.i18n("account.failed.no_selected_server"));
                     return;

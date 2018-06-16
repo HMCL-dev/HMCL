@@ -6,7 +6,6 @@ import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
 import org.jackhuang.hmcl.util.ExceptionalSupplier;
-import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.net.Proxy;
 import java.util.Map;
@@ -28,16 +27,13 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
     }
 
     @Override
-    public AuthlibInjectorAccount create(CharacterSelector selector, String username, String password, Object apiRoot, Proxy proxy) throws AuthenticationException {
+    public AuthlibInjectorAccount create(CharacterSelector selector, String username, String password, Object additionalData, Proxy proxy) throws AuthenticationException {
         Objects.requireNonNull(selector);
         Objects.requireNonNull(username);
         Objects.requireNonNull(password);
         Objects.requireNonNull(proxy);
 
-        if (!(apiRoot instanceof String) || !NetworkUtils.isURL((String) apiRoot))
-            throw new IllegalArgumentException("Additional data should be API root string for authlib injector accounts.");
-
-        AuthlibInjectorServer server = serverLookup.apply((String) apiRoot);
+        AuthlibInjectorServer server = (AuthlibInjectorServer) additionalData;
 
         AuthlibInjectorAccount account = new AuthlibInjectorAccount(new YggdrasilService(new AuthlibInjectorProvider(server.getUrl()), proxy),
                 server, injectorJarPathSupplier, username, null, null);
