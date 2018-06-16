@@ -125,34 +125,51 @@ public class AddAccountPane extends StackPane {
 
     @FXML
     private void onCreationAccept() {
-        int type = cboType.getSelectionModel().getSelectedIndex();
         String username = txtUsername.getText();
         String password = txtPassword.getText();
-        String apiRoot = Optional.ofNullable(cboServers.getSelectionModel().getSelectedItem()).map(AuthlibInjectorServer::getUrl).orElse(null);
+        Object addtionalData;
+
+        int type = cboType.getSelectionModel().getSelectedIndex();
+        AccountFactory<?> factory;
+        switch (type) {
+            case 0:
+                factory = Accounts.ACCOUNT_FACTORY.get(Accounts.OFFLINE_ACCOUNT_KEY);
+                addtionalData = null;
+                break;
+            case 1:
+                factory = Accounts.ACCOUNT_FACTORY.get(Accounts.YGGDRASIL_ACCOUNT_KEY);
+                addtionalData = null;
+                break;
+            case 2:
+                factory = Accounts.ACCOUNT_FACTORY.get(Accounts.AUTHLIB_INJECTOR_ACCOUNT_KEY);
+                Optional<AuthlibInjectorServer> server = Optional.ofNullable(cboServers.getSelectionModel().getSelectedItem());
+                if (server.isPresent()) {
+                    addtionalData = server.get().getUrl();
+                } else {
+                    lblCreationWarning.setText(Launcher.i18n("account.failed.no_selected_server"));
+                    return;
+                }
+                break;
+            default:
+                throw new Error();
+        }
+
         showSpinner();
         lblCreationWarning.setText("");
-        Task.ofResult("create_account", () -> {
-            AccountFactory<?> factory;
-            switch (type) {
-                case 0: factory = Accounts.ACCOUNT_FACTORY.get(Accounts.OFFLINE_ACCOUNT_KEY); break;
-                case 1: factory = Accounts.ACCOUNT_FACTORY.get(Accounts.YGGDRASIL_ACCOUNT_KEY); break;
-                case 2: factory = Accounts.ACCOUNT_FACTORY.get(Accounts.AUTHLIB_INJECTOR_ACCOUNT_KEY); break;
-                default: throw new Error();
-            }
 
-            return factory.create(new Selector(), username, password, apiRoot, Settings.INSTANCE.getProxy());
-        }).finalized(Schedulers.javafx(), variables -> {
-            Settings.INSTANCE.addAccount(variables.get("create_account"));
-            hideSpinner();
-            finalization.accept(this);
-        }, exception -> {
-            if (exception instanceof NoSelectedCharacterException) {
-                finalization.accept(this);
-            } else {
-                lblCreationWarning.setText(accountException(exception));
-            }
-            hideSpinner();
-        }).start();
+        Task.ofResult("create_account", () -> factory.create(new Selector(), username, password, addtionalData, Settings.INSTANCE.getProxy()))
+                .finalized(Schedulers.javafx(), variables -> {
+                    Settings.INSTANCE.addAccount(variables.get("create_account"));
+                    hideSpinner();
+                    finalization.accept(this);
+                }, exception -> {
+                    if (exception instanceof NoSelectedCharacterException) {
+                        finalization.accept(this);
+                    } else {
+                        lblCreationWarning.setText(accountException(exception));
+                    }
+                    hideSpinner();
+                }).start();
     }
 
     @FXML
