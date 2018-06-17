@@ -84,6 +84,7 @@ public class DefaultLauncher extends Launcher {
             if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
                 res.add("-Duser.home=" + options.getGameDir().getParent());
 
+            // Force using G1GC with its settings
             if (options.getJava().getParsedVersion() >= JavaVersion.JAVA_7) {
                 res.add("-XX:+UnlockExperimentalVMOptions");
                 res.add("-XX:+UseG1GC");
@@ -102,6 +103,12 @@ public class DefaultLauncher extends Launcher {
             res.add("-XX:-UseAdaptiveSizePolicy");
             res.add("-XX:-OmitStackTraceInFastThrow");
             res.add("-Xmn128m");
+
+            // As 32-bit JVM allocate 320KB for stack by default rather than 64-bit version allocating 1MB,
+            // causing Minecraft 1.13 crashed accounting for java.lang.StackOverflowError.
+            if (options.getJava().getPlatform() == Platform.BIT_32) {
+                res.add("-Xss1M");
+            }
 
             if (options.getMaxMemory() != null && options.getMaxMemory() > 0)
                 res.add("-Xmx" + options.getMaxMemory() + "m");

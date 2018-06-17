@@ -191,10 +191,12 @@ public final class LauncherHelper {
     private static void checkGameState(Profile profile, VersionSetting setting, Version version, Runnable onAccept) throws InterruptedException {
         boolean flag = false;
 
+        // Without onAccept called, the launching operation will be terminated.
+
         VersionNumber gameVersion = VersionNumber.asVersion(GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version)).orElse("Unknown"));
         JavaVersion java = setting.getJavaVersion();
         if (java == null) {
-            Controllers.dialog(Launcher.i18n("launch.wrong_javadir"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
+            Controllers.dialog(Launcher.i18n("launch.wrong_javadir"), Launcher.i18n("message.error"), MessageBox.WARNING_MESSAGE, onAccept);
             setting.setJava(null);
             setting.setDefaultJavaPath(null);
             java = JavaVersion.fromCurrentEnvironment();
@@ -202,10 +204,19 @@ public final class LauncherHelper {
         }
 
         if (!flag && java.getParsedVersion() < JavaVersion.JAVA_8) {
-            Controllers.dialog(Launcher.i18n("launch.advice.newer_java"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
+            if (gameVersion.compareTo(VersionNumber.asVersion("1.13")) >= 0) {
+                // Minecraft 1.13 and later versions only support Java 8 or later.
+                // Terminate launching operation.
+                Controllers.dialog(Launcher.i18n("launch.advice.java8_1_13"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
+            } else {
+                // Most mods require Java 8 or later version.
+                Controllers.dialog(Launcher.i18n("launch.advice.newer_java"), Launcher.i18n("message.error"), MessageBox.WARNING_MESSAGE, onAccept);
+            }
             flag = true;
         }
 
+        // LaunchWrapper will crash because of assuming the system class loader is an instance of URLClassLoader.
+        // cpw has claimed that he will make MinecraftForge of 1.13 and later versions able to run on Java 9.
         if (!flag && java.getParsedVersion() >= JavaVersion.JAVA_9 && gameVersion.compareTo(VersionNumber.asVersion("1.12.5")) < 0 && version.getMainClass().contains("launchwrapper")) {
             Controllers.dialog(Launcher.i18n("launch.advice.java9"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
             flag = true;
@@ -218,6 +229,8 @@ public final class LauncherHelper {
         }
         if (!flag && java.getPlatform() == org.jackhuang.hmcl.util.Platform.BIT_32 &&
                 setting.getMaxMemory() > 1.5 * 1024) {
+            // 1.5 * 1024 is an inaccurate number.
+            // Actual memory limit depends on operating system and memory.
             Controllers.dialog(Launcher.i18n("launch.advice.too_large_memory_for_32bit"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
             flag = true;
         }
