@@ -5,6 +5,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import org.jackhuang.hmcl.ui.FXUtils?>
+<?import org.jackhuang.hmcl.ui.construct.SpinnerPane?>
 <fx:root xmlns:fx="http://javafx.com/fxml"
          xmlns="http://javafx.com/javafx"
          type="StackPane">
@@ -56,10 +57,9 @@
         </body>
         <actions>
             <Label fx:id="lblCreationWarning"/>
-            <StackPane fx:id="acceptPane">
+            <SpinnerPane fx:id="acceptPane" styleClass="small-spinner-pane">
                 <JFXButton fx:id="btnAccept" onMouseClicked="#onCreationAccept" text="%button.ok" styleClass="dialog-accept"/>
-                <JFXSpinner fx:id="spinnerAccept" styleClass="small-spinner" />
-            </StackPane>
+            </SpinnerPane>
             <JFXButton onMouseClicked="#onCreationCancel" text="%button.cancel" styleClass="dialog-cancel"/>
         </actions>
     </JFXDialogLayout>

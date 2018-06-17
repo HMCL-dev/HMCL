@@ -46,6 +46,7 @@ import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionHandler;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.IconedItem;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Logging;
@@ -71,22 +72,17 @@ public class AddAccountPane extends StackPane {
     @FXML private Hyperlink linkManageInjectorServers;
     @FXML private JFXDialogLayout layout;
     @FXML private JFXButton btnAccept;
-    @FXML private StackPane acceptPane;
-    @FXML private JFXSpinner spinnerAccept;
+    @FXML private SpinnerPane acceptPane;
     private final Consumer<Region> finalization;
-    private final TransitionHandler transitionHandler;
 
     public AddAccountPane(Consumer<Region> finalization) {
         this.finalization = finalization;
 
         FXUtils.loadFXML(this, "/assets/fxml/account-add.fxml");
 
-        transitionHandler = new TransitionHandler(acceptPane);
-        acceptPane.getChildren().setAll(btnAccept);
-
         cboServers.setCellFactory(jfxListCellFactory(server -> new TwoLineListItem(server.getName(), server.getUrl())));
         cboServers.setConverter(stringConverter(AuthlibInjectorServer::getName));
-        cboServers.setItems(Settings.INSTANCE.SETTINGS.authlibInjectorServers);
+        cboServers.setItems(Settings.SETTINGS.authlibInjectorServers);
 
         // workaround: otherwise the combox will be black
         if (!cboServers.getItems().isEmpty())
@@ -113,14 +109,6 @@ public class AddAccountPane extends StackPane {
 
     private void validateAcceptButton() {
         btnAccept.setDisable(!txtUsername.validate() || (cboType.getSelectionModel().getSelectedIndex() != 0 && !txtPassword.validate()));
-    }
-
-    private void showSpinner() {
-        transitionHandler.setContent(spinnerAccept, ContainerAnimations.FADE.getAnimationProducer());
-    }
-
-    private void hideSpinner() {
-        transitionHandler.setContent(btnAccept, ContainerAnimations.FADE.getAnimationProducer());
     }
 
     @FXML
@@ -154,13 +142,13 @@ public class AddAccountPane extends StackPane {
                 throw new Error();
         }
 
-        showSpinner();
+        acceptPane.showSpinner();
         lblCreationWarning.setText("");
 
         Task.ofResult("create_account", () -> factory.create(new Selector(), username, password, addtionalData, Settings.INSTANCE.getProxy()))
                 .finalized(Schedulers.javafx(), variables -> {
                     Settings.INSTANCE.addAccount(variables.get("create_account"));
-                    hideSpinner();
+                    acceptPane.hideSpinner();
                     finalization.accept(this);
                 }, exception -> {
                     if (exception instanceof NoSelectedCharacterException) {
@@ -168,7 +156,7 @@ public class AddAccountPane extends StackPane {
                     } else {
                         lblCreationWarning.setText(accountException(exception));
                     }
-                    hideSpinner();
+                    acceptPane.hideSpinner();
                 }).start();
     }
 

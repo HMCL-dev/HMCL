@@ -16,6 +16,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionHandler;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
@@ -36,7 +37,7 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
     @FXML private JFXDialogLayout confirmServerPane;
     @FXML private JFXDialog dialog;
     @FXML private StackPane contentPane;
-    @FXML private JFXProgressBar progressBar;
+    @FXML private SpinnerPane nextPane;
     @FXML private JFXButton btnAddNext;
 
     private final TransitionHandler transitionHandler;
@@ -58,16 +59,16 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
     }
 
     private void removeServer(AuthlibInjectorServerItem item) {
-        Settings.INSTANCE.SETTINGS.authlibInjectorServers.remove(item.getServer());
+        Settings.SETTINGS.authlibInjectorServers.remove(item.getServer());
         reload();
     }
 
     private void reload() {
         listPane.getChildren().setAll(
-                Settings.INSTANCE.SETTINGS.authlibInjectorServers.stream()
+                Settings.SETTINGS.authlibInjectorServers.stream()
                         .map(server -> new AuthlibInjectorServerItem(server, this::removeServer))
                         .collect(toList()));
-        if (Settings.INSTANCE.SETTINGS.authlibInjectorServers.isEmpty()) {
+        if (Settings.SETTINGS.authlibInjectorServers.isEmpty()) {
             onAdd();
         }
     }
@@ -79,7 +80,7 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
         txtServerUrl.resetValidation();
         lblCreationWarning.setText("");
         addServerPane.setDisable(false);
-        progressBar.setVisible(false);
+        nextPane.hideSpinner();
         dialog.show();
     }
 
@@ -92,13 +93,13 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
     private void onAddNext() {
         String url = fixInputUrl(txtServerUrl.getText());
 
-        progressBar.setVisible(true);
+        nextPane.showSpinner();
         addServerPane.setDisable(true);
 
         Task.of(() -> {
             serverBeingAdded = new AuthlibInjectorServer(url, Accounts.getAuthlibInjectorServerName(url));
         }).finalized(Schedulers.javafx(), (variables, isDependentsSucceeded) -> {
-            progressBar.setVisible(false);
+            nextPane.hideSpinner();
             addServerPane.setDisable(false);
 
             if (isDependentsSucceeded) {

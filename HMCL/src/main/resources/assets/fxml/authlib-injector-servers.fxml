@@ -5,6 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import org.jackhuang.hmcl.ui.construct.URLValidator?>
 <?import java.lang.String?>
+<?import org.jackhuang.hmcl.ui.construct.SpinnerPane?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
@@ -47,7 +48,9 @@
                     <actions>
                         <Label fx:id="lblCreationWarning" />
                         <JFXButton onMouseClicked="#onAddCancel" text="%button.cancel" styleClass="dialog-cancel" />
-                        <JFXButton fx:id="btnAddNext" onMouseClicked="#onAddNext" text="%wizard.next" styleClass="dialog-accept" />
+                        <SpinnerPane fx:id="nextPane" styleClass="small-spinner-pane">
+                            <JFXButton fx:id="btnAddNext" onMouseClicked="#onAddNext" text="%wizard.next" styleClass="dialog-accept" />
+                        </SpinnerPane>
                     </actions>
                 </JFXDialogLayout>
 
@@ -77,7 +80,6 @@
                     </actions>
                 </JFXDialogLayout>
             </StackPane>
-            <JFXProgressBar fx:id="progressBar" visible="false" StackPane.alignment="TOP_CENTER" />
         </StackPane>
     </JFXDialog>
 </fx:root>
