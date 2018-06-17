@@ -33,7 +33,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -49,7 +48,7 @@ import java.util.zip.GZIPInputStream;
  */
 public class AppDataUpgrader extends IUpgrader {
 
-    private void launchNewerVersion(List<String> args, File jar) throws IOException, ClassNotFoundException, NoSuchMethodException, SecurityException, InvocationTargetException, IllegalAccessException {
+    private void launchNewerVersion(List<String> args, File jar) throws IOException, ReflectiveOperationException {
         try (JarFile jarFile = new JarFile(jar)) {
             String mainClass = jarFile.getManifest().getMainAttributes().getValue("Main-Class");
             if (mainClass == null)
@@ -91,7 +90,7 @@ public class AppDataUpgrader extends IUpgrader {
                 }
             } catch (JsonParseException ex) {
                 f.delete();
-            } catch (IOException | NoSuchMethodException | SecurityException | InvocationTargetException | IllegalAccessException | ClassNotFoundException t) {
+            } catch (IOException | ReflectiveOperationException t) {
                 Logging.LOG.log(Level.SEVERE, "Unable to execute newer version application", t);
                 AppDataUpgraderPackGzTask.HMCL_VER_FILE.delete(); // delete version json, let HMCL re-download the newer version.
             }
