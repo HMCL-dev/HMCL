@@ -24,21 +24,17 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccountFactory;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorBuildInfo;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServerResponse;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.MojangYggdrasilProvider;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.FileUtils;
-import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -61,8 +57,6 @@ public final class Accounts {
             pair(YGGDRASIL_ACCOUNT_KEY, new YggdrasilAccountFactory(MojangYggdrasilProvider.INSTANCE)),
             pair(AUTHLIB_INJECTOR_ACCOUNT_KEY, new AuthlibInjectorAccountFactory(Accounts::downloadAuthlibInjector, Accounts::getOrCreateAuthlibInjectorServer))
     );
-
-    private static final Map<String, String> AUTHLIB_INJECTOR_SERVER_NAMES = new HashMap<>();
 
     public static String getAccountType(Account account) {
         if (account instanceof OfflineAccount) return OFFLINE_ACCOUNT_KEY;
@@ -95,31 +89,21 @@ public final class Accounts {
         return jar.getAbsolutePath();
     }
 
-    public static String getAuthlibInjectorServerName(String serverIp) throws Exception {
-        if (AUTHLIB_INJECTOR_SERVER_NAMES.containsKey(serverIp))
-            return AUTHLIB_INJECTOR_SERVER_NAMES.get(serverIp);
-        else {
-            AuthlibInjectorServerResponse response = Constants.GSON.fromJson(NetworkUtils.doGet(NetworkUtils.toURL(serverIp)), AuthlibInjectorServerResponse.class);
-            AUTHLIB_INJECTOR_SERVER_NAMES.put(serverIp, response.getMeta().getServerName());
-            return response.getMeta().getServerName();
-        }
-    }
-
     private static AuthlibInjectorServer getOrCreateAuthlibInjectorServer(String url) {
         return Settings.SETTINGS.authlibInjectorServers.stream()
                 .filter(server -> url.equals(server.getUrl()))
                 .findFirst()
                 .orElseGet(() -> {
                     // this usually happens when migrating data from an older version
-                    String name;
+                    AuthlibInjectorServer server;
                     try {
-                        name = Accounts.getAuthlibInjectorServerName(url);
-                        LOG.info("Migrated authlib injector server [" + url + "], name=[" + name + "]");
-                    } catch (Exception e) {
-                        name = url;
-                        LOG.log(Level.WARNING, "Failed to migrate authlib injector server [" + url + "]", e);
+                        server = AuthlibInjectorServer.fetchServerInfo(url);
+                        LOG.info("Migrated authlib injector server " + server);
+                    } catch (IOException e) {
+                        server = new AuthlibInjectorServer(url, url);
+                        LOG.log(Level.WARNING, "Failed to migrate authlib injector server " + url, e);
                     }
-                    AuthlibInjectorServer server = new AuthlibInjectorServer(url, name);
+
                     Settings.SETTINGS.authlibInjectorServers.add(server);
                     return server;
                 });

@@ -22,11 +22,16 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.ui.CrashWindow;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 
+import static java.util.Collections.newSetFromMap;
+import static org.jackhuang.hmcl.util.Logging.LOG;
+
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 /**
@@ -34,7 +39,7 @@ import java.util.logging.Level;
  */
 public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
-    private static final HashMap<String, String> SOURCE = new HashMap<String, String>() {
+    private static final Map<String, String> SOURCE = new HashMap<String, String>() {
         {
             put("javafx.fxml.LoadException", Launcher.i18n("crash.NoClassDefFound"));
             put("Location is not set", Launcher.i18n("crash.NoClassDefFound"));
@@ -59,11 +64,11 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             if (s.contains(entry.getKey())) {
                 if (StringUtils.isNotBlank(entry.getValue())) {
                     String info = entry.getValue();
-                    Logging.LOG.severe(info);
+                    LOG.severe(info);
                     try {
                         MessageBox.show(info);
                     } catch (Throwable t) {
-                        Logging.LOG.log(Level.SEVERE, "Unable to show message", t);
+                        LOG.log(Level.SEVERE, "Unable to show message", t);
                     }
                 }
                 return false;
@@ -71,17 +76,21 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         return true;
     }
 
+    private static Set<String> CAUGHT_EXCEPTIONS = newSetFromMap(new ConcurrentHashMap<>());
+
     @Override
     public void uncaughtException(Thread t, Throwable e) {
-        String stackTrace = StringUtils.getStackTrace(e);
-        if (!stackTrace.contains("org.jackhuang"))
-            return;
-
-        if (THROWABLE_SET.contains(stackTrace))
-            return;
-        THROWABLE_SET.add(stackTrace);
+        LOG.log(Level.SEVERE, "Uncaught exception in thread " + t.getName(), e);
 
         try {
+            String stackTrace = StringUtils.getStackTrace(e);
+            if (!stackTrace.contains("org.jackhuang"))
+                return;
+
+            if (CAUGHT_EXCEPTIONS.contains(stackTrace))
+                return;
+            CAUGHT_EXCEPTIONS.add(stackTrace);
+
             String text = "---- Hello Minecraft! Crash Report ----\n" +
                     "  Version: " + Launcher.VERSION + "\n" +
                     "  Time: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + "\n" +
@@ -93,20 +102,17 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                     "  Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor") + "\n" +
                     "  Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor") + "\n";
 
-            Logging.LOG.log(Level.SEVERE, text);
+            LOG.log(Level.SEVERE, text);
 
             if (checkThrowable(e)) {
                 Platform.runLater(() -> new CrashWindow(text).show());
                 if (!Launcher.UPDATE_CHECKER.isOutOfDate())
                     reportToServer(text);
             }
-        } catch (Throwable ex) {
-            Logging.LOG.log(Level.SEVERE, "Unable to caught exception", ex);
-            Logging.LOG.log(Level.SEVERE, "There is the original exception", e);
+        } catch (Throwable handlingException) {
+            LOG.log(Level.SEVERE, "Unable to handle uncaught exception", handlingException);
         }
     }
-
-    private static final HashSet<String> THROWABLE_SET = new HashSet<>();
 
     private void reportToServer(final String text) {
         Thread t = new Thread(() -> {
@@ -117,9 +123,9 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             try {
                 String response = NetworkUtils.doPost(NetworkUtils.toURL("https://huangyuhui.duapp.com/hmcl/crash.php"), map);
                 if (StringUtils.isNotBlank(response))
-                    Logging.LOG.log(Level.SEVERE, "Crash server response: " + response);
+                    LOG.log(Level.SEVERE, "Crash server response: " + response);
             } catch (IOException ex) {
-                Logging.LOG.log(Level.SEVERE, "Unable to post HMCL server.", ex);
+                LOG.log(Level.SEVERE, "Unable to post HMCL server.", ex);
             }
         });
         t.setDaemon(true);
