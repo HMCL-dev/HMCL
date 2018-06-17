@@ -20,6 +20,8 @@ import org.jackhuang.hmcl.util.NetworkUtils;
 
 import static java.util.stream.Collectors.toList;
 
+import java.io.IOException;
+
 public class AuthlibInjectorServersPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", Launcher.i18n("account.injector.server"));
 
@@ -108,7 +110,7 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
 
                 transitionHandler.setContent(confirmServerPane, ContainerAnimations.SWIPE_LEFT.getAnimationProducer());
             } else {
-                lblCreationWarning.setText(variables.<Exception>get("lastException").getLocalizedMessage());
+                lblCreationWarning.setText(resolveFetchExceptionMessage(variables.<Exception>get("lastException")));
             }
         }).start();
 
@@ -146,5 +148,13 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
             url += "/";
         }
         return url;
+    }
+
+    private String resolveFetchExceptionMessage(Throwable exception) {
+        if (exception instanceof IOException) {
+            return Launcher.i18n("account.failed.connect_injector_server");
+        } else {
+            return exception.getClass() + ": " + exception.getLocalizedMessage();
+        }
     }
 }
