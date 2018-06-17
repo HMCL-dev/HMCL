@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
@@ -35,6 +36,7 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -51,7 +53,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
+import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class Settings {
     public static final Gson GSON = new GsonBuilder()
@@ -65,15 +70,12 @@ public class Settings {
             .setPrettyPrinting()
             .create();
 
-    public static final String DEFAULT_PROFILE = "Default";
-    public static final String HOME_PROFILE = "Home";
-
     public static final String SETTINGS_FILE_NAME = "hmcl.json";
     public static final File SETTINGS_FILE = new File(SETTINGS_FILE_NAME).getAbsoluteFile();
 
-    public static final Settings INSTANCE = new Settings();
+    public static final Config SETTINGS = initSettings();
 
-    private final Config SETTINGS = initSettings();
+    public static final Settings INSTANCE = new Settings();
 
     private final Map<String, Account> accounts = new ConcurrentHashMap<>();
 
@@ -84,7 +86,7 @@ public class Settings {
             Map<Object, Object> settings = iterator.next();
             AccountFactory<?> factory = Accounts.ACCOUNT_FACTORY.get(tryCast(settings.get("type"), String.class).orElse(""));
             if (factory == null) {
-                // unrecognized account type, so remove it.
+                LOG.warning("Unrecognized account type, removing: " + settings);
                 iterator.remove();
                 continue;
             }
@@ -93,7 +95,7 @@ public class Settings {
             try {
                 account = factory.fromStorage(settings, getProxy());
             } catch (Exception e) {
-                // storage is malformed, delete.
+                LOG.log(Level.WARNING, "Malformed account storage, removing: " + settings, e);
                 iterator.remove();
                 continue;
             }
@@ -101,7 +103,8 @@ public class Settings {
             accounts.put(Accounts.getAccountId(account), account);
         }
 
-        checkAuthlibInjectorAccounts();
+        SETTINGS.authlibInjectorServers.addListener(onInvalidating(this::removeDanglingAuthlibInjectorAccounts));
+
         checkProfileMap();
 
         save();
@@ -115,7 +118,7 @@ public class Settings {
         Lang.ignoringException(() -> Runtime.getRuntime().addShutdownHook(new Thread(this::save)));
     }
 
-    private Config initSettings() {
+    private static Config initSettings() {
         Config c = new Config();
         if (SETTINGS_FILE.exists())
             try {
@@ -305,30 +308,17 @@ public class Settings {
      *           AUTHLIB INJECTORS          *
      ****************************************/
 
-    public Set<String> getAuthlibInjectorServerURLs() {
-        return SETTINGS.authlibInjectorServerURLs;
-    }
-
-    public void removeAuthlibInjectorServerURL(String serverURL) {
-        SETTINGS.authlibInjectorServerURLs.remove(serverURL);
-
-        checkAuthlibInjectorAccounts();
-        save();
-    }
-
-    public void addAuthlibInjectorServerURL(String serverURL) {
-        SETTINGS.authlibInjectorServerURLs.add(serverURL);
-        save();
-    }
-
-    private void checkAuthlibInjectorAccounts() {
-        for (Account account : getAccounts()) {
-            if (account instanceof AuthlibInjectorAccount) {
-                AuthlibInjectorAccount injectorAccount = (AuthlibInjectorAccount) account;
-                if (!SETTINGS.authlibInjectorServerURLs.contains(injectorAccount.getServerBaseURL()))
-                    deleteAccount(account);
-            }
-        }
+    /**
+     * After an {@link AuthlibInjectorServer} is removed, the associated accounts should also be removed.
+     * This method performs a check and removes the dangling accounts.
+     * Don't call this before {@link #migrateAuthlibInjectorServers()} is called, otherwise old data would be lost.
+     */
+    private void removeDanglingAuthlibInjectorAccounts() {
+        accounts.values().stream()
+                .filter(AuthlibInjectorAccount.class::isInstance)
+                .filter(it -> !SETTINGS.authlibInjectorServers.contains(((AuthlibInjectorAccount) it).getServer()))
+                .collect(toList())
+                .forEach(this::deleteAccount);
     }
 
     /****************************************
@@ -561,8 +551,8 @@ public class Settings {
 
     private void checkProfileMap() {
         if (getProfileMap().isEmpty()) {
-            getProfileMap().put(DEFAULT_PROFILE, new Profile(DEFAULT_PROFILE));
-            getProfileMap().put(HOME_PROFILE, new Profile(HOME_PROFILE, Launcher.MINECRAFT_DIRECTORY));
+            getProfileMap().put(Profiles.DEFAULT_PROFILE, new Profile(Profiles.DEFAULT_PROFILE));
+            getProfileMap().put(Profiles.HOME_PROFILE, new Profile(Profiles.HOME_PROFILE, Launcher.MINECRAFT_DIRECTORY));
         }
     }
 

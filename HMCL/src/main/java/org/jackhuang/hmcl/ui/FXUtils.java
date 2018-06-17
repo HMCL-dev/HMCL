@@ -23,6 +23,7 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.Property;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -30,18 +31,22 @@ import javafx.beans.value.WeakChangeListener;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
+import javafx.util.Callback;
 import javafx.util.Duration;
+import javafx.util.StringConverter;
+
 import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
@@ -52,6 +57,7 @@ import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 
@@ -66,6 +72,10 @@ public final class FXUtils {
             throw new IllegalStateException("Not on FX application thread; currentThread = "
                     + Thread.currentThread().getName());
         }
+    }
+
+    public static InvalidationListener onInvalidating(Runnable action) {
+        return arg -> action.run();
     }
 
     public static <T> void onChange(ObservableValue<T> value, Consumer<T> consumer) {
@@ -402,7 +412,32 @@ public final class FXUtils {
         }
     }
 
-    public static final Image DEFAULT_ICON = new Image("/assets/img/icon.png");
+    public static <T> StringConverter<T> stringConverter(Function<T, String> func) {
+        return new StringConverter<T>() {
+
+            @Override
+            public String toString(T object) {
+                return object == null ? "" : func.apply(object);
+            }
+
+            @Override
+            public T fromString(String string) {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
+    public static <T> Callback<ListView<T>, ListCell<T>> jfxListCellFactory(Function<T, Node> graphicBuilder) {
+        return view -> new JFXListCell<T>() {
+            @Override
+            public void updateItem(T item, boolean empty) {
+                super.updateItem(item, empty);
+                if (!empty) {
+                    setGraphic(graphicBuilder.apply(item));
+                }
+            }
+        };
+    }
 
     public static final Interpolator SINE = new Interpolator() {
         @Override

@@ -8,7 +8,6 @@
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
-    <JFXSpinner fx:id="spinner" style="-fx-radius:16" styleClass="materialDesign-purple, first-spinner" />
     <StackPane fx:id="contentPane">
         <ScrollPane fx:id="scrollPane" fitToWidth="true" fitToHeight="true">
             <VBox fx:id="listPane" spacing="10" style="-fx-padding: 20 20 70 20;">
@@ -32,7 +31,7 @@
                         <Label text="%account.injector.add" />
                     </heading>
                     <body>
-                        <JFXTextField fx:id="txtServerIp" promptText="%account.injector.server_ip">
+                        <JFXTextField fx:id="txtServerUrl" promptText="%account.injector.server_url">
                             <validators>
                                 <URLValidator message="%input.url">
                                 </URLValidator>
@@ -62,10 +61,10 @@
                                 <ColumnConstraints maxWidth="100" />
                                 <ColumnConstraints />
                             </columnConstraints>
-                            <Label text="%account.injector.server_ip" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                            <Label text="%account.injector.server_url" GridPane.columnIndex="0" GridPane.rowIndex="0" />
                             <Label text="%account.injector.server_name" GridPane.columnIndex="0" GridPane.rowIndex="1" />
 
-                            <Label fx:id="lblServerIp" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                            <Label fx:id="lblServerUrl" GridPane.columnIndex="1" GridPane.rowIndex="0" />
                             <Label fx:id="lblServerName" GridPane.columnIndex="1" GridPane.rowIndex="1" />
 
                             <Label fx:id="lblServerWarning" text="%account.injector.http" style="-fx-text-fill: red;" GridPane.rowIndex="2" GridPane.columnSpan="2" GridPane.columnIndex="0" />

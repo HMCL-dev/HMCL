@@ -23,19 +23,19 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServerInfo;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.setting.Theme;
 
 import java.util.function.Consumer;
 
 public final class AuthlibInjectorServerItem extends BorderPane {
-    private final AuthlibInjectorServerInfo info;
+    private final AuthlibInjectorServer server;
 
     private final Label lblServerName = new Label();
     private final Label lblServerIp = new Label();
 
-    public AuthlibInjectorServerItem(AuthlibInjectorServerInfo info, Consumer<AuthlibInjectorServerItem> deleteCallback) {
-        this.info = info;
+    public AuthlibInjectorServerItem(AuthlibInjectorServer server, Consumer<AuthlibInjectorServerItem> deleteCallback) {
+        this.server = server;
 
         lblServerName.setStyle("-fx-font-size: 15;");
         lblServerIp.setStyle("-fx-font-size: 10;");
@@ -54,11 +54,11 @@ public final class AuthlibInjectorServerItem extends BorderPane {
 
         setStyle("-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;");
         JFXDepthManager.setDepth(this, 1);
-        lblServerName.setText(info.getServerName());
-        lblServerIp.setText(info.getServerIp());
+        lblServerName.setText(server.getName());
+        lblServerIp.setText(server.getUrl());
     }
 
-    public AuthlibInjectorServerInfo getInfo() {
-        return info;
+    public AuthlibInjectorServer getServer() {
+        return server;
     }
 }

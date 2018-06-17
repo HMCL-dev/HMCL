@@ -17,20 +17,35 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
-public class AuthlibInjectorServerInfo {
-    private final String serverIp;
-    private final String serverName;
+public class AuthlibInjectorServer {
+    private String url;
+    private String name;
 
-    public AuthlibInjectorServerInfo(String serverIp, String serverName) {
-        this.serverIp = serverIp;
-        this.serverName = serverName;
+    public AuthlibInjectorServer(String url, String name) {
+        this.url = url;
+        this.name = name;
     }
 
-    public String getServerIp() {
-        return serverIp;
+    public String getUrl() {
+        return url;
     }
 
-    public String getServerName() {
-        return serverName;
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public int hashCode() {
+        return url.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this)
+            return true;
+        if (!(obj instanceof AuthlibInjectorServer))
+            return false;
+        AuthlibInjectorServer another = (AuthlibInjectorServer) obj;
+        return this.url.equals(another.url);
     }
 }

@@ -264,7 +264,7 @@ public final class VersionSettingsController {
         if (iconFile.exists())
             iconPickerItem.setImage(new Image("file:" + iconFile.getAbsolutePath()));
         else
-            iconPickerItem.setImage(FXUtils.DEFAULT_ICON);
+            iconPickerItem.setImage(Constants.DEFAULT_ICON.get());
         FXUtils.limitSize(iconPickerItem.getImageView(), 32, 32);
     }
 }

@@ -34,7 +34,6 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.AccountHelper;
-import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -80,8 +79,7 @@ public class AccountPage extends StackPane implements DecoratorPage {
 
         FXUtils.setLimitWidth(this, 300);
         if (account instanceof AuthlibInjectorAccount) {
-            Accounts.getAuthlibInjectorServerNameAsync((AuthlibInjectorAccount) account)
-                    .subscribe(Schedulers.javafx(), variables -> lblServer.setText(variables.get("serverName")));
+            lblServer.setText(((AuthlibInjectorAccount) account).getServer().getName());
             FXUtils.setLimitHeight(this, 182);
         } else {
             componentList.removeChildren(paneServer);

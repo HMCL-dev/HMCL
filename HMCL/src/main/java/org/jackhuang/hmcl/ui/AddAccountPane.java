@@ -33,6 +33,7 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
@@ -46,16 +47,17 @@ import org.jackhuang.hmcl.ui.animation.TransitionHandler;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.IconedItem;
 import org.jackhuang.hmcl.ui.construct.Validator;
+import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Logging;
 
-import java.util.Collection;
+import static org.jackhuang.hmcl.ui.FXUtils.jfxListCellFactory;
+import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class AddAccountPane extends StackPane {
 
@@ -64,7 +66,7 @@ public class AddAccountPane extends StackPane {
     @FXML private Label lblCreationWarning;
     @FXML private Label lblPassword;
     @FXML private JFXComboBox<String> cboType;
-    @FXML private JFXComboBox<TwoLineListItem> cboServers;
+    @FXML private JFXComboBox<AuthlibInjectorServer> cboServers;
     @FXML private Label lblInjectorServer;
     @FXML private Hyperlink linkManageInjectorServers;
     @FXML private JFXDialogLayout layout;
@@ -82,7 +84,13 @@ public class AddAccountPane extends StackPane {
         transitionHandler = new TransitionHandler(acceptPane);
         acceptPane.getChildren().setAll(btnAccept);
 
-        loadServers();
+        cboServers.setCellFactory(jfxListCellFactory(server -> new TwoLineListItem(server.getName(), server.getUrl())));
+        cboServers.setConverter(stringConverter(AuthlibInjectorServer::getName));
+        cboServers.setItems(Settings.INSTANCE.SETTINGS.authlibInjectorServers);
+
+        // workaround: otherwise the combox will be black
+        if (!cboServers.getItems().isEmpty())
+            cboServers.getSelectionModel().select(0);
 
         cboType.getItems().setAll(Launcher.i18n("account.methods.offline"), Launcher.i18n("account.methods.yggdrasil"), Launcher.i18n("account.methods.authlib_injector"));
         cboType.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> {
@@ -94,10 +102,6 @@ public class AddAccountPane extends StackPane {
             validateAcceptButton();
         });
         cboType.getSelectionModel().select(0);
-
-        // These two lines can eliminate black, don't know why.
-        cboServers.getItems().setAll(new TwoLineListItem("", ""));
-        cboServers.getSelectionModel().select(0);
 
         txtPassword.setOnAction(e -> onCreationAccept());
         txtUsername.setOnAction(e -> onCreationAccept());
@@ -111,24 +115,6 @@ public class AddAccountPane extends StackPane {
         btnAccept.setDisable(!txtUsername.validate() || (cboType.getSelectionModel().getSelectedIndex() != 0 && !txtPassword.validate()));
     }
 
-    private void loadServers() {
-        Task.ofResult("list", () -> Settings.INSTANCE.getAuthlibInjectorServerURLs().parallelStream()
-                .flatMap(serverURL -> {
-                    try {
-                        return Stream.of(new TwoLineListItem(Accounts.getAuthlibInjectorServerName(serverURL), serverURL));
-                    } catch (Exception e) {
-                        Logging.LOG.log(Level.WARNING, "Authlib-injector server root " + serverURL + " cannot be recognized.", e);
-                        return Stream.empty();
-                    }
-                })
-                .collect(Collectors.toList()))
-                .subscribe(Task.of(Schedulers.javafx(), variables -> {
-                    cboServers.getItems().setAll(variables.<Collection<TwoLineListItem>>get("list"));
-                    if (!cboServers.getItems().isEmpty())
-                        cboServers.getSelectionModel().select(0);
-                }));
-    }
-
     private void showSpinner() {
         transitionHandler.setContent(spinnerAccept, ContainerAnimations.FADE.getAnimationProducer());
     }
@@ -139,34 +125,51 @@ public class AddAccountPane extends StackPane {
 
     @FXML
     private void onCreationAccept() {
-        int type = cboType.getSelectionModel().getSelectedIndex();
         String username = txtUsername.getText();
         String password = txtPassword.getText();
-        String apiRoot = Optional.ofNullable(cboServers.getSelectionModel().getSelectedItem()).map(TwoLineListItem::getSubtitle).orElse(null);
+        Object addtionalData;
+
+        int type = cboType.getSelectionModel().getSelectedIndex();
+        AccountFactory<?> factory;
+        switch (type) {
+            case 0:
+                factory = Accounts.ACCOUNT_FACTORY.get(Accounts.OFFLINE_ACCOUNT_KEY);
+                addtionalData = null;
+                break;
+            case 1:
+                factory = Accounts.ACCOUNT_FACTORY.get(Accounts.YGGDRASIL_ACCOUNT_KEY);
+                addtionalData = null;
+                break;
+            case 2:
+                factory = Accounts.ACCOUNT_FACTORY.get(Accounts.AUTHLIB_INJECTOR_ACCOUNT_KEY);
+                Optional<AuthlibInjectorServer> server = Optional.ofNullable(cboServers.getSelectionModel().getSelectedItem());
+                if (server.isPresent()) {
+                    addtionalData = server.get();
+                } else {
+                    lblCreationWarning.setText(Launcher.i18n("account.failed.no_selected_server"));
+                    return;
+                }
+                break;
+            default:
+                throw new Error();
+        }
+
         showSpinner();
         lblCreationWarning.setText("");
-        Task.ofResult("create_account", () -> {
-            AccountFactory<?> factory;
-            switch (type) {
-                case 0: factory = Accounts.ACCOUNT_FACTORY.get(Accounts.OFFLINE_ACCOUNT_KEY); break;
-                case 1: factory = Accounts.ACCOUNT_FACTORY.get(Accounts.YGGDRASIL_ACCOUNT_KEY); break;
-                case 2: factory = Accounts.ACCOUNT_FACTORY.get(Accounts.AUTHLIB_INJECTOR_ACCOUNT_KEY); break;
-                default: throw new Error();
-            }
 
-            return factory.create(new Selector(), username, password, apiRoot, Settings.INSTANCE.getProxy());
-        }).finalized(Schedulers.javafx(), variables -> {
-            Settings.INSTANCE.addAccount(variables.get("create_account"));
-            hideSpinner();
-            finalization.accept(this);
-        }, exception -> {
-            if (exception instanceof NoSelectedCharacterException) {
-                finalization.accept(this);
-            } else {
-                lblCreationWarning.setText(accountException(exception));
-            }
-            hideSpinner();
-        }).start();
+        Task.ofResult("create_account", () -> factory.create(new Selector(), username, password, addtionalData, Settings.INSTANCE.getProxy()))
+                .finalized(Schedulers.javafx(), variables -> {
+                    Settings.INSTANCE.addAccount(variables.get("create_account"));
+                    hideSpinner();
+                    finalization.accept(this);
+                }, exception -> {
+                    if (exception instanceof NoSelectedCharacterException) {
+                        finalization.accept(this);
+                    } else {
+                        lblCreationWarning.setText(accountException(exception));
+                    }
+                    hideSpinner();
+                }).start();
     }
 
     @FXML
@@ -224,13 +227,13 @@ public class AddAccountPane extends StackPane {
                     image = AccountHelper.getSkinImmediately(yggdrasilAccount, profile, 4, Settings.INSTANCE.getProxy());
                 } catch (Exception e) {
                     Logging.LOG.log(Level.WARNING, "Failed to get skin for " + profile.getName(), e);
-                    image = FXUtils.DEFAULT_ICON;
+                    image = null;
                 }
                 ImageView portraitView = new ImageView();
                 portraitView.setSmooth(false);
-                if (image == FXUtils.DEFAULT_ICON)
-                    portraitView.setImage(FXUtils.DEFAULT_ICON);
-                else {
+                if (image == null) {
+                    portraitView.setImage(Constants.DEFAULT_ICON.get());
+                } else {
                     portraitView.setImage(image);
                     portraitView.setViewport(AccountHelper.getViewport(4));
                 }
