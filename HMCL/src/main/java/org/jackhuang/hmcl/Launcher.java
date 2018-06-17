@@ -152,7 +152,7 @@ public final class Launcher extends Application {
     public static final File HMCL_DIRECTORY = OperatingSystem.getWorkingDirectory("hmcl");
     public static final File LOG_DIRECTORY = new File(Launcher.HMCL_DIRECTORY, "logs");
 
-    public static final String VERSION = "@HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING@";
+    public static final String VERSION = System.getProperty("hmcl.version.override", "@HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING@");
     public static final String NAME = "HMCL";
     public static final String TITLE = NAME + " " + VERSION;
     public static final ResourceBundle RESOURCE_BUNDLE = Settings.INSTANCE.getLocale().getResourceBundle();
