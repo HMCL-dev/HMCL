@@ -93,7 +93,7 @@ public final class TransitionHandler implements AnimationHandler {
         } else
             previousNode = NULL;
 
-        if (previousNode == currentNode)
+        if (previousNode == newView)
             previousNode = NULL;
 
         currentNode = newView;
