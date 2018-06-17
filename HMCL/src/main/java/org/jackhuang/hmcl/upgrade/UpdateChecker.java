@@ -27,9 +27,10 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.NetworkUtils;
 import org.jackhuang.hmcl.util.VersionNumber;
+
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -78,8 +79,10 @@ public final class UpdateChecker {
 
             @Override
             public void execute() throws Exception {
-                if (isDevelopmentVersion(Launcher.VERSION))
+                if (isDevelopmentVersion(Launcher.VERSION)) {
+                    LOG.info("Current version is a development version, skip updating");
                     return;
+                }
 
                 if (value == null) {
                     versionString = http.getResult();
@@ -87,7 +90,7 @@ public final class UpdateChecker {
                 }
 
                 if (value == null) {
-                    Logging.LOG.warning("Unable to check update...");
+                    LOG.warning("Unable to check update...");
                     if (showMessage)
                         MessageBox.show(Launcher.i18n("update.failed"));
                 } else if (base.compareTo(value) < 0)
@@ -129,12 +132,13 @@ public final class UpdateChecker {
         return new TaskResult<Map<String, String>>() {
             @Override
             public void execute() {
-                if (download_link == null)
+                if (download_link == null) {
                     try {
                         download_link = Constants.GSON.<Map<String, String>>fromJson(NetworkUtils.doGet(NetworkUtils.toURL(Launcher.UPDATE_SERVER + "/hmcl/update_link.php")), Map.class);
                     } catch (JsonSyntaxException | IOException e) {
-                        Logging.LOG.log(Level.SEVERE, "Failed to get update link.", e);
+                        LOG.log(Level.SEVERE, "Failed to get update link.", e);
                     }
+                }
                 setResult(download_link);
             }
 
