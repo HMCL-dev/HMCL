@@ -17,7 +17,35 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
+import static org.jackhuang.hmcl.util.Lang.tryCast;
+
+import java.io.IOException;
+import java.util.Optional;
+
+import org.jackhuang.hmcl.util.JsonUtils;
+import org.jackhuang.hmcl.util.NetworkUtils;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSyntaxException;
+
 public class AuthlibInjectorServer {
+
+    public static AuthlibInjectorServer fetchServerInfo(String url) throws IOException {
+        try {
+            JsonObject response = JsonUtils.fromNonNullJson(NetworkUtils.doGet(NetworkUtils.toURL(url)), JsonObject.class);
+            String name = extractServerName(response).orElse(url);
+            return new AuthlibInjectorServer(url, name);
+        } catch (JsonSyntaxException e) {
+            throw new IOException("Malformed response", e);
+        }
+    }
+
+    private static Optional<String> extractServerName(JsonObject response){
+        return tryCast(response.get("meta"), JsonObject.class)
+                .flatMap(meta -> tryCast(meta.get("serverName"), JsonPrimitive.class).map(JsonPrimitive::getAsString));
+    }
+
     private String url;
     private String name;
 
@@ -32,6 +60,11 @@ public class AuthlibInjectorServer {
 
     public String getName() {
         return name;
+    }
+
+    @Override
+    public String toString() {
+        return url + " (" + name + ")";
     }
 
     @Override

@@ -10,7 +10,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -96,7 +95,7 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
         addServerPane.setDisable(true);
 
         Task.of(() -> {
-            serverBeingAdded = new AuthlibInjectorServer(url, Accounts.getAuthlibInjectorServerName(url));
+            serverBeingAdded = AuthlibInjectorServer.fetchServerInfo(url);
         }).finalized(Schedulers.javafx(), (variables, isDependentsSucceeded) -> {
             progressBar.setVisible(false);
             addServerPane.setDisable(false);
