@@ -78,7 +78,7 @@ public final class UpdateChecker {
 
             @Override
             public void execute() throws Exception {
-                if (Launcher.VERSION.contains("@"))
+                if (isDevelopmentVersion(Launcher.VERSION))
                     return;
 
                 if (value == null) {
@@ -101,6 +101,11 @@ public final class UpdateChecker {
                 return "update_checker.process";
             }
         };
+    }
+
+    private boolean isDevelopmentVersion(String version) {
+        return version.contains("@") || // eg. @HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING@
+                version.contains("SNAPSHOT"); // eg. 3.1.SNAPSHOT
     }
 
     /**
