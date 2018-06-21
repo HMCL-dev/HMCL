@@ -83,7 +83,7 @@ public class YggdrasilService {
         try {
             requireEmpty(request(provider.getValidationURL(), createRequestWithCredentials(accessToken, clientToken)));
             return true;
-        } catch (InvalidCredentialsException | InvalidTokenException e) {
+        } catch (RemoteAuthenticationException e) {
             return false;
         }
     }
@@ -145,17 +145,6 @@ public class YggdrasilService {
 
     private static void handleErrorMessage(ErrorResponse response) throws AuthenticationException {
         if (!StringUtils.isBlank(response.error)) {
-            if (response.errorMessage != null && "ForbiddenOperationException".equals(response.error)) {
-                if (response.errorMessage.contains("Invalid credentials"))
-                    throw new InvalidCredentialsException();
-
-                else if (response.errorMessage.contains("Invalid token"))
-                    throw new InvalidTokenException();
-
-                else if (response.errorMessage.contains("Invalid username or password"))
-                    throw new InvalidPasswordException();
-            }
-
             throw new RemoteAuthenticationException(response.error, response.errorMessage, response.cause);
         }
     }

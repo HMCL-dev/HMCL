@@ -36,14 +36,13 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.AccountHelper;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
-import org.jackhuang.hmcl.ui.animation.TransitionHandler;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.IconedItem;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
@@ -253,16 +252,22 @@ public class AddAccountPane extends StackPane {
     }
 
     public static String accountException(Exception exception) {
-        if (exception instanceof InvalidCredentialsException) {
-            return Launcher.i18n("account.failed.invalid_credentials");
-        } else if (exception instanceof NoCharacterException) {
-            return Launcher.i18n("account.failed.no_charactor");
+        if (exception instanceof NoCharacterException) {
+            return Launcher.i18n("account.failed.no_character");
         } else if (exception instanceof ServerDisconnectException) {
             return Launcher.i18n("account.failed.connect_authentication_server");
-        } else if (exception instanceof InvalidTokenException) {
-            return Launcher.i18n("account.failed.invalid_token");
-        } else if (exception instanceof InvalidPasswordException) {
-            return Launcher.i18n("account.failed.invalid_password");
+        } else if (exception instanceof RemoteAuthenticationException) {
+            RemoteAuthenticationException remoteException = (RemoteAuthenticationException) exception;
+            String remoteMessage = remoteException.getRemoteMessage();
+            if ("ForbiddenOperationException".equals(remoteException.getRemoteName()) && remoteMessage != null) {
+                if (remoteMessage.contains("Invalid credentials"))
+                    return Launcher.i18n("account.failed.invalid_credentials");
+                else if (remoteMessage.contains("Invalid token"))
+                    return Launcher.i18n("account.failed.invalid_token");
+                else if (remoteMessage.contains("Invalid username or password"))
+                    return Launcher.i18n("account.failed.invalid_password");
+            }
+            return exception.getMessage();
         } else {
             return exception.getClass() + ": " + exception.getLocalizedMessage();
         }
