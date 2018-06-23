@@ -79,7 +79,7 @@ public final class Config implements Cloneable {
     public final StringProperty localization = new SimpleStringProperty();
 
     @SerializedName("downloadtype")
-    public final IntegerProperty downloadType = new SimpleIntegerProperty();
+    public final IntegerProperty downloadType = new SimpleIntegerProperty(1);
 
     @SerializedName("configurations")
     public final ObservableMap<String, Profile> configurations = FXCollections.observableMap(new TreeMap<>());
