@@ -53,6 +53,7 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
+import org.jackhuang.hmcl.setting.Locales;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.animation.AnimationProducer;
@@ -67,6 +68,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
+import java.util.Locale;
 import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -190,7 +192,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
             );
             nowAnimation.play();
         });
-        if (!Settings.INSTANCE.isFirstLaunch())
+        if (!Settings.INSTANCE.isFirstLaunch() || Settings.INSTANCE.getLocale().getLocale() != Locale.CHINA)
             drawerWrapper.getChildren().remove(welcomeView);
 
         if (!min) buttonsContainer.getChildren().remove(btnMin);

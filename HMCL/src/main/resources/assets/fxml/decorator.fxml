@@ -47,7 +47,7 @@
                     </center>
                 </BorderPane>
                 <ImageView fx:id="welcomeView">
-                    <Image url="/assets/img/HMCL.png" />
+                    <Image url="/assets/img/welcome.png" />
                 </ImageView>
             </StackPane>
         </center>
