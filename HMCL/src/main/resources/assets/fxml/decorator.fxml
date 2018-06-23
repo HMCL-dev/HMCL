@@ -8,6 +8,8 @@
 <?import org.jackhuang.hmcl.ui.construct.AdvancedListBox?>
 <?import org.jackhuang.hmcl.ui.FXUtils?>
 <?import java.lang.String?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 <fx:root xmlns="http://javafx.com/javafx"
          type="StackPane"
          xmlns:fx="http://javafx.com/fxml">
@@ -44,6 +46,9 @@
                         </StackPane>
                     </center>
                 </BorderPane>
+                <ImageView fx:id="welcomeView">
+                    <Image url="/assets/img/HMCL.png" />
+                </ImageView>
             </StackPane>
         </center>
         <top>

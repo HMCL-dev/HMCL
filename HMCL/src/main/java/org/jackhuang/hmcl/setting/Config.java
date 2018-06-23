@@ -99,6 +99,9 @@ public final class Config implements Cloneable {
     @SerializedName("logLines")
     public final IntegerProperty logLines = new SimpleIntegerProperty(100);
 
+    @SerializedName("firstLaunch")
+    public final BooleanProperty firstLaunch = new SimpleBooleanProperty(true);
+
     public final ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList();
 
     @Override

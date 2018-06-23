@@ -79,7 +79,11 @@ public class Settings {
 
     private final Map<String, Account> accounts = new ConcurrentHashMap<>();
 
+    private final boolean firstLaunch;
+
     private Settings() {
+        firstLaunch = SETTINGS.firstLaunch.get();
+
         loadProxy();
 
         for (Iterator<Map<Object, Object>> iterator = SETTINGS.accounts.iterator(); iterator.hasNext();) {
@@ -140,6 +144,7 @@ public class Settings {
     public void save() {
         try {
             SETTINGS.accounts.clear();
+            SETTINGS.firstLaunch.set(false);
             for (Account account : accounts.values()) {
                 Map<Object, Object> storage = account.toStorage();
                 storage.put("type", Accounts.getAccountType(account));
@@ -150,6 +155,10 @@ public class Settings {
         } catch (IOException ex) {
             Logging.LOG.log(Level.SEVERE, "Failed to save config", ex);
         }
+    }
+
+    public boolean isFirstLaunch() {
+        return firstLaunch;
     }
 
     private final StringProperty commonPath = new ImmediateStringProperty(this, "commonPath", SETTINGS.commonDirectory.get()) {

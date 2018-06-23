@@ -22,6 +22,10 @@ import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXDrawer;
 import com.jfoenix.controls.JFXHamburger;
 import com.jfoenix.svg.SVGGlyph;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -38,6 +42,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -45,6 +50,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.Settings;
@@ -129,6 +135,8 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     private JFXButton btnClose;
     @FXML
     private HBox navLeft;
+    @FXML
+    private ImageView welcomeView;
 
     public Decorator(Stage primaryStage, Node mainPage, String title) {
         this(primaryStage, mainPage, title, true, true);
@@ -171,6 +179,19 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         drawerWrapper.getChildren().add(0, dialog);
         dialog.setDialogContainer(drawerWrapper);
         dialog.setContent(dialogPane);
+
+        welcomeView.setCursor(Cursor.HAND);
+        welcomeView.setOnMouseClicked(e -> {
+            Timeline nowAnimation = new Timeline();
+            nowAnimation.getKeyFrames().addAll(
+                    new KeyFrame(Duration.ZERO, new KeyValue(welcomeView.opacityProperty(), 1.0D, Interpolator.EASE_BOTH)),
+                    new KeyFrame(new Duration(300), new KeyValue(welcomeView.opacityProperty(), 0.0D, Interpolator.EASE_BOTH)),
+                    new KeyFrame(new Duration(300), e2 -> drawerWrapper.getChildren().remove(welcomeView))
+            );
+            nowAnimation.play();
+        });
+        if (!Settings.INSTANCE.isFirstLaunch())
+            drawerWrapper.getChildren().remove(welcomeView);
 
         if (!min) buttonsContainer.getChildren().remove(btnMin);
         if (!max) buttonsContainer.getChildren().remove(btnMax);
