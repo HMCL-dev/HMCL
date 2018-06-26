@@ -107,8 +107,6 @@ public final class VersionSettingsController {
     }
 
     public void loadVersionSetting(Profile profile, String versionId) {
-        rootPane.getChildren().remove(advancedSettingsPane);
-
         this.profile = profile;
         this.versionId = versionId;
 
@@ -235,14 +233,6 @@ public final class VersionSettingsController {
 
     private void initGameDirSubtitle(VersionSetting versionSetting) {
         gameDirItem.setSubtitle(profile.getRepository().getRunDirectory(versionId).getAbsolutePath());
-    }
-
-    @FXML
-    private void onShowAdvanced() {
-        if (!rootPane.getChildren().contains(advancedSettingsPane))
-            rootPane.getChildren().add(advancedSettingsPane);
-        else
-            rootPane.getChildren().remove(advancedSettingsPane);
     }
 
     @FXML
