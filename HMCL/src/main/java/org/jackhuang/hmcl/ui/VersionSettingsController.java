@@ -173,6 +173,8 @@ public final class VersionSettingsController {
         else
             globalItem.getGroup().getToggles().stream().filter(it -> it.getUserData() == Boolean.FALSE).findFirst().ifPresent(it -> it.setSelected(true));
         globalItem.setToggleSelectedListener(newValue -> {
+            // do not call versionSettings.setUsesGlobal(true/false)
+            // because versionSettings can be the global one.
             if ((Boolean) newValue.getUserData())
                 profile.globalizeVersionSetting(versionId);
             else
