@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.download.game;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
@@ -56,7 +57,7 @@ public final class GameDownloadTask extends Task {
                 NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(version.getDownloadInfo().getUrl())),
                 jar,
                 dependencyManager.getProxy(),
-                version.getDownloadInfo().getSha1()
+                new IntegrityCheck("SHA-1", version.getDownloadInfo().getSha1())
         ));
     }
     

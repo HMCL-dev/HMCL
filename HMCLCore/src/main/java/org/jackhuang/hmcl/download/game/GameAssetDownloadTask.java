@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.game.AssetObject;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Logging;
@@ -106,7 +107,7 @@ public final class GameAssetDownloadTask extends Task {
                 flag = !file.exists();
             }
             if (flag) {
-                FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(url), file, dependencyManager.getProxy(), assetObject.getHash());
+                FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(url), file, dependencyManager.getProxy(), new IntegrityCheck("SHA-1", assetObject.getHash()));
                 task.setName(assetObject.getHash());
                 dependencies.add(task);
             }
