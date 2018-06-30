@@ -47,10 +47,9 @@ public abstract class Account {
     /**
      * Login with stored credentials.
      *
-     * @throws ServerDisconnectException if an network error has occurred, in which case password login won't be tried.
-     * @throws AuthenticationException if an error has occurred. If it's not a {@link ServerDisconnectException}, password login will be tried.
+     * @throws CredentialExpiredException when the stored credentials has expired, in which case a password login will be performed
      */
-    public abstract AuthInfo logIn() throws ServerDisconnectException, AuthenticationException;
+    public abstract AuthInfo logIn() throws CredentialExpiredException, AuthenticationException;
 
     /**
      * Login with specified password.

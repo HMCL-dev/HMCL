@@ -69,7 +69,15 @@ public class YggdrasilAccount extends Account {
             if (service.validate(session.getAccessToken(), session.getClientToken())) {
                 isOnline = true;
             } else {
-                updateSession(service.refresh(session.getAccessToken(), session.getClientToken(), null), new SpecificCharacterSelector(characterUUID));
+                try {
+                    updateSession(service.refresh(session.getAccessToken(), session.getClientToken(), null), new SpecificCharacterSelector(characterUUID));
+                } catch (RemoteAuthenticationException e) {
+                    if ("ForbiddenOperationException".equals(e.getRemoteName())) {
+                        throw new CredentialExpiredException(e);
+                    } else {
+                        throw e;
+                    }
+                }
             }
         }
         return session.toAuthInfo();
