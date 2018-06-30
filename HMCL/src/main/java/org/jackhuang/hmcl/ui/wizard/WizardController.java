@@ -85,7 +85,7 @@ public class WizardController implements Navigation {
         if (!canPrev()) {
             throw new IllegalStateException("Cannot go backward since this is the back page. Pages: " + pages);
         }
-        
+
         Node page = pages.pop();
         if (cleanUp && page instanceof WizardPage)
             ((WizardPage) page).cleanup(settings);

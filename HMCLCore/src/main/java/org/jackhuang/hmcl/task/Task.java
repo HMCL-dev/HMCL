@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.logging.Level;
 
 /**
  * Disposable task.
@@ -185,6 +186,9 @@ public abstract class Task {
     }
 
     public final void run() throws Exception {
+        if (getSignificance().shouldLog())
+            Logging.LOG.log(Level.FINE, "Executing task: " + getName());
+
         for (Task task : getDependents())
             doSubTask(task);
         execute();
