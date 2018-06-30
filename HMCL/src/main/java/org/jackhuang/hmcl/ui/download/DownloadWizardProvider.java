@@ -102,10 +102,10 @@ public final class DownloadWizardProvider implements WizardProvider {
                     case 1:
                         return new ModpackPage(controller);
                     default:
-                        throw new IllegalStateException("Error step " + step + ", subStep " + subStep + ", settings: " + settings);
+                        throw new IllegalStateException("Error step " + step + ", subStep " + subStep + ", settings: " + settings + ", pages: " + controller.getPages());
                 }
             default:
-                throw new IllegalStateException("error step " + step + ", settings: " + settings);
+                throw new IllegalStateException("error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
         }
     }
 

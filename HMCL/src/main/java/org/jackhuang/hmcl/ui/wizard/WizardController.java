@@ -20,10 +20,7 @@ package org.jackhuang.hmcl.ui.wizard;
 import javafx.scene.Node;
 import org.jackhuang.hmcl.task.Task;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Stack;
+import java.util.*;
 
 public class WizardController implements Navigation {
     private final WizardDisplayer displayer;
@@ -45,6 +42,10 @@ public class WizardController implements Navigation {
 
     public void setProvider(WizardProvider provider) {
         this.provider = provider;
+    }
+
+    public List<Node> getPages() {
+        return Collections.unmodifiableList(pages);
     }
 
     @Override
@@ -81,6 +82,10 @@ public class WizardController implements Navigation {
 
     @Override
     public void onPrev(boolean cleanUp) {
+        if (!canPrev()) {
+            throw new IllegalStateException("Cannot go backward since this is the back page. Pages: " + pages);
+        }
+        
         Node page = pages.pop();
         if (cleanUp && page instanceof WizardPage)
             ((WizardPage) page).cleanup(settings);
