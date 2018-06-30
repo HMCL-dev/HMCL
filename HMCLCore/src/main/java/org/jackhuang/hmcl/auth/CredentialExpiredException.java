@@ -17,19 +17,26 @@
  */
 package org.jackhuang.hmcl.auth;
 
-public class ServerResponseMalformedException extends AuthenticationException {
-    public ServerResponseMalformedException() {
-    }
+/**
+ * Thrown when the stored credentials has expired.
+ * This exception indicates that a password login should be performed.
+ *
+ * @author yushijinhun
+ * @see Account#logIn()
+ */
+public class CredentialExpiredException extends AuthenticationException {
 
-    public ServerResponseMalformedException(String message) {
-        super(message);
-    }
+    public CredentialExpiredException() {}
 
-    public ServerResponseMalformedException(String message, Throwable cause) {
+    public CredentialExpiredException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public ServerResponseMalformedException(Throwable cause) {
+    public CredentialExpiredException(String message) {
+        super(message);
+    }
+
+    public CredentialExpiredException(Throwable cause) {
         super(cause);
     }
 }

@@ -66,40 +66,54 @@ public class YggdrasilAccount extends Account {
     @Override
     public AuthInfo logIn() throws AuthenticationException {
         if (!canPlayOnline()) {
-            logInWithToken();
-            selectProfile(new SpecificCharacterSelector(characterUUID));
+            if (service.validate(session.getAccessToken(), session.getClientToken())) {
+                isOnline = true;
+            } else {
+                try {
+                    updateSession(service.refresh(session.getAccessToken(), session.getClientToken(), null), new SpecificCharacterSelector(characterUUID));
+                } catch (RemoteAuthenticationException e) {
+                    if ("ForbiddenOperationException".equals(e.getRemoteName())) {
+                        throw new CredentialExpiredException(e);
+                    } else {
+                        throw e;
+                    }
+                }
+            }
         }
         return session.toAuthInfo();
     }
 
     @Override
-    public final AuthInfo logInWithPassword(String password) throws AuthenticationException {
+    public AuthInfo logInWithPassword(String password) throws AuthenticationException {
         return logInWithPassword(password, new SpecificCharacterSelector(characterUUID));
     }
 
     protected AuthInfo logInWithPassword(String password, CharacterSelector selector) throws AuthenticationException {
-        session = service.authenticate(username, password, UUIDTypeAdapter.fromUUID(UUID.randomUUID()));
-        selectProfile(selector);
+        updateSession(service.authenticate(username, password, UUIDTypeAdapter.fromUUID(UUID.randomUUID())), selector);
         return session.toAuthInfo();
     }
 
-    private void selectProfile(CharacterSelector selector) throws AuthenticationException {
-        if (session.getSelectedProfile() == null) {
-            if (session.getAvailableProfiles() == null || session.getAvailableProfiles().length <= 0)
+    /**
+     * Updates the current session. This method shall be invoked after authenticate/refresh operation.
+     * {@link #session} field shall be set only using this method. This method ensures {@link #session}
+     * has a profile selected.
+     *
+     * @param acquiredSession the session acquired by making an authenticate/refresh request
+     */
+    private void updateSession(YggdrasilSession acquiredSession, CharacterSelector selector) throws AuthenticationException {
+        if (acquiredSession.getSelectedProfile() == null) {
+            if (acquiredSession.getAvailableProfiles() == null || acquiredSession.getAvailableProfiles().length == 0)
                 throw new NoCharacterException(this);
 
-            session = service.refresh(session.getAccessToken(), session.getClientToken(), selector.select(this, Arrays.asList(session.getAvailableProfiles())));
+            this.session = service.refresh(
+                    acquiredSession.getAccessToken(),
+                    acquiredSession.getClientToken(),
+                    selector.select(this, Arrays.asList(acquiredSession.getAvailableProfiles())));
+        } else {
+            this.session = acquiredSession;
         }
 
-        characterUUID = session.getSelectedProfile().getId();
-    }
-
-    private void logInWithToken() throws AuthenticationException {
-        if (service.validate(session.getAccessToken(), session.getClientToken())) {
-            isOnline = true;
-            return;
-        }
-        session = service.refresh(session.getAccessToken(), session.getClientToken(), null);
+        this.characterUUID = this.session.getSelectedProfile().getId();
     }
 
     @Override

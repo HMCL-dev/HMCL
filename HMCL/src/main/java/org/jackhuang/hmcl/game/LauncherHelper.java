@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
+import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.MaintainTask;
@@ -106,14 +107,12 @@ public final class LauncherHelper {
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN)))
                 .then(Task.of(Launcher.i18n("account.methods"), variables -> {
                     try {
-                        try {
-                            variables.set("account", account.logIn());
-                        } catch (ServerDisconnectException e) {
-                            variables.set("account",
-                                    account.playOffline().orElseThrow(() -> e));
-                        }
-                    } catch (AuthenticationException e) {
+                        variables.set("account", account.logIn());
+                    } catch (CredentialExpiredException e) {
                         variables.set("account", DialogController.logIn(account));
+                    } catch (AuthenticationException e) {
+                        variables.set("account",
+                                account.playOffline().orElseThrow(() -> e));
                     }
                 }))
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LAUNCHING)))
