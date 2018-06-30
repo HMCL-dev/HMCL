@@ -84,7 +84,10 @@ public class YggdrasilService {
             requireEmpty(request(provider.getValidationURL(), createRequestWithCredentials(accessToken, clientToken)));
             return true;
         } catch (RemoteAuthenticationException e) {
-            return false;
+            if ("ForbiddenOperationException".equals(e.getRemoteName())) {
+                return false;
+            }
+            throw e;
         }
     }
 
