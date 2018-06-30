@@ -157,7 +157,8 @@ public final class Controllers {
     }
 
     public static void closeDialog(Region content) {
-
+        if (stage == null) // shut down
+            return;
         decorator.closeDialog(content);
     }
 
@@ -172,6 +173,10 @@ public final class Controllers {
         if (stage == null) // shut down
             return;
         getLeftPaneController().showUpdate();
+    }
+
+    public static boolean isStopped() {
+        return decorator == null;
     }
 
     public static void shutdown() {

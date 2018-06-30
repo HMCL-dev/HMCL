@@ -172,13 +172,17 @@ public final class LauncherHelper {
 
             @Override
             public void onStop(boolean success, TaskExecutor executor) {
-                if (!success) {
+                if (!success && !Controllers.isStopped()) {
                     Platform.runLater(() -> {
-                        Controllers.closeDialog(launchingStepsPane);
-                        if (executor.getLastException() != null)
-                            Controllers.dialog(I18nException.getStackTrace(executor.getLastException()),
-                                    scriptFile == null ? Launcher.i18n("launch.failed") : Launcher.i18n("version.launch_script.failed"),
-                                    MessageBox.ERROR_MESSAGE);
+                        // Check if the application has stopped
+                        // because onStop will be invoked if tasks fail when the executor service shut down.
+                        if (!Controllers.isStopped()) {
+                            Controllers.closeDialog(launchingStepsPane);
+                            if (executor.getLastException() != null)
+                                Controllers.dialog(I18nException.getStackTrace(executor.getLastException()),
+                                        scriptFile == null ? Launcher.i18n("launch.failed") : Launcher.i18n("version.launch_script.failed"),
+                                        MessageBox.ERROR_MESSAGE);
+                        }
                     });
                 }
                 launchingStepsPane.setExecutor(null);
