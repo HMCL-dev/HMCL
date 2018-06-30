@@ -31,19 +31,23 @@ import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.util.Base64;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.jackhuang.hmcl.util.Logging.LOG;
+
+import java.io.IOException;
 
 public class AuthlibInjectorAccount extends YggdrasilAccount {
-    private final AuthlibInjectorServer server;
-    private final ExceptionalSupplier<String, ?> injectorJarPath;
+    private AuthlibInjectorServer server;
+    private ExceptionalSupplier<AuthlibInjectorArtifactInfo, ? extends IOException> authlibInjectorDownloader;
 
-    protected AuthlibInjectorAccount(YggdrasilService service, AuthlibInjectorServer server, ExceptionalSupplier<String, ?> injectorJarPath, String username, UUID characterUUID, YggdrasilSession session) {
+    protected AuthlibInjectorAccount(YggdrasilService service, AuthlibInjectorServer server, ExceptionalSupplier<AuthlibInjectorArtifactInfo, ? extends IOException> authlibInjectorDownloader, String username, UUID characterUUID, YggdrasilSession session) {
         super(service, username, characterUUID, session);
 
-        this.injectorJarPath = injectorJarPath;
+        this.authlibInjectorDownloader = authlibInjectorDownloader;
         this.server = server;
     }
 
@@ -57,25 +61,42 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         return inject(() -> super.logInWithPassword(password, selector));
     }
 
-    private AuthInfo inject(ExceptionalSupplier<AuthInfo, AuthenticationException> supplier) throws AuthenticationException {
-        // Authlib Injector recommends launchers to pre-fetch the server basic information before launched the game to save time.
-        GetTask getTask = new GetTask(NetworkUtils.toURL(server.getUrl()));
-        AtomicBoolean flag = new AtomicBoolean(true);
-        Thread thread = Lang.thread(() -> flag.set(getTask.test()));
+    private AuthInfo inject(ExceptionalSupplier<AuthInfo, AuthenticationException> loginAction) throws AuthenticationException {
+        // Pre-fetch metadata
+        GetTask metadataFetchTask = new GetTask(NetworkUtils.toURL(server.getUrl()));
+        Thread metadataFetchThread = Lang.thread(() -> {
+            try {
+                metadataFetchTask.run();
+            } catch (Exception e) {
+                LOG.log(Level.WARNING, "Failed to pre-fetch Yggdrasil metadata", e);
+            }
+        }, "Yggdrasil metadata fetch thread");
 
-        AuthInfo info = supplier.get();
+        // Update authlib-injector
+        AuthlibInjectorArtifactInfo artifact;
         try {
-            thread.join();
-
-            Arguments arguments = new Arguments().addJVMArguments("-javaagent:" + injectorJarPath.get() + "=" + server.getUrl());
-
-            if (flag.get())
-                arguments = arguments.addJVMArguments("-Dorg.to2mbn.authlibinjector.config.prefetched=" + new String(Base64.getEncoder().encode(getTask.getResult().getBytes()), UTF_8));
-
-            return info.withArguments(arguments);
-        } catch (Exception e) {
-            throw new AuthenticationException("Unable to get authlib injector jar path", e);
+            artifact = authlibInjectorDownloader.get();
+        } catch (IOException e) {
+            throw new AuthenticationException("Failed to download authlib-injector", e);
         }
+
+        // Perform authentication
+        AuthInfo info = loginAction.get();
+        Arguments arguments = new Arguments().addJVMArguments("-javaagent:" + artifact.getLocation().toString() + "=" + server.getUrl());
+
+        // Wait for metadata to be fetched
+        try {
+            metadataFetchThread.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        Optional<String> metadata = Optional.ofNullable(metadataFetchTask.getResult());
+        if (metadata.isPresent()) {
+            arguments = arguments.addJVMArguments(
+                    "-Dorg.to2mbn.authlibinjector.config.prefetched=" + Base64.getEncoder().encodeToString(metadata.get().getBytes(UTF_8)));
+        }
+
+        return info.withArguments(arguments);
     }
 
     @Override
