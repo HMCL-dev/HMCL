@@ -82,7 +82,7 @@ public final class CurseManifestFile implements Validation {
         return NetworkUtils.toURL("https://minecraft.curseforge.com/projects/" + projectID + "/files/" + fileID + "/download");
     }
     
-    public CurseManifestFile setFileName(String fileName) {
+    public CurseManifestFile withFileName(String fileName) {
         return new CurseManifestFile(projectID, fileID, fileName, required);
     }
 

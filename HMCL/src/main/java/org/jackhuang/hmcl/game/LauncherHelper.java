@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.launch.*;
+import org.jackhuang.hmcl.mod.CurseCompletionException;
 import org.jackhuang.hmcl.mod.CurseCompletionTask;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
@@ -177,10 +178,17 @@ public final class LauncherHelper {
                         // because onStop will be invoked if tasks fail when the executor service shut down.
                         if (!Controllers.isStopped()) {
                             Controllers.closeDialog(launchingStepsPane);
-                            if (executor.getLastException() != null)
-                                Controllers.dialog(I18nException.getStackTrace(executor.getLastException()),
+                            Exception ex = executor.getLastException();
+                            if (ex != null) {
+                                String message;
+                                if (ex instanceof CurseCompletionException)
+                                    message = Launcher.i18n("modpack.type.curse.error");
+                                else
+                                    message = I18nException.getStackTrace(ex);
+                                Controllers.dialog(message,
                                         scriptFile == null ? Launcher.i18n("launch.failed") : Launcher.i18n("version.launch_script.failed"),
                                         MessageBox.ERROR_MESSAGE);
+                            }
                         }
                     });
                 }

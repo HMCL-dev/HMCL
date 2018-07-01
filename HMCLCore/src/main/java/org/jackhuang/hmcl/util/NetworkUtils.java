@@ -20,10 +20,8 @@ package org.jackhuang.hmcl.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.Proxy;
-import java.net.URL;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -138,9 +136,9 @@ public final class NetworkUtils {
         String disposition = conn.getHeaderField("Content-Disposition");
         if (disposition == null || !disposition.contains("filename=")) {
             String u = conn.getURL().toString();
-            return substringAfterLast(u, '/');
+            return Lang.invoke(() -> URLDecoder.decode(substringAfterLast(u, '/'), StandardCharsets.UTF_8.name()));
         } else
-            return removeSurrounding(substringAfter(disposition, "filename="), "\"");
+            return Lang.invoke(() -> URLDecoder.decode(removeSurrounding(substringAfter(disposition, "filename="), "\""), StandardCharsets.UTF_8.name()));
     }
 
     public static URL toURL(String str) {

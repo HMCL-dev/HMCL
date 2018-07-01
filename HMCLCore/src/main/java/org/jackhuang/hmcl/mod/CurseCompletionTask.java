@@ -24,9 +24,11 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -49,7 +51,7 @@ public final class CurseCompletionTask extends Task {
      * Constructor.
      *
      * @param dependencyManager the dependency manager.
-     * @param version the existent and physical version.
+     * @param version           the existent and physical version.
      */
     public CurseCompletionTask(DefaultDependencyManager dependencyManager, String version) {
         this(dependencyManager, version, null);
@@ -59,8 +61,8 @@ public final class CurseCompletionTask extends Task {
      * Constructor.
      *
      * @param dependencyManager the dependency manager.
-     * @param version the existent and physical version.
-     * @param manifest the CurseForgeModpack manifest.
+     * @param version           the existent and physical version.
+     * @param manifest          the CurseForgeModpack manifest.
      */
     public CurseCompletionTask(DefaultDependencyManager dependencyManager, String version, CurseManifest manifest) {
         this.dependencyManager = dependencyManager;
@@ -96,6 +98,7 @@ public final class CurseCompletionTask extends Task {
         File root = repository.getVersionRoot(version);
         File run = repository.getRunDirectory(version);
 
+        AtomicBoolean flag = new AtomicBoolean(true);
         AtomicInteger finished = new AtomicInteger(0);
 
         // Because in China, Curse is too difficult to visit,
@@ -104,14 +107,32 @@ public final class CurseCompletionTask extends Task {
                 manifest.getFiles().parallelStream()
                         .map(file -> {
                             updateProgress(finished.incrementAndGet(), manifest.getFiles().size());
-                            return Lang.ignoringException(() -> file.setFileName(NetworkUtils.detectFileName(file.getUrl(), dependencyManager.getProxy())), file);
+                            if (StringUtils.isBlank(file.getFileName())) {
+                                try {
+                                    return file.withFileName(NetworkUtils.detectFileName(file.getUrl(), dependencyManager.getProxy()));
+                                } catch (IOException ioe) {
+                                    Logging.LOG.log(Level.WARNING, "Unable to fetch the file name of URL: " + file.getUrl(), ioe);
+                                    flag.set(false);
+                                    return file;
+                                }
+                            } else
+                                return file;
                         })
                         .collect(Collectors.toList()));
         FileUtils.writeText(new File(root, "manifest.json"), Constants.GSON.toJson(newManifest));
 
         for (CurseManifestFile file : newManifest.getFiles())
-            if (StringUtils.isNotBlank(file.getFileName()))
-                dependencies.add(new FileDownloadTask(file.getUrl(), new File(run, "mods/" + file.getFileName()), dependencyManager.getProxy()));
+            if (StringUtils.isNotBlank(file.getFileName())) {
+                File dest = new File(run, "mods/" + file.getFileName());
+                if (!dest.exists())
+                    dependencies.add(new FileDownloadTask(file.getUrl(), dest, dependencyManager.getProxy()));
+            }
+
+        // Let this task fail if the curse manifest has not been completed.
+        if (!flag.get())
+            dependencies.add(Task.of(() -> {
+                throw new CurseCompletionException();
+            }));
     }
 
 }
