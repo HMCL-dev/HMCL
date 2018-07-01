@@ -22,7 +22,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.Launcher;
+
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.GameRepository;
@@ -30,11 +30,10 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.Lang;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.util.Map;
 import java.util.Optional;
-
-import static org.jackhuang.hmcl.Launcher.i18n;
 
 class AdditionalInstallersPage extends StackPane implements WizardPage {
     private final InstallerWizardProvider provider;
@@ -100,7 +99,7 @@ class AdditionalInstallersPage extends StackPane implements WizardPage {
 
     @Override
     public String getTitle() {
-        return Launcher.i18n("settings.tabs.installers");
+        return i18n("settings.tabs.installers");
     }
 
     private String getVersion(String id) {
@@ -109,24 +108,24 @@ class AdditionalInstallersPage extends StackPane implements WizardPage {
 
     @Override
     public void onNavigate(Map<String, Object> settings) {
-        lblGameVersion.setText(Launcher.i18n("install.new_game.current_game_version") + ": " + provider.getGameVersion());
+        lblGameVersion.setText(i18n("install.new_game.current_game_version") + ": " + provider.getGameVersion());
         btnForge.setDisable(provider.getForge() != null);
         if (provider.getForge() != null || controller.getSettings().containsKey("forge"))
-            lblForge.setText(Launcher.i18n("install.installer.version", Launcher.i18n("install.installer.forge")) + ": " + Lang.nonNull(provider.getForge(), getVersion("forge")));
+            lblForge.setText(i18n("install.installer.version", i18n("install.installer.forge")) + ": " + Lang.nonNull(provider.getForge(), getVersion("forge")));
         else
-            lblForge.setText(Launcher.i18n("install.installer.not_installed", Launcher.i18n("install.installer.forge")));
+            lblForge.setText(i18n("install.installer.not_installed", i18n("install.installer.forge")));
 
         btnLiteLoader.setDisable(provider.getLiteLoader() != null);
         if (provider.getLiteLoader() != null || controller.getSettings().containsKey("liteloader"))
-            lblLiteLoader.setText(Launcher.i18n("install.installer.version", Launcher.i18n("install.installer.liteloader")) + ": " + Lang.nonNull(provider.getLiteLoader(), getVersion("liteloader")));
+            lblLiteLoader.setText(i18n("install.installer.version", i18n("install.installer.liteloader")) + ": " + Lang.nonNull(provider.getLiteLoader(), getVersion("liteloader")));
         else
-            lblLiteLoader.setText(Launcher.i18n("install.installer.not_installed", Launcher.i18n("install.installer.liteloader")));
+            lblLiteLoader.setText(i18n("install.installer.not_installed", i18n("install.installer.liteloader")));
 
         btnOptiFine.setDisable(provider.getOptiFine() != null);
         if (provider.getOptiFine() != null || controller.getSettings().containsKey("optifine"))
-            lblOptiFine.setText(Launcher.i18n("install.installer.version", Launcher.i18n("install.installer.optifine")) + ": " + Lang.nonNull(provider.getOptiFine(), getVersion("optifine")));
+            lblOptiFine.setText(i18n("install.installer.version", i18n("install.installer.optifine")) + ": " + Lang.nonNull(provider.getOptiFine(), getVersion("optifine")));
         else
-            lblOptiFine.setText(Launcher.i18n("install.installer.not_installed", Launcher.i18n("install.installer.optifine")));
+            lblOptiFine.setText(i18n("install.installer.not_installed", i18n("install.installer.optifine")));
 
     }
 

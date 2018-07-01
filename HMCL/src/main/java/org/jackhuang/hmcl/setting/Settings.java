@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.i18n.Locales;
 
 import java.io.File;
 import java.io.IOException;

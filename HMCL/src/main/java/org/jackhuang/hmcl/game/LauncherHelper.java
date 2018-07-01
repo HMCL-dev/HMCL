@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CredentialExpiredException;
-import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.launch.*;
@@ -51,6 +50,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class LauncherHelper {
     public static final LauncherHelper INSTANCE = new LauncherHelper();
@@ -106,7 +106,7 @@ public final class LauncherHelper {
                     }
                 })
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN)))
-                .then(Task.of(Launcher.i18n("account.methods"), variables -> {
+                .then(Task.of(i18n("account.methods"), variables -> {
                     try {
                         variables.set("account", account.logIn());
                     } catch (CredentialExpiredException e) {
@@ -131,12 +131,12 @@ public final class LauncherHelper {
                 .then(variables -> {
                     DefaultLauncher launcher = variables.get("launcher");
                     if (scriptFile == null) {
-                        return new LaunchTask<>(launcher::launch).setName(Launcher.i18n("version.launch"));
+                        return new LaunchTask<>(launcher::launch).setName(i18n("version.launch"));
                     } else {
                         return new LaunchTask<>(() -> {
                             launcher.makeLaunchScript(scriptFile);
                             return null;
-                        }).setName(Launcher.i18n("version.launch_script"));
+                        }).setName(i18n("version.launch_script"));
                     }
                 })
                 .then(Task.of(variables -> {
@@ -153,7 +153,7 @@ public final class LauncherHelper {
                     } else
                         Platform.runLater(() -> {
                             Controllers.closeDialog(launchingStepsPane);
-                            Controllers.dialog(Launcher.i18n("version.launch_script.success", scriptFile.getAbsolutePath()));
+                            Controllers.dialog(i18n("version.launch_script.success", scriptFile.getAbsolutePath()));
                         });
 
                 }))
@@ -181,12 +181,19 @@ public final class LauncherHelper {
                             Exception ex = executor.getLastException();
                             if (ex != null) {
                                 String message;
-                                if (ex instanceof CurseCompletionException)
-                                    message = Launcher.i18n("modpack.type.curse.error");
-                                else
-                                    message = I18nException.getStackTrace(ex);
+                                if (ex instanceof CurseCompletionException) {
+                                    message = i18n("modpack.type.curse.error");
+                                } else if (ex instanceof PermissionException) {
+                                    message = i18n("launch.failed.executable_permission");
+                                } else if (ex instanceof ProcessCreationException) {
+                                    message = i18n("launch.failed.creating_process") + ex.getLocalizedMessage();
+                                } else if (ex instanceof NotDecompressingNativesException) {
+                                    message = i18n("launch.failed.decompressing_natives") + ex.getLocalizedMessage();
+                                } else {
+                                    message = StringUtils.getStackTrace(ex);
+                                }
                                 Controllers.dialog(message,
-                                        scriptFile == null ? Launcher.i18n("launch.failed") : Launcher.i18n("version.launch_script.failed"),
+                                        scriptFile == null ? i18n("launch.failed") : i18n("version.launch_script.failed"),
                                         MessageBox.ERROR_MESSAGE);
                             }
                         }
@@ -207,7 +214,7 @@ public final class LauncherHelper {
         VersionNumber gameVersion = VersionNumber.asVersion(GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version)).orElse("Unknown"));
         JavaVersion java = setting.getJavaVersion();
         if (java == null) {
-            Controllers.dialog(Launcher.i18n("launch.wrong_javadir"), Launcher.i18n("message.error"), MessageBox.WARNING_MESSAGE, onAccept);
+            Controllers.dialog(i18n("launch.wrong_javadir"), i18n("message.error"), MessageBox.WARNING_MESSAGE, onAccept);
             setting.setJava(null);
             setting.setDefaultJavaPath(null);
             java = JavaVersion.fromCurrentEnvironment();
@@ -218,10 +225,10 @@ public final class LauncherHelper {
             if (gameVersion.compareTo(VersionNumber.asVersion("1.13")) >= 0) {
                 // Minecraft 1.13 and later versions only support Java 8 or later.
                 // Terminate launching operation.
-                Controllers.dialog(Launcher.i18n("launch.advice.java8_1_13"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
+                Controllers.dialog(i18n("launch.advice.java8_1_13"), i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
             } else {
                 // Most mods require Java 8 or later version.
-                Controllers.dialog(Launcher.i18n("launch.advice.newer_java"), Launcher.i18n("message.error"), MessageBox.WARNING_MESSAGE, onAccept);
+                Controllers.dialog(i18n("launch.advice.newer_java"), i18n("message.error"), MessageBox.WARNING_MESSAGE, onAccept);
             }
             flag = true;
         }
@@ -229,24 +236,24 @@ public final class LauncherHelper {
         // LaunchWrapper will crash because of assuming the system class loader is an instance of URLClassLoader.
         // cpw has claimed that he will make MinecraftForge of 1.13 and later versions able to run on Java 9.
         if (!flag && java.getParsedVersion() >= JavaVersion.JAVA_9 && gameVersion.compareTo(VersionNumber.asVersion("1.12.5")) < 0 && version.getMainClass().contains("launchwrapper")) {
-            Controllers.dialog(Launcher.i18n("launch.advice.java9"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
+            Controllers.dialog(i18n("launch.advice.java9"), i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
             flag = true;
         }
 
         if (!flag && java.getPlatform() == org.jackhuang.hmcl.util.Platform.BIT_32 &&
                 org.jackhuang.hmcl.util.Platform.IS_64_BIT) {
-            Controllers.dialog(Launcher.i18n("launch.advice.different_platform"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
+            Controllers.dialog(i18n("launch.advice.different_platform"), i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
             flag = true;
         }
         if (!flag && java.getPlatform() == org.jackhuang.hmcl.util.Platform.BIT_32 &&
                 setting.getMaxMemory() > 1.5 * 1024) {
             // 1.5 * 1024 is an inaccurate number.
             // Actual memory limit depends on operating system and memory.
-            Controllers.dialog(Launcher.i18n("launch.advice.too_large_memory_for_32bit"), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
+            Controllers.dialog(i18n("launch.advice.too_large_memory_for_32bit"), i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
             flag = true;
         }
         if (!flag && OperatingSystem.TOTAL_MEMORY > 0 && OperatingSystem.TOTAL_MEMORY < setting.getMaxMemory()) {
-            Controllers.dialog(Launcher.i18n("launch.advice.not_enough_space", OperatingSystem.TOTAL_MEMORY), Launcher.i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
+            Controllers.dialog(i18n("launch.advice.not_enough_space", OperatingSystem.TOTAL_MEMORY), i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
             flag = true;
         }
 
@@ -297,15 +304,7 @@ public final class LauncherHelper {
 
         @Override
         public void execute() throws Exception {
-            try {
-                setResult(supplier.get());
-            } catch (PermissionException e) {
-                throw new I18nException(Launcher.i18n("launch.failed.executable_permission"), e);
-            } catch (ProcessCreationException e) {
-                throw new I18nException(Launcher.i18n("launch.failed.creating_process") + e.getLocalizedMessage(), e);
-            } catch (NotDecompressingNativesException e) {
-                throw new I18nException(Launcher.i18n("launch.failed.decompressing_natives") + e.getLocalizedMessage(), e);
-            }
+            setResult(supplier.get());
         }
 
         @Override
@@ -424,10 +423,10 @@ public final class LauncherHelper {
 
                     switch (exitType) {
                         case JVM_ERROR:
-                            logWindow.setTitle(Launcher.i18n("launch.failed.cannot_create_jvm"));
+                            logWindow.setTitle(i18n("launch.failed.cannot_create_jvm"));
                             break;
                         case APPLICATION_ERROR:
-                            logWindow.setTitle(Launcher.i18n("launch.failed.exited_abnormally"));
+                            logWindow.setTitle(i18n("launch.failed.exited_abnormally"));
                             break;
                     }
 

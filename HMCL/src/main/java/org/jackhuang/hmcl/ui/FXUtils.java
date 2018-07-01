@@ -45,8 +45,8 @@ import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 
-import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.io.File;
 import java.io.IOException;
@@ -203,7 +203,7 @@ public final class FXUtils {
     }
 
     public static void loadFXML(Node node, String absolutePath) {
-        FXMLLoader loader = new FXMLLoader(node.getClass().getResource(absolutePath), Launcher.RESOURCE_BUNDLE);
+        FXMLLoader loader = new FXMLLoader(node.getClass().getResource(absolutePath), I18n.getResourceBundle());
         loader.setRoot(node);
         loader.setController(node);
         Lang.invoke((ExceptionalSupplier<Object, IOException>) loader::load);

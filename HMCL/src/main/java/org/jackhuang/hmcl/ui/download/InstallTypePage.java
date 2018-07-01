@@ -20,10 +20,11 @@ package org.jackhuang.hmcl.ui.download;
 import com.jfoenix.controls.JFXListView;
 import javafx.fxml.FXML;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.Launcher;
+
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.util.Map;
 
@@ -49,7 +50,7 @@ public final class InstallTypePage extends StackPane implements WizardPage {
 
     @Override
     public String getTitle() {
-        return Launcher.i18n("install.select");
+        return i18n("install.select");
     }
 
     public static final String INSTALL_TYPE = "INSTALL_TYPE";

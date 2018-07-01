@@ -23,12 +23,13 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.Launcher;
+
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersionTag;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersionTag;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.ui.FXUtils;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.util.Objects;
 
@@ -57,15 +58,15 @@ public final class VersionsPageItem extends StackPane {
         if (remoteVersion.getTag() instanceof GameRemoteVersionTag) {
             switch (((GameRemoteVersionTag) remoteVersion.getTag()).getType()) {
                 case RELEASE:
-                    lblGameVersion.setText(Launcher.i18n("version.game.release"));
+                    lblGameVersion.setText(i18n("version.game.release"));
                     imageView.setImage(new Image("/assets/img/icon.png", 32, 32, false, true));
                     break;
                 case SNAPSHOT:
-                    lblGameVersion.setText(Launcher.i18n("version.game.snapshot"));
+                    lblGameVersion.setText(i18n("version.game.snapshot"));
                     imageView.setImage(new Image("/assets/img/command.png", 32, 32, false, true));
                     break;
                 default:
-                    lblGameVersion.setText(Launcher.i18n("version.game.old"));
+                    lblGameVersion.setText(i18n("version.game.old"));
                     imageView.setImage(new Image("/assets/img/grass.png", 32, 32, false, true));
                     break;
             }

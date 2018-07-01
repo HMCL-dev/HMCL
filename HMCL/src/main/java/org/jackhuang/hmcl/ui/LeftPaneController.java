@@ -28,12 +28,11 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import org.jackhuang.hmcl.Launcher;
+
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
-import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.game.AccountHelper;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -49,6 +48,7 @@ import org.jackhuang.hmcl.ui.construct.ClassTitle;
 import org.jackhuang.hmcl.ui.construct.IconedItem;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.Lang;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.File;
 import java.util.HashMap;
@@ -61,27 +61,27 @@ public final class LeftPaneController {
     private final VBox profilePane = new VBox();
     private final VBox accountPane = new VBox();
     private final IconedItem launcherSettingsItem;
-    private final VersionListItem missingAccountItem = new VersionListItem(Launcher.i18n("account.missing"), Launcher.i18n("message.unknown"));
+    private final VersionListItem missingAccountItem = new VersionListItem(i18n("account.missing"), i18n("message.unknown"));
     private final HashMap<Account, VersionListItem> items = new HashMap<>();
 
     public LeftPaneController(AdvancedListBox leftPane) {
         this.leftPane = leftPane;
 
-        this.launcherSettingsItem = Lang.apply(new IconedItem(SVG.gear(Theme.blackFillBinding(), 20, 20), Launcher.i18n("settings.launcher")), iconedItem -> {
+        this.launcherSettingsItem = Lang.apply(new IconedItem(SVG.gear(Theme.blackFillBinding(), 20, 20), i18n("settings.launcher")), iconedItem -> {
             iconedItem.prefWidthProperty().bind(leftPane.widthProperty());
             iconedItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
         });
 
         leftPane
-                .add(new ClassTitle(Launcher.i18n("account").toUpperCase(), Lang.apply(new JFXButton(), button -> {
+                .add(new ClassTitle(i18n("account").toUpperCase(), Lang.apply(new JFXButton(), button -> {
                     button.setGraphic(SVG.plus(Theme.blackFillBinding(), 10, 10));
                     button.getStyleClass().add("toggle-icon-tiny");
                     button.setOnMouseClicked(e -> addNewAccount());
                 })))
                 .add(accountPane)
-                .startCategory(Launcher.i18n("launcher").toUpperCase())
+                .startCategory(i18n("launcher").toUpperCase())
                 .add(launcherSettingsItem)
-                .add(new ClassTitle(Launcher.i18n("profile.title").toUpperCase(), Lang.apply(new JFXButton(), button -> {
+                .add(new ClassTitle(i18n("profile.title").toUpperCase(), Lang.apply(new JFXButton(), button -> {
                     button.setGraphic(SVG.plus(Theme.blackFillBinding(), 10, 10));
                     button.getStyleClass().add("toggle-icon-tiny");
                     button.setOnMouseClicked(e ->
@@ -122,7 +122,7 @@ public final class LeftPaneController {
                 if (node instanceof RipplerContainer && node.getProperties().get("profile") instanceof String) {
                     boolean current = Objects.equals(node.getProperties().get("profile"), profile.getName());
                     ((RipplerContainer) node).setSelected(current);
-                    ((VersionListItem) ((RipplerContainer) node).getContainer()).setGameVersion(current ? Launcher.i18n("profile.selected") : "");
+                    ((VersionListItem) ((RipplerContainer) node).getContainer()).setGameVersion(current ? i18n("profile.selected") : "");
                 }
             }
         });
@@ -143,9 +143,9 @@ public final class LeftPaneController {
     }
 
     private static String accountType(Account account) {
-        if (account instanceof OfflineAccount) return Launcher.i18n("account.methods.offline");
+        if (account instanceof OfflineAccount) return i18n("account.methods.offline");
         else if (account instanceof YggdrasilAccount) return account.getUsername();
-        else throw new Error(Launcher.i18n("account.methods.no_method") + ": " + account);
+        else throw new Error(i18n("account.methods.no_method") + ": " + account);
     }
 
     private void onAccountAdd(AccountAddedEvent event) {
@@ -207,7 +207,7 @@ public final class LeftPaneController {
     }
 
     public void showUpdate() {
-        launcherSettingsItem.setText(Launcher.i18n("update.found"));
+        launcherSettingsItem.setText(i18n("update.found"));
         launcherSettingsItem.setTextFill(Color.RED);
     }
 
@@ -231,7 +231,7 @@ public final class LeftPaneController {
                                         Controllers.closeDialog(region.get());
                                         checkAccount();
                                     })).executor();
-                            region.set(Controllers.taskDialog(executor, Launcher.i18n("modpack.installing"), ""));
+                            region.set(Controllers.taskDialog(executor, i18n("modpack.installing"), ""));
                             executor.start();
                             showNewAccount = false;
                         } catch (UnsupportedModpackException ignore) {

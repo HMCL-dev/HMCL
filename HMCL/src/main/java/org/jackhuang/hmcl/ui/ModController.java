@@ -26,13 +26,14 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.Launcher;
+
 import org.jackhuang.hmcl.mod.ModInfo;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Logging;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,7 +43,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public final class ModController {
     @FXML
@@ -140,8 +140,8 @@ public final class ModController {
     @FXML
     private void onAdd() {
         FileChooser chooser = new FileChooser();
-        chooser.setTitle(Launcher.i18n("mods.choose_mod"));
-        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(Launcher.i18n("extension.mod"), "*.jar", "*.zip", "*.litemod"));
+        chooser.setTitle(i18n("mods.choose_mod"));
+        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.mod"), "*.jar", "*.zip", "*.litemod"));
         List<File> res = chooser.showOpenMultipleDialog(Controllers.getStage());
 
         // It's guaranteed that succeeded and failed are thread safe here.
@@ -163,10 +163,10 @@ public final class ModController {
         }).with(Task.of(Schedulers.javafx(), variables -> {
             List<String> prompt = new LinkedList<>();
             if (!succeeded.isEmpty())
-                prompt.add(Launcher.i18n("mods.add.success", String.join(", ", succeeded)));
+                prompt.add(i18n("mods.add.success", String.join(", ", succeeded)));
             if (!failed.isEmpty())
-                prompt.add(Launcher.i18n("mods.add.failed", String.join(", ", failed)));
-            Controllers.dialog(String.join("\n", prompt), Launcher.i18n("mods.add"));
+                prompt.add(i18n("mods.add.failed", String.join(", ", failed)));
+            Controllers.dialog(String.join("\n", prompt), i18n("mods.add"));
             loadMods(modManager, versionId);
         })).start();
     }

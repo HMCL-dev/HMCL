@@ -21,7 +21,7 @@ import com.jfoenix.concurrency.JFXUtilities;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
-import org.jackhuang.hmcl.setting.Settings;
+
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -37,9 +37,7 @@ import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ResourceBundle;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 public final class Launcher extends Application {
 
@@ -139,19 +137,6 @@ public final class Launcher extends Application {
             return result;
     }
 
-    public static String i18n(String key) {
-        try {
-            return RESOURCE_BUNDLE.getString(key);
-        } catch (Exception e) {
-            Logging.LOG.log(Level.SEVERE, "Cannot find key " + key + " in resource bundle", e);
-            return key;
-        }
-    }
-
-    public static String i18n(String key, Object... formatArgs) {
-        return String.format(i18n(key), formatArgs);
-    }
-
     public static final File MINECRAFT_DIRECTORY = OperatingSystem.getWorkingDirectory("minecraft");
     public static final File HMCL_DIRECTORY = OperatingSystem.getWorkingDirectory("hmcl");
     public static final File LOG_DIRECTORY = new File(Launcher.HMCL_DIRECTORY, "logs");
@@ -159,7 +144,6 @@ public final class Launcher extends Application {
     public static final String VERSION = System.getProperty("hmcl.version.override", "@HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING@");
     public static final String NAME = "HMCL";
     public static final String TITLE = NAME + " " + VERSION;
-    public static final ResourceBundle RESOURCE_BUNDLE = Settings.INSTANCE.getLocale().getResourceBundle();
     public static final UpdateChecker UPDATE_CHECKER = new UpdateChecker(VersionNumber.asVersion(VERSION));
     public static final IUpgrader UPGRADER = new AppDataUpgrader();
     public static final CrashReporter CRASH_REPORTER = new CrashReporter();
