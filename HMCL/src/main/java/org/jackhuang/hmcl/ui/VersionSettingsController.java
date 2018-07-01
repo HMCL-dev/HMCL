@@ -39,7 +39,7 @@ import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.ImagePickerItem;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.i18n.I18n;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.File;
 import java.io.IOException;
@@ -80,7 +80,7 @@ public final class VersionSettingsController {
 
     @FXML
     private void initialize() {
-        lblPhysicalMemory.setText(I18n.i18n("settings.physical_memory") + ": " + OperatingSystem.TOTAL_MEMORY + "MB");
+        lblPhysicalMemory.setText(i18n("settings.physical_memory") + ": " + OperatingSystem.TOTAL_MEMORY + "MB");
 
         FXUtils.smoothScrolling(scroll);
 
@@ -97,13 +97,13 @@ public final class VersionSettingsController {
             javaItem.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe", "javaw.exe"));
 
         gameDirItem.loadChildren(Arrays.asList(
-                gameDirItem.createChildren(I18n.i18n("settings.advanced.game_dir.default"), EnumGameDirectory.ROOT_FOLDER),
-                gameDirItem.createChildren(I18n.i18n("settings.advanced.game_dir.independent"), EnumGameDirectory.VERSION_FOLDER)
+                gameDirItem.createChildren(i18n("settings.advanced.game_dir.default"), EnumGameDirectory.ROOT_FOLDER),
+                gameDirItem.createChildren(i18n("settings.advanced.game_dir.independent"), EnumGameDirectory.VERSION_FOLDER)
         ));
 
         globalItem.loadChildren(Arrays.asList(
-                globalItem.createChildren(I18n.i18n("settings.type.global"), true),
-                globalItem.createChildren(I18n.i18n("settings.type.special"), false)
+                globalItem.createChildren(i18n("settings.type.global"), true),
+                globalItem.createChildren(i18n("settings.type.special"), false)
         ));
     }
 
@@ -183,7 +183,7 @@ public final class VersionSettingsController {
         });
 
         versionSetting.usesGlobalProperty().setChangedListenerAndOperate(it ->
-                globalItem.setSubtitle(I18n.i18n(versionSetting.isUsesGlobal() ? "settings.type.global" : "settings.type.special")));
+                globalItem.setSubtitle(i18n(versionSetting.isUsesGlobal() ? "settings.type.global" : "settings.type.special")));
 
         gameDirItem.getGroup().getToggles().stream()
                 .filter(it -> it.getUserData() == versionSetting.getGameDirType())
@@ -239,7 +239,7 @@ public final class VersionSettingsController {
     @FXML
     private void onExploreIcon() {
         FileChooser chooser = new FileChooser();
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(I18n.i18n("extension.png"), "*.png"));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.png"), "*.png"));
         File selectedFile = chooser.showOpenDialog(Controllers.getStage());
         if (selectedFile != null) {
             File iconFile = profile.getRepository().getVersionIcon(versionId);

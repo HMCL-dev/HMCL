@@ -37,7 +37,7 @@ import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.i18n.I18n;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.File;
 import java.util.Map;
@@ -76,16 +76,16 @@ public final class ModpackPage extends StackPane implements WizardPage {
         Profile profile = (Profile) controller.getSettings().get("PROFILE");
 
         FileChooser chooser = new FileChooser();
-        chooser.setTitle(I18n.i18n("modpack.choose"));
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(I18n.i18n("modpack"), "*.zip"));
+        chooser.setTitle(i18n("modpack.choose"));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
         File selectedFile = chooser.showOpenDialog(Controllers.getStage());
         if (selectedFile == null) Platform.runLater(() -> Controllers.navigate(null));
         else {
             controller.getSettings().put(MODPACK_FILE, selectedFile);
             lblModpackLocation.setText(selectedFile.getAbsolutePath());
             txtModpackName.getValidators().addAll(
-                    new Validator(I18n.i18n("install.new_game.already_exists"), str -> !profile.getRepository().hasVersion(str) && StringUtils.isNotBlank(str)),
-                    new Validator(I18n.i18n("version.forbidden_name"), str -> !profile.getRepository().forbidsVersion(str))
+                    new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().hasVersion(str) && StringUtils.isNotBlank(str)),
+                    new Validator(i18n("version.forbidden_name"), str -> !profile.getRepository().forbidsVersion(str))
             );
             txtModpackName.textProperty().addListener(e -> btnInstall.setDisable(!txtModpackName.validate()));
 
@@ -97,7 +97,7 @@ public final class ModpackPage extends StackPane implements WizardPage {
                 lblAuthor.setText(manifest.getAuthor());
                 txtModpackName.setText(manifest.getName() + (StringUtils.isBlank(manifest.getVersion()) ? "" : "-" + manifest.getVersion()));
             } catch (UnsupportedModpackException e) {
-                txtModpackName.setText(I18n.i18n("modpack.task.install.error"));
+                txtModpackName.setText(i18n("modpack.task.install.error"));
             }
         }
     }
@@ -119,14 +119,14 @@ public final class ModpackPage extends StackPane implements WizardPage {
         if (manifest != null) {
             WebStage stage = new WebStage();
             stage.getWebView().getEngine().loadContent(manifest.getDescription());
-            stage.setTitle(I18n.i18n("modpack.wizard.step.3"));
+            stage.setTitle(i18n("modpack.wizard.step.3"));
             stage.showAndWait();
         }
     }
 
     @Override
     public String getTitle() {
-        return I18n.i18n("modpack.task.install");
+        return i18n("modpack.task.install");
     }
 
     public static final String MODPACK_FILE = "MODPACK_FILE";

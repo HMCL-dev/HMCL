@@ -34,8 +34,6 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.i18n.I18n;
-
 import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
@@ -44,6 +42,7 @@ import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
  * @author huangyuhui
@@ -152,23 +151,23 @@ public final class ModpackFileSelectionPage extends StackPane implements WizardP
 
     @Override
     public String getTitle() {
-        return I18n.i18n("modpack.wizard.step.2.title");
+        return i18n("modpack.wizard.step.2.title");
     }
 
     public static final String MODPACK_FILE_SELECTION = "modpack.accepted";
     private static final Map<String, String> TRANSLATION = mapOf(
-            pair("minecraft/servers.dat", I18n.i18n("modpack.files.servers_dat")),
-            pair("minecraft/saves", I18n.i18n("modpack.files.saves")),
-            pair("minecraft/mods", I18n.i18n("modpack.files.mods")),
-            pair("minecraft/config", I18n.i18n("modpack.files.config")),
-            pair("minecraft/liteconfig", I18n.i18n("modpack.files.liteconfig")),
-            pair("minecraft/resourcepacks", I18n.i18n("modpack.files.resourcepacks")),
-            pair("minecraft/resources", I18n.i18n("modpack.files.resourcepacks")),
-            pair("minecraft/options.txt", I18n.i18n("modpack.files.options_txt")),
-            pair("minecraft/optionsshaders.txt", I18n.i18n("modpack.files.optionsshaders_txt")),
-            pair("minecraft/mods/VoxelMods", I18n.i18n("modpack.files.mods.voxelmods")),
-            pair("minecraft/dumps", I18n.i18n("modpack.files.dumps")),
-            pair("minecraft/blueprints", I18n.i18n("modpack.files.blueprints")),
-            pair("minecraft/scripts", I18n.i18n("modpack.files.scripts"))
+            pair("minecraft/servers.dat", i18n("modpack.files.servers_dat")),
+            pair("minecraft/saves", i18n("modpack.files.saves")),
+            pair("minecraft/mods", i18n("modpack.files.mods")),
+            pair("minecraft/config", i18n("modpack.files.config")),
+            pair("minecraft/liteconfig", i18n("modpack.files.liteconfig")),
+            pair("minecraft/resourcepacks", i18n("modpack.files.resourcepacks")),
+            pair("minecraft/resources", i18n("modpack.files.resourcepacks")),
+            pair("minecraft/options.txt", i18n("modpack.files.options_txt")),
+            pair("minecraft/optionsshaders.txt", i18n("modpack.files.optionsshaders_txt")),
+            pair("minecraft/mods/VoxelMods", i18n("modpack.files.mods.voxelmods")),
+            pair("minecraft/dumps", i18n("modpack.files.dumps")),
+            pair("minecraft/blueprints", i18n("modpack.files.blueprints")),
+            pair("minecraft/scripts", i18n("modpack.files.scripts"))
     );
 }

@@ -65,8 +65,6 @@ import org.jackhuang.hmcl.ui.wizard.*;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.i18n.Locales;
-
 import java.io.File;
 import java.util.Locale;
 import java.util.Queue;

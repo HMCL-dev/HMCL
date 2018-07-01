@@ -26,7 +26,7 @@ import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.wizard.AbstractWizardDisplayer;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.i18n.I18n;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.util.Map;
 
@@ -39,7 +39,7 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
             Controllers.navigate(null);
         });
 
-        pane.setTitle(I18n.i18n("message.doing"));
+        pane.setTitle(i18n("message.doing"));
         pane.setProgress(Double.MAX_VALUE);
         if (settings.containsKey("title")) {
             Object title = settings.get("title");
@@ -67,7 +67,7 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
                             if (settings.containsKey("success_message") && settings.get("success_message") instanceof String)
                                 Controllers.dialog((String) settings.get("success_message"), null, MessageBox.FINE_MESSAGE, () -> Controllers.navigate(null));
                             else if (!settings.containsKey("forbid_success_message"))
-                                Controllers.dialog(I18n.i18n("message.success"), null, MessageBox.FINE_MESSAGE, () -> Controllers.navigate(null));
+                                Controllers.dialog(i18n("message.success"), null, MessageBox.FINE_MESSAGE, () -> Controllers.navigate(null));
                         } else {
                             if (executor.getLastException() == null)
                                 return;
@@ -75,7 +75,7 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
                             if (settings.containsKey("failure_message") && settings.get("failure_message") instanceof String)
                                 Controllers.dialog(appendix, (String) settings.get("failure_message"), MessageBox.ERROR_MESSAGE, () -> Controllers.navigate(null));
                             else if (!settings.containsKey("forbid_failure_message"))
-                                Controllers.dialog(appendix, I18n.i18n("wizard.failed"), MessageBox.ERROR_MESSAGE, () -> Controllers.navigate(null));
+                                Controllers.dialog(appendix, i18n("wizard.failed"), MessageBox.ERROR_MESSAGE, () -> Controllers.navigate(null));
                         }
 
                     });

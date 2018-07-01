@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.i18n.I18n;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -114,7 +114,7 @@ public class AppDataUpgrader extends IUpgrader {
                     Task task = new AppDataUpgraderJarTask(NetworkUtils.toURL(map.get("jar")), version.toString(), hash);
                     TaskExecutor executor = task.executor();
                     AtomicReference<Region> region = new AtomicReference<>();
-                    JFXUtilities.runInFX(() -> region.set(Controllers.taskDialog(executor, I18n.i18n("message.downloading"), "", null)));
+                    JFXUtilities.runInFX(() -> region.set(Controllers.taskDialog(executor, i18n("message.downloading"), "", null)));
                     if (executor.test()) {
                         new ProcessBuilder(JavaVersion.fromCurrentEnvironment().getBinary().getAbsolutePath(), "-jar", AppDataUpgraderJarTask.getSelf(version.toString()).getAbsolutePath())
                                 .directory(new File("").getAbsoluteFile()).start();
@@ -132,7 +132,7 @@ public class AppDataUpgrader extends IUpgrader {
                     Task task = new AppDataUpgraderPackGzTask(NetworkUtils.toURL(map.get("pack")), version.toString(), hash);
                     TaskExecutor executor = task.executor();
                     AtomicReference<Region> region = new AtomicReference<>();
-                    JFXUtilities.runInFX(() -> region.set(Controllers.taskDialog(executor, I18n.i18n("message.downloading"), "", null)));
+                    JFXUtilities.runInFX(() -> region.set(Controllers.taskDialog(executor, i18n("message.downloading"), "", null)));
                     if (executor.test()) {
                         new ProcessBuilder(JavaVersion.fromCurrentEnvironment().getBinary().getAbsolutePath(), "-jar", AppDataUpgraderPackGzTask.getSelf(version.toString()).getAbsolutePath())
                                 .directory(new File("").getAbsoluteFile()).start();
@@ -154,7 +154,7 @@ public class AppDataUpgrader extends IUpgrader {
                 } catch (URISyntaxException | IOException e) {
                     Logging.LOG.log(Level.SEVERE, "Failed to browse uri: " + url, e);
                     OperatingSystem.setClipboard(url);
-                    MessageBox.show(I18n.i18n("update.no_browser"));
+                    MessageBox.show(i18n("update.no_browser"));
                 }
             }
         })).start();

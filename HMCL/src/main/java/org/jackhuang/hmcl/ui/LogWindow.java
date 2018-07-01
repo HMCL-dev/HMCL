@@ -39,10 +39,11 @@ import org.jackhuang.hmcl.util.IOUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.i18n.I18n;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -64,7 +65,7 @@ public final class LogWindow extends Stage {
     public LogWindow() {
         setScene(new Scene(impl, 800, 480));
         getScene().getStylesheets().addAll(Settings.INSTANCE.getTheme().getStylesheets());
-        setTitle(I18n.i18n("logwindow.title"));
+        setTitle(i18n("logwindow.title"));
         getIcons().add(new Image("/assets/img/icon.png"));
     }
 

@@ -30,12 +30,11 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.i18n.I18n;
-
 import java.io.File;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class DownloadWizardProvider implements WizardProvider {
     private Profile profile;
@@ -78,8 +77,8 @@ public final class DownloadWizardProvider implements WizardProvider {
 
     @Override
     public Object finish(Map<String, Object> settings) {
-        settings.put("success_message", I18n.i18n("install.success"));
-        settings.put("failure_message", I18n.i18n("install.failed"));
+        settings.put("success_message", i18n("install.success"));
+        settings.put("failure_message", i18n("install.failed"));
 
         switch (Lang.parseInt(settings.get(InstallTypePage.INSTALL_TYPE), -1)) {
             case 0: return finishVersionDownloadingAsync(settings);
@@ -98,7 +97,7 @@ public final class DownloadWizardProvider implements WizardProvider {
                 int subStep = Lang.parseInt(settings.get(InstallTypePage.INSTALL_TYPE), -1);
                 switch (subStep) {
                     case 0:
-                        return new VersionsPage(controller, I18n.i18n("install.installer.choose", I18n.i18n("install.installer.game")), "", provider, "game", () -> controller.onNext(new InstallersPage(controller, profile.getRepository(), provider)));
+                        return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.game")), "", provider, "game", () -> controller.onNext(new InstallersPage(controller, profile.getRepository(), provider)));
                     case 1:
                         return new ModpackPage(controller);
                     default:

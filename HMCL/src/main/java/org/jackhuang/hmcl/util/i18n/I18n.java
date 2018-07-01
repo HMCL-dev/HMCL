@@ -30,7 +30,7 @@ public final class I18n {
     private I18n() {}
 
     public static String i18n(String key, Object... formatArgs) {
-        return String.format(I18n.i18n(key), formatArgs);
+        return String.format(i18n(key), formatArgs);
     }
 
     public static String i18n(String key) {

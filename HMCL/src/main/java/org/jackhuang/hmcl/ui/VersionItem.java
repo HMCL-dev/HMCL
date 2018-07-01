@@ -36,7 +36,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.TextAlignment;
 
 import org.jackhuang.hmcl.setting.Theme;
-import org.jackhuang.hmcl.util.i18n.I18n;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.util.Optional;
 
@@ -176,10 +176,10 @@ public final class VersionItem extends StackPane {
         btnScript.setGraphic(SVG.script(Theme.blackFillBinding(), 15, 15));
 
         JFXUtilities.runInFX(() -> {
-            FXUtils.installTooltip(btnSettings, I18n.i18n("version.settings"));
-            FXUtils.installTooltip(btnUpdate, I18n.i18n("version.update"));
-            FXUtils.installTooltip(btnLaunch, I18n.i18n("version.launch"));
-            FXUtils.installTooltip(btnScript, I18n.i18n("version.launch_script"));
+            FXUtils.installTooltip(btnSettings, i18n("version.settings"));
+            FXUtils.installTooltip(btnUpdate, i18n("version.update"));
+            FXUtils.installTooltip(btnLaunch, i18n("version.launch"));
+            FXUtils.installTooltip(btnScript, i18n("version.launch_script"));
         });
 
         icon.translateYProperty().bind(Bindings.createDoubleBinding(() -> header.getBoundsInParent().getHeight() - icon.getHeight() / 2 - 16, header.boundsInParentProperty(), icon.heightProperty()));

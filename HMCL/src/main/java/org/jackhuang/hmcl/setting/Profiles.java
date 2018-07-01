@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import org.jackhuang.hmcl.util.i18n.I18n;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Profiles {
 
@@ -30,9 +30,9 @@ public final class Profiles {
     public static String getProfileDisplayName(Profile profile) {
         switch (profile.getName()) {
             case Profiles.DEFAULT_PROFILE:
-                return I18n.i18n("profile.default");
+                return i18n("profile.default");
             case Profiles.HOME_PROFILE:
-                return I18n.i18n("profile.home");
+                return i18n("profile.home");
             default:
                 return profile.getName();
         }

@@ -31,7 +31,7 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.util.i18n.I18n;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.File;
 
@@ -55,7 +55,7 @@ public class FileItem extends BorderPane {
         right.setGraphic(SVG.pencil(Theme.blackFillBinding(), 15, 15));
         right.getStyleClass().add("toggle-icon4");
         right.setOnMouseClicked(e -> onExplore());
-        FXUtils.installTooltip(right, I18n.i18n("button.edit"));
+        FXUtils.installTooltip(right, i18n("button.edit"));
         setRight(right);
 
         Tooltip tip = new Tooltip();

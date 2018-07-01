@@ -30,7 +30,7 @@ import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.construct.FileItem;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.i18n.I18n;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.File;
 import java.util.Optional;
@@ -55,7 +55,7 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
         String profileDisplayName = Optional.ofNullable(profile).map(Profiles::getProfileDisplayName).orElse("");
 
         title = new SimpleStringProperty(this, "title",
-                profile == null ? I18n.i18n("profile.new") : I18n.i18n("profile") + " - " + profileDisplayName);
+                profile == null ? i18n("profile.new") : i18n("profile") + " - " + profileDisplayName);
         location = new SimpleStringProperty(this, "location",
                 Optional.ofNullable(profile).map(Profile::getGameDir).map(File::getAbsolutePath).orElse(""));
 

@@ -21,10 +21,9 @@ import javafx.application.Platform;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.ui.CrashWindow;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
-import org.jackhuang.hmcl.util.i18n.I18n;
-
 import static java.util.Collections.newSetFromMap;
 import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -42,19 +41,19 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
     private static final Map<String, String> SOURCE = new HashMap<String, String>() {
         {
-            put("javafx.fxml.LoadException", I18n.i18n("crash.NoClassDefFound"));
-            put("Location is not set", I18n.i18n("crash.NoClassDefFound"));
-            put("UnsatisfiedLinkError", I18n.i18n("crash.user_fault"));
-            put("java.lang.NoClassDefFoundError", I18n.i18n("crash.NoClassDefFound"));
-            put("java.lang.VerifyError", I18n.i18n("crash.NoClassDefFound"));
-            put("java.lang.NoSuchMethodError", I18n.i18n("crash.NoClassDefFound"));
-            put("java.lang.NoSuchFieldError", I18n.i18n("crash.NoClassDefFound"));
-            put("netscape.javascript.JSException", I18n.i18n("crash.NoClassDefFound"));
-            put("java.lang.IncompatibleClassChangeError", I18n.i18n("crash.NoClassDefFound"));
-            put("java.lang.ClassFormatError", I18n.i18n("crash.NoClassDefFound"));
+            put("javafx.fxml.LoadException", i18n("crash.NoClassDefFound"));
+            put("Location is not set", i18n("crash.NoClassDefFound"));
+            put("UnsatisfiedLinkError", i18n("crash.user_fault"));
+            put("java.lang.NoClassDefFoundError", i18n("crash.NoClassDefFound"));
+            put("java.lang.VerifyError", i18n("crash.NoClassDefFound"));
+            put("java.lang.NoSuchMethodError", i18n("crash.NoClassDefFound"));
+            put("java.lang.NoSuchFieldError", i18n("crash.NoClassDefFound"));
+            put("netscape.javascript.JSException", i18n("crash.NoClassDefFound"));
+            put("java.lang.IncompatibleClassChangeError", i18n("crash.NoClassDefFound"));
+            put("java.lang.ClassFormatError", i18n("crash.NoClassDefFound"));
             put("java.lang.OutOfMemoryError", "FUCKING MEMORY LIMIT!");
-            put("Trampoline", I18n.i18n("launcher.update_java"));
-            put("com.sun.javafx.css.StyleManager.findMatchingStyles", I18n.i18n("launcher.update_java"));
+            put("Trampoline", i18n("launcher.update_java"));
+            put("com.sun.javafx.css.StyleManager.findMatchingStyles", i18n("launcher.update_java"));
             put("NoSuchAlgorithmException", "Has your operating system been installed completely or is a ghost system?");
         }
     };

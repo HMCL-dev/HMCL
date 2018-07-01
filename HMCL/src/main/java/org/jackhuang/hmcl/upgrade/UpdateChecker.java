@@ -29,9 +29,8 @@ import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.NetworkUtils;
 import org.jackhuang.hmcl.util.VersionNumber;
-import org.jackhuang.hmcl.util.i18n.I18n;
-
 import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -93,7 +92,7 @@ public final class UpdateChecker {
                 if (value == null) {
                     LOG.warning("Unable to check update...");
                     if (showMessage)
-                        MessageBox.show(I18n.i18n("update.failed"));
+                        MessageBox.show(i18n("update.failed"));
                 } else if (base.compareTo(value) < 0)
                     outOfDate = true;
                 if (outOfDate)

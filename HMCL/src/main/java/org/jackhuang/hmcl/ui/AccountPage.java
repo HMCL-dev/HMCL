@@ -39,7 +39,7 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
-import org.jackhuang.hmcl.util.i18n.I18n;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.util.Optional;
 
@@ -74,7 +74,7 @@ public class AccountPage extends StackPane implements DecoratorPage {
         this.account = account;
         this.item = item;
 
-        title = new SimpleStringProperty(this, "title", I18n.i18n("account") + " - " + account.getCharacter());
+        title = new SimpleStringProperty(this, "title", i18n("account") + " - " + account.getCharacter());
 
         FXUtils.loadFXML(this, "/assets/fxml/account.fxml");
 

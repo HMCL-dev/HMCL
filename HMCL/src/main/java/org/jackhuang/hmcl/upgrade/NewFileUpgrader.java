@@ -26,8 +26,6 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.VersionNumber;
-import org.jackhuang.hmcl.util.i18n.I18n;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -36,6 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
  *
@@ -58,11 +57,11 @@ public class NewFileUpgrader extends IUpgrader {
         URL url = requestDownloadLink();
         if (url == null) return;
         File newf = new File(url.getFile());
-        Controllers.dialog(I18n.i18n("message.downloading"));
+        Controllers.dialog(i18n("message.downloading"));
         Task task = new FileDownloadTask(url, newf);
         TaskExecutor executor = task.executor();
         AtomicReference<Region> region = new AtomicReference<>();
-        JFXUtilities.runInFX(() -> region.set(Controllers.taskDialog(executor, I18n.i18n("message.downloading"), "", null)));
+        JFXUtilities.runInFX(() -> region.set(Controllers.taskDialog(executor, i18n("message.downloading"), "", null)));
         if (executor.test()) {
             try {
                 new ProcessBuilder(newf.getCanonicalPath(), "--removeOldLauncher", getRealPath())

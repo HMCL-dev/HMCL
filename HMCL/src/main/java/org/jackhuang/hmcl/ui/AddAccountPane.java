@@ -49,10 +49,9 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.i18n.I18n;
-
 import static org.jackhuang.hmcl.ui.FXUtils.jfxListCellFactory;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.util.List;
 import java.util.Optional;
@@ -83,13 +82,13 @@ public class AddAccountPane extends StackPane {
         cboServers.setCellFactory(jfxListCellFactory(server -> new TwoLineListItem(server.getName(), server.getUrl())));
         cboServers.setConverter(stringConverter(AuthlibInjectorServer::getName));
         cboServers.setItems(Settings.SETTINGS.authlibInjectorServers);
-        cboServers.setPromptText(I18n.i18n("general.prompt.empty"));
+        cboServers.setPromptText(i18n("general.prompt.empty"));
 
         // workaround: otherwise the combox will be black
         if (!cboServers.getItems().isEmpty())
             cboServers.getSelectionModel().select(0);
 
-        cboType.getItems().setAll(I18n.i18n("account.methods.offline"), I18n.i18n("account.methods.yggdrasil"), I18n.i18n("account.methods.authlib_injector"));
+        cboType.getItems().setAll(i18n("account.methods.offline"), i18n("account.methods.yggdrasil"), i18n("account.methods.authlib_injector"));
         cboType.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> {
             txtPassword.setVisible(newValue.intValue() != 0);
             lblPassword.setVisible(newValue.intValue() != 0);
@@ -102,7 +101,7 @@ public class AddAccountPane extends StackPane {
 
         txtPassword.setOnAction(e -> onCreationAccept());
         txtUsername.setOnAction(e -> onCreationAccept());
-        txtUsername.getValidators().add(new Validator(I18n.i18n("input.email"), str -> !txtPassword.isVisible() || str.contains("@")));
+        txtUsername.getValidators().add(new Validator(i18n("input.email"), str -> !txtPassword.isVisible() || str.contains("@")));
 
         txtUsername.textProperty().addListener(it -> validateAcceptButton());
         txtPassword.textProperty().addListener(it -> validateAcceptButton());
@@ -135,7 +134,7 @@ public class AddAccountPane extends StackPane {
                 if (server.isPresent()) {
                     addtionalData = server.get();
                 } else {
-                    lblCreationWarning.setText(I18n.i18n("account.failed.no_selected_server"));
+                    lblCreationWarning.setText(i18n("account.failed.no_selected_server"));
                     return;
                 }
                 break;
@@ -190,11 +189,11 @@ public class AddAccountPane extends StackPane {
         {
             setStyle("-fx-padding: 8px;");
 
-            cancel.setText(I18n.i18n("button.cancel"));
+            cancel.setText(i18n("button.cancel"));
             StackPane.setAlignment(cancel, Pos.BOTTOM_RIGHT);
             cancel.setOnMouseClicked(e -> latch.countDown());
 
-            listBox.startCategory(I18n.i18n("account.choose"));
+            listBox.startCategory(i18n("account.choose"));
 
             setCenter(listBox);
 
@@ -255,19 +254,19 @@ public class AddAccountPane extends StackPane {
 
     public static String accountException(Exception exception) {
         if (exception instanceof NoCharacterException) {
-            return I18n.i18n("account.failed.no_character");
+            return i18n("account.failed.no_character");
         } else if (exception instanceof ServerDisconnectException) {
-            return I18n.i18n("account.failed.connect_authentication_server");
+            return i18n("account.failed.connect_authentication_server");
         } else if (exception instanceof RemoteAuthenticationException) {
             RemoteAuthenticationException remoteException = (RemoteAuthenticationException) exception;
             String remoteMessage = remoteException.getRemoteMessage();
             if ("ForbiddenOperationException".equals(remoteException.getRemoteName()) && remoteMessage != null) {
                 if (remoteMessage.contains("Invalid credentials"))
-                    return I18n.i18n("account.failed.invalid_credentials");
+                    return i18n("account.failed.invalid_credentials");
                 else if (remoteMessage.contains("Invalid token"))
-                    return I18n.i18n("account.failed.invalid_token");
+                    return i18n("account.failed.invalid_token");
                 else if (remoteMessage.contains("Invalid username or password"))
-                    return I18n.i18n("account.failed.invalid_password");
+                    return i18n("account.failed.invalid_password");
             }
             return exception.getMessage();
         } else {
@@ -276,9 +275,9 @@ public class AddAccountPane extends StackPane {
     }
 
     public static String accountType(Account account) {
-        if (account instanceof OfflineAccount) return I18n.i18n("account.methods.offline");
-        else if (account instanceof AuthlibInjectorAccount) return I18n.i18n("account.methods.authlib_injector");
-        else if (account instanceof YggdrasilAccount) return I18n.i18n("account.methods.yggdrasil");
-        else throw new Error(I18n.i18n("account.methods.no_method") + ": " + account);
+        if (account instanceof OfflineAccount) return i18n("account.methods.offline");
+        else if (account instanceof AuthlibInjectorAccount) return i18n("account.methods.authlib_injector");
+        else if (account instanceof YggdrasilAccount) return i18n("account.methods.yggdrasil");
+        else throw new Error(i18n("account.methods.no_method") + ": " + account);
     }
 }

@@ -22,9 +22,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 
-import java.util.function.Consumer;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-import org.jackhuang.hmcl.util.i18n.I18n;
+import java.util.function.Consumer;
 
 /**
  * @author huangyuhui
@@ -45,7 +45,7 @@ public class InstallerItem extends BorderPane {
         setStyle("-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;");
         JFXDepthManager.setDepth(this, 1);
         lblInstallerArtifact.setText(artifact);
-        lblInstallerVersion.setText(I18n.i18n("archive.version") + ": " + version);
+        lblInstallerVersion.setText(i18n("archive.version") + ": " + version);
     }
 
     @FXML

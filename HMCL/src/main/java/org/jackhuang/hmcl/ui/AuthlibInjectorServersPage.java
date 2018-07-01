@@ -18,14 +18,13 @@ import org.jackhuang.hmcl.ui.animation.TransitionHandler;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.NetworkUtils;
-import org.jackhuang.hmcl.util.i18n.I18n;
-
 import static java.util.stream.Collectors.toList;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.IOException;
 
 public class AuthlibInjectorServersPage extends StackPane implements DecoratorPage {
-    private final StringProperty title = new SimpleStringProperty(this, "title", I18n.i18n("account.injector.server"));
+    private final StringProperty title = new SimpleStringProperty(this, "title", i18n("account.injector.server"));
 
     @FXML private ScrollPane scrollPane;
     @FXML private StackPane addServerContainer;
@@ -154,7 +153,7 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
 
     private String resolveFetchExceptionMessage(Throwable exception) {
         if (exception instanceof IOException) {
-            return I18n.i18n("account.failed.connect_injector_server");
+            return i18n("account.failed.connect_injector_server");
         } else {
             return exception.getClass() + ": " + exception.getLocalizedMessage();
         }

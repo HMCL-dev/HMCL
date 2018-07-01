@@ -16,10 +16,11 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.util.i18n.I18n;
 
 @DefaultProperty("image")
 public final class ImagePickerItem extends BorderPane {
@@ -42,7 +43,7 @@ public final class ImagePickerItem extends BorderPane {
         selectButton.onMouseClickedProperty().bind(onSelectButtonClicked);
         selectButton.getStyleClass().add("toggle-icon4");
 
-        FXUtils.installTooltip(selectButton, I18n.i18n("button.edit"));
+        FXUtils.installTooltip(selectButton, i18n("button.edit"));
 
         HBox hBox = new HBox();
         hBox.getChildren().setAll(imageView, selectButton);
