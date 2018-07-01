@@ -203,7 +203,7 @@ public final class FXUtils {
     }
 
     public static void loadFXML(Node node, String absolutePath) {
-        FXMLLoader loader = new FXMLLoader(node.getClass().getResource(absolutePath), I18n.RESOURCE_BUNDLE);
+        FXMLLoader loader = new FXMLLoader(node.getClass().getResource(absolutePath), I18n.getResourceBundle());
         loader.setRoot(node);
         loader.setController(node);
         Lang.invoke((ExceptionalSupplier<Object, IOException>) loader::load);

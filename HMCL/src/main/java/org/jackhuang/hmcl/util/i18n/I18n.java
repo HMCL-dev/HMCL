@@ -17,17 +17,32 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
+import static org.jackhuang.hmcl.util.Logging.LOG;
+
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 
 import org.jackhuang.hmcl.setting.Settings;
-import org.jackhuang.hmcl.util.Logging;
 
 public final class I18n {
 
-    public static final ResourceBundle RESOURCE_BUNDLE = Settings.INSTANCE.getLocale().getResourceBundle();
-
     private I18n() {}
+
+    private static ResourceBundle RESOURCE_BUNDLE;
+
+    static {
+        try {
+            RESOURCE_BUNDLE = Settings.INSTANCE.getLocale().getResourceBundle();
+        } catch (Throwable e) {
+            LOG.log(Level.SEVERE, "Settings cannot be initialized", e);
+            // fallback
+            RESOURCE_BUNDLE = Locales.DEFAULT.getResourceBundle();
+        }
+    }
+
+    public static ResourceBundle getResourceBundle() {
+        return RESOURCE_BUNDLE;
+    }
 
     public static String i18n(String key, Object... formatArgs) {
         return String.format(i18n(key), formatArgs);
@@ -35,9 +50,9 @@ public final class I18n {
 
     public static String i18n(String key) {
         try {
-            return RESOURCE_BUNDLE.getString(key);
+            return getResourceBundle().getString(key);
         } catch (Exception e) {
-            Logging.LOG.log(Level.SEVERE, "Cannot find key " + key + " in resource bundle", e);
+            LOG.log(Level.SEVERE, "Cannot find key " + key + " in resource bundle", e);
             return key;
         }
     }
