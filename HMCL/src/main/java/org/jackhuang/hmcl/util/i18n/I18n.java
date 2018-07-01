@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.i18n;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
+import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 
@@ -28,20 +29,18 @@ public final class I18n {
 
     private I18n() {}
 
-    private static ResourceBundle RESOURCE_BUNDLE;
+    private static ResourceBundle RESOURCE_BUNDLE = null;
 
     static {
         try {
             RESOURCE_BUNDLE = Settings.INSTANCE.getLocale().getResourceBundle();
         } catch (Throwable e) {
             LOG.log(Level.SEVERE, "Settings cannot be initialized", e);
-            // fallback
-            RESOURCE_BUNDLE = Locales.DEFAULT.getResourceBundle();
         }
     }
 
     public static ResourceBundle getResourceBundle() {
-        return RESOURCE_BUNDLE;
+        return RESOURCE_BUNDLE == null ? Locales.DEFAULT.getResourceBundle() : RESOURCE_BUNDLE;
     }
 
     public static String i18n(String key, Object... formatArgs) {
@@ -51,7 +50,7 @@ public final class I18n {
     public static String i18n(String key) {
         try {
             return getResourceBundle().getString(key);
-        } catch (Exception e) {
+        } catch (MissingResourceException e) {
             LOG.log(Level.SEVERE, "Cannot find key " + key + " in resource bundle", e);
             return key;
         }
