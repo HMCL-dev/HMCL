@@ -17,10 +17,19 @@
  */
 package org.jackhuang.hmcl;
 
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.File;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
+import java.util.logging.Level;
 
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import javax.swing.JOptionPane;
 
 public final class Main {
@@ -28,6 +37,7 @@ public final class Main {
     public static void main(String[] args) {
         checkJavaFX();
         checkDirectoryPath();
+        checkDSTRootCAX3();
         Launcher.main(args);
     }
 
@@ -48,11 +58,45 @@ public final class Main {
         }
     }
 
+    private static void checkDSTRootCAX3() {
+        TrustManagerFactory tmf;
+        try {
+            tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init((KeyStore) null);
+        } catch (NoSuchAlgorithmException | KeyStoreException e) {
+            LOG.log(Level.WARNING, "Failed to init TrustManagerFactory", e);
+            // don't know what to do here
+            return;
+        }
+        for (TrustManager tm : tmf.getTrustManagers()) {
+            if (tm instanceof X509TrustManager) {
+                for (X509Certificate cert : ((X509TrustManager) tm).getAcceptedIssuers()) {
+                    if ("CN=DST Root CA X3, O=Digital Signature Trust Co.".equals((cert.getSubjectDN().getName()))) {
+                        return;
+                    }
+                }
+            }
+        }
+        showWarningAndContinue(i18n("fatal.missing_dst_root_ca_x3"));
+    }
+
+    /**
+     * Indicates that a fatal error has occurred, and that the application cannot start.
+     */
     private static void showErrorAndExit(String message) {
         System.err.println(message);
         System.err.println("A fatal error has occurred, forcibly exiting.");
         JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
         System.exit(1);
+    }
+
+    /**
+     * Indicates that potential issues have been detected, and that the application may not function properly (but it can still run).
+     */
+    private static void showWarningAndContinue(String message) {
+        System.err.println(message);
+        System.err.println("Potential issues have been detected.");
+        JOptionPane.showMessageDialog(null, message, "Warning", JOptionPane.WARNING_MESSAGE);
     }
 
 }
