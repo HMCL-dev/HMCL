@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl;
 
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+
 import java.io.File;
 
 import javax.swing.JOptionPane;
@@ -42,9 +44,7 @@ public final class Main {
         try {
             Class.forName("javafx.application.Application");
         } catch (ClassNotFoundException e) {
-            showErrorAndExit("JavaFX is missing.\n"
-                    + "If you are using Java 11 or above, please downgrade to Java 8 or 10.\n"
-                    + "If you are using OpenJDK, please ensure OpenJFX is included.");
+            showErrorAndExit(i18n("fatal.missing_javafx"));
         }
     }
 
