@@ -40,7 +40,6 @@ import org.jackhuang.hmcl.ui.LogWindow;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.i18n.I18nException;
 
 import java.io.File;
 import java.io.IOException;
@@ -182,10 +181,17 @@ public final class LauncherHelper {
                             Exception ex = executor.getLastException();
                             if (ex != null) {
                                 String message;
-                                if (ex instanceof CurseCompletionException)
+                                if (ex instanceof CurseCompletionException) {
                                     message = i18n("modpack.type.curse.error");
-                                else
-                                    message = I18nException.getStackTrace(ex);
+                                } else if (ex instanceof PermissionException) {
+                                    message = i18n("launch.failed.executable_permission");
+                                } else if (ex instanceof ProcessCreationException) {
+                                    message = i18n("launch.failed.creating_process") + ex.getLocalizedMessage();
+                                } else if (ex instanceof NotDecompressingNativesException) {
+                                    message = i18n("launch.failed.decompressing_natives") + ex.getLocalizedMessage();
+                                } else {
+                                    message = StringUtils.getStackTrace(ex);
+                                }
                                 Controllers.dialog(message,
                                         scriptFile == null ? i18n("launch.failed") : i18n("version.launch_script.failed"),
                                         MessageBox.ERROR_MESSAGE);
@@ -298,15 +304,7 @@ public final class LauncherHelper {
 
         @Override
         public void execute() throws Exception {
-            try {
-                setResult(supplier.get());
-            } catch (PermissionException e) {
-                throw new I18nException(i18n("launch.failed.executable_permission"), e);
-            } catch (ProcessCreationException e) {
-                throw new I18nException(i18n("launch.failed.creating_process") + e.getLocalizedMessage(), e);
-            } catch (NotDecompressingNativesException e) {
-                throw new I18nException(i18n("launch.failed.decompressing_natives") + e.getLocalizedMessage(), e);
-            }
+            setResult(supplier.get());
         }
 
         @Override
