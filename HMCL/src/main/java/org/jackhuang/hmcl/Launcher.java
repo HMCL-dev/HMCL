@@ -160,7 +160,7 @@ public final class Launcher extends Application {
     public static final IUpgrader UPGRADER = new AppDataUpgrader();
     public static final CrashReporter CRASH_REPORTER = new CrashReporter();
 
-    public static final String UPDATE_SERVER = "https://hmcl.huangyuhui.net";
+    public static final String UPDATE_SERVER = "https://www.huangyuhui.net";
     public static final String CONTACT = UPDATE_SERVER + "/hmcl.php";
     public static final String PUBLISH = "http://www.mcbbs.net/thread-142335-1-1.html";
 }
