@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.effects.JFXDepthManager;
@@ -40,7 +41,9 @@ public final class ModItem extends BorderPane {
         setCenter(modItem);
 
         JFXButton btnRemove = new JFXButton();
-        FXUtils.installTooltip(btnRemove, Launcher.i18n("mods.remove"));
+        JFXUtilities.runInFX(() -> {
+            FXUtils.installTooltip(btnRemove, Launcher.i18n("mods.remove"));
+        });
         btnRemove.setOnMouseClicked(e -> deleteCallback.accept(this));
         btnRemove.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
