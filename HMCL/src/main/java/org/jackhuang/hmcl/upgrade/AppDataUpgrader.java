@@ -23,6 +23,7 @@ import com.jfoenix.concurrency.JFXUtilities;
 import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -182,7 +183,7 @@ public class AppDataUpgrader extends IUpgrader {
 
         @Override
         public Collection<Task> getDependents() {
-            return Collections.singleton(new FileDownloadTask(downloadLink, tempFile, Proxy.NO_PROXY, hash));
+            return Collections.singleton(new FileDownloadTask(downloadLink, tempFile, Proxy.NO_PROXY, new IntegrityCheck("SHA-1", hash)));
         }
 
         @Override
@@ -232,7 +233,7 @@ public class AppDataUpgrader extends IUpgrader {
 
         @Override
         public Collection<Task> getDependents() {
-            return Collections.singleton(new FileDownloadTask(downloadLink, tempFile, Proxy.NO_PROXY, hash));
+            return Collections.singleton(new FileDownloadTask(downloadLink, tempFile, Proxy.NO_PROXY, new IntegrityCheck("SHA-1", hash)));
         }
 
         @Override

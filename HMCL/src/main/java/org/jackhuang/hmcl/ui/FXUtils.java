@@ -46,7 +46,6 @@ import javafx.util.Duration;
 import javafx.util.StringConverter;
 
 import org.jackhuang.hmcl.Launcher;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.util.*;
 
 import java.io.File;

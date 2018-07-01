@@ -4,6 +4,7 @@ import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.IOUtils;
@@ -48,7 +49,7 @@ public final class LibraryDownloadTask extends Task {
         setSignificance(TaskSignificance.MODERATE);
 
         task = new FileDownloadTask(NetworkUtils.toURL(url),
-                file, dependencyManager.getProxy(), library.getDownload().getSha1());
+                file, dependencyManager.getProxy(), new IntegrityCheck("SHA-1", library.getDownload().getSha1()));
     }
 
     @Override

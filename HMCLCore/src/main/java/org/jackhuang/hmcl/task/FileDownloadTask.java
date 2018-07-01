@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.event.FailedEvent;
+import org.jackhuang.hmcl.util.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.IOUtils;
 import org.jackhuang.hmcl.util.Logging;
@@ -35,6 +36,7 @@ import java.net.URL;
 import java.security.MessageDigest;
 import java.util.logging.Level;
 
+import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.DigestUtils.getDigest;
 
 /**
@@ -44,9 +46,38 @@ import static org.jackhuang.hmcl.util.DigestUtils.getDigest;
  */
 public class FileDownloadTask extends Task {
 
+    public static class IntegrityCheck {
+        private String algorithm;
+        private String checksum;
+
+        public IntegrityCheck(String algorithm, String checksum) {
+            this.algorithm = requireNonNull(algorithm);
+            this.checksum = requireNonNull(checksum);
+        }
+
+        public String getAlgorithm() {
+            return algorithm;
+        }
+
+        public String getChecksum() {
+            return checksum;
+        }
+
+        public MessageDigest createDigest() {
+            return getDigest(algorithm);
+        }
+
+        public void performCheck(MessageDigest digest) throws ChecksumMismatchException {
+            String actualChecksum = String.format("%1$040x", new BigInteger(1, digest.digest()));
+            if (!checksum.equalsIgnoreCase(actualChecksum)) {
+                throw new ChecksumMismatchException(algorithm, checksum, actualChecksum);
+            }
+        }
+    }
+
     private final URL url;
     private final File file;
-    private final String hash;
+    private final IntegrityCheck integrityCheck;
     private final int retry;
     private final Proxy proxy;
     private final EventManager<FailedEvent<URL>> onFailed = new EventManager<>();
@@ -74,23 +105,23 @@ public class FileDownloadTask extends Task {
      * @param url the URL of remote file.
      * @param file the location that download to.
      * @param proxy the proxy.
-     * @param hash the SHA-1 hash code of remote file, null if the hash is unknown or it is no need to check the hash code.
+     * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
      */
-    public FileDownloadTask(URL url, File file, Proxy proxy, String hash) {
-        this(url, file, proxy, hash, 5);
+    public FileDownloadTask(URL url, File file, Proxy proxy, IntegrityCheck integrityCheck) {
+        this(url, file, proxy, integrityCheck, 5);
     }
 
     /**
      * @param url the URL of remote file.
      * @param file the location that download to.
-     * @param hash the SHA-1 hash code of remote file, null if the hash is unknown or it is no need to check the hash code.
+     * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
      * @param retry the times for retrying if downloading fails.
      * @param proxy the proxy.
      */
-    public FileDownloadTask(URL url, File file, Proxy proxy, String hash, int retry) {
+    public FileDownloadTask(URL url, File file, Proxy proxy, IntegrityCheck integrityCheck, int retry) {
         this.url = url;
         this.file = file;
-        this.hash = hash;
+        this.integrityCheck = integrityCheck;
         this.retry = retry;
         this.proxy = proxy;
 
@@ -159,7 +190,7 @@ public class FileDownloadTask extends Task {
                 temp = FileUtils.createTempFile();
                 rFile = new RandomAccessFile(temp, "rw");
 
-                MessageDigest digest = getDigest("SHA-1");
+                MessageDigest digest = integrityCheck == null ? null : integrityCheck.createDigest();
 
                 stream = con.getInputStream();
                 int lastDownloaded = 0, downloaded = 0;
@@ -175,8 +206,9 @@ public class FileDownloadTask extends Task {
                     if (read == -1)
                         break;
 
-                    if (hash != null)
+                    if (digest != null) {
                         digest.update(buffer, 0, read);
+                    }
 
                     // Write buffer to file.
                     rFile.write(buffer, 0, read);
@@ -214,11 +246,9 @@ public class FileDownloadTask extends Task {
                 if (downloaded != contentLength)
                     throw new IllegalStateException("Unexpected file size: " + downloaded + ", expected: " + contentLength);
 
-                // Check hash code
-                if (hash != null) {
-                    String hashCode = String.format("%1$040x", new BigInteger(1, digest.digest()));
-                    if (!hash.equalsIgnoreCase(hashCode))
-                        throw new IllegalStateException("Unexpected hash code: " + hashCode + ", expected: " + hash);
+                // Integrity check
+                if (integrityCheck != null) {
+                    integrityCheck.performCheck(digest);
                 }
 
                 return;

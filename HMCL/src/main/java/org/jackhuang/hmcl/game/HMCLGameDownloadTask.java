@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Logging;
@@ -70,7 +71,7 @@ public class HMCLGameDownloadTask extends Task {
                 NetworkUtils.toURL(profile.getDependency().getDownloadProvider().injectURL(version.getDownloadInfo().getUrl())),
                 cache,
                 profile.getDependency().getProxy(),
-                version.getDownloadInfo().getSha1()
+                new IntegrityCheck("SHA-1", version.getDownloadInfo().getSha1())
         ).then(Task.of(v -> FileUtils.copyFile(cache, jar))));
     }
 
