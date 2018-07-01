@@ -82,6 +82,10 @@ public final class Launcher extends Application {
             UPGRADER.parseArguments(VersionNumber.asVersion(VERSION), Arrays.asList(args));
 
             Logging.LOG.info("*** " + TITLE + " ***");
+            Logging.LOG.info("Operating System: " + System.getProperty("os.name") + ' ' + OperatingSystem.SYSTEM_VERSION);
+            Logging.LOG.info("Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
+            Logging.LOG.info("Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
+            Logging.LOG.info("Java Home: " + System.getProperty("java.home"));
 
             launch(args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.
