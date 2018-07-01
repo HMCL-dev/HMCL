@@ -20,8 +20,9 @@ package org.jackhuang.hmcl.ui.construct;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextInputDialog;
-import org.jackhuang.hmcl.Launcher;
+
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import javax.swing.*;
 import java.util.Optional;
@@ -30,7 +31,7 @@ public final class MessageBox {
     private MessageBox() {
     }
 
-    private static final String TITLE = Launcher.i18n("message.info");
+    private static final String TITLE = I18n.i18n("message.info");
 
     /**
      * User Operation: Yes

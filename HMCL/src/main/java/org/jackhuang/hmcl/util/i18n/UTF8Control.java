@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -15,7 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui.construct;
+package org.jackhuang.hmcl.util.i18n;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,14 +28,14 @@ import java.util.Locale;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
-public final class UTF8Control extends ResourceBundle.Control {
+final class UTF8Control extends ResourceBundle.Control {
+
     public static final UTF8Control INSTANCE = new UTF8Control();
 
     private UTF8Control() {}
 
     @Override
-    public ResourceBundle newBundle(String baseName, Locale locale, String format, ClassLoader loader, boolean reload)
-    throws IOException {
+    public ResourceBundle newBundle(String baseName, Locale locale, String format, ClassLoader loader, boolean reload) throws IOException {
         // The below is a copy of the default implementation.
         String bundleName = toBundleName(baseName, locale);
         String resourceName = toResourceName(bundleName, "properties");
@@ -54,7 +56,7 @@ public final class UTF8Control extends ResourceBundle.Control {
         if (stream != null) {
             try {
                 // Only this line is changed to make it to read properties files as UTF-8.
-                bundle = new PropertyResourceBundle(new InputStreamReader(stream, "UTF-8"));
+                bundle = new PropertyResourceBundle(new InputStreamReader(stream, UTF_8));
             } finally {
                 stream.close();
             }

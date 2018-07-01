@@ -15,30 +15,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.util;
+package org.jackhuang.hmcl.util.i18n;
 
-public class I18nException extends Exception {
-    private final String localizedMessage;
+import java.util.ResourceBundle;
+import java.util.logging.Level;
 
-    public I18nException(String localizedMessage) {
-        this.localizedMessage = localizedMessage;
+import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.util.Logging;
+
+public final class I18n {
+
+    public static final ResourceBundle RESOURCE_BUNDLE = Settings.INSTANCE.getLocale().getResourceBundle();
+
+    private I18n() {}
+
+    public static String i18n(String key, Object... formatArgs) {
+        return String.format(I18n.i18n(key), formatArgs);
     }
 
-    public I18nException(String localizedMessage, Throwable suppressed) {
-        addSuppressed(suppressed);
-
-        this.localizedMessage = localizedMessage;
+    public static String i18n(String key) {
+        try {
+            return RESOURCE_BUNDLE.getString(key);
+        } catch (Exception e) {
+            Logging.LOG.log(Level.SEVERE, "Cannot find key " + key + " in resource bundle", e);
+            return key;
+        }
     }
 
-    @Override
-    public String getLocalizedMessage() {
-        return localizedMessage;
-    }
-
-    public static String getStackTrace(Throwable e) {
-        if (e instanceof I18nException)
-            return e.getLocalizedMessage();
-        else
-            return StringUtils.getStackTrace(e);
-    }
 }

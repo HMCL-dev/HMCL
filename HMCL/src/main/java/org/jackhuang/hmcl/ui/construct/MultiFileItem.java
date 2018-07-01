@@ -37,19 +37,20 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.Launcher;
+
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.function.Consumer;
 
 public class MultiFileItem extends ComponentList {
-    private final StringProperty customTitle = new SimpleStringProperty(this, "customTitle", Launcher.i18n("selector.custom"));
-    private final StringProperty chooserTitle = new SimpleStringProperty(this, "chooserTitle", Launcher.i18n("selector.choose_file"));
+    private final StringProperty customTitle = new SimpleStringProperty(this, "customTitle", I18n.i18n("selector.custom"));
+    private final StringProperty chooserTitle = new SimpleStringProperty(this, "chooserTitle", I18n.i18n("selector.choose_file"));
     private final BooleanProperty directory = new SimpleBooleanProperty(this, "directory", false);
     private final ObservableList<FileChooser.ExtensionFilter> extensionFilters = FXCollections.observableArrayList();
 
@@ -147,7 +148,7 @@ public class MultiFileItem extends ComponentList {
 
     public void onExploreJavaDir() {
         DirectoryChooser chooser = new DirectoryChooser();
-        chooser.setTitle(Launcher.i18n(getChooserTitle()));
+        chooser.setTitle(I18n.i18n(getChooserTitle()));
         File selectedDir = chooser.showDialog(Controllers.getStage());
         if (selectedDir != null)
             txtCustom.setText(selectedDir.getAbsolutePath());

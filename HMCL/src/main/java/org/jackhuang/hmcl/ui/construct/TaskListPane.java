@@ -23,7 +23,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.Launcher;
+
 import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameAssetRefreshTask;
@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,29 +63,29 @@ public final class TaskListPane extends StackPane {
                     return;
 
                 if (task instanceof GameAssetRefreshTask) {
-                    task.setName(Launcher.i18n("assets.download"));
+                    task.setName(I18n.i18n("assets.download"));
                 } else if (task instanceof GameAssetDownloadTask) {
-                    task.setName(Launcher.i18n("assets.download_all"));
+                    task.setName(I18n.i18n("assets.download_all"));
                 } else if (task instanceof ForgeInstallTask) {
-                    task.setName(Launcher.i18n("install.installer.install", Launcher.i18n("install.installer.forge")));
+                    task.setName(I18n.i18n("install.installer.install", I18n.i18n("install.installer.forge")));
                 } else if (task instanceof LiteLoaderInstallTask) {
-                    task.setName(Launcher.i18n("install.installer.install", Launcher.i18n("install.installer.liteloader")));
+                    task.setName(I18n.i18n("install.installer.install", I18n.i18n("install.installer.liteloader")));
                 } else if (task instanceof OptiFineInstallTask) {
-                    task.setName(Launcher.i18n("install.installer.install", Launcher.i18n("install.installer.optifine")));
+                    task.setName(I18n.i18n("install.installer.install", I18n.i18n("install.installer.optifine")));
                 } else if (task instanceof CurseCompletionTask) {
-                    task.setName(Launcher.i18n("modpack.type.curse.completion"));
+                    task.setName(I18n.i18n("modpack.type.curse.completion"));
                 } else if (task instanceof ModpackInstallTask) {
-                    task.setName(Launcher.i18n("modpack.installing"));
+                    task.setName(I18n.i18n("modpack.installing"));
                 } else if (task instanceof CurseInstallTask) {
-                    task.setName(Launcher.i18n("modpack.install", Launcher.i18n("modpack.type.curse")));
+                    task.setName(I18n.i18n("modpack.install", I18n.i18n("modpack.type.curse")));
                 } else if (task instanceof MultiMCModpackInstallTask) {
-                    task.setName(Launcher.i18n("modpack.install", Launcher.i18n("modpack.type.multimc")));
+                    task.setName(I18n.i18n("modpack.install", I18n.i18n("modpack.type.multimc")));
                 } else if (task instanceof HMCLModpackInstallTask) {
-                    task.setName(Launcher.i18n("modpack.install", Launcher.i18n("modpack.type.hmcl")));
+                    task.setName(I18n.i18n("modpack.install", I18n.i18n("modpack.type.hmcl")));
                 } else if (task instanceof HMCLModpackExportTask) {
-                    task.setName(Launcher.i18n("modpack.export"));
+                    task.setName(I18n.i18n("modpack.export"));
                 } else if (task instanceof MinecraftInstanceTask) {
-                    task.setName(Launcher.i18n("modpack.scan"));
+                    task.setName(I18n.i18n("modpack.scan"));
                 }
 
                 ProgressListNode node = new ProgressListNode(task);

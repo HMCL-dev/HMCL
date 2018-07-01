@@ -53,7 +53,6 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
-import org.jackhuang.hmcl.setting.Locales;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.animation.AnimationProducer;
@@ -66,6 +65,7 @@ import org.jackhuang.hmcl.ui.wizard.*;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.Locales;
 
 import java.io.File;
 import java.util.Locale;

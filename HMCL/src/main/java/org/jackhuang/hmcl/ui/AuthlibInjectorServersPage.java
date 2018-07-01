@@ -8,7 +8,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.Launcher;
+
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -18,13 +18,14 @@ import org.jackhuang.hmcl.ui.animation.TransitionHandler;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.NetworkUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
 
 public class AuthlibInjectorServersPage extends StackPane implements DecoratorPage {
-    private final StringProperty title = new SimpleStringProperty(this, "title", Launcher.i18n("account.injector.server"));
+    private final StringProperty title = new SimpleStringProperty(this, "title", I18n.i18n("account.injector.server"));
 
     @FXML private ScrollPane scrollPane;
     @FXML private StackPane addServerContainer;
@@ -153,7 +154,7 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
 
     private String resolveFetchExceptionMessage(Throwable exception) {
         if (exception instanceof IOException) {
-            return Launcher.i18n("account.failed.connect_injector_server");
+            return I18n.i18n("account.failed.connect_injector_server");
         } else {
             return exception.getClass() + ": " + exception.getLocalizedMessage();
         }

@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -15,24 +15,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.game;
+package org.jackhuang.hmcl.util.i18n;
 
-import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.StringUtils;
 
-public enum LoadingState {
-    DEPENDENCIES("launch.state.dependencies"),
-    MODS("launch.state.modpack"),
-    LOGGING_IN("launch.state.logging_in"),
-    LAUNCHING("launch.state.waiting_launching"),
-    DONE("launch.state.done");
+public class I18nException extends Exception {
+    private final String localizedMessage;
 
-    private final String key;
-
-    LoadingState(String key) {
-        this.key = key;
+    public I18nException(String localizedMessage) {
+        this.localizedMessage = localizedMessage;
     }
 
+    public I18nException(String localizedMessage, Throwable suppressed) {
+        addSuppressed(suppressed);
+
+        this.localizedMessage = localizedMessage;
+    }
+
+    @Override
     public String getLocalizedMessage() {
-        return I18n.i18n(key);
+        return localizedMessage;
+    }
+
+    public static String getStackTrace(Throwable e) {
+        if (e instanceof I18nException)
+            return e.getLocalizedMessage();
+        else
+            return StringUtils.getStackTrace(e);
     }
 }

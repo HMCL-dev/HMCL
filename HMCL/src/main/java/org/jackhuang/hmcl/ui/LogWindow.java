@@ -30,7 +30,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
-import org.jackhuang.hmcl.Launcher;
+
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.game.LauncherHelper;
@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.util.IOUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -63,7 +64,7 @@ public final class LogWindow extends Stage {
     public LogWindow() {
         setScene(new Scene(impl, 800, 480));
         getScene().getStylesheets().addAll(Settings.INSTANCE.getTheme().getStylesheets());
-        setTitle(Launcher.i18n("logwindow.title"));
+        setTitle(I18n.i18n("logwindow.title"));
         getIcons().add(new Image("/assets/img/icon.png"));
     }
 

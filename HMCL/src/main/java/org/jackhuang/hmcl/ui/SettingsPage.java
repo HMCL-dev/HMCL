@@ -42,6 +42,8 @@ import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.Locales;
 
 import java.net.Proxy;
 import java.util.Arrays;
@@ -49,7 +51,7 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 public final class SettingsPage extends StackPane implements DecoratorPage {
-    private final StringProperty title = new SimpleStringProperty(this, "title", Launcher.i18n("settings.launcher"));
+    private final StringProperty title = new SimpleStringProperty(this, "title", I18n.i18n("settings.launcher"));
 
     @FXML
     private JFXTextField txtProxyHost;
@@ -177,12 +179,12 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
 
         fileCommonLocation.setProperty(Settings.INSTANCE.commonPathProperty());
 
-        FXUtils.installTooltip(btnUpdate, Launcher.i18n("update.tooltip"));
+        FXUtils.installTooltip(btnUpdate, I18n.i18n("update.tooltip"));
         checkUpdate();
 
         // background
         backgroundItem.loadChildren(Collections.singletonList(
-                backgroundItem.createChildren(Launcher.i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
+                backgroundItem.createChildren(I18n.i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
         ));
 
         FXUtils.bindString(backgroundItem.getTxtCustom(), Settings.INSTANCE.backgroundImageProperty());
@@ -199,8 +201,8 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
 
         // theme
         JFXColorPicker picker = new JFXColorPicker(Color.web(Settings.INSTANCE.getTheme().getColor()), null);
-        picker.setCustomColorText(Launcher.i18n("color.custom"));
-        picker.setRecentColorsText(Launcher.i18n("color.recent"));
+        picker.setCustomColorText(I18n.i18n("color.custom"));
+        picker.setRecentColorsText(I18n.i18n("color.recent"));
         picker.getCustomColors().setAll(Arrays.stream(Theme.VALUES).map(Theme::getColor).map(Color::web).collect(Collectors.toList()));
         picker.setOnAction(e -> {
             Theme theme = Theme.custom(Theme.getColorDisplayName(picker.getValue()));
@@ -214,7 +216,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     private void initBackgroundItemSubtitle() {
         switch (Settings.INSTANCE.getBackgroundImageType()) {
             case DEFAULT:
-                backgroundItem.setSubtitle(Launcher.i18n("launcher.background.default"));
+                backgroundItem.setSubtitle(I18n.i18n("launcher.background.default"));
                 break;
             case CUSTOM:
                 backgroundItem.setSubtitle(Settings.INSTANCE.getBackgroundImage());
@@ -239,16 +241,16 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         btnUpdate.setVisible(Launcher.UPDATE_CHECKER.isOutOfDate());
 
         if (Launcher.UPDATE_CHECKER.isOutOfDate()) {
-            lblUpdateSub.setText(Launcher.i18n("update.newest_version", Launcher.UPDATE_CHECKER.getNewVersion().toString()));
+            lblUpdateSub.setText(I18n.i18n("update.newest_version", Launcher.UPDATE_CHECKER.getNewVersion().toString()));
             lblUpdateSub.getStyleClass().setAll("update-label");
 
-            lblUpdate.setText(Launcher.i18n("update.found"));
+            lblUpdate.setText(I18n.i18n("update.found"));
             lblUpdate.getStyleClass().setAll("update-label");
         } else {
-            lblUpdateSub.setText(Launcher.i18n("update.latest"));
+            lblUpdateSub.setText(I18n.i18n("update.latest"));
             lblUpdateSub.getStyleClass().setAll("subtitle-label");
 
-            lblUpdate.setText(Launcher.i18n("update"));
+            lblUpdate.setText(I18n.i18n("update"));
             lblUpdate.getStyleClass().setAll();
         }
     }

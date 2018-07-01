@@ -23,9 +23,10 @@ import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.geometry.Pos;
 import javafx.scene.layout.BorderPane;
-import org.jackhuang.hmcl.Launcher;
+
 import org.jackhuang.hmcl.mod.ModInfo;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.function.Consumer;
 
@@ -42,7 +43,7 @@ public final class ModItem extends BorderPane {
 
         JFXButton btnRemove = new JFXButton();
         JFXUtilities.runInFX(() -> {
-            FXUtils.installTooltip(btnRemove, Launcher.i18n("mods.remove"));
+            FXUtils.installTooltip(btnRemove, I18n.i18n("mods.remove"));
         });
         btnRemove.setOnMouseClicked(e -> deleteCallback.accept(this));
         btnRemove.getStyleClass().add("toggle-icon4");
@@ -53,7 +54,7 @@ public final class ModItem extends BorderPane {
         setStyle("-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;");
         JFXDepthManager.setDepth(this, 1);
         modItem.setTitle(info.getFileName());
-        modItem.setSubtitle(info.getName() + ", " + Launcher.i18n("archive.version") + ": " + info.getVersion() + ", " + Launcher.i18n("archive.game_version") + ": " + info.getGameVersion() + ", " + Launcher.i18n("archive.author") + ": " + info.getAuthors());
+        modItem.setSubtitle(info.getName() + ", " + I18n.i18n("archive.version") + ": " + info.getVersion() + ", " + I18n.i18n("archive.game_version") + ": " + info.getGameVersion() + ", " + I18n.i18n("archive.author") + ": " + info.getAuthors());
         chkEnabled.setSelected(info.isActive());
         chkEnabled.selectedProperty().addListener((a, b, newValue) ->
                 info.activeProperty().set(newValue));

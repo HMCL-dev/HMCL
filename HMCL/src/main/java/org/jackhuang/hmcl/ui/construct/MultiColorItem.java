@@ -13,16 +13,17 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import org.jackhuang.hmcl.Launcher;
+
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Consumer;
 
 public class MultiColorItem extends ComponentList {
-    private final StringProperty customTitle = new SimpleStringProperty(this, "customTitle", Launcher.i18n("selector.custom"));
-    private final StringProperty chooserTitle = new SimpleStringProperty(this, "chooserTitle", Launcher.i18n("selector.choose_file"));
+    private final StringProperty customTitle = new SimpleStringProperty(this, "customTitle", I18n.i18n("selector.custom"));
+    private final StringProperty chooserTitle = new SimpleStringProperty(this, "chooserTitle", I18n.i18n("selector.choose_file"));
 
     private final ToggleGroup group = new ToggleGroup();
     private final JFXColorPicker colorPicker = new JFXColorPicker();

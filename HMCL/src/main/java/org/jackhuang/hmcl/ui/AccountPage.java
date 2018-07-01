@@ -28,7 +28,7 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.Launcher;
+
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.Optional;
 
@@ -73,7 +74,7 @@ public class AccountPage extends StackPane implements DecoratorPage {
         this.account = account;
         this.item = item;
 
-        title = new SimpleStringProperty(this, "title", Launcher.i18n("account") + " - " + account.getCharacter());
+        title = new SimpleStringProperty(this, "title", I18n.i18n("account") + " - " + account.getCharacter());
 
         FXUtils.loadFXML(this, "/assets/fxml/account.fxml");
 

@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.io.File;
 import java.util.List;
@@ -81,8 +82,8 @@ public final class ModpackInfoPage extends StackPane implements WizardPage {
     @FXML
     private void onNext() {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(Launcher.i18n("modpack.wizard.step.initialization.save"));
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(Launcher.i18n("modpack"), "*.zip"));
+        fileChooser.setTitle(I18n.i18n("modpack.wizard.step.initialization.save"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(I18n.i18n("modpack"), "*.zip"));
         File file = fileChooser.showSaveDialog(Controllers.getStage());
         if (file == null) {
             Controllers.navigate(null);
@@ -109,7 +110,7 @@ public final class ModpackInfoPage extends StackPane implements WizardPage {
 
     @Override
     public String getTitle() {
-        return Launcher.i18n("modpack.wizard.step.1.title");
+        return I18n.i18n("modpack.wizard.step.1.title");
     }
 
     public static final String MODPACK_NAME = "modpack.name";
