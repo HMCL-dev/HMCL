@@ -8,6 +8,7 @@ HMCL is a Minecraft launcher which supports Mod management, game customizing, au
 ## Downloads
 
 Binary version can be found here: https://ci.huangyuhui.net/job/HMCL
+
 Archives in GitHub releases are built by closed CIs, uploaded here for backup.
 
 ## Contribution
