@@ -58,12 +58,17 @@ public final class MultiMCInstanceConfiguration {
     private final boolean overrideCommands; // OverrideCommands
     private final boolean overrideWindow; // OverrideWindow
 
-    public MultiMCInstanceConfiguration(String defaultName, InputStream contentStream) throws IOException {
+    private final MultiMCManifest mmcPack;
+
+    private MultiMCInstanceConfiguration(String defaultName, InputStream contentStream, MultiMCManifest mmcPack) throws IOException {
         Properties p = new Properties();
         p.load(contentStream);
 
+        this.mmcPack = mmcPack;
+
         autoCloseConsole = Boolean.parseBoolean(p.getProperty("AutoCloseConsole"));
-        gameVersion = p.getProperty("IntendedVersion");
+        gameVersion = mmcPack != null ? mmcPack.getComponents().stream().filter(e -> "net.minecraft".equals(e.getUid())).findAny()
+                .orElseThrow(() -> new IOException("Malformed mmc-pack.json")).getVersion() : p.getProperty("IntendedVersion");
         javaPath = p.getProperty("JavaPath");
         jvmArgs = p.getProperty("JvmArgs");
         fullscreen = Boolean.parseBoolean(p.getProperty("LaunchMaximized"));
@@ -253,6 +258,10 @@ public final class MultiMCInstanceConfiguration {
         return overrideWindow;
     }
 
+    public MultiMCManifest getMmcPack() {
+        return mmcPack;
+    }
+
     public static Modpack readMultiMCModpackManifest(File f) throws IOException {
         try (ZipFile zipFile = new ZipFile(f)) {
             ZipArchiveEntry firstEntry = zipFile.getEntries().nextElement();
@@ -260,7 +269,8 @@ public final class MultiMCInstanceConfiguration {
             ZipArchiveEntry entry = zipFile.getEntry(name + "/instance.cfg");
             if (entry == null)
                 throw new IOException("`instance.cfg` not found, " + f + " is not a valid MultiMC modpack.");
-            MultiMCInstanceConfiguration cfg = new MultiMCInstanceConfiguration(name, zipFile.getInputStream(entry));
+            MultiMCManifest manifest = MultiMCManifest.readMultiMCModpackManifest(f);
+            MultiMCInstanceConfiguration cfg = new MultiMCInstanceConfiguration(name, zipFile.getInputStream(entry), manifest);
             return new Modpack(cfg.getName(), "", "", cfg.getGameVersion(), cfg.getNotes(), cfg);
         }
     }

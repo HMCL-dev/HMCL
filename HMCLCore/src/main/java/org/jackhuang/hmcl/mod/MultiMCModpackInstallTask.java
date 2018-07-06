@@ -22,6 +22,7 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
@@ -37,6 +38,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  *
@@ -61,7 +63,24 @@ public final class MultiMCModpackInstallTask extends Task {
         File json = repository.getModpackConfiguration(name);
         if (repository.hasVersion(name) && !json.exists())
             throw new IllegalArgumentException("Version " + name + " already exists.");
-        dependents.add(dependencyManager.gameBuilder().name(name).gameVersion(manifest.getGameVersion()).buildAsync());
+
+        GameBuilder builder = dependencyManager.gameBuilder().name(name).gameVersion(manifest.getGameVersion());
+
+        if (manifest.getMmcPack() != null) {
+            Optional<MultiMCManifest.MultiMCManifestComponent> forge = manifest.getMmcPack().getComponents().stream().filter(e -> e.getUid().equals("net.minecraftforge")).findAny();
+            forge.ifPresent(c -> {
+                if (c.getVersion() != null)
+                    builder.version("forge", c.getVersion());
+            });
+
+            Optional<MultiMCManifest.MultiMCManifestComponent> liteLoader = manifest.getMmcPack().getComponents().stream().filter(e -> e.getUid().equals("com.mumfrey.liteloader")).findAny();
+            liteLoader.ifPresent(c -> {
+                if (c.getVersion() != null)
+                    builder.version("liteloader", c.getVersion());
+            });
+        }
+
+        dependents.add(builder.buildAsync());
         onDone().register(event -> {
             if (event.isFailed())
                 repository.removeVersionFromDisk(name);

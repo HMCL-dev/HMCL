@@ -49,7 +49,8 @@ public final class LibraryDownloadTask extends Task {
         setSignificance(TaskSignificance.MODERATE);
 
         task = new FileDownloadTask(NetworkUtils.toURL(url),
-                file, dependencyManager.getProxy(), new IntegrityCheck("SHA-1", library.getDownload().getSha1()));
+                file, dependencyManager.getProxy(),
+                library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null);
     }
 
     @Override
