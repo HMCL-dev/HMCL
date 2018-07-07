@@ -44,6 +44,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.DragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -53,6 +54,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.setting.Theme;
@@ -214,6 +216,8 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         animationHandler = new TransitionHandler(contentPlaceHolder);
 
         loadBackground();
+
+        setupAuthlibInjectorDnD();
     }
 
     private void loadBackground() {
@@ -680,5 +684,11 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
 
     public AdvancedListBox getLeftPane() {
         return leftPane;
+    }
+
+    private void setupAuthlibInjectorDnD() {
+        addEventFilter(DragEvent.DRAG_OVER, AuthlibInjectorDnD.dragOverHandler());
+        addEventFilter(DragEvent.DRAG_DROPPED, AuthlibInjectorDnD.dragDroppedHandler(
+                url -> Controllers.dialog(new AddAuthlibInjectorServerPane(url))));
     }
 }

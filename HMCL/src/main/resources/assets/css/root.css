@@ -569,7 +569,6 @@
 .list-cell:selected, .jfx-list-cell:selected {
     -fx-background-insets: 0.0;
     -fx-text-fill: BLACK;
-    -fx-background-color: black;
 }
 
 .jfx-list-cell:filled:hover,

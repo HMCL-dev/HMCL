@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.*;
+
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -50,6 +52,7 @@ import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Logging;
 import static org.jackhuang.hmcl.ui.FXUtils.jfxListCellFactory;
+import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -77,11 +80,9 @@ public class AddAccountPane extends StackPane {
 
         cboServers.setCellFactory(jfxListCellFactory(server -> new TwoLineListItem(server.getName(), server.getUrl())));
         cboServers.setConverter(stringConverter(AuthlibInjectorServer::getName));
-        cboServers.setItems(Settings.SETTINGS.authlibInjectorServers);
-
-        // workaround: otherwise the combox will be black
-        if (!cboServers.getItems().isEmpty())
-            cboServers.getSelectionModel().select(0);
+        Bindings.bindContent(cboServers.getItems(), Settings.SETTINGS.authlibInjectorServers);
+        cboServers.getItems().addListener(onInvalidating(this::selectDefaultServer));
+        selectDefaultServer();
 
         cboType.getItems().setAll(i18n("account.methods.offline"), i18n("account.methods.yggdrasil"), i18n("account.methods.authlib_injector"));
         cboType.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> {
@@ -100,6 +101,15 @@ public class AddAccountPane extends StackPane {
 
         txtUsername.textProperty().addListener(it -> validateAcceptButton());
         txtPassword.textProperty().addListener(it -> validateAcceptButton());
+    }
+
+    /**
+     * Selects the first server if no server is selected.
+     */
+    private void selectDefaultServer() {
+        if (!cboServers.getItems().isEmpty() && cboServers.getSelectionModel().isEmpty()) {
+            cboServers.getSelectionModel().select(0);
+        }
     }
 
     private void validateAcceptButton() {

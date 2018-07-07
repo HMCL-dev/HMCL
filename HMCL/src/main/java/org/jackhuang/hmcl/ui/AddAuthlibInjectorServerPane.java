@@ -57,6 +57,12 @@ public class AddAuthlibInjectorServerPane extends StackPane {
 
     private AuthlibInjectorServer serverBeingAdded;
 
+    public AddAuthlibInjectorServerPane(String url) {
+        this();
+        txtServerUrl.setText(url);
+        onAddNext();
+    }
+
     public AddAuthlibInjectorServerPane() {
         loadFXML(this, "/assets/fxml/authlib-injector-server-add.fxml");
         transitionHandler = new TransitionHandler(addServerContainer);
