@@ -86,7 +86,7 @@ public final class TransitionHandler implements AnimationHandler {
             Timeline nowAnimation = new Timeline();
             nowAnimation.getKeyFrames().addAll(transition.animate(this));
             nowAnimation.getKeyFrames().add(new KeyFrame(duration, e -> {
-                previousNode.setMouseTransparent((Boolean) previousNode.getProperties().get(MOUSE_TRANSPARENT));
+                view.setMouseTransparent(false);
                 view.getChildren().remove(previousNode);
             }));
             nowAnimation.play();
@@ -105,14 +105,12 @@ public final class TransitionHandler implements AnimationHandler {
         if (previousNode == newView)
             previousNode = NULL;
 
-        previousNode.getProperties().put(MOUSE_TRANSPARENT, previousNode.isMouseTransparent());
-        previousNode.setMouseTransparent(true);
+        view.setMouseTransparent(true);
 
         currentNode = newView;
 
         view.getChildren().setAll(previousNode, currentNode);
     }
 
-    private static final String MOUSE_TRANSPARENT = "TransitionHandler.MOUSE_TRANSPARENT";
     private static final StackPane NULL = new StackPane();
 }
