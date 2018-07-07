@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.ui.LogWindow;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
@@ -148,11 +149,11 @@ public final class LauncherHelper {
                         else
                             launchingStepsPane.setCancel(it -> {
                                 process.stop();
-                                Controllers.closeDialog(it);
+                                it.fireEvent(new DialogCloseEvent());
                             });
                     } else
                         Platform.runLater(() -> {
-                            Controllers.closeDialog(launchingStepsPane);
+                            launchingStepsPane.fireEvent(new DialogCloseEvent());
                             Controllers.dialog(i18n("version.launch_script.success", scriptFile.getAbsolutePath()));
                         });
 
@@ -177,7 +178,7 @@ public final class LauncherHelper {
                         // Check if the application has stopped
                         // because onStop will be invoked if tasks fail when the executor service shut down.
                         if (!Controllers.isStopped()) {
-                            Controllers.closeDialog(launchingStepsPane);
+                            launchingStepsPane.fireEvent(new DialogCloseEvent());
                             Exception ex = executor.getLastException();
                             if (ex != null) {
                                 String message;
@@ -267,8 +268,9 @@ public final class LauncherHelper {
     }
 
     public void emitStatus(LoadingState state) {
-        if (state == LoadingState.DONE)
-            Controllers.closeDialog(launchingStepsPane);
+        if (state == LoadingState.DONE) {
+            launchingStepsPane.fireEvent(new DialogCloseEvent());
+        }
 
         launchingStepsPane.setTitle(state.getLocalizedMessage());
         launchingStepsPane.setSubtitle((state.ordinal() + 1) + " / " + LoadingState.values().length);

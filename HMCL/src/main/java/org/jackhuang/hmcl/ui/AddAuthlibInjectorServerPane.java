@@ -21,14 +21,13 @@ import static org.jackhuang.hmcl.ui.FXUtils.loadFXML;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.IOException;
-import java.util.function.Consumer;
-
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionHandler;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
@@ -39,7 +38,6 @@ import com.jfoenix.controls.JFXTextField;
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 
 public class AddAuthlibInjectorServerPane extends StackPane {
@@ -55,14 +53,11 @@ public class AddAuthlibInjectorServerPane extends StackPane {
     @FXML private SpinnerPane nextPane;
     @FXML private JFXButton btnAddNext;
 
-    private Consumer<Region> finalization;
-
     private TransitionHandler transitionHandler;
 
     private AuthlibInjectorServer serverBeingAdded;
 
-    public AddAuthlibInjectorServerPane(Consumer<Region> finalization) {
-        this.finalization = finalization;
+    public AddAuthlibInjectorServerPane() {
         loadFXML(this, "/assets/fxml/authlib-injector-server-add.fxml");
         transitionHandler = new TransitionHandler(addServerContainer);
         transitionHandler.setContent(addServerPane, ContainerAnimations.NONE.getAnimationProducer());
@@ -89,7 +84,7 @@ public class AddAuthlibInjectorServerPane extends StackPane {
 
     @FXML
     private void onAddCancel() {
-        finalization.accept(this);
+        fireEvent(new DialogCloseEvent());
     }
 
     @FXML
@@ -129,7 +124,7 @@ public class AddAuthlibInjectorServerPane extends StackPane {
         if (!Settings.SETTINGS.authlibInjectorServers.contains(serverBeingAdded)) {
             Settings.SETTINGS.authlibInjectorServers.add(serverBeingAdded);
         }
-        finalization.accept(this);
+        fireEvent(new DialogCloseEvent());
     }
 
 }

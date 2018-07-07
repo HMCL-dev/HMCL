@@ -35,7 +35,7 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
     @Override
     default void handleTask(Map<String, Object> settings, Task task) {
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(it -> {
-            Controllers.closeDialog(it);
+            it.fireEvent(new DialogCloseEvent());
             Controllers.navigate(null);
         });
 
@@ -62,7 +62,7 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
                 @Override
                 public void onStop(boolean success, TaskExecutor executor) {
                     JFXUtilities.runInFX(() -> {
-                        Controllers.closeDialog(pane);
+                        pane.fireEvent(new DialogCloseEvent());
                         if (success) {
                             if (settings.containsKey("success_message") && settings.get("success_message") instanceof String)
                                 Controllers.dialog((String) settings.get("success_message"), null, MessageBox.FINE_MESSAGE, () -> Controllers.navigate(null));

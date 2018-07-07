@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
@@ -165,17 +166,17 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 AtomicReference<Region> region = new AtomicReference<>();
                 try {
                     TaskExecutor executor = ModpackHelper.getUpdateTask(profile, selectedFile, id, ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(id)))
-                            .then(Task.of(Schedulers.javafx(), () -> Controllers.closeDialog(region.get()))).executor();
+                            .then(Task.of(Schedulers.javafx(), () -> region.get().fireEvent(new DialogCloseEvent()))).executor();
                     region.set(Controllers.taskDialog(executor, i18n("modpack.update"), ""));
                     executor.start();
                 } catch (UnsupportedModpackException e) {
-                    Controllers.closeDialog(region.get());
+                    region.get().fireEvent(new DialogCloseEvent());
                     Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
                 } catch (MismatchedModpackTypeException e) {
-                    Controllers.closeDialog(region.get());
+                    region.get().fireEvent(new DialogCloseEvent());
                     Controllers.dialog(i18n("modpack.mismatched_type"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
                 } catch (IOException e) {
-                    Controllers.closeDialog(region.get());
+                    region.get().fireEvent(new DialogCloseEvent());
                     Controllers.dialog(i18n("modpack.invalid"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
                 }
             }

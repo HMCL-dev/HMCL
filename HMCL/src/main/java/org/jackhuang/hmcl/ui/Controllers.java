@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.InputDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
@@ -132,15 +133,15 @@ public final class Controllers {
     }
 
     public static void dialog(String text, String title, int type, Runnable onAccept) {
-        dialog(new MessageDialogPane(text, title, Controllers::closeDialog, type, onAccept));
+        dialog(new MessageDialogPane(text, title, type, onAccept));
     }
 
     public static void confirmDialog(String text, String title, Runnable onAccept, Runnable onCancel) {
-        dialog(new MessageDialogPane(text, title, Controllers::closeDialog, onAccept, onCancel));
+        dialog(new MessageDialogPane(text, title, onAccept, onCancel));
     }
 
     public static void inputDialog(String text, Consumer<String> onResult) {
-        dialog(new InputDialogPane(text, Controllers::closeDialog, onResult));
+        dialog(new InputDialogPane(text, onResult));
     }
 
     public static Region taskDialog(TaskExecutor executor, String title, String subtitle) {
@@ -156,6 +157,9 @@ public final class Controllers {
         return pane;
     }
 
+    /**
+     * Use {@link DialogCloseEvent}
+     */
     public static void closeDialog(Region content) {
         if (stage == null) // shut down
             return;

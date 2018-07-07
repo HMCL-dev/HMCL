@@ -21,13 +21,13 @@ import com.jfoenix.controls.JFXPasswordField;
 import com.jfoenix.controls.JFXProgressBar;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 
 import java.util.function.Consumer;
 
@@ -35,7 +35,6 @@ public class AccountLoginPane extends StackPane {
     private final Account oldAccount;
     private final Consumer<AuthInfo> success;
     private final Runnable failed;
-    private final Consumer<Region> closeConsumer;
 
     @FXML
     private Label lblUsername;
@@ -43,11 +42,10 @@ public class AccountLoginPane extends StackPane {
     @FXML private Label lblCreationWarning;
     @FXML private JFXProgressBar progressBar;
 
-    public AccountLoginPane(Account oldAccount, Consumer<Region> closeConsumer, Consumer<AuthInfo> success, Runnable failed) {
+    public AccountLoginPane(Account oldAccount, Consumer<AuthInfo> success, Runnable failed) {
         this.oldAccount = oldAccount;
         this.success = success;
         this.failed = failed;
-        this.closeConsumer = closeConsumer;
 
         FXUtils.loadFXML(this, "/assets/fxml/account-login.fxml");
 
@@ -70,9 +68,9 @@ public class AccountLoginPane extends StackPane {
             Object account = variable.get("login");
             if (account instanceof AuthInfo) {
                 success.accept(((AuthInfo) account));
-                closeConsumer.accept(this);
+                fireEvent(new DialogCloseEvent());
             } else if (account instanceof NoSelectedCharacterException) {
-                closeConsumer.accept(this);
+                fireEvent(new DialogCloseEvent());
             } else if (account instanceof Exception) {
                 lblCreationWarning.setText(AddAccountPane.accountException((Exception) account));
             }
@@ -84,6 +82,6 @@ public class AccountLoginPane extends StackPane {
     @FXML
     private void onCancel() {
         failed.run();
-        closeConsumer.accept(this);
+        fireEvent(new DialogCloseEvent());
     }
 }

@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.VersionNumber;
 import java.io.File;
@@ -72,7 +73,7 @@ public class NewFileUpgrader extends IUpgrader {
             }
             System.exit(0);
         }
-        JFXUtilities.runInFX(() -> Controllers.closeDialog(region.get()));
+        JFXUtilities.runInFX(() -> region.get().fireEvent(new DialogCloseEvent()));
     }
 
     private static String getRealPath() {

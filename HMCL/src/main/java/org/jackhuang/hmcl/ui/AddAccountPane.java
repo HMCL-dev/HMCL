@@ -28,7 +28,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 
 import org.jackhuang.hmcl.auth.*;
@@ -44,6 +43,7 @@ import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.IconedItem;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
@@ -56,7 +56,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 
 public class AddAccountPane extends StackPane {
@@ -72,11 +71,8 @@ public class AddAccountPane extends StackPane {
     @FXML private JFXDialogLayout layout;
     @FXML private JFXButton btnAccept;
     @FXML private SpinnerPane acceptPane;
-    private final Consumer<Region> finalization;
 
-    public AddAccountPane(Consumer<Region> finalization) {
-        this.finalization = finalization;
-
+    public AddAccountPane() {
         FXUtils.loadFXML(this, "/assets/fxml/account-add.fxml");
 
         cboServers.setCellFactory(jfxListCellFactory(server -> new TwoLineListItem(server.getName(), server.getUrl())));
@@ -148,10 +144,10 @@ public class AddAccountPane extends StackPane {
                 .finalized(Schedulers.javafx(), variables -> {
                     Settings.INSTANCE.addAccount(variables.get("create_account"));
                     acceptPane.hideSpinner();
-                    finalization.accept(this);
+                    fireEvent(new DialogCloseEvent());
                 }, exception -> {
                     if (exception instanceof NoSelectedCharacterException) {
-                        finalization.accept(this);
+                        fireEvent(new DialogCloseEvent());
                     } else {
                         lblCreationWarning.setText(accountException(exception));
                     }
@@ -161,12 +157,12 @@ public class AddAccountPane extends StackPane {
 
     @FXML
     private void onCreationCancel() {
-        finalization.accept(this);
+        fireEvent(new DialogCloseEvent());
     }
 
     @FXML
     private void onManageInjecterServers() {
-        finalization.accept(this);
+        fireEvent(new DialogCloseEvent());
         Controllers.navigate(Controllers.getServersPage());
     }
 

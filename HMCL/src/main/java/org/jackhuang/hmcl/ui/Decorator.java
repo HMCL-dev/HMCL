@@ -32,6 +32,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
@@ -59,6 +60,7 @@ import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionHandler;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.StackContainerPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogWizardDisplayer;
 import org.jackhuang.hmcl.ui.wizard.*;
@@ -67,6 +69,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import java.io.File;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -80,6 +83,8 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
             glyph -> { glyph.setPrefSize(12, 12); glyph.setSize(12, 12); });
     private static final SVGGlyph close = Lang.apply(new SVGGlyph(0, "CLOSE", "M810 274l-238 238 238 238-60 60-238-238-238 238-60-60 238-238-238-238 60-60 238 238 238-238z", Color.WHITE),
             glyph -> { glyph.setPrefSize(12, 12); glyph.setSize(12, 12); });
+
+    private static final String PROPERTY_DIALOG_CLOSE_HANDLER = Decorator.class.getName() + ".dialog.closeListener";
 
     private final ObjectProperty<Runnable> onCloseButtonAction;
     private final BooleanProperty customMaximize = new SimpleBooleanProperty(false);
@@ -563,20 +568,26 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     public void showDialog(Node node) {
         FXUtils.checkFxUserThread();
 
+        EventHandler<DialogCloseEvent> handler = event -> closeDialog(node);
+        node.getProperties().put(PROPERTY_DIALOG_CLOSE_HANDLER, handler);
+        node.addEventHandler(DialogCloseEvent.CLOSE, handler);
+
         if (dialogPane.isEmpty())
             dialog.show();
         dialogPane.push(node);
     }
 
+    @SuppressWarnings("unchecked")
     public void closeDialog(Node node) {
         FXUtils.checkFxUserThread();
 
+        Optional.ofNullable(node.getProperties().get(PROPERTY_DIALOG_CLOSE_HANDLER))
+                .ifPresent(handler -> node.removeEventHandler(DialogCloseEvent.CLOSE, (EventHandler<DialogCloseEvent>) handler));
+
         dialogPane.pop(node);
-        if (dialogPane.getChildren().isEmpty())
-            Platform.runLater(() -> {
-                if (dialogPane.getChildren().isEmpty())
-                    dialog.close();
-            });
+        if (dialogPane.getChildren().isEmpty()) {
+            dialog.close();
+        }
     }
 
     public void startWizard(WizardProvider wizardProvider) {
