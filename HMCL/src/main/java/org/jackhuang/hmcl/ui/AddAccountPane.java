@@ -82,7 +82,6 @@ public class AddAccountPane extends StackPane {
         cboServers.setCellFactory(jfxListCellFactory(server -> new TwoLineListItem(server.getName(), server.getUrl())));
         cboServers.setConverter(stringConverter(AuthlibInjectorServer::getName));
         cboServers.setItems(Settings.SETTINGS.authlibInjectorServers);
-        cboServers.setPromptText(i18n("general.prompt.empty"));
 
         // workaround: otherwise the combox will be black
         if (!cboServers.getItems().isEmpty())
