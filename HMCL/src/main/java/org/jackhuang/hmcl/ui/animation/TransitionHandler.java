@@ -98,12 +98,12 @@ public final class TransitionHandler implements AnimationHandler {
         if (view.getWidth() > 0 && view.getHeight() > 0) {
             previousNode = currentNode;
             if (previousNode == null)
-                previousNode = NULL;
+                previousNode = EMPTY_PANE;
         } else
-            previousNode = NULL;
+            previousNode = EMPTY_PANE;
 
         if (previousNode == newView)
-            previousNode = NULL;
+            previousNode = EMPTY_PANE;
 
         view.setMouseTransparent(true);
 
@@ -112,5 +112,5 @@ public final class TransitionHandler implements AnimationHandler {
         view.getChildren().setAll(previousNode, currentNode);
     }
 
-    private static final StackPane NULL = new StackPane();
+    private final StackPane EMPTY_PANE = new StackPane();
 }
