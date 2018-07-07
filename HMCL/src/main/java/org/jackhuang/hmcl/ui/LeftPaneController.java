@@ -45,6 +45,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.ClassTitle;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.IconedItem;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.Lang;
@@ -100,7 +101,7 @@ public final class LeftPaneController {
     }
 
     private void addNewAccount() {
-        Controllers.dialog(new AddAccountPane(Controllers::closeDialog));
+        Controllers.dialog(new AddAccountPane());
     }
 
     private void onSelectedAccountChanged(Account newAccount) {
@@ -228,7 +229,7 @@ public final class LeftPaneController {
                             Modpack modpack = ModpackHelper.readModpackManifest(modpackFile);
                             TaskExecutor executor = ModpackHelper.getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack)
                                     .with(Task.of(Schedulers.javafx(), () -> {
-                                        Controllers.closeDialog(region.get());
+                                        region.get().fireEvent(new DialogCloseEvent());
                                         checkAccount();
                                     })).executor();
                             region.set(Controllers.taskDialog(executor, i18n("modpack.installing"), ""));

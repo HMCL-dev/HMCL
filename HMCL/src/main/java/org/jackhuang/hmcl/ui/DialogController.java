@@ -34,7 +34,7 @@ public final class DialogController {
             CountDownLatch latch = new CountDownLatch(1);
             AtomicReference<AuthInfo> res = new AtomicReference<>(null);
             JFXUtilities.runInFX(() -> {
-                AccountLoginPane pane = new AccountLoginPane(account, Controllers::closeDialog, it -> {
+                AccountLoginPane pane = new AccountLoginPane(account, it -> {
                         res.set(it);
                         latch.countDown();
                 }, latch::countDown);

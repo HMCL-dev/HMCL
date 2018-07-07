@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.util.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -120,7 +121,7 @@ public class AppDataUpgrader extends IUpgrader {
                                 .directory(new File("").getAbsoluteFile()).start();
                         System.exit(0);
                     }
-                    JFXUtilities.runInFX(() -> Controllers.closeDialog(region.get()));
+                    JFXUtilities.runInFX(() -> region.get().fireEvent(new DialogCloseEvent()));
                 } catch (IOException ex) {
                     Logging.LOG.log(Level.SEVERE, "Failed to create upgrader", ex);
                 }
@@ -138,7 +139,7 @@ public class AppDataUpgrader extends IUpgrader {
                                 .directory(new File("").getAbsoluteFile()).start();
                         System.exit(0);
                     }
-                    JFXUtilities.runInFX(() -> Controllers.closeDialog(region.get()));
+                    JFXUtilities.runInFX(() -> region.get().fireEvent(new DialogCloseEvent()));
                 } catch (IOException ex) {
                     Logging.LOG.log(Level.SEVERE, "Failed to create upgrader", ex);
                 }

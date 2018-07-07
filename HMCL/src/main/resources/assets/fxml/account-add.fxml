@@ -29,7 +29,7 @@
                 <Label fx:id="lblInjectorServer" text="%account.injector.server" GridPane.halignment="RIGHT"
                        GridPane.columnIndex="0" GridPane.rowIndex="1"/>
 
-                <JFXComboBox fx:id="cboServers" maxHeight="25" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                <JFXComboBox fx:id="cboServers" promptText="%general.prompt.empty" maxHeight="25" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
 
                 <Hyperlink fx:id="linkManageInjectorServers" text="%account.injector.manage"
                            onMouseClicked="#onManageInjecterServers" GridPane.columnIndex="2" GridPane.rowIndex="1"/>

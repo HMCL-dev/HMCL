@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import com.jfoenix.controls.*?>
+<?import org.jackhuang.hmcl.ui.construct.URLValidator?>
+<?import org.jackhuang.hmcl.ui.construct.SpinnerPane?>
+
+<fx:root xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         type="StackPane">
+    <StackPane fx:id="addServerContainer">
+        <JFXDialogLayout fx:id="addServerPane">
+            <heading>
+                <Label text="%account.injector.add" />
+            </heading>
+            <body>
+                <JFXTextField fx:id="txtServerUrl" promptText="%account.injector.server_url">
+                    <validators>
+                        <URLValidator message="%input.url">
+                            <protocols>
+                                <String fx:value="http" />
+                                <String fx:value="https" />
+                            </protocols>
+                        </URLValidator>
+                    </validators>
+                </JFXTextField>
+            </body>
+            <actions>
+                <Label fx:id="lblCreationWarning" />
+                <JFXButton onMouseClicked="#onAddCancel" text="%button.cancel" styleClass="dialog-cancel" />
+                <SpinnerPane fx:id="nextPane" styleClass="small-spinner-pane">
+                    <JFXButton fx:id="btnAddNext"  onMouseClicked="#onAddNext" text="%wizard.next" styleClass="dialog-accept" />
+                </SpinnerPane>
+            </actions>
+        </JFXDialogLayout>
+
+        <JFXDialogLayout fx:id="confirmServerPane">
+            <heading>
+                <Label text="%account.injector.add" />
+            </heading>
+            <body>
+                <GridPane vgap="15" hgap="15" style="-fx-padding: 15 0 0 0;">
+                    <columnConstraints>
+                        <ColumnConstraints maxWidth="100" />
+                        <ColumnConstraints />
+                    </columnConstraints>
+                    <Label text="%account.injector.server_url" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                    <Label text="%account.injector.server_name" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                    <Label fx:id="lblServerUrl" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                    <Label fx:id="lblServerName" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                    <Label fx:id="lblServerWarning" text="%account.injector.http" style="-fx-text-fill: red;"
+                        GridPane.rowIndex="2" GridPane.columnSpan="2" GridPane.columnIndex="0" />
+                </GridPane>
+            </body>
+            <actions>
+                <JFXButton onMouseClicked="#onAddPrev" text="%wizard.prev" styleClass="dialog-cancel" />
+                <JFXButton onMouseClicked="#onAddCancel" text="%button.cancel" styleClass="dialog-cancel" />
+                <JFXButton onMouseClicked="#onAddFinish" text="%wizard.finish" styleClass="dialog-accept" />
+            </actions>
+        </JFXDialogLayout>
+    </StackPane>
+</fx:root>

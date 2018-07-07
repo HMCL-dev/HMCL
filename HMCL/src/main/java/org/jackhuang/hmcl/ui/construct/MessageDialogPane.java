@@ -21,7 +21,6 @@ import com.jfoenix.controls.JFXButton;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 
 import org.jackhuang.hmcl.setting.Theme;
@@ -30,10 +29,8 @@ import org.jackhuang.hmcl.ui.SVG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.util.Optional;
-import java.util.function.Consumer;
 
 public final class MessageDialogPane extends StackPane {
-    private boolean closingDialog = true;
 
     @FXML
     private JFXButton acceptButton;
@@ -48,7 +45,7 @@ public final class MessageDialogPane extends StackPane {
     @FXML
     private HBox actions;
 
-    public MessageDialogPane(String text, String title, Consumer<Region> closeConsumer, int type, Runnable onAccept) {
+    public MessageDialogPane(String text, String title, int type, Runnable onAccept) {
         FXUtils.loadFXML(this, "/assets/fxml/message-dialog.fxml");
 
         if (title != null)
@@ -56,7 +53,7 @@ public final class MessageDialogPane extends StackPane {
 
         content.setText(text);
         acceptButton.setOnMouseClicked(e -> {
-            closeConsumer.accept(MessageDialogPane.this);
+            fireEvent(new DialogCloseEvent());
             Optional.ofNullable(onAccept).ifPresent(Runnable::run);
         });
 
@@ -83,12 +80,12 @@ public final class MessageDialogPane extends StackPane {
         }
     }
 
-    public MessageDialogPane(String text, String title, Consumer<Region> closeConsumer, Runnable onAccept, Runnable onCancel) {
-        this(text, title, closeConsumer, MessageBox.QUESTION_MESSAGE, onAccept);
+    public MessageDialogPane(String text, String title, Runnable onAccept, Runnable onCancel) {
+        this(text, title, MessageBox.QUESTION_MESSAGE, onAccept);
 
         cancelButton.setVisible(true);
         cancelButton.setOnMouseClicked(e -> {
-            closeConsumer.accept(MessageDialogPane.this);
+            fireEvent(new DialogCloseEvent());
             Optional.ofNullable(onCancel).ifPresent(Runnable::run);
         });
 
@@ -96,9 +93,5 @@ public final class MessageDialogPane extends StackPane {
         cancelButton.setText(i18n("button.no"));
 
         actions.getChildren().add(cancelButton);
-    }
-
-    public void disableClosingDialog() {
-        closingDialog = false;
     }
 }

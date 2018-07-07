@@ -51,8 +51,6 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             put("netscape.javascript.JSException", i18n("crash.NoClassDefFound"));
             put("java.lang.IncompatibleClassChangeError", i18n("crash.NoClassDefFound"));
             put("java.lang.ClassFormatError", i18n("crash.NoClassDefFound"));
-            put("java.lang.OutOfMemoryError", "FUCKING MEMORY LIMIT!");
-            put("Trampoline", i18n("launcher.update_java"));
             put("com.sun.javafx.css.StyleManager.findMatchingStyles", i18n("launcher.update_java"));
             put("NoSuchAlgorithmException", "Has your operating system been installed completely or is a ghost system?");
         }
