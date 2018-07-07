@@ -269,7 +269,7 @@ public class AddAccountPane extends StackPane {
             }
             return exception.getMessage();
         } else {
-            return exception.getClass() + ": " + exception.getLocalizedMessage();
+            return exception.getClass().getName() + ": " + exception.getLocalizedMessage();
         }
     }
 

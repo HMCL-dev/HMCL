@@ -79,7 +79,7 @@ public class AddAuthlibInjectorServerDialog extends JFXDialog {
         if (exception instanceof IOException) {
             return i18n("account.failed.connect_injector_server");
         } else {
-            return exception.getClass() + ": " + exception.getLocalizedMessage();
+            return exception.getClass().getName() + ": " + exception.getLocalizedMessage();
         }
     }
 
