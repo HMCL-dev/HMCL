@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.animation;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.layout.StackPane;
@@ -78,14 +79,19 @@ public final class TransitionHandler implements AnimationHandler {
 
         updateContent(newView);
 
-        Timeline nowAnimation = new Timeline();
-        nowAnimation.getKeyFrames().addAll(transition.animate(this));
-        nowAnimation.getKeyFrames().add(new KeyFrame(duration, e -> {
-            previousNode.setMouseTransparent((Boolean) previousNode.getProperties().get(MOUSE_TRANSPARENT));
-            view.getChildren().remove(previousNode);
-        }));
-        nowAnimation.play();
-        animation = nowAnimation;
+        transition.init(this);
+
+        // runLater or "init" will not work
+        Platform.runLater(() -> {
+            Timeline nowAnimation = new Timeline();
+            nowAnimation.getKeyFrames().addAll(transition.animate(this));
+            nowAnimation.getKeyFrames().add(new KeyFrame(duration, e -> {
+                previousNode.setMouseTransparent((Boolean) previousNode.getProperties().get(MOUSE_TRANSPARENT));
+                view.getChildren().remove(previousNode);
+            }));
+            nowAnimation.play();
+            animation = nowAnimation;
+        });
     }
 
     private void updateContent(Node newView) {

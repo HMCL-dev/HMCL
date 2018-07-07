@@ -18,11 +18,12 @@
 package org.jackhuang.hmcl.ui.animation;
 
 import javafx.animation.KeyFrame;
+import javafx.util.Duration;
 
 import java.util.List;
 
-@FunctionalInterface
 public interface AnimationProducer {
+    void init(AnimationHandler handler);
 
     List<KeyFrame> animate(AnimationHandler handler);
 }
