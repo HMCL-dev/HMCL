@@ -63,9 +63,7 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
 
     @FXML
     private void onAdd() {
-        AddAuthlibInjectorServerDialog dialog = new AddAuthlibInjectorServerDialog();
-        dialog.setDialogContainer(this);
-        dialog.show();
+        Controllers.dialog(new AddAuthlibInjectorServerPane(Controllers::closeDialog));
     }
 
     public String getTitle() {

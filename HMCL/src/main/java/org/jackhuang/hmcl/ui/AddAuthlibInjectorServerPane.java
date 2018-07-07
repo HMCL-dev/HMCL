@@ -21,6 +21,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.loadFXML;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.setting.Settings;
@@ -32,16 +33,16 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXTextField;
 
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 
-public class AddAuthlibInjectorServerDialog extends JFXDialog {
+public class AddAuthlibInjectorServerPane extends StackPane {
 
     @FXML private StackPane addServerContainer;
     @FXML private Label lblServerUrl;
@@ -54,11 +55,14 @@ public class AddAuthlibInjectorServerDialog extends JFXDialog {
     @FXML private SpinnerPane nextPane;
     @FXML private JFXButton btnAddNext;
 
+    private Consumer<Region> finalization;
+
     private TransitionHandler transitionHandler;
 
     private AuthlibInjectorServer serverBeingAdded;
 
-    public AddAuthlibInjectorServerDialog() {
+    public AddAuthlibInjectorServerPane(Consumer<Region> finalization) {
+        this.finalization = finalization;
         loadFXML(this, "/assets/fxml/authlib-injector-server-add.fxml");
         transitionHandler = new TransitionHandler(addServerContainer);
         transitionHandler.setContent(addServerPane, ContainerAnimations.NONE.getAnimationProducer());
@@ -85,7 +89,7 @@ public class AddAuthlibInjectorServerDialog extends JFXDialog {
 
     @FXML
     private void onAddCancel() {
-        this.close();
+        finalization.accept(this);
     }
 
     @FXML
@@ -122,10 +126,10 @@ public class AddAuthlibInjectorServerDialog extends JFXDialog {
 
     @FXML
     private void onAddFinish() {
-        if (!Settings.INSTANCE.SETTINGS.authlibInjectorServers.contains(serverBeingAdded)) {
-            Settings.INSTANCE.SETTINGS.authlibInjectorServers.add(serverBeingAdded);
+        if (!Settings.SETTINGS.authlibInjectorServers.contains(serverBeingAdded)) {
+            Settings.SETTINGS.authlibInjectorServers.add(serverBeingAdded);
         }
-        this.close();
+        finalization.accept(this);
     }
 
 }
