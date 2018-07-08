@@ -93,7 +93,7 @@ public final class ExportWizardProvider implements WizardProvider {
                             config.logLines.set(100);
                             config.configurations.clear();
 
-                            zip.putTextFile(Settings.GSON.toJson(config), Settings.SETTINGS_FILE_NAME);
+                            zip.putTextFile(config.toJson(), Settings.SETTINGS_FILE_NAME);
                             zip.putFile(tempModpack, "modpack.zip");
 
                             File bg = new File("bg").getAbsoluteFile();

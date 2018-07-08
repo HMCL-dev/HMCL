@@ -17,21 +17,11 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
-import javafx.collections.ObservableSet;
 import javafx.scene.text.Font;
 
-import org.hildan.fxgson.creators.ObservableListCreator;
-import org.hildan.fxgson.creators.ObservableMapCreator;
-import org.hildan.fxgson.creators.ObservableSetCreator;
-import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
@@ -60,16 +50,6 @@ import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class Settings {
-    public static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(VersionSetting.class, VersionSetting.Serializer.INSTANCE)
-            .registerTypeAdapter(Profile.class, Profile.Serializer.INSTANCE)
-            .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
-            .registerTypeAdapter(ObservableList.class, new ObservableListCreator())
-            .registerTypeAdapter(ObservableSet.class, new ObservableSetCreator())
-            .registerTypeAdapter(ObservableMap.class, new ObservableMapCreator())
-            .registerTypeAdapterFactory(new JavaFxPropertyTypeAdapterFactory(true, true))
-            .setPrettyPrinting()
-            .create();
 
     public static final String SETTINGS_FILE_NAME = "hmcl.json";
     public static final File SETTINGS_FILE = new File(SETTINGS_FILE_NAME).getAbsoluteFile();
@@ -131,7 +111,7 @@ public class Settings {
                 if (StringUtils.isBlank(str))
                     Logging.LOG.finer("Settings file is empty, use the default settings.");
                 else {
-                    Config d = GSON.fromJson(str, Config.class);
+                    Config d = Config.fromJson(str);
                     if (d != null)
                         c = d;
                 }
@@ -152,7 +132,7 @@ public class Settings {
                 SETTINGS.accounts.add(storage);
             }
 
-            FileUtils.writeText(SETTINGS_FILE, GSON.toJson(SETTINGS));
+            FileUtils.writeText(SETTINGS_FILE, SETTINGS.toJson());
         } catch (IOException ex) {
             Logging.LOG.log(Level.SEVERE, "Failed to save config", ex);
         }
