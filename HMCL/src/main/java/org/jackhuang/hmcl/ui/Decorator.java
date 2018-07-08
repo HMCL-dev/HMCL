@@ -96,13 +96,14 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     private final boolean max, min;
     private final WizardController wizardController = new WizardController(this);
     private final Queue<Object> cancelQueue = new ConcurrentLinkedQueue<>();
-    private final JFXDialog dialog;
 
     private double xOffset, yOffset, newX, newY, initX, initY;
     private boolean allowMove, isDragging, maximized;
     private BoundingBox originalBox, maximizedBox;
     private final TransitionHandler animationHandler;
-    private final StackContainerPane dialogPane = new StackContainerPane();
+
+    private JFXDialog dialog;
+    private StackContainerPane dialogPane;
 
     @FXML
     private StackPane contentPlaceHolder;
@@ -180,12 +181,6 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
             if (event.getClickCount() == 2)
                 btnMax.fire();
         });
-
-        dialog = new JFXDialog();
-        dialog.setOverlayClose(false);
-        drawerWrapper.getChildren().add(0, dialog);
-        dialog.setDialogContainer(drawerWrapper);
-        dialog.setContent(dialogPane);
 
         welcomeView.setCursor(Cursor.HAND);
         welcomeView.setOnMouseClicked(e -> {
@@ -572,13 +567,21 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     public void showDialog(Node node) {
         FXUtils.checkFxUserThread();
 
+        if (dialog == null) {
+            dialog = new JFXDialog();
+            dialogPane = new StackContainerPane();
+
+            dialog.setContent(dialogPane);
+            dialog.setDialogContainer(drawerWrapper);
+            dialog.setOverlayClose(false);
+            dialog.show();
+        }
+
+        dialogPane.push(node);
+
         EventHandler<DialogCloseEvent> handler = event -> closeDialog(node);
         node.getProperties().put(PROPERTY_DIALOG_CLOSE_HANDLER, handler);
         node.addEventHandler(DialogCloseEvent.CLOSE, handler);
-
-        if (dialogPane.isEmpty())
-            dialog.show();
-        dialogPane.push(node);
     }
 
     @SuppressWarnings("unchecked")
@@ -589,8 +592,11 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
                 .ifPresent(handler -> node.removeEventHandler(DialogCloseEvent.CLOSE, (EventHandler<DialogCloseEvent>) handler));
 
         dialogPane.pop(node);
+
         if (dialogPane.getChildren().isEmpty()) {
             dialog.close();
+            dialog = null;
+            dialogPane = null;
         }
     }
 
