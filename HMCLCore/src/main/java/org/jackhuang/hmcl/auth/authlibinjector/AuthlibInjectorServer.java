@@ -26,8 +26,8 @@ import org.jackhuang.hmcl.util.JsonUtils;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSyntaxException;
 
 public class AuthlibInjectorServer {
 
@@ -36,7 +36,7 @@ public class AuthlibInjectorServer {
             JsonObject response = JsonUtils.fromNonNullJson(NetworkUtils.doGet(NetworkUtils.toURL(url)), JsonObject.class);
             String name = extractServerName(response).orElse(url);
             return new AuthlibInjectorServer(url, name);
-        } catch (JsonSyntaxException e) {
+        } catch (JsonParseException e) {
             throw new IOException("Malformed response", e);
         }
     }
