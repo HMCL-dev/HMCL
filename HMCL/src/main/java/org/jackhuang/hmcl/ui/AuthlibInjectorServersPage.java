@@ -22,7 +22,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.loadFXML;
 import static org.jackhuang.hmcl.ui.FXUtils.smoothScrolling;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 
 import javafx.beans.InvalidationListener;
@@ -48,15 +48,15 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
         smoothScrolling(scrollPane);
 
         serversListener = observable -> updateServersList();
-        Settings.SETTINGS.authlibInjectorServers.addListener(new WeakInvalidationListener(serversListener));
+        ConfigHolder.CONFIG.authlibInjectorServers.addListener(new WeakInvalidationListener(serversListener));
         updateServersList();
     }
 
     private void updateServersList() {
         listPane.getChildren().setAll(
-                Settings.SETTINGS.authlibInjectorServers.stream()
+                ConfigHolder.CONFIG.authlibInjectorServers.stream()
                         .map(server -> new AuthlibInjectorServerItem(server,
-                                item -> Settings.SETTINGS.authlibInjectorServers.remove(item.getServer())))
+                                item -> ConfigHolder.CONFIG.authlibInjectorServers.remove(item.getServer())))
                         .collect(toList()));
     }
 

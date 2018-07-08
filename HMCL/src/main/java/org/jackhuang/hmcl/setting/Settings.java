@@ -17,21 +17,11 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
-import javafx.collections.ObservableSet;
 import javafx.scene.text.Font;
 
-import org.hildan.fxgson.creators.ObservableListCreator;
-import org.hildan.fxgson.creators.ObservableMapCreator;
-import org.hildan.fxgson.creators.ObservableSetCreator;
-import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
@@ -43,8 +33,6 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.Locales;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.Authenticator;
 import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
@@ -60,21 +48,6 @@ import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class Settings {
-    public static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(VersionSetting.class, VersionSetting.Serializer.INSTANCE)
-            .registerTypeAdapter(Profile.class, Profile.Serializer.INSTANCE)
-            .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
-            .registerTypeAdapter(ObservableList.class, new ObservableListCreator())
-            .registerTypeAdapter(ObservableSet.class, new ObservableSetCreator())
-            .registerTypeAdapter(ObservableMap.class, new ObservableMapCreator())
-            .registerTypeAdapterFactory(new JavaFxPropertyTypeAdapterFactory(true, true))
-            .setPrettyPrinting()
-            .create();
-
-    public static final String SETTINGS_FILE_NAME = "hmcl.json";
-    public static final File SETTINGS_FILE = new File(SETTINGS_FILE_NAME).getAbsoluteFile();
-
-    public static final Config SETTINGS = initSettings();
 
     public static final Settings INSTANCE = new Settings();
 
@@ -83,11 +56,12 @@ public class Settings {
     private final boolean firstLaunch;
 
     private Settings() {
-        firstLaunch = SETTINGS.firstLaunch.get();
+        firstLaunch = ConfigHolder.CONFIG.firstLaunch.get();
+        ConfigHolder.CONFIG.firstLaunch.set(false);
 
         loadProxy();
 
-        for (Iterator<Map<Object, Object>> iterator = SETTINGS.accounts.iterator(); iterator.hasNext();) {
+        for (Iterator<Map<Object, Object>> iterator = ConfigHolder.CONFIG.accounts.iterator(); iterator.hasNext();) {
             Map<Object, Object> settings = iterator.next();
             AccountFactory<?> factory = Accounts.ACCOUNT_FACTORY.get(tryCast(settings.get("type"), String.class).orElse(""));
             if (factory == null) {
@@ -108,7 +82,7 @@ public class Settings {
             accounts.put(Accounts.getAccountId(account), account);
         }
 
-        SETTINGS.authlibInjectorServers.addListener(onInvalidating(this::removeDanglingAuthlibInjectorAccounts));
+        ConfigHolder.CONFIG.authlibInjectorServers.addListener(onInvalidating(this::removeDanglingAuthlibInjectorAccounts));
 
         checkProfileMap();
 
@@ -123,51 +97,26 @@ public class Settings {
         Lang.ignoringException(() -> Runtime.getRuntime().addShutdownHook(new Thread(this::save)));
     }
 
-    private static Config initSettings() {
-        Config c = new Config();
-        if (SETTINGS_FILE.exists())
-            try {
-                String str = FileUtils.readText(SETTINGS_FILE);
-                if (StringUtils.isBlank(str))
-                    Logging.LOG.finer("Settings file is empty, use the default settings.");
-                else {
-                    Config d = GSON.fromJson(str, Config.class);
-                    if (d != null)
-                        c = d;
-                }
-                Logging.LOG.finest("Initialized settings.");
-            } catch (Exception e) {
-                Logging.LOG.log(Level.WARNING, "Something happened wrongly when load settings.", e);
-            }
-        return c;
-    }
-
     public void save() {
-        try {
-            SETTINGS.accounts.clear();
-            SETTINGS.firstLaunch.set(false);
-            for (Account account : accounts.values()) {
-                Map<Object, Object> storage = account.toStorage();
-                storage.put("type", Accounts.getAccountType(account));
-                SETTINGS.accounts.add(storage);
-            }
-
-            FileUtils.writeText(SETTINGS_FILE, GSON.toJson(SETTINGS));
-        } catch (IOException ex) {
-            Logging.LOG.log(Level.SEVERE, "Failed to save config", ex);
+        ConfigHolder.CONFIG.accounts.clear();
+        for (Account account : accounts.values()) {
+            Map<Object, Object> storage = account.toStorage();
+            storage.put("type", Accounts.getAccountType(account));
+            ConfigHolder.CONFIG.accounts.add(storage);
         }
+        ConfigHolder.saveConfig(ConfigHolder.CONFIG);
     }
 
     public boolean isFirstLaunch() {
         return firstLaunch;
     }
 
-    private final StringProperty commonPath = new ImmediateStringProperty(this, "commonPath", SETTINGS.commonDirectory.get()) {
+    private final StringProperty commonPath = new ImmediateStringProperty(this, "commonPath", ConfigHolder.CONFIG.commonDirectory.get()) {
         @Override
         public void invalidated() {
             super.invalidated();
 
-            SETTINGS.commonDirectory.set(get());
+            ConfigHolder.CONFIG.commonDirectory.set(get());
             save();
         }
     };
@@ -184,7 +133,7 @@ public class Settings {
         this.commonPath.set(commonPath);
     }
 
-    private Locales.SupportedLocale locale = Locales.getLocaleByName(SETTINGS.localization.get());
+    private Locales.SupportedLocale locale = Locales.getLocaleByName(ConfigHolder.CONFIG.localization.get());
 
     public Locales.SupportedLocale getLocale() {
         return locale;
@@ -192,7 +141,7 @@ public class Settings {
 
     public void setLocale(Locales.SupportedLocale locale) {
         this.locale = locale;
-        SETTINGS.localization.set(Locales.getNameByLocale(locale));
+        ConfigHolder.CONFIG.localization.set(Locales.getNameByLocale(locale));
         save();
     }
 
@@ -202,7 +151,7 @@ public class Settings {
         return proxy;
     }
 
-    private Proxy.Type proxyType = Proxies.getProxyType(SETTINGS.proxyType.get());
+    private Proxy.Type proxyType = Proxies.getProxyType(ConfigHolder.CONFIG.proxyType.get());
 
     public Proxy.Type getProxyType() {
         return proxyType;
@@ -210,62 +159,62 @@ public class Settings {
 
     public void setProxyType(Proxy.Type proxyType) {
         this.proxyType = proxyType;
-        SETTINGS.proxyType.set(Proxies.PROXIES.indexOf(proxyType));
+        ConfigHolder.CONFIG.proxyType.set(Proxies.PROXIES.indexOf(proxyType));
         save();
         loadProxy();
     }
 
     public String getProxyHost() {
-        return SETTINGS.proxyHost.get();
+        return ConfigHolder.CONFIG.proxyHost.get();
     }
 
     public void setProxyHost(String proxyHost) {
-        SETTINGS.proxyHost.set(proxyHost);
+        ConfigHolder.CONFIG.proxyHost.set(proxyHost);
         save();
     }
 
     public String getProxyPort() {
-        return SETTINGS.proxyPort.get();
+        return ConfigHolder.CONFIG.proxyPort.get();
     }
 
     public void setProxyPort(String proxyPort) {
-        SETTINGS.proxyPort.set(proxyPort);
+        ConfigHolder.CONFIG.proxyPort.set(proxyPort);
         save();
     }
 
     public String getProxyUser() {
-        return SETTINGS.proxyUser.get();
+        return ConfigHolder.CONFIG.proxyUser.get();
     }
 
     public void setProxyUser(String proxyUser) {
-        SETTINGS.proxyUser.set(proxyUser);
+        ConfigHolder.CONFIG.proxyUser.set(proxyUser);
         save();
     }
 
     public String getProxyPass() {
-        return SETTINGS.proxyPass.get();
+        return ConfigHolder.CONFIG.proxyPass.get();
     }
 
     public void setProxyPass(String proxyPass) {
-        SETTINGS.proxyPass.set(proxyPass);
+        ConfigHolder.CONFIG.proxyPass.set(proxyPass);
         save();
     }
 
     public boolean hasProxy() {
-        return SETTINGS.hasProxy.get();
+        return ConfigHolder.CONFIG.hasProxy.get();
     }
 
     public void setHasProxy(boolean hasProxy) {
-        SETTINGS.hasProxy.set(hasProxy);
+        ConfigHolder.CONFIG.hasProxy.set(hasProxy);
         save();
     }
 
     public boolean hasProxyAuth() {
-        return SETTINGS.hasProxyAuth.get();
+        return ConfigHolder.CONFIG.hasProxyAuth.get();
     }
 
     public void setHasProxyAuth(boolean hasProxyAuth) {
-        SETTINGS.hasProxyAuth.set(hasProxyAuth);
+        ConfigHolder.CONFIG.hasProxyAuth.set(hasProxyAuth);
         save();
     }
 
@@ -296,21 +245,21 @@ public class Settings {
     }
 
     public Font getFont() {
-        return Font.font(SETTINGS.fontFamily.get(), SETTINGS.fontSize.get());
+        return Font.font(ConfigHolder.CONFIG.fontFamily.get(), ConfigHolder.CONFIG.fontSize.get());
     }
 
     public void setFont(Font font) {
-        SETTINGS.fontFamily.set(font.getFamily());
-        SETTINGS.fontSize.set(font.getSize());
+        ConfigHolder.CONFIG.fontFamily.set(font.getFamily());
+        ConfigHolder.CONFIG.fontSize.set(font.getSize());
         save();
     }
 
     public int getLogLines() {
-        return Math.max(SETTINGS.logLines.get(), 100);
+        return Math.max(ConfigHolder.CONFIG.logLines.get(), 100);
     }
 
     public void setLogLines(int logLines) {
-        SETTINGS.logLines.set(logLines);
+        ConfigHolder.CONFIG.logLines.set(logLines);
         save();
     }
 
@@ -326,7 +275,7 @@ public class Settings {
     private void removeDanglingAuthlibInjectorAccounts() {
         accounts.values().stream()
                 .filter(AuthlibInjectorAccount.class::isInstance)
-                .filter(it -> !SETTINGS.authlibInjectorServers.contains(((AuthlibInjectorAccount) it).getServer()))
+                .filter(it -> !ConfigHolder.CONFIG.authlibInjectorServers.contains(((AuthlibInjectorAccount) it).getServer()))
                 .collect(toList())
                 .forEach(this::deleteAccount);
     }
@@ -336,14 +285,14 @@ public class Settings {
      ****************************************/
 
     public DownloadProvider getDownloadProvider() {
-        return DownloadProviders.getDownloadProvider(SETTINGS.downloadType.get());
+        return DownloadProviders.getDownloadProvider(ConfigHolder.CONFIG.downloadType.get());
     }
 
     public void setDownloadProvider(DownloadProvider downloadProvider) {
         int index = DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(downloadProvider);
         if (index == -1)
             throw new IllegalArgumentException("Unknown download provider: " + downloadProvider);
-        SETTINGS.downloadType.set(index);
+        ConfigHolder.CONFIG.downloadType.set(index);
         save();
     }
 
@@ -351,7 +300,7 @@ public class Settings {
      *               ACCOUNTS               *
      ****************************************/
 
-    private final ImmediateObjectProperty<Account> selectedAccount = new ImmediateObjectProperty<Account>(this, "selectedAccount", accounts.get(SETTINGS.selectedAccount.get())) {
+    private final ImmediateObjectProperty<Account> selectedAccount = new ImmediateObjectProperty<Account>(this, "selectedAccount", accounts.get(ConfigHolder.CONFIG.selectedAccount.get())) {
         @Override
         public Account get() {
             Account a = super.get();
@@ -373,7 +322,7 @@ public class Settings {
         public void invalidated() {
             super.invalidated();
 
-            SETTINGS.selectedAccount.set(getValue() == null ? "" : Accounts.getAccountId(getValue()));
+            ConfigHolder.CONFIG.selectedAccount.set(getValue() == null ? "" : Accounts.getAccountId(getValue()));
             save();
         }
     };
@@ -423,12 +372,12 @@ public class Settings {
      *              BACKGROUND              *
      ****************************************/
 
-    private final ImmediateStringProperty backgroundImage = new ImmediateStringProperty(this, "backgroundImage", SETTINGS.backgroundImage.get()) {
+    private final ImmediateStringProperty backgroundImage = new ImmediateStringProperty(this, "backgroundImage", ConfigHolder.CONFIG.backgroundImage.get()) {
         @Override
         public void invalidated() {
             super.invalidated();
 
-            SETTINGS.backgroundImage.set(get());
+            ConfigHolder.CONFIG.backgroundImage.set(get());
             save();
         }
     };
@@ -445,12 +394,12 @@ public class Settings {
         this.backgroundImage.set(backgroundImage);
     }
 
-    private final ImmediateObjectProperty<EnumBackgroundImage> backgroundImageType = new ImmediateObjectProperty<EnumBackgroundImage>(this, "backgroundImageType", EnumBackgroundImage.indexOf(SETTINGS.backgroundImageType.get())) {
+    private final ImmediateObjectProperty<EnumBackgroundImage> backgroundImageType = new ImmediateObjectProperty<EnumBackgroundImage>(this, "backgroundImageType", EnumBackgroundImage.indexOf(ConfigHolder.CONFIG.backgroundImageType.get())) {
         @Override
         public void invalidated() {
             super.invalidated();
 
-            SETTINGS.backgroundImageType.set(get().ordinal());
+            ConfigHolder.CONFIG.backgroundImageType.set(get().ordinal());
             save();
         }
     };
@@ -471,12 +420,12 @@ public class Settings {
      *                THEME                 *
      ****************************************/
 
-    private final ImmediateObjectProperty<Theme> theme = new ImmediateObjectProperty<Theme>(this, "theme", Theme.getTheme(SETTINGS.theme.get()).orElse(Theme.BLUE)) {
+    private final ImmediateObjectProperty<Theme> theme = new ImmediateObjectProperty<Theme>(this, "theme", Theme.getTheme(ConfigHolder.CONFIG.theme.get()).orElse(Theme.BLUE)) {
         @Override
         public void invalidated() {
             super.invalidated();
 
-            SETTINGS.theme.set(get().getName().toLowerCase());
+            ConfigHolder.CONFIG.theme.set(get().getName().toLowerCase());
             save();
         }
     };
@@ -500,19 +449,19 @@ public class Settings {
     public Profile getSelectedProfile() {
         checkProfileMap();
 
-        if (!hasProfile(SETTINGS.selectedProfile.get())) {
+        if (!hasProfile(ConfigHolder.CONFIG.selectedProfile.get())) {
             getProfileMap().keySet().stream().findFirst().ifPresent(selectedProfile -> {
-                SETTINGS.selectedProfile.set(selectedProfile);
+                ConfigHolder.CONFIG.selectedProfile.set(selectedProfile);
                 save();
             });
             Schedulers.computation().schedule(this::onProfileChanged);
         }
-        return getProfile(SETTINGS.selectedProfile.get());
+        return getProfile(ConfigHolder.CONFIG.selectedProfile.get());
     }
 
     public void setSelectedProfile(Profile selectedProfile) {
-        if (hasProfile(selectedProfile.getName()) && !Objects.equals(selectedProfile.getName(), SETTINGS.selectedProfile.get())) {
-            SETTINGS.selectedProfile.set(selectedProfile.getName());
+        if (hasProfile(selectedProfile.getName()) && !Objects.equals(selectedProfile.getName(), ConfigHolder.CONFIG.selectedProfile.get())) {
+            ConfigHolder.CONFIG.selectedProfile.set(selectedProfile.getName());
             save();
             Schedulers.computation().schedule(this::onProfileChanged);
         }
@@ -530,7 +479,7 @@ public class Settings {
     }
 
     public Map<String, Profile> getProfileMap() {
-        return SETTINGS.configurations;
+        return ConfigHolder.CONFIG.configurations;
     }
 
     public Collection<Profile> getProfiles() {
@@ -589,6 +538,6 @@ public class Settings {
     }
 
     public Config getRawConfig() {
-        return SETTINGS.clone();
+        return ConfigHolder.CONFIG.clone();
     }
 }

@@ -21,9 +21,9 @@ import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.*;
 
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.AccountHelper;
 import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -80,27 +81,27 @@ public class AddAccountPane extends StackPane {
 
         cboServers.setCellFactory(jfxListCellFactory(server -> new TwoLineListItem(server.getName(), server.getUrl())));
         cboServers.setConverter(stringConverter(AuthlibInjectorServer::getName));
-        Bindings.bindContent(cboServers.getItems(), Settings.SETTINGS.authlibInjectorServers);
+        Bindings.bindContent(cboServers.getItems(), ConfigHolder.CONFIG.authlibInjectorServers);
         cboServers.getItems().addListener(onInvalidating(this::selectDefaultServer));
         selectDefaultServer();
 
         cboType.getItems().setAll(i18n("account.methods.offline"), i18n("account.methods.yggdrasil"), i18n("account.methods.authlib_injector"));
-        cboType.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> {
-            txtPassword.setVisible(newValue.intValue() != 0);
-            lblPassword.setVisible(newValue.intValue() != 0);
-            cboServers.setVisible(newValue.intValue() == 2);
-            linkManageInjectorServers.setVisible(newValue.intValue() == 2);
-            lblInjectorServer.setVisible(newValue.intValue() == 2);
-            validateAcceptButton();
-        });
         cboType.getSelectionModel().select(0);
 
-        txtPassword.setOnAction(e -> onCreationAccept());
-        txtUsername.setOnAction(e -> onCreationAccept());
+        ReadOnlyIntegerProperty loginTypeIdProperty = cboType.getSelectionModel().selectedIndexProperty();
+
+        txtPassword.visibleProperty().bind(loginTypeIdProperty.isNotEqualTo(0));
+        lblPassword.visibleProperty().bind(txtPassword.visibleProperty());
+
+        cboServers.visibleProperty().bind(loginTypeIdProperty.isEqualTo(2));
+        lblInjectorServer.visibleProperty().bind(cboServers.visibleProperty());
+        linkManageInjectorServers.visibleProperty().bind(cboServers.visibleProperty());
+
         txtUsername.getValidators().add(new Validator(i18n("input.email"), str -> !txtPassword.isVisible() || str.contains("@")));
 
-        txtUsername.textProperty().addListener(it -> validateAcceptButton());
-        txtPassword.textProperty().addListener(it -> validateAcceptButton());
+        btnAccept.disableProperty().bind(Bindings.createBooleanBinding(
+                () -> !txtUsername.validate() || (loginTypeIdProperty.get() != 0 && !txtPassword.validate()),
+                txtUsername.textProperty(), txtPassword.textProperty(), loginTypeIdProperty));
     }
 
     /**
@@ -112,12 +113,11 @@ public class AddAccountPane extends StackPane {
         }
     }
 
-    private void validateAcceptButton() {
-        btnAccept.setDisable(!txtUsername.validate() || (cboType.getSelectionModel().getSelectedIndex() != 0 && !txtPassword.validate()));
-    }
-
     @FXML
     private void onCreationAccept() {
+        if (btnAccept.isDisabled())
+            return;
+
         String username = txtUsername.getText();
         String password = txtPassword.getText();
         Object addtionalData;
@@ -149,6 +149,7 @@ public class AddAccountPane extends StackPane {
 
         acceptPane.showSpinner();
         lblCreationWarning.setText("");
+        setDisable(true);
 
         Task.ofResult("create_account", () -> factory.create(new Selector(), username, password, addtionalData, Settings.INSTANCE.getProxy()))
                 .finalized(Schedulers.javafx(), variables -> {
@@ -161,6 +162,7 @@ public class AddAccountPane extends StackPane {
                     } else {
                         lblCreationWarning.setText(accountException(exception));
                     }
+                    setDisable(false);
                     acceptPane.hideSpinner();
                 }).start();
     }
@@ -174,14 +176,6 @@ public class AddAccountPane extends StackPane {
     private void onManageInjecterServers() {
         fireEvent(new DialogCloseEvent());
         Controllers.navigate(Controllers.getServersPage());
-    }
-
-    private void showSelector(Node node) {
-        getChildren().setAll(node);
-    }
-
-    private void closeSelector() {
-        getChildren().setAll(layout);
     }
 
     private class Selector extends BorderPane implements CharacterSelector {
@@ -240,7 +234,7 @@ public class AddAccountPane extends StackPane {
                 listBox.add(accountItem);
             }
 
-            JFXUtilities.runInFX(() -> showSelector(this));
+            JFXUtilities.runInFX(() -> Controllers.dialog(this));
 
             try {
                 latch.await();
@@ -248,11 +242,11 @@ public class AddAccountPane extends StackPane {
                 if (selectedProfile == null)
                     throw new NoSelectedCharacterException(account);
 
-                JFXUtilities.runInFX(AddAccountPane.this::closeSelector);
-
                 return selectedProfile;
             } catch (InterruptedException ignore) {
                 throw new NoSelectedCharacterException(account);
+            } finally {
+                JFXUtilities.runInFX(() -> Selector.this.fireEvent(new DialogCloseEvent()));
             }
         }
     }

@@ -17,12 +17,21 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import java.io.File;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.hildan.fxgson.creators.ObservableListCreator;
+import org.hildan.fxgson.creators.ObservableMapCreator;
+import org.hildan.fxgson.creators.ObservableSetCreator;
+import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.util.FileTypeAdapter;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 
 import javafx.beans.property.BooleanProperty;
@@ -36,8 +45,24 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
+import javafx.collections.ObservableSet;
 
 public final class Config implements Cloneable {
+
+    private static final Gson CONFIG_GSON = new GsonBuilder()
+            .registerTypeAdapter(VersionSetting.class, VersionSetting.Serializer.INSTANCE)
+            .registerTypeAdapter(Profile.class, Profile.Serializer.INSTANCE)
+            .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
+            .registerTypeAdapter(ObservableList.class, new ObservableListCreator())
+            .registerTypeAdapter(ObservableSet.class, new ObservableSetCreator())
+            .registerTypeAdapter(ObservableMap.class, new ObservableMapCreator())
+            .registerTypeAdapterFactory(new JavaFxPropertyTypeAdapterFactory(true, true))
+            .setPrettyPrinting()
+            .create();
+
+    public static Config fromJson(String json) throws JsonParseException {
+        return CONFIG_GSON.fromJson(json, Config.class);
+    }
 
     @SerializedName("last")
     public final StringProperty selectedProfile = new SimpleStringProperty("");
@@ -104,8 +129,12 @@ public final class Config implements Cloneable {
 
     public final ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList();
 
+    public String toJson() {
+        return CONFIG_GSON.toJson(this);
+    }
+
     @Override
     public Config clone() {
-        return Settings.GSON.fromJson(Settings.GSON.toJson(this), Config.class);
+        return fromJson(this.toJson());
     }
 }
