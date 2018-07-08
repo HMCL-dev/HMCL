@@ -33,17 +33,22 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.Locales;
 
-import java.io.File;
+import com.google.gson.JsonParseException;
+
 import java.io.IOException;
 import java.net.Authenticator;
 import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
 import java.net.Proxy;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -52,7 +57,7 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 public class Settings {
 
     public static final String SETTINGS_FILE_NAME = "hmcl.json";
-    public static final File SETTINGS_FILE = new File(SETTINGS_FILE_NAME).getAbsoluteFile();
+    public static final Path SETTINGS_FILE = Paths.get(SETTINGS_FILE_NAME).toAbsolutePath();
 
     public static final Config SETTINGS = initSettings();
 
@@ -104,22 +109,24 @@ public class Settings {
     }
 
     private static Config initSettings() {
-        Config c = new Config();
-        if (SETTINGS_FILE.exists())
+        Config config = new Config();
+        if (Files.exists(SETTINGS_FILE)) {
             try {
-                String str = FileUtils.readText(SETTINGS_FILE);
-                if (StringUtils.isBlank(str))
-                    Logging.LOG.finer("Settings file is empty, use the default settings.");
-                else {
-                    Config d = Config.fromJson(str);
-                    if (d != null)
-                        c = d;
+                String str = new String(Files.readAllBytes(SETTINGS_FILE), UTF_8);
+                if (StringUtils.isBlank(str)) {
+                    LOG.finer("Settings file is empty, use the default settings.");
+                } else {
+                    Config deserialized = Config.fromJson(str);
+                    if (deserialized != null) {
+                        config = deserialized;
+                    }
                 }
-                Logging.LOG.finest("Initialized settings.");
-            } catch (Exception e) {
-                Logging.LOG.log(Level.WARNING, "Something happened wrongly when load settings.", e);
+                LOG.finest("Initialized settings.");
+            } catch (IOException | JsonParseException e) {
+                LOG.log(Level.WARNING, "Something happened wrongly when load settings.", e);
             }
-        return c;
+        }
+        return config;
     }
 
     public void save() {
@@ -132,9 +139,9 @@ public class Settings {
                 SETTINGS.accounts.add(storage);
             }
 
-            FileUtils.writeText(SETTINGS_FILE, SETTINGS.toJson());
+            Files.write(SETTINGS_FILE, SETTINGS.toJson().getBytes(UTF_8));
         } catch (IOException ex) {
-            Logging.LOG.log(Level.SEVERE, "Failed to save config", ex);
+            LOG.log(Level.SEVERE, "Failed to save config", ex);
         }
     }
 
