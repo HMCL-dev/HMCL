@@ -71,7 +71,7 @@ public final class Accounts {
     }
 
     private static AuthlibInjectorServer getOrCreateAuthlibInjectorServer(String url) {
-        return Settings.SETTINGS.authlibInjectorServers.stream()
+        return ConfigHolder.CONFIG.authlibInjectorServers.stream()
                 .filter(server -> url.equals(server.getUrl()))
                 .findFirst()
                 .orElseGet(() -> {
@@ -85,7 +85,7 @@ public final class Accounts {
                         LOG.log(Level.WARNING, "Failed to migrate authlib injector server " + url, e);
                     }
 
-                    Settings.SETTINGS.authlibInjectorServers.add(server);
+                    ConfigHolder.CONFIG.authlibInjectorServers.add(server);
                     return server;
                 });
     }

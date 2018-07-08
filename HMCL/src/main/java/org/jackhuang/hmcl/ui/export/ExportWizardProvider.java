@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.game.HMCLModpackExportTask;
 import org.jackhuang.hmcl.game.HMCLModpackManager;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.setting.Config;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Task;
@@ -93,7 +94,7 @@ public final class ExportWizardProvider implements WizardProvider {
                             config.logLines.set(100);
                             config.configurations.clear();
 
-                            zip.putTextFile(config.toJson(), Settings.SETTINGS_FILE_NAME);
+                            zip.putTextFile(config.toJson(), ConfigHolder.CONFIG_FILENAME);
                             zip.putFile(tempModpack, "modpack.zip");
 
                             File bg = new File("bg").getAbsoluteFile();
