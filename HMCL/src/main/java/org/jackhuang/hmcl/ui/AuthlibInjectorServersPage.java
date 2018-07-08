@@ -35,7 +35,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 public class AuthlibInjectorServersPage extends StackPane implements DecoratorPage {
-    private final StringProperty title = new SimpleStringProperty(this, "title", i18n("account.injector.server"));
+    private final StringProperty title = new SimpleStringProperty(this, "title", i18n("account.injector.manage.title"));
 
     @FXML private ScrollPane scrollPane;
     @FXML private VBox listPane;
