@@ -95,6 +95,11 @@ public class AddAuthlibInjectorServerPane extends StackPane {
 
     @FXML
     private void onAddNext() {
+        if (btnAddNext.isDisabled())
+            return;
+
+        lblCreationWarning.setText("");
+
         String url = fixInputUrl(txtServerUrl.getText());
 
         nextPane.showSpinner();

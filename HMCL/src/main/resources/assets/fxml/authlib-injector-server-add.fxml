@@ -16,7 +16,7 @@
                 <Label text="%account.injector.add" />
             </heading>
             <body>
-                <JFXTextField fx:id="txtServerUrl" promptText="%account.injector.server_url">
+                <JFXTextField fx:id="txtServerUrl" promptText="%account.injector.server_url" onAction="#onAddNext">
                     <validators>
                         <URLValidator message="%input.url">
                             <protocols>
