@@ -2,6 +2,7 @@
 
 <?import com.jfoenix.controls.JFXButton?>
 <?import javafx.scene.control.*?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.layout.*?>
 <?import org.jackhuang.hmcl.ui.construct.ComponentList?>
 <?import com.jfoenix.controls.JFXProgressBar?>
@@ -20,6 +21,9 @@
                 </left>
                 <right>
                     <VBox>
+                        <BorderPane.margin>
+                            <Insets left="15.0" />
+                        </BorderPane.margin>
                         <Label fx:id="lblType" BorderPane.alignment="CENTER_LEFT"/>
                     </VBox>
                 </right>
@@ -33,6 +37,9 @@
                 </left>
                 <right>
                     <VBox>
+                        <BorderPane.margin>
+                            <Insets left="15.0" />
+                        </BorderPane.margin>
                         <Label fx:id="lblCharacter" BorderPane.alignment="CENTER_LEFT"/>
                     </VBox>
                 </right>
@@ -46,6 +53,9 @@
                 </left>
                 <right>
                     <VBox>
+                        <BorderPane.margin>
+                            <Insets left="15.0" />
+                        </BorderPane.margin>
                         <Label fx:id="lblEmail" BorderPane.alignment="CENTER_LEFT"/>
                     </VBox>
                 </right>
@@ -59,6 +69,9 @@
                 </left>
                 <right>
                     <VBox>
+                        <BorderPane.margin>
+                            <Insets left="15.0" />
+                        </BorderPane.margin>
                         <Label fx:id="lblServer" BorderPane.alignment="CENTER_LEFT"/>
                     </VBox>
                 </right>
