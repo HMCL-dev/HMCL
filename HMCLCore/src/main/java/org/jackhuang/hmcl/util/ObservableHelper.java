@@ -62,4 +62,8 @@ public class ObservableHelper implements Observable, InvalidationListener {
         this.invalidate();
     }
 
+    public void receiveUpdatesFrom(Observable observable) {
+        observable.removeListener(this); // remove the previously added listener(if any)
+        observable.addListener(this);
+    }
 }

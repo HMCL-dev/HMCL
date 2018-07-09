@@ -18,8 +18,10 @@
 package org.jackhuang.hmcl.setting;
 
 import java.io.File;
+import java.lang.reflect.Modifier;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Stream;
 
 import org.hildan.fxgson.creators.ObservableListCreator;
 import org.hildan.fxgson.creators.ObservableMapCreator;
@@ -28,12 +30,15 @@ import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.util.FileTypeAdapter;
+import org.jackhuang.hmcl.util.ObservableHelper;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
@@ -47,7 +52,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 
-public final class Config implements Cloneable {
+public final class Config implements Cloneable, Observable {
 
     private static final Gson CONFIG_GSON = new GsonBuilder()
             .registerTypeAdapter(VersionSetting.class, VersionSetting.Serializer.INSTANCE)
@@ -61,7 +66,11 @@ public final class Config implements Cloneable {
             .create();
 
     public static Config fromJson(String json) throws JsonParseException {
-        return CONFIG_GSON.fromJson(json, Config.class);
+        Config instance = CONFIG_GSON.fromJson(json, Config.class);
+        // Gson will replace the property fields (even they are final!)
+        // So we have to add the listeners again after deserialization
+        instance.addListenerToProperties();
+        return instance;
     }
 
     @SerializedName("last")
@@ -128,6 +137,39 @@ public final class Config implements Cloneable {
     public final BooleanProperty firstLaunch = new SimpleBooleanProperty(true);
 
     public final ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList();
+
+    private transient ObservableHelper helper = new ObservableHelper(this);
+
+    public Config() {
+        addListenerToProperties();
+    }
+
+    private void addListenerToProperties() {
+        Stream.of(getClass().getFields())
+                .filter(it -> {
+                    int modifiers = it.getModifiers();
+                    return Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers);
+                })
+                .filter(it -> Observable.class.isAssignableFrom(it.getType()))
+                .map(it -> {
+                    try {
+                        return (Observable) it.get(this);
+                    } catch (IllegalAccessException e) {
+                        throw new IllegalStateException("Failed to get my own properties");
+                    }
+                })
+                .forEach(helper::receiveUpdatesFrom);
+    }
+
+    @Override
+    public void addListener(InvalidationListener listener) {
+        helper.addListener(listener);
+    }
+
+    @Override
+    public void removeListener(InvalidationListener listener) {
+        helper.removeListener(listener);
+    }
 
     public String toJson() {
         return CONFIG_GSON.toJson(this);
