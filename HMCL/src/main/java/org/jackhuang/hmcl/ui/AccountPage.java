@@ -85,15 +85,11 @@ public class AccountPage extends StackPane implements DecoratorPage {
             AuthlibInjectorServer server = ((AuthlibInjectorAccount) account).getServer();
             lblServer.setText(server.getName());
             installTooltip(lblServer, server.getUrl());
-            FXUtils.setLimitHeight(this, 182);
         } else {
             componentList.removeChildren(paneServer);
 
             if (account instanceof OfflineAccount) {
                 componentList.removeChildren(paneEmail);
-                FXUtils.setLimitHeight(this, 110);
-            } else {
-                FXUtils.setLimitHeight(this, 145);
             }
         }
 
