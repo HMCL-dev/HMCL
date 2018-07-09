@@ -114,6 +114,7 @@ public class YggdrasilAccount extends Account {
         }
 
         this.characterUUID = this.session.getSelectedProfile().getId();
+        invalidate();
     }
 
     @Override
