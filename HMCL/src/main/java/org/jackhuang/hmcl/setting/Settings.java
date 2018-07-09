@@ -84,6 +84,8 @@ public class Settings {
 
         ConfigHolder.CONFIG.authlibInjectorServers.addListener(onInvalidating(this::removeDanglingAuthlibInjectorAccounts));
 
+        this.selectedAccount.set(accounts.get(ConfigHolder.CONFIG.selectedAccount.get()));
+
         checkProfileMap();
 
         save();
@@ -300,7 +302,7 @@ public class Settings {
      *               ACCOUNTS               *
      ****************************************/
 
-    private final ImmediateObjectProperty<Account> selectedAccount = new ImmediateObjectProperty<Account>(this, "selectedAccount", accounts.get(ConfigHolder.CONFIG.selectedAccount.get())) {
+    private final ImmediateObjectProperty<Account> selectedAccount = new ImmediateObjectProperty<Account>(this, "selectedAccount", null) {
         @Override
         public Account get() {
             Account a = super.get();
