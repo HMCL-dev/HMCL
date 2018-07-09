@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXButton;
-import javafx.beans.property.Property;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.Label;
@@ -36,19 +35,20 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import java.io.File;
 
 public class FileItem extends BorderPane {
-    private Property<String> property;
-    private final Label x = new Label();
+    private final Label lblPath = new Label();
 
     private final SimpleStringProperty name = new SimpleStringProperty(this, "name");
     private final SimpleStringProperty title = new SimpleStringProperty(this, "title");
     private final SimpleStringProperty tooltip = new SimpleStringProperty(this, "tooltip");
+    private final SimpleStringProperty path = new SimpleStringProperty(this, "path");
 
     public FileItem() {
         VBox left = new VBox();
         Label name = new Label();
         name.textProperty().bind(nameProperty());
-        x.getStyleClass().addAll("subtitle-label");
-        left.getChildren().addAll(name, x);
+        lblPath.getStyleClass().addAll("subtitle-label");
+        lblPath.textProperty().bind(path);
+        left.getChildren().addAll(name, lblPath);
         setLeft(left);
 
         JFXButton right = new JFXButton();
@@ -65,8 +65,8 @@ public class FileItem extends BorderPane {
 
     public void onExplore() {
         DirectoryChooser chooser = new DirectoryChooser();
-        if (property.getValue() != null) {
-            File file = new File(property.getValue());
+        if (path.get() != null) {
+            File file = new File(path.get());
             if (file.exists()) {
                 if (file.isFile())
                     file = file.getAbsoluteFile().getParentFile();
@@ -78,13 +78,8 @@ public class FileItem extends BorderPane {
         chooser.titleProperty().bind(titleProperty());
         File selectedDir = chooser.showDialog(Controllers.getStage());
         if (selectedDir != null)
-            property.setValue(selectedDir.getAbsolutePath());
+            path.set(selectedDir.getAbsolutePath());
         chooser.titleProperty().unbind();
-    }
-
-    public void setProperty(Property<String> property) {
-        this.property = property;
-        x.textProperty().bind(property);
     }
 
     public String getName() {
@@ -121,5 +116,17 @@ public class FileItem extends BorderPane {
 
     public void setTooltip(String tooltip) {
         this.tooltip.set(tooltip);
+    }
+
+    public String getPath() {
+        return path.get();
+    }
+
+    public StringProperty pathProperty() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path.set(path);
     }
 }

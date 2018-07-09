@@ -65,7 +65,7 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
         FXUtils.onChangeAndOperate(txtProfileName.textProperty(), it -> {
             btnSave.setDisable(!txtProfileName.validate() || StringUtils.isBlank(getLocation()));
         });
-        gameDir.setProperty(location);
+        gameDir.pathProperty().bindBidirectional(location);
         FXUtils.onChangeAndOperate(location, it -> {
             btnSave.setDisable(!txtProfileName.validate() || StringUtils.isBlank(getLocation()));
         });
