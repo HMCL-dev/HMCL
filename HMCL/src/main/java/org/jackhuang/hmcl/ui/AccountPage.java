@@ -31,6 +31,7 @@ import javafx.scene.layout.StackPane;
 
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.AccountHelper;
@@ -39,6 +40,8 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
+
+import static org.jackhuang.hmcl.ui.FXUtils.installTooltip;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.util.Optional;
@@ -78,18 +81,16 @@ public class AccountPage extends StackPane implements DecoratorPage {
 
         FXUtils.loadFXML(this, "/assets/fxml/account.fxml");
 
-        FXUtils.setLimitWidth(this, 300);
         if (account instanceof AuthlibInjectorAccount) {
-            lblServer.setText(((AuthlibInjectorAccount) account).getServer().getName());
-            FXUtils.setLimitHeight(this, 182);
+            AuthlibInjectorServer server = ((AuthlibInjectorAccount) account).getServer();
+            lblServer.setText(server.getName());
+            installTooltip(lblServer, server.getUrl());
         } else {
             componentList.removeChildren(paneServer);
 
             if (account instanceof OfflineAccount) {
                 componentList.removeChildren(paneEmail);
-                FXUtils.setLimitHeight(this, 110);
-            } else
-                FXUtils.setLimitHeight(this, 145);
+            }
         }
 
         btnDelete.setGraphic(SVG.delete(Theme.blackFillBinding(), 15, 15));

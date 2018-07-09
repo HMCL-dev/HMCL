@@ -2,6 +2,7 @@
 
 <?import com.jfoenix.controls.JFXButton?>
 <?import javafx.scene.control.*?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.layout.*?>
 <?import org.jackhuang.hmcl.ui.construct.ComponentList?>
 <?import com.jfoenix.controls.JFXProgressBar?>
@@ -20,6 +21,9 @@
                 </left>
                 <right>
                     <VBox>
+                        <BorderPane.margin>
+                            <Insets left="15.0" />
+                        </BorderPane.margin>
                         <Label fx:id="lblType" BorderPane.alignment="CENTER_LEFT"/>
                     </VBox>
                 </right>
@@ -33,6 +37,9 @@
                 </left>
                 <right>
                     <VBox>
+                        <BorderPane.margin>
+                            <Insets left="15.0" />
+                        </BorderPane.margin>
                         <Label fx:id="lblCharacter" BorderPane.alignment="CENTER_LEFT"/>
                     </VBox>
                 </right>
@@ -46,6 +53,9 @@
                 </left>
                 <right>
                     <VBox>
+                        <BorderPane.margin>
+                            <Insets left="15.0" />
+                        </BorderPane.margin>
                         <Label fx:id="lblEmail" BorderPane.alignment="CENTER_LEFT"/>
                     </VBox>
                 </right>
@@ -59,24 +69,26 @@
                 </left>
                 <right>
                     <VBox>
+                        <BorderPane.margin>
+                            <Insets left="15.0" />
+                        </BorderPane.margin>
                         <Label fx:id="lblServer" BorderPane.alignment="CENTER_LEFT"/>
                     </VBox>
                 </right>
             </BorderPane>
         </ComponentList>
-
+        <BorderPane pickOnBounds="false" style="-fx-padding: 4;">
+            <left>
+                <JFXButton BorderPane.alignment="BOTTOM_LEFT" fx:id="btnDelete" onMouseClicked="#onDelete"
+                           styleClass="toggle-icon4" maxWidth="30" maxHeight="30" minWidth="30" minHeight="30"
+                           prefWidth="30" prefHeight="30"/>
+            </left>
+            <right>
+                <JFXButton BorderPane.alignment="BOTTOM_RIGHT" fx:id="btnRefresh" onMouseClicked="#onRefresh"
+                           styleClass="toggle-icon4" maxWidth="30" maxHeight="30" minWidth="30" minHeight="30"
+                           prefWidth="30" prefHeight="30"/>
+            </right>
+        </BorderPane>
     </VBox>
-    <BorderPane pickOnBounds="false" style="-fx-padding: 4;">
-        <left>
-            <JFXButton BorderPane.alignment="BOTTOM_LEFT" fx:id="btnDelete" onMouseClicked="#onDelete"
-                       styleClass="toggle-icon4" maxWidth="30" maxHeight="30" minWidth="30" minHeight="30"
-                       prefWidth="30" prefHeight="30"/>
-        </left>
-        <right>
-            <JFXButton BorderPane.alignment="BOTTOM_RIGHT" fx:id="btnRefresh" onMouseClicked="#onRefresh"
-                       styleClass="toggle-icon4" maxWidth="30" maxHeight="30" minWidth="30" minHeight="30"
-                       prefWidth="30" prefHeight="30"/>
-        </right>
-    </BorderPane>
     <JFXProgressBar fx:id="progressBar" StackPane.alignment="TOP_CENTER" visible="false" />
 </fx:root>
