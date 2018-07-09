@@ -78,7 +78,6 @@ public class AccountPage extends StackPane implements DecoratorPage {
 
         FXUtils.loadFXML(this, "/assets/fxml/account.fxml");
 
-        FXUtils.setLimitWidth(this, 300);
         if (account instanceof AuthlibInjectorAccount) {
             lblServer.setText(((AuthlibInjectorAccount) account).getServer().getName());
             FXUtils.setLimitHeight(this, 182);
