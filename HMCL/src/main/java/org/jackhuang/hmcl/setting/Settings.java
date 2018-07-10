@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
@@ -55,6 +56,16 @@ public class Settings {
 
     private final boolean firstLaunch;
 
+    private InvalidationListener accountChangeListener =
+            source -> ConfigHolder.CONFIG.accounts.setAll(
+                    accounts.values().stream()
+                            .map(account -> {
+                                Map<Object, Object> storage = account.toStorage();
+                                storage.put("type", Accounts.getAccountType(account));
+                                return storage;
+                            })
+                            .collect(toList()));
+
     private Settings() {
         firstLaunch = ConfigHolder.CONFIG.firstLaunch.get();
         ConfigHolder.CONFIG.firstLaunch.set(false);
@@ -80,6 +91,7 @@ public class Settings {
             }
 
             accounts.put(Accounts.getAccountId(account), account);
+            account.addListener(accountChangeListener);
         }
 
         ConfigHolder.CONFIG.authlibInjectorServers.addListener(onInvalidating(this::removeDanglingAuthlibInjectorAccounts));
@@ -90,22 +102,18 @@ public class Settings {
 
         save();
 
-        for (Map.Entry<String, Profile> entry2 : getProfileMap().entrySet()) {
-            entry2.getValue().setName(entry2.getKey());
-            entry2.getValue().nameProperty().setChangedListener(this::profileNameChanged);
-            entry2.getValue().addPropertyChangedListener(e -> save());
+        for (Map.Entry<String, Profile> profileEntry : getProfileMap().entrySet()) {
+            profileEntry.getValue().setName(profileEntry.getKey());
+            profileEntry.getValue().nameProperty().setChangedListener(this::profileNameChanged);
+            profileEntry.getValue().addPropertyChangedListener(e -> save());
         }
 
         Lang.ignoringException(() -> Runtime.getRuntime().addShutdownHook(new Thread(this::save)));
+
+        ConfigHolder.CONFIG.addListener(source -> save());
     }
 
-    public void save() {
-        ConfigHolder.CONFIG.accounts.clear();
-        for (Account account : accounts.values()) {
-            Map<Object, Object> storage = account.toStorage();
-            storage.put("type", Accounts.getAccountType(account));
-            ConfigHolder.CONFIG.accounts.add(storage);
-        }
+    private void save() {
         ConfigHolder.saveConfig(ConfigHolder.CONFIG);
     }
 
@@ -119,7 +127,6 @@ public class Settings {
             super.invalidated();
 
             ConfigHolder.CONFIG.commonDirectory.set(get());
-            save();
         }
     };
 
@@ -144,7 +151,6 @@ public class Settings {
     public void setLocale(Locales.SupportedLocale locale) {
         this.locale = locale;
         ConfigHolder.CONFIG.localization.set(Locales.getNameByLocale(locale));
-        save();
     }
 
     private Proxy proxy = Proxy.NO_PROXY;
@@ -162,7 +168,6 @@ public class Settings {
     public void setProxyType(Proxy.Type proxyType) {
         this.proxyType = proxyType;
         ConfigHolder.CONFIG.proxyType.set(Proxies.PROXIES.indexOf(proxyType));
-        save();
         loadProxy();
     }
 
@@ -172,7 +177,6 @@ public class Settings {
 
     public void setProxyHost(String proxyHost) {
         ConfigHolder.CONFIG.proxyHost.set(proxyHost);
-        save();
     }
 
     public String getProxyPort() {
@@ -181,7 +185,6 @@ public class Settings {
 
     public void setProxyPort(String proxyPort) {
         ConfigHolder.CONFIG.proxyPort.set(proxyPort);
-        save();
     }
 
     public String getProxyUser() {
@@ -190,7 +193,6 @@ public class Settings {
 
     public void setProxyUser(String proxyUser) {
         ConfigHolder.CONFIG.proxyUser.set(proxyUser);
-        save();
     }
 
     public String getProxyPass() {
@@ -199,7 +201,6 @@ public class Settings {
 
     public void setProxyPass(String proxyPass) {
         ConfigHolder.CONFIG.proxyPass.set(proxyPass);
-        save();
     }
 
     public boolean hasProxy() {
@@ -208,7 +209,6 @@ public class Settings {
 
     public void setHasProxy(boolean hasProxy) {
         ConfigHolder.CONFIG.hasProxy.set(hasProxy);
-        save();
     }
 
     public boolean hasProxyAuth() {
@@ -217,7 +217,6 @@ public class Settings {
 
     public void setHasProxyAuth(boolean hasProxyAuth) {
         ConfigHolder.CONFIG.hasProxyAuth.set(hasProxyAuth);
-        save();
     }
 
     private void loadProxy() {
@@ -253,7 +252,6 @@ public class Settings {
     public void setFont(Font font) {
         ConfigHolder.CONFIG.fontFamily.set(font.getFamily());
         ConfigHolder.CONFIG.fontSize.set(font.getSize());
-        save();
     }
 
     public int getLogLines() {
@@ -262,7 +260,6 @@ public class Settings {
 
     public void setLogLines(int logLines) {
         ConfigHolder.CONFIG.logLines.set(logLines);
-        save();
     }
 
     /****************************************
@@ -295,7 +292,6 @@ public class Settings {
         if (index == -1)
             throw new IllegalArgumentException("Unknown download provider: " + downloadProvider);
         ConfigHolder.CONFIG.downloadType.set(index);
-        save();
     }
 
     /****************************************
@@ -325,7 +321,6 @@ public class Settings {
             super.invalidated();
 
             ConfigHolder.CONFIG.selectedAccount.set(getValue() == null ? "" : Accounts.getAccountId(getValue()));
-            save();
         }
     };
 
@@ -343,6 +338,9 @@ public class Settings {
 
     public void addAccount(Account account) {
         accounts.put(Accounts.getAccountId(account), account);
+        account.addListener(accountChangeListener);
+        accountChangeListener.invalidated(account);
+
         onAccountLoading();
 
         EventBus.EVENT_BUS.fireEvent(new AccountAddedEvent(this, account));
@@ -357,14 +355,20 @@ public class Settings {
     }
 
     public void deleteAccount(String name, String character) {
-        accounts.remove(Accounts.getAccountId(name, character));
+        Account removed = accounts.remove(Accounts.getAccountId(name, character));
+        if (removed != null) {
+            removed.removeListener(accountChangeListener);
+            accountChangeListener.invalidated(removed);
 
-        onAccountLoading();
-        selectedAccount.get();
+            onAccountLoading();
+            selectedAccount.get();
+        }
     }
 
     public void deleteAccount(Account account) {
         accounts.remove(Accounts.getAccountId(account));
+        account.removeListener(accountChangeListener);
+        accountChangeListener.invalidated(account);
 
         onAccountLoading();
         selectedAccount.get();
@@ -380,7 +384,6 @@ public class Settings {
             super.invalidated();
 
             ConfigHolder.CONFIG.backgroundImage.set(get());
-            save();
         }
     };
 
@@ -402,7 +405,6 @@ public class Settings {
             super.invalidated();
 
             ConfigHolder.CONFIG.backgroundImageType.set(get().ordinal());
-            save();
         }
     };
 
@@ -428,7 +430,6 @@ public class Settings {
             super.invalidated();
 
             ConfigHolder.CONFIG.theme.set(get().getName().toLowerCase());
-            save();
         }
     };
 
@@ -454,7 +455,6 @@ public class Settings {
         if (!hasProfile(ConfigHolder.CONFIG.selectedProfile.get())) {
             getProfileMap().keySet().stream().findFirst().ifPresent(selectedProfile -> {
                 ConfigHolder.CONFIG.selectedProfile.set(selectedProfile);
-                save();
             });
             Schedulers.computation().schedule(this::onProfileChanged);
         }
@@ -464,7 +464,6 @@ public class Settings {
     public void setSelectedProfile(Profile selectedProfile) {
         if (hasProfile(selectedProfile.getName()) && !Objects.equals(selectedProfile.getName(), ConfigHolder.CONFIG.selectedProfile.get())) {
             ConfigHolder.CONFIG.selectedProfile.set(selectedProfile.getName());
-            save();
             Schedulers.computation().schedule(this::onProfileChanged);
         }
     }
@@ -496,8 +495,6 @@ public class Settings {
         Schedulers.computation().schedule(this::onProfileLoading);
 
         ver.nameProperty().setChangedListener(this::profileNameChanged);
-
-        save();
     }
 
     public void deleteProfile(Profile profile) {
