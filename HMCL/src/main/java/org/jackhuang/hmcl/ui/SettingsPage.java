@@ -204,7 +204,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         JFXColorPicker picker = new JFXColorPicker(Color.web(Settings.INSTANCE.getTheme().getColor()), null);
         picker.setCustomColorText(i18n("color.custom"));
         picker.setRecentColorsText(i18n("color.recent"));
-        picker.getCustomColors().setAll(Arrays.stream(Theme.VALUES).map(Theme::getColor).map(Color::web).collect(Collectors.toList()));
+        picker.getCustomColors().setAll(Theme.SUGGESTED_COLORS);
         picker.setOnAction(e -> {
             Theme theme = Theme.custom(Theme.getColorDisplayName(picker.getValue()));
             Settings.INSTANCE.setTheme(theme);

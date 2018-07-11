@@ -31,13 +31,15 @@ import java.util.logging.Level;
 
 public class Theme {
     public static final Theme BLUE = new Theme("blue", "#5C6BC0");
-    public static final Theme DARK_BLUE = new Theme("dark_blue", "#283593");
-    public static final Theme GREEN = new Theme("green", "#43A047");
-    public static final Theme ORANGE = new Theme("orange", "#E67E22");
-    public static final Theme PURPLE = new Theme("purple", "#9C27B0");
-    public static final Theme RED = new Theme("red", "#F44336");
 
-    public static final Theme[] VALUES = new Theme[]{BLUE, DARK_BLUE, GREEN, ORANGE, PURPLE, RED};
+    public static final Color[] SUGGESTED_COLORS = new Color[]{
+            Color.web("#5C6BC0"), // blue
+            Color.web("#283593"), // dark blue
+            Color.web("#43A047"), // green
+            Color.web("#E67E22"), // orange
+            Color.web("#9C27B0"), // purple
+            Color.web("#F44336")  // red
+    };
 
     private final String color;
     private final String name;
@@ -68,8 +70,7 @@ public class Theme {
     }
 
     public String[] getStylesheets() {
-        String name = isCustom() ? BLUE.getName() : this.name;
-        String css = Theme.class.getResource("/assets/css/" + name + ".css").toExternalForm();
+        String css;
         try {
             File temp = File.createTempFile("hmcl", ".css");
             FileUtils.writeText(temp, IOUtils.readFullyAsString(Theme.class.getResourceAsStream("/assets/css/custom.css"))
@@ -77,7 +78,8 @@ public class Theme {
                     .replace("%font-color%", getColorDisplayName(getForegroundColor())));
             css = temp.toURI().toString();
         } catch (IOException e) {
-            Logging.LOG.log(Level.SEVERE, "Unable to create theme stylesheet", e);
+            Logging.LOG.log(Level.SEVERE, "Unable to create theme stylesheet. Fallback to blue theme.", e);
+            css = Theme.class.getResource("/assets/css/blue.css").toExternalForm();
         }
 
         return new String[]{
@@ -97,10 +99,6 @@ public class Theme {
     public static Optional<Theme> getTheme(String name) {
         if (name == null)
             return Optional.empty();
-
-        for (Theme theme : VALUES)
-            if (theme.name.equalsIgnoreCase(name))
-                return Optional.of(theme);
 
         if (name.startsWith("#"))
             try {
