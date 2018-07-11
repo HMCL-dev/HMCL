@@ -116,6 +116,7 @@ public final class VersionSettingsController {
         gameDirItem.setDisable(profile.getRepository().isModpack(versionId));
         globalItem.setDisable(profile.getRepository().isModpack(versionId));
 
+        // unbind data fields
         if (lastVersionSetting != null) {
             FXUtils.unbindInt(txtWidth, lastVersionSetting.widthProperty());
             FXUtils.unbindInt(txtHeight, lastVersionSetting.heightProperty());
@@ -135,6 +136,12 @@ public final class VersionSettingsController {
             FXUtils.unbindEnum(cboLauncherVisibility);
         }
 
+        // unbind data fields
+        globalItem.setToggleSelectedListener(null);
+        javaItem.setToggleSelectedListener(null);
+        gameDirItem.setToggleSelectedListener(null);
+
+        // bind new data fields
         FXUtils.bindInt(txtWidth, versionSetting.widthProperty());
         FXUtils.bindInt(txtHeight, versionSetting.heightProperty());
         FXUtils.bindInt(txtMaxMemory, versionSetting.maxMemoryProperty());
