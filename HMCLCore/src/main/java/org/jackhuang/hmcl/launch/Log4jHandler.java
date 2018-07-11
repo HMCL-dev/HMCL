@@ -118,6 +118,9 @@ final class Log4jHandler extends Thread {
                     Logging.LOG.log(Level.WARNING, "An error occurred when writing console lines", e);
                     logs.forEach(System.out::println);
                     broken = true;
+                } else {
+                    // Output plain XML to user
+                    callback.accept(log, Log4jLevel.INFO);
                 }
             }
         });

@@ -323,7 +323,8 @@ public class DefaultLauncher extends Launcher {
     }
 
     private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, boolean isDaemon) {
-        boolean enablesLoggingInfo = version.getLogging() != null && version.getLogging().containsKey(DownloadType.CLIENT);
+        boolean enablesLoggingInfo = version.getLogging() != null && version.getLogging().containsKey(DownloadType.CLIENT)
+                && !"net.minecraft.launchwrapper.Launch".equals(version.getMainClass());
         if (enablesLoggingInfo)
             startMonitorsWithLoggingInfo(managedProcess, processListener, isDaemon);
         else
