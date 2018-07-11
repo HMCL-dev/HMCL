@@ -56,8 +56,8 @@ public final class OptiFineBMCLVersionList extends VersionList<Void> {
                 List<OptiFineVersion> root = Constants.GSON.fromJson(task.getResult(), new TypeToken<List<OptiFineVersion>>() {
                 }.getType());
                 for (OptiFineVersion element : root) {
-                    String version = element.getType();
-                    if (version == null)
+                    String version = element.getType() + "_" + element.getPatch();
+                    if (element.getType() == null || "pre".equals(element.getPatch()))
                         continue;
                     String mirror = "http://bmclapi2.bangbang93.com/optifine/" + element.getGameVersion() + "/" + element.getType() + "/" + element.getPatch();
                     if (!duplicates.add(mirror))
