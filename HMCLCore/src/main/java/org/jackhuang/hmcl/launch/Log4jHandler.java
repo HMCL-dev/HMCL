@@ -97,14 +97,8 @@ final class Log4jHandler extends Thread {
     public Future<?> newLine(String log) {
         return Schedulers.computation().schedule(() -> {
             try {
-                String line = log
-                        .replace("<![CDATA[", "")
-                        .replace("]]>", "")
-                        .replace("log4j:", "log4j_")
-                        .replace("<log4j_Message>", "<log4j_Message><![CDATA[")
-                        .replace("</log4j_Message>", "]]></log4j_Message>")
-                        .replace("<log4j_Throwable>", "<log4j_Throwable><![CDATA[")
-                        .replace("</log4j_Throwable>", "]]></log4j_Throwable>");
+                // Prevent from namespace parsing
+                String line = log.replace("log4j:", "log4j_");
                 logs.add(line);
                 if (broken)
                     System.out.println(line);
