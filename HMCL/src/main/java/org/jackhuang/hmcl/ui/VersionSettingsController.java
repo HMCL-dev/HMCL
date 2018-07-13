@@ -45,7 +45,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -53,6 +52,7 @@ public final class VersionSettingsController {
     private VersionSetting lastVersionSetting = null;
     private Profile profile;
     private String versionId;
+    private boolean javaItemsLoaded;
 
     @FXML private VBox rootPane;
     @FXML private ScrollPane scroll;
@@ -90,6 +90,7 @@ public final class VersionSettingsController {
                             (variables.<List<JavaVersion>>get("list")).stream()
                                     .map(javaVersion -> javaItem.createChildren(javaVersion.getVersion(), javaVersion.getBinary().getAbsolutePath(), javaVersion))
                                     .collect(Collectors.toList()));
+                    javaItemsLoaded = true;
                     initializeSelectedJava();
                 });
 
@@ -212,23 +213,34 @@ public final class VersionSettingsController {
 
     private void initializeSelectedJava() {
         if (lastVersionSetting == null
-                || !JavaVersion.getJREsImmediately().isPresent() /* JREs are still being loaded */) {
+                || !javaItemsLoaded /* JREs are still being loaded */) {
             return;
         }
 
-        boolean flag = false;
-        Toggle defaultToggle = null;
-        for (Toggle toggle : javaItem.getGroup().getToggles()) {
-            if (toggle.getUserData() == Lang.invoke(lastVersionSetting::getJavaVersion)) {
-                toggle.setSelected(true);
-                flag = true;
-            } else if (toggle.getUserData() == JavaVersion.fromCurrentEnvironment()) {
-                defaultToggle = toggle;
+        List<Toggle> toggles = javaItem.getGroup().getToggles();
+        if ("Custom".equals(lastVersionSetting.getJava())) {
+            toggles.stream()
+                    .filter(javaItem::isCustomToggle)
+                    .findFirst()
+                    .get().setSelected(true);
+        } else {
+            JavaVersion selectedJava;
+            try {
+                selectedJava = lastVersionSetting.getJavaVersion();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
             }
-        }
-
-        if (!flag) {
-            Optional.ofNullable(defaultToggle).ifPresent(t -> t.setSelected(true));
+            toggles.stream()
+                    .filter(it -> it.getUserData() == selectedJava)
+                    .findFirst()
+                    .orElseGet( // fallback to select current java
+                            () -> toggles.stream()
+                                    .filter(it -> it.getUserData() == JavaVersion.fromCurrentEnvironment())
+                                    .findFirst()
+                                    .get())
+                    .setSelected(true);
+            ;
         }
     }
 
