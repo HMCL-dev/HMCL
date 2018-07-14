@@ -18,6 +18,9 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXButton;
+
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.Label;
@@ -30,9 +33,13 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+
+import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class FileItem extends BorderPane {
     private final Label lblPath = new Label();
@@ -41,6 +48,7 @@ public class FileItem extends BorderPane {
     private final SimpleStringProperty title = new SimpleStringProperty(this, "title");
     private final SimpleStringProperty tooltip = new SimpleStringProperty(this, "tooltip");
     private final SimpleStringProperty path = new SimpleStringProperty(this, "path");
+    private final SimpleBooleanProperty convertToRelativePath = new SimpleBooleanProperty(this, "convertToRelativePath");
 
     public FileItem() {
         VBox left = new VBox();
@@ -61,6 +69,23 @@ public class FileItem extends BorderPane {
         Tooltip tip = new Tooltip();
         tip.textProperty().bind(tooltipProperty());
         Tooltip.install(this, tip);
+
+        convertToRelativePath.addListener(onInvalidating(() -> path.set(processPath(path.get()))));
+    }
+
+    /**
+     * Converts the given path to absolute/relative(if possible) path according to {@link #convertToRelativePathProperty()}.
+     */
+    private String processPath(String path) {
+        Path given = Paths.get(path).toAbsolutePath();
+        if (isConvertToRelativePath()) {
+            try {
+                return Paths.get(".").toAbsolutePath().relativize(given).normalize().toString();
+            } catch (IllegalArgumentException e) {
+                // the given path can't be relativized against current path
+            }
+        }
+        return given.normalize().toString();
     }
 
     public void onExplore() {
@@ -77,8 +102,9 @@ public class FileItem extends BorderPane {
         }
         chooser.titleProperty().bind(titleProperty());
         File selectedDir = chooser.showDialog(Controllers.getStage());
-        if (selectedDir != null)
-            path.set(selectedDir.getAbsolutePath());
+        if (selectedDir != null) {
+            path.set(processPath(selectedDir.toString()));
+        }
         chooser.titleProperty().unbind();
     }
 
@@ -128,5 +154,17 @@ public class FileItem extends BorderPane {
 
     public void setPath(String path) {
         this.path.set(path);
+    }
+
+    public boolean isConvertToRelativePath() {
+        return convertToRelativePath.get();
+    }
+
+    public BooleanProperty convertToRelativePathProperty() {
+        return convertToRelativePath;
+    }
+
+    public void setConvertToRelativePath(boolean convertToRelativePath) {
+        this.convertToRelativePath.set(convertToRelativePath);
     }
 }

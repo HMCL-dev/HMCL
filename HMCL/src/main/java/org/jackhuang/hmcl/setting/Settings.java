@@ -512,8 +512,12 @@ public class Settings {
 
     private void checkProfileMap() {
         if (getProfileMap().isEmpty()) {
-            getProfileMap().put(Profiles.DEFAULT_PROFILE, new Profile(Profiles.DEFAULT_PROFILE));
-            getProfileMap().put(Profiles.HOME_PROFILE, new Profile(Profiles.HOME_PROFILE, Launcher.MINECRAFT_DIRECTORY));
+            Profile current = new Profile(Profiles.DEFAULT_PROFILE);
+            current.setUseRelativePath(true);
+            getProfileMap().put(Profiles.DEFAULT_PROFILE, current);
+
+            Profile home = new Profile(Profiles.HOME_PROFILE, Launcher.MINECRAFT_DIRECTORY);
+            getProfileMap().put(Profiles.HOME_PROFILE, home);
         }
     }
 

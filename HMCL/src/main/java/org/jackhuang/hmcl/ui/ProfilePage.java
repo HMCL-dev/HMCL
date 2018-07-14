@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -40,12 +41,11 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
     private final StringProperty location;
     private final Profile profile;
 
-    @FXML
-    private JFXTextField txtProfileName;
-    @FXML
-    private FileItem gameDir;
+    @FXML private JFXTextField txtProfileName;
+    @FXML private FileItem gameDir;
     @FXML private JFXButton btnSave;
     @FXML private JFXButton btnDelete;
+    @FXML private JFXCheckBox toggleUseRelativePath;
 
     /**
      * @param profile null if creating a new profile.
@@ -69,9 +69,12 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
         FXUtils.onChangeAndOperate(location, it -> {
             btnSave.setDisable(!txtProfileName.validate() || StringUtils.isBlank(getLocation()));
         });
-
-        if (profile == null)
+        gameDir.convertToRelativePathProperty().bind(toggleUseRelativePath.selectedProperty());
+        if (profile == null) {
             btnDelete.setVisible(false);
+        } else {
+            toggleUseRelativePath.setSelected(profile.isUseRelativePath());
+        }
     }
 
     @FXML
@@ -86,13 +89,17 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
     private void onSave() {
         if (profile != null) {
             profile.setName(txtProfileName.getText());
-            if (StringUtils.isNotBlank(getLocation()))
+            profile.setUseRelativePath(toggleUseRelativePath.isSelected());
+            if (StringUtils.isNotBlank(getLocation())) {
                 profile.setGameDir(new File(getLocation()));
+            }
         } else {
             if (StringUtils.isBlank(getLocation())) {
                 gameDir.onExplore();
             }
-            Settings.INSTANCE.putProfile(new Profile(txtProfileName.getText(), new File(getLocation())));
+            Profile newProfile = new Profile(txtProfileName.getText(), new File(getLocation()));
+            newProfile.setUseRelativePath(toggleUseRelativePath.isSelected());
+            Settings.INSTANCE.putProfile(newProfile);
         }
 
         Settings.INSTANCE.onProfileLoading();
