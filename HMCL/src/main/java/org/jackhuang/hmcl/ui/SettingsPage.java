@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.*;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -178,7 +179,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         chkProxyAuthentication.selectedProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setHasProxyAuth(newValue));
         authPane.disableProperty().bind(chkProxyAuthentication.selectedProperty().not());
 
-        fileCommonLocation.setProperty(Settings.INSTANCE.commonPathProperty());
+        fileCommonLocation.pathProperty().bindBidirectional(Settings.INSTANCE.commonPathProperty());
 
         FXUtils.installTooltip(btnUpdate, i18n("update.tooltip"));
         checkUpdate();

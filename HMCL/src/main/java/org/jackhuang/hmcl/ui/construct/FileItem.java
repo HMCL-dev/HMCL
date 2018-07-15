@@ -18,7 +18,9 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXButton;
-import javafx.beans.property.Property;
+
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.Label;
@@ -31,24 +33,30 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+
+import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class FileItem extends BorderPane {
-    private Property<String> property;
-    private final Label x = new Label();
+    private final Label lblPath = new Label();
 
     private final SimpleStringProperty name = new SimpleStringProperty(this, "name");
     private final SimpleStringProperty title = new SimpleStringProperty(this, "title");
     private final SimpleStringProperty tooltip = new SimpleStringProperty(this, "tooltip");
+    private final SimpleStringProperty path = new SimpleStringProperty(this, "path");
+    private final SimpleBooleanProperty convertToRelativePath = new SimpleBooleanProperty(this, "convertToRelativePath");
 
     public FileItem() {
         VBox left = new VBox();
         Label name = new Label();
         name.textProperty().bind(nameProperty());
-        x.getStyleClass().addAll("subtitle-label");
-        left.getChildren().addAll(name, x);
+        lblPath.getStyleClass().addAll("subtitle-label");
+        lblPath.textProperty().bind(path);
+        left.getChildren().addAll(name, lblPath);
         setLeft(left);
 
         JFXButton right = new JFXButton();
@@ -61,12 +69,29 @@ public class FileItem extends BorderPane {
         Tooltip tip = new Tooltip();
         tip.textProperty().bind(tooltipProperty());
         Tooltip.install(this, tip);
+
+        convertToRelativePath.addListener(onInvalidating(() -> path.set(processPath(path.get()))));
+    }
+
+    /**
+     * Converts the given path to absolute/relative(if possible) path according to {@link #convertToRelativePathProperty()}.
+     */
+    private String processPath(String path) {
+        Path given = Paths.get(path).toAbsolutePath();
+        if (isConvertToRelativePath()) {
+            try {
+                return Paths.get(".").toAbsolutePath().relativize(given).normalize().toString();
+            } catch (IllegalArgumentException e) {
+                // the given path can't be relativized against current path
+            }
+        }
+        return given.normalize().toString();
     }
 
     public void onExplore() {
         DirectoryChooser chooser = new DirectoryChooser();
-        if (property.getValue() != null) {
-            File file = new File(property.getValue());
+        if (path.get() != null) {
+            File file = new File(path.get());
             if (file.exists()) {
                 if (file.isFile())
                     file = file.getAbsoluteFile().getParentFile();
@@ -77,14 +102,10 @@ public class FileItem extends BorderPane {
         }
         chooser.titleProperty().bind(titleProperty());
         File selectedDir = chooser.showDialog(Controllers.getStage());
-        if (selectedDir != null)
-            property.setValue(selectedDir.getAbsolutePath());
+        if (selectedDir != null) {
+            path.set(processPath(selectedDir.toString()));
+        }
         chooser.titleProperty().unbind();
-    }
-
-    public void setProperty(Property<String> property) {
-        this.property = property;
-        x.textProperty().bind(property);
     }
 
     public String getName() {
@@ -121,5 +142,29 @@ public class FileItem extends BorderPane {
 
     public void setTooltip(String tooltip) {
         this.tooltip.set(tooltip);
+    }
+
+    public String getPath() {
+        return path.get();
+    }
+
+    public StringProperty pathProperty() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path.set(path);
+    }
+
+    public boolean isConvertToRelativePath() {
+        return convertToRelativePath.get();
+    }
+
+    public BooleanProperty convertToRelativePathProperty() {
+        return convertToRelativePath;
+    }
+
+    public void setConvertToRelativePath(boolean convertToRelativePath) {
+        this.convertToRelativePath.set(convertToRelativePath);
     }
 }

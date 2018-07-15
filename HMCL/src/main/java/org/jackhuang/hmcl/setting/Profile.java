@@ -19,6 +19,9 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
 import javafx.beans.InvalidationListener;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+
 import org.jackhuang.hmcl.game.HMCLDependencyManager;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;
@@ -83,8 +86,18 @@ public final class Profile {
         nameProperty.set(name);
     }
 
-    public Profile() {
-        this("Default");
+    private BooleanProperty useRelativePathProperty = new SimpleBooleanProperty(this, "useRelativePath", false);
+
+    public BooleanProperty useRelativePathProperty() {
+        return useRelativePathProperty();
+    }
+
+    public boolean isUseRelativePath() {
+        return useRelativePathProperty.get();
+    }
+
+    public void setUseRelativePath(boolean useRelativePath) {
+        useRelativePathProperty.set(useRelativePath);
     }
 
     public Profile(String name) {
@@ -153,6 +166,7 @@ public final class Profile {
         return new ToStringBuilder(this)
                 .append("gameDir", getGameDir())
                 .append("name", getName())
+                .append("useRelativePath", isUseRelativePath())
                 .toString();
     }
 
@@ -160,6 +174,7 @@ public final class Profile {
         nameProperty.addListener(listener);
         globalProperty.addListener(listener);
         gameDirProperty.addListener(listener);
+        useRelativePathProperty.addListener(listener);
     }
 
     public static final class Serializer implements JsonSerializer<Profile>, JsonDeserializer<Profile> {
@@ -176,6 +191,7 @@ public final class Profile {
             JsonObject jsonObject = new JsonObject();
             jsonObject.add("global", context.serialize(src.getGlobal()));
             jsonObject.addProperty("gameDir", src.getGameDir().getPath());
+            jsonObject.addProperty("useRelativePath", src.isUseRelativePath());
 
             return jsonObject;
         }
@@ -188,6 +204,8 @@ public final class Profile {
 
             Profile profile = new Profile("Default", new File(gameDir));
             profile.setGlobal(context.deserialize(obj.get("global"), VersionSetting.class));
+
+            profile.setUseRelativePath(Optional.ofNullable(obj.get("useRelativePath")).map(JsonElement::getAsBoolean).orElse(false));
             return profile;
         }
 

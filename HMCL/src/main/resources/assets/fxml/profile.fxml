@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXCheckBox?>
 <?import com.jfoenix.controls.JFXTextField?>
 <?import com.jfoenix.validation.RequiredFieldValidator?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
 <?import org.jackhuang.hmcl.ui.construct.ComponentList?>
 <?import org.jackhuang.hmcl.ui.construct.FileItem?>
 <fx:root xmlns="http://javafx.com/javafx"
@@ -32,6 +34,12 @@
                 </BorderPane>
 
                 <FileItem fx:id="gameDir" name="%profile.instance_directory" title="%profile.instance_directory.choose"/>
+
+                <JFXCheckBox fx:id="toggleUseRelativePath" text="%profile.use_relative_path" StackPane.alignment="CENTER_LEFT">
+                    <StackPane.margin>
+                        <Insets left="-10"/>
+                    </StackPane.margin>
+                </JFXCheckBox>
             </ComponentList>
 
         </VBox>
