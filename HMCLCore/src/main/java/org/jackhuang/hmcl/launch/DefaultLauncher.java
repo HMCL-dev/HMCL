@@ -25,7 +25,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -48,8 +47,8 @@ public class DefaultLauncher extends Launcher {
         super(repository, versionId, authInfo, options, listener, daemon);
     }
 
-    private List<String> generateCommandLine(File nativeFolder) throws IOException {
-        List<String> res = new LinkedList<>();
+    private CommandBuilder generateCommandLine(File nativeFolder, boolean enableLoggingInfo) throws IOException {
+        CommandBuilder res = new CommandBuilder();
 
         // Executable
         if (StringUtils.isNotBlank(options.getWrapper()))
@@ -58,7 +57,7 @@ public class DefaultLauncher extends Launcher {
         res.add(options.getJava().getBinary().toString());
 
         if (StringUtils.isNotBlank(options.getJavaArgs()))
-            res.addAll(StringUtils.tokenize(options.getJavaArgs()));
+            res.addAllWithoutParsing(StringUtils.tokenize(options.getJavaArgs()));
 
         // JVM Args
         if (!options.isNoGeneratedJVMArgs()) {
@@ -72,7 +71,7 @@ public class DefaultLauncher extends Launcher {
             }
 
             Map<DownloadType, LoggingInfo> logging = version.getLogging();
-            if (logging != null) {
+            if (logging != null && enableLoggingInfo) {
                 LoggingInfo loggingInfo = logging.get(DownloadType.CLIENT);
                 if (loggingInfo != null) {
                     File loggingFile = repository.getLoggingObject(version.getId(), version.getAssetIndex().getId(), loggingInfo);
@@ -187,11 +186,10 @@ public class DefaultLauncher extends Launcher {
         }
 
         if (StringUtils.isNotBlank(options.getMinecraftArgs()))
-            res.addAll(StringUtils.tokenize(options.getMinecraftArgs()));
+            res.addAllWithoutParsing(StringUtils.tokenize(options.getMinecraftArgs()));
 
-        return res.stream()
-                .filter(it -> !getForbiddens().containsKey(it) || !getForbiddens().get(it).get())
-                .collect(Collectors.toList());
+        res.removeIf(it -> getForbiddens().containsKey(it) && getForbiddens().get(it).get());
+        return res;
     }
 
     public Map<String, Boolean> getFeatures() {
@@ -224,7 +222,7 @@ public class DefaultLauncher extends Launcher {
      * -Dminecraft.launcher.brand=&lt;Your launcher version&gt;
      * -Dlog4j.configurationFile=&lt;Your custom log4j configuration&gt;
      */
-    protected void appendJvmArgs(List<String> result) {
+    protected void appendJvmArgs(CommandBuilder result) {
     }
 
     public void decompressNatives(File destination) throws NotDecompressingNativesException {
@@ -262,18 +260,20 @@ public class DefaultLauncher extends Launcher {
         File nativeFolder = Files.createTempDirectory("minecraft").toFile();
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
-        List<String> rawCommandLine = generateCommandLine(nativeFolder);
+        List<String> rawCommandLine = generateCommandLine(nativeFolder, true).asList();
 
         decompressNatives(nativeFolder);
 
+        File runDirectory = repository.getRunDirectory(version.getId());
+
         if (StringUtils.isNotBlank(options.getPreLaunchCommand()))
-            Runtime.getRuntime().exec(options.getPreLaunchCommand()).waitFor();
+            new ProcessBuilder(options.getPreLaunchCommand())
+                    .directory(runDirectory).start().waitFor();
 
         Process process;
         try {
-            ProcessBuilder builder = new ProcessBuilder(rawCommandLine);
-            builder.directory(repository.getRunDirectory(version.getId()))
-                    .environment().put("APPDATA", options.getGameDir().getAbsoluteFile().getParent());
+            ProcessBuilder builder = new ProcessBuilder(rawCommandLine).directory(runDirectory);
+            builder.environment().put("APPDATA", options.getGameDir().getAbsoluteFile().getParent());
             process = builder.start();
         } catch (IOException e) {
             throw new ProcessCreationException(e);
@@ -305,14 +305,14 @@ public class DefaultLauncher extends Launcher {
                 writer.newLine();
                 writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
                 writer.newLine();
-                writer.write("cd /D %APPDATA%");
+                writer.write(new CommandBuilder().add("cd", "/D", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
                 writer.newLine();
             }
             if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
                 writer.write(options.getPreLaunchCommand());
                 writer.newLine();
             }
-            writer.write(StringUtils.makeCommand(generateCommandLine(nativeFolder)));
+            writer.write(generateCommandLine(nativeFolder, false).toString());
         }
         if (!scriptFile.setExecutable(true))
             throw new PermissionException();

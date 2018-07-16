@@ -21,8 +21,10 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
+import org.jackhuang.hmcl.util.CommandBuilder;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author huangyuhui
@@ -42,10 +44,10 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     }
 
     @Override
-    protected void appendJvmArgs(List<String> result) {
-        super.appendJvmArgs(result);
-
-        result.add("-Dminecraft.launcher.version=" + Launcher.VERSION);
-        result.add("-Dminecraft.launcher.brand=" + Launcher.NAME);
+    protected Map<String, String> getConfigurations() {
+        Map<String, String> res = super.getConfigurations();
+        res.put("${launcher_name}", Launcher.NAME);
+        res.put("${launcher_version}", Launcher.VERSION);
+        return res;
     }
 }

@@ -33,36 +33,6 @@ public final class StringUtils {
     private StringUtils() {
     }
 
-    public static String makeCommand(List<String> cmd) {
-        StringBuilder cmdbuf = new StringBuilder(120);
-        for (int i = 0; i < cmd.size(); i++) {
-            if (i > 0)
-                cmdbuf.append(' ');
-            String s = cmd.get(i);
-            if (s.indexOf(' ') >= 0 || s.indexOf('\t') >= 0)
-                if (s.charAt(0) != '"') {
-                    cmdbuf.append('"');
-                    cmdbuf.append(s);
-                    if (s.endsWith("\\"))
-                        cmdbuf.append("\\");
-                    cmdbuf.append('"');
-                } else if (s.endsWith("\""))
-                    /*
-                     * The argument has already been quoted.
-                     */
-                    cmdbuf.append(s);
-                else
-                    /*
-                     * Unmatched quote for the argument.
-                     */
-                    throw new IllegalArgumentException();
-            else
-                cmdbuf.append(s);
-        }
-
-        return cmdbuf.toString();
-    }
-
     public static String getStackTrace(Throwable throwable) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         throwable.printStackTrace(new PrintStream(stream));

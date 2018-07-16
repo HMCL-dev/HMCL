@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.download;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.TaskResult;
+import org.jackhuang.hmcl.util.CommandBuilder;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.ArrayList;
@@ -93,7 +94,7 @@ public class MaintainTask extends TaskResult<Version> {
             args.add("optifine.OptiFineForgeTweaker");
         }
 
-        return version.setMinecraftArguments(StringUtils.makeCommand(args));
+        return version.setMinecraftArguments(new CommandBuilder().addAll(args).toString());
     }
 
     @Override
