@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.ui.construct.InputDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
+import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.JavaVersion;
 
 import java.util.function.Consumer;
@@ -140,8 +141,10 @@ public final class Controllers {
         dialog(new MessageDialogPane(text, title, onAccept, onCancel));
     }
 
-    public static void inputDialog(String text, Consumer<String> onResult) {
-        dialog(new InputDialogPane(text, onResult));
+    public static InputDialogPane inputDialog(String text, FutureCallback<String> onResult) {
+        InputDialogPane pane = new InputDialogPane(text, onResult);
+        dialog(pane);
+        return pane;
     }
 
     public static Region taskDialog(TaskExecutor executor, String title, String subtitle) {

@@ -195,12 +195,15 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     }
 
     public static void renameVersion(Profile profile, String version) {
-        Controllers.inputDialog(i18n("version.manage.rename.message"), res -> {
+        Controllers.inputDialog(i18n("version.manage.rename.message"), (res, resolve, reject) -> {
             if (profile.getRepository().renameVersion(version, res)) {
                 profile.getRepository().refreshVersionsAsync().start();
                 Controllers.navigate(null);
+                resolve.run();
+            } else {
+                reject.accept(i18n("version.manage.rename.fail"));
             }
-        });
+        }).setInitialText(version);
     }
 
     public static void exportVersion(Profile profile, String version) {

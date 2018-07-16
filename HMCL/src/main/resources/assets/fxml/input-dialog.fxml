@@ -5,6 +5,7 @@
 <?import com.jfoenix.controls.JFXTextField?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.StackPane?>
+<?import org.jackhuang.hmcl.ui.construct.SpinnerPane?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
@@ -16,8 +17,11 @@
             <JFXTextField fx:id="textField" />
         </body>
         <actions>
+            <Label fx:id="lblCreationWarning"/>
+            <SpinnerPane fx:id="acceptPane" styleClass="small-spinner-pane">
+                <JFXButton fx:id="acceptButton" text="%button.ok" styleClass="dialog-accept"/>
+            </SpinnerPane>
             <JFXButton fx:id="cancelButton" styleClass="dialog-cancel" text="%button.cancel" />
-            <JFXButton fx:id="acceptButton" styleClass="dialog-accept" text="%button.ok" />
         </actions>
     </JFXDialogLayout>
 </fx:root>
