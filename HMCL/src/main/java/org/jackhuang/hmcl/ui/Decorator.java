@@ -55,7 +55,6 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
-import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.setting.Theme;
@@ -76,6 +75,8 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
 
 public final class Decorator extends StackPane implements TaskExecutorDialogWizardDisplayer {
     private static final SVGGlyph minus = Lang.apply(new SVGGlyph(0, "MINUS", "M804.571 420.571v109.714q0 22.857-16 38.857t-38.857 16h-694.857q-22.857 0-38.857-16t-16-38.857v-109.714q0-22.857 16-38.857t38.857-16h694.857q22.857 0 38.857 16t16 38.857z", Color.WHITE),
@@ -220,10 +221,10 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         try {
             Image background;
 
-            if (ConfigHolder.CONFIG.backgroundImageType.get() == EnumBackgroundImage.DEFAULT)
+            if (CONFIG.backgroundImageType.get() == EnumBackgroundImage.DEFAULT)
                 background = searchBackgroundImage(new Image("/assets/img/background.jpg"), "");
             else
-                background = searchBackgroundImage(new Image("/assets/img/background.jpg"), ConfigHolder.CONFIG.backgroundImage.get());
+                background = searchBackgroundImage(new Image("/assets/img/background.jpg"), CONFIG.backgroundImage.get());
 
             drawerWrapper.setBackground(new Background(new BackgroundImage(background, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, new BackgroundSize(800, 480, false, false, true, true))));
         } catch (IllegalArgumentException ignore) {

@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
+
 import java.net.Authenticator;
 import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
@@ -35,18 +37,18 @@ public final class ProxyManager {
 
     public static final ObjectBinding<Proxy> proxyProperty = Bindings.createObjectBinding(
             () -> {
-                String host = ConfigHolder.CONFIG.proxyHost.get();
-                Integer port = Lang.toIntOrNull(ConfigHolder.CONFIG.proxyPort.get());
-                if (!ConfigHolder.CONFIG.hasProxy.get() || StringUtils.isBlank(host) || port == null || ConfigHolder.CONFIG.proxyType.get() == Proxy.Type.DIRECT) {
+                String host = CONFIG.proxyHost.get();
+                Integer port = Lang.toIntOrNull(CONFIG.proxyPort.get());
+                if (!CONFIG.hasProxy.get() || StringUtils.isBlank(host) || port == null || CONFIG.proxyType.get() == Proxy.Type.DIRECT) {
                     return Proxy.NO_PROXY;
                 } else {
-                    return new Proxy(ConfigHolder.CONFIG.proxyType.get(), new InetSocketAddress(host, port));
+                    return new Proxy(CONFIG.proxyType.get(), new InetSocketAddress(host, port));
                 }
             },
-            ConfigHolder.CONFIG.proxyType,
-            ConfigHolder.CONFIG.proxyHost,
-            ConfigHolder.CONFIG.proxyPort,
-            ConfigHolder.CONFIG.hasProxy);
+            CONFIG.proxyType,
+            CONFIG.proxyHost,
+            CONFIG.proxyPort,
+            CONFIG.hasProxy);
 
     public static Proxy getProxy() {
         return proxyProperty.get();
@@ -65,9 +67,9 @@ public final class ProxyManager {
 
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
-                if (ConfigHolder.CONFIG.hasProxyAuth.get()) {
-                    String username = ConfigHolder.CONFIG.proxyUser.get();
-                    String password = ConfigHolder.CONFIG.proxyPass.get();
+                if (CONFIG.hasProxyAuth.get()) {
+                    String username = CONFIG.proxyUser.get();
+                    String password = CONFIG.proxyPass.get();
                     if (username != null && password != null) {
                         return new PasswordAuthentication(username, password.toCharArray());
                     }

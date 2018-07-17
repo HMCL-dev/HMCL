@@ -22,7 +22,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.IOException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -39,6 +38,8 @@ import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
+
+import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
 
 public class AddAuthlibInjectorServerPane extends StackPane {
 
@@ -132,8 +133,8 @@ public class AddAuthlibInjectorServerPane extends StackPane {
 
     @FXML
     private void onAddFinish() {
-        if (!ConfigHolder.CONFIG.authlibInjectorServers.contains(serverBeingAdded)) {
-            ConfigHolder.CONFIG.authlibInjectorServers.add(serverBeingAdded);
+        if (!CONFIG.authlibInjectorServers.contains(serverBeingAdded)) {
+            CONFIG.authlibInjectorServers.add(serverBeingAdded);
         }
         fireEvent(new DialogCloseEvent());
     }

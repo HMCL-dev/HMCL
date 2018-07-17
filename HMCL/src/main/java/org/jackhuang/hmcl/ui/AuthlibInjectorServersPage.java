@@ -22,7 +22,6 @@ import static org.jackhuang.hmcl.ui.FXUtils.loadFXML;
 import static org.jackhuang.hmcl.ui.FXUtils.smoothScrolling;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 
 import javafx.beans.InvalidationListener;
@@ -33,6 +32,8 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+
+import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
 
 public class AuthlibInjectorServersPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", i18n("account.injector.manage.title"));
@@ -48,15 +49,15 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
         smoothScrolling(scrollPane);
 
         serversListener = observable -> updateServersList();
-        ConfigHolder.CONFIG.authlibInjectorServers.addListener(new WeakInvalidationListener(serversListener));
+        CONFIG.authlibInjectorServers.addListener(new WeakInvalidationListener(serversListener));
         updateServersList();
     }
 
     private void updateServersList() {
         listPane.getChildren().setAll(
-                ConfigHolder.CONFIG.authlibInjectorServers.stream()
+                CONFIG.authlibInjectorServers.stream()
                         .map(server -> new AuthlibInjectorServerItem(server,
-                                item -> ConfigHolder.CONFIG.authlibInjectorServers.remove(item.getServer())))
+                                item -> CONFIG.authlibInjectorServers.remove(item.getServer())))
                         .collect(toList()));
     }
 

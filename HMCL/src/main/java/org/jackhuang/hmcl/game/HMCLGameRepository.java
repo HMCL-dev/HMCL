@@ -22,7 +22,6 @@ import com.google.gson.GsonBuilder;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
-import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
@@ -33,6 +32,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
+
+import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
 
 public class HMCLGameRepository extends DefaultGameRepository {
     private final Profile profile;
@@ -60,7 +61,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (useSelf(version, assetId))
             return super.getAssetDirectory(version, assetId);
         else
-            return new File(ConfigHolder.CONFIG.commonDirectory.get(), "assets");
+            return new File(CONFIG.commonDirectory.get(), "assets");
     }
 
     @Override
@@ -85,7 +86,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (self.exists() || vs.isNoCommon())
             return self;
         else
-            return new File(ConfigHolder.CONFIG.commonDirectory.get(), "libraries/" + lib.getPath());
+            return new File(CONFIG.commonDirectory.get(), "libraries/" + lib.getPath());
     }
 
 
