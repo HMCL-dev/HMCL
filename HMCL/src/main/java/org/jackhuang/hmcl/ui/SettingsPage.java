@@ -105,17 +105,10 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
 
         FXUtils.smoothScrolling(scroll);
 
-        txtProxyHost.setText(ConfigHolder.CONFIG.proxyHost.get());
-        txtProxyHost.textProperty().addListener((a, b, newValue) -> ConfigHolder.CONFIG.proxyHost.set(newValue));
-
-        txtProxyPort.setText(ConfigHolder.CONFIG.proxyPort.get());
-        txtProxyPort.textProperty().addListener((a, b, newValue) -> ConfigHolder.CONFIG.proxyPort.set(newValue));
-
-        txtProxyUsername.setText(ConfigHolder.CONFIG.proxyUser.get());
-        txtProxyUsername.textProperty().addListener((a, b, newValue) -> ConfigHolder.CONFIG.proxyUser.set(newValue));
-
-        txtProxyPassword.setText(ConfigHolder.CONFIG.proxyPass.get());
-        txtProxyPassword.textProperty().addListener((a, b, newValue) -> ConfigHolder.CONFIG.proxyPass.set(newValue));
+        txtProxyHost.textProperty().bindBidirectional(ConfigHolder.CONFIG.proxyHost);
+        txtProxyPort.textProperty().bindBidirectional(ConfigHolder.CONFIG.proxyPort);
+        txtProxyUsername.textProperty().bindBidirectional(ConfigHolder.CONFIG.proxyUser);
+        txtProxyPassword.textProperty().bindBidirectional(ConfigHolder.CONFIG.proxyPass);
 
         cboDownloadSource.getSelectionModel().select(DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(Settings.INSTANCE.getDownloadProvider()));
         cboDownloadSource.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setDownloadProvider(DownloadProviders.getDownloadProvider(newValue.intValue())));
@@ -173,8 +166,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         proxyConfigurationGroup.selectedToggleProperty().addListener((a, b, newValue) ->
                 ConfigHolder.CONFIG.proxyType.set((Proxy.Type) newValue.getUserData()));
 
-        chkProxyAuthentication.setSelected(ConfigHolder.CONFIG.hasProxyAuth.get());
-        chkProxyAuthentication.selectedProperty().addListener((a, b, newValue) -> ConfigHolder.CONFIG.hasProxyAuth.set(newValue));
+        chkProxyAuthentication.selectedProperty().bindBidirectional(ConfigHolder.CONFIG.hasProxyAuth);
         authPane.disableProperty().bind(chkProxyAuthentication.selectedProperty().not());
 
         fileCommonLocation.pathProperty().bindBidirectional(ConfigHolder.CONFIG.commonDirectory);
