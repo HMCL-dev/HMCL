@@ -81,7 +81,7 @@ public final class ExportWizardProvider implements WizardProvider {
                         boolean flag = true;
 
                         try (ZipEngine zip = new ZipEngine(modpackFile)) {
-                            Config config = Settings.INSTANCE.getRawConfig();
+                            Config config = ConfigHolder.CONFIG.clone();
 
                             config.hasProxy.set(false);
                             config.selectedProfile.set("");

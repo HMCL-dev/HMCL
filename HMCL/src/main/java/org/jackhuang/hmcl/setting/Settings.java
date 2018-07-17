@@ -423,8 +423,4 @@ public class Settings {
     public void onAccountLoading() {
         EventBus.EVENT_BUS.fireEvent(new AccountLoadingEvent(this, getAccounts()));
     }
-
-    public Config getRawConfig() {
-        return ConfigHolder.CONFIG.clone();
-    }
 }
