@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.i18n.Locales;
 
+import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.net.Proxy;
@@ -186,12 +187,12 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
                 backgroundItem.createChildren(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
         ));
 
-        FXUtils.bindString(backgroundItem.getTxtCustom(), Settings.INSTANCE.backgroundImageProperty());
+        FXUtils.bindString(backgroundItem.getTxtCustom(), ConfigHolder.CONFIG.backgroundImage);
 
         backgroundItem.setCustomUserData(EnumBackgroundImage.CUSTOM);
         backgroundItem.getGroup().getToggles().stream().filter(it -> it.getUserData() == Settings.INSTANCE.getBackgroundImageType()).findFirst().ifPresent(it -> it.setSelected(true));
 
-        Settings.INSTANCE.backgroundImageProperty().setChangedListener(it -> initBackgroundItemSubtitle());
+        ConfigHolder.CONFIG.backgroundImage.addListener(onInvalidating(this::initBackgroundItemSubtitle));
         Settings.INSTANCE.backgroundImageTypeProperty().setChangedListener(it -> initBackgroundItemSubtitle());
         initBackgroundItemSubtitle();
 
@@ -218,7 +219,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
                 backgroundItem.setSubtitle(i18n("launcher.background.default"));
                 break;
             case CUSTOM:
-                backgroundItem.setSubtitle(Settings.INSTANCE.getBackgroundImage());
+                backgroundItem.setSubtitle(ConfigHolder.CONFIG.backgroundImage.get());
                 break;
         }
     }

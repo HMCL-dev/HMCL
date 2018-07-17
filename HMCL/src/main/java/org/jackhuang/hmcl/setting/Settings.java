@@ -308,27 +308,6 @@ public class Settings {
      *              BACKGROUND              *
      ****************************************/
 
-    private final ImmediateStringProperty backgroundImage = new ImmediateStringProperty(this, "backgroundImage", ConfigHolder.CONFIG.backgroundImage.get()) {
-        @Override
-        public void invalidated() {
-            super.invalidated();
-
-            ConfigHolder.CONFIG.backgroundImage.set(get());
-        }
-    };
-
-    public String getBackgroundImage() {
-        return backgroundImage.get();
-    }
-
-    public ImmediateStringProperty backgroundImageProperty() {
-        return backgroundImage;
-    }
-
-    public void setBackgroundImage(String backgroundImage) {
-        this.backgroundImage.set(backgroundImage);
-    }
-
     private final ImmediateObjectProperty<EnumBackgroundImage> backgroundImageType = new ImmediateObjectProperty<EnumBackgroundImage>(this, "backgroundImageType", EnumBackgroundImage.indexOf(ConfigHolder.CONFIG.backgroundImageType.get())) {
         @Override
         public void invalidated() {

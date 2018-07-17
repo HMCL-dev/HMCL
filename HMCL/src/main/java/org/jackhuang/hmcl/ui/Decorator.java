@@ -55,6 +55,7 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.setting.Theme;
@@ -222,7 +223,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
             if (Settings.INSTANCE.getBackgroundImageType() == EnumBackgroundImage.DEFAULT)
                 background = searchBackgroundImage(new Image("/assets/img/background.jpg"), "");
             else
-                background = searchBackgroundImage(new Image("/assets/img/background.jpg"), Settings.INSTANCE.getBackgroundImage());
+                background = searchBackgroundImage(new Image("/assets/img/background.jpg"), ConfigHolder.CONFIG.backgroundImage.get());
 
             drawerWrapper.setBackground(new Background(new BackgroundImage(background, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, new BackgroundSize(800, 480, false, false, true, true))));
         } catch (IllegalArgumentException ignore) {
