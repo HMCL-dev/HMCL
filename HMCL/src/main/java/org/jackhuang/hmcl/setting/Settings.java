@@ -137,27 +137,15 @@ public class Settings {
         return proxy;
     }
 
-    private Proxy.Type proxyType = Proxies.getProxyType(ConfigHolder.CONFIG.proxyType.get());
-
-    public Proxy.Type getProxyType() {
-        return proxyType;
-    }
-
-    public void setProxyType(Proxy.Type proxyType) {
-        this.proxyType = proxyType;
-        ConfigHolder.CONFIG.proxyType.set(Proxies.PROXIES.indexOf(proxyType));
-        loadProxy();
-    }
-
     private void loadProxy() {
         String host = ConfigHolder.CONFIG.proxyHost.get();
         Integer port = Lang.toIntOrNull(ConfigHolder.CONFIG.proxyPort.get());
-        if (!ConfigHolder.CONFIG.hasProxy.get() || StringUtils.isBlank(host) || port == null || getProxyType() == Proxy.Type.DIRECT)
+        if (!ConfigHolder.CONFIG.hasProxy.get() || StringUtils.isBlank(host) || port == null || ConfigHolder.CONFIG.proxyType.get() == Proxy.Type.DIRECT)
             proxy = Proxy.NO_PROXY;
         else {
             System.setProperty("http.proxyHost", ConfigHolder.CONFIG.proxyHost.get());
             System.setProperty("http.proxyPort", ConfigHolder.CONFIG.proxyPort.get());
-            proxy = new Proxy(proxyType, new InetSocketAddress(host, port));
+            proxy = new Proxy(ConfigHolder.CONFIG.proxyType.get(), new InetSocketAddress(host, port));
 
             String user = ConfigHolder.CONFIG.proxyUser.get();
             String pass = ConfigHolder.CONFIG.proxyPass.get();

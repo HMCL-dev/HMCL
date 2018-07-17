@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 import java.io.File;
 import java.lang.reflect.Modifier;
+import java.net.Proxy;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
@@ -66,6 +67,7 @@ public final class Config implements Cloneable, Observable {
             .registerTypeAdapter(ObservableMap.class, new ObservableMapCreator())
             .registerTypeAdapterFactory(new JavaFxPropertyTypeAdapterFactory(true, true))
             .registerTypeAdapter(EnumBackgroundImage.class, new EnumOrdinalDeserializer<>(EnumBackgroundImage.class)) // backward compatibility for backgroundType
+            .registerTypeAdapter(Proxy.Type.class, new EnumOrdinalDeserializer<>(Proxy.Type.class)) // backward compatibility for hasProxy
             .setPrettyPrinting()
             .create();
 
@@ -96,7 +98,7 @@ public final class Config implements Cloneable, Observable {
     public final BooleanProperty hasProxyAuth = new SimpleBooleanProperty();
 
     @SerializedName("proxyType")
-    public final IntegerProperty proxyType = new SimpleIntegerProperty();
+    public final ObjectProperty<Proxy.Type> proxyType = new SimpleObjectProperty<>(Proxy.Type.DIRECT);
 
     @SerializedName("proxyHost")
     public final StringProperty proxyHost = new SimpleStringProperty();

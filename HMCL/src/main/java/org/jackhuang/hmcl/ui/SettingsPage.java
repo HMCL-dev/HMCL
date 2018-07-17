@@ -155,7 +155,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         chkProxySocks.setToggleGroup(proxyConfigurationGroup);
 
         for (Toggle toggle : proxyConfigurationGroup.getToggles())
-            if (toggle.getUserData() == Settings.INSTANCE.getProxyType())
+            if (toggle.getUserData() == ConfigHolder.CONFIG.proxyType.get())
                 toggle.setSelected(true);
 
         ToggleGroup hasProxyGroup = new ToggleGroup();
@@ -171,7 +171,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
                 ConfigHolder.CONFIG.hasProxy.set(newValue != chkNoProxy));
 
         proxyConfigurationGroup.selectedToggleProperty().addListener((a, b, newValue) ->
-                Settings.INSTANCE.setProxyType((Proxy.Type) newValue.getUserData()));
+                ConfigHolder.CONFIG.proxyType.set((Proxy.Type) newValue.getUserData()));
 
         chkProxyAuthentication.setSelected(ConfigHolder.CONFIG.hasProxyAuth.get());
         chkProxyAuthentication.selectedProperty().addListener((a, b, newValue) -> ConfigHolder.CONFIG.hasProxyAuth.set(newValue));
