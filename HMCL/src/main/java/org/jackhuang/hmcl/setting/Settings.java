@@ -33,10 +33,6 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.Locales;
 
-import java.net.Authenticator;
-import java.net.InetSocketAddress;
-import java.net.PasswordAuthentication;
-import java.net.Proxy;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -69,7 +65,7 @@ public class Settings {
         firstLaunch = ConfigHolder.CONFIG.firstLaunch.get();
         ConfigHolder.CONFIG.firstLaunch.set(false);
 
-        loadProxy();
+        ProxyManager.getProxy(); // init ProxyManager
 
         for (Iterator<Map<Object, Object>> iterator = ConfigHolder.CONFIG.accounts.iterator(); iterator.hasNext();) {
             Map<Object, Object> settings = iterator.next();
@@ -82,7 +78,7 @@ public class Settings {
 
             Account account;
             try {
-                account = factory.fromStorage(settings, getProxy());
+                account = factory.fromStorage(settings, ProxyManager.getProxy());
             } catch (Exception e) {
                 LOG.log(Level.WARNING, "Malformed account storage, removing: " + settings, e);
                 iterator.remove();
@@ -129,38 +125,6 @@ public class Settings {
     public void setLocale(Locales.SupportedLocale locale) {
         this.locale = locale;
         ConfigHolder.CONFIG.localization.set(Locales.getNameByLocale(locale));
-    }
-
-    private Proxy proxy = Proxy.NO_PROXY;
-
-    public Proxy getProxy() {
-        return proxy;
-    }
-
-    private void loadProxy() {
-        String host = ConfigHolder.CONFIG.proxyHost.get();
-        Integer port = Lang.toIntOrNull(ConfigHolder.CONFIG.proxyPort.get());
-        if (!ConfigHolder.CONFIG.hasProxy.get() || StringUtils.isBlank(host) || port == null || ConfigHolder.CONFIG.proxyType.get() == Proxy.Type.DIRECT)
-            proxy = Proxy.NO_PROXY;
-        else {
-            System.setProperty("http.proxyHost", ConfigHolder.CONFIG.proxyHost.get());
-            System.setProperty("http.proxyPort", ConfigHolder.CONFIG.proxyPort.get());
-            proxy = new Proxy(ConfigHolder.CONFIG.proxyType.get(), new InetSocketAddress(host, port));
-
-            String user = ConfigHolder.CONFIG.proxyUser.get();
-            String pass = ConfigHolder.CONFIG.proxyPass.get();
-            if (ConfigHolder.CONFIG.hasProxyAuth.get() && StringUtils.isNotBlank(user) && StringUtils.isNotBlank(pass)) {
-                System.setProperty("http.proxyUser", user);
-                System.setProperty("http.proxyPassword", pass);
-
-                Authenticator.setDefault(new Authenticator() {
-                    @Override
-                    public PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication(user, pass.toCharArray());
-                    }
-                });
-            }
-        }
     }
 
     public Font getFont() {

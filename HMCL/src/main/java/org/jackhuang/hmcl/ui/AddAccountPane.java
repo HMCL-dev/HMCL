@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.AccountHelper;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.setting.ProxyManager;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -151,7 +152,7 @@ public class AddAccountPane extends StackPane {
         lblCreationWarning.setText("");
         setDisable(true);
 
-        Task.ofResult("create_account", () -> factory.create(new Selector(), username, password, addtionalData, Settings.INSTANCE.getProxy()))
+        Task.ofResult("create_account", () -> factory.create(new Selector(), username, password, addtionalData, ProxyManager.getProxy()))
                 .finalized(Schedulers.javafx(), variables -> {
                     Settings.INSTANCE.addAccount(variables.get("create_account"));
                     acceptPane.hideSpinner();
@@ -211,7 +212,7 @@ public class AddAccountPane extends StackPane {
             for (GameProfile profile : names) {
                 Image image;
                 try {
-                    image = AccountHelper.getSkinImmediately(yggdrasilAccount, profile, 4, Settings.INSTANCE.getProxy());
+                    image = AccountHelper.getSkinImmediately(yggdrasilAccount, profile, 4, ProxyManager.getProxy());
                 } catch (Exception e) {
                     Logging.LOG.log(Level.WARNING, "Failed to get skin for " + profile.getName(), e);
                     image = null;

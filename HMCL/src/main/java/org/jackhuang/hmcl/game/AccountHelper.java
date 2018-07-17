@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
+import org.jackhuang.hmcl.setting.ProxyManager;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Scheduler;
@@ -55,7 +56,7 @@ public final class AccountHelper {
     }
 
     public static Task loadSkinAsync(YggdrasilAccount account) {
-        return loadSkinAsync(account, Settings.INSTANCE.getProxy());
+        return loadSkinAsync(account, ProxyManager.getProxy());
     }
 
     public static Task loadSkinAsync(YggdrasilAccount account, Proxy proxy) {
@@ -63,7 +64,7 @@ public final class AccountHelper {
     }
 
     public static Task refreshSkinAsync(YggdrasilAccount account) {
-        return refreshSkinAsync(account, Settings.INSTANCE.getProxy());
+        return refreshSkinAsync(account, ProxyManager.getProxy());
     }
 
     public static Task refreshSkinAsync(YggdrasilAccount account, Proxy proxy) {
