@@ -190,14 +190,14 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         FXUtils.bindString(backgroundItem.getTxtCustom(), ConfigHolder.CONFIG.backgroundImage);
 
         backgroundItem.setCustomUserData(EnumBackgroundImage.CUSTOM);
-        backgroundItem.getGroup().getToggles().stream().filter(it -> it.getUserData() == Settings.INSTANCE.getBackgroundImageType()).findFirst().ifPresent(it -> it.setSelected(true));
+        backgroundItem.getGroup().getToggles().stream().filter(it -> it.getUserData() == ConfigHolder.CONFIG.backgroundImageType.get()).findFirst().ifPresent(it -> it.setSelected(true));
 
         ConfigHolder.CONFIG.backgroundImage.addListener(onInvalidating(this::initBackgroundItemSubtitle));
-        Settings.INSTANCE.backgroundImageTypeProperty().setChangedListener(it -> initBackgroundItemSubtitle());
+        ConfigHolder.CONFIG.backgroundImageType.addListener(onInvalidating(this::initBackgroundItemSubtitle));
         initBackgroundItemSubtitle();
 
         backgroundItem.setToggleSelectedListener(newValue ->
-                Settings.INSTANCE.setBackgroundImageType((EnumBackgroundImage) newValue.getUserData()));
+                ConfigHolder.CONFIG.backgroundImageType.set((EnumBackgroundImage) newValue.getUserData()));
 
         // theme
         JFXColorPicker picker = new JFXColorPicker(Color.web(Settings.INSTANCE.getTheme().getColor()), null);
@@ -214,7 +214,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     }
 
     private void initBackgroundItemSubtitle() {
-        switch (Settings.INSTANCE.getBackgroundImageType()) {
+        switch (ConfigHolder.CONFIG.backgroundImageType.get()) {
             case DEFAULT:
                 backgroundItem.setSubtitle(i18n("launcher.background.default"));
                 break;

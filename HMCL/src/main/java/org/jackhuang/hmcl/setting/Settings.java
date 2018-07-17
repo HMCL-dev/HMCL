@@ -305,31 +305,6 @@ public class Settings {
     }
 
     /****************************************
-     *              BACKGROUND              *
-     ****************************************/
-
-    private final ImmediateObjectProperty<EnumBackgroundImage> backgroundImageType = new ImmediateObjectProperty<EnumBackgroundImage>(this, "backgroundImageType", EnumBackgroundImage.indexOf(ConfigHolder.CONFIG.backgroundImageType.get())) {
-        @Override
-        public void invalidated() {
-            super.invalidated();
-
-            ConfigHolder.CONFIG.backgroundImageType.set(get().ordinal());
-        }
-    };
-
-    public EnumBackgroundImage getBackgroundImageType() {
-        return backgroundImageType.get();
-    }
-
-    public ImmediateObjectProperty<EnumBackgroundImage> backgroundImageTypeProperty() {
-        return backgroundImageType;
-    }
-
-    public void setBackgroundImageType(EnumBackgroundImage backgroundImageType) {
-        this.backgroundImageType.set(backgroundImageType);
-    }
-
-    /****************************************
      *                THEME                 *
      ****************************************/
 

@@ -220,7 +220,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         try {
             Image background;
 
-            if (Settings.INSTANCE.getBackgroundImageType() == EnumBackgroundImage.DEFAULT)
+            if (ConfigHolder.CONFIG.backgroundImageType.get() == EnumBackgroundImage.DEFAULT)
                 background = searchBackgroundImage(new Image("/assets/img/background.jpg"), "");
             else
                 background = searchBackgroundImage(new Image("/assets/img/background.jpg"), ConfigHolder.CONFIG.backgroundImage.get());

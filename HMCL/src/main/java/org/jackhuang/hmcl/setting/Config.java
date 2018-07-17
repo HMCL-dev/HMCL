@@ -29,6 +29,7 @@ import org.hildan.fxgson.creators.ObservableSetCreator;
 import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.util.EnumOrdinalDeserializer;
 import org.jackhuang.hmcl.util.FileTypeAdapter;
 import org.jackhuang.hmcl.util.ObservableHelper;
 
@@ -42,9 +43,11 @@ import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -62,6 +65,7 @@ public final class Config implements Cloneable, Observable {
             .registerTypeAdapter(ObservableSet.class, new ObservableSetCreator())
             .registerTypeAdapter(ObservableMap.class, new ObservableMapCreator())
             .registerTypeAdapterFactory(new JavaFxPropertyTypeAdapterFactory(true, true))
+            .registerTypeAdapter(EnumBackgroundImage.class, new EnumOrdinalDeserializer<>(EnumBackgroundImage.class)) // backward compatibility for backgroundType
             .setPrettyPrinting()
             .create();
 
@@ -77,7 +81,7 @@ public final class Config implements Cloneable, Observable {
     public final StringProperty selectedProfile = new SimpleStringProperty("");
 
     @SerializedName("backgroundType")
-    public final IntegerProperty backgroundImageType = new SimpleIntegerProperty(0);
+    public final ObjectProperty<EnumBackgroundImage> backgroundImageType = new SimpleObjectProperty<>(EnumBackgroundImage.DEFAULT);
 
     @SerializedName("bgpath")
     public final StringProperty backgroundImage = new SimpleStringProperty();
