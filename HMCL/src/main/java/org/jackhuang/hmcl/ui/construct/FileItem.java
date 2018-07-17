@@ -80,7 +80,7 @@ public class FileItem extends BorderPane {
         Path given = Paths.get(path).toAbsolutePath();
         if (isConvertToRelativePath()) {
             try {
-                return Paths.get(".").toAbsolutePath().relativize(given).normalize().toString();
+                return Paths.get(".").normalize().toAbsolutePath().relativize(given).normalize().toString();
             } catch (IllegalArgumentException e) {
                 // the given path can't be relativized against current path
             }
