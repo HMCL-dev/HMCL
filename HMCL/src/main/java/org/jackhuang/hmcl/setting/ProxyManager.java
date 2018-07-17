@@ -17,14 +17,15 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import java.net.Authenticator;
 import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.net.Proxy.Type;
 
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 
-import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 
@@ -58,15 +59,22 @@ public final class ProxyManager {
     private static void initProxy() {
         proxyProperty.addListener(observable -> updateSystemProxy());
 
-        InvalidationListener onProxyAuthChanged = observable -> updateSystemProxyAuthentication();
-        ConfigHolder.CONFIG.proxyUser.addListener(onProxyAuthChanged);
-        ConfigHolder.CONFIG.proxyPass.addListener(onProxyAuthChanged);
-        ConfigHolder.CONFIG.hasProxyAuth.addListener(onProxyAuthChanged);
-        ConfigHolder.CONFIG.hasProxy.addListener(onProxyAuthChanged);
-        ConfigHolder.CONFIG.proxyType.addListener(onProxyAuthChanged);
-
         updateSystemProxy();
-        updateSystemProxyAuthentication();
+
+        Authenticator.setDefault(new Authenticator() {
+
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                if (ConfigHolder.CONFIG.hasProxyAuth.get()) {
+                    String username = ConfigHolder.CONFIG.proxyUser.get();
+                    String password = ConfigHolder.CONFIG.proxyPass.get();
+                    if (username != null && password != null) {
+                        return new PasswordAuthentication(username, password.toCharArray());
+                    }
+                }
+                return null;
+            }
+        });
     }
 
     private static void updateSystemProxy() {
@@ -97,41 +105,6 @@ public final class ProxyManager {
                 System.setProperty("socksProxyHost", host);
                 System.setProperty("socksProxyPort", port);
             }
-        }
-
-    }
-
-    private static void updateSystemProxyAuthentication() {
-        String username = ConfigHolder.CONFIG.proxyUser.get();
-        String password = ConfigHolder.CONFIG.proxyPass.get();
-        Proxy.Type proxyType = ConfigHolder.CONFIG.proxyType.get();
-        if (ConfigHolder.CONFIG.hasProxy.get() &&
-                ConfigHolder.CONFIG.hasProxyAuth.get() &&
-                proxyType != Proxy.Type.DIRECT &&
-                username != null &&
-                password != null) {
-            if (proxyType == Proxy.Type.HTTP) {
-                System.setProperty("http.proxyUser", username);
-                System.setProperty("http.proxyPassword", password);
-                System.setProperty("https.proxyUser", username);
-                System.setProperty("https.proxyPassword", password);
-                System.clearProperty("java.net.socks.username");
-                System.clearProperty("java.net.socks.password");
-            } else if (proxyType == Proxy.Type.SOCKS) {
-                System.setProperty("java.net.socks.username", username);
-                System.setProperty("java.net.socks.password", password);
-                System.clearProperty("http.proxyUser");
-                System.clearProperty("http.proxyPassword");
-                System.clearProperty("https.proxyUser");
-                System.clearProperty("https.proxyPassword");
-            }
-        } else {
-            System.clearProperty("http.proxyUser");
-            System.clearProperty("http.proxyPassword");
-            System.clearProperty("https.proxyUser");
-            System.clearProperty("https.proxyPassword");
-            System.clearProperty("java.net.socks.username");
-            System.clearProperty("java.net.socks.password");
         }
     }
 }
