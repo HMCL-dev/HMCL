@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
@@ -58,7 +58,7 @@ public class HMCLGameDownloadTask extends Task {
     public void execute() {
         File jar = profile.getRepository().getVersionJar(version);
 
-        File cache = new File(Settings.INSTANCE.getCommonPath(), "jars/" + gameVersion + ".jar");
+        File cache = new File(ConfigHolder.CONFIG.commonDirectory.get(), "jars/" + gameVersion + ".jar");
         if (cache.exists())
             try {
                 FileUtils.copyFile(cache, jar);

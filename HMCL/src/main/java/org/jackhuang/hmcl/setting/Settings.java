@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.setting;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.text.Font;
 
@@ -121,27 +120,6 @@ public class Settings {
         return firstLaunch;
     }
 
-    private final StringProperty commonPath = new ImmediateStringProperty(this, "commonPath", ConfigHolder.CONFIG.commonDirectory.get()) {
-        @Override
-        public void invalidated() {
-            super.invalidated();
-
-            ConfigHolder.CONFIG.commonDirectory.set(get());
-        }
-    };
-
-    public String getCommonPath() {
-        return commonPath.get();
-    }
-
-    public StringProperty commonPathProperty() {
-        return commonPath;
-    }
-
-    public void setCommonPath(String commonPath) {
-        this.commonPath.set(commonPath);
-    }
-
     private Locales.SupportedLocale locale = Locales.getLocaleByName(ConfigHolder.CONFIG.localization.get());
 
     public Locales.SupportedLocale getLocale() {
@@ -171,67 +149,19 @@ public class Settings {
         loadProxy();
     }
 
-    public String getProxyHost() {
-        return ConfigHolder.CONFIG.proxyHost.get();
-    }
-
-    public void setProxyHost(String proxyHost) {
-        ConfigHolder.CONFIG.proxyHost.set(proxyHost);
-    }
-
-    public String getProxyPort() {
-        return ConfigHolder.CONFIG.proxyPort.get();
-    }
-
-    public void setProxyPort(String proxyPort) {
-        ConfigHolder.CONFIG.proxyPort.set(proxyPort);
-    }
-
-    public String getProxyUser() {
-        return ConfigHolder.CONFIG.proxyUser.get();
-    }
-
-    public void setProxyUser(String proxyUser) {
-        ConfigHolder.CONFIG.proxyUser.set(proxyUser);
-    }
-
-    public String getProxyPass() {
-        return ConfigHolder.CONFIG.proxyPass.get();
-    }
-
-    public void setProxyPass(String proxyPass) {
-        ConfigHolder.CONFIG.proxyPass.set(proxyPass);
-    }
-
-    public boolean hasProxy() {
-        return ConfigHolder.CONFIG.hasProxy.get();
-    }
-
-    public void setHasProxy(boolean hasProxy) {
-        ConfigHolder.CONFIG.hasProxy.set(hasProxy);
-    }
-
-    public boolean hasProxyAuth() {
-        return ConfigHolder.CONFIG.hasProxyAuth.get();
-    }
-
-    public void setHasProxyAuth(boolean hasProxyAuth) {
-        ConfigHolder.CONFIG.hasProxyAuth.set(hasProxyAuth);
-    }
-
     private void loadProxy() {
-        String host = getProxyHost();
-        Integer port = Lang.toIntOrNull(getProxyPort());
-        if (!hasProxy() || StringUtils.isBlank(host) || port == null || getProxyType() == Proxy.Type.DIRECT)
+        String host = ConfigHolder.CONFIG.proxyHost.get();
+        Integer port = Lang.toIntOrNull(ConfigHolder.CONFIG.proxyPort.get());
+        if (!ConfigHolder.CONFIG.hasProxy.get() || StringUtils.isBlank(host) || port == null || getProxyType() == Proxy.Type.DIRECT)
             proxy = Proxy.NO_PROXY;
         else {
-            System.setProperty("http.proxyHost", getProxyHost());
-            System.setProperty("http.proxyPort", getProxyPort());
+            System.setProperty("http.proxyHost", ConfigHolder.CONFIG.proxyHost.get());
+            System.setProperty("http.proxyPort", ConfigHolder.CONFIG.proxyPort.get());
             proxy = new Proxy(proxyType, new InetSocketAddress(host, port));
 
-            String user = getProxyUser();
-            String pass = getProxyPass();
-            if (hasProxyAuth() && StringUtils.isNotBlank(user) && StringUtils.isNotBlank(pass)) {
+            String user = ConfigHolder.CONFIG.proxyUser.get();
+            String pass = ConfigHolder.CONFIG.proxyPass.get();
+            if (ConfigHolder.CONFIG.hasProxyAuth.get() && StringUtils.isNotBlank(user) && StringUtils.isNotBlank(pass)) {
                 System.setProperty("http.proxyUser", user);
                 System.setProperty("http.proxyPassword", pass);
 

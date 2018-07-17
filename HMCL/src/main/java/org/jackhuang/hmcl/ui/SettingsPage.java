@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.*;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -48,9 +47,7 @@ import org.jackhuang.hmcl.util.i18n.Locales;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.net.Proxy;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.stream.Collectors;
 
 public final class SettingsPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", i18n("settings.launcher"));
@@ -107,17 +104,17 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
 
         FXUtils.smoothScrolling(scroll);
 
-        txtProxyHost.setText(Settings.INSTANCE.getProxyHost());
-        txtProxyHost.textProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setProxyHost(newValue));
+        txtProxyHost.setText(ConfigHolder.CONFIG.proxyHost.get());
+        txtProxyHost.textProperty().addListener((a, b, newValue) -> ConfigHolder.CONFIG.proxyHost.set(newValue));
 
-        txtProxyPort.setText(Settings.INSTANCE.getProxyPort());
-        txtProxyPort.textProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setProxyPort(newValue));
+        txtProxyPort.setText(ConfigHolder.CONFIG.proxyPort.get());
+        txtProxyPort.textProperty().addListener((a, b, newValue) -> ConfigHolder.CONFIG.proxyPort.set(newValue));
 
-        txtProxyUsername.setText(Settings.INSTANCE.getProxyUser());
-        txtProxyUsername.textProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setProxyUser(newValue));
+        txtProxyUsername.setText(ConfigHolder.CONFIG.proxyUser.get());
+        txtProxyUsername.textProperty().addListener((a, b, newValue) -> ConfigHolder.CONFIG.proxyUser.set(newValue));
 
-        txtProxyPassword.setText(Settings.INSTANCE.getProxyPass());
-        txtProxyPassword.textProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setProxyPass(newValue));
+        txtProxyPassword.setText(ConfigHolder.CONFIG.proxyPass.get());
+        txtProxyPassword.textProperty().addListener((a, b, newValue) -> ConfigHolder.CONFIG.proxyPass.set(newValue));
 
         cboDownloadSource.getSelectionModel().select(DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(Settings.INSTANCE.getDownloadProvider()));
         cboDownloadSource.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setDownloadProvider(DownloadProviders.getDownloadProvider(newValue.intValue())));
@@ -163,23 +160,23 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         ToggleGroup hasProxyGroup = new ToggleGroup();
         chkNoProxy.setToggleGroup(hasProxyGroup);
         chkManualProxy.setToggleGroup(hasProxyGroup);
-        if (!Settings.INSTANCE.hasProxy())
+        if (!ConfigHolder.CONFIG.hasProxy.get())
             chkNoProxy.setSelected(true);
         else
             chkManualProxy.setSelected(true);
         proxyPane.disableProperty().bind(chkNoProxy.selectedProperty());
 
         hasProxyGroup.selectedToggleProperty().addListener((a, b, newValue) ->
-                Settings.INSTANCE.setHasProxy(newValue != chkNoProxy));
+                ConfigHolder.CONFIG.hasProxy.set(newValue != chkNoProxy));
 
         proxyConfigurationGroup.selectedToggleProperty().addListener((a, b, newValue) ->
                 Settings.INSTANCE.setProxyType((Proxy.Type) newValue.getUserData()));
 
-        chkProxyAuthentication.setSelected(Settings.INSTANCE.hasProxyAuth());
-        chkProxyAuthentication.selectedProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setHasProxyAuth(newValue));
+        chkProxyAuthentication.setSelected(ConfigHolder.CONFIG.hasProxyAuth.get());
+        chkProxyAuthentication.selectedProperty().addListener((a, b, newValue) -> ConfigHolder.CONFIG.hasProxyAuth.set(newValue));
         authPane.disableProperty().bind(chkProxyAuthentication.selectedProperty().not());
 
-        fileCommonLocation.pathProperty().bindBidirectional(Settings.INSTANCE.commonPathProperty());
+        fileCommonLocation.pathProperty().bindBidirectional(ConfigHolder.CONFIG.commonDirectory);
 
         FXUtils.installTooltip(btnUpdate, i18n("update.tooltip"));
         checkUpdate();
