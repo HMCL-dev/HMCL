@@ -30,12 +30,13 @@ import org.jackhuang.hmcl.util.StringUtils;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
+import javafx.beans.value.ObservableObjectValue;
 
 public final class ProxyManager {
     private ProxyManager() {
     }
 
-    public static final ObjectBinding<Proxy> proxyProperty = Bindings.createObjectBinding(
+    private static final ObjectBinding<Proxy> proxyProperty = Bindings.createObjectBinding(
             () -> {
                 String host = CONFIG.getProxyHost();
                 Integer port = Lang.toIntOrNull(CONFIG.getProxyPort());
@@ -52,6 +53,10 @@ public final class ProxyManager {
 
     public static Proxy getProxy() {
         return proxyProperty.get();
+    }
+
+    public static ObservableObjectValue<Proxy> proxyProperty() {
+        return proxyProperty;
     }
 
     static {
