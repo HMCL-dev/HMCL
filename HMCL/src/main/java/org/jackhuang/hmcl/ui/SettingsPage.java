@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.*;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
+import javafx.beans.binding.When;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -46,7 +47,6 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.i18n.Locales;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
-import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.net.Proxy;
@@ -188,42 +188,42 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         backgroundItem.loadChildren(Collections.singletonList(
                 backgroundItem.createChildren(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
         ));
-
-        FXUtils.bindString(backgroundItem.getTxtCustom(), CONFIG.backgroundImageProperty());
-
         backgroundItem.setCustomUserData(EnumBackgroundImage.CUSTOM);
-        backgroundItem.getGroup().getToggles().stream().filter(it -> it.getUserData() == CONFIG.getBackgroundImageType()).findFirst().ifPresent(it -> it.setSelected(true));
+        backgroundItem.getTxtCustom().textProperty().bindBidirectional(CONFIG.backgroundImageProperty());
 
-        CONFIG.backgroundImageProperty().addListener(onInvalidating(this::initBackgroundItemSubtitle));
-        CONFIG.backgroundImageTypeProperty().addListener(onInvalidating(this::initBackgroundItemSubtitle));
-        initBackgroundItemSubtitle();
+        ObjectProperty<EnumBackgroundImage> backgroundType = new SimpleObjectProperty<EnumBackgroundImage>(EnumBackgroundImage.DEFAULT) {
+            {
+                invalidated();
+            }
 
-        backgroundItem.setToggleSelectedListener(newValue ->
-        CONFIG.setBackgroundImageType((EnumBackgroundImage) newValue.getUserData()));
+            @Override
+            protected void invalidated() {
+                backgroundItem.getGroup().getToggles().stream()
+                        .filter(it -> it.getUserData() == get())
+                        .findFirst()
+                        .ifPresent(it -> it.setSelected(true));
+            }
+        };
+        backgroundItem.getGroup().selectedToggleProperty().addListener((observable, oldValue, newValue) -> backgroundType.set((EnumBackgroundImage) newValue.getUserData()));
+        backgroundType.bindBidirectional(CONFIG.backgroundImageTypeProperty());
+
+        backgroundItem.subtitleProperty().bind(
+                new When(backgroundType.isEqualTo(EnumBackgroundImage.DEFAULT))
+                        .then(i18n("launcher.background.default"))
+                        .otherwise(CONFIG.backgroundImageProperty()));
 
         // theme
-        JFXColorPicker picker = new JFXColorPicker(Color.web(Settings.INSTANCE.getTheme().getColor()), null);
+        JFXColorPicker picker = new JFXColorPicker(Color.web(CONFIG.getTheme().getColor()), null);
         picker.setCustomColorText(i18n("color.custom"));
         picker.setRecentColorsText(i18n("color.recent"));
         picker.getCustomColors().setAll(Theme.SUGGESTED_COLORS);
         picker.setOnAction(e -> {
             Theme theme = Theme.custom(Theme.getColorDisplayName(picker.getValue()));
-            Settings.INSTANCE.setTheme(theme);
+            CONFIG.setTheme(theme);
             Controllers.getScene().getStylesheets().setAll(theme.getStylesheets());
         });
         themeColorPickerContainer.getChildren().setAll(picker);
         Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
-    }
-
-    private void initBackgroundItemSubtitle() {
-        switch (CONFIG.getBackgroundImageType()) {
-            case DEFAULT:
-                backgroundItem.setSubtitle(i18n("launcher.background.default"));
-                break;
-            case CUSTOM:
-                backgroundItem.setSubtitle(CONFIG.getBackgroundImage());
-                break;
-        }
     }
 
     public String getTitle() {

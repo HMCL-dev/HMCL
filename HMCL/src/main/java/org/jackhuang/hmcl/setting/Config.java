@@ -66,6 +66,7 @@ public final class Config implements Cloneable, Observable {
             .registerTypeAdapter(ObservableSet.class, new ObservableSetCreator())
             .registerTypeAdapter(ObservableMap.class, new ObservableMapCreator())
             .registerTypeAdapterFactory(new JavaFxPropertyTypeAdapterFactory(true, true))
+            .registerTypeAdapter(Theme.class, new Theme.TypeAdapter())
             .registerTypeAdapter(EnumBackgroundImage.class, new EnumOrdinalDeserializer<>(EnumBackgroundImage.class)) // backward compatibility for backgroundType
             .registerTypeAdapter(Proxy.Type.class, new EnumOrdinalDeserializer<>(Proxy.Type.class)) // backward compatibility for hasProxy
             .setPrettyPrinting()
@@ -113,7 +114,7 @@ public final class Config implements Cloneable, Observable {
     private StringProperty proxyPass = new SimpleStringProperty();
 
     @SerializedName("theme")
-    private StringProperty theme = new SimpleStringProperty();
+    private ObjectProperty<Theme> theme = new SimpleObjectProperty<>(Theme.BLUE);
 
     @SerializedName("localization")
     private StringProperty localization = new SimpleStringProperty();
@@ -320,15 +321,15 @@ public final class Config implements Cloneable, Observable {
         return proxyPass;
     }
 
-    public String getTheme() {
+    public Theme getTheme() {
         return theme.get();
     }
 
-    public void setTheme(String theme) {
+    public void setTheme(Theme theme) {
         this.theme.set(theme);
     }
 
-    public StringProperty themeProperty() {
+    public ObjectProperty<Theme> themeProperty() {
         return theme;
     }
 

@@ -66,17 +66,22 @@ import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.StackContainerPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogWizardDisplayer;
 import org.jackhuang.hmcl.ui.wizard.*;
-import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.logging.Level;
 
+import static java.util.stream.Collectors.toList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class Decorator extends StackPane implements TaskExecutorDialogWizardDisplayer {
     private static final SVGGlyph minus = Lang.apply(new SVGGlyph(0, "MINUS", "M804.571 420.571v109.714q0 22.857-16 38.857t-38.857 16h-694.857q-22.857 0-38.857-16t-16-38.857v-109.714q0-22.857 16-38.857t38.857-16h694.857q22.857 0 38.857 16t16 38.857z", Color.WHITE),
@@ -212,81 +217,87 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
 
         animationHandler = new TransitionHandler(contentPlaceHolder);
 
-        loadBackground();
-
+        setupBackground();
         setupAuthlibInjectorDnD();
     }
 
-    private void loadBackground() {
+    // ==== Background ====
+    private void setupBackground() {
+        drawerWrapper.backgroundProperty().bind(
+                Bindings.createObjectBinding(
+                        () -> {
+                            Image image = null;
+                            if (CONFIG.getBackgroundImageType() == EnumBackgroundImage.CUSTOM) {
+                                image = tryLoadImage(Paths.get(CONFIG.getBackgroundImage()))
+                                        .orElse(null);
+                            }
+                            if (image == null) {
+                                image = loadDefaultBackgroundImage();
+                            }
+                            return new Background(new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, new BackgroundSize(800, 480, false, false, true, true)));
+                        },
+                        CONFIG.backgroundImageTypeProperty(),
+                        CONFIG.backgroundImageProperty()));
+    }
+
+    private Image defaultBackground = new Image("/assets/img/background.jpg");
+
+    /**
+     * Load background image from bg/, background.png, background.jpg
+     */
+    private Image loadDefaultBackgroundImage() {
+        Optional<Image> image = randomImageIn(Paths.get("bg"));
+        if (!image.isPresent()) {
+            image = tryLoadImage(Paths.get("background.png"));
+        }
+        if (!image.isPresent()) {
+            image = tryLoadImage(Paths.get("background.jpg"));
+        }
+        return image.orElse(defaultBackground);
+    }
+
+    private Optional<Image> randomImageIn(Path imageDir) {
+        if (!Files.isDirectory(imageDir)) {
+            return Optional.empty();
+        }
+
+        List<Path> candidates;
         try {
-            Image background;
-
-            if (CONFIG.getBackgroundImageType() == EnumBackgroundImage.DEFAULT)
-                background = searchBackgroundImage(new Image("/assets/img/background.jpg"), "");
-            else
-                background = searchBackgroundImage(new Image("/assets/img/background.jpg"), CONFIG.getBackgroundImage());
-
-            drawerWrapper.setBackground(new Background(new BackgroundImage(background, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, new BackgroundSize(800, 480, false, false, true, true))));
-        } catch (IllegalArgumentException ignore) {
+            candidates = Files.list(imageDir)
+                    .filter(Files::isRegularFile)
+                    .filter(it -> {
+                        String filename = it.getFileName().toString();
+                        return filename.endsWith(".png") || filename.endsWith(".jpg");
+                    })
+                    .collect(toList());
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Failed to list files in ./bg", e);
+            return Optional.empty();
         }
+
+        Random rnd = new Random();
+        while (candidates.size() > 0) {
+            int selected = rnd.nextInt(candidates.size());
+            Optional<Image> loaded = tryLoadImage(candidates.get(selected));
+            if (loaded.isPresent()) {
+                return Optional.of(loaded.get());
+            } else {
+                candidates.remove(selected);
+            }
+        }
+        return Optional.empty();
     }
 
-    private static Image searchBackgroundImage(Image def, String customPath) {
-        Random random = new Random();
-        boolean loaded = false;
-        Image background = def;
-
-        // custom path
-        if (StringUtils.isNotBlank(customPath)) {
+    private Optional<Image> tryLoadImage(Path path) {
+        if (Files.isRegularFile(path)) {
             try {
-                background = new Image("file:" + customPath);
-                loaded = true;
-            } catch (IllegalArgumentException ignore) {
+                return Optional.of(new Image(path.toAbsolutePath().toUri().toString()));
+            } catch (IllegalArgumentException ignored) {
             }
         }
-
-        // images in ./bg
-        if (!loaded) {
-            File backgroundImageFile = new File("bg");
-            if (backgroundImageFile.isDirectory()) {
-                File[] backgroundPath = backgroundImageFile.listFiles(file -> StringUtils.containsOne(FileUtils.getExtension(file), "png", "jpg"));
-                if (backgroundPath != null && backgroundPath.length > 0) {
-                    int index = random.nextInt(backgroundPath.length);
-                    try {
-                        background = new Image("file:" + backgroundPath[index].getAbsolutePath());
-                        loaded = true;
-                    } catch (IllegalArgumentException ignore) {
-                    }
-                }
-            }
-        }
-
-        // background.png
-        if (!loaded) {
-            File backgroundImageFile = new File("background.png");
-            if (backgroundImageFile.exists()) {
-                try {
-                    background = new Image("file:" + backgroundImageFile.getAbsolutePath());
-                    loaded = true;
-                } catch (IllegalArgumentException ignore) {
-                }
-            }
-        }
-
-        // background.jpg
-        if (!loaded) {
-            File backgroundImageFile = new File("background.jpg");
-            if (backgroundImageFile.exists()) {
-                try {
-                    background = new Image("file:" + backgroundImageFile.getAbsolutePath());
-                    loaded = true;
-                } catch (IllegalArgumentException ignore) {
-                }
-            }
-        }
-
-        return background;
+        return Optional.empty();
     }
+    // ====
 
     @FXML
     private void onMouseMoved(MouseEvent mouseEvent) {
