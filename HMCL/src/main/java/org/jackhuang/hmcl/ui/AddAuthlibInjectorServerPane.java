@@ -133,8 +133,8 @@ public class AddAuthlibInjectorServerPane extends StackPane {
 
     @FXML
     private void onAddFinish() {
-        if (!CONFIG.authlibInjectorServers.contains(serverBeingAdded)) {
-            CONFIG.authlibInjectorServers.add(serverBeingAdded);
+        if (!CONFIG.getAuthlibInjectorServers().contains(serverBeingAdded)) {
+            CONFIG.getAuthlibInjectorServers().add(serverBeingAdded);
         }
         fireEvent(new DialogCloseEvent());
     }

@@ -59,7 +59,7 @@ public class HMCLGameDownloadTask extends Task {
     public void execute() {
         File jar = profile.getRepository().getVersionJar(version);
 
-        File cache = new File(CONFIG.commonDirectory.get(), "jars/" + gameVersion + ".jar");
+        File cache = new File(CONFIG.getCommonDirectory(), "jars/" + gameVersion + ".jar");
         if (cache.exists())
             try {
                 FileUtils.copyFile(cache, jar);

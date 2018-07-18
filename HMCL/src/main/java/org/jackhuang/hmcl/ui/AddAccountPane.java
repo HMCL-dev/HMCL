@@ -82,7 +82,7 @@ public class AddAccountPane extends StackPane {
 
         cboServers.setCellFactory(jfxListCellFactory(server -> new TwoLineListItem(server.getName(), server.getUrl())));
         cboServers.setConverter(stringConverter(AuthlibInjectorServer::getName));
-        Bindings.bindContent(cboServers.getItems(), CONFIG.authlibInjectorServers);
+        Bindings.bindContent(cboServers.getItems(), CONFIG.getAuthlibInjectorServers());
         cboServers.getItems().addListener(onInvalidating(this::selectDefaultServer));
         selectDefaultServer();
 

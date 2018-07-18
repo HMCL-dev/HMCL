@@ -53,7 +53,7 @@ public class Settings {
     private final boolean firstLaunch;
 
     private InvalidationListener accountChangeListener =
-            source -> CONFIG.accounts.setAll(
+            source -> CONFIG.getAccounts().setAll(
                     accounts.values().stream()
                             .map(account -> {
                                 Map<Object, Object> storage = account.toStorage();
@@ -63,12 +63,12 @@ public class Settings {
                             .collect(toList()));
 
     private Settings() {
-        firstLaunch = CONFIG.firstLaunch.get();
-        CONFIG.firstLaunch.set(false);
+        firstLaunch = CONFIG.isFirstLaunch();
+        CONFIG.setFirstLaunch(false);
 
         ProxyManager.getProxy(); // init ProxyManager
 
-        for (Iterator<Map<Object, Object>> iterator = CONFIG.accounts.iterator(); iterator.hasNext();) {
+        for (Iterator<Map<Object, Object>> iterator = CONFIG.getAccounts().iterator(); iterator.hasNext();) {
             Map<Object, Object> settings = iterator.next();
             AccountFactory<?> factory = Accounts.ACCOUNT_FACTORY.get(tryCast(settings.get("type"), String.class).orElse(""));
             if (factory == null) {
@@ -90,9 +90,9 @@ public class Settings {
             account.addListener(accountChangeListener);
         }
 
-        CONFIG.authlibInjectorServers.addListener(onInvalidating(this::removeDanglingAuthlibInjectorAccounts));
+        CONFIG.getAuthlibInjectorServers().addListener(onInvalidating(this::removeDanglingAuthlibInjectorAccounts));
 
-        this.selectedAccount.set(accounts.get(CONFIG.selectedAccount.get()));
+        this.selectedAccount.set(accounts.get(CONFIG.getSelectedAccount()));
 
         checkProfileMap();
 
@@ -117,7 +117,7 @@ public class Settings {
         return firstLaunch;
     }
 
-    private Locales.SupportedLocale locale = Locales.getLocaleByName(CONFIG.localization.get());
+    private Locales.SupportedLocale locale = Locales.getLocaleByName(CONFIG.getLocalization());
 
     public Locales.SupportedLocale getLocale() {
         return locale;
@@ -125,24 +125,24 @@ public class Settings {
 
     public void setLocale(Locales.SupportedLocale locale) {
         this.locale = locale;
-        CONFIG.localization.set(Locales.getNameByLocale(locale));
+        CONFIG.setLocalization(Locales.getNameByLocale(locale));
     }
 
     public Font getFont() {
-        return Font.font(CONFIG.fontFamily.get(), CONFIG.fontSize.get());
+        return Font.font(CONFIG.getFontFamily(), CONFIG.getFontSize());
     }
 
     public void setFont(Font font) {
-        CONFIG.fontFamily.set(font.getFamily());
-        CONFIG.fontSize.set(font.getSize());
+        CONFIG.setFontFamily(font.getFamily());
+        CONFIG.setFontSize(font.getSize());
     }
 
     public int getLogLines() {
-        return Math.max(CONFIG.logLines.get(), 100);
+        return Math.max(CONFIG.getLogLines(), 100);
     }
 
     public void setLogLines(int logLines) {
-        CONFIG.logLines.set(logLines);
+        CONFIG.setLogLines(logLines);
     }
 
     /****************************************
@@ -157,7 +157,7 @@ public class Settings {
     private void removeDanglingAuthlibInjectorAccounts() {
         accounts.values().stream()
                 .filter(AuthlibInjectorAccount.class::isInstance)
-                .filter(it -> !CONFIG.authlibInjectorServers.contains(((AuthlibInjectorAccount) it).getServer()))
+                .filter(it -> !CONFIG.getAuthlibInjectorServers().contains(((AuthlibInjectorAccount) it).getServer()))
                 .collect(toList())
                 .forEach(this::deleteAccount);
     }
@@ -167,14 +167,14 @@ public class Settings {
      ****************************************/
 
     public DownloadProvider getDownloadProvider() {
-        return DownloadProviders.getDownloadProvider(CONFIG.downloadType.get());
+        return DownloadProviders.getDownloadProvider(CONFIG.getDownloadType());
     }
 
     public void setDownloadProvider(DownloadProvider downloadProvider) {
         int index = DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(downloadProvider);
         if (index == -1)
             throw new IllegalArgumentException("Unknown download provider: " + downloadProvider);
-        CONFIG.downloadType.set(index);
+        CONFIG.setDownloadType(index);
     }
 
     /****************************************
@@ -203,7 +203,7 @@ public class Settings {
         public void invalidated() {
             super.invalidated();
 
-            CONFIG.selectedAccount.set(getValue() == null ? "" : Accounts.getAccountId(getValue()));
+            CONFIG.setSelectedAccount(getValue() == null ? "" : Accounts.getAccountId(getValue()));
         }
     };
 
@@ -261,12 +261,12 @@ public class Settings {
      *                THEME                 *
      ****************************************/
 
-    private final ImmediateObjectProperty<Theme> theme = new ImmediateObjectProperty<Theme>(this, "theme", Theme.getTheme(CONFIG.theme.get()).orElse(Theme.BLUE)) {
+    private final ImmediateObjectProperty<Theme> theme = new ImmediateObjectProperty<Theme>(this, "theme", Theme.getTheme(CONFIG.getTheme()).orElse(Theme.BLUE)) {
         @Override
         public void invalidated() {
             super.invalidated();
 
-            CONFIG.theme.set(get().getName().toLowerCase());
+            CONFIG.setTheme(get().getName().toLowerCase());
         }
     };
 
@@ -289,18 +289,18 @@ public class Settings {
     public Profile getSelectedProfile() {
         checkProfileMap();
 
-        if (!hasProfile(CONFIG.selectedProfile.get())) {
+        if (!hasProfile(CONFIG.getSelectedProfile())) {
             getProfileMap().keySet().stream().findFirst().ifPresent(selectedProfile -> {
-                CONFIG.selectedProfile.set(selectedProfile);
+                CONFIG.setSelectedProfile(selectedProfile);
             });
             Schedulers.computation().schedule(this::onProfileChanged);
         }
-        return getProfile(CONFIG.selectedProfile.get());
+        return getProfile(CONFIG.getSelectedProfile());
     }
 
     public void setSelectedProfile(Profile selectedProfile) {
-        if (hasProfile(selectedProfile.getName()) && !Objects.equals(selectedProfile.getName(), CONFIG.selectedProfile.get())) {
-            CONFIG.selectedProfile.set(selectedProfile.getName());
+        if (hasProfile(selectedProfile.getName()) && !Objects.equals(selectedProfile.getName(), CONFIG.getSelectedProfile())) {
+            CONFIG.setSelectedProfile(selectedProfile.getName());
             Schedulers.computation().schedule(this::onProfileChanged);
         }
     }
@@ -317,7 +317,7 @@ public class Settings {
     }
 
     public Map<String, Profile> getProfileMap() {
-        return CONFIG.configurations;
+        return CONFIG.getConfigurations();
     }
 
     public Collection<Profile> getProfiles() {

@@ -49,15 +49,15 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
         smoothScrolling(scrollPane);
 
         serversListener = observable -> updateServersList();
-        CONFIG.authlibInjectorServers.addListener(new WeakInvalidationListener(serversListener));
+        CONFIG.getAuthlibInjectorServers().addListener(new WeakInvalidationListener(serversListener));
         updateServersList();
     }
 
     private void updateServersList() {
         listPane.getChildren().setAll(
-                CONFIG.authlibInjectorServers.stream()
+                CONFIG.getAuthlibInjectorServers().stream()
                         .map(server -> new AuthlibInjectorServerItem(server,
-                                item -> CONFIG.authlibInjectorServers.remove(item.getServer())))
+                                item -> CONFIG.getAuthlibInjectorServers().remove(item.getServer())))
                         .collect(toList()));
     }
 

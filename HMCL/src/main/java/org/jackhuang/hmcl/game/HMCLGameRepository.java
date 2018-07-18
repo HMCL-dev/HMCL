@@ -61,7 +61,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (useSelf(version, assetId))
             return super.getAssetDirectory(version, assetId);
         else
-            return new File(CONFIG.commonDirectory.get(), "assets");
+            return new File(CONFIG.getCommonDirectory(), "assets");
     }
 
     @Override
@@ -86,7 +86,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (self.exists() || vs.isNoCommon())
             return self;
         else
-            return new File(CONFIG.commonDirectory.get(), "libraries/" + lib.getPath());
+            return new File(CONFIG.getCommonDirectory(), "libraries/" + lib.getPath());
     }
 
 

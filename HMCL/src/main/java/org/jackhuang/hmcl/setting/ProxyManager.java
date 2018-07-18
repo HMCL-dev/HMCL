@@ -37,18 +37,18 @@ public final class ProxyManager {
 
     public static final ObjectBinding<Proxy> proxyProperty = Bindings.createObjectBinding(
             () -> {
-                String host = CONFIG.proxyHost.get();
-                Integer port = Lang.toIntOrNull(CONFIG.proxyPort.get());
-                if (!CONFIG.hasProxy.get() || StringUtils.isBlank(host) || port == null || CONFIG.proxyType.get() == Proxy.Type.DIRECT) {
+                String host = CONFIG.getProxyHost();
+                Integer port = Lang.toIntOrNull(CONFIG.getProxyPort());
+                if (!CONFIG.hasProxy() || StringUtils.isBlank(host) || port == null || CONFIG.getProxyType() == Proxy.Type.DIRECT) {
                     return Proxy.NO_PROXY;
                 } else {
-                    return new Proxy(CONFIG.proxyType.get(), new InetSocketAddress(host, port));
+                    return new Proxy(CONFIG.getProxyType(), new InetSocketAddress(host, port));
                 }
             },
-            CONFIG.proxyType,
-            CONFIG.proxyHost,
-            CONFIG.proxyPort,
-            CONFIG.hasProxy);
+            CONFIG.proxyTypeProperty(),
+            CONFIG.proxyHostProperty(),
+            CONFIG.proxyPortProperty(),
+            CONFIG.hasProxyProperty());
 
     public static Proxy getProxy() {
         return proxyProperty.get();
@@ -67,9 +67,9 @@ public final class ProxyManager {
 
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
-                if (CONFIG.hasProxyAuth.get()) {
-                    String username = CONFIG.proxyUser.get();
-                    String password = CONFIG.proxyPass.get();
+                if (CONFIG.hasProxyAuth()) {
+                    String username = CONFIG.getProxyUser();
+                    String password = CONFIG.getProxyPass();
                     if (username != null && password != null) {
                         return new PasswordAuthentication(username, password.toCharArray());
                     }
