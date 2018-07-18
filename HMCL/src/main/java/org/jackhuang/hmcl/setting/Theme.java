@@ -24,6 +24,11 @@ import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.IOUtils;
 import org.jackhuang.hmcl.util.Logging;
 
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+
+import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
@@ -115,7 +120,7 @@ public class Theme {
     }
 
     public static ObjectBinding<Color> foregroundFillBinding() {
-        return Bindings.createObjectBinding(() -> Settings.INSTANCE.getTheme().getForegroundColor(), Settings.INSTANCE.themeProperty());
+        return Bindings.createObjectBinding(() -> CONFIG.getTheme().getForegroundColor(), CONFIG.themeProperty());
     }
 
     public static ObjectBinding<Color> blackFillBinding() {
@@ -124,5 +129,17 @@ public class Theme {
 
     public static ObjectBinding<Color> whiteFillBinding() {
         return Bindings.createObjectBinding(() -> Color.WHITE);
+    }
+
+    public static class TypeAdapter extends com.google.gson.TypeAdapter<Theme> {
+        @Override
+        public void write(JsonWriter out, Theme value) throws IOException {
+            out.value(value.getName().toLowerCase());
+        }
+
+        @Override
+        public Theme read(JsonReader in) throws IOException {
+            return getTheme(in.nextString()).orElse(Theme.BLUE);
+        }
     }
 }

@@ -34,6 +34,8 @@ import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.JavaVersion;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
+
 import java.util.function.Consumer;
 
 public final class Controllers {
@@ -106,7 +108,7 @@ public final class Controllers {
         decorator.setCustomMaximize(false);
 
         scene = new Scene(decorator, 804, 521);
-        scene.getStylesheets().setAll(Settings.INSTANCE.getTheme().getStylesheets());
+        scene.getStylesheets().setAll(CONFIG.getTheme().getStylesheets());
         stage.setMinWidth(804);
         stage.setMaxWidth(804);
         stage.setMinHeight(521);

@@ -202,13 +202,13 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         CONFIG.setBackgroundImageType((EnumBackgroundImage) newValue.getUserData()));
 
         // theme
-        JFXColorPicker picker = new JFXColorPicker(Color.web(Settings.INSTANCE.getTheme().getColor()), null);
+        JFXColorPicker picker = new JFXColorPicker(Color.web(CONFIG.getTheme().getColor()), null);
         picker.setCustomColorText(i18n("color.custom"));
         picker.setRecentColorsText(i18n("color.recent"));
         picker.getCustomColors().setAll(Theme.SUGGESTED_COLORS);
         picker.setOnAction(e -> {
             Theme theme = Theme.custom(Theme.getColorDisplayName(picker.getValue()));
-            Settings.INSTANCE.setTheme(theme);
+            CONFIG.setTheme(theme);
             Controllers.getScene().getStylesheets().setAll(theme.getStylesheets());
         });
         themeColorPickerContainer.getChildren().setAll(picker);
