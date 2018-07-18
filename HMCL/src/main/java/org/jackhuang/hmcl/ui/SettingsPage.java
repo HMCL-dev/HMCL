@@ -188,19 +188,29 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         backgroundItem.loadChildren(Collections.singletonList(
                 backgroundItem.createChildren(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
         ));
-
-        FXUtils.bindString(backgroundItem.getTxtCustom(), CONFIG.backgroundImageProperty());
-
         backgroundItem.setCustomUserData(EnumBackgroundImage.CUSTOM);
-        backgroundItem.getGroup().getToggles().stream().filter(it -> it.getUserData() == CONFIG.getBackgroundImageType()).findFirst().ifPresent(it -> it.setSelected(true));
+        backgroundItem.getTxtCustom().textProperty().bindBidirectional(CONFIG.backgroundImageProperty());
+
+        ObjectProperty<EnumBackgroundImage> backgroundType = new SimpleObjectProperty<EnumBackgroundImage>(EnumBackgroundImage.DEFAULT) {
+            {
+                invalidated();
+            }
+
+            @Override
+            protected void invalidated() {
+                backgroundItem.getGroup().getToggles().stream()
+                        .filter(it -> it.getUserData() == get())
+                        .findFirst()
+                        .ifPresent(it -> it.setSelected(true));
+            }
+        };
+        backgroundItem.getGroup().selectedToggleProperty().addListener((observable, oldValue, newValue) -> backgroundType.set((EnumBackgroundImage) newValue.getUserData()));
+        backgroundType.bindBidirectional(CONFIG.backgroundImageTypeProperty());
 
         backgroundItem.subtitleProperty().bind(
-                new When(CONFIG.backgroundImageTypeProperty().isEqualTo(EnumBackgroundImage.DEFAULT))
+                new When(backgroundType.isEqualTo(EnumBackgroundImage.DEFAULT))
                         .then(i18n("launcher.background.default"))
                         .otherwise(CONFIG.backgroundImageProperty()));
-
-        backgroundItem.setToggleSelectedListener(newValue ->
-        CONFIG.setBackgroundImageType((EnumBackgroundImage) newValue.getUserData()));
 
         // theme
         JFXColorPicker picker = new JFXColorPicker(Color.web(CONFIG.getTheme().getColor()), null);
