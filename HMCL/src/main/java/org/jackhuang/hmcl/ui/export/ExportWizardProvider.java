@@ -37,6 +37,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
+
 public final class ExportWizardProvider implements WizardProvider {
     private final Profile profile;
     private final String version;
@@ -80,20 +82,13 @@ public final class ExportWizardProvider implements WizardProvider {
                         boolean flag = true;
 
                         try (ZipEngine zip = new ZipEngine(modpackFile)) {
-                            Config config = ConfigHolder.CONFIG.clone();
-
-                            config.setHasProxy(false);
-                            config.setSelectedProfile("");
-                            config.setCommonDirectory(null);
-                            config.setFontFamily("Consolas");
-                            config.setFontSize(12);
-                            config.setLocalization(null);
-                            config.getAccounts().clear();
-                            config.setSelectedAccount("");
-                            config.setLogLines(100);
-                            config.getConfigurations().clear();
-
-                            zip.putTextFile(config.toJson(), ConfigHolder.CONFIG_FILENAME);
+                            Config exported = new Config();
+                            exported.setBackgroundImageType(CONFIG.getBackgroundImageType());
+                            exported.setBackgroundImage(CONFIG.getBackgroundImage());
+                            exported.setTheme(CONFIG.getTheme());
+                            exported.setDownloadType(CONFIG.getDownloadType());
+                            exported.getAuthlibInjectorServers().setAll(CONFIG.getAuthlibInjectorServers());
+                            zip.putTextFile(exported.toJson(), ConfigHolder.CONFIG_FILENAME);
                             zip.putFile(tempModpack, "modpack.zip");
 
                             File bg = new File("bg").getAbsoluteFile();
