@@ -44,7 +44,7 @@ public final class GameAssetIndexDownloadTask extends Task {
     /**
      * Constructor.
      *
-     * @param dependencyManager the dependency manager that can provides proxy settings and {@link org.jackhuang.hmcl.game.GameRepository}
+     * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository}
      * @param version the <b>resolved</b> version
      */
     public GameAssetIndexDownloadTask(AbstractDependencyManager dependencyManager, Version version) {
@@ -67,7 +67,7 @@ public final class GameAssetIndexDownloadTask extends Task {
         File assetIndexFile = dependencyManager.getGameRepository().getIndexFile(version.getId(), assetIndexInfo.getId());
         dependencies.add(new FileDownloadTask(
                 NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(assetIndexInfo.getUrl())),
-                assetIndexFile, dependencyManager.getProxy()
+                assetIndexFile
         ));
     }
 

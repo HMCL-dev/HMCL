@@ -53,7 +53,7 @@ public final class GameAssetDownloadTask extends Task {
     /**
      * Constructor.
      *
-     * @param dependencyManager the dependency manager that can provides proxy settings and {@link org.jackhuang.hmcl.game.GameRepository}
+     * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository}
      * @param version the <b>resolved</b> version
      */
     public GameAssetDownloadTask(AbstractDependencyManager dependencyManager, Version version) {
@@ -107,7 +107,7 @@ public final class GameAssetDownloadTask extends Task {
                 flag = !file.exists();
             }
             if (flag) {
-                FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(url), file, dependencyManager.getProxy(), new IntegrityCheck("SHA-1", assetObject.getHash()));
+                FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(url), file, new IntegrityCheck("SHA-1", assetObject.getHash()));
                 task.setName(assetObject.getHash());
                 dependencies.add(task);
             }

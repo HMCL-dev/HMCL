@@ -22,8 +22,6 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.setting.Profile;
 
-import java.net.Proxy;
-
 /**
  * @author huangyuhui
  */
@@ -31,11 +29,7 @@ public class HMCLDependencyManager extends DefaultDependencyManager {
     private final Profile profile;
 
     public HMCLDependencyManager(Profile profile, DownloadProvider downloadProvider) {
-        this(profile, downloadProvider, Proxy.NO_PROXY);
-    }
-
-    public HMCLDependencyManager(Profile profile, DownloadProvider downloadProvider, Proxy proxy) {
-        super(profile.getRepository(), downloadProvider, proxy);
+        super(profile.getRepository(), downloadProvider);
 
         this.profile = profile;
     }

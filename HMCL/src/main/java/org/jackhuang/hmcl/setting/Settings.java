@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.text.Font;
 
@@ -33,16 +33,13 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.Locales;
 
-import java.net.Authenticator;
-import java.net.InetSocketAddress;
-import java.net.PasswordAuthentication;
-import java.net.Proxy;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
+import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -55,13 +52,23 @@ public class Settings {
 
     private final boolean firstLaunch;
 
+    private InvalidationListener accountChangeListener =
+            source -> CONFIG.getAccounts().setAll(
+                    accounts.values().stream()
+                            .map(account -> {
+                                Map<Object, Object> storage = account.toStorage();
+                                storage.put("type", Accounts.getAccountType(account));
+                                return storage;
+                            })
+                            .collect(toList()));
+
     private Settings() {
-        firstLaunch = ConfigHolder.CONFIG.firstLaunch.get();
-        ConfigHolder.CONFIG.firstLaunch.set(false);
+        firstLaunch = CONFIG.isFirstLaunch();
+        CONFIG.setFirstLaunch(false);
 
-        loadProxy();
+        ProxyManager.getProxy(); // init ProxyManager
 
-        for (Iterator<Map<Object, Object>> iterator = ConfigHolder.CONFIG.accounts.iterator(); iterator.hasNext();) {
+        for (Iterator<Map<Object, Object>> iterator = CONFIG.getAccounts().iterator(); iterator.hasNext();) {
             Map<Object, Object> settings = iterator.next();
             AccountFactory<?> factory = Accounts.ACCOUNT_FACTORY.get(tryCast(settings.get("type"), String.class).orElse(""));
             if (factory == null) {
@@ -72,7 +79,7 @@ public class Settings {
 
             Account account;
             try {
-                account = factory.fromStorage(settings, getProxy());
+                account = factory.fromStorage(settings);
             } catch (Exception e) {
                 LOG.log(Level.WARNING, "Malformed account storage, removing: " + settings, e);
                 iterator.remove();
@@ -80,62 +87,37 @@ public class Settings {
             }
 
             accounts.put(Accounts.getAccountId(account), account);
+            account.addListener(accountChangeListener);
         }
 
-        ConfigHolder.CONFIG.authlibInjectorServers.addListener(onInvalidating(this::removeDanglingAuthlibInjectorAccounts));
+        CONFIG.getAuthlibInjectorServers().addListener(onInvalidating(this::removeDanglingAuthlibInjectorAccounts));
 
-        this.selectedAccount.set(accounts.get(ConfigHolder.CONFIG.selectedAccount.get()));
+        this.selectedAccount.set(accounts.get(CONFIG.getSelectedAccount()));
 
         checkProfileMap();
 
         save();
 
-        for (Map.Entry<String, Profile> entry2 : getProfileMap().entrySet()) {
-            entry2.getValue().setName(entry2.getKey());
-            entry2.getValue().nameProperty().setChangedListener(this::profileNameChanged);
-            entry2.getValue().addPropertyChangedListener(e -> save());
+        for (Map.Entry<String, Profile> profileEntry : getProfileMap().entrySet()) {
+            profileEntry.getValue().setName(profileEntry.getKey());
+            profileEntry.getValue().nameProperty().setChangedListener(this::profileNameChanged);
+            profileEntry.getValue().addPropertyChangedListener(e -> save());
         }
 
         Lang.ignoringException(() -> Runtime.getRuntime().addShutdownHook(new Thread(this::save)));
+
+        CONFIG.addListener(source -> save());
     }
 
-    public void save() {
-        ConfigHolder.CONFIG.accounts.clear();
-        for (Account account : accounts.values()) {
-            Map<Object, Object> storage = account.toStorage();
-            storage.put("type", Accounts.getAccountType(account));
-            ConfigHolder.CONFIG.accounts.add(storage);
-        }
-        ConfigHolder.saveConfig(ConfigHolder.CONFIG);
+    private void save() {
+        ConfigHolder.saveConfig(CONFIG);
     }
 
     public boolean isFirstLaunch() {
         return firstLaunch;
     }
 
-    private final StringProperty commonPath = new ImmediateStringProperty(this, "commonPath", ConfigHolder.CONFIG.commonDirectory.get()) {
-        @Override
-        public void invalidated() {
-            super.invalidated();
-
-            ConfigHolder.CONFIG.commonDirectory.set(get());
-            save();
-        }
-    };
-
-    public String getCommonPath() {
-        return commonPath.get();
-    }
-
-    public StringProperty commonPathProperty() {
-        return commonPath;
-    }
-
-    public void setCommonPath(String commonPath) {
-        this.commonPath.set(commonPath);
-    }
-
-    private Locales.SupportedLocale locale = Locales.getLocaleByName(ConfigHolder.CONFIG.localization.get());
+    private Locales.SupportedLocale locale = Locales.getLocaleByName(CONFIG.getLocalization());
 
     public Locales.SupportedLocale getLocale() {
         return locale;
@@ -143,126 +125,24 @@ public class Settings {
 
     public void setLocale(Locales.SupportedLocale locale) {
         this.locale = locale;
-        ConfigHolder.CONFIG.localization.set(Locales.getNameByLocale(locale));
-        save();
-    }
-
-    private Proxy proxy = Proxy.NO_PROXY;
-
-    public Proxy getProxy() {
-        return proxy;
-    }
-
-    private Proxy.Type proxyType = Proxies.getProxyType(ConfigHolder.CONFIG.proxyType.get());
-
-    public Proxy.Type getProxyType() {
-        return proxyType;
-    }
-
-    public void setProxyType(Proxy.Type proxyType) {
-        this.proxyType = proxyType;
-        ConfigHolder.CONFIG.proxyType.set(Proxies.PROXIES.indexOf(proxyType));
-        save();
-        loadProxy();
-    }
-
-    public String getProxyHost() {
-        return ConfigHolder.CONFIG.proxyHost.get();
-    }
-
-    public void setProxyHost(String proxyHost) {
-        ConfigHolder.CONFIG.proxyHost.set(proxyHost);
-        save();
-    }
-
-    public String getProxyPort() {
-        return ConfigHolder.CONFIG.proxyPort.get();
-    }
-
-    public void setProxyPort(String proxyPort) {
-        ConfigHolder.CONFIG.proxyPort.set(proxyPort);
-        save();
-    }
-
-    public String getProxyUser() {
-        return ConfigHolder.CONFIG.proxyUser.get();
-    }
-
-    public void setProxyUser(String proxyUser) {
-        ConfigHolder.CONFIG.proxyUser.set(proxyUser);
-        save();
-    }
-
-    public String getProxyPass() {
-        return ConfigHolder.CONFIG.proxyPass.get();
-    }
-
-    public void setProxyPass(String proxyPass) {
-        ConfigHolder.CONFIG.proxyPass.set(proxyPass);
-        save();
-    }
-
-    public boolean hasProxy() {
-        return ConfigHolder.CONFIG.hasProxy.get();
-    }
-
-    public void setHasProxy(boolean hasProxy) {
-        ConfigHolder.CONFIG.hasProxy.set(hasProxy);
-        save();
-    }
-
-    public boolean hasProxyAuth() {
-        return ConfigHolder.CONFIG.hasProxyAuth.get();
-    }
-
-    public void setHasProxyAuth(boolean hasProxyAuth) {
-        ConfigHolder.CONFIG.hasProxyAuth.set(hasProxyAuth);
-        save();
-    }
-
-    private void loadProxy() {
-        String host = getProxyHost();
-        Integer port = Lang.toIntOrNull(getProxyPort());
-        if (!hasProxy() || StringUtils.isBlank(host) || port == null || getProxyType() == Proxy.Type.DIRECT)
-            proxy = Proxy.NO_PROXY;
-        else {
-            System.setProperty("http.proxyHost", getProxyHost());
-            System.setProperty("http.proxyPort", getProxyPort());
-            proxy = new Proxy(proxyType, new InetSocketAddress(host, port));
-
-            String user = getProxyUser();
-            String pass = getProxyPass();
-            if (hasProxyAuth() && StringUtils.isNotBlank(user) && StringUtils.isNotBlank(pass)) {
-                System.setProperty("http.proxyUser", user);
-                System.setProperty("http.proxyPassword", pass);
-
-                Authenticator.setDefault(new Authenticator() {
-                    @Override
-                    public PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication(user, pass.toCharArray());
-                    }
-                });
-            }
-        }
+        CONFIG.setLocalization(Locales.getNameByLocale(locale));
     }
 
     public Font getFont() {
-        return Font.font(ConfigHolder.CONFIG.fontFamily.get(), ConfigHolder.CONFIG.fontSize.get());
+        return Font.font(CONFIG.getFontFamily(), CONFIG.getFontSize());
     }
 
     public void setFont(Font font) {
-        ConfigHolder.CONFIG.fontFamily.set(font.getFamily());
-        ConfigHolder.CONFIG.fontSize.set(font.getSize());
-        save();
+        CONFIG.setFontFamily(font.getFamily());
+        CONFIG.setFontSize(font.getSize());
     }
 
     public int getLogLines() {
-        return Math.max(ConfigHolder.CONFIG.logLines.get(), 100);
+        return Math.max(CONFIG.getLogLines(), 100);
     }
 
     public void setLogLines(int logLines) {
-        ConfigHolder.CONFIG.logLines.set(logLines);
-        save();
+        CONFIG.setLogLines(logLines);
     }
 
     /****************************************
@@ -277,7 +157,7 @@ public class Settings {
     private void removeDanglingAuthlibInjectorAccounts() {
         accounts.values().stream()
                 .filter(AuthlibInjectorAccount.class::isInstance)
-                .filter(it -> !ConfigHolder.CONFIG.authlibInjectorServers.contains(((AuthlibInjectorAccount) it).getServer()))
+                .filter(it -> !CONFIG.getAuthlibInjectorServers().contains(((AuthlibInjectorAccount) it).getServer()))
                 .collect(toList())
                 .forEach(this::deleteAccount);
     }
@@ -287,15 +167,14 @@ public class Settings {
      ****************************************/
 
     public DownloadProvider getDownloadProvider() {
-        return DownloadProviders.getDownloadProvider(ConfigHolder.CONFIG.downloadType.get());
+        return DownloadProviders.getDownloadProvider(CONFIG.getDownloadType());
     }
 
     public void setDownloadProvider(DownloadProvider downloadProvider) {
         int index = DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(downloadProvider);
         if (index == -1)
             throw new IllegalArgumentException("Unknown download provider: " + downloadProvider);
-        ConfigHolder.CONFIG.downloadType.set(index);
-        save();
+        CONFIG.setDownloadType(index);
     }
 
     /****************************************
@@ -324,8 +203,7 @@ public class Settings {
         public void invalidated() {
             super.invalidated();
 
-            ConfigHolder.CONFIG.selectedAccount.set(getValue() == null ? "" : Accounts.getAccountId(getValue()));
-            save();
+            CONFIG.setSelectedAccount(getValue() == null ? "" : Accounts.getAccountId(getValue()));
         }
     };
 
@@ -343,6 +221,9 @@ public class Settings {
 
     public void addAccount(Account account) {
         accounts.put(Accounts.getAccountId(account), account);
+        account.addListener(accountChangeListener);
+        accountChangeListener.invalidated(account);
+
         onAccountLoading();
 
         EventBus.EVENT_BUS.fireEvent(new AccountAddedEvent(this, account));
@@ -357,78 +238,35 @@ public class Settings {
     }
 
     public void deleteAccount(String name, String character) {
-        accounts.remove(Accounts.getAccountId(name, character));
+        Account removed = accounts.remove(Accounts.getAccountId(name, character));
+        if (removed != null) {
+            removed.removeListener(accountChangeListener);
+            accountChangeListener.invalidated(removed);
 
-        onAccountLoading();
-        selectedAccount.get();
+            onAccountLoading();
+            selectedAccount.get();
+        }
     }
 
     public void deleteAccount(Account account) {
         accounts.remove(Accounts.getAccountId(account));
+        account.removeListener(accountChangeListener);
+        accountChangeListener.invalidated(account);
 
         onAccountLoading();
         selectedAccount.get();
-    }
-
-    /****************************************
-     *              BACKGROUND              *
-     ****************************************/
-
-    private final ImmediateStringProperty backgroundImage = new ImmediateStringProperty(this, "backgroundImage", ConfigHolder.CONFIG.backgroundImage.get()) {
-        @Override
-        public void invalidated() {
-            super.invalidated();
-
-            ConfigHolder.CONFIG.backgroundImage.set(get());
-            save();
-        }
-    };
-
-    public String getBackgroundImage() {
-        return backgroundImage.get();
-    }
-
-    public ImmediateStringProperty backgroundImageProperty() {
-        return backgroundImage;
-    }
-
-    public void setBackgroundImage(String backgroundImage) {
-        this.backgroundImage.set(backgroundImage);
-    }
-
-    private final ImmediateObjectProperty<EnumBackgroundImage> backgroundImageType = new ImmediateObjectProperty<EnumBackgroundImage>(this, "backgroundImageType", EnumBackgroundImage.indexOf(ConfigHolder.CONFIG.backgroundImageType.get())) {
-        @Override
-        public void invalidated() {
-            super.invalidated();
-
-            ConfigHolder.CONFIG.backgroundImageType.set(get().ordinal());
-            save();
-        }
-    };
-
-    public EnumBackgroundImage getBackgroundImageType() {
-        return backgroundImageType.get();
-    }
-
-    public ImmediateObjectProperty<EnumBackgroundImage> backgroundImageTypeProperty() {
-        return backgroundImageType;
-    }
-
-    public void setBackgroundImageType(EnumBackgroundImage backgroundImageType) {
-        this.backgroundImageType.set(backgroundImageType);
     }
 
     /****************************************
      *                THEME                 *
      ****************************************/
 
-    private final ImmediateObjectProperty<Theme> theme = new ImmediateObjectProperty<Theme>(this, "theme", Theme.getTheme(ConfigHolder.CONFIG.theme.get()).orElse(Theme.BLUE)) {
+    private final ImmediateObjectProperty<Theme> theme = new ImmediateObjectProperty<Theme>(this, "theme", Theme.getTheme(CONFIG.getTheme()).orElse(Theme.BLUE)) {
         @Override
         public void invalidated() {
             super.invalidated();
 
-            ConfigHolder.CONFIG.theme.set(get().getName().toLowerCase());
-            save();
+            CONFIG.setTheme(get().getName().toLowerCase());
         }
     };
 
@@ -451,20 +289,18 @@ public class Settings {
     public Profile getSelectedProfile() {
         checkProfileMap();
 
-        if (!hasProfile(ConfigHolder.CONFIG.selectedProfile.get())) {
+        if (!hasProfile(CONFIG.getSelectedProfile())) {
             getProfileMap().keySet().stream().findFirst().ifPresent(selectedProfile -> {
-                ConfigHolder.CONFIG.selectedProfile.set(selectedProfile);
-                save();
+                CONFIG.setSelectedProfile(selectedProfile);
             });
             Schedulers.computation().schedule(this::onProfileChanged);
         }
-        return getProfile(ConfigHolder.CONFIG.selectedProfile.get());
+        return getProfile(CONFIG.getSelectedProfile());
     }
 
     public void setSelectedProfile(Profile selectedProfile) {
-        if (hasProfile(selectedProfile.getName()) && !Objects.equals(selectedProfile.getName(), ConfigHolder.CONFIG.selectedProfile.get())) {
-            ConfigHolder.CONFIG.selectedProfile.set(selectedProfile.getName());
-            save();
+        if (hasProfile(selectedProfile.getName()) && !Objects.equals(selectedProfile.getName(), CONFIG.getSelectedProfile())) {
+            CONFIG.setSelectedProfile(selectedProfile.getName());
             Schedulers.computation().schedule(this::onProfileChanged);
         }
     }
@@ -481,7 +317,7 @@ public class Settings {
     }
 
     public Map<String, Profile> getProfileMap() {
-        return ConfigHolder.CONFIG.configurations;
+        return CONFIG.getConfigurations();
     }
 
     public Collection<Profile> getProfiles() {
@@ -496,8 +332,6 @@ public class Settings {
         Schedulers.computation().schedule(this::onProfileLoading);
 
         ver.nameProperty().setChangedListener(this::profileNameChanged);
-
-        save();
     }
 
     public void deleteProfile(Profile profile) {
@@ -541,9 +375,5 @@ public class Settings {
 
     public void onAccountLoading() {
         EventBus.EVENT_BUS.fireEvent(new AccountLoadingEvent(this, getAccounts()));
-    }
-
-    public Config getRawConfig() {
-        return ConfigHolder.CONFIG.clone();
     }
 }

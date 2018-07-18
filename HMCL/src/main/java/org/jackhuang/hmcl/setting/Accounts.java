@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Level;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -71,7 +72,7 @@ public final class Accounts {
     }
 
     private static AuthlibInjectorServer getOrCreateAuthlibInjectorServer(String url) {
-        return ConfigHolder.CONFIG.authlibInjectorServers.stream()
+        return CONFIG.getAuthlibInjectorServers().stream()
                 .filter(server -> url.equals(server.getUrl()))
                 .findFirst()
                 .orElseGet(() -> {
@@ -85,7 +86,7 @@ public final class Accounts {
                         LOG.log(Level.WARNING, "Failed to migrate authlib injector server " + url, e);
                     }
 
-                    ConfigHolder.CONFIG.authlibInjectorServers.add(server);
+                    CONFIG.getAuthlibInjectorServers().add(server);
                     return server;
                 });
     }

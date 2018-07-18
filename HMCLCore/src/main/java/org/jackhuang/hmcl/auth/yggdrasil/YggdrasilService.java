@@ -9,7 +9,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
 import java.io.IOException;
-import java.net.Proxy;
 import java.net.URL;
 import java.util.*;
 
@@ -21,15 +20,9 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 public class YggdrasilService {
 
     private final YggdrasilProvider provider;
-    private final Proxy proxy;
 
     public YggdrasilService(YggdrasilProvider provider) {
-        this(provider, Proxy.NO_PROXY);
-    }
-
-    public YggdrasilService(YggdrasilProvider provider, Proxy proxy) {
         this.provider = provider;
-        this.proxy = proxy;
     }
 
     public YggdrasilSession authenticate(String username, String password, String clientToken) throws AuthenticationException {
@@ -155,7 +148,7 @@ public class YggdrasilService {
     private String request(URL url, Object payload) throws AuthenticationException {
         try {
             if (payload == null)
-                return NetworkUtils.doGet(url, proxy);
+                return NetworkUtils.doGet(url);
             else
                 return NetworkUtils.doPost(url, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
         } catch (IOException e) {

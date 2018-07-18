@@ -43,13 +43,13 @@ public final class LibraryDownloadTask extends Task {
         xzFile = new File(file.getAbsoluteFile().getParentFile(), file.getName() + ".pack.xz");
 
         xzTask = new FileDownloadTask(NetworkUtils.toURL(url + ".pack.xz"),
-                xzFile, dependencyManager.getProxy(), null, 1);
+                xzFile, null, 1);
         xzTask.setSignificance(TaskSignificance.MINOR);
 
         setSignificance(TaskSignificance.MODERATE);
 
         task = new FileDownloadTask(NetworkUtils.toURL(url),
-                file, dependencyManager.getProxy(),
+                file,
                 library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null);
     }
 

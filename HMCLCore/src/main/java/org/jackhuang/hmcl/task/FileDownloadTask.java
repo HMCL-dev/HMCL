@@ -31,7 +31,6 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
-import java.net.Proxy;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.util.logging.Level;
@@ -79,7 +78,6 @@ public class FileDownloadTask extends Task {
     private final File file;
     private final IntegrityCheck integrityCheck;
     private final int retry;
-    private final Proxy proxy;
     private final EventManager<FailedEvent<URL>> onFailed = new EventManager<>();
     private RandomAccessFile rFile;
     private InputStream stream;
@@ -89,26 +87,16 @@ public class FileDownloadTask extends Task {
      * @param file the location that download to.
      */
     public FileDownloadTask(URL url, File file) {
-        this(url, file, Proxy.NO_PROXY);
+        this(url, file, null);
     }
 
     /**
      * @param url the URL of remote file.
      * @param file the location that download to.
-     * @param proxy the proxy.
-     */
-    public FileDownloadTask(URL url, File file, Proxy proxy) {
-        this(url, file, proxy, null);
-    }
-
-    /**
-     * @param url the URL of remote file.
-     * @param file the location that download to.
-     * @param proxy the proxy.
      * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
      */
-    public FileDownloadTask(URL url, File file, Proxy proxy, IntegrityCheck integrityCheck) {
-        this(url, file, proxy, integrityCheck, 5);
+    public FileDownloadTask(URL url, File file, IntegrityCheck integrityCheck) {
+        this(url, file, integrityCheck, 5);
     }
 
     /**
@@ -116,14 +104,12 @@ public class FileDownloadTask extends Task {
      * @param file the location that download to.
      * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
      * @param retry the times for retrying if downloading fails.
-     * @param proxy the proxy.
      */
-    public FileDownloadTask(URL url, File file, Proxy proxy, IntegrityCheck integrityCheck, int retry) {
+    public FileDownloadTask(URL url, File file, IntegrityCheck integrityCheck, int retry) {
         this.url = url;
         this.file = file;
         this.integrityCheck = integrityCheck;
         this.retry = retry;
-        this.proxy = proxy;
 
         setName(file.getName());
     }
@@ -174,7 +160,7 @@ public class FileDownloadTask extends Task {
             try {
                 updateProgress(0);
 
-                HttpURLConnection con = NetworkUtils.createConnection(url, proxy);
+                HttpURLConnection con = NetworkUtils.createConnection(url);
                 con.connect();
 
                 if (con.getResponseCode() / 100 != 2)

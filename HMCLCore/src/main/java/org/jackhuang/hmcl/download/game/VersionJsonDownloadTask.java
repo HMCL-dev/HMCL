@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
-import java.net.Proxy;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -66,7 +65,7 @@ public final class VersionJsonDownloadTask extends Task {
         RemoteVersion<?> remoteVersion = gameVersionList.getVersions(gameVersion).stream().findFirst()
                 .orElseThrow(() -> new IllegalStateException("Cannot find specific version " + gameVersion + " in remote repository"));
         String jsonURL = dependencyManager.getDownloadProvider().injectURL(remoteVersion.getUrl());
-        dependencies.add(new GetTask(NetworkUtils.toURL(jsonURL), Proxy.NO_PROXY, ID));
+        dependencies.add(new GetTask(NetworkUtils.toURL(jsonURL), ID));
     }
     
     public static final String ID = "raw_version_json";

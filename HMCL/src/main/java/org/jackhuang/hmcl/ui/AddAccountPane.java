@@ -41,7 +41,6 @@ import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.AccountHelper;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -52,6 +51,7 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Logging;
+import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
 import static org.jackhuang.hmcl.ui.FXUtils.jfxListCellFactory;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
@@ -81,7 +81,7 @@ public class AddAccountPane extends StackPane {
 
         cboServers.setCellFactory(jfxListCellFactory(server -> new TwoLineListItem(server.getName(), server.getUrl())));
         cboServers.setConverter(stringConverter(AuthlibInjectorServer::getName));
-        Bindings.bindContent(cboServers.getItems(), ConfigHolder.CONFIG.authlibInjectorServers);
+        Bindings.bindContent(cboServers.getItems(), CONFIG.getAuthlibInjectorServers());
         cboServers.getItems().addListener(onInvalidating(this::selectDefaultServer));
         selectDefaultServer();
 
@@ -151,7 +151,7 @@ public class AddAccountPane extends StackPane {
         lblCreationWarning.setText("");
         setDisable(true);
 
-        Task.ofResult("create_account", () -> factory.create(new Selector(), username, password, addtionalData, Settings.INSTANCE.getProxy()))
+        Task.ofResult("create_account", () -> factory.create(new Selector(), username, password, addtionalData))
                 .finalized(Schedulers.javafx(), variables -> {
                     Settings.INSTANCE.addAccount(variables.get("create_account"));
                     acceptPane.hideSpinner();
@@ -211,7 +211,7 @@ public class AddAccountPane extends StackPane {
             for (GameProfile profile : names) {
                 Image image;
                 try {
-                    image = AccountHelper.getSkinImmediately(yggdrasilAccount, profile, 4, Settings.INSTANCE.getProxy());
+                    image = AccountHelper.getSkinImmediately(yggdrasilAccount, profile, 4);
                 } catch (Exception e) {
                     Logging.LOG.log(Level.WARNING, "Failed to get skin for " + profile.getName(), e);
                     image = null;

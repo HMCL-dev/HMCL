@@ -25,7 +25,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
@@ -41,30 +40,24 @@ public final class GetTask extends TaskResult<String> {
     private final URL url;
     private final Charset charset;
     private final int retry;
-    private final Proxy proxy;
     private final String id;
 
     public GetTask(URL url) {
-        this(url, Proxy.NO_PROXY);
+        this(url, ID);
     }
 
-    public GetTask(URL url, Proxy proxy) {
-        this(url, proxy, ID);
+    public GetTask(URL url, String id) {
+        this(url, id, UTF_8);
     }
 
-    public GetTask(URL url, Proxy proxy, String id) {
-        this(url, proxy, id, UTF_8);
+    public GetTask(URL url, String id, Charset charset) {
+        this(url, id, charset, 5);
     }
 
-    public GetTask(URL url, Proxy proxy, String id, Charset charset) {
-        this(url, proxy, id, charset, 5);
-    }
-
-    public GetTask(URL url, Proxy proxy, String id, Charset charset, int retry) {
+    public GetTask(URL url, String id, Charset charset, int retry) {
         this.url = url;
         this.charset = charset;
         this.retry = retry;
-        this.proxy = proxy;
         this.id = id;
 
         setName(url.toString());
@@ -88,7 +81,7 @@ public final class GetTask extends TaskResult<String> {
                 Logging.LOG.log(Level.WARNING, "Failed to download, repeat times: " + time);
             try {
                 updateProgress(0);
-                HttpURLConnection conn = NetworkUtils.createConnection(url, proxy);
+                HttpURLConnection conn = NetworkUtils.createConnection(url);
                 InputStream input = conn.getInputStream();
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 byte[] buf = new byte[IOUtils.DEFAULT_BUFFER_SIZE];

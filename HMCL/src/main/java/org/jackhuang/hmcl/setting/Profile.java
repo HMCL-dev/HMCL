@@ -122,7 +122,7 @@ public final class Profile {
     }
 
     public HMCLDependencyManager getDependency() {
-        return new HMCLDependencyManager(this, Settings.INSTANCE.getDownloadProvider(), Settings.INSTANCE.getProxy());
+        return new HMCLDependencyManager(this, Settings.INSTANCE.getDownloadProvider());
     }
 
     public VersionSetting getVersionSetting(String id) {

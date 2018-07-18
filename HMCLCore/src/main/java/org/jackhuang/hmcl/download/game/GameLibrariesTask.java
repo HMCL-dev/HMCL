@@ -41,7 +41,7 @@ public final class GameLibrariesTask extends Task {
     /**
      * Constructor.
      *
-     * @param dependencyManager the dependency manager that can provides proxy settings and {@link org.jackhuang.hmcl.game.GameRepository}
+     * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository}
      * @param version the <b>resolved</b> version
      */
     public GameLibrariesTask(AbstractDependencyManager dependencyManager, Version version) {

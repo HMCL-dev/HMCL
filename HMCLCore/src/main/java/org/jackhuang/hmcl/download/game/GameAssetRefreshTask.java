@@ -51,7 +51,7 @@ public final class GameAssetRefreshTask extends TaskResult<Collection<Pair<File,
     /**
      * Constructor.
      *
-     * @param dependencyManager the dependency manager that can provides proxy settings and {@link org.jackhuang.hmcl.game.GameRepository}
+     * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository}
      * @param version the <b>resolved</b> version
      */
     public GameAssetRefreshTask(AbstractDependencyManager dependencyManager, Version version) {

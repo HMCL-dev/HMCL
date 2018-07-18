@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
@@ -31,6 +30,8 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
+
+import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
 
 /**
  * @author huangyuhui
@@ -58,7 +59,7 @@ public class HMCLGameDownloadTask extends Task {
     public void execute() {
         File jar = profile.getRepository().getVersionJar(version);
 
-        File cache = new File(Settings.INSTANCE.getCommonPath(), "jars/" + gameVersion + ".jar");
+        File cache = new File(CONFIG.getCommonDirectory(), "jars/" + gameVersion + ".jar");
         if (cache.exists())
             try {
                 FileUtils.copyFile(cache, jar);
@@ -70,7 +71,6 @@ public class HMCLGameDownloadTask extends Task {
         dependencies.add(new FileDownloadTask(
                 NetworkUtils.toURL(profile.getDependency().getDownloadProvider().injectURL(version.getDownloadInfo().getUrl())),
                 cache,
-                profile.getDependency().getProxy(),
                 new IntegrityCheck("SHA-1", version.getDownloadInfo().getSha1())
         ).then(Task.of(v -> FileUtils.copyFile(cache, jar))));
     }

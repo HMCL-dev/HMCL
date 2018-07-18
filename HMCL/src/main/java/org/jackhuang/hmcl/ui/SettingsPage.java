@@ -20,7 +20,8 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.*;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -28,7 +29,6 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
@@ -45,12 +45,13 @@ import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.i18n.Locales;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
+import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.net.Proxy;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 public final class SettingsPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", i18n("settings.launcher"));
@@ -88,9 +89,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     @FXML
     private StackPane themeColorPickerContainer;
     @FXML
-    private JFXRadioButton chkNoProxy;
-    @FXML
-    private JFXRadioButton chkManualProxy;
+    private JFXCheckBox chkEnableProxy;
     @FXML
     private JFXRadioButton chkProxyHttp;
     @FXML
@@ -106,18 +105,6 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         FXUtils.loadFXML(this, "/assets/fxml/setting.fxml");
 
         FXUtils.smoothScrolling(scroll);
-
-        txtProxyHost.setText(Settings.INSTANCE.getProxyHost());
-        txtProxyHost.textProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setProxyHost(newValue));
-
-        txtProxyPort.setText(Settings.INSTANCE.getProxyPort());
-        txtProxyPort.textProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setProxyPort(newValue));
-
-        txtProxyUsername.setText(Settings.INSTANCE.getProxyUser());
-        txtProxyUsername.textProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setProxyUser(newValue));
-
-        txtProxyPassword.setText(Settings.INSTANCE.getProxyPass());
-        txtProxyPassword.textProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setProxyPass(newValue));
 
         cboDownloadSource.getSelectionModel().select(DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(Settings.INSTANCE.getDownloadProvider()));
         cboDownloadSource.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setDownloadProvider(DownloadProviders.getDownloadProvider(newValue.intValue())));
@@ -149,37 +136,50 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         cboLanguage.getSelectionModel().select(Locales.LOCALES.indexOf(Settings.INSTANCE.getLocale()));
         cboLanguage.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setLocale(Locales.getLocale(newValue.intValue())));
 
+        // ==== Proxy ====
+        txtProxyHost.textProperty().bindBidirectional(CONFIG.proxyHostProperty());
+        txtProxyPort.textProperty().bindBidirectional(CONFIG.proxyPortProperty());
+        txtProxyUsername.textProperty().bindBidirectional(CONFIG.proxyUserProperty());
+        txtProxyPassword.textProperty().bindBidirectional(CONFIG.proxyPassProperty());
+
+        proxyPane.disableProperty().bind(chkEnableProxy.selectedProperty().not());
+        authPane.disableProperty().bind(chkProxyAuthentication.selectedProperty().not());
+
+        chkEnableProxy.selectedProperty().bindBidirectional(CONFIG.hasProxyProperty());
+        chkProxyAuthentication.selectedProperty().bindBidirectional(CONFIG.hasProxyAuthProperty());
+
+        ObjectProperty<Proxy.Type> selectedProxyType = new SimpleObjectProperty<Proxy.Type>(Proxy.Type.HTTP) {
+            {
+                invalidated();
+            }
+
+            @Override
+            protected void invalidated() {
+                Proxy.Type type = Objects.requireNonNull(get());
+                if (type == Proxy.Type.DIRECT) {
+                    set(Proxy.Type.HTTP); // HTTP by default
+                } else {
+                    chkProxyHttp.setSelected(type == Proxy.Type.HTTP);
+                    chkProxySocks.setSelected(type == Proxy.Type.SOCKS);
+                }
+            }
+        };
+        selectedProxyType.bindBidirectional(CONFIG.proxyTypeProperty());
 
         ToggleGroup proxyConfigurationGroup = new ToggleGroup();
         chkProxyHttp.setUserData(Proxy.Type.HTTP);
         chkProxyHttp.setToggleGroup(proxyConfigurationGroup);
         chkProxySocks.setUserData(Proxy.Type.SOCKS);
         chkProxySocks.setToggleGroup(proxyConfigurationGroup);
+        proxyConfigurationGroup.getToggles().forEach(
+                toggle -> toggle.selectedProperty().addListener((observable, oldValue, newValue) -> {
+                    if (newValue) {
+                        selectedProxyType.set((Proxy.Type) toggle.getUserData());
+                    }
+                }));
+        // ====
 
-        for (Toggle toggle : proxyConfigurationGroup.getToggles())
-            if (toggle.getUserData() == Settings.INSTANCE.getProxyType())
-                toggle.setSelected(true);
-
-        ToggleGroup hasProxyGroup = new ToggleGroup();
-        chkNoProxy.setToggleGroup(hasProxyGroup);
-        chkManualProxy.setToggleGroup(hasProxyGroup);
-        if (!Settings.INSTANCE.hasProxy())
-            chkNoProxy.setSelected(true);
-        else
-            chkManualProxy.setSelected(true);
-        proxyPane.disableProperty().bind(chkNoProxy.selectedProperty());
-
-        hasProxyGroup.selectedToggleProperty().addListener((a, b, newValue) ->
-                Settings.INSTANCE.setHasProxy(newValue != chkNoProxy));
-
-        proxyConfigurationGroup.selectedToggleProperty().addListener((a, b, newValue) ->
-                Settings.INSTANCE.setProxyType((Proxy.Type) newValue.getUserData()));
-
-        chkProxyAuthentication.setSelected(Settings.INSTANCE.hasProxyAuth());
-        chkProxyAuthentication.selectedProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setHasProxyAuth(newValue));
-        authPane.disableProperty().bind(chkProxyAuthentication.selectedProperty().not());
-
-        fileCommonLocation.pathProperty().bindBidirectional(Settings.INSTANCE.commonPathProperty());
+        fileCommonLocation.pathProperty().bindBidirectional(CONFIG.commonDirectoryProperty());
 
         FXUtils.installTooltip(btnUpdate, i18n("update.tooltip"));
         checkUpdate();
@@ -189,17 +189,17 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
                 backgroundItem.createChildren(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
         ));
 
-        FXUtils.bindString(backgroundItem.getTxtCustom(), Settings.INSTANCE.backgroundImageProperty());
+        FXUtils.bindString(backgroundItem.getTxtCustom(), CONFIG.backgroundImageProperty());
 
         backgroundItem.setCustomUserData(EnumBackgroundImage.CUSTOM);
-        backgroundItem.getGroup().getToggles().stream().filter(it -> it.getUserData() == Settings.INSTANCE.getBackgroundImageType()).findFirst().ifPresent(it -> it.setSelected(true));
+        backgroundItem.getGroup().getToggles().stream().filter(it -> it.getUserData() == CONFIG.getBackgroundImageType()).findFirst().ifPresent(it -> it.setSelected(true));
 
-        Settings.INSTANCE.backgroundImageProperty().setChangedListener(it -> initBackgroundItemSubtitle());
-        Settings.INSTANCE.backgroundImageTypeProperty().setChangedListener(it -> initBackgroundItemSubtitle());
+        CONFIG.backgroundImageProperty().addListener(onInvalidating(this::initBackgroundItemSubtitle));
+        CONFIG.backgroundImageTypeProperty().addListener(onInvalidating(this::initBackgroundItemSubtitle));
         initBackgroundItemSubtitle();
 
         backgroundItem.setToggleSelectedListener(newValue ->
-                Settings.INSTANCE.setBackgroundImageType((EnumBackgroundImage) newValue.getUserData()));
+        CONFIG.setBackgroundImageType((EnumBackgroundImage) newValue.getUserData()));
 
         // theme
         JFXColorPicker picker = new JFXColorPicker(Color.web(Settings.INSTANCE.getTheme().getColor()), null);
@@ -216,12 +216,12 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     }
 
     private void initBackgroundItemSubtitle() {
-        switch (Settings.INSTANCE.getBackgroundImageType()) {
+        switch (CONFIG.getBackgroundImageType()) {
             case DEFAULT:
                 backgroundItem.setSubtitle(i18n("launcher.background.default"));
                 break;
             case CUSTOM:
-                backgroundItem.setSubtitle(Settings.INSTANCE.getBackgroundImage());
+                backgroundItem.setSubtitle(CONFIG.getBackgroundImage());
                 break;
         }
     }

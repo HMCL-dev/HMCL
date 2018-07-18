@@ -17,7 +17,12 @@
  */
 package org.jackhuang.hmcl.auth;
 
+import org.jackhuang.hmcl.util.ObservableHelper;
 import org.jackhuang.hmcl.util.ToStringBuilder;
+
+import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 
 import java.util.Map;
 import java.util.Optional;
@@ -27,7 +32,7 @@ import java.util.UUID;
  *
  * @author huangyuhui
  */
-public abstract class Account {
+public abstract class Account implements Observable {
 
     /**
      * @return the name of the account who owns the character
@@ -65,6 +70,26 @@ public abstract class Account {
     public abstract Map<Object, Object> toStorage();
 
     public abstract void clearCache();
+
+    private ObservableHelper helper = new ObservableHelper(this);
+
+    @Override
+    public void addListener(InvalidationListener listener) {
+        helper.addListener(listener);
+    }
+
+    @Override
+    public void removeListener(InvalidationListener listener) {
+        helper.removeListener(listener);
+    }
+
+    /**
+     * Called when the account has changed.
+     * This method can be called from any thread.
+     */
+    protected void invalidate() {
+        Platform.runLater(helper::invalidate);
+    }
 
     @Override
     public String toString() {

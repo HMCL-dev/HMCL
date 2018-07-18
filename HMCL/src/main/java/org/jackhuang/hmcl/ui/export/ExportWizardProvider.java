@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.setting.Config;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
@@ -81,18 +80,18 @@ public final class ExportWizardProvider implements WizardProvider {
                         boolean flag = true;
 
                         try (ZipEngine zip = new ZipEngine(modpackFile)) {
-                            Config config = Settings.INSTANCE.getRawConfig();
+                            Config config = ConfigHolder.CONFIG.clone();
 
-                            config.hasProxy.set(false);
-                            config.selectedProfile.set("");
-                            config.commonDirectory.set(null);
-                            config.fontFamily.set("Consolas");
-                            config.fontSize.set(12);
-                            config.localization.set(null);
-                            config.accounts.clear();
-                            config.selectedAccount.set("");
-                            config.logLines.set(100);
-                            config.configurations.clear();
+                            config.setHasProxy(false);
+                            config.setSelectedProfile("");
+                            config.setCommonDirectory(null);
+                            config.setFontFamily("Consolas");
+                            config.setFontSize(12);
+                            config.setLocalization(null);
+                            config.getAccounts().clear();
+                            config.setSelectedAccount("");
+                            config.setLogLines(100);
+                            config.getConfigurations().clear();
 
                             zip.putTextFile(config.toJson(), ConfigHolder.CONFIG_FILENAME);
                             zip.putFile(tempModpack, "modpack.zip");
