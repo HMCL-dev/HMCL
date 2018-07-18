@@ -21,8 +21,6 @@ import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 
-import java.net.Proxy;
-
 /**
  * Do everything that will connect to Internet.
  * Downloading Minecraft files.
@@ -35,11 +33,6 @@ public interface DependencyManager {
      * The relied game repository.
      */
     GameRepository getGameRepository();
-
-    /**
-     * The proxy that all network operations should go through.
-     */
-    Proxy getProxy();
 
     /**
      * Check if the game is complete.

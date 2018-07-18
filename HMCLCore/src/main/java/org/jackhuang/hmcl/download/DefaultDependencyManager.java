@@ -29,8 +29,6 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.ParallelTask;
 import org.jackhuang.hmcl.task.Task;
 
-import java.net.Proxy;
-
 /**
  * Note: This class has no state.
  *
@@ -40,16 +38,10 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
     private final DefaultGameRepository repository;
     private final DownloadProvider downloadProvider;
-    private final Proxy proxy;
 
     public DefaultDependencyManager(DefaultGameRepository repository, DownloadProvider downloadProvider) {
-        this(repository, downloadProvider, Proxy.NO_PROXY);
-    }
-
-    public DefaultDependencyManager(DefaultGameRepository repository, DownloadProvider downloadProvider, Proxy proxy) {
         this.repository = repository;
         this.downloadProvider = downloadProvider;
-        this.proxy = proxy;
     }
 
     @Override
@@ -60,11 +52,6 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     @Override
     public DownloadProvider getDownloadProvider() {
         return downloadProvider;
-    }
-
-    @Override
-    public Proxy getProxy() {
-        return proxy;
     }
 
     @Override
