@@ -66,7 +66,7 @@ public final class GameLoggingDownloadTask extends Task {
         LoggingInfo logging = version.getLogging().get(DownloadType.CLIENT);
         File file = dependencyManager.getGameRepository().getLoggingObject(version.getId(), version.getAssetIndex().getId(), logging);
         if (!file.exists())
-            dependencies.add(new FileDownloadTask(NetworkUtils.toURL(logging.getFile().getUrl()), file, dependencyManager.getProxy()));
+            dependencies.add(new FileDownloadTask(NetworkUtils.toURL(logging.getFile().getUrl()), file));
     }
 
 }

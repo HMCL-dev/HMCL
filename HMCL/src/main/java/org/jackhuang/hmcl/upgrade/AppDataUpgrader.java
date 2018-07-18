@@ -185,7 +185,7 @@ public class AppDataUpgrader extends IUpgrader {
 
         @Override
         public Collection<Task> getDependents() {
-            return Collections.singleton(new FileDownloadTask(downloadLink, tempFile, Proxy.NO_PROXY, new IntegrityCheck("SHA-1", hash)));
+            return Collections.singleton(new FileDownloadTask(downloadLink, tempFile, new IntegrityCheck("SHA-1", hash)));
         }
 
         @Override
@@ -235,7 +235,7 @@ public class AppDataUpgrader extends IUpgrader {
 
         @Override
         public Collection<Task> getDependents() {
-            return Collections.singleton(new FileDownloadTask(downloadLink, tempFile, Proxy.NO_PROXY, new IntegrityCheck("SHA-1", hash)));
+            return Collections.singleton(new FileDownloadTask(downloadLink, tempFile, new IntegrityCheck("SHA-1", hash)));
         }
 
         @Override

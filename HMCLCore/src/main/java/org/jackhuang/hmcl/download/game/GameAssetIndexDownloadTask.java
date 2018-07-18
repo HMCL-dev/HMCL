@@ -67,7 +67,7 @@ public final class GameAssetIndexDownloadTask extends Task {
         File assetIndexFile = dependencyManager.getGameRepository().getIndexFile(version.getId(), assetIndexInfo.getId());
         dependencies.add(new FileDownloadTask(
                 NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(assetIndexInfo.getUrl())),
-                assetIndexFile, dependencyManager.getProxy()
+                assetIndexFile
         ));
     }
 

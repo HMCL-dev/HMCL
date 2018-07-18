@@ -154,7 +154,7 @@ public final class AccountHelper {
         File file = getSkinFile(profile.getId());
         if (!refresh && file.exists())
             return;
-        new FileDownloadTask(NetworkUtils.toURL(url), file, proxy).run();
+        new FileDownloadTask(NetworkUtils.toURL(url), file).run();
     }
 
     private static void downloadSkin(YggdrasilAccount account, boolean refresh, Proxy proxy) throws Exception {
@@ -167,7 +167,7 @@ public final class AccountHelper {
         File file = getSkinFile(account.getUUID());
         if (!refresh && file.exists())
             return;
-        new FileDownloadTask(NetworkUtils.toURL(url), file, proxy).run();
+        new FileDownloadTask(NetworkUtils.toURL(url), file).run();
     }
 
     public static Image scale(String url, double scaleRatio) {

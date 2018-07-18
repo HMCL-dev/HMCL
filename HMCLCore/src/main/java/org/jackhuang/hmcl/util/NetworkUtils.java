@@ -48,8 +48,8 @@ public final class NetworkUtils {
         NetworkUtils.userAgentSupplier = Objects.requireNonNull(userAgentSupplier);
     }
 
-    public static HttpURLConnection createConnection(URL url, Proxy proxy) throws IOException {
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
+    public static HttpURLConnection createConnection(URL url) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setDoInput(true);
         connection.setUseCaches(false);
         connection.setConnectTimeout(15000);
@@ -59,11 +59,7 @@ public final class NetworkUtils {
     }
 
     public static String doGet(URL url) throws IOException {
-        return IOUtils.readFullyAsString(createConnection(url, Proxy.NO_PROXY).getInputStream());
-    }
-
-    public static String doGet(URL url, Proxy proxy) throws IOException {
-        return IOUtils.readFullyAsString(createConnection(url, proxy).getInputStream());
+        return IOUtils.readFullyAsString(createConnection(url).getInputStream());
     }
 
     public static String doPost(URL u, Map<String, String> params) throws IOException {
@@ -80,14 +76,10 @@ public final class NetworkUtils {
         return doPost(u, post, "application/x-www-form-urlencoded");
     }
 
-    public static String doPost(URL u, String post, String contentType) throws IOException {
-        return doPost(u, post, contentType, Proxy.NO_PROXY);
-    }
-
-    public static String doPost(URL url, String post, String contentType, Proxy proxy) throws IOException {
+    public static String doPost(URL url, String post, String contentType) throws IOException {
         byte[] bytes = post.getBytes(UTF_8);
 
-        HttpURLConnection con = createConnection(url, proxy);
+        HttpURLConnection con = createConnection(url);
         con.setRequestMethod("POST");
         con.setDoOutput(true);
         con.setRequestProperty("Content-Type", contentType + "; charset=utf-8");
@@ -120,11 +112,7 @@ public final class NetworkUtils {
     }
 
     public static String detectFileName(URL url) throws IOException {
-        return detectFileName(url, Proxy.NO_PROXY);
-    }
-
-    public static String detectFileName(URL url, Proxy proxy) throws IOException {
-        HttpURLConnection conn = createConnection(url, proxy);
+        HttpURLConnection conn = createConnection(url);
         conn.connect();
         if (conn.getResponseCode() / 100 != 2)
             throw new IOException("Response code " + conn.getResponseCode());

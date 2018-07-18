@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.auth.authlibinjector;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 import java.io.IOException;
-import java.net.Proxy;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -81,7 +80,7 @@ public class AuthlibInjectorDownloader {
         }
 
         try {
-            new FileDownloadTask(new URL(downloadProvider.get().injectURL(latest.downloadUrl)), artifactLocation.toFile(), Proxy.NO_PROXY,
+            new FileDownloadTask(new URL(downloadProvider.get().injectURL(latest.downloadUrl)), artifactLocation.toFile(),
                     Optional.ofNullable(latest.checksums.get("sha256"))
                             .map(checksum -> new IntegrityCheck("SHA-256", checksum))
                             .orElse(null))

@@ -107,7 +107,7 @@ public final class GameAssetDownloadTask extends Task {
                 flag = !file.exists();
             }
             if (flag) {
-                FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(url), file, dependencyManager.getProxy(), new IntegrityCheck("SHA-1", assetObject.getHash()));
+                FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(url), file, new IntegrityCheck("SHA-1", assetObject.getHash()));
                 task.setName(assetObject.getHash());
                 dependencies.add(task);
             }

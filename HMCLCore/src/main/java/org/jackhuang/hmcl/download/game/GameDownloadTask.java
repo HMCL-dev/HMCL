@@ -56,7 +56,6 @@ public final class GameDownloadTask extends Task {
         dependencies.add(new FileDownloadTask(
                 NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(version.getDownloadInfo().getUrl())),
                 jar,
-                dependencyManager.getProxy(),
                 new IntegrityCheck("SHA-1", version.getDownloadInfo().getSha1())
         ));
     }

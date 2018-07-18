@@ -109,7 +109,7 @@ public final class CurseCompletionTask extends Task {
                             updateProgress(finished.incrementAndGet(), manifest.getFiles().size());
                             if (StringUtils.isBlank(file.getFileName())) {
                                 try {
-                                    return file.withFileName(NetworkUtils.detectFileName(file.getUrl(), dependencyManager.getProxy()));
+                                    return file.withFileName(NetworkUtils.detectFileName(file.getUrl()));
                                 } catch (IOException ioe) {
                                     Logging.LOG.log(Level.WARNING, "Unable to fetch the file name of URL: " + file.getUrl(), ioe);
                                     flag.set(false);
@@ -125,7 +125,7 @@ public final class CurseCompletionTask extends Task {
             if (StringUtils.isNotBlank(file.getFileName())) {
                 File dest = new File(run, "mods/" + file.getFileName());
                 if (!dest.exists())
-                    dependencies.add(new FileDownloadTask(file.getUrl(), dest, dependencyManager.getProxy()));
+                    dependencies.add(new FileDownloadTask(file.getUrl(), dest));
             }
 
         // Let this task fail if the curse manifest has not been completed.
