@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.*;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -27,7 +29,6 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
@@ -50,6 +51,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.net.Proxy;
 import java.util.Collections;
+import java.util.Objects;
 
 public final class SettingsPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", i18n("settings.launcher"));
@@ -87,9 +89,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     @FXML
     private StackPane themeColorPickerContainer;
     @FXML
-    private JFXRadioButton chkNoProxy;
-    @FXML
-    private JFXRadioButton chkManualProxy;
+    private JFXCheckBox chkEnableProxy;
     @FXML
     private JFXRadioButton chkProxyHttp;
     @FXML
@@ -105,11 +105,6 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         FXUtils.loadFXML(this, "/assets/fxml/setting.fxml");
 
         FXUtils.smoothScrolling(scroll);
-
-        txtProxyHost.textProperty().bindBidirectional(CONFIG.proxyHostProperty());
-        txtProxyPort.textProperty().bindBidirectional(CONFIG.proxyPortProperty());
-        txtProxyUsername.textProperty().bindBidirectional(CONFIG.proxyUserProperty());
-        txtProxyPassword.textProperty().bindBidirectional(CONFIG.proxyPassProperty());
 
         cboDownloadSource.getSelectionModel().select(DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(Settings.INSTANCE.getDownloadProvider()));
         cboDownloadSource.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setDownloadProvider(DownloadProviders.getDownloadProvider(newValue.intValue())));
@@ -141,34 +136,48 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         cboLanguage.getSelectionModel().select(Locales.LOCALES.indexOf(Settings.INSTANCE.getLocale()));
         cboLanguage.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setLocale(Locales.getLocale(newValue.intValue())));
 
+        // ==== Proxy ====
+        txtProxyHost.textProperty().bindBidirectional(CONFIG.proxyHostProperty());
+        txtProxyPort.textProperty().bindBidirectional(CONFIG.proxyPortProperty());
+        txtProxyUsername.textProperty().bindBidirectional(CONFIG.proxyUserProperty());
+        txtProxyPassword.textProperty().bindBidirectional(CONFIG.proxyPassProperty());
+
+        proxyPane.disableProperty().bind(chkEnableProxy.selectedProperty().not());
+        authPane.disableProperty().bind(chkProxyAuthentication.selectedProperty().not());
+
+        chkEnableProxy.selectedProperty().bindBidirectional(CONFIG.hasProxyProperty());
+        chkProxyAuthentication.selectedProperty().bindBidirectional(CONFIG.hasProxyAuthProperty());
+
+        ObjectProperty<Proxy.Type> selectedProxyType = new SimpleObjectProperty<Proxy.Type>(Proxy.Type.HTTP) {
+            {
+                invalidated();
+            }
+
+            @Override
+            protected void invalidated() {
+                Proxy.Type type = Objects.requireNonNull(get());
+                if (type == Proxy.Type.DIRECT) {
+                    set(Proxy.Type.HTTP); // HTTP by default
+                } else {
+                    chkProxyHttp.setSelected(type == Proxy.Type.HTTP);
+                    chkProxySocks.setSelected(type == Proxy.Type.SOCKS);
+                }
+            }
+        };
+        selectedProxyType.bindBidirectional(CONFIG.proxyTypeProperty());
 
         ToggleGroup proxyConfigurationGroup = new ToggleGroup();
         chkProxyHttp.setUserData(Proxy.Type.HTTP);
         chkProxyHttp.setToggleGroup(proxyConfigurationGroup);
         chkProxySocks.setUserData(Proxy.Type.SOCKS);
         chkProxySocks.setToggleGroup(proxyConfigurationGroup);
-
-        for (Toggle toggle : proxyConfigurationGroup.getToggles())
-            if (toggle.getUserData() == CONFIG.getProxyType())
-                toggle.setSelected(true);
-
-        ToggleGroup hasProxyGroup = new ToggleGroup();
-        chkNoProxy.setToggleGroup(hasProxyGroup);
-        chkManualProxy.setToggleGroup(hasProxyGroup);
-        if (!CONFIG.hasProxy())
-            chkNoProxy.setSelected(true);
-        else
-            chkManualProxy.setSelected(true);
-        proxyPane.disableProperty().bind(chkNoProxy.selectedProperty());
-
-        hasProxyGroup.selectedToggleProperty().addListener((a, b, newValue) ->
-        CONFIG.setHasProxy(newValue != chkNoProxy));
-
-        proxyConfigurationGroup.selectedToggleProperty().addListener((a, b, newValue) ->
-        CONFIG.setProxyType((Proxy.Type) newValue.getUserData()));
-
-        chkProxyAuthentication.selectedProperty().bindBidirectional(CONFIG.hasProxyAuthProperty());
-        authPane.disableProperty().bind(chkProxyAuthentication.selectedProperty().not());
+        proxyConfigurationGroup.getToggles().forEach(
+                toggle -> toggle.selectedProperty().addListener((observable, oldValue, newValue) -> {
+                    if (newValue) {
+                        selectedProxyType.set((Proxy.Type) toggle.getUserData());
+                    }
+                }));
+        // ====
 
         fileCommonLocation.pathProperty().bindBidirectional(CONFIG.commonDirectoryProperty());
 
