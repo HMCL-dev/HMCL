@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
-import org.jackhuang.hmcl.setting.ProxyManager;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Scheduler;
@@ -34,7 +33,6 @@ import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.File;
-import java.net.Proxy;
 import java.util.*;
 
 public final class AccountHelper {
@@ -44,31 +42,19 @@ public final class AccountHelper {
     public static final File SKIN_DIR = new File(Launcher.HMCL_DIRECTORY, "skins");
 
     public static void loadSkins() {
-        loadSkins(Proxy.NO_PROXY);
-    }
-
-    public static void loadSkins(Proxy proxy) {
         for (Account account : Settings.INSTANCE.getAccounts()) {
             if (account instanceof YggdrasilAccount) {
-                new SkinLoadTask((YggdrasilAccount) account, proxy, false).start();
+                new SkinLoadTask((YggdrasilAccount) account, false).start();
             }
         }
     }
 
     public static Task loadSkinAsync(YggdrasilAccount account) {
-        return loadSkinAsync(account, ProxyManager.getProxy());
-    }
-
-    public static Task loadSkinAsync(YggdrasilAccount account, Proxy proxy) {
-        return new SkinLoadTask(account, proxy, false);
+        return new SkinLoadTask(account, false);
     }
 
     public static Task refreshSkinAsync(YggdrasilAccount account) {
-        return refreshSkinAsync(account, ProxyManager.getProxy());
-    }
-
-    public static Task refreshSkinAsync(YggdrasilAccount account, Proxy proxy) {
-        return new SkinLoadTask(account, proxy, true);
+        return new SkinLoadTask(account, true);
     }
 
     private static File getSkinFile(UUID uuid) {
@@ -95,9 +81,9 @@ public final class AccountHelper {
         return getDefaultSkin(uuid, scaleRatio);
     }
 
-    public static Image getSkinImmediately(YggdrasilAccount account, GameProfile profile, double scaleRatio, Proxy proxy) throws Exception {
+    public static Image getSkinImmediately(YggdrasilAccount account, GameProfile profile, double scaleRatio) throws Exception {
         File file = getSkinFile(profile.getId());
-        downloadSkin(account, profile, true, proxy);
+        downloadSkin(account, profile, true);
         if (!file.exists())
             return getDefaultSkin(profile.getId(), scaleRatio);
 
@@ -112,17 +98,15 @@ public final class AccountHelper {
 
     private static class SkinLoadTask extends Task {
         private final YggdrasilAccount account;
-        private final Proxy proxy;
         private final boolean refresh;
         private final List<Task> dependencies = new LinkedList<>();
 
-        public SkinLoadTask(YggdrasilAccount account, Proxy proxy) {
-            this(account, proxy, false);
+        public SkinLoadTask(YggdrasilAccount account) {
+            this(account, false);
         }
 
-        public SkinLoadTask(YggdrasilAccount account, Proxy proxy, boolean refresh) {
+        public SkinLoadTask(YggdrasilAccount account, boolean refresh) {
             this.account = account;
-            this.proxy = proxy;
             this.refresh = refresh;
         }
 
@@ -141,11 +125,11 @@ public final class AccountHelper {
             if (!account.isLoggedIn() && (account.getCharacter() == null || refresh))
                 DialogController.logIn(account);
 
-            downloadSkin(account, refresh, proxy);
+            downloadSkin(account, refresh);
         }
     }
 
-    private static void downloadSkin(YggdrasilAccount account, GameProfile profile, boolean refresh, Proxy proxy) throws Exception {
+    private static void downloadSkin(YggdrasilAccount account, GameProfile profile, boolean refresh) throws Exception {
         account.clearCache();
 
         Optional<Texture> texture = account.getSkin(profile);
@@ -157,7 +141,7 @@ public final class AccountHelper {
         new FileDownloadTask(NetworkUtils.toURL(url), file).run();
     }
 
-    private static void downloadSkin(YggdrasilAccount account, boolean refresh, Proxy proxy) throws Exception {
+    private static void downloadSkin(YggdrasilAccount account, boolean refresh) throws Exception {
         account.clearCache();
 
         if (account.getCharacter() == null) return;

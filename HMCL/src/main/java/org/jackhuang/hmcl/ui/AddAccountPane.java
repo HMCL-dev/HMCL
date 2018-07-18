@@ -41,7 +41,6 @@ import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.AccountHelper;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.ProxyManager;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -212,7 +211,7 @@ public class AddAccountPane extends StackPane {
             for (GameProfile profile : names) {
                 Image image;
                 try {
-                    image = AccountHelper.getSkinImmediately(yggdrasilAccount, profile, 4, ProxyManager.getProxy());
+                    image = AccountHelper.getSkinImmediately(yggdrasilAccount, profile, 4);
                 } catch (Exception e) {
                     Logging.LOG.log(Level.WARNING, "Failed to get skin for " + profile.getName(), e);
                     image = null;
