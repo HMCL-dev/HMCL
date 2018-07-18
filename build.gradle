@@ -19,15 +19,6 @@
 group 'org.jackhuang'
 version '3.0'
 
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'net.sf.proguard:proguard-gradle:5.3.3'
-    }
-}
-
 repositories {
     mavenCentral()
 }

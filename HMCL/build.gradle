@@ -1,10 +1,13 @@
 import org.apache.tools.ant.filters.ReplaceTokens
-import proguard.gradle.ProGuardTask
 
 import java.security.MessageDigest
 import java.util.jar.JarFile
 import java.util.jar.Pack200
 import java.util.zip.GZIPOutputStream
+
+plugins {
+    id "edu.sc.seis.launch4j" version "2.4.4"
+}
 
 if (!hasProperty('mainClass')) {
     ext.mainClass = 'org.jackhuang.hmcl.Main'
@@ -54,11 +57,6 @@ jar {
     }
 
     doLast {
-        //new File("build/signed").mkdirs()
-        //ant.signjar(signedjar: archivePath, jar: archivePath,
-        //        keystore: "HMCL.keystore", storepass: "123456",
-        //        alias: "HMCL")
-
         def messageDigest = MessageDigest.getInstance("SHA1")
         archivePath.eachByte 1024 * 1024, { byte[] buf, int bytesRead ->
             messageDigest.update(buf, 0, bytesRead)
@@ -74,30 +72,6 @@ processResources {
     from(sourceSets.main.resources.srcDirs) {
         exclude 'icon.icns'
     }
-}
-
-task makeExecutable(dependsOn: jar) doLast {
-    ext {
-        jar.classifier = ''
-        makeExecutableinjar = jar.archivePath
-        jar.classifier = ''
-        makeExecutableoutjar = jar.archivePath
-        jar.classifier = ''
-    }
-    def loc = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length() - 4) + ".exe")
-    def fos = new FileOutputStream(loc)
-    def is = new FileInputStream(new File(project.buildDir, '../HMCLauncher.exe'))
-    int read
-    def bytes = new byte[8192]
-    while((read = is.read(bytes)) != -1)
-        fos.write(bytes, 0, read)
-    is.close()
-    is = new FileInputStream(makeExecutableoutjar)
-    while((read = is.read(bytes)) != -1)
-        fos.write(bytes, 0, read)
-    is.close()
-    fos.close()
-
 }
 
 task makePackGZ(dependsOn: jar) doLast {
@@ -123,41 +97,21 @@ task makePackGZ(dependsOn: jar) doLast {
     fileEx.append sha1Hex
 }
 
-task proguard(type: ProGuardTask, dependsOn: jar) {
-    ext {
-        def re = jar.classifier
-        injar = jar.archivePath
-        jar.classifier = 'optimized'
-        outjar = jar.archivePath
-        jar.classifier = re
-    }
+launch4j {
+    mainClassName = mainClass
+    icon = "${projectDir}/icon.ico"
 
-    injars(/*["filter": "!META-INF/**,**"], */injar)
-    String javaHome = System.getProperty("java.home")
-    if (!javaHome.endsWith("jre"))
-        javaHome += File.separator + "jre"
-    libraryjars javaHome + "/lib/rt.jar"
-    libraryjars javaHome + "/lib/jce.jar"
-    libraryjars javaHome + "/lib/jsse.jar"
-    libraryjars javaHome + "/lib/ext/jfxrt.jar"
-    outjars outjar
+    jvmOptions = ["-XX:MinHeapFreeRatio=5", "-XX:MaxHeapFreeRatio=15"]
 
-    configuration 'proguard.pro'
+    version = mavenVersion
+    productName = "HMCL"
+    internalName = "HMCL-${mavenVersion}"
+    outfile = "HMCL-${mavenVersion}.exe"
+
+    outputDir = "libs"
+
+    copyright = "Copyright (C) 2018  huangyuhui <hmcl@huangyuhui.net>"
 }
 
-task combineMETA_INF(type: Jar) {
-    ext {
-        def re = jar.classifier
-        injar = jar.archivePath
-        jar.classifier = 'optimized'
-        outjar = jar.archivePath
-        jar.classifier = re
-    }
-    from zipTree(outjar)
-    from zipTree(injar).matching {
-        include "META-INF/"
-    }
-}
-
-build.dependsOn makeExecutable
 build.dependsOn makePackGZ
+build.dependsOn createExe
