@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.auth;
 
-import java.net.Proxy;
 import java.util.Objects;
 
 public final class AccountBuilder<T extends Account> {
@@ -25,7 +24,6 @@ public final class AccountBuilder<T extends Account> {
     private String username;
     private String password = null;
     private Object additionalData = null;
-    private Proxy proxy = Proxy.NO_PROXY;
 
     public AccountBuilder() {
     }
@@ -50,12 +48,7 @@ public final class AccountBuilder<T extends Account> {
         return this;
     }
 
-    public AccountBuilder setProxy(Proxy proxy) {
-        this.proxy = Objects.requireNonNull(proxy);
-        return this;
-    }
-
     public T create(AccountFactory<T> factory) throws AuthenticationException {
-        return factory.create(selector, Objects.requireNonNull(username), password, additionalData, proxy);
+        return factory.create(selector, Objects.requireNonNull(username), password, additionalData);
     }
 }

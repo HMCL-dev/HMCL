@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
 import org.jackhuang.hmcl.util.ExceptionalSupplier;
 
 import java.io.IOException;
-import java.net.Proxy;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -45,24 +44,22 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
     }
 
     @Override
-    public AuthlibInjectorAccount create(CharacterSelector selector, String username, String password, Object additionalData, Proxy proxy) throws AuthenticationException {
+    public AuthlibInjectorAccount create(CharacterSelector selector, String username, String password, Object additionalData) throws AuthenticationException {
         Objects.requireNonNull(selector);
         Objects.requireNonNull(username);
         Objects.requireNonNull(password);
-        Objects.requireNonNull(proxy);
 
         AuthlibInjectorServer server = (AuthlibInjectorServer) additionalData;
 
-        AuthlibInjectorAccount account = new AuthlibInjectorAccount(new YggdrasilService(new AuthlibInjectorProvider(server.getUrl()), proxy),
+        AuthlibInjectorAccount account = new AuthlibInjectorAccount(new YggdrasilService(new AuthlibInjectorProvider(server.getUrl())),
                 server, authlibInjectorDownloader, username, null, null);
         account.logInWithPassword(password, selector);
         return account;
     }
 
     @Override
-    public AuthlibInjectorAccount fromStorage(Map<Object, Object> storage, Proxy proxy) {
+    public AuthlibInjectorAccount fromStorage(Map<Object, Object> storage) {
         Objects.requireNonNull(storage);
-        Objects.requireNonNull(proxy);
 
         YggdrasilSession session = YggdrasilSession.fromStorage(storage);
 
@@ -73,7 +70,7 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
 
         AuthlibInjectorServer server = serverLookup.apply(apiRoot);
 
-        return new AuthlibInjectorAccount(new YggdrasilService(new AuthlibInjectorProvider(server.getUrl()), proxy),
+        return new AuthlibInjectorAccount(new YggdrasilService(new AuthlibInjectorProvider(server.getUrl())),
                 server, authlibInjectorDownloader, username, session.getSelectedProfile().getId(), session);
     }
 }

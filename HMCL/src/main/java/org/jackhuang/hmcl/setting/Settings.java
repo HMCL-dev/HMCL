@@ -79,7 +79,7 @@ public class Settings {
 
             Account account;
             try {
-                account = factory.fromStorage(settings, ProxyManager.getProxy());
+                account = factory.fromStorage(settings);
             } catch (Exception e) {
                 LOG.log(Level.WARNING, "Malformed account storage, removing: " + settings, e);
                 iterator.remove();

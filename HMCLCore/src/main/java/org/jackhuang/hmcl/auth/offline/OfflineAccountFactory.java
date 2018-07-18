@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
-import java.net.Proxy;
 import java.util.Map;
 import java.util.UUID;
 
@@ -39,12 +38,12 @@ public class OfflineAccountFactory extends AccountFactory<OfflineAccount> {
     }
 
     @Override
-    public OfflineAccount create(CharacterSelector selector, String username, String password, Object additionalData, Proxy proxy) {
+    public OfflineAccount create(CharacterSelector selector, String username, String password, Object additionalData) {
         return new OfflineAccount(username, getUUIDFromUserName(username));
     }
 
     @Override
-    public OfflineAccount fromStorage(Map<Object, Object> storage, Proxy proxy) {
+    public OfflineAccount fromStorage(Map<Object, Object> storage) {
         String username = tryCast(storage.get("username"), String.class)
                 .orElseThrow(() -> new IllegalStateException("Offline account configuration malformed."));
         UUID uuid = tryCast(storage.get("uuid"), String.class)

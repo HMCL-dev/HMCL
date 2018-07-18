@@ -152,7 +152,7 @@ public class AddAccountPane extends StackPane {
         lblCreationWarning.setText("");
         setDisable(true);
 
-        Task.ofResult("create_account", () -> factory.create(new Selector(), username, password, addtionalData, ProxyManager.getProxy()))
+        Task.ofResult("create_account", () -> factory.create(new Selector(), username, password, addtionalData))
                 .finalized(Schedulers.javafx(), variables -> {
                     Settings.INSTANCE.addAccount(variables.get("create_account"));
                     acceptPane.hideSpinner();

@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.util.UUIDTypeAdapter;
 
-import java.net.Proxy;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -42,28 +41,26 @@ public class YggdrasilAccountFactory extends AccountFactory<YggdrasilAccount> {
     }
 
     @Override
-    public YggdrasilAccount create(CharacterSelector selector, String username, String password, Object additionalData, Proxy proxy) throws AuthenticationException {
+    public YggdrasilAccount create(CharacterSelector selector, String username, String password, Object additionalData) throws AuthenticationException {
         Objects.requireNonNull(selector);
         Objects.requireNonNull(username);
         Objects.requireNonNull(password);
-        Objects.requireNonNull(proxy);
 
-        YggdrasilAccount account = new YggdrasilAccount(new YggdrasilService(provider, proxy), username, null, null);
+        YggdrasilAccount account = new YggdrasilAccount(new YggdrasilService(provider), username, null, null);
         account.logInWithPassword(password, selector);
         return account;
     }
 
     @Override
-    public YggdrasilAccount fromStorage(Map<Object, Object> storage, Proxy proxy) {
+    public YggdrasilAccount fromStorage(Map<Object, Object> storage) {
         Objects.requireNonNull(storage);
-        Objects.requireNonNull(proxy);
 
         YggdrasilSession session = YggdrasilSession.fromStorage(storage);
 
         String username = tryCast(storage.get("username"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have username"));
 
-        return new YggdrasilAccount(new YggdrasilService(provider, proxy), username, session.getSelectedProfile().getId(), session);
+        return new YggdrasilAccount(new YggdrasilService(provider), username, session.getSelectedProfile().getId(), session);
     }
 
     public static String randomToken() {
