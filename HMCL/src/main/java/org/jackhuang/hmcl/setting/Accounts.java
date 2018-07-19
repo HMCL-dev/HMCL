@@ -61,10 +61,14 @@ public final class Accounts {
     );
 
     public static String getAccountType(Account account) {
-        if (account instanceof OfflineAccount) return OFFLINE_ACCOUNT_KEY;
-        else if (account instanceof AuthlibInjectorAccount) return AUTHLIB_INJECTOR_ACCOUNT_KEY;
-        else if (account instanceof YggdrasilAccount) return YGGDRASIL_ACCOUNT_KEY;
-        else return YGGDRASIL_ACCOUNT_KEY;
+        if (account instanceof OfflineAccount)
+            return OFFLINE_ACCOUNT_KEY;
+        else if (account instanceof AuthlibInjectorAccount)
+            return AUTHLIB_INJECTOR_ACCOUNT_KEY;
+        else if (account instanceof YggdrasilAccount)
+            return YGGDRASIL_ACCOUNT_KEY;
+        else
+            throw new IllegalArgumentException("Failed to determine account type: " + account);
     }
 
     static String getAccountId(Account account) {
