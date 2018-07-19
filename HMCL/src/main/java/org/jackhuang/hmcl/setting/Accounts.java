@@ -44,16 +44,20 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 public final class Accounts {
     private Accounts() {}
 
+    public static final OfflineAccountFactory FACTORY_OFFLINE = OfflineAccountFactory.INSTANCE;
+    public static final YggdrasilAccountFactory FACTORY_YGGDRASIL = new YggdrasilAccountFactory(MojangYggdrasilProvider.INSTANCE);
+    public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(
+            new AuthlibInjectorDownloader(Launcher.HMCL_DIRECTORY.toPath(), () -> Settings.INSTANCE.getDownloadProvider())::getArtifactInfo,
+            Accounts::getOrCreateAuthlibInjectorServer);
+
     public static final String OFFLINE_ACCOUNT_KEY = "offline";
     public static final String YGGDRASIL_ACCOUNT_KEY = "yggdrasil";
     public static final String AUTHLIB_INJECTOR_ACCOUNT_KEY = "authlibInjector";
 
     public static final Map<String, AccountFactory<?>> ACCOUNT_FACTORY = mapOf(
-            pair(OFFLINE_ACCOUNT_KEY, OfflineAccountFactory.INSTANCE),
-            pair(YGGDRASIL_ACCOUNT_KEY, new YggdrasilAccountFactory(MojangYggdrasilProvider.INSTANCE)),
-            pair(AUTHLIB_INJECTOR_ACCOUNT_KEY, new AuthlibInjectorAccountFactory(
-                    new AuthlibInjectorDownloader(Launcher.HMCL_DIRECTORY.toPath(), () -> Settings.INSTANCE.getDownloadProvider())::getArtifactInfo,
-                    Accounts::getOrCreateAuthlibInjectorServer))
+            pair(OFFLINE_ACCOUNT_KEY, FACTORY_OFFLINE),
+            pair(YGGDRASIL_ACCOUNT_KEY, FACTORY_YGGDRASIL),
+            pair(AUTHLIB_INJECTOR_ACCOUNT_KEY, FACTORY_AUTHLIB_INJECTOR)
     );
 
     public static String getAccountType(Account account) {
