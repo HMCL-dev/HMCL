@@ -133,6 +133,7 @@ public final class VersionSettingsController {
             FXUtils.unbindBoolean(chkFullscreen, lastVersionSetting.fullscreenProperty());
             FXUtils.unbindBoolean(chkNoGameCheck, lastVersionSetting.notCheckGameProperty());
             FXUtils.unbindBoolean(chkNoCommon, lastVersionSetting.noCommonProperty());
+            FXUtils.unbindBoolean(chkNoJVMArgs, lastVersionSetting.noJVMArgsProperty());
             FXUtils.unbindBoolean(chkShowLogs, lastVersionSetting.showLogsProperty());
             FXUtils.unbindEnum(cboLauncherVisibility);
         }
@@ -157,6 +158,7 @@ public final class VersionSettingsController {
         FXUtils.bindBoolean(chkFullscreen, versionSetting.fullscreenProperty());
         FXUtils.bindBoolean(chkNoGameCheck, versionSetting.notCheckGameProperty());
         FXUtils.bindBoolean(chkNoCommon, versionSetting.noCommonProperty());
+        FXUtils.bindBoolean(chkNoJVMArgs, versionSetting.noJVMArgsProperty());
         FXUtils.bindBoolean(chkShowLogs, versionSetting.showLogsProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
 
