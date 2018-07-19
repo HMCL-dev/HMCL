@@ -50,23 +50,23 @@ public final class Accounts {
             new AuthlibInjectorDownloader(Launcher.HMCL_DIRECTORY.toPath(), () -> Settings.INSTANCE.getDownloadProvider())::getArtifactInfo,
             Accounts::getOrCreateAuthlibInjectorServer);
 
-    public static final String OFFLINE_ACCOUNT_KEY = "offline";
-    public static final String YGGDRASIL_ACCOUNT_KEY = "yggdrasil";
-    public static final String AUTHLIB_INJECTOR_ACCOUNT_KEY = "authlibInjector";
+    private static final String TYPE_OFFLINE = "offline";
+    private static final String TYPE_YGGDRASIL_ACCOUNT = "yggdrasil";
+    private static final String TYPE_AUTHLIB_INJECTOR = "authlibInjector";
 
-    public static final Map<String, AccountFactory<?>> ACCOUNT_FACTORY = mapOf(
-            pair(OFFLINE_ACCOUNT_KEY, FACTORY_OFFLINE),
-            pair(YGGDRASIL_ACCOUNT_KEY, FACTORY_YGGDRASIL),
-            pair(AUTHLIB_INJECTOR_ACCOUNT_KEY, FACTORY_AUTHLIB_INJECTOR)
+    static final Map<String, AccountFactory<?>> TYPE_TO_ACCOUNT_FACTORY = mapOf(
+            pair(TYPE_OFFLINE, FACTORY_OFFLINE),
+            pair(TYPE_YGGDRASIL_ACCOUNT, FACTORY_YGGDRASIL),
+            pair(TYPE_AUTHLIB_INJECTOR, FACTORY_AUTHLIB_INJECTOR)
     );
 
-    public static String getAccountType(Account account) {
+    static String getAccountType(Account account) {
         if (account instanceof OfflineAccount)
-            return OFFLINE_ACCOUNT_KEY;
+            return TYPE_OFFLINE;
         else if (account instanceof AuthlibInjectorAccount)
-            return AUTHLIB_INJECTOR_ACCOUNT_KEY;
+            return TYPE_AUTHLIB_INJECTOR;
         else if (account instanceof YggdrasilAccount)
-            return YGGDRASIL_ACCOUNT_KEY;
+            return TYPE_YGGDRASIL_ACCOUNT;
         else
             throw new IllegalArgumentException("Failed to determine account type: " + account);
     }

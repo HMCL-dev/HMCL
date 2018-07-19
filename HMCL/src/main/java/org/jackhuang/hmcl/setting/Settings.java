@@ -70,7 +70,7 @@ public class Settings {
 
         for (Iterator<Map<Object, Object>> iterator = CONFIG.getAccounts().iterator(); iterator.hasNext();) {
             Map<Object, Object> settings = iterator.next();
-            AccountFactory<?> factory = Accounts.ACCOUNT_FACTORY.get(tryCast(settings.get("type"), String.class).orElse(""));
+            AccountFactory<?> factory = Accounts.TYPE_TO_ACCOUNT_FACTORY.get(tryCast(settings.get("type"), String.class).orElse(""));
             if (factory == null) {
                 LOG.warning("Unrecognized account type, removing: " + settings);
                 iterator.remove();
