@@ -66,7 +66,7 @@ public class Settings {
         firstLaunch = CONFIG.isFirstLaunch();
         CONFIG.setFirstLaunch(false);
 
-        ProxyManager.getProxy(); // init ProxyManager
+        ProxyManager.init();
 
         for (Iterator<Map<Object, Object>> iterator = CONFIG.getAccounts().iterator(); iterator.hasNext();) {
             Map<Object, Object> settings = iterator.next();
