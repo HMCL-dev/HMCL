@@ -20,112 +20,75 @@ package org.jackhuang.hmcl.game;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.util.IOUtils;
+import org.jenkinsci.constant_pool_scanner.ConstantPool;
+import org.jenkinsci.constant_pool_scanner.ConstantPoolScanner;
+import org.jenkinsci.constant_pool_scanner.ConstantType;
+import org.jenkinsci.constant_pool_scanner.StringConstant;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
-
-import static java.nio.charset.StandardCharsets.US_ASCII;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * @author huangyuhui
  */
 public final class GameVersion {
-    private static int lessThan32(byte[] b, int x) {
-        for (; x < b.length; x++)
-            if (b[x] < 32)
-                return x;
-        return -1;
+    private static Optional<String> getVersionOfClassMinecraft(ZipFile file, ZipArchiveEntry entry) throws IOException {
+        ConstantPool pool = ConstantPoolScanner.parse(file.getInputStream(entry), ConstantType.STRING);
+
+        return StreamSupport.stream(pool.list(StringConstant.class).spliterator(), false)
+                .map(StringConstant::get)
+                .filter(s -> s.startsWith("Minecraft Minecraft "))
+                .map(s -> s.substring("Minecraft Minecraft ".length()))
+                .findFirst();
     }
 
-    public static int matchArray(byte[] a, byte[] b) {
-        for (int i = 0; i < a.length - b.length; i++) {
-            int j = 1;
-            for (int k = 0; k < b.length; k++) {
-                if (b[k] == a[(i + k)])
-                    continue;
-                j = 0;
+    private static Optional<String> getVersionFromClassMinecraftServer(ZipFile file, ZipArchiveEntry entry) throws IOException {
+        ConstantPool pool = ConstantPoolScanner.parse(file.getInputStream(entry), ConstantType.STRING);
+
+        List<String> list = StreamSupport.stream(pool.list(StringConstant.class).spliterator(), false)
+                .map(StringConstant::get)
+                .collect(Collectors.toList());
+
+        int idx = -1;
+
+        for (int i = 0; i < list.size(); ++i)
+            if (list.get(i).startsWith("Can't keep up!")) {
+                idx = i;
                 break;
             }
-            if (j != 0)
-                return i;
-        }
-        return -1;
-    }
 
-    private static Optional<String> getVersionOfOldMinecraft(ZipFile file, ZipArchiveEntry entry) throws IOException {
-        byte[] tmp = IOUtils.readFullyAsByteArray(file.getInputStream(entry));
+        for (int i = idx - 1; i >= 0; --i)
+            if (list.get(i).matches(".*[0-9].*"))
+                return Optional.of(list.get(i));
 
-        byte[] bytes = "Minecraft Minecraft ".getBytes(US_ASCII);
-        int j = matchArray(tmp, bytes);
-        if (j < 0)
-            return Optional.empty();
-        int i = j + bytes.length;
-
-        if ((j = lessThan32(tmp, i)) < 0)
-            return Optional.empty();
-
-        return Optional.of(new String(tmp, i, j - i, US_ASCII));
-    }
-
-    private static Optional<String> getVersionOfNewMinecraft(ZipFile file, ZipArchiveEntry entry) throws IOException {
-        byte[] tmp = IOUtils.readFullyAsByteArray(file.getInputStream(entry));
-
-        byte[] str = "-server.txt".getBytes(US_ASCII);
-        int j = matchArray(tmp, str);
-        if (j < 0) return Optional.empty();
-        int i = j + str.length;
-        i += 11;
-        j = lessThan32(tmp, i);
-        if (j < 0) return Optional.empty();
-        String result = new String(tmp, i, j - i, US_ASCII);
-
-        char ch = result.charAt(0);
-        // 1.8.1+
-        if (ch < '0' || ch > '9') {
-            str = "Can't keep up! Did the system time change, or is the server overloaded?".getBytes(US_ASCII);
-            j = matchArray(tmp, str);
-            if (j < 0) return Optional.empty();
-            i = -1;
-            while (j > 0) {
-                if (tmp[j] >= 48 && tmp[j] <= 57) {
-                    i = j;
-                    break;
-                }
-                j--;
-            }
-            if (i == -1) return Optional.empty();
-            int k = i;
-            if (tmp[i + 1] >= (int) 'a' && tmp[i + 1] <= (int) 'z')
-                i++;
-            while (tmp[k] >= 48 && tmp[k] <= 57 || tmp[k] == (int) '-' || tmp[k] == (int) '.' || tmp[k] >= 97 && tmp[k] <= (int) 'z')
-                k--;
-            k++;
-            return Optional.of(new String(tmp, k, i - k + 1, US_ASCII));
-        }
-        return Optional.of(result);
+        return Optional.empty();
     }
 
     public static Optional<String> minecraftVersion(File file) {
         if (file == null || !file.exists() || !file.isFile() || !file.canRead())
             return Optional.empty();
 
-        ZipFile f = null;
+        ZipFile gameJar = null;
         try {
-            f = new ZipFile(file);
-            ZipArchiveEntry minecraft = f
-                    .getEntry("net/minecraft/client/Minecraft.class");
-            if (minecraft != null)
-                return getVersionOfOldMinecraft(f, minecraft);
-            ZipArchiveEntry main = f.getEntry("net/minecraft/client/main/Main.class");
-            ZipArchiveEntry minecraftServer = f.getEntry("net/minecraft/server/MinecraftServer.class");
-            if ((main != null) && (minecraftServer != null))
-                return getVersionOfNewMinecraft(f, minecraftServer);
+            gameJar = new ZipFile(file);
+            ZipArchiveEntry minecraft = gameJar.getEntry("net/minecraft/client/Minecraft.class");
+            if (minecraft != null) {
+                Optional<String> result = getVersionOfClassMinecraft(gameJar, minecraft);
+                if (result.isPresent())
+                    return result;
+            }
+            ZipArchiveEntry minecraftServer = gameJar.getEntry("net/minecraft/server/MinecraftServer.class");
+            if (minecraftServer != null)
+                return getVersionFromClassMinecraftServer(gameJar, minecraftServer);
             return Optional.empty();
         } catch (IOException e) {
             return Optional.empty();
         } finally {
-            IOUtils.closeQuietly(f);
+            IOUtils.closeQuietly(gameJar);
         }
     }
 }

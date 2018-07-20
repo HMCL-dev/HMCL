@@ -38,10 +38,11 @@ allprojects {
 	sourceCompatibility = 1.8
 
     dependencies {
-        compile "com.google.code.gson:gson:2.8.2"
-        compile "org.apache.commons:commons-compress:1.15"
-        compile "org.tukaani:xz:1.2"
-        compile "org.hildan.fxgson:fx-gson:3.1.0"
+        compile group: 'com.google.code.gson', name: 'gson', version: '2.8.5'
+        compile group: 'org.apache.commons', name: 'commons-compress', version: '1.17'
+        compile group: 'org.tukaani', name: 'xz', version: '1.8'
+        compile group: 'org.hildan.fxgson', name: 'fx-gson', version: '3.1.0'
+        compile group: 'org.jenkins-ci', name: 'constant-pool-scanner', version: '1.2'
         testCompile group: 'junit', name: 'junit', version: '4.12'
     }
 
