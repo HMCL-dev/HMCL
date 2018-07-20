@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.util.Base64;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -110,4 +111,16 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         return server;
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), server.hashCode());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof AuthlibInjectorAccount))
+            return false;
+        AuthlibInjectorAccount another = (AuthlibInjectorAccount) obj;
+        return super.equals(another) && server.equals(another.server);
+    }
 }

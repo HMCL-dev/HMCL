@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
-import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Scheduler;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -42,7 +42,7 @@ public final class AccountHelper {
     public static final File SKIN_DIR = new File(Launcher.HMCL_DIRECTORY, "skins");
 
     public static void loadSkins() {
-        for (Account account : Settings.INSTANCE.getAccounts()) {
+        for (Account account : Accounts.getAccounts()) {
             if (account instanceof YggdrasilAccount) {
                 new SkinLoadTask((YggdrasilAccount) account, false).start();
             }

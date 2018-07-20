@@ -105,4 +105,17 @@ public class OfflineAccount extends Account {
                 .append("uuid", uuid)
                 .toString();
     }
+
+    @Override
+    public int hashCode() {
+        return username.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof OfflineAccount))
+            return false;
+        OfflineAccount another = (OfflineAccount) obj;
+        return username.equals(another.username);
+    }
 }

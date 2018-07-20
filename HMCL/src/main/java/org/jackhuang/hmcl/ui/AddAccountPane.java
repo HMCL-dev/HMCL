@@ -33,15 +33,12 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 
 import org.jackhuang.hmcl.auth.*;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.AccountHelper;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
@@ -53,7 +50,6 @@ import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Logging;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
@@ -62,8 +58,6 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
 import static org.jackhuang.hmcl.ui.FXUtils.jfxListCellFactory;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
-import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AddAccountPane extends StackPane {
@@ -89,12 +83,8 @@ public class AddAccountPane extends StackPane {
         cboServers.getItems().addListener(onInvalidating(this::selectDefaultServer));
         selectDefaultServer();
 
-        Map<AccountFactory<?>, String> type2name = mapOf(
-                pair(Accounts.FACTORY_OFFLINE, i18n("account.methods.offline")),
-                pair(Accounts.FACTORY_YGGDRASIL, i18n("account.methods.yggdrasil")),
-                pair(Accounts.FACTORY_AUTHLIB_INJECTOR, i18n("account.methods.authlib_injector")));
-        cboType.getItems().setAll(type2name.keySet());
-        cboType.setConverter(stringConverter(type2name::get));
+        cboType.getItems().setAll(Accounts.FACTORY_OFFLINE, Accounts.FACTORY_YGGDRASIL, Accounts.FACTORY_AUTHLIB_INJECTOR);
+        cboType.setConverter(stringConverter(Accounts::getAccountTypeName));
         cboType.getSelectionModel().select(0);
 
         ReadOnlyObjectProperty<AccountFactory<?>> loginType = cboType.getSelectionModel().selectedItemProperty();
@@ -157,7 +147,15 @@ public class AddAccountPane extends StackPane {
 
         Task.ofResult("create_account", () -> factory.create(new Selector(), username, password, additionalData))
                 .finalized(Schedulers.javafx(), variables -> {
-                    Settings.INSTANCE.addAccount(variables.get("create_account"));
+                    Account account = variables.get("create_account");
+                    int oldIndex = Accounts.getAccounts().indexOf(account);
+                    if (oldIndex == -1) {
+                        Accounts.getAccounts().add(account);
+                    } else {
+                        // adding an already-added account
+                        // instead of discarding the new account, we replace the existing account with the new account
+                        Accounts.getAccounts().set(oldIndex, account);
+                    }
                     acceptPane.hideSpinner();
                     fireEvent(new DialogCloseEvent());
                 }, exception -> {
@@ -275,12 +273,5 @@ public class AddAccountPane extends StackPane {
         } else {
             return exception.getClass().getName() + ": " + exception.getLocalizedMessage();
         }
-    }
-
-    public static String accountType(Account account) {
-        if (account instanceof OfflineAccount) return i18n("account.methods.offline");
-        else if (account instanceof AuthlibInjectorAccount) return i18n("account.methods.authlib_injector");
-        else if (account instanceof YggdrasilAccount) return i18n("account.methods.yggdrasil");
-        else throw new Error(i18n("account.methods.no_method") + ": " + account);
     }
 }

@@ -169,4 +169,16 @@ public class YggdrasilAccount extends Account {
         return "YggdrasilAccount[username=" + getUsername() + "]";
     }
 
+    @Override
+    public int hashCode() {
+        return characterUUID.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof YggdrasilAccount))
+            return false;
+        YggdrasilAccount another = (YggdrasilAccount) obj;
+        return characterUUID.equals(another.characterUUID);
+    }
 }
