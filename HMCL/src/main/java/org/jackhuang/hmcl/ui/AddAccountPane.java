@@ -50,10 +50,10 @@ import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Logging;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 
+import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
 import static org.jackhuang.hmcl.ui.FXUtils.jfxListCellFactory;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
@@ -125,8 +125,7 @@ public class AddAccountPane extends StackPane {
     private Object getAuthAdditionalData() {
         AccountFactory<?> factory = cboType.getSelectionModel().getSelectedItem();
         if (factory == Accounts.FACTORY_AUTHLIB_INJECTOR) {
-            // throw an exception if none is selected
-            return Optional.ofNullable(cboServers.getSelectionModel().getSelectedItem()).get();
+            return requireNonNull(cboServers.getSelectionModel().getSelectedItem(), "selected server cannot be null");
         }
         return null;
     }
