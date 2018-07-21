@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.Locales;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -143,6 +144,27 @@ public class Settings {
 
     public void setLogLines(int logLines) {
         CONFIG.setLogLines(logLines);
+    }
+
+    public boolean isCommonDirectoryDisabled() {
+        return CONFIG.getCommonDirType() == EnumCommonDirectory.DISABLED;
+    }
+
+    public static String getDefaultCommonDirectory() {
+        return Launcher.MINECRAFT_DIRECTORY.getAbsolutePath();
+    }
+
+    public String getCommonDirectory() {
+        switch (CONFIG.getCommonDirType()) {
+            case DISABLED:
+                return null;
+            case DEFAULT:
+                return getDefaultCommonDirectory();
+            case CUSTOM:
+                return CONFIG.getCommonDirectory();
+            default:
+                return null;
+        }
     }
 
     /****************************************

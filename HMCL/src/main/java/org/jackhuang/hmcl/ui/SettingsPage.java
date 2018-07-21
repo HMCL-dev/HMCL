@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.*;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.binding.When;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -50,8 +51,10 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.net.Proxy;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Optional;
 
 public final class SettingsPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", i18n("settings.launcher"));
@@ -73,7 +76,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     @FXML
     private FontComboBox cboFont;
     @FXML
-    private FileItem fileCommonLocation;
+    private MultiFileItem<EnumCommonDirectory> fileCommonLocation;
     @FXML
     private Label lblDisplay;
     @FXML
@@ -85,7 +88,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     @FXML
     private ScrollPane scroll;
     @FXML
-    private MultiFileItem backgroundItem;
+    private MultiFileItem<EnumBackgroundImage> backgroundItem;
     @FXML
     private StackPane themeColorPickerContainer;
     @FXML
@@ -179,7 +182,16 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
                 }));
         // ====
 
-        fileCommonLocation.pathProperty().bindBidirectional(CONFIG.commonDirectoryProperty());
+        fileCommonLocation.loadChildren(Arrays.asList(
+                fileCommonLocation.createChildren(i18n("launcher.common_directory.disabled"), EnumCommonDirectory.DISABLED),
+                fileCommonLocation.createChildren(i18n("launcher.common_directory.default"), EnumCommonDirectory.DEFAULT)
+        ), EnumCommonDirectory.CUSTOM);
+        fileCommonLocation.selectedDataProperty().bindBidirectional(CONFIG.commonDirTypeProperty());
+        fileCommonLocation.customTextProperty().bindBidirectional(CONFIG.commonDirectoryProperty());
+        fileCommonLocation.subtitleProperty().bind(
+                Bindings.createObjectBinding(() -> Optional.ofNullable(Settings.INSTANCE.getCommonDirectory())
+                                .orElse(i18n("launcher.common_directory.disabled")),
+                        CONFIG.commonDirectoryProperty(), CONFIG.commonDirTypeProperty()));
 
         FXUtils.installTooltip(btnUpdate, i18n("update.tooltip"));
         checkUpdate();
@@ -187,28 +199,11 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         // background
         backgroundItem.loadChildren(Collections.singletonList(
                 backgroundItem.createChildren(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
-        ));
-        backgroundItem.setCustomUserData(EnumBackgroundImage.CUSTOM);
-        backgroundItem.getTxtCustom().textProperty().bindBidirectional(CONFIG.backgroundImageProperty());
-
-        ObjectProperty<EnumBackgroundImage> backgroundType = new SimpleObjectProperty<EnumBackgroundImage>(EnumBackgroundImage.DEFAULT) {
-            {
-                invalidated();
-            }
-
-            @Override
-            protected void invalidated() {
-                backgroundItem.getGroup().getToggles().stream()
-                        .filter(it -> it.getUserData() == get())
-                        .findFirst()
-                        .ifPresent(it -> it.setSelected(true));
-            }
-        };
-        backgroundItem.getGroup().selectedToggleProperty().addListener((observable, oldValue, newValue) -> backgroundType.set((EnumBackgroundImage) newValue.getUserData()));
-        backgroundType.bindBidirectional(CONFIG.backgroundImageTypeProperty());
-
+        ), EnumBackgroundImage.CUSTOM);
+        backgroundItem.customTextProperty().bindBidirectional(CONFIG.backgroundImageProperty());
+        backgroundItem.selectedDataProperty().bindBidirectional(CONFIG.backgroundImageTypeProperty());
         backgroundItem.subtitleProperty().bind(
-                new When(backgroundType.isEqualTo(EnumBackgroundImage.DEFAULT))
+                new When(backgroundItem.selectedDataProperty().isEqualTo(EnumBackgroundImage.DEFAULT))
                         .then(i18n("launcher.background.default"))
                         .otherwise(CONFIG.backgroundImageProperty()));
 

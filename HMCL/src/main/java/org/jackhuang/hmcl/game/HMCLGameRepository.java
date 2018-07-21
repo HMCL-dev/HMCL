@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Logging;
@@ -51,17 +52,16 @@ public class HMCLGameRepository extends DefaultGameRepository {
         return profile;
     }
 
-    private boolean useSelf(String version, String assetId) {
-        VersionSetting vs = profile.getVersionSetting(version);
-        return new File(getBaseDirectory(), "assets/indexes/" + assetId + ".json").exists() || vs.isNoCommon();
+    private boolean useSelf(String assetId) {
+        return new File(getBaseDirectory(), "assets/indexes/" + assetId + ".json").exists();
     }
 
     @Override
     public File getAssetDirectory(String version, String assetId) {
-        if (useSelf(version, assetId))
+        if (Settings.INSTANCE.isCommonDirectoryDisabled() || useSelf(assetId))
             return super.getAssetDirectory(version, assetId);
         else
-            return new File(CONFIG.getCommonDirectory(), "assets");
+            return new File(Settings.INSTANCE.getCommonDirectory(), "assets");
     }
 
     @Override
@@ -83,10 +83,10 @@ public class HMCLGameRepository extends DefaultGameRepository {
     public File getLibraryFile(Version version, Library lib) {
         VersionSetting vs = profile.getVersionSetting(version.getId());
         File self = super.getLibraryFile(version, lib);
-        if (self.exists() || vs.isNoCommon())
+        if (Settings.INSTANCE.isCommonDirectoryDisabled() || self.exists())
             return self;
         else
-            return new File(CONFIG.getCommonDirectory(), "libraries/" + lib.getPath());
+            return new File(Settings.INSTANCE.getCommonDirectory(), "libraries/" + lib.getPath());
     }
 
 

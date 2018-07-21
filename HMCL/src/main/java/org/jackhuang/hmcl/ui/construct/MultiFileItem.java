@@ -161,6 +161,11 @@ public class MultiFileItem<T> extends ComponentList {
             pane.getChildren().add(custom);
     }
 
+    public void loadChildren(Collection<Node> list, T customUserData) {
+        loadChildren(list);
+        setCustomUserData(customUserData);
+    }
+
     public ToggleGroup getGroup() {
         return group;
     }

@@ -287,23 +287,6 @@ public final class VersionSetting {
         notCheckGameProperty.set(notCheckGame);
     }
 
-    private final ImmediateBooleanProperty noCommonProperty = new ImmediateBooleanProperty(this, "noCommon", false);
-
-    public ImmediateBooleanProperty noCommonProperty() {
-        return noCommonProperty;
-    }
-
-    /**
-     * True if HMCL does not find/download libraries in/to common path.
-     */
-    public boolean isNoCommon() {
-        return noCommonProperty.get();
-    }
-
-    public void setNoCommon(boolean noCommon) {
-        noCommonProperty.set(noCommon);
-    }
-
     private final ImmediateBooleanProperty showLogsProperty = new ImmediateBooleanProperty(this, "showLogs", false);
 
     public ImmediateBooleanProperty showLogsProperty() {
@@ -504,7 +487,6 @@ public final class VersionSetting {
         minecraftArgsProperty.addListener(listener);
         noJVMArgsProperty.addListener(listener);
         notCheckGameProperty.addListener(listener);
-        noCommonProperty.addListener(listener);
         showLogsProperty.addListener(listener);
         serverIpProperty.addListener(listener);
         fullscreenProperty.addListener(listener);
@@ -569,7 +551,6 @@ public final class VersionSetting {
             obj.addProperty("fullscreen", src.isFullscreen());
             obj.addProperty("noJVMArgs", src.isNoJVMArgs());
             obj.addProperty("notCheckGame", src.isNotCheckGame());
-            obj.addProperty("noCommon", src.isNoCommon());
             obj.addProperty("showLogs", src.isShowLogs());
             obj.addProperty("gameDir", src.getGameDir());
             obj.addProperty("launcherVisibility", src.getLauncherVisibility().ordinal());
@@ -607,7 +588,6 @@ public final class VersionSetting {
             vs.setFullscreen(Optional.ofNullable(obj.get("fullscreen")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNoJVMArgs(Optional.ofNullable(obj.get("noJVMArgs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotCheckGame(Optional.ofNullable(obj.get("notCheckGame")).map(JsonElement::getAsBoolean).orElse(false));
-            vs.setNoCommon(Optional.ofNullable(obj.get("noCommon")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setLauncherVisibility(LauncherVisibility.values()[Optional.ofNullable(obj.get("launcherVisibility")).map(JsonElement::getAsInt).orElse(1)]);
             vs.setGameDirType(EnumGameDirectory.values()[Optional.ofNullable(obj.get("gameDirType")).map(JsonElement::getAsInt).orElse(0)]);

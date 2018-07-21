@@ -44,6 +44,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
@@ -71,7 +72,6 @@ public final class VersionSettingsController {
     @FXML private JFXCheckBox chkFullscreen;
     @FXML private Label lblPhysicalMemory;
     @FXML private JFXToggleButton chkNoJVMArgs;
-    @FXML private JFXToggleButton chkNoCommon;
     @FXML private JFXToggleButton chkNoGameCheck;
     @FXML private MultiFileItem<Boolean> globalItem;
     @FXML private MultiFileItem<JavaVersion> javaItem;
@@ -136,7 +136,6 @@ public final class VersionSettingsController {
             FXUtils.unbindString(txtServerIP, lastVersionSetting.serverIpProperty());
             FXUtils.unbindBoolean(chkFullscreen, lastVersionSetting.fullscreenProperty());
             FXUtils.unbindBoolean(chkNoGameCheck, lastVersionSetting.notCheckGameProperty());
-            FXUtils.unbindBoolean(chkNoCommon, lastVersionSetting.noCommonProperty());
             FXUtils.unbindBoolean(chkNoJVMArgs, lastVersionSetting.noJVMArgsProperty());
             FXUtils.unbindBoolean(chkShowLogs, lastVersionSetting.showLogsProperty());
             FXUtils.unbindEnum(cboLauncherVisibility);
@@ -165,7 +164,6 @@ public final class VersionSettingsController {
         FXUtils.bindString(txtServerIP, versionSetting.serverIpProperty());
         FXUtils.bindBoolean(chkFullscreen, versionSetting.fullscreenProperty());
         FXUtils.bindBoolean(chkNoGameCheck, versionSetting.notCheckGameProperty());
-        FXUtils.bindBoolean(chkNoCommon, versionSetting.noCommonProperty());
         FXUtils.bindBoolean(chkNoJVMArgs, versionSetting.noJVMArgsProperty());
         FXUtils.bindBoolean(chkShowLogs, versionSetting.showLogsProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
@@ -198,7 +196,7 @@ public final class VersionSettingsController {
         });
 
         gameDirItem.selectedDataProperty().bindBidirectional(versionSetting.gameDirTypeProperty());
-        gameDirItem.subtitleProperty().bind(Bindings.createStringBinding(() -> profile.getRepository().getRunDirectory(versionId).getAbsolutePath(),
+        gameDirItem.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath()).normalize().toString(),
                 versionSetting.gameDirProperty(), versionSetting.gameDirTypeProperty()));
 
         lastVersionSetting = versionSetting;
