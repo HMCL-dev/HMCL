@@ -81,7 +81,7 @@ public final class VersionSetting {
     }
 
     /**
-     * Java version or null if user customizes java directory.
+     * Java version or "Custom" if user customizes java directory, "Default" if the jvm that this app relies on.
      */
     public String getJava() {
         return javaProperty.get();
@@ -89,6 +89,15 @@ public final class VersionSetting {
 
     public void setJava(String java) {
         javaProperty.set(java);
+    }
+
+    public boolean isUsesCustomJavaDir() {
+        return "Custom".equals(getJava());
+    }
+
+    public void setUsesCustomJavaDir() {
+        setJava("Custom");
+        setDefaultJavaPath(null);
     }
 
     private final ImmediateStringProperty defaultJavaPathProperty = new ImmediateStringProperty(this, "defaultJavaPath", "");
@@ -455,7 +464,7 @@ public final class VersionSetting {
         if (StringUtils.isBlank(getJava()))
             setJava(StringUtils.isBlank(getJavaDir()) ? "Default" : "Custom");
         if ("Default".equals(getJava())) return JavaVersion.fromCurrentEnvironment();
-        else if ("Custom".equals(getJava())) {
+        else if (isUsesCustomJavaDir()) {
             try {
                 return JavaVersion.fromExecutable(new File(getJavaDir()));
             } catch (IOException e) {
@@ -475,6 +484,11 @@ public final class VersionSetting {
                         .orElse(matchedJava.get(0));
             }
         } else throw new Error();
+    }
+
+    public void setJavaVersion(JavaVersion java) {
+        setJava(java.getVersion());
+        setDefaultJavaPath(java.getBinary().toString());
     }
 
     public void addPropertyChangedListener(InvalidationListener listener) {

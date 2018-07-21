@@ -21,10 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.NamedArg;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
@@ -46,12 +43,15 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.function.Consumer;
 
-public class MultiFileItem extends ComponentList {
+public class MultiFileItem<T> extends ComponentList {
     private final StringProperty customTitle = new SimpleStringProperty(this, "customTitle", i18n("selector.custom"));
     private final StringProperty chooserTitle = new SimpleStringProperty(this, "chooserTitle", i18n("selector.choose_file"));
     private final BooleanProperty directory = new SimpleBooleanProperty(this, "directory", false);
+    private final ObjectProperty<T> selectedData = new SimpleObjectProperty<>(this, "selectedData");
+    private final ObjectProperty<T> fallbackData = new SimpleObjectProperty<>(this, "fallbackData");
     private final ObservableList<FileChooser.ExtensionFilter> extensionFilters = FXCollections.observableArrayList();
 
     private final ToggleGroup group = new ToggleGroup();
@@ -64,6 +64,7 @@ public class MultiFileItem extends ComponentList {
 
     private Consumer<Toggle> toggleSelectedListener;
 
+    @SuppressWarnings("unchecked")
     public MultiFileItem(@NamedArg(value = "hasCustom", defaultValue = "true") boolean hasCustom) {
         this.hasCustom = hasCustom;
 
@@ -110,6 +111,20 @@ public class MultiFileItem extends ComponentList {
         group.selectedToggleProperty().addListener((a, b, newValue) -> {
             if (toggleSelectedListener != null)
                 toggleSelectedListener.accept(newValue);
+
+            selectedData.set((T) newValue.getUserData());
+        });
+        selectedData.addListener((a, b, newValue) -> {
+            Optional<Toggle> selecting = group.getToggles().stream()
+                    .filter(it -> it.getUserData() == newValue)
+                    .findFirst();
+            if (!selecting.isPresent()) {
+                selecting = group.getToggles().stream()
+                        .filter(it -> it.getUserData() == getFallbackData())
+                        .findFirst();
+            }
+
+            selecting.ifPresent(toggle -> toggle.setSelected(true));
         });
     }
 
@@ -117,11 +132,11 @@ public class MultiFileItem extends ComponentList {
         return createChildren(title, null);
     }
 
-    public Node createChildren(String title, Object userData) {
+    public Node createChildren(String title, T userData) {
         return createChildren(title, "", userData);
     }
 
-    public Node createChildren(String title, String subtitle, Object userData) {
+    public Node createChildren(String title, String subtitle, T userData) {
         BorderPane pane = new BorderPane();
         pane.setStyle("-fx-padding: 3;");
         FXUtils.setLimitHeight(pane, 20);
@@ -144,14 +159,6 @@ public class MultiFileItem extends ComponentList {
 
         if (hasCustom)
             pane.getChildren().add(custom);
-    }
-
-    public void onExploreJavaDir() {
-        DirectoryChooser chooser = new DirectoryChooser();
-        chooser.setTitle(i18n(getChooserTitle()));
-        File selectedDir = chooser.showDialog(Controllers.getStage());
-        if (selectedDir != null)
-            txtCustom.setText(selectedDir.getAbsolutePath());
     }
 
     public ToggleGroup getGroup() {
@@ -182,7 +189,7 @@ public class MultiFileItem extends ComponentList {
         this.chooserTitle.set(chooserTitle);
     }
 
-    public void setCustomUserData(Object userData) {
+    public void setCustomUserData(T userData) {
         radioCustom.setUserData(userData);
     }
 
@@ -224,5 +231,29 @@ public class MultiFileItem extends ComponentList {
 
     public ObservableList<FileChooser.ExtensionFilter> getExtensionFilters() {
         return extensionFilters;
+    }
+
+    public T getSelectedData() {
+        return selectedData.get();
+    }
+
+    public ObjectProperty<T> selectedDataProperty() {
+        return selectedData;
+    }
+
+    public void setSelectedData(T selectedData) {
+        this.selectedData.set(selectedData);
+    }
+
+    public T getFallbackData() {
+        return fallbackData.get();
+    }
+
+    public ObjectProperty<T> fallbackDataProperty() {
+        return fallbackData;
+    }
+
+    public void setFallbackData(T fallbackData) {
+        this.fallbackData.set(fallbackData);
     }
 }
