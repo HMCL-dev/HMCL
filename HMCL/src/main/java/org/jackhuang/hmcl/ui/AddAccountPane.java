@@ -146,6 +146,7 @@ public class AddAccountPane extends StackPane {
 
         Task.ofResult("create_account", () -> factory.create(new Selector(), username, password, additionalData))
                 .finalized(Schedulers.javafx(), variables -> {
+
                     Account account = variables.get("create_account");
                     int oldIndex = Accounts.getAccounts().indexOf(account);
                     if (oldIndex == -1) {
@@ -156,6 +157,10 @@ public class AddAccountPane extends StackPane {
                         Accounts.getAccounts().remove(oldIndex);
                         Accounts.getAccounts().add(oldIndex, account);
                     }
+
+                    // select the new account
+                    Accounts.setSelectedAccount(account);
+
                     acceptPane.hideSpinner();
                     fireEvent(new DialogCloseEvent());
                 }, exception -> {
