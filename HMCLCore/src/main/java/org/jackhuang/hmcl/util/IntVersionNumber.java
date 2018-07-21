@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.util;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -28,10 +31,24 @@ import java.util.stream.Collectors;
  */
 public final class IntVersionNumber extends VersionNumber {
 
-    private final List<Integer> version;
+    final List<Integer> version;
 
-    IntVersionNumber(List<Integer> version) {
-        this.version = version;
+    public static boolean isIntVersionNumber(String version) {
+        return version.chars().noneMatch(ch -> ch != '.' && (ch < '0' || ch > '9'))
+                && !version.contains("..") && StringUtils.isNotBlank(version);
+    }
+
+    IntVersionNumber(String version) {
+        if (!isIntVersionNumber(version))
+            throw new IllegalArgumentException("The version " + version + " is malformed, only dots and digits are allowed.");
+
+        List<Integer> versions = Arrays.stream(version.split("\\."))
+                .map(Integer::parseInt)
+                .collect(Collectors.toList());
+        while (!versions.isEmpty() && versions.get(versions.size() - 1) == 0)
+            versions.remove(versions.size() - 1);
+
+        this.version = versions;
     }
 
     public int get(int index) {
@@ -39,46 +56,12 @@ public final class IntVersionNumber extends VersionNumber {
     }
 
     @Override
-    public int compareTo(VersionNumber o) {
-        if (!(o instanceof IntVersionNumber))
-            return 0;
-        IntVersionNumber other = (IntVersionNumber) o;
-        int len = Math.max(this.version.size(), other.version.size());
-        for (int i = 0; i < len; ++i) {
-            int thisInt = Lang.get(this.version, i).orElse(0);
-            int otherInt = Lang.get(other.version, i).orElse(0);
-            if (thisInt != otherInt)
-                return Integer.compare(thisInt, otherInt);
-        }
-        return 0;
-    }
-
-    @Override
     public int hashCode() {
-        int hash = 3;
-        for (int i : version)
-            hash = 83 * hash + i;
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof VersionNumber))
-            return false;
-        if (!(obj instanceof IntVersionNumber))
-            return true;
-        IntVersionNumber other = (IntVersionNumber) obj;
-        if (version.size() != other.version.size())
-            return false;
-
-        for (int i = 0; i < version.size(); ++i)
-            if (!version.get(i).equals(other.version.get(i)))
-                return false;
-        return true;
+        return Objects.hash(version);
     }
 
     @Override
     public String toString() {
-        return String.join(".", version.stream().map(Object::toString).collect(Collectors.toList()));
+        return version.stream().map(Object::toString).collect(Collectors.joining("."));
     }
 }

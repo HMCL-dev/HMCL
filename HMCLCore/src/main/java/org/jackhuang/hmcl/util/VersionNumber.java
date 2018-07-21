@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * The formatted version number represents a version string.
@@ -29,52 +26,76 @@ import java.util.Optional;
  */
 public abstract class VersionNumber implements Comparable<VersionNumber> {
 
-    /**
-     * @throws IllegalArgumentException if there are some characters excluding digits and dots.
-     * @param version version string in form x.x.x
-     * @return the int version number
-     */
-    public static IntVersionNumber asIntVersionNumber(String version) {
-        if (version.chars().filter(ch -> ch != '.' && (ch < '0' || ch > '9')).count() > 0
-                || version.contains("..") || StringUtils.isBlank(version))
-            throw new IllegalArgumentException("The version " + version + " is malformed, only dots and digits are allowed.");
-
-        String[] s = version.split("\\.");
-        ArrayList<Integer> versions = new ArrayList<>(s.length);
-        for (String value : s) versions.add(Integer.parseInt(value));
-        while (!versions.isEmpty() && versions.get(versions.size() - 1) == 0)
-            versions.remove(versions.size() - 1);
-
-        return new IntVersionNumber(Collections.unmodifiableList(versions));
-    }
-
-    public static StringVersionNumber asStringVersionNumber(String version) {
-        return new StringVersionNumber(version);
-    }
-
     public static VersionNumber asVersion(String version) {
         Objects.requireNonNull(version);
-        try {
-            return asIntVersionNumber(version);
-        } catch (IllegalArgumentException e) {
-            return asStringVersionNumber(version);
-        }
+        if (ComposedVersionNumber.isComposedVersionNumber(version))
+            return new ComposedVersionNumber(version);
+        else if (IntVersionNumber.isIntVersionNumber(version))
+            return new IntVersionNumber(version);
+        else
+            return new StringVersionNumber(version);
     }
 
     public static Optional<String> parseVersion(String str) {
-        if (str.chars().anyMatch(it -> it != '.' && (it < '0' || it > '9')) || StringUtils.isBlank(str))
+        if (IntVersionNumber.isIntVersionNumber(str))
+            return Optional.of(new IntVersionNumber(str).toString());
+        else
             return Optional.empty();
-        String[] s = str.split("\\.");
-        for (String i : s)
-            if (StringUtils.isBlank(i))
-                return Optional.empty();
-        StringBuilder builder = new StringBuilder();
-        int last = s.length - 1;
-        for (int i = s.length - 1; i >= 0; --i)
-            if (Integer.parseInt(s[i]) == 0)
-                last = i;
-        for (int i = 0; i < last; ++i)
-            builder.append(s[i]).append(".");
-        return Optional.of(builder.append(s[last]).toString());
     }
+
+    @Override
+    public int compareTo(VersionNumber o) {
+        return COMPARATOR.compare(this, o);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) return false;
+        else return toString().equals(obj.toString());
+    }
+
+    private static <T extends Comparable<T>> int compareTo(List<T> a, List<T> b) {
+        int i;
+        for (i = 0; i < a.size() && i < b.size(); ++i) {
+            int res = a.get(i).compareTo(b.get(i));
+            if (res != 0)
+                return res;
+        }
+        if (i < a.size()) return 1;
+        else if (i < b.size()) return -1;
+        else return 0;
+    }
+
+    public static final Comparator<VersionNumber> COMPARATOR = new Comparator<VersionNumber>() {
+        @Override
+        public int compare(VersionNumber a, VersionNumber b) {
+            if (a == null || b == null)
+                return 0;
+            else {
+                if (a instanceof ComposedVersionNumber) {
+                    if (b instanceof ComposedVersionNumber)
+                        return compareTo(((ComposedVersionNumber) a).composed, ((ComposedVersionNumber) b).composed);
+                    else
+                        return compare(((ComposedVersionNumber) a).composed.get(0), b);
+                } else if (a instanceof IntVersionNumber) {
+                    if (b instanceof ComposedVersionNumber)
+                        return -compare(b, a);
+                    else if (b instanceof IntVersionNumber)
+                        return compareTo(((IntVersionNumber) a).version, ((IntVersionNumber) b).version);
+                    else if (b instanceof StringVersionNumber)
+                        return a.toString().compareTo(b.toString());
+                } else if (a instanceof StringVersionNumber) {
+                    if (b instanceof ComposedVersionNumber)
+                        return -compare(b, a);
+                    else if (b instanceof StringVersionNumber)
+                        return a.toString().compareTo(b.toString());
+                    else if (b instanceof IntVersionNumber)
+                        return a.toString().compareTo(b.toString());
+                }
+
+                throw new IllegalArgumentException("Unrecognized VersionNumber " + a + " and " + b);
+            }
+        }
+
+    };
 }

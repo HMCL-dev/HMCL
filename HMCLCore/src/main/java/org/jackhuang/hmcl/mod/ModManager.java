@@ -41,7 +41,7 @@ public final class ModManager {
         File modsDirectory = new File(repository.getRunDirectory(id), "mods");
         Consumer<File> puter = modFile -> Lang.ignoringException(() -> modCache.put(id, ModInfo.fromFile(modFile)));
         Optional.ofNullable(modsDirectory.listFiles()).map(Arrays::stream).ifPresent(files -> files.forEach(modFile -> {
-            if (modFile.isDirectory() && VersionNumber.parseVersion(modFile.getName()) != null)
+            if (modFile.isDirectory() && VersionNumber.parseVersion(modFile.getName()).isPresent())
                 Optional.ofNullable(modFile.listFiles()).map(Arrays::stream).ifPresent(x -> x.forEach(puter));
             else
                 puter.accept(modFile);

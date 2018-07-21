@@ -49,6 +49,8 @@ import org.jackhuang.hmcl.ui.download.DownloadWizardProvider;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.OperatingSystem;
+import org.jackhuang.hmcl.util.VersionNumber;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -234,6 +236,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private void loadVersions(HMCLGameRepository repository) {
         List<Node> children = repository.getVersions().parallelStream()
+                .sorted((a, b) -> VersionNumber.COMPARATOR.compare(VersionNumber.asVersion(a.getId()), VersionNumber.asVersion(b.getId())))
                 .map(version -> buildNode(repository, version, () -> GameVersion.minecraftVersion(repository.getVersionJar(version.getId())).orElse("Unknown")))
                 .collect(Collectors.toList());
         JFXUtilities.runInFX(() -> {
