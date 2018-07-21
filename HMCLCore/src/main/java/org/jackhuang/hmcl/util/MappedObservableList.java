@@ -22,7 +22,7 @@ import static javafx.collections.FXCollections.unmodifiableObservableList;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +75,7 @@ public final class MappedObservableList {
         @Override
         public void onChanged(Change<? extends T> change) {
             // cache removed elements to reduce calls to mapper
-            Map<T, LinkedList<U>> cache = new HashMap<>();
+            Map<T, LinkedList<U>> cache = new IdentityHashMap<>();
 
             while (change.next()) {
                 int from = change.getFrom();

@@ -152,8 +152,9 @@ public class AddAccountPane extends StackPane {
                         Accounts.getAccounts().add(account);
                     } else {
                         // adding an already-added account
-                        // instead of discarding the new account, we replace the existing account with the new account
-                        Accounts.getAccounts().set(oldIndex, account);
+                        // instead of discarding the new account, we first remove the existing one then add the new one
+                        Accounts.getAccounts().remove(oldIndex);
+                        Accounts.getAccounts().add(oldIndex, account);
                     }
                     acceptPane.hideSpinner();
                     fireEvent(new DialogCloseEvent());
