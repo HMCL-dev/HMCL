@@ -69,6 +69,7 @@ import org.jackhuang.hmcl.ui.wizard.*;
 import org.jackhuang.hmcl.util.Lang;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -227,7 +228,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
                 Bindings.createObjectBinding(
                         () -> {
                             Image image = null;
-                            if (CONFIG.getBackgroundImageType() == EnumBackgroundImage.CUSTOM) {
+                            if (CONFIG.getBackgroundImageType() == EnumBackgroundImage.CUSTOM && CONFIG.getBackgroundImage() != null) {
                                 image = tryLoadImage(Paths.get(CONFIG.getBackgroundImage()))
                                         .orElse(null);
                             }

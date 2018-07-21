@@ -24,8 +24,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.logging.Level;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 
 public final class ConfigHolder {
@@ -36,15 +38,23 @@ public final class ConfigHolder {
     public static final Path CONFIG_PATH = Paths.get(CONFIG_FILENAME).toAbsolutePath();
     public static final Config CONFIG = initSettings();
 
+    private static Config upgradeSettings(Config deserialized, Map rawJson) {
+        if (!rawJson.containsKey("commonDirType"))
+            deserialized.setCommonDirType(deserialized.getCommonDirectory().equals(Settings.getDefaultCommonDirectory()) ? EnumCommonDirectory.DEFAULT : EnumCommonDirectory.CUSTOM);
+        return deserialized;
+    }
+
     private static Config initSettings() {
         Config config = new Config();
         if (Files.exists(CONFIG_PATH)) {
             try {
-                Config deserialized = Config.fromJson(new String(Files.readAllBytes(CONFIG_PATH), UTF_8));
+                String json = new String(Files.readAllBytes(CONFIG_PATH), UTF_8);
+                Map raw = new Gson().fromJson(json, Map.class);
+                Config deserialized = Config.fromJson(json);
                 if (deserialized == null) {
                     LOG.finer("Settings file is empty, use the default settings.");
                 } else {
-                    config = deserialized;
+                    config = upgradeSettings(deserialized, raw);
                 }
                 LOG.finest("Initialized settings.");
             } catch (IOException | JsonParseException e) {

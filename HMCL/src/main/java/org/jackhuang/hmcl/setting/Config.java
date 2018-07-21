@@ -89,6 +89,9 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("bgpath")
     private StringProperty backgroundImage = new SimpleStringProperty();
 
+    @SerializedName("commonDirType")
+    private ObjectProperty<EnumCommonDirectory> commonDirType = new SimpleObjectProperty<>(EnumCommonDirectory.DEFAULT);
+
     @SerializedName("commonpath")
     private StringProperty commonDirectory = new SimpleStringProperty(Launcher.MINECRAFT_DIRECTORY.getAbsolutePath());
 
@@ -145,6 +148,9 @@ public final class Config implements Cloneable, Observable {
 
     @SerializedName("authlibInjectorServers")
     private ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList();
+
+    @SerializedName("_version")
+    private IntegerProperty configVersion = new SimpleIntegerProperty(0);
 
     private transient ObservableHelper helper = new ObservableHelper(this);
 
@@ -223,6 +229,18 @@ public final class Config implements Cloneable, Observable {
 
     public StringProperty backgroundImageProperty() {
         return backgroundImage;
+    }
+
+    public EnumCommonDirectory getCommonDirType() {
+        return commonDirType.get();
+    }
+
+    public ObjectProperty<EnumCommonDirectory> commonDirTypeProperty() {
+        return commonDirType;
+    }
+
+    public void setCommonDirType(EnumCommonDirectory commonDirType) {
+        this.commonDirType.set(commonDirType);
     }
 
     public String getCommonDirectory() {

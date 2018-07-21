@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
@@ -29,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
@@ -59,7 +61,11 @@ public class HMCLGameDownloadTask extends Task {
     public void execute() {
         File jar = profile.getRepository().getVersionJar(version);
 
-        File cache = new File(CONFIG.getCommonDirectory(), "jars/" + gameVersion + ".jar");
+        // Force using common directory will not affect the behaviour that repository acts
+        // Since we always copy the downloaded jar to .minecraft/versions/<version>/
+        File cache = new File(Optional.ofNullable(Settings.INSTANCE.getCommonDirectory())
+                .orElse(Settings.getDefaultCommonDirectory()),
+                "jars/" + gameVersion + ".jar");
         if (cache.exists())
             try {
                 FileUtils.copyFile(cache, jar);

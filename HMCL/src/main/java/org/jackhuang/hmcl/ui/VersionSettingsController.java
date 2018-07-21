@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.controls.JFXToggleButton;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -43,6 +44,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
@@ -70,11 +72,10 @@ public final class VersionSettingsController {
     @FXML private JFXCheckBox chkFullscreen;
     @FXML private Label lblPhysicalMemory;
     @FXML private JFXToggleButton chkNoJVMArgs;
-    @FXML private JFXToggleButton chkNoCommon;
     @FXML private JFXToggleButton chkNoGameCheck;
-    @FXML private MultiFileItem globalItem;
-    @FXML private MultiFileItem javaItem;
-    @FXML private MultiFileItem gameDirItem;
+    @FXML private MultiFileItem<Boolean> globalItem;
+    @FXML private MultiFileItem<JavaVersion> javaItem;
+    @FXML private MultiFileItem<EnumGameDirectory> gameDirItem;
     @FXML private JFXToggleButton chkShowLogs;
     @FXML private ImagePickerItem iconPickerItem;
 
@@ -94,9 +95,12 @@ public final class VersionSettingsController {
                     initializeSelectedJava();
                 });
 
+        javaItem.setSelectedData(null);
+        javaItem.setFallbackData(JavaVersion.fromCurrentEnvironment());
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             javaItem.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe", "javaw.exe"));
 
+        gameDirItem.setCustomUserData(EnumGameDirectory.CUSTOM);
         gameDirItem.loadChildren(Arrays.asList(
                 gameDirItem.createChildren(i18n("settings.advanced.game_dir.default"), EnumGameDirectory.ROOT_FOLDER),
                 gameDirItem.createChildren(i18n("settings.advanced.game_dir.independent"), EnumGameDirectory.VERSION_FOLDER)
@@ -132,16 +136,19 @@ public final class VersionSettingsController {
             FXUtils.unbindString(txtServerIP, lastVersionSetting.serverIpProperty());
             FXUtils.unbindBoolean(chkFullscreen, lastVersionSetting.fullscreenProperty());
             FXUtils.unbindBoolean(chkNoGameCheck, lastVersionSetting.notCheckGameProperty());
-            FXUtils.unbindBoolean(chkNoCommon, lastVersionSetting.noCommonProperty());
             FXUtils.unbindBoolean(chkNoJVMArgs, lastVersionSetting.noJVMArgsProperty());
             FXUtils.unbindBoolean(chkShowLogs, lastVersionSetting.showLogsProperty());
             FXUtils.unbindEnum(cboLauncherVisibility);
+
+            globalItem.selectedDataProperty().unbindBidirectional(lastVersionSetting.usesGlobalProperty());
+
+            gameDirItem.selectedDataProperty().unbindBidirectional(lastVersionSetting.gameDirTypeProperty());
+            gameDirItem.subtitleProperty().unbind();
         }
 
         // unbind data fields
         globalItem.setToggleSelectedListener(null);
         javaItem.setToggleSelectedListener(null);
-        gameDirItem.setToggleSelectedListener(null);
 
         // bind new data fields
         FXUtils.bindInt(txtWidth, versionSetting.widthProperty());
@@ -157,19 +164,15 @@ public final class VersionSettingsController {
         FXUtils.bindString(txtServerIP, versionSetting.serverIpProperty());
         FXUtils.bindBoolean(chkFullscreen, versionSetting.fullscreenProperty());
         FXUtils.bindBoolean(chkNoGameCheck, versionSetting.notCheckGameProperty());
-        FXUtils.bindBoolean(chkNoCommon, versionSetting.noCommonProperty());
         FXUtils.bindBoolean(chkNoJVMArgs, versionSetting.noJVMArgsProperty());
         FXUtils.bindBoolean(chkShowLogs, versionSetting.showLogsProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
 
         javaItem.setToggleSelectedListener(newValue -> {
             if (javaItem.isCustomToggle(newValue)) {
-                versionSetting.setJava("Custom");
-                versionSetting.setDefaultJavaPath(null);
+                versionSetting.setUsesCustomJavaDir();
             } else {
-                JavaVersion java = (JavaVersion) newValue.getUserData();
-                versionSetting.setJava(java.getVersion());
-                versionSetting.setDefaultJavaPath(java.getBinary().toString());
+                versionSetting.setJavaVersion((JavaVersion) newValue.getUserData());
             }
         });
 
@@ -177,13 +180,13 @@ public final class VersionSettingsController {
         versionSetting.javaProperty().setChangedListener(it -> initJavaSubtitle(versionSetting));
         initJavaSubtitle(versionSetting);
 
-        if (versionSetting.isUsesGlobal())
-            globalItem.getGroup().getToggles().stream().filter(it -> it.getUserData() == Boolean.TRUE).findFirst().ifPresent(it -> it.setSelected(true));
-        else
-            globalItem.getGroup().getToggles().stream().filter(it -> it.getUserData() == Boolean.FALSE).findFirst().ifPresent(it -> it.setSelected(true));
+        globalItem.selectedDataProperty().bindBidirectional(versionSetting.usesGlobalProperty());
+        globalItem.subtitleProperty().bind(Bindings.createStringBinding(() -> i18n(versionSetting.isUsesGlobal() ? "settings.type.global" : "settings.type.special"),
+                versionSetting.usesGlobalProperty()));
         globalItem.setToggleSelectedListener(newValue -> {
             // do not call versionSettings.setUsesGlobal(true/false)
             // because versionSettings can be the global one.
+            // global versionSettings.usesGlobal is always true.
             if ((Boolean) newValue.getUserData())
                 profile.globalizeVersionSetting(versionId);
             else
@@ -192,19 +195,9 @@ public final class VersionSettingsController {
             Platform.runLater(() -> loadVersionSetting(profile, versionId));
         });
 
-        versionSetting.usesGlobalProperty().setChangedListenerAndOperate(it ->
-                globalItem.setSubtitle(i18n(versionSetting.isUsesGlobal() ? "settings.type.global" : "settings.type.special")));
-
-        gameDirItem.getGroup().getToggles().stream()
-                .filter(it -> it.getUserData() == versionSetting.getGameDirType())
-                .findFirst().ifPresent(toggle -> toggle.setSelected(true));
-
-        gameDirItem.setCustomUserData(EnumGameDirectory.CUSTOM);
-        gameDirItem.setToggleSelectedListener(newValue -> versionSetting.setGameDirType((EnumGameDirectory) newValue.getUserData()));
-
-        versionSetting.gameDirProperty().setChangedListener(it -> initGameDirSubtitle(versionSetting));
-        versionSetting.gameDirTypeProperty().setChangedListener(it -> initGameDirSubtitle(versionSetting));
-        initGameDirSubtitle(versionSetting);
+        gameDirItem.selectedDataProperty().bindBidirectional(versionSetting.gameDirTypeProperty());
+        gameDirItem.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath()).normalize().toString(),
+                versionSetting.gameDirProperty(), versionSetting.gameDirTypeProperty()));
 
         lastVersionSetting = versionSetting;
 
@@ -219,30 +212,14 @@ public final class VersionSettingsController {
             return;
         }
 
-        List<Toggle> toggles = javaItem.getGroup().getToggles();
-        if ("Custom".equals(lastVersionSetting.getJava())) {
-            toggles.stream()
-                    .filter(javaItem::isCustomToggle)
-                    .findFirst()
-                    .get().setSelected(true);
+        if (lastVersionSetting.isUsesCustomJavaDir()) {
+            javaItem.setSelectedData(null);
         } else {
-            JavaVersion selectedJava;
             try {
-                selectedJava = lastVersionSetting.getJavaVersion();
+                javaItem.setSelectedData(lastVersionSetting.getJavaVersion());
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                return;
             }
-            toggles.stream()
-                    .filter(it -> it.getUserData() == selectedJava)
-                    .findFirst()
-                    .orElseGet( // fallback to select current java
-                            () -> toggles.stream()
-                                    .filter(it -> it.getUserData() == JavaVersion.fromCurrentEnvironment())
-                                    .findFirst()
-                                    .get())
-                    .setSelected(true);
-            ;
         }
     }
 
@@ -251,10 +228,6 @@ public final class VersionSettingsController {
                 .subscribe(Task.of(Schedulers.javafx(),
                         variables -> javaItem.setSubtitle(variables.<JavaVersion>getOptional("java")
                                 .map(JavaVersion::getBinary).map(File::getAbsolutePath).orElse("Invalid Java Directory"))));
-    }
-
-    private void initGameDirSubtitle(VersionSetting versionSetting) {
-        gameDirItem.setSubtitle(profile.getRepository().getRunDirectory(versionId).getAbsolutePath());
     }
 
     @FXML

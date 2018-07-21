@@ -141,14 +141,6 @@
                 </BorderPane>
                 <BorderPane>
                     <left>
-                        <Label text="%settings.advanced.no_common"/>
-                    </left>
-                    <right>
-                        <JFXToggleButton fx:id="chkNoCommon" size="7" FXUtils.limitHeight="10" />
-                    </right>
-                </BorderPane>
-                <BorderPane>
-                    <left>
                         <Label text="%settings.advanced.dont_check_game_completeness"/>
                     </left>
                     <right>
