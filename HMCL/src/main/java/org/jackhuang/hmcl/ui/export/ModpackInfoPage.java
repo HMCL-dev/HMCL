@@ -28,7 +28,7 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -67,7 +67,7 @@ public final class ModpackInfoPage extends StackPane implements WizardPage {
         txtModpackName.textProperty().addListener(e -> checkValidation());
         txtModpackAuthor.textProperty().addListener(e -> checkValidation());
         txtModpackVersion.textProperty().addListener(e -> checkValidation());
-        txtModpackAuthor.setText(Optional.ofNullable(Settings.INSTANCE.getSelectedAccount()).map(Account::getUsername).orElse(""));
+        txtModpackAuthor.setText(Optional.ofNullable(Accounts.getSelectedAccount()).map(Account::getUsername).orElse(""));
         lblVersionName.setText(version);
 
         List<File> launcherJar = Launcher.getCurrentJarFiles();

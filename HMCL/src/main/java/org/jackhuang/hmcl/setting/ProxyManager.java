@@ -36,7 +36,7 @@ public final class ProxyManager {
     private ProxyManager() {
     }
 
-    private static final ObjectBinding<Proxy> proxyProperty = Bindings.createObjectBinding(
+    private static ObjectBinding<Proxy> proxyProperty = Bindings.createObjectBinding(
             () -> {
                 String host = CONFIG.getProxyHost();
                 Integer port = Lang.toIntOrNull(CONFIG.getProxyPort());
@@ -59,11 +59,7 @@ public final class ProxyManager {
         return proxyProperty;
     }
 
-    static {
-        initProxy();
-    }
-
-    private static void initProxy() {
+    static void init() {
         proxyProperty.addListener(observable -> updateSystemProxy());
 
         updateSystemProxy();

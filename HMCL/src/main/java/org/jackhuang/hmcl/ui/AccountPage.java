@@ -35,7 +35,7 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.AccountHelper;
-import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
@@ -97,7 +97,7 @@ public class AccountPage extends StackPane implements DecoratorPage {
         btnRefresh.setGraphic(SVG.refresh(Theme.blackFillBinding(), 15, 15));
 
         lblCharacter.setText(account.getCharacter());
-        lblType.setText(AddAccountPane.accountType(account));
+        lblType.setText(Accounts.getAccountTypeName(account));
         lblEmail.setText(account.getUsername());
 
         btnRefresh.setVisible(account instanceof YggdrasilAccount);
@@ -105,7 +105,7 @@ public class AccountPage extends StackPane implements DecoratorPage {
 
     @FXML
     private void onDelete() {
-        Settings.INSTANCE.deleteAccount(account);
+        Accounts.getAccounts().remove(account);
         Optional.ofNullable(onDelete.get()).ifPresent(Runnable::run);
     }
 

@@ -41,7 +41,7 @@ public final class Lang {
      */
     @SafeVarargs
     public static <K, V> Map<K, V> mapOf(Pair<K, V>... pairs) {
-        HashMap<K, V> map = new HashMap<>();
+        Map<K, V> map = new LinkedHashMap<>();
         for (Pair<K, V> pair : pairs)
             map.put(pair.getKey(), pair.getValue());
         return map;

@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.UnsupportedModpackException;
+import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -132,13 +133,13 @@ public final class MainPage extends StackPane implements DecoratorPage {
         });
         item.setVersionName(id);
         item.setOnLaunchButtonClicked(e -> {
-            if (Settings.INSTANCE.getSelectedAccount() == null)
+            if (Accounts.getSelectedAccount() == null)
                 Controllers.getLeftPaneController().checkAccount();
             else
-                LauncherHelper.INSTANCE.launch(profile, Settings.INSTANCE.getSelectedAccount(), id, null);
+                LauncherHelper.INSTANCE.launch(profile, Accounts.getSelectedAccount(), id, null);
         });
         item.setOnScriptButtonClicked(e -> {
-            if (Settings.INSTANCE.getSelectedAccount() == null)
+            if (Accounts.getSelectedAccount() == null)
                 Controllers.dialog(i18n("login.empty_username"));
             else {
                 FileChooser chooser = new FileChooser();
@@ -150,7 +151,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                         : new FileChooser.ExtensionFilter(i18n("extension.sh"), "*.sh"));
                 File file = chooser.showSaveDialog(Controllers.getStage());
                 if (file != null)
-                    LauncherHelper.INSTANCE.launch(profile, Settings.INSTANCE.getSelectedAccount(), id, file);
+                    LauncherHelper.INSTANCE.launch(profile, Accounts.getSelectedAccount(), id, file);
             }
         });
         item.setOnSettingsButtonClicked(e -> {
@@ -214,10 +215,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 });
                 versionPopup.show(item, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
             } else if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
-                if (Settings.INSTANCE.getSelectedAccount() == null)
+                if (Accounts.getSelectedAccount() == null)
                     Controllers.dialog(i18n("login.empty_username"));
                 else
-                    LauncherHelper.INSTANCE.launch(profile, Settings.INSTANCE.getSelectedAccount(), id, null);
+                    LauncherHelper.INSTANCE.launch(profile, Accounts.getSelectedAccount(), id, null);
             }
         });
         File iconFile = repository.getVersionIcon(id);

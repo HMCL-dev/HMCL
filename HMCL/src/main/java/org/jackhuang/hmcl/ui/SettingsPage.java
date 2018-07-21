@@ -104,7 +104,9 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     @FXML
     private Pane proxyPane;
 
-    {
+    private ObjectProperty<Proxy.Type> selectedProxyType;
+
+    public SettingsPage() {
         FXUtils.loadFXML(this, "/assets/fxml/setting.fxml");
 
         FXUtils.smoothScrolling(scroll);
@@ -151,7 +153,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         chkEnableProxy.selectedProperty().bindBidirectional(CONFIG.hasProxyProperty());
         chkProxyAuthentication.selectedProperty().bindBidirectional(CONFIG.hasProxyAuthProperty());
 
-        ObjectProperty<Proxy.Type> selectedProxyType = new SimpleObjectProperty<Proxy.Type>(Proxy.Type.HTTP) {
+        selectedProxyType = new SimpleObjectProperty<Proxy.Type>(Proxy.Type.HTTP) {
             {
                 invalidated();
             }
@@ -196,7 +198,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         FXUtils.installTooltip(btnUpdate, i18n("update.tooltip"));
         checkUpdate();
 
-        // background
+        // ==== Background ====
         backgroundItem.loadChildren(Collections.singletonList(
                 backgroundItem.createChildren(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
         ), EnumBackgroundImage.CUSTOM);
@@ -206,8 +208,9 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
                 new When(backgroundItem.selectedDataProperty().isEqualTo(EnumBackgroundImage.DEFAULT))
                         .then(i18n("launcher.background.default"))
                         .otherwise(CONFIG.backgroundImageProperty()));
+        // ====
 
-        // theme
+        // ==== Theme ====
         JFXColorPicker picker = new JFXColorPicker(Color.web(CONFIG.getTheme().getColor()), null);
         picker.setCustomColorText(i18n("color.custom"));
         picker.setRecentColorsText(i18n("color.recent"));
@@ -219,6 +222,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         });
         themeColorPickerContainer.getChildren().setAll(picker);
         Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
+        // ====
     }
 
     public String getTitle() {

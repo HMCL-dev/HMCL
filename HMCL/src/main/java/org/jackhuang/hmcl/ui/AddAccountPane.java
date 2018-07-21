@@ -21,7 +21,7 @@ import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.*;
 
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Hyperlink;
@@ -33,15 +33,12 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 
 import org.jackhuang.hmcl.auth.*;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.AccountHelper;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
@@ -51,16 +48,17 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Logging;
+
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.logging.Level;
+
+import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
 import static org.jackhuang.hmcl.ui.FXUtils.jfxListCellFactory;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.logging.Level;
 
 public class AddAccountPane extends StackPane {
 
@@ -68,7 +66,7 @@ public class AddAccountPane extends StackPane {
     @FXML private JFXPasswordField txtPassword;
     @FXML private Label lblCreationWarning;
     @FXML private Label lblPassword;
-    @FXML private JFXComboBox<String> cboType;
+    @FXML private JFXComboBox<AccountFactory<?>> cboType;
     @FXML private JFXComboBox<AuthlibInjectorServer> cboServers;
     @FXML private Label lblInjectorServer;
     @FXML private Hyperlink linkManageInjectorServers;
@@ -85,23 +83,31 @@ public class AddAccountPane extends StackPane {
         cboServers.getItems().addListener(onInvalidating(this::selectDefaultServer));
         selectDefaultServer();
 
-        cboType.getItems().setAll(i18n("account.methods.offline"), i18n("account.methods.yggdrasil"), i18n("account.methods.authlib_injector"));
+        cboType.getItems().setAll(Accounts.FACTORY_OFFLINE, Accounts.FACTORY_YGGDRASIL, Accounts.FACTORY_AUTHLIB_INJECTOR);
+        cboType.setConverter(stringConverter(Accounts::getAccountTypeName));
         cboType.getSelectionModel().select(0);
 
-        ReadOnlyIntegerProperty loginTypeIdProperty = cboType.getSelectionModel().selectedIndexProperty();
+        ReadOnlyObjectProperty<AccountFactory<?>> loginType = cboType.getSelectionModel().selectedItemProperty();
 
-        txtPassword.visibleProperty().bind(loginTypeIdProperty.isNotEqualTo(0));
+        txtPassword.visibleProperty().bind(loginType.isNotEqualTo(Accounts.FACTORY_OFFLINE));
         lblPassword.visibleProperty().bind(txtPassword.visibleProperty());
 
-        cboServers.visibleProperty().bind(loginTypeIdProperty.isEqualTo(2));
+        cboServers.visibleProperty().bind(loginType.isEqualTo(Accounts.FACTORY_AUTHLIB_INJECTOR));
         lblInjectorServer.visibleProperty().bind(cboServers.visibleProperty());
         linkManageInjectorServers.visibleProperty().bind(cboServers.visibleProperty());
 
         txtUsername.getValidators().add(new Validator(i18n("input.email"), str -> !txtPassword.isVisible() || str.contains("@")));
 
         btnAccept.disableProperty().bind(Bindings.createBooleanBinding(
-                () -> !txtUsername.validate() || (loginTypeIdProperty.get() != 0 && !txtPassword.validate()),
-                txtUsername.textProperty(), txtPassword.textProperty(), loginTypeIdProperty));
+                () -> !( // consider the opposite situation: input is valid
+                        txtUsername.validate() &&
+                        // invisible means the field is not needed, neither should it be validated
+                        (!txtPassword.isVisible() || txtPassword.validate()) &&
+                        (!cboServers.isVisible() || cboServers.getSelectionModel().getSelectedItem() != null)
+                ),
+                txtUsername.textProperty(),
+                txtPassword.textProperty(), txtPassword.visibleProperty(),
+                cboServers.getSelectionModel().selectedItemProperty(), cboServers.visibleProperty()));
     }
 
     /**
@@ -113,47 +119,48 @@ public class AddAccountPane extends StackPane {
         }
     }
 
+    /**
+     * Gets the additional data that needs to be passed into {@link AccountFactory#create(CharacterSelector, String, String, Object)}.
+     */
+    private Object getAuthAdditionalData() {
+        AccountFactory<?> factory = cboType.getSelectionModel().getSelectedItem();
+        if (factory == Accounts.FACTORY_AUTHLIB_INJECTOR) {
+            return requireNonNull(cboServers.getSelectionModel().getSelectedItem(), "selected server cannot be null");
+        }
+        return null;
+    }
+
     @FXML
     private void onCreationAccept() {
         if (btnAccept.isDisabled())
             return;
 
-        String username = txtUsername.getText();
-        String password = txtPassword.getText();
-        Object addtionalData;
-
-        int type = cboType.getSelectionModel().getSelectedIndex();
-        AccountFactory<?> factory;
-        switch (type) {
-            case 0:
-                factory = Accounts.ACCOUNT_FACTORY.get(Accounts.OFFLINE_ACCOUNT_KEY);
-                addtionalData = null;
-                break;
-            case 1:
-                factory = Accounts.ACCOUNT_FACTORY.get(Accounts.YGGDRASIL_ACCOUNT_KEY);
-                addtionalData = null;
-                break;
-            case 2:
-                factory = Accounts.ACCOUNT_FACTORY.get(Accounts.AUTHLIB_INJECTOR_ACCOUNT_KEY);
-                Optional<AuthlibInjectorServer> server = Optional.ofNullable(cboServers.getSelectionModel().getSelectedItem());
-                if (server.isPresent()) {
-                    addtionalData = server.get();
-                } else {
-                    lblCreationWarning.setText(i18n("account.failed.no_selected_server"));
-                    return;
-                }
-                break;
-            default:
-                throw new Error();
-        }
-
         acceptPane.showSpinner();
         lblCreationWarning.setText("");
         setDisable(true);
 
-        Task.ofResult("create_account", () -> factory.create(new Selector(), username, password, addtionalData))
+        String username = txtUsername.getText();
+        String password = txtPassword.getText();
+        AccountFactory<?> factory = cboType.getSelectionModel().getSelectedItem();
+        Object additionalData = getAuthAdditionalData();
+
+        Task.ofResult("create_account", () -> factory.create(new Selector(), username, password, additionalData))
                 .finalized(Schedulers.javafx(), variables -> {
-                    Settings.INSTANCE.addAccount(variables.get("create_account"));
+
+                    Account account = variables.get("create_account");
+                    int oldIndex = Accounts.getAccounts().indexOf(account);
+                    if (oldIndex == -1) {
+                        Accounts.getAccounts().add(account);
+                    } else {
+                        // adding an already-added account
+                        // instead of discarding the new account, we first remove the existing one then add the new one
+                        Accounts.getAccounts().remove(oldIndex);
+                        Accounts.getAccounts().add(oldIndex, account);
+                    }
+
+                    // select the new account
+                    Accounts.setSelectedAccount(account);
+
                     acceptPane.hideSpinner();
                     fireEvent(new DialogCloseEvent());
                 }, exception -> {
@@ -271,12 +278,5 @@ public class AddAccountPane extends StackPane {
         } else {
             return exception.getClass().getName() + ": " + exception.getLocalizedMessage();
         }
-    }
-
-    public static String accountType(Account account) {
-        if (account instanceof OfflineAccount) return i18n("account.methods.offline");
-        else if (account instanceof AuthlibInjectorAccount) return i18n("account.methods.authlib_injector");
-        else if (account instanceof YggdrasilAccount) return i18n("account.methods.yggdrasil");
-        else throw new Error(i18n("account.methods.no_method") + ": " + account);
     }
 }

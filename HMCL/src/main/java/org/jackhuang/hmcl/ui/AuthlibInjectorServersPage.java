@@ -17,17 +17,18 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import static java.util.stream.Collectors.toList;
 import static org.jackhuang.hmcl.ui.FXUtils.loadFXML;
 import static org.jackhuang.hmcl.ui.FXUtils.smoothScrolling;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
+import org.jackhuang.hmcl.util.MappedObservableList;
 
-import javafx.beans.InvalidationListener;
-import javafx.beans.WeakInvalidationListener;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.StackPane;
@@ -42,25 +43,20 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
     @FXML private VBox listPane;
     @FXML private StackPane contentPane;
 
-    private InvalidationListener serversListener;
+    private ObservableList<AuthlibInjectorServerItem> serverItems;
 
     public AuthlibInjectorServersPage() {
         loadFXML(this, "/assets/fxml/authlib-injector-servers.fxml");
         smoothScrolling(scrollPane);
 
-        serversListener = observable -> updateServersList();
-        CONFIG.getAuthlibInjectorServers().addListener(new WeakInvalidationListener(serversListener));
-        updateServersList();
+        serverItems = MappedObservableList.create(CONFIG.getAuthlibInjectorServers(), this::createServerItem);
+        Bindings.bindContent(listPane.getChildren(), serverItems);
     }
 
-    private void updateServersList() {
-        listPane.getChildren().setAll(
-                CONFIG.getAuthlibInjectorServers().stream()
-                        .map(server -> new AuthlibInjectorServerItem(server,
-                                item -> CONFIG.getAuthlibInjectorServers().remove(item.getServer())))
-                        .collect(toList()));
+    private AuthlibInjectorServerItem createServerItem(AuthlibInjectorServer server) {
+        return new AuthlibInjectorServerItem(server,
+                item -> CONFIG.getAuthlibInjectorServers().remove(item.getServer()));
     }
-
 
     @FXML
     private void onAdd() {
