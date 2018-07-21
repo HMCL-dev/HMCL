@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.download;
 import javafx.scene.Node;
 
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
@@ -100,9 +101,10 @@ public final class InstallerWizardProvider implements WizardProvider {
 
     @Override
     public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
+        DownloadProvider provider = profile.getDependency().getDownloadProvider();
         switch (step) {
             case 0:
-                return new AdditionalInstallersPage(this, controller, profile.getRepository(), BMCLAPIDownloadProvider.INSTANCE);
+                return new AdditionalInstallersPage(this, controller, profile.getRepository(), provider);
             default:
                 throw new IllegalStateException();
         }

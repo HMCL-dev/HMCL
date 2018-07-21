@@ -71,7 +71,7 @@ public final class VersionItem extends StackPane {
     private void initializeComponents() {
         setPickOnBounds(false);
         FXUtils.setLimitWidth(this, 160);
-        FXUtils.setLimitHeight(this, 156);
+        FXUtils.setLimitHeight(this, 149);
 
         content = new VBox();
         {

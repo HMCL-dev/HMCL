@@ -13,7 +13,7 @@
     <JFXSpinner fx:id="spinner" styleClass="first-spinner" />
     <StackPane fx:id="contentPane">
         <ScrollPane fitToWidth="true" fx:id="scrollPane" hbarPolicy="NEVER">
-            <JFXMasonryPane fx:id="masonryPane" HSpacing="3" VSpacing="3" cellWidth="182" cellHeight="160">
+            <JFXMasonryPane fx:id="masonryPane" HSpacing="3" VSpacing="3" cellWidth="182" cellHeight="153">
             </JFXMasonryPane>
         </ScrollPane>
         <VBox style="-fx-padding: 15;" spacing="15" pickOnBounds="false" alignment="BOTTOM_RIGHT">
