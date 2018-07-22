@@ -263,6 +263,8 @@ public class AddAccountPane extends StackPane {
             return i18n("account.failed.no_character");
         } else if (exception instanceof ServerDisconnectException) {
             return i18n("account.failed.connect_authentication_server");
+        } else if (exception instanceof ServerResponseMalformedException) {
+            return i18n("account.failed.server_response_malformed");
         } else if (exception instanceof RemoteAuthenticationException) {
             RemoteAuthenticationException remoteException = (RemoteAuthenticationException) exception;
             String remoteMessage = remoteException.getRemoteMessage();
