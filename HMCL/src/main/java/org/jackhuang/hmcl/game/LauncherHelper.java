@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.MaintainTask;
+import org.jackhuang.hmcl.download.game.LibraryDownloadException;
 import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.mod.CurseCompletionException;
 import org.jackhuang.hmcl.mod.CurseCompletionTask;
@@ -190,6 +191,8 @@ public final class LauncherHelper {
                                     message = i18n("launch.failed.creating_process") + ex.getLocalizedMessage();
                                 } else if (ex instanceof NotDecompressingNativesException) {
                                     message = i18n("launch.failed.decompressing_natives") + ex.getLocalizedMessage();
+                                } else if (ex instanceof LibraryDownloadException) {
+                                    message = i18n("launch.failed.download_library", ((LibraryDownloadException) ex).getLibrary().getName()) + "\n" + StringUtils.getStackTrace(ex.getCause());
                                 } else {
                                     message = StringUtils.getStackTrace(ex);
                                 }

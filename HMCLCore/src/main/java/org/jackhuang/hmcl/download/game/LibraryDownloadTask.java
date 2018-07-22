@@ -55,7 +55,7 @@ public final class LibraryDownloadTask extends Task {
 
     @Override
     public Collection<? extends Task> getDependents() {
-        return library.getChecksums() != null ? Collections.singleton(xzTask) : Collections.emptySet();
+        return library.getChecksums() != null ? Collections.singleton(xzTask) : Collections.singleton(task);
     }
 
     @Override
@@ -65,18 +65,21 @@ public final class LibraryDownloadTask extends Task {
 
     @Override
     public void execute() throws Exception {
-        if (isDependentsSucceeded() && library.getChecksums() != null) {
+        if (!isDependentsSucceeded()) {
+            // Since FileDownloadTask wraps the actual exception with another IOException.
+            // We should extract it letting the error message clearer.
+            Throwable t = library.getChecksums() != null ? xzTask.getLastException() : task.getLastException();
+            if (t.getCause() != null && t.getCause() != t)
+                throw new LibraryDownloadException(library, t.getCause());
+            else
+                throw new LibraryDownloadException(library, t);
+        }
+
+        if (library.getChecksums() != null) {
             unpackLibrary(jar, FileUtils.readBytes(xzFile));
             if (!checksumValid(jar, library.getChecksums()))
                 throw new IOException("Checksum failed for " + library);
-
-            downloaded = true;
         }
-    }
-
-    @Override
-    public Collection<? extends Task> getDependencies() {
-        return downloaded ? Collections.emptySet() : Collections.singleton(task);
     }
 
     private static boolean checksumValid(File libPath, List<String> checksums) {

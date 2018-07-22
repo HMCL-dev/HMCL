@@ -190,6 +190,7 @@ public final class TaskExecutor {
         } catch (SilentException | RejectedExecutionException e) {
             // do nothing
         } catch (Exception e) {
+            task.setLastException(e);
             lastException = e;
             variables.set(LAST_EXCEPTION_ID, e);
             if (task.getSignificance().shouldLog()) {

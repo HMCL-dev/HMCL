@@ -63,6 +63,16 @@ public abstract class Task {
         this.state = state;
     }
 
+    private Throwable lastException = null;
+
+    public Throwable getLastException() {
+        return lastException;
+    }
+
+    void setLastException(Throwable e) {
+        lastException = e;
+    }
+
     /**
      * The scheduler that decides how this task runs.
      */
