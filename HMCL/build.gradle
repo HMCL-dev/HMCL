@@ -5,10 +5,6 @@ import java.util.jar.JarFile
 import java.util.jar.Pack200
 import java.util.zip.GZIPOutputStream
 
-plugins {
-    id "edu.sc.seis.launch4j" version "2.4.4"
-}
-
 if (!hasProperty('mainClass')) {
     ext.mainClass = 'org.jackhuang.hmcl.Main'
 }
@@ -97,21 +93,29 @@ task makePackGZ(dependsOn: jar) doLast {
     fileEx.append sha1Hex
 }
 
-launch4j {
-    mainClassName = mainClass
-    icon = "${projectDir}/icon.ico"
+task makeExecutable(dependsOn: jar) doLast {
+    ext {
+        jar.classifier = ''
+        makeExecutableinjar = jar.archivePath
+        jar.classifier = ''
+        makeExecutableoutjar = jar.archivePath
+        jar.classifier = ''
+    }
+    def loc = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length() - 4) + ".exe")
+    def fos = new FileOutputStream(loc)
+    def is = new FileInputStream(new File(project.buildDir, '../HMCLauncher.exe'))
+    int read
+    def bytes = new byte[8192]
+    while((read = is.read(bytes)) != -1)
+        fos.write(bytes, 0, read)
+    is.close()
+    is = new FileInputStream(makeExecutableoutjar)
+    while((read = is.read(bytes)) != -1)
+        fos.write(bytes, 0, read)
+    is.close()
+    fos.close()
 
-    jvmOptions = ["-XX:MinHeapFreeRatio=5", "-XX:MaxHeapFreeRatio=15"]
-
-    version = mavenVersion
-    productName = "HMCL"
-    internalName = "HMCL-${mavenVersion}"
-    outfile = "HMCL-${mavenVersion}.exe"
-
-    outputDir = "libs"
-
-    copyright = "Copyright (C) 2018  huangyuhui <hmcl@huangyuhui.net>"
 }
 
 build.dependsOn makePackGZ
-build.dependsOn createExe
+build.dependsOn makeExecutable
