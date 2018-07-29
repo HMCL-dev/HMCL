@@ -19,6 +19,10 @@ package org.jackhuang.hmcl.util.i18n;
 
 import org.jackhuang.hmcl.util.Lang;
 
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+
+import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -106,6 +110,18 @@ public final class Locales {
         public String getName(ResourceBundle newResourceBundle) {
             if (name == null) return resourceBundle.getString("lang");
             else return newResourceBundle.getString(name);
+        }
+
+        public static class TypeAdapter extends com.google.gson.TypeAdapter<SupportedLocale> {
+            @Override
+            public void write(JsonWriter out, SupportedLocale value) throws IOException {
+                out.value(getNameByLocale(value));
+            }
+
+            @Override
+            public SupportedLocale read(JsonReader in) throws IOException {
+                return getLocaleByName(in.nextString());
+            }
         }
     }
 }

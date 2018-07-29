@@ -39,7 +39,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.setting.*;
-import org.jackhuang.hmcl.ui.construct.FileItem;
 import org.jackhuang.hmcl.ui.construct.FontComboBox;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.ui.construct.Validator;
@@ -135,11 +134,11 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
 
         ObservableList<Label> list = FXCollections.observableArrayList();
         for (Locales.SupportedLocale locale : Locales.LOCALES)
-            list.add(new Label(locale.getName(Settings.instance().getLocale().getResourceBundle())));
+            list.add(new Label(locale.getName(config().getLocalization().getResourceBundle())));
 
         cboLanguage.setItems(list);
-        cboLanguage.getSelectionModel().select(Locales.LOCALES.indexOf(Settings.instance().getLocale()));
-        cboLanguage.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> Settings.instance().setLocale(Locales.getLocale(newValue.intValue())));
+        cboLanguage.getSelectionModel().select(Locales.LOCALES.indexOf(config().getLocalization()));
+        cboLanguage.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> config().setLocalization(Locales.getLocale(newValue.intValue())));
 
         // ==== Proxy ====
         txtProxyHost.textProperty().bindBidirectional(config().proxyHostProperty());

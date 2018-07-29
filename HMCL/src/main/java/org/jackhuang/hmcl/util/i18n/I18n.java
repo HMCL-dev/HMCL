@@ -24,7 +24,6 @@ import java.util.ResourceBundle;
 import java.util.logging.Level;
 
 import org.jackhuang.hmcl.setting.ConfigHolder;
-import org.jackhuang.hmcl.setting.Settings;
 
 public final class I18n {
 
@@ -32,7 +31,7 @@ public final class I18n {
 
     public static ResourceBundle getResourceBundle() {
         if (ConfigHolder.isInitialized()) {
-            return Settings.instance().getLocale().getResourceBundle();
+            return ConfigHolder.config().getLocalization().getResourceBundle();
         } else {
             return Locales.DEFAULT.getResourceBundle();
         }

@@ -57,7 +57,6 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
-import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -200,7 +199,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
             );
             nowAnimation.play();
         });
-        if (!ConfigHolder.isNewlyCreated() || Settings.instance().getLocale().getLocale() != Locale.CHINA)
+        if (!ConfigHolder.isNewlyCreated() || config().getLocalization().getLocale() != Locale.CHINA)
             drawerWrapper.getChildren().remove(welcomeView);
 
         if (!min) buttonsContainer.getChildren().remove(btnMin);

@@ -33,6 +33,8 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.util.EnumOrdinalDeserializer;
 import org.jackhuang.hmcl.util.FileTypeAdapter;
 import org.jackhuang.hmcl.util.ObservableHelper;
+import org.jackhuang.hmcl.util.i18n.Locales;
+import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -67,6 +69,7 @@ public final class Config implements Cloneable, Observable {
             .registerTypeAdapter(ObservableMap.class, new ObservableMapCreator())
             .registerTypeAdapterFactory(new JavaFxPropertyTypeAdapterFactory(true, true))
             .registerTypeAdapter(Theme.class, new Theme.TypeAdapter())
+            .registerTypeAdapter(SupportedLocale.class, new SupportedLocale.TypeAdapter())
             .registerTypeAdapter(EnumBackgroundImage.class, new EnumOrdinalDeserializer<>(EnumBackgroundImage.class)) // backward compatibility for backgroundType
             .registerTypeAdapter(Proxy.Type.class, new EnumOrdinalDeserializer<>(Proxy.Type.class)) // backward compatibility for hasProxy
             .setPrettyPrinting()
@@ -120,7 +123,7 @@ public final class Config implements Cloneable, Observable {
     private ObjectProperty<Theme> theme = new SimpleObjectProperty<>(Theme.BLUE);
 
     @SerializedName("localization")
-    private StringProperty localization = new SimpleStringProperty();
+    private ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(Locales.DEFAULT);
 
     @SerializedName("downloadtype")
     private IntegerProperty downloadType = new SimpleIntegerProperty(1);
@@ -348,15 +351,15 @@ public final class Config implements Cloneable, Observable {
         return theme;
     }
 
-    public String getLocalization() {
+    public SupportedLocale getLocalization() {
         return localization.get();
     }
 
-    public void setLocalization(String localization) {
+    public void setLocalization(SupportedLocale localization) {
         this.localization.set(localization);
     }
 
-    public StringProperty localizationProperty() {
+    public ObjectProperty<SupportedLocale> localizationProperty() {
         return localization;
     }
 

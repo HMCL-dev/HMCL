@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.i18n.Locales;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -63,17 +62,6 @@ public class Settings {
         }
 
         config().addListener(source -> ConfigHolder.saveConfig());
-    }
-
-    private Locales.SupportedLocale locale = Locales.getLocaleByName(config().getLocalization());
-
-    public Locales.SupportedLocale getLocale() {
-        return locale;
-    }
-
-    public void setLocale(Locales.SupportedLocale locale) {
-        this.locale = locale;
-        config().setLocalization(Locales.getNameByLocale(locale));
     }
 
     public Font getFont() {
