@@ -143,9 +143,6 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("logLines")
     private IntegerProperty logLines = new SimpleIntegerProperty(100);
 
-    @SerializedName("firstLaunch")
-    private BooleanProperty firstLaunch = new SimpleBooleanProperty(true);
-
     @SerializedName("authlibInjectorServers")
     private ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList();
 
@@ -429,18 +426,6 @@ public final class Config implements Cloneable, Observable {
 
     public IntegerProperty logLinesProperty() {
         return logLines;
-    }
-
-    public boolean isFirstLaunch() {
-        return firstLaunch.get();
-    }
-
-    public void setFirstLaunch(boolean firstLaunch) {
-        this.firstLaunch.set(firstLaunch);
-    }
-
-    public BooleanProperty firstLaunchProperty() {
-        return firstLaunch;
     }
 
     public ObservableList<AuthlibInjectorServer> getAuthlibInjectorServers() {

@@ -50,11 +50,7 @@ public class Settings {
         instance = new Settings();
     }
 
-    private final boolean firstLaunch;
-
     private Settings() {
-        firstLaunch = config().isFirstLaunch();
-
         ProxyManager.init();
         Accounts.init();
 
@@ -67,11 +63,6 @@ public class Settings {
         }
 
         config().addListener(source -> ConfigHolder.saveConfig());
-        config().setFirstLaunch(false);
-    }
-
-    public boolean isFirstLaunch() {
-        return firstLaunch;
     }
 
     private Locales.SupportedLocale locale = Locales.getLocaleByName(config().getLocalization());
