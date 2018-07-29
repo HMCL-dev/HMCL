@@ -39,6 +39,8 @@ import org.jackhuang.hmcl.setting.ConfigHolder;
 public final class Main {
 
     public static void main(String[] args) {
+        /* UPDATE: perform auto-update from local source */
+
         checkJavaFX();
         checkDirectoryPath();
         checkDSTRootCAX3();

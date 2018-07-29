@@ -37,7 +37,6 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.construct.FontComboBox;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
@@ -238,10 +237,10 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     }
 
     public void checkUpdate() {
-        btnUpdate.setVisible(Launcher.UPDATE_CHECKER.isOutOfDate());
+        btnUpdate.setVisible(false /* UPDATE: current version is outdated */);
 
-        if (Launcher.UPDATE_CHECKER.isOutOfDate()) {
-            lblUpdateSub.setText(i18n("update.newest_version", Launcher.UPDATE_CHECKER.getNewVersion().toString()));
+        if (false /* UPDATE: current version is outdated */) {
+            lblUpdateSub.setText(i18n("update.newest_version", /* UPDATE: latest version number */""));
             lblUpdateSub.getStyleClass().setAll("update-label");
 
             lblUpdate.setText(i18n("update.found"));
@@ -257,6 +256,6 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
 
     @FXML
     private void onUpdate() {
-        Launcher.UPDATE_CHECKER.checkOutdate();
+        /* UPDATE: Launcher.UPDATE_CHECKER.checkOutdate();*/
     }
 }

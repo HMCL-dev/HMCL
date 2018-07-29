@@ -25,11 +25,7 @@ import javafx.application.Platform;
 import javafx.stage.Stage;
 
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.upgrade.AppDataUpgrader;
-import org.jackhuang.hmcl.upgrade.IUpgrader;
-import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
@@ -37,7 +33,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -56,12 +51,15 @@ public final class Launcher extends Application {
             primaryStage.setResizable(false);
             primaryStage.setScene(Controllers.getScene());
 
+            /*
+            UPDATE: check update
             UPDATE_CHECKER.process(false)
                     .then(Task.of(Schedulers.javafx(), () -> {
                         if (UPDATE_CHECKER.isOutOfDate())
                             Controllers.showUpdate();
                     }))
                     .start();
+            */
 
             primaryStage.show();
         } catch (Throwable e) {
@@ -80,7 +78,6 @@ public final class Launcher extends Application {
 
             // NetworkUtils.setUserAgentSupplier(() -> "Hello Minecraft! Launcher");
             Constants.UI_THREAD_SCHEDULER = Constants.JAVAFX_UI_THREAD_SCHEDULER;
-            UPGRADER.parseArguments(VersionNumber.asVersion(VERSION), Arrays.asList(args));
 
             LOG.info("*** " + TITLE + " ***");
             LOG.info("Operating System: " + System.getProperty("os.name") + ' ' + OperatingSystem.SYSTEM_VERSION);
@@ -149,8 +146,6 @@ public final class Launcher extends Application {
     public static final String VERSION = System.getProperty("hmcl.version.override", "@HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING@");
     public static final String NAME = "HMCL";
     public static final String TITLE = NAME + " " + VERSION;
-    public static final UpdateChecker UPDATE_CHECKER = new UpdateChecker(VersionNumber.asVersion(VERSION));
-    public static final IUpgrader UPGRADER = new AppDataUpgrader();
     public static final CrashReporter CRASH_REPORTER = new CrashReporter();
 
     public static final String UPDATE_SERVER = "https://www.huangyuhui.net";

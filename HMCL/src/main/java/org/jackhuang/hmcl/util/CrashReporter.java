@@ -104,8 +104,9 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
             if (checkThrowable(e)) {
                 Platform.runLater(() -> new CrashWindow(text).show());
-                if (!Launcher.UPDATE_CHECKER.isOutOfDate())
+                if (true /* UPDATE: current version is not outdated */) {
                     reportToServer(text);
+                }
             }
         } catch (Throwable handlingException) {
             LOG.log(Level.SEVERE, "Unable to handle uncaught exception", handlingException);

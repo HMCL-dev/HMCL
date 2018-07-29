@@ -39,7 +39,7 @@ public class CrashWindow extends Stage {
 
     public CrashWindow(String text) {
         Label lblCrash = new Label();
-        if (Launcher.UPDATE_CHECKER.isOutOfDate())
+        if (false/* UPDATE: current version is outdated */)
             lblCrash.setText(i18n("launcher.crash_out_dated"));
         else
             lblCrash.setText(i18n("launcher.crash"));
