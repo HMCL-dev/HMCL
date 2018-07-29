@@ -42,7 +42,6 @@ public class Settings {
 
     private Settings() {
         firstLaunch = CONFIG.isFirstLaunch();
-        CONFIG.setFirstLaunch(false);
 
         ProxyManager.init();
         Accounts.init();
@@ -56,6 +55,7 @@ public class Settings {
         }
 
         CONFIG.addListener(source -> save());
+        CONFIG.setFirstLaunch(false);
     }
 
     private void save() {
