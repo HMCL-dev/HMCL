@@ -111,35 +111,35 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
 
         FXUtils.smoothScrolling(scroll);
 
-        cboDownloadSource.getSelectionModel().select(DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(Settings.INSTANCE.getDownloadProvider()));
-        cboDownloadSource.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setDownloadProvider(DownloadProviders.getDownloadProvider(newValue.intValue())));
+        cboDownloadSource.getSelectionModel().select(DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(Settings.instance().getDownloadProvider()));
+        cboDownloadSource.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> Settings.instance().setDownloadProvider(DownloadProviders.getDownloadProvider(newValue.intValue())));
 
-        cboFont.getSelectionModel().select(Settings.INSTANCE.getFont().getFamily());
+        cboFont.getSelectionModel().select(Settings.instance().getFont().getFamily());
         cboFont.valueProperty().addListener((a, b, newValue) -> {
-            Font font = Font.font(newValue, Settings.INSTANCE.getFont().getSize());
-            Settings.INSTANCE.setFont(font);
+            Font font = Font.font(newValue, Settings.instance().getFont().getSize());
+            Settings.instance().setFont(font);
             lblDisplay.setStyle("-fx-font: " + font.getSize() + " \"" + font.getFamily() + "\";");
         });
 
-        txtFontSize.setText(Double.toString(Settings.INSTANCE.getFont().getSize()));
+        txtFontSize.setText(Double.toString(Settings.instance().getFont().getSize()));
         txtFontSize.getValidators().add(new Validator(it -> Lang.toDoubleOrNull(it) != null));
         txtFontSize.textProperty().addListener((a, b, newValue) -> {
             if (txtFontSize.validate()) {
-                Font font = Font.font(Settings.INSTANCE.getFont().getFamily(), Double.parseDouble(newValue));
-                Settings.INSTANCE.setFont(font);
+                Font font = Font.font(Settings.instance().getFont().getFamily(), Double.parseDouble(newValue));
+                Settings.instance().setFont(font);
                 lblDisplay.setStyle("-fx-font: " + font.getSize() + " \"" + font.getFamily() + "\";");
             }
         });
 
-        lblDisplay.setStyle("-fx-font: " + Settings.INSTANCE.getFont().getSize() + " \"" + Settings.INSTANCE.getFont().getFamily() + "\";");
+        lblDisplay.setStyle("-fx-font: " + Settings.instance().getFont().getSize() + " \"" + Settings.instance().getFont().getFamily() + "\";");
 
         ObservableList<Label> list = FXCollections.observableArrayList();
         for (Locales.SupportedLocale locale : Locales.LOCALES)
-            list.add(new Label(locale.getName(Settings.INSTANCE.getLocale().getResourceBundle())));
+            list.add(new Label(locale.getName(Settings.instance().getLocale().getResourceBundle())));
 
         cboLanguage.setItems(list);
-        cboLanguage.getSelectionModel().select(Locales.LOCALES.indexOf(Settings.INSTANCE.getLocale()));
-        cboLanguage.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setLocale(Locales.getLocale(newValue.intValue())));
+        cboLanguage.getSelectionModel().select(Locales.LOCALES.indexOf(Settings.instance().getLocale()));
+        cboLanguage.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> Settings.instance().setLocale(Locales.getLocale(newValue.intValue())));
 
         // ==== Proxy ====
         txtProxyHost.textProperty().bindBidirectional(config().proxyHostProperty());
@@ -191,7 +191,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());
         fileCommonLocation.customTextProperty().bindBidirectional(config().commonDirectoryProperty());
         fileCommonLocation.subtitleProperty().bind(
-                Bindings.createObjectBinding(() -> Optional.ofNullable(Settings.INSTANCE.getCommonDirectory())
+                Bindings.createObjectBinding(() -> Optional.ofNullable(Settings.instance().getCommonDirectory())
                                 .orElse(i18n("launcher.common_directory.disabled")),
                         config().commonDirectoryProperty(), config().commonDirTypeProperty()));
 

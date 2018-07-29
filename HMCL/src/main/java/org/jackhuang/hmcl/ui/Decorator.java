@@ -200,7 +200,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
             );
             nowAnimation.play();
         });
-        if (!Settings.INSTANCE.isFirstLaunch() || Settings.INSTANCE.getLocale().getLocale() != Locale.CHINA)
+        if (!Settings.instance().isFirstLaunch() || Settings.instance().getLocale().getLocale() != Locale.CHINA)
             drawerWrapper.getChildren().remove(welcomeView);
 
         if (!min) buttonsContainer.getChildren().remove(btnMin);

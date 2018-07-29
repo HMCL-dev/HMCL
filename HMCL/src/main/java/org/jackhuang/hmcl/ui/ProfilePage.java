@@ -80,7 +80,7 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
     @FXML
     private void onDelete() {
         if (profile != null) {
-            Settings.INSTANCE.deleteProfile(profile);
+            Settings.instance().deleteProfile(profile);
             Controllers.navigate(null);
         }
     }
@@ -99,10 +99,10 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
             }
             Profile newProfile = new Profile(txtProfileName.getText(), new File(getLocation()));
             newProfile.setUseRelativePath(toggleUseRelativePath.isSelected());
-            Settings.INSTANCE.putProfile(newProfile);
+            Settings.instance().putProfile(newProfile);
         }
 
-        Settings.INSTANCE.onProfileLoading();
+        Settings.instance().onProfileLoading();
         Controllers.navigate(null);
     }
 

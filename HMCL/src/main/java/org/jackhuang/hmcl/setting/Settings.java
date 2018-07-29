@@ -34,7 +34,11 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 public class Settings {
 
-    public static final Settings INSTANCE = new Settings();
+    private static Settings instance = new Settings();
+
+    public static Settings instance() {
+        return instance;
+    }
 
     private final boolean firstLaunch;
 

@@ -33,7 +33,7 @@ public final class I18n {
 
     static {
         try {
-            RESOURCE_BUNDLE = Settings.INSTANCE.getLocale().getResourceBundle();
+            RESOURCE_BUNDLE = Settings.instance().getLocale().getResourceBundle();
         } catch (Throwable e) {
             LOG.log(Level.SEVERE, "Settings cannot be initialized", e);
         }

@@ -41,7 +41,7 @@ public final class DownloadWizardProvider implements WizardProvider {
 
     @Override
     public void start(Map<String, Object> settings) {
-        profile = Settings.INSTANCE.getSelectedProfile();
+        profile = Settings.instance().getSelectedProfile();
         settings.put(PROFILE, profile);
     }
 

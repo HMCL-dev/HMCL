@@ -177,12 +177,12 @@ public final class LogWindow extends Stage {
 
             engine = webView.getEngine();
             engine.loadContent(Lang.ignoringException(() -> IOUtils.readFullyAsString(getClass().getResourceAsStream("/assets/log-window-content.html")))
-                    .replace("${FONT}", Settings.INSTANCE.getFont().getSize() + "px \"" + Settings.INSTANCE.getFont().getFamily() + "\""));
+                    .replace("${FONT}", Settings.instance().getFont().getSize() + "px \"" + Settings.instance().getFont().getFamily() + "\""));
             engine.getLoadWorker().stateProperty().addListener((a, b, newValue) -> {
                 if (newValue == Worker.State.SUCCEEDED) {
                     document = engine.getDocument();
                     body = document.getElementsByTagName("body").item(0);
-                    engine.executeScript("limitedLogs=" + Settings.INSTANCE.getLogLines());
+                    engine.executeScript("limitedLogs=" + Settings.instance().getLogLines());
                     latch.countDown();
                     onDone.fireEvent(new Event(LogWindow.this));
                 }
@@ -190,14 +190,14 @@ public final class LogWindow extends Stage {
 
             boolean flag = false;
             for (String i : cboLines.getItems())
-                if (Integer.toString(Settings.INSTANCE.getLogLines()).equals(i)) {
+                if (Integer.toString(Settings.instance().getLogLines()).equals(i)) {
                     cboLines.getSelectionModel().select(i);
                     flag = true;
                 }
 
             cboLines.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
-                Settings.INSTANCE.setLogLines(newValue == null ? 100 : Integer.parseInt(newValue));
-                engine.executeScript("limitedLogs=" + Settings.INSTANCE.getLogLines());
+                Settings.instance().setLogLines(newValue == null ? 100 : Integer.parseInt(newValue));
+                engine.executeScript("limitedLogs=" + Settings.instance().getLogLines());
             });
 
             if (!flag)

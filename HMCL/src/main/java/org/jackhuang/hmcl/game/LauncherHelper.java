@@ -378,7 +378,7 @@ public final class LauncherHelper {
                 System.out.print(log);
 
             logs.add(pair(log, level));
-            if (logs.size() > Settings.INSTANCE.getLogLines())
+            if (logs.size() > Settings.instance().getLogLines())
                 logs.removeFirst();
 
             if (setting.isShowLogs()) {

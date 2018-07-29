@@ -60,7 +60,7 @@ public final class Accounts {
     public static final OfflineAccountFactory FACTORY_OFFLINE = OfflineAccountFactory.INSTANCE;
     public static final YggdrasilAccountFactory FACTORY_YGGDRASIL = new YggdrasilAccountFactory(MojangYggdrasilProvider.INSTANCE);
     public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(
-            new AuthlibInjectorDownloader(Launcher.HMCL_DIRECTORY.toPath(), () -> Settings.INSTANCE.getDownloadProvider())::getArtifactInfo,
+            new AuthlibInjectorDownloader(Launcher.HMCL_DIRECTORY.toPath(), () -> Settings.instance().getDownloadProvider())::getArtifactInfo,
             Accounts::getOrCreateAuthlibInjectorServer);
 
     private static final String TYPE_OFFLINE = "offline";
