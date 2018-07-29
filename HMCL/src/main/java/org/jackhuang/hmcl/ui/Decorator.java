@@ -81,7 +81,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 
 import static java.util.stream.Collectors.toList;
-import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class Decorator extends StackPane implements TaskExecutorDialogWizardDisplayer {
@@ -228,8 +228,8 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
                 Bindings.createObjectBinding(
                         () -> {
                             Image image = null;
-                            if (CONFIG.getBackgroundImageType() == EnumBackgroundImage.CUSTOM && CONFIG.getBackgroundImage() != null) {
-                                image = tryLoadImage(Paths.get(CONFIG.getBackgroundImage()))
+                            if (config().getBackgroundImageType() == EnumBackgroundImage.CUSTOM && config().getBackgroundImage() != null) {
+                                image = tryLoadImage(Paths.get(config().getBackgroundImage()))
                                         .orElse(null);
                             }
                             if (image == null) {
@@ -237,8 +237,8 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
                             }
                             return new Background(new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, new BackgroundSize(800, 480, false, false, true, true)));
                         },
-                        CONFIG.backgroundImageTypeProperty(),
-                        CONFIG.backgroundImageProperty()));
+                        config().backgroundImageTypeProperty(),
+                        config().backgroundImageProperty()));
     }
 
     private Image defaultBackground = new Image("/assets/img/background.jpg");

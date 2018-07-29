@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 /**
  * @author huangyuhui

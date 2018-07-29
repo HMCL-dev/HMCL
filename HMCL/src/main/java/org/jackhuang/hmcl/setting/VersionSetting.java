@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 /**
  *
@@ -515,10 +515,10 @@ public final class VersionSetting {
                 .setFullscreen(isFullscreen())
                 .setServerIp(getServerIp())
                 .setWrapper(getWrapper())
-                .setProxyHost(CONFIG.getProxyHost())
-                .setProxyPort(CONFIG.getProxyPort())
-                .setProxyUser(CONFIG.getProxyUser())
-                .setProxyPass(CONFIG.getProxyPass())
+                .setProxyHost(config().getProxyHost())
+                .setProxyPort(config().getProxyPort())
+                .setProxyUser(config().getProxyUser())
+                .setProxyPass(config().getProxyPass())
                 .setPrecalledCommand(getPreLaunchCommand())
                 .setNoGeneratedJVMArgs(isNoJVMArgs())
                 .create();

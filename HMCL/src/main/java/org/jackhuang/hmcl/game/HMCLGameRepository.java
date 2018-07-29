@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 public class HMCLGameRepository extends DefaultGameRepository {
     private final Profile profile;

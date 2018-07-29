@@ -47,7 +47,7 @@ import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.i18n.Locales;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.net.Proxy;
@@ -142,16 +142,16 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         cboLanguage.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> Settings.INSTANCE.setLocale(Locales.getLocale(newValue.intValue())));
 
         // ==== Proxy ====
-        txtProxyHost.textProperty().bindBidirectional(CONFIG.proxyHostProperty());
-        txtProxyPort.textProperty().bindBidirectional(CONFIG.proxyPortProperty());
-        txtProxyUsername.textProperty().bindBidirectional(CONFIG.proxyUserProperty());
-        txtProxyPassword.textProperty().bindBidirectional(CONFIG.proxyPassProperty());
+        txtProxyHost.textProperty().bindBidirectional(config().proxyHostProperty());
+        txtProxyPort.textProperty().bindBidirectional(config().proxyPortProperty());
+        txtProxyUsername.textProperty().bindBidirectional(config().proxyUserProperty());
+        txtProxyPassword.textProperty().bindBidirectional(config().proxyPassProperty());
 
         proxyPane.disableProperty().bind(chkEnableProxy.selectedProperty().not());
         authPane.disableProperty().bind(chkProxyAuthentication.selectedProperty().not());
 
-        chkEnableProxy.selectedProperty().bindBidirectional(CONFIG.hasProxyProperty());
-        chkProxyAuthentication.selectedProperty().bindBidirectional(CONFIG.hasProxyAuthProperty());
+        chkEnableProxy.selectedProperty().bindBidirectional(config().hasProxyProperty());
+        chkProxyAuthentication.selectedProperty().bindBidirectional(config().hasProxyAuthProperty());
 
         selectedProxyType = new SimpleObjectProperty<Proxy.Type>(Proxy.Type.HTTP) {
             {
@@ -169,7 +169,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
                 }
             }
         };
-        selectedProxyType.bindBidirectional(CONFIG.proxyTypeProperty());
+        selectedProxyType.bindBidirectional(config().proxyTypeProperty());
 
         ToggleGroup proxyConfigurationGroup = new ToggleGroup();
         chkProxyHttp.setUserData(Proxy.Type.HTTP);
@@ -188,12 +188,12 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
                 fileCommonLocation.createChildren(i18n("launcher.common_directory.disabled"), EnumCommonDirectory.DISABLED),
                 fileCommonLocation.createChildren(i18n("launcher.common_directory.default"), EnumCommonDirectory.DEFAULT)
         ), EnumCommonDirectory.CUSTOM);
-        fileCommonLocation.selectedDataProperty().bindBidirectional(CONFIG.commonDirTypeProperty());
-        fileCommonLocation.customTextProperty().bindBidirectional(CONFIG.commonDirectoryProperty());
+        fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());
+        fileCommonLocation.customTextProperty().bindBidirectional(config().commonDirectoryProperty());
         fileCommonLocation.subtitleProperty().bind(
                 Bindings.createObjectBinding(() -> Optional.ofNullable(Settings.INSTANCE.getCommonDirectory())
                                 .orElse(i18n("launcher.common_directory.disabled")),
-                        CONFIG.commonDirectoryProperty(), CONFIG.commonDirTypeProperty()));
+                        config().commonDirectoryProperty(), config().commonDirTypeProperty()));
 
         FXUtils.installTooltip(btnUpdate, i18n("update.tooltip"));
         checkUpdate();
@@ -202,22 +202,22 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         backgroundItem.loadChildren(Collections.singletonList(
                 backgroundItem.createChildren(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
         ), EnumBackgroundImage.CUSTOM);
-        backgroundItem.customTextProperty().bindBidirectional(CONFIG.backgroundImageProperty());
-        backgroundItem.selectedDataProperty().bindBidirectional(CONFIG.backgroundImageTypeProperty());
+        backgroundItem.customTextProperty().bindBidirectional(config().backgroundImageProperty());
+        backgroundItem.selectedDataProperty().bindBidirectional(config().backgroundImageTypeProperty());
         backgroundItem.subtitleProperty().bind(
                 new When(backgroundItem.selectedDataProperty().isEqualTo(EnumBackgroundImage.DEFAULT))
                         .then(i18n("launcher.background.default"))
-                        .otherwise(CONFIG.backgroundImageProperty()));
+                        .otherwise(config().backgroundImageProperty()));
         // ====
 
         // ==== Theme ====
-        JFXColorPicker picker = new JFXColorPicker(Color.web(CONFIG.getTheme().getColor()), null);
+        JFXColorPicker picker = new JFXColorPicker(Color.web(config().getTheme().getColor()), null);
         picker.setCustomColorText(i18n("color.custom"));
         picker.setRecentColorsText(i18n("color.recent"));
         picker.getCustomColors().setAll(Theme.SUGGESTED_COLORS);
         picker.setOnAction(e -> {
             Theme theme = Theme.custom(Theme.getColorDisplayName(picker.getValue()));
-            CONFIG.setTheme(theme);
+            config().setTheme(theme);
             Controllers.getScene().getStylesheets().setAll(theme.getStylesheets());
         });
         themeColorPickerContainer.getChildren().setAll(picker);

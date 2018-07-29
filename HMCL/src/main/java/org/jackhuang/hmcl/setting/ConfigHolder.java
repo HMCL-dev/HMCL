@@ -36,7 +36,14 @@ public final class ConfigHolder {
 
     public static final String CONFIG_FILENAME = "hmcl.json";
     public static final Path CONFIG_PATH = Paths.get(CONFIG_FILENAME).toAbsolutePath();
-    public static final Config CONFIG = initSettings();
+    private static Config configInstance = initSettings();
+
+    public static Config config() {
+        if (configInstance == null) {
+            throw new IllegalStateException("Configuration hasn't been loaded");
+        }
+        return configInstance;
+    }
 
     private static Config upgradeSettings(Config deserialized, Map<?, ?> rawJson) {
         if (!rawJson.containsKey("commonDirType"))
@@ -67,7 +74,7 @@ public final class ConfigHolder {
     static void saveConfig() {
         LOG.info("Saving config");
         try {
-            Files.write(CONFIG_PATH, CONFIG.toJson().getBytes(UTF_8));
+            Files.write(CONFIG_PATH, configInstance.toJson().getBytes(UTF_8));
         } catch (IOException ex) {
             LOG.log(Level.SEVERE, "Failed to save config", ex);
         }

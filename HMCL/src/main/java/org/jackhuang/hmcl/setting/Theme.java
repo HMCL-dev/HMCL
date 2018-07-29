@@ -27,7 +27,7 @@ import org.jackhuang.hmcl.util.Logging;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 import java.io.File;
 import java.io.IOException;
@@ -120,7 +120,7 @@ public class Theme {
     }
 
     public static ObjectBinding<Color> foregroundFillBinding() {
-        return Bindings.createObjectBinding(() -> CONFIG.getTheme().getForegroundColor(), CONFIG.themeProperty());
+        return Bindings.createObjectBinding(() -> config().getTheme().getForegroundColor(), config().themeProperty());
     }
 
     public static ObjectBinding<Color> blackFillBinding() {
