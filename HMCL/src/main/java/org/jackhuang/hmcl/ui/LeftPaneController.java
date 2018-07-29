@@ -229,8 +229,8 @@ public final class LeftPaneController {
     }
 
     public void showUpdate() {
-        launcherSettingsItem.setText(i18n("update.found"));
-        launcherSettingsItem.setTextFill(Color.RED);
+        launcherSettingsItem.getLabel().setText(i18n("update.found"));
+        launcherSettingsItem.getLabel().setTextFill(Color.RED);
     }
 
     private boolean checkedModpack = false;
