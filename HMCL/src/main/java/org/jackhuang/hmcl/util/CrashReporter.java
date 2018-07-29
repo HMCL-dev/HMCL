@@ -18,7 +18,8 @@
 package org.jackhuang.hmcl.util;
 
 import javafx.application.Platform;
-import org.jackhuang.hmcl.Launcher;
+
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.CrashWindow;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import static java.util.Collections.newSetFromMap;
@@ -90,7 +91,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             CAUGHT_EXCEPTIONS.add(stackTrace);
 
             String text = "---- Hello Minecraft! Crash Report ----\n" +
-                    "  Version: " + Launcher.VERSION + "\n" +
+                    "  Version: " + Metadata.VERSION + "\n" +
                     "  Time: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + "\n" +
                     "  Thread: " + t.toString() + "\n" +
                     "\n  Content: \n    " +
@@ -117,7 +118,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         Thread t = new Thread(() -> {
             HashMap<String, String> map = new HashMap<>();
             map.put("crash_report", text);
-            map.put("version", Launcher.VERSION);
+            map.put("version", Metadata.VERSION);
             map.put("log", Logging.getLogs());
             try {
                 String response = NetworkUtils.doPost(NetworkUtils.toURL("https://hmcl.huangyuhui.net/hmcl/crash.php"), map);

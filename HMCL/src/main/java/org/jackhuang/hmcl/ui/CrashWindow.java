@@ -30,7 +30,7 @@ import javafx.stage.Stage;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.Metadata;
 
 /**
  * @author huangyuhui
@@ -51,7 +51,7 @@ public class CrashWindow extends Stage {
 
         Button btnContact = new Button();
         btnContact.setText(i18n("launcher.contact"));
-        btnContact.setOnMouseClicked(event -> FXUtils.openLink(Launcher.CONTACT));
+        btnContact.setOnMouseClicked(event -> FXUtils.openLink(Metadata.CONTACT_URL));
         HBox box = new HBox();
         box.setStyle("-fx-padding: 8px;");
         box.getChildren().add(btnContact);

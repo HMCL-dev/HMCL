@@ -79,7 +79,7 @@ public final class Launcher extends Application {
             // NetworkUtils.setUserAgentSupplier(() -> "Hello Minecraft! Launcher");
             Constants.UI_THREAD_SCHEDULER = Constants.JAVAFX_UI_THREAD_SCHEDULER;
 
-            LOG.info("*** " + TITLE + " ***");
+            LOG.info("*** " + Metadata.TITLE + " ***");
             LOG.info("Operating System: " + System.getProperty("os.name") + ' ' + OperatingSystem.SYSTEM_VERSION);
             LOG.info("Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
             LOG.info("Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
@@ -143,12 +143,5 @@ public final class Launcher extends Application {
     public static final File HMCL_DIRECTORY = OperatingSystem.getWorkingDirectory("hmcl");
     public static final File LOG_DIRECTORY = new File(Launcher.HMCL_DIRECTORY, "logs");
 
-    public static final String VERSION = System.getProperty("hmcl.version.override", "@HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING@");
-    public static final String NAME = "HMCL";
-    public static final String TITLE = NAME + " " + VERSION;
     public static final CrashReporter CRASH_REPORTER = new CrashReporter();
-
-    public static final String UPDATE_SERVER = "https://www.huangyuhui.net";
-    public static final String CONTACT = UPDATE_SERVER + "/hmcl.php";
-    public static final String PUBLISH = "http://www.mcbbs.net/thread-142335-1-1.html";
 }
