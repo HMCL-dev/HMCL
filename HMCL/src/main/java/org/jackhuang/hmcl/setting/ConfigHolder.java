@@ -36,7 +36,9 @@ public final class ConfigHolder {
 
     public static final String CONFIG_FILENAME = "hmcl.json";
     public static final Path CONFIG_PATH = Paths.get(CONFIG_FILENAME).toAbsolutePath();
-    private static Config configInstance = initSettings();
+
+    private static Config configInstance;
+    private static boolean initialized;
 
     public static Config config() {
         if (configInstance == null) {
@@ -45,10 +47,17 @@ public final class ConfigHolder {
         return configInstance;
     }
 
-    private static Config upgradeSettings(Config deserialized, Map<?, ?> rawJson) {
-        if (!rawJson.containsKey("commonDirType"))
-            deserialized.setCommonDirType(deserialized.getCommonDirectory().equals(Settings.getDefaultCommonDirectory()) ? EnumCommonDirectory.DEFAULT : EnumCommonDirectory.CUSTOM);
-        return deserialized;
+    public static boolean isInitialized() {
+        return initialized;
+    }
+
+    public synchronized static void init() {
+        if (configInstance != null) {
+            throw new IllegalStateException("Configuration is already loaded");
+        }
+        configInstance = initSettings();
+        Settings.init();
+        initialized = true;
     }
 
     private static Config initSettings() {
@@ -59,13 +68,13 @@ public final class ConfigHolder {
                 Map<?, ?> raw = new Gson().fromJson(json, Map.class);
                 Config deserialized = Config.fromJson(json);
                 if (deserialized == null) {
-                    LOG.finer("Settings file is empty, use the default settings.");
+                    LOG.finer("Config file is empty, use the default config.");
                 } else {
-                    config = upgradeSettings(deserialized, raw);
+                    config = upgradeConfig(deserialized, raw);
                 }
                 LOG.finest("Initialized settings.");
             } catch (IOException | JsonParseException e) {
-                LOG.log(Level.WARNING, "Something happened wrongly when load settings.", e);
+                LOG.log(Level.WARNING, "Something went wrong when loading config.", e);
             }
         }
         return config;
@@ -80,4 +89,9 @@ public final class ConfigHolder {
         }
     }
 
+    private static Config upgradeConfig(Config deserialized, Map<?, ?> rawJson) {
+        if (!rawJson.containsKey("commonDirType"))
+            deserialized.setCommonDirType(deserialized.getCommonDirectory().equals(Settings.getDefaultCommonDirectory()) ? EnumCommonDirectory.DEFAULT : EnumCommonDirectory.CUSTOM);
+        return deserialized;
+    }
 }

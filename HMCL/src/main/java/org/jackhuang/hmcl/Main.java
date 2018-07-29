@@ -32,12 +32,16 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import javax.swing.JOptionPane;
 
+import org.jackhuang.hmcl.setting.ConfigHolder;
+
 public final class Main {
 
     public static void main(String[] args) {
         checkJavaFX();
         checkDirectoryPath();
         checkDSTRootCAX3();
+
+        ConfigHolder.init();
         Launcher.main(args);
     }
 

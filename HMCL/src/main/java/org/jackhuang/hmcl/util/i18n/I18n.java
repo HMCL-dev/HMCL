@@ -23,24 +23,19 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.Settings;
 
 public final class I18n {
 
     private I18n() {}
 
-    private static ResourceBundle RESOURCE_BUNDLE = null;
-
-    static {
-        try {
-            RESOURCE_BUNDLE = Settings.instance().getLocale().getResourceBundle();
-        } catch (Throwable e) {
-            LOG.log(Level.SEVERE, "Settings cannot be initialized", e);
-        }
-    }
-
     public static ResourceBundle getResourceBundle() {
-        return RESOURCE_BUNDLE == null ? Locales.DEFAULT.getResourceBundle() : RESOURCE_BUNDLE;
+        if (ConfigHolder.isInitialized()) {
+            return Settings.instance().getLocale().getResourceBundle();
+        } else {
+            return Locales.DEFAULT.getResourceBundle();
+        }
     }
 
     public static String i18n(String key, Object... formatArgs) {

@@ -34,10 +34,20 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 public class Settings {
 
-    private static Settings instance = new Settings();
+    private static Settings instance;
 
     public static Settings instance() {
+        if (instance == null) {
+            throw new IllegalStateException("Settings hasn't been initialized");
+        }
         return instance;
+    }
+
+    /**
+     * Should be called from {@link ConfigHolder#init()}.
+     */
+    static void init() {
+        instance = new Settings();
     }
 
     private final boolean firstLaunch;
