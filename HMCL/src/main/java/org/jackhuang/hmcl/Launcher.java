@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl;
 
+import static org.jackhuang.hmcl.util.Logging.LOG;
+
 import com.jfoenix.concurrency.JFXUtilities;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -34,6 +36,7 @@ import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -79,11 +82,13 @@ public final class Launcher extends Application {
             Constants.UI_THREAD_SCHEDULER = Constants.JAVAFX_UI_THREAD_SCHEDULER;
             UPGRADER.parseArguments(VersionNumber.asVersion(VERSION), Arrays.asList(args));
 
-            Logging.LOG.info("*** " + TITLE + " ***");
-            Logging.LOG.info("Operating System: " + System.getProperty("os.name") + ' ' + OperatingSystem.SYSTEM_VERSION);
-            Logging.LOG.info("Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
-            Logging.LOG.info("Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
-            Logging.LOG.info("Java Home: " + System.getProperty("java.home"));
+            LOG.info("*** " + TITLE + " ***");
+            LOG.info("Operating System: " + System.getProperty("os.name") + ' ' + OperatingSystem.SYSTEM_VERSION);
+            LOG.info("Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
+            LOG.info("Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
+            LOG.info("Java Home: " + System.getProperty("java.home"));
+            LOG.info("Current Directory: " + Paths.get("").toAbsolutePath());
+            LOG.info("HMCL Directory: " + HMCL_DIRECTORY);
 
             launch(args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.
@@ -92,7 +97,7 @@ public final class Launcher extends Application {
     }
 
     public static void stopApplication() {
-        Logging.LOG.info("Stopping application.\n" + StringUtils.getStackTrace(Thread.currentThread().getStackTrace()));
+        LOG.info("Stopping application.\n" + StringUtils.getStackTrace(Thread.currentThread().getStackTrace()));
 
         JFXUtilities.runInFX(() -> {
             if (Controllers.getStage() == null)
@@ -106,7 +111,7 @@ public final class Launcher extends Application {
     }
 
     public static void stopWithoutPlatform() {
-        Logging.LOG.info("Stopping application without JavaFX Toolkit.\n" + StringUtils.getStackTrace(Thread.currentThread().getStackTrace()));
+        LOG.info("Stopping application without JavaFX Toolkit.\n" + StringUtils.getStackTrace(Thread.currentThread().getStackTrace()));
 
         JFXUtilities.runInFX(() -> {
             if (Controllers.getStage() == null)
