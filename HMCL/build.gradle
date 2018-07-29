@@ -30,9 +30,6 @@ dependencies {
 task generateSources(type: Sync) {
     from 'src/main/java'
     into "$buildDir/generated-src"
-    filter(ReplaceTokens, tokens: [
-            'HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING': mavenVersion
-    ])
 }
 
 compileJava.setSource "$buildDir/generated-src"
