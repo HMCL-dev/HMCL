@@ -34,7 +34,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 public class AuthlibInjectorServersPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", i18n("account.injector.manage.title"));
@@ -49,13 +49,13 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
         loadFXML(this, "/assets/fxml/authlib-injector-servers.fxml");
         smoothScrolling(scrollPane);
 
-        serverItems = MappedObservableList.create(CONFIG.getAuthlibInjectorServers(), this::createServerItem);
+        serverItems = MappedObservableList.create(config().getAuthlibInjectorServers(), this::createServerItem);
         Bindings.bindContent(listPane.getChildren(), serverItems);
     }
 
     private AuthlibInjectorServerItem createServerItem(AuthlibInjectorServer server) {
         return new AuthlibInjectorServerItem(server,
-                item -> CONFIG.getAuthlibInjectorServers().remove(item.getServer()));
+                item -> config().getAuthlibInjectorServers().remove(item.getServer()));
     }
 
     @FXML

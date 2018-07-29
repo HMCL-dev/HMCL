@@ -25,24 +25,31 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.i18n.Locales;
 
-import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 public class Settings {
 
-    public static final Settings INSTANCE = new Settings();
+    private static Settings instance;
 
-    private final boolean firstLaunch;
+    public static Settings instance() {
+        if (instance == null) {
+            throw new IllegalStateException("Settings hasn't been initialized");
+        }
+        return instance;
+    }
+
+    /**
+     * Should be called from {@link ConfigHolder#init()}.
+     */
+    static void init() {
+        instance = new Settings();
+    }
 
     private Settings() {
-        firstLaunch = CONFIG.isFirstLaunch();
-
         ProxyManager.init();
         Accounts.init();
 
@@ -51,52 +58,31 @@ public class Settings {
         for (Map.Entry<String, Profile> profileEntry : getProfileMap().entrySet()) {
             profileEntry.getValue().setName(profileEntry.getKey());
             profileEntry.getValue().nameProperty().setChangedListener(this::profileNameChanged);
-            profileEntry.getValue().addPropertyChangedListener(e -> save());
+            profileEntry.getValue().addPropertyChangedListener(e -> ConfigHolder.saveConfig());
         }
 
-        CONFIG.addListener(source -> save());
-        CONFIG.setFirstLaunch(false);
-    }
-
-    private void save() {
-        LOG.info("Saving config");
-        ConfigHolder.saveConfig(CONFIG);
-    }
-
-    public boolean isFirstLaunch() {
-        return firstLaunch;
-    }
-
-    private Locales.SupportedLocale locale = Locales.getLocaleByName(CONFIG.getLocalization());
-
-    public Locales.SupportedLocale getLocale() {
-        return locale;
-    }
-
-    public void setLocale(Locales.SupportedLocale locale) {
-        this.locale = locale;
-        CONFIG.setLocalization(Locales.getNameByLocale(locale));
+        config().addListener(source -> ConfigHolder.saveConfig());
     }
 
     public Font getFont() {
-        return Font.font(CONFIG.getFontFamily(), CONFIG.getFontSize());
+        return Font.font(config().getFontFamily(), config().getFontSize());
     }
 
     public void setFont(Font font) {
-        CONFIG.setFontFamily(font.getFamily());
-        CONFIG.setFontSize(font.getSize());
+        config().setFontFamily(font.getFamily());
+        config().setFontSize(font.getSize());
     }
 
     public int getLogLines() {
-        return Math.max(CONFIG.getLogLines(), 100);
+        return Math.max(config().getLogLines(), 100);
     }
 
     public void setLogLines(int logLines) {
-        CONFIG.setLogLines(logLines);
+        config().setLogLines(logLines);
     }
 
     public boolean isCommonDirectoryDisabled() {
-        return CONFIG.getCommonDirType() == EnumCommonDirectory.DISABLED;
+        return config().getCommonDirType() == EnumCommonDirectory.DISABLED;
     }
 
     public static String getDefaultCommonDirectory() {
@@ -104,13 +90,13 @@ public class Settings {
     }
 
     public String getCommonDirectory() {
-        switch (CONFIG.getCommonDirType()) {
+        switch (config().getCommonDirType()) {
             case DISABLED:
                 return null;
             case DEFAULT:
                 return getDefaultCommonDirectory();
             case CUSTOM:
-                return CONFIG.getCommonDirectory();
+                return config().getCommonDirectory();
             default:
                 return null;
         }
@@ -121,14 +107,14 @@ public class Settings {
      ****************************************/
 
     public DownloadProvider getDownloadProvider() {
-        return DownloadProviders.getDownloadProvider(CONFIG.getDownloadType());
+        return DownloadProviders.getDownloadProvider(config().getDownloadType());
     }
 
     public void setDownloadProvider(DownloadProvider downloadProvider) {
         int index = DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(downloadProvider);
         if (index == -1)
             throw new IllegalArgumentException("Unknown download provider: " + downloadProvider);
-        CONFIG.setDownloadType(index);
+        config().setDownloadType(index);
     }
 
     /****************************************
@@ -138,18 +124,18 @@ public class Settings {
     public Profile getSelectedProfile() {
         checkProfileMap();
 
-        if (!hasProfile(CONFIG.getSelectedProfile())) {
+        if (!hasProfile(config().getSelectedProfile())) {
             getProfileMap().keySet().stream().findFirst().ifPresent(selectedProfile -> {
-                CONFIG.setSelectedProfile(selectedProfile);
+                config().setSelectedProfile(selectedProfile);
             });
             Schedulers.computation().schedule(this::onProfileChanged);
         }
-        return getProfile(CONFIG.getSelectedProfile());
+        return getProfile(config().getSelectedProfile());
     }
 
     public void setSelectedProfile(Profile selectedProfile) {
-        if (hasProfile(selectedProfile.getName()) && !Objects.equals(selectedProfile.getName(), CONFIG.getSelectedProfile())) {
-            CONFIG.setSelectedProfile(selectedProfile.getName());
+        if (hasProfile(selectedProfile.getName()) && !Objects.equals(selectedProfile.getName(), config().getSelectedProfile())) {
+            config().setSelectedProfile(selectedProfile.getName());
             Schedulers.computation().schedule(this::onProfileChanged);
         }
     }
@@ -166,7 +152,7 @@ public class Settings {
     }
 
     public Map<String, Profile> getProfileMap() {
-        return CONFIG.getConfigurations();
+        return config().getConfigurations();
     }
 
     public Collection<Profile> getProfiles() {

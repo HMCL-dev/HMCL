@@ -23,24 +23,25 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 
-import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
 public final class I18n {
 
     private I18n() {}
 
-    private static ResourceBundle RESOURCE_BUNDLE = null;
-
-    static {
+    private static SupportedLocale getCurrentLocale() {
         try {
-            RESOURCE_BUNDLE = Settings.INSTANCE.getLocale().getResourceBundle();
-        } catch (Throwable e) {
-            LOG.log(Level.SEVERE, "Settings cannot be initialized", e);
+            return ConfigHolder.config().getLocalization();
+        } catch (IllegalStateException e) {
+            // e is thrown by ConfigHolder.config(), indicating the config hasn't been loaded
+            // fallback to use default locale
+            return Locales.DEFAULT;
         }
     }
 
     public static ResourceBundle getResourceBundle() {
-        return RESOURCE_BUNDLE == null ? Locales.DEFAULT.getResourceBundle() : RESOURCE_BUNDLE;
+        return getCurrentLocale().getResourceBundle();
     }
 
     public static String i18n(String key, Object... formatArgs) {

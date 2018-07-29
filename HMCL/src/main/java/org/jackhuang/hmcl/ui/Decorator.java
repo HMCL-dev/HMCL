@@ -55,8 +55,8 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
-import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -69,7 +69,6 @@ import org.jackhuang.hmcl.ui.wizard.*;
 import org.jackhuang.hmcl.util.Lang;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -81,7 +80,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 
 import static java.util.stream.Collectors.toList;
-import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class Decorator extends StackPane implements TaskExecutorDialogWizardDisplayer {
@@ -200,7 +199,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
             );
             nowAnimation.play();
         });
-        if (!Settings.INSTANCE.isFirstLaunch() || Settings.INSTANCE.getLocale().getLocale() != Locale.CHINA)
+        if (!ConfigHolder.isNewlyCreated() || config().getLocalization().getLocale() != Locale.CHINA)
             drawerWrapper.getChildren().remove(welcomeView);
 
         if (!min) buttonsContainer.getChildren().remove(btnMin);
@@ -228,8 +227,8 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
                 Bindings.createObjectBinding(
                         () -> {
                             Image image = null;
-                            if (CONFIG.getBackgroundImageType() == EnumBackgroundImage.CUSTOM && CONFIG.getBackgroundImage() != null) {
-                                image = tryLoadImage(Paths.get(CONFIG.getBackgroundImage()))
+                            if (config().getBackgroundImageType() == EnumBackgroundImage.CUSTOM && config().getBackgroundImage() != null) {
+                                image = tryLoadImage(Paths.get(config().getBackgroundImage()))
                                         .orElse(null);
                             }
                             if (image == null) {
@@ -237,8 +236,8 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
                             }
                             return new Background(new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, new BackgroundSize(800, 480, false, false, true, true)));
                         },
-                        CONFIG.backgroundImageTypeProperty(),
-                        CONFIG.backgroundImageProperty()));
+                        config().backgroundImageTypeProperty(),
+                        config().backgroundImageProperty()));
     }
 
     private Image defaultBackground = new Image("/assets/img/background.jpg");

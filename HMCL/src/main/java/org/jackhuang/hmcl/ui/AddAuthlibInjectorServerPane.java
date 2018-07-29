@@ -39,7 +39,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 public class AddAuthlibInjectorServerPane extends StackPane {
 
@@ -133,8 +133,8 @@ public class AddAuthlibInjectorServerPane extends StackPane {
 
     @FXML
     private void onAddFinish() {
-        if (!CONFIG.getAuthlibInjectorServers().contains(serverBeingAdded)) {
-            CONFIG.getAuthlibInjectorServers().add(serverBeingAdded);
+        if (!config().getAuthlibInjectorServers().contains(serverBeingAdded)) {
+            config().getAuthlibInjectorServers().add(serverBeingAdded);
         }
         fireEvent(new DialogCloseEvent());
     }

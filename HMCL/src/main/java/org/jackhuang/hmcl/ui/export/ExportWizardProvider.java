@@ -37,7 +37,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 public final class ExportWizardProvider implements WizardProvider {
     private final Profile profile;
@@ -83,11 +83,11 @@ public final class ExportWizardProvider implements WizardProvider {
 
                         try (ZipEngine zip = new ZipEngine(modpackFile)) {
                             Config exported = new Config();
-                            exported.setBackgroundImageType(CONFIG.getBackgroundImageType());
-                            exported.setBackgroundImage(CONFIG.getBackgroundImage());
-                            exported.setTheme(CONFIG.getTheme());
-                            exported.setDownloadType(CONFIG.getDownloadType());
-                            exported.getAuthlibInjectorServers().setAll(CONFIG.getAuthlibInjectorServers());
+                            exported.setBackgroundImageType(config().getBackgroundImageType());
+                            exported.setBackgroundImage(config().getBackgroundImage());
+                            exported.setTheme(config().getTheme());
+                            exported.setDownloadType(config().getDownloadType());
+                            exported.getAuthlibInjectorServers().setAll(config().getAuthlibInjectorServers());
                             zip.putTextFile(exported.toJson(), ConfigHolder.CONFIG_FILENAME);
                             zip.putFile(tempModpack, "modpack.zip");
 

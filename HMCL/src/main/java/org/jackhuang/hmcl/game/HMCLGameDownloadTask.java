@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 /**
  * @author huangyuhui
@@ -63,7 +63,7 @@ public class HMCLGameDownloadTask extends Task {
 
         // Force using common directory will not affect the behaviour that repository acts
         // Since we always copy the downloaded jar to .minecraft/versions/<version>/
-        File cache = new File(Optional.ofNullable(Settings.INSTANCE.getCommonDirectory())
+        File cache = new File(Optional.ofNullable(Settings.instance().getCommonDirectory())
                 .orElse(Settings.getDefaultCommonDirectory()),
                 "jars/" + gameVersion + ".jar");
         if (cache.exists())

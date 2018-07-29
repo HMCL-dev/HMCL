@@ -44,7 +44,7 @@ import java.util.logging.Level;
 
 import static java.util.stream.Collectors.toList;
 import static javafx.collections.FXCollections.observableArrayList;
-import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -60,7 +60,7 @@ public final class Accounts {
     public static final OfflineAccountFactory FACTORY_OFFLINE = OfflineAccountFactory.INSTANCE;
     public static final YggdrasilAccountFactory FACTORY_YGGDRASIL = new YggdrasilAccountFactory(MojangYggdrasilProvider.INSTANCE);
     public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(
-            new AuthlibInjectorDownloader(Launcher.HMCL_DIRECTORY.toPath(), () -> Settings.INSTANCE.getDownloadProvider())::getArtifactInfo,
+            new AuthlibInjectorDownloader(Launcher.HMCL_DIRECTORY.toPath(), () -> Settings.instance().getDownloadProvider())::getArtifactInfo,
             Accounts::getOrCreateAuthlibInjectorServer);
 
     private static final String TYPE_OFFLINE = "offline";
@@ -125,7 +125,7 @@ public final class Accounts {
             // selection is valid, store it
             if (!initialized)
                 return;
-            CONFIG.setSelectedAccount(selected == null ? "" : accountId(selected));
+            config().setSelectedAccount(selected == null ? "" : accountId(selected));
         }
     };
 
@@ -144,7 +144,7 @@ public final class Accounts {
         if (!initialized)
             return;
         // update storage
-        CONFIG.getAccountStorages().setAll(
+        config().getAccountStorages().setAll(
                 accounts.stream()
                         .map(account -> {
                             Map<Object, Object> storage = account.toStorage();
@@ -155,14 +155,14 @@ public final class Accounts {
     }
 
     /**
-     * Called when it's ready to load accounts from {@link ConfigHolder#CONFIG}.
+     * Called when it's ready to load accounts from {@link ConfigHolder#config()}.
      */
     static void init() {
         if (initialized)
             throw new IllegalStateException("Already initialized");
 
         // load accounts
-        CONFIG.getAccountStorages().forEach(storage -> {
+        config().getAccountStorages().forEach(storage -> {
             AccountFactory<?> factory = type2factory.get(storage.get("type"));
             if (factory == null) {
                 LOG.warning("Unrecognized account type: " + storage);
@@ -180,12 +180,12 @@ public final class Accounts {
 
         initialized = true;
 
-        CONFIG.getAuthlibInjectorServers().addListener(onInvalidating(Accounts::removeDanglingAuthlibInjectorAccounts));
+        config().getAuthlibInjectorServers().addListener(onInvalidating(Accounts::removeDanglingAuthlibInjectorAccounts));
 
         // load selected account
         selectedAccount.set(
                 accounts.stream()
-                        .filter(it -> accountId(it).equals(CONFIG.getSelectedAccount()))
+                        .filter(it -> accountId(it).equals(config().getSelectedAccount()))
                         .findFirst()
                         .orElse(null));
     }
@@ -212,7 +212,7 @@ public final class Accounts {
 
     // ==== authlib-injector ====
     private static AuthlibInjectorServer getOrCreateAuthlibInjectorServer(String url) {
-        return CONFIG.getAuthlibInjectorServers().stream()
+        return config().getAuthlibInjectorServers().stream()
                 .filter(server -> url.equals(server.getUrl()))
                 .findFirst()
                 .orElseGet(() -> {
@@ -226,7 +226,7 @@ public final class Accounts {
                         LOG.log(Level.WARNING, "Failed to migrate authlib injector server " + url, e);
                     }
 
-                    CONFIG.getAuthlibInjectorServers().add(server);
+                    config().getAuthlibInjectorServers().add(server);
                     return server;
                 });
     }
@@ -239,7 +239,7 @@ public final class Accounts {
         accounts.stream()
                 .filter(AuthlibInjectorAccount.class::isInstance)
                 .map(AuthlibInjectorAccount.class::cast)
-                .filter(it -> !CONFIG.getAuthlibInjectorServers().contains(it.getServer()))
+                .filter(it -> !config().getAuthlibInjectorServers().contains(it.getServer()))
                 .collect(toList())
                 .forEach(accounts::remove);
     }
