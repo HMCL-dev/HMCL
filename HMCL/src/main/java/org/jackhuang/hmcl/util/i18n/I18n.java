@@ -24,17 +24,24 @@ import java.util.ResourceBundle;
 import java.util.logging.Level;
 
 import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
 public final class I18n {
 
     private I18n() {}
 
-    public static ResourceBundle getResourceBundle() {
-        if (ConfigHolder.isInitialized()) {
-            return ConfigHolder.config().getLocalization().getResourceBundle();
-        } else {
-            return Locales.DEFAULT.getResourceBundle();
+    private static SupportedLocale getCurrentLocale() {
+        try {
+            return ConfigHolder.config().getLocalization();
+        } catch (IllegalStateException e) {
+            // e is thrown by ConfigHolder.config(), indicating the config hasn't been loaded
+            // fallback to use default locale
+            return Locales.DEFAULT;
         }
+    }
+
+    public static ResourceBundle getResourceBundle() {
+        return getCurrentLocale().getResourceBundle();
     }
 
     public static String i18n(String key, Object... formatArgs) {

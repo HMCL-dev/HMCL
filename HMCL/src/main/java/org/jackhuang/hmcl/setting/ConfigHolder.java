@@ -38,7 +38,6 @@ public final class ConfigHolder {
     public static final Path CONFIG_PATH = Paths.get(CONFIG_FILENAME).toAbsolutePath();
 
     private static Config configInstance;
-    private static boolean initialized;
     private static boolean newlyCreated;
 
     public static Config config() {
@@ -46,10 +45,6 @@ public final class ConfigHolder {
             throw new IllegalStateException("Configuration hasn't been loaded");
         }
         return configInstance;
-    }
-
-    public static boolean isInitialized() {
-        return initialized;
     }
 
     public static boolean isNewlyCreated() {
@@ -72,8 +67,6 @@ public final class ConfigHolder {
         if (newlyCreated) {
             saveConfig();
         }
-
-        initialized = true;
     }
 
     private static Config loadConfig() {
