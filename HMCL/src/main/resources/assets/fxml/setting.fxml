@@ -31,7 +31,7 @@
                     </right>
                 </BorderPane>
 
-                <MultiFileItem fx:id="fileCommonLocation" title="%launcher.common_directory" chooserTitle="%launcher.common_directory.choose" hasSubtitle="true"  customText="%settings.custom" />
+                <MultiFileItem fx:id="fileCommonLocation" title="%launcher.common_directory" directory="true" chooserTitle="%launcher.common_directory.choose" hasSubtitle="true"  customText="%settings.custom" />
 
                 <MultiFileItem fx:id="backgroundItem" title="%launcher.background" chooserTitle="%launcher.background.choose"
                                hasSubtitle="true" customText="%settings.custom" />
