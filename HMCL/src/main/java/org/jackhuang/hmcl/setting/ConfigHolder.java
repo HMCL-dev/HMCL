@@ -39,6 +39,7 @@ public final class ConfigHolder {
 
     private static Config configInstance;
     private static boolean initialized;
+    private static boolean newlyCreated;
 
     public static Config config() {
         if (configInstance == null) {
@@ -51,33 +52,49 @@ public final class ConfigHolder {
         return initialized;
     }
 
+    public static boolean isNewlyCreated() {
+        if (configInstance == null) {
+            throw new IllegalStateException("Configuration hasn't been loaded");
+        }
+        return newlyCreated;
+    }
+
     public synchronized static void init() {
         if (configInstance != null) {
             throw new IllegalStateException("Configuration is already loaded");
         }
-        configInstance = initSettings();
+
+        configInstance = loadConfig();
+        configInstance.addListener(source -> saveConfig());
+
         Settings.init();
+
+        if (newlyCreated) {
+            saveConfig();
+        }
+
         initialized = true;
     }
 
-    private static Config initSettings() {
-        Config config = new Config();
+    private static Config loadConfig() {
         if (Files.exists(CONFIG_PATH)) {
             try {
-                String json = new String(Files.readAllBytes(CONFIG_PATH), UTF_8);
-                Map<?, ?> raw = new Gson().fromJson(json, Map.class);
-                Config deserialized = Config.fromJson(json);
+                String content = new String(Files.readAllBytes(CONFIG_PATH), UTF_8);
+                Config deserialized = Config.fromJson(content);
                 if (deserialized == null) {
-                    LOG.finer("Config file is empty, use the default config.");
+                    LOG.info("Config is empty");
                 } else {
-                    config = upgradeConfig(deserialized, raw);
+                    Map<?, ?> raw = new Gson().fromJson(content, Map.class);
+                    return upgradeConfig(deserialized, raw);
                 }
-                LOG.finest("Initialized settings.");
             } catch (IOException | JsonParseException e) {
                 LOG.log(Level.WARNING, "Something went wrong when loading config.", e);
             }
         }
-        return config;
+
+        LOG.info("Creating an empty config");
+        newlyCreated = true;
+        return new Config();
     }
 
     static void saveConfig() {
