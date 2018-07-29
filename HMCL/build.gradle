@@ -47,9 +47,10 @@ jar {
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 
     manifest {
-        attributes 'Created-By'        : 'Copyright(c) 2013-2018 huangyuhui.',
-                'Main-Class'        : mainClass,
-                'Multi-Release': "true"
+        attributes 'Created-By': 'Copyright(c) 2013-2018 huangyuhui.',
+                'Main-Class': mainClass,
+                'Multi-Release': "true",
+                'Implementation-Version': version
     }
 
     doLast {
