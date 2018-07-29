@@ -38,7 +38,7 @@ public final class ConfigHolder {
     public static final Path CONFIG_PATH = Paths.get(CONFIG_FILENAME).toAbsolutePath();
     public static final Config CONFIG = initSettings();
 
-    private static Config upgradeSettings(Config deserialized, Map rawJson) {
+    private static Config upgradeSettings(Config deserialized, Map<?, ?> rawJson) {
         if (!rawJson.containsKey("commonDirType"))
             deserialized.setCommonDirType(deserialized.getCommonDirectory().equals(Settings.getDefaultCommonDirectory()) ? EnumCommonDirectory.DEFAULT : EnumCommonDirectory.CUSTOM);
         return deserialized;
@@ -49,7 +49,7 @@ public final class ConfigHolder {
         if (Files.exists(CONFIG_PATH)) {
             try {
                 String json = new String(Files.readAllBytes(CONFIG_PATH), UTF_8);
-                Map raw = new Gson().fromJson(json, Map.class);
+                Map<?, ?> raw = new Gson().fromJson(json, Map.class);
                 Config deserialized = Config.fromJson(json);
                 if (deserialized == null) {
                     LOG.finer("Settings file is empty, use the default settings.");
@@ -64,9 +64,10 @@ public final class ConfigHolder {
         return config;
     }
 
-    static void saveConfig(Config config) {
+    static void saveConfig() {
+        LOG.info("Saving config");
         try {
-            Files.write(CONFIG_PATH, config.toJson().getBytes(UTF_8));
+            Files.write(CONFIG_PATH, CONFIG.toJson().getBytes(UTF_8));
         } catch (IOException ex) {
             LOG.log(Level.SEVERE, "Failed to save config", ex);
         }

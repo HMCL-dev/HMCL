@@ -27,12 +27,10 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.Locales;
 
-import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.CONFIG;
-import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class Settings {
 
@@ -51,16 +49,11 @@ public class Settings {
         for (Map.Entry<String, Profile> profileEntry : getProfileMap().entrySet()) {
             profileEntry.getValue().setName(profileEntry.getKey());
             profileEntry.getValue().nameProperty().setChangedListener(this::profileNameChanged);
-            profileEntry.getValue().addPropertyChangedListener(e -> save());
+            profileEntry.getValue().addPropertyChangedListener(e -> ConfigHolder.saveConfig());
         }
 
-        CONFIG.addListener(source -> save());
+        CONFIG.addListener(source -> ConfigHolder.saveConfig());
         CONFIG.setFirstLaunch(false);
-    }
-
-    private void save() {
-        LOG.info("Saving config");
-        ConfigHolder.saveConfig(CONFIG);
     }
 
     public boolean isFirstLaunch() {
