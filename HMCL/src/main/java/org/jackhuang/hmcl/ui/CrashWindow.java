@@ -31,6 +31,7 @@ import javafx.stage.Stage;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
 
 /**
  * @author huangyuhui
@@ -39,7 +40,7 @@ public class CrashWindow extends Stage {
 
     public CrashWindow(String text) {
         Label lblCrash = new Label();
-        if (false/* UPDATE: current version is outdated */)
+        if (UpdateChecker.isOutdated())
             lblCrash.setText(i18n("launcher.crash_out_dated"));
         else
             lblCrash.setText(i18n("launcher.crash"));

@@ -35,16 +35,19 @@ import javax.net.ssl.X509TrustManager;
 import javax.swing.JOptionPane;
 
 import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.upgrade.UpdateHandler;
 
 public final class Main {
 
     public static void main(String[] args) {
-        /* UPDATE: perform auto-update from local source */
-
         checkJavaFX();
         checkDirectoryPath();
         checkDSTRootCAX3();
         checkConfigPermission();
+
+        if (UpdateHandler.processArguments(args)) {
+            return;
+        }
 
         ConfigHolder.init();
         Launcher.main(args);

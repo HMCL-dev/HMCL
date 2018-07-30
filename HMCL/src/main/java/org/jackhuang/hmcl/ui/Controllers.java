@@ -179,12 +179,6 @@ public final class Controllers {
             decorator.showPage(node);
     }
 
-    public static void showUpdate() {
-        if (stage == null) // shut down
-            return;
-        getLeftPaneController().showUpdate();
-    }
-
     public static boolean isStopped() {
         return decorator == null;
     }

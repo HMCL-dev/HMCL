@@ -54,6 +54,7 @@ import org.jackhuang.hmcl.ui.construct.ClassTitle;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.IconedItem;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.MappedObservableList;
 
@@ -92,10 +93,20 @@ public final class LeftPaneController {
     public LeftPaneController(AdvancedListBox leftPane) {
         this.leftPane = leftPane;
 
-        this.launcherSettingsItem = Lang.apply(new IconedItem(SVG.gear(Theme.blackFillBinding(), 20, 20), i18n("settings.launcher")), iconedItem -> {
-            iconedItem.prefWidthProperty().bind(leftPane.widthProperty());
-            iconedItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
-        });
+        launcherSettingsItem = new IconedItem(SVG.gear(Theme.blackFillBinding(), 20, 20));
+
+        launcherSettingsItem.getLabel().textProperty().bind(
+                new When(UpdateChecker.outdatedProperty())
+                        .then(i18n("update.found"))
+                        .otherwise(i18n("settings.launcher")));
+
+        launcherSettingsItem.getLabel().textFillProperty().bind(
+                new When(UpdateChecker.outdatedProperty())
+                        .then(Color.RED)
+                        .otherwise(Color.BLACK));
+
+        launcherSettingsItem.prefWidthProperty().bind(leftPane.widthProperty());
+        launcherSettingsItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
 
         leftPane
                 .add(new ClassTitle(i18n("account").toUpperCase(), Lang.apply(new JFXButton(), button -> {
@@ -226,11 +237,6 @@ public final class LeftPaneController {
             list.add(ripplerContainer);
         }
         Platform.runLater(() -> profilePane.getChildren().setAll(list));
-    }
-
-    public void showUpdate() {
-        launcherSettingsItem.getLabel().setText(i18n("update.found"));
-        launcherSettingsItem.getLabel().setTextFill(Color.RED);
     }
 
     private boolean checkedModpack = false;
