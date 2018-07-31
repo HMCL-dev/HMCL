@@ -9,11 +9,6 @@ dependencies {
     compile rootProject.files("lib/JFoenix.jar")
 }
 
-configurations {
-    coreCompile.extendsFrom compile
-    coreRuntime.extendsFrom runtime
-}
-
 jar {
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 
