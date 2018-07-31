@@ -60,7 +60,7 @@ task makeExecutable(dependsOn: jar) doLast {
     }
     def loc = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length() - 4) + ".exe")
     def fos = new FileOutputStream(loc)
-    def is = new FileInputStream(new File(project.buildDir, '../HMCLauncher.exe'))
+    def is = new FileInputStream(new File(project.projectDir, "src/main/resources/assets/HMCLauncher.exe"))
     int read
     def bytes = new byte[8192]
     while((read = is.read(bytes)) != -1)
