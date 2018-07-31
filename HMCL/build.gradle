@@ -9,6 +9,12 @@ dependencies {
     compile rootProject.files("lib/JFoenix.jar")
 }
 
+def createChecksum(File file) {
+    def algorithm = "SHA-1"
+    def suffix = "sha1"
+    new File(file.parentFile, file.name + "." + suffix).text = MessageDigest.getInstance(algorithm).digest(file.bytes).encodeHex().toString() + "\n"
+}
+
 jar {
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 
@@ -20,39 +26,19 @@ jar {
     }
 
     doLast {
-        def messageDigest = MessageDigest.getInstance("SHA1")
-        archivePath.eachByte 1024 * 1024, { byte[] buf, int bytesRead ->
-            messageDigest.update(buf, 0, bytesRead)
-        }
-        def sha1Hex = new BigInteger(1, messageDigest.digest()).toString(16).padLeft(40, '0')
-        def fileEx = new File(project.buildDir, "libs/" + archivePath.getName() + ".sha1")
-        if (!fileEx.exists()) fileEx.createNewFile()
-        fileEx.append sha1Hex
+        createChecksum(archivePath)
     }
 }
 
-task makeExecutable(dependsOn: jar) doLast {
-    ext {
-        jar.classifier = ''
-        makeExecutableinjar = jar.archivePath
-        jar.classifier = ''
-        makeExecutableoutjar = jar.archivePath
-        jar.classifier = ''
-    }
-    def loc = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length() - 4) + ".exe")
-    def fos = new FileOutputStream(loc)
-    def is = new FileInputStream(new File(project.projectDir, "src/main/resources/assets/HMCLauncher.exe"))
-    int read
-    def bytes = new byte[8192]
-    while((read = is.read(bytes)) != -1)
-        fos.write(bytes, 0, read)
-    is.close()
-    is = new FileInputStream(makeExecutableoutjar)
-    while((read = is.read(bytes)) != -1)
-        fos.write(bytes, 0, read)
-    is.close()
-    fos.close()
-
+def createExecutable(String suffix, String header) {
+    def output = new File(jar.archivePath.parentFile, jar.archivePath.name[0..-4] + suffix)
+    output.bytes = new File(project.projectDir, header).bytes
+    output << jar.archivePath.bytes
+    createChecksum(output)
 }
 
-build.dependsOn makeExecutable
+task makeExecutables(dependsOn: jar) doLast {
+    createExecutable("exe", "src/main/resources/assets/HMCLauncher.exe")
+}
+
+build.dependsOn makeExecutables
