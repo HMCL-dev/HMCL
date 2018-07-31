@@ -31,12 +31,6 @@ jar {
     }
 }
 
-processResources {
-    from(sourceSets.main.resources.srcDirs) {
-        exclude 'icon.icns'
-    }
-}
-
 task makeExecutable(dependsOn: jar) doLast {
     ext {
         jar.classifier = ''
