@@ -22,6 +22,7 @@ import javafx.application.Platform;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.CrashWindow;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
+import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 
 import static java.util.Collections.newSetFromMap;
@@ -107,7 +108,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
             if (checkThrowable(e)) {
                 Platform.runLater(() -> new CrashWindow(text).show());
-                if (!UpdateChecker.isOutdated()) {
+                if (!UpdateChecker.isOutdated() && IntegrityChecker.isSelfVerified()) {
                     reportToServer(text);
                 }
             }

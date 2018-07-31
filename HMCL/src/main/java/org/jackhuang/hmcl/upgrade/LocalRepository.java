@@ -88,6 +88,7 @@ final class LocalRepository {
             }
             LOG.info("Downloading " + current.get());
             try {
+                IntegrityChecker.requireVerifiedJar(current.get().getLocation());
                 Files.createDirectories(localStorage.getParent());
                 ExecutableHeaderHelper.copyWithoutHeader(current.get().getLocation(), localStorage);
             } catch (IOException e) {
@@ -105,6 +106,7 @@ final class LocalRepository {
         }
 
         LOG.info("Applying update to " + target);
+        IntegrityChecker.requireVerifiedJar(localStorage);
         ExecutableHeaderHelper.copyWithHeader(localStorage, target);
     }
 

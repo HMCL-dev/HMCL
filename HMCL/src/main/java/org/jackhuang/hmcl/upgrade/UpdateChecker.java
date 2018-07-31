@@ -83,6 +83,10 @@ public final class UpdateChecker {
             return;
         }
 
+        if (!IntegrityChecker.isSelfVerified()) {
+            return;
+        }
+
         RemoteVersion fetched = RemoteVersion.fetch(source);
         Platform.runLater(() -> {
             if (source.equals(updateSource.get())) {

@@ -97,7 +97,7 @@ public final class UpdateHandler {
 
             } else if (difference > 0) {
                 Optional<LocalVersion> current = LocalVersion.current();
-                if (current.isPresent()) {
+                if (current.isPresent() && IntegrityChecker.isSelfVerified()) {
                     try {
                         requestUpdate(local.get().getLocation(), current.get().getLocation());
                     } catch (IOException e) {
@@ -118,6 +118,7 @@ public final class UpdateHandler {
     }
 
     private static void requestUpdate(Path updateTo, Path self) throws IOException {
+        IntegrityChecker.requireVerifiedJar(updateTo);
         startJava(updateTo, "--apply-to", self.toString());
     }
 
@@ -176,6 +177,9 @@ public final class UpdateHandler {
                     }
                     if (!stored.isPresent()) {
                         throw new IOException("Failed to find local repository, this shouldn't happen");
+                    }
+                    if (!IntegrityChecker.isSelfVerified()) {
+                        throw new IOException("Current JAR is not verified");
                     }
                     requestUpdate(stored.get().getLocation(), current.get().getLocation());
                     System.exit(0);

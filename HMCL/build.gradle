@@ -1,4 +1,9 @@
+import java.nio.file.FileSystems
+import java.security.KeyFactory
 import java.security.MessageDigest
+import java.security.Signature
+import java.security.spec.PKCS8EncodedKeySpec
+import java.util.zip.ZipFile
 
 def buildnumber = System.getenv("BUILD_NUMBER") ?: "SNAPSHOT"
 def versionroot = System.getenv("VERSION_ROOT") ?: "3.1"
@@ -9,10 +14,37 @@ dependencies {
     compile rootProject.files("lib/JFoenix.jar")
 }
 
+def digest(String algorithm, byte[] bytes) {
+    return MessageDigest.getInstance(algorithm).digest(bytes)
+}
+
 def createChecksum(File file) {
     def algorithm = "SHA-1"
     def suffix = "sha1"
-    new File(file.parentFile, file.name + "." + suffix).text = MessageDigest.getInstance(algorithm).digest(file.bytes).encodeHex().toString() + "\n"
+    new File(file.parentFile, file.name + "." + suffix).text = digest(algorithm, file.bytes).encodeHex().toString() + "\n"
+}
+
+def attachSignature() {
+    def keyLocation = System.getenv("HMCL_SIGNATURE_KEY");
+    if(keyLocation == null)
+        return;
+    def privatekey = KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(new File(keyLocation).bytes))
+
+    def signer = Signature.getInstance("SHA512withRSA")
+    signer.initSign(privatekey)
+    new ZipFile(jar.archivePath).withCloseable { zip ->
+        zip.stream()
+            .sorted(Comparator.comparing({ it.name }))
+            .forEach({
+                signer.update(digest("SHA-512", it.name.getBytes("UTF-8")))
+                signer.update(digest("SHA-512", zip.getInputStream(it).bytes))
+            })
+    }
+    def signature = signer.sign()
+
+    FileSystems.newFileSystem(URI.create("jar:" + jar.archivePath.toURI()), [:]).withCloseable { zipfs ->
+        zipfs.getPath("META-INF/hmcl_signature").bytes = signature
+    }
 }
 
 jar {
@@ -26,6 +58,7 @@ jar {
     }
 
     doLast {
+        attachSignature()
         createChecksum(archivePath)
     }
 }
