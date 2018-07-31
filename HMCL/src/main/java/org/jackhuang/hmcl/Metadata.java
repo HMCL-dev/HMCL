@@ -29,7 +29,7 @@ public final class Metadata {
     public static final String NAME = "HMCL";
     public static final String TITLE = NAME + " " + VERSION;
     
-    public static final String UPDATE_SERVER_URL = "https://www.huangyuhui.net";
+    public static final String UPDATE_SERVER_URL = System.getProperty("hmcl.update_source.override", "https://www.huangyuhui.net");
     public static final String CONTACT_URL = UPDATE_SERVER_URL + "/hmcl.php";
     public static final String PUBLISH_URL = "http://www.mcbbs.net/thread-142335-1-1.html";
 }

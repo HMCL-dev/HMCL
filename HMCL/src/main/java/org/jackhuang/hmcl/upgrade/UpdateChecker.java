@@ -37,7 +37,7 @@ public final class UpdateChecker {
     private UpdateChecker() {}
 
     private static ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>();
-    private static StringProperty updateSource = new SimpleStringProperty("http://localhost/hmcl/update_link");
+    private static StringProperty updateSource = new SimpleStringProperty(Metadata.UPDATE_SERVER_URL + "/api/update_link");
     private static BooleanBinding outdated = Bindings.createBooleanBinding(
             () -> {
                 RemoteVersion latest = latestVersion.get();
