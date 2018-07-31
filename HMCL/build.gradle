@@ -1,9 +1,5 @@
-import org.apache.tools.ant.filters.ReplaceTokens
-
 import java.security.MessageDigest
 import java.util.jar.JarFile
-import java.util.jar.Pack200
-import java.util.zip.GZIPOutputStream
 
 if (!hasProperty('mainClass')) {
     ext.mainClass = 'org.jackhuang.hmcl.Main'
@@ -68,29 +64,6 @@ processResources {
     }
 }
 
-task makePackGZ(dependsOn: jar) doLast {
-    ext {
-        jar.classifier = ''
-        makeExecutableinjar = jar.archivePath
-        jar.classifier = ''
-        makeExecutableoutjar = jar.archivePath
-        jar.classifier = ''
-    }
-    def loc = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".pack.gz")
-    def os = new GZIPOutputStream(new FileOutputStream(loc))
-    Pack200.newPacker().pack new JarFile(makeExecutableinjar), os
-    os.close()
-
-    def messageDigest = MessageDigest.getInstance("SHA1")
-    loc.eachByte 1024 * 1024, { byte[] buf, int bytesRead ->
-        messageDigest.update(buf, 0, bytesRead)
-    }
-    def sha1Hex = new BigInteger(1, messageDigest.digest()).toString(16).padLeft(40, '0')
-    def fileEx = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".pack.gz.sha1")
-    if (!fileEx.exists()) fileEx.createNewFile()
-    fileEx.append sha1Hex
-}
-
 task makeExecutable(dependsOn: jar) doLast {
     ext {
         jar.classifier = ''
@@ -115,5 +88,4 @@ task makeExecutable(dependsOn: jar) doLast {
 
 }
 
-build.dependsOn makePackGZ
 build.dependsOn makeExecutable
