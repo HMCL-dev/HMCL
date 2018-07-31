@@ -19,14 +19,7 @@
 group 'org.jackhuang'
 version '3.0'
 
-repositories {
-    mavenCentral()
-}
-
-allprojects {
-    group 'org.jackhuang'
-    version '3.0'
-
+subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
 
