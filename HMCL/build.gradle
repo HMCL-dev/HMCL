@@ -1,22 +1,8 @@
 import java.security.MessageDigest
-import java.util.jar.JarFile
 
-if (!hasProperty('mainClass')) {
-    ext.mainClass = 'org.jackhuang.hmcl.Main'
-}
-
-def buildnumber = System.getenv("TRAVIS_BUILD_NUMBER")
-if (buildnumber == null)
-    buildnumber = System.getenv("BUILD_NUMBER")
-if (buildnumber == null)
-    buildnumber = "SNAPSHOT"
-
-def versionroot = System.getenv("VERSION_ROOT")
-if (versionroot == null)
-    versionroot = "3.1"
-
-String mavenVersion = versionroot + '.' + buildnumber
-version = mavenVersion
+def buildnumber = System.getenv("BUILD_NUMBER") ?: "SNAPSHOT"
+def versionroot = System.getenv("VERSION_ROOT") ?: "3.1"
+version = versionroot + '.' + buildnumber
 
 dependencies {
     compile project(":HMCLCore")
@@ -41,9 +27,9 @@ jar {
 
     manifest {
         attributes 'Created-By': 'Copyright(c) 2013-2018 huangyuhui.',
-                'Main-Class': mainClass,
-                'Multi-Release': "true",
-                'Implementation-Version': version
+                   'Main-Class': 'org.jackhuang.hmcl.Main',
+                   'Multi-Release': 'true',
+                   'Implementation-Version': version
     }
 
     doLast {
