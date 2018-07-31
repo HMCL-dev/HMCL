@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
 
@@ -121,6 +123,23 @@ public final class UpdateHandler {
 
     private static void applyUpdate(Path target) throws IOException {
         LocalRepository.applyTo(target);
+
+        Optional<String> newVersion = LocalRepository.getStored().map(LocalVersion::getVersion);
+        if (newVersion.isPresent()) {
+            Optional<Path> newFilename = tryRename(target, newVersion.get());
+            if (newFilename.isPresent()) {
+                LOG.info("Move " + target + " to " + newFilename.get());
+                try {
+                    Files.move(target, newFilename.get());
+                    target = newFilename.get();
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "Failed to move target", e);
+                }
+            }
+        } else {
+            LOG.warning("Failed to find local repository");
+        }
+
         startJava(target);
     }
 
@@ -171,6 +190,18 @@ public final class UpdateHandler {
                 Platform.runLater(() -> Controllers.dialog(e.toString(), i18n("update.failed"), MessageBox.ERROR_MESSAGE));
             }
         });
+    }
+
+    private static Optional<Path> tryRename(Path path, String newVersion) {
+        String filename = path.getFileName().toString();
+        Matcher matcher = Pattern.compile("^(?<prefix>[hH][mM][cC][lL][.-])(?<version>\\d+(?:\\.\\d+)*)(?<suffix>\\.[^.]+)$").matcher(filename);
+        if (matcher.find()) {
+            String newFilename = matcher.group("prefix") + newVersion + matcher.group("suffix");
+            if (!newFilename.equals(filename)) {
+                return Optional.of(path.resolveSibling(newFilename));
+            }
+        }
+        return Optional.empty();
     }
 
     // ==== support for old versions ===
