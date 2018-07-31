@@ -17,11 +17,14 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.VersionNumber.asVersion;
 
 import java.io.IOException;
 
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.util.NetworkUtils;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -37,7 +40,8 @@ public final class UpdateChecker {
     private UpdateChecker() {}
 
     private static ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>();
-    private static StringProperty updateSource = new SimpleStringProperty(Metadata.UPDATE_SERVER_URL + "/api/update_link");
+    private static StringProperty updateSource = new SimpleStringProperty(
+            NetworkUtils.withQuery(Metadata.UPDATE_SERVER_URL + "/api/update_link", mapOf(pair("version", Metadata.VERSION))));
     private static BooleanBinding outdated = Bindings.createBooleanBinding(
             () -> {
                 RemoteVersion latest = latestVersion.get();

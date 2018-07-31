@@ -20,9 +20,11 @@ package org.jackhuang.hmcl.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -46,6 +48,27 @@ public final class NetworkUtils {
 
     public static void setUserAgentSupplier(Supplier<String> userAgentSupplier) {
         NetworkUtils.userAgentSupplier = Objects.requireNonNull(userAgentSupplier);
+    }
+
+    public static String withQuery(String baseUrl, Map<String, String> params) {
+        try {
+            StringBuilder sb = new StringBuilder(baseUrl);
+            boolean first = true;
+            for (Entry<String, String> param : params.entrySet()) {
+                if (first) {
+                    sb.append('?');
+                    first = false;
+                } else {
+                    sb.append('&');
+                }
+                sb.append(URLEncoder.encode(param.getKey(), "UTF-8"));
+                sb.append('=');
+                sb.append(URLEncoder.encode(param.getValue(), "UTF-8"));
+            }
+            return sb.toString();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public static HttpURLConnection createConnection(URL url) throws IOException {
