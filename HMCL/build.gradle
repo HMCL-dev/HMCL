@@ -9,14 +9,6 @@ dependencies {
     compile rootProject.files("lib/JFoenix.jar")
 }
 
-task generateSources(type: Sync) {
-    from 'src/main/java'
-    into "$buildDir/generated-src"
-}
-
-compileJava.setSource "$buildDir/generated-src"
-compileJava.dependsOn generateSources
-
 configurations {
     coreCompile.extendsFrom compile
     coreRuntime.extendsFrom runtime
