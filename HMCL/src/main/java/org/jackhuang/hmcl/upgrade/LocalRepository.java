@@ -19,11 +19,10 @@ package org.jackhuang.hmcl.upgrade;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
@@ -63,12 +62,21 @@ final class LocalRepository {
     /**
      * Creates a task that downloads the given version to local repository.
      */
-    public static FileDownloadTask downloadFromRemote(RemoteVersion version) {
-        try {
-            return new FileDownloadTask(new URL(version.getUrl()), localStorage.toFile(), version.getIntegrityCheck());
-        } catch (MalformedURLException e) {
-            throw new UncheckedIOException(e);
-        }
+    public static FileDownloadTask downloadFromRemote(RemoteVersion version) throws IOException {
+        Path stage = Files.createTempFile("hmcl-update-", ".jar");
+        return new FileDownloadTask(new URL(version.getUrl()), stage.toFile(), version.getIntegrityCheck()) {
+            @Override
+            public void execute() throws Exception {
+                try {
+                    super.execute();
+                    IntegrityChecker.requireVerifiedJar(stage);
+                    Files.createDirectories(localStorage.getParent());
+                    Files.copy(stage, localStorage, StandardCopyOption.REPLACE_EXISTING);
+                } finally {
+                    Files.deleteIfExists(stage);
+                }
+            }
+        };
     }
 
     /**

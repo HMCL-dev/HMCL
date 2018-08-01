@@ -162,7 +162,13 @@ public final class UpdateHandler {
     public static void updateFrom(RemoteVersion version) {
         checkFxUserThread();
 
-        Task task = LocalRepository.downloadFromRemote(version);
+        Task task;
+        try {
+            task = LocalRepository.downloadFromRemote(version);
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Failed to create upgrade download task", e);
+            return;
+        }
         TaskExecutor executor = task.executor();
         Region dialog = Controllers.taskDialog(executor, i18n("message.downloading"), "", null);
         thread(() -> {
