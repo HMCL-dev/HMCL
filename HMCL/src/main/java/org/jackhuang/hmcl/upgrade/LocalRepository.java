@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.upgrade;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -62,30 +63,50 @@ final class LocalRepository {
         }
     }
 
+    private static void writeToStorage(Path source, boolean checkHeaders) throws IOException {
+        IntegrityChecker.requireVerifiedJar(source);
+        Files.createDirectories(localStorage.getParent());
+        if (checkHeaders) {
+            ExecutableHeaderHelper.copyWithoutHeader(source, localStorage);
+        } else {
+            Files.copy(source, localStorage, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
     /**
      * Creates a task that downloads the given version to local repository.
      */
     public static FileDownloadTask downloadFromRemote(RemoteVersion version) throws IOException {
-        Path stage = Files.createTempFile("hmcl-update-", "");
-        return new FileDownloadTask(new URL(version.getUrl()), stage.toFile(), version.getIntegrityCheck()) {
+        Path downloaded = Files.createTempFile("hmcl-update-", null);
+        return new FileDownloadTask(new URL(version.getUrl()), downloaded.toFile(), version.getIntegrityCheck()) {
             @Override
             public void execute() throws Exception {
-                Path jar = stage;
+                super.execute();
+
                 try {
-                    super.execute();
-                    if (version.getType() == RemoteVersion.Type.PACK) {
-                        Path unpacked = Files.createTempFile("hmcl-update-", ".jar");
-                        try (GZIPInputStream stream = new GZIPInputStream(Files.newInputStream(jar));
-                             JarOutputStream out = new JarOutputStream(Files.newOutputStream(unpacked))) {
-                            Pack200.newUnpacker().unpack(stream, out);
-                        }
-                        jar = unpacked;
+                    switch (version.getType()) {
+                        case JAR:
+                            writeToStorage(downloaded, false);
+                            break;
+
+                        case PACK:
+                            Path unpacked = Files.createTempFile("hmcl-update-unpack-", null);
+                            try {
+                                try (InputStream in = new GZIPInputStream(Files.newInputStream(downloaded));
+                                        JarOutputStream out = new JarOutputStream(Files.newOutputStream(unpacked))) {
+                                    Pack200.newUnpacker().unpack(in, out);
+                                }
+                                writeToStorage(unpacked, false);
+                            } finally {
+                                Files.deleteIfExists(unpacked);
+                            }
+                            break;
+
+                        default:
+                            throw new IllegalArgumentException("Unknown type: " + version.getType());
                     }
-                    IntegrityChecker.requireVerifiedJar(jar);
-                    Files.createDirectories(localStorage.getParent());
-                    Files.copy(jar, localStorage, StandardCopyOption.REPLACE_EXISTING);
                 } finally {
-                    Files.deleteIfExists(jar);
+                    Files.deleteIfExists(downloaded);
                 }
             }
         };
@@ -108,9 +129,7 @@ final class LocalRepository {
             }
             LOG.info("Downloading " + current.get());
             try {
-                IntegrityChecker.requireVerifiedJar(current.get().getLocation());
-                Files.createDirectories(localStorage.getParent());
-                ExecutableHeaderHelper.copyWithoutHeader(current.get().getLocation(), localStorage);
+                writeToStorage(current.get().getLocation(), true);
             } catch (IOException e) {
                 LOG.log(Level.WARNING, "Failed to download " + current.get(), e);
             }

@@ -38,12 +38,13 @@ public class RemoteVersion {
             String jarHash = Optional.ofNullable(response.get("jarsha1")).map(JsonElement::getAsString).orElse(null);
             String packUrl = Optional.ofNullable(response.get("pack")).map(JsonElement::getAsString).orElse(null);
             String packHash = Optional.ofNullable(response.get("packsha1")).map(JsonElement::getAsString).orElse(null);
-            if (packUrl != null && packHash != null)
+            if (packUrl != null && packHash != null) {
                 return new RemoteVersion(version, packUrl, Type.PACK, new IntegrityCheck("SHA-1", packHash));
-            else if (jarUrl != null && jarHash != null)
+            } else if (jarUrl != null && jarHash != null) {
                 return new RemoteVersion(version, jarUrl, Type.JAR, new IntegrityCheck("SHA-1", jarHash));
-            else
-                throw new IOException("Missing both jar and pack download URL");
+            } else {
+                throw new IOException("No download url is available");
+            }
         } catch (JsonParseException e) {
             throw new IOException("Malformed response", e);
         }
