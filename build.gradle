@@ -19,6 +19,16 @@
 group 'org.jackhuang'
 version '3.0'
 
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'org.tukaani:xz:1.8'
+    }
+}
+
+
 subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'

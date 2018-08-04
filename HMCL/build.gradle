@@ -6,9 +6,11 @@ import java.security.spec.PKCS8EncodedKeySpec
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
 import java.util.jar.Pack200
-import java.util.zip.GZIPOutputStream
 import java.util.zip.ZipFile
 import java.nio.file.Files
+
+import org.tukaani.xz.LZMA2Options
+import org.tukaani.xz.XZOutputStream
 
 def buildnumber = System.getenv("BUILD_NUMBER") ?: "SNAPSHOT"
 def versionroot = System.getenv("VERSION_ROOT") ?: "3.1"
@@ -87,9 +89,9 @@ def createExecutable(String suffix, String header) {
     createChecksum(output)
 }
 
-task makePackGz(dependsOn: jar) doLast {
-    def outputPath = new File(jar.archivePath.parentFile, jar.archivePath.name[0..-4] + "pack.gz")
-    new GZIPOutputStream(outputPath.newOutputStream()).withCloseable { out ->
+task makePackXz(dependsOn: jar) doLast {
+    def outputPath = new File(jar.archivePath.parentFile, jar.archivePath.name[0..-4] + "pack.xz")
+    new XZOutputStream(outputPath.newOutputStream(), new LZMA2Options(9)).withCloseable { out ->
         new JarFile(jar.archivePath).withCloseable { jarFile -> packer.pack(jarFile, out) }
     }
 
@@ -101,5 +103,5 @@ task makeExecutables(dependsOn: jar) doLast {
     createExecutable("exe", "src/main/resources/assets/HMCLauncher.exe")
 }
 
-build.dependsOn makePackGz
+build.dependsOn makePackXz
 build.dependsOn makeExecutables

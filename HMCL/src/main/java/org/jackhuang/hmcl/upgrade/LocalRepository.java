@@ -30,10 +30,10 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
 import java.util.logging.Level;
-import java.util.zip.GZIPInputStream;
 
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.tukaani.xz.XZInputStream;
 
 /**
  * A class used to manage the local HMCL repository.
@@ -89,10 +89,10 @@ final class LocalRepository {
                             writeToStorage(downloaded, false);
                             break;
 
-                        case PACK_GZ:
+                        case PACK_XZ:
                             Path unpacked = Files.createTempFile("hmcl-update-unpack-", null);
                             try {
-                                try (InputStream in = new GZIPInputStream(Files.newInputStream(downloaded));
+                                try (InputStream in = new XZInputStream(Files.newInputStream(downloaded));
                                         JarOutputStream out = new JarOutputStream(Files.newOutputStream(unpacked))) {
                                     Pack200.newUnpacker().unpack(in, out);
                                 }

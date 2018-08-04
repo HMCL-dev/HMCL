@@ -36,10 +36,10 @@ public class RemoteVersion {
             String version = Optional.ofNullable(response.get("version")).map(JsonElement::getAsString).orElseThrow(() -> new IOException("version is missing"));
             String jarUrl = Optional.ofNullable(response.get("jar")).map(JsonElement::getAsString).orElse(null);
             String jarHash = Optional.ofNullable(response.get("jarsha1")).map(JsonElement::getAsString).orElse(null);
-            String packUrl = Optional.ofNullable(response.get("pack")).map(JsonElement::getAsString).orElse(null);
-            String packHash = Optional.ofNullable(response.get("packsha1")).map(JsonElement::getAsString).orElse(null);
-            if (packUrl != null && packHash != null) {
-                return new RemoteVersion(version, packUrl, Type.PACK_GZ, new IntegrityCheck("SHA-1", packHash));
+            String packXZUrl = Optional.ofNullable(response.get("packxz")).map(JsonElement::getAsString).orElse(null);
+            String packXZHash = Optional.ofNullable(response.get("packxzsha1")).map(JsonElement::getAsString).orElse(null);
+            if (packXZUrl != null && packXZHash != null) {
+                return new RemoteVersion(version, packXZUrl, Type.PACK_XZ, new IntegrityCheck("SHA-1", packXZHash));
             } else if (jarUrl != null && jarHash != null) {
                 return new RemoteVersion(version, jarUrl, Type.JAR, new IntegrityCheck("SHA-1", jarHash));
             } else {
@@ -84,7 +84,7 @@ public class RemoteVersion {
     }
 
     public enum Type {
-        PACK_GZ,
+        PACK_XZ,
         JAR
     }
 }
