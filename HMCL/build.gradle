@@ -1,9 +1,15 @@
 import java.nio.file.FileSystems
+import java.nio.file.StandardOpenOption
 import java.security.KeyFactory
 import java.security.MessageDigest
 import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
+import java.util.jar.JarFile
+import java.util.jar.JarOutputStream
+import java.util.jar.Pack200
+import java.util.zip.GZIPOutputStream
 import java.util.zip.ZipFile
+import java.nio.file.Files
 
 def buildnumber = System.getenv("BUILD_NUMBER") ?: "SNAPSHOT"
 def versionroot = System.getenv("VERSION_ROOT") ?: "3.1"
@@ -24,26 +30,27 @@ def createChecksum(File file) {
     new File(file.parentFile, file.name + "." + suffix).text = digest(algorithm, file.bytes).encodeHex().toString() + "\n"
 }
 
-def attachSignature() {
+def attachSignature(File jar) {
     def keyLocation = System.getenv("HMCL_SIGNATURE_KEY");
-    if(keyLocation == null)
-        return;
+    if (keyLocation == null)
+        return
     def privatekey = KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(new File(keyLocation).bytes))
 
     def signer = Signature.getInstance("SHA512withRSA")
     signer.initSign(privatekey)
-    new ZipFile(jar.archivePath).withCloseable { zip ->
+    new ZipFile(jar).withCloseable { zip ->
         zip.stream()
-            .sorted(Comparator.comparing({ it.name }))
-            .forEach({
-                signer.update(digest("SHA-512", it.name.getBytes("UTF-8")))
-                signer.update(digest("SHA-512", zip.getInputStream(it).bytes))
-            })
+                .sorted(Comparator.comparing { it.name })
+                .filter { it.name != "META-INF/hmcl_signature" }
+                .forEach {
+            signer.update(digest("SHA-512", it.name.getBytes("UTF-8")))
+            signer.update(digest("SHA-512", zip.getInputStream(it).bytes))
+        }
     }
     def signature = signer.sign()
 
-    FileSystems.newFileSystem(URI.create("jar:" + jar.archivePath.toURI()), [:]).withCloseable { zipfs ->
-        zipfs.getPath("META-INF/hmcl_signature").bytes = signature
+    FileSystems.newFileSystem(URI.create("jar:" + jar.toURI()), [:]).withCloseable { zipfs ->
+        Files.newOutputStream(zipfs.getPath("META-INF/hmcl_signature"), StandardOpenOption.CREATE, StandardOpenOption.WRITE).bytes = signature
     }
 }
 
@@ -52,13 +59,13 @@ jar {
 
     manifest {
         attributes 'Created-By': 'Copyright(c) 2013-2018 huangyuhui.',
-                   'Main-Class': 'org.jackhuang.hmcl.Main',
-                   'Multi-Release': 'true',
-                   'Implementation-Version': version
+                'Main-Class': 'org.jackhuang.hmcl.Main',
+                'Multi-Release': 'true',
+                'Implementation-Version': version
     }
 
     doLast {
-        attachSignature()
+        attachSignature(archivePath)
         createChecksum(archivePath)
     }
 }
@@ -70,8 +77,29 @@ def createExecutable(String suffix, String header) {
     createChecksum(output)
 }
 
+task makePackGz(dependsOn: jar) doLast {
+    def tmp = new File(project.buildDir, "tmp")
+    def unpackedJar = new File(tmp, jar.archivePath.name)
+    def packGz = new File(jar.archivePath.parentFile, jar.archivePath.name[0..-4] + "pack.gz")
+
+    def originalStream = new ByteArrayOutputStream()
+    def unpackedJarStream = new JarOutputStream(new FileOutputStream(unpackedJar))
+    Pack200.newPacker().pack(new JarFile(jar.archivePath), originalStream)
+    Pack200.newUnpacker().unpack(new ByteArrayInputStream(originalStream.toByteArray()), unpackedJarStream)
+    unpackedJarStream.close()
+    attachSignature(unpackedJar)
+
+    new GZIPOutputStream(new FileOutputStream(packGz)).withCloseable { stream ->
+        Pack200.newPacker().pack(new JarFile(unpackedJar), stream)
+    }
+
+    createChecksum(packGz)
+}
+
+
 task makeExecutables(dependsOn: jar) doLast {
     createExecutable("exe", "src/main/resources/assets/HMCLauncher.exe")
 }
 
+build.dependsOn makePackGz
 build.dependsOn makeExecutables
