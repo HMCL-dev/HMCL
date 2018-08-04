@@ -39,9 +39,12 @@ import javafx.beans.value.ObservableBooleanValue;
 public final class UpdateChecker {
     private UpdateChecker() {}
 
+    public static final String CHANNEL_STABLE = "stable";
+    public static final String CHANNEL_DEV = "dev";
+
+    private static StringProperty updateChannel = new SimpleStringProperty(CHANNEL_STABLE);
+
     private static ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>();
-    private static StringProperty updateSource = new SimpleStringProperty(
-            NetworkUtils.withQuery(Metadata.UPDATE_SERVER_URL + "/api/update_link", mapOf(pair("version", Metadata.VERSION))));
     private static BooleanBinding outdated = Bindings.createBooleanBinding(
             () -> {
                 RemoteVersion latest = latestVersion.get();
@@ -53,24 +56,24 @@ public final class UpdateChecker {
             },
             latestVersion);
 
+    public static String getUpdateChannel() {
+        return updateChannel.get();
+    }
+
+    public static void setUpdateChannel(String updateChannel) {
+        UpdateChecker.updateChannel.set(updateChannel);
+    }
+
+    public static StringProperty updateChannelProperty() {
+        return updateChannel;
+    }
+
     public static RemoteVersion getLatestVersion() {
         return latestVersion.get();
     }
 
     public static ReadOnlyObjectProperty<RemoteVersion> latestVersionProperty() {
         return latestVersion;
-    }
-
-    public static String getUpdateSource() {
-        return updateSource.get();
-    }
-
-    public static void setUpdateSource(String updateSource) {
-        UpdateChecker.updateSource.set(updateSource);
-    }
-
-    public static StringProperty updateSourceProperty() {
-        return updateSource;
     }
 
     public static boolean isOutdated() {
@@ -82,18 +85,18 @@ public final class UpdateChecker {
     }
 
     public static void checkUpdate() throws IOException {
-        String source = updateSource.get();
-        if (source == null) {
-            return;
-        }
-
         if (!IntegrityChecker.isSelfVerified()) {
             return;
         }
 
-        RemoteVersion fetched = RemoteVersion.fetch(source);
+        String channel = getUpdateChannel();
+        String url = NetworkUtils.withQuery(Metadata.UPDATE_URL, mapOf(
+                pair("version", Metadata.VERSION),
+                pair("channel", channel)));
+
+        RemoteVersion fetched = RemoteVersion.fetch(url);
         Platform.runLater(() -> {
-            if (source.equals(updateSource.get())) {
+            if (channel.equals(getUpdateChannel())) {
                 latestVersion.set(fetched);
             }
         });
