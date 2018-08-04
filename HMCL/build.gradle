@@ -1,5 +1,4 @@
 import java.nio.file.FileSystems
-import java.nio.file.StandardOpenOption
 import java.security.KeyFactory
 import java.security.MessageDigest
 import java.security.Signature
@@ -43,15 +42,25 @@ def attachSignature(File jar) {
                 .sorted(Comparator.comparing { it.name })
                 .filter { it.name != "META-INF/hmcl_signature" }
                 .forEach {
-            signer.update(digest("SHA-512", it.name.getBytes("UTF-8")))
-            signer.update(digest("SHA-512", zip.getInputStream(it).bytes))
-        }
+                    signer.update(digest("SHA-512", it.name.getBytes("UTF-8")))
+                    signer.update(digest("SHA-512", zip.getInputStream(it).bytes))
+                }
     }
     def signature = signer.sign()
 
     FileSystems.newFileSystem(URI.create("jar:" + jar.toURI()), [:]).withCloseable { zipfs ->
-        Files.newOutputStream(zipfs.getPath("META-INF/hmcl_signature"), StandardOpenOption.CREATE, StandardOpenOption.WRITE).bytes = signature
+        Files.newOutputStream(zipfs.getPath("META-INF/hmcl_signature")).withCloseable { it.bytes = signature }
     }
+}
+
+ext.packer = Pack200.newPacker()
+packer.properties()["pack.effort"] = "9"
+ext.unpacker = Pack200.newUnpacker()
+
+def repack(File file) {
+    def packed = new ByteArrayOutputStream()
+    new JarFile(file).withCloseable { packer.pack(it, packed) }
+    new JarOutputStream(file.newOutputStream()).withCloseable { unpacker.unpack(new ByteArrayInputStream(packed.toByteArray()), it) }
 }
 
 jar {
@@ -65,6 +74,7 @@ jar {
     }
 
     doLast {
+        repack(archivePath)
         attachSignature(archivePath)
         createChecksum(archivePath)
     }
@@ -78,22 +88,12 @@ def createExecutable(String suffix, String header) {
 }
 
 task makePackGz(dependsOn: jar) doLast {
-    def tmp = new File(project.buildDir, "tmp")
-    def unpackedJar = new File(tmp, jar.archivePath.name)
-    def packGz = new File(jar.archivePath.parentFile, jar.archivePath.name[0..-4] + "pack.gz")
-
-    def originalStream = new ByteArrayOutputStream()
-    def unpackedJarStream = new JarOutputStream(new FileOutputStream(unpackedJar))
-    Pack200.newPacker().pack(new JarFile(jar.archivePath), originalStream)
-    Pack200.newUnpacker().unpack(new ByteArrayInputStream(originalStream.toByteArray()), unpackedJarStream)
-    unpackedJarStream.close()
-    attachSignature(unpackedJar)
-
-    new GZIPOutputStream(new FileOutputStream(packGz)).withCloseable { stream ->
-        Pack200.newPacker().pack(new JarFile(unpackedJar), stream)
+    def outputPath = new File(jar.archivePath.parentFile, jar.archivePath.name[0..-4] + "pack.gz")
+    new GZIPOutputStream(outputPath.newOutputStream()).withCloseable { out ->
+        new JarFile(jar.archivePath).withCloseable { jarFile -> packer.pack(jarFile, out) }
     }
 
-    createChecksum(packGz)
+    createChecksum(outputPath)
 }
 
 
