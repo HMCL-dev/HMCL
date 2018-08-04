@@ -17,14 +17,12 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
-import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLDecoder;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.CodeSource;
@@ -47,22 +45,11 @@ class LocalVersion {
             return Optional.empty();
         }
 
-        String pathString = url.getFile();
-        if (pathString.isEmpty()) {
-            return Optional.empty();
-        }
-
-        try {
-            pathString = URLDecoder.decode(pathString, UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-
         Path path;
         try {
-            path = Paths.get(pathString);
-        } catch (InvalidPathException e) {
-            LOG.log(Level.WARNING, "Invalid path: " + pathString, e);
+            path = Paths.get(url.toURI());
+        } catch (FileSystemNotFoundException | IllegalArgumentException | URISyntaxException e) {
+            LOG.log(Level.WARNING, "Invalid path: " + url, e);
             return Optional.empty();
         }
 
