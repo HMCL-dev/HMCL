@@ -39,7 +39,7 @@ public class RemoteVersion {
             String packUrl = Optional.ofNullable(response.get("pack")).map(JsonElement::getAsString).orElse(null);
             String packHash = Optional.ofNullable(response.get("packsha1")).map(JsonElement::getAsString).orElse(null);
             if (packUrl != null && packHash != null) {
-                return new RemoteVersion(version, packUrl, Type.PACK, new IntegrityCheck("SHA-1", packHash));
+                return new RemoteVersion(version, packUrl, Type.PACK_GZ, new IntegrityCheck("SHA-1", packHash));
             } else if (jarUrl != null && jarHash != null) {
                 return new RemoteVersion(version, jarUrl, Type.JAR, new IntegrityCheck("SHA-1", jarHash));
             } else {
@@ -84,7 +84,7 @@ public class RemoteVersion {
     }
 
     public enum Type {
-        PACK,
+        PACK_GZ,
         JAR
     }
 }

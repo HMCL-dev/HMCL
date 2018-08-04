@@ -89,7 +89,7 @@ final class LocalRepository {
                             writeToStorage(downloaded, false);
                             break;
 
-                        case PACK:
+                        case PACK_GZ:
                             Path unpacked = Files.createTempFile("hmcl-update-unpack-", null);
                             try {
                                 try (InputStream in = new GZIPInputStream(Files.newInputStream(downloaded));
