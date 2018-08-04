@@ -34,9 +34,16 @@ public class RemoteVersion {
         try {
             JsonObject response = JsonUtils.fromNonNullJson(NetworkUtils.doGet(NetworkUtils.toURL(url)), JsonObject.class);
             String version = Optional.ofNullable(response.get("version")).map(JsonElement::getAsString).orElseThrow(() -> new IOException("version is missing"));
-            String downloadUrl = Optional.ofNullable(response.get("jar")).map(JsonElement::getAsString).orElseThrow(() -> new IOException("jar is missing"));
-            String sha1 = Optional.ofNullable(response.get("jarsha1")).map(JsonElement::getAsString).orElseThrow(() -> new IOException("jarsha1 is missing"));
-            return new RemoteVersion(version, downloadUrl, new IntegrityCheck("SHA-1", sha1));
+            String jarUrl = Optional.ofNullable(response.get("jar")).map(JsonElement::getAsString).orElse(null);
+            String jarHash = Optional.ofNullable(response.get("jarsha1")).map(JsonElement::getAsString).orElse(null);
+            String packUrl = Optional.ofNullable(response.get("pack")).map(JsonElement::getAsString).orElse(null);
+            String packHash = Optional.ofNullable(response.get("packsha1")).map(JsonElement::getAsString).orElse(null);
+            if (packUrl != null && packHash != null)
+                return new RemoteVersion(version, packUrl, Type.PACK, new IntegrityCheck("SHA-1", packHash));
+            else if (jarUrl != null && jarHash != null)
+                return new RemoteVersion(version, jarUrl, Type.JAR, new IntegrityCheck("SHA-1", jarHash));
+            else
+                throw new IOException("Missing both jar and pack download URL");
         } catch (JsonParseException e) {
             throw new IOException("Malformed response", e);
         }
@@ -44,11 +51,13 @@ public class RemoteVersion {
 
     private String version;
     private String url;
+    private Type type;
     private IntegrityCheck integrityCheck;
 
-    public RemoteVersion(String version, String url, IntegrityCheck integrityCheck) {
+    public RemoteVersion(String version, String url, Type type, IntegrityCheck integrityCheck) {
         this.version = version;
         this.url = url;
+        this.type = type;
         this.integrityCheck = integrityCheck;
     }
 
@@ -60,6 +69,10 @@ public class RemoteVersion {
         return url;
     }
 
+    public Type getType() {
+        return type;
+    }
+
     public IntegrityCheck getIntegrityCheck() {
         return integrityCheck;
     }
@@ -67,5 +80,10 @@ public class RemoteVersion {
     @Override
     public String toString() {
         return "[" + version + " from " + url + "]";
+    }
+
+    public enum Type {
+        PACK,
+        JAR
     }
 }

@@ -26,7 +26,10 @@ import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Pack200;
 import java.util.logging.Level;
+import java.util.zip.GZIPInputStream;
 
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -63,17 +66,26 @@ final class LocalRepository {
      * Creates a task that downloads the given version to local repository.
      */
     public static FileDownloadTask downloadFromRemote(RemoteVersion version) throws IOException {
-        Path stage = Files.createTempFile("hmcl-update-", ".jar");
+        Path stage = Files.createTempFile("hmcl-update-", "");
         return new FileDownloadTask(new URL(version.getUrl()), stage.toFile(), version.getIntegrityCheck()) {
             @Override
             public void execute() throws Exception {
+                Path jar = stage;
                 try {
                     super.execute();
-                    IntegrityChecker.requireVerifiedJar(stage);
+                    if (version.getType() == RemoteVersion.Type.PACK) {
+                        Path unpacked = Files.createTempFile("hmcl-update-", ".jar");
+                        try (GZIPInputStream stream = new GZIPInputStream(Files.newInputStream(jar));
+                             JarOutputStream out = new JarOutputStream(Files.newOutputStream(unpacked))) {
+                            Pack200.newUnpacker().unpack(stream, out);
+                        }
+                        jar = unpacked;
+                    }
+                    IntegrityChecker.requireVerifiedJar(jar);
                     Files.createDirectories(localStorage.getParent());
-                    Files.copy(stage, localStorage, StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(jar, localStorage, StandardCopyOption.REPLACE_EXISTING);
                 } finally {
-                    Files.deleteIfExists(stage);
+                    Files.deleteIfExists(jar);
                 }
             }
         };
