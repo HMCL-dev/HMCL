@@ -6,6 +6,7 @@ import java.security.spec.PKCS8EncodedKeySpec
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
 import java.util.jar.Pack200
+import java.util.zip.GZIPOutputStream
 import java.util.zip.ZipFile
 import java.nio.file.Files
 
@@ -51,7 +52,7 @@ def attachSignature(File jar) {
     def signature = signer.sign()
 
     FileSystems.newFileSystem(URI.create("jar:" + jar.toURI()), [:]).withCloseable { zipfs ->
-        Files.newOutputStream(zipfs.getPath("META-INF/hmcl_signature")).withCloseable { it.bytes = signature }
+        Files.newOutputStream(zipfs.getPath("META-INF/hmcl_signature")).withCloseable { it << signature }
     }
 }
 
@@ -89,13 +90,26 @@ def createExecutable(String suffix, String header) {
     createChecksum(output)
 }
 
-task makePackXz(dependsOn: jar) doLast {
-    def outputPath = new File(jar.archivePath.parentFile, jar.archivePath.name[0..-4] + "pack.xz")
-    new XZOutputStream(outputPath.newOutputStream(), new LZMA2Options(9)).withCloseable { out ->
-        new JarFile(jar.archivePath).withCloseable { jarFile -> packer.pack(jarFile, out) }
+task makePack(dependsOn: jar) {
+    ext.outputPath = new File(jar.archivePath.parentFile, jar.archivePath.name[0..-4] + "pack")
+    doLast {
+        outputPath.newOutputStream().withCloseable { out ->
+            new JarFile(jar.archivePath).withCloseable { jarFile -> packer.pack(jarFile, out) }
+        }
+        createChecksum(outputPath)
     }
+}
 
-    createChecksum(outputPath)
+task makePackXz(dependsOn: makePack) doLast {
+    def packXz = new File(makePack.outputPath.parentFile, makePack.outputPath.name + ".xz")
+    new XZOutputStream(packXz.newOutputStream(), new LZMA2Options(9)).withCloseable { it << makePack.outputPath.bytes }
+    createChecksum(packXz)
+}
+
+task makePackGz(dependsOn: makePack) doLast {
+    def packGz = new File(makePack.outputPath.parentFile, makePack.outputPath.name + ".gz")
+    new GZIPOutputStream(packGz.newOutputStream()).withCloseable { it << makePack.outputPath.bytes }
+    createChecksum(packGz)
 }
 
 
@@ -104,4 +118,5 @@ task makeExecutables(dependsOn: jar) doLast {
 }
 
 build.dependsOn makePackXz
+build.dependsOn makePackGz
 build.dependsOn makeExecutables
