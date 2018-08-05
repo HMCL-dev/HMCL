@@ -1,3 +1,7 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '2.0.4'
+}
+
 import java.nio.file.FileSystems
 import java.security.KeyFactory
 import java.security.MessageDigest
@@ -67,19 +71,30 @@ def repack(File file) {
 }
 
 jar {
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-
     manifest {
         attributes 'Created-By': 'Copyright(c) 2013-2018 huangyuhui.',
                 'Main-Class': 'org.jackhuang.hmcl.Main',
                 'Multi-Release': 'true',
                 'Implementation-Version': version
     }
+    finalizedBy shadowJar
+}
+
+shadowJar {
+    classifier = null
+
+    exclude 'META-INF/maven/**'
+    exclude 'META-INF/NOTICE.txt'
+    exclude 'META-INF/LICENSE.txt'
+
+    dependencies {
+        exclude(dependency('org.jetbrains:annotations'))
+    }
 
     doLast {
-        repack(archivePath)
-        attachSignature(archivePath)
-        createChecksum(archivePath)
+        repack(jar.archivePath)
+        attachSignature(jar.archivePath)
+        createChecksum(jar.archivePath)
     }
 }
 
