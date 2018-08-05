@@ -91,7 +91,6 @@
                             <HBox fx:id="navRight" alignment="CENTER_LEFT">
                                 <JFXButton fx:id="refreshNavButton" onMouseClicked="#onRefresh"
                                            styleClass="jfx-decorator-button" ripplerFill="white" />
-                                <Rectangle height="${navBar.height}" width="1" fill="gray"/>
                             </HBox>
                         </right>
                     </BorderPane>
@@ -101,6 +100,7 @@
                         <padding>
                             <Insets topRightBottomLeft="4.0"/>
                         </padding>
+                        <Rectangle height="${navBar.height}" width="1" fill="gray"/>
                         <JFXButton fx:id="btnMin" styleClass="jfx-decorator-button" ripplerFill="white"
                                    onAction="#onMin">
                         </JFXButton>
