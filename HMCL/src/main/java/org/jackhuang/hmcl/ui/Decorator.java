@@ -67,6 +67,8 @@ import org.jackhuang.hmcl.ui.construct.StackContainerPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogWizardDisplayer;
 import org.jackhuang.hmcl.ui.wizard.*;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.OperatingSystem;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -167,7 +169,14 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
 
         onCloseButtonAction = new SimpleObjectProperty<>(this, "onCloseButtonAction", Launcher::stopApplication);
 
-        primaryStage.initStyle(StageStyle.UNDECORATED);
+        switch (OperatingSystem.CURRENT_OS) {
+            case OSX:
+                titleContainer.setRight(null);
+                break;
+            default:
+                primaryStage.initStyle(StageStyle.UNDECORATED);
+                break;
+        }
         btnClose.setGraphic(close);
         btnMin.setGraphic(minus);
         btnMax.setGraphic(resizeMax);
