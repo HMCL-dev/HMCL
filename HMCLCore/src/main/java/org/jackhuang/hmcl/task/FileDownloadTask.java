@@ -115,9 +115,21 @@ public class FileDownloadTask extends Task {
     }
 
     private void closeFiles() {
-        IOUtils.closeQuietly(rFile);
+        if (rFile != null)
+            try {
+                rFile.close();
+            } catch (IOException e) {
+                Logging.LOG.log(Level.WARNING, "Failed to close file: " + rFile, e);
+            }
+
         rFile = null;
-        IOUtils.closeQuietly(stream);
+
+        if (stream != null)
+            try {
+                stream.close();
+            } catch (IOException e) {
+                Logging.LOG.log(Level.WARNING, "Failed to close stream", e);
+            }
         stream = null;
     }
 

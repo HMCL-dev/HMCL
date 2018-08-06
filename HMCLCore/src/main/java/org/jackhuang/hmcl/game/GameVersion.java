@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.game;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.jackhuang.hmcl.util.IOUtils;
 import org.jenkinsci.constant_pool_scanner.ConstantPool;
 import org.jenkinsci.constant_pool_scanner.ConstantPoolScanner;
 import org.jenkinsci.constant_pool_scanner.ConstantType;
@@ -72,23 +71,21 @@ public final class GameVersion {
         if (file == null || !file.exists() || !file.isFile() || !file.canRead())
             return Optional.empty();
 
-        ZipFile gameJar = null;
         try {
-            gameJar = new ZipFile(file);
-            ZipArchiveEntry minecraft = gameJar.getEntry("net/minecraft/client/Minecraft.class");
-            if (minecraft != null) {
-                Optional<String> result = getVersionOfClassMinecraft(gameJar, minecraft);
-                if (result.isPresent())
-                    return result;
+            try (ZipFile gameJar = new ZipFile(file)) {
+                ZipArchiveEntry minecraft = gameJar.getEntry("net/minecraft/client/Minecraft.class");
+                if (minecraft != null) {
+                    Optional<String> result = getVersionOfClassMinecraft(gameJar, minecraft);
+                    if (result.isPresent())
+                        return result;
+                }
+                ZipArchiveEntry minecraftServer = gameJar.getEntry("net/minecraft/server/MinecraftServer.class");
+                if (minecraftServer != null)
+                    return getVersionFromClassMinecraftServer(gameJar, minecraftServer);
+                return Optional.empty();
             }
-            ZipArchiveEntry minecraftServer = gameJar.getEntry("net/minecraft/server/MinecraftServer.class");
-            if (minecraftServer != null)
-                return getVersionFromClassMinecraftServer(gameJar, minecraftServer);
-            return Optional.empty();
         } catch (IOException e) {
             return Optional.empty();
-        } finally {
-            IOUtils.closeQuietly(gameJar);
         }
     }
 }

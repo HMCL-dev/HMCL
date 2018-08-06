@@ -20,8 +20,8 @@ package org.jackhuang.hmcl.util;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -70,9 +70,7 @@ public final class FileUtils {
     }
 
     public static void writeBytes(File file, byte[] array) throws IOException {
-        try (FileOutputStream stream = new FileOutputStream(file)) {
-            stream.write(array);
-        }
+        Files.write(file.toPath(), array);
     }
 
     public static void deleteDirectory(File directory)
@@ -92,10 +90,6 @@ public final class FileUtils {
 
     public static boolean deleteDirectoryQuietly(File directory) {
         return Lang.test(() -> deleteDirectory(directory));
-    }
-
-    public static boolean cleanDirectoryQuietly(File directory) {
-        return Lang.test(() -> cleanDirectory(directory));
     }
 
     public static void cleanDirectory(File directory)
@@ -159,65 +153,8 @@ public final class FileUtils {
         return !fileInCanonicalDir.getCanonicalFile().equals(fileInCanonicalDir.getAbsoluteFile());
     }
 
-    public static void copyDirectory(File srcDir, File destDir)
-            throws IOException {
-        copyDirectory(srcDir, destDir, null);
-    }
+    public static void copyDirectory(Path src, Path dest) {
 
-    public static void copyDirectory(File srcDir, File destDir, FileFilter filter)
-            throws IOException {
-        Objects.requireNonNull(srcDir, "Source must not be null");
-        Objects.requireNonNull(destDir, "Destination must not be null");
-        if (!srcDir.exists())
-            throw new FileNotFoundException("Source '" + srcDir + "' does not exist");
-        if (!srcDir.isDirectory())
-            throw new IOException("Source '" + srcDir + "' exists but is not a directory");
-        if (srcDir.getCanonicalPath().equals(destDir.getCanonicalPath()))
-            throw new IOException("Source '" + srcDir + "' and destination '" + destDir + "' are the same");
-
-        List<String> exclusionList = null;
-        if (destDir.getCanonicalPath().startsWith(srcDir.getCanonicalPath())) {
-            File[] srcFiles = filter == null ? srcDir.listFiles() : srcDir.listFiles(filter);
-            if ((srcFiles != null) && (srcFiles.length > 0)) {
-                exclusionList = new ArrayList<>(srcFiles.length);
-                for (File srcFile : srcFiles) {
-                    File copiedFile = new File(destDir, srcFile.getName());
-                    exclusionList.add(copiedFile.getCanonicalPath());
-                }
-            }
-        }
-        doCopyDirectory(srcDir, destDir, filter, exclusionList);
-    }
-
-    private static void doCopyDirectory(File srcDir, File destDir, FileFilter filter, List<String> exclusionList)
-            throws IOException {
-        File[] srcFiles = filter == null ? srcDir.listFiles() : srcDir.listFiles(filter);
-        if (srcFiles == null)
-            throw new IOException("Failed to list contents of " + srcDir);
-        if (destDir.exists()) {
-            if (!destDir.isDirectory())
-                throw new IOException("Destination '" + destDir + "' exists but is not a directory");
-        } else if (!FileUtils.makeDirectory(destDir))
-            throw new IOException("Destination '" + destDir + "' directory cannot be created");
-
-        if (!destDir.canWrite())
-            throw new IOException("Destination '" + destDir + "' cannot be written to");
-        for (File srcFile : srcFiles) {
-            File dstFile = new File(destDir, srcFile.getName());
-            if ((exclusionList == null) || (!exclusionList.contains(srcFile.getCanonicalPath())))
-                if (srcFile.isDirectory())
-                    doCopyDirectory(srcFile, dstFile, filter, exclusionList);
-                else
-                    doCopyFile(srcFile, dstFile);
-        }
-        destDir.setLastModified(srcDir.lastModified());
-    }
-
-    public static void copyFileQuietly(File srcFile, File destFile) {
-        try {
-            copyFile(srcFile, destFile);
-        } catch (IOException ignore) {
-        }
     }
 
     public static void copyFile(File srcFile, File destFile)
@@ -235,17 +172,13 @@ public final class FileUtils {
             throw new IOException("Destination '" + parentFile + "' directory cannot be created");
         if (destFile.exists() && !destFile.canWrite())
             throw new IOException("Destination '" + destFile + "' exists but is read-only");
-        doCopyFile(srcFile, destFile);
+
+        Files.copy(srcFile.toPath(), destFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
     }
 
     public static void moveFile(File srcFile, File destFile) throws IOException {
         copyFile(srcFile, destFile);
         srcFile.delete();
-    }
-
-    private static void doCopyFile(File srcFile, File destFile)
-            throws IOException {
-        Files.copy(srcFile.toPath(), destFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
     }
 
     public static boolean makeDirectory(File directory) {

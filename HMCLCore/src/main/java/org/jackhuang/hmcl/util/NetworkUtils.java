@@ -84,30 +84,22 @@ public final class NetworkUtils {
         con.setDoOutput(true);
         con.setRequestProperty("Content-Type", contentType + "; charset=utf-8");
         con.setRequestProperty("Content-Length", "" + bytes.length);
-        OutputStream os = null;
-        try {
-            os = con.getOutputStream();
-            if (os != null)
-                os.write(bytes);
-        } finally {
-            IOUtils.closeQuietly(os);
+        try (OutputStream os = con.getOutputStream()) {
+            os.write(bytes);
         }
         return readData(con);
     }
 
     public static String readData(HttpURLConnection con) throws IOException {
-        InputStream is = null;
         try {
-            is = con.getInputStream();
-            return IOUtils.readFullyAsString(is, UTF_8);
+            try (InputStream stdout = con.getInputStream()) {
+                return IOUtils.readFullyAsString(stdout, UTF_8);
+            }
         } catch (IOException e) {
-            IOUtils.closeQuietly(is);
-            is = con.getErrorStream();
-            if (is != null)
-                return IOUtils.readFullyAsString(is, UTF_8);
-            throw e;
-        } finally {
-            IOUtils.closeQuietly(is);
+            try (InputStream stderr = con.getErrorStream()) {
+                if (stderr == null) throw e;
+                return IOUtils.readFullyAsString(stderr, UTF_8);
+            }
         }
     }
 

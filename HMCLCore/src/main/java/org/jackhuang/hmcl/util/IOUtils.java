@@ -31,22 +31,11 @@ public final class IOUtils {
 
     public static final int DEFAULT_BUFFER_SIZE = 8 * 1024;
 
-    public static void closeQuietly(Closeable closeable) {
-        try {
-            if (closeable != null)
-                closeable.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public static ByteArrayOutputStream readFully(InputStream stream) throws IOException {
-        try {
+        try (InputStream is = stream) {
             ByteArrayOutputStream result = new ByteArrayOutputStream();
-            copyTo(stream, result);
+            copyTo(is, result);
             return result;
-        } finally {
-            closeQuietly(stream);
         }
     }
 
